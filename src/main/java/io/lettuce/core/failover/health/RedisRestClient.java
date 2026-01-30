@@ -15,7 +15,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -85,18 +84,18 @@ class RedisRestClient {
 
         // Validate response status
         if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
-            return readBdbs(response.getResponseBodyAsByteBuffer());
+            return readBdbs(response.getResponseBody(StandardCharsets.UTF_8));
         } else {
             throw new RedisRestException("Failed to get BDBs", response.getStatusCode(),
                     response.getResponseBody(StandardCharsets.UTF_8));
         }
     }
 
-    public boolean checkBdbAvailability(String uid, boolean lagAware) {
+    public boolean checkBdbAvailability(Long uid, boolean lagAware) {
         return checkBdbAvailability(uid, lagAware, null);
     }
 
-    public boolean checkBdbAvailability(String uid, boolean extendedCheckEnabled, Long availabilityLagToleranceMs) {
+    public boolean checkBdbAvailability(Long uid, boolean extendedCheckEnabled, Long availabilityLagToleranceMs) {
         String availabilityPath = String.format(V_1_BDBS_S_AVAILABILITY, uid);
 
         HttpClient.Request.RequestBuilder requestBuilder = HttpClient.Request.get(availabilityPath)
@@ -284,9 +283,9 @@ class RedisRestClient {
      * @param responseBody the JSON response containing BDBs with endpoints
      * @return list of BDB information objects
      */
-    private List<BdbInfo> readBdbs(ByteBuffer responseBody) {
+    private List<BdbInfo> readBdbs(String responseBody) {
         JsonParser jsonParser = ClientOptions.DEFAULT_JSON_PARSER.get();
-        JsonArray bdbs = jsonParser.loadJsonValue(responseBody).asJsonArray();
+        JsonArray bdbs = jsonParser.createJsonValue(responseBody).asJsonArray();
         List<BdbInfo> bdbInfoList = new ArrayList<>();
 
         for (JsonValue bdbElement : bdbs.asList()) {
@@ -299,7 +298,9 @@ class RedisRestClient {
                 continue;
             }
 
-            String bdbId = bdb.get("uid").asNumber().toString();
+            Number bdbIdValue = bdb.get("uid").asNumber();
+            Long bdbId = bdbIdValue != null ? bdbIdValue.longValue() : null;
+
             List<EndpointInfo> endpoints = new ArrayList<>();
 
             JsonValue endpointsJson = bdb.get("endpoints");
@@ -345,16 +346,16 @@ class RedisRestClient {
      */
     static class BdbInfo {
 
-        private final String uid;
+        private final Long uid;
 
         private final List<EndpointInfo> endpoints;
 
-        BdbInfo(String uid, List<EndpointInfo> endpoints) {
+        BdbInfo(Long uid, List<EndpointInfo> endpoints) {
             this.uid = uid;
             this.endpoints = endpoints;
         }
 
-        String getUid() {
+        Long getUid() {
             return uid;
         }
 

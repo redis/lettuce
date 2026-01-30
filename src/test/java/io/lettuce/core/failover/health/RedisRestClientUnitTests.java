@@ -1,8 +1,16 @@
+/*
+ * Copyright 2026-Present, Redis Ltd. and Contributors
+ * 
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.support.http.HttpClient;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -13,12 +21,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -29,6 +37,7 @@ import org.mockito.ArgumentCaptor;
  * Unit tests for {@link RedisRestClient}.
  */
 @ExtendWith(MockitoExtension.class)
+@Tag(UNIT_TEST)
 class RedisRestClientUnitTests {
 
     private static final String SAMPLE_BDBS_RESPONSE = loadResource("sample-bdbs-response.json");
@@ -76,8 +85,7 @@ class RedisRestClientUnitTests {
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
-        when(response.getResponseBodyAsByteBuffer())
-                .thenReturn(ByteBuffer.wrap(SAMPLE_BDBS_RESPONSE.getBytes(StandardCharsets.UTF_8)));
+        when(response.getResponseBody(StandardCharsets.UTF_8)).thenReturn(SAMPLE_BDBS_RESPONSE);
 
         // Execute
         List<RedisRestClient.BdbInfo> bdbs = redisRestClient.getBdbs();
@@ -85,12 +93,12 @@ class RedisRestClientUnitTests {
         // Verify 3 BDBs are returned with correct UIDs
         assertNotNull(bdbs);
         assertEquals(3, bdbs.size());
-        assertTrue(bdbs.stream().anyMatch(b -> "1".equals(b.getUid())));
-        assertTrue(bdbs.stream().anyMatch(b -> "2".equals(b.getUid())));
-        assertTrue(bdbs.stream().anyMatch(b -> "3".equals(b.getUid())));
+        assertTrue(bdbs.stream().anyMatch(b -> b.getUid() == 1));
+        assertTrue(bdbs.stream().anyMatch(b -> b.getUid() == 2));
+        assertTrue(bdbs.stream().anyMatch(b -> b.getUid() == 3));
 
         // Verify BDB with uid "1" has correct endpoint details
-        RedisRestClient.BdbInfo bdb1 = bdbs.stream().filter(b -> "1".equals(b.getUid())).findFirst().orElse(null);
+        RedisRestClient.BdbInfo bdb1 = bdbs.stream().filter(b -> b.getUid() == 1).findFirst().orElse(null);
         assertNotNull(bdb1);
         assertEquals(1, bdb1.getEndpoints().size());
 
@@ -106,8 +114,7 @@ class RedisRestClientUnitTests {
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
-        when(response.getResponseBodyAsByteBuffer())
-                .thenReturn(ByteBuffer.wrap(SAMPLE_BDBS_RESPONSE.getBytes(StandardCharsets.UTF_8)));
+        when(response.getResponseBody(StandardCharsets.UTF_8)).thenReturn(SAMPLE_BDBS_RESPONSE);
 
         List<RedisRestClient.BdbInfo> bdbs = redisRestClient.getBdbs();
 
@@ -115,7 +122,7 @@ class RedisRestClientUnitTests {
         RedisRestClient.BdbInfo matchingBdb = bdbs.stream().filter(bdb -> bdb.matches("redis-12001.test.example.com"))
                 .findFirst().orElse(null);
         assertNotNull(matchingBdb);
-        assertEquals("3", matchingBdb.getUid());
+        assertEquals(3L, matchingBdb.getUid());
     }
 
     @Test
@@ -123,15 +130,14 @@ class RedisRestClientUnitTests {
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
-        when(response.getResponseBodyAsByteBuffer())
-                .thenReturn(ByteBuffer.wrap(SAMPLE_BDBS_RESPONSE.getBytes(StandardCharsets.UTF_8)));
+        when(response.getResponseBody(StandardCharsets.UTF_8)).thenReturn(SAMPLE_BDBS_RESPONSE);
 
         List<RedisRestClient.BdbInfo> bdbs = redisRestClient.getBdbs();
 
         // Test matches() by IP address
         RedisRestClient.BdbInfo matchingBdb = bdbs.stream().filter(bdb -> bdb.matches("10.0.0.3")).findFirst().orElse(null);
         assertNotNull(matchingBdb);
-        assertEquals("2", matchingBdb.getUid());
+        assertEquals(2L, matchingBdb.getUid());
     }
 
     @Test
@@ -159,7 +165,7 @@ class RedisRestClientUnitTests {
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
 
-        boolean result = redisRestClient.checkBdbAvailability("1", false, null);
+        boolean result = redisRestClient.checkBdbAvailability(1L, false, null);
 
         assertTrue(result);
     }
@@ -170,7 +176,7 @@ class RedisRestClientUnitTests {
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(503);
 
-        boolean result = redisRestClient.checkBdbAvailability("1", false, null);
+        boolean result = redisRestClient.checkBdbAvailability(1L, false, null);
 
         assertFalse(result);
     }
@@ -181,7 +187,7 @@ class RedisRestClientUnitTests {
         failedFuture.completeExceptionally(new IOException("Connection failed"));
         when(httpConnection.executeAsync(any(HttpClient.Request.class))).thenReturn(failedFuture);
 
-        boolean result = redisRestClient.checkBdbAvailability("1", false, null);
+        boolean result = redisRestClient.checkBdbAvailability(1L, false, null);
 
         assertFalse(result);
     }
@@ -192,7 +198,7 @@ class RedisRestClientUnitTests {
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
 
-        redisRestClient.checkBdbAvailability("42", false, null);
+        redisRestClient.checkBdbAvailability(42L, false, null);
 
         ArgumentCaptor<HttpClient.Request> requestCaptor = ArgumentCaptor.forClass(HttpClient.Request.class);
         verify(httpConnection).executeAsync(requestCaptor.capture());
@@ -208,7 +214,7 @@ class RedisRestClientUnitTests {
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
 
-        redisRestClient.checkBdbAvailability("42", true, null);
+        redisRestClient.checkBdbAvailability(42L, true, null);
 
         ArgumentCaptor<HttpClient.Request> requestCaptor = ArgumentCaptor.forClass(HttpClient.Request.class);
         verify(httpConnection).executeAsync(requestCaptor.capture());
@@ -225,7 +231,7 @@ class RedisRestClientUnitTests {
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
 
-        redisRestClient.checkBdbAvailability("42", true, 5000L);
+        redisRestClient.checkBdbAvailability(42L, true, 5000L);
 
         ArgumentCaptor<HttpClient.Request> requestCaptor = ArgumentCaptor.forClass(HttpClient.Request.class);
         verify(httpConnection).executeAsync(requestCaptor.capture());
@@ -246,7 +252,7 @@ class RedisRestClientUnitTests {
         when(response.getStatusCode()).thenReturn(200);
 
         // First request - connection will be established (httpConnection is null initially)
-        redisRestClient.checkBdbAvailability("1", false, null);
+        redisRestClient.checkBdbAvailability(1L, false, null);
 
         // Verify connect was called once for the first request
         verify(httpClient, times(1)).connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class));
@@ -265,7 +271,7 @@ class RedisRestClientUnitTests {
                 .thenReturn(CompletableFuture.completedFuture(response));
 
         // Second request - should trigger reconnection after executeAsync() fails
-        redisRestClient.checkBdbAvailability("1", false, null);
+        redisRestClient.checkBdbAvailability(1L, false, null);
 
         // Verify connect was called twice (first request + reestablishment after failure)
         verify(httpClient, times(2)).connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class));

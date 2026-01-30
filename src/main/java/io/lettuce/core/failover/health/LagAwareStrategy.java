@@ -25,9 +25,7 @@ public class LagAwareStrategy implements HealthCheckStrategy {
 
     private final HttpClient httpClient;
 
-    private final boolean ownsHttpClient;
-
-    private String cachedBdbId;
+    private Long cachedBdbId;
 
     public LagAwareStrategy(LagAwareStrategy.Config config) {
         this(config, null);
@@ -38,10 +36,8 @@ public class LagAwareStrategy implements HealthCheckStrategy {
 
         if (httpClient != null) {
             this.httpClient = httpClient;
-            this.ownsHttpClient = false;
         } else {
-            this.httpClient = HttpClientResources.acquire();
-            this.ownsHttpClient = true;
+            this.httpClient = HttpClientResources.get();
         }
 
         this.redisRestClient = createRedisRestClient(config, this.httpClient);
@@ -75,7 +71,7 @@ public class LagAwareStrategy implements HealthCheckStrategy {
     @Override
     public HealthStatus doHealthCheck(RedisURI endpoint) {
         try {
-            String bdbId = cachedBdbId;
+            Long bdbId = cachedBdbId;
             if (bdbId == null) {
                 // Try to find BDB that matches the database host
                 String dbHost = endpoint.getHost();
@@ -115,11 +111,6 @@ public class LagAwareStrategy implements HealthCheckStrategy {
     public void close() {
         if (redisRestClient != null) {
             redisRestClient.close();
-        }
-
-        // Release HttpClient reference if we acquired it
-        if (ownsHttpClient && httpClient != null) {
-            HttpClientResources.release(httpClient);
         }
     }
 

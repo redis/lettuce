@@ -6,17 +6,13 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.support.http.HttpClient;
 import io.lettuce.core.support.http.HttpClientResources;
 import io.lettuce.test.ReflectionTestUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.reflect.Field;
+import java.io.IOException;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -43,7 +39,7 @@ class LagAwareStrategyUnitTests {
     private LagAwareStrategy.Config config;
 
     @Test
-    void shouldNotCloseProvidedHttpClient() {
+    void shouldNotCloseProvidedHttpClient() throws IOException {
         when(config.getRestEndpoint()).thenReturn(restEndpoint);
         when(config.getCredentialsSupplier()).thenReturn(credentialsSupplier);
         HttpClient externalClient = mock(HttpClient.class);
@@ -134,7 +130,7 @@ class LagAwareStrategyUnitTests {
         RedisRestClient mockRestClient = mock(RedisRestClient.class);
 
         when(mockRestClient.getBdbs()).thenReturn(createDefaultBdbs());
-        when(mockRestClient.checkBdbAvailability(eq("1"), eq(true), anyLong())).thenReturn(true);
+        when(mockRestClient.checkBdbAvailability(eq(1L), eq(true), anyLong())).thenReturn(true);
 
         LagAwareStrategy strategy = createStrategyWithMock(config, mockRestClient);
 
@@ -143,7 +139,7 @@ class LagAwareStrategyUnitTests {
         // Verify
         assertEquals(HealthStatus.HEALTHY, status);
         verify(mockRestClient).getBdbs();
-        verify(mockRestClient).checkBdbAvailability("1", true, 5000L);
+        verify(mockRestClient).checkBdbAvailability(1L, true, 5000L);
 
         strategy.close();
     }
@@ -156,7 +152,7 @@ class LagAwareStrategyUnitTests {
         RedisRestClient mockRestClient = mock(RedisRestClient.class);
 
         when(mockRestClient.getBdbs()).thenReturn(createDefaultBdbs());
-        when(mockRestClient.checkBdbAvailability(eq("1"), eq(false))).thenReturn(true);
+        when(mockRestClient.checkBdbAvailability(eq(1L), eq(false))).thenReturn(true);
 
         LagAwareStrategy strategy = createStrategyWithMock(config, mockRestClient);
 
@@ -165,7 +161,7 @@ class LagAwareStrategyUnitTests {
         // Verify
         assertEquals(HealthStatus.HEALTHY, status);
         verify(mockRestClient).getBdbs();
-        verify(mockRestClient).checkBdbAvailability("1", false);
+        verify(mockRestClient).checkBdbAvailability(1L, false);
 
         strategy.close();
     }
@@ -178,7 +174,7 @@ class LagAwareStrategyUnitTests {
         RedisRestClient mockRestClient = mock(RedisRestClient.class);
 
         when(mockRestClient.getBdbs()).thenReturn(createDefaultBdbs());
-        when(mockRestClient.checkBdbAvailability(eq("1"), eq(true), anyLong())).thenReturn(false);
+        when(mockRestClient.checkBdbAvailability(eq(1L), eq(true), anyLong())).thenReturn(false);
 
         LagAwareStrategy strategy = createStrategyWithMock(config, mockRestClient);
 
@@ -198,7 +194,7 @@ class LagAwareStrategyUnitTests {
         RedisRestClient mockRestClient = mock(RedisRestClient.class);
 
         when(mockRestClient.getBdbs()).thenReturn(createDefaultBdbs());
-        when(mockRestClient.checkBdbAvailability(eq("1"), eq(true), anyLong())).thenReturn(true);
+        when(mockRestClient.checkBdbAvailability(eq(1L), eq(true), anyLong())).thenReturn(true);
 
         LagAwareStrategy strategy = createStrategyWithMock(config, mockRestClient);
 
@@ -208,7 +204,7 @@ class LagAwareStrategyUnitTests {
 
         // Verify getBdbs() was only called once (BDB ID was cached)
         verify(mockRestClient, times(1)).getBdbs();
-        verify(mockRestClient, times(2)).checkBdbAvailability("1", true, 5000L);
+        verify(mockRestClient, times(2)).checkBdbAvailability(1L, true, 5000L);
 
         strategy.close();
     }
@@ -237,7 +233,7 @@ class LagAwareStrategyUnitTests {
     private List<RedisRestClient.BdbInfo> createDefaultBdbs() {
         List<String> addr = Collections.singletonList("10.0.0.1");
         RedisRestClient.EndpointInfo endpoint = new RedisRestClient.EndpointInfo(addr, "redis-1.example.com", 12000, "1:0");
-        RedisRestClient.BdbInfo bdb = new RedisRestClient.BdbInfo("1", Collections.singletonList(endpoint));
+        RedisRestClient.BdbInfo bdb = new RedisRestClient.BdbInfo(1L, Collections.singletonList(endpoint));
         return Collections.singletonList(bdb);
     }
 
