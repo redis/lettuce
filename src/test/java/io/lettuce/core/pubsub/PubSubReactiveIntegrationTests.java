@@ -22,6 +22,8 @@ package io.lettuce.core.pubsub;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
+import io.lettuce.core.pubsub.PubSubOutput.Type;
+import io.lettuce.core.pubsub.api.reactive.SubscriptionMessage;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -192,6 +194,185 @@ class PubSubReactiveIntegrationTests extends AbstractRedisClientTest implements 
         Delay.delay(Duration.ofMillis(500));
 
         assertThat(patternMessages).hasSize(3);
+    }
+
+    @Test
+    void observeMessage() throws Exception {
+
+        block(pubsub.subscribe(channel));
+
+        BlockingQueue<SubscriptionMessage<String, String>> channelMessages = LettuceFactories.newBlockingQueue();
+
+        Disposable disposable = pubsub.observe(sink -> new RedisPubSubAdapter<String, String>() {
+
+            @Override
+            public void message(String channel, String message) {
+                sink.next(new SubscriptionMessage<>(channel, message));
+            }
+
+        }).doOnNext(channelMessages::add).subscribe();
+
+        redis.publish(channel, message);
+        redis.publish(channel, message);
+        redis.publish(channel, message);
+
+        Wait.untilEquals(3, channelMessages::size).waitOrTimeout();
+        assertThat(channelMessages).hasSize(3);
+
+        disposable.dispose();
+        redis.publish(channel, message);
+        Delay.delay(Duration.ofMillis(500));
+        assertThat(channelMessages).hasSize(3);
+
+        SubscriptionMessage<String, String> channelMessage = channelMessages.take();
+        assertThat(channelMessage.getChannel()).isEqualTo(channel);
+        assertThat(channelMessage.getMessage()).isEqualTo(message);
+    }
+
+    @Test
+    void observeMessageUnsubscribe() {
+
+        block(pubsub.subscribe(channel));
+
+        BlockingQueue<SubscriptionMessage<String, String>> channelMessages = LettuceFactories.newBlockingQueue();
+
+        pubsub.observe(sink -> new RedisPubSubAdapter<String, String>() {
+
+            @Override
+            public void message(String channel, String message) {
+                sink.next(new SubscriptionMessage<>(channel, message));
+            }
+
+        }).doOnNext(channelMessages::add).subscribe().dispose();
+
+        block(statefulRedisConnection.reactive().publish(channel, message));
+        block(statefulRedisConnection.reactive().publish(channel, message));
+
+        Delay.delay(Duration.ofMillis(500));
+        assertThat(channelMessages).isEmpty();
+    }
+
+    @Test
+    void observePMessage() throws Exception {
+
+        block(pubsub.psubscribe(pattern));
+
+        BlockingQueue<SubscriptionMessage<String, String>> patternMessages = LettuceFactories.newBlockingQueue();
+
+        pubsub.observe(sink -> new RedisPubSubAdapter<String, String>() {
+
+            @Override
+            public void message(String pattern, String channel, String message) {
+                sink.next(new SubscriptionMessage<>(pattern, channel, message));
+            }
+
+        }).doOnNext(patternMessages::add).subscribe();
+
+        redis.publish(channel, message);
+        redis.publish(channel, message);
+        redis.publish(channel, message);
+
+        Wait.untilTrue(() -> patternMessages.size() == 3).waitOrTimeout();
+        assertThat(patternMessages).hasSize(3);
+
+        SubscriptionMessage<String, String> patternMessage = patternMessages.take();
+        assertThat(patternMessage.getChannel()).isEqualTo(channel);
+        assertThat(patternMessage.getMessage()).isEqualTo(message);
+        assertThat(patternMessage.getPattern()).isEqualTo(pattern);
+    }
+
+    @Test
+    void observePMessageWithUnsubscribe() {
+
+        block(pubsub.psubscribe(pattern));
+
+        BlockingQueue<SubscriptionMessage<String, String>> patternMessages = LettuceFactories.newBlockingQueue();
+
+        Disposable subscription = pubsub.observe(sink -> new RedisPubSubAdapter<String, String>() {
+
+            @Override
+            public void message(String pattern, String channel, String message) {
+                sink.next(new SubscriptionMessage<>(pattern, channel, message));
+            }
+
+        }).doOnNext(patternMessages::add).subscribe();
+
+        redis.publish(channel, message);
+        redis.publish(channel, message);
+        redis.publish(channel, message);
+
+        Wait.untilTrue(() -> patternMessages.size() == 3).waitOrTimeout();
+        assertThat(patternMessages).hasSize(3);
+        subscription.dispose();
+
+        redis.publish(channel, message);
+        redis.publish(channel, message);
+        redis.publish(channel, message);
+
+        Delay.delay(Duration.ofMillis(500));
+
+        assertThat(patternMessages).hasSize(3);
+    }
+
+    @Test
+    void observeSMessage() throws Exception {
+
+        block(pubsub.ssubscribe(shardChannel));
+
+        BlockingQueue<SubscriptionMessage<String, String>> sharedMessages = LettuceFactories.newBlockingQueue();
+
+        pubsub.observe(sink -> new RedisPubSubAdapter<String, String>() {
+
+            @Override
+            public void smessage(String shardChannel, String message) {
+                sink.next(new SubscriptionMessage<>(shardChannel, message));
+            }
+
+        }).doOnNext(sharedMessages::add).subscribe();
+
+        redis.spublish(shardChannel, message);
+        redis.spublish(shardChannel, message);
+        redis.spublish(shardChannel, message);
+
+        Wait.untilTrue(() -> sharedMessages.size() == 3).waitOrTimeout();
+        assertThat(sharedMessages).hasSize(3);
+
+        SubscriptionMessage<String, String> shardMessage = sharedMessages.take();
+        assertThat(shardMessage.getChannel()).isEqualTo(shardChannel);
+        assertThat(shardMessage.getMessage()).isEqualTo(message);
+    }
+
+    @Test
+    void observeSMessageWithUnsubscribe() {
+
+        block(pubsub.ssubscribe(shardChannel));
+
+        BlockingQueue<SubscriptionMessage<String, String>> shardMessages = LettuceFactories.newBlockingQueue();
+
+        Disposable subscription = pubsub.observe(sink -> new RedisPubSubAdapter<String, String>() {
+
+            @Override
+            public void smessage(String shardChannel, String message) {
+                sink.next(new SubscriptionMessage<>(shardChannel, message));
+            }
+
+        }).doOnNext(shardMessages::add).subscribe();
+
+        redis.spublish(shardChannel, message);
+        redis.spublish(shardChannel, message);
+        redis.spublish(shardChannel, message);
+
+        Wait.untilTrue(() -> shardMessages.size() == 3).waitOrTimeout();
+        assertThat(shardMessages).hasSize(3);
+        subscription.dispose();
+
+        redis.spublish(shardChannel, message);
+        redis.spublish(shardChannel, message);
+        redis.spublish(shardChannel, message);
+
+        Delay.delay(Duration.ofMillis(500));
+
+        assertThat(shardMessages).hasSize(3);
     }
 
     @Test
