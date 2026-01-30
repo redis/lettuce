@@ -39,12 +39,10 @@ import java.util.function.Supplier;
  * <h2>Lag-Aware Availability Checks</h2>
  * <p>
  * When {@link Config#isExtendedCheckEnabled()} is {@code true}, performs a lag-aware availability check using the
- * {@code extend_check=lag} query parameter. This considers replication lag tolerance and helps reduce the risk of data
- * inconsistencies during disaster recovery by ensuring failover only occurs when databases are sufficiently synchronized.
+ * {@code extend_check=lag} query parameter.
  * </p>
  * <p>
- * The lag tolerance threshold can be configured via {@link Config#getAvailabilityLagTolerance()} (default: 100ms). Depending on
- * factors such as workload, network conditions, and throughput, you might want to adjust this threshold.
+ * The lag tolerance threshold can be configured via {@link Config#getAvailabilityLagTolerance()} (default: 100ms).
  * </p>
  *
  * @author Ivo Gaydazhiev
