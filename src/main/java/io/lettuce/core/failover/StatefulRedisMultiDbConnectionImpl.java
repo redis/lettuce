@@ -1,5 +1,6 @@
 package io.lettuce.core.failover;
 
+import java.io.Closeable;
 import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.util.Collection;
@@ -11,7 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.ClientOptions;
@@ -21,7 +24,6 @@ import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
-import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
@@ -87,10 +89,14 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     private final ClientResources clientResources;
 
+    private final RedisDatabaseDeferredCompletion<C> completion;
+
+    private final Set<Consumer<Closeable>> onCloseListeners = ConcurrentHashMap.newKeySet();
+
     public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
             DatabaseFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
-            RedisDatabaseAsyncCompletion<C> completion) {
+            RedisDatabaseDeferredCompletion<C> completion) {
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
         }
@@ -137,6 +143,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
         this.reactive = newRedisReactiveCommandsImpl();
+        this.completion = completion;
         if (completion != null) {
             completion.whenComplete(this::onDatabaseCompletion);
         }
@@ -388,14 +395,39 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     @Override
     public void close() {
-        healthStatusManager.close();
-        databases.values().forEach(RedisDatabaseImpl::close);
+        closeAsync().join();
+    }
+
+    /**
+     * Register MultiDbConnection as Closeable resource. Internal access only.
+     *
+     * @param registry registry of closeables
+     */
+    protected void registerAsCloseable(final Collection<Closeable> registry) {
+        registry.add(this);
+        onCloseListeners.add(resource -> {
+            registry.remove(resource);
+        });
     }
 
     @Override
     public CompletableFuture<Void> closeAsync() {
-        return CompletableFuture.allOf(databases.values().stream().map(db -> db.getConnection())
-                .map(StatefulConnection::closeAsync).toArray(CompletableFuture[]::new));
+        Stream<CompletableFuture<Void>> asyncCloseStream = databases.values().stream().map(RedisDatabaseImpl<C>::closeAsync);
+
+        CompletableFuture<Void> closeAllFuture = CompletableFuture.allOf(asyncCloseStream.toArray(CompletableFuture[]::new));
+
+        CompletableFuture<Void> deferredsFuture;
+        if (completion != null) {
+            deferredsFuture = completion.closeAsync();
+        } else {
+            deferredsFuture = CompletableFuture.completedFuture(null);
+        }
+
+        return closeAllFuture.whenComplete((v, t) -> {
+            healthStatusManager.close();
+        }).thenCompose(v -> deferredsFuture).whenComplete((v, t) -> {
+            onCloseListeners.forEach(c -> c.accept(this));
+        });
     }
 
     @Override
@@ -769,7 +801,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
             // Remove the database and close its connection
             databases.remove(redisURI);
-            database.close();
+            database.closeAsync().join();
         });
     }
 
