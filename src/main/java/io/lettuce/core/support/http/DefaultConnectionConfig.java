@@ -66,7 +66,7 @@ class DefaultConnectionConfig implements HttpClient.ConnectionConfig {
 
         @Override
         public Builder readTimeout(int timeoutMs) {
-            LettuceAssert.isTrue(timeoutMs > 0, "Read timeout must be greater than or equal to 0");
+            LettuceAssert.isTrue(timeoutMs >= 0, "Read timeout must be greater than or equal to 0");
             this.readTimeout = timeoutMs;
             return this;
         }
