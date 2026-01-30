@@ -31,6 +31,7 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Netty-based implementation of {@link HttpClient}. This implementation uses Netty's http codecs to implement a asynchronous
@@ -80,6 +81,20 @@ class NettyHttpClient implements HttpClient {
             this.eventLoopGroup = new MultiThreadIoEventLoopGroup(2, NioIoHandler.newFactory());
             this.ownEventLoopGroup = true;
         }
+    }
+
+    /**
+     * Creates a new {@link NettyHttpClient} with a custom event loop group configuration.
+     *
+     * @param numberOfThreads the number of threads to use in the event loop group.
+     * @param threadFactory the thread factory to use for creating threads.
+     */
+    NettyHttpClient(int numberOfThreads, ThreadFactory threadFactory) {
+        LettuceAssert.isTrue(numberOfThreads > 0, "Number of threads must be greater than zero");
+        LettuceAssert.notNull(threadFactory, "ThreadFactory must not be null");
+
+        this.eventLoopGroup = new MultiThreadIoEventLoopGroup(numberOfThreads, threadFactory, NioIoHandler.newFactory());
+        this.ownEventLoopGroup = true;
     }
 
     @Override
@@ -153,7 +168,7 @@ class NettyHttpClient implements HttpClient {
      * Shutdown this client.
      *
      * The shutdown is executed without quiet time and a timeout of 2 {@link TimeUnit#SECONDS}.
-     * 
+     *
      * @see #shutdown(long, long, TimeUnit)
      */
     public void shutdown() {
