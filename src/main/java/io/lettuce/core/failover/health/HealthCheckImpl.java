@@ -180,8 +180,6 @@ public class HealthCheckImpl implements HealthCheck {
                 scheduler.shutdownNow();
             }
         } catch (InterruptedException e) {
-            // Force shutdown immediately
-            scheduler.shutdownNow();
             Thread.currentThread().interrupt();
         }
     }

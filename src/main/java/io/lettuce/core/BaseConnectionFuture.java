@@ -7,22 +7,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Base class for connection futures that provides protection against event loop deadlocks.
+ * Connection future that delegates calls to the decorated {@link CompletableFuture}.
  * <p>
- * This class ensures that all callbacks (thenApply, thenAccept, etc.) execute on a separate thread pool rather than on Netty
- * event loop threads. This prevents deadlocks when users call blocking sync operations inside callbacks.
- * <p>
- * Example of the problem this solves:
- *
- * <pre>
- * {@code
- * // DANGEROUS with plain CompletableFuture - can deadlock!
- * future.thenApply(conn -> conn.sync().ping());
- *
- * // SAFE with BaseConnectionFuture - always runs on separate thread
- * future.thenApply(conn -> conn.sync().ping());
- * }
- * </pre>
+ * This class provides a wrapper around {@link CompletableFuture} that implements both {@link CompletionStage} and
+ * {@link Future} interfaces, delegating all method calls to the underlying future.
  *
  * @param <T> Connection type
  * @author Ali Takavci
@@ -30,28 +18,15 @@ import java.util.function.Function;
  */
 public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Future<T> {
 
-    protected final CompletableFuture<T> delegate;
-
-    protected final Executor defaultExecutor;
+    private final CompletableFuture<T> delegate;
 
     /**
      * Create a new {@link BaseConnectionFuture} wrapping the given delegate future.
      *
      * @param delegate the underlying CompletableFuture
      */
-    protected BaseConnectionFuture(CompletableFuture<T> delegate) {
-        this(delegate, ForkJoinPool.commonPool());
-    }
-
-    /**
-     * Create a new {@link BaseConnectionFuture} wrapping the given delegate future with a custom executor.
-     *
-     * @param delegate the underlying CompletableFuture
-     * @param defaultExecutor the executor to use for async callbacks
-     */
-    protected BaseConnectionFuture(CompletableFuture<T> delegate, Executor defaultExecutor) {
+    public BaseConnectionFuture(CompletableFuture<T> delegate) {
         this.delegate = delegate;
-        this.defaultExecutor = defaultExecutor;
     }
 
     /**
@@ -92,19 +67,14 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
         return delegate.get(timeout, unit);
     }
 
-    // =========================================================================
-    // CompletionStage methods - ALL force async execution
-    // =========================================================================
-
     @Override
     public <U> CompletionStage<U> thenApply(Function<? super T, ? extends U> fn) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.thenApplyAsync(fn, defaultExecutor));
+        return wrap(delegate.thenApply(fn));
     }
 
     @Override
     public <U> CompletionStage<U> thenApplyAsync(Function<? super T, ? extends U> fn) {
-        return wrap(delegate.thenApplyAsync(fn, defaultExecutor));
+        return wrap(delegate.thenApplyAsync(fn));
     }
 
     @Override
@@ -114,13 +84,12 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
 
     @Override
     public CompletionStage<Void> thenAccept(Consumer<? super T> action) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.thenAcceptAsync(action, defaultExecutor));
+        return wrap(delegate.thenAccept(action));
     }
 
     @Override
     public CompletionStage<Void> thenAcceptAsync(Consumer<? super T> action) {
-        return wrap(delegate.thenAcceptAsync(action, defaultExecutor));
+        return wrap(delegate.thenAcceptAsync(action));
     }
 
     @Override
@@ -130,13 +99,12 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
 
     @Override
     public CompletionStage<Void> thenRun(Runnable action) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.thenRunAsync(action, defaultExecutor));
+        return wrap(delegate.thenRun(action));
     }
 
     @Override
     public CompletionStage<Void> thenRunAsync(Runnable action) {
-        return wrap(delegate.thenRunAsync(action, defaultExecutor));
+        return wrap(delegate.thenRunAsync(action));
     }
 
     @Override
@@ -147,14 +115,13 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
     @Override
     public <U, V> CompletionStage<V> thenCombine(CompletionStage<? extends U> other,
             BiFunction<? super T, ? super U, ? extends V> fn) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.thenCombineAsync(other, fn, defaultExecutor));
+        return wrap(delegate.thenCombine(other, fn));
     }
 
     @Override
     public <U, V> CompletionStage<V> thenCombineAsync(CompletionStage<? extends U> other,
             BiFunction<? super T, ? super U, ? extends V> fn) {
-        return wrap(delegate.thenCombineAsync(other, fn, defaultExecutor));
+        return wrap(delegate.thenCombineAsync(other, fn));
     }
 
     @Override
@@ -166,14 +133,13 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
     @Override
     public <U> CompletionStage<Void> thenAcceptBoth(CompletionStage<? extends U> other,
             BiConsumer<? super T, ? super U> action) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.thenAcceptBothAsync(other, action, defaultExecutor));
+        return wrap(delegate.thenAcceptBoth(other, action));
     }
 
     @Override
     public <U> CompletionStage<Void> thenAcceptBothAsync(CompletionStage<? extends U> other,
             BiConsumer<? super T, ? super U> action) {
-        return wrap(delegate.thenAcceptBothAsync(other, action, defaultExecutor));
+        return wrap(delegate.thenAcceptBothAsync(other, action));
     }
 
     @Override
@@ -184,13 +150,12 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
 
     @Override
     public CompletionStage<Void> runAfterBoth(CompletionStage<?> other, Runnable action) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.runAfterBothAsync(other, action, defaultExecutor));
+        return wrap(delegate.runAfterBoth(other, action));
     }
 
     @Override
     public CompletionStage<Void> runAfterBothAsync(CompletionStage<?> other, Runnable action) {
-        return wrap(delegate.runAfterBothAsync(other, action, defaultExecutor));
+        return wrap(delegate.runAfterBothAsync(other, action));
     }
 
     @Override
@@ -200,13 +165,12 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
 
     @Override
     public <U> CompletionStage<U> applyToEither(CompletionStage<? extends T> other, Function<? super T, U> fn) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.applyToEitherAsync(other, fn, defaultExecutor));
+        return wrap(delegate.applyToEither(other, fn));
     }
 
     @Override
     public <U> CompletionStage<U> applyToEitherAsync(CompletionStage<? extends T> other, Function<? super T, U> fn) {
-        return wrap(delegate.applyToEitherAsync(other, fn, defaultExecutor));
+        return wrap(delegate.applyToEitherAsync(other, fn));
     }
 
     @Override
@@ -217,13 +181,12 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
 
     @Override
     public CompletionStage<Void> acceptEither(CompletionStage<? extends T> other, Consumer<? super T> action) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.acceptEitherAsync(other, action, defaultExecutor));
+        return wrap(delegate.acceptEither(other, action));
     }
 
     @Override
     public CompletionStage<Void> acceptEitherAsync(CompletionStage<? extends T> other, Consumer<? super T> action) {
-        return wrap(delegate.acceptEitherAsync(other, action, defaultExecutor));
+        return wrap(delegate.acceptEitherAsync(other, action));
     }
 
     @Override
@@ -234,13 +197,12 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
 
     @Override
     public CompletionStage<Void> runAfterEither(CompletionStage<?> other, Runnable action) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.runAfterEitherAsync(other, action, defaultExecutor));
+        return wrap(delegate.runAfterEither(other, action));
     }
 
     @Override
     public CompletionStage<Void> runAfterEitherAsync(CompletionStage<?> other, Runnable action) {
-        return wrap(delegate.runAfterEitherAsync(other, action, defaultExecutor));
+        return wrap(delegate.runAfterEitherAsync(other, action));
     }
 
     @Override
@@ -250,13 +212,12 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
 
     @Override
     public <U> CompletionStage<U> thenCompose(Function<? super T, ? extends CompletionStage<U>> fn) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.thenComposeAsync(fn, defaultExecutor));
+        return wrap(delegate.thenCompose(fn));
     }
 
     @Override
     public <U> CompletionStage<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn) {
-        return wrap(delegate.thenComposeAsync(fn, defaultExecutor));
+        return wrap(delegate.thenComposeAsync(fn));
     }
 
     @Override
@@ -266,13 +227,12 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
 
     @Override
     public CompletionStage<T> whenComplete(BiConsumer<? super T, ? super Throwable> action) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.whenCompleteAsync(action, defaultExecutor));
+        return wrap(delegate.whenComplete(action));
     }
 
     @Override
     public CompletionStage<T> whenCompleteAsync(BiConsumer<? super T, ? super Throwable> action) {
-        return wrap(delegate.whenCompleteAsync(action, defaultExecutor));
+        return wrap(delegate.whenCompleteAsync(action));
     }
 
     @Override
@@ -282,13 +242,12 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
 
     @Override
     public <U> CompletionStage<U> handle(BiFunction<? super T, Throwable, ? extends U> fn) {
-        // Force async execution to prevent event loop blocking
-        return wrap(delegate.handleAsync(fn, defaultExecutor));
+        return wrap(delegate.handle(fn));
     }
 
     @Override
     public <U> CompletionStage<U> handleAsync(BiFunction<? super T, Throwable, ? extends U> fn) {
-        return wrap(delegate.handleAsync(fn, defaultExecutor));
+        return wrap(delegate.handleAsync(fn));
     }
 
     @Override
@@ -298,8 +257,6 @@ public abstract class BaseConnectionFuture<T> implements CompletionStage<T>, Fut
 
     @Override
     public CompletionStage<T> exceptionally(Function<Throwable, ? extends T> fn) {
-        // exceptionally doesn't have an async variant, but it's typically safe
-        // as it only runs on exception and doesn't block
         return wrap(delegate.exceptionally(fn));
     }
 
