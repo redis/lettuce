@@ -17,6 +17,10 @@ public enum SwitchReason {
      */
     CIRCUIT_BREAKER,
     /**
+     * Switch was triggered to failback to a more weighted database.
+     */
+    FAILBACK,
+    /**
      * Switch was triggered by user request.
      */
     FORCED

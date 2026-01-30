@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -138,6 +139,8 @@ public class HealthCheckImpl implements HealthCheck {
 
     private final ScheduledExecutorService scheduler;
 
+    private ScheduledFuture<?> scheduledTask;
+
     HealthCheckImpl(RedisURI endpoint, HealthCheckStrategy strategy) {
 
         LettuceAssert.isTrue(strategy.getNumProbes() > 0, "Number of HealthCheckStrategy probes must be greater than 0");
@@ -165,13 +168,16 @@ public class HealthCheckImpl implements HealthCheck {
 
     @Override
     public void start() {
-        scheduler.scheduleAtFixedRate(this::healthCheck, 0, strategy.getInterval(), TimeUnit.MILLISECONDS);
+        scheduledTask = scheduler.scheduleAtFixedRate(this::healthCheck, 0, strategy.getInterval(), TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void stop() {
         strategy.close();
         this.listeners.clear();
+        if (scheduledTask != null) {
+            scheduledTask.cancel(false);
+        }
         scheduler.shutdown();
 
         try {

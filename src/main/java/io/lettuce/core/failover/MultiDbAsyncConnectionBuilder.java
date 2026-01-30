@@ -30,10 +30,11 @@ class MultiDbAsyncConnectionBuilder<K, V> extends
      * @param client the multi-database client instance
      * @param resources the client resources for event loops and thread pools
      * @param codec the codec for encoding/decoding keys and values
+     * @param multiDbOptions the multi-database configuration
      */
     MultiDbAsyncConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec,
-            Collection<Closeable> closeableResources) {
-        super(client, resources, codec);
+            Collection<Closeable> closeableResources, MultiDbOptions multiDbOptions) {
+        super(client, resources, codec, multiDbOptions);
         this.closeableResources = closeableResources;
     }
 
@@ -46,11 +47,11 @@ class MultiDbAsyncConnectionBuilder<K, V> extends
     protected StatefulRedisMultiDbConnection<K, V> createMultiDbConnection(
             RedisDatabaseImpl<StatefulRedisConnection<K, V>> selected,
             Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases, RedisCodec<K, V> codec,
-            HealthStatusManager healthStatusManager,
-            RedisDatabaseDeferredCompletion<StatefulRedisConnection<K, V>> completion) {
+            HealthStatusManager healthStatusManager, RedisDatabaseDeferredCompletion<StatefulRedisConnection<K, V>> completion,
+            MultiDbOptions multiDbOptions) {
 
         StatefulRedisMultiDbConnectionImpl<?, K, V> connection = new StatefulRedisMultiDbConnectionImpl<>(selected, databases,
-                resources, codec, this::createRedisDatabaseAsync, healthStatusManager, completion);
+                resources, codec, this::createRedisDatabaseAsync, healthStatusManager, completion, multiDbOptions);
 
         connection.registerAsCloseable(closeableResources);
         return connection;

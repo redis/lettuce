@@ -589,7 +589,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         ClientOptions clientOptions = ClientOptions.builder()
                 .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build()).build();
 
-        Map<RedisURI, DatabaseConfig> configs = ReflectionTestUtils.getField(multiDbClient, "databaseConfigs");
+        Map<RedisURI, DatabaseConfig> configs = ReflectionTestUtils.getField(multiDbClient, "databaseConfigMap");
         configs.values().forEach(
                 dbConfig -> configs.put(dbConfig.getRedisURI(), dbConfig.mutate().clientOptions(clientOptions).build()));
 
