@@ -27,7 +27,7 @@ class PartitionAccessor {
     List<RedisClusterNode> getReadCandidates(RedisClusterNode upstream) {
         return get(redisClusterNode -> redisClusterNode.getNodeId().equals(upstream.getNodeId())
                 || (redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA)
-                        && upstream.getNodeId().equals(redisClusterNode.getSlaveOf())));
+                        && upstream.getNodeId().equals(redisClusterNode.getReplicaOf())));
     }
 
     List<RedisClusterNode> get(Predicate<RedisClusterNode> test) {

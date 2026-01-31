@@ -60,8 +60,8 @@ import reactor.core.publisher.Mono;
  * <p>
  * {@code RedisURI.Builder.redis("localhost", 6379).withPassword("password").withDatabase(1).build(); }
  * </p>
- * See {@link io.lettuce.core.RedisURI.Builder#redis(String)} and {@link io.lettuce.core.RedisURI.Builder#sentinel(String)} for
- * more options.</li>
+ * See {@link io.lettuce.core.RedisURI.Builder#redis(String)} and
+ * {@link io.lettuce.core.RedisURI.Builder#sentinelPrimary(String, String)} for more options.</li>
  * <li>Construct your own instance:
  * <p>
  * {@code new RedisURI("localhost", 6379, Duration.ofSeconds(60));}
@@ -98,7 +98,7 @@ import reactor.core.publisher.Mono;
  * <i>redis-sentinel</i><b>{@code ://}</b>[[<i>username</i>{@code :}]<i>password@</i>]<i>host1</i> [<b>{@code :} </b>
  * <i>port1</i>][, <i>host2</i> [<b>{@code :}</b><i>port2</i>]][, <i>hostN</i> [<b>{@code :}</b><i>portN</i>]][<b>{@code /} </b>
  * <i>database</i>][<b>{@code ?} </b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
- * <i>&amp;sentinelMasterId=sentinelMasterId</i>] [<i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]
+ * <i>&amp;sentinelPrimaryId=sentinelPrimaryId</i>] [<i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]
  * [<i>&amp;libraryName=libraryName</i>] [<i>&amp;libraryVersion=libraryVersion</i>] [<i>&amp;verifyPeer=NONE|CA|FULL</i>]]
  * </blockquote>
  *
@@ -184,7 +184,16 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     public static final String PARAMETER_NAME_DATABASE_ALT = "db";
 
+    /**
+     * @deprecated since 7.3, use {@link #PARAMETER_NAME_SENTINEL_PRIMARY_ID}.
+     */
+    @Deprecated
     public static final String PARAMETER_NAME_SENTINEL_MASTER_ID = "sentinelMasterId";
+
+    /**
+     * @since 7.3
+     */
+    public static final String PARAMETER_NAME_SENTINEL_PRIMARY_ID = "sentinelPrimaryId";
 
     public static final String PARAMETER_NAME_CLIENT_NAME = "clientName";
 
@@ -380,19 +389,43 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Returns the Sentinel Master Id.
+     * Returns the Sentinel primary id.
      *
-     * @return the Sentinel Master Id.
+     * @return the Sentinel primary id.
+     * @since 7.3
      */
+    public String getSentinelPrimaryId() {
+        return sentinelMasterId;
+    }
+
+    /**
+     * Sets the Sentinel primary id.
+     *
+     * @param sentinelPrimaryId the Sentinel primary id.
+     * @since 7.3
+     */
+    public void setSentinelPrimaryId(String sentinelPrimaryId) {
+        this.sentinelMasterId = sentinelPrimaryId;
+    }
+
+    /**
+     * Returns the Sentinel master id.
+     *
+     * @return the Sentinel master id.
+     * @deprecated since 7.3, use {@link #getSentinelPrimaryId()}.
+     */
+    @Deprecated
     public String getSentinelMasterId() {
         return sentinelMasterId;
     }
 
     /**
-     * Sets the Sentinel Master Id.
+     * Sets the Sentinel master id.
      *
-     * @param sentinelMasterId the Sentinel Master Id.
+     * @param sentinelMasterId the Sentinel master id.
+     * @deprecated since 7.3, use {@link #setSentinelPrimaryId(String)}.
      */
+    @Deprecated
     public void setSentinelMasterId(String sentinelMasterId) {
         this.sentinelMasterId = sentinelMasterId;
     }
@@ -520,7 +553,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * provider no explicit {@link RedisCredentialsProvider} was configured.
      *
      * @return the {@link RedisCredentialsProvider} to use to authenticate Redis connections
-     * @since 6.2
+     * @since 7.3
      */
     public RedisCredentialsProvider getCredentialsProvider() {
         return this.credentialsProvider;
@@ -531,7 +564,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * username/password.
      *
      * @param credentialsProvider the credentials provider to use when authenticating a Redis connection.
-     * @since 6.2
+     * @since 7.3
      */
     public void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
 
@@ -897,6 +930,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
                     parseVerifyPeer(builder, queryParam);
                 }
 
+                if (forStartWith.startsWith(PARAMETER_NAME_SENTINEL_PRIMARY_ID.toLowerCase() + "=")) {
+                    parseSentinelPrimaryId(builder, queryParam);
+                }
+
                 if (forStartWith.startsWith(PARAMETER_NAME_SENTINEL_MASTER_ID.toLowerCase() + "=")) {
                     parseSentinelMasterId(builder, queryParam);
                 }
@@ -904,7 +941,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         if (isSentinel(uri.getScheme())) {
-            LettuceAssert.notEmpty(builder.sentinelMasterId, "URI must contain the sentinelMasterId");
+            LettuceAssert.notEmpty(builder.sentinelMasterId, "URI must contain the sentinelPrimaryId");
         }
 
         return builder.build();
@@ -995,7 +1032,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         if (sentinelMasterId != null) {
-            queryPairs.add(PARAMETER_NAME_SENTINEL_MASTER_ID + "=" + urlEncode(sentinelMasterId));
+            queryPairs.add(PARAMETER_NAME_SENTINEL_PRIMARY_ID + "=" + urlEncode(sentinelMasterId));
         }
 
         if (timeout.getSeconds() != DEFAULT_TIMEOUT) {
@@ -1190,11 +1227,15 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
     }
 
+    private static void parseSentinelPrimaryId(Builder builder, String queryParam) {
+        parseSentinelMasterId(builder, queryParam);
+    }
+
     private static void parseSentinelMasterId(Builder builder, String queryParam) {
 
         String masterIdString = getValuePart(queryParam);
         if (isNotEmpty(masterIdString)) {
-            builder.withSentinelMasterId(masterIdString);
+            builder.withSentinelPrimaryId(masterIdString);
         }
     }
 
@@ -1295,7 +1336,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         LettuceAssert.notNull(builder, "Invalid URI, cannot get host part");
 
         if (isNotEmpty(masterId)) {
-            builder.withSentinelMasterId(masterId);
+            builder.withSentinelPrimaryId(masterId);
         }
 
         if (uri.getScheme().equals(URI_SCHEME_REDIS_SENTINEL_SECURE)) {
@@ -1417,12 +1458,58 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
+         * Set Sentinel host and primary id. Creates a new builder.
+         *
+         * @param host the host name
+         * @param primaryId sentinel primary id
+         * @return new builder with Sentinel host/port.
+         * @since 7.3
+         */
+        public static Builder sentinelPrimary(String host, String primaryId) {
+            return sentinelPrimary(host, DEFAULT_SENTINEL_PORT, primaryId);
+        }
+
+        /**
+         * Set Sentinel host, port and primary id. Creates a new builder.
+         *
+         * @param host the host name
+         * @param port the port
+         * @param primaryId sentinel primary id
+         * @return new builder with Sentinel host/port.
+         * @since 7.3
+         */
+        public static Builder sentinelPrimary(String host, int port, String primaryId) {
+            return sentinelPrimary(host, port, primaryId, null);
+        }
+
+        /**
+         * Set Sentinel host, port, primary id and Sentinel authentication. Creates a new builder.
+         *
+         * @param host the host name
+         * @param port the port
+         * @param primaryId sentinel primary id
+         * @param password the Sentinel password (supported since Redis 5.0.1)
+         * @return new builder with Sentinel host/port.
+         * @since 7.3
+         */
+        public static Builder sentinelPrimary(String host, int port, String primaryId, CharSequence password) {
+
+            LettuceAssert.notEmpty(host, "Host must not be empty");
+            LettuceAssert.isTrue(isValidPort(port), () -> String.format("Port out of range: %s", port));
+
+            return password == null ? RedisURI.builder().withSentinelPrimaryId(primaryId).withSentinel(host, port)
+                    : RedisURI.builder().withSentinelPrimaryId(primaryId).withSentinel(host, port, password);
+        }
+
+        /**
          * Set Sentinel host and master id. Creates a new builder.
          *
          * @param host the host name
          * @param masterId sentinel master id
          * @return new builder with Sentinel host/port.
+         * @deprecated since 7.3, use {@link #sentinelPrimary(String, String)}.
          */
+        @Deprecated
         public static Builder sentinel(String host, String masterId) {
             return sentinel(host, DEFAULT_SENTINEL_PORT, masterId);
         }
@@ -1434,7 +1521,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @param port the port
          * @param masterId sentinel master id
          * @return new builder with Sentinel host/port.
+         * @deprecated since 7.3, use {@link #sentinelPrimary(String, int, String)}.
          */
+        @Deprecated
         public static Builder sentinel(String host, int port, String masterId) {
             return sentinel(host, port, masterId, null);
         }
@@ -1447,7 +1536,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @param masterId sentinel master id
          * @param password the Sentinel password (supported since Redis 5.0.1)
          * @return new builder with Sentinel host/port.
+         * @deprecated since 7.3, use {@link #sentinelPrimary(String, int, String, CharSequence)}.
          */
+        @Deprecated
         public static Builder sentinel(String host, int port, String masterId, CharSequence password) {
 
             LettuceAssert.notEmpty(host, "Host must not be empty");
@@ -1762,7 +1853,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * Configures authentication.
          *
          * @param credentialsProvider the credentials provider to use
-         * @since 6.2
+         * @since 7.3
          */
         public Builder withAuthentication(RedisCredentialsProvider credentialsProvider) {
             this.credentialsProvider = credentialsProvider;
@@ -1815,17 +1906,30 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         * Configures a sentinel master Id.
+         * Configures a sentinel primary id.
+         *
+         * @param sentinelPrimaryId sentinel primary id, must not be empty or {@code null}
+         * @return the builder
+         * @since 7.3
+         */
+        public Builder withSentinelPrimaryId(String sentinelPrimaryId) {
+
+            LettuceAssert.notEmpty(sentinelPrimaryId, "Sentinel primary id must not be empty");
+
+            this.sentinelMasterId = sentinelPrimaryId;
+            return this;
+        }
+
+        /**
+         * Configures a sentinel master id.
          *
          * @param sentinelMasterId sentinel master id, must not be empty or {@code null}
          * @return the builder
+         * @deprecated since 7.3, use {@link #withSentinelPrimaryId(String)}.
          */
+        @Deprecated
         public Builder withSentinelMasterId(String sentinelMasterId) {
-
-            LettuceAssert.notEmpty(sentinelMasterId, "Sentinel master id must not empty");
-
-            this.sentinelMasterId = sentinelMasterId;
-            return this;
+            return withSentinelPrimaryId(sentinelMasterId);
         }
 
         /**

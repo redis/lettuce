@@ -12,7 +12,7 @@ import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Represents a range of slots together with its master and replicas.
+ * Represents a range of slots together with its primary and replicas.
  *
  * @author Mark Paluch
  * @since 3.0
@@ -36,7 +36,7 @@ public class ClusterSlotRange implements Serializable {
      *
      * @param from from slot
      * @param to to slot
-     * @param upstream master for the slots, may be {@code null}
+     * @param upstream primary for the slots, may be {@code null}
      * @param replicaNodes list of replicas must not be {@code null} but may be empty
      */
     public ClusterSlotRange(int from, int to, RedisClusterNode upstream, List<RedisClusterNode> replicaNodes) {
@@ -55,7 +55,7 @@ public class ClusterSlotRange implements Serializable {
         int port = hostAndPort.hasPort() ? hostAndPort.getPort() : RedisURI.DEFAULT_REDIS_PORT;
         RedisClusterNode redisClusterNode = new RedisClusterNode();
         redisClusterNode.setUri(RedisURI.create(hostAndPort.getHostText(), port));
-        redisClusterNode.setSlaveOf(slaveOf);
+        redisClusterNode.setReplicaOf(slaveOf);
         redisClusterNode.setFlags(flags);
         return redisClusterNode;
     }
@@ -81,8 +81,24 @@ public class ClusterSlotRange implements Serializable {
         return upstream;
     }
 
+    /**
+     * @return the primary for the slots, may be {@code null}
+     * @since 7.3
+     */
+    public RedisClusterNode getPrimary() {
+        return upstream;
+    }
+
     public void setUpstream(RedisClusterNode upstream) {
         this.upstream = upstream;
+    }
+
+    /**
+     * @param primary the primary for the slots, may be {@code null}
+     * @since 7.3
+     */
+    public void setPrimary(RedisClusterNode primary) {
+        this.upstream = primary;
     }
 
     @Deprecated
@@ -117,7 +133,7 @@ public class ClusterSlotRange implements Serializable {
         sb.append(getClass().getSimpleName());
         sb.append(" [from=").append(from);
         sb.append(", to=").append(to);
-        sb.append(", masterNode=").append(upstream);
+        sb.append(", primaryNode=").append(upstream);
         sb.append(", replicaNodes=").append(replicaNodes);
         sb.append(']');
         return sb.toString();

@@ -23,7 +23,7 @@ public class RedisReplicaInstance implements RedisInstance, Serializable {
     /**
      * Constructs a {@link RedisReplicaInstance}
      *
-     * @param upstream master for the replication, must not be {@code null}
+     * @param upstream primary for the replication, must not be {@code null}
      * @param state replica state, must not be {@code null}
      */
     RedisReplicaInstance(ReplicationPartner upstream, State state) {
@@ -87,17 +87,17 @@ public class RedisReplicaInstance implements RedisInstance, Serializable {
          */
         HANDSHAKE,
         /**
-         * the instance needs to connect to its master.
+         * the instance needs to connect to its primary.
          */
         CONNECT,
 
         /**
-         * the replica-master connection is in progress.
+         * the replica-primary connection is in progress.
          */
         CONNECTING,
 
         /**
-         * the master and replica are trying to perform the synchronization.
+         * the primary and replica are trying to perform the synchronization.
          */
         SYNC,
 
@@ -111,7 +111,7 @@ public class RedisReplicaInstance implements RedisInstance, Serializable {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName());
-        sb.append(" [master=").append(upstream);
+        sb.append(" [primary=").append(upstream);
         sb.append(", state=").append(state);
         sb.append(']');
         return sb.toString();
