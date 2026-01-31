@@ -172,13 +172,13 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         return targetMethod.invoke(executionModel == ExecutionModel.REACTIVE ? it.reactive() : it.async(), argsToUse);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private Object getExecutions(Map<RedisClusterNode, Object> executions, long timeoutNs)
             throws ExecutionException, InterruptedException {
 
         if (executionModel == ExecutionModel.REACTIVE) {
             Map<RedisClusterNode, CompletionStage<? extends Publisher<?>>> reactiveExecutions = (Map) executions;
-            return new ReactiveExecutionsImpl<>(reactiveExecutions);
+            return new ReactiveExecutionsImpl(reactiveExecutions);
         }
 
         Map<RedisClusterNode, CompletionStage<?>> asyncExecutions = (Map) executions;
