@@ -25,6 +25,8 @@ import java.util.Map;
 
 import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.FlushMode;
+import io.lettuce.core.HotkeysArgs;
+import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.ShutdownArgs;
 import io.lettuce.core.TrackingArgs;
@@ -391,6 +393,39 @@ public interface RedisServerCommands<K, V> {
      */
     @Deprecated
     String flushdbAsync();
+
+    /**
+     * Start hotkeys tracking.
+     *
+     * @param args tracking arguments.
+     * @return String simple-string-reply {@code OK}.
+     * @since 7.3
+     */
+    String hotkeysStart(HotkeysArgs args);
+
+    /**
+     * Stop hotkeys tracking but retain data.
+     *
+     * @return String simple-string-reply {@code OK}.
+     * @since 7.3
+     */
+    String hotkeysStop();
+
+    /**
+     * Reset hotkeys tracking data.
+     *
+     * @return String simple-string-reply {@code OK}.
+     * @since 7.3
+     */
+    String hotkeysReset();
+
+    /**
+     * Get hotkeys tracking results.
+     *
+     * @return {@link HotkeysReply} with tracking data, or {@code null} if no tracking session.
+     * @since 7.3
+     */
+    HotkeysReply hotkeysGet();
 
     /**
      * Get information and statistics about the server.

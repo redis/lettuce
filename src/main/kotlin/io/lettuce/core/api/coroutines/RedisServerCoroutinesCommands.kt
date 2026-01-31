@@ -393,6 +393,39 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     suspend fun flushdbAsync(): String?
 
     /**
+     * Start hotkeys tracking.
+     *
+     * @param args tracking arguments.
+     * @return String simple-string-reply `OK`.
+     * @since 7.3
+     */
+    suspend fun hotkeysStart(args: HotkeysArgs): String?
+
+    /**
+     * Stop hotkeys tracking but retain data.
+     *
+     * @return String simple-string-reply `OK`.
+     * @since 7.3
+     */
+    suspend fun hotkeysStop(): String?
+
+    /**
+     * Reset hotkeys tracking data.
+     *
+     * @return String simple-string-reply `OK`.
+     * @since 7.3
+     */
+    suspend fun hotkeysReset(): String?
+
+    /**
+     * Get hotkeys tracking results.
+     *
+     * @return @link HotkeysReply} with tracking data, or `null` if no tracking session.
+     * @since 7.3
+     */
+    suspend fun hotkeysGet(): HotkeysReply?
+
+    /**
      * Get information and statistics about the server.
      *
      * @return String bulk-string-reply as a collection of text lines.
