@@ -3544,6 +3544,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XTRIM, new IntegerOutput<>(codec), args);
     }
 
+    public Command<K, V, String> xcfgset(K key, XCfgSetArgs xCfgSetArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(xCfgSetArgs, "XCfgSetArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        xCfgSetArgs.build(args);
+        return createCommand(XCFGSET, new StatusOutput<>(codec), args);
+    }
+
     private static String getLowerValue(Range<String> range) {
 
         Boundary<String> boundary = range.getLower();

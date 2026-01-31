@@ -3158,6 +3158,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> xcfgset(K key, XCfgSetArgs args) {
+        return createMono(() -> commandBuilder.xcfgset(key, args));
+    }
+
+    @Override
     public Flux<StreamMessage<K, V>> xclaim(K key, Consumer<K> consumer, long minIdleTime, String... messageIds) {
         return createDissolvingFlux(
                 () -> commandBuilder.xclaim(key, consumer, XClaimArgs.Builder.minIdleTime(minIdleTime), messageIds));

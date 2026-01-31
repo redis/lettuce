@@ -125,6 +125,15 @@ public interface NodeSelectionStreamCommands<K, V> {
     Executions<ClaimedMessages<K, V>> xautoclaim(K key, XAutoClaimArgs<K> args);
 
     /**
+     * Configure idempotency parameters for a stream.
+     *
+     * @param key the stream key.
+     * @param args configuration arguments.
+     * @return simple-reply OK.
+     */
+    Executions<String> xcfgset(K key, XCfgSetArgs args);
+
+    /**
      * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
      *
      * @param key the stream key.
