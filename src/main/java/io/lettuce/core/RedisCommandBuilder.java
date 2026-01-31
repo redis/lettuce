@@ -1163,6 +1163,27 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(FLUSHDB, new StatusOutput<>(codec), new CommandArgs<>(codec).add(flushMode));
     }
 
+    Command<K, V, String> hotkeysStart(HotkeysArgs args) {
+        LettuceAssert.notNull(args, "HotkeysArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> cmdArgs = new CommandArgs<>(codec).add(START);
+        args.build(cmdArgs);
+        return createCommand(HOTKEYS, new StatusOutput<>(codec), cmdArgs);
+    }
+
+    Command<K, V, String> hotkeysStop() {
+        return createCommand(HOTKEYS, new StatusOutput<>(codec), new CommandArgs<>(codec).add(STOP));
+    }
+
+    Command<K, V, String> hotkeysReset() {
+        return createCommand(HOTKEYS, new StatusOutput<>(codec), new CommandArgs<>(codec).add(RESET));
+    }
+
+    Command<K, V, HotkeysReply> hotkeysGet() {
+        return new Command<>(HOTKEYS, new ComplexOutput<>(codec, HotkeysReplyParser.INSTANCE),
+                new CommandArgs<>(codec).add("GET"));
+    }
+
     <T> Command<K, V, T> fcall(String function, ScriptOutputType type, boolean readonly, K[] keys, V... values) {
         LettuceAssert.notEmpty(function, "Function " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
