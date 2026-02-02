@@ -129,6 +129,7 @@ public interface RedisStreamCommands<K, V> {
      * @param key the stream key.
      * @param args configuration arguments.
      * @return simple-reply OK.
+     * @since 7.3
      */
     String xcfgset(K key, XCfgSetArgs args);
 

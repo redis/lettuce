@@ -111,47 +111,4 @@ class XAddArgsUnitTests {
                 .hasMessageContaining("Idempotent ID must not be null");
     }
 
-    @Test
-    void checkHashCodeIdmpParams() {
-        XAddArgs firstParam = new XAddArgs().idmp("producer1", "iid1");
-        XAddArgs secondParam = new XAddArgs().idmp("producer1", "iid1");
-        assertThat(firstParam.hashCode()).isEqualTo(secondParam.hashCode());
-        assertThat(firstParam).isEqualTo(secondParam);
-    }
-
-    @Test
-    void checkHashCodeIdmpAutoParams() {
-        XAddArgs firstParam = new XAddArgs().idmpAuto("producer1");
-        XAddArgs secondParam = new XAddArgs().idmpAuto("producer1");
-        assertThat(firstParam.hashCode()).isEqualTo(secondParam.hashCode());
-        assertThat(firstParam).isEqualTo(secondParam);
-    }
-
-    @Test
-    void checkHashCodeIdmpByteArrayParams() {
-        byte[] producerId = "producer1".getBytes(StandardCharsets.UTF_8);
-        byte[] idempotentId = "iid1".getBytes(StandardCharsets.UTF_8);
-        XAddArgs firstParam = new XAddArgs().idmp(producerId, idempotentId);
-        XAddArgs secondParam = new XAddArgs().idmp(producerId, idempotentId);
-        assertThat(firstParam.hashCode()).isEqualTo(secondParam.hashCode());
-        assertThat(firstParam).isEqualTo(secondParam);
-    }
-
-    @Test
-    void checkHashCodeIdmpAutoDifferentProducers() {
-        XAddArgs firstParam = new XAddArgs().idmpAuto("producer1");
-        XAddArgs secondParam = new XAddArgs().idmpAuto("producer2");
-        assertThat(firstParam.hashCode()).isNotEqualTo(secondParam.hashCode());
-        assertThat(firstParam).isNotEqualTo(secondParam);
-    }
-
-    @Test
-    void checkEqualsWithAllFields() {
-        XAddArgs firstParam = new XAddArgs().nomkstream().maxlen(100).approximateTrimming().idmp("producer1", "iid1").id("1-0");
-        XAddArgs secondParam = new XAddArgs().nomkstream().maxlen(100).approximateTrimming().idmp("producer1", "iid1")
-                .id("1-0");
-        assertThat(firstParam).isEqualTo(secondParam);
-        assertThat(firstParam.hashCode()).isEqualTo(secondParam.hashCode());
-    }
-
 }

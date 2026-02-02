@@ -1,30 +1,16 @@
 /*
- * Copyright 2018-Present, Redis Ltd. and Contributors
+ * Copyright 2026, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package io.lettuce.core;
-
-import java.util.Arrays;
-import java.util.Objects;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * Argument list builder for the Redis <a href="https://redis.io/commands/xadd">XADD</a> command. Static import the methods from
@@ -321,8 +307,7 @@ public class XAddArgs implements CompositeArgument {
         LettuceAssert.notNull(producerId, "Producer ID must not be null");
         LettuceAssert.notNull(idempotentId, "Idempotent ID must not be null");
 
-        return idmp(producerId.getBytes(java.nio.charset.StandardCharsets.UTF_8),
-                idempotentId.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return idmp(producerId.getBytes(StandardCharsets.UTF_8), idempotentId.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -409,30 +394,6 @@ public class XAddArgs implements CompositeArgument {
         } else {
             args.add("*");
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        XAddArgs xAddArgs = (XAddArgs) o;
-        return approximateTrimming == xAddArgs.approximateTrimming && exactTrimming == xAddArgs.exactTrimming
-                && nomkstream == xAddArgs.nomkstream && autoIdempotent == xAddArgs.autoIdempotent
-                && Objects.equals(id, xAddArgs.id) && Objects.equals(maxlen, xAddArgs.maxlen)
-                && Objects.equals(minid, xAddArgs.minid) && Objects.equals(limit, xAddArgs.limit)
-                && trimmingMode == xAddArgs.trimmingMode && Arrays.equals(producerId, xAddArgs.producerId)
-                && Arrays.equals(idempotentId, xAddArgs.idempotentId);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = Objects.hash(id, maxlen, approximateTrimming, exactTrimming, nomkstream, minid, limit, trimmingMode,
-                autoIdempotent);
-        result = 31 * result + Arrays.hashCode(producerId);
-        result = 31 * result + Arrays.hashCode(idempotentId);
-        return result;
     }
 
 }

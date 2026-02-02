@@ -1,21 +1,8 @@
 /*
- * Copyright 2018-Present, Redis Ltd. and Contributors
+ * Copyright 2026, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package io.lettuce.core;
 
@@ -23,6 +10,7 @@ import java.util.Objects;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
 
 /**
  * Argument list builder for the Redis XCFGSET command.
@@ -30,6 +18,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * {@link XCfgSetArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Aleksandar Todorov
+ * @since 7.3
  */
 public class XCfgSetArgs implements CompositeArgument {
 
@@ -60,7 +49,7 @@ public class XCfgSetArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link XCfgSetArgs} and setting {@literal IDMP-MAXSIZE}.
+         * Creates new {@link XCfgSetArgs} and sets a {@literal IDMP-MAXSIZE}.
          *
          * @param maxsize maximum number of idempotent IDs per producer (1-10000).
          * @return new {@link XCfgSetArgs} with {@literal IDMP-MAXSIZE} set.
@@ -104,11 +93,11 @@ public class XCfgSetArgs implements CompositeArgument {
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (idmpDuration != null) {
-            args.add("IDMP-DURATION").add(idmpDuration);
+            args.add(CommandKeyword.IDMP_DURATION).add(idmpDuration);
         }
 
         if (idmpMaxsize != null) {
-            args.add("IDMP-MAXSIZE").add(idmpMaxsize);
+            args.add(CommandKeyword.IDMP_MAXSIZE).add(idmpMaxsize);
         }
     }
 

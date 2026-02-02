@@ -103,6 +103,7 @@ interface RedisStreamCoroutinesCommands<K : Any, V : Any> {
      * @param key the stream key.
      * @param args configuration arguments.
      * @return simple-reply OK.
+     * @since 7.3
      */
     suspend fun xcfgset(key: K, args: XCfgSetArgs): String?
 
