@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.testcontainers.shaded.org.awaitility.Durations;
 
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisURI;
@@ -981,7 +982,8 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @DisplayName("Should schedule failback task when failback is enabled")
         void shouldScheduleFailbackTaskWhenEnabled() {
             // Given: MultiDbOptions with failback enabled
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(60000L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
+                    .failbackCheckInterval(Durations.ONE_MINUTE).build();
 
             // When: Create connection
             try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
@@ -1029,7 +1031,8 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @DisplayName("Should use custom failback interval")
         void shouldUseCustomFailbackInterval() {
             // Given: MultiDbOptions with custom interval
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(30000L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
+                    .failbackCheckInterval(Duration.ofSeconds(30)).build();
 
             // When: Create connection
             try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(

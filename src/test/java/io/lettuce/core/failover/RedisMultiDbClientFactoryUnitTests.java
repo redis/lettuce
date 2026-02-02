@@ -3,7 +3,10 @@ package io.lettuce.core.failover;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
+import java.time.Duration;
 import java.util.Collections;
+
+import org.awaitility.Durations;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -58,7 +61,8 @@ class RedisMultiDbClientFactoryUnitTests {
 
     @Test
     void withMultiDbOptions() {
-        MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(60000L).build();
+        MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(Durations.ONE_MINUTE)
+                .build();
         FastShutdown.shutdown(MultiDbClient.create(MultiDbTestSupport.DBs, options));
     }
 
@@ -88,12 +92,13 @@ class RedisMultiDbClientFactoryUnitTests {
 
     @Test
     void getMultiDbOptions() {
-        MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false).failbackCheckInterval(30000L).build();
+        MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false).failbackCheckInterval(Duration.ofSeconds(30))
+                .build();
         MultiDbClient client = MultiDbClient.create(MultiDbTestSupport.DBs, options);
 
         assertThat(client.getMultiDbOptions()).isNotNull();
         assertThat(client.getMultiDbOptions().isFailbackSupported()).isFalse();
-        assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(30000L);
+        assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(Duration.ofSeconds(30));
 
         FastShutdown.shutdown(client);
     }
@@ -104,7 +109,7 @@ class RedisMultiDbClientFactoryUnitTests {
 
         assertThat(client.getMultiDbOptions()).isNotNull();
         assertThat(client.getMultiDbOptions().isFailbackSupported()).isTrue();
-        assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(120000L);
+        assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(Durations.TWO_MINUTES);
 
         FastShutdown.shutdown(client);
     }
