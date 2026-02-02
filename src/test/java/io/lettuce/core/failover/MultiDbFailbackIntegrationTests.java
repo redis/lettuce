@@ -102,7 +102,7 @@ class MultiDbFailbackIntegrationTests {
             DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).build();
             DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).build();
 
-            MultiDbOptions options = MultiDbOptions.builder().failbackCheckInterval(10000L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackCheckInterval(Durations.TEN_SECONDS).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
 
             // When: Connect
@@ -129,7 +129,8 @@ class MultiDbFailbackIntegrationTests {
             DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
                     .build();
 
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(1000L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
+                    .failbackCheckInterval(Durations.ONE_SECOND).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
             connection = client.connect();
 
@@ -156,7 +157,8 @@ class MultiDbFailbackIntegrationTests {
                     .build();
 
             // Use short failback interval (500ms) for faster testing
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(500L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
+                    .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
             connection = client.connect();
 
@@ -187,7 +189,8 @@ class MultiDbFailbackIntegrationTests {
             DatabaseConfig db3 = DatabaseConfig.builder(URI3).weight(0.3f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
                     .build();
 
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(500L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
+                    .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2, db3), options);
             connection = client.connect();
 
@@ -215,7 +218,8 @@ class MultiDbFailbackIntegrationTests {
             DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
                     .build();
 
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(500L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
+                    .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
             connection = client.connect();
 
@@ -241,7 +245,8 @@ class MultiDbFailbackIntegrationTests {
             DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
                     .build();
 
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(500L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
+                    .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
             connection = client.connect();
 
@@ -317,7 +322,8 @@ class MultiDbFailbackIntegrationTests {
             DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
                     .build();
 
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(300L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
+                    .failbackCheckInterval(Duration.ofMillis(300L)).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
             connection = client.connect();
 
@@ -372,7 +378,8 @@ class MultiDbFailbackIntegrationTests {
             DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).build();
             DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).build();
 
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(1000L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
+                    .failbackCheckInterval(Durations.ONE_SECOND).build();
 
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
             connection = client.connect();

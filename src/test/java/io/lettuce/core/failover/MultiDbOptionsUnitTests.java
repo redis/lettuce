@@ -1,6 +1,11 @@
 package io.lettuce.core.failover;
 
 import static org.assertj.core.api.Assertions.*;
+
+import java.time.Duration;
+
+import org.awaitility.Durations;
+
 import static io.lettuce.TestTags.UNIT_TEST;
 
 import org.junit.jupiter.api.DisplayName;
@@ -66,7 +71,7 @@ class MultiDbOptionsUnitTests {
         @DisplayName("Should allow custom failback check interval")
         void shouldAllowCustomFailbackCheckInterval() {
             // When: Set custom interval
-            MultiDbOptions options = MultiDbOptions.builder().failbackCheckInterval(60000L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackCheckInterval(Durations.ONE_MINUTE).build();
 
             // Then: Interval should be set
             assertThat(options.getFailbackCheckInterval()).isEqualTo(60000L);
@@ -82,7 +87,8 @@ class MultiDbOptionsUnitTests {
         @DisplayName("Should support method chaining")
         void shouldSupportMethodChaining() {
             // When: Chain builder methods
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false).failbackCheckInterval(30000L).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false)
+                    .failbackCheckInterval(Duration.ofSeconds(30)).build();
 
             // Then: All settings should be applied
             assertThat(options.isFailbackSupported()).isFalse();
@@ -94,7 +100,7 @@ class MultiDbOptionsUnitTests {
         void shouldAllowOverridingValuesInChain() {
             // When: Override values in chain
             MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackSupported(false)
-                    .failbackCheckInterval(60000L).failbackCheckInterval(90000L).build();
+                    .failbackCheckInterval(Durations.ONE_MINUTE).failbackCheckInterval(Duration.ofSeconds(90)).build();
 
             // Then: Last values should be used
             assertThat(options.isFailbackSupported()).isFalse();
@@ -111,7 +117,7 @@ class MultiDbOptionsUnitTests {
         @DisplayName("Should handle zero failback check interval")
         void shouldHandleZeroFailbackCheckInterval() {
             // should throw exception
-            assertThatThrownBy(() -> MultiDbOptions.builder().failbackCheckInterval(0L).build())
+            assertThatThrownBy(() -> MultiDbOptions.builder().failbackCheckInterval(Duration.ZERO).build())
                     .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("must be greater than 0");
         }
 
@@ -119,7 +125,7 @@ class MultiDbOptionsUnitTests {
         @DisplayName("Should handle negative failback check interval")
         void shouldHandleNegativeFailbackCheckInterval() {
             // should throw exception
-            assertThatThrownBy(() -> MultiDbOptions.builder().failbackCheckInterval(-1000L).build())
+            assertThatThrownBy(() -> MultiDbOptions.builder().failbackCheckInterval(Duration.ofMillis(-1000L)).build())
                     .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("must be greater than 0");
         }
 
@@ -127,7 +133,7 @@ class MultiDbOptionsUnitTests {
         @DisplayName("Should handle maximum long value for failback check interval")
         void shouldHandleMaxLongValueForFailbackCheckInterval() {
             // When: Set interval to max long value
-            MultiDbOptions options = MultiDbOptions.builder().failbackCheckInterval(Long.MAX_VALUE).build();
+            MultiDbOptions options = MultiDbOptions.builder().failbackCheckInterval(Duration.ofHours(Long.MAX_VALUE)).build();
 
             // Then: Interval should be max long value
             assertThat(options.getFailbackCheckInterval()).isEqualTo(Long.MAX_VALUE);

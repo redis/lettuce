@@ -1,5 +1,7 @@
 package io.lettuce.core.failover;
 
+import java.time.Duration;
+
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -8,13 +10,14 @@ import io.lettuce.core.internal.LettuceAssert;
  * This class contains configuration options that apply at the multi-database level, such as failback behavior. Individual
  * database configurations are managed separately via {@link DatabaseConfig}.
  *
- * @author Lettuce Contributors
+ * @author Ali TAKAVCI
+ * @since 7.4
  */
 public class MultiDbOptions {
 
     private final boolean failbackSupported;
 
-    private final long failbackCheckInterval;
+    private final Duration failbackCheckInterval;
 
     private MultiDbOptions(Builder builder) {
         this.failbackSupported = builder.failbackSupported;
@@ -35,7 +38,7 @@ public class MultiDbOptions {
      *
      * @return the failback check interval in milliseconds
      */
-    public long getFailbackCheckInterval() {
+    public Duration getFailbackCheckInterval() {
         return failbackCheckInterval;
     }
 
@@ -63,12 +66,14 @@ public class MultiDbOptions {
     public static class Builder {
 
         /** Default interval in milliseconds for checking if failed databases have recovered. */
-        private static final long FAILBACK_CHECK_INTERVAL_DEFAULT = 120000;
+        private static final Duration FAILBACK_CHECK_INTERVAL_DEFAULT = Duration.ofSeconds(120);
+
+        private static final Duration MAX_INTERVAL = Duration.ofMillis(Long.MAX_VALUE);
 
         /** Whether automatic failback to higher-priority databases is supported. */
         private boolean failbackSupported = true;
 
-        private long failbackCheckInterval = FAILBACK_CHECK_INTERVAL_DEFAULT;
+        private Duration failbackCheckInterval = FAILBACK_CHECK_INTERVAL_DEFAULT;
 
         private Builder() {
         }
@@ -90,9 +95,12 @@ public class MultiDbOptions {
          * @param failbackCheckInterval the check interval in milliseconds
          * @return this builder
          */
-        public Builder failbackCheckInterval(long failbackCheckInterval) {
-            LettuceAssert.isTrue(failbackCheckInterval > 0,
+        public Builder failbackCheckInterval(Duration failbackCheckInterval) {
+            LettuceAssert.isTrue(failbackCheckInterval.compareTo(MAX_INTERVAL) >= 0,
+                    "failbackCheckInterval must be less than max value of long in milliseconds.");
+            LettuceAssert.isTrue(failbackCheckInterval.toMillis() > 0,
                     "failbackCheckInterval must be greater than 0, got: " + failbackCheckInterval);
+
             this.failbackCheckInterval = failbackCheckInterval;
             return this;
         }
