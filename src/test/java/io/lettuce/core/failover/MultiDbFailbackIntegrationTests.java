@@ -111,7 +111,7 @@ class MultiDbFailbackIntegrationTests {
             // Then: Connection should be created successfully with custom interval
             assertThat(connection).isNotNull();
             assertThat(connection.isOpen()).isTrue();
-            assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(10000L);
+            assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(Durations.TEN_SECONDS);
         }
 
     }
@@ -362,7 +362,7 @@ class MultiDbFailbackIntegrationTests {
             // Then: Connection should work normally with default interval
             assertThat(connection).isNotNull();
             assertThat(connection.isOpen()).isTrue();
-            assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(120000L);
+            assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(Durations.TWO_MINUTES);
         }
 
     }
