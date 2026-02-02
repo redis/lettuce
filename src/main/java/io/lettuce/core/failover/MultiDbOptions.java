@@ -96,7 +96,7 @@ public class MultiDbOptions {
          * @return this builder
          */
         public Builder failbackCheckInterval(Duration failbackCheckInterval) {
-            LettuceAssert.isTrue(failbackCheckInterval.compareTo(MAX_INTERVAL) >= 0,
+            LettuceAssert.isTrue(failbackCheckInterval.compareTo(MAX_INTERVAL) <= 0,
                     "failbackCheckInterval must be less than max value of long in milliseconds.");
             LettuceAssert.isTrue(failbackCheckInterval.toMillis() > 0,
                     "failbackCheckInterval must be greater than 0, got: " + failbackCheckInterval);

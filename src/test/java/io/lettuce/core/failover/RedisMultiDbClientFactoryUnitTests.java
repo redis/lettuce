@@ -98,7 +98,7 @@ class RedisMultiDbClientFactoryUnitTests {
 
         assertThat(client.getMultiDbOptions()).isNotNull();
         assertThat(client.getMultiDbOptions().isFailbackSupported()).isFalse();
-        assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(30000L);
+        assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(Duration.ofSeconds(30));
 
         FastShutdown.shutdown(client);
     }
@@ -109,7 +109,7 @@ class RedisMultiDbClientFactoryUnitTests {
 
         assertThat(client.getMultiDbOptions()).isNotNull();
         assertThat(client.getMultiDbOptions().isFailbackSupported()).isTrue();
-        assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(120000L);
+        assertThat(client.getMultiDbOptions().getFailbackCheckInterval()).isEqualTo(Durations.TWO_MINUTES);
 
         FastShutdown.shutdown(client);
     }
