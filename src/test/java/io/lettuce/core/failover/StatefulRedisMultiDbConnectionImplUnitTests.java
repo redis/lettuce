@@ -517,7 +517,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             when(healthCheck2.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
 
             assertThatThrownBy(() -> connection.switchTo(uri2)).isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("UNHEALTHY");
+                    .hasMessageContaining("unhealthy");
 
             assertThat(connection.getCurrentEndpoint()).isNotEqualTo(uri2);
         }

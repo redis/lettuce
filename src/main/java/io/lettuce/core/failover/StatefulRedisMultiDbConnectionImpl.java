@@ -36,7 +36,6 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.event.DatabaseSwitchEvent;
 import io.lettuce.core.failover.event.SwitchReason;
-import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusManager;
@@ -684,13 +683,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         RedisDatabaseImpl<C> target = databases.get(redisURI);
         if (target == null) {
             throw new IllegalArgumentException("Unknown endpoint: " + redisURI);
-        }
-
-        // Check if target has unhealthy health check results before attempting switch
-        HealthCheck healthCheck = target.getHealthCheck();
-        if (healthCheck != null && healthCheck.getStatus() == HealthStatus.UNHEALTHY) {
-            throw new IllegalStateException("Cannot switch to database " + target.getId()
-                    + " - health check reports UNHEALTHY status. Database endpoint: " + redisURI);
         }
 
         if (safeSwitch(target, false, SwitchReason.FORCED)) {
