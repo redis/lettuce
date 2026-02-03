@@ -52,6 +52,7 @@ import java.util.UUID;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.core.protocol.CommandType.XINFO;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -789,6 +790,159 @@ public class StreamCommandIntegrationTests extends TestSupport {
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
 
         assertThat(redis.xgroupSetid(StreamOffset.latest(key), "group")).isEqualTo("OK");
+    }
+
+    // Idempotent Producer Tests
+
+    @Test
+    @EnabledOnCommand("XCFGSET")
+    void xaddIdmpBasic() {
+        String producerId = "producer-1";
+        String idempotentId = "msg-001";
+
+        // First XADD with IDMP should succeed - bytes version
+        String id1 = redis.xadd(key, XAddArgs.Builder.idmp(producerId.getBytes(), idempotentId.getBytes()),
+                Collections.singletonMap("order", "12345"));
+        assertThat(id1).isNotNull();
+        assertThat(redis.xlen(key)).isEqualTo(1L);
+
+        // Second XADD with same IDMP should return same ID and not add duplicate - string version, msg mismatch
+        String id2 = redis.xadd(key, XAddArgs.Builder.idmp(producerId, idempotentId),
+                Collections.singletonMap("order", "54321"));
+        assertThat(id2).isEqualTo(id1);
+        assertThat(redis.xlen(key)).isEqualTo(1L);
+
+        // Different idempotent ID should add new entry
+        String idempotentId2 = "msg-002";
+        String id3 = redis.xadd(key, XAddArgs.Builder.idmp(producerId, idempotentId2),
+                Collections.singletonMap("order", "67890"));
+        assertThat(id3).isNotEqualTo(id1);
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+    }
+
+    @Test
+    @EnabledOnCommand("XCFGSET")
+    void xaddIdmpAutoBasic() {
+        String producerId = "producer-1";
+
+        // First XADD with IDMPAUTO should succeed
+        String id1 = redis.xadd(key, XAddArgs.Builder.idmpAuto(producerId.getBytes()),
+                Collections.singletonMap("order", "12345"));
+        assertThat(id1).isNotNull();
+        assertThat(redis.xlen(key)).isEqualTo(1L);
+
+        // Second XADD with same content should return same ID (duplicate detected)
+        String id2 = redis.xadd(key, XAddArgs.Builder.idmpAuto(producerId), Collections.singletonMap("order", "12345"));
+        assertThat(id2).isEqualTo(id1);
+        assertThat(redis.xlen(key)).isEqualTo(1L);
+
+        // Different content should add new entry
+        String id3 = redis.xadd(key, XAddArgs.Builder.idmpAuto(producerId.getBytes()),
+                Collections.singletonMap("order", "67890"));
+        assertThat(id3).isNotEqualTo(id1);
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+    }
+
+    @Test
+    @EnabledOnCommand("XCFGSET")
+    void xaddIdmpMultipleProducers() {
+        String producer1 = "producer-1";
+        String producer2 = "producer-2";
+        String idempotentId = "msg-001";
+
+        // Producer 1 adds message
+        String id1 = redis.xadd(key, XAddArgs.Builder.idmp(producer1.getBytes(), idempotentId.getBytes()),
+                Collections.singletonMap("order", "12345"));
+        assertThat(id1).isNotNull();
+
+        // Producer 2 with same idempotent ID should add new entry (different producer)
+        String id2 = redis.xadd(key, XAddArgs.Builder.idmp(producer2, idempotentId),
+                Collections.singletonMap("order", "67890"));
+        assertThat(id2).isNotEqualTo(id1);
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+
+        // Producer 1 retry should be deduplicated
+        String id3 = redis.xadd(key, XAddArgs.Builder.idmp(producer1, idempotentId),
+                Collections.singletonMap("order", "12345"));
+        assertThat(id3).isEqualTo(id1);
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+    }
+
+    @Test
+    @EnabledOnCommand("XCFGSET")
+    void xaddIdmpWithTrimmingMode() {
+        byte[] producerId = "producer-1".getBytes();
+        byte[] idempotentId = "msg-001".getBytes();
+
+        // Add with IDMP and trimming mode
+        String id1 = redis.xadd(key,
+                new XAddArgs().trimmingMode(StreamDeletionPolicy.KEEP_REFERENCES).idmp(producerId, idempotentId).maxlen(100),
+                Collections.singletonMap("order", "12345"));
+        assertThat(id1).isNotNull();
+
+        // Retry should be deduplicated
+        String id2 = redis.xadd(key,
+                new XAddArgs().trimmingMode(StreamDeletionPolicy.KEEP_REFERENCES).idmp(producerId, idempotentId).maxlen(100),
+                Collections.singletonMap("order", "12345"));
+        assertThat(id2).isEqualTo(id1);
+        assertThat(redis.xlen(key)).isEqualTo(1L);
+    }
+
+    @Test
+    @EnabledOnCommand("XCFGSET")
+    void xcfgsetDefaults() {
+        // Create stream with initial entry
+        redis.xadd(key, Collections.singletonMap("field1", "value1"));
+
+        // Verify default values (100 for both duration and maxsize)
+        List<Object> info = redis.xinfoStream(key);
+        assertThat(info).contains("idmp-duration", 100L);
+        assertThat(info).contains("idmp-maxsize", 100L);
+
+        // Change configuration
+        String result = redis.xcfgset(key, new XCfgSetArgs().idmpDuration(200).idmpMaxsize(200));
+        assertThat(result).isEqualTo("OK");
+
+        // Verify new values
+        List<Object> infoAfter = redis.xinfoStream(key);
+        assertThat(infoAfter).contains("idmp-duration", 200L);
+        assertThat(infoAfter).contains("idmp-maxsize", 200L);
+    }
+
+    @Test
+    @EnabledOnCommand("XCFGSET")
+    void xinfoStreamIdempotencyFields() {
+        byte[] producer1 = "producer-1".getBytes();
+        byte[] producer2 = "producer-2".getBytes();
+        byte[] idempotentId1 = "msg-001".getBytes();
+        byte[] idempotentId2 = "msg-002".getBytes();
+
+        // Create stream first (XCFGSET requires an existing stream)
+        redis.xadd(key, Collections.singletonMap("init", "init"));
+
+        // Configure idempotency parameters
+        redis.xcfgset(key, new XCfgSetArgs().idmpDuration(300).idmpMaxsize(500));
+
+        // Add messages with idempotent IDs
+        redis.xadd(key, XAddArgs.Builder.idmp(producer1, idempotentId1), Collections.singletonMap("order", "12345"));
+        redis.xadd(key, XAddArgs.Builder.idmp(producer1, idempotentId2), Collections.singletonMap("order", "67890"));
+        redis.xadd(key, XAddArgs.Builder.idmp(producer2, idempotentId1), Collections.singletonMap("order", "11111"));
+
+        // Retry - should be detected as duplicate
+        redis.xadd(key, XAddArgs.Builder.idmp(producer1, idempotentId1), Collections.singletonMap("order", "12345"));
+
+        // Verify XINFO STREAM contains all idempotency-related fields
+        List<Object> info = redis.xinfoStream(key);
+
+        // Configuration fields
+        assertThat(info).contains("idmp-duration", 300L);
+        assertThat(info).contains("idmp-maxsize", 500L);
+
+        // Tracking fields
+        assertThat(info).contains("pids-tracked", 2L); // producer1 and producer2
+        assertThat(info).contains("iids-tracked", 3L); // 3 unique (pid, iid) pairs
+        assertThat(info).contains("iids-added", 3L); // 3 unique messages added
+        assertThat(info).contains("iids-duplicates", 1L); // 1 duplicate detected
     }
 
     // Redis 8.2 Stream Commands Tests
