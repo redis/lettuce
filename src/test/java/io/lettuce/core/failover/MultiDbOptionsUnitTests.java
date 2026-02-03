@@ -190,4 +190,60 @@ class MultiDbOptionsUnitTests {
 
     }
 
+    @Nested
+    @DisplayName("Max Failover Attempts Configuration Tests")
+    class MaxFailoverAttemptsConfigurationTests {
+
+        @Test
+        @DisplayName("Should have default max failover attempts of 10")
+        void shouldHaveDefaultMaxFailoverAttempts() {
+            // When: Build with defaults
+            MultiDbOptions options = MultiDbOptions.builder().build();
+
+            // Then: Max failover attempts should be 10
+            assertThat(options.getMaxFailoverAttempts()).isEqualTo(10);
+        }
+
+        @Test
+        @DisplayName("Should allow custom max failover attempts")
+        void shouldAllowCustomMaxFailoverAttempts() {
+            // When: Set custom max failover attempts
+            MultiDbOptions options = MultiDbOptions.builder().maxFailoverAttempts(5).build();
+
+            // Then: Max failover attempts should be set
+            assertThat(options.getMaxFailoverAttempts()).isEqualTo(5);
+        }
+
+        @Test
+        @DisplayName("Should validate max failover attempts - reject invalid values and accept minimum")
+        void shouldValidateMaxFailoverAttempts() {
+            // Zero should throw exception
+            assertThatThrownBy(() -> MultiDbOptions.builder().maxFailoverAttempts(0).build())
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("must be greater than 0");
+
+            // Negative value should throw exception
+            assertThatThrownBy(() -> MultiDbOptions.builder().maxFailoverAttempts(-1).build())
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("must be greater than 0");
+
+            // Minimum value of 1 should be accepted
+            MultiDbOptions options = MultiDbOptions.builder().maxFailoverAttempts(1).build();
+            assertThat(options.getMaxFailoverAttempts()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Should support method chaining with max failover attempts")
+        void shouldSupportMethodChainingWithMaxFailoverAttempts() {
+            // When: Chain builder methods including max failover attempts
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).gracePeriod(Duration.ofSeconds(60))
+                    .maxFailoverAttempts(15).failbackCheckInterval(Durations.ONE_MINUTE).build();
+
+            // Then: All settings should be applied
+            assertThat(options.isFailbackSupported()).isTrue();
+            assertThat(options.getGracePeriod()).isEqualTo(Duration.ofSeconds(60));
+            assertThat(options.getMaxFailoverAttempts()).isEqualTo(15);
+            assertThat(options.getFailbackCheckInterval()).isEqualTo(Durations.ONE_MINUTE);
+        }
+
+    }
+
 }

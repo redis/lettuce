@@ -21,10 +21,13 @@ public class MultiDbOptions {
 
     private final Duration gracePeriod;
 
+    private final int maxFailoverAttempts;
+
     private MultiDbOptions(Builder builder) {
         this.failbackSupported = builder.failbackSupported;
         this.failbackCheckInterval = builder.failbackCheckInterval;
         this.gracePeriod = builder.gracePeriod;
+        this.maxFailoverAttempts = builder.maxFailoverAttempts;
     }
 
     /**
@@ -53,6 +56,16 @@ public class MultiDbOptions {
      */
     public Duration getGracePeriod() {
         return gracePeriod;
+    }
+
+    /**
+     * Returns the maximum number of failover attempts before giving up. This limit prevents infinite loops and stack overflow
+     * when all databases are unhealthy or rapidly changing state.
+     *
+     * @return the maximum number of failover attempts
+     */
+    public int getMaxFailoverAttempts() {
+        return maxFailoverAttempts;
     }
 
     /**
@@ -86,12 +99,17 @@ public class MultiDbOptions {
         /** Default grace period duration. */
         private static final Duration GRACE_PERIOD_DEFAULT = Duration.ofSeconds(30);
 
+        /** Default maximum number of failover attempts. */
+        private static final int MAX_FAILOVER_ATTEMPTS_DEFAULT = 10;
+
         /** Whether automatic failback to higher-priority databases is supported. */
         private boolean failbackSupported = true;
 
         private Duration failbackCheckInterval = FAILBACK_CHECK_INTERVAL_DEFAULT;
 
         private Duration gracePeriod = GRACE_PERIOD_DEFAULT;
+
+        private int maxFailoverAttempts = MAX_FAILOVER_ATTEMPTS_DEFAULT;
 
         private Builder() {
         }
@@ -134,6 +152,21 @@ public class MultiDbOptions {
          */
         public Builder gracePeriod(Duration gracePeriod) {
             this.gracePeriod = gracePeriod;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of failover attempts before giving up. This limit prevents infinite loops and stack overflow
+         * when all databases are unhealthy or rapidly changing state.
+         * <p>
+         * Defaults to 10 attempts.
+         *
+         * @param maxFailoverAttempts the maximum number of failover attempts, must be greater than 0
+         * @return this builder
+         */
+        public Builder maxFailoverAttempts(int maxFailoverAttempts) {
+            LettuceAssert.isTrue(maxFailoverAttempts > 0, "maxFailoverAttempts must be greater than 0");
+            this.maxFailoverAttempts = maxFailoverAttempts;
             return this;
         }
 
