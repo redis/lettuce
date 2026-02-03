@@ -57,4 +57,11 @@ public interface RedisDatabase {
      */
     CircuitBreaker.State getCircuitBreakerState();
 
+    /**
+     * Check if this database is healthy.
+     *
+     * @return true if the database is healthy, false otherwise
+     */
+    boolean isHealthy();
+
 }

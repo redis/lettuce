@@ -70,7 +70,9 @@ class DatabaseCommandTracker {
 
     public void resetChannel(Channel channel) {
         // remove/unbind tracker here
-        channel.pipeline().remove(MultiDbOutboundHandler.class);
+        if (channel.pipeline().get(MultiDbOutboundHandler.class) != null) {
+            channel.pipeline().remove(MultiDbOutboundHandler.class);
+        }
     }
 
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
