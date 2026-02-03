@@ -141,4 +141,53 @@ class MultiDbOptionsUnitTests {
 
     }
 
+    @Nested
+    @DisplayName("Grace Period Configuration Tests")
+    class GracePeriodConfigurationTests {
+
+        @Test
+        @DisplayName("Should have default grace period of 30 seconds (30000ms)")
+        void shouldHaveDefaultGracePeriod() {
+            // When: Build with defaults
+            MultiDbOptions options = MultiDbOptions.builder().build();
+
+            // Then: Grace period should be 30000ms (30 seconds)
+            assertThat(options.getGracePeriod()).isEqualTo(Duration.ofSeconds(30));
+        }
+
+        @Test
+        @DisplayName("Should allow custom grace period in milliseconds")
+        void shouldAllowCustomGracePeriod() {
+            // When: Set custom grace period to 60 seconds (60000ms)
+            MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Durations.ONE_MINUTE).build();
+
+            // Then: Grace period should be set
+            assertThat(options.getGracePeriod()).isEqualTo(Durations.ONE_MINUTE);
+        }
+
+        @Test
+        @DisplayName("Should allow zero grace period for immediate failback")
+        void shouldAllowZeroGracePeriod() {
+            // When: Set grace period to zero (disables grace period)
+            MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Duration.ZERO).build();
+
+            // Then: Grace period should be zero
+            assertThat(options.getGracePeriod()).isEqualTo(Duration.ZERO);
+        }
+
+        @Test
+        @DisplayName("Should support method chaining with grace period")
+        void shouldSupportMethodChainingWithGracePeriod() {
+            // When: Chain builder methods including grace period
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).gracePeriod(Duration.ofSeconds(45))
+                    .failbackCheckInterval(Durations.ONE_MINUTE).build();
+
+            // Then: All settings should be applied
+            assertThat(options.isFailbackSupported()).isTrue();
+            assertThat(options.getGracePeriod()).isEqualTo(Duration.ofSeconds(45));
+            assertThat(options.getFailbackCheckInterval()).isEqualTo(Durations.ONE_MINUTE);
+        }
+
+    }
+
 }

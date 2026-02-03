@@ -156,7 +156,8 @@ class CircuitBreakerImpl implements CircuitBreaker {
      *
      * @param newState the target state
      */
-    void transitionTo(State newState) {
+    @Override
+    public void transitionTo(State newState) {
         stateTransitionTo(newState);
     }
 

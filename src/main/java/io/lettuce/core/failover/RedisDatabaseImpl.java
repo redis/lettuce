@@ -1,5 +1,7 @@
 package io.lettuce.core.failover;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,8 +47,21 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
 
     private final String id;
 
+    private final Clock clock;
+
+    /**
+     * Timestamp (in milliseconds) when the grace period ends. A value of 0 means no grace period is active. During the grace
+     * period, this database cannot be selected for failover or failback.
+     */
+    private volatile long gracePeriodEndTime = 0;
+
     public RedisDatabaseImpl(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint,
             CircuitBreaker circuitBreaker, HealthCheck healthCheck) {
+        this(config, connection, databaseEndpoint, circuitBreaker, healthCheck, Clock.systemUTC());
+    }
+
+    public RedisDatabaseImpl(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint,
+            CircuitBreaker circuitBreaker, HealthCheck healthCheck, Clock clock) {
 
         this.id = config.getRedisURI().toString() + "-" + ID_COUNTER.getAndIncrement();
         this.redisURI = config.getRedisURI();
@@ -55,6 +70,7 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
         this.databaseEndpoint = databaseEndpoint;
         this.circuitBreaker = circuitBreaker;
         this.healthCheck = healthCheck;
+        this.clock = clock;
     }
 
     @Override
@@ -118,6 +134,55 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
     @Override
     public State getCircuitBreakerState() {
         return circuitBreaker.getCurrentState();
+    }
+
+    boolean isHealthy() {
+        return !isInGracePeriod() && getHealthCheckStatus().isHealthy() && getCircuitBreakerState().isClosed();
+    }
+
+    boolean isHealthyIgnoreGracePeriod() {
+        return getHealthCheckStatus().isHealthy() && getCircuitBreakerState().isClosed();
+    }
+
+    /**
+     * Starts a grace period for this database. During the grace period, this database cannot be selected for failover or
+     * failback.
+     *
+     * @param durationMillis the duration of the grace period in milliseconds
+     */
+    void startGracePeriod(Duration durationMillis) {
+        if (durationMillis.toMillis() > 0) {
+            long endTime = clock.millis() + durationMillis.toMillis();
+            // this is against a possible overflow
+            this.gracePeriodEndTime = endTime < 0 ? Long.MAX_VALUE : endTime;
+            logger.info("Started grace period of {}ms for database {}", durationMillis, getId());
+        }
+    }
+
+    /**
+     * Checks if this database is currently in a grace period.
+     *
+     * @return {@code true} if the database is in a grace period, {@code false} otherwise
+     */
+    boolean isInGracePeriod() {
+        long endTime = this.gracePeriodEndTime;
+        if (endTime == 0) {
+            return false;
+        }
+        boolean inGracePeriod = clock.millis() < endTime;
+        if (!inGracePeriod) {
+            // Grace period has ended, reset the end time
+            clearGracePeriod();
+            circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
+        }
+        return inGracePeriod;
+    }
+
+    /**
+     * Clears the grace period for this database.
+     */
+    void clearGracePeriod() {
+        this.gracePeriodEndTime = 0;
     }
 
 }
