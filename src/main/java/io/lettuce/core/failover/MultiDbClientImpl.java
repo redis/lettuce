@@ -55,7 +55,6 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         this.databaseConfigMap = new ConcurrentHashMap<>(databaseConfigs.size());
         for (DatabaseConfig config : databaseConfigs) {
-            LettuceAssert.notNull(config, "DatabaseConfig must not be null");
             LettuceAssert.notNull(config.getRedisURI(), "RedisURI must not be null");
             this.databaseConfigMap.put(config.getRedisURI(), config);
         }
@@ -177,10 +176,6 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigMap);
 
         return MultiDbConnectionFuture.from(future);
-    }
-
-    protected HealthStatusManager createHealthStatusManager() {
-        return new HealthStatusManagerImpl();
     }
 
     /**
