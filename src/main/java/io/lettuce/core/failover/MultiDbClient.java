@@ -24,7 +24,7 @@ public interface MultiDbClient extends BaseRedisClient {
      * @return a new MultiDbClient
      * @since 7.4
      */
-    public static MultiDbClient create(Collection<DatabaseConfig> databaseConfigs) {
+    static MultiDbClient create(Collection<DatabaseConfig> databaseConfigs) {
         return new MultiDbClientImpl(databaseConfigs, MultiDbOptions.create());
     }
 
@@ -36,7 +36,7 @@ public interface MultiDbClient extends BaseRedisClient {
      * @return a new MultiDbClient
      * @since 7.4
      */
-    public static MultiDbClient create(ClientResources resources, Collection<DatabaseConfig> databaseConfigs) {
+    static MultiDbClient create(ClientResources resources, Collection<DatabaseConfig> databaseConfigs) {
         return new MultiDbClientImpl(resources, databaseConfigs, MultiDbOptions.create());
     }
 
@@ -48,7 +48,7 @@ public interface MultiDbClient extends BaseRedisClient {
      * @return a new MultiDbClient
      * @since 7.4
      */
-    public static MultiDbClient create(Collection<DatabaseConfig> databaseConfigs, MultiDbOptions multiDbOptions) {
+    static MultiDbClient create(Collection<DatabaseConfig> databaseConfigs, MultiDbOptions multiDbOptions) {
         return new MultiDbClientImpl(databaseConfigs, multiDbOptions);
     }
 
@@ -61,7 +61,7 @@ public interface MultiDbClient extends BaseRedisClient {
      * @return a new MultiDbClient
      * @since 7.4
      */
-    public static MultiDbClient create(ClientResources resources, Collection<DatabaseConfig> databaseConfigs,
+    static MultiDbClient create(ClientResources resources, Collection<DatabaseConfig> databaseConfigs,
             MultiDbOptions multiDbOptions) {
         return new MultiDbClientImpl(resources, databaseConfigs, multiDbOptions);
     }

@@ -95,7 +95,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     private final Set<Consumer<Closeable>> onCloseListeners = ConcurrentHashMap.newKeySet();
 
-    private volatile ScheduledFuture<?> failbackTask;
+    private final ScheduledFuture<?> failbackTask;
 
     /**
      * Creates a new multi-database connection with default options.
@@ -188,6 +188,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             Duration failbackInterval = multiDbOptions.getFailbackCheckInterval();
             this.failbackTask = resources.eventExecutorGroup().scheduleAtFixedRate(this::periodicFailbackCheck,
                     failbackInterval.toMillis(), failbackInterval.toMillis(), TimeUnit.MILLISECONDS);
+        } else {
+            this.failbackTask = null;
         }
 
     }
@@ -336,7 +338,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                         "Failback check: Found higher-priority healthy database {} (weight: {}) than current {} (weight: {})",
                         highestWeightedHealthy.getId(), highestWeightedHealthy.getWeight(), currentDb.getId(),
                         currentDb.getWeight());
-                // safeSwitch(highestWeightedHealthy, true, SwitchReason.FAILBACK);
                 failoverFrom(currentDb, SwitchReason.FAILBACK);
             }
         } catch (Exception e) {
