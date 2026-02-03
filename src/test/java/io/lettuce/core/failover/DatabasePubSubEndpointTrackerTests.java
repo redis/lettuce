@@ -42,7 +42,11 @@ import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.resource.TestClientResources;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
+import io.netty.util.concurrent.GenericFutureListener;
 
 /**
  * Unit tests for {@link DatabasePubSubEndpointImpl} focusing on:
@@ -267,9 +271,9 @@ class DatabasePubSubEndpointTrackerTests {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
-            io.netty.channel.Channel mockChannel = mock(io.netty.channel.Channel.class);
-            io.netty.channel.ChannelPipeline mockPipeline = mock(io.netty.channel.ChannelPipeline.class);
-            io.netty.channel.ChannelHandlerContext mockContext = mock(io.netty.channel.ChannelHandlerContext.class);
+            Channel mockChannel = mock(Channel.class);
+            ChannelPipeline mockPipeline = mock(ChannelPipeline.class);
+            ChannelHandlerContext mockContext = mock(ChannelHandlerContext.class);
             ChannelFuture mockCloseFuture = mock(ChannelFuture.class);
 
             when(mockChannel.pipeline()).thenReturn(mockPipeline);
@@ -277,8 +281,7 @@ class DatabasePubSubEndpointTrackerTests {
             when(mockCloseFuture.isSuccess()).thenReturn(true);
             // Simulate immediate completion of the close future
             when(mockCloseFuture.addListener(any())).thenAnswer(invocation -> {
-                @SuppressWarnings("unchecked")
-                io.netty.util.concurrent.GenericFutureListener<ChannelFuture> listener = invocation.getArgument(0);
+                GenericFutureListener<ChannelFuture> listener = invocation.getArgument(0);
                 listener.operationComplete(mockCloseFuture);
                 return mockCloseFuture;
             });
@@ -296,13 +299,15 @@ class DatabasePubSubEndpointTrackerTests {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
-            io.netty.channel.Channel mockChannel = mock(io.netty.channel.Channel.class);
-            io.netty.channel.ChannelPipeline mockPipeline = mock(io.netty.channel.ChannelPipeline.class);
+            Channel mockChannel = mock(Channel.class);
+            ChannelPipeline mockPipeline = mock(ChannelPipeline.class);
 
             when(mockChannel.pipeline()).thenReturn(mockPipeline);
+            when(mockPipeline.get(MultiDbOutboundHandler.class)).thenReturn(new MultiDbOutboundHandler(null));
 
             endpoint.notifyChannelInactive(mockChannel);
 
+            verify(mockPipeline).get(MultiDbOutboundHandler.class);
             verify(mockPipeline).remove(MultiDbOutboundHandler.class);
         }
 

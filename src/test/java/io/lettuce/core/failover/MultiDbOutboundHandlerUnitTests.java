@@ -40,6 +40,7 @@ import io.lettuce.core.protocol.*;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 
 /**
  * Unit tests for {@link MultiDbOutboundHandler} focusing on:
@@ -175,7 +176,7 @@ class MultiDbOutboundHandlerUnitTests {
 
             // Capture the listener attached to the promise
             when(mockPromise.addListener(any())).thenAnswer(invocation -> {
-                io.netty.util.concurrent.GenericFutureListener<?> listener = invocation.getArgument(0);
+                GenericFutureListener<?> listener = invocation.getArgument(0);
 
                 // Simulate write failure
                 Future<?> failedFuture = mock(Future.class);
@@ -183,7 +184,7 @@ class MultiDbOutboundHandlerUnitTests {
                 when(failedFuture.cause()).thenReturn(new IOException("Write failed"));
 
                 @SuppressWarnings("unchecked")
-                io.netty.util.concurrent.GenericFutureListener<Future<? super Void>> typedListener = (io.netty.util.concurrent.GenericFutureListener<Future<? super Void>>) listener;
+                GenericFutureListener<Future<? super Void>> typedListener = (GenericFutureListener<Future<? super Void>>) listener;
                 typedListener.operationComplete((Future<? super Void>) failedFuture);
 
                 return mockPromise;
@@ -214,14 +215,14 @@ class MultiDbOutboundHandlerUnitTests {
 
             // Capture the listener attached to the promise
             when(mockPromise.addListener(any())).thenAnswer(invocation -> {
-                io.netty.util.concurrent.GenericFutureListener<?> listener = invocation.getArgument(0);
+                GenericFutureListener<?> listener = invocation.getArgument(0);
 
                 // Simulate successful write
                 Future<?> successFuture = mock(Future.class);
                 when(successFuture.isSuccess()).thenReturn(true);
 
                 @SuppressWarnings("unchecked")
-                io.netty.util.concurrent.GenericFutureListener<Future<? super Void>> typedListener = (io.netty.util.concurrent.GenericFutureListener<Future<? super Void>>) listener;
+                GenericFutureListener<Future<? super Void>> typedListener = (GenericFutureListener<Future<? super Void>>) listener;
                 typedListener.operationComplete((Future<? super Void>) successFuture);
 
                 return mockPromise;
@@ -248,14 +249,14 @@ class MultiDbOutboundHandlerUnitTests {
 
             // Capture the listener attached to the promise
             when(mockPromise.addListener(any())).thenAnswer(invocation -> {
-                io.netty.util.concurrent.GenericFutureListener<?> listener = invocation.getArgument(0);
+                GenericFutureListener<?> listener = invocation.getArgument(0);
 
                 // Simulate successful write
                 Future<?> successFuture = mock(Future.class);
                 when(successFuture.isSuccess()).thenReturn(true);
 
                 @SuppressWarnings("unchecked")
-                io.netty.util.concurrent.GenericFutureListener<Future<? super Void>> typedListener = (io.netty.util.concurrent.GenericFutureListener<Future<? super Void>>) listener;
+                GenericFutureListener<Future<? super Void>> typedListener = (GenericFutureListener<Future<? super Void>>) listener;
                 typedListener.operationComplete((Future<? super Void>) successFuture);
 
                 return mockPromise;
@@ -282,14 +283,14 @@ class MultiDbOutboundHandlerUnitTests {
 
             // Capture the listener attached to the promise
             when(mockPromise.addListener(any())).thenAnswer(invocation -> {
-                io.netty.util.concurrent.GenericFutureListener<?> listener = invocation.getArgument(0);
+                GenericFutureListener<?> listener = invocation.getArgument(0);
 
                 // Simulate successful write
                 Future<?> successFuture = mock(Future.class);
                 when(successFuture.isSuccess()).thenReturn(true);
 
                 @SuppressWarnings("unchecked")
-                io.netty.util.concurrent.GenericFutureListener<Future<? super Void>> typedListener = (io.netty.util.concurrent.GenericFutureListener<Future<? super Void>>) listener;
+                GenericFutureListener<Future<? super Void>> typedListener = (GenericFutureListener<Future<? super Void>>) listener;
                 typedListener.operationComplete((Future<? super Void>) successFuture);
 
                 return mockPromise;

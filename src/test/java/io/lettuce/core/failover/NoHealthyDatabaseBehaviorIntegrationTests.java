@@ -1,14 +1,12 @@
 package io.lettuce.core.failover;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
-import static io.lettuce.core.failover.health.HealthCheckStrategySupplier.NO_HEALTH_CHECK;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +15,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.junit.jupiter.api.AfterAll;
@@ -30,14 +27,11 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.org.awaitility.Durations;
 
-import com.google.common.collect.Streams;
-
 import eu.rekawek.toxiproxy.Proxy;
 import eu.rekawek.toxiproxy.ToxiproxyClient;
 import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
@@ -294,23 +288,6 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
                     .hasMessageContaining("No healthy database available !!");
         }
 
-        // @Test
-        // @DisplayName("Should fail sync commands when all databases are unreachable by circuit breaker")
-        // void shouldFailSyncCommandsWhenAllDatabasesUnreachableByCircuitBreaker() {
-        // // Given: Force all circuit breakers to OPEN state
-        // connection.getEndpoints().forEach(uri -> {
-        // RedisDatabaseImpl<?> db = (RedisDatabaseImpl<?>) connection.getDatabase(uri);
-        // db.getCircuitBreaker().transitionTo(CircuitBreaker.State.OPEN);
-        // });
-
-        // // When/Then: Sync commands should fail with RedisCircuitBreakerException
-        // assertThatThrownBy(() -> connection.sync().set("key", "value")).isInstanceOf(RedisNoHealthyDatabaseException.class)
-        // .hasMessageContaining("No healthy database available !!");
-
-        // assertThatThrownBy(() -> connection.sync().get("key")).isInstanceOf(RedisNoHealthyDatabaseException.class)
-        // .hasMessageContaining("No healthy database available !!");
-        // }
-
         @Test
         @DisplayName("Should fail sync commands when all databases are unreachable by health check")
         void shouldFailSyncCommandsWhenAllDatabasesUnreachableByHealthCheck() throws Exception {
@@ -354,28 +331,6 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
             assertThatThrownBy(() -> getFuture.get()).isInstanceOf(ExecutionException.class)
                     .hasCauseInstanceOf(RedisNoHealthyDatabaseException.class);
         }
-
-        // @Test
-        // @DisplayName("Should fail async commands when all databases are unreachable")
-        // void shouldFailAsyncCommandsWhenAllDatabasesUnreachableByCircuitBreaker() throws Exception {
-        // // Given: All proxies disabled
-        // // disableAllToxiproxy();
-        // connection.getEndpoints().forEach(uri -> {
-        // RedisDatabaseImpl<?> db = (RedisDatabaseImpl<?>) connection.getDatabase(uri);
-        // db.getCircuitBreaker().transitionTo(CircuitBreaker.State.OPEN);
-        // });
-
-        // // When: Execute async commands
-        // RedisFuture<String> setFuture = connection.async().set("key", "value");
-        // RedisFuture<String> getFuture = connection.async().get("key");
-
-        // // Then: Futures should complete exceptionally
-        // assertThatThrownBy(() -> setFuture.get()).isInstanceOf(ExecutionException.class)
-        // .hasCauseInstanceOf(RedisNoHealthyDatabaseException.class);
-
-        // assertThatThrownBy(() -> getFuture.get()).isInstanceOf(ExecutionException.class)
-        // .hasCauseInstanceOf(RedisNoHealthyDatabaseException.class);
-        // }
 
         @Test
         @DisplayName("Should fail async commands when all databases are unreachable")
@@ -445,23 +400,6 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
 
             StepVerifier.create(reactive.get("key")).expectError(RedisNoHealthyDatabaseException.class).verify();
         }
-
-        // @Test
-        // @DisplayName("Should fail reactive commands when all databases are unreachable by circuit breaker")
-        // void shouldFailReactiveCommandsWhenAllDatabasesUnreachableByCircuitBreaker() {
-        // // Given: Force all circuit breakers to OPEN state
-        // connection.getEndpoints().forEach(uri -> {
-        // RedisDatabaseImpl<?> db = (RedisDatabaseImpl<?>) connection.getDatabase(uri);
-        // db.getCircuitBreaker().transitionTo(CircuitBreaker.State.OPEN);
-        // });
-
-        // // When/Then: Reactive commands should emit error
-        // RedisReactiveCommands<String, String> reactive = connection.reactive();
-
-        // StepVerifier.create(reactive.set("key", "value")).expectError(RedisNoHealthyDatabaseException.class).verify();
-
-        // StepVerifier.create(reactive.get("key")).expectError(RedisNoHealthyDatabaseException.class).verify();
-        // }
 
         @Test
         @DisplayName("Should fail reactive commands when all databases are unreachable by health check")
@@ -593,9 +531,6 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
 
             // Wait for grace period to expire and circuit breakers to close
             await().atMost(Durations.ONE_SECOND).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS).untilAsserted(() -> {
-                // At least one database should become healthy
-                // boolean anyHealthy = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
-                // .anyMatch(uri -> connection.isHealthy(uri));
                 assertThat(connection.getCurrentDatabase().isHealthy()).isTrue();
             });
 
@@ -623,8 +558,6 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
 
             // Wait for grace period to expire and circuit breakers to close
             await().atMost(Durations.ONE_SECOND).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS).untilAsserted(() -> {
-                // boolean anyHealthy = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
-                // .anyMatch(uri -> connection.isHealthy(uri));
                 assertThat(connection.getCurrentDatabase().isHealthy()).isTrue();
             });
 
@@ -651,8 +584,6 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
 
             // Wait for grace period to expire and circuit breakers to close
             await().atMost(Durations.ONE_SECOND).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS).untilAsserted(() -> {
-                // boolean anyHealthy = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
-                // .anyMatch(uri -> connection.isHealthy(uri));
                 assertThat(connection.getCurrentDatabase().isHealthy()).isTrue();
             });
 
