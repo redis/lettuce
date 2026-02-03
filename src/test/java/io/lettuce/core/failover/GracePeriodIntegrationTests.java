@@ -11,17 +11,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.logging.log4j.core.pattern.AbstractStyleNameConverter.Red;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.*;
 
+import com.google.common.reflect.Reflection;
+
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
+import io.lettuce.core.failover.api.RedisDatabase;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheckStrategy;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.core.failover.health.ProbingPolicy;
+import io.lettuce.test.MutableClock;
+import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
 
@@ -199,6 +205,10 @@ class GracePeriodIntegrationTests extends TestSupport {
                 assertThat(testConnection.getCurrentEndpoint()).isEqualTo(redis1Uri);
             });
 
+            RedisDatabase currentDatabase = testConnection.getCurrentDatabase();
+            MutableClock clock = new MutableClock();
+            ReflectionTestUtils.setField(currentDatabase, "clock", clock);
+
             // When: Make redis1 unhealthy (this triggers failover and starts grace period)
             testStrategy.setHealthStatus(redis1Uri, HealthStatus.UNHEALTHY);
 
@@ -211,16 +221,17 @@ class GracePeriodIntegrationTests extends TestSupport {
             testStrategy.setHealthStatus(redis1Uri, HealthStatus.HEALTHY);
 
             // Then: Should NOT failback to redis1 during grace period (3 seconds)
+            // Advance the clock by 1.5 seconds (half the grace period) and verify still on redis2
+            clock.tick(Duration.ofMillis(1500));
+
             // Wait 1.5 seconds (half the grace period) and verify still on redis2
-            try {
-                Thread.sleep(1500L);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
             assertThat(testConnection.getCurrentEndpoint()).isEqualTo(redis2Uri);
 
+            // Then advance the clock by another 1.5 seconds (total 3 seconds)
+            clock.tick(Duration.ofMillis(1500));
+
             // Then: After grace period expires, should failback to redis1
-            await().atMost(3, TimeUnit.SECONDS).untilAsserted(() -> {
+            await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
                 assertThat(testConnection.getCurrentEndpoint()).isEqualTo(redis1Uri);
             });
 

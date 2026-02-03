@@ -223,7 +223,7 @@ class HealthCheckImplUnitTests {
         assertThat(manager.getHealthStatus(testEndpoint)).isEqualTo(HealthStatus.UNKNOWN);
 
         // Wait for initial health check to complete
-        Thread.sleep(200);
+        Thread.sleep(100);
 
         // Now should be HEALTHY after initial check
         assertThat(manager.getHealthStatus(testEndpoint)).isEqualTo(HealthStatus.HEALTHY);
