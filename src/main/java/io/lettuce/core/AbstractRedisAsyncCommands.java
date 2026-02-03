@@ -3077,6 +3077,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> xcfgset(K key, XCfgSetArgs args) {
+        return dispatch(commandBuilder.xcfgset(key, args));
+    }
+
+    @Override
     public RedisFuture<List<StreamMessage<K, V>>> xclaim(K key, Consumer<K> consumer, long minIdleTime, String... messageIds) {
         return dispatch(commandBuilder.xclaim(key, consumer, XClaimArgs.Builder.minIdleTime(minIdleTime), messageIds));
     }
