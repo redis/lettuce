@@ -97,7 +97,7 @@ public class MultiDbOptions {
         private static final Duration MAX_INTERVAL = Duration.ofMillis(Long.MAX_VALUE);
 
         /** Default grace period duration. */
-        private static final Duration GRACE_PERIOD_DEFAULT = Duration.ofSeconds(30);
+        private static final Duration GRACE_PERIOD_DEFAULT = Duration.ofSeconds(60);
 
         /** Default maximum number of failover attempts. */
         private static final int MAX_FAILOVER_ATTEMPTS_DEFAULT = 10;
