@@ -98,6 +98,16 @@ interface RedisStreamCoroutinesCommands<K : Any, V : Any> {
     suspend fun xautoclaim(key: K, args: XAutoClaimArgs<K>): ClaimedMessages<K, V>?
 
     /**
+     * Configure idempotency parameters for a stream.
+     *
+     * @param key the stream key.
+     * @param args configuration arguments.
+     * @return simple-reply OK.
+     * @since 7.3
+     */
+    suspend fun xcfgset(key: K, args: XCfgSetArgs): String?
+
+    /**
      * Gets ownership of one or multiple messages in the Pending Entries List of a given stream consumer group.
      *
      * @param key the stream key.
