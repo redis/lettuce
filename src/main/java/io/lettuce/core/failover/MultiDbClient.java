@@ -17,21 +17,53 @@ import io.lettuce.core.resource.ClientResources;
 @Experimental
 public interface MultiDbClient extends BaseRedisClient {
 
-    public static MultiDbClient create(Collection<DatabaseConfig> databaseConfigs) {
-        if (databaseConfigs == null || databaseConfigs.isEmpty()) {
-            throw new IllegalArgumentException("Database configs must not be empty");
-        }
-        return new MultiDbClientImpl(databaseConfigs);
+    /**
+     * Create a new MultiDbClient with the given database configurations.
+     *
+     * @param databaseConfigs the database configurations
+     * @return a new MultiDbClient
+     * @since 7.4
+     */
+    static MultiDbClient create(Collection<DatabaseConfig> databaseConfigs) {
+        return new MultiDbClientImpl(databaseConfigs, MultiDbOptions.create());
     }
 
-    public static MultiDbClient create(ClientResources resources, Collection<DatabaseConfig> databaseConfigs) {
-        if (resources == null) {
-            throw new IllegalArgumentException("Client resources must not be null");
-        }
-        if (databaseConfigs == null || databaseConfigs.isEmpty()) {
-            throw new IllegalArgumentException("Database configs must not be empty");
-        }
-        return new MultiDbClientImpl(resources, databaseConfigs);
+    /**
+     * Create a new MultiDbClient with the given client resources and database configurations.
+     *
+     * @param resources the client resources
+     * @param databaseConfigs the database configurations
+     * @return a new MultiDbClient
+     * @since 7.4
+     */
+    static MultiDbClient create(ClientResources resources, Collection<DatabaseConfig> databaseConfigs) {
+        return new MultiDbClientImpl(resources, databaseConfigs, MultiDbOptions.create());
+    }
+
+    /**
+     * Create a new MultiDbClient with the given database configurations and multi-database options.
+     *
+     * @param databaseConfigs the database configurations
+     * @param multiDbOptions the multi-database options
+     * @return a new MultiDbClient
+     * @since 7.4
+     */
+    static MultiDbClient create(Collection<DatabaseConfig> databaseConfigs, MultiDbOptions multiDbOptions) {
+        return new MultiDbClientImpl(databaseConfigs, multiDbOptions);
+    }
+
+    /**
+     * Create a new MultiDbClient with the given client resources, database configurations, and multi-database options.
+     *
+     * @param resources the client resources
+     * @param databaseConfigs the database configurations
+     * @param multiDbOptions the multi-database options
+     * @return a new MultiDbClient
+     * @since 7.4
+     */
+    static MultiDbClient create(ClientResources resources, Collection<DatabaseConfig> databaseConfigs,
+            MultiDbOptions multiDbOptions) {
+        return new MultiDbClientImpl(resources, databaseConfigs, multiDbOptions);
     }
 
     /**
@@ -134,5 +166,12 @@ public interface MultiDbClient extends BaseRedisClient {
      * @since 7.4
      */
     public MultiDbConnectionFuture<StatefulRedisMultiDbPubSubConnection<String, String>> connectPubSubAsync();
+
+    /**
+     * Gets the multi-database options.
+     *
+     * @return the multi-database options
+     */
+    MultiDbOptions getMultiDbOptions();
 
 }

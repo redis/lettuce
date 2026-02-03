@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -93,14 +95,49 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     private final Set<Consumer<Closeable>> onCloseListeners = ConcurrentHashMap.newKeySet();
 
+    private final ScheduledFuture<?> failbackTask;
+
+    /**
+     * Creates a new multi-database connection with default options.
+     *
+     * @param initialDatabase the initial database, or {@code null} to auto-select.
+     * @param connections map of database connections, must not be empty.
+     * @param resources the client resources.
+     * @param codec the codec for keys and values.
+     * @param connectionFactory factory for creating connections, may be {@code null}.
+     * @param healthStatusManager the health status manager.
+     * @param completion deferred completion handler, may be {@code null}.
+     */
     public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
             DatabaseFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
             RedisDatabaseDeferredCompletion<C> completion) {
+        this(initialDatabase, connections, resources, codec, connectionFactory, healthStatusManager, completion,
+                MultiDbOptions.create());
+    }
+
+    /**
+     * Creates a new multi-database connection with the specified options.
+     *
+     * @param initialDatabase the initial database, or {@code null} to auto-select.
+     * @param connections map of database connections, must not be empty.
+     * @param resources the client resources.
+     * @param codec the codec for keys and values.
+     * @param connectionFactory factory for creating connections, may be {@code null}.
+     * @param healthStatusManager the health status manager, must not be {@code null}.
+     * @param completion deferred completion handler, may be {@code null}.
+     * @param multiDbOptions the multi-database options, must not be {@code null}.
+     */
+    public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
+            Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
+            DatabaseFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
+            RedisDatabaseDeferredCompletion<C> completion, MultiDbOptions multiDbOptions) {
+
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
         }
         LettuceAssert.notNull(healthStatusManager, "healthStatusManager must not be null");
+        LettuceAssert.notNull(multiDbOptions, "multiDbOptions must not be null");
 
         this.databases = new ConcurrentHashMap<>(connections);
 
@@ -117,9 +154,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             this.current = initialDatabase;
         }
 
-        if (current == null) {
-            throw new IllegalStateException("InitialDatabase must not be null");
-        }
+        LettuceAssert.notNull(current, "InitialDatabase must not be null");
 
         // Now register listeners - they can safely access current
         databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
@@ -147,6 +182,16 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         if (completion != null) {
             completion.whenComplete(this::onDatabaseCompletion);
         }
+
+        // Start periodic failback checker
+        if (multiDbOptions.isFailbackSupported()) {
+            Duration failbackInterval = multiDbOptions.getFailbackCheckInterval();
+            this.failbackTask = resources.eventExecutorGroup().scheduleAtFixedRate(this::periodicFailbackCheck,
+                    failbackInterval.toMillis(), failbackInterval.toMillis(), TimeUnit.MILLISECONDS);
+        } else {
+            this.failbackTask = null;
+        }
+
     }
 
     private void onDatabaseCompletion(RedisDatabaseImpl<C> db, Throwable e) {
@@ -269,6 +314,37 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 .filter(DatabasePredicates.isNot(dbToExclude)).max(DatabaseComparators.byWeight).orElse(null);
     }
 
+    /**
+     * Periodically checks if a higher-priority database has become healthy and performs failback if configured.
+     * <p>
+     * This method is called by the failback scheduler at regular intervals. It checks if there is a higher-weighted healthy
+     * database available than the current one, and if so, initiates a failback to that database.
+     */
+    private void periodicFailbackCheck() {
+        try {
+            RedisDatabaseImpl<C> currentDb = current;
+            if (currentDb == null) {
+                return;
+            }
+
+            // Find the highest-weighted healthy database
+            RedisDatabaseImpl<C> highestWeightedHealthy = databases.values().stream()
+                    .filter(DatabasePredicates.isHealthyAndCbClosed).max(DatabaseComparators.byWeight).orElse(null);
+
+            // If we found a healthy database with higher weight than current, failback to it
+            if (highestWeightedHealthy != null && highestWeightedHealthy != currentDb
+                    && highestWeightedHealthy.getWeight() > currentDb.getWeight()) {
+                logger.info(
+                        "Failback check: Found higher-priority healthy database {} (weight: {}) than current {} (weight: {})",
+                        highestWeightedHealthy.getId(), highestWeightedHealthy.getWeight(), currentDb.getId(),
+                        currentDb.getWeight());
+                failoverFrom(currentDb, SwitchReason.FAILBACK);
+            }
+        } catch (Exception e) {
+            logger.error("Error during periodic failback check", e);
+        }
+    }
+
     static class DatabaseComparators {
 
         public static final Comparator<RedisDatabaseImpl<?>> byWeight = Comparator
@@ -298,6 +374,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     }
 
+    /**
+     * Returns the asynchronous API. The API is a dynamic proxy that remains valid across database switches.
+     *
+     * @return the asynchronous commands API.
+     */
     @Override
     public RedisAsyncCommands<K, V> async() {
         return async;
@@ -338,6 +419,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return new RedisAsyncCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
     }
 
+    /**
+     * Returns the reactive API. The API is a dynamic proxy that remains valid across database switches.
+     *
+     * @return the reactive commands API.
+     */
     @Override
     public RedisReactiveCommands<K, V> reactive() {
         return reactive;
@@ -352,11 +438,21 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return new RedisReactiveCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
     }
 
+    /**
+     * Returns the synchronous API. The API is a dynamic proxy that remains valid across database switches.
+     *
+     * @return the synchronous commands API.
+     */
     @Override
     public RedisCommands<K, V> sync() {
         return sync;
     }
 
+    /**
+     * Add a connection state listener. Listeners are migrated during database switches.
+     *
+     * @param listener must not be {@code null}.
+     */
     @Override
     public void addListener(RedisConnectionStateListener listener) {
         doBySharedLock(() -> {
@@ -365,6 +461,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         });
     }
 
+    /**
+     * Remove a connection state listener.
+     *
+     * @param listener must not be {@code null}.
+     */
     @Override
     public void removeListener(RedisConnectionStateListener listener) {
         doBySharedLock(() -> {
@@ -373,26 +474,52 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         });
     }
 
+    /**
+     * Set the command timeout for all database connections.
+     *
+     * @param timeout the timeout, must not be {@code null}.
+     */
     @Override
     public void setTimeout(Duration timeout) {
         databases.values().forEach(db -> db.getConnection().setTimeout(timeout));
     }
 
+    /**
+     * Returns the command timeout.
+     *
+     * @return the timeout.
+     */
     @Override
     public Duration getTimeout() {
         return current.getConnection().getTimeout();
     }
 
+    /**
+     * Dispatch a command to the current database.
+     *
+     * @param command the command, must not be {@code null}.
+     * @param <T> the result type.
+     * @return the dispatched command.
+     */
     @Override
     public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> command) {
         return current.getConnection().dispatch(command);
     }
 
+    /**
+     * Dispatch multiple commands to the current database.
+     *
+     * @param commands the commands, must not be {@code null}.
+     * @return the dispatched commands.
+     */
     @Override
     public Collection<RedisCommand<K, V, ?>> dispatch(Collection<? extends RedisCommand<K, V, ?>> commands) {
         return current.getConnection().dispatch(commands);
     }
 
+    /**
+     * Close the connection. Blocks until all database connections are closed.
+     */
     @Override
     public void close() {
         closeAsync().join();
@@ -410,8 +537,16 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         });
     }
 
+    /**
+     * Close the connection asynchronously. Closes all database connections and cleans up resources.
+     *
+     * @return a {@link CompletableFuture} notified when the operation completes.
+     */
     @Override
     public CompletableFuture<Void> closeAsync() {
+        if (failbackTask != null) {
+            failbackTask.cancel(false);
+        }
         Stream<CompletableFuture<Void>> asyncCloseStream = databases.values().stream().map(RedisDatabaseImpl<C>::closeAsync);
 
         CompletableFuture<Void> closeAllFuture = CompletableFuture.allOf(asyncCloseStream.toArray(CompletableFuture[]::new));
@@ -430,36 +565,69 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         });
     }
 
+    /**
+     * Returns whether the connection is open.
+     *
+     * @return {@code true} if open.
+     */
     @Override
     public boolean isOpen() {
         return current.getConnection().isOpen();
     }
 
+    /**
+     * Returns the client options.
+     *
+     * @return the options.
+     */
     @Override
     public ClientOptions getOptions() {
         return current.getConnection().getOptions();
     }
 
+    /**
+     * Returns the client resources.
+     *
+     * @return the resources.
+     */
     @Override
     public ClientResources getResources() {
         return clientResources;
     }
 
+    /**
+     * Enable or disable auto-flush for all database connections. Default is {@code true}.
+     *
+     * @param autoFlush the auto-flush state.
+     */
     @Override
     public void setAutoFlushCommands(boolean autoFlush) {
         databases.values().forEach(db -> db.getConnection().setAutoFlushCommands(autoFlush));
     }
 
+    /**
+     * Flush outstanding commands on the current database.
+     */
     @Override
     public void flushCommands() {
         current.getConnection().flushCommands();
     }
 
+    /**
+     * Returns whether the connection is in a transaction (MULTI).
+     *
+     * @return {@code true} if in a transaction.
+     */
     @Override
     public boolean isMulti() {
         return current.getConnection().isMulti();
     }
 
+    /**
+     * Add a push listener. Listeners are migrated during database switches.
+     *
+     * @param listener must not be {@code null}.
+     */
     @Override
     public void addListener(PushListener listener) {
         doBySharedLock(() -> {
@@ -468,6 +636,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         });
     }
 
+    /**
+     * Remove a push listener.
+     *
+     * @param listener must not be {@code null}.
+     */
     @Override
     public void removeListener(PushListener listener) {
         doBySharedLock(() -> {
@@ -476,21 +649,43 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         });
     }
 
+    /**
+     * Returns the codec.
+     *
+     * @return the codec.
+     */
     @Override
     public RedisCodec<K, V> getCodec() {
         return codec;
     }
 
+    /**
+     * Returns the current database endpoint.
+     *
+     * @return the current endpoint URI.
+     */
     @Override
     public RedisURI getCurrentEndpoint() {
         return current.getRedisURI();
     }
 
+    /**
+     * Returns all configured database endpoints.
+     *
+     * @return all endpoint URIs.
+     */
     @Override
     public Iterable<RedisURI> getEndpoints() {
         return databases.keySet();
     }
 
+    /**
+     * Switch to a specific database endpoint.
+     *
+     * @param redisURI the database URI, must not be {@code null}.
+     * @throws IllegalArgumentException if the endpoint is unknown.
+     * @throws IllegalStateException if the switch fails or target is unhealthy.
+     */
     @Override
     public void switchTo(RedisURI redisURI) {
         RedisDatabaseImpl<C> target = databases.get(redisURI);
@@ -711,11 +906,23 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         }
     }
 
+    /**
+     * Returns the current database.
+     *
+     * @return the current database.
+     */
     @Override
     public RedisDatabaseImpl<C> getCurrentDatabase() {
         return current;
     }
 
+    /**
+     * Returns the database for the specified endpoint.
+     *
+     * @param redisURI the database URI, must not be {@code null}.
+     * @return the database.
+     * @throws IllegalArgumentException if the endpoint is unknown.
+     */
     @Override
     public RedisDatabaseImpl<C> getDatabase(RedisURI redisURI) {
         RedisDatabaseImpl<C> database = databases.get(redisURI);
@@ -725,6 +932,13 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return database;
     }
 
+    /**
+     * Checks whether the database endpoint is healthy.
+     *
+     * @param endpoint the database URI, must not be {@code null}.
+     * @return {@code true} if healthy.
+     * @throws IllegalArgumentException if the endpoint is unknown.
+     */
     @Override
     public boolean isHealthy(RedisURI endpoint) {
         RedisDatabaseImpl<C> database = databases.get(endpoint);
@@ -735,16 +949,30 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return DatabasePredicates.isHealthyAndCbClosed.test(database);
     }
 
+    /**
+     * Add a database endpoint with the specified weight.
+     *
+     * @param redisURI the database URI, must not be {@code null}.
+     * @param weight the failover weight (higher = higher priority).
+     * @throws UnsupportedOperationException if created without a DatabaseFactory.
+     * @throws IllegalArgumentException if the database already exists.
+     */
     @Override
     public void addDatabase(RedisURI redisURI, float weight) {
         addDatabase(DatabaseConfig.builder(redisURI).weight(weight).build());
     }
 
+    /**
+     * Add a database endpoint with the specified configuration.
+     *
+     * @param databaseConfig the database configuration, must not be {@code null}.
+     * @throws UnsupportedOperationException if created without a DatabaseFactory.
+     * @throws IllegalArgumentException if the database already exists.
+     * @throws RedisConnectionException if connection fails.
+     */
     @Override
     public void addDatabase(DatabaseConfig databaseConfig) {
-        if (databaseConfig == null) {
-            throw new IllegalArgumentException("DatabaseConfig must not be null");
-        }
+        LettuceAssert.notNull(databaseConfig, "DatabaseConfig must not be null");
 
         if (connectionFactory == null) {
             throw new UnsupportedOperationException(
@@ -780,11 +1008,17 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     }
 
+    /**
+     * Remove a database endpoint.
+     *
+     * @param redisURI the database URI, must not be {@code null}.
+     * @throws IllegalArgumentException if the database is not found.
+     * @throws UnsupportedOperationException if removing the current database.
+     */
     @Override
     public void removeDatabase(RedisURI redisURI) {
-        if (redisURI == null) {
-            throw new IllegalArgumentException("RedisURI must not be null");
-        }
+        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
+
         doByExclusiveLock(() -> {
             RedisDatabaseImpl<C> database = null;
             database = databases.get(redisURI);
