@@ -101,7 +101,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                     .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
 
             // When: Create MultiDbClient and connect
-            MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
             waitForEndpoints(connection, 2, 1);
 
@@ -144,7 +144,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
             DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).healthCheckStrategySupplier(supplier).build();
 
             // When: Create MultiDbClient and connect
-            MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
 
             try {
@@ -210,8 +210,8 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
             DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).healthCheckStrategySupplier(supplier2).build();
 
             // When: Create MultiDbClient with different strategies per endpoint
-            MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2),
-                    MultiDbOptions.builder().failbackSupported(false).gracePeriod(0).build());
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2),
+                    MultiDbOptions.builder().failbackSupported(false).gracePeriod(Duration.ZERO).build());
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
 
             try {
@@ -277,7 +277,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
 
             // When: Create MultiDbClient and connect
             MultiDbClient testClient = MultiDbClient.create(Collections.singletonList(databaseConfig),
-                    MultiDbOptions.builder().failbackSupported(false).gracePeriod(0).build());
+                    MultiDbOptions.builder().failbackSupported(false).gracePeriod(Duration.ZERO).build());
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
 
             try {

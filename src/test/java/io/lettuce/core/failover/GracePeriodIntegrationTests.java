@@ -4,12 +4,14 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.awaitility.Durations;
 import org.junit.jupiter.api.*;
 
 import io.lettuce.core.RedisURI;
@@ -52,8 +54,8 @@ class GracePeriodIntegrationTests extends TestSupport {
         DatabaseConfig db2Config = DatabaseConfig.builder(redis2Uri).weight(0.5f)
                 .healthCheckStrategySupplier(PingStrategy.DEFAULT).build();
 
-        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(2000L) // 2 second grace period
-                .failbackCheckInterval(500L) // Check every 500ms
+        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Durations.TWO_SECONDS) // 2 second grace period
+                .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS) // Check every 500ms
                 .build();
 
         multiDbClient = MultiDbClient.create(Arrays.asList(db1Config, db2Config), options);
@@ -123,8 +125,8 @@ class GracePeriodIntegrationTests extends TestSupport {
         DatabaseConfig db2Config = DatabaseConfig.builder(redis2Uri).weight(0.5f)
                 .healthCheckStrategySupplier(PingStrategy.DEFAULT).build();
 
-        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(0L) // No grace period
-                .failbackCheckInterval(500L).build();
+        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Duration.ZERO) // No grace period
+                .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS).build();
 
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(db1Config, db2Config), options);
         StatefulRedisMultiDbConnection<String, String> testConnection = testClient.connect();
@@ -154,16 +156,16 @@ class GracePeriodIntegrationTests extends TestSupport {
     @DisplayName("Should verify grace period configuration is applied")
     void shouldVerifyGracePeriodConfiguration() {
         // Given: Client with custom grace period
-        assertThat(multiDbClient.getMultiDbOptions().getGracePeriod()).isEqualTo(2000L);
+        assertThat(multiDbClient.getMultiDbOptions().getGracePeriod()).isEqualTo(Durations.TWO_SECONDS);
 
         // When: Create client with different grace period
-        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(5000L).build();
+        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Durations.FIVE_SECONDS).build();
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(DatabaseConfig.builder(redis1Uri).weight(1.0f).build(),
                 DatabaseConfig.builder(redis2Uri).weight(0.5f).build()), options);
 
         try {
             // Then: Should have the configured grace period
-            assertThat(testClient.getMultiDbOptions().getGracePeriod()).isEqualTo(5000L);
+            assertThat(testClient.getMultiDbOptions().getGracePeriod()).isEqualTo(Durations.FIVE_SECONDS);
         } finally {
             FastShutdown.shutdown(testClient);
         }
@@ -182,8 +184,8 @@ class GracePeriodIntegrationTests extends TestSupport {
         DatabaseConfig config1 = DatabaseConfig.builder(redis1Uri).weight(1.0f).healthCheckStrategySupplier(supplier).build();
         DatabaseConfig config2 = DatabaseConfig.builder(redis2Uri).weight(0.5f).healthCheckStrategySupplier(supplier).build();
 
-        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(3000L) // 3 second grace period
-                .failbackCheckInterval(500L) // Check every 500ms
+        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Duration.ofSeconds(3)) // 3 second grace period
+                .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS) // Check every 500ms
                 .build();
 
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2), options);
@@ -241,8 +243,8 @@ class GracePeriodIntegrationTests extends TestSupport {
         DatabaseConfig config1 = DatabaseConfig.builder(redis1Uri).weight(1.0f).healthCheckStrategySupplier(supplier).build();
         DatabaseConfig config2 = DatabaseConfig.builder(redis2Uri).weight(0.5f).healthCheckStrategySupplier(supplier).build();
 
-        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(2000L) // 2 second grace period
-                .failbackCheckInterval(500L) // Check every 500ms
+        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Durations.TWO_SECONDS) // 2 second grace period
+                .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS) // Check every 500ms
                 .build();
 
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2), options);

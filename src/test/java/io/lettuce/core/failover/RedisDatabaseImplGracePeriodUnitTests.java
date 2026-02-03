@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.*;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.mockito.Mockito.*;
 
+import java.time.Duration;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,11 +16,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.testcontainers.shaded.org.awaitility.Durations;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
+import io.lettuce.test.MutableClock;
 
 /**
  * Unit tests for grace period functionality in {@link RedisDatabaseImpl}.
@@ -47,6 +51,8 @@ class RedisDatabaseImplGracePeriodUnitTests {
 
     private RedisDatabaseImpl<StatefulRedisConnection<String, String>> database;
 
+    private MutableClock clock;
+
     @BeforeEach
     void setUp() {
         uri = RedisURI.create("redis://dummy:9999");
@@ -60,7 +66,9 @@ class RedisDatabaseImplGracePeriodUnitTests {
         // Setup health check mock
         when(healthCheck.getStatus()).thenReturn(HealthStatus.HEALTHY);
 
-        database = new RedisDatabaseImpl<>(config, connection, endpoint, circuitBreaker, healthCheck);
+        clock = new MutableClock();
+
+        database = new RedisDatabaseImpl<>(config, connection, endpoint, circuitBreaker, healthCheck, clock);
     }
 
     @Nested
@@ -78,7 +86,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
         @DisplayName("Should start grace period with positive duration")
         void shouldStartGracePeriodWithPositiveDuration() {
             // When: Start grace period with 1000ms
-            database.startGracePeriod(1000L);
+            database.startGracePeriod(Durations.ONE_SECOND);
 
             // Then: Database should be in grace period
             assertThat(database.isInGracePeriod()).isTrue();
@@ -88,7 +96,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
         @DisplayName("Should not start grace period with zero duration")
         void shouldNotStartGracePeriodWithZeroDuration() {
             // When: Start grace period with 0ms
-            database.startGracePeriod(0L);
+            database.startGracePeriod(Duration.ZERO);
 
             // Then: Database should not be in grace period
             assertThat(database.isInGracePeriod()).isFalse();
@@ -98,7 +106,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
         @DisplayName("Should not start grace period with negative duration")
         void shouldNotStartGracePeriodWithNegativeDuration() {
             // When: Start grace period with negative duration
-            database.startGracePeriod(-1000L);
+            database.startGracePeriod(Duration.ofMillis(-1000L));
 
             // Then: Database should not be in grace period
             assertThat(database.isInGracePeriod()).isFalse();
@@ -108,11 +116,11 @@ class RedisDatabaseImplGracePeriodUnitTests {
         @DisplayName("Should automatically exit grace period after duration expires")
         void shouldAutomaticallyExitGracePeriodAfterExpiry() throws InterruptedException {
             // When: Start grace period with 100ms
-            database.startGracePeriod(100L);
+            database.startGracePeriod(Durations.ONE_HUNDRED_MILLISECONDS);
             assertThat(database.isInGracePeriod()).isTrue();
 
-            // Wait for grace period to expire
-            Thread.sleep(150L);
+            // Advance the clock by 150ms
+            clock.tick(Duration.ofMillis(150));
 
             // Then: Database should not be in grace period
             assertThat(database.isInGracePeriod()).isFalse();
@@ -126,11 +134,11 @@ class RedisDatabaseImplGracePeriodUnitTests {
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
 
             // When: Start grace period with 100ms
-            database.startGracePeriod(100L);
+            database.startGracePeriod(Durations.ONE_HUNDRED_MILLISECONDS);
             assertThat(database.isInGracePeriod()).isTrue();
 
-            // Wait for grace period to expire
-            Thread.sleep(150L);
+            // Advance the clock by 150ms
+            clock.tick(Duration.ofMillis(150));
 
             // When: Check if in grace period (this triggers the reset logic)
             boolean inGracePeriod = database.isInGracePeriod();
@@ -148,7 +156,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
 
             // When: Start grace period with long duration
-            database.startGracePeriod(10000L);
+            database.startGracePeriod(Durations.TEN_SECONDS);
 
             // Then: Circuit breaker should still be OPEN during grace period
             assertThat(database.isInGracePeriod()).isTrue();
@@ -159,11 +167,11 @@ class RedisDatabaseImplGracePeriodUnitTests {
         @DisplayName("Should allow restarting grace period with new duration")
         void shouldAllowRestartingGracePeriod() {
             // Given: Database is in grace period
-            database.startGracePeriod(10000L);
+            database.startGracePeriod(Durations.TEN_SECONDS);
             assertThat(database.isInGracePeriod()).isTrue();
 
             // When: Restart grace period with new duration
-            database.startGracePeriod(20000L);
+            database.startGracePeriod(Duration.ofSeconds(20));
 
             // Then: Database should still be in grace period
             assertThat(database.isInGracePeriod()).isTrue();
@@ -181,7 +189,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
             // Given: Health check is healthy, circuit breaker is closed, but in grace period
             when(healthCheck.getStatus()).thenReturn(HealthStatus.HEALTHY);
             circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
-            database.startGracePeriod(10000L);
+            database.startGracePeriod(Durations.TEN_SECONDS);
 
             // Then: Database should not be healthy (grace period blocks automatic selection)
             assertThat(database.isHealthy()).isFalse();
@@ -193,11 +201,11 @@ class RedisDatabaseImplGracePeriodUnitTests {
             // Given: Database in grace period
             when(healthCheck.getStatus()).thenReturn(HealthStatus.HEALTHY);
             circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
-            database.startGracePeriod(100L);
+            database.startGracePeriod(Durations.ONE_HUNDRED_MILLISECONDS);
             assertThat(database.isHealthy()).isFalse();
 
-            // When: Wait for grace period to expire
-            Thread.sleep(150L);
+            // Advance the clock by 150ms
+            clock.tick(Duration.ofMillis(150));
 
             // Then: Database should be healthy
             assertThat(database.isHealthy()).isTrue();
@@ -209,7 +217,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
             // Given: Health check is healthy, circuit breaker is closed, in grace period
             when(healthCheck.getStatus()).thenReturn(HealthStatus.HEALTHY);
             circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
-            database.startGracePeriod(10000L);
+            database.startGracePeriod(Durations.TEN_SECONDS);
 
             // Then: Database should be healthy when ignoring grace period (for forced switches)
             assertThat(database.isHealthyIgnoreGracePeriod()).isTrue();
@@ -221,7 +229,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
             // Given: Health check is unhealthy, in grace period
             when(healthCheck.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
             circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
-            database.startGracePeriod(10000L);
+            database.startGracePeriod(Durations.TEN_SECONDS);
 
             // Then: Database should not be healthy even when ignoring grace period
             assertThat(database.isHealthyIgnoreGracePeriod()).isFalse();
@@ -233,7 +241,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
             // Given: Circuit breaker is open, in grace period
             when(healthCheck.getStatus()).thenReturn(HealthStatus.HEALTHY);
             circuitBreaker.transitionTo(CircuitBreaker.State.OPEN);
-            database.startGracePeriod(10000L);
+            database.startGracePeriod(Durations.TEN_SECONDS);
 
             // Then: Database should not be healthy even when ignoring grace period
             assertThat(database.isHealthyIgnoreGracePeriod()).isFalse();
@@ -250,7 +258,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
             assertThat(database.isHealthy()).isTrue();
 
             // When: Enter grace period
-            database.startGracePeriod(10000L);
+            database.startGracePeriod(Durations.TEN_SECONDS);
             // Then: Should not be healthy
             assertThat(database.isHealthy()).isFalse();
 
@@ -289,7 +297,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
 
             when(healthCheck1.getStatus()).thenReturn(HealthStatus.HEALTHY);
             circuitBreaker1.transitionTo(CircuitBreaker.State.CLOSED);
-            redis1.startGracePeriod(10000L);
+            redis1.startGracePeriod(Durations.TEN_SECONDS);
 
             // And: Low weight database (redis2) is healthy
             RedisURI redis2Uri = RedisURI.create("redis://dummy:9998");
@@ -326,17 +334,17 @@ class RedisDatabaseImplGracePeriodUnitTests {
             CircuitBreakerImpl circuitBreaker1 = new CircuitBreakerImpl(CircuitBreaker.CircuitBreakerConfig.builder().build());
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> redis1 = new RedisDatabaseImpl<>(config1, connection1,
-                    endpoint1, circuitBreaker1, healthCheck1);
+                    endpoint1, circuitBreaker1, healthCheck1, clock);
 
             when(healthCheck1.getStatus()).thenReturn(HealthStatus.HEALTHY);
             circuitBreaker1.transitionTo(CircuitBreaker.State.CLOSED);
-            redis1.startGracePeriod(100L);
+            redis1.startGracePeriod(Durations.ONE_HUNDRED_MILLISECONDS);
 
             // Then: redis1 should not be healthy initially
             assertThat(redis1.isHealthy()).isFalse();
 
-            // When: Wait for grace period to expire
-            Thread.sleep(150L);
+            // Advance the clock by 150ms
+            clock.tick(Duration.ofMillis(150));
 
             // Then: redis1 should be healthy (grace period expired)
             assertThat(redis1.isHealthy()).isTrue();

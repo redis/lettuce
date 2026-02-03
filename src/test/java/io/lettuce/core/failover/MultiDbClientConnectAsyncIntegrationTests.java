@@ -8,6 +8,7 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -384,7 +385,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         DatabaseConfig db1 = DatabaseConfig.builder(MultiDbTestSupport.URI1).weight(1.0f).build();
         DatabaseConfig db2 = DatabaseConfig.builder(MultiDbTestSupport.URI2).weight(1.0f).build();
 
-        MultiDbClient equalWeightClient = MultiDbClient.create(java.util.Arrays.asList(db1, db2));
+        MultiDbClient equalWeightClient = MultiDbClient.create(Arrays.asList(db1, db2));
 
         try {
             MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = equalWeightClient
@@ -413,7 +414,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         DatabaseConfig validDb = DatabaseConfig.builder(MultiDbTestSupport.URI1).weight(1.0f).build();
         DatabaseConfig invalidDb = DatabaseConfig.builder(RedisURI.create("redis://localhost:9999")).weight(0.5f).build();
 
-        MultiDbClient partialClient = MultiDbClient.create(java.util.Arrays.asList(validDb, invalidDb));
+        MultiDbClient partialClient = MultiDbClient.create(Arrays.asList(validDb, invalidDb));
 
         try {
             MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = partialClient.connectAsync(UTF8);
@@ -443,7 +444,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         DatabaseConfig invalidDb1 = DatabaseConfig.builder(RedisURI.create("redis://localhost:9998")).weight(1.0f).build();
         DatabaseConfig invalidDb2 = DatabaseConfig.builder(RedisURI.create("redis://localhost:9999")).weight(0.5f).build();
 
-        MultiDbClient failClient = MultiDbClient.create(java.util.Arrays.asList(invalidDb1, invalidDb2));
+        MultiDbClient failClient = MultiDbClient.create(Arrays.asList(invalidDb1, invalidDb2));
 
         try {
             MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = failClient.connectAsync(UTF8);
@@ -552,7 +553,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
             throws InterruptedException, ExecutionException, TimeoutException {
         // Create a client with invalid endpoint
         DatabaseConfig invalidDb = DatabaseConfig.builder(RedisURI.create("redis://localhost:9999")).weight(1.0f).build();
-        MultiDbClient failClient = MultiDbClient.create(java.util.Arrays.asList(invalidDb));
+        MultiDbClient failClient = MultiDbClient.create(Arrays.asList(invalidDb));
 
         try {
             MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = failClient.connectAsync(UTF8);

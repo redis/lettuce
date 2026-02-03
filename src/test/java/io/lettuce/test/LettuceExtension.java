@@ -180,7 +180,7 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
             return instance;
         }
 
-        // Use qualified key for storage to support multiple instances of the same type
+        // Use Class key for unqualified singletons; composite key suffixed with qualifier for qualified instances.
         String storeKey = parameter.getType().getName() + qualifier;
         return store.getOrComputeIfAbsent(storeKey, it -> doGetInstance(parameterizedType, qualifier));
     }
