@@ -9,13 +9,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.lettuce.core.AbstractRedisClient;
@@ -35,6 +39,7 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.RedisNoHealthyDatabaseException;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
+import io.lettuce.core.failover.event.AllDatabasesUnhealthyEvent;
 import io.lettuce.core.failover.event.DatabaseSwitchEvent;
 import io.lettuce.core.failover.event.SwitchReason;
 import io.lettuce.core.failover.health.HealthStatus;
@@ -45,6 +50,7 @@ import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
+import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -98,6 +104,12 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     private final Set<Consumer<Closeable>> onCloseListeners = ConcurrentHashMap.newKeySet();
 
     private final ScheduledFuture<?> failbackTask;
+
+    /**
+     * Manages failover retry state when no healthy database is available. Encapsulates the retry task scheduling, attempt
+     * counting, and event publishing with a lock-free, thread-safe interface.
+     */
+    private final FailoverRetryState failoverRetryState = new FailoverRetryState();
 
     /**
      * Creates a new multi-database connection with default options.
@@ -285,6 +297,9 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         RedisDatabaseImpl<C> selectedDatabase = getNextHealthyDatabase(fromDb);
 
         if (selectedDatabase != null) {
+            // Reset the no-healthy-db counter on successful failover
+            failoverRetryState.resetAttempts();
+
             if (logger.isInfoEnabled()) {
                 logger.info("Initiating failover from {} to {} (attempt: {})", fromDb.getId(), selectedDatabase.getId(),
                         recursionAttempt);
@@ -307,13 +322,41 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 failoverFromRecursive(fromDb, reason, recursionAttempt);
             }
         } else {
-            // No healthy database found, stay on the current one
-            // TODO: manage max attempts to failover, to throw some proper exception to notify
-            // user that failovers are not recovering
-            logger.info("No healthy database found, staying on current database {}", fromDb.getId());
+            handleNoHealthyDatabaseFound(reason);
         }
     }
 
+    /**
+     * Handles the case when no healthy database is found during failover. Publishes an event to notify users and schedules a
+     * retry with configurable delay. Retries indefinitely until a healthy database is found.
+     * <p>
+     * This method uses a lock-free approach to ensure only one retry task is scheduled at a time, preventing multiple
+     * concurrent retry attempts from different threads.
+     *
+     * @param reason the reason for the failover
+     */
+    private void handleNoHealthyDatabaseFound(SwitchReason reason) {
+
+        failoverRetryState.tryScheduleRetry(() -> failoverFrom(null, reason),
+                multiDbOptions.getDelayInBetweenFailoverAttempts(), clientResources.eventExecutorGroup());
+    }
+
+    /**
+     * Publishes an {@link AllDatabasesUnhealthyEvent} to the event bus when all databases are unhealthy.
+     *
+     * @param failedAttempts the number of consecutive failed failover attempts
+     */
+    private void publishAllDatabasesUnhealthyEvent(int failedAttempts) {
+        clientResources.eventBus().publish(new AllDatabasesUnhealthyEvent(failedAttempts,
+                databases.values().stream().map(db -> new ImmutableRedisURI(db.getRedisURI())).collect(Collectors.toList()),
+                this));
+    }
+
+    /**
+     *
+     * @param dbToExclude - if null, no database will be excluded
+     * @return
+     */
     private RedisDatabaseImpl<C> getNextHealthyDatabase(RedisDatabaseImpl<C> dbToExclude) {
         return databases.values().stream().filter(RedisDatabaseImpl::isHealthy).filter(DatabasePredicates.isNot(dbToExclude))
                 .max(DatabaseComparators.byWeight).orElse(null);
@@ -1062,6 +1105,59 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         RedisURI fromUri;
 
         RedisURI toUri;
+
+    }
+
+    /**
+     * Thread-safe holder for failover retry state. Manages the scheduled retry task and tracks consecutive failed attempts.
+     * Uses a lock-free approach to ensure only one retry task is scheduled at a time.
+     */
+    private class FailoverRetryState {
+
+        private final AtomicInteger attempts = new AtomicInteger(0);
+
+        private final AtomicReference<Runnable> scheduledTask = new AtomicReference<>();
+
+        /**
+         * Attempts to schedule a retry task after the given delay.
+         * <p>
+         * A retry is scheduled only if there is no retry task currently scheduled. If scheduling succeeds:
+         * <ul>
+         * <li>The retry attempt counter is incremented</li>
+         * <li>An {@link AllDatabasesUnhealthyEvent} is published with the updated attempt count</li>
+         * <li>The task is scheduled for execution using the provided executor</li>
+         * </ul>
+         * </p>
+         * <p>
+         * When the scheduled task starts executing, it clears the scheduled-task marker, allowing subsequent retries to be
+         * scheduled.
+         * </p>
+         *
+         * @param retryAction the action to execute when the retry task runs
+         * @param delay the delay before executing the retry task
+         * @param executor the executor used to schedule the retry task
+         */
+        void tryScheduleRetry(Runnable retryAction, Duration delay, ScheduledExecutorService executor) {
+            // Create the task - clears the scheduled task when it starts, allowing next retry to be scheduled
+            Runnable task = () -> {
+                scheduledTask.set(null);
+                retryAction.run();
+            };
+
+            // Try to claim the slot atomically; only schedule if we successfully claimed it
+            if (scheduledTask.compareAndSet(null, task)) {
+                int attemptCount = attempts.incrementAndGet();
+                publishAllDatabasesUnhealthyEvent(attemptCount);
+                executor.schedule(task, delay.toMillis(), TimeUnit.MILLISECONDS);
+            }
+        }
+
+        /**
+         * Resets the attempt counter to zero. Called when a successful failover occurs.
+         */
+        void resetAttempts() {
+            attempts.set(0);
+        }
 
     }
 
