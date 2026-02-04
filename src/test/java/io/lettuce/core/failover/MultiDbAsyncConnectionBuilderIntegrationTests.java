@@ -396,7 +396,8 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
                             .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(1)).build()).build())
                     .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
 
-            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2), MultiDbOptions.builder()
+                    .initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE).build());
             forCleanup = testClient;
 
             // When/Then: Connect should fail with RedisConnectionException
