@@ -36,6 +36,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.event.DatabaseSwitchEvent;
 import io.lettuce.core.failover.event.SwitchReason;
+import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
@@ -255,14 +256,27 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         }
     }
 
+    /**
+     * Maximum number of failover recursion attempts to prevent infinite loops and stack overflow.
+     * <p>
+     * This limit covers both:
+     * <ul>
+     * <li>Retry attempts when a switch operation fails</li>
+     * <li>Cascading failovers when the newly selected database becomes unhealthy during the switch</li>
+     * </ul>
+     * <p>
+     * The value of 10 is chosen as a safety net to prevent potential infinite loops in pathological scenarios where all
+     * databases are unhealthy or rapidly changing state. In normal operation, failover should succeed within 1-2 attempts.
+     */
+    private static final int MAX_FAILOVER_RECURSION = 10;
+
     private void failoverFrom(RedisDatabaseImpl<C> fromDb, SwitchReason reason) {
         failoverFromRecursive(fromDb, reason, 0);
     }
 
     private void failoverFromRecursive(RedisDatabaseImpl<C> fromDb, SwitchReason reason, int recursionAttempt) {
-        int maxFailoverAttempts = multiDbOptions.getMaxFailoverAttempts();
-        if (maxFailoverAttempts <= recursionAttempt++) {
-            logger.warn("Max failover attempts ({}) reached, staying on current database {}", maxFailoverAttempts,
+        if (MAX_FAILOVER_RECURSION <= recursionAttempt++) {
+            logger.warn("Max failover attempts ({}) reached, staying on current database {}", MAX_FAILOVER_RECURSION,
                     current.getId());
             return;
         }
