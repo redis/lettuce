@@ -146,13 +146,13 @@ class MultiDbOptionsUnitTests {
     class GracePeriodConfigurationTests {
 
         @Test
-        @DisplayName("Should have default grace period of 30 seconds (30000ms)")
+        @DisplayName("Should have default grace period of 60 seconds (60000ms)")
         void shouldHaveDefaultGracePeriod() {
             // When: Build with defaults
             MultiDbOptions options = MultiDbOptions.builder().build();
 
             // Then: Grace period should be 30000ms (30 seconds)
-            assertThat(options.getGracePeriod()).isEqualTo(Duration.ofSeconds(30));
+            assertThat(options.getGracePeriod()).isEqualTo(Duration.ofSeconds(60));
         }
 
         @Test

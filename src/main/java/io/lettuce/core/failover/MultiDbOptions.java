@@ -84,7 +84,7 @@ public class MultiDbOptions {
         private static final Duration MAX_INTERVAL = Duration.ofMillis(Long.MAX_VALUE);
 
         /** Default grace period duration. */
-        private static final Duration GRACE_PERIOD_DEFAULT = Duration.ofSeconds(30);
+        private static final Duration GRACE_PERIOD_DEFAULT = Duration.ofSeconds(60);
 
         /** Whether automatic failback to higher-priority databases is supported. */
         private boolean failbackSupported = true;
