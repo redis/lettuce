@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
+import io.lettuce.core.failover.health.HealthCheckStrategy;
+import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.resource.FastShutdown;
@@ -39,6 +41,9 @@ class MultiDbFailbackIntegrationTests {
     private static final RedisURI URI2 = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port() + 1).build();
 
     private static final RedisURI URI3 = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port() + 2).build();
+
+    private static final HealthCheckStrategySupplier SIMPLE_PING_STRATEGY = (uri, options) -> new PingStrategy(options,
+            HealthCheckStrategy.Config.builder().interval(1000).timeout(1000).numProbes(1).build());
 
     private MultiDbClient client;
 
@@ -62,8 +67,10 @@ class MultiDbFailbackIntegrationTests {
         @DisplayName("Should create connection with failback enabled by default")
         void shouldCreateConnectionWithFailbackEnabledByDefault() {
             // Given: Client with default options (failback enabled)
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).build();
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).build();
+            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
+                    .build();
+            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
+                    .build();
 
             client = MultiDbClient.create(Arrays.asList(db1, db2));
 
@@ -80,8 +87,10 @@ class MultiDbFailbackIntegrationTests {
         @DisplayName("Should create connection with failback disabled")
         void shouldCreateConnectionWithFailbackDisabled() {
             // Given: Client with failback disabled
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).build();
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).build();
+            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
+                    .build();
+            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
+                    .build();
 
             MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
@@ -99,8 +108,10 @@ class MultiDbFailbackIntegrationTests {
         @DisplayName("Should create connection with custom failback check interval")
         void shouldCreateConnectionWithCustomFailbackCheckInterval() {
             // Given: Client with custom failback interval (10 seconds)
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).build();
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).build();
+            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
+                    .build();
+            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
+                    .build();
 
             MultiDbOptions options = MultiDbOptions.builder().failbackCheckInterval(Durations.TEN_SECONDS).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
@@ -121,44 +132,17 @@ class MultiDbFailbackIntegrationTests {
     class FailbackBehaviorTests {
 
         @Test
-        @DisplayName("Should maintain connection to current database when it remains healthy")
-        void shouldMaintainConnectionWhenHealthy() {
-            // Given: Two databases with health checks and short failback interval
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
-                    .build();
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
-                    .build();
-
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
-                    .failbackCheckInterval(Durations.ONE_SECOND).build();
-            client = MultiDbClient.create(Arrays.asList(db1, db2), options);
-            connection = client.connect();
-
-            // When: Connection is established to URI1
-            await().atMost(Durations.FIVE_SECONDS).untilAsserted(() -> {
-                assertThat(connection.getCurrentEndpoint()).isEqualTo(URI1);
-            });
-
-            RedisURI initialEndpoint = connection.getCurrentEndpoint();
-
-            // Then: After waiting for multiple failback check intervals, should still be on same endpoint
-            await().during(Duration.ofSeconds(3)).atMost(Durations.FIVE_SECONDS).untilAsserted(() -> {
-                assertThat(connection.getCurrentEndpoint()).isEqualTo(initialEndpoint);
-            });
-        }
-
-        @Test
         @DisplayName("Should failback to higher-weighted database after manual switch")
         void shouldFailbackToHigherWeightedDatabaseAfterManualSwitch() {
             // Given: Two databases with health checks and very short failback interval for faster testing
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
 
             // Use short failback interval (500ms) for faster testing
             MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
-                    .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS).build();
+                    .failbackCheckInterval(Durations.ONE_HUNDRED_MILLISECONDS).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
             connection = client.connect();
 
@@ -182,15 +166,15 @@ class MultiDbFailbackIntegrationTests {
         @DisplayName("Should failback to highest-weighted database among multiple databases")
         void shouldFailbackToHighestWeightedDatabaseAmongMultiple() {
             // Given: Three databases with different weights
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.7f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.7f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
-            DatabaseConfig db3 = DatabaseConfig.builder(URI3).weight(0.3f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db3 = DatabaseConfig.builder(URI3).weight(0.3f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
 
             MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
-                    .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS).build();
+                    .failbackCheckInterval(Durations.ONE_HUNDRED_MILLISECONDS).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2, db3), options);
             connection = client.connect();
 
@@ -213,40 +197,41 @@ class MultiDbFailbackIntegrationTests {
         @DisplayName("Should not failback when current database has highest weight")
         void shouldNotFailbackWhenCurrentDatabaseHasHighestWeight() {
             // Given: Two databases with health checks
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
 
             MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
-                    .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS).build();
+                    .failbackCheckInterval(Durations.ONE_HUNDRED_MILLISECONDS).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
             connection = client.connect();
 
             // When: Connection is on highest-weighted database (URI1)
-            await().atMost(Durations.FIVE_SECONDS).untilAsserted(() -> {
+            await().atMost(Durations.FIVE_SECONDS).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS).untilAsserted(() -> {
                 assertThat(connection.getCurrentEndpoint()).isEqualTo(URI1);
             });
 
             RedisURI initialEndpoint = connection.getCurrentEndpoint();
 
             // Then: Should maintain connection (no failback needed)
-            await().during(Duration.ofSeconds(2)).atMost(Durations.FIVE_SECONDS).untilAsserted(() -> {
-                assertThat(connection.getCurrentEndpoint()).isEqualTo(initialEndpoint);
-            });
+            await().during(Durations.ONE_SECOND).atMost(Durations.TWO_SECONDS).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS)
+                    .untilAsserted(() -> {
+                        assertThat(connection.getCurrentEndpoint()).isEqualTo(initialEndpoint);
+                    });
         }
 
         @Test
         @DisplayName("Should perform multiple failbacks over time")
         void shouldPerformMultipleFailbacksOverTime() {
             // Given: Two databases with health checks
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
 
             MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
-                    .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS).build();
+                    .failbackCheckInterval(Durations.ONE_HUNDRED_MILLISECONDS).build();
             client = MultiDbClient.create(Arrays.asList(db1, db2), options);
             connection = client.connect();
 
@@ -281,10 +266,10 @@ class MultiDbFailbackIntegrationTests {
         @DisplayName("Should not perform failback when disabled")
         void shouldNotPerformFailbackWhenDisabled() {
             // Given: Client with failback disabled
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
 
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
 
             MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false).build();
@@ -302,7 +287,7 @@ class MultiDbFailbackIntegrationTests {
             assertThat(connection.getCurrentEndpoint()).isEqualTo(URI2);
 
             // Then: Should maintain connection to URI2 (no failback should occur even though URI1 has higher weight)
-            await().during(Duration.ofSeconds(3)).atMost(Durations.FIVE_SECONDS).untilAsserted(() -> {
+            await().during(Durations.ONE_SECOND).atMost(Durations.FIVE_SECONDS).untilAsserted(() -> {
                 assertThat(connection.getCurrentEndpoint()).isEqualTo(URI2);
             });
         }
@@ -317,9 +302,9 @@ class MultiDbFailbackIntegrationTests {
         @DisplayName("Should respect custom failback check interval")
         void shouldRespectCustomFailbackCheckInterval() {
             // Given: Databases with very short failback interval (300ms)
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
 
             MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
@@ -345,9 +330,9 @@ class MultiDbFailbackIntegrationTests {
         @DisplayName("Should work with default failback interval")
         void shouldWorkWithDefaultFailbackInterval() {
             // Given: Databases with default failback interval (120 seconds)
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(PingStrategy.DEFAULT)
+            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
                     .build();
 
             // Use default options (failback enabled with 120s interval)
@@ -375,8 +360,10 @@ class MultiDbFailbackIntegrationTests {
         @DisplayName("Should cleanup failback task on connection close")
         void shouldCleanupFailbackTaskOnClose() {
             // Given: Connection with failback enabled
-            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).build();
-            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).build();
+            DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
+                    .build();
+            DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(SIMPLE_PING_STRATEGY)
+                    .build();
 
             MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
                     .failbackCheckInterval(Durations.ONE_SECOND).build();

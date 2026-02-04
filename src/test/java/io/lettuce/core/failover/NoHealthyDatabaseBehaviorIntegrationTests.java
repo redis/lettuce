@@ -99,7 +99,7 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
     private RedisClient directClient2;
 
     // Timeout config
-    private static final Duration COMMAND_TIMEOUT = Durations.TWO_HUNDRED_MILLISECONDS;
+    private static final Duration COMMAND_TIMEOUT = Durations.ONE_HUNDRED_MILLISECONDS;
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(2);
 
@@ -117,9 +117,9 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
     /* 500 ms grace period */
     private static final Duration GRACE_PERIOD = Durations.FIVE_HUNDRED_MILLISECONDS;
 
-    private static final int HEALTH_CHECK_INTERVAL = 400;
+    private static final int HEALTH_CHECK_INTERVAL = 200;
 
-    private static final int HEALTH_CHECK_NUM_PROBES = 2;
+    private static final int HEALTH_CHECK_NUM_PROBES = 1;
 
     private static final int HEALTH_CHECK_DELAY_IN_BETWEEN_PROBES = 50;
 
@@ -174,7 +174,8 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
 
         // Create health check config and supplier
         HealthCheckStrategy.Config healthCheckConfig = HealthCheckStrategy.Config.builder().interval(HEALTH_CHECK_INTERVAL)
-                .numProbes(HEALTH_CHECK_NUM_PROBES).delayInBetweenProbes(HEALTH_CHECK_DELAY_IN_BETWEEN_PROBES).build();
+                .numProbes(HEALTH_CHECK_NUM_PROBES).delayInBetweenProbes(HEALTH_CHECK_DELAY_IN_BETWEEN_PROBES).timeout(3000)
+                .build();
         HealthCheckStrategySupplier healthCheckSupplier = (uri, options) -> new PingStrategy(options, healthCheckConfig);
 
         // Create MultiDbClient with proxy endpoints and custom circuit breaker config

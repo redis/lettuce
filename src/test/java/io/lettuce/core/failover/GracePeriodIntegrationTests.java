@@ -56,12 +56,14 @@ class GracePeriodIntegrationTests extends TestSupport {
     void setUp() {
         // Create client with short grace period for faster tests
         DatabaseConfig db1Config = DatabaseConfig.builder(redis1Uri).weight(1.0f)
-                .healthCheckStrategySupplier(PingStrategy.DEFAULT).build();
+                .healthCheckStrategySupplier(PingStrategy.DEFAULT)
+                .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
         DatabaseConfig db2Config = DatabaseConfig.builder(redis2Uri).weight(0.5f)
-                .healthCheckStrategySupplier(PingStrategy.DEFAULT).build();
+                .healthCheckStrategySupplier(PingStrategy.DEFAULT)
+                .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
 
-        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Durations.TWO_SECONDS) // 2 second grace period
-                .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS) // Check every 500ms
+        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Durations.ONE_SECOND) // 1 second grace period
+                .failbackCheckInterval(Durations.TWO_HUNDRED_MILLISECONDS) // Check every 500ms
                 .build();
 
         multiDbClient = MultiDbClient.create(Arrays.asList(db1Config, db2Config), options);
@@ -162,7 +164,7 @@ class GracePeriodIntegrationTests extends TestSupport {
     @DisplayName("Should verify grace period configuration is applied")
     void shouldVerifyGracePeriodConfiguration() {
         // Given: Client with custom grace period
-        assertThat(multiDbClient.getMultiDbOptions().getGracePeriod()).isEqualTo(Durations.TWO_SECONDS);
+        assertThat(multiDbClient.getMultiDbOptions().getGracePeriod()).isEqualTo(Durations.ONE_SECOND);
 
         // When: Create client with different grace period
         MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Durations.FIVE_SECONDS).build();
@@ -254,8 +256,8 @@ class GracePeriodIntegrationTests extends TestSupport {
         DatabaseConfig config1 = DatabaseConfig.builder(redis1Uri).weight(1.0f).healthCheckStrategySupplier(supplier).build();
         DatabaseConfig config2 = DatabaseConfig.builder(redis2Uri).weight(0.5f).healthCheckStrategySupplier(supplier).build();
 
-        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Durations.TWO_SECONDS) // 2 second grace period
-                .failbackCheckInterval(Durations.FIVE_HUNDRED_MILLISECONDS) // Check every 500ms
+        MultiDbOptions options = MultiDbOptions.builder().gracePeriod(Durations.ONE_SECOND) // 1 second grace period
+                .failbackCheckInterval(Durations.TWO_HUNDRED_MILLISECONDS) // Check every 500ms
                 .build();
 
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2), options);

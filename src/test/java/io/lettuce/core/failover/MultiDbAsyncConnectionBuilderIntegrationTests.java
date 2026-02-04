@@ -423,7 +423,7 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             // Given: Highest weighted endpoint has hanging health check, second is healthy
             CountDownLatch hangLatch = new CountDownLatch(1);
             HealthCheckStrategySupplier hangingSupplier = (uri, options) -> new TestHealthCheckStrategy(
-                    HealthCheckStrategy.Config.builder().interval(100).timeout(5000).numProbes(1).build(), endpoint -> {
+                    HealthCheckStrategy.Config.builder().interval(100).timeout(2000).numProbes(1).build(), endpoint -> {
                         try {
                             // Hang indefinitely
                             hangLatch.await();

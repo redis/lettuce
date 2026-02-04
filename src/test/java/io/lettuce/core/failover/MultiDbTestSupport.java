@@ -15,6 +15,9 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
+import io.lettuce.core.failover.health.HealthCheckStrategy;
+import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
+import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.test.settings.TestSettings;
 
 import static io.lettuce.core.failover.health.HealthCheckStrategySupplier.NO_HEALTH_CHECK;
@@ -94,8 +97,12 @@ public class MultiDbTestSupport extends TestSupport {
     public static List<DatabaseConfig> getDatabaseConfigs(RedisURI... URIs) {
         float weight = 1.0f;
         List<DatabaseConfig> endpoints = new ArrayList<>();
+        // Simple ping strategy for testing
+        HealthCheckStrategySupplier simplePingStrategy = (uri, options) -> new PingStrategy(options,
+                HealthCheckStrategy.Config.builder().interval(1000).timeout(1000).numProbes(1).build());
+
         for (RedisURI uri : URIs) {
-            endpoints.add(DatabaseConfig.builder(uri).weight(weight).build());
+            endpoints.add(DatabaseConfig.builder(uri).weight(weight).healthCheckStrategySupplier(simplePingStrategy).build());
             weight /= 2;
         }
         return endpoints;
@@ -105,9 +112,13 @@ public class MultiDbTestSupport extends TestSupport {
             CircuitBreaker.CircuitBreakerConfig circuitBreakerConfig, RedisURI... URIs) {
         float weight = 1.0f;
         List<DatabaseConfig> endpoints = new ArrayList<>();
+        // Simple ping strategy for testing
+        HealthCheckStrategySupplier simplePingStrategy = (uri, options) -> new PingStrategy(options,
+                HealthCheckStrategy.Config.builder().interval(1000).timeout(1000).numProbes(1).build());
+
         for (RedisURI uri : URIs) {
             endpoints.add(DatabaseConfig.builder(uri).weight(weight).circuitBreakerConfig(circuitBreakerConfig)
-                    .clientOptions(clientOptions).build());
+                    .clientOptions(clientOptions).healthCheckStrategySupplier(simplePingStrategy).build());
             weight /= 2;
         }
         return endpoints;
