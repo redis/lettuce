@@ -21,10 +21,13 @@ public class MultiDbOptions {
 
     private final Duration gracePeriod;
 
+    private final InitializationPolicy initializationPolicy;
+
     private MultiDbOptions(Builder builder) {
         this.failbackSupported = builder.failbackSupported;
         this.failbackCheckInterval = builder.failbackCheckInterval;
         this.gracePeriod = builder.gracePeriod;
+        this.initializationPolicy = builder.initializationPolicy;
     }
 
     /**
@@ -43,6 +46,15 @@ public class MultiDbOptions {
      */
     public Duration getFailbackCheckInterval() {
         return failbackCheckInterval;
+    }
+
+    /**
+     * Returns the initialization policy.
+     *
+     * @return the initialization policy
+     */
+    public InitializationPolicy getInitializationPolicy() {
+        return initializationPolicy;
     }
 
     /**
@@ -93,6 +105,8 @@ public class MultiDbOptions {
 
         private Duration gracePeriod = GRACE_PERIOD_DEFAULT;
 
+        private InitializationPolicy initializationPolicy = InitializationPolicy.BuiltIn.MAJORITY_AVAILABLE;
+
         private Builder() {
         }
 
@@ -134,6 +148,18 @@ public class MultiDbOptions {
          */
         public Builder gracePeriod(Duration gracePeriod) {
             this.gracePeriod = gracePeriod;
+            return this;
+        }
+
+        /**
+         * Sets the initialization policy.
+         *
+         * @param initializationPolicy the initialization policy
+         * @return this builder
+         */
+        public Builder initializationPolicy(InitializationPolicy initializationPolicy) {
+            LettuceAssert.notNull(initializationPolicy, "initializationPolicy must not be null");
+            this.initializationPolicy = initializationPolicy;
             return this;
         }
 

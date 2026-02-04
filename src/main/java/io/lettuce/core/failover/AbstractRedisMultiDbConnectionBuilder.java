@@ -18,6 +18,8 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.failover.InitializationPolicy.Decision;
+import io.lettuce.core.failover.InitializationPolicy.InitializationContext;
 import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthCheckStrategy;
@@ -60,6 +62,8 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
 
     protected final MultiDbOptions multiDbOptions;
 
+    protected final InitializationPolicy initializationPolicy;
+
     /**
      * Creates a new {@link AbstractRedisMultiDbConnectionBuilder}.
      *
@@ -74,6 +78,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
         this.client = client;
         this.codec = codec;
         this.multiDbOptions = multiDbOptions;
+        this.initializationPolicy = multiDbOptions.getInitializationPolicy();
     }
 
     /**
@@ -181,6 +186,19 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                     logger.error("Error while finding initial db candidate", e);
                     connectionFuture
                             .completeExceptionally(new RedisConnectionException("Error while finding initial db candidate", e));
+                }
+                InitializationContext ctx = new ConnectionInitializationContext(databaseFutures, healthStatusFutures);
+                Decision decision = initializationPolicy.evaluate(ctx);
+                switch (decision) {
+                    case SUCCESS:
+                        break;
+                    case CONTINUE:
+                        selected = null;
+                        break;
+                    case FAIL:
+                        connectionFuture.completeExceptionally(
+                                new RedisConnectionException("Initialization failed due to initialization policy: " + ctx));
+                        break;
                 }
                 try {
                     if (selected != null) {

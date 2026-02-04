@@ -958,7 +958,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         if (database == null) {
             throw new IllegalArgumentException("Unknown endpoint: " + endpoint);
         }
-
         return database.isHealthy();
     }
 
