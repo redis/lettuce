@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.event.Event;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 
@@ -17,6 +18,7 @@ import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
  * @author Ivo Gaydajiev
  * @since 7.4
  */
+@Experimental
 public class AllDatabasesUnhealthyEvent implements Event {
 
     private final int failedAttempts;
