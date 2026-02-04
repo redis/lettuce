@@ -33,6 +33,7 @@ import io.lettuce.core.SocketOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.failover.api.InitializationPolicy;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheckStrategy;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;

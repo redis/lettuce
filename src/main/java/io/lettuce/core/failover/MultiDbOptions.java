@@ -2,6 +2,7 @@ package io.lettuce.core.failover;
 
 import java.time.Duration;
 
+import io.lettuce.core.failover.api.InitializationPolicy;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**

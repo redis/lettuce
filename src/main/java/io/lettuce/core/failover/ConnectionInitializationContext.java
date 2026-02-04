@@ -5,7 +5,8 @@ import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.AbstractRedisMultiDbConnectionBuilder.DatabaseFutureMap;
-import io.lettuce.core.failover.InitializationPolicy.Decision;
+import io.lettuce.core.failover.api.InitializationPolicy;
+import io.lettuce.core.failover.api.InitializationPolicy.Decision;
 import io.lettuce.core.failover.health.HealthStatus;
 
 class ConnectionInitializationContext implements InitializationPolicy.InitializationContext {

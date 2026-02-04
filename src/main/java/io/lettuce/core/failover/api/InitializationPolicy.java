@@ -1,4 +1,6 @@
-package io.lettuce.core.failover;
+package io.lettuce.core.failover.api;
+
+import io.lettuce.core.annotations.Experimental;
 
 /**
  * Interface for initialization policies.
@@ -15,7 +17,8 @@ package io.lettuce.core.failover;
  * @author Ali Takavci
  * @since 7.4
  */
-interface InitializationPolicy {
+@Experimental
+public interface InitializationPolicy {
 
     enum Decision {
         CONTINUE, SUCCESS, FAIL
@@ -35,6 +38,16 @@ interface InitializationPolicy {
 
     /**
      * Built-in initialization policies.
+     * <p>
+     * The policy is evaluated based on the completion status of database connection futures, and the decision to continue
+     * waiting, succeed, or fail is based on the number of available, pending, and failed connections.
+     * </p>
+     * Built-in policies are:
+     * <ul>
+     * <li>{@link BuiltIn#ALL_AVAILABLE} - All databases need to be available</li>
+     * <li>{@link BuiltIn#MAJORITY_AVAILABLE} - Majority of databases need to be available</li>
+     * <li>{@link BuiltIn#ONE_AVAILABLE} - At least one database needs to be available</li>
+     * </ul>
      */
     class BuiltIn {
 

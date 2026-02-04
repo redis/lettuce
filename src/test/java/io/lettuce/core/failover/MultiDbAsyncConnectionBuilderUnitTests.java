@@ -345,7 +345,7 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, new AtomicReference<>());
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures);
 
             assertThat(selected).isNotNull();
             assertThat(selected).isSameAs(db1);
@@ -368,7 +368,7 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, new AtomicReference<>());
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures);
 
             assertThat(selected).isNull();
         }
@@ -388,7 +388,7 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1);
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, new AtomicReference<>());
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures);
 
             assertThat(selected).isNull();
         }
@@ -412,7 +412,7 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, new AtomicReference<>());
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures);
 
             assertThat(selected).isNotNull();
             assertThat(selected).isSameAs(db2);
@@ -430,22 +430,54 @@ class MultiDbAsyncConnectionBuilderUnitTests {
 
             Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures = new HashMap<>();
             healthStatusFutures.put(uri1, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
+            healthStatusFutures.put(uri2, CompletableFuture.completedFuture(HealthStatus.UNHEALTHY));
+
+            List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
+
+            // First call should select db1 (highest weighted)
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected1 = regularBuilder
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures);
+
+            healthStatusFutures.put(uri2, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
+
+            // Second call should also return db1 (same candidate, as state hasn't changed)
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected2 = regularBuilder
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures);
+
+            assertThat(selected1).isNotNull();
+            assertThat(selected1).isSameAs(db1);
+            assertThat(selected2).isNotNull();
+            assertThat(selected2).isSameAs(db1);
+        }
+
+        @Test
+        @DisplayName("Should consistently return the most weighted healthy candidate when called multiple times")
+        void shouldReturnMostWeightedHealthyCandidateOnMultipleCalls() {
+            DatabaseFutureMap<StatefulRedisConnection<String, String>> databaseFutures = new DatabaseFutureMap<>();
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> db1 = createMockDatabase(config1, mockConnection1, null);
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> db2 = createMockDatabase(config2, mockConnection2, null);
+
+            databaseFutures.put(uri1, CompletableFuture.completedFuture(db1));
+            databaseFutures.put(uri2, CompletableFuture.completedFuture(db2));
+
+            Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures = new HashMap<>();
+            healthStatusFutures.put(uri1, CompletableFuture.completedFuture(HealthStatus.UNHEALTHY));
             healthStatusFutures.put(uri2, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
 
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
 
-            AtomicReference<RedisDatabaseImpl<StatefulRedisConnection<String, String>>> initialDb = new AtomicReference<>();
-
             // First call should select db1 (highest weighted)
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected1 = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, initialDb);
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures);
+
+            healthStatusFutures.put(uri1, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
 
             // Second call should also return db1 (same candidate, as state hasn't changed)
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected2 = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, initialDb);
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures);
 
             assertThat(selected1).isNotNull();
-            assertThat(selected1).isSameAs(db1);
+            assertThat(selected1).isSameAs(db2);
             assertThat(selected2).isNotNull();
             assertThat(selected2).isSameAs(db1);
         }
@@ -469,7 +501,7 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, new AtomicReference<>());
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures);
 
             assertThat(selected).isNotNull();
             assertThat(selected).isSameAs(db2);
