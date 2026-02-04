@@ -595,4 +595,316 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
 
     }
 
+    // ============ Initialization Policy Tests ============
+
+    @Nested
+    @DisplayName("Initialization Policy Tests")
+    @Tag(INTEGRATION_TEST)
+    class InitializationPolicyTests {
+
+        @Test
+        @DisplayName("Should succeed with ALL_AVAILABLE policy when all endpoints are healthy")
+        void shouldSucceedWithAllAvailablePolicyWhenAllHealthy() {
+            // Given: Three healthy endpoints with ALL_AVAILABLE policy
+            DatabaseConfig config1 = DatabaseConfig.builder(REDIS_URI_1).weight(1.0f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(REDIS_URI_2).weight(0.5f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+            DatabaseConfig config3 = DatabaseConfig.builder(REDIS_URI_3).weight(0.25f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+
+            MultiDbOptions options = MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ALL_AVAILABLE)
+                    .build();
+
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3), options);
+            forCleanup = testClient;
+
+            // When: Connect asynchronously
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
+                    .connectAsync(StringCodec.UTF8);
+
+            // Then: Should complete successfully with all endpoints available
+            await().atMost(Durations.TEN_SECONDS).until(future::isDone);
+            connection = future.toCompletableFuture().join();
+            assertThat(connection).isNotNull();
+            await().atMost(Durations.FIVE_SECONDS).untilAsserted(() -> {
+                assertThat(connection.getEndpoints()).containsExactlyInAnyOrder(REDIS_URI_1, REDIS_URI_2, REDIS_URI_3);
+            });
+        }
+
+        @Test
+        @DisplayName("Should fail with ALL_AVAILABLE policy when any endpoint fails")
+        void shouldFailWithAllAvailablePolicyWhenAnyFails() {
+            // Given: One failing endpoint with ALL_AVAILABLE policy
+            DatabaseConfig config1 = DatabaseConfig.builder(REDIS_URI_1).weight(1.0f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(NONEXISTENT_URI).weight(0.5f)
+                    .clientOptions(ClientOptions.builder()
+                            .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(1)).build()).build())
+                    .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
+
+            MultiDbOptions options = MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ALL_AVAILABLE)
+                    .build();
+
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2), options);
+            forCleanup = testClient;
+
+            // When/Then: Connect should fail
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
+                    .connectAsync(StringCodec.UTF8);
+
+            assertThatThrownBy(() -> {
+                await().atMost(Durations.TEN_SECONDS).until(future::isDone);
+                future.toCompletableFuture().join();
+            }).hasCauseInstanceOf(RedisConnectionException.class)
+                    .hasMessageContaining("Initialization failed due to initialization policy");
+        }
+
+        @Test
+        @DisplayName("Should fail with ALL_AVAILABLE policy when any endpoint is unhealthy")
+        void shouldFailWithAllAvailablePolicyWhenAnyUnhealthy() {
+            // Given: One unhealthy endpoint with ALL_AVAILABLE policy
+            DatabaseConfig config1 = DatabaseConfig.builder(REDIS_URI_1).weight(1.0f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(REDIS_URI_2).weight(0.5f)
+                    .healthCheckStrategySupplier(createAlwaysUnhealthySupplier()).build();
+
+            MultiDbOptions options = MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ALL_AVAILABLE)
+                    .build();
+
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2), options);
+            forCleanup = testClient;
+
+            // When/Then: Connect should fail
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
+                    .connectAsync(StringCodec.UTF8);
+
+            assertThatThrownBy(() -> {
+                await().atMost(Durations.TEN_SECONDS).until(future::isDone);
+                future.toCompletableFuture().join();
+            }).hasCauseInstanceOf(RedisConnectionException.class)
+                    .hasMessageContaining("Initialization failed due to initialization policy");
+        }
+
+        @Test
+        @DisplayName("Should succeed with MAJORITY_AVAILABLE policy when majority are healthy")
+        void shouldSucceedWithMajorityAvailablePolicyWhenMajorityHealthy() {
+            // Given: 2 of 3 endpoints healthy with MAJORITY_AVAILABLE policy
+            DatabaseConfig config1 = DatabaseConfig.builder(REDIS_URI_1).weight(1.0f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(REDIS_URI_2).weight(0.5f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+            DatabaseConfig config3 = DatabaseConfig.builder(REDIS_URI_3).weight(0.25f)
+                    .healthCheckStrategySupplier(createAlwaysUnhealthySupplier()).build();
+
+            MultiDbOptions options = MultiDbOptions.builder()
+                    .initializationPolicy(InitializationPolicy.BuiltIn.MAJORITY_AVAILABLE).build();
+
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3), options);
+            forCleanup = testClient;
+
+            // When: Connect asynchronously
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
+                    .connectAsync(StringCodec.UTF8);
+
+            // Then: Should complete successfully with majority available
+            await().atMost(Durations.TEN_SECONDS).until(future::isDone);
+            connection = future.toCompletableFuture().join();
+            assertThat(connection).isNotNull();
+            await().atMost(Durations.FIVE_SECONDS).untilAsserted(() -> {
+                assertThat(connection.getEndpoints()).contains(REDIS_URI_1, REDIS_URI_2);
+            });
+        }
+
+        @Test
+        @DisplayName("Should fail with MAJORITY_AVAILABLE policy when majority fail")
+        void shouldFailWithMajorityAvailablePolicyWhenMajorityFail() {
+            // Given: 2 of 3 endpoints failing with MAJORITY_AVAILABLE policy
+            DatabaseConfig config1 = DatabaseConfig.builder(REDIS_URI_1).weight(1.0f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(NONEXISTENT_URI).weight(0.5f)
+                    .clientOptions(ClientOptions.builder()
+                            .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(1)).build()).build())
+                    .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
+
+            RedisURI nonexistent2 = RedisURI.create(TestSettings.host(), TestSettings.nonexistentPort() + 1);
+            DatabaseConfig config3 = DatabaseConfig.builder(nonexistent2).weight(0.25f)
+                    .clientOptions(ClientOptions.builder()
+                            .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(1)).build()).build())
+                    .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
+
+            MultiDbOptions options = MultiDbOptions.builder()
+                    .initializationPolicy(InitializationPolicy.BuiltIn.MAJORITY_AVAILABLE).build();
+
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3), options);
+            forCleanup = testClient;
+
+            // When/Then: Connect should fail
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
+                    .connectAsync(StringCodec.UTF8);
+
+            assertThatThrownBy(() -> {
+                await().atMost(Durations.TEN_SECONDS).until(future::isDone);
+                future.toCompletableFuture().join();
+            }).hasCauseInstanceOf(RedisConnectionException.class)
+                    .hasMessageContaining("Initialization failed due to initialization policy");
+        }
+
+        @Test
+        @DisplayName("Should succeed early with MAJORITY_AVAILABLE policy when majority reached")
+        void shouldSucceedEarlyWithMajorityAvailablePolicy() {
+            // Given: 3 of 5 endpoints healthy (majority), others slow
+            DatabaseConfig config1 = DatabaseConfig.builder(REDIS_URI_1).weight(1.0f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(REDIS_URI_2).weight(0.5f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+            DatabaseConfig config3 = DatabaseConfig.builder(REDIS_URI_3).weight(0.25f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+
+            // Create slow health check for remaining endpoints
+            CountDownLatch slowLatch = new CountDownLatch(1);
+            HealthCheckStrategySupplier slowSupplier = (uri, options) -> new TestHealthCheckStrategy(
+                    HealthCheckStrategy.Config.builder().interval(100).timeout(10000).numProbes(1).build(), endpoint -> {
+                        try {
+                            slowLatch.await();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                        return HealthStatus.HEALTHY;
+                    });
+
+            RedisURI uri4 = RedisURI.create(TestSettings.host(), TestSettings.port(13));
+            RedisURI uri5 = RedisURI.create(TestSettings.host(), TestSettings.port(14));
+            DatabaseConfig config4 = DatabaseConfig.builder(uri4).weight(0.125f).healthCheckStrategySupplier(slowSupplier)
+                    .build();
+            DatabaseConfig config5 = DatabaseConfig.builder(uri5).weight(0.0625f).healthCheckStrategySupplier(slowSupplier)
+                    .build();
+
+            MultiDbOptions options = MultiDbOptions.builder()
+                    .initializationPolicy(InitializationPolicy.BuiltIn.MAJORITY_AVAILABLE).build();
+
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3, config4, config5),
+                    options);
+            forCleanup = testClient;
+
+            // When: Connect asynchronously
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
+                    .connectAsync(StringCodec.UTF8);
+
+            // Then: Should complete early once majority (3 of 5) is reached
+            await().atMost(Durations.FIVE_SECONDS).until(future::isDone);
+            connection = future.toCompletableFuture().join();
+            assertThat(connection).isNotNull();
+
+            // Cleanup
+            slowLatch.countDown();
+        }
+
+        @Test
+        @DisplayName("Should succeed with ONE_AVAILABLE policy when at least one endpoint is healthy")
+        void shouldSucceedWithOneAvailablePolicyWhenOneHealthy() {
+            // Given: 1 of 3 endpoints healthy with ONE_AVAILABLE policy
+            DatabaseConfig config1 = DatabaseConfig.builder(REDIS_URI_1).weight(1.0f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(REDIS_URI_2).weight(0.5f)
+                    .healthCheckStrategySupplier(createAlwaysUnhealthySupplier()).build();
+            DatabaseConfig config3 = DatabaseConfig.builder(REDIS_URI_3).weight(0.25f)
+                    .healthCheckStrategySupplier(createAlwaysUnhealthySupplier()).build();
+
+            MultiDbOptions options = MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE)
+                    .build();
+
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3), options);
+            forCleanup = testClient;
+
+            // When: Connect asynchronously
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
+                    .connectAsync(StringCodec.UTF8);
+
+            // Then: Should complete successfully with at least one available
+            await().atMost(Durations.TEN_SECONDS).until(future::isDone);
+            connection = future.toCompletableFuture().join();
+            assertThat(connection).isNotNull();
+            await().atMost(Durations.FIVE_SECONDS).untilAsserted(() -> {
+                assertThat(connection.getEndpoints()).contains(REDIS_URI_1);
+            });
+        }
+
+        @Test
+        @DisplayName("Should fail with ONE_AVAILABLE policy when all endpoints fail")
+        void shouldFailWithOneAvailablePolicyWhenAllFail() {
+            // Given: All endpoints failing with ONE_AVAILABLE policy
+            DatabaseConfig config1 = DatabaseConfig.builder(NONEXISTENT_URI).weight(1.0f)
+                    .clientOptions(ClientOptions.builder()
+                            .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(1)).build()).build())
+                    .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
+
+            RedisURI nonexistent2 = RedisURI.create(TestSettings.host(), TestSettings.nonexistentPort() + 1);
+            DatabaseConfig config2 = DatabaseConfig.builder(nonexistent2).weight(0.5f)
+                    .clientOptions(ClientOptions.builder()
+                            .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(1)).build()).build())
+                    .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
+
+            MultiDbOptions options = MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE)
+                    .build();
+
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2), options);
+            forCleanup = testClient;
+
+            // When/Then: Connect should fail
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
+                    .connectAsync(StringCodec.UTF8);
+
+            assertThatThrownBy(() -> {
+                await().atMost(Durations.TEN_SECONDS).until(future::isDone);
+                future.toCompletableFuture().join();
+            }).hasCauseInstanceOf(RedisConnectionException.class).hasMessageContaining("No healthy database available");
+        }
+
+        @Test
+        @DisplayName("Should succeed early with ONE_AVAILABLE policy when first endpoint is healthy")
+        void shouldSucceedEarlyWithOneAvailablePolicy() {
+            // Given: First endpoint healthy, others slow with ONE_AVAILABLE policy
+            DatabaseConfig config1 = DatabaseConfig.builder(REDIS_URI_1).weight(1.0f)
+                    .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
+
+            // Create slow health check for remaining endpoints
+            CountDownLatch slowLatch = new CountDownLatch(1);
+            HealthCheckStrategySupplier slowSupplier = (uri, options) -> new TestHealthCheckStrategy(
+                    HealthCheckStrategy.Config.builder().interval(100).timeout(10000).numProbes(1).build(), endpoint -> {
+                        try {
+                            slowLatch.await();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                        return HealthStatus.HEALTHY;
+                    });
+
+            DatabaseConfig config2 = DatabaseConfig.builder(REDIS_URI_2).weight(0.5f).healthCheckStrategySupplier(slowSupplier)
+                    .build();
+            DatabaseConfig config3 = DatabaseConfig.builder(REDIS_URI_3).weight(0.25f).healthCheckStrategySupplier(slowSupplier)
+                    .build();
+
+            MultiDbOptions options = MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE)
+                    .build();
+
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3), options);
+            forCleanup = testClient;
+
+            // When: Connect asynchronously
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
+                    .connectAsync(StringCodec.UTF8);
+
+            // Then: Should complete early once first endpoint is healthy
+            await().atMost(Durations.FIVE_SECONDS).until(future::isDone);
+            connection = future.toCompletableFuture().join();
+            assertThat(connection).isNotNull();
+            assertThat(connection.getCurrentEndpoint()).isEqualTo(REDIS_URI_1);
+
+            // Cleanup
+            slowLatch.countDown();
+        }
+
+    }
+
 }
