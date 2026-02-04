@@ -292,8 +292,8 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
 
                 // And: Simulate timeout by introducing delay longer than timeout
                 CountDownLatch timeoutLatch = new java.util.concurrent.CountDownLatch(1);
-                testStrategy.setHealthCheckDelay(uri1, TestHealthCheckStrategy.Delay.Await(timeoutLatch)); // indefinite delay > 100ms
-                                                                                                           // timeout
+                // indefinite delay > 100ms timeout
+                testStrategy.setHealthCheckDelay(uri1, TestHealthCheckStrategy.Delay.Await(timeoutLatch));
 
                 // When health check times out, it should be recorded as failed and status becomes UNHEALTHY
                 with().pollInterval(5, MILLISECONDS).timeout(Duration.ofMillis(customTimeout + 50)).await()

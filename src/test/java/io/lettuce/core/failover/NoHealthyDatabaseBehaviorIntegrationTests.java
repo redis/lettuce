@@ -53,9 +53,11 @@ import reactor.test.StepVerifier;
  * <p>
  * Scenarios tested:
  * <ul>
- * <li>All databases circuit breakers open - commands should fail with RedisCircuitBreakerException</li>
- * <li>All databases in grace period - commands should fail with RedisCircuitBreakerException (on current unhealthy DB)</li>
- * <li>All databases unreachable - commands should timeout or fail</li>
+ * <li>All databases circuit breakers open - commands should fail with {@link RedisNoHealthyDatabaseException}</li>
+ * <li>All databases in grace period - commands should fail with {@link RedisNoHealthyDatabaseException} (on current unhealthy
+ * DB)</li>
+ * <li>All databases unreachable - commands should fail with {@link RedisNoHealthyDatabaseException} when no healthy database is
+ * available</li>
  * <li>Behavior across sync, async, and reactive APIs</li>
  * </ul>
  *
@@ -72,11 +74,9 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
     private static final int redis2_port = TestSettings.port(9);
 
     // Redis Endpoints exposed by toxiproxy
-    private static final RedisURI redis1ProxyUri = RedisURI.Builder.redis(host, TestSettings.proxyPort()).withPassword(passwd)
-            .build();
+    private static final RedisURI redis1ProxyUri = RedisURI.Builder.redis(host, TestSettings.proxyPort()).build();
 
-    private static final RedisURI redis2ProxyUri = RedisURI.Builder.redis(host, TestSettings.proxyPort(1)).withPassword(passwd)
-            .build();
+    private static final RedisURI redis2ProxyUri = RedisURI.Builder.redis(host, TestSettings.proxyPort(1)).build();
 
     private static final ToxiproxyClient tp = new ToxiproxyClient("localhost", TestSettings.proxyAdminPort());
 
@@ -99,7 +99,7 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
     private RedisClient directClient2;
 
     // Timeout config
-    private static final Duration COMMMAND_TIMEOUT = Durations.TWO_HUNDRED_MILLISECONDS;
+    private static final Duration COMMAND_TIMEOUT = Durations.TWO_HUNDRED_MILLISECONDS;
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(2);
 
@@ -114,7 +114,7 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
     /* 5 second window */
     private static final int CB_METRICS_WINDOW_SIZE = 5;
 
-    /* 2 second grace period */
+    /* 500 ms grace period */
     private static final Duration GRACE_PERIOD = Durations.FIVE_HUNDRED_MILLISECONDS;
 
     private static final int HEALTH_CHECK_INTERVAL = 400;
@@ -163,13 +163,13 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
         directClient2.connect().sync().flushall();
 
         // Create circuit breaker config with low thresholds for testing
-        // Only need 5 failures minimum (instead of default 1000)reactive
+        // Only need 5 failures minimum (instead of the default 1000)
         cbConfig = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(CB_FAILURE_RATE_THRESHOLD)
                 .minimumNumberOfFailures(CB_MIN_FAILURES).metricsWindowSize(CB_METRICS_WINDOW_SIZE).build();
 
         // Create client options with short timeouts
         ClientOptions clientOptions = ClientOptions.builder()
-                .timeoutOptions(TimeoutOptions.builder().fixedTimeout(COMMMAND_TIMEOUT).build())
+                .timeoutOptions(TimeoutOptions.builder().fixedTimeout(COMMAND_TIMEOUT).build())
                 .socketOptions(SocketOptions.builder().connectTimeout(CONNECT_TIMEOUT).build()).build();
 
         // Create health check config and supplier
