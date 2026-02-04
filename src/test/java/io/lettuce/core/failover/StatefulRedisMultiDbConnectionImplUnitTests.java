@@ -32,7 +32,9 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
+import io.lettuce.core.event.Event;
 import io.lettuce.core.event.EventBus;
+import io.lettuce.core.failover.event.AllDatabasesUnhealthyEvent;
 import io.lettuce.core.failover.event.DatabaseSwitchEvent;
 import io.lettuce.core.failover.event.SwitchReason;
 import io.lettuce.core.failover.health.HealthCheck;
@@ -1051,6 +1053,225 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(null, databases, clientResources, codec,
                     connectionFactory, healthStatusManager, null, null)).isInstanceOf(IllegalArgumentException.class)
                             .hasMessageContaining("multiDbOptions must not be null");
+        }
+
+    }
+
+    @Nested
+    @Tag(UNIT_TEST)
+    @DisplayName("All Databases Unhealthy Event Tests")
+    class AllDatabasesUnhealthyEventTests {
+
+        @Test
+        @DisplayName("Should retry failover and publish event with incremented attempt count")
+        void shouldRetryFailoverAndIncrementAttemptCount() {
+            Duration retryDelay = Duration.ofMillis(100);
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false)
+                    .delayInBetweenFailoverAttempts(retryDelay).build();
+
+            try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options)) {
+
+                // Capture the health status listener for uri1
+                ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
+                verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
+
+                // Now make all databases unhealthy
+                when(healthCheck1.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck2.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck3.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+
+                // Capture the scheduled retry task
+                ArgumentCaptor<Runnable> retryTaskCaptor = ArgumentCaptor.forClass(Runnable.class);
+
+                // Trigger first failover
+                HealthStatusChangeEvent healthEvent = new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY,
+                        HealthStatus.UNHEALTHY);
+                listenerCaptor.getValue().onStatusChange(healthEvent);
+
+                // Verify first retry was scheduled
+                verify(eventExecutorGroup).schedule(retryTaskCaptor.capture(), eq(retryDelay.toMillis()),
+                        eq(TimeUnit.MILLISECONDS));
+
+                // Execute the retry task (simulating the delay elapsed)
+                retryTaskCaptor.getValue().run();
+
+                // Verify second retry was scheduled (since all DBs still unhealthy)
+                verify(eventExecutorGroup, times(2)).schedule(any(Runnable.class), eq(retryDelay.toMillis()),
+                        eq(TimeUnit.MILLISECONDS));
+
+                // Verify events were published with incrementing attempt counts
+                ArgumentCaptor<AllDatabasesUnhealthyEvent> eventCaptor = ArgumentCaptor
+                        .forClass(AllDatabasesUnhealthyEvent.class);
+                verify(eventBus, atLeast(2)).publish(eventCaptor.capture());
+
+                List<AllDatabasesUnhealthyEvent> events = eventCaptor.getAllValues();
+                assertThat(events).hasSizeGreaterThanOrEqualTo(2);
+                assertThat(events.get(0).getFailedAttempts()).isEqualTo(1);
+                assertThat(events.get(1).getFailedAttempts()).isEqualTo(2);
+            }
+        }
+
+        @Test
+        @DisplayName("Should use default delay when not configured")
+        void shouldUseDefaultDelayWhenNotConfigured() {
+            // Use default options (12 seconds delay)
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false).build();
+
+            try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options)) {
+
+                // Capture the health status listener for uri1
+                ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
+                verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
+
+                // Now make all databases unhealthy
+                when(healthCheck1.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck2.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck3.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+
+                // Trigger failover via health status change
+                HealthStatusChangeEvent healthEvent = new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY,
+                        HealthStatus.UNHEALTHY);
+                listenerCaptor.getValue().onStatusChange(healthEvent);
+
+                // Then: Retry task should be scheduled with default delay (12 seconds)
+                verify(eventExecutorGroup).schedule(any(Runnable.class), eq(12000L), eq(TimeUnit.MILLISECONDS));
+            }
+        }
+
+        @Test
+        @DisplayName("Should not schedule duplicate retry tasks when multiple failover triggers occur")
+        void shouldNotScheduleDuplicateRetryTasks() {
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false)
+                    .delayInBetweenFailoverAttempts(Duration.ofSeconds(5)).build();
+
+            try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options)) {
+
+                // Capture the health status listeners
+                ArgumentCaptor<HealthStatusListener> listenerCaptor1 = ArgumentCaptor.forClass(HealthStatusListener.class);
+                ArgumentCaptor<HealthStatusListener> listenerCaptor2 = ArgumentCaptor.forClass(HealthStatusListener.class);
+                verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor1.capture());
+                verify(healthStatusManager).registerListener(eq(uri2), listenerCaptor2.capture());
+
+                // Now make all databases unhealthy
+                when(healthCheck1.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck2.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck3.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+
+                // Trigger multiple failovers from different health status changes
+                HealthStatusChangeEvent healthEvent1 = new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY,
+                        HealthStatus.UNHEALTHY);
+                HealthStatusChangeEvent healthEvent2 = new HealthStatusChangeEvent(uri2, HealthStatus.HEALTHY,
+                        HealthStatus.UNHEALTHY);
+
+                listenerCaptor1.getValue().onStatusChange(healthEvent1);
+                listenerCaptor2.getValue().onStatusChange(healthEvent2);
+
+                // Then: Only one retry task should be scheduled (lock-free ensures single scheduling)
+                verify(eventExecutorGroup, times(1)).schedule(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS));
+            }
+        }
+
+        @Test
+        @DisplayName("Should reset attempt counter when a healthy database is found")
+        void shouldResetAttemptCounterWhenHealthyDatabaseFound() {
+            Duration retryDelay = Duration.ofMillis(100);
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false)
+                    .delayInBetweenFailoverAttempts(retryDelay).build();
+
+            try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options)) {
+
+                // Capture the health status listeners
+                ArgumentCaptor<HealthStatusListener> listenerCaptor1 = ArgumentCaptor.forClass(HealthStatusListener.class);
+                ArgumentCaptor<HealthStatusListener> listenerCaptor2 = ArgumentCaptor.forClass(HealthStatusListener.class);
+                verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor1.capture());
+                verify(healthStatusManager).registerListener(eq(uri2), listenerCaptor2.capture());
+
+                // Make all databases unhealthy
+                when(healthCheck1.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck2.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck3.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+
+                // Capture the scheduled retry tasks
+                ArgumentCaptor<Runnable> retryTaskCaptor = ArgumentCaptor.forClass(Runnable.class);
+
+                // Trigger first failover - all unhealthy, attempt count = 1
+                HealthStatusChangeEvent healthEvent1 = new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY,
+                        HealthStatus.UNHEALTHY);
+                listenerCaptor1.getValue().onStatusChange(healthEvent1);
+
+                verify(eventExecutorGroup).schedule(retryTaskCaptor.capture(), eq(retryDelay.toMillis()),
+                        eq(TimeUnit.MILLISECONDS));
+
+                // Now make db2 healthy before retry executes
+                when(healthCheck2.getStatus()).thenReturn(HealthStatus.HEALTHY);
+
+                // Execute the retry task - should find healthy db2 and reset counter
+                retryTaskCaptor.getValue().run();
+
+                // Make db2 unhealthy again (all databases now unhealthy)
+                when(healthCheck2.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+
+                // Trigger failover from db2 (which is now the active database after successful failover)
+                HealthStatusChangeEvent healthEvent2 = new HealthStatusChangeEvent(uri2, HealthStatus.HEALTHY,
+                        HealthStatus.UNHEALTHY);
+                listenerCaptor2.getValue().onStatusChange(healthEvent2);
+
+                // Verify AllDatabasesUnhealthyEvent events - filter from all published events
+                ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+                verify(eventBus, atLeast(2)).publish(eventCaptor.capture());
+
+                List<AllDatabasesUnhealthyEvent> unhealthyEvents = eventCaptor.getAllValues().stream()
+                        .filter(e -> e instanceof AllDatabasesUnhealthyEvent).map(e -> (AllDatabasesUnhealthyEvent) e)
+                        .collect(java.util.stream.Collectors.toList());
+
+                // First event: attempt 1, then after reset, new event: attempt 1 again
+                assertThat(unhealthyEvents).hasSizeGreaterThanOrEqualTo(2);
+                assertThat(unhealthyEvents.get(0).getFailedAttempts()).isEqualTo(1);
+                assertThat(unhealthyEvents.get(1).getFailedAttempts()).isEqualTo(1);
+            }
+        }
+
+        @Test
+        @DisplayName("Should publish AllDatabasesUnhealthyEvent with correct data when no healthy database is found")
+        void shouldPublishEventWithCorrectDataWhenNoHealthyDatabaseFound() {
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false)
+                    .delayInBetweenFailoverAttempts(Duration.ofMillis(100)).build();
+
+            try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options)) {
+
+                // Capture the health status listener for uri1
+                ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
+                verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
+
+                // Now make all databases unhealthy
+                when(healthCheck1.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck2.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck3.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+
+                // Trigger failover via health status change
+                HealthStatusChangeEvent healthEvent = new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY,
+                        HealthStatus.UNHEALTHY);
+                listenerCaptor.getValue().onStatusChange(healthEvent);
+
+                // Then: AllDatabasesUnhealthyEvent should be published with correct data
+                ArgumentCaptor<AllDatabasesUnhealthyEvent> eventCaptor = ArgumentCaptor
+                        .forClass(AllDatabasesUnhealthyEvent.class);
+                verify(eventBus, atLeastOnce()).publish(eventCaptor.capture());
+
+                AllDatabasesUnhealthyEvent event = eventCaptor.getValue();
+                assertThat(event.getFailedAttempts()).isEqualTo(1);
+                assertThat(event.getSource()).isSameAs(connection);
+                assertThat(event.getUnhealthyDatabases()).hasSize(3);
+                // Verify URIs are included (using host:port comparison since ImmutableRedisURI wraps the original)
+                List<String> hostPorts = event.getUnhealthyDatabases().stream().map(uri -> uri.getHost() + ":" + uri.getPort())
+                        .collect(java.util.stream.Collectors.toList());
+                assertThat(hostPorts).containsExactlyInAnyOrder("localhost:6379", "localhost:6380", "localhost:6381");
+            }
         }
 
     }

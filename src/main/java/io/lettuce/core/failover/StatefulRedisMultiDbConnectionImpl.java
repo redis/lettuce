@@ -42,7 +42,6 @@ import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.event.AllDatabasesUnhealthyEvent;
 import io.lettuce.core.failover.event.DatabaseSwitchEvent;
 import io.lettuce.core.failover.event.SwitchReason;
-import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
@@ -50,7 +49,6 @@ import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
-import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
