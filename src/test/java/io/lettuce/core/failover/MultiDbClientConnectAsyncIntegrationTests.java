@@ -446,8 +446,8 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         DatabaseConfig invalidDb1 = DatabaseConfig.builder(RedisURI.create("redis://localhost:9998")).weight(1.0f).build();
         DatabaseConfig invalidDb2 = DatabaseConfig.builder(RedisURI.create("redis://localhost:9999")).weight(0.5f).build();
 
-        MultiDbClient failClient = MultiDbClient.create(Arrays.asList(invalidDb1, invalidDb2), MultiDbOptions.builder()
-                .initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE).build());
+        MultiDbClient failClient = MultiDbClient.create(Arrays.asList(invalidDb1, invalidDb2),
+                MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE).build());
 
         try {
             MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = failClient.connectAsync(UTF8);
