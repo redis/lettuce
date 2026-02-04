@@ -135,30 +135,31 @@ public class ActiveActiveFailoverScenarioTest {
     // ========================================
 
     @Test
-    @DisplayName("Health check detects failures and triggers failover with failback")
-    public void testHealthCheckFailoverWithFailback() throws Exception {
-        log.info("Starting health check failover with failback test");
+    @DisplayName("Circuit breaker triggers failover on command timeouts")
+    public void testCircuitBreakerFailover() throws Exception {
+        log.info("Starting circuit breaker failover test");
 
-        // This test verifies that health check can detect failures and trigger failover,
-        // and that failback works when the endpoint becomes healthy again.
-        // We use a controllable health check that starts HEALTHY (to allow initial connection)
-        // and then we manually mark endpoints as unhealthy/healthy to trigger failover/failback.
+        // This test verifies that the circuit breaker triggers failover when commands timeout.
+        // We use network_latency fault injection to add latency that causes timeouts,
+        // which the circuit breaker tracks and uses to trigger failover.
 
-        ClientOptions clientOptions = createClientOptions();
+        // Use short timeout (500ms) so commands timeout quickly during latency injection
+        ClientOptions clientOptions = ClientOptions.builder()
+                .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(10)).build())
+                .timeoutOptions(TimeoutOptions.enabled(Duration.ofMillis(500))).build();
 
-        // Use high CB thresholds - we rely on health check for failover
-        CircuitBreaker.CircuitBreakerConfig cbConfig = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(90.0f)
-                .minimumNumberOfFailures(1000).metricsWindowSize(100).build();
+        // Circuit breaker config: 10% failure rate threshold, minimum 5 failures
+        CircuitBreaker.CircuitBreakerConfig cbConfig = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(10.0f)
+                .minimumNumberOfFailures(5).metricsWindowSize(10).build();
 
-        // Use controllable health check that starts HEALTHY, allowing initial connection
-        ControllableHealthCheckStrategy healthCheckStrategy = new ControllableHealthCheckStrategy();
-        HealthCheckStrategySupplier healthCheckSupplier = (uri, factory) -> healthCheckStrategy;
-
+        // Disable health check - we want to test circuit breaker specifically
         DatabaseConfig primaryConfig = DatabaseConfig.builder(primaryUri).weight(1.0f).clientOptions(clientOptions)
-                .circuitBreakerConfig(cbConfig).healthCheckStrategySupplier(healthCheckSupplier).build();
+                .circuitBreakerConfig(cbConfig).healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK)
+                .build();
 
         DatabaseConfig secondaryConfig = DatabaseConfig.builder(secondaryUri).weight(0.5f).clientOptions(clientOptions)
-                .circuitBreakerConfig(cbConfig).healthCheckStrategySupplier(healthCheckSupplier).build();
+                .circuitBreakerConfig(cbConfig).healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK)
+                .build();
 
         MultiDbOptions multiDbOptions = MultiDbOptions.builder().failbackSupported(true)
                 .failbackCheckInterval(Duration.ofSeconds(1)).gracePeriod(Duration.ofSeconds(2)).build();
@@ -190,29 +191,53 @@ public class ActiveActiveFailoverScenarioTest {
             }
         });
 
-        // Start workload
-        MultiThreadedFakeApp fakeApp = new MultiThreadedFakeApp(connection, NUM_THREADS, Duration.ofSeconds(30));
-        Thread workloadThread = new Thread(fakeApp);
-        workloadThread.start();
+        // Log initial circuit breaker state
+        log.info("Circuit breaker initial state: {}", connection.getDatabase(primaryUri).getCircuitBreakerState());
 
-        // Wait for workload to start
-        await().atMost(Duration.ofSeconds(5)).until(() -> fakeApp.getExecutedCommands() > 0);
-        log.info("Workload started, commands: {}", fakeApp.getExecutedCommands());
+        // Trigger network latency on primary - 2000ms delay will cause 500ms timeout commands to fail
+        log.info("Triggering network_latency on primary (2000ms delay for 60s duration)");
+        Map<String, Object> params = new HashMap<>();
+        params.put("bdb_id", aaEndpoint.getBdbId());
+        params.put("delay_ms", 2000); // 2 second latency - will cause 500ms timeout to fail
+        params.put("duration", 60); // Latency will be active for 60 seconds
+        faultClient.triggerActionAndWait("network_latency", params, Duration.ofSeconds(2), Duration.ofSeconds(1),
+                Duration.ofSeconds(30)).block();
+        log.info("Network latency applied, starting command execution");
 
-        // Mark primary as unhealthy to trigger failover
-        log.info("Marking primary as UNHEALTHY to trigger failover");
-        healthCheckStrategy.setHealthStatus(primaryUri, HealthStatus.UNHEALTHY);
+        // Fire async commands to trigger circuit breaker - each will timeout after 500ms
+        log.info("Firing async commands to trigger circuit breaker...");
+        for (int i = 0; i < 20; i++) {
+            try {
+                connection.async().get("cb-test-key-" + i);
+            } catch (Exception e) {
+                // Expected - commands will timeout
+            }
+            // Small delay to let failures accumulate
+            Thread.sleep(100);
 
-        // Wait for failover to happen
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            // Check CB state
+            io.lettuce.core.failover.api.RedisDatabase database = connection.getDatabase(primaryUri);
+            CircuitBreaker.State cbState = database.getCircuitBreakerState();
+            io.lettuce.core.failover.metrics.MetricsSnapshot metrics = database.getMetricsSnapshot();
+            log.info("Command {} - CB state: {}, metrics: total={}, failures={}, rate={}%", i, cbState, metrics.getTotalCount(),
+                    metrics.getFailureCount(), metrics.getFailureRate());
+
+            if (reporter.isFailoverHappened()) {
+                log.info("Failover detected after {} commands", i + 1);
+                break;
+            }
+        }
+
+        // Wait for failover to complete
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
             assertThat(reporter.isFailoverHappened()).isTrue();
         });
 
         log.info("Failover happened at: {}", reporter.getFailoverAt());
         log.info("Failover reason: {}", reporter.getFailoverReason());
 
-        // Verify failover reason is HEALTH_CHECK
-        assertThat(reporter.getFailoverReason()).isEqualTo(SwitchReason.HEALTH_CHECK);
+        // Verify failover reason is CIRCUIT_BREAKER
+        assertThat(reporter.getFailoverReason()).isEqualTo(SwitchReason.CIRCUIT_BREAKER);
 
         // Verify we switched to secondary
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
@@ -221,33 +246,15 @@ public class ActiveActiveFailoverScenarioTest {
         });
         log.info("Verified failover to secondary endpoint");
 
-        // Now mark primary as healthy again to trigger failback
-        log.info("Marking primary as HEALTHY to trigger failback");
-        healthCheckStrategy.setHealthStatus(primaryUri, HealthStatus.HEALTHY);
+        // Verify commands work on secondary
+        log.info("Verifying commands work on secondary...");
+        for (int i = 0; i < 5; i++) {
+            String result = connection.sync().set("verify-key-" + i, "value-" + i);
+            assertThat(result).isEqualTo("OK");
+        }
+        log.info("Successfully executed commands on secondary endpoint");
 
-        // Wait for failback to happen
-        log.info("Waiting for failback...");
-        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-            assertThat(reporter.isFailbackHappened()).isTrue();
-        });
-
-        log.info("Failback happened at: {}", reporter.getFailbackAt());
-
-        // Verify we're back on primary
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-            String currentRunId = extractRunId(connection.sync().info("server"));
-            assertThat(currentRunId).isEqualTo(primaryRunId);
-        });
-        log.info("Verified failback to primary endpoint");
-
-        // Stop workload
-        fakeApp.stop();
-        workloadThread.join(5000);
-
-        log.info("Total commands executed: {}", fakeApp.getExecutedCommands());
-        log.info("Captured exceptions: {}", fakeApp.getCapturedExceptions().size());
-
-        log.info("Health check failover with failback test completed successfully");
+        log.info("Circuit breaker failover test completed successfully");
     }
 
     // ========================================
