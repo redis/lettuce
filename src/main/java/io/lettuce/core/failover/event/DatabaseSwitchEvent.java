@@ -1,6 +1,7 @@
 package io.lettuce.core.failover.event;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.event.Event;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 
@@ -10,6 +11,7 @@ import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
  * @author Ivo Gaydajiev
  * @since 7.4
  */
+@Experimental
 public class DatabaseSwitchEvent implements Event {
 
     private final SwitchReason reason;
