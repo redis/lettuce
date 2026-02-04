@@ -33,6 +33,7 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.failover.api.RedisNoHealthyDatabaseException;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.event.DatabaseSwitchEvent;
 import io.lettuce.core.failover.event.SwitchReason;
@@ -496,6 +497,10 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      */
     @Override
     public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> command) {
+        if (!current.isHealthy() && hasNoHealthyDb()) {
+            command.completeExceptionally(new RedisNoHealthyDatabaseException("No healthy database available !!"));
+            return command;
+        }
         return current.getConnection().dispatch(command);
     }
 
@@ -507,7 +512,16 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      */
     @Override
     public Collection<RedisCommand<K, V, ?>> dispatch(Collection<? extends RedisCommand<K, V, ?>> commands) {
+        if (!current.isHealthy() && hasNoHealthyDb()) {
+            commands.forEach(
+                    c -> c.completeExceptionally(new RedisNoHealthyDatabaseException("No healthy database available !!")));
+            return (Collection) commands;
+        }
         return current.getConnection().dispatch(commands);
+    }
+
+    private boolean hasNoHealthyDb() {
+        return databases.values().stream().noneMatch(RedisDatabaseImpl::isHealthy);
     }
 
     /**

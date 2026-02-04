@@ -41,6 +41,7 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 
 /**
@@ -316,7 +317,7 @@ class DatabaseCommandTrackerUnitTests {
 
             Channel mockChannel = mock(Channel.class);
             ChannelPipeline mockPipeline = mock(ChannelPipeline.class);
-            io.netty.channel.ChannelHandlerContext mockContext = mock(io.netty.channel.ChannelHandlerContext.class);
+            ChannelHandlerContext mockContext = mock(ChannelHandlerContext.class);
 
             when(mockChannel.pipeline()).thenReturn(mockPipeline);
             when(mockPipeline.context(CommandHandler.class)).thenReturn(mockContext);
@@ -348,9 +349,11 @@ class DatabaseCommandTrackerUnitTests {
             ChannelPipeline mockPipeline = mock(ChannelPipeline.class);
 
             when(mockChannel.pipeline()).thenReturn(mockPipeline);
+            when(mockPipeline.get(MultiDbOutboundHandler.class)).thenReturn(new MultiDbOutboundHandler(null));
 
             tracker.resetChannel(mockChannel);
 
+            verify(mockPipeline).get(MultiDbOutboundHandler.class);
             verify(mockPipeline).remove(MultiDbOutboundHandler.class);
         }
 

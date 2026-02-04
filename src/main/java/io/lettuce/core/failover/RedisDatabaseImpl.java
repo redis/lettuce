@@ -136,7 +136,8 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
         return circuitBreaker.getCurrentState();
     }
 
-    boolean isHealthy() {
+    @Override
+    public boolean isHealthy() {
         return !isInGracePeriod() && getHealthCheckStatus().isHealthy() && getCircuitBreakerState().isClosed();
     }
 
