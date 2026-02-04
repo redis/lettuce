@@ -12,8 +12,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
-import io.lettuce.core.failover.health.HealthStatusManager;
-import io.lettuce.core.failover.health.HealthStatusManagerImpl;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.DefaultEndpoint;

@@ -11,6 +11,7 @@ import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SslOptions;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.support.http.HttpClient;
 import io.lettuce.core.support.http.HttpClientResources;
@@ -50,6 +51,7 @@ import java.util.function.Supplier;
  * @see <a href="https://redis.io/docs/latest/operate/rs/monitoring/db-availability/">Redis Enterprise Database Availability
  *      API</a>
  */
+@Experimental
 public class LagAwareStrategy implements HealthCheckStrategy {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(LagAwareStrategy.class);

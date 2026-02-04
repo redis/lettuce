@@ -37,7 +37,6 @@ import io.lettuce.core.failover.api.RedisNoHealthyDatabaseException;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.event.DatabaseSwitchEvent;
 import io.lettuce.core.failover.event.SwitchReason;
-import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;

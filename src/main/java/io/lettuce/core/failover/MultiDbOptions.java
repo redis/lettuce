@@ -3,6 +3,7 @@ package io.lettuce.core.failover;
 import java.time.Duration;
 
 import io.lettuce.core.failover.api.InitializationPolicy;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -14,6 +15,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Ali TAKAVCI
  * @since 7.4
  */
+@Experimental
 public class MultiDbOptions {
 
     private final boolean failbackSupported;
