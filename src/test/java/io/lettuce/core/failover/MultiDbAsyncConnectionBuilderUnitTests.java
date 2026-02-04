@@ -419,8 +419,8 @@ class MultiDbAsyncConnectionBuilderUnitTests {
         }
 
         @Test
-        @DisplayName("Should use atomic reference to ensure only one database is selected")
-        void shouldUseAtomicReferenceForSelection() {
+        @DisplayName("Should consistently return the same candidate when called multiple times")
+        void shouldReturnSameCandidateOnMultipleCalls() {
             DatabaseFutureMap<StatefulRedisConnection<String, String>> databaseFutures = new DatabaseFutureMap<>();
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> db1 = createMockDatabase(config1, mockConnection1, null);
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> db2 = createMockDatabase(config2, mockConnection2, null);
@@ -436,17 +436,18 @@ class MultiDbAsyncConnectionBuilderUnitTests {
 
             AtomicReference<RedisDatabaseImpl<StatefulRedisConnection<String, String>>> initialDb = new AtomicReference<>();
 
-            // First call should select db1
+            // First call should select db1 (highest weighted)
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected1 = regularBuilder
                     .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, initialDb);
 
-            // Second call should return null because atomic reference is already set
+            // Second call should also return db1 (same candidate, as state hasn't changed)
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected2 = regularBuilder
                     .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, initialDb);
 
             assertThat(selected1).isNotNull();
             assertThat(selected1).isSameAs(db1);
-            assertThat(selected2).isNull();
+            assertThat(selected2).isNotNull();
+            assertThat(selected2).isSameAs(db1);
         }
 
         @Test
@@ -472,6 +473,55 @@ class MultiDbAsyncConnectionBuilderUnitTests {
 
             assertThat(selected).isNotNull();
             assertThat(selected).isSameAs(db2);
+        }
+
+        @Test
+        @DisplayName("Should use atomic reference to ensure only one database is selected in handleHealthStatusResults")
+        void shouldUseAtomicReferenceToPreventMultipleSelections() {
+            HealthStatusManager healthStatusManager = new HealthStatusManagerImpl();
+            DatabaseMap<StatefulRedisConnection<String, String>> databases = new DatabaseMap<>();
+            DatabaseFutureMap<StatefulRedisConnection<String, String>> databaseFutures = new DatabaseFutureMap<>();
+
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> db1 = createMockDatabase(config1, mockConnection1, null);
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> db2 = createMockDatabase(config2, mockConnection2, null);
+
+            databases.put(uri1, db1);
+            databases.put(uri2, db2);
+
+            databaseFutures.put(uri1, CompletableFuture.completedFuture(db1));
+            databaseFutures.put(uri2, CompletableFuture.completedFuture(db2));
+
+            Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures = new HashMap<>();
+            healthStatusFutures.put(uri1, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
+            healthStatusFutures.put(uri2, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
+
+            List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
+
+            CompletableFuture<StatefulRedisMultiDbConnection<String, String>> connectionFuture = new CompletableFuture<>();
+            AtomicReference<RedisDatabaseImpl<StatefulRedisConnection<String, String>>> initialDb = new AtomicReference<>();
+
+            // First call to handleHealthStatusResults should select db1 and complete the connection future
+            regularBuilder.handleHealthStatusResults(healthStatusManager, databases, databaseFutures, healthStatusFutures,
+                    connectionFuture, sortedConfigs, initialDb);
+
+            // Verify the connection was created and the future was completed
+            assertThat(connectionFuture).isCompleted();
+            assertThat(initialDb.get()).isSameAs(db1);
+
+            // Create a new connection future for the second call
+            CompletableFuture<StatefulRedisMultiDbConnection<String, String>> connectionFuture2 = new CompletableFuture<>();
+
+            // Second call with the same atomic reference should NOT create a new connection
+            // because initialDb is already set
+            regularBuilder.handleHealthStatusResults(healthStatusManager, databases, databaseFutures, healthStatusFutures,
+                    connectionFuture2, sortedConfigs, initialDb);
+
+            // The second connection future should NOT be completed because atomic reference was already set
+            assertThat(connectionFuture2).isNotCompleted();
+            // The atomic reference should still point to db1
+            assertThat(initialDb.get()).isSameAs(db1);
+
+            healthStatusManager.close();
         }
 
     }

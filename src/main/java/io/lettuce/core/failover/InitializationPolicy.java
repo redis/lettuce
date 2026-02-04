@@ -1,6 +1,5 @@
 package io.lettuce.core.failover;
 
-
 /**
  * Interface for initialization policies.
  *

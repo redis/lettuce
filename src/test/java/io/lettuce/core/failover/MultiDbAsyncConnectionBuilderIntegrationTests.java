@@ -244,7 +244,8 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             DatabaseConfig config3 = DatabaseConfig.builder(REDIS_URI_3).weight(0.25f)
                     .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
 
-            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3),
+                    MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE).build());
             forCleanup = testClient;
 
             // When: Connect asynchronously

@@ -139,8 +139,8 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                 healthStatusManager);
 
         // Build the final connection future
-        CompletableFuture<MC> connectionFuture = buildFuture(databaseConfigs, healthStatusManager, databases, databaseFutures,
-                healthStatusFutures);
+        CompletableFuture<MC> connectionFuture = buildConnectionFuture(databaseConfigs, healthStatusManager, databases,
+                databaseFutures, healthStatusFutures);
 
         return connectionFuture;
     }
@@ -160,8 +160,8 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
      * @param healthStatusFutures map of futures for health check results
      * @return a {@link CompletableFuture} that completes with the multi-database connection
      */
-    CompletableFuture<MC> buildFuture(Map<RedisURI, DatabaseConfig> databaseConfigs, HealthStatusManager healthStatusManager,
-            DatabaseMap<SC> databases, DatabaseFutureMap<SC> databaseFutures,
+    CompletableFuture<MC> buildConnectionFuture(Map<RedisURI, DatabaseConfig> databaseConfigs,
+            HealthStatusManager healthStatusManager, DatabaseMap<SC> databases, DatabaseFutureMap<SC> databaseFutures,
             Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures) {
 
         CompletableFuture<MC> connectionFuture = new CompletableFuture<>();
@@ -173,60 +173,8 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
         AtomicReference<RedisDatabaseImpl<SC>> initialDb = new AtomicReference<>();
 
         for (CompletableFuture<HealthStatus> healthStatusFuture : healthStatusFutures.values()) {
-            healthStatusFuture.handleAsync((healthStatus, throwable) -> {
-
-                MC conn = null;
-                Exception capturedFailure = null;
-                RedisDatabaseImpl<SC> selected = null;
-
-                try {
-                    selected = findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, initialDb);
-                } catch (Exception e) {
-                    // this should not happen in theory, but if it does, lets stop playing wizard.
-                    logger.error("Error while finding initial db candidate", e);
-                    connectionFuture
-                            .completeExceptionally(new RedisConnectionException("Error while finding initial db candidate", e));
-                }
-                InitializationContext ctx = new ConnectionInitializationContext(databaseFutures, healthStatusFutures);
-                Decision decision = initializationPolicy.evaluate(ctx);
-                switch (decision) {
-                    case SUCCESS:
-                        break;
-                    case CONTINUE:
-                        selected = null;
-                        break;
-                    case FAIL:
-                        connectionFuture.completeExceptionally(
-                                new RedisConnectionException("Initialization failed due to initialization policy: " + ctx));
-                        break;
-                }
-                try {
-                    if (selected != null) {
-                        logger.info("Selected {} as primary database", selected);
-                        // here its is possible race condition if other thread running this handler at the same time.
-                        // but only one can provide non null 'selected', and that's the one we want.
-                        // check how 'findInitialDbCandidate' guards against it.
-                        conn = buildConn(healthStatusManager, databases, databaseFutures, selected);
-                        connectionFuture.complete(conn);
-                    }
-                } catch (Exception e) {
-                    logger.error("Error while building connection", e);
-                    capturedFailure = e;
-                } finally {
-                    // if we dont have the connection then its either
-                    // - no selected db yet
-                    // - or attempted to build connection but failed.
-                    // in both cases we need to check if all failed, and complete the future accordingly.
-                    if (conn == null) {
-                        // check if everything seems to be somehow failed at this point.
-                        if (checkIfAllFailed(healthStatusFutures)) {
-                            connectionFuture.completeExceptionally(
-                                    new RedisConnectionException("No healthy database available !!", capturedFailure));
-                        }
-                    }
-                }
-                return null;
-            });
+            healthStatusFuture.handleAsync((healthStatus, throwable) -> handleHealthStatusResults(healthStatusManager,
+                    databases, databaseFutures, healthStatusFutures, connectionFuture, sortedConfigs, initialDb));
         }
 
         connectionFuture.whenComplete((conn, throwable) -> {
@@ -235,6 +183,69 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
             }
         });
         return connectionFuture;
+    }
+
+    Object handleHealthStatusResults(HealthStatusManager healthStatusManager, DatabaseMap<SC> databases,
+            DatabaseFutureMap<SC> databaseFutures, Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures,
+            CompletableFuture<MC> connectionFuture, List<DatabaseConfig> sortedConfigs,
+            AtomicReference<RedisDatabaseImpl<SC>> initialDb) {
+        MC conn = null;
+        Exception capturedFailure = null;
+        RedisDatabaseImpl<SC> candidate = null;
+
+        try {
+            candidate = findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, initialDb);
+        } catch (Exception e) {
+            // this should not happen in theory, but if it does, lets stop playing wizard.
+            logger.error("Error while finding initial db candidate", e);
+            connectionFuture.completeExceptionally(new RedisConnectionException("Error while finding initial db candidate", e));
+        }
+
+        try {
+            // evaluate if initialization policy is satisfied
+            ConnectionInitializationContext ctx = new ConnectionInitializationContext(databaseFutures, healthStatusFutures);
+            Decision decision = ctx.conformsTo(initializationPolicy);
+            logger.info("Initialization policy decision: {} with context: {}", decision, ctx);
+            if (decision == Decision.CONTINUE) {
+                candidate = null;
+            }
+            if (decision == Decision.FAIL) {
+                if (checkIfAllFailed(healthStatusFutures)) {
+                    connectionFuture.completeExceptionally(new RedisConnectionException("No healthy database available !!"));
+                } else {
+                    connectionFuture.completeExceptionally(
+                            new RedisConnectionException("Initialization failed due to initialization policy: " + ctx));
+                }
+                // this is important to not proceed further.
+                return null;
+            }
+            if (candidate != null) {
+                if (initialDb.compareAndSet(null, candidate)) {
+                    logger.info("Selected {} as primary database", candidate);
+                    // here its is possible race condition if other thread running this handler at the same time.
+                    // but only one can set initialDb to non null, and that's the one we want.
+                    // 'compareAndSet' guards against multiple connection creation.
+                    conn = buildConn(healthStatusManager, databases, databaseFutures, candidate);
+                    connectionFuture.complete(conn);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error while building connection", e);
+            capturedFailure = e;
+        } finally {
+            // if we dont have the connection then its either
+            // - no selected db yet
+            // - or attempted to build connection but failed.
+            // in both cases we need to check if all failed, and complete the future accordingly.
+            if (conn == null) {
+                // check if everything seems to be somehow failed at this point.
+                if (checkIfAllFailed(healthStatusFutures)) {
+                    connectionFuture.completeExceptionally(
+                            new RedisConnectionException("No healthy database available !!", capturedFailure));
+                }
+            }
+        }
+        return null;
     }
 
     void destroyBuilderResources(DatabaseFutureMap<SC> databaseFutures,
@@ -486,10 +497,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
             // we have a connection and health check result where all prior(more weighted) databases are unhealthy or failed
             // So this one is the best bet we have so far.
             if (healthStatus.isHealthy()) {
-                RedisDatabaseImpl<SC> database = dbFuture.getNow(null);
-                if (initialDb.compareAndSet(null, database)) {
-                    return database;
-                }
+                return dbFuture.getNow(null);
             }
             logger.debug("Database {} is not healthy, skipping", config.getRedisURI());
         }

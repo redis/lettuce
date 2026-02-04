@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.AbstractRedisMultiDbConnectionBuilder.DatabaseFutureMap;
+import io.lettuce.core.failover.InitializationPolicy.Decision;
 import io.lettuce.core.failover.health.HealthStatus;
 
 class ConnectionInitializationContext implements InitializationPolicy.InitializationContext {
@@ -61,6 +62,10 @@ class ConnectionInitializationContext implements InitializationPolicy.Initializa
     @Override
     public int getPendingConnections() {
         return pending;
+    }
+
+    public Decision conformsTo(InitializationPolicy policy) {
+        return policy.evaluate(this);
     }
 
     @Override

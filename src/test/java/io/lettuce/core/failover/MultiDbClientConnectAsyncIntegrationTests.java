@@ -414,7 +414,8 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         DatabaseConfig validDb = DatabaseConfig.builder(MultiDbTestSupport.URI1).weight(1.0f).build();
         DatabaseConfig invalidDb = DatabaseConfig.builder(RedisURI.create("redis://localhost:9999")).weight(0.5f).build();
 
-        MultiDbClient partialClient = MultiDbClient.create(Arrays.asList(validDb, invalidDb));
+        MultiDbClient partialClient = MultiDbClient.create(Arrays.asList(validDb, invalidDb),
+                MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE).build());
 
         try {
             MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = partialClient.connectAsync(UTF8);
