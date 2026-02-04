@@ -263,8 +263,8 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
         @DisplayName("Should configure health check interval and timeout")
         void shouldConfigureHealthCheckIntervalAndTimeout() {
             // Given: Custom interval and timeout values (minimum for fast testing)
-            int customInterval = 1;
-            int customTimeout = 10;
+            int customInterval = 5;
+            int customTimeout = 100;
 
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(customInterval)
                     .timeout(customTimeout).numProbes(1).delayInBetweenProbes(1).build();
@@ -282,9 +282,9 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
 
             try {
                 // Then: Health checks should be running and called multiple times
-                // With 1ms interval, we expect at least 5 calls within 20ms
+                // With 5ms interval, we expect at least 5 calls within 50ms
                 int expectedMinimumCalls = 5;
-                with().pollInterval(5, MILLISECONDS).timeout(Duration.ofMillis(20)).await()
+                with().pollInterval(5, MILLISECONDS).timeout(Duration.ofMillis(50)).await()
                         .until(() -> testStrategy.getHealthCheckCallCount(uri1) >= expectedMinimumCalls);
 
                 // And: Verify health status is HEALTHY
@@ -292,7 +292,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
 
                 // And: Simulate timeout by introducing delay longer than timeout
                 CountDownLatch timeoutLatch = new java.util.concurrent.CountDownLatch(1);
-                testStrategy.setHealthCheckDelay(uri1, TestHealthCheckStrategy.Delay.Await(timeoutLatch)); // 15ms delay > 10ms
+                testStrategy.setHealthCheckDelay(uri1, TestHealthCheckStrategy.Delay.Await(timeoutLatch)); // indefinite delay > 100ms
                                                                                                            // timeout
 
                 // When health check times out, it should be recorded as failed and status becomes UNHEALTHY
