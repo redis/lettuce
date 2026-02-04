@@ -6,7 +6,7 @@
  */
 package io.lettuce.core.failover.health;
 
-import java.io.IOException;
+import io.lettuce.core.annotations.Experimental;
 
 /**
  * Exception thrown when a Redis REST API operation fails. This exception provides additional context about HTTP-specific errors
@@ -15,6 +15,7 @@ import java.io.IOException;
  * @author Ivo Gaydazhiev
  * @since 7.4
  */
+@Experimental
 public class RedisRestException extends RuntimeException {
 
     private final int statusCode;
