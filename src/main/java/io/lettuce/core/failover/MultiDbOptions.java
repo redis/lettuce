@@ -21,10 +21,13 @@ public class MultiDbOptions {
 
     private final Duration gracePeriod;
 
+    private final Duration delayInBetweenFailoverAttempts;
+
     private MultiDbOptions(Builder builder) {
         this.failbackSupported = builder.failbackSupported;
         this.failbackCheckInterval = builder.failbackCheckInterval;
         this.gracePeriod = builder.gracePeriod;
+        this.delayInBetweenFailoverAttempts = builder.delayInBetweenFailoverAttempts;
     }
 
     /**
@@ -53,6 +56,18 @@ public class MultiDbOptions {
      */
     public Duration getGracePeriod() {
         return gracePeriod;
+    }
+
+    /**
+     * Returns the delay between failover attempts when no healthy database is available.
+     * <p>
+     * When all databases are unhealthy and no failover target can be selected, the client will wait for this duration before
+     * retrying to find a healthy database.
+     *
+     * @return the delay between failover attempts
+     */
+    public Duration getDelayInBetweenFailoverAttempts() {
+        return delayInBetweenFailoverAttempts;
     }
 
     /**
@@ -86,12 +101,17 @@ public class MultiDbOptions {
         /** Default grace period duration. */
         private static final Duration GRACE_PERIOD_DEFAULT = Duration.ofSeconds(60);
 
+        /** Default delay between failover attempts when no healthy database is available. */
+        private static final Duration DELAY_IN_BETWEEN_FAILOVER_ATTEMPTS_DEFAULT = Duration.ofSeconds(12);
+
         /** Whether automatic failback to higher-priority databases is supported. */
         private boolean failbackSupported = true;
 
         private Duration failbackCheckInterval = FAILBACK_CHECK_INTERVAL_DEFAULT;
 
         private Duration gracePeriod = GRACE_PERIOD_DEFAULT;
+
+        private Duration delayInBetweenFailoverAttempts = DELAY_IN_BETWEEN_FAILOVER_ATTEMPTS_DEFAULT;
 
         private Builder() {
         }
@@ -134,6 +154,27 @@ public class MultiDbOptions {
          */
         public Builder gracePeriod(Duration gracePeriod) {
             this.gracePeriod = gracePeriod;
+            return this;
+        }
+
+        /**
+         * Sets the delay between failover attempts when no healthy database is available.
+         * <p>
+         * When all databases are unhealthy and no failover target can be selected, the client will wait for this duration
+         * before retrying to find a healthy database.
+         * <p>
+         * Defaults to 12 seconds.
+         *
+         * @param delayInBetweenFailoverAttempts the delay between failover attempts
+         * @return this builder
+         * @throws IllegalArgumentException if the delay is zero or negative
+         */
+        public Builder delayInBetweenFailoverAttempts(Duration delayInBetweenFailoverAttempts) {
+            LettuceAssert.notNull(delayInBetweenFailoverAttempts, "delayInBetweenFailoverAttempts must not be null");
+            LettuceAssert.isTrue(delayInBetweenFailoverAttempts.toMillis() > 0,
+                    "delayInBetweenFailoverAttempts must be greater than 0, got: " + delayInBetweenFailoverAttempts);
+
+            this.delayInBetweenFailoverAttempts = delayInBetweenFailoverAttempts;
             return this;
         }
 
