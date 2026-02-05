@@ -1,30 +1,37 @@
 Lettuce 7.2.0 RELEASE NOTES
 ==============================
 
-The Lettuce team is pleased to announce the Lettuce 7.2.0 minor release!
+The Lettuce team is pleased to announce the Lettuce 7.3.0 minor release!
 
-Lettuce 7.2.0 supports Redis 2.6+ up to Redis 8.x. In terms of Java runtime, Lettuce requires at least Java 8 and
-works with Java 24. The driver is tested against Redis 8.4, Redis 8.2, Redis 8.0, Redis 7.4 and Redis 7.2.
+Lettuce 7.3.0 supports Redis 2.6+ up to Redis 8.x. In terms of Java runtime, Lettuce requires at least Java 8 and
+works with Java 24. The driver is tested against Redis 8.6, Redis 8.4, Redis 8.2, Redis 8.0, Redis 7.4 and Redis 7.2.
 
-Thanks to all contributors who made Lettuce 7.2.0.RELEASE possible.
+Thanks to all contributors who made Lettuce 7.3.0.RELEASE possible.
 
 📗 Links
-Reference documentation: https://lettuce.io/core/7.2.0.RELEASE/reference/
-Javadoc: https://lettuce.io/core/7.2.0.RELEASE/api/
+Reference documentation: https://lettuce.io/core/7.3.0.RELEASE
 
 ⭐ New Features
-* Add ftHybrid by @a-TODO-rov in https://github.com/redis/lettuce/pull/3540
-* Expose method to add upstream driver libraries to CLIENT SETINFO payload by @viktoriya-kutsarova in https://github.com/redis/lettuce/pull/3542
+* Add idempotent mechanism to streams by @a-TODO-rov in https://github.com/redis/lettuce/pull/3637
+* Add support for INT vector types by @a-TODO-rov in https://github.com/redis/lettuce/pull/3616
 
 🐞 Bug Fixes
-* SearchArgs.returnField with alias produces malformed redis command #3528 by @tishun in https://github.com/redis/lettuce/pull/3530
-* fix consistency with get(int) that returns wrapped DelegateJsonObject/DelegateJsonArray for nested structures by @NeatGuyCoding in https://github.com/redis/lettuce/pull/3464
+* Fix command queue corruption on encoding failures by @yangy0000 in https://github.com/redis/lettuce/pull/3443
+* Update NIO event loop creation to use Netty 4.2 API #3584 by @jruaux in https://github.com/redis/lettuce/pull/3585
+* Fix epoll with iouring scenario by @a-TODO-rov in https://github.com/redis/lettuce/pull/3601
 
 💡 Other
-* Bumping Netty to 4.2.5.Final (main) by @tishun in https://github.com/redis/lettuce/pull/3536
+* Bump the maven group with 2 updates by @dependabot[bot] in https://github.com/redis/lettuce/pull/3390
+* DOC-4423 list command examples by @andy-stark-redis in https://github.com/redis/lettuce/pull/3433
+* DOC-5375 reactive hash examples by @andy-stark-redis in https://github.com/redis/lettuce/pull/3336
+* DOC-5376 added reactive sets examples by @andy-stark-redis in https://github.com/redis/lettuce/pull/3337
+* DOC-5399  set cmd examples by @andy-stark-redis in https://github.com/redis/lettuce/pull/3342
+* Bump org.awaitility:awaitility from 4.2.2 to 4.3.0 by @dependabot[bot] in https://github.com/redis/lettuce/pull/3626
+* Add Redis 8.6 to test matrix by @a-TODO-rov in https://github.com/redis/lettuce/pull/3617 https://github.com/redis/lettuce/pull/3635
+* Re-enable SentinelAclIntegrationTests #3274 by @yuripbong in https://github.com/redis/lettuce/pull/3625
 
 ❤️ New Contributors
-* @NeatGuyCoding made their first contribution in https://github.com/redis/lettuce/pull/3464
-* @viktoriya-kutsarova made their first contribution in https://github.com/redis/lettuce/pull/3542
+* @yangy0000 made their first contribution in https://github.com/redis/lettuce/pull/3443
+* @yuripbong made their first contribution in https://github.com/redis/lettuce/pull/3625
 
-**Full Changelog**: https://github.com/redis/lettuce/compare/7.1.0.RELEASE...7.2.0.RELEASE
+**Full Changelog**: https://github.com/redis/lettuce/compare/7.2.1.RELEASE...7.3.0.RELEASE
