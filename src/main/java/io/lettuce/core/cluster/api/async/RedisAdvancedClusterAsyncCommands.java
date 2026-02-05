@@ -475,4 +475,52 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      */
     RedisFuture<Long> touch(K... keys);
 
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use {@link #masters()}.commands().hotkeysStart() or target
+     * specific nodes via {@link #getConnection(String)}.
+     *
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<String> hotkeysStart(io.lettuce.core.HotkeysArgs args) {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use masters().commands().hotkeysStart() or target specific nodes.");
+    }
+
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use {@link #masters()}.commands().hotkeysStop() or target
+     * specific nodes via {@link #getConnection(String)}.
+     *
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<String> hotkeysStop() {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use masters().commands().hotkeysStop() or target specific nodes.");
+    }
+
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use {@link #masters()}.commands().hotkeysReset() or target
+     * specific nodes via {@link #getConnection(String)}.
+     *
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<String> hotkeysReset() {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use masters().commands().hotkeysReset() or target specific nodes.");
+    }
+
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use {@link #masters()}.commands().hotkeysGet() or target
+     * specific nodes via {@link #getConnection(String)}.
+     *
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<io.lettuce.core.HotkeysReply> hotkeysGet() {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use masters().commands().hotkeysGet() or target specific nodes.");
+    }
+
 }

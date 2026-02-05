@@ -8,8 +8,7 @@ package io.lettuce.core.cluster.commands;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.List;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import javax.inject.Inject;
 
@@ -18,9 +17,7 @@ import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.Range;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.Executions;
-import io.lettuce.core.cluster.api.sync.NodeSelection;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
-import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterEach;
@@ -31,8 +28,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
- * Integration tests for {@link io.lettuce.core.api.sync.RedisServerCommands} HOTKEYS commands using Redis Cluster. Tests
- * cluster-specific features like SLOTS filtering and validates all response fields.
+ * Integration tests for HOTKEYS commands using Redis Cluster. Verifies that HOTKEYS commands are not supported on the cluster
+ * client directly but work via NodeSelection API.
  *
  * @author Aleksandar Todorov
  */
@@ -61,17 +58,54 @@ public class HotkeysClusterCommandIntegrationTests {
 
     private void clearState() {
         redis.flushall();
-        redis.masters().commands().hotkeysStop();
-        redis.masters().commands().hotkeysReset();
+        redis.upstream().commands().hotkeysStop();
+        redis.upstream().commands().hotkeysReset();
     }
 
     /**
-     * Comprehensive test that verifies response fields. Uses SAMPLE > 1 to trigger sampling-related fields.
+     * Verifies that hotkeysStart throws UnsupportedOperationException on cluster client.
      */
     @Test
-    void hotkeysWithAllFields() {
-        // Use SAMPLE > 1 and both metrics - start on all masters
-        redis.masters().commands()
+    void hotkeysStartThrowsOnClusterClient() {
+        assertThatThrownBy(() -> redis.hotkeysStart(HotkeysArgs.Builder.metrics(HotkeysArgs.Metric.CPU)))
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("HOTKEYS commands are not supported on cluster client");
+    }
+
+    /**
+     * Verifies that hotkeysStop throws UnsupportedOperationException on cluster client.
+     */
+    @Test
+    void hotkeysStopThrowsOnClusterClient() {
+        assertThatThrownBy(() -> redis.hotkeysStop()).isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("HOTKEYS commands are not supported on cluster client");
+    }
+
+    /**
+     * Verifies that hotkeysReset throws UnsupportedOperationException on cluster client.
+     */
+    @Test
+    void hotkeysResetThrowsOnClusterClient() {
+        assertThatThrownBy(() -> redis.hotkeysReset()).isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("HOTKEYS commands are not supported on cluster client");
+    }
+
+    /**
+     * Verifies that hotkeysGet throws UnsupportedOperationException on cluster client.
+     */
+    @Test
+    void hotkeysGetThrowsOnClusterClient() {
+        assertThatThrownBy(() -> redis.hotkeysGet()).isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("HOTKEYS commands are not supported on cluster client");
+    }
+
+    /**
+     * Verifies that HOTKEYS commands work via NodeSelection API.
+     */
+    @Test
+    void hotkeysWorksViaNodeSelectionApi() {
+        // Start on all masters via NodeSelection
+        redis.upstream().commands()
                 .hotkeysStart(HotkeysArgs.Builder.metrics(HotkeysArgs.Metric.CPU, HotkeysArgs.Metric.NET).sample(2));
 
         // Generate traffic on keys
@@ -85,7 +119,7 @@ public class HotkeysClusterCommandIntegrationTests {
         }
 
         // Get results from all masters
-        Executions<HotkeysReply> executions = redis.masters().commands().hotkeysGet();
+        Executions<HotkeysReply> executions = redis.upstream().commands().hotkeysGet();
         assertThat(executions).isNotEmpty();
 
         // Verify at least one node has tracking data
@@ -134,7 +168,7 @@ public class HotkeysClusterCommandIntegrationTests {
         // 31) by-net-bytes - should have entries for keys
         assertThat(reply.getByNetBytes()).isNotEmpty();
 
-        redis.masters().commands().hotkeysStop();
+        redis.upstream().commands().hotkeysStop();
     }
 
 }
