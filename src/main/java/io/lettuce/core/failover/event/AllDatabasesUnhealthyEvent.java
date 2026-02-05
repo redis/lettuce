@@ -9,11 +9,12 @@ import io.lettuce.core.event.Event;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 
 /**
- * Event that is fired when all configured databases are unhealthy and no failover target can be selected after exhausting all
- * retry attempts.
+ * Event that is fired when all configured databases are unhealthy and no failover target can be selected for a failover
+ * attempt.
  * <p>
- * This event indicates that the MultiDbClient has attempted to find a healthy database multiple times (up to
- * {@code maxFailoverAttempts}) with delays between attempts, but all databases remain unhealthy.
+ * This event indicates that the MultiDbClient attempted to find a healthy database for the current failover attempt but all
+ * databases were unhealthy at that time. The event may be fired multiple times as failover is retried; the
+ * {@code failedAttempts} value reflects the number of failed failover attempts so far.
  *
  * @author Ivo Gaydajiev
  * @since 7.4

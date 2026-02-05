@@ -188,6 +188,8 @@ public class MultiDbOptions {
          */
         public Builder delayInBetweenFailoverAttempts(Duration delayInBetweenFailoverAttempts) {
             LettuceAssert.notNull(delayInBetweenFailoverAttempts, "delayInBetweenFailoverAttempts must not be null");
+            LettuceAssert.isTrue(delayInBetweenFailoverAttempts.compareTo(MAX_INTERVAL) <= 0,
+                    "delayInBetweenFailoverAttempts must be less than max value of long in milliseconds.");
             LettuceAssert.isTrue(delayInBetweenFailoverAttempts.toMillis() > 0,
                     "delayInBetweenFailoverAttempts must be greater than 0, got: " + delayInBetweenFailoverAttempts);
 

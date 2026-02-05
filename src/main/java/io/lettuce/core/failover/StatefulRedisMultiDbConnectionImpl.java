@@ -299,12 +299,12 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             failoverRetryState.resetAttempts();
 
             if (logger.isInfoEnabled()) {
-                logger.info("Initiating failover from {} to {} (attempt: {})", fromDb.getId(), selectedDatabase.getId(),
+                logger.info("Initiating failover from {} to {} (attempt: {})", getDatabaseId(fromDb), selectedDatabase.getId(),
                         recursionAttempt);
             }
             if (safeSwitch(selectedDatabase, true, reason)) {
                 if (logger.isInfoEnabled()) {
-                    logger.info("Failover successful from {} to {}", fromDb.getId(), selectedDatabase.getId());
+                    logger.info("Failover successful from {} to {}", getDatabaseId(fromDb), selectedDatabase.getId());
                 }
                 // check if we missed any events during the switch
                 if (!selectedDatabase.isHealthy()) {
@@ -314,7 +314,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 }
             } else {
                 if (logger.isInfoEnabled()) {
-                    logger.info("Failover attempt from {} to {} has failed, retrying...", fromDb.getId(),
+                    logger.info("Failover attempt from {} to {} has failed, retrying...", getDatabaseId(fromDb),
                             selectedDatabase.getId());
                 }
                 failoverFromRecursive(fromDb, reason, recursionAttempt);
@@ -322,6 +322,10 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         } else {
             handleNoHealthyDatabaseFound(reason);
         }
+    }
+
+    private static String getDatabaseId(RedisDatabaseImpl<?> database) {
+        return database == null ? "N/A" : database.getId();
     }
 
     /**
@@ -1143,9 +1147,16 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
             // Try to claim the slot atomically; only schedule if we successfully claimed it
             if (scheduledTask.compareAndSet(null, task)) {
-                int attemptCount = attempts.incrementAndGet();
-                publishAllDatabasesUnhealthyEvent(attemptCount);
-                executor.schedule(task, delay.toMillis(), TimeUnit.MILLISECONDS);
+                try {
+                    int attemptCount = attempts.incrementAndGet();
+                    publishAllDatabasesUnhealthyEvent(attemptCount);
+                    executor.schedule(task, delay.toMillis(), TimeUnit.MILLISECONDS);
+                } catch (RuntimeException e) {
+                    logger.error("Failed to schedule failover retry task", e);
+                    // highly unlikely to happen, but if it does, we need to clear the scheduled task so that next retry can be
+                    // scheduled.
+                    scheduledTask.compareAndSet(task, null);
+                }
             }
         }
 
