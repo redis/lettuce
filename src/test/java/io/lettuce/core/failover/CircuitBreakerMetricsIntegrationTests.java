@@ -63,12 +63,16 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
         RedisURI endpoint = connection.getCurrentEndpoint();
 
         // Execute multiple commands
-        connection.sync().set("key1", "value1");
-        connection.sync().set("key2", "value2");
+        connection.async().set("key1", "value1");
+        connection.async().set("key2", "value2");
         connection.sync().get("key1");
+        connection.sync().get("key2");
 
         // Get metrics
         CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(endpoint)).getCircuitBreaker();
+        // the reason we issue 4 commands but expect 3 successes is that it is possible to hit a timeslice transition in the
+        // middle of the 4 commands, in which case some command results might not be recorded.
+        // Verifying against 3 does not make a guarantee but it will decrease the flakiness of the test significantly.
         assertThat(cb.getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(3);
         assertThat(cb.getSnapshot().getFailureCount()).isEqualTo(0);
 
