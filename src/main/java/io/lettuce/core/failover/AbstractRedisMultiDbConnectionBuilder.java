@@ -478,23 +478,23 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                 continue;
             }
 
-            CompletableFuture<HealthStatus> healthStatusFurue = healthStatusFutures.get(config.getRedisURI());
+            CompletableFuture<HealthStatus> healthStatusFuture = healthStatusFutures.get(config.getRedisURI());
 
             // Check if health check is not yet complete
-            if (!healthStatusFurue.isDone()) {
+            if (!healthStatusFuture.isDone()) {
                 // Health check is still pending - wait for this database's health check before checking lower-weighted ones
                 logger.debug("Waiting for health check to complete for {}", config.getRedisURI());
                 return null;
             }
 
             // Check if the health check has failed (future completed exceptionally)
-            if (healthStatusFurue.isCompletedExceptionally()) {
+            if (healthStatusFuture.isCompletedExceptionally()) {
                 // Health check failed - skip to next weighted endpoint
                 logger.debug("Skipping database with failed health check for {}", config.getRedisURI());
                 continue;
             }
 
-            HealthStatus healthStatus = healthStatusFurue.getNow(HealthStatus.UNKNOWN);
+            HealthStatus healthStatus = healthStatusFuture.getNow(HealthStatus.UNKNOWN);
 
             // We have a connection and health check result where all prior (higher-weighted) databases are unhealthy or failed.
             // This is the best candidate available based on weight ordering.
