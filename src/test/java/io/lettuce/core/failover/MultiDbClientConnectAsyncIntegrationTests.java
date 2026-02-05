@@ -29,6 +29,7 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.failover.api.InitializationPolicy;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.NoFailback;
@@ -414,7 +415,8 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         DatabaseConfig validDb = DatabaseConfig.builder(MultiDbTestSupport.URI1).weight(1.0f).build();
         DatabaseConfig invalidDb = DatabaseConfig.builder(RedisURI.create("redis://localhost:9999")).weight(0.5f).build();
 
-        MultiDbClient partialClient = MultiDbClient.create(Arrays.asList(validDb, invalidDb));
+        MultiDbClient partialClient = MultiDbClient.create(Arrays.asList(validDb, invalidDb),
+                MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE).build());
 
         try {
             MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = partialClient.connectAsync(UTF8);
@@ -444,7 +446,8 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         DatabaseConfig invalidDb1 = DatabaseConfig.builder(RedisURI.create("redis://localhost:9998")).weight(1.0f).build();
         DatabaseConfig invalidDb2 = DatabaseConfig.builder(RedisURI.create("redis://localhost:9999")).weight(0.5f).build();
 
-        MultiDbClient failClient = MultiDbClient.create(Arrays.asList(invalidDb1, invalidDb2));
+        MultiDbClient failClient = MultiDbClient.create(Arrays.asList(invalidDb1, invalidDb2),
+                MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE).build());
 
         try {
             MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = failClient.connectAsync(UTF8);

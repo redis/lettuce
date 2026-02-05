@@ -3,6 +3,7 @@ package io.lettuce.core.failover;
 import java.util.concurrent.*;
 
 import io.lettuce.core.BaseConnectionFuture;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
 
 /**
@@ -14,6 +15,7 @@ import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
  * @author Ali Takavci
  * @since 7.4
  */
+@Experimental
 public class MultiDbConnectionFuture<C extends BaseRedisMultiDbConnection> extends BaseConnectionFuture<C> {
 
     /**

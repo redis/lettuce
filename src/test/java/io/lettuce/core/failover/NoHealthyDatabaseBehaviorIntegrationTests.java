@@ -283,10 +283,10 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
 
             // When/Then: Sync commands should fail with RedisCircuitBreakerException
             assertThatThrownBy(() -> connection.sync().set("key", "value")).isInstanceOf(RedisNoHealthyDatabaseException.class)
-                    .hasMessageContaining("No healthy database available !!");
+                    .hasMessageContaining("No healthy database available!");
 
             assertThatThrownBy(() -> connection.sync().get("key")).isInstanceOf(RedisNoHealthyDatabaseException.class)
-                    .hasMessageContaining("No healthy database available !!");
+                    .hasMessageContaining("No healthy database available!");
         }
 
         @Test

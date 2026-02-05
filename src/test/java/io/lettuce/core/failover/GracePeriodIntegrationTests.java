@@ -11,11 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.logging.log4j.core.pattern.AbstractStyleNameConverter.Red;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.*;
-
-import com.google.common.reflect.Reflection;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
