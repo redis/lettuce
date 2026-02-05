@@ -2,6 +2,7 @@ package io.lettuce.core.failover;
 
 import java.time.Duration;
 
+import io.lettuce.core.failover.api.InitializationPolicy;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 
@@ -23,12 +24,15 @@ public class MultiDbOptions {
 
     private final Duration gracePeriod;
 
+    private final InitializationPolicy initializationPolicy;
+
     private final Duration delayInBetweenFailoverAttempts;
 
     private MultiDbOptions(Builder builder) {
         this.failbackSupported = builder.failbackSupported;
         this.failbackCheckInterval = builder.failbackCheckInterval;
         this.gracePeriod = builder.gracePeriod;
+        this.initializationPolicy = builder.initializationPolicy;
         this.delayInBetweenFailoverAttempts = builder.delayInBetweenFailoverAttempts;
     }
 
@@ -48,6 +52,15 @@ public class MultiDbOptions {
      */
     public Duration getFailbackCheckInterval() {
         return failbackCheckInterval;
+    }
+
+    /**
+     * Returns the initialization policy.
+     *
+     * @return the initialization policy
+     */
+    public InitializationPolicy getInitializationPolicy() {
+        return initializationPolicy;
     }
 
     /**
@@ -113,6 +126,8 @@ public class MultiDbOptions {
 
         private Duration gracePeriod = GRACE_PERIOD_DEFAULT;
 
+        private InitializationPolicy initializationPolicy = InitializationPolicy.BuiltIn.MAJORITY_AVAILABLE;
+
         private Duration delayInBetweenFailoverAttempts = DELAY_IN_BETWEEN_FAILOVER_ATTEMPTS_DEFAULT;
 
         private Builder() {
@@ -177,6 +192,18 @@ public class MultiDbOptions {
                     "delayInBetweenFailoverAttempts must be greater than 0, got: " + delayInBetweenFailoverAttempts);
 
             this.delayInBetweenFailoverAttempts = delayInBetweenFailoverAttempts;
+            return this;
+        }
+
+        /**
+         * Sets the initialization policy.
+         *
+         * @param initializationPolicy the initialization policy
+         * @return this builder
+         */
+        public Builder initializationPolicy(InitializationPolicy initializationPolicy) {
+            LettuceAssert.notNull(initializationPolicy, "initializationPolicy must not be null");
+            this.initializationPolicy = initializationPolicy;
             return this;
         }
 

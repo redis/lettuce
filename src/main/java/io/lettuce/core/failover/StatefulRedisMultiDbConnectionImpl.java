@@ -539,7 +539,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     @Override
     public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> command) {
         if (!current.isHealthy() && hasNoHealthyDb()) {
-            command.completeExceptionally(new RedisNoHealthyDatabaseException("No healthy database available !!"));
+            command.completeExceptionally(new RedisNoHealthyDatabaseException("No healthy database available!"));
             return command;
         }
         return current.getConnection().dispatch(command);
@@ -555,7 +555,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     public Collection<RedisCommand<K, V, ?>> dispatch(Collection<? extends RedisCommand<K, V, ?>> commands) {
         if (!current.isHealthy() && hasNoHealthyDb()) {
             commands.forEach(
-                    c -> c.completeExceptionally(new RedisNoHealthyDatabaseException("No healthy database available !!")));
+                    c -> c.completeExceptionally(new RedisNoHealthyDatabaseException("No healthy database available!")));
             return (Collection) commands;
         }
         return current.getConnection().dispatch(commands);
@@ -999,7 +999,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         if (database == null) {
             throw new IllegalArgumentException("Unknown endpoint: " + endpoint);
         }
-
         return database.isHealthy();
     }
 

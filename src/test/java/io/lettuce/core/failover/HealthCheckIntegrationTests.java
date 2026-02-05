@@ -3,6 +3,7 @@ package io.lettuce.core.failover;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.failover.api.InitializationPolicy;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheckStrategy;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
@@ -417,7 +418,8 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
             DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).healthCheckStrategySupplier(supplier).build();
 
             // When: Create MultiDbClient and connect
-            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2),
+                    MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE).build());
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
             waitForEndpoints(connection, 2, 1);
 
@@ -614,7 +616,8 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                     .healthCheckStrategySupplier(supplier).build();
 
             // When: Create MultiDbClient and connect
-            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2),
+                    MultiDbOptions.builder().initializationPolicy(InitializationPolicy.BuiltIn.ONE_AVAILABLE).build());
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
 
             try {
