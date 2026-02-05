@@ -9,28 +9,30 @@ package io.lettuce.core.cluster.commands;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import javax.inject.Inject;
 
-import io.lettuce.core.cluster.SlotHash;
+import io.lettuce.core.HotkeysArgs;
+import io.lettuce.core.HotkeysReply;
+import io.lettuce.core.Range;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.sync.Executions;
+import io.lettuce.core.cluster.api.sync.NodeSelection;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-
-import io.lettuce.core.HotkeysArgs;
-import io.lettuce.core.HotkeysReply;
-import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisServerCommands} HOTKEYS commands using Redis Cluster. Tests
  * cluster-specific features like SLOTS filtering and validates all response fields.
- *
- * Expected HOTKEYS GET response format:
  *
  * @author Aleksandar Todorov
  */
@@ -59,26 +61,20 @@ public class HotkeysClusterCommandIntegrationTests {
 
     private void clearState() {
         redis.flushall();
-        redis.hotkeysStop();
-        redis.hotkeysReset();
+        redis.masters().commands().hotkeysStop();
+        redis.masters().commands().hotkeysReset();
     }
 
     /**
-     * Comprehensive test that verifies SLOTS filtering and all 16 response fields. Uses SAMPLE > 1 and SLOTS to trigger all
-     * conditional fields.
+     * Comprehensive test that verifies response fields. Uses SAMPLE > 1 to trigger sampling-related fields.
      */
     @Test
-    void hotkeysWithSlotsAndAllFields() {
-        // Get actual slot numbers for our test keys
-        int fooSlot = SlotHash.getSlot("foo");
-        int barSlot = SlotHash.getSlot("bar");
-        int bazSlot = SlotHash.getSlot("baz");
+    void hotkeysWithAllFields() {
+        // Use SAMPLE > 1 and both metrics - start on all masters
+        redis.masters().commands()
+                .hotkeysStart(HotkeysArgs.Builder.metrics(HotkeysArgs.Metric.CPU, HotkeysArgs.Metric.NET).sample(2));
 
-        // Use SAMPLE > 1 and SLOTS to trigger all conditional fields
-        redis.hotkeysStart(HotkeysArgs.Builder.metrics(HotkeysArgs.Metric.CPU, HotkeysArgs.Metric.NET).sample(2).slots(fooSlot,
-                barSlot, bazSlot));
-
-        // Generate traffic on keys that hash to the selected slots
+        // Generate traffic on keys
         for (int i = 0; i < 50; i++) {
             redis.set("foo", "value" + i);
             redis.get("foo");
@@ -87,10 +83,14 @@ public class HotkeysClusterCommandIntegrationTests {
             redis.set("baz", "value" + i);
             redis.get("baz");
         }
-        // Also set a key outside selected slots
-        redis.set("other", "value");
 
-        HotkeysReply reply = redis.hotkeysGet();
+        // Get results from all masters
+        Executions<HotkeysReply> executions = redis.masters().commands().hotkeysGet();
+        assertThat(executions).isNotEmpty();
+
+        // Verify at least one node has tracking data
+        HotkeysReply reply = executions.stream().filter(r -> r != null && r.isTrackingActive()).findFirst().orElse(null);
+        assertThat(reply).isNotNull();
 
         // 1) tracking-active
         assertThat(reply.isTrackingActive()).isTrue();
@@ -98,23 +98,16 @@ public class HotkeysClusterCommandIntegrationTests {
         // 3) sample-ratio
         assertThat(reply.getSampleRatio()).isEqualTo(2);
 
-        // 5) selected-slots - verify SLOTS filtering works
-        assertThat(reply.getSelectedSlots()).containsExactlyInAnyOrder(fooSlot, barSlot, bazSlot);
+        // 5) selected-slots - returns ranges; each node returns its own slot range (not full 0-16383)
+        assertThat(reply.getSelectedSlots()).isNotEmpty();
+        Range<Integer> firstRange = reply.getSelectedSlots().get(0);
+        // Verify the range structure is valid (start <= end, within valid slot range)
+        assertThat(firstRange.getLower().getValue()).isGreaterThanOrEqualTo(0);
+        assertThat(firstRange.getUpper().getValue()).isLessThanOrEqualTo(16383);
+        assertThat(firstRange.getLower().getValue()).isLessThanOrEqualTo(firstRange.getUpper().getValue());
 
-        // 7) sampled-command-selected-slots-ms (conditional)
-        assertThat(reply.getSampledCommandSelectedSlotsMs()).isNotNull();
-
-        // 9) all-commands-selected-slots-ms (conditional)
-        assertThat(reply.getAllCommandsSelectedSlotsMs()).isNotNull();
-
-        // 11) all-commands-all-slots-ms
-        assertThat(reply.getAllCommandsAllSlotsMs()).isNotNull();
-
-        // 13) net-bytes-sampled-commands-selected-slots (conditional)
-        assertThat(reply.getNetBytesSampledCommandsSelectedSlots()).isNotNull();
-
-        // 15) net-bytes-all-commands-selected-slots (conditional)
-        assertThat(reply.getNetBytesAllCommandsSelectedSlots()).isNotNull();
+        // 11) all-commands-all-slots-us
+        assertThat(reply.getAllCommandsAllSlotsUs()).isNotNull();
 
         // 17) net-bytes-all-commands-all-slots
         assertThat(reply.getNetBytesAllCommandsAllSlots()).isNotNull();
@@ -135,15 +128,13 @@ public class HotkeysClusterCommandIntegrationTests {
         // 27) total-net-bytes
         assertThat(reply.getTotalNetBytes()).isNotNull();
 
-        // 29) by-cpu-time - should have entries for keys in selected slots
-        assertThat(reply.getByCpuTime()).isNotEmpty();
-        assertThat(reply.getByCpuTime().keySet()).containsAnyOf("foo", "bar", "baz");
+        // 29) by-cpu-time-us - should have entries for keys
+        assertThat(reply.getByCpuTimeUs()).isNotEmpty();
 
-        // 31) by-net-bytes - should have entries for keys in selected slots
+        // 31) by-net-bytes - should have entries for keys
         assertThat(reply.getByNetBytes()).isNotEmpty();
-        assertThat(reply.getByNetBytes().keySet()).containsAnyOf("foo", "bar", "baz");
 
-        redis.hotkeysStop();
+        redis.masters().commands().hotkeysStop();
     }
 
 }

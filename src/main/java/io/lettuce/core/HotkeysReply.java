@@ -24,13 +24,13 @@ public class HotkeysReply {
 
     private final int sampleRatio;
 
-    private final List<Integer> selectedSlots;
+    private final List<Range<Integer>> selectedSlots;
 
-    private final Long sampledCommandSelectedSlotsMs;
+    private final Long sampledCommandSelectedSlotsUs;
 
-    private final Long allCommandsSelectedSlotsMs;
+    private final Long allCommandsSelectedSlotsUs;
 
-    private final Long allCommandsAllSlotsMs;
+    private final Long allCommandsAllSlotsUs;
 
     private final Long netBytesSampledCommandsSelectedSlots;
 
@@ -48,7 +48,7 @@ public class HotkeysReply {
 
     private final Long totalNetBytes;
 
-    private final Map<String, Long> byCpuTime;
+    private final Map<String, Long> byCpuTimeUs;
 
     private final Map<String, Long> byNetBytes;
 
@@ -57,10 +57,10 @@ public class HotkeysReply {
      *
      * @param trackingActive whether tracking is currently active.
      * @param sampleRatio the sampling ratio.
-     * @param selectedSlots the selected slots (empty if all slots).
-     * @param sampledCommandSelectedSlotsMs CPU time for sampled commands on selected slots in milliseconds (nullable).
-     * @param allCommandsSelectedSlotsMs CPU time for all commands on selected slots in milliseconds (nullable).
-     * @param allCommandsAllSlotsMs CPU time for all commands on all slots in milliseconds.
+     * @param selectedSlots the selected slot ranges (empty if all slots).
+     * @param sampledCommandSelectedSlotsUs CPU time for sampled commands on selected slots in microseconds (nullable).
+     * @param allCommandsSelectedSlotsUs CPU time for all commands on selected slots in microseconds (nullable).
+     * @param allCommandsAllSlotsUs CPU time for all commands on all slots in microseconds.
      * @param netBytesSampledCommandsSelectedSlots network bytes for sampled commands on selected slots (nullable).
      * @param netBytesAllCommandsSelectedSlots network bytes for all commands on selected slots (nullable).
      * @param netBytesAllCommandsAllSlots network bytes for all commands on all slots.
@@ -69,21 +69,21 @@ public class HotkeysReply {
      * @param totalCpuTimeUserMs total CPU user time in milliseconds.
      * @param totalCpuTimeSysMs total CPU system time in milliseconds.
      * @param totalNetBytes total network bytes.
-     * @param byCpuTime top K keys by CPU time.
+     * @param byCpuTimeUs top K keys by CPU time in microseconds (key -> microseconds).
      * @param byNetBytes top K keys by network bytes (key -> bytes).
      */
-    public HotkeysReply(boolean trackingActive, int sampleRatio, List<Integer> selectedSlots,
-            Long sampledCommandSelectedSlotsMs, Long allCommandsSelectedSlotsMs, Long allCommandsAllSlotsMs,
+    public HotkeysReply(boolean trackingActive, int sampleRatio, List<Range<Integer>> selectedSlots,
+            Long sampledCommandSelectedSlotsUs, Long allCommandsSelectedSlotsUs, Long allCommandsAllSlotsUs,
             Long netBytesSampledCommandsSelectedSlots, Long netBytesAllCommandsSelectedSlots, Long netBytesAllCommandsAllSlots,
             Long collectionStartTimeUnixMs, Long collectionDurationMs, Long totalCpuTimeUserMs, Long totalCpuTimeSysMs,
-            Long totalNetBytes, Map<String, Long> byCpuTime, Map<String, Long> byNetBytes) {
+            Long totalNetBytes, Map<String, Long> byCpuTimeUs, Map<String, Long> byNetBytes) {
 
         this.trackingActive = trackingActive;
         this.sampleRatio = sampleRatio;
         this.selectedSlots = selectedSlots != null ? Collections.unmodifiableList(selectedSlots) : Collections.emptyList();
-        this.sampledCommandSelectedSlotsMs = sampledCommandSelectedSlotsMs;
-        this.allCommandsSelectedSlotsMs = allCommandsSelectedSlotsMs;
-        this.allCommandsAllSlotsMs = allCommandsAllSlotsMs;
+        this.sampledCommandSelectedSlotsUs = sampledCommandSelectedSlotsUs;
+        this.allCommandsSelectedSlotsUs = allCommandsSelectedSlotsUs;
+        this.allCommandsAllSlotsUs = allCommandsAllSlotsUs;
         this.netBytesSampledCommandsSelectedSlots = netBytesSampledCommandsSelectedSlots;
         this.netBytesAllCommandsSelectedSlots = netBytesAllCommandsSelectedSlots;
         this.netBytesAllCommandsAllSlots = netBytesAllCommandsAllSlots;
@@ -92,7 +92,7 @@ public class HotkeysReply {
         this.totalCpuTimeUserMs = totalCpuTimeUserMs;
         this.totalCpuTimeSysMs = totalCpuTimeSysMs;
         this.totalNetBytes = totalNetBytes;
-        this.byCpuTime = byCpuTime != null ? Collections.unmodifiableMap(byCpuTime) : Collections.emptyMap();
+        this.byCpuTimeUs = byCpuTimeUs != null ? Collections.unmodifiableMap(byCpuTimeUs) : Collections.emptyMap();
         this.byNetBytes = byNetBytes != null ? Collections.unmodifiableMap(byNetBytes) : Collections.emptyMap();
     }
 
@@ -104,20 +104,20 @@ public class HotkeysReply {
         return sampleRatio;
     }
 
-    public List<Integer> getSelectedSlots() {
+    public List<Range<Integer>> getSelectedSlots() {
         return selectedSlots;
     }
 
-    public Long getSampledCommandSelectedSlotsMs() {
-        return sampledCommandSelectedSlotsMs;
+    public Long getSampledCommandSelectedSlotsUs() {
+        return sampledCommandSelectedSlotsUs;
     }
 
-    public Long getAllCommandsSelectedSlotsMs() {
-        return allCommandsSelectedSlotsMs;
+    public Long getAllCommandsSelectedSlotsUs() {
+        return allCommandsSelectedSlotsUs;
     }
 
-    public Long getAllCommandsAllSlotsMs() {
-        return allCommandsAllSlotsMs;
+    public Long getAllCommandsAllSlotsUs() {
+        return allCommandsAllSlotsUs;
     }
 
     public Long getNetBytesSampledCommandsSelectedSlots() {
@@ -152,8 +152,8 @@ public class HotkeysReply {
         return totalNetBytes;
     }
 
-    public Map<String, Long> getByCpuTime() {
-        return byCpuTime;
+    public Map<String, Long> getByCpuTimeUs() {
+        return byCpuTimeUs;
     }
 
     public Map<String, Long> getByNetBytes() {
@@ -171,9 +171,9 @@ public class HotkeysReply {
         HotkeysReply that = (HotkeysReply) o;
         return trackingActive == that.trackingActive && sampleRatio == that.sampleRatio
                 && Objects.equals(selectedSlots, that.selectedSlots)
-                && Objects.equals(sampledCommandSelectedSlotsMs, that.sampledCommandSelectedSlotsMs)
-                && Objects.equals(allCommandsSelectedSlotsMs, that.allCommandsSelectedSlotsMs)
-                && Objects.equals(allCommandsAllSlotsMs, that.allCommandsAllSlotsMs)
+                && Objects.equals(sampledCommandSelectedSlotsUs, that.sampledCommandSelectedSlotsUs)
+                && Objects.equals(allCommandsSelectedSlotsUs, that.allCommandsSelectedSlotsUs)
+                && Objects.equals(allCommandsAllSlotsUs, that.allCommandsAllSlotsUs)
                 && Objects.equals(netBytesSampledCommandsSelectedSlots, that.netBytesSampledCommandsSelectedSlots)
                 && Objects.equals(netBytesAllCommandsSelectedSlots, that.netBytesAllCommandsSelectedSlots)
                 && Objects.equals(netBytesAllCommandsAllSlots, that.netBytesAllCommandsAllSlots)
@@ -181,29 +181,29 @@ public class HotkeysReply {
                 && Objects.equals(collectionDurationMs, that.collectionDurationMs)
                 && Objects.equals(totalCpuTimeUserMs, that.totalCpuTimeUserMs)
                 && Objects.equals(totalCpuTimeSysMs, that.totalCpuTimeSysMs)
-                && Objects.equals(totalNetBytes, that.totalNetBytes) && Objects.equals(byCpuTime, that.byCpuTime)
+                && Objects.equals(totalNetBytes, that.totalNetBytes) && Objects.equals(byCpuTimeUs, that.byCpuTimeUs)
                 && Objects.equals(byNetBytes, that.byNetBytes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(trackingActive, sampleRatio, selectedSlots, sampledCommandSelectedSlotsMs,
-                allCommandsSelectedSlotsMs, allCommandsAllSlotsMs, netBytesSampledCommandsSelectedSlots,
+        return Objects.hash(trackingActive, sampleRatio, selectedSlots, sampledCommandSelectedSlotsUs,
+                allCommandsSelectedSlotsUs, allCommandsAllSlotsUs, netBytesSampledCommandsSelectedSlots,
                 netBytesAllCommandsSelectedSlots, netBytesAllCommandsAllSlots, collectionStartTimeUnixMs, collectionDurationMs,
-                totalCpuTimeUserMs, totalCpuTimeSysMs, totalNetBytes, byCpuTime, byNetBytes);
+                totalCpuTimeUserMs, totalCpuTimeSysMs, totalNetBytes, byCpuTimeUs, byNetBytes);
     }
 
     @Override
     public String toString() {
         return "HotkeysReply{" + "trackingActive=" + trackingActive + ", sampleRatio=" + sampleRatio + ", selectedSlots="
-                + selectedSlots + ", sampledCommandSelectedSlotsMs=" + sampledCommandSelectedSlotsMs
-                + ", allCommandsSelectedSlotsMs=" + allCommandsSelectedSlotsMs + ", allCommandsAllSlotsMs="
-                + allCommandsAllSlotsMs + ", netBytesSampledCommandsSelectedSlots=" + netBytesSampledCommandsSelectedSlots
+                + selectedSlots + ", sampledCommandSelectedSlotsUs=" + sampledCommandSelectedSlotsUs
+                + ", allCommandsSelectedSlotsUs=" + allCommandsSelectedSlotsUs + ", allCommandsAllSlotsUs="
+                + allCommandsAllSlotsUs + ", netBytesSampledCommandsSelectedSlots=" + netBytesSampledCommandsSelectedSlots
                 + ", netBytesAllCommandsSelectedSlots=" + netBytesAllCommandsSelectedSlots + ", netBytesAllCommandsAllSlots="
                 + netBytesAllCommandsAllSlots + ", collectionStartTimeUnixMs=" + collectionStartTimeUnixMs
                 + ", collectionDurationMs=" + collectionDurationMs + ", totalCpuTimeUserMs=" + totalCpuTimeUserMs
-                + ", totalCpuTimeSysMs=" + totalCpuTimeSysMs + ", totalNetBytes=" + totalNetBytes + ", byCpuTime=" + byCpuTime
-                + ", byNetBytes=" + byNetBytes + '}';
+                + ", totalCpuTimeSysMs=" + totalCpuTimeSysMs + ", totalNetBytes=" + totalNetBytes + ", byCpuTimeUs="
+                + byCpuTimeUs + ", byNetBytes=" + byNetBytes + '}';
     }
 
 }

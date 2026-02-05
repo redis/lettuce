@@ -76,15 +76,15 @@ public class HotkeysCommandIntegrationTests extends TestSupport {
         redis.hotkeysStop();
         HotkeysReply reply = redis.hotkeysGet();
         assertThat(reply.isTrackingActive()).isFalse();
-        assertThat(reply.getByCpuTime()).containsKey("key1");
+        assertThat(reply.getByCpuTimeUs()).containsKey("key1");
 
         // Restart clears previous data
         redis.hotkeysStart(HotkeysArgs.Builder.metrics(HotkeysArgs.Metric.CPU));
         redis.set("key2", "val2");
         reply = redis.hotkeysGet();
         assertThat(reply.isTrackingActive()).isTrue();
-        assertThat(reply.getByCpuTime()).containsKey("key2");
-        assertThat(reply.getByCpuTime()).doesNotContainKey("key1");
+        assertThat(reply.getByCpuTimeUs()).containsKey("key2");
+        assertThat(reply.getByCpuTimeUs()).doesNotContainKey("key1");
 
         // RESET clears all data
         redis.hotkeysStop();
@@ -114,8 +114,8 @@ public class HotkeysCommandIntegrationTests extends TestSupport {
         HotkeysReply reply = redis.hotkeysGet();
 
         // Verify CPU hotspot detected
-        assertThat(reply.getByCpuTime()).containsKey(cpuHot);
-        assertThat(reply.getByCpuTime().get(cpuHot)).isGreaterThan(0L);
+        assertThat(reply.getByCpuTimeUs()).containsKey(cpuHot);
+        assertThat(reply.getByCpuTimeUs().get(cpuHot)).isGreaterThan(0L);
 
         // Verify NET hotspot detected
         assertThat(reply.getByNetBytes()).containsKey(netHot);
@@ -136,7 +136,7 @@ public class HotkeysCommandIntegrationTests extends TestSupport {
         }
         HotkeysReply reply = redis.hotkeysGet();
         assertThat(reply.getSampleRatio()).isEqualTo(5);
-        assertThat(reply.getByCpuTime().size()).isLessThan(20);
+        assertThat(reply.getByCpuTimeUs().size()).isLessThan(20);
         redis.hotkeysStop();
         redis.hotkeysReset();
 
@@ -146,7 +146,7 @@ public class HotkeysCommandIntegrationTests extends TestSupport {
             redis.set("countkey" + i, "value" + i);
         }
         reply = redis.hotkeysGet();
-        assertThat(reply.getByCpuTime().size()).isLessThanOrEqualTo(10);
+        assertThat(reply.getByCpuTimeUs().size()).isLessThanOrEqualTo(10);
         redis.hotkeysStop();
         redis.hotkeysReset();
 
@@ -156,7 +156,7 @@ public class HotkeysCommandIntegrationTests extends TestSupport {
         await().until(() -> !redis.hotkeysGet().isTrackingActive());
         reply = redis.hotkeysGet();
         assertThat(reply.getCollectionDurationMs()).isGreaterThanOrEqualTo(1000L);
-        assertThat(reply.getByCpuTime()).containsKey("durationkey");
+        assertThat(reply.getByCpuTimeUs()).containsKey("durationkey");
     }
 
     /**

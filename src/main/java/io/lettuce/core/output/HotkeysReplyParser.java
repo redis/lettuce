@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.lettuce.core.HotkeysReply;
+import io.lettuce.core.Range;
 
 /**
  * Parser for Redis <a href="https://redis.io/commands/hotkeys">HOTKEYS GET</a> command output.
@@ -41,20 +42,22 @@ public class HotkeysReplyParser implements ComplexDataParser<HotkeysReply> {
             return null;
         }
 
-        Map<Object, Object> data = dynamicData.getDynamicMap();
+        Map<Object, Object> data = extractDataMap(dynamicData);
         if (data == null || data.isEmpty()) {
-            throw new IllegalArgumentException("Failed while parsing HOTKEYS GET: data must not be null or empty");
+            // HOTKEYS GET returns nil (empty response) when hotkeys has never been started
+            return null;
         }
 
         // Extract fields from the response
         boolean trackingActive = getLongValue(data, "tracking-active") == 1;
         int sampleRatio = getLongValue(data, "sample-ratio").intValue();
 
-        List<Integer> selectedSlots = parseIntegerList(data.get("selected-slots"));
+        List<Range<Integer>> selectedSlots = parseSlotRanges(data.get("selected-slots"));
 
-        Long sampledCommandSelectedSlotsMs = getLongValueOrNull(data, "sampled-command-selected-slots-ms");
-        Long allCommandsSelectedSlotsMs = getLongValueOrNull(data, "all-commands-selected-slots-ms");
-        Long allCommandsAllSlotsMs = getLongValueOrNull(data, "all-commands-all-slots-ms");
+        // CPU time fields use microseconds (us) suffix
+        Long sampledCommandSelectedSlotsUs = getLongValueOrNull(data, "sampled-command-selected-slots-us");
+        Long allCommandsSelectedSlotsUs = getLongValueOrNull(data, "all-commands-selected-slots-us");
+        Long allCommandsAllSlotsUs = getLongValueOrNull(data, "all-commands-all-slots-us");
 
         Long netBytesSampledCommandsSelectedSlots = getLongValueOrNull(data, "net-bytes-sampled-commands-selected-slots");
         Long netBytesAllCommandsSelectedSlots = getLongValueOrNull(data, "net-bytes-all-commands-selected-slots");
@@ -66,13 +69,58 @@ public class HotkeysReplyParser implements ComplexDataParser<HotkeysReply> {
         Long totalCpuTimeSysMs = getLongValueOrNull(data, "total-cpu-time-sys-ms");
         Long totalNetBytes = getLongValueOrNull(data, "total-net-bytes");
 
-        Map<String, Long> byCpuTime = parseKeyValueMap(data.get("by-cpu-time"));
+        // by-cpu-time uses microseconds (us) suffix
+        Map<String, Long> byCpuTimeUs = parseKeyValueMap(data.get("by-cpu-time-us"));
         Map<String, Long> byNetBytes = parseKeyValueMap(data.get("by-net-bytes"));
 
-        return new HotkeysReply(trackingActive, sampleRatio, selectedSlots, sampledCommandSelectedSlotsMs,
-                allCommandsSelectedSlotsMs, allCommandsAllSlotsMs, netBytesSampledCommandsSelectedSlots,
+        return new HotkeysReply(trackingActive, sampleRatio, selectedSlots, sampledCommandSelectedSlotsUs,
+                allCommandsSelectedSlotsUs, allCommandsAllSlotsUs, netBytesSampledCommandsSelectedSlots,
                 netBytesAllCommandsSelectedSlots, netBytesAllCommandsAllSlots, collectionStartTimeUnixMs, collectionDurationMs,
-                totalCpuTimeUserMs, totalCpuTimeSysMs, totalNetBytes, byCpuTime, byNetBytes);
+                totalCpuTimeUserMs, totalCpuTimeSysMs, totalNetBytes, byCpuTimeUs, byNetBytes);
+    }
+
+    /**
+     * Extract data map from ComplexData. Handles both RESP2 (array of key-value pairs) and RESP3 (map) formats. Also handles
+     * the case where the response is wrapped in an outer array.
+     */
+    private Map<Object, Object> extractDataMap(ComplexData dynamicData) {
+        // Try RESP3 map format first
+        if (dynamicData.isMap()) {
+            return dynamicData.getDynamicMap();
+        }
+
+        // RESP2 format: array of alternating key-value pairs
+        if (dynamicData.isList()) {
+            List<?> list = dynamicData.getDynamicList();
+            if (list == null || list.isEmpty()) {
+                return null;
+            }
+
+            // Check if the response is wrapped in an outer array (single element that is ComplexData)
+            // This happens when Redis returns [[key1, val1, key2, val2, ...]]
+            if (list.size() == 1 && list.get(0) instanceof ComplexData) {
+                ComplexData innerData = (ComplexData) list.get(0);
+                if (innerData.isMap()) {
+                    return innerData.getDynamicMap();
+                }
+                if (innerData.isList()) {
+                    list = innerData.getDynamicList();
+                    if (list == null || list.isEmpty()) {
+                        return null;
+                    }
+                }
+            }
+
+            Map<Object, Object> result = new LinkedHashMap<>();
+            for (int i = 0; i < list.size(); i += 2) {
+                if (i + 1 < list.size()) {
+                    result.put(list.get(i), list.get(i + 1));
+                }
+            }
+            return result;
+        }
+
+        return null;
     }
 
     private Long getLongValue(Map<Object, Object> data, String key) {
@@ -88,16 +136,26 @@ public class HotkeysReplyParser implements ComplexDataParser<HotkeysReply> {
         return value != null ? (Long) value : null;
     }
 
-    private List<Integer> parseIntegerList(Object value) {
+    /**
+     * Parse selected-slots which is an array of [start, end] ranges. Example: [[0, 16383]] means all slots.
+     */
+    private List<Range<Integer>> parseSlotRanges(Object value) {
         if (value == null) {
             return new ArrayList<>();
         }
 
         if (value instanceof ComplexData) {
             List<?> list = ((ComplexData) value).getDynamicList();
-            List<Integer> result = new ArrayList<>(list.size());
+            List<Range<Integer>> result = new ArrayList<>(list.size());
             for (Object item : list) {
-                result.add(((Long) item).intValue());
+                if (item instanceof ComplexData) {
+                    List<?> range = ((ComplexData) item).getDynamicList();
+                    if (range.size() == 2) {
+                        int start = ((Long) range.get(0)).intValue();
+                        int end = ((Long) range.get(1)).intValue();
+                        result.add(Range.create(start, end));
+                    }
+                }
             }
             return result;
         }
