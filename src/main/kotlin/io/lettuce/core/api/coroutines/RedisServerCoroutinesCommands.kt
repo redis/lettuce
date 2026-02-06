@@ -398,7 +398,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      *
      * @param args tracking arguments.
      * @return String simple-string-reply `OK`.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     suspend fun hotkeysStart(args: HotkeysArgs): String?
@@ -407,7 +407,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * Stop hotkeys tracking but retain data.
      *
      * @return String simple-string-reply `OK`.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     suspend fun hotkeysStop(): String?
@@ -416,7 +416,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * Reset hotkeys tracking data.
      *
      * @return String simple-string-reply `OK`.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     suspend fun hotkeysReset(): String?
@@ -425,7 +425,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * Get hotkeys tracking results.
      *
      * @return @link HotkeysReply} with tracking data, or `null` if no tracking session.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     suspend fun hotkeysGet(): HotkeysReply?

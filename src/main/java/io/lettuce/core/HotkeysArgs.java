@@ -24,7 +24,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * {@link HotkeysArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Aleksandar Todorov
- * @since 7.3
+ * @since 7.4
  */
 @Experimental
 public class HotkeysArgs implements CompositeArgument {

@@ -385,7 +385,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      *
      * @param args tracking arguments.
      * @return String simple-string-reply {@code OK}.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     AsyncExecutions<String> hotkeysStart(HotkeysArgs args);
@@ -394,7 +394,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      * Stop hotkeys tracking but retain data.
      *
      * @return String simple-string-reply {@code OK}.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     AsyncExecutions<String> hotkeysStop();
@@ -403,7 +403,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      * Reset hotkeys tracking data.
      *
      * @return String simple-string-reply {@code OK}.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     AsyncExecutions<String> hotkeysReset();
@@ -412,7 +412,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      * Get hotkeys tracking results.
      *
      * @return {@link HotkeysReply} with tracking data, or {@code null} if no tracking session.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     AsyncExecutions<HotkeysReply> hotkeysGet();

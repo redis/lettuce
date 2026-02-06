@@ -19,7 +19,7 @@ import io.lettuce.core.annotations.Experimental;
  * Parser for Redis <a href="https://redis.io/commands/hotkeys">HOTKEYS GET</a> command output.
  *
  * @author Aleksandar Todorov
- * @since 7.3
+ * @since 7.4
  */
 @Experimental
 public class HotkeysReplyParser implements ComplexDataParser<HotkeysReply> {

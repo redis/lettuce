@@ -18,7 +18,7 @@ import io.lettuce.core.annotations.Experimental;
  * information and top K hotkeys by CPU time and network bytes.
  *
  * @author Aleksandar Todorov
- * @since 7.3
+ * @since 7.4
  */
 @Experimental
 public class HotkeysReply {

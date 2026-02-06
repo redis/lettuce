@@ -402,7 +402,7 @@ public interface RedisServerReactiveCommands<K, V> {
      *
      * @param args tracking arguments.
      * @return String simple-string-reply {@code OK}.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     Mono<String> hotkeysStart(HotkeysArgs args);
@@ -411,7 +411,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * Stop hotkeys tracking but retain data.
      *
      * @return String simple-string-reply {@code OK}.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     Mono<String> hotkeysStop();
@@ -420,7 +420,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * Reset hotkeys tracking data.
      *
      * @return String simple-string-reply {@code OK}.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     Mono<String> hotkeysReset();
@@ -429,7 +429,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * Get hotkeys tracking results.
      *
      * @return {@link HotkeysReply} with tracking data, or {@code null} if no tracking session.
-     * @since 7.3
+     * @since 7.4
      */
     @Experimental
     Mono<HotkeysReply> hotkeysGet();
