@@ -25,30 +25,31 @@ import io.lettuce.core.failover.MultiDbClient;
 import io.lettuce.core.failover.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 
-// Define Redis endpoints
-RedisURI east = RedisURI.builder()
+
+// Configure databases with weights (higher weight = higher priority)
+// redis-east
+RedisURI eastUri = RedisURI.builder()
         .withHost("redis-east.example.com")
         .withPort(6379)
         .withPassword("secret".toCharArray())
         .build();
 
-RedisURI west = RedisURI.builder()
-        .withHost("redis-west.example.com")
-        .withPort(6379)
-        .withPassword("secret".toCharArray())
-        .build();
-
-// Configure databases with weights (higher weight = higher priority)
-DatabaseConfig db1 = DatabaseConfig.builder(east)
+DatabaseConfig wast = DatabaseConfig.builder(eastUri)
         .weight(1.0f)  // Primary database
         .build();
 
-DatabaseConfig db2 = DatabaseConfig.builder(west)
+// redis-west
+RedisURI westUri = RedisURI.builder()
+                .withHost("redis-west.example.com")
+                .withPort(6379)
+                .withPassword("secret".toCharArray())
+                .build();
+DatabaseConfig west = DatabaseConfig.builder(westUri)
         .weight(0.5f)  // Secondary database
         .build();
 
 // Create the multi-database client
-MultiDbClient client = MultiDbClient.create(Arrays.asList(db1, db2));
+MultiDbClient client = MultiDbClient.create(Arrays.asList(east, west));
 
 // Connect and use like a regular Redis connection
 StatefulRedisMultiDbConnection<String, String> connection = client.connect();
@@ -176,8 +177,8 @@ For Redis Enterprise deployments, use `LagAwareStrategy` which leverages the RES
     <artifactId>netty-codec-http</artifactId>
 </dependency>
 <dependency>
-    <groupId>com.google.code.gson</groupId>
-    <artifactId>gson</artifactId>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
 </dependency>
 ```
 
