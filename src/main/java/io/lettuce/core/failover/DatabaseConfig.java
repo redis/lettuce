@@ -1,6 +1,7 @@
 package io.lettuce.core.failover;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.MaintNotificationsConfig;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
@@ -173,7 +174,7 @@ public class DatabaseConfig {
 
         private float weight = DEFAULT_WEIGHT;
 
-        private ClientOptions clientOptions = ClientOptions.create();
+        private ClientOptions clientOptions = MultiDbClientOptions.from(ClientOptions.create());
 
         private CircuitBreakerConfig circuitBreakerConfig;
 
@@ -196,7 +197,8 @@ public class DatabaseConfig {
         }
 
         public Builder clientOptions(ClientOptions clientOptions) {
-            this.clientOptions = clientOptions;
+            this.clientOptions = MultiDbClientOptions.from(clientOptions);
+
             return this;
         }
 
@@ -231,6 +233,30 @@ public class DatabaseConfig {
          */
         public DatabaseConfig build() {
             return new DatabaseConfig(this);
+        }
+
+        private static class MultiDbClientOptions extends ClientOptions {
+
+            private static final MaintNotificationsConfig DEFAULT_MAINT_NOTIFICATIONS_CONFIG = MaintNotificationsConfig
+                    .disabled();
+
+            protected MultiDbClientOptions(ClientOptions original) {
+                super(original);
+            }
+
+            @Override
+            public MaintNotificationsConfig getMaintNotificationsConfig() {
+                if (super.getMaintNotificationsConfig() == MAINT_NOTIFICATIONS_CONFIG_INITIAL) {
+                    return DEFAULT_MAINT_NOTIFICATIONS_CONFIG;
+                }
+
+                return super.getMaintNotificationsConfig();
+            }
+
+            static ClientOptions from(ClientOptions clientOptions) {
+                return new MultiDbClientOptions(clientOptions);
+            }
+
         }
 
     }
