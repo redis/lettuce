@@ -197,6 +197,60 @@ DatabaseConfig db = DatabaseConfig.builder(redisUri)
         .build();
 ```
 
+### Custom Health Check Strategies
+
+You can implement custom health check strategies by implementing the `HealthCheckStrategy` interface.
+
+Use cases:
+- Application-specific health validation logic
+- Integration with external monitoring systems
+- Custom performance or latency-based health checks
+
+```java
+import io.lettuce.core.failover.health.HealthCheckStrategy;
+import io.lettuce.core.failover.health.HealthStatus;
+import io.lettuce.core.failover.health.ProbingPolicy;
+
+public class CustomHealthCheck implements HealthCheckStrategy {
+
+    private final HealthCheckStrategy.Config config;
+
+    public CustomHealthCheck(HealthCheckStrategy.Config config) {
+        this.config = config;
+    }
+
+    @Override
+    public HealthStatus doHealthCheck(RedisURI endpoint) {
+        // Implement custom health check logic
+        // Return HealthStatus.HEALTHY, HealthStatus.UNHEALTHY, or HealthStatus.UNKNOWN
+        return HealthStatus.HEALTHY;
+    }
+
+    @Override
+    public int getInterval() { return config.getInterval(); }
+
+    @Override
+    public int getTimeout() { return config.getTimeout(); }
+
+    @Override
+    public int getNumProbes() { return config.getNumProbes(); }
+
+    @Override
+    public int getDelayInBetweenProbes() { return config.getDelayInBetweenProbes(); }
+
+    @Override
+    public ProbingPolicy getPolicy() { return config.getPolicy(); }
+}
+```
+
+Use the `healthCheckStrategySupplier()` method to provide a custom health check implementation:
+
+```java
+DatabaseConfig db = DatabaseConfig.builder(redisUri)
+        .healthCheckStrategySupplier((uri, factory) -> new CustomHealthCheck(HealthCheckStrategy.Config.create()))
+        .build();
+```
+
 ### Disabling Health Checks
 
 To disable health checks for a specific database:
