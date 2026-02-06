@@ -341,7 +341,6 @@ class RedisHandshake implements ConnectionInitializer {
     private CompletionStage<Void> enableMaintNotifications(Channel channel) {
         return sendMaintenanceNotificationsOn(channel).handle((result, error) -> {
             if (error != null) {
-                LOG.info("Maintenance events not supported.");
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Maintenance events not enabled", error);
                 }

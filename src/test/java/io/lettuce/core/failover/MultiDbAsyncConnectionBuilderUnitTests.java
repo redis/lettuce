@@ -23,6 +23,8 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.failover.AbstractRedisMultiDbConnectionBuilder.DatabaseFutureMap;
 import io.lettuce.core.failover.AbstractRedisMultiDbConnectionBuilder.DatabaseMap;
+import io.lettuce.core.failover.api.DatabaseConfig;
+import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.*;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
