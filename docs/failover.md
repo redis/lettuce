@@ -1,0 +1,313 @@
+# Automatic Failover and Failback with Lettuce
+
+!!! warning "Experimental Feature"
+    This feature is experimental and may change in future versions.
+
+Lettuce supports automatic failover and failback for your Redis deployments through the `MultiDbClient`. This is useful when:
+
+1. You have more than one Redis deployment (e.g., two independent Redis servers or multiple Redis databases replicated across active-active clusters).
+2. You want your application to connect to and use one deployment at a time.
+3. You want your application to fail over to the next available deployment if the current deployment becomes unavailable.
+4. You want your application to fail back to the original deployment when it becomes available again.
+
+Lettuce will fail over to a subsequent Redis deployment after the circuit breaker detects failures exceeding the configured threshold. In the background, Lettuce executes health checks to determine when a Redis deployment is available again. When this occurs, Lettuce will fail back to the original deployment.
+
+## Basic Usage
+
+To configure Lettuce for failover, you specify a weighted list of Redis databases. Lettuce will connect to the Redis database with the highest weight. If the highest-weighted database becomes unavailable, Lettuce will attempt to connect to the database with the next highest weight.
+
+Suppose you run two Redis deployments: `redis-east` and `redis-west`. You want your application to first connect to `redis-east`. If `redis-east` becomes unavailable, you want your application to connect to `redis-west`.
+
+```java
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.failover.DatabaseConfig;
+import io.lettuce.core.failover.MultiDbClient;
+import io.lettuce.core.failover.MultiDbOptions;
+import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
+
+// Define Redis endpoints
+RedisURI east = RedisURI.builder()
+        .withHost("redis-east.example.com")
+        .withPort(6379)
+        .withPassword("secret".toCharArray())
+        .build();
+
+RedisURI west = RedisURI.builder()
+        .withHost("redis-west.example.com")
+        .withPort(6379)
+        .withPassword("secret".toCharArray())
+        .build();
+
+// Configure databases with weights (higher weight = higher priority)
+DatabaseConfig db1 = DatabaseConfig.builder(east)
+        .weight(1.0f)  // Primary database
+        .build();
+
+DatabaseConfig db2 = DatabaseConfig.builder(west)
+        .weight(0.5f)  // Secondary database
+        .build();
+
+// Create the multi-database client
+MultiDbClient client = MultiDbClient.create(Arrays.asList(db1, db2));
+
+// Connect and use like a regular Redis connection
+StatefulRedisMultiDbConnection<String, String> connection = client.connect();
+
+// Execute commands asynchronously - they go to the highest-weighted healthy database
+connection.async().set("key", "value");
+String value = connection.async().get("key").get();
+
+// Clean up
+connection.close();
+client.shutdown();
+```
+
+## Configuration Options
+
+### DatabaseConfig
+
+Each database is configured using `DatabaseConfig.Builder`:
+
+| Setting | Method | Default | Description |
+|---------|--------|---------|-------------|
+| Weight | `weight(float)` | `1.0` | Priority weight for database selection. Higher weight = higher priority. |
+| Circuit Breaker Config | `circuitBreakerConfig(CircuitBreakerConfig)` | Default config | Circuit breaker settings for failure detection. |
+| Health Check Strategy | `healthCheckStrategySupplier(HealthCheckStrategySupplier)` | `PingStrategy.DEFAULT` | Strategy for health checks. Use `HealthCheckStrategySupplier.NO_HEALTH_CHECK` to disable. |
+| Client Options | `clientOptions(ClientOptions)` | Default options | Per-database client options. |
+
+### MultiDbOptions
+
+Global options for the multi-database client:
+
+| Setting | Method | Default | Description |
+|---------|--------|---------|-------------|
+| Failback Supported | `failbackSupported(boolean)` | `true` | Enable automatic failback to higher-priority databases. |
+| Failback Check Interval | `failbackCheckInterval(Duration)` | `120 seconds` | Interval for checking if failed databases have recovered. |
+| Grace Period | `gracePeriod(Duration)` | `60 seconds` | Time to wait before allowing failback to a recovered database. |
+| Delay Between Failover Attempts | `delayInBetweenFailoverAttempts(Duration)` | `12 seconds` | Delay between failover attempts when no healthy database is available. |
+| Initialization Policy | `initializationPolicy(InitializationPolicy)` | `MAJORITY_AVAILABLE` | Policy for connection initialization. |
+
+Example with custom options:
+
+```java
+MultiDbOptions options = MultiDbOptions.builder()
+        .failbackSupported(true)
+        .failbackCheckInterval(Duration.ofSeconds(30))
+        .gracePeriod(Duration.ofSeconds(10))
+        .delayInBetweenFailoverAttempts(Duration.ofSeconds(5))
+        .build();
+
+MultiDbClient client = MultiDbClient.create(Arrays.asList(db1, db2), options);
+```
+
+### Circuit Breaker Configuration
+
+The circuit breaker detects failures and triggers failover:
+
+| Setting | Method | Default | Description |
+|---------|--------|---------|-------------|
+| Failure Rate Threshold | `failureRateThreshold(float)` | `10.0` | Percentage of failures to trigger circuit breaker. |
+| Minimum Number of Failures | `minimumNumberOfFailures(int)` | `1000` | Minimum failures before circuit breaker can open. |
+| Metrics Window Size | `metricsWindowSize(int)` | `2 seconds` | Time window for collecting metrics. |
+| Tracked Exceptions | `trackedExceptions(Set)` | Connection/Timeout exceptions | Exceptions that count as failures. |
+
+```java
+import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
+
+CircuitBreakerConfig cbConfig = CircuitBreakerConfig.builder()
+        .failureRateThreshold(50.0f)
+        .minimumNumberOfFailures(100)
+        .metricsWindowSize(5)
+        .build();
+
+DatabaseConfig db = DatabaseConfig.builder(redisUri)
+        .circuitBreakerConfig(cbConfig)
+        .build();
+```
+
+## Health Check Strategies
+
+Health checks run in the background to monitor database availability and enable automatic failback.
+
+### PingStrategy (Default)
+
+Uses the Redis `PING` command to verify connectivity:
+
+```java
+import io.lettuce.core.failover.health.PingStrategy;
+import io.lettuce.core.failover.health.HealthCheckStrategy;
+
+// Use default PingStrategy
+DatabaseConfig db = DatabaseConfig.builder(redisUri)
+        .healthCheckStrategySupplier(PingStrategy.DEFAULT)
+        .build();
+
+// Or with custom configuration
+HealthCheckStrategy.Config healthConfig = HealthCheckStrategy.Config.builder()
+        .interval(5000)           // Check every 5 seconds
+        .timeout(1000)            // 1 second timeout
+        .numProbes(3)             // 3 probes per check
+        .delayInBetweenProbes(500) // 500ms between probes
+        .build();
+
+DatabaseConfig db = DatabaseConfig.builder(redisUri)
+        .healthCheckStrategySupplier((uri, factory) ->
+                new PingStrategy(factory, healthConfig))
+        .build();
+```
+
+### LagAwareStrategy (Redis Enterprise)
+
+For Redis Enterprise deployments, use `LagAwareStrategy` which leverages the REST API to check database availability and replication lag.
+
+**Required dependencies** (optional in Lettuce):
+```xml
+<dependency>
+    <groupId>io.netty</groupId>
+    <artifactId>netty-codec-http</artifactId>
+</dependency>
+<dependency>
+    <groupId>com.google.code.gson</groupId>
+    <artifactId>gson</artifactId>
+</dependency>
+```
+
+```java
+import io.lettuce.core.failover.health.LagAwareStrategy;
+
+LagAwareStrategy.Config lagConfig = LagAwareStrategy.Config.builder()
+        .restApiUri(URI.create("https://cluster.redis.local:9443"))
+        .credentials(() -> RedisCredentials.just("admin", "password"))
+        .extendedCheckEnabled(true)  // Enable lag-aware checks
+        .availabilityLagTolerance(Duration.ofMillis(100))
+        .build();
+
+DatabaseConfig db = DatabaseConfig.builder(redisUri)
+        .healthCheckStrategySupplier((uri, factory) -> new LagAwareStrategy(lagConfig))
+        .build();
+```
+
+### Disabling Health Checks
+
+To disable health checks for a specific database:
+
+```java
+import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
+
+DatabaseConfig db = DatabaseConfig.builder(redisUri)
+        .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK)
+        .build();
+```
+
+## Failback
+
+Failback is the process of returning to a higher-priority database after it recovers from a failure.
+
+### Automatic Failback
+
+By default, Lettuce automatically fails back to higher-weighted databases when they become healthy again. The process:
+
+1. Health checks continuously monitor all databases
+2. When a higher-priority database passes health checks, it enters a grace period
+3. After the grace period expires, Lettuce fails back to the higher-priority database
+
+Configure failback behavior:
+
+```java
+MultiDbOptions options = MultiDbOptions.builder()
+        .failbackSupported(true)              // Enable automatic failback
+        .failbackCheckInterval(Duration.ofSeconds(30))  // How often to check
+        .gracePeriod(Duration.ofSeconds(60))  // Wait before failback
+        .build();
+```
+
+### Disabling Failback
+
+To disable automatic failback:
+
+```java
+MultiDbOptions options = MultiDbOptions.builder()
+        .failbackSupported(false)
+        .build();
+```
+
+### Manual Failback
+
+You can manually switch to a specific database using the connection API:
+
+```java
+StatefulRedisMultiDbConnection<String, String> connection = client.connect();
+
+// Get current endpoint
+RedisURI current = connection.getCurrentEndpoint();
+
+// Get all available endpoints
+Collection<RedisURI> endpoints = connection.getEndpoints();
+
+// Check if a specific endpoint is healthy
+boolean healthy = connection.isHealthy(targetUri);
+
+// Force switch to a specific endpoint
+connection.switchTo(targetUri);
+```
+
+## Dynamic Database Management
+
+You can add or remove databases at runtime:
+
+```java
+StatefulRedisMultiDbConnection<String, String> connection = client.connect();
+
+// Add a new database
+RedisURI newDb = RedisURI.create("redis://new-server:6379");
+DatabaseConfig newConfig = DatabaseConfig.builder(newDb)
+        .weight(0.8f)
+        .build();
+connection.addDatabase(newConfig);
+
+// Remove a database
+connection.removeDatabase(existingUri);
+```
+
+## Events
+
+Listen for database switch events to monitor failover and failback:
+
+### Database Switch Events
+
+```java
+client.getResources().eventBus().get()
+        .filter(event -> event instanceof DatabaseSwitchEvent)
+        .cast(DatabaseSwitchEvent.class)
+        .subscribe(event -> log.info("Switch: {} -> {} ({})",
+                event.getFromDb(), event.getToDb(), event.getReason()));
+```
+
+Switch reasons:
+- `HEALTH_CHECK` - Database failed health check
+- `CIRCUIT_BREAKER` - Circuit breaker opened due to failures
+- `FAILBACK` - Automatic failback to higher-priority database
+- `FORCED` - Manual switch via `switchTo()`
+
+### All Databases Unhealthy Event
+
+Fired when all databases are unhealthy and no failover target is available:
+
+```java
+client.getResources().eventBus().get()
+        .filter(event -> event instanceof AllDatabasesUnhealthyEvent)
+        .cast(AllDatabasesUnhealthyEvent.class)
+        .subscribe(event -> log.warn("All databases unhealthy! Attempts: {}, DBs: {}",
+                event.getFailedAttempts(), event.getUnhealthyDatabases()));
+```
+
+## Troubleshooting
+
+### Enable Debug Logging
+
+Add to your logging configuration:
+
+```properties
+logging.level.io.lettuce.core.failover=DEBUG
+```
+
