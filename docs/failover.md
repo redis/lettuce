@@ -237,15 +237,20 @@ DatabaseConfig db = DatabaseConfig.builder(redisUri)
 
 ## Failback
 
-Failback is the process of returning to a higher-priority database after it recovers from a failure.
+When a failover is triggered, Lettuce will attempt to connect to the next Redis server based on the weights of server configurations you provide at setup.
+
+For example, recall the `redis-east` and `redis-west` deployments from the basic usage example above. Lettuce will attempt to connect to `redis-east` first. If `redis-east` becomes unavailable, then Lettuce will attempt to use `redis-west`.
+
+Now suppose that `redis-east` eventually comes back online. You will likely want to switch your application back to `redis-east`.
 
 ### Automatic Failback
 
-By default, Lettuce automatically fails back to higher-weighted databases when they become healthy again. The process:
+Lettuce automatically monitors the health of all configured databases, including those that are currently inactive due to previous failures. The automatic failback process works as follows:
 
-1. Health checks continuously monitor all databases
-2. When a higher-priority database passes health checks, it enters a grace period
-3. After the grace period expires, Lettuce fails back to the higher-priority database
+- **Continuous Monitoring** - Health checks run continuously for all databases, regardless of their current active status
+- **Recovery Detection** - When a previously failed database recovers, Lettuce detects this through health checks
+- **Weight-Based Failback** - If automatic failback is enabled and a recovered database has a higher weight than the currently active database, Lettuce will automatically switch to the recovered database
+- **Grace Period Respect** - Failback only occurs after the configured grace period has elapsed since the database was marked as healthy
 
 Configure failback behavior:
 
