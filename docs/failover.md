@@ -199,55 +199,27 @@ DatabaseConfig db = DatabaseConfig.builder(redisUri)
 
 ### Custom Health Check Strategies
 
-You can implement custom health check strategies by implementing the `HealthCheckStrategy` interface.
-
-Use cases:
-- Application-specific health validation logic
-- Integration with external monitoring systems
-- Custom performance or latency-based health checks
+Implement the `HealthCheckStrategy` interface for custom health validation logic, integration with external monitoring systems, or latency-based health checks.
 
 ```java
-import io.lettuce.core.failover.health.HealthCheckStrategy;
-import io.lettuce.core.failover.health.HealthStatus;
-import io.lettuce.core.failover.health.ProbingPolicy;
-
-public class CustomHealthCheck implements HealthCheckStrategy {
-
-    private final HealthCheckStrategy.Config config;
+public class CustomHealthCheck extends AbstractHealthCheckStrategy {
 
     public CustomHealthCheck(HealthCheckStrategy.Config config) {
-        this.config = config;
+        super(config);
     }
 
     @Override
     public HealthStatus doHealthCheck(RedisURI endpoint) {
-        // Implement custom health check logic
-        // Return HealthStatus.HEALTHY, HealthStatus.UNHEALTHY, or HealthStatus.UNKNOWN
-        return HealthStatus.HEALTHY;
+        // Return HealthStatus.HEALTHY, UNHEALTHY, or UNKNOWN
+        return checkExternalMonitoringSystem(endpoint)
+                ? HealthStatus.HEALTHY : HealthStatus.UNHEALTHY;
     }
-
-    @Override
-    public int getInterval() { return config.getInterval(); }
-
-    @Override
-    public int getTimeout() { return config.getTimeout(); }
-
-    @Override
-    public int getNumProbes() { return config.getNumProbes(); }
-
-    @Override
-    public int getDelayInBetweenProbes() { return config.getDelayInBetweenProbes(); }
-
-    @Override
-    public ProbingPolicy getPolicy() { return config.getPolicy(); }
 }
-```
 
-Use the `healthCheckStrategySupplier()` method to provide a custom health check implementation:
-
-```java
+// Use with healthCheckStrategySupplier()
 DatabaseConfig db = DatabaseConfig.builder(redisUri)
-        .healthCheckStrategySupplier((uri, factory) -> new CustomHealthCheck(HealthCheckStrategy.Config.create()))
+        .healthCheckStrategySupplier((uri, factory) ->
+                new CustomHealthCheck(HealthCheckStrategy.Config.create()))
         .build();
 ```
 
