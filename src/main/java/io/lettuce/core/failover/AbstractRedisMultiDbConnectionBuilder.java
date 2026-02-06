@@ -21,7 +21,6 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
 import io.lettuce.core.failover.api.InitializationPolicy;
 import io.lettuce.core.failover.api.InitializationPolicy.Decision;
-import io.lettuce.core.failover.api.InitializationPolicy.InitializationContext;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthCheckStrategy;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;

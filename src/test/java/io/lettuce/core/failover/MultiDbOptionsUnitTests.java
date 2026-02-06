@@ -190,4 +190,56 @@ class MultiDbOptionsUnitTests {
 
     }
 
+    @Nested
+    @DisplayName("Delay In Between Failover Attempts Configuration Tests")
+    class DelayInBetweenFailoverAttemptsConfigurationTests {
+
+        @Test
+        @DisplayName("Should have default delay of 12 seconds")
+        void shouldHaveDefaultDelay() {
+            // When: Build with defaults
+            MultiDbOptions options = MultiDbOptions.builder().build();
+
+            // Then: Delay should be 12 seconds
+            assertThat(options.getDelayInBetweenFailoverAttempts()).isEqualTo(Duration.ofSeconds(12));
+        }
+
+        @Test
+        @DisplayName("Should allow custom delay")
+        void shouldAllowCustomDelay() {
+            // When: Set custom delay
+            MultiDbOptions options = MultiDbOptions.builder().delayInBetweenFailoverAttempts(Duration.ofSeconds(30)).build();
+
+            // Then: Delay should be set
+            assertThat(options.getDelayInBetweenFailoverAttempts()).isEqualTo(Duration.ofSeconds(30));
+        }
+
+        @Test
+        @DisplayName("Should validate delay - reject invalid values")
+        void shouldValidateDelay() {
+            // Zero should throw exception
+            assertThatThrownBy(() -> MultiDbOptions.builder().delayInBetweenFailoverAttempts(Duration.ZERO).build())
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("must be greater than 0");
+
+            // Negative value should throw exception
+            assertThatThrownBy(() -> MultiDbOptions.builder().delayInBetweenFailoverAttempts(Duration.ofMillis(-1000)).build())
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("must be greater than 0");
+        }
+
+        @Test
+        @DisplayName("Should support method chaining with delay")
+        void shouldSupportMethodChainingWithDelay() {
+            // When: Chain builder methods including delay
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).gracePeriod(Duration.ofSeconds(60))
+                    .delayInBetweenFailoverAttempts(Duration.ofSeconds(15)).failbackCheckInterval(Durations.ONE_MINUTE).build();
+
+            // Then: All settings should be applied
+            assertThat(options.isFailbackSupported()).isTrue();
+            assertThat(options.getGracePeriod()).isEqualTo(Duration.ofSeconds(60));
+            assertThat(options.getDelayInBetweenFailoverAttempts()).isEqualTo(Duration.ofSeconds(15));
+            assertThat(options.getFailbackCheckInterval()).isEqualTo(Durations.ONE_MINUTE);
+        }
+
+    }
+
 }
