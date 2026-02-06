@@ -149,12 +149,13 @@ class RedisURIUnitTests {
 
         RedisURI redisURI = RedisURI.create("redis-sentinel://auth@h1:222,h2,h3:1234/5?sentinelMasterId=masterId");
         assertThat(redisURI.getSentinelMasterId()).isEqualTo("masterId");
+        assertThat(redisURI.getSentinelPrimaryId()).isEqualTo("masterId");
         assertThat(redisURI.getSentinels().get(0).getPort()).isEqualTo(222);
         assertThat(redisURI.getSentinels().get(1).getPort()).isEqualTo(RedisURI.DEFAULT_SENTINEL_PORT);
         assertThat(redisURI.getSentinels().get(2).getPort()).isEqualTo(1234);
         assertThat(redisURI.getDatabase()).isEqualTo(5);
 
-        assertThat(redisURI).hasToString("redis-sentinel://****@h1:222,h2,h3:1234/5?sentinelMasterId=masterId");
+        assertThat(redisURI).hasToString("redis-sentinel://****@h1:222,h2,h3:1234/5?sentinelPrimaryId=masterId");
     }
 
     @Test
@@ -163,7 +164,7 @@ class RedisURIUnitTests {
         RedisURI redisURI = RedisURI.create("rediss-sentinel://auth@h1:222,h2,h3:1234/5?sentinelMasterId=masterId");
         assertThat(redisURI.isSsl()).isTrue();
 
-        assertThat(redisURI).hasToString("rediss-sentinel://****@h1:222,h2,h3:1234/5?sentinelMasterId=masterId");
+        assertThat(redisURI).hasToString("rediss-sentinel://****@h1:222,h2,h3:1234/5?sentinelPrimaryId=masterId");
     }
 
     @Test

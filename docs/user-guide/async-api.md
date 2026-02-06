@@ -458,14 +458,14 @@ couple of `…​Either()` methods are available on a `CompletionStage<T>`,
 see the [Java 8 API docs](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html)
 for the full reference. The either-or pattern consumes the value from
 the first future that is completed. A good example might be two services
-returning the same data, for instance, a Master-Replica scenario, but
+returning the same data, for instance, a Primary-Replica scenario, but
 you want to return the data as fast as possible:
 
 ``` java
-RedisStringAsyncCommands<String, String> master = masterClient.connect().async();
+RedisStringAsyncCommands<String, String> primary = primaryClient.connect().async();
 RedisStringAsyncCommands<String, String> replica = replicaClient.connect().async();
 
-RedisFuture<String> future = master.get("key");
+RedisFuture<String> future = primary.get("key");
 future.acceptEither(replica.get("key"), new Consumer<String>() {
     @Override
     public void accept(String value) {

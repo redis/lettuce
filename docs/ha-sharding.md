@@ -1,75 +1,75 @@
 # High-Availability and Sharding
 
-## Master/Replica
+## Primary/Replica
 
 Redis can increase availability and read throughput by using
-replication. Lettuce provides dedicated Master/Replica support since 4.2
+replication. Lettuce provides dedicated Primary/Replica support since 4.2
 for topologies and ReadFrom-Settings.
 
-Redis Master/Replica can be run standalone or together with Redis
-Sentinel, which provides automated failover and master promotion.
-Failover and master promotion is supported in Lettuce already since
-version 3.1 for master connections.
+Redis Primary/Replica can be run standalone or together with Redis
+Sentinel, which provides automated failover and primary promotion.
+Failover and primary promotion is supported in Lettuce already since
+version 3.1 for primary connections.
 
-Connections can be obtained from the `MasterReplica` connection provider
+Connections can be obtained from the `PrimaryReplica` connection provider
 by supplying the client, Codec, and one or multiple RedisURIs.
 
 ### Redis Sentinel
 
-Master/Replica using Redis Sentinel uses Redis
+Primary/Replica using Redis Sentinel uses Redis
 Sentinel as registry and notification source for topology events.
-Details about the master and its replicas are obtained from Redis
+Details about the primary and its replicas are obtained from Redis
 Sentinel. Lettuce subscribes to Redis Sentinel events for notifications to all supplied
 Sentinels.
 
-### Standalone Master/Replica
+### Standalone Primary/Replica
 
-Running a Standalone Master/Replica setup requires one seed address to
+Running a Standalone Primary/Replica setup requires one seed address to
 establish a Redis connection. Providing one `RedisURI` will discover
-other nodes which belong to the Master/Replica setup and use the
+other nodes which belong to the Primary/Replica setup and use the
 discovered addresses for connections. The initial URI can point either
-to a master or a replica node.
+to a primary or a replica node.
 
-### Static Master/Replica with predefined node addresses
+### Static Primary/Replica with predefined node addresses
 
 In some cases, topology discovery shouldn’t be enabled, or the
 discovered Redis addresses are not suited for connections. AWS
 ElastiCache falls into this category. Lettuce allows to specify one or
 more Redis addresses as `List` and predefine the node topology.
-Master/Replica URIs will be treated in this case as static topology, and
+Primary/Replica URIs will be treated in this case as static topology, and
 no additional hosts are discovered in such case. Redis Standalone
-Master/Replica will discover the roles of the supplied `RedisURI`s and
+Primary/Replica will discover the roles of the supplied `RedisURI`s and
 issue commands to the appropriate node.
 
 ### Topology discovery
 
-Master-Replica topologies are either static or semi-static. Redis
+Primary-Replica topologies are either static or semi-static. Redis
 Standalone instances with attached replicas provide no failover/HA
 mechanism. Redis Sentinel managed instances are controlled by Redis
-Sentinel and allow failover (which include master promotion). The
-`MasterReplica` API supports both mechanisms. The topology is provided
+Sentinel and allow failover (which include primary promotion). The
+`PrimaryReplica` API supports both mechanisms. The topology is provided
 by a `TopologyProvider`:
 
-- `MasterReplicaTopologyProvider`: Dynamic topology lookup using the
+- `ReplicaTopologyProvider`: Dynamic topology lookup using the
   `INFO REPLICATION` output. Replicas are listed as replicaN=…​ entries.
-  The initial connection can either point to a master or a replica, and
+  The initial connection can either point to a primary or a replica, and
   the topology provider will discover nodes. The connection needs to be
-  re-established outside of Lettuce in a case of a Master/Replica
+  re-established outside of Lettuce in a case of a Primary/Replica
   failover or topology changes.
 
 - `StaticMasterReplicaTopologyProvider`: Topology is defined by the list
-  of URIs and the ROLE output. MasterReplica uses only the supplied
+  of URIs and the ROLE output. PrimaryReplica uses only the supplied
   nodes and won’t discover additional nodes in the setup. The connection
   needs to be re-established outside of Lettuce in case of a
-  Master/Replica failover or topology changes.
+  Primary/Replica failover or topology changes.
 
 - `SentinelTopologyProvider`: Dynamic topology lookup using the Redis
   Sentinel API. In particular, `SENTINEL MASTER` and `SENTINEL REPLICAS`
-  output. Master/Replica failover is handled by Lettuce.
+  output. Primary/Replica failover is handled by Lettuce.
 
 ### Topology Updates
 
-- Standalone Master/Replica: Performs a one-time topology lookup which
+- Standalone Primary/Replica: Performs a one-time topology lookup which
   remains static afterward
 
 - Redis Sentinel: Subscribes to all Sentinels and listens for Pub/Sub
@@ -78,7 +78,7 @@ by a `TopologyProvider`:
 #### Transactions
 
 Since version 5.1, transactions and commands during a transaction are
-routed to the master node to ensure atomic transaction execution on a
+routed to the primary node to ensure atomic transaction execution on a
 single node. Transactions can contain read- and write-operations so the
 driver cannot decide upfront which node can be used to run the actual
 transaction.
@@ -88,9 +88,9 @@ transaction.
 ``` java
 RedisClient redisClient = RedisClient.create();
 
-StatefulRedisMasterReplicaConnection<String, String> connection = MasterReplica.connect(redisClient, StringCodec.UTF8,
+StatefulRedisPrimaryReplicaConnection<String, String> connection = PrimaryReplica.connect(redisClient, StringCodec.UTF8,
         RedisURI.create("redis://localhost"));
-connection.setReadFrom(ReadFrom.MASTER_PREFERRED);
+connection.setReadFrom(ReadFrom.PRIMARY_PREFERRED);
 
 System.out.println("Connected to Redis");
 
@@ -101,9 +101,9 @@ redisClient.shutdown();
 ``` java
 RedisClient redisClient = RedisClient.create();
 
-StatefulRedisMasterReplicaConnection<String, String> connection = MasterReplica.connect(redisClient, StringCodec.UTF8,
-        RedisURI.create("redis-sentinel://localhost:26379,localhost:26380/0#mymaster"));
-connection.setReadFrom(ReadFrom.MASTER_PREFERRED);
+StatefulRedisPrimaryReplicaConnection<String, String> connection = PrimaryReplica.connect(redisClient, StringCodec.UTF8,
+        RedisURI.create("redis-sentinel://localhost:26379,localhost:26380/0#myprimary"));
+connection.setReadFrom(ReadFrom.PRIMARY_PREFERRED);
 
 System.out.println("Connected to Redis");
 
@@ -118,9 +118,9 @@ List<RedisURI> nodes = Arrays.asList(RedisURI.create("redis://host1"),
         RedisURI.create("redis://host2"),
         RedisURI.create("redis://host3"));
 
-StatefulRedisMasterReplicaConnection<String, String> connection = MasterReplica
+StatefulRedisPrimaryReplicaConnection<String, String> connection = PrimaryReplica
         .connect(redisClient, StringCodec.UTF8, nodes);
-connection.setReadFrom(ReadFrom.MASTER_PREFERRED);
+connection.setReadFrom(ReadFrom.PRIMARY_PREFERRED);
 
 System.out.println("Connected to Redis");
 
@@ -138,10 +138,10 @@ Sentinel-managed nodes in multiple ways:
     Redis Sentinel commands
 
 2.  Using Redis Sentinel to [connect to a
-    master](#redis-discovery-using-redis-sentinel)
+    primary](#redis-discovery-using-redis-sentinel)
 
-3.  Using Redis Sentinel to connect to master nodes and replicas through
-    the {master-replica-api-link}.
+3.  Using Redis Sentinel to connect to primary nodes and replicas through
+    the `PrimaryReplica` API.
 
 In both cases, you need to supply a `RedisURI` since the Redis Sentinel
 integration supports multiple Sentinel hosts to provide high
@@ -154,7 +154,7 @@ asynchronous connections and no connection pooling.
 
 Lettuce exposes an API to interact with Redis Sentinel nodes directly.
 This is useful for performing administrative tasks using Lettuce. You
-can monitor new master nodes, query master addresses, replicas and much
+can monitor new primary nodes, query primary addresses, replicas and much
 more. A connection to a Redis Sentinel node is established by
 `RedisClient.connectSentinel()`. Use a [Publish/Subscribe
 connection](user-guide/pubsub.md) to subscribe to Sentinel events.
@@ -163,17 +163,17 @@ connection](user-guide/pubsub.md) to subscribe to Sentinel events.
 
 One or more Redis Sentinels can monitor Redis instances . These Redis
 instances are usually operated together with a replica of the Redis
-instance. Once the master goes down, the replica is promoted to a
-master. Once a master instance is not reachable anymore, the failover
+instance. Once the primary goes down, the replica is promoted to a
+primary. Once a primary instance is not reachable anymore, the failover
 process is started by the Redis Sentinels. Usually, the client
 connection is terminated. The disconnect can result in any of the
 following options:
 
-1.  The master comes back: The connection is restored to the Redis
+1.  The primary comes back: The connection is restored to the Redis
     instance
 
-2.  A replica is promoted to a master: Lettuce performs an address
-    lookup using the `masterId`. As soon as the Redis Sentinel provides
+2.  A replica is promoted to a primary: Lettuce performs an address
+    lookup using the `primaryId`. As soon as the Redis Sentinel provides
     an address the connection is restored to the new Redis instance
 
 Read more at <https://redis.io/docs/latest/operate/oss_and_stack/management/sentinel>
@@ -186,11 +186,11 @@ RedisClient client = new RedisClient(redisUri);
 
 RedisSentinelAsyncConnection<String, String>  connection = client.connectSentinelAsync();
 
-Map<String, String> map = connection.master("mymaster").get();
+Map<String, String> map = connection.primary("myprimary").get();
 ```
 
 ``` java
-RedisURI redisUri = RedisURI.Builder.sentinel("sentinelhost1", "mymaster").withSentinel("sentinelhost2").build();
+RedisURI redisUri = RedisURI.Builder.sentinelPrimary("sentinelhost1", "myprimary").withSentinel("sentinelhost2").build();
 RedisClient client = RedisClient.create(redisUri);
 
 RedisConnection<String, String> connection = client.connect();
@@ -198,7 +198,7 @@ RedisConnection<String, String> connection = client.connect();
 
 !!! NOTE
     Every time you connect to a Redis instance using Redis Sentinel, the
-    Redis master is looked up using a new connection to a Redis Sentinel.
+    Redis primary is looked up using a new connection to a Redis Sentinel.
     This can be time-consuming, especially when multiple Redis Sentinels
     are used and one or more of them are not reachable.
 
@@ -245,7 +245,7 @@ users of the cluster connection might be affected.
 ### Command routing
 
 The [concept of Redis Cluster](https://redis.io/docs/latest/operate/oss_and_stack/management/scaling/)
-bases on sharding. Every master node within the cluster handles one or
+bases on sharding. Every primary node within the cluster handles one or
 more slots. Slots are the [unit of
 sharding](https://redis.io/docs/latest/operate/oss_and_stack/management/scaling/#redis-cluster-data-sharding)
 and calculated from the commands' key using `CRC16 MOD 16384`. Hash
@@ -277,7 +277,7 @@ Following commands are supported for cross-slot command execution:
 - `DEL`: Delete the `KEY`s. Returns the number of keys that were
   removed.
 
-- `EXISTS`: Count the number of `KEY`s that exist across the master
+- `EXISTS`: Count the number of `KEY`s that exist across the primary
   nodes being responsible for the particular key.
 
 - `MGET`: Get the values of all given `KEY`s. Returns the values in the
@@ -297,16 +297,16 @@ Following commands are executed on multiple cluster nodes operations:
 - `CLIENT SETNAME`: Set the client name on all known cluster node
   connections. Returns always `OK`.
 
-- `KEYS`: Return/Stream all keys that are stored on all masters.
+- `KEYS`: Return/Stream all keys that are stored on all primaries.
 
-- `DBSIZE`: Return the number of keys that are stored on all masters.
+- `DBSIZE`: Return the number of keys that are stored on all primaries.
 
-- `FLUSHALL`: Flush all data on the cluster masters. Returns always
+- `FLUSHALL`: Flush all data on the cluster primaries. Returns always
   `OK`.
 
-- `FLUSHDB`: Flush all data on the cluster masters. Returns always `OK`.
+- `FLUSHDB`: Flush all data on the cluster primaries. Returns always `OK`.
 
-- `RANDOMKEY`: Return a random key from a random master.
+- `RANDOMKEY`: Return a random key from a random primary.
 
 - `SCAN`: Scan the keyspace across the whole cluster according to
   `ReadFrom` settings.
@@ -333,12 +333,12 @@ Cross-slot command execution is available on the following APIs:
 ### Execution of commands on one or multiple cluster nodes
 
 Sometimes commands have to be executed on multiple cluster nodes. The
-advanced cluster API allows to select a set of nodes (e.g. all masters,
+advanced cluster API allows to select a set of nodes (e.g. all primaries,
 all replicas) and trigger a command on this set.
 
 ``` java
 RedisAdvancedClusterAsyncCommands<String, String> async = clusterClient.connect().async();
-AsyncNodeSelection<String, String> replicas = connection.slaves();
+AsyncNodeSelection<String, String> replicas = connection.replicas();
 
 AsyncExecutions<List<String>> executions = replicas.commands().keys("*");
 executions.forEach(result -> result.thenAccept(keys -> System.out.println(keys)));
@@ -354,7 +354,7 @@ selection updates its node set upon a [cluster topology view
 refresh](#refreshing-the-cluster-topology-view). Node
 selections can be constructed by the following presets:
 
-- masters
+- primaries
 
 - replicas (operate on connections with activated `READONLY` mode)
 
@@ -376,7 +376,7 @@ feedback from the users. So feel free to contribute.
 ### Refreshing the cluster topology view
 
 The Redis Cluster configuration may change at runtime. New nodes can be
-added, the master for a specific slot can change. Lettuce handles
+added, the primary for a specific slot can change. Lettuce handles
 `MOVED` and `ASK` redirects transparently but in case too many commands
 run into redirects, you should refresh the cluster topology view. The
 topology is bound to a `RedisClusterClient` instance. All cluster
@@ -516,22 +516,22 @@ The ReadFrom setting describes how Lettuce routes read operations to
 replica nodes.
 
 By default, Lettuce routes its read operations in multi-node connections
-to the master node. Reading from the master returns the most recent
+to the primary node. Reading from the primary returns the most recent
 version of the data because write operations are issued to the single
-master node. Reading from masters guarantees strong consistency.
+primary node. Reading from primaries guarantees strong consistency.
 
 You can reduce latency or improve read throughput by distributing reads
 to replica members for applications that do not require fully up-to-date
 data.
 
-Be careful if using other ReadFrom settings than `MASTER`. Settings
-other than `MASTER` may return stale data because the replication is
+Be careful if using other ReadFrom settings than `PRIMARY`. Settings
+other than `PRIMARY` may return stale data because the replication is
 asynchronous. Data in the replicas may not hold the most recent data.
 
 ### Redis Cluster
 
 Redis Cluster is a multi-node operated Redis setup that uses one or more
-master nodes and allows to setup replica nodes. Redis Cluster
+primary nodes and allows to setup replica nodes. Redis Cluster
 connections allow to set a `ReadFrom` setting on connection level. This
 setting applies for all read operations on this connection.
 
@@ -549,37 +549,37 @@ connection.close();
 client.shutdown();
 ```
 
-### Master/Replica connections ("Master/Slave")
+### Primary/Replica connections (legacy master/slave)
 
-Redis nodes can be operated in a Master/Replica setup to achieve
-availability and performance. Master/Replica setups can be run either
+Redis nodes can be operated in a Primary/Replica setup to achieve
+availability and performance. Primary/Replica setups can be run either
 Standalone or managed using Redis Sentinel. Lettuce allows to use
-replica nodes for read operations by using the `MasterReplica` API that
-supports both Master/Replica setups:
+replica nodes for read operations by using the `PrimaryReplica` API that
+supports both Primary/Replica setups:
 
-1.  Redis Standalone Master/Replica (no failover)
+1.  Redis Standalone Primary/Replica (no failover)
 
-2.  Redis Sentinel Master/Replica (Sentinel-managed failover)
+2.  Redis Sentinel Primary/Replica (Sentinel-managed failover)
 
 The resulting connection uses in any case the primary connection-point
 to dispatch non-read operations.
 
 #### Redis Sentinel
 
-Master/Replica with Redis Sentinel is very similar to regular Redis
-Sentinel operations. When the master fails over, a replica is promoted
-by Redis Sentinel to the new master and the client obtains the new
+Primary/Replica with Redis Sentinel is very similar to regular Redis
+Sentinel operations. When the primary fails over, a replica is promoted
+by Redis Sentinel to the new primary and the client obtains the new
 topology from Redis Sentinel.
 
-Connections to Master/Replica require one or more Redis Sentinel
-connection points and a master name. The primary connection point is the
-Sentinel monitored master node.
+Connections to Primary/Replica require one or more Redis Sentinel
+connection points and a primary name. The primary connection point is the
+Sentinel monitored primary node.
 
 ``` java
-RedisURI sentinelUri = RedisURI.Builder.sentinel("sentinel-host", 26379, "master-name").build();
+RedisURI sentinelUri = RedisURI.Builder.sentinelPrimary("sentinel-host", 26379, "primary-name").build();
 RedisClient client = RedisClient.create();
 
-StatefulRedisMasterReplicaConnection<String, String> connection = MasterReplica.connect(
+StatefulRedisPrimaryReplicaConnection<String, String> connection = PrimaryReplica.connect(
             client,
             StringCodec.UTF8
             sentinelUri);
@@ -594,23 +594,23 @@ client.shutdown();
 
 #### Redis Standalone
 
-Master/Replica with Redis Standalone is very similar to regular Redis
-Standalone operations. A Redis Standalone Master/Replica setup is static
+Primary/Replica with Redis Standalone is very similar to regular Redis
+Standalone operations. A Redis Standalone Primary/Replica setup is static
 and provides no built-in failover. Replicas are read from the Redis
-master node’s `INFO` command.
+primary node’s `INFO` command.
 
-Connecting to Redis Standalone Master/Replica nodes requires connections
-to use the Redis master for the `RedisURI`. The node used within the
+Connecting to Redis Standalone Primary/Replica nodes requires connections
+to use the Redis primary for the `RedisURI`. The node used within the
 `RedisURI` is the primary connection point.
 
 ``` java
-RedisURI masterUri = RedisURI.Builder.redis("master-host", 6379).build();
+RedisURI primaryUri = RedisURI.Builder.redis("primary-host", 6379).build();
 RedisClient client = RedisClient.create();
 
-StatefulRedisMasterReplicaConnection<String, String> connection = MasterReplica.connect(
+StatefulRedisPrimaryReplicaConnection<String, String> connection = PrimaryReplica.connect(
             client,
             StringCodec.UTF8,
-            masterUri);
+            primaryUri);
 
 connection.setReadFrom(ReadFrom.REPLICA);
 
@@ -620,42 +620,42 @@ connection.close();
 client.shutdown();
 ```
 
-### Use Cases for non-master reads
+### Use Cases for non-primary reads
 
-The following use cases are common for using non-master read settings
+The following use cases are common for using non-primary read settings
 and encourage eventual consistency:
 
 - Providing local reads for geographically distributed applications. If
   you have Redis and application servers in multiple data centers, you
   may consider having a geographically distributed cluster. Using the
   `LOWEST_LATENCY` setting allows the client to read from the
-  lowest-latency members, rather than always reading from the master
+  lowest-latency members, rather than always reading from the primary
   node.
 
-- Maintaining availability during a failover. Use `MASTER_PREFERRED` if
-  you want an application to read from the master by default, but to
-  allow stale reads from replicas when the master node is unavailable.
-  `MASTER_PREFERRED` allows a "read-only mode" for your application
+- Maintaining availability during a failover. Use `PRIMARY_PREFERRED` if
+  you want an application to read from the primary by default, but to
+  allow stale reads from replicas when the primary node is unavailable.
+  `PRIMARY_PREFERRED` allows a "read-only mode" for your application
   during a failover.
 
 - Increase read throughput by allowing stale reads If you want to
   increase your read throughput by adding additional replica nodes to
   your cluster Use `REPLICA` to read explicitly from replicas and reduce
-  read load on the master node. Using replica reads can highly lead to
+  read load on the primary node. Using replica reads can highly lead to
   stale reads.
 
 ### Read from settings
 
-All `ReadFrom` settings except `MASTER` may return stale data because
+All `ReadFrom` settings except `PRIMARY` may return stale data because
 replicas replication is asynchronous and requires some delay. You need
 to ensure that your application can tolerate stale data.
 
 | Setting             | Description                                                                    |
 |---------------------|--------------------------------------------------------------------------------|
-| `MASTER`            | Default mode. Read from the current master node.                               |
-| `MASTER_PREFERRED`  | Read from the master, but if it is unavailable, read from replica nodes.       |
+| `PRIMARY`           | Default mode. Read from the current primary node.                              |
+| `PRIMARY_PREFERRED` | Read from the primary, but if it is unavailable, read from replica nodes.      |
 | `REPLICA`           | Read from replica nodes.                                                       |
-| `REPLICA_PREFERRED` | Read from the replica nodes, but if none is unavailable, read from the master. |
+| `REPLICA_PREFERRED` | Read from the replica nodes, but if none is unavailable, read from the primary. |
 | `LOWEST_LATENCY`    | Read from any node of the cluster with the lowest latency.                     |
 | `ANY`               | Read from any node of the cluster.                                             |
 | `ANY_REPLICA`       | Read from any replica of the cluster.                                          |
@@ -667,4 +667,3 @@ to ensure that your application can tolerate stale data.
 
 Custom read settings can be implemented by extending the
 `io.lettuce.core.ReadFrom` class.
-

@@ -39,12 +39,18 @@ public abstract class ReadFrom {
 
     /**
      * Setting to read from the upstream only.
+     *
+     * @deprecated since 7.3, use {@link #PRIMARY}.
      */
+    @Deprecated
     public static final ReadFrom MASTER = new ReadFromImpl.ReadFromUpstream();
 
     /**
-     * Setting to read preferred from the upstream and fall back to a replica if the master is not available.
+     * Setting to read preferred from the upstream and fall back to a replica if the primary is not available.
+     *
+     * @deprecated since 7.3, use {@link #PRIMARY_PREFERRED}.
      */
+    @Deprecated
     public static final ReadFrom MASTER_PREFERRED = new ReadFromImpl.ReadFromUpstreamPreferred();
 
     /**
@@ -60,6 +66,20 @@ public abstract class ReadFrom {
      * @since 6.0
      */
     public static final ReadFrom UPSTREAM_PREFERRED = new ReadFromImpl.ReadFromUpstreamPreferred();
+
+    /**
+     * Setting to read from the upstream only.
+     *
+     * @since 7.3
+     */
+    public static final ReadFrom PRIMARY = UPSTREAM;
+
+    /**
+     * Setting to read preferred from the upstream and fall back to a replica if the upstream is not available.
+     *
+     * @since 7.3
+     */
+    public static final ReadFrom PRIMARY_PREFERRED = UPSTREAM_PREFERRED;
 
     /**
      * Setting to read preferred from replica and fall back to upstream if no replica is available.
@@ -214,19 +234,27 @@ public abstract class ReadFrom {
             }
         }
 
-        if (name.equalsIgnoreCase("master")) {
-            return UPSTREAM;
-        }
-
-        if (name.equalsIgnoreCase("masterPreferred")) {
-            return UPSTREAM_PREFERRED;
-        }
-
         if (name.equalsIgnoreCase("upstream")) {
             return UPSTREAM;
         }
 
         if (name.equalsIgnoreCase("upstreamPreferred")) {
+            return UPSTREAM_PREFERRED;
+        }
+
+        if (name.equalsIgnoreCase("primary")) {
+            return PRIMARY;
+        }
+
+        if (name.equalsIgnoreCase("primaryPreferred")) {
+            return PRIMARY_PREFERRED;
+        }
+
+        if (name.equalsIgnoreCase("master")) {
+            return UPSTREAM;
+        }
+
+        if (name.equalsIgnoreCase("masterPreferred")) {
             return UPSTREAM_PREFERRED;
         }
 
