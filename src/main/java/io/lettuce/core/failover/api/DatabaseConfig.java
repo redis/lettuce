@@ -1,10 +1,9 @@
-package io.lettuce.core.failover;
+package io.lettuce.core.failover.api;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.MaintNotificationsConfig;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
-import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.core.internal.LettuceAssert;

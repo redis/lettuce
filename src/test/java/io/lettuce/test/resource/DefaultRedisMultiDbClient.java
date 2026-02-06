@@ -1,8 +1,8 @@
 package io.lettuce.test.resource;
 
 import io.lettuce.core.failover.MultiDbClient;
-import io.lettuce.core.failover.MultiDbOptions;
 import io.lettuce.core.failover.MultiDbTestSupport;
+import io.lettuce.core.failover.api.MultiDbOptions;
 
 /**
  * @author Ali Takavci

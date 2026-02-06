@@ -1,4 +1,4 @@
-package io.lettuce.core.failover;
+package io.lettuce.core.failover.api;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;

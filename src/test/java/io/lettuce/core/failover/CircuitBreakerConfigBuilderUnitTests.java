@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
 import io.lettuce.TestTags;
-import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
+import io.lettuce.core.failover.api.CircuitBreakerConfig;
 
 /**
  * Unit tests for {@link CircuitBreakerConfig.Builder}.

@@ -22,6 +22,8 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.failover.api.DatabaseConfig;
+import io.lettuce.core.failover.api.MultiDbConnectionFuture;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.test.LettuceExtension;

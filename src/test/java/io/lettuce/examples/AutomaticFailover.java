@@ -7,9 +7,9 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
-import io.lettuce.core.failover.CircuitBreaker;
-import io.lettuce.core.failover.DatabaseConfig;
+import io.lettuce.core.failover.api.DatabaseConfig;
 import io.lettuce.core.failover.MultiDbClient;
+import io.lettuce.core.failover.api.CircuitBreakerConfig;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.event.DatabaseSwitchEvent;
 import io.lettuce.core.failover.health.PingStrategy;
@@ -163,8 +163,8 @@ public class AutomaticFailover {
     private static List<DatabaseConfig> createDatabaseConfigs(ClientOptions clientOptions, List<String> endpoints) {
         List<DatabaseConfig> configs = new ArrayList<>();
 
-        CircuitBreaker.CircuitBreakerConfig circuitBreakerConfig = CircuitBreaker.CircuitBreakerConfig.builder()
-                .failureRateThreshold(10.0f).minimumNumberOfFailures(5).metricsWindowSize(5).build();
+        CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.builder().failureRateThreshold(10.0f)
+                .minimumNumberOfFailures(5).metricsWindowSize(5).build();
 
         // Create a DatabaseConfig for each endpoint
         float weight = 1.0f;

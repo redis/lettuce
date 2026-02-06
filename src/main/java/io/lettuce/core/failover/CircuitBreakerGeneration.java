@@ -10,7 +10,7 @@ import io.lettuce.core.annotations.Experimental;
  * @since 7.4
  */
 @Experimental
-public interface CircuitBreakerGeneration {
+interface CircuitBreakerGeneration {
 
     /**
      * Record the result of a command execution for the metrics tracking of this generation. * @param error the error, if any

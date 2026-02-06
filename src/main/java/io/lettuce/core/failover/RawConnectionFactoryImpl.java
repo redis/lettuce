@@ -3,6 +3,7 @@ package io.lettuce.core.failover;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.failover.api.RawConnectionFactory;
 
 /**
  * Implementation of {@link RawConnectionFactory} for creating raw connections to databases.

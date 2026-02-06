@@ -1,4 +1,4 @@
-package io.lettuce.core.failover;
+package io.lettuce.core.failover.api;
 
 import java.time.Duration;
 import java.util.Collections;

@@ -33,7 +33,7 @@ import org.junit.jupiter.api.*;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
+import io.lettuce.core.failover.api.CircuitBreakerConfig;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;

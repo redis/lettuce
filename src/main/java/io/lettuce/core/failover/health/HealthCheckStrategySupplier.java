@@ -2,7 +2,7 @@ package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
-import io.lettuce.core.failover.RawConnectionFactory;
+import io.lettuce.core.failover.api.RawConnectionFactory;
 
 /**
  * Supplier for health check strategies.

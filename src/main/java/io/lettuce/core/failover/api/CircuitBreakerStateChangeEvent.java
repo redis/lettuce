@@ -1,6 +1,7 @@
-package io.lettuce.core.failover;
+package io.lettuce.core.failover.api;
 
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.failover.CircuitBreaker;
 
 /**
  * Event representing a circuit breaker state change.
