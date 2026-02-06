@@ -1,25 +1,33 @@
-Lettuce 7.4.0.BETA1 RELEASE NOTES
+Lettuce 7.4.0 RELEASE NOTES
 ==============================
+The Lettuce team is pleased to announce the Lettuce **7.4.0** minor release!
 
-The Lettuce team is pleased to announce the **first beta release of Lettuce 7.4.0**!
+✨ New: MultiDbClient
+Lettuce introduces MultiDbClient, providing client-side failover and failback across multiple Redis databases.
 
-This release introduces **Automatic Client-Side Endpoint Failover** through the newly added **MultiDBClient**.
+MultiDbClient is designed to support client-side geographic failover, improving availability by monitoring the health of configured Redis endpoints and automatically switching connections when a database becomes unavailable. 
+See the [docs](https://github.com/redis/lettuce/blob/main/docs/failover.md) for details and more examples.
 
-### Key Features
+Lettuce 7.4.0 supports Redis 2.6+ up to Redis 8.x. In terms of Java runtime, Lettuce requires at least Java 8 and
+works with Java 24. The driver is tested against Redis 8.6, Redis 8.4, Redis 8.2, Redis 8.0, Redis 7.4 and Redis 7.2.
 
-- **Automatic Detection**: The client monitors the health of all configured Redis endpoints.
-- **Seamless Failover**: If the active endpoint fails, traffic is automatically rerouted to the next healthiest endpoint based on configurable priorities.
-- **Customizable**: Developers can configure endpoints, set priorities, adjust failure sensitivity, and plug in custom health checks or failure detection logic.
+Thanks to all contributors who made Lettuce 7.4.0.RELEASE possible.
 
+📗 Links
+Reference documentation: https://lettuce.io/core/7.4.0.RELEASE
 
-**Lettuce 7.4.0.BETA1** supports Redis **2.6+** up to Redis **8.x** and requires **Java 8** or newer. The driver is tested against Redis **8.4**, **8.2**, **7.4**, and **7.2**.
+⭐ New Features
+* [automatic failover] Support for client-side geographic failover by @ggivo in https://github.com/redis/lettuce/pull/3576
+* Implement hotkeys commands by @a-TODO-rov in https://github.com/redis/lettuce/pull/3638
 
+🐞 Bug Fixes
+* Remove noisy INFO log for unsupported maintenance events by @ggivo in https://github.com/redis/lettuce/pull/3652
 
+💡 Other
+* Improvements to the Lettuce guide by @tishun in https://github.com/redis/lettuce/pull/3655
 
-We encourage you to try out this beta and provide feedback ahead of the general availability release.
-
-**Full Changelog**: https://github.com/redis/lettuce/compare/7.2.0.RELEASE...7.4.0.BETA1
-
-## Contributors
+❤️ Contributors
 We'd like to thank all the contributors who worked on this release!
-@atakavci, @ggivo, @uglide
+@a-TODO-rov, @ggivo, @tishun, @atakavci  and github-action-benchmark
+
+**Full Changelog**: https://github.com/redis/lettuce/compare/7.3.0.RELEASE...7.4.0.RELEASE
