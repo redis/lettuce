@@ -532,18 +532,12 @@ class NettyHttpClientIntegrationTests {
         connection.closeAsync().get(5, TimeUnit.SECONDS);
 
         // Await completion with timeout, then verify exception type and message
-        assertThatThrownBy(() -> future1.get(5, TimeUnit.SECONDS))
-                .isInstanceOf(ExecutionException.class)
-                .hasCauseInstanceOf(IOException.class)
-                .hasMessageContaining("Connection closed");
-        assertThatThrownBy(() -> future2.get(5, TimeUnit.SECONDS))
-                .isInstanceOf(ExecutionException.class)
-                .hasCauseInstanceOf(IOException.class)
-                .hasMessageContaining("Connection closed");
-        assertThatThrownBy(() -> future3.get(5, TimeUnit.SECONDS))
-                .isInstanceOf(ExecutionException.class)
-                .hasCauseInstanceOf(IOException.class)
-                .hasMessageContaining("Connection closed");
+        assertThatThrownBy(() -> future1.get(5, TimeUnit.SECONDS)).isInstanceOf(ExecutionException.class)
+                .hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        assertThatThrownBy(() -> future2.get(5, TimeUnit.SECONDS)).isInstanceOf(ExecutionException.class)
+                .hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        assertThatThrownBy(() -> future3.get(5, TimeUnit.SECONDS)).isInstanceOf(ExecutionException.class)
+                .hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
     }
 
     @Test
