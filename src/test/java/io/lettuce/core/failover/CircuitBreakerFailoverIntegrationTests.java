@@ -34,6 +34,8 @@ import io.lettuce.core.SocketOptions;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.failover.api.CircuitBreakerConfig;
+import io.lettuce.core.failover.api.CircuitBreakerStateChangeEvent;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.WithPassword;
@@ -83,7 +85,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
 
     private MultiDbClient multiDbClient;
 
-    CircuitBreaker.CircuitBreakerConfig cbConfig;
+    CircuitBreakerConfig cbConfig;
 
     @BeforeAll
     public static void setupToxiproxy() throws IOException {
@@ -126,7 +128,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
                 .build();
 
         // Create circuit breaker config with low thresholds for testing
-        cbConfig = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(10.0f) // 10% failure rate threshold
+        cbConfig = CircuitBreakerConfig.builder().failureRateThreshold(10.0f) // 10% failure rate threshold
                 .minimumNumberOfFailures(5) // Only need 5 failures minimum (instead of default 1000)
                 .metricsWindowSize(5).build();
 

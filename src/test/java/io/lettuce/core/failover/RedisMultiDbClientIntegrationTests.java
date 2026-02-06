@@ -10,6 +10,7 @@ import io.lettuce.core.event.command.CommandFailedEvent;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.command.CommandStartedEvent;
 import io.lettuce.core.event.command.CommandSucceededEvent;
+import io.lettuce.core.failover.api.DatabaseConfig;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;

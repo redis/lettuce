@@ -20,6 +20,8 @@ import org.testcontainers.shaded.org.awaitility.Durations;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.failover.api.CircuitBreakerConfig;
+import io.lettuce.core.failover.api.DatabaseConfig;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.test.MutableClock;
@@ -59,8 +61,8 @@ class RedisDatabaseImplGracePeriodUnitTests {
         DatabaseConfig config = DatabaseConfig.builder(uri).weight(1.0f).build();
 
         // Create a real circuit breaker for testing
-        CircuitBreaker.CircuitBreakerConfig cbConfig = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(50.0f)
-                .minimumNumberOfFailures(10).build();
+        CircuitBreakerConfig cbConfig = CircuitBreakerConfig.builder().failureRateThreshold(50.0f).minimumNumberOfFailures(10)
+                .build();
         circuitBreaker = new CircuitBreakerImpl(cbConfig);
 
         // Setup health check mock
@@ -290,7 +292,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
             StatefulRedisConnection<String, String> connection1 = mock(StatefulRedisConnection.class);
             DatabaseEndpoint endpoint1 = mock(DatabaseEndpoint.class);
             HealthCheck healthCheck1 = mock(HealthCheck.class);
-            CircuitBreakerImpl circuitBreaker1 = new CircuitBreakerImpl(CircuitBreaker.CircuitBreakerConfig.builder().build());
+            CircuitBreakerImpl circuitBreaker1 = new CircuitBreakerImpl(CircuitBreakerConfig.builder().build());
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> redis1 = new RedisDatabaseImpl<>(config1, connection1,
                     endpoint1, circuitBreaker1, healthCheck1);
@@ -305,7 +307,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
             StatefulRedisConnection<String, String> connection2 = mock(StatefulRedisConnection.class);
             DatabaseEndpoint endpoint2 = mock(DatabaseEndpoint.class);
             HealthCheck healthCheck2 = mock(HealthCheck.class);
-            CircuitBreakerImpl circuitBreaker2 = new CircuitBreakerImpl(CircuitBreaker.CircuitBreakerConfig.builder().build());
+            CircuitBreakerImpl circuitBreaker2 = new CircuitBreakerImpl(CircuitBreakerConfig.builder().build());
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> redis2 = new RedisDatabaseImpl<>(config2, connection2,
                     endpoint2, circuitBreaker2, healthCheck2);
@@ -331,7 +333,7 @@ class RedisDatabaseImplGracePeriodUnitTests {
             StatefulRedisConnection<String, String> connection1 = mock(StatefulRedisConnection.class);
             DatabaseEndpoint endpoint1 = mock(DatabaseEndpoint.class);
             HealthCheck healthCheck1 = mock(HealthCheck.class);
-            CircuitBreakerImpl circuitBreaker1 = new CircuitBreakerImpl(CircuitBreaker.CircuitBreakerConfig.builder().build());
+            CircuitBreakerImpl circuitBreaker1 = new CircuitBreakerImpl(CircuitBreakerConfig.builder().build());
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> redis1 = new RedisDatabaseImpl<>(config1, connection1,
                     endpoint1, circuitBreaker1, healthCheck1, clock);
