@@ -9,6 +9,8 @@ import io.lettuce.core.internal.LettuceAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.lettuce.core.failover.api.CircuitBreakerConfig;
+import io.lettuce.core.failover.api.CircuitBreakerStateChangeEvent;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.metrics.CircuitBreakerMetrics;
 import io.lettuce.core.failover.metrics.MetricsFactory;
@@ -135,7 +137,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
      *
      * @return an immutable snapshot of current metrics
      */
-    MetricsSnapshot evaluateMetrics(CircuitBreakerImpl.CircuitBreakerStateHolder current) {
+    MetricsSnapshot evaluateMetrics(CircuitBreakerStateHolder current) {
         MetricsSnapshot snapshot = current.metrics.getSnapshot();
         boolean evaluationResult = snapshot.getFailureRate() >= config.getFailureRateThreshold()
                 && snapshot.getFailureCount() >= config.getMinimumNumberOfFailures();

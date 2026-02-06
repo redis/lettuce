@@ -3,7 +3,7 @@ package io.lettuce.core.failover.health;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.failover.RawConnectionFactory;
+import io.lettuce.core.failover.api.RawConnectionFactory;
 
 /**
  * Health check strategy that uses PING command to check endpoint health.

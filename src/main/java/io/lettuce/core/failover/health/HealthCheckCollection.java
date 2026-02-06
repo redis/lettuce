@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 7.4
  **/
 @Experimental
-public class HealthCheckCollection {
+class HealthCheckCollection {
 
     private final Map<RedisURI, HealthCheck> healthChecks = new ConcurrentHashMap<>();
 

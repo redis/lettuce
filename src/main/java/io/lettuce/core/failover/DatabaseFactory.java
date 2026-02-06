@@ -3,6 +3,7 @@ package io.lettuce.core.failover;
 import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.failover.api.DatabaseConfig;
 import io.lettuce.core.failover.health.HealthStatusManager;
 
 /**

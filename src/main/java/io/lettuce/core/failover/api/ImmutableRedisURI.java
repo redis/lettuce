@@ -1,4 +1,4 @@
-package io.lettuce.core.failover;
+package io.lettuce.core.failover.api;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -16,7 +16,7 @@ import io.lettuce.core.annotations.Experimental;
  * {@link UnsupportedOperationException}.
  */
 @Experimental
-class ImmutableRedisURI extends RedisURI {
+public class ImmutableRedisURI extends RedisURI {
 
     private List<RedisURI> sentinels;
 

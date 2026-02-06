@@ -7,6 +7,7 @@ import java.util.Map;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
