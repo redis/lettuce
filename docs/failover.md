@@ -125,9 +125,18 @@ DatabaseConfig db = DatabaseConfig.builder(redisUri)
         .build();
 ```
 
-## Health Check Strategies
+## Health Check Configuration and Customization
 
-Health checks run in the background to monitor database availability and enable automatic failback.
+The MultiDbClient includes a comprehensive health check system that continuously monitors the availability of Redis databases to enable automatic failover and failback.
+
+The health check system serves several critical purposes in the failover architecture:
+
+- **Proactive Monitoring** - Continuously monitors passive databases that aren't currently receiving traffic
+- **Failback Detection** - Determines when a previously failed database has recovered and is ready to accept traffic
+- **Circuit Breaker Integration** - Works with the circuit breaker pattern to manage database state transitions
+- **Customizable Strategies** - Supports pluggable health check implementations for different deployment scenarios
+
+The health check system operates independently of your application traffic, running background checks at configurable intervals to assess database health without impacting performance.
 
 ### PingStrategy (Default)
 
