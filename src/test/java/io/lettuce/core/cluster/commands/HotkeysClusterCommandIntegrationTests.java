@@ -18,6 +18,7 @@ import io.lettuce.core.Range;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.Executions;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
+import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterEach;
@@ -169,6 +170,34 @@ public class HotkeysClusterCommandIntegrationTests {
         assertThat(reply.getByNetBytes()).isNotEmpty();
 
         redis.upstream().commands().hotkeysStop();
+    }
+
+    /**
+     * Verifies that HOTKEYS commands work via getConnection(nodeId) for node-specific connections.
+     */
+    @Test
+    void hotkeysWorksViaNodeConnection() {
+        // Get a specific node connection
+        String nodeId = redis.getStatefulConnection().getPartitions().getPartition(0).getNodeId();
+        RedisClusterCommands<String, String> nodeCommands = redis.getConnection(nodeId);
+
+        // Start tracking on this specific node
+        String startResult = nodeCommands.hotkeysStart(HotkeysArgs.Builder.metrics(HotkeysArgs.Metric.CPU));
+        assertThat(startResult).isEqualTo("OK");
+
+        // Generate some traffic
+        for (int i = 0; i < 10; i++) {
+            redis.set("test-key", "value" + i);
+        }
+
+        // Get results from this node
+        HotkeysReply reply = nodeCommands.hotkeysGet();
+        assertThat(reply).isNotNull();
+        assertThat(reply.isTrackingActive()).isTrue();
+
+        // Stop and reset
+        nodeCommands.hotkeysStop();
+        nodeCommands.hotkeysReset();
     }
 
 }

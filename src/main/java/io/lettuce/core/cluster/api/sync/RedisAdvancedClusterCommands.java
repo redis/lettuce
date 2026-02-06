@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import io.lettuce.core.HotkeysArgs;
-import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.ScanArgs;
@@ -440,53 +438,5 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @return Long integer-reply the number of found keys.
      */
     Long touch(K... keys);
-
-    /**
-     * HOTKEYS commands are not supported on the cluster client. Use {@link #masters()}.commands().hotkeysStart() or target
-     * specific nodes via {@link #getConnection(String)}.
-     *
-     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
-     */
-    @Override
-    default String hotkeysStart(HotkeysArgs args) {
-        throw new UnsupportedOperationException(
-                "HOTKEYS commands are not supported on cluster client. Use masters().commands().hotkeysStart() or target specific nodes.");
-    }
-
-    /**
-     * HOTKEYS commands are not supported on the cluster client. Use {@link #masters()}.commands().hotkeysStop() or target
-     * specific nodes via {@link #getConnection(String)}.
-     *
-     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
-     */
-    @Override
-    default String hotkeysStop() {
-        throw new UnsupportedOperationException(
-                "HOTKEYS commands are not supported on cluster client. Use masters().commands().hotkeysStop() or target specific nodes.");
-    }
-
-    /**
-     * HOTKEYS commands are not supported on the cluster client. Use {@link #masters()}.commands().hotkeysReset() or target
-     * specific nodes via {@link #getConnection(String)}.
-     *
-     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
-     */
-    @Override
-    default String hotkeysReset() {
-        throw new UnsupportedOperationException(
-                "HOTKEYS commands are not supported on cluster client. Use masters().commands().hotkeysReset() or target specific nodes.");
-    }
-
-    /**
-     * HOTKEYS commands are not supported on the cluster client. Use {@link #masters()}.commands().hotkeysGet() or target
-     * specific nodes via {@link #getConnection(String)}.
-     *
-     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
-     */
-    @Override
-    default HotkeysReply hotkeysGet() {
-        throw new UnsupportedOperationException(
-                "HOTKEYS commands are not supported on cluster client. Use masters().commands().hotkeysGet() or target specific nodes.");
-    }
 
 }
