@@ -50,7 +50,7 @@
 
     <properties>
         <awaitility.version>4.3.0</awaitility.version>
-        <assertj-core.version>3.25.3</assertj-core.version>
+        <assertj-core.version>3.27.7</assertj-core.version>
         <cdi-api.version>2.0.SP1</cdi-api.version>
         <brave.version>5.13.11</brave.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
