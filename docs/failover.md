@@ -353,3 +353,6 @@ Add to your logging configuration:
 logging.level.io.lettuce.core.failover=DEBUG
 ```
 
+## Need help or have questions?
+For assistance with this automatic failover and failback feature,
+[start a discussion](https://github.com/redis/lettuce/discussions/new?category=q-a).
