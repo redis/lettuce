@@ -21,9 +21,9 @@ Suppose you run two Redis deployments: `redis-east` and `redis-west`. You want y
 
 ```java
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.failover.DatabaseConfig;
+import io.lettuce.core.failover.api.DatabaseConfig;
 import io.lettuce.core.failover.MultiDbClient;
-import io.lettuce.core.failover.MultiDbOptions;
+import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 
 
@@ -114,7 +114,7 @@ The circuit breaker detects failures and triggers failover:
 | Tracked Exceptions | `trackedExceptions(Set)` | Connection/Timeout exceptions | Exceptions that count as failures. |
 
 ```java
-import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
+import io.lettuce.core.failover.api.CircuitBreakerConfig;
 
 CircuitBreakerConfig cbConfig = CircuitBreakerConfig.builder()
         .failureRateThreshold(50.0f)
