@@ -4,7 +4,6 @@
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
     <version>7.4.0-SNAPSHOT</version>
-
     <packaging>jar</packaging>
 
     <name>Lettuce</name>

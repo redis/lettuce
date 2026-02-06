@@ -11,6 +11,7 @@ import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.failover.event.SwitchReason;
 import io.lettuce.core.failover.health.HealthStatusManager;

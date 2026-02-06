@@ -17,7 +17,7 @@ import org.junit.jupiter.api.*;
 
 import io.lettuce.core.*;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
+import io.lettuce.core.failover.api.CircuitBreakerConfig;
 import io.lettuce.core.failover.metrics.MetricsFactory;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
 import io.lettuce.core.failover.metrics.TestClock;

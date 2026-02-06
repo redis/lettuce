@@ -49,6 +49,7 @@ nav:
   - Overview: overview.md
   - New & Noteworthy: new-features.md
   - Getting Started: getting-started.md
+  - Compatibility & Roadmap: compatibility-roadmap.md
   - User Guide:
       - Connecting Redis: user-guide/connecting-redis.md
       - Asynchronous API: user-guide/async-api.md

@@ -15,6 +15,8 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
+import io.lettuce.core.failover.api.CircuitBreakerConfig;
+import io.lettuce.core.failover.api.DatabaseConfig;
 import io.lettuce.test.settings.TestSettings;
 
 import static io.lettuce.core.failover.health.HealthCheckStrategySupplier.NO_HEALTH_CHECK;
@@ -102,7 +104,7 @@ public class MultiDbTestSupport extends TestSupport {
     }
 
     public static List<DatabaseConfig> getDatabaseConfigs(ClientOptions clientOptions,
-            CircuitBreaker.CircuitBreakerConfig circuitBreakerConfig, RedisURI... URIs) {
+            CircuitBreakerConfig circuitBreakerConfig, RedisURI... URIs) {
         float weight = 1.0f;
         List<DatabaseConfig> endpoints = new ArrayList<>();
         for (RedisURI uri : URIs) {

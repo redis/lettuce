@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.RedisCommandTimeoutException;
+import io.lettuce.core.failover.api.RedisCircuitBreakerException;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.RedisCommand;

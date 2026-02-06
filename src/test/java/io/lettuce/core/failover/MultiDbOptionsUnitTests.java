@@ -11,6 +11,9 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import io.lettuce.core.failover.api.MultiDbOptions;
+
 import org.junit.jupiter.api.Tag;
 
 /**

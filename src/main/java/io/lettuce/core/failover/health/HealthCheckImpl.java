@@ -31,8 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Ivo Gaydazhiev
  * @since 7.4
  */
-@Experimental
-public class HealthCheckImpl implements HealthCheck {
+class HealthCheckImpl implements HealthCheck {
 
     static class HealthProbeContext implements ProbingPolicy.ProbeContext {
 

@@ -16,6 +16,8 @@ import org.junit.jupiter.api.*;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
+import io.lettuce.core.failover.api.DatabaseConfig;
+import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.RedisDatabase;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheckStrategy;

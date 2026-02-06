@@ -14,7 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.failover.RawConnectionFactory;
+import io.lettuce.core.failover.api.RawConnectionFactory;
 
 /**
  * Unit tests for {@link PingStrategy}.

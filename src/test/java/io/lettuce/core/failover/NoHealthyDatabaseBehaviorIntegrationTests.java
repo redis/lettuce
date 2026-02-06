@@ -38,6 +38,9 @@ import io.lettuce.core.SocketOptions;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.failover.api.CircuitBreakerConfig;
+import io.lettuce.core.failover.api.DatabaseConfig;
+import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.RedisNoHealthyDatabaseException;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheckStrategy;
@@ -91,7 +94,7 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
 
     private MultiDbClient multiDbClient;
 
-    private CircuitBreaker.CircuitBreakerConfig cbConfig;
+    private CircuitBreakerConfig cbConfig;
 
     // Direct clients for cleanup
     private RedisClient directClient1;
@@ -164,7 +167,7 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
 
         // Create circuit breaker config with low thresholds for testing
         // Only need 5 failures minimum (instead of the default 1000)
-        cbConfig = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(CB_FAILURE_RATE_THRESHOLD)
+        cbConfig = CircuitBreakerConfig.builder().failureRateThreshold(CB_FAILURE_RATE_THRESHOLD)
                 .minimumNumberOfFailures(CB_MIN_FAILURES).metricsWindowSize(CB_METRICS_WINDOW_SIZE).build();
 
         // Create client options with short timeouts

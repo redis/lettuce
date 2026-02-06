@@ -3,7 +3,10 @@ package io.lettuce.core.failover;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.failover.api.CircuitBreakerConfig;
+import io.lettuce.core.failover.api.DatabaseConfig;
 import io.lettuce.core.failover.api.InitializationPolicy;
+import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheckStrategy;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
@@ -605,8 +608,8 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
 
             // Configure circuit breaker with low thresholds for fast testing
-            CircuitBreaker.CircuitBreakerConfig cbConfig = CircuitBreaker.CircuitBreakerConfig.builder()
-                    .failureRateThreshold(50.0f) // 50% failure rate threshold
+            CircuitBreakerConfig cbConfig = CircuitBreakerConfig.builder().failureRateThreshold(50.0f) // 50% failure rate
+                                                                                                       // threshold
                     .minimumNumberOfFailures(2) // minimum 2 failures
                     .build();
 
