@@ -295,14 +295,14 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         RedisDatabaseImpl<C> selectedDatabase = getNextHealthyDatabase(fromDb);
 
         if (selectedDatabase != null) {
-            // Reset the no-healthy-db counter on successful failover
-            failoverRetryState.resetAttempts();
-
             if (logger.isInfoEnabled()) {
                 logger.info("Initiating failover from {} to {} (attempt: {})", getDatabaseId(fromDb), selectedDatabase.getId(),
                         recursionAttempt);
             }
             if (safeSwitch(selectedDatabase, true, reason)) {
+                // Reset the no-healthy-db counter on successful failover
+                failoverRetryState.resetAttempts();
+
                 if (logger.isInfoEnabled()) {
                     logger.info("Failover successful from {} to {}", getDatabaseId(fromDb), selectedDatabase.getId());
                 }
