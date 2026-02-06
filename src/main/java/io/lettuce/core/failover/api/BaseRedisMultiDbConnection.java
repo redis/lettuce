@@ -4,7 +4,6 @@ import java.io.Closeable;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
-import io.lettuce.core.failover.DatabaseConfig;
 
 /**
  * @author Ali Takavci

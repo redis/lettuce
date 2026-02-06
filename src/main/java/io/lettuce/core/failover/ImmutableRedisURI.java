@@ -16,7 +16,7 @@ import io.lettuce.core.annotations.Experimental;
  * {@link UnsupportedOperationException}.
  */
 @Experimental
-public class ImmutableRedisURI extends RedisURI {
+class ImmutableRedisURI extends RedisURI {
 
     private List<RedisURI> sentinels;
 

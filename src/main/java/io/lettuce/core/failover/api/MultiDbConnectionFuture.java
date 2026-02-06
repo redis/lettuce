@@ -1,10 +1,9 @@
-package io.lettuce.core.failover;
+package io.lettuce.core.failover.api;
 
 import java.util.concurrent.*;
 
 import io.lettuce.core.BaseConnectionFuture;
 import io.lettuce.core.annotations.Experimental;
-import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
 
 /**
  * A {@code MultiDbConnectionFuture} represents the result of an asynchronous multi-database connection initialization.
