@@ -18,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Ivo Gaydazhiev
  * @since 7.4
  **/
-@Experimental
 class HealthCheckCollection {
 
     private final Map<RedisURI, HealthCheck> healthChecks = new ConcurrentHashMap<>();
