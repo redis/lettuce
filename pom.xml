@@ -257,6 +257,12 @@
         </dependency>
 
         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson-version}</version>
@@ -562,6 +568,14 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>1.20.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Toxiproxy for network failure simulation -->
+        <dependency>
+            <groupId>eu.rekawek.toxiproxy</groupId>
+            <artifactId>toxiproxy-java</artifactId>
+            <version>2.1.11</version>
             <scope>test</scope>
         </dependency>
 
@@ -903,6 +917,7 @@
                         <exclude>**/*Test</exclude>
                         <exclude>**/*IntegrationTests</exclude>
                     </excludes>
+                    <excludedGroups>integration</excludedGroups>
                 </configuration>
             </plugin>
 
@@ -1069,6 +1084,7 @@
         <profile>
             <id>ci</id>
         </profile>
+
         <profile>
             <id>entraid-it</id>
             <build>

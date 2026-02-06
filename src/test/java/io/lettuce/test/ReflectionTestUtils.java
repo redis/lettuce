@@ -158,4 +158,14 @@ public final class ReflectionTestUtils {
         }
     }
 
+    public static void setField(Class<?> target, String fieldName, Object value) {
+        try {
+            java.lang.reflect.Field field = ReflectionTestUtils.findField(target, fieldName);
+            field.setAccessible(true);
+            field.set(null, value);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set field " + fieldName, e);
+        }
+    }
+
 }
