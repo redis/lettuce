@@ -65,6 +65,8 @@ public class ClusterTopologyRefreshOptions {
 
     public static final int DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS = 5;
 
+    public static final int DEFAULT_MAX_TOPOLOGY_REFRESH_SOURCES = Integer.MAX_VALUE;
+
     private final Set<RefreshTrigger> adaptiveRefreshTriggers;
 
     private final Duration adaptiveRefreshTimeout;
@@ -79,6 +81,8 @@ public class ClusterTopologyRefreshOptions {
 
     private final int refreshTriggersReconnectAttempts;
 
+    private final int maxTopologyRefreshSources;
+
     protected ClusterTopologyRefreshOptions(Builder builder) {
 
         this.adaptiveRefreshTriggers = Collections.unmodifiableSet(new HashSet<>(builder.adaptiveRefreshTriggers));
@@ -88,6 +92,7 @@ public class ClusterTopologyRefreshOptions {
         this.periodicRefreshEnabled = builder.periodicRefreshEnabled;
         this.refreshPeriod = builder.refreshPeriod;
         this.refreshTriggersReconnectAttempts = builder.refreshTriggersReconnectAttempts;
+        this.maxTopologyRefreshSources = builder.maxTopologyRefreshSources;
     }
 
     protected ClusterTopologyRefreshOptions(ClusterTopologyRefreshOptions original) {
@@ -99,6 +104,7 @@ public class ClusterTopologyRefreshOptions {
         this.periodicRefreshEnabled = original.periodicRefreshEnabled;
         this.refreshPeriod = original.refreshPeriod;
         this.refreshTriggersReconnectAttempts = original.refreshTriggersReconnectAttempts;
+        this.maxTopologyRefreshSources = original.maxTopologyRefreshSources;
     }
 
     /**
@@ -156,6 +162,8 @@ public class ClusterTopologyRefreshOptions {
         private Duration refreshPeriod = DEFAULT_REFRESH_PERIOD_DURATION;
 
         private int refreshTriggersReconnectAttempts = DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS;
+
+        private int maxTopologyRefreshSources = DEFAULT_MAX_TOPOLOGY_REFRESH_SOURCES;
 
         private Builder() {
         }
@@ -301,6 +309,19 @@ public class ClusterTopologyRefreshOptions {
          */
         public Builder dynamicRefreshSources(boolean dynamicRefreshSources) {
             this.dynamicRefreshSources = dynamicRefreshSources;
+            return this;
+        }
+
+        /**
+         * @param maxTopologyRefreshSources maximum number of nodes to query for topology refresh. Use
+         *        {@link ClusterTopologyRefreshOptions#DEFAULT_MAX_TOPOLOGY_REFRESH_SOURCES} for no limit.
+         * @return {@code this}
+         */
+        public Builder maxTopologyRefreshSources(int maxTopologyRefreshSources) {
+
+            LettuceAssert.isTrue(maxTopologyRefreshSources > 0, "maxTopologyRefreshSources must be greater than 0");
+
+            this.maxTopologyRefreshSources = maxTopologyRefreshSources;
             return this;
         }
 
@@ -457,6 +478,19 @@ public class ClusterTopologyRefreshOptions {
      */
     public boolean useDynamicRefreshSources() {
         return dynamicRefreshSources;
+    }
+
+    /**
+     * Return the maximum number of additionally queried (discovered) nodes used as sources during topology refresh when
+     * {@link #useDynamicRefreshSources()} ()} is true.
+     *
+     * <p>
+     * A value of {@link #DEFAULT_MAX_TOPOLOGY_REFRESH_SOURCES} means no limit and will query all discovered nodes.
+     *
+     * @return the maximum number of additionally queried topology refresh sources
+     */
+    public int getMaxTopologyRefreshSources() {
+        return maxTopologyRefreshSources;
     }
 
     /**
