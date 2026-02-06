@@ -22,6 +22,7 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
 import io.lettuce.core.TrackingInfo
+import io.lettuce.core.annotations.Experimental
 import io.lettuce.core.protocol.CommandType
 import java.util.*
 
@@ -399,6 +400,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply `OK`.
      * @since 7.3
      */
+    @Experimental
     suspend fun hotkeysStart(args: HotkeysArgs): String?
 
     /**
@@ -407,6 +409,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply `OK`.
      * @since 7.3
      */
+    @Experimental
     suspend fun hotkeysStop(): String?
 
     /**
@@ -415,6 +418,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply `OK`.
      * @since 7.3
      */
+    @Experimental
     suspend fun hotkeysReset(): String?
 
     /**
@@ -423,6 +427,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return @link HotkeysReply} with tracking data, or `null` if no tracking session.
      * @since 7.3
      */
+    @Experimental
     suspend fun hotkeysGet(): HotkeysReply?
 
     /**

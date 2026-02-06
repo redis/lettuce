@@ -12,6 +12,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
@@ -25,6 +26,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @author Aleksandar Todorov
  * @since 7.3
  */
+@Experimental
 public class HotkeysArgs implements CompositeArgument {
 
     /**

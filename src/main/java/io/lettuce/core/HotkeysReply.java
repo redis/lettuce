@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * Reply from the Redis <a href="https://redis.io/commands/hotkeys">HOTKEYS GET</a> command. Contains tracking session
  * information and top K hotkeys by CPU time and network bytes.
@@ -18,6 +20,7 @@ import java.util.Objects;
  * @author Aleksandar Todorov
  * @since 7.3
  */
+@Experimental
 public class HotkeysReply {
 
     private final boolean trackingActive;

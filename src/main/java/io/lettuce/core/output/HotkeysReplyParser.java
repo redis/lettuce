@@ -13,6 +13,7 @@ import java.util.Map;
 
 import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.Range;
+import io.lettuce.core.annotations.Experimental;
 
 /**
  * Parser for Redis <a href="https://redis.io/commands/hotkeys">HOTKEYS GET</a> command output.
@@ -20,6 +21,7 @@ import io.lettuce.core.Range;
  * @author Aleksandar Todorov
  * @since 7.3
  */
+@Experimental
 public class HotkeysReplyParser implements ComplexDataParser<HotkeysReply> {
 
     public static final HotkeysReplyParser INSTANCE = new HotkeysReplyParser();

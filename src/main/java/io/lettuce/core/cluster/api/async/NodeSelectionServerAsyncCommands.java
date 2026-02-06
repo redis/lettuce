@@ -30,6 +30,7 @@ import io.lettuce.core.KillArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
 import io.lettuce.core.TrackingInfo;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.protocol.CommandType;
 
 /**
@@ -386,6 +387,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      * @return String simple-string-reply {@code OK}.
      * @since 7.3
      */
+    @Experimental
     AsyncExecutions<String> hotkeysStart(HotkeysArgs args);
 
     /**
@@ -394,6 +396,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      * @return String simple-string-reply {@code OK}.
      * @since 7.3
      */
+    @Experimental
     AsyncExecutions<String> hotkeysStop();
 
     /**
@@ -402,6 +405,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      * @return String simple-string-reply {@code OK}.
      * @since 7.3
      */
+    @Experimental
     AsyncExecutions<String> hotkeysReset();
 
     /**
@@ -410,6 +414,7 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      * @return {@link HotkeysReply} with tracking data, or {@code null} if no tracking session.
      * @since 7.3
      */
+    @Experimental
     AsyncExecutions<HotkeysReply> hotkeysGet();
 
     /**

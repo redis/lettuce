@@ -31,6 +31,7 @@ import io.lettuce.core.ShutdownArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
 import io.lettuce.core.TrackingInfo;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.protocol.CommandType;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -403,6 +404,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return String simple-string-reply {@code OK}.
      * @since 7.3
      */
+    @Experimental
     Mono<String> hotkeysStart(HotkeysArgs args);
 
     /**
@@ -411,6 +413,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return String simple-string-reply {@code OK}.
      * @since 7.3
      */
+    @Experimental
     Mono<String> hotkeysStop();
 
     /**
@@ -419,6 +422,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return String simple-string-reply {@code OK}.
      * @since 7.3
      */
+    @Experimental
     Mono<String> hotkeysReset();
 
     /**
@@ -427,6 +431,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return {@link HotkeysReply} with tracking data, or {@code null} if no tracking session.
      * @since 7.3
      */
+    @Experimental
     Mono<HotkeysReply> hotkeysGet();
 
     /**
