@@ -1,7 +1,8 @@
 # Automatic Failover and Failback with Lettuce
 
-!!! warning "Experimental Feature"
-    This feature is experimental and may change in future versions.
+> [!WARNING]
+> **Experimental Feature** <p>
+> This feature is experimental and may change in future versions.
 
 Lettuce supports automatic failover and failback for your Redis deployments through the `MultiDbClient`. This is useful when:
 
@@ -34,7 +35,7 @@ RedisURI eastUri = RedisURI.builder()
         .withPassword("secret".toCharArray())
         .build();
 
-DatabaseConfig wast = DatabaseConfig.builder(eastUri)
+DatabaseConfig east = DatabaseConfig.builder(eastUri)
         .weight(1.0f)  // Primary database
         .build();
 
