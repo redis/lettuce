@@ -21,6 +21,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -530,15 +531,19 @@ class NettyHttpClientIntegrationTests {
         // Close the connection - this should complete all pending requests exceptionally
         connection.closeAsync().get(5, TimeUnit.SECONDS);
 
-        // Verify all pending requests are now completed exceptionally
-        assertThat(future1).isCompletedExceptionally();
-        assertThat(future2).isCompletedExceptionally();
-        assertThat(future3).isCompletedExceptionally();
-
-        // Verify the exception type and message
-        assertThatThrownBy(future1::get).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
-        assertThatThrownBy(future2::get).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
-        assertThatThrownBy(future3::get).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        // Await completion with timeout, then verify exception type and message
+        assertThatThrownBy(() -> future1.get(5, TimeUnit.SECONDS))
+                .isInstanceOf(ExecutionException.class)
+                .hasCauseInstanceOf(IOException.class)
+                .hasMessageContaining("Connection closed");
+        assertThatThrownBy(() -> future2.get(5, TimeUnit.SECONDS))
+                .isInstanceOf(ExecutionException.class)
+                .hasCauseInstanceOf(IOException.class)
+                .hasMessageContaining("Connection closed");
+        assertThatThrownBy(() -> future3.get(5, TimeUnit.SECONDS))
+                .isInstanceOf(ExecutionException.class)
+                .hasCauseInstanceOf(IOException.class)
+                .hasMessageContaining("Connection closed");
     }
 
     @Test
