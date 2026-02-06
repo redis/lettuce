@@ -129,6 +129,14 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun flushdb(flushMode: FlushMode): String? = ops.flushdb(flushMode).awaitFirstOrNull()
 
     override suspend fun flushdbAsync(): String? = ops.flushdbAsync().awaitFirstOrNull()
+    
+    override suspend fun hotkeysStart(args: HotkeysArgs): String? = ops.hotkeysStart(args).awaitFirstOrNull()
+
+    override suspend fun hotkeysStop(): String? = ops.hotkeysStop().awaitFirstOrNull()
+
+    override suspend fun hotkeysReset(): String? = ops.hotkeysReset().awaitFirstOrNull()
+
+    override suspend fun hotkeysGet(): HotkeysReply? = ops.hotkeysGet().awaitFirstOrNull()
 
     override suspend fun info(): String? = ops.info().awaitFirstOrNull()
 

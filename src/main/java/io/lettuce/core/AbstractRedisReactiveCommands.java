@@ -1214,6 +1214,26 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> hotkeysStart(HotkeysArgs args) {
+        return createMono(() -> commandBuilder.hotkeysStart(args));
+    }
+
+    @Override
+    public Mono<String> hotkeysStop() {
+        return createMono(commandBuilder::hotkeysStop);
+    }
+
+    @Override
+    public Mono<String> hotkeysReset() {
+        return createMono(commandBuilder::hotkeysReset);
+    }
+
+    @Override
+    public Mono<HotkeysReply> hotkeysGet() {
+        return createMono(commandBuilder::hotkeysGet);
+    }
+
+    @Override
     public Mono<Long> geoadd(K key, double longitude, double latitude, V member) {
         return geoadd(key, longitude, latitude, member, null);
     }

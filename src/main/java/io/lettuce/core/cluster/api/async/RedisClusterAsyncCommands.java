@@ -23,10 +23,11 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.HotkeysArgs;
+import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.Range;
 import io.lettuce.core.RedisFuture;
-import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.async.*;
 import io.lettuce.core.json.JsonParser;
 
@@ -407,5 +408,53 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      * @since 6.5
      */
     JsonParser getJsonParser();
+
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
+     * {@code getConnection(nodeId)}.
+     *
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<String> hotkeysStart(HotkeysArgs args) {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use node selection API or target specific nodes.");
+    }
+
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
+     * {@code getConnection(nodeId)}.
+     *
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<String> hotkeysStop() {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use node selection API or target specific nodes.");
+    }
+
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
+     * {@code getConnection(nodeId)}.
+     *
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<String> hotkeysReset() {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use node selection API or target specific nodes.");
+    }
+
+    /**
+     * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
+     * {@code getConnection(nodeId)}.
+     *
+     * @throws UnsupportedOperationException HOTKEYS is a node-specific command
+     */
+    @Override
+    default RedisFuture<HotkeysReply> hotkeysGet() {
+        throw new UnsupportedOperationException(
+                "HOTKEYS commands are not supported on cluster client. Use node selection API or target specific nodes.");
+    }
 
 }
