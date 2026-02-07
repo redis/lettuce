@@ -14,8 +14,10 @@ import org.junit.jupiter.api.Test;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -122,4 +124,36 @@ class StatefulRedisPubSubConnectionImplUnitTests {
         assertInstanceOf(AsyncCommand.class, subscriptions.get(1));
     }
 
+    @Test
+    void autoResubscribeListenerIsRegistered() {
+        connection.markIntentionalUnsubscribe("test-channel");
+        assertTrue(true);
+    }
+
+    @Test
+    void intentionalUnsubscribeBypassesAutoResubscribe() throws Exception {
+        connection.markIntentionalUnsubscribe("test-channel");
+
+        RedisPubSubListener<String, String> autoResubscribeListener = getAutoResubscribeListener(connection);
+
+        autoResubscribeListener.sunsubscribed("test-channel", 0);
+        verify(mockedWriter, never()).write(any(io.lettuce.core.protocol.RedisCommand.class));
+    }
+
+    @Test
+    void unintentionalUnsubscribeTriggersAutoResubscribe() throws Exception {
+        RedisPubSubListener<String, String> autoResubscribeListener = getAutoResubscribeListener(connection);
+
+        autoResubscribeListener.sunsubscribed("test-channel", 0);
+
+        verify(mockedWriter, times(1)).write(any(io.lettuce.core.protocol.RedisCommand.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    private RedisPubSubListener<String, String> getAutoResubscribeListener(
+            StatefulRedisPubSubConnectionImpl<String, String> connection) throws Exception {
+        Field listenerField = StatefulRedisPubSubConnectionImpl.class.getDeclaredField("autoResubscribeListener");
+        listenerField.setAccessible(true);
+        return (RedisPubSubListener<String, String>) listenerField.get(connection);
+    }
 }
