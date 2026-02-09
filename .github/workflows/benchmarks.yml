@@ -25,7 +25,7 @@ jobs:
   benchmark:
     name: Execute benchmarks
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
