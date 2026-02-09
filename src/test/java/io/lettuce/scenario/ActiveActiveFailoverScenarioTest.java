@@ -128,6 +128,67 @@ public class ActiveActiveFailoverScenarioTest {
         if (multiDbClient != null) {
             multiDbClient.shutdown();
         }
+
+        // Wait for cluster to become healthy before next test
+        // This is needed because network_latency injection can affect DNS and connectivity
+        waitForClusterHealthy(primaryUri, Duration.ofSeconds(90));
+    }
+
+    /**
+     * Wait for cluster to become healthy by polling PING responses. Similar to redis-py's _wait_for_cluster_healthy pattern.
+     */
+    private void waitForClusterHealthy(RedisURI uri, Duration timeout) {
+        log.info("Waiting for cluster to become healthy (timeout={}s)", timeout.getSeconds());
+
+        long startTime = System.currentTimeMillis();
+        long timeoutMs = timeout.toMillis();
+        int healthyStreak = 0;
+        int requiredStreak = 3;
+        long pingThresholdMs = 1500;
+
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            io.lettuce.core.RedisClient probeClient = null;
+            try {
+                probeClient = io.lettuce.core.RedisClient.create(uri);
+                probeClient.setOptions(ClientOptions.builder()
+                        .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(5)).build())
+                        .timeoutOptions(TimeoutOptions.enabled(Duration.ofSeconds(5))).build());
+
+                long pingStart = System.currentTimeMillis();
+                try (io.lettuce.core.api.StatefulRedisConnection<String, String> probeConn = probeClient.connect()) {
+                    probeConn.sync().ping();
+                }
+                long pingMs = System.currentTimeMillis() - pingStart;
+
+                if (pingMs < pingThresholdMs) {
+                    healthyStreak++;
+                    log.info("Cluster PING: {}ms (streak {}/{})", pingMs, healthyStreak, requiredStreak);
+                    if (healthyStreak >= requiredStreak) {
+                        log.info("Cluster is healthy");
+                        return;
+                    }
+                } else {
+                    healthyStreak = 0;
+                    log.info("Cluster PING: {}ms (too slow, resetting streak)", pingMs);
+                }
+            } catch (Exception e) {
+                healthyStreak = 0;
+                log.info("Cluster health check failed: {}", e.getMessage());
+            } finally {
+                if (probeClient != null) {
+                    probeClient.shutdown(Duration.ZERO, Duration.ofSeconds(2));
+                }
+            }
+
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        log.warn("Cluster did not become healthy within {}s, proceeding anyway", timeout.getSeconds());
     }
 
     // ========================================
@@ -472,7 +533,296 @@ public class ActiveActiveFailoverScenarioTest {
     }
 
     // ========================================
-    // Test 4: Pub/Sub Failover (Optional)
+    // Test 4: Health Check Failover with Failback
+    // ========================================
+
+    @Test
+    @DisplayName("Health check should trigger failover and failback cycle")
+    public void testHealthCheckFailoverWithFailback() throws Exception {
+        log.info("Starting health check failover with failback test");
+
+        // Create controllable health check strategy that defaults to HEALTHY
+        ControllableHealthCheckStrategy healthCheckStrategy = new ControllableHealthCheckStrategy();
+
+        // Supplier that returns the same controllable strategy for all endpoints
+        HealthCheckStrategySupplier controllableSupplier = (uri, factory) -> healthCheckStrategy;
+
+        ClientOptions clientOptions = createClientOptions();
+
+        // High CB threshold so circuit breaker doesn't interfere with health check test
+        CircuitBreaker.CircuitBreakerConfig cbConfig = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(90.0f)
+                .minimumNumberOfFailures(1000).metricsWindowSize(100).build();
+
+        // Use controllable health check strategy
+        DatabaseConfig primaryConfig = DatabaseConfig.builder(primaryUri).weight(1.0f).clientOptions(clientOptions)
+                .circuitBreakerConfig(cbConfig).healthCheckStrategySupplier(controllableSupplier).build();
+
+        DatabaseConfig secondaryConfig = DatabaseConfig.builder(secondaryUri).weight(0.5f).clientOptions(clientOptions)
+                .circuitBreakerConfig(cbConfig).healthCheckStrategySupplier(controllableSupplier).build();
+
+        // Enable failback with short intervals for testing
+        MultiDbOptions multiDbOptions = MultiDbOptions.builder().failbackSupported(true)
+                .failbackCheckInterval(Duration.ofSeconds(5)).gracePeriod(Duration.ofSeconds(3)).build();
+
+        multiDbClient = MultiDbClient.create(Arrays.asList(primaryConfig, secondaryConfig), multiDbOptions);
+        connection = multiDbClient.connect();
+
+        // Verify connection works
+        assertThat(connection.sync().ping()).isEqualTo("PONG");
+
+        // Ensure we start on the primary (highest weight)
+        connection.switchTo(primaryUri);
+        assertThat(connection.getCurrentEndpoint()).isEqualTo(primaryUri);
+
+        // Capture run_ids
+        primaryRunId = extractRunId(connection.sync().info("server"));
+        connection.switchTo(secondaryUri);
+        secondaryRunId = extractRunId(connection.sync().info("server"));
+        connection.switchTo(primaryUri);
+
+        log.info("Primary run_id: {}", primaryRunId);
+        log.info("Secondary run_id: {}", secondaryRunId);
+        assertThat(primaryRunId).isNotEqualTo(secondaryRunId);
+
+        // Setup failover reporter
+        FailoverReporter reporter = new FailoverReporter();
+        eventSubscription = multiDbClient.getResources().eventBus().get().subscribe(event -> {
+            if (event instanceof DatabaseSwitchEvent) {
+                reporter.accept((DatabaseSwitchEvent) event);
+            }
+        });
+
+        // Verify we're on primary
+        String currentRunId = extractRunId(connection.sync().info("server"));
+        assertThat(currentRunId).isEqualTo(primaryRunId);
+        log.info("Confirmed starting on primary endpoint");
+
+        // ---- PHASE 1: Trigger failover by marking primary unhealthy ----
+        log.info("PHASE 1: Marking primary endpoint as UNHEALTHY");
+        healthCheckStrategy.setHealthStatus(primaryUri, HealthStatus.UNHEALTHY);
+
+        // Wait for health check to detect unhealthy status
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            assertThat(connection.isHealthy(primaryUri)).isFalse();
+        });
+        log.info("Primary detected as unhealthy");
+
+        // Wait for failover to happen
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            assertThat(reporter.isFailoverHappened()).isTrue();
+        });
+
+        log.info("Failover happened at: {}", reporter.getFailoverAt());
+        log.info("Failover reason: {}", reporter.getFailoverReason());
+
+        // Verify failover reason is HEALTH_CHECK
+        assertThat(reporter.getFailoverReason()).isEqualTo(SwitchReason.HEALTH_CHECK);
+
+        // Verify we switched to secondary
+        assertThat(connection.getCurrentEndpoint()).isEqualTo(secondaryUri);
+        currentRunId = extractRunId(connection.sync().info("server"));
+        assertThat(currentRunId).isEqualTo(secondaryRunId);
+        log.info("Verified failover to secondary endpoint");
+
+        // ---- PHASE 2: Trigger failback by marking primary healthy again ----
+        log.info("PHASE 2: Marking primary endpoint as HEALTHY again");
+        healthCheckStrategy.setHealthStatus(primaryUri, HealthStatus.HEALTHY);
+
+        // Wait for health check to detect healthy status
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            assertThat(connection.isHealthy(primaryUri)).isTrue();
+        });
+        log.info("Primary detected as healthy again");
+
+        // Wait for grace period (3s) + failback check interval (5s) + buffer
+        log.info("Waiting for grace period and failback check...");
+
+        // Wait for failback to happen
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
+            assertThat(reporter.isFailbackHappened()).isTrue();
+        });
+
+        log.info("Failback happened at: {}", reporter.getFailbackAt());
+
+        // Verify we're back on primary (higher weight)
+        assertThat(connection.getCurrentEndpoint()).isEqualTo(primaryUri);
+        currentRunId = extractRunId(connection.sync().info("server"));
+        assertThat(currentRunId).isEqualTo(primaryRunId);
+        log.info("Verified failback to primary endpoint");
+
+        // Verify commands work on primary
+        for (int i = 0; i < 5; i++) {
+            String result = connection.sync().set("failback-verify-key-" + i, "value-" + i);
+            assertThat(result).isEqualTo("OK");
+        }
+        log.info("Successfully executed commands on primary after failback");
+
+        log.info("Health check failover with failback test completed successfully");
+    }
+
+    // ========================================
+    // Test 5: Data Integrity During Failover
+    // ========================================
+
+    @Test
+    @DisplayName("Data written before failover should be readable after failover (AA replication)")
+    public void testDataIntegrityDuringFailover() throws Exception {
+        log.info("Starting data integrity during failover test");
+
+        // Create controllable health check strategy
+        ControllableHealthCheckStrategy healthCheckStrategy = new ControllableHealthCheckStrategy();
+        HealthCheckStrategySupplier controllableSupplier = (uri, factory) -> healthCheckStrategy;
+
+        ClientOptions clientOptions = createClientOptions();
+
+        // High CB threshold so circuit breaker doesn't interfere
+        CircuitBreaker.CircuitBreakerConfig cbConfig = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(90.0f)
+                .minimumNumberOfFailures(1000).metricsWindowSize(100).build();
+
+        DatabaseConfig primaryConfig = DatabaseConfig.builder(primaryUri).weight(1.0f).clientOptions(clientOptions)
+                .circuitBreakerConfig(cbConfig).healthCheckStrategySupplier(controllableSupplier).build();
+
+        DatabaseConfig secondaryConfig = DatabaseConfig.builder(secondaryUri).weight(0.5f).clientOptions(clientOptions)
+                .circuitBreakerConfig(cbConfig).healthCheckStrategySupplier(controllableSupplier).build();
+
+        // Enable failback for bidirectional test
+        MultiDbOptions multiDbOptions = MultiDbOptions.builder().failbackSupported(true)
+                .failbackCheckInterval(Duration.ofSeconds(5)).gracePeriod(Duration.ofSeconds(3)).build();
+
+        multiDbClient = MultiDbClient.create(Arrays.asList(primaryConfig, secondaryConfig), multiDbOptions);
+        connection = multiDbClient.connect();
+
+        // Verify connection works
+        assertThat(connection.sync().ping()).isEqualTo("PONG");
+
+        // Start on primary
+        connection.switchTo(primaryUri);
+        assertThat(connection.getCurrentEndpoint()).isEqualTo(primaryUri);
+
+        // Capture run_ids
+        primaryRunId = extractRunId(connection.sync().info("server"));
+        connection.switchTo(secondaryUri);
+        secondaryRunId = extractRunId(connection.sync().info("server"));
+        connection.switchTo(primaryUri);
+
+        log.info("Primary run_id: {}", primaryRunId);
+        log.info("Secondary run_id: {}", secondaryRunId);
+
+        // Setup failover reporter
+        FailoverReporter reporter = new FailoverReporter();
+        eventSubscription = multiDbClient.getResources().eventBus().get().subscribe(event -> {
+            if (event instanceof DatabaseSwitchEvent) {
+                reporter.accept((DatabaseSwitchEvent) event);
+            }
+        });
+
+        // ---- PHASE 1: Write data on primary ----
+        log.info("PHASE 1: Writing 100 keys on primary endpoint");
+        Map<String, String> writtenOnPrimary = new HashMap<>();
+        String testPrefix = "data-integrity-" + System.currentTimeMillis() + "-";
+
+        for (int i = 0; i < 100; i++) {
+            String key = testPrefix + "primary-" + i;
+            String value = "value-" + i + "-" + System.currentTimeMillis();
+            String result = connection.sync().set(key, value);
+            assertThat(result).isEqualTo("OK");
+            writtenOnPrimary.put(key, value);
+        }
+        log.info("Wrote {} keys on primary", writtenOnPrimary.size());
+
+        // ---- PHASE 2: Trigger failover to secondary ----
+        log.info("PHASE 2: Triggering failover to secondary");
+        healthCheckStrategy.setHealthStatus(primaryUri, HealthStatus.UNHEALTHY);
+
+        // Wait for failover
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            assertThat(reporter.isFailoverHappened()).isTrue();
+        });
+
+        // Verify we're on secondary
+        assertThat(connection.getCurrentEndpoint()).isEqualTo(secondaryUri);
+        String currentRunId = extractRunId(connection.sync().info("server"));
+        assertThat(currentRunId).isEqualTo(secondaryRunId);
+        log.info("Failover to secondary complete");
+
+        // ---- PHASE 3: Verify data is readable on secondary (AA replication) ----
+        log.info("PHASE 3: Verifying data on secondary (with AA replication lag tolerance)");
+
+        // Use Awaitility to handle AA replication lag
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(1)).untilAsserted(() -> {
+            int matchCount = 0;
+            for (Map.Entry<String, String> entry : writtenOnPrimary.entrySet()) {
+                String actual = connection.sync().get(entry.getKey());
+                if (entry.getValue().equals(actual)) {
+                    matchCount++;
+                }
+            }
+            log.info("Data verification progress: {}/{} keys match", matchCount, writtenOnPrimary.size());
+            assertThat(matchCount).isEqualTo(writtenOnPrimary.size());
+        });
+        log.info("All {} keys verified on secondary", writtenOnPrimary.size());
+
+        // ---- PHASE 4: Write additional data on secondary ----
+        log.info("PHASE 4: Writing additional keys on secondary endpoint");
+        Map<String, String> writtenOnSecondary = new HashMap<>();
+
+        for (int i = 0; i < 50; i++) {
+            String key = testPrefix + "secondary-" + i;
+            String value = "secondary-value-" + i + "-" + System.currentTimeMillis();
+            String result = connection.sync().set(key, value);
+            assertThat(result).isEqualTo("OK");
+            writtenOnSecondary.put(key, value);
+        }
+        log.info("Wrote {} keys on secondary", writtenOnSecondary.size());
+
+        // ---- PHASE 5: Trigger failback to primary ----
+        log.info("PHASE 5: Triggering failback to primary");
+        healthCheckStrategy.setHealthStatus(primaryUri, HealthStatus.HEALTHY);
+
+        // Wait for failback
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
+            assertThat(reporter.isFailbackHappened()).isTrue();
+        });
+
+        // Verify we're back on primary
+        assertThat(connection.getCurrentEndpoint()).isEqualTo(primaryUri);
+        currentRunId = extractRunId(connection.sync().info("server"));
+        assertThat(currentRunId).isEqualTo(primaryRunId);
+        log.info("Failback to primary complete");
+
+        // ---- PHASE 6: Verify data written on secondary is readable on primary ----
+        log.info("PHASE 6: Verifying secondary data on primary (with AA replication lag tolerance)");
+
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofSeconds(1)).untilAsserted(() -> {
+            int matchCount = 0;
+            for (Map.Entry<String, String> entry : writtenOnSecondary.entrySet()) {
+                String actual = connection.sync().get(entry.getKey());
+                if (entry.getValue().equals(actual)) {
+                    matchCount++;
+                }
+            }
+            log.info("Data verification progress: {}/{} keys match", matchCount, writtenOnSecondary.size());
+            assertThat(matchCount).isEqualTo(writtenOnSecondary.size());
+        });
+        log.info("All {} secondary keys verified on primary", writtenOnSecondary.size());
+
+        // ---- PHASE 7: Verify original primary data is still there ----
+        log.info("PHASE 7: Verifying original primary data is still accessible");
+        int verifiedCount = 0;
+        for (Map.Entry<String, String> entry : writtenOnPrimary.entrySet()) {
+            String actual = connection.sync().get(entry.getKey());
+            assertThat(actual).isEqualTo(entry.getValue());
+            verifiedCount++;
+        }
+        log.info("Verified {} original primary keys", verifiedCount);
+
+        log.info("Data integrity during failover test completed successfully");
+        log.info("Total keys verified: {} (primary) + {} (secondary) = {}", writtenOnPrimary.size(), writtenOnSecondary.size(),
+                writtenOnPrimary.size() + writtenOnSecondary.size());
+    }
+
+    // ========================================
+    // Test 6: Pub/Sub Failover
     // ========================================
 
     @Test
