@@ -1,8 +1,10 @@
 package io.lettuce.core.support.caching;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.codec.RedisCodec;
 
 /**
@@ -17,9 +19,18 @@ class DefaultRedisCache<K, V> implements RedisCache<K, V> {
 
     private final RedisCodec<K, V> codec;
 
+    private final boolean closeConnection;
+
+    private final List<PushListener> listeners = new CopyOnWriteArrayList<>();
+
     public DefaultRedisCache(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec) {
+        this(connection, codec, true);
+    }
+
+    public DefaultRedisCache(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec, boolean closeConnection) {
         this.connection = connection;
         this.codec = codec;
+        this.closeConnection = closeConnection;
     }
 
     @Override
@@ -35,19 +46,29 @@ class DefaultRedisCache<K, V> implements RedisCache<K, V> {
     @Override
     public void addInvalidationListener(java.util.function.Consumer<? super K> listener) {
 
-        connection.addListener(message -> {
+        PushListener pushListener = message -> {
             if (message.getType().equals("invalidate")) {
 
                 List<Object> content = message.getContent(codec::decodeKey);
                 List<K> keys = (List<K>) content.get(1);
                 keys.forEach(listener);
             }
-        });
+        };
+
+        listeners.add(pushListener);
+        connection.addListener(pushListener);
     }
 
     @Override
     public void close() {
-        connection.close();
+        for (PushListener listener : listeners) {
+            connection.removeListener(listener);
+        }
+        listeners.clear();
+
+        if (closeConnection) {
+            connection.close();
+        }
     }
 
 }
