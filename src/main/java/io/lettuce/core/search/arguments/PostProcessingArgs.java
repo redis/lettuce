@@ -75,15 +75,23 @@ public class PostProcessingArgs<K, V> {
 
         /**
          * Request loading of document attributes.
+         * <p>
+         * Note: To load all attributes, use {@link #loadAll()} instead of passing {@code "*"} as a field. Passing {@code "*"}
+         * as a field name will result in an {@link IllegalArgumentException}.
+         * </p>
          *
-         * @param fields the field identifiers
+         * @param fields the field identifiers (must not include {@code "*"})
          * @return this builder
+         * @throws IllegalArgumentException if {@code "*"} is passed as a field name
          */
         @SafeVarargs
         public final Builder<K, V> load(K... fields) {
             LettuceAssert.notNull(fields, "Fields must not be null");
             for (K field : fields) {
                 LettuceAssert.notNull(field, "Field must not be null");
+                if ("*".equals(field)) {
+                    throw new IllegalArgumentException("Use loadAll() instead of load(\"*\") to load all document attributes");
+                }
                 instance.loadFields.add(field);
             }
             return this;
@@ -95,8 +103,12 @@ public class PostProcessingArgs<K, V> {
          * Equivalent to using {@code LOAD *} in the Redis command. This loads all attributes from the source documents. Use
          * with caution as this can significantly impact performance when dealing with large documents or many results.
          * </p>
+         * <p>
+         * <b>Note:</b> This feature requires Redis OSS 8.6 or later.
+         * </p>
          *
          * @return this builder
+         * @since Redis OSS 8.6
          */
         public Builder<K, V> loadAll() {
             instance.loadAll = true;
@@ -151,20 +163,24 @@ public class PostProcessingArgs<K, V> {
     /**
      * Build the post-processing command arguments.
      * <p>
-     * LOAD is built first, then post-processing operations are built in user-specified order.
+     * LOAD is built first (if specified), then post-processing operations are built in user-specified order.
      * </p>
      *
      * @param args the {@link CommandArgs} to append to
      */
     public void build(CommandArgs<K, V> args) {
-        args.add(CommandKeyword.LOAD);
+        // LOAD clause - only emit if loadAll or loadFields is specified
         if (loadAll) {
-            // LOAD *
+            // LOAD * (no count prefix for wildcard)
+            args.add(CommandKeyword.LOAD);
             args.add("*");
-        } else {
-            args.add(loadFields.size()); // Count prefix required
+        } else if (!loadFields.isEmpty()) {
+            // LOAD count field [field ...]
+            args.add(CommandKeyword.LOAD);
+            args.add(loadFields.size());
             loadFields.forEach(args::addKey);
         }
+        // No LOAD emitted if neither loadAll nor loadFields specified
 
         for (PostProcessingOperation<K, ?> operation : postProcessingOperations) {
             // Cast is safe because all operations can build with CommandArgs<K, V>
