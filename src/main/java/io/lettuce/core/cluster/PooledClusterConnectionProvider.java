@@ -54,6 +54,7 @@ import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.netty.util.internal.logging.InternalLogger;
@@ -591,18 +592,20 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     private boolean isStale(ConnectionKey connectionKey) {
-
         if (connectionKey.nodeId != null && partitions.getPartitionByNodeId(connectionKey.nodeId) != null) {
             return false;
         }
 
-        if (connectionKey.host != null && partitions.getPartition(connectionKey.host, connectionKey.port) != null) {
-            return false;
-        }
+        RedisClusterNode node = partitions.getPartition(connectionKey.host, connectionKey.port);
 
+        if (connectionKey.host != null && node != null) {
+            if (connectionKey.connectionIntent == ConnectionIntent.READ && node.getRole().isUpstream()) {
+                return true;
+            }
+            return connectionKey.connectionIntent == ConnectionIntent.WRITE && node.getRole().isReplica();
+        }
         return true;
     }
-
     /**
      * Set auto-flush on all commands. Synchronize on {@code stateLock} to initiate a happens-before relation and clear the
      * thread caches of other threads.
