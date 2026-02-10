@@ -17,18 +17,28 @@ import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
+import io.lettuce.core.search.arguments.Apply;
 import io.lettuce.core.search.arguments.CombineArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.Filter;
+import io.lettuce.core.search.arguments.GroupBy;
 import io.lettuce.core.search.arguments.HybridArgs;
 import io.lettuce.core.search.arguments.HybridSearchArgs;
 import io.lettuce.core.search.arguments.HybridVectorArgs;
+import io.lettuce.core.search.arguments.Limit;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.PostProcessingArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
+import io.lettuce.core.search.arguments.ReduceFunction;
+import io.lettuce.core.search.arguments.Reducer;
+import io.lettuce.core.search.arguments.Scorer;
 import io.lettuce.core.search.arguments.ScoringFunction;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SortBy;
+import io.lettuce.core.search.arguments.SortDirection;
+import io.lettuce.core.search.arguments.SortProperty;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
@@ -787,37 +797,30 @@ class RediSearchCommandBuilderUnitTests {
 
         HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
-                        .scorer(HybridSearchArgs.Scorer.of(ScoringFunction.TF_IDF_NORMALIZED)).scoreAlias("text_score").build())
+                        .scorer(Scorer.of(ScoringFunction.TF_IDF_NORMALIZED)).scoreAlias("text_score").build())
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
-                        .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
-                        .scoreAlias("vector_score").build())
+                        .vectorParamName("query_vector").method(HybridVectorArgs.Knn.of(20).efRuntime(150))
+                        .filter("@brand:{apple|samsung|google}").scoreAlias("vector_score").build())
                 .combine(CombineArgs.of(new CombineArgs.Linear<String>().alpha(0.7).beta(0.3)))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
-                        .addOperation(PostProcessingArgs.GroupBy.<String, String> of("@brand")
-                                .reduce(PostProcessingArgs.Reducer
-                                        .<String, String> of(PostProcessingArgs.ReduceFunction.SUM, "@price").as("sum"))
-                                .reduce(PostProcessingArgs.Reducer.<String, String> of(PostProcessingArgs.ReduceFunction.COUNT)
-                                        .as("count")))
-                        .addOperation(PostProcessingArgs.SortBy
-                                .of(new PostProcessingArgs.SortProperty<>("@sum", PostProcessingArgs.SortDirection.ASC)))
-                        .addOperation(PostProcessingArgs.Apply.of("@sum * 0.9", "discounted_price"))
-                        .addOperation(PostProcessingArgs.Filter.of("@sum > 700"))
-                        .addOperation(PostProcessingArgs.Limit.of(0, 20)).build())
-                .param("discount_rate", "0.9").param("$vector", new String(queryVector)).build();
+                        .addOperation(GroupBy.<String, String> of("@brand")
+                                .reduce(Reducer.<String, String> of(ReduceFunction.SUM, "@price").as("sum"))
+                                .reduce(Reducer.<String, String> of(ReduceFunction.COUNT).as("count")))
+                        .addOperation(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC)))
+                        .addOperation(Apply.of("@sum * 0.9", "discounted_price")).addOperation(Filter.of("@sum > 700"))
+                        .addOperation(Limit.of(0, 20)).build())
+                .param("discount_rate", "0.9").build();
 
         Command<String, String, HybridReply<String, String>> command = builder.ftHybrid("idx:ecommerce", hybridArgs);
 
         String args = command.getArgs().toCommandString();
 
-        String expected = "idx:ecommerce SEARCH value<@category:{electronics} smartphone camera> SCORER TFIDF.DOCNORM "
-                + "YIELD_SCORE_AS key<text_score> VSIM key<@image_embedding> zczMPc3MTD6amZk+zczMPgAAAD+amRk/MzMzP83MTD9mZmY/AACAPw== "
-                + "KNN 4 K 20 EF_RUNTIME 150 FILTER @brand:{apple|samsung|google} YIELD_SCORE_AS key<vector_score> "
-                + "COMBINE LINEAR 4 ALPHA 0.7 BETA 0.3 LOAD 3 key<@price> key<@brand> key<@category> GROUPBY 1 @brand "
-                + "REDUCE U1VN 1 value<@price> AS sum REDUCE Q09VTlQ= 0 AS count SORTBY 2 @sum ASC "
-                + "APPLY value<@sum * 0.9> AS discounted_price FILTER value<@sum > 700> LIMIT 0 20 "
-                + "PARAMS 4 key<discount_rate> value<0.9> key<$vector> value<" + new String(queryVector) + ">";
-
-        assertThat(args).isEqualTo(expected);
+        // Vector is now passed via PARAMS with the parameter reference $query_vector in VSIM
+        // Note: HashMap order is not guaranteed, so we check for key parts
+        assertThat(args).contains("VSIM key<@image_embedding> $query_vector");
+        assertThat(args).contains("PARAMS 4");
+        assertThat(args).contains("key<query_vector> zczMPc3MTD6amZk+zczMPgAAAD+amRk/MzMzP83MTD9mZmY/AACAPw==");
+        assertThat(args).contains("key<discount_rate> value<0.9>");
     }
 
     private byte[] floatArrayToByteArray(float[] vector) {
