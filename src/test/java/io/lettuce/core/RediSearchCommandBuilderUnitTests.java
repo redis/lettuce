@@ -61,6 +61,7 @@ import java.util.Map;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link RediSearchCommandBuilder}.
@@ -821,6 +822,71 @@ class RediSearchCommandBuilderUnitTests {
         assertThat(args).contains("PARAMS 4");
         assertThat(args).contains("key<query_vector> zczMPc3MTD6amZk+zczMPgAAAD+amRk/MzMzP83MTD9mZmY/AACAPw==");
         assertThat(args).contains("key<discount_rate> value<0.9>");
+
+        // Verify LOAD is emitted with count prefix (LOAD 3 @price @brand @category)
+        assertThat(args).contains("LOAD 3 key<@price> key<@brand> key<@category>");
+    }
+
+    @Test
+    void postProcessingArgsWithLoadFieldsShouldEmitLoadWithCount() {
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
+                .load("@price", "@brand", "@category").build();
+
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        postProcessingArgs.build(args);
+
+        // Should emit: LOAD 3 @price @brand @category
+        assertThat(args.toCommandString()).isEqualTo("LOAD 3 key<@price> key<@brand> key<@category>");
+    }
+
+    @Test
+    void postProcessingArgsWithLoadAllShouldEmitLoadStar() {
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder().loadAll().build();
+
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        postProcessingArgs.build(args);
+
+        // Should emit: LOAD * (no count prefix for wildcard)
+        assertThat(args.toCommandString()).isEqualTo("LOAD *");
+    }
+
+    @Test
+    void postProcessingArgsWithoutLoadShouldNotEmitLoad() {
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
+                .addOperation(Filter.of("@price > 100")).build();
+
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        postProcessingArgs.build(args);
+
+        // Should NOT emit LOAD at all, only the FILTER operation
+        assertThat(args.toCommandString()).contains("FILTER");
+        assertThat(args.toCommandString()).doesNotContain("LOAD");
+    }
+
+    @Test
+    void postProcessingArgsWithOperationsOnlyShouldNotEmitLoad() {
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
+                .addOperation(GroupBy.<String, String> of("@category")
+                        .reduce(Reducer.<String, String> of(ReduceFunction.COUNT).as("count")))
+                .addOperation(SortBy.of(new SortProperty<>("@count", SortDirection.DESC))).addOperation(Limit.of(0, 10))
+                .build();
+
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        postProcessingArgs.build(args);
+
+        // Should NOT contain LOAD
+        assertThat(args.toCommandString()).doesNotContain("LOAD");
+        // Should contain the operations
+        assertThat(args.toCommandString()).contains("GROUPBY");
+        assertThat(args.toCommandString()).contains("SORTBY");
+        assertThat(args.toCommandString()).contains("LIMIT");
+    }
+
+    @Test
+    void loadWithAsteriskShouldThrowException() {
+        // Passing "*" to load() should throw an exception directing users to use loadAll() instead
+        assertThatThrownBy(() -> PostProcessingArgs.<String, String> builder().load("*"))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("loadAll()");
     }
 
     private byte[] floatArrayToByteArray(float[] vector) {
