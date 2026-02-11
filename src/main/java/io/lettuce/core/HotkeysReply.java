@@ -60,7 +60,8 @@ public class HotkeysReply {
      *
      * @param trackingActive whether tracking is currently active.
      * @param sampleRatio the sampling ratio.
-     * @param selectedSlots the selected slot ranges (empty if all slots).
+     * @param selectedSlots the selected slot ranges; consecutive slots are grouped into ranges, single slots are represented as
+     *        ranges where lower equals upper (e.g., {@code Range.create(100, 100)}); empty if all slots were selected.
      * @param sampledCommandSelectedSlotsUs CPU time for sampled commands on selected slots in microseconds (nullable).
      * @param allCommandsSelectedSlotsUs CPU time for all commands on selected slots in microseconds (nullable).
      * @param allCommandsAllSlotsUs CPU time for all commands on all slots in microseconds.
@@ -107,6 +108,20 @@ public class HotkeysReply {
         return sampleRatio;
     }
 
+    /**
+     * Returns the selected slot ranges for which hotkeys data was collected.
+     * <p>
+     * Redis groups consecutive slots into ranges. For example, if slots 0, 1, 2, and 100 were selected, Redis returns them as
+     * two entries: {@code [[0, 2], [100]]}. This method represents each entry as a {@link Range}:
+     * <ul>
+     * <li>Consecutive slots are represented as {@code Range.create(start, end)}, e.g., {@code Range.create(0, 2)}</li>
+     * <li>Single slots are represented as {@code Range.create(slot, slot)}, e.g., {@code Range.create(100, 100)}</li>
+     * </ul>
+     * To check if a range represents a single slot, compare
+     * {@code range.getLower().getValue().equals(range.getUpper().getValue())}.
+     *
+     * @return an unmodifiable list of slot ranges, or an empty list if all slots were selected (no filtering).
+     */
     public List<Range<Integer>> getSelectedSlots() {
         return selectedSlots;
     }

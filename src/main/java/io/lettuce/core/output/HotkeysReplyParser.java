@@ -57,7 +57,7 @@ public class HotkeysReplyParser implements ComplexDataParser<HotkeysReply> {
         List<Range<Integer>> selectedSlots = parseSlotRanges(data.get("selected-slots"));
 
         // CPU time fields use microseconds (us) suffix
-        Long sampledCommandSelectedSlotsUs = getLongValueOrNull(data, "sampled-command-selected-slots-us");
+        Long sampledCommandSelectedSlotsUs = getLongValueOrNull(data, "sampled-commands-selected-slots-us");
         Long allCommandsSelectedSlotsUs = getLongValueOrNull(data, "all-commands-selected-slots-us");
         Long allCommandsAllSlotsUs = getLongValueOrNull(data, "all-commands-all-slots-us");
 
@@ -139,7 +139,12 @@ public class HotkeysReplyParser implements ComplexDataParser<HotkeysReply> {
     }
 
     /**
-     * Parse selected-slots which is an array of [start, end] ranges. Example: [[0, 16383]] means all slots.
+     * Parse selected-slots which is an array of slot entries. Each entry can be:
+     * <ul>
+     * <li>A single slot: [slot] (array with 1 element)</li>
+     * <li>A slot range: [start, end] (array with 2 elements)</li>
+     * </ul>
+     * Example: [[0, 2], [100]] means slots 0-2 (range) and slot 100 (single).
      */
     private List<Range<Integer>> parseSlotRanges(Object value) {
         if (value == null) {
@@ -152,7 +157,12 @@ public class HotkeysReplyParser implements ComplexDataParser<HotkeysReply> {
             for (Object item : list) {
                 if (item instanceof ComplexData) {
                     List<?> range = ((ComplexData) item).getDynamicList();
-                    if (range.size() == 2) {
+                    if (range.size() == 1) {
+                        // Single slot
+                        int slot = ((Long) range.get(0)).intValue();
+                        result.add(Range.create(slot, slot));
+                    } else if (range.size() == 2) {
+                        // Slot range
                         int start = ((Long) range.get(0)).intValue();
                         int end = ((Long) range.get(1)).intValue();
                         result.add(Range.create(start, end));
