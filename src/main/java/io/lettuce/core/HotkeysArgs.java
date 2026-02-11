@@ -166,11 +166,16 @@ public class HotkeysArgs implements CompositeArgument {
 
         /**
          * Creates new {@link HotkeysArgs} with {@literal SLOTS} set.
+         * <p>
+         * Specifies which hash slots to track for hotkeys collection (cluster mode only). In the response, Redis groups
+         * consecutive slots into ranges. For example, if you specify slots 0, 1, 2, and 100, the response will contain
+         * {@code [[0, 2], [100]]} - consecutive slots 0-2 are grouped, while slot 100 remains separate.
          *
          * @param slots the slot numbers to track (each: {@value #SLOT_MIN}-{@value #SLOT_MAX}, max count:
          *        {@value #SLOTS_MAX_COUNT}).
          * @return new {@link HotkeysArgs} with {@literal SLOTS} set.
          * @see HotkeysArgs#slots(int...)
+         * @see io.lettuce.core.HotkeysReply#getSelectedSlots()
          */
         public static HotkeysArgs slots(int... slots) {
             return new HotkeysArgs().slots(slots);
@@ -255,9 +260,14 @@ public class HotkeysArgs implements CompositeArgument {
     /**
      * Set the slot numbers to track (cluster mode only). Each slot must be between {@value #SLOT_MIN} and {@value #SLOT_MAX}
      * inclusive. Maximum {@value #SLOTS_MAX_COUNT} slots can be specified.
+     * <p>
+     * In the response, Redis groups consecutive slots into ranges. For example, if you specify slots 0, 1, 2, and 100, the
+     * response's {@link HotkeysReply#getSelectedSlots()} will contain two entries: a range {@code [0, 2]} for the consecutive
+     * slots and {@code [100, 100]} for the single slot.
      *
      * @param slots the slot numbers.
      * @return {@code this} {@link HotkeysArgs}.
+     * @see HotkeysReply#getSelectedSlots()
      */
     public HotkeysArgs slots(int... slots) {
 
