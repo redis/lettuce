@@ -15,10 +15,13 @@ import javax.inject.Inject;
 import io.lettuce.core.HotkeysArgs;
 import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.Range;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.cluster.SlotHash;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.Executions;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterEach;
@@ -198,6 +201,82 @@ public class HotkeysClusterCommandIntegrationTests {
         // Stop and reset
         nodeCommands.hotkeysStop();
         nodeCommands.hotkeysReset();
+    }
+
+    /**
+     * Verifies that HOTKEYS commands work with specific slots parameter. This test:
+     * <ol>
+     * <li>Selects a node and gets slots from its range</li>
+     * <li>Starts HOTKEYS tracking with those specific slots</li>
+     * <li>Generates traffic on keys that hash to those slots</li>
+     * <li>Verifies the reply contains the expected slot ranges and metrics</li>
+     * </ol>
+     */
+    @Test
+    void hotkeysWorksWithSlotsParameter() {
+        // Get a node that handles slot 123 and its connection
+        RedisClusterNode node = redis.upstream().asMap().keySet().stream().filter(n -> n.hasSlot(123)).findFirst()
+                .orElseThrow(() -> new RuntimeException("No node found for slot 123"));
+        RedisCommands<String, String> commands = redis.upstream().asMap().get(node);
+
+        // Get the first 3 slots from this node's range
+        int slot1 = node.getSlots().get(0);
+        int slot2 = node.getSlots().get(1);
+        int slot3 = node.getSlots().get(2);
+
+        // Start tracking with specific slots from this node's range
+        commands.hotkeysStart(HotkeysArgs.Builder.metrics(HotkeysArgs.Metric.CPU, HotkeysArgs.Metric.NET).sample(2).slots(slot1,
+                slot2, slot3));
+
+        // Find keys that hash to the monitored slots
+        String key1 = findKeyForSlot(slot1);
+        String key2 = findKeyForSlot(slot2);
+        String key3 = findKeyForSlot(slot3);
+
+        // Generate traffic on those keys - they will be tracked since we're monitoring their slots
+        for (int i = 0; i < 50; i++) {
+            commands.set(key1, "value" + i);
+            commands.get(key1);
+            commands.set(key2, "value" + i);
+            commands.get(key2);
+            commands.set(key3, "value" + i);
+            commands.get(key3);
+        }
+
+        // Get results
+        HotkeysReply reply = commands.hotkeysGet();
+
+        // Verify tracking is active
+        assertThat(reply).isNotNull();
+        assertThat(reply.isTrackingActive()).isTrue();
+        assertThat(reply.getSampleRatio()).isEqualTo(2);
+
+        // Verify selected-slots contains the range we specified
+        assertThat(reply.getSelectedSlots()).isNotEmpty();
+        Range<Integer> firstRange = reply.getSelectedSlots().get(0);
+        assertThat(firstRange.getLower().getValue()).isEqualTo(slot1);
+        assertThat(firstRange.getUpper().getValue()).isEqualTo(slot3);
+
+        // Verify CPU time metrics (in microseconds)
+        assertThat(reply.getSampledCommandSelectedSlotsUs()).isNotNull();
+        assertThat(reply.getSampledCommandSelectedSlotsUs()).isGreaterThan(0L);
+
+        // Stop tracking
+        commands.hotkeysStop();
+        commands.hotkeysReset();
+    }
+
+    /**
+     * Find a key that hashes to the specified slot.
+     */
+    private String findKeyForSlot(int targetSlot) {
+        for (int i = 0; i < 100000; i++) {
+            String key = "key" + i;
+            if (SlotHash.getSlot(key) == targetSlot) {
+                return key;
+            }
+        }
+        throw new IllegalStateException("Could not find key for slot " + targetSlot);
     }
 
 }
