@@ -28,11 +28,11 @@ import io.lettuce.core.protocol.CommandKeyword;
  * {
  *     &#64;code
  *     // Group by category and count items
- *     GroupBy<String, String> groupBy = GroupBy.of("category").reduce(Reducer.count().as("item_count"));
+ *     GroupBy<String, String> groupBy = GroupBy.of("category").reduce(Reducers.count().as("item_count"));
  *
  *     // Group by multiple fields with multiple reducers
- *     GroupBy<String, String> complexGroup = GroupBy.of("category", "brand").reduce(Reducer.count().as("count"))
- *             .reduce(Reducer.avg("@price").as("avg_price"));
+ *     GroupBy<String, String> complexGroup = GroupBy.of("category", "brand").reduce(Reducers.count().as("count"))
+ *             .reduce(Reducers.avg("@price").as("avg_price"));
  * }
  * </pre>
  *
@@ -41,6 +41,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @author Aleksandar Todorov
  * @since 7.2
  * @see Reducer
+ * @see Reducers
  * @see ReduceFunction
  * @see PostProcessingOperation
  */
@@ -49,7 +50,7 @@ public class GroupBy<K, V> implements PostProcessingOperation<K, V> {
 
     private final List<K> properties;
 
-    private final List<Reducer<K, V>> reducers;
+    private final List<Reducer<K>> reducers;
 
     /**
      * Creates a new GROUPBY operation.
@@ -80,7 +81,7 @@ public class GroupBy<K, V> implements PostProcessingOperation<K, V> {
      * @param reducer the reducer to add
      * @return this GroupBy instance
      */
-    public GroupBy<K, V> reduce(Reducer<K, V> reducer) {
+    public GroupBy<K, V> reduce(Reducer<K> reducer) {
         this.reducers.add(reducer);
         return this;
     }
@@ -99,7 +100,7 @@ public class GroupBy<K, V> implements PostProcessingOperation<K, V> {
             }
         }
 
-        for (Reducer<K, V> reducer : reducers) {
+        for (Reducer<K> reducer : reducers) {
             reducer.build(args);
         }
     }

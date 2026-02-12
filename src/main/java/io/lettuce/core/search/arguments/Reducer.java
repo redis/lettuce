@@ -6,11 +6,7 @@
  */
 package io.lettuce.core.search.arguments;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
@@ -18,7 +14,7 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
 /**
- * REDUCE function for GROUPBY operations. Performs aggregate operations on grouped results with optional aliasing.
+ * Abstract reducer for GROUPBY operations in FT.HYBRID and FT.AGGREGATE commands. Instances are created via {@link Reducers}.
  * <p>
  * Reducers handle group entries in a GROUPBY operation, performing aggregate operations like counting, summing, averaging, or
  * finding min/max values. Each reducer can have an optional alias using the AS keyword.
@@ -27,163 +23,117 @@ import io.lettuce.core.protocol.CommandKeyword;
  * <h3>Example Usage:</h3>
  *
  * <pre>
- * 
- * {
- *     &#64;code
- *     // Count items in each group
- *     Reducer<String, String> count = Reducer.count().as("item_count");
+ * {@code
+ * // Count items in each group
+ * Reducers.count().as("item_count")
  *
- *     // Sum numeric values
- *     Reducer<String, String> totalSales = Reducer.sum("@sales").as("total_sales");
+ * // Sum numeric values
+ * Reducers.sum("@sales").as("total_sales")
  *
- *     // Calculate average
- *     Reducer<String, String> avgPrice = Reducer.avg("@price").as("average_price");
+ * // Calculate average
+ * Reducers.avg("@price").as("average_price")
+ *
+ * // Quantile with percentile parameter
+ * Reducers.quantile("@price", 0.5).as("median_price")
+ *
+ * // First value with optional sort by
+ * Reducers.firstValue("@name").by("@timestamp").as("first_name")
+ *
+ * // Random sample
+ * Reducers.randomSample("@id", 10).as("sample_ids")
  * }
  * </pre>
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @since 7.2
+ * @see Reducers
  * @see ReduceFunction
  * @see GroupBy
+ * @see <a href="https://redis.io/docs/latest/commands/ft.aggregate/">FT.AGGREGATE</a>
+ * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
  */
 @Experimental
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class Reducer<K, V> {
+public abstract class Reducer<K> {
 
-    private final ReduceFunction function;
+    private final String function;
 
-    private final List<V> args;
-
-    private Optional<K> alias = Optional.empty();
+    private K alias;
 
     /**
-     * Creates a new reducer.
+     * Creates a new reducer with the specified function.
      *
-     * @param function the reducer function
-     * @param args the arguments to the reducer function
+     * @param function the reduce function enum
      */
-    private Reducer(ReduceFunction function, List<V> args) {
+    protected Reducer(ReduceFunction function) {
+        LettuceAssert.notNull(function, "Function must not be null");
+        this.function = function.name();
+    }
+
+    /**
+     * Creates a new reducer with the specified function name. Use this constructor for custom or future reduce functions not
+     * yet defined in {@link ReduceFunction}.
+     *
+     * @param function the reduce function name (e.g., "COUNT", "SUM", "MY_CUSTOM_REDUCER")
+     */
+    protected Reducer(String function) {
+        LettuceAssert.notNull(function, "Function must not be null");
+        LettuceAssert.notEmpty(function, "Function must not be empty");
         this.function = function;
-        this.args = new ArrayList<>(args);
     }
 
     /**
-     * Static factory method to create a Reducer with a function and optional arguments.
+     * Get the reduce function name.
      *
-     * @param function the reducer function
-     * @param args the arguments to the reducer function (optional, can be empty for COUNT)
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return new Reducer instance
+     * @return the reduce function name
      */
-    @SafeVarargs
-    public static <K, V> Reducer<K, V> of(ReduceFunction function, V... args) {
-        LettuceAssert.notNull(function, "ReduceFunction must not be null");
-        return new Reducer<>(function, args.length == 0 ? Collections.emptyList() : Arrays.asList(args));
+    public final String getFunction() {
+        return function;
     }
 
     /**
-     * Static factory method to create a COUNT reducer.
+     * Get the reducer-specific arguments.
      *
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return new COUNT Reducer instance
+     * @return list of reducer-specific arguments
      */
-    public static <K, V> Reducer<K, V> count() {
-        return new Reducer<>(ReduceFunction.COUNT, Collections.emptyList());
-    }
+    protected abstract List<Object> getOwnArgs();
 
     /**
-     * Static factory method to create a SUM reducer.
-     *
-     * @param field the field to sum
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return new SUM Reducer instance
-     */
-    public static <K, V> Reducer<K, V> sum(V field) {
-        return new Reducer<>(ReduceFunction.SUM, Collections.singletonList(field));
-    }
-
-    /**
-     * Static factory method to create an AVG reducer.
-     *
-     * @param field the field to average
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return new AVG Reducer instance
-     */
-    public static <K, V> Reducer<K, V> avg(V field) {
-        return new Reducer<>(ReduceFunction.AVG, Collections.singletonList(field));
-    }
-
-    /**
-     * Static factory method to create a MIN reducer.
-     *
-     * @param field the field to find minimum
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return new MIN Reducer instance
-     */
-    public static <K, V> Reducer<K, V> min(V field) {
-        return new Reducer<>(ReduceFunction.MIN, Collections.singletonList(field));
-    }
-
-    /**
-     * Static factory method to create a MAX reducer.
-     *
-     * @param field the field to find maximum
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return new MAX Reducer instance
-     */
-    public static <K, V> Reducer<K, V> max(V field) {
-        return new Reducer<>(ReduceFunction.MAX, Collections.singletonList(field));
-    }
-
-    /**
-     * Static factory method to create a COUNT_DISTINCT reducer.
-     *
-     * @param field the field to count distinct values
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return new COUNT_DISTINCT Reducer instance
-     */
-    public static <K, V> Reducer<K, V> countDistinct(V field) {
-        return new Reducer<>(ReduceFunction.COUNT_DISTINCT, Collections.singletonList(field));
-    }
-
-    /**
-     * Set an alias for the reducer result.
+     * Set an alias for the reducer result using AS keyword.
      *
      * @param alias the alias name
      * @return this reducer
      */
-    public Reducer<K, V> as(K alias) {
+    @SuppressWarnings("unchecked")
+    public <T extends Reducer<K>> T as(K alias) {
         LettuceAssert.notNull(alias, "Alias must not be null");
-        this.alias = Optional.of(alias);
-        return this;
+        this.alias = alias;
+        return (T) this;
     }
 
     /**
      * Build the reducer into command args.
+     * <p>
+     * Format: REDUCE function nargs arg [arg ...] [AS name]
+     * </p>
      *
      * @param args the command args to build into
+     * @param <V> value type
      */
-    public void build(CommandArgs<K, V> args) {
+    public final <V> void build(CommandArgs<K, V> args) {
         args.add(CommandKeyword.REDUCE);
         args.add(function);
-        args.add(this.args.size());
-        for (V arg : this.args) {
-            args.addValue(arg);
+
+        List<Object> ownArgs = getOwnArgs();
+        args.add(ownArgs.size());
+        for (Object arg : ownArgs) {
+            args.add(arg);
         }
 
-        alias.ifPresent(a -> {
+        if (alias != null) {
             args.add(CommandKeyword.AS);
-            args.add(a.toString());
-        });
+            args.addKey(alias);
+        }
     }
 
 }
