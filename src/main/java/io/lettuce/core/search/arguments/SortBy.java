@@ -10,14 +10,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
 /**
- * SORTBY post-processing operation. Sorts results by one or more properties with optional MAX optimization for top-N queries.
+ * SORTBY post-processing operation. Sorts results by one or more properties.
  * <p>
  * Sorts the pipeline results up until the point of SORTBY, using a list of properties. By default, sorting is ascending, but
  * ASC or DESC can be specified for each property.
@@ -26,14 +25,11 @@ import io.lettuce.core.protocol.CommandKeyword;
  * <h3>Example Usage:</h3>
  *
  * <pre>
- * 
+ *
  * {
  *     &#64;code
  *     // Simple sort by single field
  *     SortBy<String> sortBy = SortBy.of("price", SortDirection.DESC);
- *
- *     // Sort with MAX optimization for top-N queries
- *     SortBy<String> topN = SortBy.of("score", SortDirection.DESC).max(100);
  *
  *     // Multiple sort criteria
  *     SortBy<String> multiSort = SortBy.of(SortProperty.of("category", SortDirection.ASC),
@@ -49,14 +45,9 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @see PostProcessingOperation
  */
 @Experimental
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class SortBy<K> implements PostProcessingOperation<K, Object> {
 
     private final List<SortProperty<K>> properties;
-
-    private Optional<Long> max = Optional.empty();
-
-    private boolean withCount = false;
 
     /**
      * Creates a new SORTBY operation.
@@ -91,27 +82,6 @@ public class SortBy<K> implements PostProcessingOperation<K, Object> {
         return new SortBy<>(Arrays.asList(properties));
     }
 
-    /**
-     * Set the MAX parameter for top-N optimization.
-     *
-     * @param max the maximum number of results to sort
-     * @return this SortBy instance
-     */
-    public SortBy<K> max(long max) {
-        this.max = Optional.of(max);
-        return this;
-    }
-
-    /**
-     * Enable WITHCOUNT to return accurate counts.
-     *
-     * @return this SortBy instance
-     */
-    public SortBy<K> withCount() {
-        this.withCount = true;
-        return this;
-    }
-
     @Override
     public void build(CommandArgs<K, Object> args) {
         args.add(CommandKeyword.SORTBY);
@@ -126,15 +96,6 @@ public class SortBy<K> implements PostProcessingOperation<K, Object> {
                 args.add(propertyStr);
             }
             args.add(property.getDirection().name());
-        }
-
-        max.ifPresent(m -> {
-            args.add(CommandKeyword.MAX);
-            args.add(m);
-        });
-
-        if (withCount) {
-            args.add(CommandKeyword.WITHCOUNT);
         }
     }
 

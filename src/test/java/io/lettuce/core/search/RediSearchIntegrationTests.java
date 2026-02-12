@@ -1270,7 +1270,7 @@ public class RediSearchIntegrationTests {
                         .scoreAlias("vector_score").build())
                 .combine(Combiners.<String> linear().alpha(0.7).beta(0.3).window(26))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
-                        .addOperation(GroupBy.<String, String> of("@brand").reduce(Reducers.<String> sum("@price").as("sum"))
+                        .addOperation(GroupBy.<String, String> of("@brand").reduce(Reducers.sum("@price").as("sum"))
                                 .reduce(Reducers.<String> count().as("count")))
                         .addOperation(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC),
                                 new SortProperty<>("@count", SortDirection.DESC)))
