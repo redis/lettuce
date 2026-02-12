@@ -18,7 +18,7 @@ import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.Apply;
-import io.lettuce.core.search.arguments.CombineArgs;
+import io.lettuce.core.search.arguments.Combiners;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
@@ -802,7 +802,7 @@ class RediSearchCommandBuilderUnitTests {
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
                         .vectorParamName("query_vector").method(HybridVectorArgs.Knn.of(20).efRuntime(150))
                         .filter("@brand:{apple|samsung|google}").scoreAlias("vector_score").build())
-                .combine(CombineArgs.of(new CombineArgs.Linear<String>().alpha(0.7).beta(0.3)))
+                .combine(Combiners.<String> linear().alpha(0.7).beta(0.3).window(26))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
                         .addOperation(GroupBy.<String, String> of("@brand")
                                 .reduce(Reducer.<String, String> of(ReduceFunction.SUM, "@price").as("sum"))
