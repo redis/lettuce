@@ -31,8 +31,7 @@ import io.lettuce.core.search.arguments.Limit;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.PostProcessingArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
-import io.lettuce.core.search.arguments.ReduceFunction;
-import io.lettuce.core.search.arguments.Reducer;
+import io.lettuce.core.search.arguments.Reducers;
 import io.lettuce.core.search.arguments.Scorers;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortBy;
@@ -803,9 +802,8 @@ class RediSearchCommandBuilderUnitTests {
                         .filter("@brand:{apple|samsung|google}").scoreAlias("vector_score").build())
                 .combine(Combiners.<String> linear().alpha(0.7).beta(0.3).window(26))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
-                        .addOperation(GroupBy.<String, String> of("@brand")
-                                .reduce(Reducer.<String, String> of(ReduceFunction.SUM, "@price").as("sum"))
-                                .reduce(Reducer.<String, String> of(ReduceFunction.COUNT).as("count")))
+                        .addOperation(GroupBy.<String, String> of("@brand").reduce(Reducers.<String> sum("@price").as("sum"))
+                                .reduce(Reducers.<String> count().as("count")))
                         .addOperation(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC)))
                         .addOperation(Apply.of("@sum * 0.9", "discounted_price")).addOperation(Filter.of("@sum > 700"))
                         .addOperation(Limit.of(0, 20)).build())
@@ -865,8 +863,7 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void postProcessingArgsWithOperationsOnlyShouldNotEmitLoad() {
         PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
-                .addOperation(GroupBy.<String, String> of("@category")
-                        .reduce(Reducer.<String, String> of(ReduceFunction.COUNT).as("count")))
+                .addOperation(GroupBy.<String, String> of("@category").reduce(Reducers.<String> count().as("count")))
                 .addOperation(SortBy.of(new SortProperty<>("@count", SortDirection.DESC))).addOperation(Limit.of(0, 10))
                 .build();
 
