@@ -29,8 +29,7 @@ import io.lettuce.core.search.arguments.PostProcessingArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
 import io.lettuce.core.search.arguments.ReduceFunction;
 import io.lettuce.core.search.arguments.Reducer;
-import io.lettuce.core.search.arguments.Scorer;
-import io.lettuce.core.search.arguments.ScoringFunction;
+import io.lettuce.core.search.arguments.Scorers;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortBy;
 import io.lettuce.core.search.arguments.SortByArgs;
@@ -46,7 +45,6 @@ import io.lettuce.core.search.arguments.VectorFieldArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -1213,7 +1211,6 @@ public class RediSearchIntegrationTests {
 
     @Test
     @EnabledOnCommand("FT.HYBRID")
-    @Disabled("FT.HYBRID feature requires update after Redis 8.6")
     void ftHybridAdvancedMultiQueryWithPostProcessing() {
         String indexName = "idx:ecommerce";
 
@@ -1268,7 +1265,7 @@ public class RediSearchIntegrationTests {
 
         HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
-                        .scorer(Scorer.of(ScoringFunction.BM25)).scoreAlias("text_score").build())
+                        .scorer(Scorers.bm25()).scoreAlias("text_score").build())
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
                         .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
                         .scoreAlias("vector_score").build())
