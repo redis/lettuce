@@ -54,6 +54,8 @@ internal class RedisStreamCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun xautoclaim(key: K, args: XAutoClaimArgs<K>): ClaimedMessages<K, V>? = ops.xautoclaim(key, args).awaitFirstOrNull()
 
+    override suspend fun xcfgset(key: K, args: XCfgSetArgs): String? = ops.xcfgset(key, args).awaitFirstOrNull()
+
     override fun xclaim(key: K, consumer: Consumer<K>, minIdleTime: Long, vararg messageIds: String): Flow<StreamMessage<K, V>> = ops.xclaim(key, consumer, minIdleTime, *messageIds).asFlow()
 
     override fun xclaim(key: K, consumer: Consumer<K>, args: XClaimArgs, vararg messageIds: String): Flow<StreamMessage<K, V>> = ops.xclaim(key, consumer, args, *messageIds).asFlow()

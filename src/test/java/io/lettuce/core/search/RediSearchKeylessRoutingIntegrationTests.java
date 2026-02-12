@@ -396,6 +396,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("FT.HYBRID")
+    @Disabled("FT.HYBRID feature requires update after Redis 8.6")
     void hybrid_routesRandomly_acrossUpstreams_whenReadFromUpstream() {
         prepareHybrid();
         long upstreams = connection.getPartitions().stream().filter(n -> n.is(RedisClusterNode.NodeFlag.UPSTREAM)).count();
@@ -419,6 +420,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("FT.HYBRID")
+    @Disabled("FT.HYBRID feature requires update after Redis 8.6")
     void hybrid_routesRandomly_acrossReplicas_whenReadFromAnyReplica() {
         prepareHybrid();
         long replicas = connection.getPartitions().stream().filter(n -> n.is(RedisClusterNode.NodeFlag.REPLICA)).count();

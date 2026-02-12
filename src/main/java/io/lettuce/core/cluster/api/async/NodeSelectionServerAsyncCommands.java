@@ -24,10 +24,13 @@ import java.util.List;
 import java.util.Date;
 import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.FlushMode;
+import io.lettuce.core.HotkeysArgs;
+import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
 import io.lettuce.core.TrackingInfo;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.protocol.CommandType;
 
 /**
@@ -376,6 +379,43 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      */
     @Deprecated
     AsyncExecutions<String> flushdbAsync();
+
+    /**
+     * Start hotkeys tracking.
+     *
+     * @param args tracking arguments.
+     * @return String simple-string-reply {@code OK}.
+     * @since 7.4
+     */
+    @Experimental
+    AsyncExecutions<String> hotkeysStart(HotkeysArgs args);
+
+    /**
+     * Stop hotkeys tracking but retain data.
+     *
+     * @return String simple-string-reply {@code OK}.
+     * @since 7.4
+     */
+    @Experimental
+    AsyncExecutions<String> hotkeysStop();
+
+    /**
+     * Reset hotkeys tracking data.
+     *
+     * @return String simple-string-reply {@code OK}.
+     * @since 7.4
+     */
+    @Experimental
+    AsyncExecutions<String> hotkeysReset();
+
+    /**
+     * Get hotkeys tracking results.
+     *
+     * @return {@link HotkeysReply} with tracking data, or {@code null} if no tracking session.
+     * @since 7.4
+     */
+    @Experimental
+    AsyncExecutions<HotkeysReply> hotkeysGet();
 
     /**
      * Get information and statistics about the server.

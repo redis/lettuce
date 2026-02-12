@@ -22,6 +22,7 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
 import io.lettuce.core.TrackingInfo
+import io.lettuce.core.annotations.Experimental
 import io.lettuce.core.protocol.CommandType
 import java.util.*
 
@@ -391,6 +392,43 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
         ReplaceWith("flushdb(FlushMode.ASYNC)")
     )
     suspend fun flushdbAsync(): String?
+
+    /**
+     * Start hotkeys tracking.
+     *
+     * @param args tracking arguments.
+     * @return String simple-string-reply `OK`.
+     * @since 7.4
+     */
+    @Experimental
+    suspend fun hotkeysStart(args: HotkeysArgs): String?
+
+    /**
+     * Stop hotkeys tracking but retain data.
+     *
+     * @return String simple-string-reply `OK`.
+     * @since 7.4
+     */
+    @Experimental
+    suspend fun hotkeysStop(): String?
+
+    /**
+     * Reset hotkeys tracking data.
+     *
+     * @return String simple-string-reply `OK`.
+     * @since 7.4
+     */
+    @Experimental
+    suspend fun hotkeysReset(): String?
+
+    /**
+     * Get hotkeys tracking results.
+     *
+     * @return @link HotkeysReply} with tracking data, or `null` if no tracking session.
+     * @since 7.4
+     */
+    @Experimental
+    suspend fun hotkeysGet(): HotkeysReply?
 
     /**
      * Get information and statistics about the server.

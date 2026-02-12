@@ -33,6 +33,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -45,6 +47,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -1184,6 +1187,96 @@ public class RediSearchVectorIntegrationTests {
                 redisMixed.getStatefulConnection().close();
             }
         }
+    }
+
+    static Stream<VectorFieldArgs.VectorType> quantizedVectorTypes() {
+        return Stream.of(VectorFieldArgs.VectorType.INT8, VectorFieldArgs.VectorType.UINT8);
+    }
+
+    @ParameterizedTest
+    @MethodSource("quantizedVectorTypes")
+    void testQuantizedVectorTypes(VectorFieldArgs.VectorType vectorType) {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
+
+        String typeName = vectorType.name();
+        String indexName = typeName.toLowerCase() + "-idx";
+        String prefix = typeName.toLowerCase() + ":";
+        String fieldName = "embedding_" + typeName.toLowerCase();
+
+        // Create vector field with appropriate algorithm based on type
+        FieldArgs<String> vectorField;
+        if (vectorType == VectorFieldArgs.VectorType.INT8) {
+            // INT8 with FLAT algorithm and L2 distance
+            vectorField = VectorFieldArgs.<String> builder().name(fieldName).flat().type(vectorType).dimensions(4)
+                    .distanceMetric(VectorFieldArgs.DistanceMetric.L2).build();
+        } else {
+            // UINT8 with HNSW algorithm and COSINE distance
+            vectorField = VectorFieldArgs.<String> builder().name(fieldName).hnsw().type(vectorType).dimensions(4)
+                    .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).attribute("M", 16).attribute("EF_CONSTRUCTION", 200)
+                    .build();
+        }
+
+        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(prefix)
+                .on(CreateArgs.TargetType.HASH).build();
+
+        redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
+
+        // Add vectors based on type
+        byte[] vector1, vector2, vector3, queryVector;
+        if (vectorType == VectorFieldArgs.VectorType.INT8) {
+            // INT8 vectors (signed 8-bit: -128 to 127)
+            vector1 = new byte[] { 10, 20, 30, 40 };
+            vector2 = new byte[] { -50, 60, -70, 80 };
+            vector3 = new byte[] { 15, 25, 35, 45 };
+            queryVector = new byte[] { 12, 22, 32, 42 };
+        } else {
+            // UINT8 vectors (unsigned 8-bit: 0 to 255, stored as signed bytes in Java)
+            vector1 = new byte[] { (byte) 100, (byte) 150, (byte) 200, (byte) 250 };
+            vector2 = new byte[] { (byte) 50, (byte) 100, (byte) 150, (byte) 200 };
+            vector3 = new byte[] { (byte) 110, (byte) 160, (byte) 210, (byte) 240 };
+            queryVector = new byte[] { (byte) 105, (byte) 155, (byte) 205, (byte) 245 };
+        }
+
+        // Store documents
+        Map<String, Object> doc1 = new HashMap<>();
+        doc1.put("name", typeName + " Vector 1");
+        doc1.put(fieldName, vector1);
+        storeHashDocument(prefix + "1", doc1);
+
+        Map<String, Object> doc2 = new HashMap<>();
+        doc2.put("name", typeName + " Vector 2");
+        doc2.put(fieldName, vector2);
+        storeHashDocument(prefix + "2", doc2);
+
+        Map<String, Object> doc3 = new HashMap<>();
+        doc3.put("name", typeName + " Vector 3");
+        doc3.put(fieldName, vector3);
+        storeHashDocument(prefix + "3", doc3);
+
+        // Test KNN search
+        ByteBuffer queryBuffer = ByteBuffer.wrap(queryVector);
+        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
+        SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
+                .param(blobKey, queryBuffer).limit(0, 2).build();
+
+        ByteBuffer queryString = ByteBuffer
+                .wrap(("*=>[KNN 2 @" + fieldName + " $BLOB AS distance]").getBytes(StandardCharsets.UTF_8));
+        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);
+
+        assertThat(results.getCount()).isEqualTo(2);
+        assertThat(results.getResults()).hasSize(2);
+
+        // Verify that the search worked with the quantized vectors
+        ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes(StandardCharsets.UTF_8));
+        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
+            String name = new String(result.getFields().get(nameKey).array(), StandardCharsets.UTF_8);
+            assertThat(name).contains(typeName + " Vector");
+        }
+
+        // Cleanup
+        redis.ftDropindex(indexName);
     }
 
 }

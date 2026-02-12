@@ -53,6 +53,9 @@ public class ClientOptions implements Serializable {
 
     public static final MaintNotificationsConfig DEFAULT_MAINT_NOTIFICATIONS_CONFIG = MaintNotificationsConfig.enabled();
 
+    protected static final MaintNotificationsConfig MAINT_NOTIFICATIONS_CONFIG_INITIAL = MaintNotificationsConfig
+            .copyOf(DEFAULT_MAINT_NOTIFICATIONS_CONFIG);
+
     public static final Predicate<RedisCommand<?, ?, ?>> DEFAULT_REPLAY_FILTER = (cmd) -> false;
 
     public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
@@ -206,7 +209,7 @@ public class ClientOptions implements Serializable {
 
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
 
-        private MaintNotificationsConfig maintNotificationsConfig = DEFAULT_MAINT_NOTIFICATIONS_CONFIG;
+        private MaintNotificationsConfig maintNotificationsConfig = MAINT_NOTIFICATIONS_CONFIG_INITIAL;
 
         private Predicate<RedisCommand<?, ?, ?>> replayFilter = DEFAULT_REPLAY_FILTER;
 

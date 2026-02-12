@@ -139,6 +139,8 @@ class VectorFieldArgsTest {
     void testVectorTypeEnum() {
         assertThat(VectorFieldArgs.VectorType.FLOAT32.name()).isEqualTo("FLOAT32");
         assertThat(VectorFieldArgs.VectorType.FLOAT64.name()).isEqualTo("FLOAT64");
+        assertThat(VectorFieldArgs.VectorType.INT8.name()).isEqualTo("INT8");
+        assertThat(VectorFieldArgs.VectorType.UINT8.name()).isEqualTo("UINT8");
     }
 
     @Test

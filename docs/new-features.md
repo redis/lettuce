@@ -1,6 +1,25 @@
 # New & Noteworthy
 
 
+## What's new in Lettuce 7.2
+
+- Support for [`FT.HYBRID`](https://redis.io/docs/latest/commands/ft.hybrid/) command enabling hybrid vector and full-text search queries
+- Ability to expose upstream driver libraries in [`CLIENT SETINFO`](https://redis.io/docs/latest/commands/client-setinfo/) payload for better client identification
+
+## What's new in Lettuce 7.1
+
+- Support for [`XREADGROUP`](https://redis.io/docs/latest/commands/xreadgroup/) with `CLAIM` argument for atomic message claiming in Redis Streams consumer groups
+- [Compare-and-Set (CAS) / Compare-and-Delete (CAD)](https://redis.io/docs/latest/commands/set/) commands through `DIGEST`, `DELEX` and `SET` extensions for optimistic locking patterns
+- Support for [`MSETEX`](https://redis.io/docs/latest/commands/msetex/) command to atomically set multiple keys with expiration
+
+## What's new in Lettuce 7.0
+
+- [Maintenance events support](advanced-usage.md) for graceful handling of Redis maintenance operations enabling hitless upgrades
+- Upgrade to [Netty 4.2](https://github.com/netty/netty/releases/tag/netty-4.2.0.Final) with adaptive memory allocator and improved threading model
+- [RediSearch](user-guide/redis-search.md) cluster mode support with cursor sticking and read operation distribution across nodes
+- String-based JSON API to avoid unnecessary byte-to-string conversions
+- Removal of deprecated APIs as part of major version cleanup
+
 ## What’s new in Lettuce 6.8
 - [RediSearch support](user-guide/redis-search.md) through `RediSearchCommands` and the respective reactive, async and Kotlin APIs
 

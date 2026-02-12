@@ -2680,3 +2680,8 @@ or master/replica state is reconfigured, following rules apply:
   and buffered commands, which were not sent, are executed by using the
   new cluster view
 
+## Automatic Failover
+
+Lettuce supports automatic failover and failback for multi-database deployments through the `MultiDbClient`. This is useful when you have multiple independent Redis deployments and want your application to automatically switch between them based on availability.
+
+For detailed information about configuring and using automatic failover, see the [Failover documentation](failover.md).

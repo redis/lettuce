@@ -1154,6 +1154,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> hotkeysStart(HotkeysArgs args) {
+        return dispatch(commandBuilder.hotkeysStart(args));
+    }
+
+    @Override
+    public RedisFuture<String> hotkeysStop() {
+        return dispatch(commandBuilder.hotkeysStop());
+    }
+
+    @Override
+    public RedisFuture<String> hotkeysReset() {
+        return dispatch(commandBuilder.hotkeysReset());
+    }
+
+    @Override
+    public RedisFuture<HotkeysReply> hotkeysGet() {
+        return dispatch(commandBuilder.hotkeysGet());
+    }
+
+    @Override
     public RedisFuture<Long> geoadd(K key, double longitude, double latitude, V member) {
         return geoadd(key, longitude, latitude, member, null);
     }
@@ -3074,6 +3094,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<ClaimedMessages<K, V>> xautoclaim(K key, XAutoClaimArgs<K> args) {
         return dispatch(commandBuilder.xautoclaim(key, args));
+    }
+
+    @Override
+    public RedisFuture<String> xcfgset(K key, XCfgSetArgs args) {
+        return dispatch(commandBuilder.xcfgset(key, args));
     }
 
     @Override

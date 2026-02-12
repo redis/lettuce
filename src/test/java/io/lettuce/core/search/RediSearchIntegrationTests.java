@@ -36,6 +36,7 @@ import io.lettuce.core.search.arguments.VectorFieldArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -1202,6 +1203,7 @@ public class RediSearchIntegrationTests {
 
     @Test
     @EnabledOnCommand("FT.HYBRID")
+    @Disabled("FT.HYBRID feature requires update after Redis 8.6")
     void ftHybridAdvancedMultiQueryWithPostProcessing() {
         String indexName = "idx:ecommerce";
 

@@ -55,8 +55,28 @@ public class MaintNotificationsConfig {
         this.maintNotificationsEnabled = builder.maintNotificationsEnabled;
     }
 
+    /**
+     * Copy constructor for creating a copy of an existing configuration.
+     *
+     * @param original the configuration to copy
+     */
+    protected MaintNotificationsConfig(MaintNotificationsConfig original) {
+        this.maintNotificationsEnabled = original.maintNotificationsEnabled;
+        this.endpointTypeSource = original.endpointTypeSource;
+    }
+
     public static MaintNotificationsConfig.Builder builder() {
         return new MaintNotificationsConfig.Builder();
+    }
+
+    /**
+     * Creates a copy of the given {@link MaintNotificationsConfig}.
+     *
+     * @param source the configuration to copy
+     * @return a new instance with identical configuration
+     */
+    public static MaintNotificationsConfig copyOf(MaintNotificationsConfig source) {
+        return new MaintNotificationsConfig(source);
     }
 
     /**
