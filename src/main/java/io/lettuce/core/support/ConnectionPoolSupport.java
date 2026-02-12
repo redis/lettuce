@@ -62,6 +62,7 @@ import io.lettuce.core.support.ConnectionWrapping.Origin;
  *
  * @author Mark Paluch
  * @author dae won
+ * @author JiHongKim98
  * @since 4.3
  */
 public abstract class ConnectionPoolSupport {
@@ -147,6 +148,13 @@ public abstract class ConnectionPoolSupport {
             public T borrowObject() throws Exception {
                 return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get())
                         : super.borrowObject();
+            }
+
+            @Override
+            public T borrowObject(long borrowMaxWaitMillis) throws Exception {
+                return wrapConnections
+                        ? ConnectionWrapping.wrapConnection(super.borrowObject(borrowMaxWaitMillis), poolRef.get())
+                        : super.borrowObject(borrowMaxWaitMillis);
             }
 
             @Override

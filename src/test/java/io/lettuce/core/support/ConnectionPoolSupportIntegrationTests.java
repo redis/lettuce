@@ -406,6 +406,23 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
         pool.close();
     }
 
+    @Test
+    void genericPoolShouldWorkWithBorrowObjectTimeout() throws Exception {
+
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
+
+        for (int i = 0; i < 10; i++) {
+            try (StatefulRedisConnection<String, String> connection = pool.borrowObject(10_000)) {
+                RedisCommands<String, String> sync = connection.sync();
+                sync.ping();
+            }
+            assertThat(pool.getNumActive()).isEqualTo(0);
+        }
+
+        pool.close();
+    }
+
     private void borrowAndReturn(ObjectPool<StatefulRedisConnection<String, String>> pool) throws Exception {
 
         for (int i = 0; i < 10; i++) {
