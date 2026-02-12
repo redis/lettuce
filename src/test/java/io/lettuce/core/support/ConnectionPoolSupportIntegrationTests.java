@@ -408,7 +408,7 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     }
 
     @Test
-    void genericPoolShouldWorkWithBorrowObjectTimeout() throws Exception {
+    void genericPoolShouldWorkWithBorrowObjectTimeoutMillis() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
                 .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
@@ -425,7 +425,7 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     }
 
     @Test
-    void genericPoolShouldWorkWithBorrowObjectDuration() throws Exception {
+    void genericPoolShouldWorkWithBorrowObjectTimeoutDuration() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
                 .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
