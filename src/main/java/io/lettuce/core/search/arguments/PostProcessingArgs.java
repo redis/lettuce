@@ -18,18 +18,27 @@ import java.util.List;
 /**
  * Argument list builder for FT.HYBRID and FT.AGGREGATE post-processing operations. Operations are applied in user-specified
  * order after the COMBINE clause.
+ * <p>
+ * The builder provides dedicated methods for each operation type with validation:
+ * </p>
+ * <ul>
+ * <li>{@link Builder#groupBy(GroupBy)} - Only one GROUPBY allowed</li>
+ * <li>{@link Builder#sortBy(SortBy)} - Only one SORTBY allowed</li>
+ * <li>{@link Builder#limit(Limit)} - Only one LIMIT allowed</li>
+ * <li>{@link Builder#apply(Apply)} - Multiple APPLY operations allowed</li>
+ * <li>{@link Builder#filter(Filter)} - Only one FILTER allowed</li>
+ * </ul>
  *
  * <h3>Basic Usage:</h3>
  *
  * <pre>
- *
+ * 
  * {
  *     &#64;code
  *     PostProcessingArgs<String, String> args = PostProcessingArgs.<String, String> builder().load("@price", "@category")
- *             .addOperation(GroupBy.of("@category").reduce(Reducer.of(ReduceFunction.COUNT).as("total")))
- *             .addOperation(Apply.of("@price * 0.9", "discounted_price"))
- *             .addOperation(SortBy.of("@discounted_price", SortDirection.DESC))
- *             .addOperation(Filter.of("@discounted_price > 100")).build();
+ *             .groupBy(GroupBy.of("@category").reduce(Reducers.count().as("total")))
+ *             .apply(Apply.of("@price * 0.9", "discounted_price")).sortBy(SortBy.of("@discounted_price", SortDirection.DESC))
+ *             .filter(Filter.of("@discounted_price > 100")).limit(Limit.of(0, 10)).build();
  * }
  * </pre>
  *
@@ -51,10 +60,19 @@ public class PostProcessingArgs<K, V> {
     private boolean loadAll = false;
 
     /**
-     * Ordered list of pipeline operations (GROUPBY, SORTBY, APPLY, FILTER). These operations are applied in the order specified
-     * by the user.
+     * Ordered list of pipeline operations (GROUPBY, SORTBY, APPLY, FILTER, LIMIT). These operations are applied in the order
+     * specified by the user.
      */
     private final List<PostProcessingOperation<K, ?>> postProcessingOperations = new ArrayList<>();
+
+    // Tracking flags for single-use operations
+    private boolean hasGroupBy = false;
+
+    private boolean hasSortBy = false;
+
+    private boolean hasFilter = false;
+
+    private boolean hasLimit = false;
 
     /**
      * @return a new {@link Builder} for {@link PostProcessingArgs}.
@@ -116,36 +134,98 @@ public class PostProcessingArgs<K, V> {
         }
 
         /**
-         * Add a post-processing operation to the pipeline.
+         * Add a GROUPBY operation to the pipeline.
          * <p>
-         * Operations are applied in the order they are added. Supported operations include:
+         * Groups results by one or more properties with optional reducer functions. Only one GROUPBY operation is allowed per
+         * pipeline.
          * </p>
-         * <ul>
-         * <li>{@link GroupBy} - Group results by properties with optional reducers</li>
-         * <li>{@link Apply} - Apply expressions to create computed fields</li>
-         * <li>{@link SortBy} - Sort results by properties</li>
-         * <li>{@link Filter} - Filter results by expressions</li>
-         * </ul>
          *
-         * <h3>Example Usage:</h3>
+         * @param groupBy the GROUPBY operation
+         * @return this builder
+         * @throws IllegalStateException if a GROUPBY operation has already been added
+         */
+        public Builder<K, V> groupBy(GroupBy<K, V> groupBy) {
+            LettuceAssert.notNull(groupBy, "GroupBy must not be null");
+            if (instance.hasGroupBy) {
+                throw new IllegalStateException("GROUPBY operation has already been added. Only one GROUPBY is allowed.");
+            }
+            instance.hasGroupBy = true;
+            instance.postProcessingOperations.add(groupBy);
+            return this;
+        }
+
+        /**
+         * Add a SORTBY operation to the pipeline.
+         * <p>
+         * Sorts results by one or more properties. Only one SORTBY operation is allowed per pipeline.
+         * </p>
          *
-         * <pre>
-         * {@code
-         * PostProcessingArgs.<String, String> builder()
-         *     .addOperation(GroupBy.of("@category").reduce(Reducer.of(ReduceFunction.COUNT).as("total")))
-         *     .addOperation(Apply.of("@price * 0.9", "discounted_price"))
-         *     .addOperation(SortBy.of("@discounted_price", SortDirection.DESC))
-         *     .addOperation(Filter.of("@discounted_price > 100"))
-         *     .build();
-         * }
-         * </pre>
+         * @param sortBy the SORTBY operation
+         * @return this builder
+         * @throws IllegalStateException if a SORTBY operation has already been added
+         */
+        public Builder<K, V> sortBy(SortBy<K> sortBy) {
+            LettuceAssert.notNull(sortBy, "SortBy must not be null");
+            if (instance.hasSortBy) {
+                throw new IllegalStateException("SORTBY operation has already been added. Only one SORTBY is allowed.");
+            }
+            instance.hasSortBy = true;
+            instance.postProcessingOperations.add(sortBy);
+            return this;
+        }
+
+        /**
+         * Add a LIMIT operation to the pipeline.
+         * <p>
+         * Limits the number of results returned. Only one LIMIT operation is allowed per pipeline.
+         * </p>
          *
-         * @param operation the operation to add (GroupBy, Apply, SortBy, Filter, etc.)
+         * @param limit the LIMIT operation
+         * @return this builder
+         * @throws IllegalStateException if a LIMIT operation has already been added
+         */
+        public Builder<K, V> limit(Limit limit) {
+            LettuceAssert.notNull(limit, "Limit must not be null");
+            if (instance.hasLimit) {
+                throw new IllegalStateException("LIMIT operation has already been added. Only one LIMIT is allowed.");
+            }
+            instance.hasLimit = true;
+            instance.postProcessingOperations.add(limit);
+            return this;
+        }
+
+        /**
+         * Add an APPLY operation to the pipeline.
+         * <p>
+         * Applies an expression to create a computed field. Multiple APPLY operations can be added.
+         * </p>
+         *
+         * @param apply the APPLY operation
          * @return this builder
          */
-        public Builder<K, V> addOperation(PostProcessingOperation<K, ?> operation) {
-            LettuceAssert.notNull(operation, "Operation must not be null");
-            instance.postProcessingOperations.add(operation);
+        public Builder<K, V> apply(Apply<K, V> apply) {
+            LettuceAssert.notNull(apply, "Apply must not be null");
+            instance.postProcessingOperations.add(apply);
+            return this;
+        }
+
+        /**
+         * Add a FILTER operation to the pipeline.
+         * <p>
+         * Filters results based on an expression. Only one FILTER operation is allowed per pipeline.
+         * </p>
+         *
+         * @param filter the FILTER operation
+         * @return this builder
+         * @throws IllegalStateException if a FILTER operation has already been added
+         */
+        public Builder<K, V> filter(Filter<K, V> filter) {
+            LettuceAssert.notNull(filter, "Filter must not be null");
+            if (instance.hasFilter) {
+                throw new IllegalStateException("FILTER operation has already been added. Only one FILTER is allowed.");
+            }
+            instance.hasFilter = true;
+            instance.postProcessingOperations.add(filter);
             return this;
         }
 

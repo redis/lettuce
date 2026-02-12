@@ -802,11 +802,11 @@ class RediSearchCommandBuilderUnitTests {
                         .filter("@brand:{apple|samsung|google}").scoreAlias("vector_score").build())
                 .combine(Combiners.<String> linear().alpha(0.7).beta(0.3).window(26))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
-                        .addOperation(GroupBy.<String, String> of("@brand").reduce(Reducers.<String> sum("@price").as("sum"))
+                        .groupBy(GroupBy.<String, String> of("@brand").reduce(Reducers.<String> sum("@price").as("sum"))
                                 .reduce(Reducers.<String> count().as("count")))
-                        .addOperation(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC)))
-                        .addOperation(Apply.of("@sum * 0.9", "discounted_price")).addOperation(Filter.of("@sum > 700"))
-                        .addOperation(Limit.of(0, 20)).build())
+                        .sortBy(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC)))
+                        .apply(Apply.of("@sum * 0.9", "discounted_price")).filter(Filter.of("@sum > 700"))
+                        .limit(Limit.of(0, 20)).build())
                 .param("discount_rate", "0.9").build();
 
         Command<String, String, HybridReply<String, String>> command = builder.ftHybrid("idx:ecommerce", hybridArgs);
@@ -850,7 +850,7 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void postProcessingArgsWithoutLoadShouldNotEmitLoad() {
         PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
-                .addOperation(Filter.of("@price > 100")).build();
+                .filter(Filter.of("@price > 100")).build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         postProcessingArgs.build(args);
@@ -863,9 +863,8 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void postProcessingArgsWithOperationsOnlyShouldNotEmitLoad() {
         PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
-                .addOperation(GroupBy.<String, String> of("@category").reduce(Reducers.<String> count().as("count")))
-                .addOperation(SortBy.of(new SortProperty<>("@count", SortDirection.DESC))).addOperation(Limit.of(0, 10))
-                .build();
+                .groupBy(GroupBy.<String, String> of("@category").reduce(Reducers.<String> count().as("count")))
+                .sortBy(SortBy.of(new SortProperty<>("@count", SortDirection.DESC))).limit(Limit.of(0, 10)).build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         postProcessingArgs.build(args);
