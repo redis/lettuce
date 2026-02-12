@@ -6,127 +6,66 @@
  */
 package io.lettuce.core.search.arguments;
 
+import java.util.List;
+
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
 /**
- * Scoring configuration for text search. Specifies the scoring algorithm.
- * <p>
- * Note: Parameter support will be added in a future release when the Redis server supports it.
- * </p>
- *
- * <h3>Example:</h3>
- *
- * <pre>
- * {@code
- * Scorer.of(ScoringFunction.BM25)
- * // Output: SCORER BM25
- *
- * // Using factory methods
- * Scorer.bm25()
- * Scorer.tfidf()
- * }
- * </pre>
+ * Abstract scorer for text search. Instances are created via {@link Scorers}.
  *
  * @author Aleksandar Todorov
  * @since 7.2
- * @see ScoringFunction
+ * @see Scorers
  */
 @Experimental
-public class Scorer {
+public abstract class Scorer {
 
-    private final ScoringFunction algorithm;
-
-    private Scorer(ScoringFunction algorithm) {
-        this.algorithm = algorithm;
-    }
+    private final String name;
 
     /**
-     * Create a scorer with the specified algorithm.
+     * Creates a new scorer with the specified name.
      *
-     * @param algorithm the scoring algorithm
-     * @return a new {@link Scorer} instance
+     * @param name the scoring algorithm name (e.g., "BM25STD", "TFIDF")
      */
-    public static Scorer of(ScoringFunction algorithm) {
-        LettuceAssert.notNull(algorithm, "Algorithm must not be null");
-        return new Scorer(algorithm);
+    protected Scorer(String name) {
+        LettuceAssert.notNull(name, "Name must not be null");
+        LettuceAssert.notEmpty(name, "Name must not be empty");
+        this.name = name;
     }
 
     /**
-     * Create a BM25 scorer.
+     * Get the scorer name.
      *
-     * @return a new {@link Scorer} instance with BM25 algorithm
+     * @return the scorer name
      */
-    public static Scorer bm25() {
-        return new Scorer(ScoringFunction.BM25);
+    public final String getName() {
+        return name;
     }
 
     /**
-     * Create a TFIDF scorer.
+     * Get the scorer-specific arguments.
      *
-     * @return a new {@link Scorer} instance with TFIDF algorithm
+     * @return list of scorer-specific arguments
      */
-    public static Scorer tfidf() {
-        return new Scorer(ScoringFunction.TF_IDF);
-    }
+    protected abstract List<Object> getOwnArgs();
 
     /**
-     * Create a TFIDF with document normalization scorer.
-     *
-     * @return a new {@link Scorer} instance with TFIDF.DOCNORM algorithm
-     */
-    public static Scorer tfidfNormalized() {
-        return new Scorer(ScoringFunction.TF_IDF_NORMALIZED);
-    }
-
-    /**
-     * Create a DISMAX scorer.
-     *
-     * @return a new {@link Scorer} instance with DISMAX algorithm
-     */
-    public static Scorer dismax() {
-        return new Scorer(ScoringFunction.DIS_MAX);
-    }
-
-    /**
-     * Create a DOCSCORE scorer.
-     *
-     * @return a new {@link Scorer} instance with DOCSCORE algorithm
-     */
-    public static Scorer docscore() {
-        return new Scorer(ScoringFunction.DOCUMENT_SCORE);
-    }
-
-    /**
-     * Create a HAMMING scorer.
-     *
-     * @return a new {@link Scorer} instance with HAMMING algorithm
-     */
-    public static Scorer hamming() {
-        return new Scorer(ScoringFunction.HAMMING_DISTANCE);
-    }
-
-    /**
-     * Get the scoring algorithm.
-     *
-     * @return the scoring algorithm
-     */
-    public ScoringFunction getAlgorithm() {
-        return algorithm;
-    }
-
-    /**
-     * Build the SCORER arguments.
+     * Build the SCORER arguments into the command.
+     * <p>
+     * Format: SCORER name [arg1] [arg2] ...
+     * </p>
      *
      * @param args the {@link CommandArgs} to append to
      * @param <K> key type
      * @param <V> value type
      */
-    public <K, V> void build(CommandArgs<K, V> args) {
+    public final <K, V> void build(CommandArgs<K, V> args) {
         args.add(CommandKeyword.SCORER);
-        args.add(algorithm.toString());
+        args.add(name);
+        getOwnArgs().forEach(args::add);
     }
 
 }

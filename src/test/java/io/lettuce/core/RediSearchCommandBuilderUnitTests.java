@@ -33,8 +33,7 @@ import io.lettuce.core.search.arguments.PostProcessingArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
 import io.lettuce.core.search.arguments.ReduceFunction;
 import io.lettuce.core.search.arguments.Reducer;
-import io.lettuce.core.search.arguments.Scorer;
-import io.lettuce.core.search.arguments.ScoringFunction;
+import io.lettuce.core.search.arguments.Scorers;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortBy;
 import io.lettuce.core.search.arguments.SortDirection;
@@ -798,7 +797,7 @@ class RediSearchCommandBuilderUnitTests {
 
         HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
-                        .scorer(Scorer.of(ScoringFunction.TF_IDF_NORMALIZED)).scoreAlias("text_score").build())
+                        .scorer(Scorers.tfidfDocNorm()).scoreAlias("text_score").build())
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
                         .vectorParamName("query_vector").method(HybridVectorArgs.Knn.of(20).efRuntime(150))
                         .filter("@brand:{apple|samsung|google}").scoreAlias("vector_score").build())
