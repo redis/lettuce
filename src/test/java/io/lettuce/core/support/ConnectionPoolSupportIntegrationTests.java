@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.lang.reflect.Proxy;
+import java.time.Duration;
 import java.util.Set;
 
 import org.apache.commons.pool2.ObjectPool;
@@ -414,6 +415,23 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
 
         for (int i = 0; i < 10; i++) {
             try (StatefulRedisConnection<String, String> connection = pool.borrowObject(10_000)) {
+                RedisCommands<String, String> sync = connection.sync();
+                sync.ping();
+            }
+            assertThat(pool.getNumActive()).isEqualTo(0);
+        }
+
+        pool.close();
+    }
+
+    @Test
+    void genericPoolShouldWorkWithBorrowObjectDuration() throws Exception {
+
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
+
+        for (int i = 0; i < 10; i++) {
+            try (StatefulRedisConnection<String, String> connection = pool.borrowObject(Duration.ofSeconds(10))) {
                 RedisCommands<String, String> sync = connection.sync();
                 sync.ping();
             }

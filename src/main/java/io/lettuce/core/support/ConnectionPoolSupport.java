@@ -2,6 +2,7 @@ package io.lettuce.core.support;
 
 import static io.lettuce.core.support.ConnectionWrapping.HasTargetConnection;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -155,6 +156,13 @@ public abstract class ConnectionPoolSupport {
                 return wrapConnections
                         ? ConnectionWrapping.wrapConnection(super.borrowObject(borrowMaxWaitMillis), poolRef.get())
                         : super.borrowObject(borrowMaxWaitMillis);
+            }
+
+            @Override
+            public T borrowObject(Duration borrowMaxWaitDuration) throws Exception {
+                return wrapConnections
+                        ? ConnectionWrapping.wrapConnection(super.borrowObject(borrowMaxWaitDuration), poolRef.get())
+                        : super.borrowObject(borrowMaxWaitDuration);
             }
 
             @Override
