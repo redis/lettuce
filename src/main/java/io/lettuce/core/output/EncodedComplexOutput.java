@@ -39,7 +39,7 @@ public class EncodedComplexOutput<K, V, T> extends ComplexOutput<K, V, T> {
         }
 
         ByteBuffer copy = ByteBuffer.allocate(source.remaining());
-        copy.put(source.duplicate());
+        copy.put(source);
         copy.flip();
         return copy;
     }
