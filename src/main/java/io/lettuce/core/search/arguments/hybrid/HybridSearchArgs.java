@@ -4,7 +4,7 @@
  *
  * Licensed under the MIT License.
  */
-package io.lettuce.core.search.arguments;
+package io.lettuce.core.search.arguments.hybrid;
 
 import java.util.Optional;
 
@@ -12,6 +12,8 @@ import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.search.aggregateutils.Scorer;
+import io.lettuce.core.search.arguments.ScoringFunction;
 
 /**
  * Arguments for the SEARCH clause in FT.HYBRID command. Configures text search query, scoring function, and score aliasing.
