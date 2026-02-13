@@ -146,19 +146,6 @@ public abstract class ConnectionPoolSupport {
                 new RedisPooledObjectFactory<>(connectionSupplier, validationPredicate), config) {
 
             @Override
-            public T borrowObject() throws Exception {
-                return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get())
-                        : super.borrowObject();
-            }
-
-            @Override
-            public T borrowObject(long borrowMaxWaitMillis) throws Exception {
-                return wrapConnections
-                        ? ConnectionWrapping.wrapConnection(super.borrowObject(borrowMaxWaitMillis), poolRef.get())
-                        : super.borrowObject(borrowMaxWaitMillis);
-            }
-
-            @Override
             public T borrowObject(Duration borrowMaxWaitDuration) throws Exception {
                 return wrapConnections
                         ? ConnectionWrapping.wrapConnection(super.borrowObject(borrowMaxWaitDuration), poolRef.get())
