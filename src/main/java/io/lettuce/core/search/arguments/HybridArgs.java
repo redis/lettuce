@@ -58,7 +58,7 @@ public class HybridArgs<K, V> {
 
     private Optional<PostProcessingArgs<K, V>> postProcessingArgs = Optional.empty();
 
-    private final Map<K, V> params = new HashMap<>();
+    private final Map<K, Object> params = new HashMap<>();
 
     private Optional<Duration> timeout = Optional.empty();
 
@@ -155,6 +155,24 @@ public class HybridArgs<K, V> {
         }
 
         /**
+         * Add a binary parameter for parameterized queries.
+         * <p>
+         * Use this for vector data that needs to be passed as binary. Parameters can be referenced in queries using
+         * {@code $name} syntax.
+         * </p>
+         *
+         * @param name the parameter name
+         * @param value the binary parameter value (e.g., vector data)
+         * @return this builder
+         */
+        public Builder<K, V> param(K name, byte[] value) {
+            LettuceAssert.notNull(name, "Parameter name must not be null");
+            LettuceAssert.notNull(value, "Parameter value must not be null");
+            instance.params.put(name, value);
+            return this;
+        }
+
+        /**
          * Set the maximum time to wait for the query to complete.
          *
          * @param timeout the timeout duration (with millisecond resolution)
@@ -177,6 +195,7 @@ public class HybridArgs<K, V> {
      *
      * @param args the {@link CommandArgs} to append to
      */
+    @SuppressWarnings("unchecked")
     public void build(CommandArgs<K, V> args) {
         // Both SEARCH and VSIM must be configured (per PRD)
         LettuceAssert.notNull(searchArgs, "SEARCH clause is required - use search() or search(HybridSearchArgs)");
@@ -203,7 +222,11 @@ public class HybridArgs<K, V> {
             args.add(params.size() * 2L);
             params.forEach((name, value) -> {
                 args.addKey(name);
-                args.addValue(value);
+                if (value instanceof byte[]) {
+                    args.add((byte[]) value);
+                } else {
+                    args.addValue((V) value);
+                }
             });
         }
 

@@ -797,9 +797,9 @@ class RediSearchCommandBuilderUnitTests {
         HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
                         .scorer(Scorers.tfidfDocNorm()).scoreAlias("text_score").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
-                        .vectorParamName("query_vector").method(HybridVectorArgs.Knn.of(20).efRuntime(150))
-                        .filter("@brand:{apple|samsung|google}").scoreAlias("vector_score").build())
+                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector("$vec")
+                        .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
+                        .scoreAlias("vector_score").build())
                 .combine(Combiners.<String> linear().alpha(0.7).beta(0.3).window(26))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
                         .groupBy(GroupBy.<String, String> of("@brand").reduce(Reducers.<String> sum("@price").as("sum"))
@@ -807,17 +807,15 @@ class RediSearchCommandBuilderUnitTests {
                         .sortBy(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC)))
                         .apply(Apply.of("@sum * 0.9", "discounted_price")).filter(Filter.of("@sum > 700"))
                         .limit(Limit.of(0, 20)).build())
-                .param("discount_rate", "0.9").build();
+                .param("vec", queryVector).param("discount_rate", "0.9").build();
 
         Command<String, String, HybridReply<String, String>> command = builder.ftHybrid("idx:ecommerce", hybridArgs);
 
         String args = command.getArgs().toCommandString();
 
-        // Vector is now passed via PARAMS with the parameter reference $query_vector in VSIM
-        // Note: HashMap order is not guaranteed, so we check for key parts
-        assertThat(args).contains("VSIM key<@image_embedding> $query_vector");
+        // Vector data is passed via PARAMS, referenced as $vec in VSIM
+        assertThat(args).contains("VSIM key<@image_embedding> value<$vec>");
         assertThat(args).contains("PARAMS 4");
-        assertThat(args).contains("key<query_vector> zczMPc3MTD6amZk+zczMPgAAAD+amRk/MzMzP83MTD9mZmY/AACAPw==");
         assertThat(args).contains("key<discount_rate> value<0.9>");
 
         // Verify LOAD is emitted with count prefix (LOAD 3 @price @brand @category)
