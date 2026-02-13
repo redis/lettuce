@@ -4,7 +4,7 @@
  *
  * Licensed under the MIT License.
  */
-package io.lettuce.core.search.arguments;
+package io.lettuce.core.search.aggregateutils;
 
 import java.util.List;
 

@@ -5,12 +5,18 @@
  * Licensed under the MIT License.
  */
 
-package io.lettuce.core.search.arguments;
+package io.lettuce.core.search.arguments.hybrid;
 
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.search.aggregateutils.Apply;
+import io.lettuce.core.search.aggregateutils.Filter;
+import io.lettuce.core.search.aggregateutils.GroupBy;
+import io.lettuce.core.search.aggregateutils.Limit;
+import io.lettuce.core.search.aggregateutils.PostProcessingOperation;
+import io.lettuce.core.search.aggregateutils.SortBy;
 
 import java.util.ArrayList;
 import java.util.List;

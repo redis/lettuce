@@ -5,7 +5,7 @@
  * Licensed under the MIT License.
  */
 
-package io.lettuce.core.search.arguments;
+package io.lettuce.core.search.arguments.hybrid;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;

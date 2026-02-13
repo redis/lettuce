@@ -25,7 +25,7 @@ import io.lettuce.core.search.arguments.SynUpdateArgs
 
 import io.lettuce.core.search.AggregationReply.Cursor
 import io.lettuce.core.search.HybridReply
-import io.lettuce.core.search.arguments.HybridArgs
+import io.lettuce.core.search.arguments.hybrid.HybridArgs
 
 /**
  * Coroutine executed commands for RediSearch functionality
