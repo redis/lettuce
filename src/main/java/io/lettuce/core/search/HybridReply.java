@@ -10,13 +10,17 @@ import io.lettuce.core.annotations.Experimental;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Represents the results of an {@code FT.HYBRID} command. Contains total result count, execution time, warnings, and a list of
- * per-document results with document key and field values.
+ * result field maps.
+ * <p>
+ * Each result is a {@link Map} of field names to values. The document key is available under the reserved field name
+ * {@code __key} when returning individual documents. Score information (text score, vector distance, combined score) is
+ * included when using {@code YIELD_SCORE_AS} in the query.
+ * </p>
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -30,7 +34,7 @@ public class HybridReply<K, V> {
 
     private double executionTime;
 
-    private final List<Result<K, V>> results;
+    private final List<Map<K, V>> results;
 
     private final List<V> warnings = new ArrayList<>();
 
@@ -76,18 +80,18 @@ public class HybridReply<K, V> {
     }
 
     /**
-     * @return an unmodifiable view of all results returned by the command
+     * @return an unmodifiable view of all results returned by the command. Each result is a map of field names to values.
      */
-    public List<Result<K, V>> getResults() {
+    public List<Map<K, V>> getResults() {
         return Collections.unmodifiableList(results);
     }
 
     /**
      * Add a new result entry.
      *
-     * @param result the result to add
+     * @param result the result map to add
      */
-    public void addResult(Result<K, V> result) {
+    public void addResult(Map<K, V> result) {
         this.results.add(result);
     }
 
@@ -119,40 +123,6 @@ public class HybridReply<K, V> {
      */
     public boolean isEmpty() {
         return results.isEmpty();
-    }
-
-    /**
-     * Represents a single result entry in an {@code FT.HYBRID} response.
-     * <p>
-     * Each result contains field values returned by the query. The document key is available in the fields map under the
-     * reserved field name {@code __key} when returning individual documents. Score information (text score, vector distance,
-     * combined score) is included in the fields map when using {@code YIELD_SCORE_AS} in the query.
-     * </p>
-     */
-    public static class Result<K, V> {
-
-        private final Map<K, V> fields = new HashMap<>();
-
-        public Result() {
-        }
-
-        /**
-         * @return a mutable map of all fields associated with this result
-         */
-        public Map<K, V> getFields() {
-            return fields;
-        }
-
-        /**
-         * Add a single field to this result.
-         *
-         * @param key field name
-         * @param value field value
-         */
-        public void addField(K key, V value) {
-            fields.put(key, value);
-        }
-
     }
 
 }
