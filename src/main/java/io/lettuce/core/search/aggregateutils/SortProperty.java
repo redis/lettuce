@@ -13,7 +13,7 @@ import io.lettuce.core.annotations.Experimental;
  *
  * @param <K> Key type.
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see SortBy
  * @see SortDirection
  */

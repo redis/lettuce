@@ -37,7 +37,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * </pre>
  *
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see Combiner
  */
 @Experimental

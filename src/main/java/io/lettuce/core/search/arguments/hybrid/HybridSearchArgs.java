@@ -21,7 +21,7 @@ import io.lettuce.core.search.arguments.ScoringFunction;
  * @param <K> Key type
  * @param <V> Value type
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see ScoringFunction
  * @see Scorer
  */

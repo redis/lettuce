@@ -16,7 +16,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see GroupBy
  * @see Apply
  * @see SortBy

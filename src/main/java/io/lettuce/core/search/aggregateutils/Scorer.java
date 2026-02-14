@@ -17,7 +17,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * Abstract scorer for text search. Instances are created via {@link Scorers}.
  *
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see Scorers
  */
 @Experimental

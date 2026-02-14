@@ -12,7 +12,7 @@ import io.lettuce.core.annotations.Experimental;
  * Sort direction enumeration for SORTBY operations in FT.HYBRID and FT.AGGREGATE commands.
  *
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see SortBy
  * @see SortProperty
  */

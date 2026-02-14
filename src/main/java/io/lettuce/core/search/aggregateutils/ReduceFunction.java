@@ -15,7 +15,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * Enumeration of REDUCE functions for GROUPBY operations in FT.HYBRID and FT.AGGREGATE commands.
  *
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see Reducer
  * @see GroupBy
  */
