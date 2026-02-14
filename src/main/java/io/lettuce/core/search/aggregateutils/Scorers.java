@@ -15,7 +15,7 @@ import io.lettuce.core.annotations.Experimental;
  * Factory class for creating {@link Scorer} instances for text search.
  *
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see Scorer
  */
 @Experimental

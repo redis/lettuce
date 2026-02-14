@@ -39,7 +39,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  *
  * @param <K> Key type
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see Combiners
  * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
  */

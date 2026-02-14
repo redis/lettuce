@@ -39,7 +39,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  *
  * @param <K> Key type.
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see SortProperty
  * @see SortDirection
  * @see PostProcessingOperation

@@ -42,7 +42,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * </pre>
  *
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see Reducer
  * @see ReduceFunction
  */
