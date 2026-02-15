@@ -3,7 +3,7 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>7.3.0-SNAPSHOT</version>
+    <version>7.5.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
@@ -50,7 +50,7 @@
 
     <properties>
         <awaitility.version>4.3.0</awaitility.version>
-        <assertj-core.version>3.25.3</assertj-core.version>
+        <assertj-core.version>3.27.7</assertj-core.version>
         <cdi-api.version>2.0.SP1</cdi-api.version>
         <brave.version>5.13.11</brave.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
@@ -254,6 +254,12 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-resolver-dns</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -562,6 +568,14 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>1.20.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Toxiproxy for network failure simulation -->
+        <dependency>
+            <groupId>eu.rekawek.toxiproxy</groupId>
+            <artifactId>toxiproxy-java</artifactId>
+            <version>2.1.11</version>
             <scope>test</scope>
         </dependency>
 
@@ -903,6 +917,7 @@
                         <exclude>**/*Test</exclude>
                         <exclude>**/*IntegrationTests</exclude>
                     </excludes>
+                    <excludedGroups>integration</excludedGroups>
                 </configuration>
             </plugin>
 
@@ -1069,6 +1084,7 @@
         <profile>
             <id>ci</id>
         </profile>
+
         <profile>
             <id>entraid-it</id>
             <build>
