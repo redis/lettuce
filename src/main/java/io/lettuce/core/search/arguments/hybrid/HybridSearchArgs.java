@@ -4,7 +4,7 @@
  *
  * Licensed under the MIT License.
  */
-package io.lettuce.core.search.arguments;
+package io.lettuce.core.search.arguments.hybrid;
 
 import java.util.Optional;
 
@@ -12,6 +12,8 @@ import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.search.aggregateutils.Scorer;
+import io.lettuce.core.search.arguments.ScoringFunction;
 
 /**
  * Arguments for the SEARCH clause in FT.HYBRID command. Configures text search query, scoring function, and score aliasing.
@@ -19,7 +21,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @param <K> Key type
  * @param <V> Value type
  * @author Aleksandar Todorov
- * @since 7.2
+ * @since 7.5
  * @see ScoringFunction
  * @see Scorer
  */
@@ -129,56 +131,6 @@ public class HybridSearchArgs<K, V> {
             args.add(CommandKeyword.YIELD_SCORE_AS);
             args.addKey(scoreAlias);
         }
-    }
-
-    /**
-     * Scoring configuration for text search. Specifies the scoring algorithm.
-     * <p>
-     * Note: Parameter support will be added in a future release when the Redis server supports it.
-     * </p>
-     *
-     * <h3>Example:</h3>
-     *
-     * <pre>
-     * Scorer.of(ScoringFunction.BM25)
-     * // Output: SCORER BM25
-     * </pre>
-     *
-     * @author Aleksandar Todorov
-     * @since 7.2
-     * @see ScoringFunction
-     */
-    public static class Scorer {
-
-        private final ScoringFunction algorithm;
-
-        private Scorer(ScoringFunction algorithm) {
-            this.algorithm = algorithm;
-        }
-
-        /**
-         * Create a scorer with the specified algorithm.
-         *
-         * @param algorithm the scoring algorithm
-         * @return a new {@link Scorer} instance
-         */
-        public static Scorer of(ScoringFunction algorithm) {
-            LettuceAssert.notNull(algorithm, "Algorithm must not be null");
-            return new Scorer(algorithm);
-        }
-
-        /**
-         * Build the SCORER arguments.
-         *
-         * @param args the {@link CommandArgs} to append to
-         * @param <K> key type
-         * @param <V> value type
-         */
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add(CommandKeyword.SCORER);
-            args.add(algorithm.toString());
-        }
-
     }
 
 }

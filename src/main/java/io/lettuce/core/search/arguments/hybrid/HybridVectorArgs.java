@@ -4,7 +4,7 @@
  *
  * Licensed under the MIT License.
  */
-package io.lettuce.core.search.arguments;
+package io.lettuce.core.search.arguments.hybrid;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,30 +98,18 @@ public class HybridVectorArgs<K, V> {
         }
 
         /**
-         * Set the query vector data.
+         * Set the query vector parameter reference.
+         * <p>
+         * This should be a parameter name (e.g., "$vec") that references a vector passed via
+         * {@link HybridArgs.Builder#param(Object, byte[])}. The actual binary vector data must be provided in PARAMS.
+         * </p>
          *
-         * @param vectorData the vector data (byte array or other format)
+         * @param vectorData the parameter reference (e.g., "$vec")
          * @return this builder
          */
         public Builder<K, V> vector(V vectorData) {
             LettuceAssert.notNull(vectorData, "Vector data must not be null");
             this.vectorData = vectorData;
-            return this;
-        }
-
-        /**
-         * Set the query vector data as byte array.
-         * <p>
-         * This overload allows passing binary vector data (e.g., float arrays encoded as bytes) when using String codec.
-         * </p>
-         *
-         * @param vectorData the vector data as byte array
-         * @return this builder
-         */
-        @SuppressWarnings("unchecked")
-        public Builder<K, V> vector(byte[] vectorData) {
-            LettuceAssert.notNull(vectorData, "Vector data must not be null");
-            this.vectorData = (V) vectorData;
             return this;
         }
 
@@ -184,13 +172,7 @@ public class HybridVectorArgs<K, V> {
     public void build(CommandArgs<K, V> args) {
         args.add(CommandType.VSIM);
         args.addKey(fieldName);
-
-        // Handle byte[] vectors specially (they're always binary data)
-        if (vectorData instanceof byte[]) {
-            args.add((byte[]) vectorData);
-        } else {
-            args.addValue((V) vectorData);
-        }
+        args.addValue(vectorData);
 
         // Vector search method (KNN or RANGE) - optional
         if (method != null) {

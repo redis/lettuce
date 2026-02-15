@@ -40,7 +40,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.search.HybridReply;
-import io.lettuce.core.search.arguments.HybridArgs;
+import io.lettuce.core.search.arguments.hybrid.HybridArgs;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 

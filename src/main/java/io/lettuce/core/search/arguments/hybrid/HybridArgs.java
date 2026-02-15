@@ -5,7 +5,7 @@
  * Licensed under the MIT License.
  */
 
-package io.lettuce.core.search.arguments;
+package io.lettuce.core.search.arguments.hybrid;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
@@ -32,7 +32,7 @@ import java.util.Optional;
  *             .search(HybridSearchArgs.<String, String> builder().query("comfortable shoes").build())
  *             .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector(vectorBlob)
  *                     .method(HybridVectorArgs.Knn.of(10)).build())
- *             .combine(CombineArgs.of(new CombineArgs.RRF<>())).build();
+ *             .combine(Combiners.rrf().window(20).constant(60)).build();
  * }
  * </pre>
  *
@@ -43,7 +43,8 @@ import java.util.Optional;
  * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
  * @see HybridSearchArgs
  * @see HybridVectorArgs
- * @see CombineArgs
+ * @see Combiner
+ * @see Combiners
  * @see PostProcessingArgs
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -53,11 +54,11 @@ public class HybridArgs<K, V> {
 
     private final List<HybridVectorArgs<K, V>> vectorArgs = new ArrayList<>();
 
-    private Optional<CombineArgs<K>> combineArgs = Optional.empty();
+    private Optional<Combiner<K>> combiner = Optional.empty();
 
     private Optional<PostProcessingArgs<K, V>> postProcessingArgs = Optional.empty();
 
-    private final Map<K, V> params = new HashMap<>();
+    private final Map<K, Object> params = new HashMap<>();
 
     private Optional<Duration> timeout = Optional.empty();
 
@@ -109,14 +110,18 @@ public class HybridArgs<K, V> {
         }
 
         /**
-         * Configure the COMBINE clause using {@link CombineArgs}.
+         * Configure the COMBINE clause using a {@link Combiner}.
+         * <p>
+         * Use {@link Combiners#rrf()} or {@link Combiners#linear()} to create combiners.
+         * </p>
          *
-         * @param combineArgs the combine arguments
+         * @param combiner the combiner (use {@link Combiners} factory)
          * @return this builder
+         * @see Combiners
          */
-        public Builder<K, V> combine(CombineArgs<K> combineArgs) {
-            LettuceAssert.notNull(combineArgs, "Combine args must not be null");
-            instance.combineArgs = Optional.of(combineArgs);
+        public Builder<K, V> combine(Combiner<K> combiner) {
+            LettuceAssert.notNull(combiner, "Combiner must not be null");
+            instance.combiner = Optional.of(combiner);
             return this;
         }
 
@@ -150,6 +155,24 @@ public class HybridArgs<K, V> {
         }
 
         /**
+         * Add a binary parameter for parameterized queries.
+         * <p>
+         * Use this for vector data that needs to be passed as binary. Parameters can be referenced in queries using
+         * {@code $name} syntax.
+         * </p>
+         *
+         * @param name the parameter name
+         * @param value the binary parameter value (e.g., vector data)
+         * @return this builder
+         */
+        public Builder<K, V> param(K name, byte[] value) {
+            LettuceAssert.notNull(name, "Parameter name must not be null");
+            LettuceAssert.notNull(value, "Parameter value must not be null");
+            instance.params.put(name, value);
+            return this;
+        }
+
+        /**
          * Set the maximum time to wait for the query to complete.
          *
          * @param timeout the timeout duration (with millisecond resolution)
@@ -172,6 +195,7 @@ public class HybridArgs<K, V> {
      *
      * @param args the {@link CommandArgs} to append to
      */
+    @SuppressWarnings("unchecked")
     public void build(CommandArgs<K, V> args) {
         // Both SEARCH and VSIM must be configured (per PRD)
         LettuceAssert.notNull(searchArgs, "SEARCH clause is required - use search() or search(HybridSearchArgs)");
@@ -184,9 +208,9 @@ public class HybridArgs<K, V> {
         vectorArgs.forEach(vectorArg -> vectorArg.build(args));
 
         // COMBINE clause
-        if (combineArgs.isPresent()) {
+        if (combiner.isPresent()) {
             args.add(CommandKeyword.COMBINE);
-            combineArgs.get().build(args);
+            combiner.get().build(args);
         }
 
         // Post-processing operations (LOAD, GROUPBY, APPLY, SORTBY, FILTER, LIMIT)
@@ -198,7 +222,11 @@ public class HybridArgs<K, V> {
             args.add(params.size() * 2L);
             params.forEach((name, value) -> {
                 args.addKey(name);
-                args.addValue(value);
+                if (value instanceof byte[]) {
+                    args.add((byte[]) value);
+                } else {
+                    args.addValue((V) value);
+                }
             });
         }
 

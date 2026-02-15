@@ -11,6 +11,7 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.search.arguments.ScoringFunction;
 import io.lettuce.core.search.arguments.*;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;

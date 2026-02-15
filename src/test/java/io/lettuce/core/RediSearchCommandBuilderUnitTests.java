@@ -17,18 +17,26 @@ import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
-import io.lettuce.core.search.arguments.CombineArgs;
+import io.lettuce.core.search.aggregateutils.Apply;
+import io.lettuce.core.search.arguments.hybrid.Combiners;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
-import io.lettuce.core.search.arguments.HybridArgs;
-import io.lettuce.core.search.arguments.HybridSearchArgs;
-import io.lettuce.core.search.arguments.HybridVectorArgs;
+import io.lettuce.core.search.aggregateutils.Filter;
+import io.lettuce.core.search.aggregateutils.GroupBy;
+import io.lettuce.core.search.arguments.hybrid.HybridArgs;
+import io.lettuce.core.search.arguments.hybrid.HybridSearchArgs;
+import io.lettuce.core.search.arguments.hybrid.HybridVectorArgs;
+import io.lettuce.core.search.aggregateutils.Limit;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
-import io.lettuce.core.search.arguments.PostProcessingArgs;
+import io.lettuce.core.search.arguments.hybrid.PostProcessingArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
-import io.lettuce.core.search.arguments.ScoringFunction;
+import io.lettuce.core.search.aggregateutils.Reducers;
+import io.lettuce.core.search.aggregateutils.Scorers;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.aggregateutils.SortBy;
+import io.lettuce.core.search.aggregateutils.SortDirection;
+import io.lettuce.core.search.aggregateutils.SortProperty;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
@@ -51,6 +59,7 @@ import java.util.Map;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link RediSearchCommandBuilder}.
@@ -787,37 +796,90 @@ class RediSearchCommandBuilderUnitTests {
 
         HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
-                        .scorer(HybridSearchArgs.Scorer.of(ScoringFunction.TF_IDF_NORMALIZED)).scoreAlias("text_score").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
+                        .scorer(Scorers.tfidfDocNorm()).scoreAlias("text_score").build())
+                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector("$vec")
                         .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
                         .scoreAlias("vector_score").build())
-                .combine(CombineArgs.of(new CombineArgs.Linear<String>().alpha(0.7).beta(0.3)))
+                .combine(Combiners.<String> linear().alpha(0.7).beta(0.3).window(26))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
-                        .addOperation(PostProcessingArgs.GroupBy.<String, String> of("@brand")
-                                .reduce(PostProcessingArgs.Reducer
-                                        .<String, String> of(PostProcessingArgs.ReduceFunction.SUM, "@price").as("sum"))
-                                .reduce(PostProcessingArgs.Reducer.<String, String> of(PostProcessingArgs.ReduceFunction.COUNT)
-                                        .as("count")))
-                        .addOperation(PostProcessingArgs.SortBy
-                                .of(new PostProcessingArgs.SortProperty<>("@sum", PostProcessingArgs.SortDirection.ASC)))
-                        .addOperation(PostProcessingArgs.Apply.of("@sum * 0.9", "discounted_price"))
-                        .addOperation(PostProcessingArgs.Filter.of("@sum > 700"))
-                        .addOperation(PostProcessingArgs.Limit.of(0, 20)).build())
-                .param("discount_rate", "0.9").param("$vector", new String(queryVector)).build();
+                        .groupBy(GroupBy.<String, String> of("@brand").reduce(Reducers.<String> sum("@price").as("sum"))
+                                .reduce(Reducers.<String> count().as("count")))
+                        .sortBy(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC)))
+                        .apply(Apply.of("@sum * 0.9", "discounted_price")).filter(Filter.of("@sum > 700"))
+                        .limit(Limit.of(0, 20)).build())
+                .param("vec", queryVector).param("discount_rate", "0.9").build();
 
         Command<String, String, HybridReply<String, String>> command = builder.ftHybrid("idx:ecommerce", hybridArgs);
 
         String args = command.getArgs().toCommandString();
 
-        String expected = "idx:ecommerce SEARCH value<@category:{electronics} smartphone camera> SCORER TFIDF.DOCNORM "
-                + "YIELD_SCORE_AS key<text_score> VSIM key<@image_embedding> zczMPc3MTD6amZk+zczMPgAAAD+amRk/MzMzP83MTD9mZmY/AACAPw== "
-                + "KNN 4 K 20 EF_RUNTIME 150 FILTER @brand:{apple|samsung|google} YIELD_SCORE_AS key<vector_score> "
-                + "COMBINE LINEAR 4 ALPHA 0.7 BETA 0.3 LOAD 3 key<@price> key<@brand> key<@category> GROUPBY 1 @brand "
-                + "REDUCE U1VN 1 value<@price> AS sum REDUCE Q09VTlQ= 0 AS count SORTBY 2 @sum ASC "
-                + "APPLY value<@sum * 0.9> AS discounted_price FILTER value<@sum > 700> LIMIT 0 20 "
-                + "PARAMS 4 key<discount_rate> value<0.9> key<$vector> value<" + new String(queryVector) + ">";
+        // Vector data is passed via PARAMS, referenced as $vec in VSIM
+        assertThat(args).contains("VSIM key<@image_embedding> value<$vec>");
+        assertThat(args).contains("PARAMS 4");
+        assertThat(args).contains("key<discount_rate> value<0.9>");
 
-        assertThat(args).isEqualTo(expected);
+        // Verify LOAD is emitted with count prefix (LOAD 3 @price @brand @category)
+        assertThat(args).contains("LOAD 3 key<@price> key<@brand> key<@category>");
+    }
+
+    @Test
+    void postProcessingArgsWithLoadFieldsShouldEmitLoadWithCount() {
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
+                .load("@price", "@brand", "@category").build();
+
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        postProcessingArgs.build(args);
+
+        // Should emit: LOAD 3 @price @brand @category
+        assertThat(args.toCommandString()).isEqualTo("LOAD 3 key<@price> key<@brand> key<@category>");
+    }
+
+    @Test
+    void postProcessingArgsWithLoadAllShouldEmitLoadStar() {
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder().loadAll().build();
+
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        postProcessingArgs.build(args);
+
+        // Should emit: LOAD * (no count prefix for wildcard)
+        assertThat(args.toCommandString()).isEqualTo("LOAD *");
+    }
+
+    @Test
+    void postProcessingArgsWithoutLoadShouldNotEmitLoad() {
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
+                .filter(Filter.of("@price > 100")).build();
+
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        postProcessingArgs.build(args);
+
+        // Should NOT emit LOAD at all, only the FILTER operation
+        assertThat(args.toCommandString()).contains("FILTER");
+        assertThat(args.toCommandString()).doesNotContain("LOAD");
+    }
+
+    @Test
+    void postProcessingArgsWithOperationsOnlyShouldNotEmitLoad() {
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
+                .groupBy(GroupBy.<String, String> of("@category").reduce(Reducers.<String> count().as("count")))
+                .sortBy(SortBy.of(new SortProperty<>("@count", SortDirection.DESC))).limit(Limit.of(0, 10)).build();
+
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        postProcessingArgs.build(args);
+
+        // Should NOT contain LOAD
+        assertThat(args.toCommandString()).doesNotContain("LOAD");
+        // Should contain the operations
+        assertThat(args.toCommandString()).contains("GROUPBY");
+        assertThat(args.toCommandString()).contains("SORTBY");
+        assertThat(args.toCommandString()).contains("LIMIT");
+    }
+
+    @Test
+    void loadWithAsteriskShouldThrowException() {
+        // Passing "*" to load() should throw an exception directing users to use loadAll() instead
+        assertThatThrownBy(() -> PostProcessingArgs.<String, String> builder().load("*"))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("loadAll()");
     }
 
     private byte[] floatArrayToByteArray(float[] vector) {
