@@ -27,6 +27,7 @@ import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.lettuce.core.search.arguments.VectorFieldArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
@@ -43,6 +44,7 @@ import java.util.Map;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag(INTEGRATION_TEST)
 @EnabledOnCommand("FT.HYBRID")
@@ -229,9 +231,18 @@ public class FtHybridIntegrationTests {
 
     // ==================== TEST 4: LOAD * ====================
 
+    /**
+     * Tests FT.HYBRID with LOAD * to load all document attributes.
+     * <p>
+     * Note: LOAD * (loadAll) requires Redis OSS 8.6 or later.
+     * </p>
+     *
+     * @since Redis OSS 8.6
+     */
     @Test
     @Order(4)
     void hybridWithLoadAll() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.6"));
         HybridArgs<String, String> args = HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics}").build())
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
