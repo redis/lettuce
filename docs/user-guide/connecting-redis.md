@@ -178,13 +178,13 @@ are:
   connection
 
 - `rediss://[password@]host[:port][/databaseNumber]` [SSL
-  Connections](../advanced-usage.md#ssl-connections) Redis connection
+  Connections](../advanced-usage/ssl-connections.md) Redis connection
 
 - `redis-sentinel://[password@]host[:port][,host2[:port2]][/databaseNumber]#sentinelMasterId`
   for using Redis Sentinel
 
 - `redis-socket:///path/to/socket` [Unix Domain
-  Sockets](../advanced-usage.md#unix-domain-sockets) connection to Redis
+  Sockets](../advanced-usage/native-transports.md#unix-domain-sockets) connection to Redis
 
 ### Exceptions
 

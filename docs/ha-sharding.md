@@ -385,14 +385,14 @@ the same cluster topology view. The view can be updated in three ways:
 
 1.  Either by calling `RedisClusterClient.reloadPartitions`
 
-2.  [Periodic updates](advanced-usage.md#cluster-specific-options) in the background
+2.  [Periodic updates](advanced-usage/client-options.md#cluster-specific-options) in the background
     based on an interval
 
-3.  [Adaptive updates](advanced-usage.md#cluster-specific-options) in the background
+3.  [Adaptive updates](advanced-usage/client-options.md#cluster-specific-options) in the background
     based on persistent disconnects and `MOVED`/`ASK` redirections
 
 By default, commands follow `-ASK` and `-MOVED` redirects [up to 5
-times](advanced-usage.md#cluster-specific-options) until the command execution is
+times](advanced-usage/client-options.md#cluster-specific-options) until the command execution is
 considered to be failed. Background topology updating starts with the
 first connection obtained through `RedisClusterClient`.
 
@@ -429,7 +429,7 @@ and closed after obtaining the topology:
 
 ### Client-options
 
-See [Cluster-specific Client options](advanced-usage.md#cluster-specific-options).
+See [Cluster-specific Client options](advanced-usage/client-options.md#cluster-specific-options).
 
 #### Examples
 
