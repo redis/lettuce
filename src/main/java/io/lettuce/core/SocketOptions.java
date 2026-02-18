@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.resource.ExtendedKeepAliveSupport;
 
 /**
  * Options to configure low-level socket options for the connections kept to Redis servers.
@@ -39,7 +40,7 @@ public class SocketOptions {
 
     public static final Duration DEFAULT_CONNECT_TIMEOUT_DURATION = Duration.ofSeconds(DEFAULT_CONNECT_TIMEOUT);
 
-    public static final boolean DEFAULT_SO_KEEPALIVE = false;
+    public static final boolean DEFAULT_SO_KEEPALIVE = true;
 
     public static final boolean DEFAULT_TCP_USER_TIMEOUT_ENABLED = false;
 
@@ -114,7 +115,7 @@ public class SocketOptions {
 
         private boolean tcpNoDelay = DEFAULT_SO_NO_DELAY;
 
-        private boolean extendedKeepAlive = false;
+        private boolean extendedKeepAlive = ExtendedKeepAliveSupport.isSupported();
 
         private Builder() {
         }
@@ -155,7 +156,10 @@ public class SocketOptions {
         }
 
         /**
-         * Set whether to enable TCP keepalive. Defaults to {@code false}. See {@link #DEFAULT_SO_KEEPALIVE}.
+         * Set whether to enable TCP keepalive. Defaults to {@code true}. See {@link #DEFAULT_SO_KEEPALIVE}.
+         * <p>
+         * Note: Using this method disables extended keep-alive options. To use extended keep-alive options (custom idle,
+         * interval, count), use {@link #keepAlive(KeepAliveOptions)} instead.
          *
          * @param keepAlive whether to enable or disable the TCP keepalive.
          * @return {@code this}
@@ -170,7 +174,7 @@ public class SocketOptions {
         }
 
         /**
-         * Configure TCP keepalive. Defaults to disabled. See {@link #DEFAULT_SO_KEEPALIVE}.
+         * Configure TCP keepalive. Defaults to enabled. See {@link #DEFAULT_SO_KEEPALIVE}.
          *
          * @param keepAlive whether to enable or disable the TCP keepalive.
          * @return {@code this}
@@ -315,11 +319,11 @@ public class SocketOptions {
      */
     public static class KeepAliveOptions {
 
-        public static final int DEFAULT_COUNT = 9;
+        public static final int DEFAULT_COUNT = 3;
 
-        public static final Duration DEFAULT_IDLE = Duration.ofHours(2);
+        public static final Duration DEFAULT_IDLE = Duration.ofSeconds(5);
 
-        public static final Duration DEFAULT_INTERVAL = Duration.ofSeconds(75);
+        public static final Duration DEFAULT_INTERVAL = Duration.ofSeconds(5);
 
         private final int count;
 
@@ -363,8 +367,8 @@ public class SocketOptions {
             }
 
             /**
-             * Set the maximum number of keepalive probes TCP should send before dropping the connection. Defaults to {@code 9}.
-             * See also {@link #DEFAULT_COUNT} and {@code TCP_KEEPCNT}.
+             * Set the maximum number of keepalive probes TCP should send before dropping the connection. Defaults to
+             * {@link #DEFAULT_COUNT}. See also {@code TCP_KEEPCNT}.
              *
              * @param count the maximum number of keepalive probes TCP
              * @return {@code this}
@@ -378,7 +382,7 @@ public class SocketOptions {
             }
 
             /**
-             * Enable TCP keepalive. Defaults to disabled. See {@link #DEFAULT_SO_KEEPALIVE}.
+             * Enable TCP keepalive. Defaults to enabled. See {@link #DEFAULT_SO_KEEPALIVE}.
              *
              * @return {@code this}
              * @see java.net.SocketOptions#SO_KEEPALIVE
@@ -388,7 +392,7 @@ public class SocketOptions {
             }
 
             /**
-             * Disable TCP keepalive. Defaults to disabled. See {@link #DEFAULT_SO_KEEPALIVE}.
+             * Disable TCP keepalive. Defaults to enabled. See {@link #DEFAULT_SO_KEEPALIVE}.
              *
              * @return {@code this}
              * @see java.net.SocketOptions#SO_KEEPALIVE
@@ -398,7 +402,7 @@ public class SocketOptions {
             }
 
             /**
-             * Enable TCP keepalive. Defaults to {@code false}. See {@link #DEFAULT_SO_KEEPALIVE}.
+             * Enable TCP keepalive. Defaults to {@code true}. See {@link #DEFAULT_SO_KEEPALIVE}.
              *
              * @param enabled whether to enable TCP keepalive.
              * @return {@code this}
@@ -412,7 +416,7 @@ public class SocketOptions {
 
             /**
              * The time the connection needs to remain idle before TCP starts sending keepalive probes if keepalive is enabled.
-             * Defaults to {@code 2 hours}. See also @link {@link #DEFAULT_IDLE} and {@code TCP_KEEPIDLE}.
+             * Defaults to {@link #DEFAULT_IDLE}. See also {@code TCP_KEEPIDLE}.
              * <p>
              * The time granularity of is seconds.
              *
@@ -429,8 +433,8 @@ public class SocketOptions {
             }
 
             /**
-             * The time between individual keepalive probes. Defaults to {@code 75 second}. See also {@link #DEFAULT_INTERVAL}
-             * and {@code TCP_KEEPINTVL}.
+             * The time between individual keepalive probes. Defaults to {@link #DEFAULT_INTERVAL}. See also
+             * {@code TCP_KEEPINTVL}.
              * <p>
              * The time granularity of is seconds.
              *
@@ -477,8 +481,8 @@ public class SocketOptions {
         }
 
         /**
-         * Returns the maximum number of keepalive probes TCP should send before dropping the connection. Defaults to {@code 9}.
-         * See also {@link #DEFAULT_COUNT} and {@code TCP_KEEPCNT}.
+         * Returns the maximum number of keepalive probes TCP should send before dropping the connection. Defaults to
+         * {@link #DEFAULT_COUNT}. See also {@code TCP_KEEPCNT}.
          *
          * @return the maximum number of keepalive probes TCP should send before dropping the connection.
          */
@@ -498,7 +502,7 @@ public class SocketOptions {
 
         /**
          * The time the connection needs to remain idle before TCP starts sending keepalive probes if keepalive is enabled.
-         * Defaults to {@code 2 hours}. See also @link {@link #DEFAULT_IDLE} and {@code TCP_KEEPIDLE}.
+         * Defaults to {@link #DEFAULT_IDLE}. See also {@code TCP_KEEPIDLE}.
          * <p>
          * The time granularity of is seconds.
          *
@@ -509,8 +513,7 @@ public class SocketOptions {
         }
 
         /**
-         * The time between individual keepalive probes. Defaults to {@code 1 second}. See also {@link #DEFAULT_INTERVAL} and
-         * {@code TCP_KEEPINTVL}.
+         * The time between individual keepalive probes. Defaults to {@link #DEFAULT_INTERVAL}. See also {@code TCP_KEEPINTVL}.
          * <p>
          * The time granularity of is seconds.
          *
@@ -533,9 +536,10 @@ public class SocketOptions {
     public static class TcpUserTimeoutOptions {
 
         /**
-         * Recommended default TCP_KEEPIDLE(2 hour) + TCP_KEEPINTVL(75 s) * TCP_KEEPCNT(9) 2 * 3600 + 75 * 9 = 7875
+         * Recommended default: TCP_KEEPIDLE + TCP_KEEPINTVL * TCP_KEEPCNT.
          */
-        public static final Duration DEFAULT_TCP_USER_TIMEOUT = Duration.ofSeconds(7875);
+        public static final Duration DEFAULT_TCP_USER_TIMEOUT = KeepAliveOptions.DEFAULT_IDLE
+                .plus(KeepAliveOptions.DEFAULT_INTERVAL.multipliedBy(KeepAliveOptions.DEFAULT_COUNT));
 
         private final Duration tcpUserTimeout;
 
@@ -599,7 +603,7 @@ public class SocketOptions {
             }
 
             /**
-             * The TCP User Timeout. Defaults to {@code 7875 second}. See also {@link #DEFAULT_TCP_USER_TIMEOUT}.
+             * The TCP User Timeout. Defaults to {@link #DEFAULT_TCP_USER_TIMEOUT}.
              * <p>
              * The time granularity of is seconds.
              *
