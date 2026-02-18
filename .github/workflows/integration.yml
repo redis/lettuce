@@ -27,9 +27,8 @@ on:
 
 jobs:
   build:
-    name: Build and Test
+    name: Build and Test (Redis ${{ matrix.redis_version }})
     if: github.event.inputs.client_libs_test_image_tag == ''
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -40,28 +39,17 @@ jobs:
           - "8.0"
           - "7.4"
           - "7.2"
-    steps:
-      - name: Checkout project
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/run-tests
-        with:
-          redis_version: ${{ matrix.redis_version }}
-          codecov_token: ${{ secrets.CODECOV_TOKEN }}
-          redis_env_work_dir: ${{ github.workspace }}/work
-          redis_env_conf_dir: ${{ github.workspace }}/src/test/resources/docker-env
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      redis_version: ${{ matrix.redis_version }}
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
   build_using_custom_image:
     name: Build and Test using custom image
     if: github.event.inputs.client_libs_test_image_tag != ''
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/run-tests
-        with:
-          client_libs_test_image_tag: ${{ github.event.inputs.client_libs_test_image_tag }}
-          codecov_token: ${{ secrets.CODECOV_TOKEN }}
-          redis_env_work_dir: ${{ github.workspace }}/work
-          redis_env_conf_dir: ${{ github.workspace }}/src/test/resources/docker-env
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      client_libs_test_image_tag: ${{ github.event.inputs.client_libs_test_image_tag }}
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}
