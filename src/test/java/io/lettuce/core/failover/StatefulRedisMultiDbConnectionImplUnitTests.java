@@ -1281,4 +1281,81 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
     }
 
+    @Nested
+    @DisplayName("Weight Management Tests")
+    class WeightManagementTests {
+
+        @Test
+        @DisplayName("Should get initial weight from config")
+        void shouldGetInitialWeightFromConfig() {
+            // Then: Weight should be 1.0f as set in setUp
+            assertThat(db1.getWeight()).isEqualTo(1.0f);
+        }
+
+        @Test
+        @DisplayName("Should set and get weight")
+        void shouldSetAndGetWeight() {
+            // When: Set weight to 2.5f
+            db1.setWeight(2.5f);
+
+            // Then: Weight should be updated
+            assertThat(db1.getWeight()).isEqualTo(2.5f);
+        }
+
+        @Test
+        @DisplayName("Should update weight multiple times")
+        void shouldUpdateWeightMultipleTimes() {
+            // When: Update weight multiple times
+            db1.setWeight(1.5f);
+            assertThat(db1.getWeight()).isEqualTo(1.5f);
+
+            db1.setWeight(3.0f);
+            assertThat(db1.getWeight()).isEqualTo(3.0f);
+
+            db1.setWeight(0.5f);
+            assertThat(db1.getWeight()).isEqualTo(0.5f);
+        }
+
+        @Test
+        @DisplayName("Should handle zero weight")
+        void shouldHandleZeroWeight() {
+            // When: Set weight to 0
+            db1.setWeight(0.0f);
+
+            // Then: Weight should be 0
+            assertThat(db1.getWeight()).isEqualTo(0.0f);
+        }
+
+        @Test
+        @DisplayName("Should handle negative weight")
+        void shouldHandleNegativeWeight() {
+            // When: Set weight to negative value
+            db1.setWeight(-1.0f);
+
+            // Then: Weight should be set (validation happens at config level)
+            assertThat(db1.getWeight()).isEqualTo(-1.0f);
+        }
+
+        @Test
+        @DisplayName("Should handle very large weight values")
+        void shouldHandleVeryLargeWeightValues() {
+            // When: Set weight to very large value
+            db1.setWeight(Float.MAX_VALUE);
+
+            // Then: Weight should be set
+            assertThat(db1.getWeight()).isEqualTo(Float.MAX_VALUE);
+        }
+
+        @Test
+        @DisplayName("Should handle very small positive weight values")
+        void shouldHandleVerySmallPositiveWeightValues() {
+            // When: Set weight to very small positive value
+            db1.setWeight(0.001f);
+
+            // Then: Weight should be set
+            assertThat(db1.getWeight()).isEqualTo(0.001f);
+        }
+
+    }
+
 }

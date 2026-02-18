@@ -34,7 +34,7 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
 
     private static final AtomicInteger ID_COUNTER = new AtomicInteger(1);
 
-    private final float weight;
+    private float weight;
 
     private final C connection;
 
@@ -82,6 +82,11 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
     @Override
     public float getWeight() {
         return weight;
+    }
+
+    @Override
+    public void setWeight(float weight) {
+        this.weight = weight;
     }
 
     C getConnection() {
