@@ -51,6 +51,11 @@ on:
         required: false
         type: string
         default: ''
+      upload_coverage:
+        description: 'Whether to upload coverage reports to Codecov'
+        required: false
+        type: boolean
+        default: true
     secrets:
       codecov_token:
         description: 'Codecov token for uploading coverage'
@@ -145,13 +150,13 @@ jobs:
         continue-on-error: true
 
       - name: Upload coverage reports to Codecov
-        if: ${{ secrets.codecov_token != '' }}
+        if: ${{ inputs.upload_coverage }}
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.codecov_token }}
 
       - name: Upload test failure reports to Codecov
-        if: ${{ always() && secrets.codecov_token != '' }}
+        if: ${{ always() && inputs.upload_coverage }}
         uses: codecov/test-results-action@v1
         with:
           fail_ci_if_error: false
