@@ -42,8 +42,8 @@ class KeepAliveOptionsUnitTests {
         KeepAliveOptions disabled = KeepAliveOptions.builder().build();
 
         assertThat(disabled).isNotNull();
-        assertThat(disabled.getIdle()).hasSeconds(5);
-        assertThat(disabled.getInterval()).hasSeconds(5);
+        assertThat(disabled.getIdle()).hasSeconds(13);
+        assertThat(disabled.getInterval()).hasSeconds(13);
         assertThat(disabled.getCount()).isEqualTo(3);
     }
 

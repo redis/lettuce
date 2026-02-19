@@ -314,16 +314,21 @@ public class SocketOptions {
      * applicable for kqueue in general or NIO sockets using Java 10 or earlier.
      * <p>
      * The time granularity of {@link #getIdle()} and {@link #getInterval()} is seconds.
+     * <p>
+     * Default values are chosen so that {@code idle + (interval × count)} is close to
+     * {@link RedisURI#DEFAULT_TIMEOUT_DURATION}. {@link TcpUserTimeoutOptions#DEFAULT_TCP_USER_TIMEOUT} is derived from these
+     * values.
      *
      * @since 6.1
+     * @see TcpUserTimeoutOptions#DEFAULT_TCP_USER_TIMEOUT
      */
     public static class KeepAliveOptions {
 
         public static final int DEFAULT_COUNT = 3;
 
-        public static final Duration DEFAULT_IDLE = Duration.ofSeconds(5);
+        public static final Duration DEFAULT_IDLE = Duration.ofSeconds(13);
 
-        public static final Duration DEFAULT_INTERVAL = Duration.ofSeconds(5);
+        public static final Duration DEFAULT_INTERVAL = Duration.ofSeconds(13);
 
         private final int count;
 
