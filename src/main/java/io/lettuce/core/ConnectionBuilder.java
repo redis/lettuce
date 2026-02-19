@@ -20,7 +20,6 @@
 package io.lettuce.core;
 
 import java.net.SocketAddress;
-import java.net.SocketOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +28,6 @@ import java.util.function.Supplier;
 
 import io.lettuce.core.protocol.MaintenanceAwareComponent;
 import io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog;
-import jdk.net.ExtendedSocketOptions;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandEncoder;
@@ -41,8 +39,8 @@ import io.lettuce.core.protocol.ReconnectionListener;
 import io.lettuce.core.protocol.RedisHandshakeHandler;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.EpollProvider;
+import io.lettuce.core.resource.ExtendedKeepAliveSupport;
 import io.lettuce.core.resource.IOUringProvider;
-import io.lettuce.core.resource.KqueueProvider;
 import io.lettuce.core.resource.Transports;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -52,7 +50,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.socket.nio.NioChannelOption;
 import io.netty.util.AttributeKey;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -309,19 +306,8 @@ public class ConnectionBuilder {
         if (options.isKeepAlive() && options.isExtendedKeepAlive()) {
 
             SocketOptions.KeepAliveOptions keepAlive = options.getKeepAlive();
-            boolean applied = false;
-
-            if (IOUringProvider.isAvailable()) {
-                IOUringProvider.applyKeepAlive(bootstrap, keepAlive.getCount(), keepAlive.getIdle(), keepAlive.getInterval());
-                applied = true;
-            } else if (io.lettuce.core.resource.EpollProvider.isAvailable()) {
-                EpollProvider.applyKeepAlive(bootstrap, keepAlive.getCount(), keepAlive.getIdle(), keepAlive.getInterval());
-                applied = true;
-            } else if (ExtendedNioSocketOptions.isAvailable() && !KqueueProvider.isAvailable()) {
-                ExtendedNioSocketOptions.applyKeepAlive(bootstrap, keepAlive.getCount(), keepAlive.getIdle(),
-                        keepAlive.getInterval());
-                applied = true;
-            }
+            boolean applied = ExtendedKeepAliveSupport.applyKeepAlive(bootstrap, keepAlive.getCount(), keepAlive.getIdle(),
+                    keepAlive.getInterval());
 
             LettuceAssert.assertState(applied,
                     "Extended TCP keepalive options could not be applied. Native transports (io_uring or epoll) or a compatible NIO transport are required.");
@@ -382,55 +368,6 @@ public class ConnectionBuilder {
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
             ctx.channel().attr(INIT_FAILURE).set(cause);
             super.exceptionCaught(ctx, cause);
-        }
-
-    }
-
-    /**
-     * Utility to support Java 11 {@link ExtendedSocketOptions extended keepalive options}.
-     */
-    @SuppressWarnings("unchecked")
-    static class ExtendedNioSocketOptions {
-
-        private static final SocketOption<Integer> TCP_KEEPCOUNT;
-
-        private static final SocketOption<Integer> TCP_KEEPIDLE;
-
-        private static final SocketOption<Integer> TCP_KEEPINTERVAL;
-
-        static {
-
-            SocketOption<Integer> keepCount = null;
-            SocketOption<Integer> keepIdle = null;
-            SocketOption<Integer> keepInterval = null;
-            try {
-
-                keepCount = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPCOUNT").get(null);
-                keepIdle = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPIDLE").get(null);
-                keepInterval = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPINTERVAL")
-                        .get(null);
-            } catch (ReflectiveOperationException e) {
-                logger.trace("Cannot extract ExtendedSocketOptions for KeepAlive", e);
-            }
-
-            TCP_KEEPCOUNT = keepCount;
-            TCP_KEEPIDLE = keepIdle;
-            TCP_KEEPINTERVAL = keepInterval;
-        }
-
-        public static boolean isAvailable() {
-            return TCP_KEEPCOUNT != null && TCP_KEEPIDLE != null && TCP_KEEPINTERVAL != null;
-        }
-
-        /**
-         * Apply Keep-Alive options.
-         *
-         */
-        public static void applyKeepAlive(Bootstrap bootstrap, int count, Duration idle, Duration interval) {
-
-            bootstrap.option(NioChannelOption.of(TCP_KEEPCOUNT), count);
-            bootstrap.option(NioChannelOption.of(TCP_KEEPIDLE), Math.toIntExact(idle.getSeconds()));
-            bootstrap.option(NioChannelOption.of(TCP_KEEPINTERVAL), Math.toIntExact(interval.getSeconds()));
         }
 
     }
