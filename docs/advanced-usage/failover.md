@@ -1,8 +1,8 @@
 # Automatic Failover and Failback with Lettuce
 
-> [!WARNING]
-> **Experimental Feature** <p>
-> This feature is experimental and may change in future versions.
+!!! WARNING
+    **Experimental Feature** <p>
+    This feature is experimental and may change in future versions.
 
 Lettuce supports automatic failover and failback for your Redis deployments through the `MultiDbClient`. This is useful when:
 
