@@ -9,7 +9,7 @@ import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Configuration for a database in a multi-database client. Holds the Redis URI, weight for database/endpoint proirity, circuit
+ * Configuration for a database in a multi-database client. Holds the Redis URI, weight for database/endpoint priority, circuit
  * breaker configuration, and optional health check strategy supplier.
  *
  * <p>

@@ -18,6 +18,7 @@ import io.lettuce.core.failover.api.RedisDatabase;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
+import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Represents a Redis database with a weight and a connection.
@@ -86,6 +87,7 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
 
     @Override
     public void setWeight(float weight) {
+        LettuceAssert.isTrue(weight > 0, "Weight must be greater than 0");
         this.weight = weight;
     }
 
