@@ -66,6 +66,7 @@ runs:
         REDIS_ENV_CONF_DIR: ${{ inputs.redis_env_conf_dir }}
         REDIS_VERSION_LABEL: ${{ inputs.client_libs_test_image_tag || inputs.redis_version }}
       run: |
+        echo "::group::Validate inputs"
         make_args=()
 
         if [ -n "$CLIENT_LIBS_TEST_IMAGE" ]; then
@@ -83,7 +84,9 @@ runs:
 
         echo "make_args=${make_args[*]}" | tee -a ${GITHUB_OUTPUT}
         echo "redis_version_label=$REDIS_VERSION_LABEL" | tee -a ${GITHUB_OUTPUT}
+        echo "::endgroup::"
 
+        echo "::group::Prepare environment paths"
         if [ -z "$REDIS_ENV_CONF_DIR" ]; then
           REDIS_ENV_CONF_DIR=$(readlink -f "${{ github.action_path }}/../../../src/test/resources/docker-env")
         fi
@@ -95,6 +98,7 @@ runs:
           REDIS_ENV_WORK_DIR=$(mktemp -du)
           echo "redis_env_work_dir=$REDIS_ENV_WORK_DIR" | tee -a ${GITHUB_OUTPUT}
         fi
+        echo "::endgroup::"
 
     - name: Set up Java
       uses: actions/setup-java@v4
@@ -111,17 +115,17 @@ runs:
         checkout-enabled: false
         java-version: ${{ inputs.java_version }}
 
-    - name: Install missing dependencies to container
-      shell: bash
-      run: |
-        sudo apt update
-
-
     - name: Set up Docker Compose environment
       shell: bash
       run: |
+        echo "::group::Create work directory"
         mkdir -m 777 $REDIS_ENV_WORK_DIR
+        echo "Work directory: $REDIS_ENV_WORK_DIR"
+        echo "::endgroup::"
+
+        echo "::group::Start Redis containers"
         make start ${{ steps.args.outputs.make_args }}
+        echo "::endgroup::"
       env:
         REDIS_ENV_CONF_DIR: ${{ steps.args.outputs.redis_env_conf_dir }}
         REDIS_ENV_WORK_DIR: ${{ steps.args.outputs.redis_env_work_dir }}
@@ -129,16 +133,18 @@ runs:
     - name: Maven offline
       shell: bash
       run: |
+        echo "::group::Download Maven dependencies"
         mvn -q dependency:go-offline
+        echo "::endgroup::"
       continue-on-error: true
 
     - name: Run tests
       shell: bash
       run: |
+        echo "::group::Run test suite"
         export TEST_WORK_FOLDER=$REDIS_ENV_WORK_DIR
-        echo $TEST_WORK_FOLDER
-        ls -la $TEST_WORK_FOLDER
         make test-coverage
+        echo "::endgroup::"
       env:
         REDIS_ENV_WORK_DIR: ${{ steps.args.outputs.redis_env_work_dir }}
         JVM_OPTS: -Xmx3200m
@@ -148,7 +154,9 @@ runs:
       if: always()
       shell: bash
       run: |
+        echo "::group::Stop Redis containers"
         make stop
+        echo "::endgroup::"
       continue-on-error: true
 
     - name: Upload coverage reports to Codecov
