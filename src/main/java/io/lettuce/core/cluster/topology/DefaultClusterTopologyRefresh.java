@@ -19,10 +19,13 @@
  */
 package io.lettuce.core.cluster.topology;
 
+import io.lettuce.core.cluster.ClusterTopologyRefreshOptions;
+import io.lettuce.core.cluster.topology.TopologyComparators.LatencyComparator;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -92,6 +95,23 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
     @Override
     public CompletionStage<Map<RedisURI, Partitions>> loadViews(Iterable<RedisURI> seed, Duration connectTimeout,
             boolean discovery) {
+        return loadViews(seed, connectTimeout, discovery, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Load topology views from a collection of {@link RedisURI}s and return the view per {@link RedisURI}. Partitions contain
+     * an ordered list of {@link RedisClusterNode}s. The sort key is latency. Nodes with lower latency come first.
+     *
+     * @param seed collection of {@link RedisURI}s
+     * @param connectTimeout connect timeout
+     * @param discovery {@code true} to discover additional nodes
+     * @param maxTopologyRefreshSources maximum number of additionally queried (discovered) nodes. Use {@link Integer#MAX_VALUE}
+     *        to query all discovered nodes.
+     * @return mapping between {@link RedisURI} and {@link Partitions}
+     */
+    @Override
+    public CompletionStage<Map<RedisURI, Partitions>> loadViews(Iterable<RedisURI> seed, Duration connectTimeout,
+            boolean discovery, int maxTopologyRefreshSources) {
 
         if (!isEventLoopActive()) {
             return CompletableFuture.completedFuture(Collections.emptyMap());
@@ -115,7 +135,8 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
                         if (discovery && isEventLoopActive()) {
 
                             Set<RedisURI> allKnownUris = views.getClusterNodes();
-                            Set<RedisURI> discoveredNodes = difference(allKnownUris, toSet(seed));
+                            Set<RedisURI> discoveredNodes = limit(difference(allKnownUris, toSet(seed)),
+                                    maxTopologyRefreshSources);
 
                             if (discoveredNodes.isEmpty()) {
                                 return CompletableFuture.completedFuture(views);
@@ -388,6 +409,18 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
         }
 
         return result;
+    }
+
+    private static Set<RedisURI> limit(Set<RedisURI> uris, int maxTopologyRefreshSources) {
+        if (uris.size() <= maxTopologyRefreshSources) {
+            return uris;
+        }
+
+        List<RedisURI> uriList = new ArrayList<>(uris);
+        Collections.shuffle(uriList);
+
+        return uriList.stream().limit(maxTopologyRefreshSources)
+                .collect(Collectors.toCollection(() -> new TreeSet<>(TopologyComparators.RedisURIComparator.INSTANCE)));
     }
 
     private static long getCommandTimeoutNs(Iterable<RedisURI> redisURIs) {
