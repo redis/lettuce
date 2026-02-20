@@ -1,7 +1,7 @@
 x-client-libs-image: &client-libs-image
-  image: "redislabs/client-libs-test:${REDIS_VERSION:-8.6.0}"
+  image: "${CLIENT_LIBS_TEST_IMAGE:-redislabs/client-libs-test}:${CLIENT_LIBS_TEST_IMAGE_TAG:-${REDIS_VERSION:-8.6.0}}"
 x-client-libs-stack-image: &client-libs-stack-image
-  image: "redislabs/client-libs-test:${REDIS_STACK_VERSION:-8.6.0}"
+  image: "${CLIENT_LIBS_TEST_IMAGE:-redislabs/client-libs-test}:${CLIENT_LIBS_TEST_IMAGE_TAG:-${REDIS_STACK_VERSION:-${REDIS_VERSION:-8.6.0}}}"
 
 services:
   # Test infrastructure used for simulating network issues to test multi-db client failover
