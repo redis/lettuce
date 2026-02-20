@@ -23,11 +23,18 @@ public interface RedisDatabase {
     String getId();
 
     /**
-     * Get the weight for load balancing.
+     * Get the weight for endpoint priority.
      *
      * @return the weight
      */
     float getWeight();
+
+    /**
+     * Set the weight for endpoint priority.
+     *
+     * @param weight the weight
+     */
+    void setWeight(float weight);
 
     /**
      * Get the Redis URI for this database.

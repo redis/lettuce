@@ -71,7 +71,7 @@ public interface BaseRedisMultiDbConnection extends Closeable {
      * Add a new database to the multi-database connection.
      *
      * @param redisURI the Redis URI for the new database, must not be {@code null}
-     * @param weight the weight for load balancing, must be greater than 0
+     * @param weight the weight for endpoint priority, must be greater than 0
      * @throws IllegalArgumentException if the database already exists or parameters are invalid
      */
     void addDatabase(RedisURI redisURI, float weight);

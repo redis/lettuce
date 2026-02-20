@@ -219,14 +219,14 @@ class DatabaseConfigBuilderUnitTests {
         }
 
         @Test
-        @DisplayName("Example: Configuration with custom weight for load balancing")
+        @DisplayName("Example: Configuration with custom weight for endpoint selection")
         void exampleConfigurationWithCustomWeight() {
             // Example: Create multiple configs with different weights
             DatabaseConfig config1 = DatabaseConfig.builder(RedisURI.create("redis://primary:6379")).weight(2.0f).build();
 
             DatabaseConfig config2 = DatabaseConfig.builder(RedisURI.create("redis://secondary:6379")).weight(1.0f).build();
 
-            // Verify weights for load balancing
+            // Verify weights for endpoint selection
             assertThat(config1.getWeight()).isEqualTo(2.0f);
             assertThat(config2.getWeight()).isEqualTo(1.0f);
         }

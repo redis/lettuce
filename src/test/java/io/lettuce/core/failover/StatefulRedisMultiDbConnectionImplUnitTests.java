@@ -2,6 +2,7 @@ package io.lettuce.core.failover;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -1060,6 +1061,51 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
                             .hasMessageContaining("multiDbOptions must not be null");
         }
 
+        @Test
+        @DisplayName("Should failback when a database weight is increased to be higher than current database")
+        void shouldFailbackWhenDatabaseWeightIsIncreasedToBeHigher() {
+            // Given: MultiDbOptions with failback enabled
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true)
+                    .failbackCheckInterval(Duration.ofSeconds(30)).build();
+
+            try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options)) {
+
+                // Capture the failback task
+                ArgumentCaptor<Runnable> failbackTaskCaptor = ArgumentCaptor.forClass(Runnable.class);
+                verify(eventExecutorGroup).scheduleAtFixedRate(failbackTaskCaptor.capture(), anyLong(), anyLong(),
+                        any(TimeUnit.class));
+
+                // Start with db1 (weight 1.0)
+                assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
+                assertThat(connection.getDatabase(uri1).getWeight()).isEqualTo(1.0f);
+
+                // Increase db3's weight to be higher than db2's weight
+                // db3 initially has weight 0.25, increase it to 1.5
+                connection.getDatabase(uri3).setWeight(1.5f);
+                assertThat(connection.getDatabase(uri3).getWeight()).isEqualTo(1.5f);
+
+                // Execute the periodic failback check
+                failbackTaskCaptor.getValue().run();
+
+                // Then: Should failback to db3 (now has highest weight of 1.5)
+                assertThat(connection.getCurrentEndpoint()).isEqualTo(uri3);
+
+                // Verify DatabaseSwitchEvent was published with FAILBACK reason
+                ArgumentCaptor<DatabaseSwitchEvent> eventCaptor = ArgumentCaptor.forClass(DatabaseSwitchEvent.class);
+                verify(eventBus, atLeastOnce()).publish(eventCaptor.capture());
+
+                // Find the failback event (there may be multiple switch events)
+                DatabaseSwitchEvent failbackEvent = eventCaptor.getAllValues().stream()
+                        .filter(event -> event.getReason() == SwitchReason.FAILBACK).findFirst().orElse(null);
+
+                assertThat(failbackEvent).isNotNull();
+                assertThat(failbackEvent.getFromDb()).isEqualTo(uri1);
+                assertThat(failbackEvent.getToDb()).isEqualTo(uri3);
+                assertThat(failbackEvent.getSource()).isSameAs(connection);
+            }
+        }
+
     }
 
     @Nested
@@ -1277,6 +1323,79 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
                         .collect(java.util.stream.Collectors.toList());
                 assertThat(hostPorts).containsExactlyInAnyOrder("localhost:6379", "localhost:6380", "localhost:6381");
             }
+        }
+
+    }
+
+    @Nested
+    @DisplayName("Weight Management Tests")
+    class WeightManagementTests {
+
+        @Test
+        @DisplayName("Should get initial weight from config")
+        void shouldGetInitialWeightFromConfig() {
+            // Then: Weight should be 1.0f as set in setUp
+            assertThat(db1.getWeight()).isEqualTo(1.0f);
+        }
+
+        @Test
+        @DisplayName("Should set and get weight")
+        void shouldSetAndGetWeight() {
+            // When: Set weight to 2.5f
+            db1.setWeight(2.5f);
+
+            // Then: Weight should be updated
+            assertThat(db1.getWeight()).isEqualTo(2.5f);
+        }
+
+        @Test
+        @DisplayName("Should update weight multiple times")
+        void shouldUpdateWeightMultipleTimes() {
+            // When: Update weight multiple times
+            db1.setWeight(1.5f);
+            assertThat(db1.getWeight()).isEqualTo(1.5f);
+
+            db1.setWeight(3.0f);
+            assertThat(db1.getWeight()).isEqualTo(3.0f);
+
+            db1.setWeight(0.5f);
+            assertThat(db1.getWeight()).isEqualTo(0.5f);
+        }
+
+        @Test
+        @DisplayName("Should throw on zero weight")
+        void shouldThrowOnZeroWeight() {
+            // When: Set weight to 0
+            // Then: Should throw exception
+            assertThrows(IllegalArgumentException.class, () -> db1.setWeight(0.0f));
+        }
+
+        @Test
+        @DisplayName("Should throw on negative weight")
+        void shouldThrowOnNegativeWeight() {
+            // When: Set weight to negative value
+            // Then: Should throw exception
+            assertThrows(IllegalArgumentException.class, () -> db1.setWeight(-1.0f));
+        }
+
+        @Test
+        @DisplayName("Should handle very large weight values")
+        void shouldHandleVeryLargeWeightValues() {
+            // When: Set weight to very large value
+            db1.setWeight(Float.MAX_VALUE);
+
+            // Then: Weight should be set
+            assertThat(db1.getWeight()).isEqualTo(Float.MAX_VALUE);
+        }
+
+        @Test
+        @DisplayName("Should handle very small positive weight values")
+        void shouldHandleVerySmallPositiveWeightValues() {
+            // When: Set weight to very small positive value
+            db1.setWeight(0.001f);
+
+            // Then: Weight should be set
+            assertThat(db1.getWeight()).isEqualTo(0.001f);
         }
 
     }
