@@ -24,7 +24,7 @@ import io.lettuce.core.search.arguments.SugGetArgs
 import io.lettuce.core.search.arguments.SynUpdateArgs
 import io.lettuce.core.search.AggregationReply.Cursor
 import io.lettuce.core.search.HybridReply
-import io.lettuce.core.search.arguments.HybridArgs
+import io.lettuce.core.search.arguments.hybrid.HybridArgs
 
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow

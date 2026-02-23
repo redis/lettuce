@@ -13,19 +13,26 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
-import io.lettuce.core.search.arguments.CombineArgs;
+import io.lettuce.core.search.aggregateutils.Apply;
+import io.lettuce.core.search.arguments.hybrid.Combiners;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
-import io.lettuce.core.search.arguments.HybridArgs;
-import io.lettuce.core.search.arguments.HybridSearchArgs;
-import io.lettuce.core.search.arguments.HybridVectorArgs;
+import io.lettuce.core.search.aggregateutils.Filter;
+import io.lettuce.core.search.aggregateutils.GroupBy;
+import io.lettuce.core.search.arguments.hybrid.HybridArgs;
+import io.lettuce.core.search.arguments.hybrid.HybridSearchArgs;
+import io.lettuce.core.search.arguments.hybrid.HybridVectorArgs;
+import io.lettuce.core.search.aggregateutils.Limit;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
-import io.lettuce.core.search.arguments.PostProcessingArgs;
+import io.lettuce.core.search.arguments.hybrid.PostProcessingArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
-import io.lettuce.core.search.arguments.ScoringFunction;
+import io.lettuce.core.search.aggregateutils.Reducers;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.aggregateutils.SortBy;
 import io.lettuce.core.search.arguments.SortByArgs;
+import io.lettuce.core.search.aggregateutils.SortDirection;
+import io.lettuce.core.search.aggregateutils.SortProperty;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
@@ -36,7 +43,6 @@ import io.lettuce.core.search.arguments.VectorFieldArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -1203,7 +1209,6 @@ public class RediSearchIntegrationTests {
 
     @Test
     @EnabledOnCommand("FT.HYBRID")
-    @Disabled("FT.HYBRID feature requires update after Redis 8.6")
     void ftHybridAdvancedMultiQueryWithPostProcessing() {
         String indexName = "idx:ecommerce";
 
@@ -1258,24 +1263,19 @@ public class RediSearchIntegrationTests {
 
         HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
-                        .scorer(HybridSearchArgs.Scorer.of(ScoringFunction.BM25)).scoreAlias("text_score").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
+                        .scoreAlias("text_score").build())
+                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector("$vec")
                         .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
                         .scoreAlias("vector_score").build())
-                .combine(CombineArgs.of(new CombineArgs.Linear<String>().alpha(0.7).beta(0.3)))
+                .combine(Combiners.<String> linear().alpha(0.7).beta(0.3).window(26))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
-                        .addOperation(PostProcessingArgs.GroupBy.<String, String> of("@brand")
-                                .reduce(PostProcessingArgs.Reducer
-                                        .<String, String> of(PostProcessingArgs.ReduceFunction.SUM, "@price").as("sum"))
-                                .reduce(PostProcessingArgs.Reducer.<String, String> of(PostProcessingArgs.ReduceFunction.COUNT)
-                                        .as("count")))
-                        .addOperation(PostProcessingArgs.SortBy.of(
-                                new PostProcessingArgs.SortProperty<>("@sum", PostProcessingArgs.SortDirection.ASC),
-                                new PostProcessingArgs.SortProperty<>("@count", PostProcessingArgs.SortDirection.DESC)))
-                        .addOperation(PostProcessingArgs.Apply.of("@sum * 0.9", "discounted_price"))
-                        .addOperation(PostProcessingArgs.Filter.of("@sum > 700"))
-                        .addOperation(PostProcessingArgs.Limit.of(0, 20)).build())
-                .param("discount_rate", "0.9").param("$vector", new String(queryVector)).build();
+                        .groupBy(GroupBy.<String, String> of("@brand").reduce(Reducers.sum("@price").as("sum"))
+                                .reduce(Reducers.<String> count().as("count")))
+                        .sortBy(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC),
+                                new SortProperty<>("@count", SortDirection.DESC)))
+                        .apply(Apply.of("@sum * 0.9", "discounted_price")).filter(Filter.of("@sum > 700"))
+                        .limit(Limit.of(0, 20)).build())
+                .param("vec", queryVector).param("discount_rate", "0.9").build();
 
         HybridReply<String, String> reply = redis.ftHybrid(indexName, hybridArgs);
 
@@ -1288,21 +1288,21 @@ public class RediSearchIntegrationTests {
         assertThat(reply.getExecutionTime()).isGreaterThan(0L);
 
         // Verify first result (google)
-        Map<String, String> r1 = reply.getResults().get(0).getFields();
+        Map<String, String> r1 = reply.getResults().get(0);
         assertThat(r1.get("brand")).isEqualTo("google");
         assertThat(r1.get("count")).isEqualTo("2");
         assertThat(r1.get("sum")).isEqualTo("1398");
         assertThat(r1.get("discounted_price")).isEqualTo("1258.2");
 
         // Verify second result (samsung)
-        Map<String, String> r2 = reply.getResults().get(1).getFields();
+        Map<String, String> r2 = reply.getResults().get(1);
         assertThat(r2.get("brand")).isEqualTo("samsung");
         assertThat(r2.get("count")).isEqualTo("2");
         assertThat(r2.get("sum")).isEqualTo("1598");
         assertThat(r2.get("discounted_price")).isEqualTo("1438.2");
 
         // Verify third result (apple)
-        Map<String, String> r3 = reply.getResults().get(2).getFields();
+        Map<String, String> r3 = reply.getResults().get(2);
         assertThat(r3.get("brand")).isEqualTo("apple");
         assertThat(r3.get("count")).isEqualTo("3");
         assertThat(r3.get("sum")).isEqualTo("2997");

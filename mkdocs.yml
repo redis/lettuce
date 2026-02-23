@@ -65,7 +65,20 @@ nav:
           - Redis Functions: user-guide/redis-functions.md
   - High-Availability and Sharding: ha-sharding.md
   - Working with dynamic Redis Command Interfaces: redis-command-interfaces.md
-  - Advanced Usage: advanced-usage.md
+  - Advanced Usage:
+      - Client Resources: advanced-usage/client-resources.md
+      - Client Options: advanced-usage/client-options.md
+      - SSL Connections: advanced-usage/ssl-connections.md
+      - Native Transports: advanced-usage/native-transports.md
+      - Streaming API: advanced-usage/streaming-api.md
+      - Events: advanced-usage/events.md
+      - Observability: advanced-usage/observability.md
+      - Pipelining: advanced-usage/pipelining.md
+      - Connection Pooling: advanced-usage/connection-pooling.md
+      - Custom Commands: advanced-usage/custom-commands.md
+      - Graal Native Image: advanced-usage/graal-native-image.md
+      - Command Execution Reliability: advanced-usage/command-execution-reliability.md
+      - Failover: advanced-usage/failover.md
   - Integration and Extension: integration-extension.md
   - Frequently Asked Questions: faq.md
   - API Reference: https://www.javadoc.io/doc/io.lettuce/lettuce-core/latest/index.html

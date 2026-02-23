@@ -14,7 +14,7 @@
 
 ## What's new in Lettuce 7.0
 
-- [Maintenance events support](advanced-usage.md) for graceful handling of Redis maintenance operations enabling hitless upgrades
+- [Maintenance events support](advanced-usage/events.md) for graceful handling of Redis maintenance operations enabling hitless upgrades
 - Upgrade to [Netty 4.2](https://github.com/netty/netty/releases/tag/netty-4.2.0.Final) with adaptive memory allocator and improved threading model
 - [RediSearch](user-guide/redis-search.md) cluster mode support with cursor sticking and read operation distribution across nodes
 - String-based JSON API to avoid unnecessary byte-to-string conversions
@@ -77,10 +77,10 @@
 - Command Listener API through
   `RedisClient.addListener(CommandListener)`.
 
-- [Micrometer support](advanced-usage.md#micrometer) through
+- [Micrometer support](advanced-usage/observability.md#micrometer) through
   `MicrometerCommandLatencyRecorder`.
 
-- [Experimental support for `io_uring`](advanced-usage.md#native-transports).
+- [Experimental support for `io_uring`](advanced-usage/native-transports.md).
 
 - Configuration of extended Keep-Alive options through
   `KeepAliveOptions` (only available for some transports/Java versions).
@@ -91,7 +91,7 @@
 
 - Add support for Redis ACL commands.
 
-- [Java Flight Recorder Events](advanced-usage.md#java-flight-recorder-events-since-61)
+- [Java Flight Recorder Events](advanced-usage/observability.md#java-flight-recorder-events-since-61)
 
 ## What’s new in Lettuce 6.0
 
@@ -156,14 +156,14 @@
 - Add support for `ZPOPMIN`, `ZPOPMAX`, `BZPOPMIN`, `BZPOPMAX` commands.
 
 - Add support for Redis Command Tracing through Brave, see [Configuring
-  Client resources](advanced-usage.md#configuring-client-resources).
+  Client resources](advanced-usage/client-resources.md).
 
 - Add support for [Redis
   Streams](https://redis.io/topics/streams-intro).
 
 - Asynchronous `connect()` for Master/Replica connections.
 
-- [Asynchronous Connection Pooling](advanced-usage.md#asynchronous-connection-pooling)
+- [Asynchronous Connection Pooling](advanced-usage/connection-pooling.md#asynchronous-connection-pooling)
   through `AsyncConnectionPoolSupport` and `AsyncPool`.
 
 - Dedicated exceptions for Redis `LOADING`, `BUSY`, and `NOSCRIPT`
@@ -173,11 +173,11 @@
   canceled already on disconnect.
 
 - Global command timeouts (also for reactive and asynchronous API usage)
-  configurable through [Client Options](advanced-usage.md#client-options).
+  configurable through [Client Options](advanced-usage/client-options.md).
 
 - Host and port mappers for Lettuce usage behind connection
   tunnels/proxies through `SocketAddressResolver`, see [Configuring
-  Client resources](advanced-usage.md#configuring-client-resources).
+  Client resources](advanced-usage/client-resources.md).
 
 - `SCRIPT LOAD` dispatch to all cluster nodes when issued through
   `RedisAdvancedClusterCommands`.

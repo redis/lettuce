@@ -15,6 +15,7 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -118,7 +119,7 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
                     if (resultsList != null) {
                         for (Object resultObj : resultsList) {
                             if (resultObj instanceof ComplexData) {
-                                HybridReply.Result<K, V> result = new HybridReply.Result<>();
+                                Map<K, V> result = new HashMap<>();
                                 addFieldsFromComplexData((ComplexData) resultObj, result);
                                 reply.addResult(result);
                             }
@@ -182,12 +183,12 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
             }
 
             ComplexData resultData = (ComplexData) raw;
-            HybridReply.Result<K, V> result = parseResultEntry(resultData);
+            Map<K, V> result = parseResultEntry(resultData);
             reply.addResult(result);
         }
     }
 
-    private HybridReply.Result<K, V> parseResultEntry(ComplexData resultData) {
+    private Map<K, V> parseResultEntry(ComplexData resultData) {
         Map<Object, Object> entryMap;
         try {
             entryMap = resultData.getDynamicMap();
@@ -195,7 +196,7 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
             entryMap = null;
         }
 
-        HybridReply.Result<K, V> result = new HybridReply.Result<>();
+        Map<K, V> result = new HashMap<>();
 
         if (entryMap != null && !entryMap.isEmpty()) {
             entryMap.forEach((key, value) -> {
@@ -205,7 +206,7 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
 
                 K fieldKey = codec.decodeKey((ByteBuffer) key);
                 V fieldValue = codec.decodeValue((ByteBuffer) value);
-                result.addField(fieldKey, fieldValue);
+                result.put(fieldKey, fieldValue);
             });
         } else {
             addFieldsFromComplexData(resultData, result);
@@ -214,7 +215,7 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
         return result;
     }
 
-    private void addFieldsFromComplexData(ComplexData data, HybridReply.Result<K, V> result) {
+    private void addFieldsFromComplexData(ComplexData data, Map<K, V> result) {
         Map<Object, Object> map;
         try {
             map = data.getDynamicMap();
@@ -229,7 +230,7 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
                 }
                 K decodedKey = codec.decodeKey((ByteBuffer) k);
                 V decodedValue = codec.decodeValue((ByteBuffer) v);
-                result.addField(decodedKey, decodedValue);
+                result.put(decodedKey, decodedValue);
             });
             return;
         }
@@ -247,7 +248,7 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
             }
             K decodedKey = codec.decodeKey((ByteBuffer) k);
             V decodedValue = codec.decodeValue((ByteBuffer) v);
-            result.addField(decodedKey, decodedValue);
+            result.put(decodedKey, decodedValue);
         }
     }
 

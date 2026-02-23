@@ -284,6 +284,41 @@ public class CommandArgs<K, V> {
     }
 
     /**
+     * Add an object argument. Dispatches to the appropriate typed add method based on runtime type.
+     * <p>
+     * Supports: {@link String}, {@link Long}, {@link Integer}, {@link Double}, {@link Float}, {@link ProtocolKeyword},
+     * {@code byte[]}. Other types are converted via {@link Object#toString()}.
+     * </p>
+     *
+     * @param obj the object to add, must not be {@code null}
+     * @return the command args.
+     * @since 7.5
+     */
+    public CommandArgs<K, V> add(Object obj) {
+
+        LettuceAssert.notNull(obj, "Argument must not be null");
+
+        if (obj instanceof String) {
+            singularArguments.add(StringArgument.of((String) obj));
+        } else if (obj instanceof Long) {
+            singularArguments.add(IntegerArgument.of((Long) obj));
+        } else if (obj instanceof Integer) {
+            singularArguments.add(IntegerArgument.of((long) (Integer) obj));
+        } else if (obj instanceof Double) {
+            singularArguments.add(DoubleArgument.of((Double) obj));
+        } else if (obj instanceof Float) {
+            singularArguments.add(DoubleArgument.of((double) (Float) obj));
+        } else if (obj instanceof ProtocolKeyword) {
+            singularArguments.add(ProtocolKeywordArgument.of((ProtocolKeyword) obj));
+        } else if (obj instanceof byte[]) {
+            singularArguments.add(BytesArgument.of((byte[]) obj));
+        } else {
+            singularArguments.add(StringArgument.of(obj.toString()));
+        }
+        return this;
+    }
+
+    /**
      * Add all arguments from {@link CommandArgs}
      *
      * @param args the args, must not be {@code null}
