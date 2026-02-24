@@ -143,6 +143,111 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         connection.close();
     }
 
+    // ============ Database Weight Management Tests ============
+
+    @Test
+    void shouldGetDatabaseWeight() {
+        StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
+
+        RedisURI endpoint = connection.getCurrentEndpoint();
+        assertNotNull(endpoint);
+
+        // Get database and verify weight
+        float weight = connection.getDatabase(endpoint).getWeight();
+        assertThat(weight).isGreaterThan(0);
+
+        connection.close();
+    }
+
+    @Test
+    void shouldSetDatabaseWeight() {
+        StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
+
+        RedisURI endpoint = connection.getCurrentEndpoint();
+        assertNotNull(endpoint);
+
+        // Get initial weight
+        float initialWeight = connection.getDatabase(endpoint).getWeight();
+
+        // Set new weight
+        connection.getDatabase(endpoint).setWeight(5.0f);
+
+        // Verify weight was updated
+        assertThat(connection.getDatabase(endpoint).getWeight()).isEqualTo(5.0f);
+        assertThat(connection.getDatabase(endpoint).getWeight()).isNotEqualTo(initialWeight);
+
+        connection.close();
+    }
+
+    @Test
+    void shouldUpdateWeightMultipleTimes() {
+        StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
+
+        RedisURI endpoint = connection.getCurrentEndpoint();
+        assertNotNull(endpoint);
+
+        // Update weight multiple times
+        connection.getDatabase(endpoint).setWeight(2.0f);
+        assertThat(connection.getDatabase(endpoint).getWeight()).isEqualTo(2.0f);
+
+        connection.getDatabase(endpoint).setWeight(3.5f);
+        assertThat(connection.getDatabase(endpoint).getWeight()).isEqualTo(3.5f);
+
+        connection.getDatabase(endpoint).setWeight(1.0f);
+        assertThat(connection.getDatabase(endpoint).getWeight()).isEqualTo(1.0f);
+
+        connection.close();
+    }
+
+    @Test
+    void shouldSetWeightForMultipleDatabases() {
+        StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
+
+        List<RedisURI> endpoints = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
+                .collect(Collectors.toList());
+        assertThat(endpoints).hasSizeGreaterThanOrEqualTo(2);
+
+        // Set different weights for different databases
+        connection.getDatabase(endpoints.get(0)).setWeight(2.0f);
+        connection.getDatabase(endpoints.get(1)).setWeight(3.0f);
+
+        // Verify weights were updated
+        assertThat(connection.getDatabase(endpoints.get(0)).getWeight()).isEqualTo(2.0f);
+        assertThat(connection.getDatabase(endpoints.get(1)).getWeight()).isEqualTo(3.0f);
+
+        connection.close();
+    }
+
+    @Test
+    void shouldGetWeightForAllDatabases() {
+        StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
+
+        // Get all endpoints and verify each has a positive weight
+        for (RedisURI endpoint : connection.getEndpoints()) {
+            float weight = connection.getDatabase(endpoint).getWeight();
+            assertThat(weight).isGreaterThan(0);
+        }
+
+        connection.close();
+    }
+
+    @Test
+    void shouldThrowExceptionWhenGettingDatabaseForNonExistentEndpoint() {
+        StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
+
+        RedisURI nonExistentUri = RedisURI.create("redis://nonexistent:9999");
+
+        assertThatThrownBy(() -> connection.getDatabase(nonExistentUri)).isInstanceOf(IllegalArgumentException.class);
+
+        connection.close();
+    }
+
     // ============ Basic Command Tests (Async) ============
 
     @Test
