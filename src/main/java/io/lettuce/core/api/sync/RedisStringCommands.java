@@ -420,7 +420,10 @@ public interface RedisStringCommands<K, V> {
      * @param seconds the seconds type: long.
      * @param value the value.
      * @return String simple-string-reply.
+     * @deprecated since 7.4.0, use {@link #set(K, V, SetArgs)} instead.
+     * This command is deprecated by Redis since version 2.6.12.
      */
+    @Deprecated
     String setex(K key, long seconds, V value);
 
     /**

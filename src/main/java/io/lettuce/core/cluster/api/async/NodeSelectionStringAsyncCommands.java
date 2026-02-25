@@ -420,7 +420,10 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * @param seconds the seconds type: long.
      * @param value the value.
      * @return String simple-string-reply.
+     * @deprecated since 7.4.0, use {@link #set(Object, Object, SetArgs)} instead.
+     * This command is deprecated by Redis since version 2.6.12.
      */
+    @Deprecated
     AsyncExecutions<String> setex(K key, long seconds, V value);
 
     /**
