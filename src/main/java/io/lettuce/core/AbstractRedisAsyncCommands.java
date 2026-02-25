@@ -1286,6 +1286,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.getrange(key, start, end));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<V> getset(K key, V value) {
         return dispatch(commandBuilder.getset(key, value));

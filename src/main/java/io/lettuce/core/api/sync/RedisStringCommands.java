@@ -299,7 +299,10 @@ public interface RedisStringCommands<K, V> {
      * @param key the key.
      * @param value the value.
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
+     * @deprecated since 7.4.0, use {@link #set(K, V, SetArgs)} instead.
+     * This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     V getset(K key, V value);
 
     /**
