@@ -1382,6 +1382,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> commandBuilder.getrange(key, start, end));
     }
 
+    @Deprecated
     @Override
     public Mono<V> getset(K key, V value) {
         return createMono(() -> commandBuilder.getset(key, value));
