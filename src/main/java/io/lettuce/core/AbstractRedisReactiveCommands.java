@@ -2852,6 +2852,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> commandBuilder.setex(key, seconds, value));
     }
 
+    @Deprecated
     @Override
     public Mono<Boolean> setnx(K key, V value) {
         return createMono(() -> commandBuilder.setnx(key, value));
