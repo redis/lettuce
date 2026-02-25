@@ -13,6 +13,7 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.search.aggregateutils.Apply;
 import io.lettuce.core.search.arguments.hybrid.Combiners;
 import io.lettuce.core.search.arguments.CreateArgs;
@@ -49,6 +50,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1309,6 +1311,46 @@ public class RediSearchIntegrationTests {
         assertThat(r3.get("discounted_price")).isEqualTo("2697.3");
 
         redis.ftDropindex(indexName);
+    }
+
+    @Test
+    void testSearchWithLargeJsonPayloads() {
+        String testIndex = "idx-large-json";
+        String prefix = "large-json:";
+
+        redis.ftCreate(testIndex,
+                CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON).withPrefix(prefix).build(),
+                Collections.singletonList(NumericFieldArgs.<String> builder().name("pos").build()));
+
+        // Add sorting by pos to ensure deterministic order
+        SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder()
+                .sortBy(SortByArgs.<String> builder().attribute("pos").build()).limit(0, 10_000).build();
+
+        // Store expected values for exact comparison
+        ArrayList<String> expected = new ArrayList<>();
+
+        for (int i = 1; i <= 50; i++) {
+            String json = String.format(
+                    "{\"pos\":%d,\"ts\":%d,\"large\":\"just here to make the response larger to some great extend and overflow the buffers\"}",
+                    i, System.currentTimeMillis());
+
+            redis.jsonSet(prefix + i, JsonPath.ROOT_PATH, json);
+            expected.add(json);
+
+            // Start checking at iteration 924 like the reproducer
+            if (i >= 40) {
+                SearchReply<String, String> reply = redis.ftSearch(testIndex, "*", searchArgs);
+                assertThat(reply.getCount()).isEqualTo(i);
+
+                // Exact value comparison at each position
+                for (int t = 0; t < expected.size(); t++) {
+                    String actualBody = reply.getResults().get(t).getFields().get("$");
+                    assertThat(actualBody).as("Mismatch at position %d on loop %d", t, i).isEqualTo(expected.get(t));
+                }
+            }
+        }
+
+        redis.ftDropindex(testIndex);
     }
 
     private void createProduct(String id, String title, String category, String brand, String price, String rating,
