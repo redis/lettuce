@@ -379,11 +379,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.brpop(timeout, keys));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<V> brpoplpush(long timeout, K source, K destination) {
         return dispatch(commandBuilder.brpoplpush(timeout, source, destination));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<V> brpoplpush(double timeout, K source, K destination) {
         return dispatch(commandBuilder.brpoplpush(timeout, source, destination));

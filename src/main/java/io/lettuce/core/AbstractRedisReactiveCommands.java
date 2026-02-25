@@ -402,11 +402,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> commandBuilder.brpop(timeout, keys));
     }
 
+    @Deprecated
     @Override
     public Mono<V> brpoplpush(long timeout, K source, K destination) {
         return createMono(() -> commandBuilder.brpoplpush(timeout, source, destination));
     }
 
+    @Deprecated
     @Override
     public Mono<V> brpoplpush(double timeout, K source, K destination) {
         return createMono(() -> commandBuilder.brpoplpush(timeout, source, destination));
