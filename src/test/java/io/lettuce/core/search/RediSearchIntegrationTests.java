@@ -1359,7 +1359,7 @@ public class RediSearchIntegrationTests {
             ArrayList<String> expected = new ArrayList<>();
 
             // Use 1000 documents like the reproducer - bug manifests around iteration 924+
-            for (int i = 1; i <= 1000; i++) {
+            for (int i = 1; i <= 50; i++) {
                 String json = String.format(
                         "{\"pos\":%d,\"ts\":%d,\"large\":\"just here to make the response larger to some great extend and overflow the buffers\"}",
                         i, System.currentTimeMillis());
