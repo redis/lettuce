@@ -2698,6 +2698,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createDissolvingFlux(() -> commandBuilder.rpop(key, count));
     }
 
+    @Deprecated
     @Override
     public Mono<V> rpoplpush(K source, K destination) {
         return createMono(() -> commandBuilder.rpoplpush(source, destination));
