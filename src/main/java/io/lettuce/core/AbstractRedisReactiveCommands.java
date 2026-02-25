@@ -1468,6 +1468,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    @Deprecated
     public Mono<String> hmset(K key, Map<K, V> map) {
         return createMono(() -> commandBuilder.hmset(key, map));
     }
