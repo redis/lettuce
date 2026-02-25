@@ -2340,6 +2340,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.ping());
     }
 
+    @Deprecated
     @Override
     public RedisFuture<String> psetex(K key, long milliseconds, V value) {
         return dispatch(commandBuilder.psetex(key, milliseconds, value));

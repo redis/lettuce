@@ -2421,6 +2421,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(commandBuilder::ping);
     }
 
+    @Deprecated
     @Override
     public Mono<String> psetex(K key, long milliseconds, V value) {
         return createMono(() -> commandBuilder.psetex(key, milliseconds, value));

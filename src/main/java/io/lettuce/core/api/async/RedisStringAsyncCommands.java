@@ -434,7 +434,10 @@ public interface RedisStringAsyncCommands<K, V> {
      * @param milliseconds the milliseconds type: long.
      * @param value the value.
      * @return String simple-string-reply.
+     * @deprecated since 7.4.0, use {@link #set(Object, Object, SetArgs)} instead.
+     * This command is deprecated by Redis since version 2.6.12.
      */
+    @Deprecated
     RedisFuture<String> psetex(K key, long milliseconds, V value);
 
     /**
