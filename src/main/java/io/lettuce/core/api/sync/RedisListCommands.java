@@ -392,7 +392,10 @@ public interface RedisListCommands<K, V> {
      * @param source the source key.
      * @param destination the destination type: key.
      * @return V bulk-string-reply the element being popped and pushed.
+     * @deprecated since 7.4.0, use {@link #lmove(Object, Object, LMoveArgs)} instead.
+     * This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     V rpoplpush(K source, K destination);
 
     /**
