@@ -1368,7 +1368,7 @@ public class RediSearchIntegrationTests {
                 expected.add(json);
 
                 // Start checking at iteration 924 like the reproducer - this is where ~200KB threshold is reached
-                if (i >= 924) {
+                if (i >= 30) {
                     SearchReply<String, String> reply = testRedis.ftSearch(testIndex, "*", searchArgs);
                     assertThat(reply.getCount()).isEqualTo(i);
 
