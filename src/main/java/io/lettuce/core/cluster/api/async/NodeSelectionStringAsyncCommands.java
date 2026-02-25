@@ -447,7 +447,10 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * @return Boolean integer-reply specifically:
      *
      *         {@code 1} if the key was set {@code 0} if the key was not set.
+     * @deprecated since 7.4.0, use {@link #set(Object, Object, SetArgs)} instead.
+     * This command is deprecated by Redis since version 2.6.12.
      */
+    @Deprecated
     AsyncExecutions<Boolean> setnx(K key, V value);
 
     /**
