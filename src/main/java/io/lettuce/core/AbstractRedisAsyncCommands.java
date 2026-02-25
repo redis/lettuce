@@ -1352,6 +1352,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    @Deprecated
     public RedisFuture<String> hmset(K key, Map<K, V> map) {
         return dispatch(commandBuilder.hmset(key, map));
     }

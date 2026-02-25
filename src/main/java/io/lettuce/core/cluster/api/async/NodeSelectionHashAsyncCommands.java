@@ -169,7 +169,10 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param key the key.
      * @param map the hash to apply.
      * @return String simple-string-reply.
+     * @deprecated since 7.4.0, use {@link #hset(java.lang.Object, java.util.Map)} instead.
+     * This command is deprecated by Redis since version 4.0.0.
      */
+    @Deprecated
     AsyncExecutions<String> hmset(K key, Map<K, V> map);
 
     /**
