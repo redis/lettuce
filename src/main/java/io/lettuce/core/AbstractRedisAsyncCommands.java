@@ -2781,6 +2781,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.setbit(key, offset, value));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<String> setex(K key, long seconds, V value) {
         return dispatch(commandBuilder.setex(key, seconds, value));
