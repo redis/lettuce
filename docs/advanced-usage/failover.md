@@ -403,11 +403,13 @@ connection.getDatabase(eastUri).setWeight(2.0f);
 // After the next failback check (within 30 seconds), Lettuce will automatically
 // fail back to redis-east because it has a higher weight (2.0 > 1.5)
 // and is healthy
+Thread.sleep(30000);
+System.out.println("After weight change: " + connection.getCurrentEndpoint()); // redis-east
 ```
 
 #### Weight Changes Without Automatic Failback
 
-If automatic failback is disabled (`failbackSupported(false)`), weight changes do not trigger automatic database switches:
+If automatic failback is disabled (`failbackSupported(false)`), weight change itself does not trigger automatic database switches:
 
 ```java
 MultiDbOptions options = MultiDbOptions.builder()
@@ -431,22 +433,6 @@ Weight changes affect which database Lettuce selects during failover:
 - When the current database fails, Lettuce selects the healthy database with the **highest current weight**
 - Weight changes are immediately reflected in failover decisions
 - This allows you to control failover targets dynamically
-
-```java
-// Setup: Three databases
-DatabaseConfig primary = DatabaseConfig.builder(primaryUri).weight(1.0f).build();
-DatabaseConfig secondary = DatabaseConfig.builder(secondaryUri).weight(0.7f).build();
-DatabaseConfig tertiary = DatabaseConfig.builder(tertiaryUri).weight(0.3f).build();
-
-MultiDbClient client = MultiDbClient.create(Arrays.asList(primary, secondary, tertiary));
-StatefulRedisMultiDbConnection<String, String> connection = client.connect();
-
-// Currently on primary (weight 1.0)
-// Before maintenance, increase tertiary's weight to make it the preferred failover target
-connection.getDatabase(tertiaryUri).setWeight(0.9f);
-
-// If primary fails, Lettuce will now failover to tertiary (0.9) instead of secondary (0.7)
-```
 
 ### Best Practices for Dynamic Weight Changes
 
