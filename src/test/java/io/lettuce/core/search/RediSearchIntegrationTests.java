@@ -11,7 +11,10 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.protocol.DecodeBufferPolicies;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.search.aggregateutils.Apply;
@@ -1313,44 +1316,74 @@ public class RediSearchIntegrationTests {
         redis.ftDropindex(indexName);
     }
 
+    /**
+     * Test to reproduce memory corruption issue with large FT.SEARCH responses.
+     * <p>
+     * This test reproduces the bug reported in <a href="https://github.com/redis/lettuce/issues/3526">...</a> where ByteBuffer
+     * references to Netty's pooled buffers get corrupted when responses are large enough (~200KB+) to trigger buffer reuse.
+     * <p>
+     * Key conditions to trigger the bug:
+     * <ul>
+     * <li>RESP3 protocol (different parsing path than RESP2)</li>
+     * <li>Large decode buffer policy (prevents early buffer recycling)</li>
+     * <li>Large response size (~200KB+, achieved with 924+ documents)</li>
+     * </ul>
+     */
     @Test
     void testSearchWithLargeJsonPayloads() {
         String testIndex = "idx-large-json";
         String prefix = "large-json:";
 
-        redis.ftCreate(testIndex,
-                CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON).withPrefix(prefix).build(),
-                Collections.singletonList(NumericFieldArgs.<String> builder().name("pos").build()));
+        // Create a dedicated client with settings that trigger the memory corruption bug
+        // These settings match the reproducer from the bug report
+        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).withTimeout(Duration.ofSeconds(30)).build();
+        RedisClient testClient = RedisClient.create(redisURI);
+        testClient.setOptions(ClientOptions.builder()
+                // Large buffer policy prevents early buffer recycling, exposing the bug
+                .decodeBufferPolicy(DecodeBufferPolicies.ratio(Integer.MAX_VALUE / 2.0f))
+                // RESP3 has different parsing path where the bug manifests
+                .protocolVersion(ProtocolVersion.RESP3).build());
 
-        // Add sorting by pos to ensure deterministic order
-        SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder()
-                .sortBy(SortByArgs.<String> builder().attribute("pos").build()).limit(0, 10_000).build();
+        try (StatefulRedisConnection<String, String> connection = testClient.connect()) {
+            RedisCommands<String, String> testRedis = connection.sync();
 
-        // Store expected values for exact comparison
-        ArrayList<String> expected = new ArrayList<>();
+            testRedis.ftCreate(testIndex,
+                    CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON).withPrefix(prefix).build(),
+                    Collections.singletonList(NumericFieldArgs.<String> builder().name("$.pos").as("pos").build()));
 
-        for (int i = 1; i <= 50; i++) {
-            String json = String.format(
-                    "{\"pos\":%d,\"ts\":%d,\"large\":\"just here to make the response larger to some great extend and overflow the buffers\"}",
-                    i, System.currentTimeMillis());
+            // Add sorting by pos to ensure deterministic order
+            SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder()
+                    .sortBy(SortByArgs.<String> builder().attribute("pos").build()).limit(0, 10_000).build();
 
-            redis.jsonSet(prefix + i, JsonPath.ROOT_PATH, json);
-            expected.add(json);
+            // Store expected values for exact comparison
+            ArrayList<String> expected = new ArrayList<>();
 
-            // Start checking at iteration 924 like the reproducer
-            if (i >= 40) {
-                SearchReply<String, String> reply = redis.ftSearch(testIndex, "*", searchArgs);
-                assertThat(reply.getCount()).isEqualTo(i);
+            // Use 1000 documents like the reproducer - bug manifests around iteration 924+
+            for (int i = 1; i <= 1000; i++) {
+                String json = String.format(
+                        "{\"pos\":%d,\"ts\":%d,\"large\":\"just here to make the response larger to some great extend and overflow the buffers\"}",
+                        i, System.currentTimeMillis());
 
-                // Exact value comparison at each position
-                for (int t = 0; t < expected.size(); t++) {
-                    String actualBody = reply.getResults().get(t).getFields().get("$");
-                    assertThat(actualBody).as("Mismatch at position %d on loop %d", t, i).isEqualTo(expected.get(t));
+                testRedis.jsonSet(prefix + i, JsonPath.ROOT_PATH, json);
+                expected.add(json);
+
+                // Start checking at iteration 924 like the reproducer - this is where ~200KB threshold is reached
+                if (i >= 924) {
+                    SearchReply<String, String> reply = testRedis.ftSearch(testIndex, "*", searchArgs);
+                    assertThat(reply.getCount()).isEqualTo(i);
+
+                    // Exact value comparison at each position
+                    for (int t = 0; t < expected.size(); t++) {
+                        String actualBody = reply.getResults().get(t).getFields().get("$");
+                        assertThat(actualBody).as("Mismatch at position %d on loop %d", t, i).isEqualTo(expected.get(t));
+                    }
                 }
             }
-        }
 
-        redis.ftDropindex(testIndex);
+            testRedis.ftDropindex(testIndex);
+        } finally {
+            testClient.shutdown();
+        }
     }
 
     private void createProduct(String id, String title, String category, String brand, String price, String rating,
