@@ -387,18 +387,8 @@ StatefulRedisMultiDbConnection<String, String> connection = client.connect();
 // Initially connected to redis-east (weight 1.0)
 System.out.println("Current: " + connection.getCurrentEndpoint()); // redis-east
 
-// Manually switch to redis-west
-connection.switchTo(westUri);
-System.out.println("After manual switch: " + connection.getCurrentEndpoint()); // redis-west
-
 // Increase redis-west's weight to be higher than redis-east
 connection.getDatabase(westUri).setWeight(1.5f);
-
-// Lettuce will NOT failback because redis-west (1.5) is already active
-// and has the highest weight
-
-// Now increase redis-east's weight to be even higher
-connection.getDatabase(eastUri).setWeight(2.0f);
 
 // After the next failback check (within 30 seconds), Lettuce will automatically
 // fail back to redis-east because it has a higher weight (2.0 > 1.5)
