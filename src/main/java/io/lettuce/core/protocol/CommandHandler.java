@@ -20,11 +20,13 @@
 package io.lettuce.core.protocol;
 
 import static io.lettuce.core.ConnectionEvents.*;
+import static io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE;
 
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.time.LocalTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,6 +49,8 @@ import io.lettuce.core.datastructure.queue.HashIndexedQueue;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
+import io.lettuce.core.metrics.EndpointQueueMonitor;
+import io.lettuce.core.metrics.EndpointQueueMonitor.QueueId;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.PushOutput;
 import io.lettuce.core.resource.ClientResources;
@@ -165,6 +169,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.tracingEnabled = tracing.isEnabled();
 
         this.decodeBufferPolicy = clientOptions.getDecodeBufferPolicy();
+
+        EndpointQueueMonitor endpointQueueMonitor = clientResources.endpointQueueMonitor();
+        if (endpointQueueMonitor != null) {
+            endpointQueueMonitor.observeQueueSize(QueueId.create("lettuce.command.handler.queue", endpoint.getId()),
+                    stack::size);
+        }
     }
 
     public Endpoint getEndpoint() {
@@ -625,6 +635,13 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) throws InterruptedException {
+        final boolean rebindInProgress = ctx.channel().hasAttr(REBIND_ATTRIBUTE)
+                && ctx.channel().attr(REBIND_ATTRIBUTE).get() != null
+                && ctx.channel().attr(REBIND_ATTRIBUTE).get().equals(RebindState.STARTED);
+        if (debugEnabled && rebindInProgress) {
+            logger.debug("{} Processing command while rebind is in progress, stack has {} more to process", logPrefix(),
+                    stack.size());
+        }
 
         if (pristine) {
 
@@ -709,6 +726,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 }
                 afterDecode(ctx, command);
             }
+        }
+
+        if (rebindInProgress && stack.isEmpty()) {
+            logger.info("{} Rebind completed at {}", logPrefix(), LocalTime.now());
+            ctx.channel().attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
         }
 
         decodeBufferPolicy.afterDecoding(buffer);

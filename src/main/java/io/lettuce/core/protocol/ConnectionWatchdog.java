@@ -24,7 +24,11 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
+import io.lettuce.core.metrics.ConnectionMonitor;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import io.lettuce.core.ClientOptions;
@@ -71,7 +75,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private final EventExecutorGroup reconnectWorkers;
 
-    private final ReconnectionHandler reconnectionHandler;
+    protected final ReconnectionHandler reconnectionHandler;
 
     private final ReconnectionListener reconnectionListener;
 
@@ -93,13 +97,80 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private final AtomicBoolean reconnectSchedulerSync;
 
-    private volatile int attempts;
+    private volatile Attempts attempts = new Attempts();
 
     private volatile boolean armed;
 
     private volatile boolean listenOnChannelInactive;
 
     private volatile Timeout reconnectScheduleTimeout;
+
+    private final ConnectionMonitor connectionMonitor;
+
+    static class Attempts {
+
+        private int attempts = 0;
+
+        private long disconnectedNs = -1;
+
+        private long completedNs = -1;
+
+        /**
+         * Sets the time of when connection transitioned to disconnected state.
+         *
+         * @param time the time of when the item was sent.
+         */
+        void disconnected(long time) {
+            if (this.disconnectedNs == -1) {
+                this.disconnectedNs = time;
+            }
+
+            this.completedNs = -1;
+        }
+
+        /**
+         * Set the time of completion
+         * 
+         * @param time the time of completion.
+         */
+        void completed(long time) {
+            if (this.completedNs == -1) {
+                this.completedNs = time;
+            } else {
+                logger.warn("Attempt Completed time already set, ignoring");
+            }
+        }
+
+        /**
+         * @return the time of when the connection became inactive.
+         */
+        long getDisconnected() {
+            return disconnectedNs;
+        }
+
+        /**
+         *
+         * @return the time of completion.
+         */
+        long getCompleted() {
+            return completedNs;
+        }
+
+        public int getAttempts() {
+            return attempts;
+        }
+
+        public int incrementAndGet() {
+            return ++attempts;
+        }
+
+        @Override
+        public String toString() {
+            return "Attempts{" + "attempts=" + attempts + ", disconnectedNs=" + disconnectedNs + ", completedNs=" + completedNs
+                    + '}';
+        }
+
+    }
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -118,8 +189,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      */
     public ConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
             EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
-            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
-            Endpoint endpoint) {
+            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus, Endpoint endpoint,
+            ConnectionMonitor connectionMonitor) {
 
         LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
@@ -141,6 +212,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.eventBus = eventBus;
         this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
         this.epid = endpoint.getId();
+        this.connectionMonitor = connectionMonitor;
 
         Mono<SocketAddress> wrappedSocketAddressSupplier = socketAddressSupplier.doOnNext(addr -> remoteAddress = addr)
                 .onErrorResume(t -> {
@@ -172,6 +244,17 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             reconnectScheduleTimeout.cancel();
         }
 
+        // connection is closing,
+        // reset attempts & record record the time of completion if in middle of reconnect
+        Attempts currentAttempts = this.attempts;
+        this.attempts = new Attempts();
+        if (currentAttempts.getDisconnected() > 0) {
+            // reconnected after disconnect
+            currentAttempts.completed(System.nanoTime());
+
+            connectionMonitor.recordDisconnectedTime(epid, currentAttempts.getCompleted() - currentAttempts.getDisconnected());
+        }
+
         reconnectionHandler.prepareClose();
     }
 
@@ -185,7 +268,18 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         reconnectScheduleTimeout = null;
         logPrefix = null;
         remoteAddress = channel.remoteAddress();
-        attempts = 0;
+
+        // attempts = 0;
+        // reconnected successfully
+        // reset attempts & record record the time of completion
+        final Attempts currentAttempts = this.attempts;
+        this.attempts = new Attempts();
+        if (currentAttempts.getAttempts() > 0) {
+            // reconnected after disconnect
+            currentAttempts.completed(System.nanoTime());
+            connectionMonitor.recordDisconnectedTime(epid, currentAttempts.getCompleted() - currentAttempts.getDisconnected());
+        }
+
         resetReconnectDelay();
         logPrefix = null;
         logger.debug("{} channelActive()", logPrefix());
@@ -205,6 +299,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         channel = null;
 
         if (listenOnChannelInactive && !reconnectionHandler.isReconnectSuspended()) {
+            attempts.disconnected(System.nanoTime());
             scheduleReconnect();
         } else {
             logger.debug("{} Reconnect scheduling disabled", logPrefix(), ctx);
@@ -239,9 +334,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         }
 
         if ((channel == null || !channel.isActive()) && reconnectSchedulerSync.compareAndSet(false, true)) {
+            // attempts++;
+            // final int attempt = attempts;
+            final int attempt = attempts.incrementAndGet();
+            connectionMonitor.incrementReconnectionAttempts(epid);
 
-            attempts++;
-            final int attempt = attempts;
             Duration delay = reconnectDelay.createDelay(attempt);
             int timeout = (int) delay.toMillis();
             logger.debug("{} Reconnect attempt {}, delay {}ms", logPrefix(), attempt, timeout);
