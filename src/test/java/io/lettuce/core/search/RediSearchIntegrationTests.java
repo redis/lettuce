@@ -11,8 +11,11 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.protocol.DecodeBufferPolicies;
 import io.lettuce.core.search.aggregateutils.Apply;
 import io.lettuce.core.search.arguments.hybrid.Combiners;
 import io.lettuce.core.search.arguments.CreateArgs;
@@ -41,6 +44,7 @@ import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.lettuce.core.search.arguments.VectorFieldArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -49,6 +53,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,6 +63,7 @@ import java.util.Map;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for Redis Search functionality using FT.SEARCH command.
@@ -1309,6 +1315,61 @@ public class RediSearchIntegrationTests {
         assertThat(r3.get("discounted_price")).isEqualTo("2697.3");
 
         redis.ftDropindex(indexName);
+    }
+
+    @Test
+    void testSearchWithLargeJsonPayloads() {
+        String testIndex = "idx-large-json";
+        String prefix = "large-json:";
+
+        // Create a dedicated client with settings that trigger the memory corruption bug
+        // These settings match the reproducer from the bug report
+        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).withTimeout(Duration.ofSeconds(30)).build();
+        RedisClient testClient = RedisClient.create(redisURI);
+        testClient.setOptions(ClientOptions.builder()
+                // Large buffer policy prevents early buffer recycling, exposing the bug
+                .decodeBufferPolicy(DecodeBufferPolicies.ratio(Integer.MAX_VALUE / 2.0f)).build());
+
+        try (StatefulRedisConnection<String, String> connection = testClient.connect()) {
+            RedisCommands<String, String> testRedis = connection.sync();
+
+            testRedis.ftCreate(testIndex,
+                    CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON).withPrefix(prefix).build(),
+                    Collections.singletonList(NumericFieldArgs.<String> builder().name("$.pos").as("pos").build()));
+
+            // Add sorting by pos to ensure deterministic order
+            SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder()
+                    .sortBy(SortByArgs.<String> builder().attribute("pos").build()).limit(0, 10_000).build();
+
+            // Store expected values for exact comparison
+            ArrayList<String> expected = new ArrayList<>();
+
+            // Use 1000 documents like the reproducer - bug manifests around iteration 924+
+            for (int i = 1; i <= 1000; i++) {
+                String json = String.format(
+                        "{\"pos\":%d,\"ts\":%d,\"large\":\"just here to make the response larger to some great extend and overflow the buffers\"}",
+                        i, System.currentTimeMillis());
+
+                testRedis.jsonSet(prefix + i, JsonPath.ROOT_PATH, json);
+                expected.add(json);
+
+                // Start checking at iteration 924 like the reproducer - this is where ~200KB threshold is reached
+                if (i >= 924) {
+                    SearchReply<String, String> reply = testRedis.ftSearch(testIndex, "*", searchArgs);
+                    assertThat(reply.getCount()).isEqualTo(i);
+
+                    // Exact value comparison at each position
+                    for (int t = 0; t < expected.size(); t++) {
+                        String actualBody = reply.getResults().get(t).getFields().get("$");
+                        assertThat(actualBody).as("Mismatch at position %d on loop %d", t, i).isEqualTo(expected.get(t));
+                    }
+                }
+            }
+
+            testRedis.ftDropindex(testIndex);
+        } finally {
+            testClient.shutdown();
+        }
     }
 
     private void createProduct(String id, String title, String category, String brand, String price, String rating,
