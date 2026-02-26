@@ -29,7 +29,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.unix.DomainSocketAddress;
-import io.netty.incubator.channel.uring.IOUring;
 import io.netty.incubator.channel.uring.IOUringChannelOption;
 import io.netty.incubator.channel.uring.IOUringDatagramChannel;
 import io.netty.incubator.channel.uring.IOUringEventLoopGroup;
@@ -52,29 +51,33 @@ public class IOUringProvider {
 
     private static final String IOURING_ENABLED_KEY = "io.lettuce.core.iouring";
 
-    private static final boolean IOURING_ENABLED = Boolean.parseBoolean(SystemPropertyUtil.get(IOURING_ENABLED_KEY, "true"));
+    private static final boolean IOURING_ENABLED;
 
     private static final boolean IOURING_AVAILABLE;
 
     private static final EventLoopResources IOURING_RESOURCES;
 
     static {
-
-        boolean availability;
+        boolean libraryPresent;
         try {
             Class.forName("io.netty.incubator.channel.uring.IOUring");
-            availability = IOUring.isAvailable();
+            libraryPresent = true;
         } catch (ClassNotFoundException e) {
-            availability = false;
+            libraryPresent = false;
         }
 
-        IOURING_AVAILABLE = availability;
+        String enabledStr = SystemPropertyUtil.get(IOURING_ENABLED_KEY);
+        if (libraryPresent && enabledStr == null && EpollProvider.isAvailable()) {
+            throw new IllegalStateException("Both io_uring and epoll transports are available. " + IOURING_ENABLED_KEY
+                    + " system property must be set to true or false.");
+        }
+        IOURING_ENABLED = enabledStr == null || Boolean.parseBoolean(enabledStr);
+        IOURING_AVAILABLE = libraryPresent && IOURING_ENABLED;
 
         if (IOURING_AVAILABLE) {
             logger.debug("Starting with io_uring library");
             IOURING_RESOURCES = new EventLoopResourcesWrapper(IOUringResources.INSTANCE,
                     IOUringProvider::checkForIOUringLibrary);
-
         } else {
             logger.debug("Starting without optional io_uring library");
             IOURING_RESOURCES = new EventLoopResourcesWrapper(UnavailableResources.INSTANCE,
