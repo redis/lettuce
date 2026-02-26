@@ -1359,7 +1359,7 @@ public class RediSearchIntegrationTests {
             ArrayList<String> expected = new ArrayList<>();
 
             // Use 1000 documents like the reproducer - bug manifests around iteration 924+
-            for (int i = 1; i <= 50; i++) {
+            for (int i = 1; i <= 1000; i++) {
                 String json = String.format(
                         "{\"pos\":%d,\"ts\":%d,\"large\":\"just here to make the response larger to some great extend and overflow the buffers\"}",
                         i, System.currentTimeMillis());
@@ -1368,7 +1368,7 @@ public class RediSearchIntegrationTests {
                 expected.add(json);
 
                 // Start checking at iteration 924 like the reproducer - this is where ~200KB threshold is reached
-                if (i >= 30) {
+                if (i >= 924) {
                     SearchReply<String, String> reply = testRedis.ftSearch(testIndex, "*", searchArgs);
                     assertThat(reply.getCount()).isEqualTo(i);
 
