@@ -129,7 +129,7 @@ public class SocketOptions {
          */
         public Builder connectTimeout(Duration connectTimeout) {
 
-            LettuceAssert.notNull(connectTimeout, "Connection timeout must not be null");
+            LettuceAssert.notNull(connectTimeout, "Connect timeout must not be null");
             LettuceAssert.isTrue(connectTimeout.toNanos() > 0, "Connect timeout must be greater 0");
 
             this.connectTimeout = connectTimeout;
@@ -149,7 +149,7 @@ public class SocketOptions {
         public Builder connectTimeout(long connectTimeout, TimeUnit connectTimeoutUnit) {
 
             LettuceAssert.isTrue(connectTimeout > 0, "Connect timeout must be greater 0");
-            LettuceAssert.notNull(connectTimeoutUnit, "TimeUnit must not be null");
+            LettuceAssert.notNull(connectTimeoutUnit, "Connect timeout unit must not be null");
 
             return connectTimeout(Duration.ofNanos(connectTimeoutUnit.toNanos(connectTimeout)));
         }
@@ -422,7 +422,7 @@ public class SocketOptions {
             public KeepAliveOptions.Builder idle(Duration idle) {
 
                 LettuceAssert.notNull(idle, "Idle time must not be null");
-                LettuceAssert.isTrue(!idle.isNegative(), "Idle time must not be begative");
+                LettuceAssert.isTrue(!idle.isNegative(), "Idle time must not be negative");
 
                 this.idle = idle;
                 return this;
@@ -439,8 +439,8 @@ public class SocketOptions {
              */
             public KeepAliveOptions.Builder interval(Duration interval) {
 
-                LettuceAssert.notNull(interval, "Idle time must not be null");
-                LettuceAssert.isTrue(!interval.isNegative(), "Idle time must not be begative");
+                LettuceAssert.notNull(interval, "Interval time must not be null");
+                LettuceAssert.isTrue(!interval.isNegative(), "Interval time must not be negative");
 
                 this.interval = interval;
                 return this;

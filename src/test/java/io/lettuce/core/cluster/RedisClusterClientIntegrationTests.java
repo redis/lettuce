@@ -262,19 +262,6 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testReset() {
-
-        clusterClient.reloadPartitions();
-        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
-
-        connection.sync().set(ClusterTestSettings.KEY_A, value);
-        connection.reset();
-
-        assertThat(connection.sync().set(ClusterTestSettings.KEY_A, value)).isEqualTo("OK");
-        connection.close();
-    }
-
-    @Test
     @SuppressWarnings({ "rawtypes" })
     void testClusterCommandRedirection() {
 

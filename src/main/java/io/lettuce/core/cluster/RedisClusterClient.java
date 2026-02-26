@@ -198,7 +198,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         this.initialUris = Collections.unmodifiableList(LettuceLists.newList(redisURIs));
         this.refresh = createTopologyRefresh();
 
-        setDefaultTimeout(getFirstUri().getTimeout());
         setOptions(ClusterClientOptions.create());
     }
 
@@ -548,7 +547,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
@@ -634,7 +633,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
@@ -680,7 +679,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
@@ -798,7 +797,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {

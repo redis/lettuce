@@ -11,6 +11,10 @@ import java.util.Map;
  */
 public class LettuceClassUtils {
 
+    private LettuceClassUtils() {
+        // No Instances.
+    }
+
     /** The CGLIB class separator character "$$" */
     public static final String CGLIB_CLASS_SEPARATOR = "$$";
 

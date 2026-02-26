@@ -23,7 +23,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.Range;
+import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.reactive.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -37,12 +39,12 @@ import reactor.core.publisher.Mono;
  * @author dengliming
  * @since 5.0
  */
-public interface RedisClusterReactiveCommands<K, V>
-        extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>, RedisFunctionReactiveCommands<K, V>,
-        RedisGeoReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
-        RedisKeyReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>,
-        RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
-        RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V> {
+public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>,
+        RedisFunctionReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>,
+        RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisListReactiveCommands<K, V>,
+        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
+        RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
+        RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.
@@ -376,5 +378,16 @@ public interface RedisClusterReactiveCommands<K, V>
      * @return List of maps containing attributes and values for each peer link.
      */
     Mono<List<Map<String, Object>>> clusterLinks();
+
+    /**
+     * Set multiple keys to multiple values with optional conditions and expiration. Emits: numkeys, pairs, then [NX|XX] and one
+     * of [EX|PX|EXAT|PXAT|KEEPTTL]. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param map the map of keys and values.
+     * @param args the {@link MSetExArgs} specifying NX/XX and expiration.
+     * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
+     * @since 7.1
+     */
+    Mono<Boolean> msetex(Map<K, V> map, MSetExArgs args);
 
 }

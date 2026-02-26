@@ -25,30 +25,28 @@ import static io.lettuce.core.StringMatchResult.Position;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
-import org.junit.jupiter.api.Assumptions;
+import io.lettuce.core.cluster.SlotHash;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
 import io.lettuce.core.*;
-import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.dynamic.Commands;
-import io.lettuce.core.dynamic.RedisCommandFactory;
-import io.lettuce.core.dynamic.annotation.Command;
-import io.lettuce.core.dynamic.annotation.Param;
 import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
@@ -178,6 +176,51 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.del("one");
         assertThat(redis.msetnx(map)).isTrue();
         assertThat(redis.get("two")).isEqualTo("2");
+    }
+
+    @ParameterizedTest(name = "MSETEX NX + {0} with cross-slot keys")
+    @MethodSource("msetexNxArgsProvider")
+    @EnabledOnCommand("MSETEX")
+    protected void msetexNxWithCrossSlotKeys_parametrized(String optionLabel, MSetExArgs args) {
+
+        // Build 16 keys with distinct hash tags so they map across 16 evenly-partitioned buckets over 16000 slots
+        final int buckets = 16;
+        Map<String, String> map = new LinkedHashMap<>();
+
+        for (int b = 0; b < buckets; b++) {
+            for (int j = 0;; j++) { // find a tag that lands in bucket b
+                String k = "msetex:{t" + b + '-' + j + "}"; // only the tag influences the slot
+                int slot = SlotHash.getSlot(k);
+                int bucket = Math.min(slot / 1000, buckets - 1);
+                if (bucket == b) {
+                    map.put(k, "v" + b);
+                    break;
+                }
+            }
+        }
+
+        // Execute MSETEX with NX + the provided option
+        Boolean result = redis.msetex(map, args);
+        assertThat(result).isTrue();
+
+        // Verify TTL semantics depending on option
+        String anyKey = map.keySet().iterator().next();
+        long ttl = redis.ttl(anyKey);
+        if ("KEEPTTL".equals(optionLabel)) {
+            // KEEPTTL with NX on new keys -> no expiration should be set
+            assertThat(ttl).isEqualTo(-1);
+        } else {
+            // Expiring variants (EX/PX/EXAT/PXAT): TTL should be > 0 shortly after
+            assertThat(ttl).isGreaterThan(0L);
+        }
+    }
+
+    static Stream<Arguments> msetexNxArgsProvider() {
+        return Stream.of(Arguments.of("EX", MSetExArgs.Builder.nx().ex(Duration.ofSeconds(5))),
+                Arguments.of("PX", MSetExArgs.Builder.nx().px(Duration.ofMillis(5000))),
+                Arguments.of("EXAT", MSetExArgs.Builder.nx().exAt(Instant.now().plusSeconds(5))),
+                Arguments.of("PXAT", MSetExArgs.Builder.nx().pxAt(Instant.now().plusSeconds(5))),
+                Arguments.of("KEEPTTL", MSetExArgs.Builder.nx().keepttl()));
     }
 
     @Test

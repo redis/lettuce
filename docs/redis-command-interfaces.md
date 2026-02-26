@@ -155,7 +155,7 @@ public interface MixedCommands extends Commands {
     to determine a command intent (whether a command is a read-only one).
     Commands are resolved case-sensitive. Use lower-case command names in
     `@Command` to resolve to an unknown command to e.g. enforce
-    master-routing.
+    primary-routing.
 
 ### CamelCase in method names
 
@@ -581,4 +581,3 @@ Errors are transported through `RedisFuture`. Synchronous commands don’t
 receive any result/exception signal except if the batch is flushed
 through a synchronous method call. Synchronous flushing throws
 `BatchException` containing the failed commands.
-

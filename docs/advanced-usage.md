@@ -101,8 +101,9 @@ The basic configuration options are listed in the table below:
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------|-------------|
 | **I/O Thread Pool Size**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `ioThreadPoolSize`           | `See below` |
 | The number of threads in the I/O thread pools. Every thread represents an internal event loop where all I/O tasks are run. The number does not reflect the actual number of I/O threads because the client requires different thread pools for Network (NIO) and Unix Domain Socket (EPoll) connections. The minimum I/O threads are `2`. |                              |             |
-| **Computation Thread Pool Size**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `comput ationThreadPoolSize` | `See below` |
+| **Computation Thread Pool Size**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `computationThreadPoolSize` | `See below` |
 | The number of threads in the computation thread pool. Every thread represents an internal event loop where all computation tasks are run. The minimum computation threads are `2`.                                                                                                                                                     |                              |             |
+
 
 #### Default thread pool size
 
@@ -154,7 +155,7 @@ needs to be shut down once you no longer need the resources.</td>
 total control over the thread pools can provide an existing
 <code>EventExecutorGroup</code> to the Client resources. A provided
 <code>EventExecutorGroup</code> is not managed by the client and needs
-to be shut down once you do not longer need the resources.</td>
+to be shut down once you no longer need the resources.</td>
 </tr>
 <tr>
 <td><strong>Event bus</strong></td>
@@ -281,7 +282,7 @@ customization of <code>Bootstrap</code> after <code>Bootstrap</code>
 configuration by Lettuce and <code>Channel</code> customization after
 all Lettuce handlers are added to <code>Channel</code>. The customizer
 allows custom SSL configuration (requires RedisURI in plain-text mode,
-otherwise Lettuce’s configures SSL), adding custom handlers or setting
+otherwise Lettuce configures SSL), adding custom handlers or setting
 customized <code>Bootstrap</code> options. Misconfiguring
 <code>Bootstrap</code> or <code>Channel</code> can cause connection
 failures or undesired behavior.</p></td>
@@ -382,26 +383,6 @@ that the command would not be filtered out.</p>
 enabled.</p></td>
 </tr>
 <tr>
-<td>Cancel commands on reconnect failure</td>
-<td><code>cancelCommandsOnReconnectFailure</code></td>
-<td><code>false</code></td>
-</tr>
-<tr>
-<td colspan="3"><p>Since: 3.1, 4.0</p>
-<p><strong>This flag is deprecated and should not be used as it can lead
-to race conditions and protocol offsets. SSL is natively supported by
-Lettuce and does no longer requires the use of SSL tunnels where
-protocol traffic can get out of sync.</strong></p>
-<p>If this flag is <code>true</code> any queued commands will be
-canceled when a reconnect fails within the activation sequence. The
-reconnect itself has two phases: Socket connection and
-protocol/connection activation. In case a connect timeout occurs, a
-connection reset, host lookup fails, this does not affect the
-cancellation of commands. In contrast, where the protocol/connection
-activation fails due to SSL errors or PING before activating connection
-failure, queued commands are canceled.</p></td>
-</tr>
-<tr>
 <td>Policy how to reclaim decode buffer memory</td>
 <td><code>decodeBufferPolicy</code></td>
 <td><code>ratio-based at 75%</code></td>
@@ -481,7 +462,7 @@ latest available protocol.</p></td>
 </tr>
 <tr>
 <td colspan="3"><p>Since: 6.0</p>
-<p>Charset to use for Luascripts.</p></td>
+<p>Charset to use for Lua scripts.</p></td>
 </tr>
 <tr>
 <td>Socket Options</td>
@@ -611,7 +592,7 @@ topology refresh. These refreshes are rate-limited using a timeout since
 events can happen on a large scale. Adaptive refresh triggers are
 disabled by default. Following triggers can be enabled:</p>
 <p><code>MOVED_REDIRECT</code>, <code>ASK_REDIRECT</code>,
-<code>PER SISTENT_RECONNECTS</code>, <code>UNKNOWN_NODE</code> (since
+<code>PERSISTENT_RECONNECTS</code>, <code>UNKNOWN_NODE</code> (since
 5.1), and <code>UNCOVERED_SLOT</code> (since 5.2) (see also reconnect
 attempts for the reconnect trigger)</p></td>
 </tr>
@@ -635,7 +616,7 @@ ignored.</p></td>
 </tr>
 <tr>
 <td colspan="3"><p>Since: 4.2</p>
-<p>Set the threshold for the <code>PE RSISTENT_RECONNECTS</code> refresh
+<p>Set the threshold for the <code>PERSISTENT_RECONNECTS</code> refresh
 trigger. Topology updates based on persistent reconnects lead only to a
 refresh if the reconnect process tries at least the number of specified
 attempts. The first reconnect attempt starts with
@@ -1004,7 +985,7 @@ There are 4 StreamingChannels accepting different data types:
 
 - [ScoredValueStreamingChannel](https://www.javadoc.io/static/io.lettuce/lettuce-core/6.4.0.RELEASE/io/lettuce/core/output/ScoredValueStreamingChannel.html)
 
-The result of the steaming methods is the count of keys/values/key-value
+The result of the streaming methods is the count of keys/values/key-value
 pairs as `long` value.
 
 !!! NOTE
@@ -1121,7 +1102,7 @@ obtaining the event bus from the client’s client resources.
 
 ``` java
 RedisClient client = RedisClient.create()
-EventBus eventBus = client.getresources().eventBus();
+EventBus eventBus = client.getResources().eventBus();
 
 eventBus.get().subscribe(e -> System.out.println(event));
 
@@ -1379,7 +1360,7 @@ The following settings are available to configure from
 | **Latency percentiles**                                                                                                                                                                                                                                                                                                                                                               | `targetPercentiles`        | `50.0, 90 .0, 95.0, 99.0, 99.9` |
 | A `double`-array of percentiles for latency metrics. The `CommandMetrics` contains a map that holds the percentile value and the latency value according to the percentile. Note that percentiles here must be specified in the range between 0 and 100.                                                                                                                              |                            |                                 |
 | **Reset latencies after publish**                                                                                                                                                                                                                                                                                                                                                     | `resetLatenciesAfterEvent` | `true`                          |
-| Allows controlling whether the latency metrics are reset to zero one they were published. Setting `resetLatenciesAfterEvent` allows accumulating metrics over a long period for long-term analytics.                                                                                                                                                                                  |                            |                                 |
+| Allows controlling whether the latency metrics are reset to zero once they were published. Setting `resetLatenciesAfterEvent` allows accumulating metrics over a long period for long-term analytics.                                                                                                                                                                                  |                            |                                 |
 | **Local socket distinction**                                                                                                                                                                                                                                                                                                                                                          | `localDistinction`         | `false`                         |
 | Enables per connection metrics tracking instead of per host/port. If `true`, multiple connections to the same host/connection point will be recorded separately which allows to inspection of every connection individually. If `false`, multiple connections to the same host/connection point will be recorded together. This allows a consolidated view on one particular service. |                            |                                 |
 
@@ -1454,7 +1435,7 @@ The following settings are available to configure from
 | Sets the minimum value that this timer is expected to observe. Applies only if Histogram publishing is enabled.                                                                                                                                                                                                                                                                    |                     |                                                                                    |
 | **Additional Tags**                                                                                                                                                                                                                                                                                                                                                                | `tags`              | `Tags.empty()`                                                                     |
 | Extra tags to add to the generated metrics.                                                                                                                                                                                                                                                                                                                                        |                     |                                                                                    |
-| **Latency percentiles**                                                                                                                                                                                                                                                                                                                                                            | `targetPercentiles` | `0.5, 0.9, 0.95,  0.99, 0.999 (corresp onding with 50.0, 90. 0, 95.0, 99.0, 99.9)` |
+| **Latency percentiles**                                                                                                                                                                                                                                                                                                                                                            | `targetPercentiles` | `0.5, 0.9, 0.95,  0.99, 0.999 (corresponding with 50.0, 90.0, 95.0, 99.0, 99.9)` |
 | A `double`-array of percentiles for latency metrics. Values must be supplied in the range of `0.0` (0th percentile) up to `1.0` (100th percentile). The `CommandMetrics` contains a map that holds the percentile value and the latency value according to the percentile. This applies only if Histogram publishing is enabled.                                                   |                     |                                                                                    |
 
 ### Tracing
@@ -2119,7 +2100,7 @@ that extends `CompleteableFuture`. `AsyncCommand` can be synchronized by
 `await()` or `get()` which corresponds with the asynchronous pull style.
 By using the methods from the `CompletionStage` interface (such as
 `handle()` or `thenAccept()`) the response handler will trigger the
-functions ("listeners") on command completion. Lear more about
+functions ("listeners") on command completion. Learn more about
 asynchronous usage in the [Asynchronous API](user-guide/async-api.md) topic.
 
 ``` java
@@ -2418,7 +2399,7 @@ configuration is required for netty and the JDK in
 
 We don’t have found a way yet to invoke default interface methods on
 proxies without `MethodHandle`. Hence the `NodeSelection` API
-(`masters()`, `all()` and others on `RedisAdvancedClusterCommands` and
+(`primaries()`, `all()` and others on `RedisAdvancedClusterCommands` and
 `RedisAdvancedClusterAsyncCommands`) do not work.
 
 ## Command execution reliability
@@ -2615,7 +2596,7 @@ means, if you execute a command twice, each resulting state is different
 in comparison to the previous. Examples for non-idempotent Redis
 commands are such as `LPUSH`, `PUBLISH` or `INCR`.
 
-Note: When using master-replica replication, different rules apply to
+Note: When using primary-replica replication, different rules apply to
 *at-least-once* consistency. Replication between Redis nodes works
 asynchronously. A command can be processed successfully from Lettuce’s
 client perspective, but the result is not necessarily replicated to the
@@ -2637,7 +2618,7 @@ To change into *at-most-once* consistency level, disable auto-reconnect
 mode. Connections can no longer be reconnected and thus no retries are
 issued. Unsuccessful commands are canceled. New commands are rejected.
 
-#### Controlling replay of commands in *at-lease-once* mode
+#### Controlling replay of commands in *at-least-once* mode
 
 !!! NOTE
     This feature is only available since Lettuce 6.6
@@ -2678,14 +2659,14 @@ auto-replay of commands.
 Lettuce sticks in clustered operations to the same rules as for
 standalone operations but with one exception:
 
-Command execution on master nodes, which is rejected by a `MOVED`
+Command execution on primary nodes, which is rejected by a `MOVED`
 response are tried to re-execute with the appropriate connection.
-`MOVED` errors occur on master nodes when a slot’s responsibility is
+`MOVED` errors occur on primary nodes when a slot’s responsibility is
 moved from one cluster node to another node. Afterwards *at-least-once*
 and *at-most-once* rules apply.
 
 When the cluster topology changes, generally spoken, the cluster slots
-or master/replica state is reconfigured, following rules apply:
+or primary/replica state is reconfigured, following rules apply:
 
 - **at-most-once** If the connection is disconnected, queued commands
   are canceled and buffered commands, which were not sent, are executed
@@ -2698,4 +2679,3 @@ or master/replica state is reconfigured, following rules apply:
 - If the connection is not disconnected, queued commands are finished
   and buffered commands, which were not sent, are executed by using the
   new cluster view
-

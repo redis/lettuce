@@ -41,7 +41,6 @@ import org.junit.jupiter.api.*;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;

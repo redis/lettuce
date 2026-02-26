@@ -48,7 +48,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag#REPLICA} state</li>
  * <li>Newly added or removed nodes to/from the Redis Cluster</li>
  * <li>Changes in {@link RedisClusterNode#getSlots()} responsibility</li>
- * <li>Changes to the {@link RedisClusterNode#getSlaveOf() replication source} (the master of a replica)</li>
+ * <li>Changes to the {@link RedisClusterNode#getReplicaOf() replication source} (the primary of a replica)</li>
  * <li>Changes to the {@link RedisClusterNode#getUri()} () connection point}</li>
  * </ul>
  *

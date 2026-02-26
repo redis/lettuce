@@ -182,7 +182,7 @@ class ReplicaTopologyProvider implements TopologyProvider {
         boolean foundPort = masterPortMatcher.find();
 
         if (!foundHost || !foundPort) {
-            throw new IllegalStateException("Cannot resolve master from info " + info);
+            throw new IllegalStateException("Cannot resolve primary from info " + info);
         }
 
         String host = masterHostMatcher.group(1);

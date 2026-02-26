@@ -37,9 +37,10 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 /**
  * Representation of a Redis Cluster node. A {@link RedisClusterNode} is identified by its {@code nodeId}.
  * <p>
- * A {@link RedisClusterNode} can be a {@link #getRole() responsible master} or replica. Masters can be responsible for zero to
- * {@link io.lettuce.core.cluster.SlotHash#SLOT_COUNT 16384} slots. Each replica refers to exactly one {@link #getSlaveOf()
- * master}. Nodes can have different {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag flags} assigned.
+ * A {@link RedisClusterNode} can be a {@link #getRole() responsible primary} or replica. Primaries can be responsible for zero
+ * to {@link io.lettuce.core.cluster.SlotHash#SLOT_COUNT 16384} slots. Each replica refers to exactly one
+ * {@link #getReplicaOf()} primary upstream. Nodes can have different
+ * {@link io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag flags} assigned.
  * <p>
  * This class is mutable and not thread-safe if mutated by multiple threads concurrently.
  *
@@ -206,6 +207,29 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.connected = connected;
     }
 
+    /**
+     * @return the replication source, can be {@code null}
+     * @since 7.3
+     */
+    public String getReplicaOf() {
+        return slaveOf;
+    }
+
+    /**
+     * Sets the replication source.
+     *
+     * @param replicaOf the replication source, can be {@code null}
+     * @since 7.3
+     */
+    public void setReplicaOf(String replicaOf) {
+        this.slaveOf = replicaOf;
+    }
+
+    /**
+     * @return the replication source, can be {@code null}
+     * @deprecated since 7.3, use {@link #getReplicaOf()}.
+     */
+    @Deprecated
     public String getSlaveOf() {
         return slaveOf;
     }
@@ -214,7 +238,9 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      * Sets the replication source.
      *
      * @param slaveOf the replication source, can be {@code null}
+     * @deprecated since 7.3, use {@link #setReplicaOf(String)}.
      */
+    @Deprecated
     public void setSlaveOf(String slaveOf) {
         this.slaveOf = slaveOf;
     }
@@ -407,8 +433,9 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      */
     public boolean is(NodeFlag nodeFlag) {
 
-        if (nodeFlag == NodeFlag.MASTER || nodeFlag == NodeFlag.UPSTREAM) {
-            return getFlags().contains(NodeFlag.MASTER) || getFlags().contains(NodeFlag.UPSTREAM);
+        if (nodeFlag == NodeFlag.MASTER || nodeFlag == NodeFlag.UPSTREAM || nodeFlag == NodeFlag.PRIMARY) {
+            return getFlags().contains(NodeFlag.MASTER) || getFlags().contains(NodeFlag.UPSTREAM)
+                    || getFlags().contains(NodeFlag.PRIMARY);
         }
 
         if (nodeFlag == NodeFlag.SLAVE || nodeFlag == NodeFlag.REPLICA) {
@@ -481,7 +508,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         sb.append(" [uri=").append(uri);
         sb.append(", nodeId='").append(nodeId).append('\'');
         sb.append(", connected=").append(connected);
-        sb.append(", slaveOf='").append(slaveOf).append('\'');
+        sb.append(", replicaOf='").append(slaveOf).append('\'');
         sb.append(", pingSentTimestamp=").append(pingSentTimestamp);
         sb.append(", pongReceivedTimestamp=").append(pongReceivedTimestamp);
         sb.append(", configEpoch=").append(configEpoch);
@@ -508,6 +535,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         SLAVE,
 
         REPLICA, //
+
+        /**
+         * Synonym for {@link #UPSTREAM}.
+         */
+        PRIMARY, //
 
         /**
          * Synonym for {@link #UPSTREAM}.

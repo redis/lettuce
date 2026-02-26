@@ -1,5 +1,19 @@
 # New & Noteworthy
 
+
+## What’s new in Lettuce 6.8
+- [RediSearch support](user-guide/redis-search.md) through `RediSearchCommands` and the respective reactive, async and Kotlin APIs
+
+## What’s new in Lettuce 6.7
+- [VectorSet support](user-guide/vector-sets.md) through `RedisVectorSetCommands` and the respective reactive, async and Kotlin APIs
+- `ConnectionPoolSupport` also allows the user to provide custom connection validations
+
+## What’s new in Lettuce 6.6
+- Support `HGETDEL`, `HGETEX` and `HSETEX`
+- Introduce command replay filter to avoid command replaying after reconnect
+- Deprecate the STRALGO command and implement the LCS in its place
+- Token based authentication integration with core extension
+
 ## What’s new in Lettuce 6.5
 
 - [RedisJSON support](user-guide/redis-json.md) through `RedisJSONCommands` and the respective reactive, async and Kotlin APIs
@@ -128,7 +142,7 @@
 - Add support for [Redis
   Streams](https://redis.io/topics/streams-intro).
 
-- Asynchronous `connect()` for Master/Replica connections.
+- Asynchronous `connect()` for Primary/Replica connections.
 
 - [Asynchronous Connection Pooling](advanced-usage.md#asynchronous-connection-pooling)
   through `AsyncConnectionPoolSupport` and `AsyncPool`.
@@ -152,7 +166,7 @@
 - Reactive `ScanStream` to iterate over the keyspace using `SCAN`
   commands.
 
-- Transactions using Master/Replica connections are bound to the master
+- Transactions using Primary/Replica connections are bound to the primary
   node.
 
 ## What’s new in Lettuce 5.0
@@ -182,4 +196,3 @@
 
 - HTML and PDF reference documentation along with a new project website:
   <https://lettuce.io>.
-

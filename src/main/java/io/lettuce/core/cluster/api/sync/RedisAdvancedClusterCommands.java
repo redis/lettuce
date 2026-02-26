@@ -79,7 +79,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Select all upstream nodes.
      *
      * @return API with synchronous executed commands on a selection of upstream cluster nodes.
-     * @deprecated since 6.0 in favor of {@link #upstream()}.
+     * @deprecated since 6.0 in favor of {@link #upstream()} (use {@link #primaries()} for primary terminology).
      */
     @Deprecated
     default NodeSelection<K, V> masters() {
@@ -93,6 +93,16 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      */
     default NodeSelection<K, V> upstream() {
         return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
+    }
+
+    /**
+     * Select all primary nodes.
+     *
+     * @return API with synchronous executed commands on a selection of primary cluster nodes.
+     * @since 7.3
+     */
+    default NodeSelection<K, V> primaries() {
+        return upstream();
     }
 
     /**
@@ -282,11 +292,20 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Find all keys matching the given pattern on all cluster upstream nodes.
      *
-     * @param pattern the pattern type: patternkey (pattern)
+     * @param pattern the pattern type
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyCommands#keys(Object)
      */
-    List<K> keys(K pattern);
+    List<K> keys(String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    List<K> keysLegacy(K pattern);
 
     /**
      * Find all keys matching the given pattern on all cluster upstream nodes.
@@ -294,9 +313,20 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @param channel the channel
      * @param pattern the pattern
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyCommands#keys(KeyStreamingChannel, Object)
      */
-    Long keys(KeyStreamingChannel<K> channel, K pattern);
+    Long keys(KeyStreamingChannel<K> channel, String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
+     *             version.
+     */
+    @Deprecated
+    Long keysLegacy(KeyStreamingChannel<K> channel, K pattern);
 
     /**
      * Return a random key from the keyspace on a random master.

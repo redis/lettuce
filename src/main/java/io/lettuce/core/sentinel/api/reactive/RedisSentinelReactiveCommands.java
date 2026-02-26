@@ -43,40 +43,78 @@ import reactor.core.publisher.Mono;
 public interface RedisSentinelReactiveCommands<K, V> {
 
     /**
-     * Return the ip and port number of the master with that name.
+     * Return the ip and port number of the primary with that name.
      *
      * @param key the key.
      * @return SocketAddress.
+     * @since 7.3
      */
+    default Mono<SocketAddress> getPrimaryAddrByName(K key) {
+        return getMasterAddrByName(key);
+    }
+
+    /**
+     * Return the ip and port number of the primary with that name.
+     *
+     * @param key the key.
+     * @return SocketAddress.
+     * @deprecated since 7.3, use {@link #getPrimaryAddrByName(Object)}.
+     */
+    @Deprecated
     Mono<SocketAddress> getMasterAddrByName(K key);
 
     /**
-     * Enumerates all the monitored masters and their states.
+     * Enumerates all the monitored primaries and their states.
      *
      * @return Map&lt;K, V&gt;&gt;.
+     * @since 7.3
      */
+    default Flux<Map<K, V>> primaries() {
+        return masters();
+    }
+
+    /**
+     * Enumerates all the monitored primaries and their states.
+     *
+     * @return Map&lt;K, V&gt;&gt;.
+     * @deprecated since 7.3, use {@link #primaries()}.
+     */
+    @Deprecated
     Flux<Map<K, V>> masters();
 
     /**
-     * Show the state and info of the specified master.
+     * Show the state and info of the specified primary.
      *
      * @param key the key.
      * @return Map&lt;K, V&gt;.
+     * @since 7.3
      */
+    default Mono<Map<K, V>> primary(K key) {
+        return master(key);
+    }
+
+    /**
+     * Show the state and info of the specified primary.
+     *
+     * @param key the key.
+     * @return Map&lt;K, V&gt;.
+     * @deprecated since 7.3, use {@link #primary(Object)}.
+     */
+    @Deprecated
     Mono<Map<K, V>> master(K key);
 
     /**
-     * Provides a list of replicas for the master with the specified name.
+     * Provides a list of replicas for the primary with the specified name.
      *
      * @param key the key.
      * @return Map&lt;K, V&gt;.
-     * @deprecated since 6.2, use #replicas(Object) instead.
+     * @deprecated since 7.3, use #replicas(Object) instead.
      */
     @Deprecated
     Flux<Map<K, V>> slaves(K key);
 
     /**
-     * This command will reset all the masters with matching name.
+     * This command will reset all the primaries with matching name.
      *
      * @param key the key.
      * @return Long.
@@ -84,24 +122,24 @@ public interface RedisSentinelReactiveCommands<K, V> {
     Mono<Long> reset(K key);
 
     /**
-     * Provides a list of replicas for the master with the specified name.
+     * Provides a list of replicas for the primary with the specified name.
      *
      * @param key the key.
      * @return Map&lt;K, V&gt;.
-     * @since 6.2
+     * @since 7.3
      */
     Flux<Map<K, V>> replicas(K key);
 
     /**
      * Perform a failover.
      *
-     * @param key the master id.
+     * @param key the primary id.
      * @return String.
      */
     Mono<String> failover(K key);
 
     /**
-     * This command tells the Sentinel to start monitoring a new master with the specified name, ip, port, and quorum.
+     * This command tells the Sentinel to start monitoring a new primary with the specified name, ip, port, and quorum.
      *
      * @param key the key.
      * @param ip the IP address.
@@ -122,7 +160,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
     Mono<String> set(K key, String option, V value);
 
     /**
-     * remove the specified master.
+     * remove the specified primary.
      *
      * @param key the key.
      * @return String.
@@ -248,11 +286,6 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @since 6.0.2
      */
     <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args);
-
-    /**
-     * @return {@code true} if the connection is open (connected and not closed).
-     */
-    boolean isOpen();
 
     /**
      * @return the underlying connection.
