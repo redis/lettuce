@@ -26,11 +26,20 @@ import static org.mockito.AdditionalMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.eq;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -65,6 +74,7 @@ import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.output.KeyValueListOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.ValueListOutput;
+import io.lettuce.core.output.ValueOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
 import io.lettuce.test.Delay;
@@ -648,6 +658,97 @@ class CommandHandlerUnitTests {
         assertThat(stack).hasSize(0);
 
         sut.channelUnregistered(context);
+    }
+
+    /**
+     * if large keys are received ,the large buffer will created and then released
+     */
+    @Test
+    void shouldLargeBufferCreatedAndRelease() throws Exception {
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        channelPromise.setSuccess();
+        ClientOptions clientOptions = ClientOptions.builder().createByteBufWhenRecvLargeKey(true).build();
+        sut = new CommandHandler(clientOptions, clientResources, endpoint);
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        sut.getStack().add(new Command<>(CommandType.GET, new ValueOutput<String, String>(StringCodec.UTF8)));
+
+        ByteBuf internalBuffer = ReflectionTestUtils.getField(sut, "readBuffer");
+
+        // step1 Receive First TCP Packet
+        ByteBuf msg = context.alloc().buffer(13);
+        // 1+5+2+7 ($+length+\r\n+len(value))
+        msg.writeBytes("$65536\r\nval_abc".getBytes(StandardCharsets.UTF_8));
+        sut.channelRead(context, msg);
+
+        int markedReaderIndex = ReflectionTestUtils.getField(internalBuffer, "markedReaderIndex");
+        assertThat(markedReaderIndex).isEqualTo(8);
+        assertThat(internalBuffer.readerIndex()).isEqualTo(8);
+        assertThat(internalBuffer.writerIndex()).isEqualTo(15);
+
+        // step2 Receive Second TCP Packet
+        ByteBuf msg2 = context.alloc().buffer(64 * 1024);
+        StringBuilder sb = new StringBuilder();
+        // 65536-7
+        for (int i = 0; i < 65529; i++) {
+            sb.append((char) ('a' + i % 26));
+        }
+        sb.append("\r\n");
+        msg2.writeBytes(sb.toString().getBytes(StandardCharsets.UTF_8));
+        sut.channelRead(context, msg2);
+
+        // step3 Got Result: readBuffer.capacity = 64k and tmpBuffer is null
+        ByteBuf readBuffer = ReflectionTestUtils.getField(sut, "readBuffer");
+        assertThat(readBuffer.capacity()).isEqualTo(64 * 1024);
+        assertThat(readBuffer.readerIndex()).isZero();
+        assertThat(readBuffer.writerIndex()).isZero();
+
+        ByteBuf tmpBuffer = ReflectionTestUtils.getField(sut, "tmpReadBuffer");
+        assertThat(tmpBuffer).isNull();
+    }
+
+    /**
+     * readBufferSize = 16 createByteBufWhenRecvLargeKey = true large than readBufferSize will create a new buffer
+     *
+     */
+    @Test
+    void shouldLargeThan16ThenCreateAndRelease() throws Exception {
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        channelPromise.setSuccess();
+        int readBufferSize = 16;
+        ClientOptions clientOptions = ClientOptions.builder().createByteBufWhenRecvLargeKey(true).readBufferSize(readBufferSize)
+                .build();
+        sut = new CommandHandler(clientOptions, clientResources, endpoint);
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        sut.getStack().add(new Command<>(CommandType.GET, new ValueOutput<String, String>(StringCodec.UTF8)));
+
+        ByteBuf internalBuffer = ReflectionTestUtils.getField(sut, "readBuffer");
+
+        // step1 Receive First TCP Packet
+        ByteBuf msg = context.alloc().buffer(13);
+        // 1+5+2+7 ($+length+\r\n+len(value))
+        msg.writeBytes("$16\r\nabc_val".getBytes(StandardCharsets.UTF_8));
+        sut.channelRead(context, msg);
+
+        int markedReaderIndex = ReflectionTestUtils.getField(internalBuffer, "markedReaderIndex");
+        assertThat(markedReaderIndex).isEqualTo(5);
+        assertThat(internalBuffer.readerIndex()).isEqualTo(5);
+        assertThat(internalBuffer.writerIndex()).isEqualTo(12);
+
+        // step2 Receive Second TCP Packet
+        ByteBuf msg2 = context.alloc().buffer(32);
+        msg2.writeBytes("abcd_abcd\r\n".getBytes(StandardCharsets.UTF_8));
+        sut.channelRead(context, msg2);
+
+        // step3 Got Result: readBuffer.capacity = 64k and tmpBuffer is null
+        ByteBuf readBuffer = ReflectionTestUtils.getField(sut, "readBuffer");
+        assertThat(readBuffer.capacity()).isEqualTo(readBufferSize);
+        assertThat(readBuffer.readerIndex()).isZero();
+        assertThat(readBuffer.writerIndex()).isZero();
+
+        ByteBuf tmpBuffer = ReflectionTestUtils.getField(sut, "tmpReadBuffer");
+        assertThat(tmpBuffer).isNull();
     }
 
 }
