@@ -20,7 +20,19 @@
 package io.lettuce.core.api.sync;
 
 import java.util.List;
-import io.lettuce.core.*;
+
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.Limit;
+import io.lettuce.core.Range;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.ScoredValue;
+import io.lettuce.core.ScoredValueScanCursor;
+import io.lettuce.core.StreamScanCursor;
+import io.lettuce.core.ZAddArgs;
+import io.lettuce.core.ZAggregateArgs;
+import io.lettuce.core.ZPopArgs;
+import io.lettuce.core.ZStoreArgs;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 
@@ -1443,7 +1455,7 @@ public interface RedisSortedSetCommands<K, V> {
      * stores the result in the {@code dstKey} destination key.
      *
      * @param dstKey the src key.
-     * 
+     *
      * @param srcKey the dst key.
      * @param range the score range.
      * @param limit the limit to apply.

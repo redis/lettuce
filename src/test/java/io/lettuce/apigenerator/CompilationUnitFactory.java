@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,11 +35,13 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.github.javaparser.printer.configuration.imports.EclipseImportOrderingStrategy;
 import org.apache.commons.lang3.StringUtils;
 
-import com.github.javaparser.JavaParser;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Modifier;
@@ -50,12 +51,16 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
+import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Name;
 import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.printer.DefaultPrettyPrinter;
+import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
+import com.github.javaparser.printer.configuration.DefaultConfigurationOption;
 
 /**
  * @author Mark Paluch
@@ -130,10 +135,10 @@ class CompilationUnitFactory {
 
         result.setPackageDeclaration(new PackageDeclaration(new Name(targetPackage)));
 
-        template = JavaParser.parse(templateFile);
+        template = StaticJavaParser.parse(templateFile);
 
         ClassOrInterfaceDeclaration templateTypeDeclaration = (ClassOrInterfaceDeclaration) template.getTypes().get(0);
-        resultType = new ClassOrInterfaceDeclaration(EnumSet.of(Modifier.PUBLIC), true, targetName);
+        resultType = new ClassOrInterfaceDeclaration(new NodeList<>(new Modifier(Modifier.Keyword.PUBLIC)), true, targetName);
         if (templateTypeDeclaration.getExtendedTypes() != null) {
             resultType.setExtendedTypes(templateTypeDeclaration.getExtendedTypes());
         }
@@ -180,9 +185,19 @@ class CompilationUnitFactory {
     }
 
     private void writeResult() throws IOException {
+        // Configure PrettyPrinter with IntelliJ import ordering strategy
+        DefaultPrinterConfiguration config = new DefaultPrinterConfiguration();
+        EclipseImportOrderingStrategy strategy = new EclipseImportOrderingStrategy();
+        strategy.setSortImportsAlphabetically(true);
+        DefaultConfigurationOption option = new DefaultConfigurationOption(
+                DefaultPrinterConfiguration.ConfigOption.SORT_IMPORTS_STRATEGY, strategy);
+        config.addOption(option);
+
+        DefaultPrettyPrinter printer = new DefaultPrettyPrinter(config);
+        String formattedCode = printer.print(result);
 
         FileOutputStream fos = new FileOutputStream(target);
-        fos.write(result.toString().getBytes());
+        fos.write(formattedCode.getBytes());
         fos.close();
     }
 
@@ -214,20 +229,29 @@ class CompilationUnitFactory {
         ClassOrInterfaceDeclaration declaringClass = (ClassOrInterfaceDeclaration) result.getChildNodes().get(1);
 
         List<ImportDeclaration> optimizedImports = result.getImports().stream()
-                .filter(i -> i.isAsterisk() || i.isStatic() || declaringClass.findFirst(Type.class, t -> {
-                    String fullType = t.toString();
-                    String importIdentifier = i.getName().getIdentifier();
-
-                    return fullType.contains(importIdentifier);
-                }).isPresent()).sorted((o1, o2) -> {
-                    if (o1.getNameAsString().startsWith("java"))
-                        return -1;
-                    if (o2.getNameAsString().startsWith("java"))
-                        return 1;
-                    return o1.getNameAsString().compareTo(o2.getNameAsString());
-                }).collect(Collectors.toList());
+                .filter(i -> i.isAsterisk() || i.isStatic() || isImportUsed(declaringClass, i)).collect(Collectors.toList());
 
         result.setImports(NodeList.nodeList(optimizedImports));
+    }
+
+    private boolean isImportUsed(ClassOrInterfaceDeclaration declaringClass, ImportDeclaration importDeclaration) {
+        String importIdentifier = importDeclaration.getName().getIdentifier();
+
+        // Check if import is used in types
+        boolean usedInTypes = declaringClass.findFirst(Type.class, t -> {
+            String fullType = t.toString();
+            // Match patterns like: Flux<X<Long>>, X, X<Long> where X is importIdentifier
+            String regex = "\\b" + Pattern.quote(importIdentifier) + "(?:<[^>]*>)?\\b";
+            return Pattern.compile(regex).matcher(fullType).find();
+        }).isPresent();
+
+        // Check if import is used in annotations
+        boolean usedInAnnotations = declaringClass.findFirst(AnnotationExpr.class, a -> {
+            String annotationName = a.getNameAsString();
+            return annotationName.equals(importIdentifier);
+        }).isPresent();
+
+        return usedInTypes || usedInAnnotations;
     }
 
     /**

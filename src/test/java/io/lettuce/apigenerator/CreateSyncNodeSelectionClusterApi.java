@@ -56,7 +56,7 @@ public class CreateSyncNodeSelectionClusterApi {
 
     private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault",
             "digest", "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "dispatch", "setAutoFlushCommands",
-            "flushCommands");
+            "flushCommands", "getJsonParser");
 
     /**
      * Mutate type comment.

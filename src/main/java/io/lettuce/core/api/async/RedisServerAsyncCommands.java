@@ -29,8 +29,8 @@ import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.ShutdownArgs;
 import io.lettuce.core.TrackingArgs;
-import io.lettuce.core.UnblockType;
 import io.lettuce.core.TrackingInfo;
+import io.lettuce.core.UnblockType;
 import io.lettuce.core.protocol.CommandType;
 
 /**

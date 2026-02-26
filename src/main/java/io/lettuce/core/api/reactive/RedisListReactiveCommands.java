@@ -21,13 +21,13 @@ package io.lettuce.core.api.reactive;
 
 import java.util.List;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.LMPopArgs;
 import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.LPosArgs;
 import io.lettuce.core.output.ValueStreamingChannel;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Reactive executed commands for Lists.
@@ -335,8 +335,8 @@ public interface RedisListReactiveCommands<K, V> {
      * @param start the start type: long.
      * @param stop the stop type: long.
      * @return Long count of elements in the specified range.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #lrange}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #lrange}.
      */
     @Deprecated
     Mono<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop);

@@ -24,7 +24,16 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
-import io.lettuce.core.*;
+import io.lettuce.core.CopyArgs;
+import io.lettuce.core.ExpireArgs;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.MigrateArgs;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RestoreArgs;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.SortArgs;
+import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 
@@ -609,21 +618,21 @@ public interface RedisKeyAsyncCommands<K, V> {
     RedisFuture<KeyScanCursor<K>> scan();
 
     /**
-     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
+     * Incrementally iterate the keys space. Use {@link io.lettuce.core.KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @see KeyScanArgs
+     * @see io.lettuce.core.KeyScanArgs
      */
     RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
+     * Incrementally iterate the keys space. Use {@link io.lettuce.core.KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @see KeyScanArgs
+     * @see io.lettuce.core.KeyScanArgs
      */
     RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
@@ -644,23 +653,23 @@ public interface RedisKeyAsyncCommands<K, V> {
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
-     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
+     * Incrementally iterate the keys space. Use {@link io.lettuce.core.KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @see KeyScanArgs
+     * @see io.lettuce.core.KeyScanArgs
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
+     * Incrementally iterate the keys space. Use {@link io.lettuce.core.KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @see KeyScanArgs
+     * @see io.lettuce.core.KeyScanArgs
      */
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 

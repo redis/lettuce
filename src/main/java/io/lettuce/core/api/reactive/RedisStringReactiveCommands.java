@@ -21,17 +21,17 @@ package io.lettuce.core.api.reactive;
 
 import java.util.Map;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.GetExArgs;
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.LcsArgs;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.StrAlgoArgs;
-import io.lettuce.core.LcsArgs;
 import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.Value;
 import io.lettuce.core.output.KeyValueStreamingChannel;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Reactive executed commands for Strings.
@@ -344,8 +344,8 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param channel the channel.
      * @param keys the keys.
      * @return Long array-reply list of values at the specified keys.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #mget}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #mget}.
      */
     @Deprecated
     Mono<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys);
@@ -353,7 +353,7 @@ public interface RedisStringReactiveCommands<K, V> {
     /**
      * Set multiple keys to multiple values.
      *
-     * @param map the map.
+     * @param map the map containing key-value pairs.
      * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
      */
     Mono<String> mset(Map<K, V> map);
@@ -361,7 +361,7 @@ public interface RedisStringReactiveCommands<K, V> {
     /**
      * Set multiple keys to multiple values, only if none of the keys exist.
      *
-     * @param map the map.
+     * @param map the map containing key-value pairs.
      * @return Boolean integer-reply specifically:
      *
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).

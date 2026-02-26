@@ -19,6 +19,12 @@
  */
 package io.lettuce.core.cluster.api.sync;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.HGetExArgs;
 import io.lettuce.core.HSetExArgs;
@@ -31,12 +37,6 @@ import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Synchronous executed commands on a node selection for Hashes (Key-Value pairs).
