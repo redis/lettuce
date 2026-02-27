@@ -8,9 +8,18 @@ import io.lettuce.core.event.Event;
  * @author Mark Paluch
  * @since 6.1
  */
-enum NoOpEventRecorder implements EventRecorder, EventRecorder.RecordableEvent {
+public final class NoOpEventRecorder implements EventRecorder, EventRecorder.RecordableEvent {
 
-    INSTANCE;
+    public final static NoOpEventRecorder INSTANCE = new NoOpEventRecorder();
+
+    private Event originalEvent = null;
+
+    private NoOpEventRecorder() {
+    }
+
+    public NoOpEventRecorder(Event event) {
+        this.originalEvent = event;
+    }
 
     @Override
     public void record(Event event) {
@@ -24,7 +33,11 @@ enum NoOpEventRecorder implements EventRecorder, EventRecorder.RecordableEvent {
 
     @Override
     public void record() {
+    }
 
+    @Override
+    public Event getSource() {
+        return originalEvent;
     }
 
 }
