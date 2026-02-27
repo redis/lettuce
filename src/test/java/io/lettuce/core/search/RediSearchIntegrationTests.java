@@ -46,10 +46,10 @@ import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.lettuce.core.search.arguments.VectorFieldArgs;
+import io.lettuce.core.search.arguments.GeoFieldArgs;
+import io.lettuce.core.search.arguments.GeoshapeFieldArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
-import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -67,7 +67,6 @@ import java.util.Map;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for Redis Search functionality using FT.SEARCH command.
@@ -1074,75 +1073,221 @@ public class RediSearchIntegrationTests {
     void testFtInfoCommand() {
         String testIndex = "info-idx";
 
-        // Create field definitions
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+        // Create comprehensive field definitions covering all field types with various options
+
+        // TEXT fields with different options
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").as("product_title").sortable().weight(2)
+                .noStem().phonetic(TextFieldArgs.PhoneticMatcher.ENGLISH).withSuffixTrie().build();
+        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("description").indexEmpty().indexMissing()
+                .build();
+
+        // NUMERIC field with sortable
         FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
+        FieldArgs<String> stockField = NumericFieldArgs.<String> builder().name("stock").noIndex().build();
 
-        // Create index
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("product:")
-                .on(CreateArgs.TargetType.HASH).build();
-        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField, priceField, categoryField)))
-                .isEqualTo("OK");
+        // TAG fields with different separators and options
+        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").separator(";").caseSensitive()
+                .withSuffixTrie().sortable().build();
+        FieldArgs<String> tagsField = TagFieldArgs.<String> builder().name("tags").separator(",").build();
 
-        // Add some test documents
-        redis.hset("product:1", "title", "Redis Guide");
-        redis.hset("product:1", "content", "A comprehensive guide to Redis");
-        redis.hset("product:1", "price", "29.99");
-        redis.hset("product:1", "category", "books");
+        // GEO field for location data
+        FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("location").build();
 
-        redis.hset("product:2", "title", "Lettuce Tutorial");
-        redis.hset("product:2", "content", "Learn Lettuce Redis client");
-        redis.hset("product:2", "price", "19.99");
-        redis.hset("product:2", "category", "tutorials");
+        // GEOSHAPE field with coordinate system
+        FieldArgs<String> deliveryAreaField = GeoshapeFieldArgs.<String> builder().name("delivery_area").spherical().build();
+
+        // VECTOR field for embeddings
+        FieldArgs<String> embeddingField = VectorFieldArgs.<String> builder().name("embedding").hnsw()
+                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(128).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
+                .build();
+
+        // Create index with comprehensive CreateArgs options
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.HASH)
+                .withPrefix("product:").withPrefix("item:").defaultLanguage(DocumentLanguage.ENGLISH).languageField("lang")
+                .defaultScore(0.5).scoreField("doc_score").stopWords(Arrays.asList("the", "a", "an")).build();
+
+        List<FieldArgs<String>> allFields = Arrays.asList(titleField, descriptionField, priceField, stockField, categoryField,
+                tagsField, locationField, deliveryAreaField, embeddingField);
+
+        assertThat(redis.ftCreate(testIndex, createArgs, allFields)).isEqualTo("OK");
+
+        // Add test documents with all field types populated
+        Map<String, String> product1 = new HashMap<>();
+        product1.put("title", "Redis Enterprise Guide");
+        product1.put("description", "A comprehensive guide to Redis Enterprise features");
+        product1.put("price", "49.99");
+        product1.put("stock", "100");
+        product1.put("category", "books;technical");
+        product1.put("tags", "redis,database,nosql");
+        product1.put("location", "-122.4194,37.7749");
+        product1.put("delivery_area", "POLYGON((-122.5 37.7, -122.3 37.7, -122.3 37.8, -122.5 37.8, -122.5 37.7))");
+        product1.put("lang", "english");
+        product1.put("doc_score", "0.9");
+        redis.hset("product:1", product1);
+        // Add vector embedding (128 floats as blob) using binary connection
+        byte[] embedding1 = new byte[128 * 4];
+        for (int i = 0; i < 128; i++) {
+            int bits = Float.floatToIntBits(0.1f * i);
+            embedding1[i * 4] = (byte) bits;
+            embedding1[i * 4 + 1] = (byte) (bits >> 8);
+            embedding1[i * 4 + 2] = (byte) (bits >> 16);
+            embedding1[i * 4 + 3] = (byte) (bits >> 24);
+        }
+        redisBinary.hset("product:1".getBytes(), "embedding".getBytes(), embedding1);
+
+        Map<String, String> product2 = new HashMap<>();
+        product2.put("title", "Lettuce Client Tutorial");
+        product2.put("description", "Learn how to use the Lettuce Redis client");
+        product2.put("price", "29.99");
+        product2.put("stock", "50");
+        product2.put("category", "tutorials;programming");
+        product2.put("tags", "lettuce,java,client");
+        product2.put("location", "-73.9857,40.7484");
+        product2.put("delivery_area", "POLYGON((-74.0 40.7, -73.9 40.7, -73.9 40.8, -74.0 40.8, -74.0 40.7))");
+        product2.put("lang", "english");
+        product2.put("doc_score", "0.85");
+        redis.hset("product:2", product2);
+        byte[] embedding2 = new byte[128 * 4];
+        for (int i = 0; i < 128; i++) {
+            int bits = Float.floatToIntBits(0.2f * i);
+            embedding2[i * 4] = (byte) bits;
+            embedding2[i * 4 + 1] = (byte) (bits >> 8);
+            embedding2[i * 4 + 2] = (byte) (bits >> 16);
+            embedding2[i * 4 + 3] = (byte) (bits >> 24);
+        }
+        redisBinary.hset("product:2".getBytes(), "embedding".getBytes(), embedding2);
+
+        // Execute a search to populate dialect stats
+        redis.ftSearch(testIndex, "*");
 
         // Get index information
-        IndexInfo info = redis.ftInfo(testIndex);
+        IndexInfo<String> info = redis.ftInfo(testIndex);
 
-        // Verify basic information is present
+        // Verify basic information
         assertThat(info).isNotNull();
         assertThat(info.getIndexName()).isEqualTo(testIndex);
 
         // Verify index definition
-        assertThat(info.getIndexDefinition()).isNotNull();
-        assertThat(info.getIndexDefinition().getKeyType()).isNotNull();
+        IndexInfo.IndexDefinition<String> indexDef = info.getIndexDefinition();
+        assertThat(indexDef).isNotNull();
+        assertThat(indexDef.getKeyType()).isEqualTo(IndexInfo.IndexDefinition.TargetType.HASH);
+        assertThat(indexDef.getPrefixes()).containsExactlyInAnyOrder("product:", "item:");
+        assertThat(indexDef.getDefaultScore()).isEqualTo(0.5);
+        assertThat(indexDef.getLanguageField()).isEqualTo("lang");
+        assertThat(indexDef.getScoreField()).isEqualTo("doc_score");
+        assertThat(indexDef.getDefaultLanguage()).isEqualTo("english");
 
-        // Verify fields (schema fields)
-        assertThat(info.getFields()).isNotEmpty();
-        assertThat(info.getFields()).hasSize(4); // title, content, price, category
+        // Verify all fields are present
+        List<IndexInfo.Field<String>> fields = info.getFields();
+        assertThat(fields).hasSize(9);
 
-        // Verify field types
-        List<IndexInfo.Field> fields = info.getFields();
-        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.TextField).count()).isEqualTo(2); // title, content
-        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.NumericField).count()).isEqualTo(1); // price
-        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.TagField).count()).isEqualTo(1); // category
+        // Verify TEXT fields
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.TextField).count()).isEqualTo(2);
+        IndexInfo.TextField<String> titleFieldInfo = (IndexInfo.TextField<String>) fields.stream()
+                .filter(f -> "title".equals(f.getIdentifier())).findFirst().orElse(null);
+        assertThat(titleFieldInfo).isNotNull();
+        assertThat(titleFieldInfo.getAttribute()).isEqualTo("product_title");
+        assertThat(titleFieldInfo.isSortable()).isTrue();
+        assertThat(titleFieldInfo.getWeight()).isEqualTo(2.0);
+        assertThat(titleFieldInfo.isNoStem()).isTrue();
+        assertThat(titleFieldInfo.getPhonetic()).isEqualTo("dm:en");
+        assertThat(titleFieldInfo.isWithSuffixTrie()).isTrue();
 
-        // Verify specific field properties
-        IndexInfo.Field priceFieldInfo = fields.stream().filter(f -> "price".equals(f.getIdentifier())).findFirst()
-                .orElse(null);
+        IndexInfo.TextField<String> descFieldInfo = (IndexInfo.TextField<String>) fields.stream()
+                .filter(f -> "description".equals(f.getIdentifier())).findFirst().orElse(null);
+        assertThat(descFieldInfo).isNotNull();
+        assertThat(descFieldInfo.isIndexEmpty()).isTrue();
+        assertThat(descFieldInfo.isIndexMissing()).isTrue();
+
+        // Verify NUMERIC fields
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.NumericField).count()).isEqualTo(2);
+        IndexInfo.NumericField<String> priceFieldInfo = (IndexInfo.NumericField<String>) fields.stream()
+                .filter(f -> "price".equals(f.getIdentifier())).findFirst().orElse(null);
         assertThat(priceFieldInfo).isNotNull();
-        assertThat(priceFieldInfo).isInstanceOf(IndexInfo.NumericField.class);
         assertThat(priceFieldInfo.isSortable()).isTrue();
+
+        IndexInfo.NumericField<String> stockFieldInfo = (IndexInfo.NumericField<String>) fields.stream()
+                .filter(f -> "stock".equals(f.getIdentifier())).findFirst().orElse(null);
+        assertThat(stockFieldInfo).isNotNull();
+        assertThat(stockFieldInfo.isNoIndex()).isTrue();
+
+        // Verify TAG fields
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.TagField).count()).isEqualTo(2);
+        IndexInfo.TagField<String> categoryFieldInfo = (IndexInfo.TagField<String>) fields.stream()
+                .filter(f -> "category".equals(f.getIdentifier())).findFirst().orElse(null);
+        assertThat(categoryFieldInfo).isNotNull();
+        assertThat(categoryFieldInfo.getSeparator()).isEqualTo(";");
+        assertThat(categoryFieldInfo.isCaseSensitive()).isTrue();
+        assertThat(categoryFieldInfo.isWithSuffixTrie()).isTrue();
+        assertThat(categoryFieldInfo.isSortable()).isTrue();
+
+        IndexInfo.TagField<String> tagsFieldInfo = (IndexInfo.TagField<String>) fields.stream()
+                .filter(f -> "tags".equals(f.getIdentifier())).findFirst().orElse(null);
+        assertThat(tagsFieldInfo).isNotNull();
+        assertThat(tagsFieldInfo.getSeparator()).isEqualTo(",");
+
+        // Verify GEO field
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.GeoField).count()).isEqualTo(1);
+        IndexInfo.GeoField<String> locationFieldInfo = (IndexInfo.GeoField<String>) fields.stream()
+                .filter(f -> "location".equals(f.getIdentifier())).findFirst().orElse(null);
+        assertThat(locationFieldInfo).isNotNull();
+        assertThat(locationFieldInfo.getType()).isEqualTo(IndexInfo.Field.FieldType.GEO);
+
+        // Verify GEOSHAPE field
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.GeoshapeField).count()).isEqualTo(1);
+        IndexInfo.GeoshapeField<String> deliveryAreaFieldInfo = (IndexInfo.GeoshapeField<String>) fields.stream()
+                .filter(f -> "delivery_area".equals(f.getIdentifier())).findFirst().orElse(null);
+        assertThat(deliveryAreaFieldInfo).isNotNull();
+        assertThat(deliveryAreaFieldInfo.getCoordinateSystem()).isEqualTo(IndexInfo.GeoshapeField.CoordinateSystem.SPHERICAL);
+
+        // Verify VECTOR field
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.VectorField).count()).isEqualTo(1);
+        IndexInfo.VectorField<String> embeddingFieldInfo = (IndexInfo.VectorField<String>) fields.stream()
+                .filter(f -> "embedding".equals(f.getIdentifier())).findFirst().orElse(null);
+        assertThat(embeddingFieldInfo).isNotNull();
+        assertThat(embeddingFieldInfo.getAlgorithm()).isEqualTo(IndexInfo.VectorField.Algorithm.HNSW);
+        // Vector attributes are stored in the attributes map
+        Map<String, Object> vectorAttrs = embeddingFieldInfo.getAttributes();
+        assertThat(vectorAttrs).isNotEmpty();
+        assertThat(vectorAttrs.get("DIM")).isEqualTo(128L);
+        assertThat(vectorAttrs.get("DISTANCE_METRIC")).isEqualTo("COSINE");
+        assertThat(vectorAttrs.get("TYPE")).isEqualTo("FLOAT32");
 
         // Verify document count
         assertThat(info.getNumDocs()).isEqualTo(2L);
+        assertThat(info.getMaxDocId()).isGreaterThanOrEqualTo(2L);
+        assertThat(info.getNumTerms()).isGreaterThan(0L);
+        assertThat(info.getNumRecords()).isGreaterThan(0L);
 
-        // Verify statistics are present
-        assertThat(info.getNumTerms()).isNotNull();
-        assertThat(info.getNumRecords()).isNotNull();
+        // Verify size statistics
+        IndexInfo.SizeStatistics sizeStats = info.getSizeStats();
+        assertThat(sizeStats).isNotNull();
+        assertThat(sizeStats.getInvertedSizeMb()).isGreaterThanOrEqualTo(0.0);
+        assertThat(sizeStats.getDocTableSizeMb()).isGreaterThanOrEqualTo(0.0);
+        assertThat(sizeStats.getKeyTableSizeMb()).isGreaterThanOrEqualTo(0.0);
+        assertThat(sizeStats.getVectorIndexSizeMb()).isGreaterThanOrEqualTo(0.0);
+        assertThat(sizeStats.getGeoshapesSizeMb()).isGreaterThanOrEqualTo(0.0);
+        assertThat(sizeStats.getTagOverheadSizeMb()).isGreaterThanOrEqualTo(0.0);
+        assertThat(sizeStats.getTextOverheadSizeMb()).isGreaterThanOrEqualTo(0.0);
 
-        // Verify size statistics are available
-        if (info.getSizeStats() != null) {
-            assertThat(info.getSizeStats().getInvertedSizeMb()).isNotNull();
-        }
+        // Verify indexing statistics
+        IndexInfo.IndexingStatistics indexingStats = info.getIndexingStats();
+        assertThat(indexingStats).isNotNull();
+        assertThat(indexingStats.getPercentIndexed()).isEqualTo(1.0);
+        assertThat(indexingStats.isIndexing()).isFalse();
+        assertThat(indexingStats.getNumberOfUses()).isGreaterThanOrEqualTo(1L);
 
-        // Verify indexing statistics are available
-        if (info.getIndexingStats() != null) {
-            // These fields should be present
-            assertThat(info.getIndexingStats().isIndexing()).isNotNull();
-            assertThat(info.getIndexingStats().getPercentIndexed()).isNotNull();
-        }
+        // Verify GC statistics
+        IndexInfo.GcStatistics gcStats = info.getGcStats();
+        assertThat(gcStats).isNotNull();
+
+        // Verify cursor statistics
+        IndexInfo.CursorStatistics cursorStats = info.getCursorStats();
+        assertThat(cursorStats).isNotNull();
+
+        // Verify dialect statistics (should have at least one query counted)
+        IndexInfo.DialectStatistics dialectStats = info.getDialectStats();
+        assertThat(dialectStats).isNotNull();
 
         // Cleanup
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");

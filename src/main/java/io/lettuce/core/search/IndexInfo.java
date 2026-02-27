@@ -33,7 +33,7 @@ import java.util.Map;
  * @param <V> Value type.
  * @author Julien Ruaux
  * @see <a href="https://redis.io/docs/latest/commands/ft.info/">FT.INFO</a>
- * @since 6.8
+ * @since 7.5
  */
 public class IndexInfo<V> {
 
@@ -109,8 +109,8 @@ public class IndexInfo<V> {
         return noOffsets;
     }
 
-    void setNoOffsets(boolean noOffsets) {
-        this.noOffsets = noOffsets;
+    void setNoOffsets() {
+        this.noOffsets = true;
     }
 
     /**
@@ -123,8 +123,8 @@ public class IndexInfo<V> {
         return noHighlight;
     }
 
-    void setNoHighlight(boolean noHighlight) {
-        this.noHighlight = noHighlight;
+    void setNoHighlight() {
+        this.noHighlight = true;
     }
 
     /**
@@ -137,8 +137,8 @@ public class IndexInfo<V> {
         return noFields;
     }
 
-    void setNoFields(boolean noFields) {
-        this.noFields = noFields;
+    void setNoFields() {
+        this.noFields = true;
     }
 
     /**
@@ -151,8 +151,8 @@ public class IndexInfo<V> {
         return noFrequency;
     }
 
-    void setNoFrequency(boolean noFrequency) {
-        this.noFrequency = noFrequency;
+    void setNoFrequency() {
+        this.noFrequency = true;
     }
 
     /**
@@ -165,8 +165,8 @@ public class IndexInfo<V> {
         return maxTextFields;
     }
 
-    void setMaxTextFields(boolean maxTextFields) {
-        this.maxTextFields = maxTextFields;
+    void setMaxTextFields() {
+        this.maxTextFields = true;
     }
 
     /**
@@ -179,8 +179,8 @@ public class IndexInfo<V> {
         return skipInitialScan;
     }
 
-    void setSkipInitialScan(boolean skipInitialScan) {
-        this.skipInitialScan = skipInitialScan;
+    void setSkipInitialScan() {
+        this.skipInitialScan = true;
     }
 
     /**

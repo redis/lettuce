@@ -6,10 +6,12 @@
  */
 package io.lettuce.core.search;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.*;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Julien Ruaux
  */
+@Tag(UNIT_TEST)
 class IndexInfoTest {
 
     @Test
@@ -38,8 +41,8 @@ class IndexInfoTest {
     @Test
     void testIndexInfoOptions() {
         IndexInfo<String> info = new IndexInfo<>();
-        info.setNoOffsets(true);
-        info.setNoFrequency(true);
+        info.setNoOffsets();
+        info.setNoFrequency();
 
         assertThat(info.isNoOffsets()).isTrue();
         assertThat(info.isNoFrequency()).isTrue();
@@ -103,7 +106,7 @@ class IndexInfoTest {
     @Test
     void testIndexInfoImmutability() {
         IndexInfo<String> info = new IndexInfo<>();
-        info.setNoOffsets(true);
+        info.setNoOffsets();
         IndexInfo.IndexDefinition<String> definition = new IndexInfo.IndexDefinition<>();
         definition.setKeyType(IndexInfo.IndexDefinition.TargetType.HASH);
         info.setIndexDefinition(definition);

@@ -623,7 +623,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @return a list of index names
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft._list/">FT._LIST</a>
-     * @see #ftCreate(String, CreateArgs, FieldArgs[])
+     * @see #ftCreate(String, CreateArgs, List)
      * @see #ftDropindex(String)
      */
     @Experimental
@@ -670,7 +670,7 @@ public interface RediSearchAsyncCommands<K, V> {
      *
      * @param index the index name
      * @return an IndexInfo object containing index information and statistics
-     * @since 6.8
+     * @since 7.5
      * @see <a href="https://redis.io/docs/latest/commands/ft.info/">FT.INFO</a>
      * @see #ftCreate(String, CreateArgs, List)
      * @see #ftList()
