@@ -6,24 +6,27 @@
  */
 package io.lettuce.core.api;
 
+import java.util.Map;
+import java.util.List;
+
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.HybridReply;
 import io.lettuce.core.search.IndexInfo;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
+import io.lettuce.core.search.AggregationReply.Cursor;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.hybrid.HybridArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * ${intent} for RediSearch functionality
@@ -619,7 +622,7 @@ public interface RediSearchCommands<K, V> {
      * @return a list of index names
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft._list/">FT._LIST</a>
-     * @see #ftCreate(String, CreateArgs, FieldArgs[])
+     * @see #ftCreate(String, CreateArgs, List)
      * @see #ftDropindex(String)
      */
     @Experimental
@@ -666,7 +669,7 @@ public interface RediSearchCommands<K, V> {
      *
      * @param index the index name
      * @return an IndexInfo object containing index information and statistics
-     * @since 6.8
+     * @since 7.5
      * @see <a href="https://redis.io/docs/latest/commands/ft.info/">FT.INFO</a>
      * @see #ftCreate(String, CreateArgs, List)
      * @see #ftList()
