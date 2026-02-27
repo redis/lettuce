@@ -1,14 +1,16 @@
 package io.lettuce.core.support.caching;
 
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
-
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Utility to provide server-side assistance for client-side caches. This is a {@link CacheFrontend} that represents a two-level
@@ -31,6 +33,7 @@ import io.lettuce.core.codec.RedisCodec;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Yoobin Yoon
  * @since 6.0
  */
 public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
@@ -40,6 +43,8 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
     private final RedisCache<K, V> redisCache;
 
     private final List<Consumer<K>> invalidationListeners = new CopyOnWriteArrayList<>();
+
+    private final ConcurrentHashMap<K, ReentrantLock> keyLocks = new ConcurrentHashMap<>();
 
     private ClientSideCaching(CacheAccessor<K, V> cacheAccessor, RedisCache<K, V> redisCache) {
         this.cacheAccessor = cacheAccessor;
@@ -103,6 +108,7 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
     }
 
     private void notifyInvalidate(K key) {
+        keyLocks.remove(key);
 
         for (java.util.function.Consumer<K> invalidationListener : invalidationListeners) {
             invalidationListener.accept(key);
@@ -111,11 +117,29 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
 
     @Override
     public void close() {
+        keyLocks.clear();
         redisCache.close();
     }
 
     public void addInvalidationListener(java.util.function.Consumer<K> invalidationListener) {
         invalidationListeners.add(invalidationListener);
+    }
+
+    /**
+     * Execute the supplied function while holding the lock for the given key.
+     *
+     * @param key the key to lock
+     * @param supplier the function to execute under the lock
+     * @return the result of the supplied function
+     */
+    private <T> T withKeyLock(K key, Supplier<T> supplier) {
+        ReentrantLock keyLock = keyLocks.computeIfAbsent(key, k -> new ReentrantLock());
+        keyLock.lock();
+        try {
+            return supplier.get();
+        } finally {
+            keyLock.unlock();
+        }
     }
 
     @Override
@@ -124,11 +148,21 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         V value = cacheAccessor.get(key);
 
         if (value == null) {
-            value = redisCache.get(key);
+            value = withKeyLock(key, () -> {
+                V cachedValue = cacheAccessor.get(key);
 
-            if (value != null) {
-                cacheAccessor.put(key, value);
-            }
+                if (cachedValue == null) {
+                    V redisValue = redisCache.get(key);
+
+                    if (redisValue != null) {
+                        cacheAccessor.put(key, redisValue);
+                    }
+
+                    return redisValue;
+                }
+
+                return cachedValue;
+            });
         }
 
         return value;
@@ -140,28 +174,38 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         V value = cacheAccessor.get(key);
 
         if (value == null) {
-            value = redisCache.get(key);
+            value = withKeyLock(key, () -> {
+                V cachedValue = cacheAccessor.get(key);
 
-            if (value == null) {
+                if (cachedValue == null) {
+                    V redisValue = redisCache.get(key);
 
-                try {
-                    value = valueLoader.call();
-                } catch (Exception e) {
-                    throw new ValueRetrievalException(
-                            String.format("Value loader %s failed with an exception for key %s", valueLoader, key), e);
+                    if (redisValue == null) {
+                        try {
+                            V loadedValue = valueLoader.call();
+
+                            if (loadedValue == null) {
+                                throw new ValueRetrievalException(
+                                        String.format("Value loader %s returned a null value for key %s", valueLoader, key));
+                            }
+
+                            redisCache.put(key, loadedValue);
+                            redisCache.get(key);
+                            cacheAccessor.put(key, loadedValue);
+
+                            return loadedValue;
+                        } catch (Exception e) {
+                            throw new ValueRetrievalException(
+                                    String.format("Value loader %s failed with an exception for key %s", valueLoader, key), e);
+                        }
+                    } else {
+                        cacheAccessor.put(key, redisValue);
+                        return redisValue;
+                    }
                 }
 
-                if (value == null) {
-                    throw new ValueRetrievalException(
-                            String.format("Value loader %s returned a null value for key %s", valueLoader, key));
-                }
-                redisCache.put(key, value);
-
-                // register interest in key
-                redisCache.get(key);
-            }
-
-            cacheAccessor.put(key, value);
+                return cachedValue;
+            });
         }
 
         return value;
