@@ -1190,17 +1190,20 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.geopos(key, members));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
         return georadius_ro(key, longitude, latitude, distance, unit);
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance,
             GeoArgs.Unit unit, GeoArgs geoArgs) {
         return georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> georadius(K key, double longitude, double latitude, double distance, Unit unit,
             GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {

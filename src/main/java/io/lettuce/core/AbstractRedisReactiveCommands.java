@@ -1250,17 +1250,20 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createDissolvingFlux(() -> commandBuilder.geoposValues(key, members));
     }
 
+    @Deprecated
     @Override
     public Flux<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
         return georadius_ro(key, longitude, latitude, distance, unit);
     }
 
+    @Deprecated
     @Override
     public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
         return georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
     }
 
+    @Deprecated
     @Override
     public Mono<Long> georadius(K key, double longitude, double latitude, double distance, Unit unit,
             GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
