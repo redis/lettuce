@@ -171,6 +171,7 @@ public interface RedisHashCommands<K, V> {
      * @deprecated since 7.4.0, use {@link #hset(java.lang.Object, java.util.Map)} instead. This command is deprecated by Redis
      *             since version 4.0.0.
      */
+    @Deprecated
     String hmset(K key, Map<K, V> map);
 
     /**
