@@ -1287,11 +1287,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return georadiusbymember_ro(key, member, distance, unit);
     }
 
+    @Deprecated
     @Override
     public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
         return georadiusbymember_ro(key, member, distance, unit, geoArgs);
     }
 
+    @Deprecated
     @Override
     public Mono<Long> georadiusbymember(K key, V member, double distance, Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
         return createMono(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoRadiusStoreArgs));
