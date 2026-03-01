@@ -147,8 +147,8 @@ public interface RedisGeoCommands<K, V> {
      * @param distance radius distance.
      * @param unit distance unit.
      * @return bulk reply.
-     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead.
-     * This command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Set<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit);
@@ -163,8 +163,8 @@ public interface RedisGeoCommands<K, V> {
      * @param unit distance unit.
      * @param geoArgs args to control the result.
      * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}.
-     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead.
-     * This command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
@@ -181,8 +181,8 @@ public interface RedisGeoCommands<K, V> {
      * @param geoRadiusStoreArgs args to store either the resulting elements with their distance or the resulting elements with
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result.
-     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead.
-     * This command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
@@ -197,8 +197,8 @@ public interface RedisGeoCommands<K, V> {
      * @param distance radius distance.
      * @param unit distance unit.
      * @return set of members.
-     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead.
-     * This command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Set<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit);
@@ -213,8 +213,8 @@ public interface RedisGeoCommands<K, V> {
      * @param unit distance unit.
      * @param geoArgs args to control the result.
      * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}.
-     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead.
-     * This command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
@@ -230,8 +230,8 @@ public interface RedisGeoCommands<K, V> {
      * @param geoRadiusStoreArgs args to store either the resulting elements with their distance or the resulting elements with
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result.
-     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead.
-     * This command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.4.0, use {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
