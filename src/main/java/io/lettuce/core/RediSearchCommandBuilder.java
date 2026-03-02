@@ -22,18 +22,8 @@ import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
-import io.lettuce.core.search.AggregateReplyParser;
-import io.lettuce.core.search.AggregationReply;
-import io.lettuce.core.search.HybridReply;
-import io.lettuce.core.search.HybridReplyParser;
+import io.lettuce.core.search.*;
 
-import io.lettuce.core.search.SearchReply;
-import io.lettuce.core.search.SearchReplyParser;
-import io.lettuce.core.search.SpellCheckResult;
-import io.lettuce.core.search.SpellCheckResultParser;
-import io.lettuce.core.search.Suggestion;
-import io.lettuce.core.search.SuggestionParser;
-import io.lettuce.core.search.SynonymMapParser;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
@@ -409,6 +399,20 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         return createCommand(FT_EXPLAIN, new StatusOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Return information and statistics about an index.
+     *
+     * @param index the index name
+     * @return an IndexInfo object containing index information and statistics
+     */
+    public Command<K, V, IndexInfo<V>> ftInfo(String index) {
+        LettuceAssert.notNull(index, "Index must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).add(index);
+
+        return createCommand(FT_INFO, new EncodedComplexOutput<>(codec, new IndexInfoParser<>(codec)), commandArgs);
     }
 
     /**

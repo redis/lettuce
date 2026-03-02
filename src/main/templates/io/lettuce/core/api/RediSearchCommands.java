@@ -6,23 +6,27 @@
  */
 package io.lettuce.core.api;
 
+import java.util.Map;
+import java.util.List;
+
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.HybridReply;
+import io.lettuce.core.search.IndexInfo;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
+import io.lettuce.core.search.AggregationReply.Cursor;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.hybrid.HybridArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * ${intent} for RediSearch functionality
@@ -618,11 +622,61 @@ public interface RediSearchCommands<K, V> {
      * @return a list of index names
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft._list/">FT._LIST</a>
-     * @see #ftCreate(String, CreateArgs, FieldArgs[])
+     * @see #ftCreate(String, CreateArgs, List)
      * @see #ftDropindex(String)
      */
     @Experimental
     List<V> ftList();
+
+    /**
+     * Return information and statistics about a search index.
+     *
+     * <p>
+     * This command returns detailed information and statistics about a specified search index, including configuration, schema
+     * definition, memory usage, indexing progress, and performance metrics.
+     * </p>
+     *
+     * <p>
+     * The returned map contains various categories of information:
+     * </p>
+     * <ul>
+     * <li><strong>General:</strong> index_name, index_options, index_definition, attributes, num_docs, max_doc_id, num_terms,
+     * num_records</li>
+     * <li><strong>Size statistics:</strong> inverted_sz_mb, vector_index_sz_mb, doc_table_size_mb, sortable_values_size_mb,
+     * key_table_size_mb, etc.</li>
+     * <li><strong>Indexing statistics:</strong> hash_indexing_failures, total_indexing_time, indexing, percent_indexed,
+     * number_of_uses</li>
+     * <li><strong>Garbage collection:</strong> bytes_collected, total_ms_run, total_cycles, average_cycle_time_ms,
+     * last_run_time_ms</li>
+     * <li><strong>Cursor statistics:</strong> global_idle, global_total, index_capacity, index_total</li>
+     * <li><strong>Dialect statistics:</strong> Usage counts for each query dialect (1-4)</li>
+     * <li><strong>Error statistics:</strong> Indexing failures and errors per field</li>
+     * </ul>
+     *
+     * <p>
+     * Key use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Monitoring:</strong> Track index health, memory usage, and performance</li>
+     * <li><strong>Debugging:</strong> Identify indexing failures and errors</li>
+     * <li><strong>Capacity planning:</strong> Analyze memory consumption and growth trends</li>
+     * <li><strong>Performance tuning:</strong> Review indexing time and garbage collection metrics</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index name
+     * @return an IndexInfo object containing index information and statistics
+     * @since 7.5
+     * @see <a href="https://redis.io/docs/latest/commands/ft.info/">FT.INFO</a>
+     * @see #ftCreate(String, CreateArgs, List)
+     * @see #ftList()
+     * @see #ftDropindex(String)
+     */
+    @Experimental
+    IndexInfo<V> ftInfo(String index);
 
     /**
      * Dump synonym group contents.
