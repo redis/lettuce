@@ -407,11 +407,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> commandBuilder.brpop(timeout, keys));
     }
 
+    @Deprecated
     @Override
     public Mono<V> brpoplpush(long timeout, K source, K destination) {
         return createMono(() -> commandBuilder.brpoplpush(timeout, source, destination));
     }
 
+    @Deprecated
     @Override
     public Mono<V> brpoplpush(double timeout, K source, K destination) {
         return createMono(() -> commandBuilder.brpoplpush(timeout, source, destination));
@@ -1278,17 +1280,20 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createDissolvingFlux(() -> commandBuilder.geoposValues(key, members));
     }
 
+    @Deprecated
     @Override
     public Flux<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
         return georadius_ro(key, longitude, latitude, distance, unit);
     }
 
+    @Deprecated
     @Override
     public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
         return georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
     }
 
+    @Deprecated
     @Override
     public Mono<Long> georadius(K key, double longitude, double latitude, double distance, Unit unit,
             GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
@@ -1306,16 +1311,19 @@ public abstract class AbstractRedisReactiveCommands<K, V>
                 () -> commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance, unit.name(), geoArgs));
     }
 
+    @Deprecated
     @Override
     public Flux<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
         return georadiusbymember_ro(key, member, distance, unit);
     }
 
+    @Deprecated
     @Override
     public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
         return georadiusbymember_ro(key, member, distance, unit, geoArgs);
     }
 
+    @Deprecated
     @Override
     public Mono<Long> georadiusbymember(K key, V member, double distance, Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
         return createMono(() -> commandBuilder.georadiusbymember(key, member, distance, unit.name(), geoRadiusStoreArgs));
@@ -1382,6 +1390,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> commandBuilder.getrange(key, start, end));
     }
 
+    @Deprecated
     @Override
     public Mono<V> getset(K key, V value) {
         return createMono(() -> commandBuilder.getset(key, value));
@@ -1468,6 +1477,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    @Deprecated
     public Mono<String> hmset(K key, Map<K, V> map) {
         return createMono(() -> commandBuilder.hmset(key, map));
     }
@@ -2556,6 +2566,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(commandBuilder::ping);
     }
 
+    @Deprecated
     @Override
     public Mono<String> psetex(K key, long milliseconds, V value) {
         return createMono(() -> commandBuilder.psetex(key, milliseconds, value));
@@ -2671,6 +2682,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createDissolvingFlux(() -> commandBuilder.rpop(key, count));
     }
 
+    @Deprecated
     @Override
     public Mono<V> rpoplpush(K source, K destination) {
         return createMono(() -> commandBuilder.rpoplpush(source, destination));
@@ -2820,11 +2832,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> commandBuilder.setbit(key, offset, value));
     }
 
+    @Deprecated
     @Override
     public Mono<String> setex(K key, long seconds, V value) {
         return createMono(() -> commandBuilder.setex(key, seconds, value));
     }
 
+    @Deprecated
     @Override
     public Mono<Boolean> setnx(K key, V value) {
         return createMono(() -> commandBuilder.setnx(key, value));

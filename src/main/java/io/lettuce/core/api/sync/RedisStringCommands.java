@@ -301,7 +301,10 @@ public interface RedisStringCommands<K, V> {
      * @param key the key.
      * @param value the value.
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
+     * @deprecated since 7.4.0, use {@link #set(K, V, SetArgs)} instead. This command is deprecated by Redis since version
+     *             6.2.0.
      */
+    @Deprecated
     V getset(K key, V value);
 
     /**
@@ -433,7 +436,10 @@ public interface RedisStringCommands<K, V> {
      * @param seconds the seconds type: long.
      * @param value the value.
      * @return String simple-string-reply.
+     * @deprecated since 7.4.0, use {@link #set(K, V, SetArgs)} instead. This command is deprecated by Redis since version
+     *             2.6.12.
      */
+    @Deprecated
     String setex(K key, long seconds, V value);
 
     /**
@@ -443,7 +449,10 @@ public interface RedisStringCommands<K, V> {
      * @param milliseconds the milliseconds type: long.
      * @param value the value.
      * @return String simple-string-reply.
+     * @deprecated since 7.4.0, use {@link #set(K, V, SetArgs)} instead. This command is deprecated by Redis since version
+     *             2.6.12.
      */
+    @Deprecated
     String psetex(K key, long milliseconds, V value);
 
     /**
@@ -454,7 +463,10 @@ public interface RedisStringCommands<K, V> {
      * @return Boolean integer-reply specifically:
      *
      *         {@code 1} if the key was set {@code 0} if the key was not set.
+     * @deprecated since 7.4.0, use {@link #set(K, V, SetArgs)} instead. This command is deprecated by Redis since version
+     *             2.6.12.
      */
+    @Deprecated
     Boolean setnx(K key, V value);
 
     /**
