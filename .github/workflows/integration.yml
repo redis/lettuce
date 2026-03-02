@@ -1,4 +1,6 @@
 name: Continuous Integration
+run-name: "Continuous Integration${{ github.event.inputs.client_libs_test_image_tag != '' && format(' using image: {0}', github.event.inputs.client_libs_test_image_tag) || '' }}"
+
 on:
   push:
     paths-ignore:
@@ -17,11 +19,16 @@ on:
   schedule:
     - cron: '0 1 * * *' # nightly build
   workflow_dispatch:
+    inputs:
+      client_libs_test_image_tag:
+        description: 'Custom client libs test image tag to use instead of redis_version'
+        required: false
+        default: ''
 
 jobs:
   build:
-    name: Build and Test
-    runs-on: ubuntu-latest
+    name: Build and Test (Redis ${{ matrix.redis_version }})
+    if: github.event.inputs.client_libs_test_image_tag == ''
     strategy:
       fail-fast: false
       matrix:
@@ -32,54 +39,17 @@ jobs:
           - "8.0"
           - "7.4"
           - "7.2"
-    env:
-      REDIS_ENV_WORK_DIR: ${{ github.workspace }}/work
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      redis_version: ${{ matrix.redis_version }}
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
-    steps:
-      - name: Checkout project
-        uses: actions/checkout@v4
-      - name: Set Java up in the runner
-        uses: actions/setup-java@v4
-        with:
-          java-version: '8'
-          distribution: 'temurin'
-          cache: 'maven'
-      - name: Setup Maven
-        uses: s4u/setup-maven-action@v1.8.0
-        with:
-          java-version: 8
-      - name: Install missing dependencies to container
-        run: |
-          sudo apt update
-      - name: Set up Docker Compose environment
-        run: |
-          mkdir -m 777 $REDIS_ENV_WORK_DIR
-          make start version=${{ matrix.redis_version }}
-      - name: Maven offline
-        run: |
-          mvn -q dependency:go-offline
-        continue-on-error: true
-      - name: Run tests
-        run: |
-          export TEST_WORK_FOLDER=$REDIS_ENV_WORK_DIR
-          echo $TEST_WORK_FOLDER
-          ls -la $TEST_WORK_FOLDER
-          make test-coverage
-        env:
-          JVM_OPTS: -Xmx3200m
-          TERM: dumb
-      - name: Tear down Docker Compose environment
-        run: |
-          docker compose $COMPOSE_ENV_FILES -f src/test/resources/docker-env/docker-compose.yml down
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-      - name: Upload test failure reports to Codecov
-        uses: codecov/test-results-action@v1
-        if: always() # always upload test results to include test failures
-        with:
-          fail_ci_if_error: false
-          files: ./target/surefire-reports/TEST*,./target/failsafe-reports/TEST*
-          verbose: ${{ runner.debug }}
-          token: ${{ secrets.CODECOV_TOKEN }}
+  build_using_custom_image:
+    name: Build and Test using custom image
+    if: github.event.inputs.client_libs_test_image_tag != ''
+    uses: ./.github/workflows/run-tests.yml
+    with:
+      client_libs_test_image_tag: ${{ github.event.inputs.client_libs_test_image_tag }}
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}
