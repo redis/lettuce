@@ -1,5 +1,6 @@
 package io.lettuce.test.settings;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -13,6 +14,8 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import io.lettuce.core.SslOptions;
 
 public class TlsSettings {
 
@@ -31,6 +34,15 @@ public class TlsSettings {
     private static final String TEST_CA_CERT = "ca.crt";
 
     private static final String TEST_TRUSTSTORE = "truststore.jks";
+
+    // mTLS container configurations
+    public static final String MTLS_STANDALONE_CONTAINER = "redis-standalone-5-client-cert";
+
+    public static final Path MTLS_STANDALONE_TLS_PATH = Paths.get(MTLS_STANDALONE_CONTAINER + "/work/tls");
+
+    public static final String MTLS_CLUSTER_CONTAINER = "ssl-test-cluster";
+
+    public static final Path MTLS_CLUSTER_TLS_PATH = Paths.get(MTLS_CLUSTER_CONTAINER + "/work/tls");
 
     public static Path envClientP12(Path certLocation) {
         return Paths.get(TEST_WORK_FOLDER, certLocation.toString(), TEST_CLIENT_P12);
@@ -128,6 +140,32 @@ public class TlsSettings {
         Path trustStorePath = testTruststorePath(trustStoreName).toAbsolutePath();
 
         return createAndSaveTruststore(trustedCertPaths, trustStorePath, truststorePassword);
+    }
+
+    /**
+     * Creates SslOptions with client certificate (keystore) and truststore for mTLS authentication.
+     *
+     * @param containerName the container/environment name for truststore creation
+     * @param tlsPath the path to TLS certificates
+     * @return SslOptions configured for mTLS
+     */
+    public static SslOptions createMtlsSslOptions(String containerName, Path tlsPath) {
+        Path truststorePath = createAndSaveTestTruststore(containerName, tlsPath, "changeit");
+        File truststoreFile = truststorePath.toFile();
+        File keystore = envClientP12(tlsPath).toFile();
+
+        return SslOptions.builder().jdkSslProvider().keystore(keystore, "changeit".toCharArray())
+                .truststore(truststoreFile, "changeit").build();
+    }
+
+    /**
+     * Creates SslOptions for the mTLS cluster with client certificate (keystore) and truststore. The mTLS cluster requires
+     * client certificates for TLS handshake.
+     *
+     * @return SslOptions configured for mTLS cluster
+     */
+    public static SslOptions createMtlsClusterSslOptions() {
+        return createMtlsSslOptions(MTLS_CLUSTER_CONTAINER, MTLS_CLUSTER_TLS_PATH);
     }
 
 }
