@@ -2,6 +2,7 @@ package io.lettuce.core.cluster;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.test.settings.TestSettings.*;
+import static io.lettuce.test.settings.TlsSettings.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
@@ -17,6 +18,7 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.SslVerifyMode;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -32,7 +34,7 @@ import io.lettuce.test.resource.TestClientResources;
 @Tag(INTEGRATION_TEST)
 class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
-    private static final int CLUSTER_PORT_SSL_1 = 7442;
+    private static final int CLUSTER_PORT_SSL_1 = 7443;
 
     private static final int CLUSTER_PORT_SSL_2 = 7444; // replica cannot replicate properly with upstream
 
@@ -43,9 +45,13 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
     private static final String SLOT_16352_KEY = "UyAa4KqoWgPGKa";
 
     private static RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withPassword("foobared").withSsl(true)
-            .withVerifyPeer(false).build();
+            .withVerifyPeer(SslVerifyMode.CA).build();
 
     private static RedisClusterClient redisClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
+
+    static {
+        redisClient.setOptions(ClusterClientOptions.builder().sslOptions(createMtlsClusterSslOptions()).build());
+    }
 
     @BeforeEach
     void before() {
@@ -108,7 +114,7 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
         try {
             node2Connection.sync().get(SLOT_1_KEY);
         } catch (RedisCommandExecutionException e) {
-            assertThat(e).hasMessage("MOVED 1 127.0.0.1:7442");
+            assertThat(e).hasMessage("MOVED 1 127.0.0.1:" + CLUSTER_PORT_SSL_1);
         }
 
         connection.close();
@@ -128,8 +134,10 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
     @Test
     void connectionWithoutPasswordShouldFail() {
 
-        RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
+        RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(SslVerifyMode.CA)
+                .build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
+        redisClusterClient.setOptions(ClusterClientOptions.builder().sslOptions(createMtlsClusterSslOptions()).build());
 
         try {
             redisClusterClient.reloadPartitions();
@@ -143,8 +151,10 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
     @Test
     void connectionWithoutPasswordShouldFail2() {
 
-        RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(false).build();
+        RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(SslVerifyMode.CA)
+                .build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
+        redisClusterClient.setOptions(ClusterClientOptions.builder().sslOptions(createMtlsClusterSslOptions()).build());
 
         try {
             redisClusterClient.connect();

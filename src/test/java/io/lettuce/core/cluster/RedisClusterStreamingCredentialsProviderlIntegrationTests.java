@@ -1,10 +1,26 @@
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+import static io.lettuce.test.settings.TestSettings.*;
+import static io.lettuce.test.settings.TlsSettings.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
 import io.lettuce.core.AclSetuserArgs;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.MyStreamingRedisCredentialsProvider;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.SslVerifyMode;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -15,20 +31,6 @@ import io.lettuce.test.CanConnect;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static io.lettuce.TestTags.INTEGRATION_TEST;
-import static io.lettuce.test.settings.TestSettings.host;
-import static io.lettuce.test.settings.TestSettings.hostAddr;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * @author Ivo Gaydajiev
@@ -36,7 +38,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 @Tag(INTEGRATION_TEST)
 class RedisClusterStreamingCredentialsProviderIntegrationTests extends TestSupport {
 
-    private static final int CLUSTER_PORT_SSL_1 = 7442;
+    private static final int CLUSTER_PORT_SSL_1 = 7443;
 
     private static final int CLUSTER_PORT_SSL_2 = 7444; // replica cannot replicate properly with upstream
 
@@ -49,15 +51,19 @@ class RedisClusterStreamingCredentialsProviderIntegrationTests extends TestSuppo
     private static MyStreamingRedisCredentialsProvider credentialsProvider = new MyStreamingRedisCredentialsProvider();
 
     private static RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true)
-            .withAuthentication(credentialsProvider).withVerifyPeer(false).build();
+            .withAuthentication(credentialsProvider).withVerifyPeer(SslVerifyMode.CA).build();
 
     private static RedisClusterClient redisClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
+    static {
+        redisClient.setOptions(ClusterClientOptions.builder().sslOptions(createMtlsClusterSslOptions()).build());
+    }
+
     @BeforeEach
     void before() {
-        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_1), "Assume that stunnel runs on port 7442");
-        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_2), "Assume that stunnel runs on port 7444");
-        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_3), "Assume that stunnel runs on port 7445");
+        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_1), "Assume that Redis TLS runs on port " + CLUSTER_PORT_SSL_1);
+        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_2), "Assume that Redis TLS runs on port " + CLUSTER_PORT_SSL_2);
+        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_3), "Assume that Redis TLS runs on port " + CLUSTER_PORT_SSL_3);
         assumeTrue(CanConnect.to(host(), 7479), "Assume that Redis runs on port 7479");
         assumeTrue(CanConnect.to(host(), 7480), "Assume that Redis runs on port 7480");
         assumeTrue(CanConnect.to(host(), 7481), "Assume that Redis runs on port 7481");
@@ -120,7 +126,7 @@ class RedisClusterStreamingCredentialsProviderIntegrationTests extends TestSuppo
         try {
             node2Connection.sync().get(SLOT_1_KEY);
         } catch (RedisCommandExecutionException e) {
-            assertThat(e).hasMessage("MOVED 1 127.0.0.1:7442");
+            assertThat(e).hasMessage("MOVED 1 127.0.0.1:" + CLUSTER_PORT_SSL_1);
         }
 
         connection.close();
