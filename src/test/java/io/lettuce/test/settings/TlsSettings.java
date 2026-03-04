@@ -44,6 +44,29 @@ public class TlsSettings {
 
     public static final Path MTLS_CLUSTER_TLS_PATH = Paths.get(MTLS_CLUSTER_CONTAINER + "/work/tls");
 
+    /**
+     * Client certificate options for mTLS tests.
+     */
+    public enum ClientCertificate {
+
+        /** Default client cert (client.p12) - CN matches ACL user, mTLS auto-auth succeeds */
+        DEFAULT("client.p12"),
+
+        /** Alternative client cert (Client-test-2.p12) - CN has no matching ACL user */
+        NO_ACL_USER("Client-test-2.p12");
+
+        private final String filename;
+
+        ClientCertificate(String filename) {
+            this.filename = filename;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+
+    }
+
     public static Path envClientP12(Path certLocation) {
         return Paths.get(TEST_WORK_FOLDER, certLocation.toString(), TEST_CLIENT_P12);
     }
@@ -143,29 +166,63 @@ public class TlsSettings {
     }
 
     /**
+     * Creates SslOptions with the specified keystore and truststore files.
+     *
+     * @param keystore the client certificate keystore file
+     * @param truststore the truststore file
+     * @return SslOptions configured with the provided stores
+     */
+    public static SslOptions createSslOptions(File keystore, File truststore) {
+        return SslOptions.builder().jdkSslProvider().keystore(keystore, "changeit".toCharArray())
+                .truststore(truststore, "changeit").build();
+    }
+
+    /**
      * Creates SslOptions with client certificate (keystore) and truststore for mTLS authentication.
+     *
+     * @param containerName the container/environment name for truststore creation
+     * @param tlsPath the path to TLS certificates
+     * @param clientCert the client certificate to use
+     * @return SslOptions configured for mTLS
+     */
+    public static SslOptions createMtlsSslOptions(String containerName, Path tlsPath, ClientCertificate clientCert) {
+        Path truststorePath = createAndSaveTestTruststore(containerName, tlsPath, "changeit");
+        File truststoreFile = truststorePath.toFile();
+        Path keystorePath = Paths.get(TEST_WORK_FOLDER, tlsPath.toString(), clientCert.getFilename());
+
+        return createSslOptions(keystorePath.toFile(), truststoreFile);
+    }
+
+    /**
+     * Creates SslOptions with client certificate (keystore) and truststore for mTLS authentication. Uses the default client
+     * certificate which has a matching ACL user (mTLS auto-auth succeeds).
      *
      * @param containerName the container/environment name for truststore creation
      * @param tlsPath the path to TLS certificates
      * @return SslOptions configured for mTLS
      */
     public static SslOptions createMtlsSslOptions(String containerName, Path tlsPath) {
-        Path truststorePath = createAndSaveTestTruststore(containerName, tlsPath, "changeit");
-        File truststoreFile = truststorePath.toFile();
-        File keystore = envClientP12(tlsPath).toFile();
-
-        return SslOptions.builder().jdkSslProvider().keystore(keystore, "changeit".toCharArray())
-                .truststore(truststoreFile, "changeit").build();
+        return createMtlsSslOptions(containerName, tlsPath, ClientCertificate.DEFAULT);
     }
 
     /**
-     * Creates SslOptions for the mTLS cluster with client certificate (keystore) and truststore. The mTLS cluster requires
-     * client certificates for TLS handshake.
+     * Creates SslOptions for the mTLS cluster with default client certificate. The certificate's CN matches an ACL user, so
+     * mTLS auto-auth will succeed.
      *
      * @return SslOptions configured for mTLS cluster
      */
     public static SslOptions createMtlsClusterSslOptions() {
-        return createMtlsSslOptions(MTLS_CLUSTER_CONTAINER, MTLS_CLUSTER_TLS_PATH);
+        return createMtlsSslOptions(MTLS_CLUSTER_CONTAINER, MTLS_CLUSTER_TLS_PATH, ClientCertificate.DEFAULT);
+    }
+
+    /**
+     * Creates SslOptions for the mTLS cluster with a client certificate that has no matching ACL user. Use this for tests that
+     * expect authentication to fail.
+     *
+     * @return SslOptions configured for mTLS cluster without ACL user match
+     */
+    public static SslOptions createMtlsClusterSslOptionsNoAcl() {
+        return createMtlsSslOptions(MTLS_CLUSTER_CONTAINER, MTLS_CLUSTER_TLS_PATH, ClientCertificate.NO_ACL_USER);
     }
 
 }

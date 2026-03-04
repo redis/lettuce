@@ -137,10 +137,12 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
         RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(SslVerifyMode.CA)
                 .build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
-        redisClusterClient.setOptions(ClusterClientOptions.builder().sslOptions(createMtlsClusterSslOptions()).build());
+        // Use certificate without matching ACL user to ensure auth fails
+        redisClusterClient.setOptions(ClusterClientOptions.builder().sslOptions(createMtlsClusterSslOptionsNoAcl()).build());
 
         try {
-            redisClusterClient.reloadPartitions();
+            redisClusterClient.refreshPartitions();
+            fail("Expected RedisException for missing password");
         } catch (RedisException e) {
             assertThat(e).hasMessageContaining("Cannot reload Redis Cluster topology");
         } finally {
@@ -154,10 +156,12 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
         RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(SslVerifyMode.CA)
                 .build();
         RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
-        redisClusterClient.setOptions(ClusterClientOptions.builder().sslOptions(createMtlsClusterSslOptions()).build());
+        // Use certificate without matching ACL user to ensure auth fails
+        redisClusterClient.setOptions(ClusterClientOptions.builder().sslOptions(createMtlsClusterSslOptionsNoAcl()).build());
 
         try {
             redisClusterClient.connect();
+            fail("Expected RedisConnectionException for missing password");
         } catch (RedisConnectionException e) {
             assertThat(e).hasMessageContaining("Unable to establish a connection to Redis Cluster");
         } finally {
@@ -168,10 +172,10 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
     @Test
     void clusterNodeRefreshWorksForMultipleIterations() {
 
-        redisClient.reloadPartitions();
-        redisClient.reloadPartitions();
-        redisClient.reloadPartitions();
-        redisClient.reloadPartitions();
+        redisClient.refreshPartitions();
+        redisClient.refreshPartitions();
+        redisClient.refreshPartitions();
+        redisClient.refreshPartitions();
     }
 
 }
