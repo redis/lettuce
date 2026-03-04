@@ -25,6 +25,7 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.Executions;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.test.CanConnect;
+import io.lettuce.test.condition.RedisConditions;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 
@@ -133,6 +134,10 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
     @Test
     void connectionWithoutPasswordShouldFail() {
+        // mTLS with NO_ACL_USER certificate only available on Redis 8.0+
+        try (StatefulRedisClusterConnection<String, String> conn = redisClient.connect()) {
+            assumeTrue(RedisConditions.of(conn).hasVersionGreaterOrEqualsTo("8.0"), "Requires Redis 8.0+");
+        }
 
         RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(SslVerifyMode.CA)
                 .build();
@@ -152,6 +157,10 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
     @Test
     void connectionWithoutPasswordShouldFail2() {
+        // mTLS with NO_ACL_USER certificate only available on Redis 8.0+
+        try (StatefulRedisClusterConnection<String, String> conn = redisClient.connect()) {
+            assumeTrue(RedisConditions.of(conn).hasVersionGreaterOrEqualsTo("8.0"), "Requires Redis 8.0+");
+        }
 
         RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withVerifyPeer(SslVerifyMode.CA)
                 .build();
