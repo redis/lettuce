@@ -735,6 +735,17 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return store.compute(f.key(), () -> f.apply(this));
     }
 
+    @Override
+    public io.lettuce.core.TransactionBuilder<K, V> transaction() {
+        return current.getConnection().transaction();
+    }
+
+    @Override
+    @SafeVarargs
+    public final io.lettuce.core.TransactionBuilder<K, V> transaction(K... watchKeys) {
+        return current.getConnection().transaction(watchKeys);
+    }
+
     /**
      * Returns the current database endpoint.
      *
