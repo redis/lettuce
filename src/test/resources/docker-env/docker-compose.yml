@@ -149,17 +149,23 @@ services:
     ports:
       - "36379-36381:36379-36381"
 
+  # TLS Cluster with native Redis TLS and client certificate authentication (mTLS)
   ssl-test-cluster:
     <<: *client-libs-image
     container_name: ssl-test-cluster
     environment:
       - REDIS_CLUSTER=yes
+      - TLS_ENABLED=yes
     volumes:
       - ./ssl-test-cluster/config:/redis/config:r
+      - ${REDIS_ENV_WORK_DIR}/ssl-test-cluster/work:/redis/work:rw
     ports:
       - "7479:7479"
       - "7480:7480"
       - "7481:7481"
+      - "7443:7443"   # TLS port node 1
+      - "7444:7444"   # TLS port node 2
+      - "7445:7445"   # TLS port node 3
     networks:
       - redis-network
 
