@@ -346,8 +346,8 @@ public class BundledTransactionIntegrationTests extends TestSupport {
                             throw new AssertionError("Transaction was unexpectedly discarded: " + prefix);
                         }
                         if (result.size() != keysPerTransaction * 2) {
-                            throw new AssertionError("Wrong result size for " + prefix +
-                                    ": expected " + (keysPerTransaction * 2) + " got " + result.size());
+                            throw new AssertionError("Wrong result size for " + prefix + ": expected "
+                                    + (keysPerTransaction * 2) + " got " + result.size());
                         }
 
                         // First N results are "OK" from SET
@@ -361,16 +361,15 @@ public class BundledTransactionIntegrationTests extends TestSupport {
                             String expected = prefix + "val" + k;
                             String actual = (String) result.get(keysPerTransaction + k);
                             if (!expected.equals(actual)) {
-                                throw new AssertionError("GET mismatch for " + prefix + "key" + k +
-                                        ": expected '" + expected + "' but got '" + actual + "'");
+                                throw new AssertionError("GET mismatch for " + prefix + "key" + k + ": expected '" + expected
+                                        + "' but got '" + actual + "'");
                             }
                         }
                     }
                 } catch (Exception e) {
                     hasError.set(true);
                     synchronized (errorMessages) {
-                        errorMessages.append("Thread ").append(threadId).append(": ")
-                                .append(e.getMessage()).append("\n");
+                        errorMessages.append("Thread ").append(threadId).append(": ").append(e.getMessage()).append("\n");
                     }
                 } finally {
                     doneLatch.countDown();
