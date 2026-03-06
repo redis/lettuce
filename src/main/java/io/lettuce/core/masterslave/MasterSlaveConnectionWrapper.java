@@ -140,4 +140,15 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
         return delegate.getCodec();
     }
 
+    @Override
+    public io.lettuce.core.TransactionBuilder<K, V> transaction() {
+        return delegate.transaction();
+    }
+
+    @Override
+    @SafeVarargs
+    public final io.lettuce.core.TransactionBuilder<K, V> transaction(K... watchKeys) {
+        return delegate.transaction(watchKeys);
+    }
+
 }
