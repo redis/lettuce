@@ -394,12 +394,13 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     /**
      * Dispatch a transaction bundle as a single atomic unit.
      * <p>
-     * This method is called by {@link TransactionBuilderImpl} to dispatch the collected commands atomically.
+     * This method is called by {@link TransactionBuilderImpl} and cluster transaction support to dispatch the collected
+     * commands atomically.
      *
      * @param bundle the transaction bundle to dispatch.
      * @return a future that completes with the transaction result.
      */
-    RedisFuture<TransactionResult> dispatchTransactionBundle(TransactionBundle<K, V> bundle) {
+    public RedisFuture<TransactionResult> dispatchTransactionBundle(TransactionBundle<K, V> bundle) {
         AsyncCommand<K, V, TransactionResult> async = new AsyncCommand<>(bundle);
         RedisCommand<K, V, TransactionResult> dispatched = dispatch(async);
         return async;

@@ -7,6 +7,7 @@
 package io.lettuce.core.cluster;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import reactor.core.publisher.Mono;
 
@@ -16,15 +17,17 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.protocol.TransactionBundle;
 
 /**
  * Cluster-aware implementation of {@link TransactionBuilder}.
  * <p>
- * This builder delegates to an underlying node-specific builder after determining the target slot from WATCH keys. Redis
- * Cluster requires that all keys in a transaction reside on the same slot.
+ * This builder collects commands locally and validates that all keys hash to the same slot. At execution time, it routes the
+ * transaction to the appropriate cluster node.
  * <p>
- * <b>Important:</b> When using {@link #commands()}, you are responsible for ensuring all keys map to the same slot. Otherwise,
- * CROSSSLOT errors will occur at execution time. Use Redis hash tags to ensure keys map to the same slot.
+ * <b>Important:</b> All keys used in the transaction must map to the same slot. If keys span multiple slots, a
+ * {@link RedisException} is thrown during command collection.
  * <p>
  * <b>Hash Tags:</b> Keys {@code {user123}:name} and {@code {user123}:email} will both hash to the slot determined by
  * {@code user123}.
@@ -32,7 +35,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * Example usage:
  *
  * <pre>
- * 
+ *
  * {
  *     &#64;code
  *     // Keys with same hash tag - will succeed
@@ -45,7 +48,7 @@ import io.lettuce.core.internal.LettuceAssert;
  *     TransactionBuilder<String, String> txn2 = connection.transaction();
  *     txn2.commands().set("user:name", "John");
  *     txn2.commands().set("product:price", "100"); // Different slot!
- *     txn2.execute(); // Throws CROSSSLOT error
+ *     // Throws CROSSSLOT error immediately when second command is added
  * }
  * </pre>
  *
@@ -64,11 +67,7 @@ public class ClusterTransactionBuilder<K, V> implements TransactionBuilder<K, V>
 
     private final K[] watchKeys;
 
-    private Integer targetSlot;
-
-    private K firstKey;
-
-    private TransactionBuilder<K, V> delegate;
+    private final ClusterCommandCollectingAsyncCommands<K, V> collector;
 
     /**
      * Create a new ClusterTransactionBuilder.
@@ -86,63 +85,32 @@ public class ClusterTransactionBuilder<K, V> implements TransactionBuilder<K, V>
         this.clusterConnection = clusterConnection;
         this.codec = codec;
         this.watchKeys = (watchKeys != null && watchKeys.length > 0) ? watchKeys : null;
-        this.targetSlot = null;
-        this.firstKey = null;
-        this.delegate = null;
+        this.collector = new ClusterCommandCollectingAsyncCommands<>(clusterConnection, codec);
 
-        // Validate WATCH keys are all in same slot and determine target slot
+        // Validate WATCH keys are all in same slot and set target slot
         if (this.watchKeys != null) {
+            Integer targetSlot = null;
+            K firstKey = null;
             for (K watchKey : this.watchKeys) {
-                validateSlot(watchKey);
+                if (watchKey != null) {
+                    ByteBuffer encoded = codec.encodeKey(watchKey);
+                    int slot = SlotHash.getSlot(encoded);
+                    if (targetSlot == null) {
+                        targetSlot = slot;
+                        firstKey = watchKey;
+                    } else if (!targetSlot.equals(slot)) {
+                        throw new RedisException(String.format(
+                                "CROSSSLOT Keys in transaction must hash to the same slot. "
+                                        + "Key '%s' hashes to slot %d, but key '%s' hashes to slot %d. "
+                                        + "Use hash tags like {tag}key to ensure same slot routing.",
+                                firstKey, targetSlot, watchKey, slot));
+                    }
+                }
+            }
+            if (targetSlot != null) {
+                collector.setTargetSlot(targetSlot);
             }
         }
-    }
-
-    /**
-     * Validate that a key maps to the same slot as previous keys.
-     *
-     * @param key the key to validate.
-     * @throws RedisException if the key maps to a different slot.
-     */
-    private void validateSlot(K key) {
-        if (key == null) {
-            return;
-        }
-
-        ByteBuffer encoded = codec.encodeKey(key);
-        int slot = SlotHash.getSlot(encoded);
-
-        if (targetSlot == null) {
-            targetSlot = slot;
-            firstKey = key;
-        } else if (!targetSlot.equals(slot)) {
-            throw new RedisException(String.format(
-                    "CROSSSLOT Keys in transaction must hash to the same slot. " + "Key '%s' hashes to slot %d, "
-                            + "but key '%s' hashes to slot %d. " + "Use hash tags like {tag}key to ensure same slot routing.",
-                    firstKey, targetSlot, key, slot));
-        }
-    }
-
-    /**
-     * Get or create the delegate builder for the target node.
-     *
-     * @return the delegate builder.
-     */
-    private TransactionBuilder<K, V> getDelegate() {
-        if (delegate == null) {
-            if (targetSlot == null) {
-                throw new RedisException(
-                        "Cannot determine target slot. Use WATCH keys or ensure commands use keys in the same slot.");
-            }
-            // Get connection to the target node
-            StatefulRedisConnection<K, V> nodeConnection = getNodeConnection();
-            if (watchKeys != null) {
-                delegate = nodeConnection.transaction(watchKeys);
-            } else {
-                delegate = nodeConnection.transaction();
-            }
-        }
-        return delegate;
     }
 
     /**
@@ -151,6 +119,7 @@ public class ClusterTransactionBuilder<K, V> implements TransactionBuilder<K, V>
      * @return the node connection.
      */
     private StatefulRedisConnection<K, V> getNodeConnection() {
+        Integer targetSlot = collector.getTargetSlot();
         if (targetSlot == null) {
             throw new RedisException("No keys have been added to the transaction yet");
         }
@@ -164,55 +133,67 @@ public class ClusterTransactionBuilder<K, V> implements TransactionBuilder<K, V>
     /**
      * Returns an async commands interface for adding ANY Redis command to the transaction.
      * <p>
-     * <b>Important:</b> For cluster transactions, you are responsible for ensuring all keys used via this interface map to the
-     * same slot. Otherwise, CROSSSLOT errors will occur at execution time. Use Redis hash tags like {@code {tag}key} to ensure
-     * same slot routing.
+     * Commands added via this interface are validated for slot consistency. If a command uses a key that hashes to a different
+     * slot than previous keys, a {@link RedisException} is thrown immediately.
      *
      * @return async commands interface that collects commands for the transaction
      */
     @Override
     public io.lettuce.core.api.async.RedisAsyncCommands<K, V> commands() {
-        return getDelegate().commands();
+        return collector;
     }
 
     @Override
     public TransactionBuilder<K, V> addCommand(RawCommand<K, V> command) {
-        getDelegate().addCommand(command);
+        // For raw commands, we cannot easily extract keys to validate slots
+        // The user is responsible for ensuring slot consistency
+        collector.dispatch(command.toCommand(codec));
         return this;
     }
 
     @Override
     public int size() {
-        return delegate == null ? 0 : delegate.size();
+        return collector.size();
     }
 
     @Override
     public boolean isEmpty() {
-        return delegate == null || delegate.isEmpty();
+        return collector.isEmpty();
     }
 
     @Override
     public TransactionResult execute() {
-        if (delegate == null) {
-            throw new RedisException("No commands added to the transaction");
-        }
-        return delegate.execute();
+        return executeAsync().toCompletableFuture().join();
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public RedisFuture<TransactionResult> executeAsync() {
-        if (delegate == null) {
-            throw new RedisException("No commands added to the transaction");
+        Integer targetSlot = collector.getTargetSlot();
+        if (collector.isEmpty() && targetSlot == null) {
+            // Empty transaction with no target slot - need at least WATCH keys or a command with key
+            throw new RedisException("Cannot execute empty cluster transaction without target slot. "
+                    + "Use WATCH keys or add commands with keys to determine target node.");
         }
-        return delegate.executeAsync();
+
+        // Get the node connection for the target slot
+        StatefulRedisConnection<K, V> nodeConnection = getNodeConnection();
+
+        // Create bundle with collected commands
+        List<RedisCommand<K, V, ?>> commands = collector.drainCommands();
+        TransactionBundle<K, V> bundle = watchKeys != null ? new TransactionBundle<>(codec, commands, watchKeys)
+                : new TransactionBundle<>(codec, commands);
+
+        // Dispatch to the node connection
+        if (nodeConnection instanceof StatefulRedisConnectionImpl) {
+            return ((StatefulRedisConnectionImpl<K, V>) nodeConnection).dispatchTransactionBundle(bundle);
+        }
+        throw new UnsupportedOperationException("Node connection does not support transaction bundles");
     }
 
     @Override
     public Mono<TransactionResult> executeReactive() {
-        if (delegate == null) {
-            throw new RedisException("No commands added to the transaction");
-        }
-        return delegate.executeReactive();
+        return Mono.fromFuture(executeAsync()::toCompletableFuture);
     }
 
 }
