@@ -183,7 +183,7 @@ services:
     networks:
       - redis-network
 
-  # Cleanup working directory using same uid/gid as the test environment to avoid permission issues.
+  # Cleanup workdir using container uid/gid to avoid host permission issues.
   cleanup:
     <<: *client-libs-image
     volumes:
