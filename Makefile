@@ -37,7 +37,7 @@ endef
 start:
 	@$(COMPOSE_ENV) \
 	echo "Environment work directory: $(REDIS_ENV_WORK_DIR)"; \
-	$$compose_cmd run --rm cleanup; \
+	$$compose_cmd run --rm --quiet-pull cleanup; \
 	$$compose_cmd --parallel 1 up -d --wait --quiet-pull; \
 	echo "Started test environment with Redis $$display_version.";
 
