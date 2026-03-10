@@ -46,11 +46,6 @@ on:
         required: false
         type: string
         default: ''
-      redis_env_conf_dir:
-        description: 'Redis env conf directory'
-        required: false
-        type: string
-        default: ''
       upload_coverage:
         description: 'Whether to upload coverage reports to Codecov'
         required: false
@@ -79,7 +74,6 @@ jobs:
           CLIENT_LIBS_TEST_IMAGE: ${{ inputs.client_libs_test_image }}
           CLIENT_LIBS_TEST_IMAGE_TAG: ${{ inputs.client_libs_test_image_tag }}
           REDIS_ENV_WORK_DIR: ${{ inputs.redis_env_work_dir }}
-          REDIS_ENV_CONF_DIR: ${{ inputs.redis_env_conf_dir }}
         run: |
           make_args=()
 
@@ -97,11 +91,6 @@ jobs:
           fi
 
           echo "make_args=${make_args[*]}" | tee -a ${GITHUB_OUTPUT}
-
-          if [ -z "$REDIS_ENV_CONF_DIR" ]; then
-            REDIS_ENV_CONF_DIR="${{ github.workspace }}/src/test/resources/docker-env"
-          fi
-          echo "redis_env_conf_dir=$REDIS_ENV_CONF_DIR" | tee -a ${GITHUB_OUTPUT}
 
           if [ -n "$REDIS_ENV_WORK_DIR" ]; then
             echo "redis_env_work_dir=$REDIS_ENV_WORK_DIR" | tee -a ${GITHUB_OUTPUT}
@@ -128,7 +117,6 @@ jobs:
           mkdir -m 777 $REDIS_ENV_WORK_DIR
           make start ${{ steps.args.outputs.make_args }}
         env:
-          REDIS_ENV_CONF_DIR: ${{ steps.args.outputs.redis_env_conf_dir }}
           REDIS_ENV_WORK_DIR: ${{ steps.args.outputs.redis_env_work_dir }}
 
       - name: Maven offline
@@ -148,19 +136,20 @@ jobs:
         if: always()
         run: make stop
         continue-on-error: true
+        env:
+          REDIS_ENV_WORK_DIR: ${{ steps.args.outputs.redis_env_work_dir }}
 
       - name: Upload coverage reports to Codecov
-        if: ${{ inputs.upload_coverage }}
+        if: inputs.upload_coverage
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.codecov_token }}
 
       - name: Upload test failure reports to Codecov
-        if: ${{ always() && inputs.upload_coverage }}
+        if: always() && inputs.upload_coverage
         uses: codecov/test-results-action@v1
         with:
           fail_ci_if_error: false
           files: ./target/surefire-reports/TEST*,./target/failsafe-reports/TEST*
           verbose: ${{ runner.debug }}
           token: ${{ secrets.codecov_token }}
-
