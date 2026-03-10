@@ -134,7 +134,7 @@ jobs:
 
       - name: Tear down Docker Compose environment
         if: always()
-        run: make stop
+        run: make stop ${{ steps.args.outputs.make_args }}
         continue-on-error: true
         env:
           REDIS_ENV_WORK_DIR: ${{ steps.args.outputs.redis_env_work_dir }}

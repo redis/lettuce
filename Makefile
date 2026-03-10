@@ -7,8 +7,8 @@ DEFAULT_TEST_ENV_VERSION := 8.6
 export REDIS_ENV_WORK_DIR := $(or ${REDIS_ENV_WORK_DIR},$(ROOT_DIR)/work)
 MVN_SOCKET_ARGS := -Ddomainsocket="$(REDIS_ENV_WORK_DIR)/socket-6482" -Dsentineldomainsocket="$(REDIS_ENV_WORK_DIR)/socket-26379"
 
-start:
-	@if [ -z "$(version)" ]; then \
+define COMPOSE_ENV
+	if [ -z "$(version)" ]; then \
 		version=$(arg); \
 		if [ -z "$$version" ]; then \
 			version="$(DEFAULT_TEST_ENV_VERSION)"; \
@@ -23,18 +23,22 @@ start:
 		exit 1; \
 	else \
 		display_version="version $$version"; \
+		echo "Version: $(version)"; \
 	fi; \
-	echo "Version: $(version)"; \
 	default_env_file="src/test/resources/docker-env/.env"; \
 	custom_env_file="src/test/resources/docker-env/.env.v$$version"; \
 	env_files="--env-file $$default_env_file"; \
 	if [ -f "$$custom_env_file" ]; then \
 		env_files="$$env_files --env-file $$custom_env_file"; \
 	fi; \
+	compose_cmd="docker compose $$env_files -f src/test/resources/docker-env/docker-compose.yml";
+endef
+
+start:
+	@$(COMPOSE_ENV) \
 	echo "Environment work directory: $(REDIS_ENV_WORK_DIR)"; \
-	rm -rf "$(REDIS_ENV_WORK_DIR)"; \
-	mkdir -p "$(REDIS_ENV_WORK_DIR)"; \
-	docker compose $$env_files -f src/test/resources/docker-env/docker-compose.yml --parallel 1 up -d --wait --quiet-pull; \
+	$$compose_cmd run --rm cleanup; \
+	$$compose_cmd --parallel 1 up -d --wait --quiet-pull; \
 	echo "Started test environment with Redis $$display_version.";
 
 
@@ -45,10 +49,10 @@ test-coverage:
 	mvn -DskipITs=false $(MVN_SOCKET_ARGS) clean compile verify jacoco:report -P$(PROFILE)
 
 stop:
-	COMPOSE_CMD="docker compose --env-file src/test/resources/docker-env/.env -f src/test/resources/docker-env/docker-compose.yml"; \
-	$$COMPOSE_CMD down; \
-	$$COMPOSE_CMD run --rm cleanup; \
-	$$COMPOSE_CMD down; # remove network after cleanup
+	@$(COMPOSE_ENV) \
+	$$compose_cmd down; \
+	$$compose_cmd run --rm cleanup; \
+	$$compose_cmd down; # remove default network after cleanup
 
 clean:
 	rm -Rf target/
