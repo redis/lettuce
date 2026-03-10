@@ -51,7 +51,7 @@ test-coverage:
 stop:
 	@$(COMPOSE_ENV) \
 	$$compose_cmd down; \
-	$$compose_cmd run --rm cleanup; \
+	$$compose_cmd run --rm --quiet-pull cleanup; \
 	$$compose_cmd down; # remove default network after cleanup
 
 clean:
