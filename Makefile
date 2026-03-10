@@ -45,8 +45,10 @@ test-coverage:
 	mvn -DskipITs=false $(MVN_SOCKET_ARGS) clean compile verify jacoco:report -P$(PROFILE)
 
 stop:
-	docker compose --env-file src/test/resources/docker-env/.env -f src/test/resources/docker-env/docker-compose.yml down; \
-	rm -rf "$(REDIS_ENV_WORK_DIR)"
+	COMPOSE_CMD="docker compose --env-file src/test/resources/docker-env/.env -f src/test/resources/docker-env/docker-compose.yml"; \
+	$$COMPOSE_CMD down; \
+	$$COMPOSE_CMD run --rm cleanup; \
+	$$COMPOSE_CMD down; # remove network after cleanup
 
 clean:
 	rm -Rf target/
