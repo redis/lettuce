@@ -37,11 +37,10 @@ endef
 start:
 	@$(COMPOSE_ENV) \
 	echo "Environment work directory: $(REDIS_ENV_WORK_DIR)"; \
-	mkdir -pm 777 "$$REDIS_ENV_WORK_DIR"; # allow tests to put truststore files in work dir \
-	$$compose_cmd run --rm --quiet-pull cleanup; \
+	mkdir -pm 777 "$$REDIS_ENV_WORK_DIR"; # allow tests to put truststore files into workdir \
+	$$compose_cmd run --rm --quiet-pull cleanup; # cleanup workdir before starting \
 	$$compose_cmd --parallel 1 up -d --wait --quiet-pull; \
 	echo "Started test environment with Redis $$display_version.";
-
 
 test:
 	mvn -DskipITs=false $(MVN_SOCKET_ARGS) clean compile verify -P$(PROFILE)
@@ -51,9 +50,7 @@ test-coverage:
 
 stop:
 	@$(COMPOSE_ENV) \
-	$$compose_cmd down; \
-	$$compose_cmd run --rm --quiet-pull cleanup; \
-	$$compose_cmd down; # remove default network after cleanup
+	$$compose_cmd down;
 
 clean:
 	rm -Rf target/
