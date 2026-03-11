@@ -2,7 +2,10 @@ package io.lettuce.core.cluster;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.test.settings.TestSettings.*;
-import static io.lettuce.test.settings.TlsSettings.*;
+import static io.lettuce.test.settings.TlsSettings.ClientCertificate;
+import static io.lettuce.test.settings.TlsSettings.MTLS_CLUSTER_CONTAINER;
+import static io.lettuce.test.settings.TlsSettings.MTLS_CLUSTER_TLS_PATH;
+import static io.lettuce.test.settings.TlsSettings.createMtlsSslOptions;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
@@ -56,7 +59,9 @@ class RedisClusterStreamingCredentialsProviderIntegrationTests extends TestSuppo
     private static RedisClusterClient redisClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
 
     static {
-        redisClient.setOptions(ClusterClientOptions.builder().sslOptions(createMtlsClusterSslOptions()).build());
+        redisClient.setOptions(ClusterClientOptions.builder()
+                .sslOptions(createMtlsSslOptions(MTLS_CLUSTER_CONTAINER, MTLS_CLUSTER_TLS_PATH, ClientCertificate.DEFAULT))
+                .build());
     }
 
     @BeforeEach

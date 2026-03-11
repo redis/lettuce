@@ -7,7 +7,8 @@
 package io.lettuce.core;
 
 import static io.lettuce.test.settings.TestSettings.host;
-import static io.lettuce.test.settings.TlsSettings.*;
+import static io.lettuce.test.settings.TlsSettings.ClientCertificate;
+import static io.lettuce.test.settings.TlsSettings.createMtlsSslOptions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -45,7 +46,8 @@ import io.lettuce.test.resource.TestClientResources;
 public abstract class AbstractMtlsAutoAuthIntegrationTests extends TestSupport {
 
     // The CN in the client certificate - must match an ACL user for auto-auth
-    protected static final String CLIENT_CERT_CN = "Client-Test-cert";
+    // Note: Case-sensitive - must exactly match the CN in the certificate
+    protected static final String CLIENT_CERT_CN = "Client-test-cert";
 
     protected SslOptions sslOptions;
 
@@ -157,7 +159,7 @@ public abstract class AbstractMtlsAutoAuthIntegrationTests extends TestSupport {
     void beforeAll() {
         assumeTrue(CanConnect.to(host(), getPort()), "Assume that Redis with mTLS runs on port " + getPort());
 
-        sslOptions = createMtlsSslOptions(getContainerName(), getTlsPath());
+        sslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(), ClientCertificate.DEFAULT);
 
         redisURI = RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build();
 

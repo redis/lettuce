@@ -27,10 +27,6 @@ public class TlsSettings {
 
     private static final String TEST_CLIENT_P12 = "client.p12";
 
-    private static final String TEST_CLIENT_CERT = "client.crt";
-
-    private static final String TEST_CLIENT_KEY = "client.key";
-
     private static final String TEST_CA_CERT = "ca.crt";
 
     private static final String TEST_TRUSTSTORE = "truststore.jks";
@@ -49,20 +45,48 @@ public class TlsSettings {
      */
     public enum ClientCertificate {
 
-        /** Default client cert (client.p12) - CN matches ACL user, mTLS auto-auth succeeds */
-        DEFAULT("client.p12"),
+        /**
+         * Default client cert - CN=Client-test-cert (lowercase t), has ACL user, mTLS auto-auth succeeds.
+         */
+        DEFAULT("Client-test-cert.p12", "Client-test-cert"),
 
-        /** Alternative client cert (Client-test-2.p12) - CN has no matching ACL user */
-        NO_ACL_USER("Client-test-2.p12");
+        /**
+         * Primary mTLS user cert - CN=Client-test-cert (lowercase t), has ACL user.
+         */
+        USER_1("Client-test-cert.p12", "Client-test-cert"),
+
+        /**
+         * Secondary mTLS user cert - CN=Client-test-2, has ACL user. Used for multi-user testing.
+         */
+        USER_2("Client-test-2.p12", "Client-test-2"),
+
+        /**
+         * Client cert with no matching ACL user (CN=Client-Test-cert, uppercase T). Used for testing authentication failures
+         * when the certificate is valid but has no corresponding Redis ACL user.
+         * <p>
+         * Note: This uses client.p12 which has CN=Client-Test-cert (uppercase T), which differs from the ACL user
+         * Client-test-cert (lowercase t) due to case sensitivity.
+         */
+        NO_ACL_USER("client.p12", "Client-Test-cert");
 
         private final String filename;
 
-        ClientCertificate(String filename) {
+        private final String commonName;
+
+        ClientCertificate(String filename, String commonName) {
             this.filename = filename;
+            this.commonName = commonName;
         }
 
         public String getFilename() {
             return filename;
+        }
+
+        /**
+         * @return the Common Name (CN) in the certificate, which should match the Redis ACL user
+         */
+        public String getCommonName() {
+            return commonName;
         }
 
     }
@@ -191,38 +215,6 @@ public class TlsSettings {
         Path keystorePath = Paths.get(TEST_WORK_FOLDER, tlsPath.toString(), clientCert.getFilename());
 
         return createSslOptions(keystorePath.toFile(), truststoreFile);
-    }
-
-    /**
-     * Creates SslOptions with client certificate (keystore) and truststore for mTLS authentication. Uses the default client
-     * certificate which has a matching ACL user (mTLS auto-auth succeeds).
-     *
-     * @param containerName the container/environment name for truststore creation
-     * @param tlsPath the path to TLS certificates
-     * @return SslOptions configured for mTLS
-     */
-    public static SslOptions createMtlsSslOptions(String containerName, Path tlsPath) {
-        return createMtlsSslOptions(containerName, tlsPath, ClientCertificate.DEFAULT);
-    }
-
-    /**
-     * Creates SslOptions for the mTLS cluster with default client certificate. The certificate's CN matches an ACL user, so
-     * mTLS auto-auth will succeed.
-     *
-     * @return SslOptions configured for mTLS cluster
-     */
-    public static SslOptions createMtlsClusterSslOptions() {
-        return createMtlsSslOptions(MTLS_CLUSTER_CONTAINER, MTLS_CLUSTER_TLS_PATH, ClientCertificate.DEFAULT);
-    }
-
-    /**
-     * Creates SslOptions for the mTLS cluster with a client certificate that has no matching ACL user. Use this for tests that
-     * expect authentication to fail.
-     *
-     * @return SslOptions configured for mTLS cluster without ACL user match
-     */
-    public static SslOptions createMtlsClusterSslOptionsNoAcl() {
-        return createMtlsSslOptions(MTLS_CLUSTER_CONTAINER, MTLS_CLUSTER_TLS_PATH, ClientCertificate.NO_ACL_USER);
     }
 
 }

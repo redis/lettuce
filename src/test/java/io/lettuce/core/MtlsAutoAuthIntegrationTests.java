@@ -8,10 +8,15 @@ package io.lettuce.core;
 
 import static io.lettuce.test.settings.TestSettings.host;
 import static io.lettuce.test.settings.TestSettings.mtlsStandalonePort;
+import static io.lettuce.test.settings.TlsSettings.ClientCertificate;
 import static io.lettuce.test.settings.TlsSettings.MTLS_STANDALONE_CONTAINER;
 import static io.lettuce.test.settings.TlsSettings.MTLS_STANDALONE_TLS_PATH;
+import static io.lettuce.test.settings.TlsSettings.createMtlsSslOptions;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Path;
+
+import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -102,6 +107,78 @@ class MtlsAutoAuthIntegrationTests extends AbstractMtlsAutoAuthIntegrationTests 
     @Override
     protected RedisConditions getConditions() {
         return RedisConditions.of(standaloneConnection);
+    }
+
+    // ========== Multi-user mTLS tests ==========
+
+    @Test
+    void connectWithMtlsUser1() {
+        // User 1: Client-test-cert.p12 (CN=Client-test-cert, lowercase t)
+        SslOptions user1SslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(), ClientCertificate.USER_1);
+        RedisClient user1Client = RedisClient.create(getClientResources(),
+                RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build());
+        user1Client.setOptions(ClientOptions.builder().sslOptions(user1SslOptions).build());
+
+        try (StatefulRedisConnection<String, String> conn = user1Client.connect()) {
+            RedisCommands<String, String> sync = conn.sync();
+            String result = sync.ping();
+            assertThat(result).isEqualTo("PONG");
+
+            // Verify authenticated as the certificate user
+            String whoami = sync.aclWhoami();
+            assertThat(whoami).isEqualTo("Client-test-cert");
+        } finally {
+            user1Client.shutdown();
+        }
+    }
+
+    @Test
+    void connectWithMtlsUser2() {
+        // User 2: Client-test-2.p12 (CN=Client-test-2)
+        SslOptions user2SslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(), ClientCertificate.USER_2);
+        RedisClient user2Client = RedisClient.create(getClientResources(),
+                RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build());
+        user2Client.setOptions(ClientOptions.builder().sslOptions(user2SslOptions).build());
+
+        try (StatefulRedisConnection<String, String> conn = user2Client.connect()) {
+            RedisCommands<String, String> sync = conn.sync();
+            String result = sync.ping();
+            assertThat(result).isEqualTo("PONG");
+
+            // Verify authenticated as the certificate user
+            String whoami = sync.aclWhoami();
+            assertThat(whoami).isEqualTo("Client-test-2");
+        } finally {
+            user2Client.shutdown();
+        }
+    }
+
+    // ========== Case sensitivity tests ==========
+
+    @Test
+    void caseMismatchCertificateShouldNotAuthenticateAsMtlsUser() {
+        // client.p12 has CN=Client-Test-cert (uppercase T)
+        // ACL user is Client-test-cert (lowercase t)
+        // Redis ACL usernames are case-sensitive, so mTLS auto-auth should NOT work
+        // The connection will fall back to default user (since standalone has no requirepass)
+        SslOptions caseMismatchSslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(),
+                ClientCertificate.NO_ACL_USER);
+        RedisClient caseMismatchClient = RedisClient.create(getClientResources(),
+                RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build());
+        caseMismatchClient.setOptions(ClientOptions.builder().sslOptions(caseMismatchSslOptions).build());
+
+        try (StatefulRedisConnection<String, String> conn = caseMismatchClient.connect()) {
+            RedisCommands<String, String> sync = conn.sync();
+
+            // The connection should work but authenticate as "default" user,
+            // NOT as the certificate CN "Client-Test-cert" (which doesn't exist as ACL user)
+            String whoami = sync.aclWhoami();
+            assertThat(whoami).isEqualTo("default");
+            assertThat(whoami).isNotEqualTo("Client-Test-cert");
+            assertThat(whoami).isNotEqualTo("Client-test-cert");
+        } finally {
+            caseMismatchClient.shutdown();
+        }
     }
 
 }

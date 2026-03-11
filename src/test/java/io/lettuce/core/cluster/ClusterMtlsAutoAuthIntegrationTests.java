@@ -8,18 +8,27 @@ package io.lettuce.core.cluster;
 
 import static io.lettuce.test.settings.TestSettings.host;
 import static io.lettuce.test.settings.TestSettings.mtlsClusterPort;
+import static io.lettuce.test.settings.TlsSettings.ClientCertificate;
 import static io.lettuce.test.settings.TlsSettings.MTLS_CLUSTER_CONTAINER;
 import static io.lettuce.test.settings.TlsSettings.MTLS_CLUSTER_TLS_PATH;
+import static io.lettuce.test.settings.TlsSettings.createMtlsSslOptions;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Path;
 
+import org.junit.jupiter.api.Test;
+
 import io.lettuce.core.AbstractMtlsAutoAuthIntegrationTests;
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SslOptions;
 import io.lettuce.core.SslVerifyMode;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.test.condition.RedisConditions;
 
 /**
@@ -120,6 +129,106 @@ class ClusterMtlsAutoAuthIntegrationTests extends AbstractMtlsAutoAuthIntegratio
     @Override
     protected RedisConditions getConditions() {
         return RedisConditions.of(clusterConnection);
+    }
+
+    // ========== Cluster-specific mTLS tests ==========
+
+    @Test
+    void discoverClusterNodesWithMtls() {
+        // Get cluster partitions - this tests that mTLS works for topology discovery
+        assertThat(redisClusterClient.getPartitions()).isNotEmpty();
+        assertThat(redisClusterClient.getPartitions().size()).isGreaterThanOrEqualTo(3);
+
+        // Verify we can see node details
+        for (RedisClusterNode node : redisClusterClient.getPartitions()) {
+            assertThat(node.getNodeId()).isNotEmpty();
+            assertThat(node.getUri()).isNotNull();
+        }
+    }
+
+    @Test
+    void performCrossSlotOperationsWithMtls() {
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
+
+        // These keys will hash to different slots
+        String key1 = "mtls-cluster-key-1";
+        String key2 = "mtls-cluster-key-2";
+        String key3 = "mtls-cluster-key-3";
+
+        sync.set(key1, "value1");
+        sync.set(key2, "value2");
+        sync.set(key3, "value3");
+
+        assertThat(sync.get(key1)).isEqualTo("value1");
+        assertThat(sync.get(key2)).isEqualTo("value2");
+        assertThat(sync.get(key3)).isEqualTo("value3");
+
+        // Cleanup
+        sync.del(key1, key2, key3);
+    }
+
+    // ========== Multi-user mTLS tests ==========
+
+    @Test
+    void connectWithMtlsUser1() {
+        // User 1: Client-test-cert.p12 (CN=Client-test-cert, lowercase t)
+        SslOptions user1SslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(), ClientCertificate.USER_1);
+        RedisClusterClient user1Client = RedisClusterClient.create(getClientResources(),
+                RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build());
+        user1Client.setOptions(ClusterClientOptions.builder().sslOptions(user1SslOptions).build());
+
+        try (StatefulRedisClusterConnection<String, String> conn = user1Client.connect()) {
+            RedisAdvancedClusterCommands<String, String> sync = conn.sync();
+            String result = sync.ping();
+            assertThat(result).isEqualTo("PONG");
+
+            // Verify authenticated as the certificate user
+            String whoami = sync.aclWhoami();
+            assertThat(whoami).isEqualTo("Client-test-cert");
+        } finally {
+            user1Client.shutdown();
+        }
+    }
+
+    @Test
+    void connectWithMtlsUser2() {
+        // User 2: Client-test-2.p12 (CN=Client-test-2)
+        SslOptions user2SslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(), ClientCertificate.USER_2);
+        RedisClusterClient user2Client = RedisClusterClient.create(getClientResources(),
+                RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build());
+        user2Client.setOptions(ClusterClientOptions.builder().sslOptions(user2SslOptions).build());
+
+        try (StatefulRedisClusterConnection<String, String> conn = user2Client.connect()) {
+            RedisAdvancedClusterCommands<String, String> sync = conn.sync();
+            String result = sync.ping();
+            assertThat(result).isEqualTo("PONG");
+
+            // Verify authenticated as the certificate user
+            String whoami = sync.aclWhoami();
+            assertThat(whoami).isEqualTo("Client-test-2");
+        } finally {
+            user2Client.shutdown();
+        }
+    }
+
+    // ========== Case sensitivity tests ==========
+
+    @Test
+    void caseMismatchCertificateShouldFailAuthentication() {
+        // client.p12 has CN=Client-Test-cert (uppercase T)
+        // ACL user is Client-test-cert (lowercase t)
+        // Redis ACL usernames are case-sensitive, so this should fail
+        SslOptions caseMismatchSslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(),
+                ClientCertificate.NO_ACL_USER);
+        RedisClusterClient caseMismatchClient = RedisClusterClient.create(getClientResources(),
+                RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build());
+        caseMismatchClient.setOptions(ClusterClientOptions.builder().sslOptions(caseMismatchSslOptions).build());
+
+        try {
+            assertThatThrownBy(caseMismatchClient::connect).isInstanceOf(RedisException.class);
+        } finally {
+            caseMismatchClient.shutdown();
+        }
     }
 
 }
