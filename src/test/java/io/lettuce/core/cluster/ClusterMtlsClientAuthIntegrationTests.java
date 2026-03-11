@@ -19,7 +19,7 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.AbstractMtlsAutoAuthIntegrationTests;
+import io.lettuce.core.AbstractMtlsClientAuthIntegrationTests;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
@@ -32,14 +32,14 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.test.condition.RedisConditions;
 
 /**
- * Integration tests for Redis 8.6+ mTLS automatic authentication in cluster mode.
+ * Integration tests for Redis 8.6+ mTLS client authentication in cluster mode.
  * <p>
- * This class provides the cluster implementation of mTLS auto-auth tests. The actual test methods are inherited from
- * {@link AbstractMtlsAutoAuthIntegrationTests}.
+ * This class provides the cluster implementation of mTLS client auth tests. The actual test methods are inherited from
+ * {@link AbstractMtlsClientAuthIntegrationTests}.
  *
  * @author Aleksandar Todorov
  */
-class ClusterMtlsAutoAuthIntegrationTests extends AbstractMtlsAutoAuthIntegrationTests {
+class ClusterMtlsClientAuthIntegrationTests extends AbstractMtlsClientAuthIntegrationTests {
 
     private RedisClusterClient redisClusterClient;
 

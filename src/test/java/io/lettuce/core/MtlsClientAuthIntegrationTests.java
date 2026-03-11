@@ -23,14 +23,14 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.condition.RedisConditions;
 
 /**
- * Integration tests for Redis 8.6+ mTLS automatic authentication (standalone mode).
+ * Integration tests for Redis 8.6+ mTLS client authentication (standalone mode).
  * <p>
- * This class provides the standalone implementation of mTLS auto-auth tests. The actual test methods are inherited from
- * {@link AbstractMtlsAutoAuthIntegrationTests}.
+ * This class provides the standalone implementation of mTLS client auth tests. The actual test methods are inherited from
+ * {@link AbstractMtlsClientAuthIntegrationTests}.
  *
  * @author Aleksandar Todorov
  */
-class MtlsAutoAuthIntegrationTests extends AbstractMtlsAutoAuthIntegrationTests {
+class MtlsClientAuthIntegrationTests extends AbstractMtlsClientAuthIntegrationTests {
 
     private RedisClient redisClient;
 
@@ -159,7 +159,7 @@ class MtlsAutoAuthIntegrationTests extends AbstractMtlsAutoAuthIntegrationTests 
     void caseMismatchCertificateShouldNotAuthenticateAsMtlsUser() {
         // client.p12 has CN=Client-Test-cert (uppercase T)
         // ACL user is Client-test-cert (lowercase t)
-        // Redis ACL usernames are case-sensitive, so mTLS auto-auth should NOT work
+        // Redis ACL usernames are case-sensitive, so mTLS client auth should NOT work
         // The connection will fall back to default user (since standalone has no requirepass)
         SslOptions caseMismatchSslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(),
                 ClientCertificate.NO_ACL_USER);

@@ -32,7 +32,7 @@ import io.lettuce.test.condition.RedisConditions;
 import io.lettuce.test.resource.TestClientResources;
 
 /**
- * Abstract base class for Redis 8.6+ mTLS automatic authentication integration tests.
+ * Abstract base class for Redis 8.6+ mTLS client authentication integration tests.
  * <p>
  * When mTLS is configured and the client certificate's Common Name (CN) matches an existing ACL user, the client is
  * automatically authenticated as that user without needing to send an AUTH command.
@@ -43,9 +43,9 @@ import io.lettuce.test.resource.TestClientResources;
  */
 @Tag(INTEGRATION_TEST)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class AbstractMtlsAutoAuthIntegrationTests extends TestSupport {
+public abstract class AbstractMtlsClientAuthIntegrationTests extends TestSupport {
 
-    // The CN in the client certificate - must match an ACL user for auto-auth
+    // The CN in the client certificate - must match an ACL user for client auth
     // Note: Case-sensitive - must exactly match the CN in the certificate
     protected static final String CLIENT_CERT_CN = "Client-test-cert";
 
@@ -120,7 +120,7 @@ public abstract class AbstractMtlsAutoAuthIntegrationTests extends TestSupport {
     protected abstract void closeCommands(RedisCommands<String, String> commands);
 
     /**
-     * Create a new connection that explicitly authenticates as the 'default' user (not via mTLS auto-auth). The caller is
+     * Create a new connection that explicitly authenticates as the 'default' user (not via mTLS client auth). The caller is
      * responsible for closing the returned TestConnection.
      * <p>
      * For servers with password: should use password-based authentication. For servers without password: should use explicit
@@ -166,7 +166,7 @@ public abstract class AbstractMtlsAutoAuthIntegrationTests extends TestSupport {
         try {
             initializeClient();
         } catch (Exception e) {
-            // Connection may fail on Redis versions < 8.6 that don't support mTLS auto-auth
+            // Connection may fail on Redis versions < 8.6 that don't support mTLS client auth
             // Tests will be skipped in beforeEach() due to null connection
         }
     }
@@ -179,14 +179,14 @@ public abstract class AbstractMtlsAutoAuthIntegrationTests extends TestSupport {
     @BeforeEach
     void setUp() {
         // Skip tests if connection could not be established (e.g., Redis < 8.6 without mTLS support)
-        assumeTrue(connection != null, "mTLS connection not available - requires Redis 8.6+ with mTLS auto-auth");
+        assumeTrue(connection != null, "mTLS connection not available - requires Redis 8.6+ with mTLS client auth");
 
         RedisConditions conditions = getConditions();
-        assumeTrue(conditions.hasVersionGreaterOrEqualsTo("8.6"), "mTLS auto-authentication requires Redis 8.6+");
+        assumeTrue(conditions.hasVersionGreaterOrEqualsTo("8.6"), "mTLS client authentication requires Redis 8.6+");
     }
 
     @Test
-    void mtlsAutoAuthWithClientCertificate() {
+    void mtlsClientAuthWithClientCertificate() {
         RedisCommands<String, String> commands = connect();
         try {
             // Verify connection works
@@ -200,7 +200,7 @@ public abstract class AbstractMtlsAutoAuthIntegrationTests extends TestSupport {
     }
 
     @Test
-    void mtlsAutoAuthWithReconnect() {
+    void mtlsClientAuthWithReconnect() {
         RedisCommands<String, String> commands = connect();
         try {
             // Verify initial authentication
@@ -223,7 +223,7 @@ public abstract class AbstractMtlsAutoAuthIntegrationTests extends TestSupport {
             // Verify connection works
             assertThat(testConn.commands().ping()).isEqualTo("PONG");
 
-            // Verify we're authenticated as 'default' user (explicit auth, not mTLS auto-auth)
+            // Verify we're authenticated as 'default' user (explicit auth, not mTLS client auth)
             assertThat(testConn.commands().aclWhoami()).isEqualTo("default");
         }
     }

@@ -9,14 +9,14 @@ package io.lettuce.core;
 import io.lettuce.core.protocol.ProtocolVersion;
 
 /**
- * Integration tests for Redis 8.6+ mTLS automatic authentication using RESP2 protocol.
+ * Integration tests for Redis 8.6+ mTLS client authentication using RESP2 protocol.
  * <p>
- * This class extends {@link MtlsAutoAuthIntegrationTests} to verify that mTLS auto-authentication works correctly with the
+ * This class extends {@link MtlsClientAuthIntegrationTests} to verify that mTLS client authentication works correctly with the
  * RESP2 protocol (which uses AUTH command instead of HELLO).
  *
  * @author Aleksandar Todorov
  */
-class MtlsAutoAuthResp2IntegrationTests extends MtlsAutoAuthIntegrationTests {
+class MtlsClientAuthResp2IntegrationTests extends MtlsClientAuthIntegrationTests {
 
     @Override
     protected ClientOptions.Builder clientOptionsBuilder(SslOptions sslOptions) {

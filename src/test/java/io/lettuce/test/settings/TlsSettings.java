@@ -46,7 +46,7 @@ public class TlsSettings {
     public enum ClientCertificate {
 
         /**
-         * Default client cert - CN=Client-test-cert (lowercase t), has ACL user, mTLS auto-auth succeeds.
+         * Default client cert - CN=Client-test-cert (lowercase t), has ACL user, mTLS client auth succeeds.
          */
         DEFAULT("Client-test-cert.p12", "Client-test-cert"),
 
