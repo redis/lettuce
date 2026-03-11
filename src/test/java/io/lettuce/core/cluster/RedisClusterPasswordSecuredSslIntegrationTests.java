@@ -78,9 +78,9 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
     @BeforeEach
     void before() {
-        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_1), "Assume that stunnel runs on port 7442");
-        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_2), "Assume that stunnel runs on port 7444");
-        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_3), "Assume that stunnel runs on port 7445");
+        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_1), "Assume that Redis TLS runs on port " + CLUSTER_PORT_SSL_1);
+        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_2), "Assume that Redis TLS runs on port " + CLUSTER_PORT_SSL_2);
+        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_3), "Assume that Redis TLS runs on port " + CLUSTER_PORT_SSL_3);
         assumeTrue(CanConnect.to(host(), 7479), "Assume that Redis runs on port 7479");
         assumeTrue(CanConnect.to(host(), 7480), "Assume that Redis runs on port 7480");
         assumeTrue(CanConnect.to(host(), 7481), "Assume that Redis runs on port 7481");

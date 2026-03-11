@@ -48,17 +48,12 @@ public class TlsSettings {
         /**
          * Default client cert - CN=Client-test-cert (lowercase t), has ACL user, mTLS client auth succeeds.
          */
-        DEFAULT("Client-test-cert.p12", "Client-test-cert"),
-
-        /**
-         * Primary mTLS user cert - CN=Client-test-cert (lowercase t), has ACL user.
-         */
-        USER_1("Client-test-cert.p12", "Client-test-cert"),
+        DEFAULT("Client-test-cert.p12"),
 
         /**
          * Secondary mTLS user cert - CN=Client-test-2, has ACL user. Used for multi-user testing.
          */
-        USER_2("Client-test-2.p12", "Client-test-2"),
+        USER_2("Client-test-2.p12"),
 
         /**
          * Client cert with no matching ACL user (CN=Client-Test-cert, uppercase T). Used for testing authentication failures
@@ -67,26 +62,16 @@ public class TlsSettings {
          * Note: This uses client.p12 which has CN=Client-Test-cert (uppercase T), which differs from the ACL user
          * Client-test-cert (lowercase t) due to case sensitivity.
          */
-        NO_ACL_USER("client.p12", "Client-Test-cert");
+        NO_ACL_USER("client.p12");
 
         private final String filename;
 
-        private final String commonName;
-
-        ClientCertificate(String filename, String commonName) {
+        ClientCertificate(String filename) {
             this.filename = filename;
-            this.commonName = commonName;
         }
 
         public String getFilename() {
             return filename;
-        }
-
-        /**
-         * @return the Common Name (CN) in the certificate, which should match the Redis ACL user
-         */
-        public String getCommonName() {
-            return commonName;
         }
 
     }

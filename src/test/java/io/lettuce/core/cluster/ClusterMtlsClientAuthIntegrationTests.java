@@ -170,28 +170,7 @@ class ClusterMtlsClientAuthIntegrationTests extends AbstractMtlsClientAuthIntegr
     // ========== Multi-user mTLS tests ==========
 
     @Test
-    void connectWithMtlsUser1() {
-        // User 1: Client-test-cert.p12 (CN=Client-test-cert, lowercase t)
-        SslOptions user1SslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(), ClientCertificate.USER_1);
-        RedisClusterClient user1Client = RedisClusterClient.create(getClientResources(),
-                RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build());
-        user1Client.setOptions(ClusterClientOptions.builder().sslOptions(user1SslOptions).build());
-
-        try (StatefulRedisClusterConnection<String, String> conn = user1Client.connect()) {
-            RedisAdvancedClusterCommands<String, String> sync = conn.sync();
-            String result = sync.ping();
-            assertThat(result).isEqualTo("PONG");
-
-            // Verify authenticated as the certificate user
-            String whoami = sync.aclWhoami();
-            assertThat(whoami).isEqualTo("Client-test-cert");
-        } finally {
-            user1Client.shutdown();
-        }
-    }
-
-    @Test
-    void connectWithMtlsUser2() {
+    void connectWithDifferentMtlsUser() {
         // User 2: Client-test-2.p12 (CN=Client-test-2)
         SslOptions user2SslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(), ClientCertificate.USER_2);
         RedisClusterClient user2Client = RedisClusterClient.create(getClientResources(),
