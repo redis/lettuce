@@ -9,6 +9,9 @@ import static io.lettuce.test.settings.TlsSettings.createMtlsSslOptions;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,12 +20,14 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import io.lettuce.core.AclSetuserArgs;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.MyStreamingRedisCredentialsProvider;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.SslOptions;
 import io.lettuce.core.SslVerifyMode;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -39,6 +44,7 @@ import io.lettuce.test.settings.TestSettings;
  * @author Ivo Gaydajiev
  */
 @Tag(INTEGRATION_TEST)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RedisClusterStreamingCredentialsProviderIntegrationTests extends TestSupport {
 
     private static final int CLUSTER_PORT_SSL_1 = 7443;
@@ -51,17 +57,31 @@ class RedisClusterStreamingCredentialsProviderIntegrationTests extends TestSuppo
 
     private static final String SLOT_16352_KEY = "UyAa4KqoWgPGKa";
 
-    private static MyStreamingRedisCredentialsProvider credentialsProvider = new MyStreamingRedisCredentialsProvider();
+    private MyStreamingRedisCredentialsProvider credentialsProvider;
 
-    private static RedisURI redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true)
-            .withAuthentication(credentialsProvider).withVerifyPeer(SslVerifyMode.CA).build();
+    private RedisURI redisURI;
 
-    private static RedisClusterClient redisClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
+    private RedisClusterClient redisClient;
 
-    static {
-        redisClient.setOptions(ClusterClientOptions.builder()
-                .sslOptions(createMtlsSslOptions(MTLS_CLUSTER_CONTAINER, MTLS_CLUSTER_TLS_PATH, ClientCertificate.DEFAULT))
-                .build());
+    @BeforeAll
+    void beforeAll() {
+        // Check if mTLS certificate files exist (only available on Redis 8.0+)
+        Path keystorePath = Paths.get(System.getenv().getOrDefault("TEST_WORK_FOLDER", "work/docker"),
+                MTLS_CLUSTER_TLS_PATH.toString(), ClientCertificate.DEFAULT.getFilename());
+        assumeTrue(Files.exists(keystorePath),
+                "mTLS certificates not available (requires Redis 8.0+), skipping SSL cluster tests");
+
+        credentialsProvider = new MyStreamingRedisCredentialsProvider();
+
+        redisURI = RedisURI.Builder.redis(host(), CLUSTER_PORT_SSL_1).withSsl(true).withAuthentication(credentialsProvider)
+                .withVerifyPeer(SslVerifyMode.CA).build();
+
+        redisClient = RedisClusterClient.create(TestClientResources.get(), redisURI);
+
+        SslOptions sslOptions = createMtlsSslOptions(MTLS_CLUSTER_CONTAINER, MTLS_CLUSTER_TLS_PATH, ClientCertificate.DEFAULT);
+        redisClient.setOptions(ClusterClientOptions.builder().sslOptions(sslOptions).build());
+
+        credentialsProvider.emitCredentials(TestSettings.username(), TestSettings.password().toString().toCharArray());
     }
 
     @BeforeEach
@@ -74,15 +94,14 @@ class RedisClusterStreamingCredentialsProviderIntegrationTests extends TestSuppo
         assumeTrue(CanConnect.to(host(), 7481), "Assume that Redis runs on port 7481");
     }
 
-    @BeforeAll
-    static void beforeClass() {
-        credentialsProvider.emitCredentials(TestSettings.username(), TestSettings.password().toString().toCharArray());
-    }
-
     @AfterAll
-    static void afterClass() {
-        credentialsProvider.shutdown();
-        FastShutdown.shutdown(redisClient);
+    void afterAll() {
+        if (credentialsProvider != null) {
+            credentialsProvider.shutdown();
+        }
+        if (redisClient != null) {
+            FastShutdown.shutdown(redisClient);
+        }
     }
 
     @Test

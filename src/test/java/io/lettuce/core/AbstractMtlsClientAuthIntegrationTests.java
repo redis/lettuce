@@ -12,7 +12,9 @@ import static io.lettuce.test.settings.TlsSettings.createMtlsSslOptions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 
@@ -158,6 +160,11 @@ public abstract class AbstractMtlsClientAuthIntegrationTests extends TestSupport
     @BeforeAll
     void beforeAll() {
         assumeTrue(CanConnect.to(host(), getPort()), "Assume that Redis with mTLS runs on port " + getPort());
+
+        // Check if mTLS certificate files exist (only available on Redis 8.0+)
+        Path keystorePath = Paths.get(System.getenv().getOrDefault("TEST_WORK_FOLDER", "work/docker"), getTlsPath().toString(),
+                ClientCertificate.DEFAULT.getFilename());
+        assumeTrue(Files.exists(keystorePath), "mTLS certificate file does not exist (requires Redis 8.0+): " + keystorePath);
 
         sslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(), ClientCertificate.DEFAULT);
 
