@@ -117,7 +117,7 @@ class MtlsClientAuthIntegrationTests extends AbstractMtlsClientAuthIntegrationTe
         SslOptions user2SslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(), ClientCertificate.USER_2);
         RedisClient user2Client = RedisClient.create(getClientResources(),
                 RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build());
-        user2Client.setOptions(ClientOptions.builder().sslOptions(user2SslOptions).build());
+        user2Client.setOptions(clientOptionsBuilder(user2SslOptions).build());
 
         try (StatefulRedisConnection<String, String> conn = user2Client.connect()) {
             RedisCommands<String, String> sync = conn.sync();
@@ -144,7 +144,7 @@ class MtlsClientAuthIntegrationTests extends AbstractMtlsClientAuthIntegrationTe
                 ClientCertificate.NO_ACL_USER);
         RedisClient caseMismatchClient = RedisClient.create(getClientResources(),
                 RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build());
-        caseMismatchClient.setOptions(ClientOptions.builder().sslOptions(caseMismatchSslOptions).build());
+        caseMismatchClient.setOptions(clientOptionsBuilder(caseMismatchSslOptions).build());
 
         try (StatefulRedisConnection<String, String> conn = caseMismatchClient.connect()) {
             RedisCommands<String, String> sync = conn.sync();

@@ -175,7 +175,7 @@ class ClusterMtlsClientAuthIntegrationTests extends AbstractMtlsClientAuthIntegr
         SslOptions user2SslOptions = createMtlsSslOptions(getContainerName(), getTlsPath(), ClientCertificate.USER_2);
         RedisClusterClient user2Client = RedisClusterClient.create(getClientResources(),
                 RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build());
-        user2Client.setOptions(ClusterClientOptions.builder().sslOptions(user2SslOptions).build());
+        user2Client.setOptions((ClusterClientOptions) clientOptionsBuilder(user2SslOptions).build());
 
         try (StatefulRedisClusterConnection<String, String> conn = user2Client.connect()) {
             RedisAdvancedClusterCommands<String, String> sync = conn.sync();
@@ -201,7 +201,7 @@ class ClusterMtlsClientAuthIntegrationTests extends AbstractMtlsClientAuthIntegr
                 ClientCertificate.NO_ACL_USER);
         RedisClusterClient caseMismatchClient = RedisClusterClient.create(getClientResources(),
                 RedisURI.builder().withHost(host()).withPort(getPort()).withSsl(true).withVerifyPeer(verifyPeer()).build());
-        caseMismatchClient.setOptions(ClusterClientOptions.builder().sslOptions(caseMismatchSslOptions).build());
+        caseMismatchClient.setOptions((ClusterClientOptions) clientOptionsBuilder(caseMismatchSslOptions).build());
 
         try {
             assertThatThrownBy(caseMismatchClient::connect).isInstanceOf(RedisException.class);
