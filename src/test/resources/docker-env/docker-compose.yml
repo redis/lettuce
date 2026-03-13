@@ -183,6 +183,15 @@ services:
     networks:
       - redis-network
 
+  # Cleanup workdir using container uid/gid to avoid host permission issues.
+  cleanup:
+    <<: *client-libs-image
+    volumes:
+      - ${REDIS_ENV_WORK_DIR}:/work:rw
+    entrypoint: find /work -mindepth 1 -delete
+    profiles:
+      - cleanup
+
 networks:
   redis-network:
     driver: bridge
