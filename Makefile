@@ -37,8 +37,10 @@ endef
 start:
 	@$(COMPOSE_ENV) \
 	echo "Environment work directory: $(REDIS_ENV_WORK_DIR)"; \
-	mkdir -pm 777 "$$REDIS_ENV_WORK_DIR"; # allow tests to put truststore files into workdir \
-	$$compose_cmd run --rm --quiet-pull cleanup; # cleanup workdir before starting \
+	# allow tests to put truststore files into workdir
+	mkdir -pm 777 "$$REDIS_ENV_WORK_DIR"; \
+	# cleanup workdir before starting
+	$$compose_cmd run --rm --quiet-pull cleanup; \
 	$$compose_cmd --parallel 1 up -d --wait --quiet-pull; \
 	echo "Started test environment with Redis $$display_version.";
 
