@@ -1,7 +1,89 @@
 ## Transactions/Multi
 
 Transactions allow the execution of a group of commands in a single
-step. Transactions can be controlled using `WATCH`, `UNWATCH`, `EXEC`,
+step. Lettuce provides two approaches for working with transactions:
+
+1. **Bundled Transactions** (recommended): Thread-safe transactions using `TransactionBuilder`
+2. **Traditional MULTI/EXEC**: Low-level commands requiring external synchronization
+
+## Bundled Transactions (Since 7.6)
+
+Bundled transactions provide a thread-safe way to execute Redis transactions. Unlike traditional
+MULTI/EXEC, bundled transactions encode all commands atomically and dispatch them as a single unit,
+preventing command interleaving when sharing connections across threads.
+
+### Basic Usage
+
+``` java
+// Create a transaction builder and add commands
+TransactionBuilder<String, String> txn = connection.transaction();
+txn.commands().set("key1", "value1");
+txn.commands().set("key2", "value2");
+txn.commands().incr("counter");
+TransactionResult result = txn.execute();
+
+// Access results by index
+String setResult = result.get(0);  // "OK"
+Long counterValue = result.get(2); // new counter value
+```
+
+### Async Transactions
+
+``` java
+TransactionBuilder<String, String> txn = connection.transaction();
+txn.commands().set("key", "value");
+txn.commands().get("key");
+RedisFuture<TransactionResult> future = txn.executeAsync();
+
+TransactionResult result = future.get();
+```
+
+### Reactive Transactions
+
+``` java
+TransactionBuilder<String, String> txn = connection.transaction();
+txn.commands().set("key", "value");
+txn.commands().get("key");
+Mono<TransactionResult> mono = txn.executeReactive();
+
+mono.subscribe(result -> {
+    String value = result.get(1);
+});
+```
+
+### Using WATCH
+
+WATCH keys can be specified when creating the transaction builder:
+
+``` java
+// Watch keys for optimistic locking
+TransactionBuilder<String, String> txn = connection.transaction("watched-key");
+txn.commands().set("watched-key", "new-value");
+TransactionResult result = txn.execute();
+
+if (result.wasDiscarded()) {
+    // Another client modified the watched key - retry logic here
+}
+```
+
+### Cluster Transactions
+
+When using Redis Cluster, all keys in the transaction must hash to the same slot.
+Use hash tags to ensure keys map to the same slot:
+
+``` java
+// Keys with same hash tag - will succeed
+TransactionBuilder<String, String> txn = connection.transaction();
+txn.commands().set("{user123}:name", "John");
+txn.commands().set("{user123}:email", "john@example.com");
+txn.execute();
+
+// Keys without hash tags may fail with cross-slot error
+```
+
+## Traditional MULTI/EXEC
+
+Transactions can also be controlled using `WATCH`, `UNWATCH`, `EXEC`,
 `MULTI` and `DISCARD` commands. Synchronous, asynchronous, and reactive
 APIs allow the use of transactions.
 
@@ -158,6 +240,243 @@ redis.multi();
 redis.append(key, "foo");
 redis.exec(); // result is an empty list because of the changed key
 ```
+
+## Migrating to Bundled Transactions
+
+If you're currently using traditional MULTI/EXEC, consider migrating to bundled transactions
+for thread-safety benefits. This section provides a comprehensive guide for migration.
+
+### Why Migrate?
+
+**Traditional MULTI/EXEC has threading issues:**
+
+When multiple threads share a connection and use traditional transactions, commands from
+different transactions can interleave on the wire:
+
+```
+Thread A: MULTI
+Thread B: MULTI          <- Interleaved!
+Thread A: SET key1 val1
+Thread B: SET key2 val2  <- Wrong transaction!
+Thread A: EXEC           <- Executes both SETs
+Thread B: EXEC           <- Empty or unexpected results
+```
+
+**Bundled Transactions solve this** by encoding all commands atomically before dispatch,
+ensuring the entire transaction is written to the network as a single unit.
+
+### Migration Scenarios
+
+#### Scenario 1: Basic Synchronous Transaction
+
+**Before:**
+``` java
+// Traditional - NOT thread-safe without synchronization
+RedisCommands<String, String> sync = connection.sync();
+sync.multi();
+sync.set("key1", "value1");
+sync.set("key2", "value2");
+sync.incr("counter");
+TransactionResult result = sync.exec();
+```
+
+**After:**
+``` java
+// Bundled - thread-safe by design
+TransactionBuilder<String, String> txn = connection.transaction();
+txn.commands().set("key1", "value1");
+txn.commands().set("key2", "value2");
+txn.commands().incr("counter");
+TransactionResult result = txn.execute();
+
+// Access results by index
+String setResult = result.get(0);  // "OK"
+Long counterValue = result.get(2); // incremented value
+```
+
+#### Scenario 2: Asynchronous Transaction
+
+**Before:**
+``` java
+RedisAsyncCommands<String, String> async = connection.async();
+RedisFuture<String> multi = async.multi();
+RedisFuture<String> set1 = async.set("key1", "value1");
+RedisFuture<Long> incr = async.incr("counter");
+RedisFuture<TransactionResult> exec = async.exec();
+
+// Must wait for exec to get actual results
+TransactionResult result = exec.get();
+```
+
+**After:**
+``` java
+TransactionBuilder<String, String> txn = connection.transaction();
+txn.commands().set("key1", "value1");
+txn.commands().incr("counter");
+RedisFuture<TransactionResult> future = txn.executeAsync();
+
+TransactionResult result = future.get();
+```
+
+#### Scenario 3: Reactive Transaction
+
+**Before:**
+``` java
+RedisReactiveCommands<String, String> reactive = connection.reactive();
+reactive.multi().subscribe(multiResponse -> {
+    reactive.set("key", "value").subscribe();
+    reactive.incr("counter").subscribe();
+    reactive.exec().subscribe(result -> {
+        // Handle result
+    });
+});
+```
+
+**After:**
+``` java
+TransactionBuilder<String, String> txn = connection.transaction();
+txn.commands().set("key", "value");
+txn.commands().incr("counter");
+Mono<TransactionResult> mono = txn.executeReactive();
+
+mono.subscribe(result -> {
+    String setValue = result.get(0);
+    Long counterValue = result.get(1);
+});
+```
+
+#### Scenario 4: Transaction with WATCH (Optimistic Locking)
+
+**Before:**
+``` java
+// Must handle WATCH separately
+sync.watch("balance");
+String currentBalance = sync.get("balance");
+long balance = Long.parseLong(currentBalance);
+
+if (balance >= 100) {
+    sync.multi();
+    sync.decrby("balance", 100);
+    sync.incrby("purchases", 1);
+    TransactionResult result = sync.exec();
+
+    if (result.wasDiscarded()) {
+        // Retry - balance was modified by another client
+    }
+}
+```
+
+**After:**
+``` java
+// WATCH keys passed to transaction() method
+String currentBalance = connection.sync().get("balance");
+long balance = Long.parseLong(currentBalance);
+
+if (balance >= 100) {
+    TransactionBuilder<String, String> txn = connection.transaction("balance");
+    txn.commands().decrby("balance", 100);
+    txn.commands().incrby("purchases", 1);
+    TransactionResult result = txn.execute();
+
+    if (result.wasDiscarded()) {
+        // Retry - balance was modified by another client
+    }
+}
+```
+
+!!! note
+    With bundled transactions, WATCH, MULTI, commands, and EXEC are sent atomically.
+    This means you cannot read watched key values between WATCH and EXEC in the same
+    atomic block - read the values before calling `transaction()`.
+
+#### Scenario 5: Using External Synchronization
+
+**Before:**
+``` java
+// Manual synchronization required
+private final Object txnLock = new Object();
+
+public void performTransaction() {
+    synchronized (txnLock) {
+        redis.multi();
+        redis.set("key", "value");
+        redis.exec();
+    }
+}
+```
+
+**After:**
+``` java
+// No synchronization needed - transactions are inherently thread-safe
+public void performTransaction() {
+    TransactionBuilder<String, String> txn = connection.transaction();
+    txn.commands().set("key", "value");
+    txn.execute();
+}
+```
+
+#### Scenario 6: Full Redis Command Access
+
+The `commands()` method provides access to all 400+ Redis commands:
+
+``` java
+TransactionBuilder<String, String> txn = connection.transaction();
+
+// String commands
+txn.commands().set("str", "value");
+txn.commands().append("str", "-suffix");
+
+// Hash commands
+txn.commands().hset("hash", "field", "value");
+txn.commands().hincrby("hash", "counter", 5);
+
+// List commands
+txn.commands().lpush("list", "item1", "item2");
+
+// Set commands
+txn.commands().sadd("set", "member1", "member2");
+
+// Sorted set commands
+txn.commands().zadd("zset", 1.0, "one");
+
+// HyperLogLog
+txn.commands().pfadd("hll", "elem1", "elem2");
+
+// Execute all commands atomically
+TransactionResult result = txn.execute();
+```
+
+### Key Differences
+
+| Feature | Traditional MULTI/EXEC | Bundled Transactions |
+|---------|------------------------|----------------------|
+| Thread Safety | Requires external sync | Built-in |
+| Command Dispatch | Individual commands | Atomic bundle |
+| WATCH Support | Separate command | Builder parameter |
+| Cluster Support | Manual node selection | Automatic routing |
+| Command Interleaving | Possible | Prevented |
+| API | Multiple method calls | Fluent builder |
+| Result Access | Individual futures + exec result | Single TransactionResult |
+
+### Checklist for Migration
+
+1. **Replace `multi()`/`exec()` calls** with `connection.transaction()...execute()`
+2. **Move WATCH keys** to `transaction(watchKey1, watchKey2, ...)` parameter
+3. **Remove synchronization blocks** around transactions
+4. **Update result handling** to use `TransactionResult.get(index)`
+5. **Use `commands()`** for any Redis command in the transaction
+6. **Test thoroughly** - especially multi-threaded scenarios
+
+### When to Keep Traditional MULTI/EXEC
+
+In rare cases, you may need traditional MULTI/EXEC:
+
+- **Interactive transactions**: When you need to read values between MULTI and EXEC
+  and make decisions based on QUEUED responses
+- **Protocol-level debugging**: When you need to observe individual QUEUED responses
+- **Legacy code constraints**: When refactoring is not feasible
+
+For most use cases, bundled transactions are the recommended approach.
 
 ## Scripting and Functions
 
