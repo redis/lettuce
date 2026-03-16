@@ -188,4 +188,20 @@ public class TestSettings {
         return Integer.parseInt(System.getProperty("proxy.admin.port", "8474"));
     }
 
+    /**
+     *
+     * @return port of the mTLS standalone Redis instance (redis-standalone-5-client-cert). Defaults to {@literal 6445}.
+     */
+    public static int mtlsStandalonePort() {
+        return sslPort(2); // 6445
+    }
+
+    /**
+     *
+     * @return port of the mTLS cluster (ssl-test-cluster). Defaults to {@literal 7443}.
+     */
+    public static int mtlsClusterPort() {
+        return 7443;
+    }
+
 }
