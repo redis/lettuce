@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.RedisCommand;
@@ -23,8 +24,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Tihomir Mateev
  * @since 7.6
  */
-class CommandCollectingAsyncCommands<K, V> extends AbstractRedisAsyncCommands<K, V>
-        implements io.lettuce.core.api.async.RedisAsyncCommands<K, V> {
+class CommandCollectingAsyncCommands<K, V> extends AbstractRedisAsyncCommands<K, V> implements RedisAsyncCommands<K, V> {
 
     private final StatefulRedisConnection<K, V> statefulConnection;
 
@@ -60,9 +60,8 @@ class CommandCollectingAsyncCommands<K, V> extends AbstractRedisAsyncCommands<K,
         collectedCommands.add(commandToStore);
 
         // Return a completed async command (won't be used for actual execution)
-        AsyncCommand<K, V, T> asyncCommand = new AsyncCommand<>(cmd);
         // Don't complete it - it will be completed when the transaction executes
-        return asyncCommand;
+        return new AsyncCommand<>(cmd);
     }
 
     /**

@@ -29,6 +29,7 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.TransactionBuilder;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -736,13 +737,13 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     @Override
-    public io.lettuce.core.TransactionBuilder<K, V> transaction() {
+    public TransactionBuilder<K, V> transaction() {
         return current.getConnection().transaction();
     }
 
     @Override
     @SafeVarargs
-    public final io.lettuce.core.TransactionBuilder<K, V> transaction(K... watchKeys) {
+    public final TransactionBuilder<K, V> transaction(K... watchKeys) {
         return current.getConnection().transaction(watchKeys);
     }
 

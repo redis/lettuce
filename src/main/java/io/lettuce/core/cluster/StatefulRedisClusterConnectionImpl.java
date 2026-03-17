@@ -41,6 +41,7 @@ import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.TransactionBuilder;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -404,13 +405,13 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     // -------------------------------------------------------------------------
 
     @Override
-    public io.lettuce.core.TransactionBuilder<K, V> transaction() {
+    public TransactionBuilder<K, V> transaction() {
         return new ClusterTransactionBuilder<>(this, codec);
     }
 
     @Override
     @SafeVarargs
-    public final io.lettuce.core.TransactionBuilder<K, V> transaction(K... watchKeys) {
+    public final TransactionBuilder<K, V> transaction(K... watchKeys) {
         return new ClusterTransactionBuilder<>(this, codec, watchKeys);
     }
 

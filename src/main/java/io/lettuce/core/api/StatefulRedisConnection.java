@@ -102,7 +102,7 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      * </pre>
      *
      * @return a new transaction builder.
-     * @since 6.6
+     * @since 7.6
      */
     TransactionBuilder<K, V> transaction();
 
@@ -128,7 +128,7 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      *
      * @param watchKeys the keys to watch.
      * @return a new transaction builder with WATCH.
-     * @since 6.6
+     * @since 7.6
      */
     @SuppressWarnings("unchecked")
     TransactionBuilder<K, V> transaction(K... watchKeys);

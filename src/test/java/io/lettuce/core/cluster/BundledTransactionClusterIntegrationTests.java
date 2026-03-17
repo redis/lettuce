@@ -22,6 +22,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import io.lettuce.core.*;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.output.ValueOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 
 /**
@@ -165,6 +170,65 @@ public class BundledTransactionClusterIntegrationTests {
         assertThat(result).hasSize(1);
         assertThat((String) result.get(0)).isEqualTo("OK");
         assertThat(sync.get(key)).isEqualTo("updated");
+    }
+
+    @Test
+    void transactionWithAddCommand() {
+        // Test using addCommand for raw/custom commands
+        String key = "{raw}:key";
+        StringCodec codec = StringCodec.UTF8;
+
+        TransactionBuilder<String, String> builder = connection.transaction();
+
+        // Use addCommand for SET command
+        CommandArgs<String, String> setArgs = new CommandArgs<>(codec).addKey(key).addValue("rawValue");
+        RawCommand<String, String> setCommand = RawCommand.of(CommandType.SET, new StatusOutput<>(codec), setArgs);
+        builder.addCommand(setCommand);
+
+        // Use commands() API for GET to verify mixing works
+        builder.commands().get(key);
+
+        TransactionResult result = builder.execute();
+
+        assertThat(result.wasDiscarded()).isFalse();
+        assertThat(result).hasSize(2);
+        assertThat((String) result.get(0)).isEqualTo("OK");
+        assertThat((String) result.get(1)).isEqualTo("rawValue");
+
+        // Verify the value persisted
+        assertThat(sync.get(key)).isEqualTo("rawValue");
+    }
+
+    @Test
+    void transactionWithMultipleAddCommands() {
+        // Test using multiple addCommand calls
+        String key1 = "{rawmulti}:counter";
+        String key2 = "{rawmulti}:name";
+        StringCodec codec = StringCodec.UTF8;
+
+        sync.set(key1, "0");
+
+        TransactionBuilder<String, String> builder = connection.transaction();
+
+        // INCR command via addCommand
+        CommandArgs<String, String> incrArgs = new CommandArgs<>(codec).addKey(key1);
+        builder.addCommand(RawCommand.of(CommandType.INCR, new io.lettuce.core.output.IntegerOutput<>(codec), incrArgs));
+
+        // SET command via addCommand
+        CommandArgs<String, String> setArgs = new CommandArgs<>(codec).addKey(key2).addValue("John");
+        builder.addCommand(RawCommand.of(CommandType.SET, new StatusOutput<>(codec), setArgs));
+
+        // GET command via addCommand
+        CommandArgs<String, String> getArgs = new CommandArgs<>(codec).addKey(key1);
+        builder.addCommand(RawCommand.of(CommandType.GET, new ValueOutput<>(codec), getArgs));
+
+        TransactionResult result = builder.execute();
+
+        assertThat(result.wasDiscarded()).isFalse();
+        assertThat(result).hasSize(3);
+        assertThat((Long) result.get(0)).isEqualTo(1L); // INCR result
+        assertThat((String) result.get(1)).isEqualTo("OK"); // SET result
+        assertThat((String) result.get(2)).isEqualTo("1"); // GET result (counter value)
     }
 
 }

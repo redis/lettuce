@@ -9,6 +9,7 @@ import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.TransactionBuilder;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -153,13 +154,13 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     }
 
     @Override
-    public io.lettuce.core.TransactionBuilder<K, V> transaction() {
+    public TransactionBuilder<K, V> transaction() {
         return delegate.transaction();
     }
 
     @Override
     @SafeVarargs
-    public final io.lettuce.core.TransactionBuilder<K, V> transaction(K... watchKeys) {
+    public final TransactionBuilder<K, V> transaction(K... watchKeys) {
         return delegate.transaction(watchKeys);
     }
 

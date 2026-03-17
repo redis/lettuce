@@ -13,6 +13,7 @@ import java.util.List;
 import io.lettuce.core.AbstractRedisAsyncCommands;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.protocol.AsyncCommand;
@@ -30,16 +31,11 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Tihomir Mateev
  * @since 7.6
  */
-class ClusterCommandCollectingAsyncCommands<K, V> extends AbstractRedisAsyncCommands<K, V>
-        implements io.lettuce.core.api.async.RedisAsyncCommands<K, V> {
-
-    private final StatefulRedisClusterConnection<K, V> clusterConnection;
+class ClusterCommandCollectingAsyncCommands<K, V> extends AbstractRedisAsyncCommands<K, V> implements RedisAsyncCommands<K, V> {
 
     private final List<RedisCommand<K, V, ?>> collectedCommands = new ArrayList<>();
 
     private Integer targetSlot = null;
-
-    private ByteBuffer firstKey = null;
 
     /**
      * Creates a new instance.
@@ -49,7 +45,6 @@ class ClusterCommandCollectingAsyncCommands<K, V> extends AbstractRedisAsyncComm
      */
     ClusterCommandCollectingAsyncCommands(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec) {
         super(connection, codec);
-        this.clusterConnection = connection;
     }
 
     @Override
@@ -82,8 +77,7 @@ class ClusterCommandCollectingAsyncCommands<K, V> extends AbstractRedisAsyncComm
         collectedCommands.add(commandToStore);
 
         // Return an async command (won't be used for actual execution)
-        AsyncCommand<K, V, T> asyncCommand = new AsyncCommand<>(cmd);
-        return asyncCommand;
+        return new AsyncCommand<>(cmd);
     }
 
     /**
@@ -97,7 +91,6 @@ class ClusterCommandCollectingAsyncCommands<K, V> extends AbstractRedisAsyncComm
 
         if (targetSlot == null) {
             targetSlot = slot;
-            firstKey = encodedKey.duplicate();
         } else if (!targetSlot.equals(slot)) {
             throw new RedisException(String.format("CROSSSLOT Keys in transaction must hash to the same slot. "
                     + "First key hashes to slot %d, but current key hashes to slot %d. "
