@@ -1,5 +1,6 @@
 package io.lettuce.test.settings;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import io.lettuce.core.SslOptions;
+
 public class TlsSettings {
 
     private static final String TRUST_STORE_TYPE = "PKCS12";
@@ -24,13 +27,54 @@ public class TlsSettings {
 
     private static final String TEST_CLIENT_P12 = "client.p12";
 
-    private static final String TEST_CLIENT_CERT = "client.crt";
-
-    private static final String TEST_CLIENT_KEY = "client.key";
-
     private static final String TEST_CA_CERT = "ca.crt";
 
     private static final String TEST_TRUSTSTORE = "truststore.jks";
+
+    // mTLS container configurations
+    public static final String MTLS_STANDALONE_CONTAINER = "redis-standalone-5-client-cert";
+
+    public static final Path MTLS_STANDALONE_TLS_PATH = Paths.get(MTLS_STANDALONE_CONTAINER + "/work/tls");
+
+    public static final String MTLS_CLUSTER_CONTAINER = "ssl-test-cluster";
+
+    public static final Path MTLS_CLUSTER_TLS_PATH = Paths.get(MTLS_CLUSTER_CONTAINER + "/work/tls");
+
+    /**
+     * Client certificate options for mTLS tests.
+     */
+    public enum ClientCertificate {
+
+        /**
+         * Default client cert - CN=Client-test-cert (lowercase t), has ACL user, mTLS client auth succeeds.
+         */
+        DEFAULT("Client-test-cert.p12"),
+
+        /**
+         * Secondary mTLS user cert - CN=Client-test-2, has ACL user. Used for multi-user testing.
+         */
+        USER_2("Client-test-2.p12"),
+
+        /**
+         * Client cert with no matching ACL user (CN=Client-Test-cert, uppercase T). Used for testing authentication failures
+         * when the certificate is valid but has no corresponding Redis ACL user.
+         * <p>
+         * Note: This uses client.p12 which has CN=Client-Test-cert (uppercase T), which differs from the ACL user
+         * Client-test-cert (lowercase t) due to case sensitivity.
+         */
+        NO_ACL_USER("client.p12");
+
+        private final String filename;
+
+        ClientCertificate(String filename) {
+            this.filename = filename;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+
+    }
 
     public static Path envClientP12(Path certLocation) {
         return Paths.get(TEST_WORK_FOLDER, certLocation.toString(), TEST_CLIENT_P12);
@@ -128,6 +172,34 @@ public class TlsSettings {
         Path trustStorePath = testTruststorePath(trustStoreName).toAbsolutePath();
 
         return createAndSaveTruststore(trustedCertPaths, trustStorePath, truststorePassword);
+    }
+
+    /**
+     * Creates SslOptions with the specified keystore and truststore files.
+     *
+     * @param keystore the client certificate keystore file
+     * @param truststore the truststore file
+     * @return SslOptions configured with the provided stores
+     */
+    public static SslOptions createSslOptions(File keystore, File truststore) {
+        return SslOptions.builder().jdkSslProvider().keystore(keystore, "changeit".toCharArray())
+                .truststore(truststore, "changeit").build();
+    }
+
+    /**
+     * Creates SslOptions with client certificate (keystore) and truststore for mTLS authentication.
+     *
+     * @param containerName the container/environment name for truststore creation
+     * @param tlsPath the path to TLS certificates
+     * @param clientCert the client certificate to use
+     * @return SslOptions configured for mTLS
+     */
+    public static SslOptions createMtlsSslOptions(String containerName, Path tlsPath, ClientCertificate clientCert) {
+        Path truststorePath = createAndSaveTestTruststore(containerName, tlsPath, "changeit");
+        File truststoreFile = truststorePath.toFile();
+        Path keystorePath = Paths.get(TEST_WORK_FOLDER, tlsPath.toString(), clientCert.getFilename());
+
+        return createSslOptions(keystorePath.toFile(), truststoreFile);
     }
 
 }
