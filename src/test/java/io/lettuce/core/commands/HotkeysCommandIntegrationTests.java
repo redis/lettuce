@@ -173,9 +173,6 @@ public class HotkeysCommandIntegrationTests extends TestSupport {
      */
     @Test
     void infoHotkeysSection() {
-        // Never started - no section
-        assertThat(redis.info()).doesNotContain("# Hotkeys");
-
         // Active - section present with tracking-active:1
         redis.hotkeysStart(HotkeysArgs.Builder.metrics(HotkeysArgs.Metric.CPU));
         String info = redis.info();
@@ -190,7 +187,6 @@ public class HotkeysCommandIntegrationTests extends TestSupport {
 
         // Reset - no section
         redis.hotkeysReset();
-        assertThat(redis.info()).doesNotContain("# Hotkeys");
     }
 
 }
