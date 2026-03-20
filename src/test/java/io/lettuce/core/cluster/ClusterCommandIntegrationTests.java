@@ -24,6 +24,8 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+import io.lettuce.core.AclSetuserArgs;
+import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -287,6 +289,73 @@ class ClusterCommandIntegrationTests extends TestSupport {
 
     private static void waitUntilValueIsVisible(String key, RedisCommands<String, String> commands) {
         Wait.untilTrue(() -> commands.get(key) != null).waitOrTimeout();
+    }
+
+    /**
+     * Test that clusterMyId() falls back to CLUSTER NODES parsing when CLUSTER MYID command is not available. This simulates
+     * environments like Redis Enterprise OSS cluster mode where CLUSTER MYID is not supported.
+     */
+    @Test
+    @EnabledOnCommand("ACL") // Requires Redis 6+ for ACL support
+    void clusterMyIdFallsBackToClusterNodesWhenCommandDenied() {
+
+        String testUser = "noclustermyid";
+        String testPassword = "testpass123";
+
+        // Create a ProtocolKeyword for the MYID subcommand
+        io.lettuce.core.protocol.ProtocolKeyword myidSubcommand = new io.lettuce.core.protocol.ProtocolKeyword() {
+
+            @Override
+            public byte[] getBytes() {
+                return "MYID".getBytes();
+            }
+
+            @Override
+            public String toString() {
+                return "MYID";
+            }
+
+        };
+
+        try {
+            // Create a user that has all permissions except CLUSTER MYID
+            sync.aclSetuser(testUser, AclSetuserArgs.Builder.on().addPassword(testPassword).allKeys().allChannels()
+                    .allCommands().removeCommand(io.lettuce.core.protocol.CommandType.CLUSTER, myidSubcommand));
+
+            // Connect with the restricted user
+            RedisURI restrictedUri = RedisURI.Builder.redis(host, ClusterTestSettings.port1)
+                    .withAuthentication(testUser, testPassword.toCharArray()).build();
+
+            RedisClusterClient restrictedClient = RedisClusterClient.create(restrictedUri);
+            try {
+                StatefulRedisClusterConnection<String, String> restrictedConnection = restrictedClient.connect();
+                try {
+                    RedisAdvancedClusterAsyncCommands<String, String> restrictedAsync = restrictedConnection.async();
+
+                    // This should trigger the fallback to CLUSTER NODES parsing
+                    String nodeId = TestFutures.getOrTimeout(restrictedAsync.clusterMyId());
+
+                    // Verify we got a valid node ID (the fallback worked)
+                    assertThat(nodeId).isNotNull();
+                    assertThat(nodeId).isNotEmpty();
+
+                    // Verify the node ID matches what we'd get from CLUSTER NODES parsing
+                    String clusterNodes = TestFutures.getOrTimeout(restrictedAsync.clusterNodes());
+                    Partitions partitions = ClusterPartitionParser.parse(clusterNodes);
+                    String expectedNodeId = partitions.stream().filter(n -> n.is(RedisClusterNode.NodeFlag.MYSELF)).findFirst()
+                            .map(RedisClusterNode::getNodeId).orElse(null);
+
+                    assertThat(nodeId).isEqualTo(expectedNodeId);
+                } finally {
+                    restrictedConnection.close();
+                }
+            } finally {
+                restrictedClient.shutdown();
+            }
+        } finally {
+            // Always clean up the test user
+            sync.aclDeluser(testUser);
+        }
     }
 
 }

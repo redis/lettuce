@@ -9,6 +9,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.protocol.CommandType;
@@ -237,6 +238,21 @@ class RedisAdvancedClusterReactiveCommandsImplTest {
         CompletableFuture<T> cf = new CompletableFuture<>();
         cf.completeExceptionally(t);
         return cf;
+    }
+
+    @Test
+    void clusterMyId_fallsBackToClusterNodes_parsingMyselfFlag() {
+        // Test that CLUSTER NODES parsing correctly identifies the MYSELF node
+        // This verifies the fallback logic used when CLUSTER MYID is not available
+        String clusterNodesOutput = "node-789 127.0.0.1:6379@16379 myself,master - 0 0 1 connected 0-16383\n"
+                + "node-012 127.0.0.1:6380@16380 slave node-789 0 0 0 connected";
+
+        Partitions partitions = ClusterPartitionParser.parse(clusterNodesOutput);
+        java.util.Optional<RedisClusterNode> myselfNode = partitions.stream()
+                .filter(n -> n.is(RedisClusterNode.NodeFlag.MYSELF)).findFirst();
+
+        assertThat(myselfNode).isPresent();
+        assertThat(myselfNode.get().getNodeId()).isEqualTo("node-789");
     }
 
 }

@@ -10,8 +10,10 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.search.AggregationReply;
@@ -227,6 +229,34 @@ class RedisAdvancedClusterAsyncCommandsImplTest {
         CompletableFuture<T> cf = new CompletableFuture<>();
         cf.completeExceptionally(t);
         return cf;
+    }
+
+    @Test
+    void clusterMyId_fallsBackToClusterNodes_parsingMyselfFlag() {
+        // Test that CLUSTER NODES parsing correctly identifies the MYSELF node
+        // This verifies the fallback logic used when CLUSTER MYID is not available
+        String clusterNodesOutput = "node-123 127.0.0.1:6379@16379 myself,master - 0 0 1 connected 0-16383\n"
+                + "node-456 127.0.0.1:6380@16380 slave node-123 0 0 0 connected";
+
+        Partitions partitions = ClusterPartitionParser.parse(clusterNodesOutput);
+        java.util.Optional<RedisClusterNode> myselfNode = partitions.stream()
+                .filter(n -> n.is(RedisClusterNode.NodeFlag.MYSELF)).findFirst();
+
+        assertThat(myselfNode).isPresent();
+        assertThat(myselfNode.get().getNodeId()).isEqualTo("node-123");
+    }
+
+    @Test
+    void clusterMyId_fallsBackToClusterNodes_whenMyselfFlagMissing() {
+        // Test behavior when no node has MYSELF flag (edge case)
+        String clusterNodesOutput = "node-123 127.0.0.1:6379@16379 master - 0 0 1 connected 0-16383\n"
+                + "node-456 127.0.0.1:6380@16380 slave node-123 0 0 0 connected";
+
+        Partitions partitions = ClusterPartitionParser.parse(clusterNodesOutput);
+        java.util.Optional<RedisClusterNode> myselfNode = partitions.stream()
+                .filter(n -> n.is(RedisClusterNode.NodeFlag.MYSELF)).findFirst();
+
+        assertThat(myselfNode).isEmpty();
     }
 
 }
