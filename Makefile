@@ -2,7 +2,7 @@ SHELL := /bin/bash
 PATH := ./work/redis-git/src:${PATH}
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 PROFILE ?= ci
-SUPPORTED_TEST_ENV_VERSIONS := 8.6 8.4 8.2 8.0 7.4 7.2
+SUPPORTED_TEST_ENV_VERSIONS := 8.8 8.6 8.4 8.2 8.0 7.4 7.2
 DEFAULT_TEST_ENV_VERSION := 8.6
 export REDIS_ENV_WORK_DIR := $(or ${REDIS_ENV_WORK_DIR},$(ROOT_DIR)/work)
 MVN_SOCKET_ARGS := -Ddomainsocket="$(REDIS_ENV_WORK_DIR)/socket-6482" -Dsentineldomainsocket="$(REDIS_ENV_WORK_DIR)/socket-26379"
@@ -37,8 +37,8 @@ endef
 start:
 	@$(COMPOSE_ENV) \
 	echo "Environment work directory: $(REDIS_ENV_WORK_DIR)"; \
-	mkdir -pm 777 "$$REDIS_ENV_WORK_DIR"; # allow tests to put truststore files into workdir \
-	$$compose_cmd run --rm --quiet-pull cleanup; # cleanup workdir before starting \
+	mkdir -pm 777 "$$REDIS_ENV_WORK_DIR"; \
+	$$compose_cmd run --rm --quiet-pull cleanup; \
 	$$compose_cmd --parallel 1 up -d --wait --quiet-pull; \
 	echo "Started test environment with Redis $$display_version.";
 
