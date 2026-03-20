@@ -1,5 +1,12 @@
 # Pipelining and command flushing
 
+!!! NOTE
+    Lettuce is a non-blocking, asynchronous driver that pipelines commands by default.
+    According to [Redis pipelining](https://redis.io/docs/latest/develop/using-commands/pipelining/),
+    pipelining constitutes sending multiple commands without waiting for responses. Since Lettuce
+    does not block after each command invocation - even when using the synchronous API - it
+    inherently leverages pipelining to maximize throughput by default.
+
 Redis is a TCP server using the client-server model and what is called a
 Request/Response protocol. This means that usually a request is
 accomplished with the following steps:
@@ -136,4 +143,4 @@ multiple commands in a batch (size depends on your environment, but
 batches between 50 and 1000 work nice during performance tests) can
 increase the throughput up to a factor of 5x.
 
-Pipelining within the Redis docs: <https://redis.io/docs/latest/develop/use/pipelining/>
+Pipelining within the Redis docs: <https://redis.io/docs/latest/develop/using-commands/pipelining/>
