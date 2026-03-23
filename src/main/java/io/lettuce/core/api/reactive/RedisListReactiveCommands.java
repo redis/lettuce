@@ -156,7 +156,10 @@ public interface RedisListReactiveCommands<K, V> {
      * @param destination the destination type: key.
      * @return V bulk-string-reply the element being popped from {@code source} and pushed to {@code destination}. If
      *         {@code timeout} is reached, a.
+     * @deprecated since 7.4.0, use {@link #blmove(Object, Object, LMoveArgs, double)} instead. This command is deprecated by
+     *             Redis since version 6.2.0.
      */
+    @Deprecated
     Mono<V> brpoplpush(long timeout, K source, K destination);
 
     /**
@@ -168,7 +171,10 @@ public interface RedisListReactiveCommands<K, V> {
      * @return V bulk-string-reply the element being popped from {@code source} and pushed to {@code destination}. If
      *         {@code timeout} is reached, a.
      * @since 6.1.3
+     * @deprecated since 7.4.0, use {@link #blmove(Object, Object, LMoveArgs, long)} instead. This command is deprecated by
+     *             Redis since version 6.2.0.
      */
+    @Deprecated
     Mono<V> brpoplpush(double timeout, K source, K destination);
 
     /**
@@ -395,7 +401,10 @@ public interface RedisListReactiveCommands<K, V> {
      * @param source the source key.
      * @param destination the destination type: key.
      * @return V bulk-string-reply the element being popped and pushed.
+     * @deprecated since 7.4.0, use {@link #lmove(Object, Object, LMoveArgs)} instead. This command is deprecated by Redis since
+     *             version 6.2.0.
      */
+    @Deprecated
     Mono<V> rpoplpush(K source, K destination);
 
     /**
