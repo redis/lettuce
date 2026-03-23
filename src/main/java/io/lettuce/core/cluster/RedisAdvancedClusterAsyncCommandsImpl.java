@@ -236,7 +236,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             }
             // Fallback silently: parse CLUSTER NODES to find MYSELF (e.g., when CLUSTER MYID is not supported)
             return super.clusterNodes().toCompletableFuture().thenApply(nodes -> ClusterPartitionParser.parse(nodes).stream()
-                    .filter(node -> node.is(MYSELF)).findFirst().map(RedisClusterNode::getNodeId).orElse(null));
+                    .filter(node -> node.is(MYSELF)).findFirst().map(RedisClusterNode::getNodeId).orElse(""));
         }).thenCompose(Function.identity());
 
         return new PipelinedRedisFuture<>(result);

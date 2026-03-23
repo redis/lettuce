@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.protocol.ProtocolKeyword;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -303,7 +304,7 @@ class ClusterCommandIntegrationTests extends TestSupport {
         String testPassword = "testpass123";
 
         // Create a ProtocolKeyword for the MYID subcommand
-        io.lettuce.core.protocol.ProtocolKeyword myidSubcommand = new io.lettuce.core.protocol.ProtocolKeyword() {
+        ProtocolKeyword myidSubcommand = new ProtocolKeyword() {
 
             @Override
             public byte[] getBytes() {
@@ -326,10 +327,8 @@ class ClusterCommandIntegrationTests extends TestSupport {
             RedisURI restrictedUri = RedisURI.Builder.redis(host, ClusterTestSettings.port1)
                     .withAuthentication(testUser, testPassword.toCharArray()).build();
 
-            RedisClusterClient restrictedClient = RedisClusterClient.create(restrictedUri);
-            try {
-                StatefulRedisClusterConnection<String, String> restrictedConnection = restrictedClient.connect();
-                try {
+            try (RedisClusterClient restrictedClient = RedisClusterClient.create(restrictedUri)){
+                try (StatefulRedisClusterConnection<String, String> restrictedConnection = restrictedClient.connect()) {
                     RedisAdvancedClusterAsyncCommands<String, String> restrictedAsync = restrictedConnection.async();
 
                     // This should trigger the fallback to CLUSTER NODES parsing
@@ -346,11 +345,7 @@ class ClusterCommandIntegrationTests extends TestSupport {
                             .map(RedisClusterNode::getNodeId).orElse(null);
 
                     assertThat(nodeId).isEqualTo(expectedNodeId);
-                } finally {
-                    restrictedConnection.close();
                 }
-            } finally {
-                restrictedClient.shutdown();
             }
         } finally {
             // Always clean up the test user
