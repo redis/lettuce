@@ -8,7 +8,7 @@ import java.util.Map;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @author Mark Paluch
+ * @author Mark Paluch, Ivar Henckel
  * @since 6.0
  */
 public interface CacheAccessor<K, V> {
@@ -22,7 +22,7 @@ public interface CacheAccessor<K, V> {
      * @return a {@link CacheAccessor} backed by a {@link Map} implementation.
      */
     static <K, V> CacheAccessor<K, V> forMap(Map<K, V> map) {
-        return new MapCacheAccessor<>(map);
+        return new PendingAwareCacheAccessor<>(map);
     }
 
     /**
@@ -58,5 +58,17 @@ public interface CacheAccessor<K, V> {
      * @param key the key whose mapping is to be removed from the cache.
      */
     void evict(K key);
+
+    /**
+     * Mark a key as pending.
+     * <p>
+     * By marking keys as pending, i.e. Redis get operation in progress, it's possible to block cache updates that would
+     * otherwise overwrite simultaneous invalidates.
+     *
+     * @param key the key to be marked as pending.
+     */
+    default void setPending(K key) {
+        // Do nothing.
+    }
 
 }
