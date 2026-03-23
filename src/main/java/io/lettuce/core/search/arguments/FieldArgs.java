@@ -119,8 +119,8 @@ public abstract class FieldArgs<K> {
      * @param args the command arguments to modify
      */
     public final void build(CommandArgs<K, ?> args) {
-        args.add(name.toString());
-        as.ifPresent(a -> args.add(AS).add(a.toString()));
+        args.addKey(name);
+        as.ifPresent(a -> args.add(AS).addKey(a));
         args.add(getFieldType());
 
         // Add type-specific arguments

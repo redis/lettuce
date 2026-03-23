@@ -73,7 +73,8 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(index, "Index must not be null");
         notEmpty(fieldArgs.toArray());
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
+        RediSearchCommandArgs<K, V> args = new RediSearchCommandArgs<>(codec);
+        args.add(index);
 
         if (createArgs != null) {
             createArgs.build(args);
@@ -101,7 +102,8 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(query, "Query must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
+        RediSearchCommandArgs<K, V> args = new RediSearchCommandArgs<>(codec);
+        args.add(index);
         args.addValue(query);
 
         if (searchArgs != null) {
