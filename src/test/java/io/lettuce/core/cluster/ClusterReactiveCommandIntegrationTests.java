@@ -13,13 +13,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import reactor.test.StepVerifier;
+import io.lettuce.core.AclSetuserArgs;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
+import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.models.slots.ClusterSlotRange;
 import io.lettuce.core.cluster.models.slots.ClusterSlotsParser;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Mark Paluch
@@ -107,6 +115,73 @@ class ClusterReactiveCommandIntegrationTests {
         for (Map<String, Object> value : values) {
             assertThat(value).containsKeys("direction", "node", "create-time", "events", "send-buffer-allocated",
                     "send-buffer-used");
+        }
+    }
+
+    /**
+     * Test that clusterMyId() falls back to CLUSTER NODES parsing when CLUSTER MYID command is not available. This simulates
+     * environments like Redis Enterprise OSS cluster mode where CLUSTER MYID is not supported.
+     */
+    @Test
+    @EnabledOnCommand("ACL") // Requires Redis 6+ for ACL support
+    void clusterMyIdFallsBackToClusterNodesWhenCommandDenied() {
+
+        String testUser = "noclustermyid_reactive";
+        String testPassword = "testpass123";
+
+        // Create a ProtocolKeyword for the MYID subcommand
+        ProtocolKeyword myidSubcommand = new ProtocolKeyword() {
+
+            @Override
+            public byte[] getBytes() {
+                return "MYID".getBytes();
+            }
+
+            @Override
+            public String toString() {
+                return "MYID";
+            }
+
+        };
+
+        try {
+            // Create a user that has all permissions except CLUSTER MYID
+            sync.aclSetuser(testUser, AclSetuserArgs.Builder.on().addPassword(testPassword).allKeys().allChannels()
+                    .allCommands().removeCommand(CommandType.CLUSTER, myidSubcommand));
+
+            // Connect with the restricted user
+            RedisURI restrictedUri = RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port1)
+                    .withAuthentication(testUser, testPassword.toCharArray()).build();
+
+            RedisClusterClient restrictedClient = RedisClusterClient.create(restrictedUri);
+            try {
+                StatefulRedisClusterConnection<String, String> restrictedConnection = restrictedClient.connect();
+                try {
+                    RedisAdvancedClusterReactiveCommands<String, String> restrictedReactive = restrictedConnection.reactive();
+
+                    // This should trigger the fallback to CLUSTER NODES parsing
+                    StepVerifier.create(restrictedReactive.clusterMyId()).assertNext(nodeId -> {
+                        // Verify we got a valid node ID (the fallback worked)
+                        assertThat(nodeId).isNotNull();
+                        assertThat(nodeId).isNotEmpty();
+
+                        // Verify the node ID matches what we'd get from CLUSTER NODES parsing
+                        String clusterNodes = restrictedReactive.clusterNodes().block();
+                        Partitions partitions = ClusterPartitionParser.parse(clusterNodes);
+                        String expectedNodeId = partitions.stream().filter(n -> n.is(RedisClusterNode.NodeFlag.MYSELF))
+                                .findFirst().map(RedisClusterNode::getNodeId).orElse(null);
+
+                        assertThat(nodeId).isEqualTo(expectedNodeId);
+                    }).verifyComplete();
+                } finally {
+                    restrictedConnection.close();
+                }
+            } finally {
+                restrictedClient.shutdown();
+            }
+        } finally {
+            // Always clean up the test user
+            sync.aclDeluser(testUser);
         }
     }
 

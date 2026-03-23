@@ -56,6 +56,7 @@ import io.lettuce.core.cluster.api.async.AsyncNodeSelection;
 import io.lettuce.core.cluster.api.async.NodeSelectionAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
@@ -216,6 +217,29 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         return super.clusterGetKeysInSlot(slot, count);
+    }
+
+    /**
+     * Obtain the nodeId for the currently connected node.
+     * <p>
+     * This implementation first attempts to use the {@code CLUSTER MYID} command. If that command is not supported (e.g., on
+     * Redis Enterprise OSS cluster mode), it falls back to parsing the {@code CLUSTER NODES} output to find the node marked
+     * with the {@code MYSELF} flag.
+     *
+     * @return String simple-string-reply
+     */
+    @Override
+    public RedisFuture<String> clusterMyId() {
+        CompletableFuture<String> result = super.clusterMyId().toCompletableFuture().handle((nodeId, ex) -> {
+            if (ex == null && nodeId != null) {
+                return CompletableFuture.completedFuture(nodeId);
+            }
+            // Fallback silently: parse CLUSTER NODES to find MYSELF (e.g., when CLUSTER MYID is not supported)
+            return super.clusterNodes().toCompletableFuture().thenApply(nodes -> ClusterPartitionParser.parse(nodes).stream()
+                    .filter(node -> node.is(MYSELF)).findFirst().map(RedisClusterNode::getNodeId).orElse(null));
+        }).thenCompose(Function.identity());
+
+        return new PipelinedRedisFuture<>(result);
     }
 
     @Override
