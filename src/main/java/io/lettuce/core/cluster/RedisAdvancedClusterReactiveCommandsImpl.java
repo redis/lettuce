@@ -219,7 +219,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public Mono<String> clusterMyId() {
         // Fallback silently: parse CLUSTER NODES to find MYSELF (e.g., when CLUSTER MYID is not supported)
         return super.clusterMyId().onErrorResume(ex -> super.clusterNodes().map(nodes -> ClusterPartitionParser.parse(nodes)
-                .stream().filter(node -> node.is(MYSELF)).findFirst().map(RedisClusterNode::getNodeId).orElse(null)));
+                .stream().filter(node -> node.is(MYSELF)).findFirst().map(RedisClusterNode::getNodeId).orElse("")));
     }
 
     @Override

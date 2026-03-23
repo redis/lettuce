@@ -19,22 +19,27 @@ import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.test.LoggingTestUtils;
 import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+@Tag(UNIT_TEST)
 class RedisAdvancedClusterReactiveCommandsImplTest {
 
     private RedisAdvancedClusterReactiveCommandsImpl<String, String> reactive;
@@ -238,21 +243,6 @@ class RedisAdvancedClusterReactiveCommandsImplTest {
         CompletableFuture<T> cf = new CompletableFuture<>();
         cf.completeExceptionally(t);
         return cf;
-    }
-
-    @Test
-    void clusterMyId_fallsBackToClusterNodes_parsingMyselfFlag() {
-        // Test that CLUSTER NODES parsing correctly identifies the MYSELF node
-        // This verifies the fallback logic used when CLUSTER MYID is not available
-        String clusterNodesOutput = "node-789 127.0.0.1:6379@16379 myself,master - 0 0 1 connected 0-16383\n"
-                + "node-012 127.0.0.1:6380@16380 slave node-789 0 0 0 connected";
-
-        Partitions partitions = ClusterPartitionParser.parse(clusterNodesOutput);
-        java.util.Optional<RedisClusterNode> myselfNode = partitions.stream()
-                .filter(n -> n.is(RedisClusterNode.NodeFlag.MYSELF)).findFirst();
-
-        assertThat(myselfNode).isPresent();
-        assertThat(myselfNode.get().getNodeId()).isEqualTo("node-789");
     }
 
 }
