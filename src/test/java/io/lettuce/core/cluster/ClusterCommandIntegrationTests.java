@@ -327,7 +327,7 @@ class ClusterCommandIntegrationTests extends TestSupport {
             RedisURI restrictedUri = RedisURI.Builder.redis(host, ClusterTestSettings.port1)
                     .withAuthentication(testUser, testPassword.toCharArray()).build();
 
-            try (RedisClusterClient restrictedClient = RedisClusterClient.create(restrictedUri)){
+            try (RedisClusterClient restrictedClient = RedisClusterClient.create(restrictedUri)) {
                 try (StatefulRedisClusterConnection<String, String> restrictedConnection = restrictedClient.connect()) {
                     RedisAdvancedClusterAsyncCommands<String, String> restrictedAsync = restrictedConnection.async();
 
