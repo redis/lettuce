@@ -13,13 +13,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import reactor.test.StepVerifier;
+import io.lettuce.core.AclSetuserArgs;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
+import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
+import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.models.slots.ClusterSlotRange;
 import io.lettuce.core.cluster.models.slots.ClusterSlotsParser;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Mark Paluch
@@ -30,6 +39,8 @@ class ClusterReactiveCommandIntegrationTests {
 
     private final RedisClusterClient clusterClient;
 
+    private final StatefulRedisClusterConnection<String, String> connection;
+
     private final RedisClusterReactiveCommands<String, String> reactive;
 
     private final RedisClusterCommands<String, String> sync;
@@ -38,6 +49,7 @@ class ClusterReactiveCommandIntegrationTests {
     ClusterReactiveCommandIntegrationTests(RedisClusterClient clusterClient,
             StatefulRedisClusterConnection<String, String> connection) {
         this.clusterClient = clusterClient;
+        this.connection = connection;
 
         this.reactive = connection.reactive();
         this.sync = connection.sync();
@@ -107,6 +119,78 @@ class ClusterReactiveCommandIntegrationTests {
         for (Map<String, Object> value : values) {
             assertThat(value).containsKeys("direction", "node", "create-time", "events", "send-buffer-allocated",
                     "send-buffer-used");
+        }
+    }
+
+    /**
+     * Test that clusterMyId() falls back to CLUSTER NODES parsing when CLUSTER MYID command is not available. This simulates
+     * environments like Redis Enterprise OSS cluster mode where CLUSTER MYID is not supported.
+     */
+    @Test
+    @EnabledOnCommand("ACL") // Requires Redis 6+ for ACL support
+    void clusterMyIdFallsBackToClusterNodesWhenCommandDenied() {
+
+        String testUser = "noclustermyid_reactive";
+        String testPassword = "testpass123";
+
+        // Create a ProtocolKeyword for the MYID subcommand
+        ProtocolKeyword myidSubcommand = new ProtocolKeyword() {
+
+            @Override
+            public byte[] getBytes() {
+                return "MYID".getBytes();
+            }
+
+            @Override
+            public String toString() {
+                return "MYID";
+            }
+
+        };
+
+        RedisAdvancedClusterCommands<String, String> advancedSync = connection.sync();
+
+        try {
+            // Create a user on ALL cluster nodes so authentication works during topology refresh
+            AclSetuserArgs userArgs = AclSetuserArgs.Builder.on().addPassword(testPassword).allKeys().allChannels()
+                    .allCommands().removeCommand(CommandType.CLUSTER, myidSubcommand);
+
+            for (RedisClusterNode node : connection.getPartitions()) {
+                advancedSync.getConnection(node.getNodeId()).aclSetuser(testUser, userArgs);
+            }
+
+            // Connect with the restricted user
+            RedisURI restrictedUri = RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port1)
+                    .withAuthentication(testUser, testPassword.toCharArray()).build();
+
+            try (RedisClusterClient restrictedClient = RedisClusterClient.create(restrictedUri);
+                    StatefulRedisClusterConnection<String, String> restrictedConnection = restrictedClient.connect()) {
+
+                RedisAdvancedClusterReactiveCommands<String, String> restrictedReactive = restrictedConnection.reactive();
+
+                // This should trigger the fallback to CLUSTER NODES parsing
+                StepVerifier.create(restrictedReactive.clusterMyId().zipWith(restrictedReactive.clusterNodes()))
+                        .assertNext(tuple -> {
+                            String nodeId = tuple.getT1();
+                            String clusterNodes = tuple.getT2();
+
+                            // Verify we got a valid node ID (the fallback worked)
+                            assertThat(nodeId).isNotNull();
+                            assertThat(nodeId).isNotEmpty();
+
+                            // Verify the node ID matches what we'd get from CLUSTER NODES parsing
+                            Partitions partitions = ClusterPartitionParser.parse(clusterNodes);
+                            String expectedNodeId = partitions.stream().filter(n -> n.is(RedisClusterNode.NodeFlag.MYSELF))
+                                    .findFirst().map(RedisClusterNode::getNodeId).orElse(null);
+
+                            assertThat(nodeId).isEqualTo(expectedNodeId);
+                        }).verifyComplete();
+            }
+        } finally {
+            // Always clean up the test user on ALL nodes
+            for (RedisClusterNode node : connection.getPartitions()) {
+                advancedSync.getConnection(node.getNodeId()).aclDeluser(testUser);
+            }
         }
     }
 
