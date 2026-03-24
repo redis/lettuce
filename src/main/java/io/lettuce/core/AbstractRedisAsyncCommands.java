@@ -22,7 +22,10 @@ package io.lettuce.core;
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.async.*;
+import io.lettuce.core.cluster.PipelinedRedisFuture;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
@@ -76,6 +79,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
@@ -549,9 +555,46 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.clusterMeet(ip, port));
     }
 
+    /**
+     * Obtain the nodeId for the currently connected node.
+     * <p>
+     * This implementation first attempts to use the {@code CLUSTER MYID} command. If that command is not supported, it falls
+     * back to parsing the {@code CLUSTER NODES} output to find the node marked with the {@code MYSELF} flag.
+     *
+     * @return String simple-string-reply
+     */
     @Override
     public RedisFuture<String> clusterMyId() {
-        return dispatch(commandBuilder.clusterMyId());
+        CompletableFuture<String> result = dispatch(commandBuilder.clusterMyId()).toCompletableFuture().handle((nodeId, ex) -> {
+            if (ex != null) {
+                // Only fall back for command execution errors (e.g., NOPERM, ERR unknown subcommand)
+                Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+                if (cause instanceof RedisCommandExecutionException) {
+                    return clusterMyIdFromClusterNodes();
+                }
+                CompletableFuture<String> failed = new CompletableFuture<>();
+                failed.completeExceptionally(cause);
+                return failed;
+            }
+            if (nodeId == null || nodeId.isEmpty()) {
+                return clusterMyIdFromClusterNodes();
+            }
+            return CompletableFuture.completedFuture(nodeId);
+        }).thenCompose(Function.identity());
+
+        return new PipelinedRedisFuture<>(result);
+    }
+
+    /**
+     * Extract the current node's ID by parsing {@code CLUSTER NODES} output.
+     *
+     * @return CompletableFuture containing the node ID if found, or failed future if no node has the MYSELF flag
+     */
+    private CompletableFuture<String> clusterMyIdFromClusterNodes() throws RedisException {
+        return clusterNodes().toCompletableFuture()
+                .thenApply(nodes -> ClusterPartitionParser.parse(nodes).stream()
+                        .filter(node -> node.is(RedisClusterNode.NodeFlag.MYSELF)).findFirst().map(RedisClusterNode::getNodeId)
+                        .orElseThrow(() -> new RedisException("Failed to determine cluster node id")));
     }
 
     @Override
