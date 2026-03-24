@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
@@ -57,7 +56,6 @@ import io.lettuce.core.cluster.api.async.AsyncNodeSelection;
 import io.lettuce.core.cluster.api.async.NodeSelectionAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
-import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
@@ -218,49 +216,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         return super.clusterGetKeysInSlot(slot, count);
-    }
-
-    /**
-     * Obtain the nodeId for the currently connected node.
-     * <p>
-     * This implementation first attempts to use the {@code CLUSTER MYID} command. If that command is not supported (e.g., on
-     * Redis Enterprise OSS cluster mode), it falls back to parsing the {@code CLUSTER NODES} output to find the node marked
-     * with the {@code MYSELF} flag.
-     *
-     * @return String simple-string-reply
-     */
-    @Override
-    public RedisFuture<String> clusterMyId() {
-        CompletableFuture<String> result = super.clusterMyId().toCompletableFuture()
-                .thenCompose(nodeId -> nodeId != null && !nodeId.isEmpty() ? CompletableFuture.completedFuture(nodeId)
-                        : clusterMyIdFromClusterNodes())
-                .handle((nodeId, ex) -> {
-                    if (nodeId != null) {
-                        return CompletableFuture.completedFuture(nodeId);
-                    }
-                    // Only fall back for command execution errors (e.g., NOPERM, ERR unknown subcommand)
-                    Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
-                    if (cause instanceof RedisCommandExecutionException) {
-                        return clusterMyIdFromClusterNodes();
-                    }
-                    CompletableFuture<String> failed = new CompletableFuture<>();
-                    failed.completeExceptionally(cause);
-                    return failed;
-                }).thenCompose(Function.identity());
-
-        return new PipelinedRedisFuture<>(result);
-    }
-
-    /**
-     * Extract the current node's ID by parsing {@code CLUSTER NODES} output.
-     *
-     * @return CompletableFuture containing the node ID if found, or failed future if no node has the MYSELF flag
-     */
-    private CompletableFuture<String> clusterMyIdFromClusterNodes() {
-        return super.clusterNodes().toCompletableFuture()
-                .thenApply(nodes -> ClusterPartitionParser.parse(nodes).stream().filter(node -> node.is(MYSELF)).findFirst()
-                        .map(RedisClusterNode::getNodeId)
-                        .orElseThrow(() -> new RedisException("Failed to determine cluster node id")));
     }
 
     @Override

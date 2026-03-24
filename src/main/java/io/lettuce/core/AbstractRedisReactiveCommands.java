@@ -23,6 +23,8 @@ import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.*;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
+import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
@@ -572,9 +574,30 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> commandBuilder.clusterMeet(ip, port));
     }
 
+    /**
+     * Obtain the nodeId for the currently connected node.
+     * <p>
+     * This implementation first attempts to use the {@code CLUSTER MYID} command. If that command is not supported, it falls
+     * back to parsing the {@code CLUSTER NODES} output to find the node marked with the {@code MYSELF} flag.
+     *
+     * @return Mono&lt;String&gt; simple-string-reply
+     */
     @Override
     public Mono<String> clusterMyId() {
-        return createMono(commandBuilder::clusterMyId);
+        return createMono(commandBuilder::clusterMyId).filter(nodeId -> nodeId != null && !nodeId.isEmpty())
+                .switchIfEmpty(Mono.defer(this::clusterMyIdFromClusterNodes))
+                .onErrorResume(RedisCommandExecutionException.class, ex -> clusterMyIdFromClusterNodes());
+    }
+
+    /**
+     * Extract the current node's ID by parsing {@code CLUSTER NODES} output.
+     *
+     * @return Mono containing the node ID if found, or error if no node has the MYSELF flag
+     */
+    private Mono<String> clusterMyIdFromClusterNodes() {
+        return clusterNodes().map(nodes -> ClusterPartitionParser.parse(nodes).stream()
+                .filter(node -> node.is(RedisClusterNode.NodeFlag.MYSELF)).findFirst().map(RedisClusterNode::getNodeId)
+                .orElseThrow(() -> new RedisException("Failed to determine cluster node id")));
     }
 
     @Override

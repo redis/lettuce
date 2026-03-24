@@ -58,7 +58,6 @@ import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
-import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
@@ -204,34 +203,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         Mono<RedisClusterReactiveCommands<K, V>> connectionBySlot = findConnectionBySlotReactive(slot);
         return connectionBySlot.flatMapMany(conn -> conn.clusterGetKeysInSlot(slot, count));
-    }
-
-    /**
-     * Obtain the nodeId for the currently connected node.
-     * <p>
-     * This implementation first attempts to use the {@code CLUSTER MYID} command. If that command is not supported (e.g., on
-     * Redis Enterprise OSS cluster mode), it falls back to parsing the {@code CLUSTER NODES} output to find the node marked
-     * with the {@code MYSELF} flag.
-     *
-     * @return Mono&lt;String&gt; simple-string-reply
-     */
-    @Override
-    public Mono<String> clusterMyId() {
-        // Fallback silently: parse CLUSTER NODES to find MYSELF (e.g., when CLUSTER MYID is not supported)
-        return super.clusterMyId().filter(nodeId -> nodeId != null && !nodeId.isEmpty())
-                .switchIfEmpty(Mono.defer(this::clusterMyIdFromClusterNodes))
-                .onErrorResume(RedisCommandExecutionException.class, ex -> clusterMyIdFromClusterNodes());
-    }
-
-    /**
-     * Extract the current node's ID by parsing {@code CLUSTER NODES} output.
-     *
-     * @return Mono containing the node ID if found, or error if no node has the MYSELF flag
-     */
-    private Mono<String> clusterMyIdFromClusterNodes() {
-        return super.clusterNodes().map(nodes -> ClusterPartitionParser.parse(nodes).stream().filter(node -> node.is(MYSELF))
-                .findFirst().map(RedisClusterNode::getNodeId)
-                .orElseThrow(() -> new RedisException("Failed to determine cluster node id")));
     }
 
     @Override
