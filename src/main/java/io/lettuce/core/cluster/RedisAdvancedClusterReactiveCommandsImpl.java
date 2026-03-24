@@ -218,9 +218,20 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Mono<String> clusterMyId() {
         // Fallback silently: parse CLUSTER NODES to find MYSELF (e.g., when CLUSTER MYID is not supported)
-        return super.clusterMyId().onErrorResume(ex -> super.clusterNodes().map(nodes -> ClusterPartitionParser.parse(nodes)
-                .stream().filter(node -> node.is(MYSELF)).findFirst().map(RedisClusterNode::getNodeId)
-                .orElseThrow(() -> new RedisException("Failed to determine cluster node id"))));
+        return super.clusterMyId().filter(nodeId -> nodeId != null && !nodeId.isEmpty())
+                .switchIfEmpty(Mono.defer(this::clusterMyIdFromClusterNodes))
+                .onErrorResume(RedisCommandExecutionException.class, ex -> clusterMyIdFromClusterNodes());
+    }
+
+    /**
+     * Extract the current node's ID by parsing {@code CLUSTER NODES} output.
+     *
+     * @return Mono containing the node ID if found, or error if no node has the MYSELF flag
+     */
+    private Mono<String> clusterMyIdFromClusterNodes() {
+        return super.clusterNodes().map(nodes -> ClusterPartitionParser.parse(nodes).stream().filter(node -> node.is(MYSELF))
+                .findFirst().map(RedisClusterNode::getNodeId)
+                .orElseThrow(() -> new RedisException("Failed to determine cluster node id")));
     }
 
     @Override

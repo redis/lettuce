@@ -24,6 +24,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.AclSetuserArgs;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
@@ -318,17 +319,27 @@ class ClusterCommandIntegrationTests extends TestSupport {
 
         };
 
-        try {
-            // Create a user that has all permissions except CLUSTER MYID
-            sync.aclSetuser(testUser, AclSetuserArgs.Builder.on().addPassword(testPassword).allKeys().allChannels()
-                    .allCommands().removeCommand(io.lettuce.core.protocol.CommandType.CLUSTER, myidSubcommand));
+        // Use cluster connection to create user on ALL nodes
+        try (StatefulRedisClusterConnection<String, String> clusterConnection = clusterClient.connect()) {
+            RedisAdvancedClusterCommands<String, String> clusterSync = clusterConnection.sync();
 
-            // Connect with the restricted user
-            RedisURI restrictedUri = RedisURI.Builder.redis(host, ClusterTestSettings.port1)
-                    .withAuthentication(testUser, testPassword.toCharArray()).build();
+            try {
+                // Create a user on ALL cluster nodes so authentication works during topology refresh
+                AclSetuserArgs userArgs = AclSetuserArgs.Builder.on().addPassword(testPassword).allKeys().allChannels()
+                        .allCommands().removeCommand(io.lettuce.core.protocol.CommandType.CLUSTER, myidSubcommand);
 
-            try (RedisClusterClient restrictedClient = RedisClusterClient.create(restrictedUri)) {
-                try (StatefulRedisClusterConnection<String, String> restrictedConnection = restrictedClient.connect()) {
+                // ACL commands are not exposed via NodeSelectionCommands, so we iterate over nodes manually
+                for (RedisClusterNode node : clusterConnection.getPartitions()) {
+                    clusterSync.getConnection(node.getNodeId()).aclSetuser(testUser, userArgs);
+                }
+
+                // Connect with the restricted user
+                RedisURI restrictedUri = RedisURI.Builder.redis(host, ClusterTestSettings.port1)
+                        .withAuthentication(testUser, testPassword.toCharArray()).build();
+
+                try (RedisClusterClient restrictedClient = RedisClusterClient.create(restrictedUri);
+                        StatefulRedisClusterConnection<String, String> restrictedConnection = restrictedClient.connect()) {
+
                     RedisAdvancedClusterAsyncCommands<String, String> restrictedAsync = restrictedConnection.async();
 
                     // This should trigger the fallback to CLUSTER NODES parsing
@@ -346,10 +357,12 @@ class ClusterCommandIntegrationTests extends TestSupport {
 
                     assertThat(nodeId).isEqualTo(expectedNodeId);
                 }
+            } finally {
+                // Always clean up the test user on ALL nodes
+                for (RedisClusterNode node : clusterConnection.getPartitions()) {
+                    clusterSync.getConnection(node.getNodeId()).aclDeluser(testUser);
+                }
             }
-        } finally {
-            // Always clean up the test user
-            sync.aclDeluser(testUser);
         }
     }
 

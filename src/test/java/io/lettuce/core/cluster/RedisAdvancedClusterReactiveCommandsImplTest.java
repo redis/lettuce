@@ -9,7 +9,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.protocol.CommandType;
@@ -19,27 +18,22 @@ import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.test.LoggingTestUtils;
 import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@Tag(UNIT_TEST)
 class RedisAdvancedClusterReactiveCommandsImplTest {
 
     private RedisAdvancedClusterReactiveCommandsImpl<String, String> reactive;

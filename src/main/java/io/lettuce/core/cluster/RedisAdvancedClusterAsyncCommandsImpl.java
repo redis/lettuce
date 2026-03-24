@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
@@ -230,18 +231,36 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      */
     @Override
     public RedisFuture<String> clusterMyId() {
-        CompletableFuture<String> result = super.clusterMyId().toCompletableFuture().handle((nodeId, ex) -> {
-            if (ex == null && nodeId != null) {
-                return CompletableFuture.completedFuture(nodeId);
-            }
-            // Fallback silently: parse CLUSTER NODES to find MYSELF (e.g., when CLUSTER MYID is not supported)
-            return super.clusterNodes().toCompletableFuture()
-                    .thenApply(nodes -> ClusterPartitionParser.parse(nodes).stream().filter(node -> node.is(MYSELF)).findFirst()
-                            .map(RedisClusterNode::getNodeId)
-                            .orElseThrow(() -> new RedisException("Failed to determine cluster node id")));
-        }).thenCompose(Function.identity());
+        CompletableFuture<String> result = super.clusterMyId().toCompletableFuture()
+                .thenCompose(nodeId -> nodeId != null && !nodeId.isEmpty() ? CompletableFuture.completedFuture(nodeId)
+                        : clusterMyIdFromClusterNodes())
+                .handle((nodeId, ex) -> {
+                    if (nodeId != null) {
+                        return CompletableFuture.completedFuture(nodeId);
+                    }
+                    // Only fall back for command execution errors (e.g., NOPERM, ERR unknown subcommand)
+                    Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+                    if (cause instanceof RedisCommandExecutionException) {
+                        return clusterMyIdFromClusterNodes();
+                    }
+                    CompletableFuture<String> failed = new CompletableFuture<>();
+                    failed.completeExceptionally(cause);
+                    return failed;
+                }).thenCompose(Function.identity());
 
         return new PipelinedRedisFuture<>(result);
+    }
+
+    /**
+     * Extract the current node's ID by parsing {@code CLUSTER NODES} output.
+     *
+     * @return CompletableFuture containing the node ID if found, or failed future if no node has the MYSELF flag
+     */
+    private CompletableFuture<String> clusterMyIdFromClusterNodes() {
+        return super.clusterNodes().toCompletableFuture()
+                .thenApply(nodes -> ClusterPartitionParser.parse(nodes).stream().filter(node -> node.is(MYSELF)).findFirst()
+                        .map(RedisClusterNode::getNodeId)
+                        .orElseThrow(() -> new RedisException("Failed to determine cluster node id")));
     }
 
     @Override
