@@ -38,7 +38,7 @@ class PubSubCommandBuilderUnitTests {
         Command<String, String, Long> command = this.commandBuilder.publish(channel, message);
 
         assertThat(command.getType()).isEqualTo(PUBLISH);
-        assertThat(command.getArgs()).isInstanceOf(PubSubCommandArgs.class);
+        assertThat(command.getArgs()).isInstanceOf(CommandArgs.class);
         assertThat(command.getArgs().toCommandString()).isEqualTo("key<channel> value<message payload>");
         assertThat(command.getOutput()).isInstanceOf(IntegerOutput.class);
     }
@@ -49,7 +49,7 @@ class PubSubCommandBuilderUnitTests {
         Command<String, String, List<String>> command = this.commandBuilder.pubsubChannels(pattern);
 
         assertThat(command.getType()).isEqualTo(PUBSUB);
-        assertThat(command.getArgs()).isInstanceOf(PubSubCommandArgs.class);
+        assertThat(command.getArgs()).isInstanceOf(CommandArgs.class);
         assertThat(command.getArgs().toCommandString()).isEqualTo("CHANNELS key<channelPattern>");
         assertThat(command.getOutput()).isInstanceOf(KeyListOutput.class);
     }
@@ -60,7 +60,7 @@ class PubSubCommandBuilderUnitTests {
         Command<String, String, Map<String, Long>> command = this.commandBuilder.pubsubNumsub(pattern);
 
         assertThat(command.getType()).isEqualTo(PUBSUB);
-        assertThat(command.getArgs()).isInstanceOf(PubSubCommandArgs.class);
+        assertThat(command.getArgs()).isInstanceOf(CommandArgs.class);
         assertThat(command.getArgs().toCommandString()).isEqualTo("NUMSUB key<channelPattern>");
         assertThat(command.getOutput()).isInstanceOf(MapOutput.class);
     }
@@ -71,7 +71,7 @@ class PubSubCommandBuilderUnitTests {
         Command<String, String, List<String>> command = this.commandBuilder.pubsubShardChannels(pattern);
 
         assertThat(command.getType()).isEqualTo(PUBSUB);
-        assertThat(command.getArgs()).isInstanceOf(PubSubCommandArgs.class);
+        assertThat(command.getArgs()).isInstanceOf(CommandArgs.class);
         assertThat(command.getArgs().toCommandString()).isEqualTo("SHARDCHANNELS key<channelPattern>");
         assertThat(command.getOutput()).isInstanceOf(KeyListOutput.class);
     }
@@ -82,7 +82,7 @@ class PubSubCommandBuilderUnitTests {
         Command<String, String, Map<String, Long>> command = this.commandBuilder.pubsubShardNumsub(pattern);
 
         assertThat(command.getType()).isEqualTo(PUBSUB);
-        assertThat(command.getArgs()).isInstanceOf(PubSubCommandArgs.class);
+        assertThat(command.getArgs()).isInstanceOf(CommandArgs.class);
         assertThat(command.getArgs().toCommandString()).isEqualTo("SHARDNUMSUB key<channelPattern>");
         assertThat(command.getOutput()).isInstanceOf(MapOutput.class);
     }
@@ -93,7 +93,7 @@ class PubSubCommandBuilderUnitTests {
         Command<String, String, String> command = this.commandBuilder.psubscribe(pattern);
 
         assertThat(command.getType()).isEqualTo(PSUBSCRIBE);
-        assertThat(command.getArgs()).isInstanceOf(PubSubCommandArgs.class);
+        assertThat(command.getArgs()).isInstanceOf(CommandArgs.class);
         assertThat(command.getArgs().toCommandString()).isEqualTo("key<channelPattern>");
         assertThat(command.getOutput()).isInstanceOf(PubSubOutput.class);
     }
@@ -104,7 +104,7 @@ class PubSubCommandBuilderUnitTests {
         Command<String, String, String> command = this.commandBuilder.punsubscribe(pattern);
 
         assertThat(command.getType()).isEqualTo(PUNSUBSCRIBE);
-        assertThat(command.getArgs()).isInstanceOf(PubSubCommandArgs.class);
+        assertThat(command.getArgs()).isInstanceOf(CommandArgs.class);
         assertThat(command.getArgs().toCommandString()).isEqualTo("key<channelPattern>");
         assertThat(command.getOutput()).isInstanceOf(PubSubOutput.class);
     }
@@ -115,7 +115,7 @@ class PubSubCommandBuilderUnitTests {
         Command<String, String, String> command = this.commandBuilder.subscribe(pattern);
 
         assertThat(command.getType()).isEqualTo(SUBSCRIBE);
-        assertThat(command.getArgs()).isInstanceOf(PubSubCommandArgs.class);
+        assertThat(command.getArgs()).isInstanceOf(CommandArgs.class);
         assertThat(command.getArgs().toCommandString()).isEqualTo("key<channelPattern>");
         assertThat(command.getOutput()).isInstanceOf(PubSubOutput.class);
     }
@@ -126,7 +126,7 @@ class PubSubCommandBuilderUnitTests {
         Command<String, String, String> command = this.commandBuilder.unsubscribe(pattern);
 
         assertThat(command.getType()).isEqualTo(UNSUBSCRIBE);
-        assertThat(command.getArgs()).isInstanceOf(PubSubCommandArgs.class);
+        assertThat(command.getArgs()).isInstanceOf(CommandArgs.class);
         assertThat(command.getArgs().toCommandString()).isEqualTo("key<channelPattern>");
         assertThat(command.getOutput()).isInstanceOf(PubSubOutput.class);
     }

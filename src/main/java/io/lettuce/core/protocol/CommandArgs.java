@@ -61,6 +61,20 @@ public class CommandArgs<K, V> {
     final List<SingularArgument> singularArguments = new ArrayList<>(10);
 
     /**
+     * Create a new {@link CommandArgs} instance that does not expose a first key. This is useful for commands that do not
+     * operate on key-space keys (e.g. RediSearch index commands, Pub/Sub commands) to prevent incorrect cluster routing.
+     *
+     * @param codec Codec used to encode/decode keys and values, must not be {@code null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new {@link CommandArgs} instance whose {@link #getFirstEncodedKey()} always returns {@code null}.
+     * @since 7.6
+     */
+    public static <K, V> CommandArgs<K, V> keyless(RedisCodec<K, V> codec) {
+        return new KeylessCommandArgs<>(codec);
+    }
+
+    /**
      * @param codec Codec used to encode/decode keys and values, must not be {@code null}.
      */
     public CommandArgs(RedisCodec<K, V> codec) {
@@ -783,6 +797,23 @@ public class CommandArgs<K, V> {
     interface EncodeFunction<T> {
 
         void encode(ToByteBufEncoder<T, T> encoder, T item, ByteBuf target);
+
+    }
+
+    /**
+     * {@link CommandArgs} extension whose {@link #getFirstEncodedKey()} always returns {@code null}. Used for commands that do
+     * not operate on key-space keys.
+     */
+    private static class KeylessCommandArgs<K, V> extends CommandArgs<K, V> {
+
+        KeylessCommandArgs(RedisCodec<K, V> codec) {
+            super(codec);
+        }
+
+        @Override
+        public ByteBuffer getFirstEncodedKey() {
+            return null;
+        }
 
     }
 

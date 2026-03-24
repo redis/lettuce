@@ -495,10 +495,10 @@ public class AggregateArgs<K, V> {
                 }
                 args.add(argCount);
                 for (LoadField<K> loadField : loadFields) {
-                    args.add(loadField.field.toString());
+                    args.addKey(loadField.field);
                     if (loadField.alias != null) {
                         args.add(CommandKeyword.AS);
-                        args.add(loadField.alias.toString());
+                        args.addKey(loadField.alias);
                     }
                 }
             }
@@ -534,7 +534,7 @@ public class AggregateArgs<K, V> {
             args.add(CommandKeyword.PARAMS);
             args.add(params.size() * 2L);
             params.forEach((key, value) -> {
-                args.add(key.toString());
+                args.addKey(key);
                 args.addValue(value);
             });
         }
@@ -713,7 +713,7 @@ public class AggregateArgs<K, V> {
                 if (!propertyStr.startsWith("@")) {
                     args.add("@" + propertyStr);
                 } else {
-                    args.add(propertyStr);
+                    args.addKey(property);
                 }
             }
 
@@ -820,7 +820,7 @@ public class AggregateArgs<K, V> {
                 if (!propertyStr.startsWith("@")) {
                     args.add("@" + propertyStr);
                 } else {
-                    args.add(propertyStr);
+                    args.addKey(property.property);
                 }
                 args.add(property.direction.name());
             }
@@ -896,7 +896,7 @@ public class AggregateArgs<K, V> {
             args.add(CommandKeyword.APPLY);
             args.addValue(expression);
             args.add(CommandKeyword.AS);
-            args.add(name.toString());
+            args.addKey(name);
         }
 
         /**
@@ -1060,7 +1060,7 @@ public class AggregateArgs<K, V> {
 
             alias.ifPresent(a -> {
                 args.add(CommandKeyword.AS);
-                args.add(a.toString());
+                args.addKey(a);
             });
         }
 

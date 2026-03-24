@@ -54,12 +54,12 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, Long> publish(K channel, V message) {
-        CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).addKey(channel).addValue(message);
+        CommandArgs<K, V> args = CommandArgs.<K, V> keyless(codec).addKey(channel).addValue(message);
         return createCommand(PUBLISH, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, List<K>> pubsubChannels(K pattern) {
-        CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(CHANNELS).addKey(pattern);
+        CommandArgs<K, V> args = CommandArgs.<K, V> keyless(codec).add(CHANNELS).addKey(pattern);
         return createCommand(PUBSUB, new KeyListOutput<>(codec), args);
     }
 
@@ -68,12 +68,12 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     final Command<K, V, Map<K, Long>> pubsubNumsub(K... channels) {
         LettuceAssert.notEmpty(channels, "Channels " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(NUMSUB).addKeys(channels);
+        CommandArgs<K, V> args = CommandArgs.<K, V> keyless(codec).add(NUMSUB).addKeys(channels);
         return createCommand(PUBSUB, new MapOutput<>((RedisCodec) codec), args);
     }
 
     Command<K, V, List<K>> pubsubShardChannels(K pattern) {
-        CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(SHARDCHANNELS).addKey(pattern);
+        CommandArgs<K, V> args = CommandArgs.<K, V> keyless(codec).add(SHARDCHANNELS).addKey(pattern);
         return createCommand(PUBSUB, new KeyListOutput<>(codec), args);
     }
 
@@ -82,7 +82,7 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     final Command<K, V, Map<K, Long>> pubsubShardNumsub(K... shardChannels) {
         LettuceAssert.notEmpty(shardChannels, "Shard channels " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(SHARDNUMSUB).addKeys(shardChannels);
+        CommandArgs<K, V> args = CommandArgs.<K, V> keyless(codec).add(SHARDNUMSUB).addKeys(shardChannels);
         return createCommand(PUBSUB, new MapOutput<>((RedisCodec) codec), args);
     }
 
@@ -133,7 +133,7 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     @SafeVarargs
     final <T> Command<K, V, T> pubSubCommand(CommandType type, CommandOutput<K, V, T> output, K... keys) {
-        return new Command<>(type, output, new PubSubCommandArgs<>(codec).addKeys(keys));
+        return new Command<>(type, output, CommandArgs.<K, V> keyless(codec).addKeys(keys));
     }
 
 }
