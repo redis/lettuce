@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
 import io.lettuce.core.api.BaseRedisClient;
@@ -233,9 +234,9 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @param connectionBuilder connection builder to configure the connection
      * @param redisURI URI of the Redis instance
      */
-    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
-            RedisURI redisURI) {
-        connectionBuilder(socketAddressSupplier, connectionBuilder, connectionEvents, redisURI);
+    protected void connectionBuilderAsync(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
+            ConnectionBuilder connectionBuilder, RedisURI redisURI) {
+        connectionBuilderAsync(socketAddressSupplier, connectionBuilder, connectionEvents, redisURI);
     }
 
     /**
@@ -247,8 +248,8 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @param redisURI URI of the Redis instance
      * @since 6.2
      */
-    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
-            ConnectionEvents connectionEvents, RedisURI redisURI) {
+    protected void connectionBuilderAsync(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
+            ConnectionBuilder connectionBuilder, ConnectionEvents connectionEvents, RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap();
         redisBootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT);
@@ -258,7 +259,7 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
         connectionBuilder.configureBootstrap(!LettuceStrings.isEmpty(redisURI.getSocket()), this::getEventLoopGroup);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents == this.connectionEvents ? connectionEvents
                 : ConnectionEvents.of(this.connectionEvents, connectionEvents));
-        connectionBuilder.socketAddressSupplier(socketAddressSupplier);
+        connectionBuilder.socketAddressSupplierAsync(socketAddressSupplier);
     }
 
     protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
@@ -376,6 +377,54 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
                     }
                     initializeChannelAsync0(connectionBuilder, channelReadyFuture, redisAddress);
                 }, channelReadyFuture::completeExceptionally);
+
+        return new DefaultConnectionFuture<>(socketAddressFuture,
+                channelReadyFuture.thenApply(channel -> (T) connectionBuilder.connection()));
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <K, V, T extends RedisChannelHandler<K, V>> ConnectionFuture<T> initializeChannelAsync2(
+            ConnectionBuilder connectionBuilder) {
+
+        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = connectionBuilder.socketAddressAsync();
+
+        if (clientResources.eventExecutorGroup().isShuttingDown()) {
+            throw new IllegalStateException("Cannot connect, Event executor group is terminated.");
+        }
+
+        CompletableFuture<SocketAddress> socketAddressFuture = new CompletableFuture<>();
+        CompletableFuture<Channel> channelReadyFuture = new CompletableFuture<>();
+
+        String uriString = connectionBuilder.getRedisURI().toString();
+
+        EventRecorder.getInstance().record(new ConnectionCreatedEvent(uriString, connectionBuilder.endpoint().getId()));
+        EventRecorder.RecordableEvent event = EventRecorder.getInstance()
+                .start(new ConnectEvent(uriString, connectionBuilder.endpoint().getId()));
+
+        channelReadyFuture.whenComplete((channel, throwable) -> {
+            event.record();
+        });
+        // handle synchronous exceptions during get(), before obtaining the CompletionStage
+        try {
+            // this
+            socketAddressSupplier.get().whenComplete((redisAddress, error) -> {
+                if (error != null) {
+                    socketAddressFuture.completeExceptionally(error);
+                    channelReadyFuture.completeExceptionally(error);
+                    return;
+                }
+
+                socketAddressFuture.complete(redisAddress);
+
+                if (channelReadyFuture.isCancelled()) {
+                    return;
+                }
+                initializeChannelAsync0(connectionBuilder, channelReadyFuture, redisAddress);
+            });
+        } catch (Exception e) {
+            socketAddressFuture.completeExceptionally(e);
+            channelReadyFuture.completeExceptionally(e);
+        }
 
         return new DefaultConnectionFuture<>(socketAddressFuture,
                 channelReadyFuture.thenApply(channel -> (T) connectionBuilder.connection()));

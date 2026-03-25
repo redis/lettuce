@@ -23,6 +23,7 @@ import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -51,8 +52,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.util.AttributeKey;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Connection builder for connections. This class is part of the internal API.
@@ -62,13 +61,13 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 public class ConnectionBuilder {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(ConnectionBuilder.class);
-
     public static final AttributeKey<String> REDIS_URI = AttributeKey.valueOf("RedisURI");
 
     public static final AttributeKey<Throwable> INIT_FAILURE = AttributeKey.valueOf("ConnectionBuilder.INIT_FAILURE");
 
     private Mono<SocketAddress> socketAddressSupplier;
+
+    private Supplier<CompletionStage<SocketAddress>> socketAddressSupplierAsync;
 
     private ConnectionEvents connectionEvents;
 
@@ -183,9 +182,19 @@ public class ConnectionBuilder {
         return this;
     }
 
+    public ConnectionBuilder socketAddressSupplierAsync(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
+        this.socketAddressSupplierAsync = socketAddressSupplier;
+        return this;
+    }
+
     public Mono<SocketAddress> socketAddress() {
         LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set");
         return socketAddressSupplier;
+    }
+
+    public Supplier<CompletionStage<SocketAddress>> socketAddressAsync() {
+        LettuceAssert.assertState(socketAddressSupplierAsync != null, "SocketAddressSupplier must be set");
+        return socketAddressSupplierAsync;
     }
 
     public ConnectionBuilder timeout(Duration timeout) {
