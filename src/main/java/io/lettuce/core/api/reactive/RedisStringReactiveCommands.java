@@ -21,6 +21,8 @@ package io.lettuce.core.api.reactive;
 
 import java.util.Map;
 
+import io.lettuce.core.GCRAArgs;
+import io.lettuce.core.GCRAResponse;
 import io.lettuce.core.MSetExArgs;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -305,6 +307,20 @@ public interface RedisStringReactiveCommands<K, V> {
      * @return V bulk-string-reply the old value stored at {@code key}, or {@code null} when {@code key} did not exist.
      */
     Mono<V> getset(K key, V value);
+
+    /**
+     * Rate limit a request using the Generic Cell Rate Algorithm (GCRA).
+     * <p>
+     * The GCRA command provides a rate limiting mechanism that returns information about whether the request was limited and
+     * the current state of the rate limiter.
+     *
+     * @param key the key related to a specific rate limiting case.
+     * @param gcraArgs the arguments for the GCRA command, must not be {@code null}.
+     * @return {@link GCRAResponse} containing the rate limiting result.
+     * @since 7.6
+     * @see <a href="https://redis.io/commands/gcra">GCRA command reference</a>
+     */
+    Mono<GCRAResponse> gcra(K key, GCRAArgs gcraArgs);
 
     /**
      * Increment the integer value of a key by one.

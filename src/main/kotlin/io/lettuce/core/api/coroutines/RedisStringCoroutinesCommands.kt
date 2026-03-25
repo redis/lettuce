@@ -249,6 +249,20 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
     suspend fun getset(key: K, value: V): V?
 
     /**
+     * Rate limit a request using the Generic Cell Rate Algorithm (GCRA).
+     * <p>
+     * The GCRA command provides a rate limiting mechanism that returns information about whether the request was limited and
+     * the current state of the rate limiter.
+     *
+     * @param key the key related to a specific rate limiting case.
+     * @param gcraArgs the arguments for the GCRA command, must not be `null`.
+     * @return @link GCRAResponse} containing the rate limiting result.
+     * @since 7.6
+     * @see <a href="https://redis.io/commands/gcra">GCRA command reference</a>
+     */
+    suspend fun gcra(key: K, gcraArgs: GCRAArgs): GCRAResponse?
+
+    /**
      * Increment the integer value of a key by one.
      *
      * @param key the key.

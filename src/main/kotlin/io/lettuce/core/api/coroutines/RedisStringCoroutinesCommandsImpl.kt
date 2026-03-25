@@ -84,6 +84,9 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun getset(key: K, value: V): V? =
         ops.getset(key, value).awaitFirstOrNull()
 
+    override suspend fun gcra(key: K, gcraArgs: GCRAArgs): GCRAResponse? =
+        ops.gcra(key, gcraArgs).awaitFirstOrNull()
+
     override suspend fun incr(key: K): Long? = ops.incr(key).awaitFirstOrNull()
 
     override suspend fun incrby(key: K, amount: Long): Long? =

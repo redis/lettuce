@@ -1370,6 +1370,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<GCRAResponse> gcra(K key, GCRAArgs gcraArgs) {
+        return dispatch(commandBuilder.gcra(key, gcraArgs));
+    }
+
+    @Override
     public RedisFuture<Long> hdel(K key, K... fields) {
         return dispatch(commandBuilder.hdel(key, fields));
     }
