@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 import io.lettuce.core.BitFieldArgs;
+import io.lettuce.core.GCRAArgs;
+import io.lettuce.core.GCRAResponse;
 import io.lettuce.core.GetExArgs;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MSetExArgs;
@@ -304,6 +306,20 @@ public interface NodeSelectionStringCommands<K, V> {
     Executions<V> getset(K key, V value);
 
     /**
+     * Rate limit a request using the Generic Cell Rate Algorithm (GCRA).
+     * <p>
+     * The GCRA command provides a rate limiting mechanism that returns information about whether the request was limited and
+     * the current state of the rate limiter.
+     *
+     * @param key the key related to a specific rate limiting case.
+     * @param gcraArgs the arguments for the GCRA command, must not be {@code null}.
+     * @return {@link GCRAResponse} containing the rate limiting result.
+     * @since 7.6
+     * @see <a href="https://redis.io/commands/gcra">GCRA command reference</a>
+     */
+    Executions<GCRAResponse> gcra(K key, GCRAArgs gcraArgs);
+
+    /**
      * Increment the integer value of a key by one.
      *
      * @param key the key.
@@ -349,7 +365,7 @@ public interface NodeSelectionStringCommands<K, V> {
     /**
      * Set multiple keys to multiple values.
      *
-     * @param map the map.
+     * @param map the map containing key-value pairs.
      * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
      */
     Executions<String> mset(Map<K, V> map);
@@ -357,7 +373,7 @@ public interface NodeSelectionStringCommands<K, V> {
     /**
      * Set multiple keys to multiple values, only if none of the keys exist.
      *
-     * @param map the map.
+     * @param map the map containing key-value pairs.
      * @return Boolean integer-reply specifically:
      *
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).

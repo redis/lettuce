@@ -125,6 +125,10 @@ public enum CommandType implements ProtocolKeyword {
                                             "FT.SUGDEL"), FT_SUGGET("FT.SUGGET"), FT_SUGLEN("FT.SUGLEN"), FT_SYNDUMP(
                                                     "FT.SYNDUMP"), FT_SYNUPDATE("FT.SYNUPDATE"), FT_TAGVALS("FT.TAGVALS"),
 
+    // Rate Limiting
+
+    GCRA,
+
     // Others
 
     TIME, WAIT,
