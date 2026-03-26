@@ -22,10 +22,11 @@ package io.lettuce.core.protocol;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionBuilder;
@@ -117,7 +118,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      * @param endpoint must not be {@code null}
      */
     public ConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
-            EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
+            EventExecutorGroup reconnectWorkers, Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
             ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
             Endpoint endpoint) {
 
@@ -142,26 +143,41 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
         this.epid = endpoint.getId();
 
-        Mono<SocketAddress> wrappedSocketAddressSupplier = wrapSocketAddressSupplier(socketAddressSupplier);
+        Supplier<CompletionStage<SocketAddress>> wrappedSocketAddressSupplier = wrapSocketAddressSupplierAsync(
+                socketAddressSupplier);
         this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier, timer,
                 reconnectWorkers, connectionFacade);
 
         resetReconnectDelay();
     }
 
-    protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> source) {
-        return source.doOnNext(addr -> remoteAddress = addr).onErrorResume(t -> {
-
-            if (logger.isDebugEnabled()) {
-                logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
-                        + ", reusing cached address " + remoteAddress, t);
-            } else {
-                logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
-                        + ", reusing cached address " + remoteAddress);
+    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplierAsync(
+            Supplier<CompletionStage<SocketAddress>> source) {
+        return () -> {
+            try {
+                return source.get().handle((addr, t) -> {
+                    if (t != null) {
+                        log(remoteAddress, t);
+                        return remoteAddress;
+                    }
+                    remoteAddress = addr;
+                    return addr;
+                });
+            } catch (Exception e) {
+                log(remoteAddress, e);
+                return CompletableFuture.completedFuture(remoteAddress);
             }
+        };
+    }
 
-            return Mono.just(remoteAddress);
-        });
+    private void log(SocketAddress cached, Throwable t) {
+        if (logger.isDebugEnabled()) {
+            logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
+                    + ", reusing cached address " + cached, t);
+        } else {
+            logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
+                    + ", reusing cached address " + cached);
+        }
     }
 
     void prepareClose() {
@@ -332,7 +348,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             eventBus.publish(new ReconnectAttemptEvent(redisUri, epid, LocalAddress.ANY, remoteAddress, attempt, delay));
             logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
 
-            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = reconnectionHandler.reconnect();
+            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = reconnectionHandler.reconnectAsync();
             CompletableFuture<Channel> future = tuple.getT1();
 
             future.whenComplete((c, t) -> {

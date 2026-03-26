@@ -29,7 +29,6 @@ import java.util.function.Supplier;
 
 import io.lettuce.core.protocol.MaintenanceAwareComponent;
 import io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandEncoder;
 import io.lettuce.core.protocol.CommandHandler;
@@ -64,8 +63,6 @@ public class ConnectionBuilder {
     public static final AttributeKey<String> REDIS_URI = AttributeKey.valueOf("RedisURI");
 
     public static final AttributeKey<Throwable> INIT_FAILURE = AttributeKey.valueOf("ConnectionBuilder.INIT_FAILURE");
-
-    private Mono<SocketAddress> socketAddressSupplier;
 
     private Supplier<CompletionStage<SocketAddress>> socketAddressSupplierAsync;
 
@@ -149,13 +146,14 @@ public class ConnectionBuilder {
         }
 
         LettuceAssert.assertState(bootstrap != null, "Bootstrap must be set for autoReconnect=true");
-        LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set for autoReconnect=true");
+        LettuceAssert.assertState(socketAddressSupplierAsync != null,
+                "SocketAddressSupplier must be set for autoReconnect=true");
 
         ConnectionWatchdog watchdog;
         if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
             MaintenanceAwareConnectionWatchdog maintenanceAwareWatchdog = new MaintenanceAwareConnectionWatchdog(
                     clientResources.reconnectDelay(), clientOptions, bootstrap, clientResources.timer(),
-                    clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener, connection,
+                    clientResources.eventExecutorGroup(), socketAddressSupplierAsync, reconnectionListener, connection,
                     clientResources.eventBus(), endpoint);
             if (connection.getChannelWriter() instanceof MaintenanceAwareComponent) {
                 maintenanceAwareWatchdog.setMaintenanceEventListener((MaintenanceAwareComponent) connection.getChannelWriter());
@@ -163,8 +161,8 @@ public class ConnectionBuilder {
             watchdog = maintenanceAwareWatchdog;
         } else {
             watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
-                    clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
-                    connection, clientResources.eventBus(), endpoint);
+                    clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplierAsync,
+                    reconnectionListener, connection, clientResources.eventBus(), endpoint);
         }
 
         endpoint.registerConnectionWatchdog(watchdog);
@@ -177,19 +175,9 @@ public class ConnectionBuilder {
         return new PlainChannelInitializer(this::buildHandlers, clientResources);
     }
 
-    public ConnectionBuilder socketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
-        this.socketAddressSupplier = socketAddressSupplier;
-        return this;
-    }
-
     public ConnectionBuilder socketAddressSupplierAsync(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
         this.socketAddressSupplierAsync = socketAddressSupplier;
         return this;
-    }
-
-    public Mono<SocketAddress> socketAddress() {
-        LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set");
-        return socketAddressSupplier;
     }
 
     public Supplier<CompletionStage<SocketAddress>> socketAddressAsync() {
