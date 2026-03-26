@@ -347,42 +347,6 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @since 4.4
      */
     @SuppressWarnings("unchecked")
-    protected <K, V, T extends RedisChannelHandler<K, V>> ConnectionFuture<T> initializeChannelAsync(
-            ConnectionBuilder connectionBuilder) {
-
-        Mono<SocketAddress> socketAddressSupplier = connectionBuilder.socketAddress();
-
-        if (clientResources.eventExecutorGroup().isShuttingDown()) {
-            throw new IllegalStateException("Cannot connect, Event executor group is terminated.");
-        }
-
-        CompletableFuture<SocketAddress> socketAddressFuture = new CompletableFuture<>();
-        CompletableFuture<Channel> channelReadyFuture = new CompletableFuture<>();
-
-        String uriString = connectionBuilder.getRedisURI().toString();
-
-        EventRecorder.getInstance().record(new ConnectionCreatedEvent(uriString, connectionBuilder.endpoint().getId()));
-        EventRecorder.RecordableEvent event = EventRecorder.getInstance()
-                .start(new ConnectEvent(uriString, connectionBuilder.endpoint().getId()));
-
-        channelReadyFuture.whenComplete((channel, throwable) -> {
-            event.record();
-        });
-
-        socketAddressSupplier.doOnError(socketAddressFuture::completeExceptionally).doOnNext(socketAddressFuture::complete)
-                .subscribe(redisAddress -> {
-
-                    if (channelReadyFuture.isCancelled()) {
-                        return;
-                    }
-                    initializeChannelAsync0(connectionBuilder, channelReadyFuture, redisAddress);
-                }, channelReadyFuture::completeExceptionally);
-
-        return new DefaultConnectionFuture<>(socketAddressFuture,
-                channelReadyFuture.thenApply(channel -> (T) connectionBuilder.connection()));
-    }
-
-    @SuppressWarnings("unchecked")
     protected <K, V, T extends RedisChannelHandler<K, V>> ConnectionFuture<T> initializeChannelAsync2(
             ConnectionBuilder connectionBuilder) {
 

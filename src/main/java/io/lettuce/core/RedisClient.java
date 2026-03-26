@@ -331,7 +331,7 @@ public class RedisClient extends AbstractRedisClient {
                 redisURI);
         connectionBuilder.connectionInitializer(createHandshake(state));
 
-        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
+        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync2(connectionBuilder);
 
         return future.thenApply(channelHandler -> (S) connection);
     }
@@ -607,7 +607,7 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilderAsync(getSocketAddressSupplierAsync(redisURI), connectionBuilder, connection.getConnectionEvents(),
                 redisURI);
 
-        ConnectionFuture<?> sync = initializeChannelAsync(connectionBuilder);
+        ConnectionFuture<?> sync = initializeChannelAsync2(connectionBuilder);
 
         return sync.thenApply(ignore -> (StatefulRedisSentinelConnection<K, V>) connection).whenComplete((ignore, e) -> {
 
