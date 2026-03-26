@@ -409,8 +409,7 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
          * @param original the original supplier
          * @return a new supplier that is aware of re-bind events
          */
-        public Supplier<CompletionStage<SocketAddress>> wrappedSupplier(
-                Supplier<CompletionStage<SocketAddress>> original) {
+        public Supplier<CompletionStage<SocketAddress>> wrappedSupplier(Supplier<CompletionStage<SocketAddress>> original) {
             return () -> {
                 State current = state.get();
                 logger.debug("RebindAwareAddressSupplier rebind state: {}", current);

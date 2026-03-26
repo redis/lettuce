@@ -146,8 +146,7 @@ public class ConnectionBuilder {
         }
 
         LettuceAssert.assertState(bootstrap != null, "Bootstrap must be set for autoReconnect=true");
-        LettuceAssert.assertState(socketAddressSupplier != null,
-                "SocketAddressSupplier must be set for autoReconnect=true");
+        LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set for autoReconnect=true");
 
         ConnectionWatchdog watchdog;
         if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
@@ -161,8 +160,8 @@ public class ConnectionBuilder {
             watchdog = maintenanceAwareWatchdog;
         } else {
             watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
-                    clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier,
-                    reconnectionListener, connection, clientResources.eventBus(), endpoint);
+                    clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
+                    connection, clientResources.eventBus(), endpoint);
         }
 
         endpoint.registerConnectionWatchdog(watchdog);

@@ -327,8 +327,7 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.clientResources(getResources());
         connectionBuilder.commandHandler(commandHandlerSupplier).endpoint(endpoint);
 
-        connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(),
-                redisURI);
+        connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(), redisURI);
         connectionBuilder.connectionInitializer(createHandshake(state));
 
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
@@ -604,8 +603,7 @@ public class RedisClient extends AbstractRedisClient {
         ClientOptions clientOptions = getOptions();
         connectionBuilder.endpoint(endpoint).commandHandler(() -> new CommandHandler(clientOptions, getResources(), endpoint))
                 .connection(connection);
-        connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(),
-                redisURI);
+        connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(), redisURI);
 
         ConnectionFuture<?> sync = initializeChannelAsync(connectionBuilder);
 
