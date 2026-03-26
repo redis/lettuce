@@ -1171,6 +1171,13 @@ public class RedisClusterClient extends AbstractRedisClient {
         return iterator.next();
     }
 
+    /**
+     * Returns a {@link Supplier} for a {@link SocketAddress}
+     *
+     * @param sortFunction Sort function to enforce a specific order. The sort function must not change the order or the input
+     *        parameter but create a new collection with the desired order, must not be {@code null}.
+     * @return {@link Supplier} for {@link SocketAddress connection points}.
+     */
     protected Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplierAsync(Supplier<Partitions> partitionsSupplier,
             Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
 

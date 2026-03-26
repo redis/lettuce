@@ -691,13 +691,10 @@ public class RedisClient extends AbstractRedisClient {
      * Resolution is performed either using Redis Sentinel (if the {@link RedisURI} is configured with Sentinels) or via DNS
      * resolution.
      * <p>
-     * This method returns a {@link Supplier} to ensure lazy evaluation - the resolution is only performed when
-     * {@link Supplier#get()} is called. Each call to {@link Supplier#get()} produces a fresh resolution.
-     * <p>
      * Subclasses of {@link RedisClient} may override that method.
      *
      * @param redisURI must not be {@code null}.
-     * @return a {@link Supplier} that produces the resolved {@link SocketAddress} as a {@link CompletionStage}.
+     * @return a {@link Supplier} that produces the resolved {@link SocketAddress}.
      * @see ClientResources#addressResolverGroup()
      * @see RedisURI#getSentinels()
      * @see RedisURI#getSentinelMasterId()
