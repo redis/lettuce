@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.protocol.ProtocolKeyword;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,10 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+import io.lettuce.core.AclSetuserArgs;
+import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -287,6 +291,79 @@ class ClusterCommandIntegrationTests extends TestSupport {
 
     private static void waitUntilValueIsVisible(String key, RedisCommands<String, String> commands) {
         Wait.untilTrue(() -> commands.get(key) != null).waitOrTimeout();
+    }
+
+    /**
+     * Test that clusterMyId() falls back to CLUSTER NODES parsing when CLUSTER MYID command is not available. This simulates
+     * environments like Redis Enterprise OSS cluster mode where CLUSTER MYID is not supported.
+     */
+    @Test
+    @EnabledOnCommand("ACL") // Requires Redis 6+ for ACL support
+    void clusterMyIdFallsBackToClusterNodesWhenCommandDenied() {
+
+        String testUser = "noclustermyid";
+        String testPassword = "testpass123";
+
+        // Create a ProtocolKeyword for the MYID subcommand
+        ProtocolKeyword myidSubcommand = new ProtocolKeyword() {
+
+            @Override
+            public byte[] getBytes() {
+                return "MYID".getBytes();
+            }
+
+            @Override
+            public String toString() {
+                return "MYID";
+            }
+
+        };
+
+        // Use cluster connection to create user on ALL nodes
+        try (StatefulRedisClusterConnection<String, String> clusterConnection = clusterClient.connect()) {
+            RedisAdvancedClusterCommands<String, String> clusterSync = clusterConnection.sync();
+
+            try {
+                // Create a user on ALL cluster nodes so authentication works during topology refresh
+                AclSetuserArgs userArgs = AclSetuserArgs.Builder.on().addPassword(testPassword).allKeys().allChannels()
+                        .allCommands().removeCommand(io.lettuce.core.protocol.CommandType.CLUSTER, myidSubcommand);
+
+                // ACL commands are not exposed via NodeSelectionCommands, so we iterate over nodes manually
+                for (RedisClusterNode node : clusterConnection.getPartitions()) {
+                    clusterSync.getConnection(node.getNodeId()).aclSetuser(testUser, userArgs);
+                }
+
+                // Connect with the restricted user
+                RedisURI restrictedUri = RedisURI.Builder.redis(host, ClusterTestSettings.port1)
+                        .withAuthentication(testUser, testPassword.toCharArray()).build();
+
+                try (RedisClusterClient restrictedClient = RedisClusterClient.create(restrictedUri);
+                        StatefulRedisClusterConnection<String, String> restrictedConnection = restrictedClient.connect()) {
+
+                    RedisAdvancedClusterAsyncCommands<String, String> restrictedAsync = restrictedConnection.async();
+
+                    // This should trigger the fallback to CLUSTER NODES parsing
+                    String nodeId = TestFutures.getOrTimeout(restrictedAsync.clusterMyId());
+
+                    // Verify we got a valid node ID (the fallback worked)
+                    assertThat(nodeId).isNotNull();
+                    assertThat(nodeId).isNotEmpty();
+
+                    // Verify the node ID matches what we'd get from CLUSTER NODES parsing
+                    String clusterNodes = TestFutures.getOrTimeout(restrictedAsync.clusterNodes());
+                    Partitions partitions = ClusterPartitionParser.parse(clusterNodes);
+                    String expectedNodeId = partitions.stream().filter(n -> n.is(RedisClusterNode.NodeFlag.MYSELF)).findFirst()
+                            .map(RedisClusterNode::getNodeId).orElse(null);
+
+                    assertThat(nodeId).isEqualTo(expectedNodeId);
+                }
+            } finally {
+                // Always clean up the test user on ALL nodes
+                for (RedisClusterNode node : clusterConnection.getPartitions()) {
+                    clusterSync.getConnection(node.getNodeId()).aclDeluser(testUser);
+                }
+            }
+        }
     }
 
 }
