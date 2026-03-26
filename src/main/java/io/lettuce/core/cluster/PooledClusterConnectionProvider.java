@@ -794,12 +794,12 @@ class PooledClusterConnectionProvider<K, V>
 
             if (key.nodeId != null) {
                 // NodeId connections do not provide command recovery due to cluster reconfiguration
-                return redisClusterClient.connectToNodeAsync(redisCodec, key.nodeId, null, getSocketAddressSupplier(key));
+                return redisClusterClient.connectToNodeAsync(redisCodec, key.nodeId, null, getSocketAddressSupplierAsync(key));
             }
 
             // Host and port connections do provide command recovery due to cluster reconfiguration
             return redisClusterClient.connectToNodeAsync(redisCodec, key.host + ":" + key.port, clusterWriter,
-                    getSocketAddressSupplier(key));
+                    getSocketAddressSupplierAsync(key));
         }
 
     }

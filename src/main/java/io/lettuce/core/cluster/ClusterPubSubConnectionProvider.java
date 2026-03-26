@@ -69,12 +69,12 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
 
                 // NodeId connections do not provide command recovery due to cluster reconfiguration
                 return redisClusterClient.connectPubSubToNodeAsync((RedisCodec) redisCodec, key.nodeId,
-                        getSocketAddressSupplier(key));
+                        getSocketAddressSupplierAsync(key));
             }
 
             // Host and port connections do provide command recovery due to cluster reconfiguration
             return redisClusterClient.connectPubSubToNodeAsync((RedisCodec) redisCodec, key.host + ":" + key.port,
-                    getSocketAddressSupplier(key));
+                    getSocketAddressSupplierAsync(key));
         }
 
     }
