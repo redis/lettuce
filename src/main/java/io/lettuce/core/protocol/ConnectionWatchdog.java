@@ -143,7 +143,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
         this.epid = endpoint.getId();
 
-        Supplier<CompletionStage<SocketAddress>> wrappedSocketAddressSupplier = wrapSocketAddressSupplierAsync(
+        Supplier<CompletionStage<SocketAddress>> wrappedSocketAddressSupplier = wrapSocketAddressSupplier(
                 socketAddressSupplier);
         this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier, timer,
                 reconnectWorkers, connectionFacade);
@@ -151,7 +151,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         resetReconnectDelay();
     }
 
-    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplierAsync(
+    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplier(
             Supplier<CompletionStage<SocketAddress>> source) {
         return () -> {
             try {
@@ -348,7 +348,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             eventBus.publish(new ReconnectAttemptEvent(redisUri, epid, LocalAddress.ANY, remoteAddress, attempt, delay));
             logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
 
-            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = reconnectionHandler.reconnectAsync();
+            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = reconnectionHandler.reconnect();
             CompletableFuture<Channel> future = tuple.getT1();
 
             future.whenComplete((c, t) -> {

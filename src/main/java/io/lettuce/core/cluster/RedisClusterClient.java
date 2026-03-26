@@ -702,7 +702,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new CommandHandler(getClusterClientOptions(), getResources(),
                 endpoint);
-        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = getSocketAddressSupplierAsync(
+        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = getSocketAddressSupplier(
                 connection::getPartitions, TopologyComparators::sortByClientCount);
         Mono<StatefulRedisClusterConnectionImpl<K, V>> connectionMono = Mono
                 .defer(() -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
@@ -821,7 +821,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(getClusterClientOptions(),
                 getResources(), codec, endpoint);
-        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = getSocketAddressSupplierAsync(
+        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = getSocketAddressSupplier(
                 connection::getPartitions, TopologyComparators::sortByClientCount);
         Mono<StatefulRedisClusterPubSubConnectionImpl<K, V>> connectionMono = Mono
                 .defer(() -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
@@ -853,7 +853,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         ConnectionBuilder connectionBuilder = createConnectionBuilder(connection, connection.getConnectionState(), endpoint,
                 connectionSettings, socketAddressSupplier, commandHandlerSupplier);
 
-        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync2(connectionBuilder);
+        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
         return future.thenApply(channelHandler -> (S) connection);
     }
@@ -870,7 +870,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         ConnectionBuilder connectionBuilder = createConnectionBuilder(connection, connection.getConnectionState(), endpoint,
                 connectionSettings, socketAddressSupplier, commandHandlerSupplier);
 
-        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync2(connectionBuilder);
+        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
         return future.thenApply(channelHandler -> (S) connection);
     }
@@ -899,7 +899,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         connectionBuilder.endpoint(endpoint);
         connectionBuilder.commandHandler(commandHandlerSupplier);
 
-        connectionBuilderAsync(socketAddressSupplier, connectionBuilder, connection.getConnectionEvents(), connectionSettings);
+        connectionBuilder(socketAddressSupplier, connectionBuilder, connection.getConnectionEvents(), connectionSettings);
 
         return connectionBuilder;
     }
@@ -1178,7 +1178,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      *        parameter but create a new collection with the desired order, must not be {@code null}.
      * @return {@link Supplier} for {@link SocketAddress connection points}.
      */
-    protected Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplierAsync(Supplier<Partitions> partitionsSupplier,
+    protected Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplier(Supplier<Partitions> partitionsSupplier,
             Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
 
         LettuceAssert.notNull(sortFunction, "Sort function must not be null");

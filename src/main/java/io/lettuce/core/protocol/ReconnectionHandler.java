@@ -29,7 +29,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import io.lettuce.core.ClientOptions;
@@ -88,7 +87,7 @@ class ReconnectionHandler {
      *
      * @return reconnect {@link ChannelFuture}.
      */
-    protected Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> reconnectAsync() {
+    protected Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> reconnect() {
 
         CompletableFuture<Channel> future = new CompletableFuture<>();
         CompletableFuture<SocketAddress> address = new CompletableFuture<>();

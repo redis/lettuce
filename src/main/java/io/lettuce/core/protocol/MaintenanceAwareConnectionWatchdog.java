@@ -114,11 +114,11 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     }
 
     @Override
-    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplierAsync(
+    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplier(
             Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
-        Supplier<CompletionStage<SocketAddress>> source = super.wrapSocketAddressSupplierAsync(socketAddressSupplier);
+        Supplier<CompletionStage<SocketAddress>> source = super.wrapSocketAddressSupplier(socketAddressSupplier);
         rebindAwareAddressSupplier = new RebindAwareAddressSupplier();
-        return rebindAwareAddressSupplier.wrappedSupplierAsync(source);
+        return rebindAwareAddressSupplier.wrappedSupplier(source);
     }
 
     @Override
@@ -409,7 +409,7 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
          * @param original the original supplier
          * @return a new supplier that is aware of re-bind events
          */
-        public Supplier<CompletionStage<SocketAddress>> wrappedSupplierAsync(
+        public Supplier<CompletionStage<SocketAddress>> wrappedSupplier(
                 Supplier<CompletionStage<SocketAddress>> original) {
             return () -> {
                 State current = state.get();

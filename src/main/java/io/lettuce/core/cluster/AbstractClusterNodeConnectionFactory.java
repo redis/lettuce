@@ -54,7 +54,7 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
      * @param connectionKey must not be {@code null}.
      * @return a {@link Supplier} for a {@link SocketAddress}.
      */
-    Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplierAsync(ConnectionKey connectionKey) {
+    Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplier(ConnectionKey connectionKey) {
 
         return () -> {
             try {

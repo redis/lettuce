@@ -64,7 +64,7 @@ public class ConnectionBuilder {
 
     public static final AttributeKey<Throwable> INIT_FAILURE = AttributeKey.valueOf("ConnectionBuilder.INIT_FAILURE");
 
-    private Supplier<CompletionStage<SocketAddress>> socketAddressSupplierAsync;
+    private Supplier<CompletionStage<SocketAddress>> socketAddressSupplier;
 
     private ConnectionEvents connectionEvents;
 
@@ -146,14 +146,14 @@ public class ConnectionBuilder {
         }
 
         LettuceAssert.assertState(bootstrap != null, "Bootstrap must be set for autoReconnect=true");
-        LettuceAssert.assertState(socketAddressSupplierAsync != null,
+        LettuceAssert.assertState(socketAddressSupplier != null,
                 "SocketAddressSupplier must be set for autoReconnect=true");
 
         ConnectionWatchdog watchdog;
         if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
             MaintenanceAwareConnectionWatchdog maintenanceAwareWatchdog = new MaintenanceAwareConnectionWatchdog(
                     clientResources.reconnectDelay(), clientOptions, bootstrap, clientResources.timer(),
-                    clientResources.eventExecutorGroup(), socketAddressSupplierAsync, reconnectionListener, connection,
+                    clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener, connection,
                     clientResources.eventBus(), endpoint);
             if (connection.getChannelWriter() instanceof MaintenanceAwareComponent) {
                 maintenanceAwareWatchdog.setMaintenanceEventListener((MaintenanceAwareComponent) connection.getChannelWriter());
@@ -161,7 +161,7 @@ public class ConnectionBuilder {
             watchdog = maintenanceAwareWatchdog;
         } else {
             watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
-                    clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplierAsync,
+                    clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier,
                     reconnectionListener, connection, clientResources.eventBus(), endpoint);
         }
 
@@ -175,14 +175,14 @@ public class ConnectionBuilder {
         return new PlainChannelInitializer(this::buildHandlers, clientResources);
     }
 
-    public ConnectionBuilder socketAddressSupplierAsync(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
-        this.socketAddressSupplierAsync = socketAddressSupplier;
+    public ConnectionBuilder socketAddressSupplier(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
+        this.socketAddressSupplier = socketAddressSupplier;
         return this;
     }
 
-    public Supplier<CompletionStage<SocketAddress>> socketAddressAsync() {
-        LettuceAssert.assertState(socketAddressSupplierAsync != null, "SocketAddressSupplier must be set");
-        return socketAddressSupplierAsync;
+    public Supplier<CompletionStage<SocketAddress>> socketAddress() {
+        LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set");
+        return socketAddressSupplier;
     }
 
     public ConnectionBuilder timeout(Duration timeout) {

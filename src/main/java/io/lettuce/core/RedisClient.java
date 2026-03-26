@@ -327,11 +327,11 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.clientResources(getResources());
         connectionBuilder.commandHandler(commandHandlerSupplier).endpoint(endpoint);
 
-        connectionBuilderAsync(getSocketAddressSupplierAsync(redisURI), connectionBuilder, connection.getConnectionEvents(),
+        connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(),
                 redisURI);
         connectionBuilder.connectionInitializer(createHandshake(state));
 
-        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync2(connectionBuilder);
+        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
         return future.thenApply(channelHandler -> (S) connection);
     }
@@ -604,10 +604,10 @@ public class RedisClient extends AbstractRedisClient {
         ClientOptions clientOptions = getOptions();
         connectionBuilder.endpoint(endpoint).commandHandler(() -> new CommandHandler(clientOptions, getResources(), endpoint))
                 .connection(connection);
-        connectionBuilderAsync(getSocketAddressSupplierAsync(redisURI), connectionBuilder, connection.getConnectionEvents(),
+        connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(),
                 redisURI);
 
-        ConnectionFuture<?> sync = initializeChannelAsync2(connectionBuilder);
+        ConnectionFuture<?> sync = initializeChannelAsync(connectionBuilder);
 
         return sync.thenApply(ignore -> (StatefulRedisSentinelConnection<K, V>) connection).whenComplete((ignore, e) -> {
 
@@ -699,7 +699,7 @@ public class RedisClient extends AbstractRedisClient {
      * @see RedisURI#getSentinels()
      * @see RedisURI#getSentinelMasterId()
      */
-    protected Supplier<CompletionStage<SocketAddress>> getSocketAddressAsyncImproved(RedisURI redisURI) {
+    protected Supplier<CompletionStage<SocketAddress>> getSocketAddress(RedisURI redisURI) {
         return () -> {
             if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
                 logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(),
@@ -745,8 +745,8 @@ public class RedisClient extends AbstractRedisClient {
         }
     }
 
-    private Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplierAsync(RedisURI redisURI) {
-        Supplier<CompletionStage<SocketAddress>> delegate = getSocketAddressAsyncImproved(redisURI);
+    private Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplier(RedisURI redisURI) {
+        Supplier<CompletionStage<SocketAddress>> delegate = getSocketAddress(redisURI);
         return () -> delegate.get().thenApply(addr -> {
             logger.debug("Resolved SocketAddress {} using {}", addr, redisURI);
             return addr;

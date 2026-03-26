@@ -234,9 +234,9 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @param connectionBuilder connection builder to configure the connection
      * @param redisURI URI of the Redis instance
      */
-    protected void connectionBuilderAsync(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
+    protected void connectionBuilder(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
             ConnectionBuilder connectionBuilder, RedisURI redisURI) {
-        connectionBuilderAsync(socketAddressSupplier, connectionBuilder, connectionEvents, redisURI);
+        connectionBuilder(socketAddressSupplier, connectionBuilder, connectionEvents, redisURI);
     }
 
     /**
@@ -248,7 +248,7 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @param redisURI URI of the Redis instance
      * @since 6.2
      */
-    protected void connectionBuilderAsync(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
+    protected void connectionBuilder(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
             ConnectionBuilder connectionBuilder, ConnectionEvents connectionEvents, RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap();
@@ -259,7 +259,7 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
         connectionBuilder.configureBootstrap(!LettuceStrings.isEmpty(redisURI.getSocket()), this::getEventLoopGroup);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents == this.connectionEvents ? connectionEvents
                 : ConnectionEvents.of(this.connectionEvents, connectionEvents));
-        connectionBuilder.socketAddressSupplierAsync(socketAddressSupplier);
+        connectionBuilder.socketAddressSupplier(socketAddressSupplier);
     }
 
     protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
@@ -347,10 +347,10 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @since 4.4
      */
     @SuppressWarnings("unchecked")
-    protected <K, V, T extends RedisChannelHandler<K, V>> ConnectionFuture<T> initializeChannelAsync2(
+    protected <K, V, T extends RedisChannelHandler<K, V>> ConnectionFuture<T> initializeChannelAsync(
             ConnectionBuilder connectionBuilder) {
 
-        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = connectionBuilder.socketAddressAsync();
+        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = connectionBuilder.socketAddress();
 
         if (clientResources.eventExecutorGroup().isShuttingDown()) {
             throw new IllegalStateException("Cannot connect, Event executor group is terminated.");
