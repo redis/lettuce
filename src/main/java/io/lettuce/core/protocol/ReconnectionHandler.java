@@ -29,9 +29,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.Pair;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.SslConnectionBuilder;
 import io.lettuce.core.internal.LettuceAssert;
@@ -87,7 +86,7 @@ class ReconnectionHandler {
      *
      * @return reconnect {@link ChannelFuture}.
      */
-    protected Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> reconnect() {
+    protected Pair<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> reconnect() {
 
         CompletableFuture<Channel> future = new CompletableFuture<>();
         CompletableFuture<SocketAddress> address = new CompletableFuture<>();
@@ -119,7 +118,7 @@ class ReconnectionHandler {
         }
 
         this.currentFuture = future;
-        return Tuples.of(future, address);
+        return Pair.of(future, address);
     }
 
     private void reconnect0(CompletableFuture<Channel> result, SocketAddress remoteAddress) {
