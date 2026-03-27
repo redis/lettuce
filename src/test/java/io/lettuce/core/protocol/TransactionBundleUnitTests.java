@@ -148,4 +148,55 @@ class TransactionBundleUnitTests {
         assertThat(bundleWithWatch.getExpectedResponseCount()).isEqualTo(4);
     }
 
+    @Test
+    void shouldResetOutputStateOnReEncode() {
+        // Create a simple SET command
+        Command<String, String, String> setCmd = new Command<>(CommandType.SET, new StatusOutput<>(codec),
+                new CommandArgs<>(codec).addKey("mykey").addValue("myvalue"));
+        commands.add(setCmd);
+
+        TransactionBundle<String, String> bundle = new TransactionBundle<>(codec, commands, null);
+        io.lettuce.core.output.BundleOutput<String, String> output = (io.lettuce.core.output.BundleOutput<String, String>) bundle
+                .getOutput();
+
+        // Before any encoding or response processing
+        assertThat(output.isResponseComplete()).isFalse();
+
+        // First encode - simulates initial send
+        ByteBuf buf1 = Unpooled.directBuffer();
+        bundle.encode(buf1);
+        String encoded1 = buf1.toString(StandardCharsets.UTF_8);
+        buf1.release();
+
+        // Simulate partial response processing that would happen before connection drop
+        // For 1 command: expect MULTI (1) + QUEUED (1) + EXEC (1) = 3 responses
+        output.complete(0); // Complete MULTI response - 1 of 3
+        output.complete(0); // Complete QUEUED response - 2 of 3
+        // Still not complete - missing EXEC
+        assertThat(output.isResponseComplete()).isFalse();
+
+        // Second encode - simulates retry after connection failure
+        // This MUST reset the output state so the bundle can process responses fresh
+        ByteBuf buf2 = Unpooled.directBuffer();
+        bundle.encode(buf2);
+        String encoded2 = buf2.toString(StandardCharsets.UTF_8);
+        buf2.release();
+
+        // Both encodes should produce the same wire format
+        assertThat(encoded1).isEqualTo(encoded2);
+
+        // After reset, response count should be back to 0 and isResponseComplete() should be false
+        assertThat(output.isResponseComplete()).isFalse();
+
+        // Now simulate processing all responses on the retry
+        output.complete(0); // MULTI - 1 of 3
+        output.complete(0); // QUEUED - 2 of 3
+        output.multi(1); // EXEC array start
+        output.complete(1); // EXEC array element
+        output.complete(0); // EXEC complete - 3 of 3
+
+        // Now should be complete
+        assertThat(output.isResponseComplete()).isTrue();
+    }
+
 }

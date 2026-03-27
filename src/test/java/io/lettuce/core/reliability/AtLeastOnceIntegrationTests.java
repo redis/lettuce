@@ -26,6 +26,8 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.TransactionBuilder;
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
@@ -443,6 +445,61 @@ class AtLeastOnceIntegrationTests {
             return e.getCause();
         }
         return null;
+    }
+
+    @Test
+    void transactionBundleRetriedAfterConnectionFailure() throws Exception {
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> sync = connection.sync();
+        RedisCommands<String, String> verificationConnection = client.connect().sync();
+
+        sync.set(key, "1");
+        assertThat(verificationConnection.get(key)).isEqualTo("1");
+
+        ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection);
+
+        // Suspend reconnect BEFORE building the transaction
+        connectionWatchdog.setReconnectSuspended(true);
+
+        // Disconnect the channel BEFORE executing the transaction
+        Channel channel = ConnectionTestUtil.getChannel(connection);
+        channel.eventLoop().submit(() -> channel.unsafe().disconnect(channel.newPromise())).sync();
+
+        // Wait for channel to close
+        Wait.untilTrue(() -> !channel.isOpen()).waitOrTimeout();
+
+        // Build and execute transaction while disconnected
+        TransactionBuilder<String, String> builder = connection.transaction();
+        builder.commands().incr(key);
+        builder.commands().incr(key);
+        builder.commands().get(key);
+
+        RedisFuture<TransactionResult> future = builder.executeAsync();
+
+        // Transaction should not be done yet (waiting for reconnect)
+        Delay.delay(Duration.ofMillis(100));
+        assertThat(future.isDone()).isFalse();
+
+        // Resume reconnect
+        connectionWatchdog.setReconnectSuspended(false);
+        connectionWatchdog.scheduleReconnect();
+
+        // Wait for transaction to complete after reconnect
+        TransactionResult result = future.get(10, TimeUnit.SECONDS);
+
+        // Verify transaction executed correctly after retry
+        assertThat(result.wasDiscarded()).isFalse();
+        assertThat(result).hasSize(3);
+        assertThat((Long) result.get(0)).isEqualTo(2L); // INCR 1 -> 2
+        assertThat((Long) result.get(1)).isEqualTo(3L); // INCR 2 -> 3
+        assertThat((String) result.get(2)).isEqualTo("3"); // GET -> "3"
+
+        // Verify with separate connection
+        assertThat(verificationConnection.get(key)).isEqualTo("3");
+
+        connection.close();
+        verificationConnection.getStatefulConnection().close();
     }
 
 }

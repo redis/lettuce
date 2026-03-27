@@ -338,4 +338,23 @@ public class BundleOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
         return responseCount >= expectedResponseCount;
     }
 
+    /**
+     * Reset the output state to prepare for retry after a connection failure.
+     * <p>
+     * This clears all accumulated state from partial response processing, allowing the transaction to be re-sent and
+     * re-processed from scratch.
+     *
+     * @since 7.6
+     */
+    public void reset() {
+        this.currentPhase = hasWatch ? Phase.WATCH : Phase.MULTI;
+        this.queuedCount = 0;
+        this.execIndex = 0;
+        this.discarded = null;
+        this.execArraySize = null;
+        this.responseCount = 0;
+        this.responses.clear();
+        setError((String) null);
+    }
+
 }

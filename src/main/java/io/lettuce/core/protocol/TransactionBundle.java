@@ -52,6 +52,8 @@ public class TransactionBundle<K, V> implements RedisCommand<K, V, TransactionRe
 
     private volatile byte status = ST_INITIAL;
 
+    private volatile boolean encodedOnce = false;
+
     private Throwable exception;
 
     /**
@@ -154,6 +156,12 @@ public class TransactionBundle<K, V> implements RedisCommand<K, V, TransactionRe
     @Override
     public void encode(ByteBuf buf) {
         buf.touch("TransactionBundle.encode(…)");
+
+        // Reset output state if this is a retry (re-encoding after connection failure)
+        if (encodedOnce) {
+            output.reset();
+        }
+        encodedOnce = true;
 
         // Encode WATCH if present
         if (hasWatch()) {
