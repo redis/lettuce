@@ -1,5 +1,8 @@
 package io.lettuce.core.tracing;
 
+import java.util.Map;
+import java.util.function.Supplier;
+
 import reactor.core.publisher.Mono;
 
 /**
@@ -19,8 +22,13 @@ public interface TraceContextProvider {
     /**
      * @return the {@link TraceContext}.
      */
+    @Deprecated
     default Mono<TraceContext> getTraceContextLater() {
         return Mono.justOrEmpty(getTraceContext());
+    }
+
+    default Supplier<TraceContext> getTraceContextAsync(Map<Object, Object> appContext) {
+        return () -> getTraceContext();
     }
 
 }

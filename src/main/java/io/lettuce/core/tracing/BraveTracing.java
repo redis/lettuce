@@ -21,8 +21,10 @@ package io.lettuce.core.tracing;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import reactor.core.publisher.Mono;
 import brave.Span;
@@ -496,6 +498,28 @@ public class BraveTracing implements Tracing {
 
                         return new BraveTraceContext(it.get(brave.propagation.TraceContext.class));
                     });
+        }
+
+        @Override
+        public Supplier<TraceContext> getTraceContextAsync(Map<Object, Object> asyncContext) {
+            return () -> {
+                if (asyncContext != null) {
+                    if (asyncContext.containsKey(Span.class)) {
+                        return new BraveTraceContext(((Span) asyncContext.get(Span.class)).context());
+                    }
+
+                    if (asyncContext.containsKey(brave.propagation.TraceContext.class)) {
+                        return new BraveTraceContext(
+                                (brave.propagation.TraceContext) asyncContext.get(brave.propagation.TraceContext.class));
+                    }
+
+                    // this is a deliberate choice to not fallback to ThreadLocal in async context
+                    // as we cannot guarantee that the ThreadLocal will be the same as the one that created the async context
+                    return null;
+                }
+                // fallback — map empty or keys not found, read ThreadLocal
+                return getTraceContext();
+            };
         }
 
     }

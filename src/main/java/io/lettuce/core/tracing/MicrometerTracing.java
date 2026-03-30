@@ -6,6 +6,7 @@ import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CompleteableCommand;
@@ -286,6 +287,29 @@ public class MicrometerTracing implements Tracing {
 
                 return new MicrometerTraceContext(it.get(ObservationThreadLocalAccessor.KEY));
             });
+        }
+
+        @Override
+        public Supplier<TraceContext> getTraceContextAsync(Map<Object, Object> asyncContext) {
+            return () -> {
+                if (asyncContext != null) {
+                    if (asyncContext.containsKey(Observation.class)) {
+                        return new MicrometerTraceContext((Observation) asyncContext.get(Observation.class));
+                    }
+                    if (asyncContext.containsKey(TraceContext.class)) {
+                        return (TraceContext) asyncContext.get(TraceContext.class);
+                    }
+                    if (asyncContext.containsKey(ObservationThreadLocalAccessor.KEY)) {
+                        return new MicrometerTraceContext((Observation) asyncContext.get(ObservationThreadLocalAccessor.KEY));
+                    }
+
+                    // this is a deliberate choice to not fallback to ThreadLocal in async context
+                    // as we cannot guarantee that the ThreadLocal will be the same as the one that created the async context
+                    return null;
+                }
+                // fallback — map empty or keys not found, read ThreadLocal
+                return getTraceContext();
+            };
         }
 
         public ObservationRegistry getRegistry() {
