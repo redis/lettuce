@@ -14,6 +14,7 @@ import java.util.List;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.search.arguments.AggregateArgs;
 
 /**
  * SORTBY post-processing operation. Sorts results by one or more properties.
@@ -88,13 +89,7 @@ public class SortBy<K> implements PostProcessingOperation<K, Object> {
         // Count includes property + direction pairs
         args.add(properties.size() * 2L);
         for (SortProperty<K> property : properties) {
-            // Add @ prefix if not already present
-            String propertyStr = property.getProperty().toString();
-            if (!propertyStr.startsWith("@")) {
-                args.add("@" + propertyStr);
-            } else {
-                args.add(propertyStr);
-            }
+            AggregateArgs.addKeyWithAtPrefix(args, property.getProperty());
             args.add(property.getDirection().name());
         }
     }

@@ -73,7 +73,7 @@ public class Apply<K, V> implements PostProcessingOperation<K, V> {
         args.add(CommandKeyword.APPLY);
         args.addValue(expression);
         args.add(CommandKeyword.AS);
-        args.add(name.toString());
+        args.addKey(name);
     }
 
 }

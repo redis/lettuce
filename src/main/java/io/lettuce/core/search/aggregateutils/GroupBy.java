@@ -13,6 +13,7 @@ import java.util.List;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.search.arguments.AggregateArgs;
 
 /**
  * GROUPBY post-processing operation. Groups results by one or more properties with reducer functions.
@@ -91,13 +92,7 @@ public class GroupBy<K, V> implements PostProcessingOperation<K, V> {
         args.add(CommandKeyword.GROUPBY);
         args.add(properties.size());
         for (K property : properties) {
-            // Add @ prefix if not already present
-            String propertyStr = property.toString();
-            if (!propertyStr.startsWith("@")) {
-                args.add("@" + propertyStr);
-            } else {
-                args.add(propertyStr);
-            }
+            AggregateArgs.addKeyWithAtPrefix(args, property);
         }
 
         for (Reducer<K> reducer : reducers) {

@@ -708,13 +708,7 @@ public class AggregateArgs<K, V> {
             args.add(CommandKeyword.GROUPBY);
             args.add(properties.size());
             for (K property : properties) {
-                // Add @ prefix if not already present
-                String propertyStr = property.toString();
-                if (!propertyStr.startsWith("@")) {
-                    args.add("@" + propertyStr);
-                } else {
-                    args.addKey(property);
-                }
+                addKeyWithAtPrefix(args, property);
             }
 
             for (Reducer<K, V> reducer : reducers) {
@@ -815,13 +809,7 @@ public class AggregateArgs<K, V> {
             // Count includes property + direction pairs
             args.add(properties.size() * 2L);
             for (SortProperty<K> property : properties) {
-                // Add @ prefix if not already present
-                String propertyStr = property.property.toString();
-                if (!propertyStr.startsWith("@")) {
-                    args.add("@" + propertyStr);
-                } else {
-                    args.addKey(property.property);
-                }
+                addKeyWithAtPrefix(args, property.property);
                 args.add(property.direction.name());
             }
 
@@ -1112,6 +1100,41 @@ public class AggregateArgs<K, V> {
      */
     public enum SortDirection {
         ASC, DESC
+    }
+
+    /**
+     * Add a key argument with an {@code @} prefix to {@link CommandArgs}. If the key already starts with {@code @}, it is added
+     * as-is. This method is codec-aware and works correctly with both {@code String} and {@code byte[]} key types.
+     *
+     * @param args the command args
+     * @param key the key to add
+     * @param <K> Key type
+     * @param <V> Value type
+     */
+    public static <K, V> void addKeyWithAtPrefix(CommandArgs<K, V> args, K key) {
+        boolean hasPrefix = false;
+        if (key instanceof String) {
+            hasPrefix = ((String) key).startsWith("@");
+        } else if (key instanceof byte[]) {
+            byte[] bytes = (byte[]) key;
+            hasPrefix = bytes.length > 0 && bytes[0] == '@';
+        }
+
+        if (hasPrefix) {
+            args.addKey(key);
+        } else {
+            if (key instanceof String) {
+                args.add("@" + key);
+            } else if (key instanceof byte[]) {
+                byte[] bytes = (byte[]) key;
+                byte[] prefixed = new byte[bytes.length + 1];
+                prefixed[0] = '@';
+                System.arraycopy(bytes, 0, prefixed, 1, bytes.length);
+                args.add(prefixed);
+            } else {
+                args.add("@" + key.toString());
+            }
+        }
     }
 
 }
