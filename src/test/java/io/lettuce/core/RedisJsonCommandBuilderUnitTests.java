@@ -1,6 +1,5 @@
-package io.lettuce.core.json;
+package io.lettuce.core;
 
-import io.lettuce.core.RedisJsonCommandBuilder;
 /*
  * Copyright 2024, Redis Ltd. and Contributors
  * All rights reserved.
