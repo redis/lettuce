@@ -25,6 +25,25 @@ public class JsonSetArgs implements CompositeArgument {
 
     private boolean xx;
 
+    private FphaType fphaType;
+
+    /**
+     * Floating-point half-precision array type for the {@literal FPHA} block of the {@literal JSON.SET} command.
+     *
+     * @since 7.6
+     */
+    public enum FphaType {
+
+        FP16(CommandKeyword.FP16), BF16(CommandKeyword.BF16), FP32(CommandKeyword.FP32), FP64(CommandKeyword.FP64);
+
+        private final CommandKeyword keyword;
+
+        FphaType(CommandKeyword keyword) {
+            this.keyword = keyword;
+        }
+
+    }
+
     /**
      * Builder entry points for {@link JsonSetArgs}.
      */
@@ -52,6 +71,17 @@ public class JsonSetArgs implements CompositeArgument {
          */
         public static JsonSetArgs xx() {
             return new JsonSetArgs().xx();
+        }
+
+        /**
+         * Creates new {@link JsonSetArgs} and sets the {@literal FPHA} type.
+         *
+         * @param fphaType the floating-point half-precision array type.
+         * @return new {@link JsonSetArgs} with {@literal FPHA} type set.
+         * @since 7.6
+         */
+        public static JsonSetArgs fpha(FphaType fphaType) {
+            return new JsonSetArgs().fpha(fphaType);
         }
 
         /**
@@ -88,6 +118,19 @@ public class JsonSetArgs implements CompositeArgument {
     }
 
     /**
+     * Set the floating-point half-precision array type for encoding numeric arrays.
+     *
+     * @param fphaType the floating-point half-precision array type.
+     * @return {@code this}.
+     * @since 7.6
+     */
+    public JsonSetArgs fpha(FphaType fphaType) {
+
+        this.fphaType = fphaType;
+        return this;
+    }
+
+    /**
      * Set the key only if it already exists.
      *
      * @return {@code this}.
@@ -104,6 +147,11 @@ public class JsonSetArgs implements CompositeArgument {
             args.add(CommandKeyword.XX);
         } else if (nx) {
             args.add(CommandKeyword.NX);
+        }
+
+        if (fphaType != null) {
+            args.add(CommandKeyword.FPHA);
+            args.add(fphaType.keyword);
         }
     }
 
