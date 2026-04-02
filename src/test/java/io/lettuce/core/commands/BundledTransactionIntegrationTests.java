@@ -26,7 +26,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.ReactiveTransactionBuilder;
 import io.lettuce.test.LettuceExtension;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 /**
@@ -87,7 +89,7 @@ public class BundledTransactionIntegrationTests extends TestSupport {
 
     @Test
     void reactiveTransaction() {
-        TransactionBuilder<String, String> builder = connection.transaction();
+        ReactiveTransactionBuilder<String, String> builder = connection.reactive().transaction();
         builder.commands().set(key, value);
         builder.commands().get(key);
 
@@ -96,6 +98,42 @@ public class BundledTransactionIntegrationTests extends TestSupport {
             assertThat(result).hasSize(2);
             assertThat((String) result.get(0)).isEqualTo("OK");
             assertThat((String) result.get(1)).isEqualTo(value);
+        }).verifyComplete();
+    }
+
+    @Test
+    void reactiveTransactional_functionalApi() {
+        // Test the functional API pattern
+        StepVerifier.create(connection.reactive().transactional(txn -> {
+            txn.set(key, value);
+            txn.incr("counter");
+            txn.get(key);
+        })).consumeNextWith(result -> {
+            assertThat(result.wasDiscarded()).isFalse();
+            assertThat(result).hasSize(3);
+            assertThat((String) result.get(0)).isEqualTo("OK");
+            assertThat((Long) result.get(1)).isEqualTo(1L);
+            assertThat((String) result.get(2)).isEqualTo(value);
+        }).verifyComplete();
+    }
+
+    @Test
+    void reactiveTransactional_withReactiveDataSources() {
+        // Test composing with reactive data sources
+        Mono<String> keyMono = Mono.just(key);
+        Mono<String> valueMono = Mono.just(value);
+
+        Mono<TransactionResult> result = keyMono
+                .flatMap(k -> valueMono.flatMap(v -> connection.reactive().transactional(txn -> {
+                    txn.set(k, v);
+                    txn.get(k);
+                })));
+
+        StepVerifier.create(result).consumeNextWith(r -> {
+            assertThat(r.wasDiscarded()).isFalse();
+            assertThat(r).hasSize(2);
+            assertThat((String) r.get(0)).isEqualTo("OK");
+            assertThat((String) r.get(1)).isEqualTo(value);
         }).verifyComplete();
     }
 

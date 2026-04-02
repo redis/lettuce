@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.ReactiveTransactionBuilder;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
@@ -21,7 +22,7 @@ import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TransactionBundle;
 
 /**
- * Cluster-aware implementation of {@link TransactionBuilder}.
+ * Cluster-aware implementation of {@link TransactionBuilder} and {@link ReactiveTransactionBuilder}.
  * <p>
  * This builder collects commands locally and validates that all keys hash to the same slot. At execution time, it routes the
  * transaction to the appropriate cluster node.
@@ -35,7 +36,7 @@ import io.lettuce.core.protocol.TransactionBundle;
  * Example usage:
  *
  * <pre>
- *
+ * 
  * {
  *     &#64;code
  *     // Keys with same hash tag - will succeed
@@ -57,9 +58,10 @@ import io.lettuce.core.protocol.TransactionBundle;
  * @author Tihomir Mateev
  * @since 7.6
  * @see TransactionBuilder
+ * @see ReactiveTransactionBuilder
  * @see io.lettuce.core.cluster.SlotHash
  */
-public class ClusterTransactionBuilder<K, V> implements TransactionBuilder<K, V> {
+public class ClusterTransactionBuilder<K, V> implements ReactiveTransactionBuilder<K, V> {
 
     private final StatefulRedisClusterConnection<K, V> clusterConnection;
 

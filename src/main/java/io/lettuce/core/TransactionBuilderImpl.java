@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.reactive.ReactiveTransactionBuilder;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.LettuceAssert;
@@ -20,17 +21,20 @@ import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TransactionBundle;
 
 /**
- * Default implementation of {@link TransactionBuilder}.
+ * Default implementation of {@link TransactionBuilder} and {@link ReactiveTransactionBuilder}.
  * <p>
  * Uses composition with {@link CommandCollectingAsyncCommands} to leverage the full async API while collecting commands for
  * batch execution. This provides complete Redis command coverage (400+ commands) without code duplication.
+ * <p>
+ * This implementation supports both sync/async execution (via {@link TransactionBuilder}) and reactive execution (via
+ * {@link ReactiveTransactionBuilder}).
  *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 7.6
  */
-class TransactionBuilderImpl<K, V> implements TransactionBuilder<K, V> {
+class TransactionBuilderImpl<K, V> implements ReactiveTransactionBuilder<K, V> {
 
     private final StatefulRedisConnection<K, V> connection;
 

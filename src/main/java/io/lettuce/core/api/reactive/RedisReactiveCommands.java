@@ -21,6 +21,7 @@ package io.lettuce.core.api.reactive;
 
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.api.CommandsFactory;
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import reactor.core.publisher.Mono;
@@ -87,11 +88,94 @@ public interface RedisReactiveCommands<K, V>
     StatefulRedisConnection<K, V> getStatefulConnection();
 
     /**
+     * Create a new reactive transaction builder for atomic transaction dispatch.
+     * <p>
+     * This method creates a {@link ReactiveTransactionBuilder} that collects commands and dispatches them atomically as a
+     * single MULTI/EXEC block. Use {@link ReactiveTransactionBuilder#executeReactive()} to execute the transaction and receive
+     * the result as a {@link Mono}.
+     * <p>
+     * Example usage:
+     *
+     * <pre>
+     *
+     * {
+     *     &#64;code
+     *     ReactiveTransactionBuilder<String, String> txn = connection.reactive().transaction();
+     *     txn.commands().set("key1", "value1");
+     *     txn.commands().incr("counter");
+     *     Mono<TransactionResult> result = txn.executeReactive();
+     * }
+     * </pre>
+     *
+     * @return a new reactive transaction builder
+     * @since 7.6
+     */
+    ReactiveTransactionBuilder<K, V> transaction();
+
+    /**
+     * Create a new reactive transaction builder with WATCH support for optimistic locking.
+     * <p>
+     * The specified keys will be watched before the transaction is executed. If any of the watched keys are modified by another
+     * client before the transaction executes, the entire transaction will be aborted.
+     *
+     * @param watchKeys the keys to watch
+     * @return a new reactive transaction builder with WATCH
+     * @since 7.6
+     */
+    @SuppressWarnings("unchecked")
+    ReactiveTransactionBuilder<K, V> transaction(K... watchKeys);
+
+    /**
+     * Execute a transaction reactively using a functional builder pattern.
+     * <p>
+     * This method provides a more natural API for reactive chains. The transaction is built via the consumer and executed when
+     * the returned {@link Mono} is subscribed to.
+     * <p>
+     * Example usage:
+     *
+     * <pre>
+     *
+     * {
+     *     &#64;code
+     *     // Simple usage
+     *     Mono<TransactionResult> result = commands.transactional(txn -> {
+     *         txn.set("key1", "value1");
+     *         txn.incr("counter");
+     *     });
+     *
+     *     // Composing with reactive data sources
+     *     Mono<TransactionResult> result = keyMono.flatMap(key -> valueMono.flatMap(value -> commands.transactional(txn -> {
+     *         txn.set(key, value);
+     *         txn.incr("counter");
+     *     })));
+     * }
+     * </pre>
+     *
+     * @param transactionBody consumer that receives a commands interface to add commands to the transaction
+     * @return a Mono that emits the transaction result when subscribed
+     * @since 7.6
+     */
+    Mono<TransactionResult> transactional(
+            java.util.function.Consumer<io.lettuce.core.api.async.RedisAsyncCommands<K, V>> transactionBody);
+
+    /**
+     * Execute a transaction reactively with WATCH keys using a functional builder pattern.
+     *
+     * @param transactionBody consumer that receives a commands interface to add commands to the transaction
+     * @param watchKeys the keys to watch
+     * @return a Mono that emits the transaction result when subscribed
+     * @since 7.6
+     */
+    @SuppressWarnings("unchecked")
+    Mono<TransactionResult> transactional(
+            java.util.function.Consumer<io.lettuce.core.api.async.RedisAsyncCommands<K, V>> transactionBody, K... watchKeys);
+
+    /**
      * Returns the {@link CommandsFactory} that creates {@link RedisReactiveCommands}, for use with
      * {@link io.lettuce.core.api.StatefulRedisConnection#commands(CommandsFactory)}:
      *
      * <pre>
-     * 
+     *
      * {
      *     &#64;code
      *     RedisReactiveCommands<K, V> reactive = connection.commands(RedisReactiveCommands.factory());

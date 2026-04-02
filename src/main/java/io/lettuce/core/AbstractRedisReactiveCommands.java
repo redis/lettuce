@@ -125,6 +125,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
 
     private final StatefulConnection<K, V> connection;
 
+    private final RedisCodec<K, V> codec;
+
     private final RedisCommandBuilder<K, V> commandBuilder;
 
     private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
@@ -155,6 +157,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec,
             Supplier<JsonParser> parser) {
         this.connection = connection;
+        this.codec = codec;
         this.parser = parser;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
@@ -4356,6 +4359,15 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Mono<BfScanDumpValue> bfScanDump(K key, long iterator) {
         return createMono(() -> bloomFilterCommandBuilder.bfScanDump(key, iterator));
+    }
+
+    /**
+     * Get the codec used by this instance.
+     *
+     * @return the codec.
+     */
+    protected RedisCodec<K, V> getCodec() {
+        return codec;
     }
 
 }

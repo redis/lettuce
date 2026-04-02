@@ -7,17 +7,20 @@
 package io.lettuce.core;
 
 import io.lettuce.core.api.async.RedisAsyncCommands;
-import reactor.core.publisher.Mono;
 
 /**
  * Builder interface for constructing Redis transactions that are executed atomically as a single unit.
  * <p>
  * Unlike the traditional {@code MULTI}/{@code EXEC} approach where commands are sent individually, a {@link TransactionBuilder}
- * collects all commands and dispatches them atomically when {@link #execute()}, {@link #executeAsync()}, or
- * {@link #executeReactive()} is called. This ensures thread-safety when sharing connections across multiple threads.
+ * collects all commands and dispatches them atomically when {@link #execute()} or {@link #executeAsync()} is called. This
+ * ensures thread-safety when sharing connections across multiple threads.
  * <p>
  * Use {@link #commands()} to access the full Redis async commands API (400+ commands). Commands invoked on this interface are
  * collected for batch execution rather than being dispatched immediately.
+ * <p>
+ * For reactive execution, use {@link io.lettuce.core.api.reactive.ReactiveTransactionBuilder} which extends this interface with
+ * {@code executeReactive()} returning a {@code Mono<TransactionResult>}. Obtain it via
+ * {@link io.lettuce.core.api.reactive.RedisReactiveCommands#transaction()}.
  * <p>
  * Example usage:
  *
@@ -41,6 +44,7 @@ import reactor.core.publisher.Mono;
  * @author Tihomir Mateev
  * @since 7.6
  * @see TransactionResult
+ * @see io.lettuce.core.api.reactive.ReactiveTransactionBuilder
  */
 public interface TransactionBuilder<K, V> {
 
@@ -98,16 +102,6 @@ public interface TransactionBuilder<K, V> {
      * @return a future that completes with the transaction result.
      */
     RedisFuture<TransactionResult> executeAsync();
-
-    /**
-     * Execute the transaction reactively.
-     * <p>
-     * This method dispatches all collected commands atomically as a single MULTI/EXEC block when the returned Mono is
-     * subscribed to.
-     *
-     * @return a Mono that emits the transaction result.
-     */
-    Mono<TransactionResult> executeReactive();
 
     /**
      * Get the number of commands currently in this transaction.

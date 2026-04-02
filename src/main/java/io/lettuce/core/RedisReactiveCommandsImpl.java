@@ -1,16 +1,20 @@
 package io.lettuce.core;
 
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import reactor.core.publisher.Mono;
+
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.reactive.ReactiveTransactionBuilder;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.json.JsonParser;
-import reactor.core.publisher.Mono;
-
-import java.util.function.Supplier;
 
 /**
- * A reactive and thread-safe API for a Redis Sentinel connection.
+ * A reactive and thread-safe API for a Redis connection.
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -44,6 +48,33 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
     @Override
     public StatefulRedisConnection<K, V> getStatefulConnection() {
         return (StatefulRedisConnection<K, V>) super.getConnection();
+    }
+
+    @Override
+    public ReactiveTransactionBuilder<K, V> transaction() {
+        return new TransactionBuilderImpl<>(getStatefulConnection(), getCodec());
+    }
+
+    @Override
+    @SafeVarargs
+    public final ReactiveTransactionBuilder<K, V> transaction(K... watchKeys) {
+        return new TransactionBuilderImpl<>(getStatefulConnection(), getCodec(), watchKeys);
+    }
+
+    @Override
+    public Mono<TransactionResult> transactional(Consumer<RedisAsyncCommands<K, V>> transactionBody) {
+        return transactional(transactionBody, (K[]) null);
+    }
+
+    @Override
+    @SafeVarargs
+    public final Mono<TransactionResult> transactional(Consumer<RedisAsyncCommands<K, V>> transactionBody, K... watchKeys) {
+        return Mono.defer(() -> {
+            ReactiveTransactionBuilder<K, V> builder = (watchKeys != null && watchKeys.length > 0) ? transaction(watchKeys)
+                    : transaction();
+            transactionBody.accept(builder.commands());
+            return builder.executeReactive();
+        });
     }
 
 }

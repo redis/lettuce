@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.ReactiveTransactionBuilder;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.ProtocolVersion;
 import reactor.test.StepVerifier;
@@ -94,7 +95,7 @@ public class BundledTransactionResp2IntegrationTests extends TestSupport {
 
     @Test
     void reactiveTransactionResp2() {
-        TransactionBuilder<String, String> builder = connection.transaction();
+        ReactiveTransactionBuilder<String, String> builder = connection.reactive().transaction();
         builder.commands().set(key, value);
         builder.commands().get(key);
 

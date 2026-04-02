@@ -183,7 +183,7 @@ class CreateTransactionBuilderApi {
         for (String imp : collectedImports) {
             sb.append(imp).append("\n");
         }
-        sb.append("\nimport reactor.core.publisher.Mono;\n\n");
+        sb.append("\n");
 
         // Class javadoc
         sb.append("/**\n");
@@ -286,13 +286,6 @@ class CreateTransactionBuilderApi {
         sb.append("    RedisFuture<TransactionResult> executeAsync();\n\n");
 
         sb.append("    /**\n");
-        sb.append("     * Execute the transaction reactively.\n");
-        sb.append("     *\n");
-        sb.append("     * @return a Mono that emits the transaction result.\n");
-        sb.append("     */\n");
-        sb.append("    Mono<TransactionResult> executeReactive();\n\n");
-
-        sb.append("    /**\n");
         sb.append("     * Get the number of commands in this transaction.\n");
         sb.append("     *\n");
         sb.append("     * @return the command count.\n");
@@ -325,7 +318,6 @@ class CreateTransactionBuilderApi {
         }
         sb.append("\nimport java.util.ArrayList;\n");
         sb.append("import java.util.concurrent.ExecutionException;\n");
-        sb.append("import reactor.core.publisher.Mono;\n");
         sb.append("import io.lettuce.core.api.StatefulRedisConnection;\n");
         sb.append("import io.lettuce.core.codec.RedisCodec;\n");
         sb.append("import io.lettuce.core.internal.LettuceAssert;\n");
@@ -434,11 +426,6 @@ class CreateTransactionBuilderApi {
         sb.append("            return ((StatefulRedisConnectionImpl<K, V>) connection).dispatchTransactionBundle(bundle);\n");
         sb.append("        }\n");
         sb.append("        throw new UnsupportedOperationException(\"Connection does not support transaction bundles\");\n");
-        sb.append("    }\n\n");
-
-        sb.append("    @Override\n");
-        sb.append("    public Mono<TransactionResult> executeReactive() {\n");
-        sb.append("        return Mono.fromFuture(executeAsync()::toCompletableFuture);\n");
         sb.append("    }\n\n");
 
         sb.append("    @Override\n");
