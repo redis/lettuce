@@ -1,11 +1,11 @@
-Lettuce 7.0.1 RELEASE NOTES
+Lettuce 7.0.2 RELEASE NOTES
 ==============================
 
-The Lettuce team is pleased to announce the release of Lettuce 7.0.1!
+The Lettuce team is pleased to announce the release of Lettuce 7.0.2!
 
-**Lettuce 7.0.1.RELEASE** supports Redis **2.6+** up to Redis **8.x** and requires **Java 8** or newer. The driver is tested against Redis **8.2**, **8.0**, **7.4**, and **7.2**.
+**Lettuce 7.0.2.RELEASE** supports Redis **2.6+** up to Redis **8.x** and requires **Java 8** or newer. The driver is tested against Redis **8.2**, **8.0**, **7.4**, and **7.2**.
 
-Thanks to all contributors who made Lettuce 7.0.1.RELEASE possible!
+Thanks to all contributors who made Lettuce 7.0.2.RELEASE possible!
 
 If you need any support, meet Lettuce at
 
@@ -14,20 +14,11 @@ If you need any support, meet Lettuce at
 * Join the chat at https://discord.gg/redis and look for the "Help:Tools Lettuce" channel
 * GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
 * Documentation: https://lettuce.io/core/7.0.1.RELEASE/reference/
-* Javadoc: https://lettuce.io/core/7.0.1.RELEASE/api/
+* Javadoc: https://lettuce.io/core/7.0.2.RELEASE/api/
 
 # Changes
-
 ## 🐛 Bug Fixes
-* [Backport] Reduce CPU cycles spent on setting tracing tags by @ggivo in https://github.com/redis/lettuce/pull/3504
-* docs: add maintNotificationsConfig to ClientOptions documentation by @ggivo in https://github.com/redis/lettuce/pull/3487
-* SearchArgs.returnField with alias produces malformed redis command #3528 (7.0.x) by @a-TODO-rov in https://github.com/redis/lettuce/pull/3538
-* Preserve null values when parsing SearchReplies (#3518) by @a-TODO-rov in https://github.com/redis/lettuce/pull/3553
-* Fix command queue corruption on encoding failures (#3443) (7.0.x) by @tishun in https://github.com/redis/lettuce/pull/3561
-
-## 💡 Other
-* Bumping Netty to 4.2.5.Final (7.0.x) by @a-TODO-rov in https://github.com/redis/lettuce/pull/3539
+* ERR unknown subcommand 'MYID' with Azure Managed Redis #3495 (#3693) by @a-TODO-rov in https://github.com/redis/lettuce/pull/3698
 
 ---
-
-**Full Changelog**: https://github.com/redis/lettuce/compare/7.0.0.RELEASE...7.0.1.RELEASE
+**Full Changelog**: https://github.com/redis/lettuce/compare/7.0.1.RELEASE...7.0.2.RELEASE
