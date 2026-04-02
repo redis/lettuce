@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutionException;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag(INTEGRATION_TEST)
@@ -500,7 +501,8 @@ public class RedisJsonIntegrationTests {
         assertThat(result).isEqualTo("OK");
 
         List<JsonValue> fetched = redis.jsonGet("fpha:test", JsonPath.ROOT_PATH);
-        assertThat(fetched.get(0).toString()).isEqualTo("[1.0,2.0,3.0]");
+        assertNotNull(fetched.get(0).asJsonArray());
+        assertThat(fetched.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("[1.0,2.0,3.0]");
     }
 
     @Test
@@ -514,7 +516,8 @@ public class RedisJsonIntegrationTests {
         assertThat(result).isEqualTo("OK");
 
         List<JsonValue> fetched = redis.jsonGet("fpha:nxtest", JsonPath.ROOT_PATH);
-        assertThat(fetched.get(0).toString()).isEqualTo("[4.0,5.0,6.0]");
+        assertNotNull(fetched.get(0).asJsonArray());
+        assertThat(fetched.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("[4.0,5.0,6.0]");
 
         // Second set with NX should return null since key already exists
         String result2 = redis.jsonSet("fpha:nxtest", JsonPath.ROOT_PATH, numericArray, args);
@@ -529,7 +532,8 @@ public class RedisJsonIntegrationTests {
         assertThat(result).isEqualTo("OK");
 
         List<JsonValue> fetched = redis.jsonGet("fpha:strtest", JsonPath.ROOT_PATH);
-        assertThat(fetched.get(0).toString()).isEqualTo("[1.5,2.5,3.5]");
+        assertNotNull(fetched.get(0).asJsonArray());
+        assertThat(fetched.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("[1.5,2.5,3.5]");
     }
 
     @ParameterizedTest(name = "With {0} as path")
