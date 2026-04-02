@@ -28,7 +28,7 @@ public class JsonSetArgs implements CompositeArgument {
     private FphaType fphaType;
 
     /**
-     * Floating-point half-precision array type for the {@literal FPHA} block of the {@literal JSON.SET} command.
+     * Floating-point precision array type for the {@literal FPHA} block of the {@literal JSON.SET} command.
      *
      * @since 7.6
      */
