@@ -1955,6 +1955,17 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> jsonGetValueRaw(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+        return createMono(() -> jsonCommandBuilder.jsonGetValueRaw(key, options, jsonPaths));
+    }
+
+    @Override
+    public Mono<String> jsonGetValueRaw(K key, JsonPath... jsonPaths) {
+        final JsonGetArgs args = JsonGetArgs.Builder.defaults();
+        return createMono(() -> jsonCommandBuilder.jsonGetValueRaw(key, args, jsonPaths));
+    }
+
+    @Override
     public Mono<Long> jsonDel(K key) {
         return createMono(() -> jsonCommandBuilder.jsonDel(key, JsonPath.ROOT_PATH));
     }
@@ -1968,6 +1979,17 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     public Flux<JsonValue> jsonGet(K key, JsonPath... jsonPaths) {
         final JsonGetArgs args = JsonGetArgs.Builder.defaults();
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonGet(key, args, jsonPaths));
+    }
+
+    @Override
+    public Mono<JsonValue> jsonGetValue(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+        return createMono(() -> jsonCommandBuilder.jsonGetValue(key, options, jsonPaths));
+    }
+
+    @Override
+    public Mono<JsonValue> jsonGetValue(K key, JsonPath... jsonPaths) {
+        final JsonGetArgs args = JsonGetArgs.Builder.defaults();
+        return createMono(() -> jsonCommandBuilder.jsonGetValue(key, args, jsonPaths));
     }
 
     @Override

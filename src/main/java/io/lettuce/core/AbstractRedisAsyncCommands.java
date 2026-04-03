@@ -1890,6 +1890,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> jsonGetValueRaw(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+        return dispatch(jsonCommandBuilder.jsonGetValueRaw(key, options, jsonPaths));
+    }
+
+    @Override
+    public RedisFuture<String> jsonGetValueRaw(K key, JsonPath... jsonPaths) {
+        return dispatch(jsonCommandBuilder.jsonGetValueRaw(key, JsonGetArgs.Builder.defaults(), jsonPaths));
+    }
+
+    @Override
     public RedisFuture<Long> jsonDel(K key) {
         return dispatch(jsonCommandBuilder.jsonDel(key, JsonPath.ROOT_PATH));
     }
@@ -1907,6 +1917,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<JsonValue>> jsonGet(K key, JsonPath... jsonPaths) {
         return dispatch(jsonCommandBuilder.jsonGet(key, JsonGetArgs.Builder.defaults(), jsonPaths));
+    }
+
+    @Override
+    public RedisFuture<JsonValue> jsonGetValue(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+        return dispatch(jsonCommandBuilder.jsonGetValue(key, options, jsonPaths));
+    }
+
+    @Override
+    public RedisFuture<JsonValue> jsonGetValue(K key, JsonPath... jsonPaths) {
+        return dispatch(jsonCommandBuilder.jsonGetValue(key, JsonGetArgs.Builder.defaults(), jsonPaths));
     }
 
     @Override

@@ -117,23 +117,23 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun jsonDel(key: K): Long? = ops.jsonDel(key).awaitFirstOrNull()
 
-    override suspend fun jsonGet(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): List<JsonValue> =
-        ops.jsonGet(key, options, *jsonPaths).asFlow().toList()
+    override suspend fun jsonGetValue(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): JsonValue? =
+        ops.jsonGetValue(key, options, *jsonPaths).awaitFirstOrNull()
 
-    override suspend fun jsonGet(key: K, vararg jsonPaths: JsonPath): List<JsonValue> =
-        ops.jsonGet(key, *jsonPaths).asFlow().toList()
+    override suspend fun jsonGetValueRaw(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): String? =
+        ops.jsonGetValueRaw(key, options, *jsonPaths).awaitFirstOrNull()
+
+    override suspend fun jsonGetValue(key: K, vararg jsonPaths: JsonPath): JsonValue? =
+        ops.jsonGetValue(key, *jsonPaths).awaitFirstOrNull()
+
+    override suspend fun jsonGetValueRaw(key: K, vararg jsonPaths: JsonPath): String? =
+        ops.jsonGetValueRaw(key, *jsonPaths).awaitFirstOrNull()
 
     override suspend fun jsonMerge(key: K, jsonPath: JsonPath, jsonString: String): String? =
         ops.jsonMerge(key, jsonPath, jsonString).awaitFirstOrNull()
 
     override suspend fun jsonMerge(key: K, jsonPath: JsonPath, value: JsonValue): String? =
         ops.jsonMerge(key, jsonPath, value).awaitFirstOrNull()
-
-    override suspend fun jsonGetRaw(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): List<String> =
-        ops.jsonGetRaw(key, options, *jsonPaths).asFlow().toList()
-
-    override suspend fun jsonGetRaw(key: K, vararg jsonPaths: JsonPath): List<String> =
-        ops.jsonGetRaw(key, *jsonPaths).asFlow().toList()
 
     override suspend fun jsonMGet(jsonPath: JsonPath, vararg keys: K): List<JsonValue> =
         ops.jsonMGet(jsonPath, *keys).asFlow().toList()

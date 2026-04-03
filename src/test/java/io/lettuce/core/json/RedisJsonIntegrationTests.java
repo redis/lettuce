@@ -17,6 +17,7 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
 import org.junit.jupiter.api.AfterAll;
@@ -752,6 +753,200 @@ public class RedisJsonIntegrationTests {
         List<String> result = redis.jsonArrpopRaw("myKey");
         assertThat(result.toString()).isEqualTo("[\"one\"]");
         assertThat(redis.jsonGetRaw("myKey").get(0)).isEqualTo("[]");
+    }
+
+    @Test
+    void jsonMGetReturnsMultipleElementsForMultipleKeys() {
+        // Setup: Create two separate JSON documents
+        JsonParser parser = redis.getJsonParser();
+        JsonValue bike1 = parser.createJsonValue("{\"id\":\"bike:100\",\"model\":\"Speedy\"}");
+        JsonValue bike2 = parser.createJsonValue("{\"id\":\"bike:200\",\"model\":\"Cruiser\"}");
+        JsonValue bike3 = parser.createJsonValue("{\"id\":\"bike:300\",\"model\":\"Racer\"}");
+
+        redis.jsonSet("test:bike1", JsonPath.ROOT_PATH, bike1);
+        redis.jsonSet("test:bike2", JsonPath.ROOT_PATH, bike2);
+        redis.jsonSet("test:bike3", JsonPath.ROOT_PATH, bike3);
+
+        // Query multiple keys
+        List<JsonValue> values = redis.jsonMGet(JsonPath.ROOT_PATH, "test:bike1", "test:bike2", "test:bike3");
+
+        // Verify that the list contains multiple elements (one per key)
+        assertThat(values).hasSize(3);
+        assertThat(values.get(0).toString()).contains("bike:100");
+        assertThat(values.get(1).toString()).contains("bike:200");
+        assertThat(values.get(2).toString()).contains("bike:300");
+    }
+
+    @Test
+    void jsonArrpopReturnsMultipleElementsForMultipleArrayMatches() {
+        // Path $..colors matches the colors array in both bike:1 and bike:2
+        JsonPath colorsPath = JsonPath.of("$..colors");
+
+        // Pop from all matching colors arrays
+        List<JsonValue> poppedValues = redis.jsonArrpop(BIKES_INVENTORY, colorsPath);
+
+        // Should return 2 elements (one from each colors array that exists)
+        // bike:1 colors: ["black", "silver"] -> pops "silver"
+        // bike:2 colors: ["black", "white"] -> pops "white"
+        assertThat(poppedValues).hasSize(2);
+        // The popped elements should be the last elements from each array
+        assertThat(poppedValues.get(0).toString()).isEqualTo("\"silver\"");
+        assertThat(poppedValues.get(1).toString()).isEqualTo("\"white\"");
+    }
+
+    @Test
+    void jsonArrpopWithIndexReturnsMultipleElementsForMultipleArrayMatches() {
+        // Path $..colors matches colors arrays
+        JsonPath colorsPath = JsonPath.of("$..colors");
+
+        // Pop from index 0 of all matching colors arrays
+        List<JsonValue> poppedValues = redis.jsonArrpop(BIKES_INVENTORY, colorsPath, 0);
+
+        // Should return 2 elements (one from each colors array)
+        // bike:1 colors: ["black", "silver"] -> pops "black"
+        // bike:2 colors: ["black", "white"] -> pops "black"
+        assertThat(poppedValues).hasSize(2);
+        assertThat(poppedValues.get(0).toString()).isEqualTo("\"black\"");
+        assertThat(poppedValues.get(1).toString()).isEqualTo("\"black\"");
+    }
+
+    @Test
+    void jsonGetWithMultiplePathsReturnsMultipleElements() {
+        // Query two different paths
+        JsonPath modelPath = JsonPath.of("$..model");
+        JsonPath idPath = JsonPath.of("$..id");
+
+        List<JsonValue> values = redis.jsonGet(BIKES_INVENTORY, modelPath, idPath);
+
+        // With multiple paths, jsonGet returns a single JSON object containing both paths' results
+        // The List<JsonValue> will have 1 element which is the combined result
+        assertThat(values).hasSize(1);
+        String result = values.get(0).toString();
+        // The result should contain both paths as keys
+        assertThat(result).contains("$..model");
+        assertThat(result).contains("$..id");
+    }
+
+    @Test
+    void jsonMGetWithMultipleKeysAndJsonPath() {
+        // Setup: Create documents with nested structure
+        JsonParser parser = redis.getJsonParser();
+        JsonValue doc1 = parser.createJsonValue("{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"}]}");
+        JsonValue doc2 = parser.createJsonValue("{\"items\":[{\"name\":\"c\"},{\"name\":\"d\"}]}");
+
+        redis.jsonSet("test:doc1", JsonPath.ROOT_PATH, doc1);
+        redis.jsonSet("test:doc2", JsonPath.ROOT_PATH, doc2);
+
+        // Query multiple keys with a JSONPath
+        JsonPath namePath = JsonPath.of("$..name");
+        List<JsonValue> values = redis.jsonMGet(namePath, "test:doc1", "test:doc2");
+
+        // Should return 2 elements (one per key)
+        assertThat(values).hasSize(2);
+        // Each element should contain the array of names
+        assertThat(values.get(0).toString()).isEqualTo("[\"a\",\"b\"]");
+        assertThat(values.get(1).toString()).isEqualTo("[\"c\",\"d\"]");
+    }
+
+    @Test
+    void jsonMGetReturnsNullForMissingKeys() {
+        JsonParser parser = redis.getJsonParser();
+        JsonValue doc = parser.createJsonValue("{\"value\":42}");
+        redis.jsonSet("test:exists", JsonPath.ROOT_PATH, doc);
+
+        List<JsonValue> values = redis.jsonMGet(JsonPath.ROOT_PATH, "test:exists", "test:missing", "test:exists");
+
+        // Should return 3 elements
+        assertThat(values).hasSize(3);
+        assertThat(values.get(0).isNull()).isFalse();
+        assertThat(values.get(1).isNull()).isTrue(); // Missing key returns JSON null
+        assertThat(values.get(2).isNull()).isFalse();
+    }
+
+    @Test
+    void jsonArrpopReturnsNullForNonArrayPaths() {
+        // Create a document with multiple paths, some arrays, some not
+        JsonParser parser = redis.getJsonParser();
+        JsonValue doc = parser
+                .createJsonValue("{\"arr1\":[1,2,3],\"notArray\":\"string\",\"arr2\":[4,5,6],\"nested\":{\"arr3\":[7,8,9]}}");
+        redis.jsonSet("test:mixed", JsonPath.ROOT_PATH, doc);
+
+        // Use wildcard to match all top-level fields
+        JsonPath wildcardPath = JsonPath.of("$.*");
+        List<JsonValue> poppedValues = redis.jsonArrpop("test:mixed", wildcardPath);
+
+        // Should return results for all 4 matched paths
+        // arr1 -> 3, notArray -> null (not array), arr2 -> 6, nested -> null (not array)
+        assertThat(poppedValues).hasSize(4);
+        assertThat(poppedValues.get(0).toString()).isEqualTo("3"); // arr1
+        assertThat(poppedValues.get(1).isNull()).isTrue(); // notArray (string, not array)
+        assertThat(poppedValues.get(2).toString()).isEqualTo("6"); // arr2
+        assertThat(poppedValues.get(3).isNull()).isTrue(); // nested (object, not array)
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { "..mountain_bikes[0:2].model", "$..mountain_bikes[0:2].model" })
+    void jsonGetValueReturnsSingleJsonValue(String path) {
+        JsonPath myPath = JsonPath.of(path);
+
+        JsonValue value = redis.jsonGetValue(BIKES_INVENTORY, myPath);
+        assertThat(value).isNotNull();
+
+        if (path.startsWith("$")) {
+            assertThat(value.toString()).isEqualTo("[\"Phoebe\",\"Quaoar\"]");
+            assertThat(value.isJsonArray()).isTrue();
+            assertThat(value.asJsonArray().size()).isEqualTo(2);
+        } else {
+            assertThat(value.toString()).isEqualTo("\"Phoebe\"");
+        }
+    }
+
+    @Test
+    void jsonGetValueWithArgs() {
+        JsonPath myPath = JsonPath.of("$..model");
+        JsonGetArgs args = JsonGetArgs.Builder.defaults();
+
+        JsonValue value = redis.jsonGetValue(BIKES_INVENTORY, args, myPath);
+        assertThat(value).isNotNull();
+        assertThat(value.toString()).isEqualTo("[\"Phoebe\",\"Quaoar\",\"Weywot\"]");
+    }
+
+    @Test
+    void jsonGetValueWithMultiplePaths() {
+        JsonPath modelPath = JsonPath.of("$..model");
+        JsonPath idPath = JsonPath.of("$..id");
+
+        JsonValue value = redis.jsonGetValue(BIKES_INVENTORY, modelPath, idPath);
+        assertThat(value).isNotNull();
+        // The result should be a JSON object containing both paths as keys
+        assertThat(value.asJsonObject().get("$..model").isJsonArray()).isTrue();
+        assertThat(value.asJsonObject().get("$..id").isJsonArray()).isTrue();
+
+        assertThat(value.asJsonObject().get("$..model").asJsonArray().size()).isEqualTo(3);
+        assertThat(value.asJsonObject().get("$..id").asJsonArray().size()).isEqualTo(3);
+
+        assertThat(value.asJsonObject().get("$..model").asJsonArray().asList().get(0).toString()).isEqualTo("\"Phoebe\"");
+        assertThat(value.asJsonObject().get("$..id").asJsonArray().asList().get(0).toString()).isEqualTo("\"bike:1\"");
+    }
+
+    @Test
+    void jsonGetValueRawReturnsSingleString() {
+        JsonPath myPath = JsonPath.of("$..model");
+
+        String value = redis.jsonGetValueRaw(BIKES_INVENTORY, myPath);
+        assertThat(value).isNotNull();
+        assertThat(value).isEqualTo("[\"Phoebe\",\"Quaoar\",\"Weywot\"]");
+    }
+
+    @Test
+    void jsonGetValueRawWithArgs() {
+        JsonPath myPath = JsonPath.of("$..model");
+        JsonGetArgs args = JsonGetArgs.Builder.indent("  ").newline("\n");
+
+        String value = redis.jsonGetValueRaw(BIKES_INVENTORY, args, myPath);
+        assertThat(value).isNotNull();
+        // Should contain pretty-printed JSON
+        assertThat(value).isEqualTo("[\n  \"Phoebe\",\n  \"Quaoar\",\n  \"Weywot\"\n]");
     }
 
 }

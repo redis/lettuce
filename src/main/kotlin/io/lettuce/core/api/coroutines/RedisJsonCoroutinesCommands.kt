@@ -307,23 +307,23 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @param options the [JsonGetArgs] to use.
      * @param jsonPaths the [JsonPath]s to use to identify the values to get.
      * @return JsonValue the value at path in JSON serialized form, or null if the path does not exist.
-     * @since 6.5
+     * @since 7.6
      */
-    suspend fun jsonGet(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): List<JsonValue>
+    suspend fun jsonGetValue(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): JsonValue?
 
     /**
-     * Return the value at the specified path in JSON serialized form as raw strings.
+     * Return the value at the specified path in JSON serialized form as a raw string.
      * <p>
-     * Behaves like [jsonGet(Any, JsonGetArgs, JsonPath...)] but returns {@code List<String>} with raw JSON instead of
-     * [JsonValue] wrappers.
+     * Behaves like [jsonGetValue(Any, JsonGetArgs, JsonPath...)] but returns `String` with raw JSON instead of
+     * [JsonValue] wrapper.
      *
      * @param key the key holding the JSON document.
      * @param options the [JsonGetArgs] to use.
      * @param jsonPaths the [JsonPath]s to use to identify the values to get.
-     * @return List<String> the value at path in JSON serialized form, or null if the path does not exist.
-     * @since 7.0
+     * @return String the value at path in JSON serialized form, or null if the path does not exist.
+     * @since 7.6
      */
-    suspend fun jsonGetRaw(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): List<String>
+    suspend fun jsonGetValueRaw(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): String?
 
     /**
      * Return the value at the specified path in JSON serialized form. Uses defaults for the [JsonGetArgs].
@@ -339,22 +339,23 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @param key the key holding the JSON document.
      * @param jsonPaths the [JsonPath]s to use to identify the values to get.
      * @return JsonValue the value at path in JSON serialized form, or null if the path does not exist.
-     * @since 6.5
+     * @since 7.6
      */
-    suspend fun jsonGet(key: K, vararg jsonPaths: JsonPath): List<JsonValue>
+    suspend fun jsonGetValue(key: K, vararg jsonPaths: JsonPath): JsonValue?
 
     /**
-     * Return the value at the specified path in JSON serialized form as raw strings. Uses defaults for the [JsonGetArgs].
+     * Return the value at the specified path in JSON serialized form as a raw string. Uses defaults for the
+     * [JsonGetArgs].
      * <p>
-     * Behaves like [jsonGet(Any, JsonPath...)] but returns {@code List<String>} with raw JSON instead of
-     * [JsonValue] wrappers.
+     * Behaves like [jsonGetValue(Any, JsonPath...)] but returns `String` with raw JSON instead of
+     * [JsonValue] wrapper.
      *
      * @param key the key holding the JSON document.
      * @param jsonPaths the [JsonPath]s to use to identify the values to get.
-     * @return List<String> the value at path in JSON serialized form, or null if the path does not exist.
-     * @since 7.0
+     * @return String the value at path in JSON serialized form, or null if the path does not exist.
+     * @since 7.6
      */
-    suspend fun jsonGetRaw(key: K, vararg jsonPaths: JsonPath): List<String>
+    suspend fun jsonGetValueRaw(key: K, vararg jsonPaths: JsonPath): String?
 
     /**
      * Merge a given [JsonValue] with the value matching [JsonPath]. Consequently, JSON values at matching paths are
