@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.tracing.RedisObservation.HighCardinalityCommandKeyNames;
 import io.lettuce.core.tracing.Tracer.Span;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -307,7 +308,7 @@ public class MicrometerTracing implements Tracing {
                     // as we cannot guarantee that the ThreadLocal will be the same as the one that created the async context
                     return null;
                 }
-                // fallback — map empty or keys not found, read ThreadLocal
+                // fallback — no async context map provided, read ThreadLocal
                 return getTraceContext();
             };
         }

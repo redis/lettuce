@@ -517,7 +517,7 @@ public class BraveTracing implements Tracing {
                     // as we cannot guarantee that the ThreadLocal will be the same as the one that created the async context
                     return null;
                 }
-                // fallback — map empty or keys not found, read ThreadLocal
+                // fallback — no async context map provided, read ThreadLocal
                 return getTraceContext();
             };
         }

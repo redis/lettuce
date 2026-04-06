@@ -142,7 +142,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
      * Adapts a {@link ContextView} to the {@link Map} interface. This allows reusing existing code that expects a
      * <code>Map</code> to represent a context.
      */
-    public static class ContextViewMapAdapter extends AbstractMap<Object, Object> {
+    static class ContextViewMapAdapter extends AbstractMap<Object, Object> {
 
         private final ContextView ctx;
 
