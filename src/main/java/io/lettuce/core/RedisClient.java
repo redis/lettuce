@@ -753,48 +753,55 @@ public class RedisClient extends AbstractRedisClient {
 
     private CompletionStage<SocketAddress> lookupRedisAsync(RedisURI sentinelUri) {
 
-        // check if it is possible to get a null timeout
         Duration timeout = sentinelUri.getTimeout();
 
         return connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout).thenCompose(c -> {
-            String sentinelMasterId = sentinelUri.getSentinelMasterId();
+            try {
+                String sentinelMasterId = sentinelUri.getSentinelMasterId();
 
-            CompletableFuture<SocketAddress> resultFuture = new CompletableFuture<>();
+                CompletableFuture<SocketAddress> resultFuture = new CompletableFuture<>();
 
-            // Schedule timeout (Java 8 compatible - no orTimeout)
-            java.util.concurrent.ScheduledFuture<?> timeoutTask = getResources().eventExecutorGroup().next().schedule(() -> {
-                if (!resultFuture.isDone()) {
-                    RedisCommandTimeoutException ex = ExceptionFactory
-                            .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
-                    resultFuture.completeExceptionally(ex);
-                }
-            }, timeout.toMillis(), TimeUnit.MILLISECONDS);
+                // Schedule timeout unless Duration.ZERO which means "do not time out"
+                java.util.concurrent.ScheduledFuture<?> timeoutTask = timeout.isZero() ? null
+                        : getResources().eventExecutorGroup().next().schedule(() -> {
+                            if (!resultFuture.isDone()) {
+                                RedisCommandTimeoutException ex = ExceptionFactory
+                                        .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
+                                resultFuture.completeExceptionally(ex);
+                            }
+                        }, timeout.toMillis(), TimeUnit.MILLISECONDS);
 
-            c.async().getMasterAddrByName(sentinelMasterId).whenComplete((addr, e) -> {
-                timeoutTask.cancel(false);
-                if (e != null) {
-                    resultFuture.completeExceptionally(e);
-                } else {
-                    try {
-                        if (addr instanceof InetSocketAddress) {
-                            InetSocketAddress isa = (InetSocketAddress) addr;
-                            SocketAddress resolved = getResources().socketAddressResolver()
-                                    .resolve(RedisURI.create(isa.getHostString(), isa.getPort()));
-
-                            logger.debug("Resolved Master {} SocketAddress {}:{} to {}", sentinelMasterId, isa.getHostString(),
-                                    isa.getPort(), resolved);
-
-                            resultFuture.complete(resolved);
-                        } else {
-                            resultFuture.complete(addr);
-                        }
-                    } catch (Exception ex) {
-                        resultFuture.completeExceptionally(ex);
+                c.async().getMasterAddrByName(sentinelMasterId).whenComplete((addr, e) -> {
+                    if (timeoutTask != null) {
+                        timeoutTask.cancel(false);
                     }
-                }
-            });
+                    if (e != null) {
+                        resultFuture.completeExceptionally(e);
+                    } else {
+                        try {
+                            if (addr instanceof InetSocketAddress) {
+                                InetSocketAddress isa = (InetSocketAddress) addr;
+                                SocketAddress resolved = getResources().socketAddressResolver()
+                                        .resolve(RedisURI.create(isa.getHostString(), isa.getPort()));
 
-            return resultFuture.whenComplete((result, ex) -> c.closeAsync());
+                                logger.debug("Resolved Master {} SocketAddress {}:{} to {}", sentinelMasterId,
+                                        isa.getHostString(), isa.getPort(), resolved);
+
+                                resultFuture.complete(resolved);
+                            } else {
+                                resultFuture.complete(addr);
+                            }
+                        } catch (Exception ex) {
+                            resultFuture.completeExceptionally(ex);
+                        }
+                    }
+                });
+
+                return resultFuture.whenComplete((result, ex) -> c.closeAsync());
+            } catch (Exception e) {
+                c.closeAsync();
+                throw e;
+            }
         });
     }
 

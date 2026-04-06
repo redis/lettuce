@@ -369,7 +369,7 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
         });
         // handle synchronous exceptions during get(), before obtaining the CompletionStage
         try {
-            // this
+            // this completes both socketAddressFuture and channelReadyFuture exceptionally if an error occurs
             socketAddressSupplier.get().whenComplete((redisAddress, error) -> {
                 if (error != null) {
                     socketAddressFuture.completeExceptionally(error);

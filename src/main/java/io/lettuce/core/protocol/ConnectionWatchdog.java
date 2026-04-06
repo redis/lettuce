@@ -145,8 +145,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
         Supplier<CompletionStage<SocketAddress>> wrappedSocketAddressSupplier = wrapSocketAddressSupplier(
                 socketAddressSupplier);
-        this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier, timer,
-                reconnectWorkers, connectionFacade);
+        this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier);
 
         resetReconnectDelay();
     }

@@ -49,7 +49,7 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
     /**
      * Get a {@link Supplier} for a {@link SocketAddress} for a {@link ConnectionKey}.
      * <p>
-     * This {@link Supplier} resolves the requested endpoint on each {@link Supplier#get()}. *
+     * This {@link Supplier} resolves the requested endpoint on each {@link Supplier#get()}.
      * 
      * @param connectionKey must not be {@code null}.
      * @return a {@link Supplier} for a {@link SocketAddress}.

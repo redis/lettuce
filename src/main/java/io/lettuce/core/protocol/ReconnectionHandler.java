@@ -65,14 +65,10 @@ class ReconnectionHandler {
     private volatile boolean reconnectSuspended;
 
     ReconnectionHandler(ClientOptions clientOptions, Bootstrap bootstrap,
-            Supplier<CompletionStage<SocketAddress>> socketAddressSupplierAsync, Timer timer, ExecutorService reconnectWorkers,
-            ConnectionFacade connectionFacade) {
+            Supplier<CompletionStage<SocketAddress>> socketAddressSupplierAsync) {
 
         LettuceAssert.notNull(socketAddressSupplierAsync, "SocketAddressSupplier must not be null");
         LettuceAssert.notNull(bootstrap, "Bootstrap must not be null");
-        LettuceAssert.notNull(timer, "Timer must not be null");
-        LettuceAssert.notNull(reconnectWorkers, "ExecutorService must not be null");
-        LettuceAssert.notNull(connectionFacade, "ConnectionFacade must not be null");
 
         this.socketAddressSupplierAsync = socketAddressSupplierAsync;
         this.bootstrap = bootstrap;
