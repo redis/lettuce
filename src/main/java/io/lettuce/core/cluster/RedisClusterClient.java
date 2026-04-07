@@ -1187,11 +1187,18 @@ public class RedisClusterClient extends AbstractRedisClient {
                 sortFunction, getResources());
 
         return () -> {
-            if (partitions.isEmpty()) {
-                return CompletableFuture.completedFuture(getResources().socketAddressResolver().resolve(getFirstUri()));
-            }
+            try {
+                if (partitions.isEmpty()) {
+                    RedisURI firstURI = getFirstUri();
+                    SocketAddress socketAddress = getResources().socketAddressResolver().resolve(firstURI);
+                    logger.debug("Resolved SocketAddress {} using {}", socketAddress, firstURI);
+                    return CompletableFuture.completedFuture(socketAddress);
+                }
 
-            return CompletableFuture.completedFuture(socketAddressSupplier.get());
+                return CompletableFuture.completedFuture(socketAddressSupplier.get());
+            } catch (Exception e) {
+                return Futures.failed(e);
+            }
         };
     }
 
