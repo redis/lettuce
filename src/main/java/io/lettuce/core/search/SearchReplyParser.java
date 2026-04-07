@@ -17,8 +17,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Parser for Redis Search (RediSearch) command responses that converts raw Redis data into structured {@link SearchReply}
@@ -68,7 +66,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
      *        <li>Document IDs are always parsed when using this constructor</li>
      *        </ul>
      */
-    public SearchReplyParser(RedisCodec<K, V> codec, SearchArgs<K, V> args) {
+    public SearchReplyParser(RedisCodec<K, V> codec, SearchArgs<K> args) {
         this.codec = codec;
         this.withScores = args != null && args.isWithScores();
         this.withContent = args == null || !args.isNoContent();
@@ -285,9 +283,8 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
 
             if (resultsMap.containsKey(WARNING_KEY)) {
                 ComplexData warning = (ComplexData) resultsMap.get(WARNING_KEY);
-                warning.getDynamicList().forEach(warningEntry -> {
-                    searchReply.addWarning(codec.decodeValue((ByteBuffer) warningEntry));
-                });
+                warning.getDynamicList().forEach(
+                        warningEntry -> searchReply.addWarning(StringCodec.UTF8.decodeValue((ByteBuffer) warningEntry)));
             }
 
             return searchReply;

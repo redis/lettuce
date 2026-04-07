@@ -18,3 +18,4 @@ dependency-reduced-pom.xml
 *.java-version
 *.DS_Store
 .vscode*
+.augment

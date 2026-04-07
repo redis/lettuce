@@ -26,7 +26,7 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testDefaultGeoshapeFieldArgs() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("geometry").build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("geometry").build();
 
         assertThat(field.getName()).isEqualTo("geometry");
         assertThat(field.getFieldType()).isEqualTo("GEOSHAPE");
@@ -41,7 +41,7 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testGeoshapeFieldArgsWithSpherical() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("shape").spherical().build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("shape").spherical().build();
 
         assertThat(field.getName()).isEqualTo("shape");
         assertThat(field.getCoordinateSystem()).hasValue(GeoshapeFieldArgs.CoordinateSystem.SPHERICAL);
@@ -49,7 +49,7 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testGeoshapeFieldArgsWithFlat() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("polygon").flat().build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("polygon").flat().build();
 
         assertThat(field.getName()).isEqualTo("polygon");
         assertThat(field.getCoordinateSystem()).hasValue(GeoshapeFieldArgs.CoordinateSystem.FLAT);
@@ -57,7 +57,7 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testGeoshapeFieldArgsWithAlias() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("complex_geometry").as("geom").build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("complex_geometry").as("geom").build();
 
         assertThat(field.getName()).isEqualTo("complex_geometry");
         assertThat(field.getAs()).hasValue("geom");
@@ -66,7 +66,7 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testGeoshapeFieldArgsWithSortable() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("sortable_shape").sortable().build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("sortable_shape").sortable().build();
 
         assertThat(field.getName()).isEqualTo("sortable_shape");
         assertThat(field.isSortable()).isTrue();
@@ -75,8 +75,8 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testGeoshapeFieldArgsWithAllOptions() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("comprehensive_geoshape").as("shape").flat()
-                .sortable().unNormalizedForm().noIndex().indexEmpty().indexMissing().build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("comprehensive_geoshape").as("shape").flat().sortable()
+                .unNormalizedForm().noIndex().indexEmpty().indexMissing().build();
 
         assertThat(field.getName()).isEqualTo("comprehensive_geoshape");
         assertThat(field.getAs()).hasValue("shape");
@@ -96,8 +96,8 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testGeoshapeFieldArgsBuildWithSpherical() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("spherical_shape").as("shape").spherical()
-                .sortable().indexEmpty().build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("spherical_shape").as("shape").spherical().sortable()
+                .indexEmpty().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -114,8 +114,8 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testGeoshapeFieldArgsBuildWithFlat() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("flat_shape").as("cartesian").flat()
-                .sortable().unNormalizedForm().build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("flat_shape").as("cartesian").flat().sortable()
+                .unNormalizedForm().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -132,7 +132,7 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testGeoshapeFieldArgsMinimalBuild() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("simple_geoshape").build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("simple_geoshape").build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -152,7 +152,7 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testGeoshapeFieldArgsWithNoIndex() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("no_index_shape").noIndex().build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("no_index_shape").noIndex().build();
 
         assertThat(field.getName()).isEqualTo("no_index_shape");
         assertThat(field.isNoIndex()).isTrue();
@@ -169,7 +169,7 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testGeoshapeFieldArgsWithIndexEmpty() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("index_empty_shape").indexEmpty().build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("index_empty_shape").indexEmpty().build();
 
         assertThat(field.getName()).isEqualTo("index_empty_shape");
         assertThat(field.isIndexEmpty()).isTrue();
@@ -177,8 +177,7 @@ class GeoshapeFieldArgsTest {
 
     @Test
     void testGeoshapeFieldArgsWithIndexMissing() {
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("index_missing_shape").indexMissing()
-                .build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("index_missing_shape").indexMissing().build();
 
         assertThat(field.getName()).isEqualTo("index_missing_shape");
         assertThat(field.isIndexMissing()).isTrue();
@@ -187,8 +186,8 @@ class GeoshapeFieldArgsTest {
     @Test
     void testBuilderMethodChaining() {
         // Test that builder methods return the correct type for method chaining
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("chained_geoshape").as("chained_alias")
-                .spherical().sortable().unNormalizedForm().noIndex().indexEmpty().indexMissing().build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("chained_geoshape").as("chained_alias").spherical()
+                .sortable().unNormalizedForm().noIndex().indexEmpty().indexMissing().build();
 
         assertThat(field.getName()).isEqualTo("chained_geoshape");
         assertThat(field.getAs()).hasValue("chained_alias");
@@ -203,7 +202,7 @@ class GeoshapeFieldArgsTest {
     @Test
     void testGeoshapeFieldArgsTypeSpecificBehavior() {
         // Test that geoshape fields have their specific arguments and not others
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("geoshape_field").flat().build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("geoshape_field").flat().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -224,8 +223,8 @@ class GeoshapeFieldArgsTest {
     @Test
     void testGeoshapeFieldArgsInheritedMethods() {
         // Test that inherited methods from FieldArgs work correctly
-        GeoshapeFieldArgs<String> field = GeoshapeFieldArgs.<String> builder().name("inherited_geoshape").noIndex().indexEmpty()
-                .indexMissing().build();
+        GeoshapeFieldArgs field = GeoshapeFieldArgs.builder().name("inherited_geoshape").noIndex().indexEmpty().indexMissing()
+                .build();
 
         assertThat(field.isNoIndex()).isTrue();
         assertThat(field.isIndexEmpty()).isTrue();

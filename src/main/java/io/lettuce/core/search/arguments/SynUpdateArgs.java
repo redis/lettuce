@@ -14,12 +14,10 @@ import io.lettuce.core.protocol.CommandArgs;
  * <p>
  * {@link SynUpdateArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
- * @param <K> Key type.
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  */
-public class SynUpdateArgs<K, V> {
+public class SynUpdateArgs {
 
     private boolean skipInitialScan = false;
 
@@ -40,8 +38,8 @@ public class SynUpdateArgs<K, V> {
          * @return new {@link SynUpdateArgs} with {@literal SKIPINITIALSCAN} set.
          * @see SynUpdateArgs#skipInitialScan()
          */
-        public static <K, V> SynUpdateArgs<K, V> skipInitialScan() {
-            return new SynUpdateArgs<K, V>().skipInitialScan();
+        public static SynUpdateArgs skipInitialScan() {
+            return new SynUpdateArgs().skipInitialScan();
         }
 
     }
@@ -52,7 +50,7 @@ public class SynUpdateArgs<K, V> {
      *
      * @return {@code this} {@link SynUpdateArgs}.
      */
-    public SynUpdateArgs<K, V> skipInitialScan() {
+    public SynUpdateArgs skipInitialScan() {
         this.skipInitialScan = true;
         return this;
     }
@@ -62,7 +60,7 @@ public class SynUpdateArgs<K, V> {
      *
      * @param args the command arguments to append to.
      */
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<?, ?> args) {
         if (skipInitialScan) {
             args.add("SKIPINITIALSCAN");
         }

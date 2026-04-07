@@ -17,23 +17,21 @@ import io.lettuce.core.protocol.CommandArgs;
  * For example, you can search for documents with a price between a certain range or retrieve documents with a specific rating
  * value.
  *
- * @param <K> Key type
  * @see <a href=
  *      "https://redis.io/docs/latest/develop/interact/search-and-query/basic-constructs/field-and-type-options/#numeric-fields">Numeric
  *      Fields</a>
  * @since 6.8
  * @author Tihomir Mateev
  */
-public class NumericFieldArgs<K> extends FieldArgs<K> {
+public class NumericFieldArgs extends FieldArgs {
 
     /**
      * Create a new {@link NumericFieldArgs} using the builder pattern.
      * 
-     * @param <K> Key type
      * @return a new {@link Builder}
      */
-    public static <K> Builder<K> builder() {
-        return new Builder<>();
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -42,19 +40,18 @@ public class NumericFieldArgs<K> extends FieldArgs<K> {
     }
 
     @Override
-    protected void buildTypeSpecificArgs(CommandArgs<K, ?> args) {
+    protected void buildTypeSpecificArgs(CommandArgs<?, ?> args) {
         // Numeric fields have no type-specific arguments beyond the common ones
     }
 
     /**
      * Builder for {@link NumericFieldArgs}.
      * 
-     * @param <K> Key type
      */
-    public static class Builder<K> extends FieldArgs.Builder<K, NumericFieldArgs<K>, Builder<K>> {
+    public static class Builder extends FieldArgs.Builder<NumericFieldArgs, Builder> {
 
         public Builder() {
-            super(new NumericFieldArgs<>());
+            super(new NumericFieldArgs());
         }
 
     }

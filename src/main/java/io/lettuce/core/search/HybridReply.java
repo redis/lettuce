@@ -36,7 +36,7 @@ public class HybridReply<K, V> {
 
     private final List<Map<K, V>> results;
 
-    private final List<V> warnings = new ArrayList<>();
+    private final List<String> warnings = new ArrayList<>();
 
     /**
      * Creates a new empty HybridReply instance.
@@ -98,7 +98,7 @@ public class HybridReply<K, V> {
     /**
      * @return a read-only view of all warnings reported by the server
      */
-    public List<V> getWarnings() {
+    public List<String> getWarnings() {
         return Collections.unmodifiableList(warnings);
     }
 
@@ -107,7 +107,7 @@ public class HybridReply<K, V> {
      *
      * @param warning the warning to add
      */
-    public void addWarning(V warning) {
+    public void addWarning(String warning) {
         this.warnings.add(warning);
     }
 

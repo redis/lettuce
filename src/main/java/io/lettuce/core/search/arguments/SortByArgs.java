@@ -13,14 +13,13 @@ import io.lettuce.core.protocol.CommandKeyword;
 /**
  * Argument list builder for {@code SORTBY} clause.
  *
- * @param <K> Key type.
  * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/sorting/">Sorting</a>
  * @since 6.8
  * @author Tihomir Mateev
  */
-public class SortByArgs<K> {
+public class SortByArgs {
 
-    private K attribute;
+    private String attribute;
 
     private boolean isDescending;
 
@@ -30,10 +29,9 @@ public class SortByArgs<K> {
      * Used to build a new instance of the {@link SortByArgs}.
      *
      * @return a {@link SortByArgs.Builder} that provides the option to build up a new instance of the {@link SearchArgs}
-     * @param <K> the key type
      */
-    public static <K> SortByArgs.Builder<K> builder() {
-        return new SortByArgs.Builder<>();
+    public static SortByArgs.Builder builder() {
+        return new SortByArgs.Builder();
     }
 
     /**
@@ -42,12 +40,11 @@ public class SortByArgs<K> {
      * As a final step the {@link SortByArgs.Builder#build()} method needs to be executed to create the final {@link SortByArgs}
      * instance.
      *
-     * @param <K> the key type
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      */
-    public static class Builder<K> {
+    public static class Builder {
 
-        private final SortByArgs<K> sortByArgs = new SortByArgs<>();
+        private final SortByArgs sortByArgs = new SortByArgs();
 
         /**
          * Add an attribute to sort by.
@@ -55,7 +52,7 @@ public class SortByArgs<K> {
          * @param attribute the attribute to sort by
          * @return the instance of the current {@link SortByArgs.Builder} for the purpose of method chaining
          */
-        public SortByArgs.Builder<K> attribute(K attribute) {
+        public SortByArgs.Builder attribute(String attribute) {
             sortByArgs.attribute = attribute;
             return this;
         }
@@ -65,7 +62,7 @@ public class SortByArgs<K> {
          *
          * @return the instance of the current {@link SortByArgs.Builder} for the purpose of method chaining
          */
-        public SortByArgs.Builder<K> descending() {
+        public SortByArgs.Builder descending() {
             sortByArgs.isDescending = true;
             return this;
         }
@@ -75,7 +72,7 @@ public class SortByArgs<K> {
          *
          * @return the instance of the current {@link SortByArgs.Builder} for the purpose of method chaining
          */
-        public SortByArgs.Builder<K> withCount() {
+        public SortByArgs.Builder withCount() {
             sortByArgs.withCount = true;
             return this;
         }
@@ -85,7 +82,7 @@ public class SortByArgs<K> {
          *
          * @return the {@link SortByArgs}
          */
-        public SortByArgs<K> build() {
+        public SortByArgs build() {
             return sortByArgs;
         }
 
@@ -96,8 +93,8 @@ public class SortByArgs<K> {
      *
      * @param args the {@link CommandArgs} object
      */
-    public void build(CommandArgs<K, ?> args) {
-        args.add(CommandKeyword.SORTBY).addKey(attribute);
+    public void build(CommandArgs<?, ?> args) {
+        args.add(CommandKeyword.SORTBY).add(attribute);
 
         if (this.isDescending) {
             args.add(CommandKeyword.DESC);

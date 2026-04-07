@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
 
@@ -28,27 +28,22 @@ import io.lettuce.core.output.ComplexDataParser;
  * structure properly represents the synonym relationships returned by Redis Search.
  * </p>
  *
- * @param <K> Key type.
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  */
-public class SynonymMapParser<K, V> implements ComplexDataParser<Map<V, List<V>>> {
+public class SynonymMapParser implements ComplexDataParser<Map<String, List<String>>> {
 
-    private final RedisCodec<K, V> codec;
-
-    public SynonymMapParser(RedisCodec<K, V> codec) {
-        this.codec = codec;
+    public SynonymMapParser() {
     }
 
     /**
      * Parse the FT.SYNDUMP response data, automatically detecting RESP2 vs RESP3 format.
      *
      * @param data the response data from Redis
-     * @return a map where keys are terms and values are lists of synonyms for each term
+     * @return a map where keys are terms and values are lists of synonym group IDs for each term
      */
     @Override
-    public Map<V, List<V>> parse(ComplexData data) {
+    public Map<String, List<String>> parse(ComplexData data) {
 
         if (data == null) {
             return new LinkedHashMap<>();
@@ -64,9 +59,9 @@ public class SynonymMapParser<K, V> implements ComplexDataParser<Map<V, List<V>>
     /**
      * Parse FT.SYNDUMP response in RESP2 format (array-based with alternating key-value pairs).
      */
-    private Map<V, List<V>> parseResp2(ComplexData data) {
+    private Map<String, List<String>> parseResp2(ComplexData data) {
         List<Object> synonymArray = data.getDynamicList();
-        Map<V, List<V>> synonymMap = new LinkedHashMap<>();
+        Map<String, List<String>> synonymMap = new LinkedHashMap<>();
 
         // RESP2: Parse alternating key-value pairs
         // Structure: [term1, [synonym1, synonym2], term2, [synonym3, synonym4], ...]
@@ -76,13 +71,13 @@ public class SynonymMapParser<K, V> implements ComplexDataParser<Map<V, List<V>>
             }
 
             // Decode the term (key)
-            V term = codec.decodeValue((ByteBuffer) synonymArray.get(i++));
+            String term = StringCodec.UTF8.decodeValue((ByteBuffer) synonymArray.get(i++));
 
             // Decode the synonyms (value - should be a list)
             ComplexData synonymsData = (ComplexData) synonymArray.get(i++);
             List<Object> synonims = synonymsData.getDynamicList();
 
-            List<V> decodedSynonyms = synonims.stream().map(synonym -> codec.decodeValue((ByteBuffer) synonym))
+            List<String> decodedSynonyms = synonims.stream().map(synonym -> StringCodec.UTF8.decodeValue((ByteBuffer) synonym))
                     .collect(Collectors.toList());
             synonymMap.put(term, decodedSynonyms);
         }
@@ -93,21 +88,21 @@ public class SynonymMapParser<K, V> implements ComplexDataParser<Map<V, List<V>>
     /**
      * Parse FT.SYNDUMP response in RESP3 format (map-based).
      */
-    private Map<V, List<V>> parseResp3(ComplexData data) {
+    private Map<String, List<String>> parseResp3(ComplexData data) {
         Map<Object, Object> synonymMapRaw = data.getDynamicMap();
-        Map<V, List<V>> synonymMap = new LinkedHashMap<>();
+        Map<String, List<String>> synonymMap = new LinkedHashMap<>();
 
         // RESP3: Parse native map structure
         // Structure: {term1: [synonym1, synonym2], term2: [synonym3, synonym4], ...}
         for (Map.Entry<Object, Object> entry : synonymMapRaw.entrySet()) {
             // Decode the term (key)
-            V term = codec.decodeValue((ByteBuffer) entry.getKey());
+            String term = StringCodec.UTF8.decodeValue((ByteBuffer) entry.getKey());
 
             // Decode the synonyms (value - should be a list)
             Object synonymsData = entry.getValue();
 
             List<Object> synonymsList = ((ComplexData) synonymsData).getDynamicList();
-            List<V> synonyms = synonymsList.stream().map(synonym -> codec.decodeValue((ByteBuffer) synonym))
+            List<String> synonyms = synonymsList.stream().map(synonym -> StringCodec.UTF8.decodeValue((ByteBuffer) synonym))
                     .collect(Collectors.toList());
 
             synonymMap.put(term, synonyms);

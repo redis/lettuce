@@ -6,7 +6,6 @@
  */
 package io.lettuce.core.search;
 
-import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
@@ -31,24 +30,20 @@ import java.util.Map;
  * <li>An array of suggestions, where each suggestion is a 2-element array of [score, suggestion]</li>
  * </ol>
  *
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  */
-public class SpellCheckResultParser<K, V> implements ComplexDataParser<SpellCheckResult<V>> {
+public class SpellCheckResultParser implements ComplexDataParser<SpellCheckResult> {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SpellCheckResultParser.class);
 
-    private final RedisCodec<K, V> codec;
-
-    public SpellCheckResultParser(RedisCodec<K, V> codec) {
-        this.codec = codec;
+    public SpellCheckResultParser() {
     }
 
     @Override
-    public SpellCheckResult<V> parse(ComplexData data) {
+    public SpellCheckResult parse(ComplexData data) {
         if (data == null) {
-            return new SpellCheckResult<>();
+            return new SpellCheckResult();
         }
 
         if (data.isList()) {
@@ -71,13 +66,13 @@ public class SpellCheckResultParser<K, V> implements ComplexDataParser<SpellChec
      * ]
      * </pre>
      */
-    class SpellCheckResp3Parser implements ComplexDataParser<SpellCheckResult<V>> {
+    class SpellCheckResp3Parser implements ComplexDataParser<SpellCheckResult> {
 
         private final ByteBuffer resultsKeyword = StringCodec.UTF8.encodeKey("results");
 
         @Override
-        public SpellCheckResult<V> parse(ComplexData data) {
-            SpellCheckResult<V> result = new SpellCheckResult<>();
+        public SpellCheckResult parse(ComplexData data) {
+            SpellCheckResult result = new SpellCheckResult();
 
             if (data == null) {
                 return null;
@@ -96,29 +91,29 @@ public class SpellCheckResultParser<K, V> implements ComplexDataParser<SpellChec
             for (Object term : resultsMap.keySet()) {
 
                 // Key of the inner map is the misspelled term
-                V misspelledTerm = codec.decodeValue((ByteBuffer) term);
+                String misspelledTerm = StringCodec.UTF8.decodeValue((ByteBuffer) term);
 
                 // Value of the inner map is the suggestions array
                 ComplexData termData = (ComplexData) resultsMap.get(term);
                 List<Object> suggestionsArray = termData.getDynamicList();
 
-                List<SpellCheckResult.Suggestion<V>> suggestions = parseSuggestions(suggestionsArray);
-                result.addMisspelledTerm(new SpellCheckResult.MisspelledTerm<>(misspelledTerm, suggestions));
+                List<SpellCheckResult.Suggestion> suggestions = parseSuggestions(suggestionsArray);
+                result.addMisspelledTerm(new SpellCheckResult.MisspelledTerm(misspelledTerm, suggestions));
             }
 
             return result;
         }
 
-        private List<SpellCheckResult.Suggestion<V>> parseSuggestions(List<Object> suggestionsArray) {
-            List<SpellCheckResult.Suggestion<V>> suggestions = new ArrayList<>();
+        private List<SpellCheckResult.Suggestion> parseSuggestions(List<Object> suggestionsArray) {
+            List<SpellCheckResult.Suggestion> suggestions = new ArrayList<>();
 
             for (Object suggestionObj : suggestionsArray) {
                 Map<Object, Object> suggestionMap = ((ComplexData) suggestionObj).getDynamicMap();
 
                 for (Object suggestion : suggestionMap.keySet()) {
                     double score = (double) suggestionMap.get(suggestion);
-                    V suggestionValue = codec.decodeValue((ByteBuffer) suggestion);
-                    suggestions.add(new SpellCheckResult.Suggestion<>(score, suggestionValue));
+                    String suggestionValue = StringCodec.UTF8.decodeValue((ByteBuffer) suggestion);
+                    suggestions.add(new SpellCheckResult.Suggestion(score, suggestionValue));
                 }
             }
 
@@ -140,13 +135,13 @@ public class SpellCheckResultParser<K, V> implements ComplexDataParser<SpellChec
      * ]
      * </pre>
      */
-    class SpellCheckResp2Parser implements ComplexDataParser<SpellCheckResult<V>> {
+    class SpellCheckResp2Parser implements ComplexDataParser<SpellCheckResult> {
 
         private final ByteBuffer termKeyword = StringCodec.UTF8.encodeKey("TERM");
 
         @Override
-        public SpellCheckResult<V> parse(ComplexData data) {
-            SpellCheckResult<V> result = new SpellCheckResult<>();
+        public SpellCheckResult parse(ComplexData data) {
+            SpellCheckResult result = new SpellCheckResult();
 
             List<Object> elements = data.getDynamicList();
             if (elements == null || elements.isEmpty()) {
@@ -171,21 +166,21 @@ public class SpellCheckResultParser<K, V> implements ComplexDataParser<SpellChec
                 }
 
                 // Second element is the misspelled term
-                V misspelledTerm = decodeValue(termContents.get(1));
+                String misspelledTerm = decodeString(termContents.get(1));
 
                 // Third element is the suggestions array
                 ComplexData suggestionsObj = (ComplexData) termContents.get(2);
                 List<Object> suggestionsArray = suggestionsObj.getDynamicList();
-                List<SpellCheckResult.Suggestion<V>> suggestions = parseSuggestions(suggestionsArray);
+                List<SpellCheckResult.Suggestion> suggestions = parseSuggestions(suggestionsArray);
 
-                result.addMisspelledTerm(new SpellCheckResult.MisspelledTerm<>(misspelledTerm, suggestions));
+                result.addMisspelledTerm(new SpellCheckResult.MisspelledTerm(misspelledTerm, suggestions));
             }
 
             return result;
         }
 
-        private List<SpellCheckResult.Suggestion<V>> parseSuggestions(List<Object> suggestionsArray) {
-            List<SpellCheckResult.Suggestion<V>> suggestions = new ArrayList<>();
+        private List<SpellCheckResult.Suggestion> parseSuggestions(List<Object> suggestionsArray) {
+            List<SpellCheckResult.Suggestion> suggestions = new ArrayList<>();
 
             for (Object suggestionObj : suggestionsArray) {
                 List<Object> suggestionData = ((ComplexData) suggestionObj).getDynamicList();
@@ -199,9 +194,9 @@ public class SpellCheckResultParser<K, V> implements ComplexDataParser<SpellChec
                 double score = parseScore(suggestionData.get(0));
 
                 // Second element is the suggestion
-                V suggestion = decodeValue(suggestionData.get(1));
+                String suggestion = decodeString(suggestionData.get(1));
 
-                suggestions.add(new SpellCheckResult.Suggestion<>(score, suggestion));
+                suggestions.add(new SpellCheckResult.Suggestion(score, suggestion));
             }
 
             return suggestions;
@@ -212,16 +207,13 @@ public class SpellCheckResultParser<K, V> implements ComplexDataParser<SpellChec
     /**
      * Helper method to decode values that can be either ByteBuffer or String objects.
      */
-    @SuppressWarnings("unchecked")
-    private V decodeValue(Object value) {
+    private String decodeString(Object value) {
         if (value instanceof ByteBuffer) {
-            return codec.decodeValue((ByteBuffer) value);
+            return StringCodec.UTF8.decodeValue((ByteBuffer) value);
         } else if (value instanceof String) {
-            // For test scenarios where strings are passed directly
-            return (V) value;
+            return (String) value;
         } else {
-            // Fallback - try to cast directly
-            return (V) value;
+            return String.valueOf(value);
         }
     }
 
