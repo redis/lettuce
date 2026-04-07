@@ -22,7 +22,6 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * represent unstructured data such as text, images, or other complex features. Redis allows you to search for similar vectors
  * using vector search algorithms like cosine similarity, Euclidean distance, and inner product.
  *
- * @param <K> Key type
  * @see <a href=
  *      "https://redis.io/docs/latest/develop/interact/search-and-query/basic-constructs/field-and-type-options/#vector-fields">Vector
  *      Fields</a>
@@ -30,7 +29,7 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * @author Tihomir Mateev
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class VectorFieldArgs<K> extends FieldArgs<K> {
+public class VectorFieldArgs extends FieldArgs {
 
     /**
      * Vector similarity index algorithms.
@@ -138,11 +137,10 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
     /**
      * Create a new {@link VectorFieldArgs} using the builder pattern.
      * 
-     * @param <K> Key type
      * @return a new {@link Builder}
      */
-    public static <K> Builder<K> builder() {
-        return new Builder<>();
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -169,7 +167,7 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
     }
 
     @Override
-    protected void buildTypeSpecificArgs(CommandArgs<K, ?> args) {
+    protected void buildTypeSpecificArgs(CommandArgs<?, ?> args) {
         algorithm.ifPresent(alg -> args.add(alg.toString()));
 
         if (!attributes.isEmpty()) {
@@ -184,12 +182,11 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
     /**
      * Builder for {@link VectorFieldArgs}.
      * 
-     * @param <K> Key type
      */
-    public static class Builder<K> extends FieldArgs.Builder<K, VectorFieldArgs<K>, Builder<K>> {
+    public static class Builder extends FieldArgs.Builder<VectorFieldArgs, Builder> {
 
         public Builder() {
-            super(new VectorFieldArgs<>());
+            super(new VectorFieldArgs());
         }
 
         /**
@@ -198,7 +195,7 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
          * @param algorithm the algorithm
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> algorithm(Algorithm algorithm) {
+        public Builder algorithm(Algorithm algorithm) {
             instance.algorithm = Optional.of(algorithm);
             return self();
         }
@@ -208,7 +205,7 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
          * 
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> flat() {
+        public Builder flat() {
             return algorithm(Algorithm.FLAT);
         }
 
@@ -217,7 +214,7 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
          *
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> hnsw() {
+        public Builder hnsw() {
             return algorithm(Algorithm.HNSW);
         }
 
@@ -236,7 +233,7 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
          * @return the instance of the {@link Builder} for the purpose of method chaining
          * @since Redis 8.2
          */
-        public Builder<K> svsVamana() {
+        public Builder svsVamana() {
             return algorithm(Algorithm.SVS_VAMANA);
         }
 
@@ -246,7 +243,7 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
          * @param type the vector data type
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> type(VectorType type) {
+        public Builder type(VectorType type) {
             instance.attributes.put(TYPE.toString(), type.toString());
             return self();
         }
@@ -257,7 +254,7 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
          * @param dimensions the number of dimensions
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> dimensions(int dimensions) {
+        public Builder dimensions(int dimensions) {
             instance.attributes.put(DIM.toString(), dimensions);
             return self();
         }
@@ -268,7 +265,7 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
          * @param metric the distance metric
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> distanceMetric(DistanceMetric metric) {
+        public Builder distanceMetric(DistanceMetric metric) {
             instance.attributes.put(DISTANCE_METRIC.toString(), metric.toString());
             return self();
         }
@@ -280,7 +277,7 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
          * @param value the attribute value
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> attribute(String name, Object value) {
+        public Builder attribute(String name, Object value) {
             instance.attributes.put(name, value);
             return self();
         }

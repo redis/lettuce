@@ -99,8 +99,7 @@ class RedisAdvancedClusterReactiveCommandsImplTest {
 
     @Test
     void ftAggregate_stampsNodeId_whenCursorCreated() {
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
-                .withCursor(AggregateArgs.WithCursor.of(1L)).build();
+        AggregateArgs<String> args = AggregateArgs.<String> builder().withCursor(AggregateArgs.WithCursor.of(1L)).build();
 
         AggregationReply<String, String> replyWithCursor = new AggregationReply<>();
         replyWithCursor.setCursor(AggregationReply.Cursor.of(42L, null));
@@ -122,8 +121,8 @@ class RedisAdvancedClusterReactiveCommandsImplTest {
         when(nodeReactive.ftAggregate(anyString(), anyString(), any())).thenReturn(Mono.just(replyNoCursor));
         when(nodeReactive.clusterMyId()).thenReturn(Mono.just("node-1"));
 
-        AggregationReply<String, String> out = reactive
-                .ftAggregate("idx", "*", AggregateArgs.<String, String> builder().build()).block();
+        AggregationReply<String, String> out = reactive.ftAggregate("idx", "*", AggregateArgs.<String> builder().build())
+                .block();
 
         assertThat(out).isNotNull();
         assertThat(out.getCursor()).isEmpty();

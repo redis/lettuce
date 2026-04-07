@@ -18,33 +18,31 @@ import io.lettuce.core.search.arguments.ScoringFunction;
 /**
  * Arguments for the SEARCH clause in FT.HYBRID command. Configures text search query, scoring function, and score aliasing.
  *
- * @param <K> Key type
- * @param <V> Value type
  * @author Aleksandar Todorov
  * @since 7.5
  * @see ScoringFunction
  * @see Scorer
  */
 @Experimental
-public class HybridSearchArgs<K, V> {
+public class HybridSearchArgs {
 
-    private final V query;
+    private final String query;
 
     private final Scorer scorer;
 
-    private final K scoreAlias;
+    private final String scoreAlias;
 
-    private HybridSearchArgs(Builder<K, V> builder) {
+    private HybridSearchArgs(Builder builder) {
         this.query = builder.query;
         this.scorer = builder.scorer;
         this.scoreAlias = builder.scoreAlias;
     }
 
-    public static <K, V> Builder<K, V> builder() {
-        return new Builder<>();
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public V getQuery() {
+    public String getQuery() {
         return query;
     }
 
@@ -52,17 +50,17 @@ public class HybridSearchArgs<K, V> {
         return Optional.ofNullable(scorer);
     }
 
-    public Optional<K> getScoreAlias() {
+    public Optional<String> getScoreAlias() {
         return Optional.ofNullable(scoreAlias);
     }
 
-    public static class Builder<K, V> {
+    public static class Builder {
 
-        private V query;
+        private String query;
 
         private Scorer scorer;
 
-        private K scoreAlias;
+        private String scoreAlias;
 
         /**
          * Set the text search query.
@@ -70,7 +68,7 @@ public class HybridSearchArgs<K, V> {
          * @param query the search query
          * @return this builder
          */
-        public Builder<K, V> query(V query) {
+        public Builder query(String query) {
             LettuceAssert.notNull(query, "Query must not be null");
             this.query = query;
             return this;
@@ -82,19 +80,19 @@ public class HybridSearchArgs<K, V> {
          * @param scorer the scorer to use
          * @return this builder
          */
-        public Builder<K, V> scorer(Scorer scorer) {
+        public Builder scorer(Scorer scorer) {
             LettuceAssert.notNull(scorer, "Scorer must not be null");
             this.scorer = scorer;
             return this;
         }
 
         /**
-         * Set an alias for the text search score field.
+         * Set an alias for the text search score field (YIELD_SCORE_AS).
          *
-         * @param alias the field name to use for the search score
+         * @param alias the label to assign to the combined fusion score
          * @return this builder
          */
-        public Builder<K, V> scoreAlias(K alias) {
+        public Builder scoreAlias(String alias) {
             LettuceAssert.notNull(alias, "Score alias must not be null");
             this.scoreAlias = alias;
             return this;
@@ -105,9 +103,9 @@ public class HybridSearchArgs<K, V> {
          *
          * @return the configured arguments
          */
-        public HybridSearchArgs<K, V> build() {
+        public HybridSearchArgs build() {
             LettuceAssert.notNull(query, "Query must not be null");
-            return new HybridSearchArgs<>(this);
+            return new HybridSearchArgs(this);
         }
 
     }
@@ -117,9 +115,9 @@ public class HybridSearchArgs<K, V> {
      *
      * @param args the {@link CommandArgs} to append to
      */
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<?, ?> args) {
         args.add(CommandKeyword.SEARCH);
-        args.addValue(query);
+        args.add(query);
 
         // SCORER inside SEARCH
         if (scorer != null) {
@@ -129,7 +127,7 @@ public class HybridSearchArgs<K, V> {
         // YIELD_SCORE_AS for SEARCH
         if (scoreAlias != null) {
             args.add(CommandKeyword.YIELD_SCORE_AS);
-            args.addKey(scoreAlias);
+            args.add(scoreAlias);
         }
     }
 
