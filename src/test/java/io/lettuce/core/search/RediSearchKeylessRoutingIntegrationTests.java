@@ -100,13 +100,12 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         connection.sync().flushall();
 
         // Schema for text search tests
-        FieldArgs<String> title = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> author = TagFieldArgs.<String> builder().name("author").build();
-        FieldArgs<String> year = NumericFieldArgs.<String> builder().name("year").sortable().build();
-        FieldArgs<String> rating = NumericFieldArgs.<String> builder().name("rating").sortable().build();
+        FieldArgs title = TextFieldArgs.builder().name("title").build();
+        FieldArgs author = TagFieldArgs.builder().name("author").build();
+        FieldArgs year = NumericFieldArgs.builder().name("year").sortable().build();
+        FieldArgs rating = NumericFieldArgs.builder().name("rating").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         assertThat(connection.sync().ftCreate(INDEX, createArgs, Arrays.asList(title, author, year, rating))).isEqualTo("OK");
 
         // Data spread across slots
@@ -137,10 +136,9 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         connection.sync().flushall();
     }
 
-    private AggregateArgs<String, String> aggWithCursor(long count) {
-        return AggregateArgs.<String, String> builder()
-                .groupBy(AggregateArgs.GroupBy.<String, String> of("author")
-                        .reduce(AggregateArgs.Reducer.<String, String> avg("@rating").as("avg_rating")))
+    private AggregateArgs<String> aggWithCursor(long count) {
+        return AggregateArgs.<String> builder()
+                .groupBy(AggregateArgs.GroupBy.of("author").reduce(AggregateArgs.Reducer.avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(count)).build();
     }
 
@@ -153,7 +151,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
 
         Set<String> nodeIds = new HashSet<>();
         int observedCursors = 0;
-        AggregateArgs<String, String> args = aggWithCursor(1L);
+        AggregateArgs<String> args = aggWithCursor(1L);
         for (int i = 0; i < 40 && nodeIds.size() < upstreams; i++) {
             AggregationReply<String, String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
             assertThat(first).isNotNull();
@@ -182,7 +180,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
 
         Set<String> nodeIds = new HashSet<>();
         int observedCursors = 0;
-        AggregateArgs<String, String> args = aggWithCursor(1L);
+        AggregateArgs<String> args = aggWithCursor(1L);
         for (int i = 0; i < 60 && nodeIds.size() < replicas; i++) {
             AggregationReply<String, String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
             assertThat(first).isNotNull();
@@ -218,10 +216,9 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         clearLatencyMetrics();
 
         String tmpIndex = INDEX + ":create:" + UUID.randomUUID();
-        FieldArgs<String> title = TextFieldArgs.<String> builder().name("title").build();
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
-        assertThat(connection.sync().ftCreate(tmpIndex, createArgs, Arrays.asList(title))).isEqualTo("OK");
+        FieldArgs title = TextFieldArgs.builder().name("title").build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
+        assertThat(connection.sync().ftCreate(tmpIndex, createArgs, Collections.singletonList(title))).isEqualTo("OK");
 
         Set<String> nodes = observedNodeIdsFor(CommandType.FT_CREATE);
         assertThat(nodes).isNotEmpty();
@@ -356,25 +353,21 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         return buffer.array();
     }
 
-    private HybridArgs<String, String> hybridArgs() {
+    private HybridArgs hybridArgs() {
         float[] queryVector = { 0.15f, 0.25f, 0.35f, 0.45f };
-        return HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics}").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(5)).build())
+        return HybridArgs.builder().search(HybridSearchArgs.builder().query("@category:{electronics}").build()).vectorSearch(
+                HybridVectorArgs.builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(5)).build())
                 .param("vec", floatArrayToByteArray(queryVector)).build();
     }
 
     private void prepareHybrid() {
         // Schema for hybrid search tests
-        FieldArgs<String> category = TagFieldArgs.<String> builder().name("category").build();
-        FieldArgs<String> price = NumericFieldArgs.<String> builder().name("price").sortable().build();
-        FieldArgs<String> embedding = VectorFieldArgs.<String> builder().name("embedding").hnsw()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
-                .build();
+        FieldArgs category = TagFieldArgs.builder().name("category").build();
+        FieldArgs price = NumericFieldArgs.builder().name("price").sortable().build();
+        FieldArgs embedding = VectorFieldArgs.builder().name("embedding").hnsw().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
 
-        CreateArgs<String, String> hybridCreateArgs = CreateArgs.<String, String> builder().withPrefix(HYBRID_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs hybridCreateArgs = CreateArgs.builder().withPrefix(HYBRID_PREFIX).on(CreateArgs.TargetType.HASH).build();
         assertThat(connection.sync().ftCreate(HYBRID_INDEX, hybridCreateArgs, Arrays.asList(category, price, embedding)))
                 .isEqualTo("OK");
 

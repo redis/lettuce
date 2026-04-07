@@ -19,19 +19,18 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * This class contains common options shared by all field types. Specific field types should extend this class and add their
  * type-specific options.
  *
- * @param <K> Key type
  * @see <a href= "https://redis.io/docs/latest/develop/interact/search-and-query/basic-constructs/field-and-type-options/">Field
  *      and type options</a>
  * @since 6.8
  * @author Tihomir Mateev
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public abstract class FieldArgs<K> {
+public abstract class FieldArgs {
 
     // Common field properties
-    protected K name;
+    protected String name;
 
-    protected Optional<K> as = Optional.empty();
+    protected Optional<String> as = Optional.empty();
 
     protected boolean sortable;
 
@@ -55,7 +54,7 @@ public abstract class FieldArgs<K> {
      *
      * @return the field name
      */
-    public K getName() {
+    public String getName() {
         return name;
     }
 
@@ -64,7 +63,7 @@ public abstract class FieldArgs<K> {
      *
      * @return the field alias
      */
-    public Optional<K> getAs() {
+    public Optional<String> getAs() {
         return as;
     }
 
@@ -118,9 +117,9 @@ public abstract class FieldArgs<K> {
      *
      * @param args the command arguments to modify
      */
-    public final void build(CommandArgs<K, ?> args) {
-        args.add(name.toString());
-        as.ifPresent(a -> args.add(AS).add(a.toString()));
+    public final void build(CommandArgs<?, ?> args) {
+        args.add(name);
+        as.ifPresent(a -> args.add(AS).add(a));
         args.add(getFieldType());
 
         // Add type-specific arguments
@@ -149,16 +148,15 @@ public abstract class FieldArgs<K> {
      *
      * @param args the command arguments to modify
      */
-    protected abstract void buildTypeSpecificArgs(CommandArgs<K, ?> args);
+    protected abstract void buildTypeSpecificArgs(CommandArgs<?, ?> args);
 
     /**
      * Base builder for field arguments.
      *
-     * @param <K> Key type
      * @param <T> The concrete field args type
      * @param <B> The concrete builder type
      */
-    public abstract static class Builder<K, T extends FieldArgs<K>, B extends Builder<K, T, B>> {
+    public abstract static class Builder<T extends FieldArgs, B extends Builder<T, B>> {
 
         protected final T instance;
 
@@ -187,7 +185,7 @@ public abstract class FieldArgs<K> {
          * @param name the name of the field
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public B name(K name) {
+        public B name(String name) {
             instance.name = name;
             return self();
         }
@@ -199,7 +197,7 @@ public abstract class FieldArgs<K> {
          * @param as the field name to be used in queries
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public B as(K as) {
+        public B as(String as) {
             instance.as = Optional.of(as);
             return self();
         }

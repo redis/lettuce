@@ -16,23 +16,21 @@ import io.lettuce.core.protocol.CommandArgs;
  * which allow you to implement location-based search functionality in your applications such as finding nearby restaurants,
  * stores, or any other points of interest.
  *
- * @param <K> Key type
  * @see <a href=
  *      "https://redis.io/docs/latest/develop/interact/search-and-query/basic-constructs/field-and-type-options/#geo-fields">Geo
  *      Fields</a>
  * @since 6.8
  * @author Tihomir Mateev
  */
-public class GeoFieldArgs<K> extends FieldArgs<K> {
+public class GeoFieldArgs extends FieldArgs {
 
     /**
      * Create a new {@link GeoFieldArgs} using the builder pattern.
      * 
-     * @param <K> Key type
      * @return a new {@link Builder}
      */
-    public static <K> Builder<K> builder() {
-        return new Builder<>();
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -41,19 +39,18 @@ public class GeoFieldArgs<K> extends FieldArgs<K> {
     }
 
     @Override
-    protected void buildTypeSpecificArgs(CommandArgs<K, ?> args) {
+    protected void buildTypeSpecificArgs(CommandArgs<?, ?> args) {
         // Geo fields have no type-specific arguments beyond the common ones
     }
 
     /**
      * Builder for {@link GeoFieldArgs}.
      * 
-     * @param <K> Key type
      */
-    public static class Builder<K> extends FieldArgs.Builder<K, GeoFieldArgs<K>, Builder<K>> {
+    public static class Builder extends FieldArgs.Builder<GeoFieldArgs, Builder> {
 
         public Builder() {
-            super(new GeoFieldArgs<>());
+            super(new GeoFieldArgs());
         }
 
     }

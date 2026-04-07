@@ -20,21 +20,19 @@ import io.lettuce.core.protocol.CommandKeyword;
  * {
  *     &#64;code
  *     // Get first 10 results
- *     Limit<String, String> limit = Limit.of(0, 10);
+ *     Limit limit = Limit.of(0, 10);
  *
  *     // Get results 50-100
- *     Limit<String, String> paginated = Limit.of(50, 50);
+ *     Limit paginated = Limit.of(50, 50);
  * }
  * </pre>
  *
- * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @since 7.5
  * @see PostProcessingOperation
  */
 @Experimental
-public class Limit<K, V> implements PostProcessingOperation<K, V> {
+public class Limit implements PostProcessingOperation {
 
     private final long offset;
 
@@ -56,12 +54,10 @@ public class Limit<K, V> implements PostProcessingOperation<K, V> {
      *
      * @param offset the zero-based starting index
      * @param num the maximum number of results to return
-     * @param <K> Key type
-     * @param <V> Value type
      * @return new Limit instance
      */
-    public static <K, V> Limit<K, V> of(long offset, long num) {
-        return new Limit<>(offset, num);
+    public static Limit of(long offset, long num) {
+        return new Limit(offset, num);
     }
 
     /**
@@ -83,7 +79,7 @@ public class Limit<K, V> implements PostProcessingOperation<K, V> {
     }
 
     @Override
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<?, ?> args) {
         args.add(CommandKeyword.LIMIT);
         args.add(offset);
         args.add(num);

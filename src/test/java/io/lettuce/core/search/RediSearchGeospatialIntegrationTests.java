@@ -86,12 +86,11 @@ public class RediSearchGeospatialIntegrationTests {
     @Test
     void testGeoFieldBasicFunctionality() {
         // Create index with GEO field for location data
-        FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("location").build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
-        FieldArgs<String> cityField = TextFieldArgs.<String> builder().name("city").build();
+        FieldArgs locationField = GeoFieldArgs.builder().name("location").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs cityField = TextFieldArgs.builder().name("city").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("store:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("store:").on(CreateArgs.TargetType.HASH).build();
 
         String result = redis.ftCreate(GEO_INDEX, createArgs, Arrays.asList(locationField, nameField, cityField));
         assertThat(result).isEqualTo("OK");
@@ -145,11 +144,10 @@ public class RediSearchGeospatialIntegrationTests {
     @Test
     void testGeoFieldMultipleLocations() {
         // Create index for products with multiple store locations
-        FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("locations").build();
-        FieldArgs<String> productField = TextFieldArgs.<String> builder().name("product").build();
+        FieldArgs locationField = GeoFieldArgs.builder().name("locations").build();
+        FieldArgs productField = TextFieldArgs.builder().name("product").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("product:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("product:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(GEO_INDEX, createArgs, Arrays.asList(locationField, productField));
 
@@ -182,11 +180,10 @@ public class RediSearchGeospatialIntegrationTests {
     @Test
     void testGeoshapePointSphericalCoordinates() {
         // Create index with GEOSHAPE field using spherical coordinates (default)
-        FieldArgs<String> geomField = GeoshapeFieldArgs.<String> builder().name("geom").spherical().build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs geomField = GeoshapeFieldArgs.builder().name("geom").spherical().build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("location:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("location:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(GEOSHAPE_INDEX, createArgs, Arrays.asList(geomField, nameField));
 
@@ -208,7 +205,7 @@ public class RediSearchGeospatialIntegrationTests {
 
         // Test 1: Find points within Manhattan area (rough polygon)
         String manhattanPolygon = "POLYGON ((-74.047 40.680, -74.047 40.820, -73.910 40.820, -73.910 40.680, -74.047 40.680))";
-        SearchArgs<String, String> withinArgs = SearchArgs.<String, String> builder().param("area", manhattanPolygon).build();
+        SearchArgs<String> withinArgs = SearchArgs.<String> builder().param("area", manhattanPolygon).build();
 
         SearchReply<String, String> results = redis.ftSearch(GEOSHAPE_INDEX, "@geom:[WITHIN $area]", withinArgs);
 
@@ -229,11 +226,10 @@ public class RediSearchGeospatialIntegrationTests {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
 
         // Create index with GEOSHAPE field using Cartesian coordinates for easier testing
-        FieldArgs<String> geomField = GeoshapeFieldArgs.<String> builder().name("geom").flat().build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs geomField = GeoshapeFieldArgs.builder().name("geom").flat().build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("shape:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("shape:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(CARTESIAN_INDEX, createArgs, Arrays.asList(geomField, nameField));
 
@@ -266,7 +262,7 @@ public class RediSearchGeospatialIntegrationTests {
 
         // Test 1: WITHIN - Find shapes within the large square
         String largeSquare = "POLYGON ((0 0, 0 4, 4 4, 4 0, 0 0))";
-        SearchArgs<String, String> withinArgs = SearchArgs.<String, String> builder().param("container", largeSquare).build();
+        SearchArgs<String> withinArgs = SearchArgs.<String> builder().param("container", largeSquare).build();
 
         SearchReply<String, String> results = redis.ftSearch(CARTESIAN_INDEX, "@geom:[WITHIN $container]", withinArgs);
 
@@ -275,7 +271,7 @@ public class RediSearchGeospatialIntegrationTests {
 
         // Test 2: CONTAINS - Find shapes that contain a specific point
         String testPoint = "POINT (1.5 1.5)";
-        SearchArgs<String, String> containsArgs = SearchArgs.<String, String> builder().param("point", testPoint).build();
+        SearchArgs<String> containsArgs = SearchArgs.<String> builder().param("point", testPoint).build();
 
         results = redis.ftSearch(CARTESIAN_INDEX, "@geom:[CONTAINS $point]", containsArgs);
 
@@ -284,7 +280,7 @@ public class RediSearchGeospatialIntegrationTests {
 
         // Test 3: INTERSECTS - Find shapes that intersect with a test area
         String testArea = "POLYGON ((2 0, 2 2, 4 2, 4 0, 2 0))";
-        SearchArgs<String, String> intersectsArgs = SearchArgs.<String, String> builder().param("area", testArea).build();
+        SearchArgs<String> intersectsArgs = SearchArgs.<String> builder().param("area", testArea).build();
 
         results = redis.ftSearch(CARTESIAN_INDEX, "@geom:[INTERSECTS $area]", intersectsArgs);
 
@@ -292,7 +288,7 @@ public class RediSearchGeospatialIntegrationTests {
         assertThat(results.getCount()).isGreaterThanOrEqualTo(2);
 
         // Test 4: DISJOINT - Find shapes that don't overlap with a test area
-        SearchArgs<String, String> disjointArgs = SearchArgs.<String, String> builder().param("area", testArea).build();
+        SearchArgs<String> disjointArgs = SearchArgs.<String> builder().param("area", testArea).build();
 
         results = redis.ftSearch(CARTESIAN_INDEX, "@geom:[DISJOINT $area]", disjointArgs);
 
@@ -313,14 +309,13 @@ public class RediSearchGeospatialIntegrationTests {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
 
         // Create index with mixed field types including geospatial
-        FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("location").build();
-        FieldArgs<String> serviceAreaField = GeoshapeFieldArgs.<String> builder().name("service_area").spherical().build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
-        FieldArgs<String> categoryField = TextFieldArgs.<String> builder().name("category").build();
-        FieldArgs<String> ratingField = TextFieldArgs.<String> builder().name("rating").build();
+        FieldArgs locationField = GeoFieldArgs.builder().name("location").build();
+        FieldArgs serviceAreaField = GeoshapeFieldArgs.builder().name("service_area").spherical().build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs categoryField = TextFieldArgs.builder().name("category").build();
+        FieldArgs ratingField = TextFieldArgs.builder().name("rating").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("business:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("business:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(GEO_INDEX, createArgs,
                 Arrays.asList(locationField, serviceAreaField, nameField, categoryField, ratingField));
@@ -351,8 +346,7 @@ public class RediSearchGeospatialIntegrationTests {
 
         // Test 2: Find businesses whose service area contains a specific point
         String customerLocation = "POINT (-105.0 39.8)";
-        SearchArgs<String, String> serviceArgs = SearchArgs.<String, String> builder().param("customer", customerLocation)
-                .build();
+        SearchArgs<String> serviceArgs = SearchArgs.<String> builder().param("customer", customerLocation).build();
 
         results = redis.ftSearch(GEO_INDEX, "@service_area:[CONTAINS $customer]", serviceArgs);
 
@@ -360,7 +354,7 @@ public class RediSearchGeospatialIntegrationTests {
 
         // Test 3: Find high-rated cafes with service areas intersecting a region
         String searchRegion = "POLYGON ((-105.3 40.0, -105.3 40.1, -105.2 40.1, -105.2 40.0, -105.3 40.0))";
-        SearchArgs<String, String> complexArgs = SearchArgs.<String, String> builder().param("region", searchRegion).build();
+        SearchArgs<String> complexArgs = SearchArgs.<String> builder().param("region", searchRegion).build();
 
         results = redis.ftSearch(GEO_INDEX, "(@category:cafe) (@service_area:[INTERSECTS $region])", complexArgs);
 
@@ -377,11 +371,10 @@ public class RediSearchGeospatialIntegrationTests {
     @Test
     void testGeospatialUnitsAndCoordinateSystems() {
         // Create index for testing different units
-        FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("location").build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs locationField = GeoFieldArgs.builder().name("location").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("poi:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("poi:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(GEO_INDEX, createArgs, Arrays.asList(locationField, nameField));
 
@@ -424,12 +417,11 @@ public class RediSearchGeospatialIntegrationTests {
     @Test
     void testGeospatialErrorHandling() {
         // Create index for error testing
-        FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("location").build();
-        FieldArgs<String> geomField = GeoshapeFieldArgs.<String> builder().name("geom").build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs locationField = GeoFieldArgs.builder().name("location").build();
+        FieldArgs geomField = GeoshapeFieldArgs.builder().name("geom").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("test:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("test:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(GEO_INDEX, createArgs, Arrays.asList(locationField, geomField, nameField));
 
@@ -450,7 +442,7 @@ public class RediSearchGeospatialIntegrationTests {
 
         // Test 3: Valid GEOSHAPE query
         String validPolygon = "POLYGON ((-105 39, -105 40, -104 40, -104 39, -105 39))";
-        SearchArgs<String, String> validArgs = SearchArgs.<String, String> builder().param("area", validPolygon).build();
+        SearchArgs<String> validArgs = SearchArgs.<String> builder().param("area", validPolygon).build();
 
         results = redis.ftSearch(GEO_INDEX, "@geom:[WITHIN $area]", validArgs);
         assertThat(results.getCount()).isEqualTo(1);

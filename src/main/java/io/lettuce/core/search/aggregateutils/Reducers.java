@@ -52,57 +52,57 @@ public final class Reducers {
     private Reducers() {
     }
 
-    public static <K> Count<K> count() {
-        return new Count<>();
+    public static Count count() {
+        return new Count();
     }
 
-    public static <K> CountDistinct<K> countDistinct(K field) {
-        return new CountDistinct<>(field);
+    public static CountDistinct countDistinct(String field) {
+        return new CountDistinct(field);
     }
 
-    public static <K> CountDistinctish<K> countDistinctish(K field) {
-        return new CountDistinctish<>(field);
+    public static CountDistinctish countDistinctish(String field) {
+        return new CountDistinctish(field);
     }
 
-    public static <K> Sum<K> sum(K field) {
-        return new Sum<>(field);
+    public static Sum sum(String field) {
+        return new Sum(field);
     }
 
-    public static <K> Avg<K> avg(K field) {
-        return new Avg<>(field);
+    public static Avg avg(String field) {
+        return new Avg(field);
     }
 
-    public static <K> Min<K> min(K field) {
-        return new Min<>(field);
+    public static Min min(String field) {
+        return new Min(field);
     }
 
-    public static <K> Max<K> max(K field) {
-        return new Max<>(field);
+    public static Max max(String field) {
+        return new Max(field);
     }
 
-    public static <K> Stddev<K> stddev(K field) {
-        return new Stddev<>(field);
+    public static Stddev stddev(String field) {
+        return new Stddev(field);
     }
 
-    public static <K> Quantile<K> quantile(K field, double quantile) {
-        return new Quantile<>(field, quantile);
+    public static Quantile quantile(String field, double quantile) {
+        return new Quantile(field, quantile);
     }
 
-    public static <K> ToList<K> toList(K field) {
-        return new ToList<>(field);
+    public static ToList toList(String field) {
+        return new ToList(field);
     }
 
-    public static <K> FirstValue<K> firstValue(K field) {
-        return new FirstValue<>(field);
+    public static FirstValue firstValue(String field) {
+        return new FirstValue(field);
     }
 
-    public static <K> RandomSample<K> randomSample(K field, int sampleSize) {
-        return new RandomSample<>(field, sampleSize);
+    public static RandomSample randomSample(String field, int sampleSize) {
+        return new RandomSample(field, sampleSize);
     }
 
     // ==================== Concrete Reducer Implementations ====================
 
-    public static class Count<K> extends Reducer<K> {
+    public static class Count extends Reducer {
 
         Count() {
             super(ReduceFunction.COUNT);
@@ -115,11 +115,11 @@ public final class Reducers {
 
     }
 
-    public static class CountDistinct<K> extends Reducer<K> {
+    public static class CountDistinct extends Reducer {
 
-        private final K field;
+        private final String field;
 
-        CountDistinct(K field) {
+        CountDistinct(String field) {
             super(ReduceFunction.COUNT_DISTINCT);
             LettuceAssert.notNull(field, "Field must not be null");
             this.field = field;
@@ -132,11 +132,11 @@ public final class Reducers {
 
     }
 
-    public static class CountDistinctish<K> extends Reducer<K> {
+    public static class CountDistinctish extends Reducer {
 
-        private final K field;
+        private final String field;
 
-        CountDistinctish(K field) {
+        CountDistinctish(String field) {
             super(ReduceFunction.COUNT_DISTINCTISH);
             LettuceAssert.notNull(field, "Field must not be null");
             this.field = field;
@@ -149,11 +149,11 @@ public final class Reducers {
 
     }
 
-    public static class Sum<K> extends Reducer<K> {
+    public static class Sum extends Reducer {
 
-        private final K field;
+        private final String field;
 
-        Sum(K field) {
+        Sum(String field) {
             super(ReduceFunction.SUM);
             LettuceAssert.notNull(field, "Field must not be null");
             this.field = field;
@@ -166,11 +166,11 @@ public final class Reducers {
 
     }
 
-    public static class Avg<K> extends Reducer<K> {
+    public static class Avg extends Reducer {
 
-        private final K field;
+        private final String field;
 
-        Avg(K field) {
+        Avg(String field) {
             super(ReduceFunction.AVG);
             LettuceAssert.notNull(field, "Field must not be null");
             this.field = field;
@@ -183,11 +183,11 @@ public final class Reducers {
 
     }
 
-    public static class Min<K> extends Reducer<K> {
+    public static class Min extends Reducer {
 
-        private final K field;
+        private final String field;
 
-        Min(K field) {
+        Min(String field) {
             super(ReduceFunction.MIN);
             LettuceAssert.notNull(field, "Field must not be null");
             this.field = field;
@@ -200,11 +200,11 @@ public final class Reducers {
 
     }
 
-    public static class Max<K> extends Reducer<K> {
+    public static class Max extends Reducer {
 
-        private final K field;
+        private final String field;
 
-        Max(K field) {
+        Max(String field) {
             super(ReduceFunction.MAX);
             LettuceAssert.notNull(field, "Field must not be null");
             this.field = field;
@@ -217,11 +217,11 @@ public final class Reducers {
 
     }
 
-    public static class Stddev<K> extends Reducer<K> {
+    public static class Stddev extends Reducer {
 
-        private final K field;
+        private final String field;
 
-        Stddev(K field) {
+        Stddev(String field) {
             super(ReduceFunction.STDDEV);
             LettuceAssert.notNull(field, "Field must not be null");
             this.field = field;
@@ -234,13 +234,13 @@ public final class Reducers {
 
     }
 
-    public static class Quantile<K> extends Reducer<K> {
+    public static class Quantile extends Reducer {
 
-        private final K field;
+        private final String field;
 
         private final double quantile;
 
-        Quantile(K field, double quantile) {
+        Quantile(String field, double quantile) {
             super(ReduceFunction.QUANTILE);
             LettuceAssert.notNull(field, "Field must not be null");
             LettuceAssert.isTrue(quantile >= 0 && quantile <= 1, "Quantile must be between 0 and 1");
@@ -258,11 +258,11 @@ public final class Reducers {
 
     }
 
-    public static class ToList<K> extends Reducer<K> {
+    public static class ToList extends Reducer {
 
-        private final K field;
+        private final String field;
 
-        ToList(K field) {
+        ToList(String field) {
             super(ReduceFunction.TOLIST);
             LettuceAssert.notNull(field, "Field must not be null");
             this.field = field;
@@ -275,26 +275,26 @@ public final class Reducers {
 
     }
 
-    public static class FirstValue<K> extends Reducer<K> {
+    public static class FirstValue extends Reducer {
 
-        private final K field;
+        private final String field;
 
-        private K byField;
+        private String byField;
 
         private SortDirection byDirection;
 
-        FirstValue(K field) {
+        FirstValue(String field) {
             super(ReduceFunction.FIRST_VALUE);
             LettuceAssert.notNull(field, "Field must not be null");
             this.field = field;
         }
 
-        public FirstValue<K> by(K byField) {
+        public FirstValue by(String byField) {
             this.byField = byField;
             return this;
         }
 
-        public FirstValue<K> by(K byField, SortDirection direction) {
+        public FirstValue by(String byField, SortDirection direction) {
             this.byField = byField;
             this.byDirection = direction;
             return this;
@@ -316,13 +316,13 @@ public final class Reducers {
 
     }
 
-    public static class RandomSample<K> extends Reducer<K> {
+    public static class RandomSample extends Reducer {
 
-        private final K field;
+        private final String field;
 
         private final int sampleSize;
 
-        RandomSample(K field, int sampleSize) {
+        RandomSample(String field, int sampleSize) {
             super(ReduceFunction.RANDOM_SAMPLE);
             LettuceAssert.notNull(field, "Field must not be null");
             LettuceAssert.isTrue(sampleSize > 0, "Sample size must be positive");

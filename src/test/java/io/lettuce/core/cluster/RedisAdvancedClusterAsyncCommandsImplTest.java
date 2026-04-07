@@ -105,8 +105,7 @@ class RedisAdvancedClusterAsyncCommandsImplTest {
 
     @Test
     void ftAggregate_stampsNodeId_whenCursorCreated() {
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
-                .withCursor(AggregateArgs.WithCursor.of(1L)).build();
+        AggregateArgs<String> args = AggregateArgs.<String> builder().withCursor(AggregateArgs.WithCursor.of(1L)).build();
 
         AggregationReply<String, String> replyWithCursor = new AggregationReply<>();
         replyWithCursor.setCursor(AggregationReply.Cursor.of(42L, null));
@@ -168,7 +167,7 @@ class RedisAdvancedClusterAsyncCommandsImplTest {
         when(nodeAsync.ftAggregate(anyString(), anyString(), any())).thenReturn(new PipelinedRedisFuture<>(cf));
         when(nodeAsync.clusterMyId()).thenReturn(new PipelinedRedisFuture<>(CompletableFuture.completedFuture("node-1")));
 
-        AggregationReply<String, String> out = async.ftAggregate("idx", "*", AggregateArgs.<String, String> builder().build())
+        AggregationReply<String, String> out = async.ftAggregate("idx", "*", AggregateArgs.<String> builder().build())
                 .toCompletableFuture().join();
 
         assertThat(out.getCursor()).isEmpty();

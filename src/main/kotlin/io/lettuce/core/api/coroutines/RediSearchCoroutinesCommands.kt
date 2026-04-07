@@ -64,7 +64,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    suspend fun ftCreate(index: String, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftCreate(index: String, fieldArgs: List<FieldArgs>): String?
 
     /**
      * Create a new search index with the given name, custom configuration, and field definitions.
@@ -103,7 +103,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    suspend fun ftCreate(index: String, arguments: CreateArgs<K, V>, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftCreate(index: String, arguments: CreateArgs, fieldArgs: List<FieldArgs>): String?
 
     /**
      * Add an alias to a search index.
@@ -280,7 +280,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    suspend fun ftAlter(index: String, skipInitialScan: Boolean, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftAlter(index: String, skipInitialScan: Boolean, fieldArgs: List<FieldArgs>): String?
 
     /**
      * Add new attributes to an existing search index.
@@ -315,7 +315,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    suspend fun ftAlter(index: String, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftAlter(index: String, fieldArgs: List<FieldArgs>): String?
 
     /**
      * Return a distinct set of values indexed in a Tag field.
@@ -370,6 +370,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftCreate(String, List)
      * @see #ftCreate(String, CreateArgs, List)
      */
+    @Deprecated("FT.TAGVALS has been deprecated by Redis")
     @Experimental
     suspend fun ftTagvals(index: String, fieldName: String): List<V>
 
@@ -406,13 +407,13 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
-     * @see #ftSpellcheck(String, Any, SpellCheckArgs)
-     * @see #ftDictadd(String, Any[])
-     * @see #ftDictdel(String, Any[])
+     * @see #ftSpellcheck(String, String, SpellCheckArgs)
+     * @see #ftDictadd(String, String[])
+     * @see #ftDictdel(String, String[])
      * @see #ftDictdump(String)
      */
     @Experimental
-    suspend fun ftSpellcheck(index: String, query: V): SpellCheckResult<V>?
+    suspend fun ftSpellcheck(index: String, query: String): SpellCheckResult?
 
     /**
      * Perform spelling correction on a query with additional options.
@@ -443,13 +444,13 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
-     * @see #ftSpellcheck(String, Any)
-     * @see #ftDictadd(String, Any[])
-     * @see #ftDictdel(String, Any[])
+     * @see #ftSpellcheck(String, String)
+     * @see #ftDictadd(String, String[])
+     * @see #ftDictdel(String, String[])
      * @see #ftDictdump(String)
      */
     @Experimental
-    suspend fun ftSpellcheck(index: String, query: V, args: SpellCheckArgs<K, V>): SpellCheckResult<V>?
+    suspend fun ftSpellcheck(index: String, query: String, args: SpellCheckArgs): SpellCheckResult?
 
     /**
      * Add terms to a dictionary.
@@ -479,11 +480,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictadd/">FT.DICTADD</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
-     * @see #ftDictdel(String, Any[])
+     * @see #ftDictdel(String, String[])
      * @see #ftDictdump(String)
      */
     @Experimental
-    suspend fun ftDictadd(dict: String, vararg terms: V): Long?
+    suspend fun ftDictadd(dict: String, vararg terms: String): Long?
 
     /**
      * Delete terms from a dictionary.
@@ -502,11 +503,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return the number of terms that were deleted
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictdel/">FT.DICTDEL</a>
-     * @see #ftDictadd(String, Any[])
+     * @see #ftDictadd(String, String[])
      * @see #ftDictdump(String)
      */
     @Experimental
-    suspend fun ftDictdel(dict: String, vararg terms: V): Long?
+    suspend fun ftDictdel(dict: String, vararg terms: String): Long?
 
     /**
      * Dump all terms in a dictionary.
@@ -523,11 +524,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return a list of all terms in the dictionary
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictdump/">FT.DICTDUMP</a>
-     * @see #ftDictadd(String, Any[])
-     * @see #ftDictdel(String, Any[])
+     * @see #ftDictadd(String, String[])
+     * @see #ftDictdel(String, String[])
      */
     @Experimental
-    suspend fun ftDictdump(dict: String): List<V>
+    suspend fun ftDictdump(dict: String): List<String>
 
     /**
      * Return the execution plan for a complex query.
@@ -556,11 +557,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return the execution plan as a string
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.explain/">FT.EXPLAIN</a>
-     * @see #ftExplain(String, Any, ExplainArgs)
-     * @see #ftSearch(String, Any)
+     * @see #ftExplain(String, String, ExplainArgs)
+     * @see #ftSearch(String, String)
      */
     @Experimental
-    suspend fun ftExplain(index: String, query: V): String?
+    suspend fun ftExplain(index: String, query: String): String?
 
     /**
      * Return the execution plan for a complex query with additional options.
@@ -587,11 +588,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return the execution plan as a string
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.explain/">FT.EXPLAIN</a>
-     * @see #ftExplain(String, Any)
-     * @see #ftSearch(String, Any)
+     * @see #ftExplain(String, String)
+     * @see #ftSearch(String, String)
      */
     @Experimental
-    suspend fun ftExplain(index: String, query: V, args: ExplainArgs<K, V>): String?
+    suspend fun ftExplain(index: String, query: String, args: ExplainArgs): String?
 
     /**
      * Return a list of all existing indexes.
@@ -627,7 +628,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    suspend fun ftList(): List<V>
+    suspend fun ftList(): List<String>
 
     /**
      * Dump synonym group contents.
@@ -655,11 +656,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return a map where keys are synonym terms and values are lists of group IDs containing that synonym
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.syndump/">FT.SYNDUMP</a>
-     * @see #ftSynupdate(String, Any, Any[])
-     * @see #ftSynupdate(String, Any, SynUpdateArgs, Any[])
+     * @see #ftSynupdate(String, String, String[])
+     * @see #ftSynupdate(String, String, SynUpdateArgs, String[])
      */
     @Experimental
-    suspend fun ftSyndump(index: String): Map<V, List<V>>?
+    suspend fun ftSyndump(index: String): Map<String, List<String>>?
 
     /**
      * Update a synonym group with additional terms.
@@ -689,11 +690,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return OK if executed correctly
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
-     * @see #ftSynupdate(String, Any, SynUpdateArgs, Any[])
+     * @see #ftSynupdate(String, String, SynUpdateArgs, String[])
      * @see #ftSyndump(String)
      */
     @Experimental
-    suspend fun ftSynupdate(index: String, synonymGroupId: V, vararg terms: V): String?
+    suspend fun ftSynupdate(index: String, synonymGroupId: String, vararg terms: String): String?
 
     /**
      * Update a synonym group with additional terms and options.
@@ -721,11 +722,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return OK if executed correctly
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
-     * @see #ftSynupdate(String, Any, Any[])
+     * @see #ftSynupdate(String, String, String[])
      * @see #ftSyndump(String)
      */
     @Experimental
-    suspend fun ftSynupdate(index: String, synonymGroupId: V, args: SynUpdateArgs<K, V>, vararg terms: V): String?
+    suspend fun ftSynupdate(index: String, synonymGroupId: String, args: SynUpdateArgs, vararg terms: String): String?
 
     /**
      * Add a suggestion string to an auto-complete suggestion dictionary.
@@ -762,7 +763,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftSuglen(Any)
      */
     @Experimental
-    suspend fun ftSugadd(key: K, suggestion: V, score: Double): Long?
+    suspend fun ftSugadd(key: K, suggestion: String, score: Double): Long?
 
     /**
      * Add a suggestion string to an auto-complete suggestion dictionary with additional options.
@@ -789,7 +790,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftSuglen(Any)
      */
     @Experimental
-    suspend fun ftSugadd(key: K, suggestion: V, score: Double, args: SugAddArgs<K, V>): Long?
+    suspend fun ftSugadd(key: K, suggestion: String, score: Double, args: SugAddArgs): Long?
 
     /**
      * Delete a string from a suggestion dictionary.
@@ -813,7 +814,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftSuglen(Any)
      */
     @Experimental
-    suspend fun ftSugdel(key: K, suggestion: V): Boolean?
+    suspend fun ftSugdel(key: K, suggestion: String): Boolean?
 
     /**
      * Get completion suggestions for a prefix.
@@ -838,7 +839,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftSuglen(Any)
      */
     @Experimental
-    suspend fun ftSugget(key: K, prefix: V): List<Suggestion<V>>
+    suspend fun ftSugget(key: K, prefix: String): List<Suggestion>
 
     /**
      * Get completion suggestions for a prefix with additional options.
@@ -864,7 +865,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftSuglen(Any)
      */
     @Experimental
-    suspend fun ftSugget(key: K, prefix: V, args: SugGetArgs<K, V>): List<Suggestion<V>>
+    suspend fun ftSugget(key: K, prefix: String, args: SugGetArgs): List<Suggestion>
 
     /**
      * Get the size of an auto-complete suggestion dictionary.
@@ -975,10 +976,10 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/query/">Query syntax</a>
      * @see SearchReply
      * @see SearchArgs
-     * @see #ftSearch(String, Any, SearchArgs)
+     * @see #ftSearch(String, String, SearchArgs)
      */
     @Experimental
-    suspend fun ftSearch(index: String, query: V): SearchReply<K, V>?
+    suspend fun ftSearch(index: String, query: String): SearchReply<K, V>?
 
     /**
      * Search the index with a textual query using advanced search options and filters.
@@ -1026,10 +1027,10 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/">Advanced concepts</a>
      * @see SearchReply
      * @see SearchArgs
-     * @see #ftSearch(String, Any)
+     * @see #ftSearch(String, String)
      */
     @Experimental
-    suspend fun ftSearch(index: String, query: V, args: SearchArgs<K, V>): SearchReply<K, V>?
+    suspend fun ftSearch(index: String, query: String, args: SearchArgs<K>): SearchReply<K, V>?
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.
@@ -1068,10 +1069,10 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/">Aggregations</a>
      * @see SearchReply
      * @see AggregateArgs
-     * @see #ftAggregate(String, Any, AggregateArgs)
+     * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    suspend fun ftAggregate(index: String, query: V): AggregationReply<K, V>?
+    suspend fun ftAggregate(index: String, query: String): AggregationReply<K, V>?
 
     /**
      * Run a search query on an index and perform advanced aggregate transformations with a processing pipeline.
@@ -1123,11 +1124,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      *      API</a>
      * @see SearchReply
      * @see AggregateArgs
-     * @see #ftAggregate(String, Any)
+     * @see #ftAggregate(String, String)
      * @see #ftCursorread(String, Cursor)
      */
     @Experimental
-    suspend fun ftAggregate(index: String, query: V, args: AggregateArgs<K, V>): AggregationReply<K, V>?
+    suspend fun ftAggregate(index: String, query: String, args: AggregateArgs<K>): AggregationReply<K, V>?
 
     /**
      * Read next results from an existing cursor and optionally override the batch size.
@@ -1157,7 +1158,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
      * @see AggregationReply
-     * @see #ftAggregate(String, Any, AggregateArgs)
+     * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
     suspend fun ftCursorread(index: String, cursor: Cursor, count: Int): AggregationReply<K, V>?
@@ -1189,7 +1190,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
      * @see AggregationReply
-     * @see #ftAggregate(String, Any, AggregateArgs)
+     * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
     suspend fun ftCursorread(index: String, cursor: Cursor): AggregationReply<K, V>?
@@ -1226,7 +1227,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see <a href=
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
-     * @see #ftAggregate(String, Any, AggregateArgs)
+     * @see #ftAggregate(String, String, AggregateArgs)
      * @see #ftCursorread(String, Cursor)
      * @see #ftCursorread(String, Cursor, Integer)
      */
@@ -1245,7 +1246,6 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @since 7.2
      */
     @Experimental
-    suspend fun ftHybrid(index: String, args: HybridArgs<K, V>): HybridReply<K, V>?
+    suspend fun ftHybrid(index: String, args: HybridArgs): HybridReply<K, V>?
 
 }
-
