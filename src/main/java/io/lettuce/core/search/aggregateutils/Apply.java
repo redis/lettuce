@@ -24,25 +24,23 @@ import io.lettuce.core.protocol.CommandKeyword;
  * {
  *     &#64;code
  *     // Calculate total value from price and quantity
- *     Apply<String, String> totalValue = Apply.of("@price * @quantity", "total_value");
+ *     Apply totalValue = Apply.of("@price * @quantity", "total_value");
  *
  *     // Mathematical operations
- *     Apply<String, String> discount = Apply.of("@price * 0.9", "discounted_price");
+ *     Apply discount = Apply.of("@price * 0.9", "discounted_price");
  * }
  * </pre>
  *
- * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @since 7.5
  * @see PostProcessingOperation
  */
 @Experimental
-public class Apply<K, V> implements PostProcessingOperation<K, V> {
+public class Apply implements PostProcessingOperation {
 
-    private final V expression;
+    private final String expression;
 
-    private final K name;
+    private final String name;
 
     /**
      * Creates a new APPLY operation.
@@ -50,7 +48,7 @@ public class Apply<K, V> implements PostProcessingOperation<K, V> {
      * @param expression the expression to apply
      * @param name the result field name
      */
-    public Apply(V expression, K name) {
+    public Apply(String expression, String name) {
         this.expression = expression;
         this.name = name;
     }
@@ -60,20 +58,18 @@ public class Apply<K, V> implements PostProcessingOperation<K, V> {
      *
      * @param expression the expression to apply
      * @param name the name of the result field
-     * @param <K> Key type
-     * @param <V> Value type
      * @return new Apply instance
      */
-    public static <K, V> Apply<K, V> of(V expression, K name) {
-        return new Apply<>(expression, name);
+    public static Apply of(String expression, String name) {
+        return new Apply(expression, name);
     }
 
     @Override
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<?, ?> args) {
         args.add(CommandKeyword.APPLY);
-        args.addValue(expression);
+        args.add(expression);
         args.add(CommandKeyword.AS);
-        args.add(name.toString());
+        args.add(name);
     }
 
 }
