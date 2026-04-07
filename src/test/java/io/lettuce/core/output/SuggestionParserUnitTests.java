@@ -28,13 +28,13 @@ class SuggestionParserUnitTests {
 
     @Test
     void shouldParseBasicSuggestions() {
-        SuggestionParser<String> parser = new SuggestionParser<>(false, false);
+        SuggestionParser parser = new SuggestionParser(false, false);
         ArrayComplexData data = new ArrayComplexData(3);
         data.store("suggestion1");
         data.store("suggestion2");
         data.store("suggestion3");
 
-        List<Suggestion<String>> suggestions = parser.parse(data);
+        List<Suggestion> suggestions = parser.parse(data);
 
         assertThat(suggestions).hasSize(3);
         assertThat(suggestions.get(0).getValue()).isEqualTo("suggestion1");
@@ -46,14 +46,14 @@ class SuggestionParserUnitTests {
 
     @Test
     void shouldParseSuggestionsWithScores() {
-        SuggestionParser<String> parser = new SuggestionParser<>(true, false);
+        SuggestionParser parser = new SuggestionParser(true, false);
         ArrayComplexData data = new ArrayComplexData(4);
         data.store("suggestion1");
         data.store(1.5);
         data.store("suggestion2");
         data.store(2.0);
 
-        List<Suggestion<String>> suggestions = parser.parse(data);
+        List<Suggestion> suggestions = parser.parse(data);
 
         assertThat(suggestions).hasSize(2);
         assertThat(suggestions.get(0).getValue()).isEqualTo("suggestion1");
@@ -66,14 +66,14 @@ class SuggestionParserUnitTests {
 
     @Test
     void shouldParseSuggestionsWithPayloads() {
-        SuggestionParser<String> parser = new SuggestionParser<>(false, true);
+        SuggestionParser parser = new SuggestionParser(false, true);
         ArrayComplexData data = new ArrayComplexData(4);
         data.store("suggestion1");
         data.store("payload1");
         data.store("suggestion2");
         data.store("payload2");
 
-        List<Suggestion<String>> suggestions = parser.parse(data);
+        List<Suggestion> suggestions = parser.parse(data);
 
         assertThat(suggestions).hasSize(2);
         assertThat(suggestions.get(0).getValue()).isEqualTo("suggestion1");
@@ -86,7 +86,7 @@ class SuggestionParserUnitTests {
 
     @Test
     void shouldParseSuggestionsWithScoresAndPayloads() {
-        SuggestionParser<String> parser = new SuggestionParser<>(true, true);
+        SuggestionParser parser = new SuggestionParser(true, true);
         ArrayComplexData data = new ArrayComplexData(6);
         data.store("suggestion1");
         data.store(1.5);
@@ -95,7 +95,7 @@ class SuggestionParserUnitTests {
         data.store(2.0);
         data.store("payload2");
 
-        List<Suggestion<String>> suggestions = parser.parse(data);
+        List<Suggestion> suggestions = parser.parse(data);
 
         assertThat(suggestions).hasSize(2);
         assertThat(suggestions.get(0).getValue()).isEqualTo("suggestion1");
@@ -110,48 +110,48 @@ class SuggestionParserUnitTests {
 
     @Test
     void shouldHandleEmptyList() {
-        SuggestionParser<String> parser = new SuggestionParser<>(false, false);
+        SuggestionParser parser = new SuggestionParser(false, false);
         ArrayComplexData data = new ArrayComplexData(0);
 
-        List<Suggestion<String>> suggestions = parser.parse(data);
+        List<Suggestion> suggestions = parser.parse(data);
         assertThat(suggestions).isEmpty();
     }
 
     @Test
     void shouldThrowExceptionForNullData() {
-        SuggestionParser<String> parser = new SuggestionParser<>(false, false);
+        SuggestionParser parser = new SuggestionParser(false, false);
 
-        List<Suggestion<String>> suggestions = parser.parse(null);
+        List<Suggestion> suggestions = parser.parse(null);
         assertThat(suggestions).isEmpty();
     }
 
     @Test
     void shouldThrowExceptionForInvalidScoreFormat() {
-        SuggestionParser<String> parser = new SuggestionParser<>(true, false);
+        SuggestionParser parser = new SuggestionParser(true, false);
         ArrayComplexData data = new ArrayComplexData(3);
         data.store("suggestion1");
         data.store("suggestion2");
         data.store("suggestion3");
 
-        List<Suggestion<String>> suggestions = parser.parse(data);
+        List<Suggestion> suggestions = parser.parse(data);
         assertThat(suggestions).hasSize(0);
     }
 
     @Test
     void shouldThrowExceptionForInvalidPayloadFormat() {
-        SuggestionParser<String> parser = new SuggestionParser<>(false, true);
+        SuggestionParser parser = new SuggestionParser(false, true);
         ArrayComplexData data = new ArrayComplexData(3);
         data.store("suggestion1");
         data.store("payload1");
         data.store("suggestion2");
 
-        List<Suggestion<String>> suggestions = parser.parse(data);
+        List<Suggestion> suggestions = parser.parse(data);
         assertThat(suggestions).hasSize(0);
     }
 
     @Test
     void shouldThrowExceptionForInvalidScoreAndPayloadFormat() {
-        SuggestionParser<String> parser = new SuggestionParser<>(true, true);
+        SuggestionParser parser = new SuggestionParser(true, true);
         ArrayComplexData data = new ArrayComplexData(5);
         data.store("suggestion1");
         data.store(1.5);
@@ -159,7 +159,7 @@ class SuggestionParserUnitTests {
         data.store("suggestion2");
         data.store(2.0);
 
-        List<Suggestion<String>> suggestions = parser.parse(data);
+        List<Suggestion> suggestions = parser.parse(data);
         assertThat(suggestions).hasSize(0);
     }
 

@@ -20,8 +20,6 @@ import io.lettuce.core.protocol.CommandType;
  * Arguments for the VSIM clause in FT.HYBRID command. Configures vector similarity search including field, vector data, search
  * method (KNN or RANGE), filters, and score aliasing.
  *
- * @param <K> Key type
- * @param <V> Value type
  * @author Aleksandar Todorov
  * @since 7.2
  * @see VectorSearchMethod
@@ -29,19 +27,19 @@ import io.lettuce.core.protocol.CommandType;
  * @see Range
  */
 @Experimental
-public class HybridVectorArgs<K, V> {
+public class HybridVectorArgs {
 
-    private final K fieldName;
+    private final String fieldName;
 
-    private final V vectorData;
+    private final String vectorData;
 
     private final VectorSearchMethod method;
 
     private final List<String> filters;
 
-    private final K scoreAlias;
+    private final String scoreAlias;
 
-    private HybridVectorArgs(Builder<K, V> builder) {
+    private HybridVectorArgs(Builder builder) {
         this.fieldName = builder.fieldName;
         this.vectorData = builder.vectorData;
         this.method = builder.method;
@@ -49,15 +47,15 @@ public class HybridVectorArgs<K, V> {
         this.scoreAlias = builder.scoreAlias;
     }
 
-    public static <K, V> Builder<K, V> builder() {
-        return new Builder<>();
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public K getFieldName() {
+    public String getFieldName() {
         return fieldName;
     }
 
-    public V getVectorData() {
+    public String getVectorData() {
         return vectorData;
     }
 
@@ -69,21 +67,21 @@ public class HybridVectorArgs<K, V> {
         return filters;
     }
 
-    public Optional<K> getScoreAlias() {
+    public Optional<String> getScoreAlias() {
         return Optional.ofNullable(scoreAlias);
     }
 
-    public static class Builder<K, V> {
+    public static class Builder {
 
-        private K fieldName;
+        private String fieldName;
 
-        private V vectorData;
+        private String vectorData;
 
         private VectorSearchMethod method;
 
         private final List<String> filters = new ArrayList<>();
 
-        private K scoreAlias;
+        private String scoreAlias;
 
         /**
          * Set the vector field name.
@@ -91,7 +89,7 @@ public class HybridVectorArgs<K, V> {
          * @param fieldName the field name (typically prefixed with '@')
          * @return this builder
          */
-        public Builder<K, V> field(K fieldName) {
+        public Builder field(String fieldName) {
             LettuceAssert.notNull(fieldName, "Field name must not be null");
             this.fieldName = fieldName;
             return this;
@@ -101,13 +99,13 @@ public class HybridVectorArgs<K, V> {
          * Set the query vector parameter reference.
          * <p>
          * This should be a parameter name (e.g., "$vec") that references a vector passed via
-         * {@link HybridArgs.Builder#param(Object, byte[])}. The actual binary vector data must be provided in PARAMS.
+         * {@link HybridArgs.Builder#param(String, byte[])}. The actual binary vector data must be provided in PARAMS.
          * </p>
          *
          * @param vectorData the parameter reference (e.g., "$vec")
          * @return this builder
          */
-        public Builder<K, V> vector(V vectorData) {
+        public Builder vector(String vectorData) {
             LettuceAssert.notNull(vectorData, "Vector data must not be null");
             this.vectorData = vectorData;
             return this;
@@ -121,7 +119,7 @@ public class HybridVectorArgs<K, V> {
          * @see Knn
          * @see Range
          */
-        public Builder<K, V> method(VectorSearchMethod method) {
+        public Builder method(VectorSearchMethod method) {
             LettuceAssert.notNull(method, "Vector search method must not be null");
             this.method = method;
             return this;
@@ -133,19 +131,19 @@ public class HybridVectorArgs<K, V> {
          * @param expression the filter expression (e.g., "@brand:{apple|samsung}")
          * @return this builder
          */
-        public Builder<K, V> filter(String expression) {
+        public Builder filter(String expression) {
             LettuceAssert.notNull(expression, "Filter expression must not be null");
             this.filters.add(expression);
             return this;
         }
 
         /**
-         * Set an alias for the vector distance field (normalized vector score).
+         * Set an alias for the vector distance field (YIELD_SCORE_AS).
          *
-         * @param alias the field name to use for the normalized vector distance
+         * @param alias the label to assign to the normalized vector distance score
          * @return this builder
          */
-        public Builder<K, V> scoreAlias(K alias) {
+        public Builder scoreAlias(String alias) {
             LettuceAssert.notNull(alias, "Score alias must not be null");
             this.scoreAlias = alias;
             return this;
@@ -156,10 +154,10 @@ public class HybridVectorArgs<K, V> {
          *
          * @return the configured arguments
          */
-        public HybridVectorArgs<K, V> build() {
+        public HybridVectorArgs build() {
             LettuceAssert.notNull(fieldName, "Field name must not be null");
             LettuceAssert.notNull(vectorData, "Vector data must not be null");
-            return new HybridVectorArgs<>(this);
+            return new HybridVectorArgs(this);
         }
 
     }
@@ -169,10 +167,10 @@ public class HybridVectorArgs<K, V> {
      *
      * @param args the {@link CommandArgs} to append to
      */
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<?, ?> args) {
         args.add(CommandType.VSIM);
-        args.addKey(fieldName);
-        args.addValue(vectorData);
+        args.add(fieldName);
+        args.add(vectorData);
 
         // Vector search method (KNN or RANGE) - optional
         if (method != null) {
@@ -188,7 +186,7 @@ public class HybridVectorArgs<K, V> {
         // YIELD_SCORE_AS for VSIM (normalized vector distance)
         if (scoreAlias != null) {
             args.add(CommandKeyword.YIELD_SCORE_AS);
-            args.addKey(scoreAlias);
+            args.add(scoreAlias);
         }
     }
 

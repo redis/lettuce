@@ -11,16 +11,15 @@ import io.lettuce.core.annotations.Experimental;
 /**
  * Represents a sort property with direction for SORTBY operations in FT.HYBRID and FT.AGGREGATE commands.
  *
- * @param <K> Key type.
  * @author Aleksandar Todorov
  * @since 7.5
  * @see SortBy
  * @see SortDirection
  */
 @Experimental
-public class SortProperty<K> {
+public class SortProperty {
 
-    private final K property;
+    private final String property;
 
     private final SortDirection direction;
 
@@ -30,7 +29,7 @@ public class SortProperty<K> {
      * @param property the property to sort by
      * @param direction the sort direction
      */
-    public SortProperty(K property, SortDirection direction) {
+    public SortProperty(String property, SortDirection direction) {
         this.property = property;
         this.direction = direction;
     }
@@ -40,11 +39,10 @@ public class SortProperty<K> {
      *
      * @param property the property to sort by
      * @param direction the sort direction
-     * @param <K> Key type
      * @return new SortProperty instance
      */
-    public static <K> SortProperty<K> of(K property, SortDirection direction) {
-        return new SortProperty<>(property, direction);
+    public static SortProperty of(String property, SortDirection direction) {
+        return new SortProperty(property, direction);
     }
 
     /**
@@ -52,7 +50,7 @@ public class SortProperty<K> {
      *
      * @return the property
      */
-    public K getProperty() {
+    public String getProperty() {
         return property;
     }
 

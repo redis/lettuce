@@ -24,30 +24,28 @@ import io.lettuce.core.protocol.CommandKeyword;
  * {
  *     &#64;code
  *     // Filter by numeric comparison
- *     Filter<String, String> priceFilter = Filter.of("@price > 100");
+ *     Filter priceFilter = Filter.of("@price > 100");
  *
  *     // Filter by computed field
- *     Filter<String, String> totalFilter = Filter.of("@total_value > 1000");
+ *     Filter totalFilter = Filter.of("@total_value > 1000");
  * }
  * </pre>
  *
- * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @since 7.5
  * @see PostProcessingOperation
  */
 @Experimental
-public class Filter<K, V> implements PostProcessingOperation<K, V> {
+public class Filter implements PostProcessingOperation {
 
-    private final V expression;
+    private final String expression;
 
     /**
      * Creates a new FILTER operation.
      *
      * @param expression the filter expression (e.g., "@price > 100", "@category == 'electronics'")
      */
-    public Filter(V expression) {
+    public Filter(String expression) {
         this.expression = expression;
     }
 
@@ -55,18 +53,16 @@ public class Filter<K, V> implements PostProcessingOperation<K, V> {
      * Static factory method to create a Filter instance.
      *
      * @param expression the filter expression
-     * @param <K> Key type
-     * @param <V> Value type
      * @return new Filter instance
      */
-    public static <K, V> Filter<K, V> of(V expression) {
-        return new Filter<>(expression);
+    public static Filter of(String expression) {
+        return new Filter(expression);
     }
 
     @Override
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<?, ?> args) {
         args.add(CommandKeyword.FILTER);
-        args.addValue(expression);
+        args.add(expression);
     }
 
 }

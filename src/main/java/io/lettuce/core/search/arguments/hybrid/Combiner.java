@@ -37,7 +37,6 @@ import io.lettuce.core.protocol.CommandKeyword;
  * }
  * </pre>
  *
- * @param <K> Key type
  * @author Aleksandar Todorov
  * @author apoorva-01
  * @since 7.5
@@ -45,11 +44,11 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
  */
 @Experimental
-public abstract class Combiner<K> {
+public abstract class Combiner {
 
     private final String name;
 
-    private K scoreAlias;
+    private String scoreAlias;
 
     /**
      * Creates a new combiner with the specified name.
@@ -76,7 +75,7 @@ public abstract class Combiner<K> {
      * @return this instance
      */
     @SuppressWarnings("unchecked")
-    public final <T extends Combiner<K>> T as(K alias) {
+    public final <T extends Combiner> T as(String alias) {
         this.scoreAlias = alias;
         return (T) this;
     }
@@ -92,9 +91,8 @@ public abstract class Combiner<K> {
      * Build the combiner arguments into the command.
      *
      * @param args the {@link CommandArgs} to append to
-     * @param <V> value type
      */
-    public final <V> void build(CommandArgs<K, V> args) {
+    public final void build(CommandArgs<?, ?> args) {
         args.add(name);
 
         List<Object> ownArgs = getOwnArgs();
@@ -106,7 +104,7 @@ public abstract class Combiner<K> {
 
         if (scoreAlias != null) {
             args.add(CommandKeyword.YIELD_SCORE_AS);
-            args.addKey(scoreAlias);
+            args.add(scoreAlias);
         }
     }
 
