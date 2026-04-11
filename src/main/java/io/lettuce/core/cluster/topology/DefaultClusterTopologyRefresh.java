@@ -54,6 +54,8 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.LettuceLists;
+import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.Timeout;
@@ -92,15 +94,23 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
     @Override
     public CompletionStage<Map<RedisURI, Partitions>> loadViews(Iterable<RedisURI> seed, Duration connectTimeout,
             boolean discovery) {
+        return loadViews(seed, connectTimeout, discovery, Integer.MAX_VALUE);
+    }
+
+    @Override
+    public CompletionStage<Map<RedisURI, Partitions>> loadViews(Iterable<RedisURI> seed, Duration connectTimeout,
+            boolean discovery, int maxTopologyRefreshSources) {
 
         if (!isEventLoopActive()) {
             return CompletableFuture.completedFuture(Collections.emptyMap());
         }
 
-        long commandTimeoutNs = getCommandTimeoutNs(seed);
+        List<RedisURI> refreshSources = LettuceLists.newListDeduplicated(seed, maxTopologyRefreshSources);
+
+        long commandTimeoutNs = getCommandTimeoutNs(refreshSources);
         ConnectionTracker tracker = new ConnectionTracker();
         long connectionTimeout = commandTimeoutNs + connectTimeout.toNanos();
-        openConnections(tracker, seed, connectionTimeout, TimeUnit.NANOSECONDS);
+        openConnections(tracker, refreshSources, connectionTimeout, TimeUnit.NANOSECONDS);
 
         CompletableFuture<NodeTopologyViews> composition = tracker.whenComplete(map -> {
             return new Connections(clientResources, map);
@@ -115,16 +125,25 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
                         if (discovery && isEventLoopActive()) {
 
                             Set<RedisURI> allKnownUris = views.getClusterNodes();
-                            Set<RedisURI> discoveredNodes = difference(allKnownUris, toSet(seed));
+                            Set<RedisURI> discoveredNodes = difference(allKnownUris, toSet(refreshSources));
+                            int remainingSources = remainingSources(maxTopologyRefreshSources, refreshSources.size());
 
-                            if (discoveredNodes.isEmpty()) {
+                            if (discoveredNodes.isEmpty() || remainingSources == 0) {
                                 return CompletableFuture.completedFuture(views);
                             }
 
-                            openConnections(tracker, discoveredNodes, connectionTimeout, TimeUnit.NANOSECONDS);
+                            List<RedisURI> additionalSources = LettuceLists.newListDeduplicated(discoveredNodes,
+                                    remainingSources);
+
+                            if (additionalSources.isEmpty()) {
+                                return CompletableFuture.completedFuture(views);
+                            }
+
+                            openConnections(tracker, additionalSources, connectionTimeout, TimeUnit.NANOSECONDS);
 
                             return tracker.whenComplete(map -> {
-                                return new Connections(clientResources, map).retainAll(discoveredNodes);
+                                return new Connections(clientResources, map)
+                                        .retainAll(LettuceSets.newHashSet(additionalSources));
                             }).thenCompose(newConnections -> {
 
                                 Requests additionalTopology = newConnections
@@ -150,7 +169,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
                     }).thenCompose((it) -> tracker.close().thenApply(ignore -> it)).thenCompose(it -> {
 
                         if (it.isEmpty()) {
-                            Exception exception = tryFail(requestedTopology, tracker, seed);
+                            Exception exception = tryFail(requestedTopology, tracker, refreshSources);
                             return Futures.failed(exception);
                         }
 
@@ -388,6 +407,10 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
         }
 
         return result;
+    }
+
+    private static int remainingSources(int maxTopologyRefreshSources, int refreshSources) {
+        return Math.max(0, maxTopologyRefreshSources - refreshSources);
     }
 
     private static long getCommandTimeoutNs(Iterable<RedisURI> redisURIs) {
