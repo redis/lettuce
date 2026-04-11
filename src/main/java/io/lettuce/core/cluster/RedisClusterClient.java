@@ -354,13 +354,13 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Iterable<RedisURI> seed;
         if (initialSeedNodes || partitions == null || partitions.isEmpty()) {
-            seed = this.initialUris;
+            seed = LettuceLists.newListDeduplicated(this.initialUris, getMaxTopologyRefreshSources());
         } else {
             List<RedisURI> uris = new ArrayList<>();
             for (RedisClusterNode partition : TopologyComparators.sortByUri(partitions)) {
                 uris.add(partition.getUri());
             }
-            seed = uris;
+            seed = LettuceLists.newListDeduplicated(uris, getMaxTopologyRefreshSources());
         }
         return seed;
     }
@@ -1038,7 +1038,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         Iterable<RedisURI> topologyRefreshSource = getTopologyRefreshSource();
         CompletableFuture<Partitions> future = new CompletableFuture<>();
 
-        fetchPartitions(topologyRefreshSource).whenComplete((nodes, throwable) -> {
+        fetchPartitions(topologyRefreshSource, getMaxTopologyRefreshSources()).whenComplete((nodes, throwable) -> {
 
             if (throwable == null) {
                 future.complete(nodes);
@@ -1046,9 +1046,9 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
 
             // Attempt recovery using initial seed nodes
-            if (useDynamicRefreshSources() && topologyRefreshSource != initialUris) {
+            if (useDynamicRefreshSources() && !usesInitialUris(topologyRefreshSource)) {
 
-                fetchPartitions(initialUris).whenComplete((nextNodes, nextThrowable) -> {
+                fetchPartitions(initialUris, Integer.MAX_VALUE).whenComplete((nextNodes, nextThrowable) -> {
 
                     if (nextThrowable != null) {
                         Throwable exception = Exceptions.unwrap(nextThrowable);
@@ -1084,10 +1084,12 @@ public class RedisClusterClient extends AbstractRedisClient {
         return future;
     }
 
-    private CompletionStage<Partitions> fetchPartitions(Iterable<RedisURI> topologyRefreshSource) {
+    private CompletionStage<Partitions> fetchPartitions(Iterable<RedisURI> topologyRefreshSource,
+            int maxTopologyRefreshSources) {
 
         CompletionStage<Map<RedisURI, Partitions>> topology = refresh.loadViews(topologyRefreshSource,
-                getClusterClientOptions().getSocketOptions().getConnectTimeout(), useDynamicRefreshSources());
+                getClusterClientOptions().getSocketOptions().getConnectTimeout(), useDynamicRefreshSources(),
+                maxTopologyRefreshSources);
 
         return topology.thenApply(partitions -> {
 
@@ -1265,6 +1267,27 @@ public class RedisClusterClient extends AbstractRedisClient {
         ClusterTopologyRefreshOptions topologyRefreshOptions = getClusterClientOptions().getTopologyRefreshOptions();
 
         return topologyRefreshOptions.useDynamicRefreshSources();
+    }
+
+    /**
+     * Returns the maximum number of nodes queried during topology refresh.
+     *
+     * @return maximum number of nodes queried during topology refresh.
+     * @see ClusterTopologyRefreshOptions#getMaxTopologyRefreshSources()
+     */
+    protected int getMaxTopologyRefreshSources() {
+
+        ClusterTopologyRefreshOptions topologyRefreshOptions = getClusterClientOptions().getTopologyRefreshOptions();
+
+        return topologyRefreshOptions.getMaxTopologyRefreshSources();
+    }
+
+    private boolean usesInitialUris(Iterable<RedisURI> topologyRefreshSource) {
+        return toUniqueRedisUris(initialUris).equals(toUniqueRedisUris(topologyRefreshSource));
+    }
+
+    private static List<RedisURI> toUniqueRedisUris(Iterable<RedisURI> candidates) {
+        return LettuceLists.newListDeduplicated(candidates, Integer.MAX_VALUE);
     }
 
     /**
