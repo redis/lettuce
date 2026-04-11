@@ -34,6 +34,7 @@ import io.lettuce.core.internal.ExceptionFactory;
  *
  * @author Mark Paluch
  * @author Tobias Nehrlich
+ * @author Sunwoo Ho
  */
 @Tag(UNIT_TEST)
 class ExceptionFactoryUnitTests {
@@ -88,6 +89,25 @@ class ExceptionFactoryUnitTests {
         assertThat(ExceptionFactory.createExecutionException("READONLY foo bar", new IllegalStateException()))
                 .isInstanceOf(RedisReadOnlyException.class).hasMessage("READONLY foo bar")
                 .hasRootCauseInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void shouldCreateNoFunctionException() {
+
+        assertThat(ExceptionFactory.createExecutionException("ERR Function not found"))
+                .isInstanceOf(RedisNoFunctionException.class).hasMessage("ERR Function not found").hasNoCause();
+        assertThat(ExceptionFactory.createExecutionException("ERR Function not found", new IllegalStateException()))
+                .isInstanceOf(RedisNoFunctionException.class).hasMessage("ERR Function not found")
+                .hasRootCauseInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void shouldNotMisclassifyOtherErrMessagesAsNoFunction() {
+
+        assertThat(ExceptionFactory.createExecutionException("ERR Library not found"))
+                .isExactlyInstanceOf(RedisCommandExecutionException.class).hasMessage("ERR Library not found");
+        assertThat(ExceptionFactory.createExecutionException("ERR some random error"))
+                .isExactlyInstanceOf(RedisCommandExecutionException.class).hasMessage("ERR some random error");
     }
 
     @Test
