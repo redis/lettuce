@@ -116,6 +116,8 @@ class SslIntegrationTests extends TestSupport {
 
     @BeforeAll
     static void beforeClass() {
+        assumeTrue(CanConnect.to(TestSettings.host(), sslPort()), "Assume that stunnel runs on port 6443");
+
         Path path0 = createAndSaveTestTruststore("redis-standalone-0", Paths.get("redis-standalone-0/work/tls"), "changeit");
         truststoreFile0 = path0.toFile();
 
@@ -129,8 +131,6 @@ class SslIntegrationTests extends TestSupport {
         truststoreFile3 = createAndSaveTestTruststore("redis-standalone-5-client-cert",
                 Paths.get("redis-standalone-5-client-cert/work/tls"), "changeit").toFile();
 
-        assumeTrue(CanConnect.to(TestSettings.host(), sslPort()), "Assume that stunnel runs on port 6443");
-        // Maybe we should do a list.
         assertThat(truststoreFile0).exists();
         assertThat(truststoreFile1).exists();
         assertThat(truststoreFile2).exists();
@@ -267,7 +267,7 @@ class SslIntegrationTests extends TestSupport {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .openSslProvider() //
-                .truststore(truststoreFile0, "changeit") //
+                .truststore(truststoreFile1, "changeit") //
                 .build();
         setOptions(sslOptions);
 
