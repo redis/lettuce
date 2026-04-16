@@ -67,8 +67,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 @ExtendWith(LettuceExtension.class)
 class SslIntegrationTests extends TestSupport {
 
-    private static final String KEYSTORE = "work/keystore.jks";
-
     private static File truststoreFile0;
 
     private static File truststoreFile1;
