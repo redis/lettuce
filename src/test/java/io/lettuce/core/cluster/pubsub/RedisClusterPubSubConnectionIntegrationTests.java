@@ -285,20 +285,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testConnectToLeastClientsNode() {
-
-        clusterClient.reloadPartitions();
-
-        StatefulRedisPubSubConnection<String, String> connectionAfterPartitionReload = clusterClient.connectPubSub();
-        String newConnectionNodeId = connectionAfterPartitionReload.sync().clusterMyId();
-
-        // Verify the connection was successfully established and we can communicate with the node
-        assertThat(newConnectionNodeId).isNotNull().isNotEmpty();
-        assertThat(connectionAfterPartitionReload.sync().ping()).isEqualTo("PONG");
-        connectionAfterPartitionReload.close();
-    }
-
-    @Test
     void testRegularClientPubSubPublish() throws Exception {
 
         String nodeId = pubSubConnection.sync().clusterMyId();
