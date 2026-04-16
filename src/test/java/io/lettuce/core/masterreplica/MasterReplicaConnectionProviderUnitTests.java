@@ -27,6 +27,8 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.protocol.ConnectionIntent;
+import io.lettuce.core.resource.ClientResources;
+import io.netty.util.concurrent.ImmediateEventExecutor;
 
 /**
  * @author Mark Paluch
@@ -49,10 +51,15 @@ class MasterReplicaConnectionProviderUnitTests {
     @Mock
     RedisCommands<String, String> commandsMock;
 
+    @Mock
+    ClientResources clientResourcesMock;
+
     @BeforeEach
     void before() {
 
         nodeConnectionMock = (StatefulRedisConnection) channelHandlerMock;
+        when(clientMock.getResources()).thenReturn(clientResourcesMock);
+        when(clientResourcesMock.eventExecutorGroup()).thenReturn(ImmediateEventExecutor.INSTANCE);
         sut = new MasterReplicaConnectionProvider<>(clientMock, StringCodec.UTF8, RedisURI.create("localhost", 1),
                 Collections.emptyMap());
         sut.setKnownNodes(Arrays.asList(
@@ -73,6 +80,40 @@ class MasterReplicaConnectionProviderUnitTests {
         sut.close();
 
         verify(channelHandlerMock).closeAsync();
+    }
+
+    @Test
+    void shouldNotPropagateCancellationToUnderlyingConnectionAttempt() {
+
+        CompletableFuture<StatefulRedisConnection<String, String>> actualConnection = new CompletableFuture<>();
+
+        when(clientMock.connectAsync(eq(StringCodec.UTF8), any()))
+                .thenReturn(ConnectionFuture.from(mock(java.net.SocketAddress.class), actualConnection));
+
+        CompletableFuture<StatefulRedisConnection<String, String>> future = sut.getConnectionAsync(ConnectionIntent.READ);
+
+        assertThat(future.cancel(false)).isTrue();
+        assertThat(actualConnection.isCancelled()).isFalse();
+    }
+
+    @Test
+    void shouldAllowOtherWaitersToSucceedWhenOneIsCancelled() {
+
+        CompletableFuture<StatefulRedisConnection<String, String>> actualConnection = new CompletableFuture<>();
+
+        when(clientMock.connectAsync(eq(StringCodec.UTF8), any()))
+                .thenReturn(ConnectionFuture.from(mock(java.net.SocketAddress.class), actualConnection));
+
+        CompletableFuture<StatefulRedisConnection<String, String>> first = sut.getConnectionAsync(ConnectionIntent.READ);
+        CompletableFuture<StatefulRedisConnection<String, String>> second = sut.getConnectionAsync(ConnectionIntent.READ);
+
+        assertThat(first.cancel(false)).isTrue();
+        assertThat(actualConnection.isCancelled()).isFalse();
+
+        actualConnection.complete(nodeConnectionMock);
+
+        assertThat(second.join()).isSameAs(nodeConnectionMock);
+        verify(clientMock, times(1)).connectAsync(eq(StringCodec.UTF8), any());
     }
 
 }

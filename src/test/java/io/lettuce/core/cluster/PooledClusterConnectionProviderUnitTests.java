@@ -61,6 +61,7 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.resource.ClientResources;
+import io.netty.util.concurrent.ImmediateEventExecutor;
 
 /**
  * Unit tests for {@link PooledClusterConnectionProvider}.
@@ -106,6 +107,9 @@ class PooledClusterConnectionProviderUnitTests {
     void before() {
 
         nodeConnectionMock = (StatefulRedisConnection) channelHandlerMock;
+
+        when(clientMock.getResources()).thenReturn(clientResourcesMock);
+        when(clientResourcesMock.eventExecutorGroup()).thenReturn(ImmediateEventExecutor.INSTANCE);
 
         sut = new PooledClusterConnectionProvider<>(clientMock, writerMock, StringCodec.UTF8, clusterEventListener);
 
@@ -417,6 +421,43 @@ class PooledClusterConnectionProviderUnitTests {
         sut.close();
 
         verify(channelHandlerMock).closeAsync();
+    }
+
+    @Test
+    void shouldNotPropagateCancellationToUnderlyingConnectionAttempt() {
+
+        CompletableFuture<StatefulRedisConnection<String, String>> actualConnection = new CompletableFuture<>();
+
+        when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any()))
+                .thenReturn(ConnectionFuture.from(socketAddressMock, actualConnection));
+
+        ConnectionFuture<StatefulRedisConnection<String, String>> future = sut
+                .getConnectionAsync(new ClusterNodeConnectionFactory.ConnectionKey(ConnectionIntent.WRITE, "localhost", 1));
+
+        assertThat(future.cancel(false)).isTrue();
+        assertThat(actualConnection.isCancelled()).isFalse();
+    }
+
+    @Test
+    void shouldAllowOtherWaitersToSucceedWhenOneIsCancelled() {
+
+        CompletableFuture<StatefulRedisConnection<String, String>> actualConnection = new CompletableFuture<>();
+
+        when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any()))
+                .thenReturn(ConnectionFuture.from(socketAddressMock, actualConnection));
+
+        ConnectionFuture<StatefulRedisConnection<String, String>> first = sut
+                .getConnectionAsync(new ClusterNodeConnectionFactory.ConnectionKey(ConnectionIntent.WRITE, "localhost", 1));
+        ConnectionFuture<StatefulRedisConnection<String, String>> second = sut
+                .getConnectionAsync(new ClusterNodeConnectionFactory.ConnectionKey(ConnectionIntent.WRITE, "localhost", 1));
+
+        assertThat(first.cancel(false)).isTrue();
+        assertThat(actualConnection.isCancelled()).isFalse();
+
+        actualConnection.complete(nodeConnectionMock);
+
+        assertThat(second.join()).isSameAs(nodeConnectionMock);
+        verify(clientMock, times(1)).connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any());
     }
 
     @Test

@@ -50,7 +50,7 @@ class MasterReplicaConnectionProvider<K, V> {
 
     private final RedisURI initialRedisUri;
 
-    private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, CompletionStage<StatefulRedisConnection<K, V>>> connectionProvider;
+    private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>> connectionProvider;
 
     private List<RedisNodeDescription> knownNodes = new ArrayList<>();
 
@@ -68,7 +68,8 @@ class MasterReplicaConnectionProvider<K, V> {
         Function<ConnectionKey, CompletionStage<StatefulRedisConnection<K, V>>> connectionFactory = new DefaultConnectionFactory(
                 redisClient, redisCodec);
 
-        this.connectionProvider = new AsyncConnectionProvider<>(connectionFactory);
+        this.connectionProvider = new AsyncConnectionProvider<>(connectionFactory,
+                redisClient.getResources().eventExecutorGroup());
 
         for (Map.Entry<RedisURI, StatefulRedisConnection<K, V>> entry : initialConnections.entrySet()) {
             connectionProvider.register(toConnectionKey(entry.getKey()), entry.getValue());
