@@ -50,6 +50,8 @@ public class SortCommandIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
 
+    private final String key = "sort-command-key";
+
     @Inject
     protected SortCommandIntegrationTests(RedisCommands<String, String> redis) {
         this.redis = redis;
