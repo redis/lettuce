@@ -166,7 +166,7 @@ public class SpellCheckResultParser implements ComplexDataParser<SpellCheckResul
                 }
 
                 // Second element is the misspelled term
-                String misspelledTerm = decodeString(termContents.get(1));
+                String misspelledTerm = StringCodec.UTF8.decodeValue((ByteBuffer) termContents.get(1));
 
                 // Third element is the suggestions array
                 ComplexData suggestionsObj = (ComplexData) termContents.get(2);
@@ -194,7 +194,7 @@ public class SpellCheckResultParser implements ComplexDataParser<SpellCheckResul
                 double score = parseScore(suggestionData.get(0));
 
                 // Second element is the suggestion
-                String suggestion = decodeString(suggestionData.get(1));
+                String suggestion = StringCodec.UTF8.decodeValue((ByteBuffer) suggestionData.get(1));
 
                 suggestions.add(new SpellCheckResult.Suggestion(score, suggestion));
             }
@@ -202,19 +202,6 @@ public class SpellCheckResultParser implements ComplexDataParser<SpellCheckResul
             return suggestions;
         }
 
-    }
-
-    /**
-     * Helper method to decode values that can be either ByteBuffer or String objects.
-     */
-    private String decodeString(Object value) {
-        if (value instanceof ByteBuffer) {
-            return StringCodec.UTF8.decodeValue((ByteBuffer) value);
-        } else if (value instanceof String) {
-            return (String) value;
-        } else {
-            return String.valueOf(value);
-        }
     }
 
     /**

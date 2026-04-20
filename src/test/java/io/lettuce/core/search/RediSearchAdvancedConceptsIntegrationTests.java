@@ -340,8 +340,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
 
     /**
      * Test text highlighting and summarization features. Based on the following
-     * <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Redis
-     * documentation</a>
+     * <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/">Redis documentation</a>
      */
     @Test
     void testHighlightingAndSummarization() {

@@ -25,6 +25,8 @@ import io.lettuce.core.search.SynonymMapParser;
 @Tag(UNIT_TEST)
 class SynonymMapParserUnitTests {
 
+    private static final StringCodec CODEC = StringCodec.UTF8;
+
     private final SynonymMapParser parser = new SynonymMapParser();
 
     @Test
@@ -34,20 +36,20 @@ class SynonymMapParserUnitTests {
         ComplexData data = new ArrayComplexData(4);
 
         // Add term1
-        data.storeObject(StringCodec.UTF8.encodeKey("term1"));
+        data.storeObject(CODEC.encodeKey("term1"));
 
         // Add synonyms for term1
         ComplexData synonyms1 = new ArrayComplexData(2);
-        synonyms1.storeObject(StringCodec.UTF8.encodeKey("synonym1"));
-        synonyms1.storeObject(StringCodec.UTF8.encodeKey("synonym2"));
+        synonyms1.storeObject(CODEC.encodeKey("synonym1"));
+        synonyms1.storeObject(CODEC.encodeKey("synonym2"));
         data.storeObject(synonyms1);
 
         // Add term2
-        data.storeObject(StringCodec.UTF8.encodeKey("term2"));
+        data.storeObject(CODEC.encodeKey("term2"));
 
         // Add synonyms for term2
         ComplexData synonyms2 = new ArrayComplexData(1);
-        synonyms2.storeObject(StringCodec.UTF8.encodeKey("synonym3"));
+        synonyms2.storeObject(CODEC.encodeKey("synonym3"));
         data.storeObject(synonyms2);
 
         Map<String, List<String>> result = parser.parse(data);
@@ -63,16 +65,16 @@ class SynonymMapParserUnitTests {
         ComplexData data = new MapComplexData(2);
 
         // Add term1 and its synonyms
-        data.storeObject(StringCodec.UTF8.encodeKey("term1"));
+        data.storeObject(CODEC.encodeKey("term1"));
         ComplexData synonyms1 = new ArrayComplexData(2);
-        synonyms1.storeObject(StringCodec.UTF8.encodeKey("synonym1"));
-        synonyms1.storeObject(StringCodec.UTF8.encodeKey("synonym2"));
+        synonyms1.storeObject(CODEC.encodeKey("synonym1"));
+        synonyms1.storeObject(CODEC.encodeKey("synonym2"));
         data.storeObject(synonyms1);
 
         // Add term2 and its synonyms
-        data.storeObject(StringCodec.UTF8.encodeKey("term2"));
+        data.storeObject(CODEC.encodeKey("term2"));
         ComplexData synonyms2 = new ArrayComplexData(1);
-        synonyms2.storeObject(StringCodec.UTF8.encodeKey("synonym3"));
+        synonyms2.storeObject(CODEC.encodeKey("synonym3"));
         data.storeObject(synonyms2);
 
         Map<String, List<String>> result = parser.parse(data);
@@ -104,9 +106,9 @@ class SynonymMapParserUnitTests {
     void shouldHandleSingleSynonymResp2() {
         // RESP2: ["term1", "synonym1"] (single synonym, not in array)
         ComplexData data = new ArrayComplexData(1);
-        data.storeObject(StringCodec.UTF8.encodeKey("term1"));
+        data.storeObject(CODEC.encodeKey("term1"));
         ComplexData synonymData = new ArrayComplexData(1);
-        synonymData.storeObject(StringCodec.UTF8.encodeKey("synonym1"));
+        synonymData.storeObject(CODEC.encodeKey("synonym1"));
         data.storeObject(synonymData);
 
         Map<String, List<String>> result = parser.parse(data);
@@ -119,9 +121,9 @@ class SynonymMapParserUnitTests {
     void shouldHandleSingleSynonymResp3() {
         // RESP3: {"term1": "synonym1"} (single synonym, not in array)
         ComplexData data = new MapComplexData(1);
-        data.storeObject(StringCodec.UTF8.encodeKey("term1"));
+        data.storeObject(CODEC.encodeKey("term1"));
         ComplexData synonymData = new ArrayComplexData(1);
-        synonymData.storeObject(StringCodec.UTF8.encodeKey("synonym1"));
+        synonymData.storeObject(CODEC.encodeKey("synonym1"));
         data.storeObject(synonymData);
 
         Map<String, List<String>> result = parser.parse(data);

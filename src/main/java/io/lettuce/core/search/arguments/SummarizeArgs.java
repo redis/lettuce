@@ -18,8 +18,9 @@ import java.util.Optional;
 /**
  * Argument list builder for {@code SUMMARIZE} clause.
  *
- * @param <K> Key type - used for hash field names.
- * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighing</a>
+ * @param <K> Key type
+ * @see <a href=
+ *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#summarization">Summarization</a>
  * @since 6.8
  * @author Tihomir Mateev
  */
@@ -61,7 +62,7 @@ public class SummarizeArgs<K> {
          * Add a field to summarize. Each field is summarized. If no FIELDS directive is passed, then all returned fields are
          * summarized.
          *
-         * @param field the field name (hash field name)
+         * @param field the field name
          * @return the instance of the current {@link SummarizeArgs.Builder} for the purpose of method chaining
          */
         public SummarizeArgs.Builder<K> field(K field) {

@@ -370,9 +370,8 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>
      * @see #ftCreate(String, List)
      * @see #ftCreate(String, CreateArgs, List)
-     * @deprecated {@code FT.TAGVALS} has been deprecated by Redis. See <a href=
-     *             "https://oneuptime.com/blog/post/2026-03-31-redis-how-to-use-fttagvals-in-redis-to-list-unique-tag-values/view">FT.TAGVALS
-     *             reference</a>.
+     * @deprecated {@code FT.TAGVALS} has been deprecated by Redis. See
+     *             <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>.
      */
     @Deprecated
     @Experimental

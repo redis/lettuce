@@ -8,13 +8,13 @@ package io.lettuce.core.output;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.SuggestionParser;
 
@@ -26,13 +26,15 @@ import io.lettuce.core.search.SuggestionParser;
 @Tag(UNIT_TEST)
 class SuggestionParserUnitTests {
 
+    private static final StringCodec CODEC = StringCodec.UTF8;
+
     @Test
     void shouldParseBasicSuggestions() {
         SuggestionParser parser = new SuggestionParser(false, false);
         ArrayComplexData data = new ArrayComplexData(3);
-        data.store("suggestion1");
-        data.store("suggestion2");
-        data.store("suggestion3");
+        data.storeObject(CODEC.encodeValue("suggestion1"));
+        data.storeObject(CODEC.encodeValue("suggestion2"));
+        data.storeObject(CODEC.encodeValue("suggestion3"));
 
         List<Suggestion> suggestions = parser.parse(data);
 
@@ -48,9 +50,9 @@ class SuggestionParserUnitTests {
     void shouldParseSuggestionsWithScores() {
         SuggestionParser parser = new SuggestionParser(true, false);
         ArrayComplexData data = new ArrayComplexData(4);
-        data.store("suggestion1");
+        data.storeObject(CODEC.encodeValue("suggestion1"));
         data.store(1.5);
-        data.store("suggestion2");
+        data.storeObject(CODEC.encodeValue("suggestion2"));
         data.store(2.0);
 
         List<Suggestion> suggestions = parser.parse(data);
@@ -68,10 +70,10 @@ class SuggestionParserUnitTests {
     void shouldParseSuggestionsWithPayloads() {
         SuggestionParser parser = new SuggestionParser(false, true);
         ArrayComplexData data = new ArrayComplexData(4);
-        data.store("suggestion1");
-        data.store("payload1");
-        data.store("suggestion2");
-        data.store("payload2");
+        data.storeObject(CODEC.encodeValue("suggestion1"));
+        data.storeObject(CODEC.encodeValue("payload1"));
+        data.storeObject(CODEC.encodeValue("suggestion2"));
+        data.storeObject(CODEC.encodeValue("payload2"));
 
         List<Suggestion> suggestions = parser.parse(data);
 
@@ -88,12 +90,12 @@ class SuggestionParserUnitTests {
     void shouldParseSuggestionsWithScoresAndPayloads() {
         SuggestionParser parser = new SuggestionParser(true, true);
         ArrayComplexData data = new ArrayComplexData(6);
-        data.store("suggestion1");
+        data.storeObject(CODEC.encodeValue("suggestion1"));
         data.store(1.5);
-        data.store("payload1");
-        data.store("suggestion2");
+        data.storeObject(CODEC.encodeValue("payload1"));
+        data.storeObject(CODEC.encodeValue("suggestion2"));
         data.store(2.0);
-        data.store("payload2");
+        data.storeObject(CODEC.encodeValue("payload2"));
 
         List<Suggestion> suggestions = parser.parse(data);
 
