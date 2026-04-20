@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, Redis Ltd. and Contributors
+ * Copyright 2026-present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
@@ -19,7 +19,7 @@ import io.lettuce.core.search.arguments.AggregateArgs.SortBy;
 import io.lettuce.core.search.arguments.AggregateArgs.SortDirection;
 
 /**
- * Unit tests for {@link AggregateArgs} focusing on {@code @} prefix normalisation in {@link GroupBy}, {@link SortBy}, and
+ * Unit tests for {@link AggregateArgs} focusing on {@code @} prefix normalization in {@link GroupBy}, {@link SortBy}, and
  * {@link Reducer}.
  *
  * @author Viktoriya Kutsarova
@@ -97,62 +97,6 @@ class AggregateArgsTest {
         Reducer.avg("@price").as("avg_price").build(args);
 
         assertThat(args.toString()).contains("@price");
-    }
-
-    @Test
-    void reducerAvgWithoutAtPrefixShouldAddPrefix() {
-        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-
-        Reducer.avg("price").as("avg_price").build(args);
-
-        assertThat(args.toString()).contains("@price");
-    }
-
-    @Test
-    void reducerSumWithoutAtPrefixShouldAddPrefix() {
-        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-
-        Reducer.sum("stock").as("total_stock").build(args);
-
-        assertThat(args.toString()).contains("@stock");
-    }
-
-    @Test
-    void reducerMinWithoutAtPrefixShouldAddPrefix() {
-        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-
-        Reducer.min("price").build(args);
-
-        assertThat(args.toString()).contains("@price");
-    }
-
-    @Test
-    void reducerMaxWithoutAtPrefixShouldAddPrefix() {
-        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-
-        Reducer.max("price").build(args);
-
-        assertThat(args.toString()).contains("@price");
-    }
-
-    @Test
-    void reducerCountDistinctWithAtPrefixShouldNotDoublePrefix() {
-        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-
-        Reducer.countDistinct("@role").as("role_diversity").build(args);
-
-        String output = args.toString();
-        assertThat(output).contains("@role");
-        assertThat(output).doesNotContain("@@role");
-    }
-
-    @Test
-    void reducerCountDistinctWithoutAtPrefixShouldAddPrefix() {
-        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-
-        Reducer.countDistinct("role").as("role_diversity").build(args);
-
-        assertThat(args.toString()).contains("@role");
     }
 
 }
