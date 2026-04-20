@@ -176,7 +176,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                 final SearchReply.SearchResult<K, V> searchResult = new SearchReply.SearchResult<>(id);
 
                 if (withScores) {
-                    searchResult.setScore(Double.parseDouble(StringCodec.UTF8.decodeKey((ByteBuffer) resultsList.get(i))));
+                    searchResult.setScore(Double.parseDouble(StringCodec.UTF8.decodeValue((ByteBuffer) resultsList.get(i))));
                     i++;
                 }
 

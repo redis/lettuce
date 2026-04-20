@@ -30,7 +30,7 @@ import java.util.Arrays;
  * {
  *     &#64;code
  *     // Simple aggregation with grouping and counting
- *     AggregateArgs<String> args = AggregateArgs.builder().groupBy(GroupBy.of("category").reduce(Reducer.count().as("count")))
+ *     AggregateArgs<String> args = AggregateArgs.builder().groupBy("category").reduce(Reducer.count().as("count"))
  *             .sortBy("count", SortDirection.DESC).build();
  *     AggregationReply<String, String> result = redis.ftAggregate("myindex", "*", args);
  * }
@@ -44,10 +44,9 @@ import java.util.Arrays;
  * {
  *     &#64;code
  *     // Complex aggregation pipeline
- *     AggregateArgs<String> args = AggregateArgs.builder().load("price").load("quantity").load("category")
- *             .apply("@price * @quantity", "total_value").filter("@total_value > 100")
- *             .groupBy(GroupBy.of("category").reduce(Reducer.sum("@total_value").as("category_total"))
- *                     .reduce(Reducer.avg("@price").as("avg_price")))
+ *     AggregateArgs<String> args = AggregateArgs.builder().load("price", "quantity", "category")
+ *             .apply("@price * @quantity", "total_value").filter("@total_value > 100").groupBy("category")
+ *             .reduce(Reducer.sum("@total_value").as("category_total")).reduce(Reducer.avg("@price").as("avg_price"))
  *             .sortBy("category_total", SortDirection.DESC).limit(0, 10).dialect(QueryDialects.DIALECT2).build();
  * }
  * </pre>
@@ -288,7 +287,7 @@ public class AggregateArgs<K> {
          * .filter("@total_value > 1000")
          *
          * // Filter by reducer result
-         * .groupBy(GroupBy.of("category").reduce(Reducer.count().as("count")))
+         * .groupBy("category").reduce(Reducer.count().as("count"))
          * .filter("@count >= 5")
          * }
          * </pre>
@@ -563,7 +562,7 @@ public class AggregateArgs<K> {
                 if (value instanceof byte[]) {
                     args.add((byte[]) value);
                 } else {
-                    args.add(value.toString());
+                    args.add((String) value);
                 }
             });
         }
@@ -1062,12 +1061,7 @@ public class AggregateArgs<K> {
             args.add(function);
             args.add(this.args.size());
             for (String arg : this.args) {
-                // Add @ prefix if not already present
-                if (!arg.startsWith("@")) {
-                    args.add("@" + arg);
-                } else {
-                    args.add(arg);
-                }
+                args.add(arg);
             }
 
             alias.ifPresent(a -> {

@@ -1,23 +1,26 @@
 /*
- * Copyright 2025, Redis Ltd. and Contributors
+ * Copyright 2026-present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
  */
 package io.lettuce.core.search;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link HybridReply}.
  *
- * @author Redis Ltd.
+ * @author Viktoriya Kutsarova
  */
+@Tag(UNIT_TEST)
 class HybridReplyTest {
 
     @Test
