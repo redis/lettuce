@@ -18,7 +18,8 @@ import java.util.Optional;
  * Argument list builder for {@code HIGHLIGHT} clause.
  *
  * @param <K> Key type - used for hash field names.
- * @see <a href= "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+ * @see <a href=
+ *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#highlighting">Highlighting</a>
  * @since 6.8
  * @author Tihomir Mateev
  */

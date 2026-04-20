@@ -209,7 +209,7 @@ public class SearchArgs<K> {
          * @param summarizeFilter the summarization filter
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          * @see <a href=
-         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#summarization">Summarization</a>
          */
         public SearchArgs.Builder<K> summarizeArgs(SummarizeArgs<K> summarizeFilter) {
             instance.summarize = Optional.ofNullable(summarizeFilter);
@@ -225,7 +225,7 @@ public class SearchArgs<K> {
          * @param field the field to add
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          * @see <a href=
-         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#summarization">Summarization</a>
          */
         public SearchArgs.Builder<K> summarizeField(K field) {
             if (summarizeArgs == null) {
@@ -246,7 +246,7 @@ public class SearchArgs<K> {
          * @param len the field to add
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          * @see <a href=
-         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#summarization">Summarization</a>
          */
         public SearchArgs.Builder<K> summarizeLen(long len) {
             if (summarizeArgs == null) {
@@ -268,7 +268,7 @@ public class SearchArgs<K> {
          * @param separator the separator between fragments
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          * @see <a href=
-         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#summarization">Summarization</a>
          */
         public SearchArgs.Builder<K> summarizeSeparator(String separator) {
             if (summarizeArgs == null) {
@@ -288,7 +288,7 @@ public class SearchArgs<K> {
          * @param fragments the number of fragments to return
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          * @see <a href=
-         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#summarization">Summarization</a>
          */
         public SearchArgs.Builder<K> summarizeFragments(long fragments) {
             if (summarizeArgs == null) {
@@ -306,7 +306,7 @@ public class SearchArgs<K> {
          * @param highlightFilter the highlighting filter
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          * @see <a href=
-         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#highlighting">Highlighting</a>
          */
         public SearchArgs.Builder<K> highlightArgs(HighlightArgs<K> highlightFilter) {
             instance.highlight = Optional.ofNullable(highlightFilter);
@@ -321,7 +321,7 @@ public class SearchArgs<K> {
          * @param field the field to summarize
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          * @see <a href=
-         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#highlighting">Highlighting</a>
          */
         public SearchArgs.Builder<K> highlightField(K field) {
             if (highlightArgs == null) {
@@ -343,7 +343,7 @@ public class SearchArgs<K> {
          * @param endTag the string is appended to each matched term
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          * @see <a href=
-         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#highlighting">Highlighting</a>
          */
         public SearchArgs.Builder<K> highlightTags(String startTag, String endTag) {
             if (highlightArgs == null) {

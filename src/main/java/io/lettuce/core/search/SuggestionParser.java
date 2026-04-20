@@ -109,6 +109,19 @@ public class SuggestionParser implements ComplexDataParser<List<Suggestion>> {
     }
 
     /**
+     * Decode a string value from the response, handling nil bulk strings as {@code null}.
+     *
+     * @param obj the value object from the response
+     * @return the decoded string or {@code null} if the server returned a nil reply
+     */
+    private static String decodeString(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+        return StringCodec.UTF8.decodeValue((ByteBuffer) obj);
+    }
+
+    /**
      * Parse a score value from the response.
      *
      * @param scoreObj the score object from the response
@@ -124,19 +137,6 @@ public class SuggestionParser implements ComplexDataParser<List<Suggestion>> {
         }
 
         return 0.0;
-    }
-
-    /**
-     * Decode a value from the response, handling both {@link ByteBuffer} and {@link String} objects.
-     *
-     * @param obj the object from the response
-     * @return the decoded string value
-     */
-    private String decodeString(Object obj) {
-        if (obj instanceof ByteBuffer) {
-            return StringCodec.UTF8.decodeValue((ByteBuffer) obj);
-        }
-        return (String) obj;
     }
 
 }
