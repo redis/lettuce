@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, Redis Ltd. and Contributors
+ * Copyright 2026-present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests for {@link HybridReplyParser}.
  *
- * @author Redis Ltd.
+ * @author Viktoriya Kutsarova
  */
 @Tag(UNIT_TEST)
 class HybridReplyParserUnitTests {
