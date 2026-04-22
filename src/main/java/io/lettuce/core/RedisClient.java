@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -756,24 +757,25 @@ public class RedisClient extends AbstractRedisClient {
         Duration timeout = sentinelUri.getTimeout();
 
         return connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout).thenCompose(c -> {
+            ScheduledFuture<?> timeoutTask = null;
             try {
                 String sentinelMasterId = sentinelUri.getSentinelMasterId();
 
                 CompletableFuture<SocketAddress> resultFuture = new CompletableFuture<>();
 
                 // Schedule timeout unless Duration.ZERO which means "do not time out"
-                java.util.concurrent.ScheduledFuture<?> timeoutTask = timeout.isZero() ? null
-                        : getResources().eventExecutorGroup().next().schedule(() -> {
-                            if (!resultFuture.isDone()) {
-                                RedisCommandTimeoutException ex = ExceptionFactory
-                                        .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
-                                resultFuture.completeExceptionally(ex);
-                            }
-                        }, timeout.toMillis(), TimeUnit.MILLISECONDS);
+                timeoutTask = timeout.isZero() ? null : getResources().eventExecutorGroup().next().schedule(() -> {
+                    if (!resultFuture.isDone()) {
+                        RedisCommandTimeoutException ex = ExceptionFactory
+                                .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
+                        resultFuture.completeExceptionally(ex);
+                    }
+                }, timeout.toMillis(), TimeUnit.MILLISECONDS);
+                final ScheduledFuture<?> scheduledTimeout = timeoutTask;
 
                 c.async().getMasterAddrByName(sentinelMasterId).whenComplete((addr, e) -> {
-                    if (timeoutTask != null) {
-                        timeoutTask.cancel(false);
+                    if (scheduledTimeout != null) {
+                        scheduledTimeout.cancel(false);
                     }
                     if (e != null) {
                         resultFuture.completeExceptionally(e);
@@ -799,6 +801,9 @@ public class RedisClient extends AbstractRedisClient {
 
                 return resultFuture.whenComplete((result, ex) -> c.closeAsync());
             } catch (Exception e) {
+                if (timeoutTask != null) {
+                    timeoutTask.cancel(false);
+                }
                 c.closeAsync();
                 throw e;
             }
