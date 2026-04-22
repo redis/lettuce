@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
@@ -628,8 +629,8 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
                     try {
                         connection.addDatabase(uri, 1.0f);
                         addCounts[uriIndex].incrementAndGet();
-                    } catch (IllegalArgumentException e) {
-                        // Expected: "Database already exists"
+                    } catch (IllegalArgumentException | RedisConnectionException e) {
+                        // Expected: "Database already exists" or connection failure to non-existent port
                     }
                 } else {
                     // Remove operation

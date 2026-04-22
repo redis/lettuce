@@ -43,10 +43,10 @@ start:
 	echo "Started test environment with Redis $$display_version.";
 
 test:
-	mvn -DskipITs=false $(MVN_SOCKET_ARGS) clean compile verify -P$(PROFILE)
+	TEST_WORK_FOLDER=$(REDIS_ENV_WORK_DIR) mvn -DskipITs=false $(MVN_SOCKET_ARGS) clean compile verify -P$(PROFILE)
 
 test-coverage:
-	mvn -DskipITs=false $(MVN_SOCKET_ARGS) clean compile verify jacoco:report -P$(PROFILE)
+	TEST_WORK_FOLDER=$(REDIS_ENV_WORK_DIR) mvn -DskipITs=false $(MVN_SOCKET_ARGS) clean compile verify jacoco:report -P$(PROFILE)
 
 stop:
 	@$(COMPOSE_ENV) \
