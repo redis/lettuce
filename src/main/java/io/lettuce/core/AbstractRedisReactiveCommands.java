@@ -3177,6 +3177,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Long> xnack(K key, K group, XNackMode mode, String... messageIds) {
+        return createMono(() -> commandBuilder.xnack(key, group, mode, messageIds));
+    }
+
+    @Override
+    public Mono<Long> xnack(K key, K group, XNackMode mode, XNackArgs args, String... messageIds) {
+        return createMono(() -> commandBuilder.xnack(key, group, mode, args, messageIds));
+    }
+
+    @Override
     public Mono<String> xadd(K key, Map<K, V> body) {
         return createMono(() -> commandBuilder.xadd(key, null, body));
     }

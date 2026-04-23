@@ -1129,6 +1129,132 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void xnackSilent() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
+
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        String id = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.SILENT, id);
+
+        assertThat(nacked).isEqualTo(1L);
+    }
+
+    @Test
+    void xnackFail() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
+
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        String id = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.FAIL, id);
+
+        assertThat(nacked).isEqualTo(1L);
+    }
+
+    @Test
+    void xnackFatal() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
+
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        String id = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.FATAL, id);
+
+        assertThat(nacked).isEqualTo(1L);
+    }
+
+    @Test
+    void xnackMultipleMessages() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
+
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.FAIL, id1, id2);
+
+        assertThat(nacked).isEqualTo(2L);
+    }
+
+    @Test
+    void xnackNonExistentMessage() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
+
+        String groupName = "test-group";
+
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.SILENT, "999999-0");
+
+        assertThat(nacked).isEqualTo(0L);
+    }
+
+    @Test
+    void xnackWithRetryCount() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
+
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        String id = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.FAIL, XNackArgs.Builder.retryCount(10), id);
+
+        assertThat(nacked).isEqualTo(1L);
+    }
+
+    @Test
+    void xnackWithForce() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
+
+        String groupName = "test-group";
+
+        // Add a message but don't read it (not in PEL yet)
+        String id = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+
+        // FORCE creates an unowned PEL entry for the ID even though it's not in the PEL
+        Long nacked = redis.xnack(key, groupName, XNackMode.SILENT, XNackArgs.Builder.force(), id);
+
+        assertThat(nacked).isEqualTo(1L);
+    }
+
+    @Test
+    void xnackWithRetryCountAndForce() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
+
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        String id = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.FATAL, new XNackArgs().retryCount(3).force(), id);
+
+        assertThat(nacked).isEqualTo(1L);
+    }
+
+    @Test
     @EnabledOnCommand("XDELEX") // Redis 8.2
     void xaddWithTrimmingMode() {
         // Add initial entries to the stream
