@@ -486,6 +486,122 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructXnackSilent() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.SILENT,
+                new String[] { MESSAGE_ID1, MESSAGE_ID2 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*8\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n"
+                + "test-stream\r\n" + "$10\r\n" + "test-group\r\n" + "$6\r\n" + "SILENT\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n"
+                + "2\r\n" + "$12\r\n" + "1234567890-0\r\n" + "$12\r\n" + "1234567891-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXnackFail() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, new String[] { MESSAGE_ID1 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n"
+                        + "$4\r\n" + "FAIL\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXnackFatal() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FATAL,
+                new String[] { MESSAGE_ID1 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n"
+                        + "$5\r\n" + "FATAL\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXnackWithRetryCount() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL,
+                XNackArgs.Builder.retryCount(5), new String[] { MESSAGE_ID1 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n"
+                + "test-stream\r\n" + "$10\r\n" + "test-group\r\n" + "$4\r\n" + "FAIL\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n"
+                + "1\r\n" + "$12\r\n" + "1234567890-0\r\n" + "$10\r\n" + "RETRYCOUNT\r\n" + "$1\r\n" + "5\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXnackWithForce() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.SILENT, XNackArgs.Builder.force(),
+                new String[] { MESSAGE_ID1 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*8\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n"
+                + "test-stream\r\n" + "$10\r\n" + "test-group\r\n" + "$6\r\n" + "SILENT\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n"
+                + "1\r\n" + "$12\r\n" + "1234567890-0\r\n" + "$5\r\n" + "FORCE\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXnackWithRetryCountAndForce() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FATAL,
+                new XNackArgs().retryCount(10).force(), new String[] { MESSAGE_ID1, MESSAGE_ID2 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*11\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n" + "$5\r\n"
+                        + "FATAL\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "2\r\n" + "$12\r\n" + "1234567890-0\r\n" + "$12\r\n"
+                        + "1234567891-0\r\n" + "$10\r\n" + "RETRYCOUNT\r\n" + "$2\r\n" + "10\r\n" + "$5\r\n" + "FORCE\r\n");
+    }
+
+    @Test
+    void xnackShouldRejectNullKey() {
+        assertThatThrownBy(() -> sut.xnack(null, GROUP_NAME, XNackMode.FAIL, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Key must not be null");
+    }
+
+    @Test
+    void xnackShouldRejectNullGroup() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, null, XNackMode.FAIL, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Group must not be null");
+    }
+
+    @Test
+    void xnackShouldRejectNullMode() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, null, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("XNackMode must not be null");
+    }
+
+    @Test
+    void xnackShouldRejectEmptyMessageIds() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, new String[] {}))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageIds must not be empty");
+    }
+
+    @Test
+    void xnackShouldRejectNullMessageIds() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, (String[]) null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageIds must not be empty");
+    }
+
+    @Test
+    void xnackShouldRejectNullElementsInMessageIds() {
+        assertThatThrownBy(
+                () -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, new String[] { MESSAGE_ID1, null, MESSAGE_ID2 }))
+                        .isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("MessageIds must not contain null elements");
+    }
+
+    @Test
+    void xnackArgsShouldRejectNegativeRetryCount() {
+        assertThatThrownBy(() -> XNackArgs.Builder.retryCount(-1)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("RETRYCOUNT must be greater than or equal to 0");
+    }
+
+    @Test
     void shouldCorrectlyConstructSetWithExAndIfeq() {
         Command<String, String, ?> command = sut.set("mykey", "myvalue",
                 SetArgs.Builder.ex(100).compareCondition(CompareCondition.valueEq("oldvalue")));

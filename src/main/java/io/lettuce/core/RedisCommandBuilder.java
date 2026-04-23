@@ -3269,6 +3269,32 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XACKDEL, new StreamEntryDeletionResultListOutput<>(codec), args);
     }
 
+    public Command<K, V, Long> xnack(K key, K group, XNackMode mode, String[] messageIds) {
+        return xnack(key, group, mode, null, messageIds);
+    }
+
+    public Command<K, V, Long> xnack(K key, K group, XNackMode mode, XNackArgs xNackArgs, String[] messageIds) {
+        notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(mode, "XNackMode " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group).add(mode);
+
+        args.add(CommandKeyword.IDS).add(messageIds.length);
+
+        for (String messageId : messageIds) {
+            args.add(messageId);
+        }
+
+        if (xNackArgs != null) {
+            xNackArgs.build(args);
+        }
+
+        return createCommand(XNACK, new IntegerOutput<>(codec), args);
+    }
+
     public Command<K, V, ClaimedMessages<K, V>> xautoclaim(K key, XAutoClaimArgs<K> xAutoClaimArgs) {
         notNullKey(key);
         LettuceAssert.notNull(xAutoClaimArgs, "XAutoClaimArgs " + MUST_NOT_BE_NULL);
