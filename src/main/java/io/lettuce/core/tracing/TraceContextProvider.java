@@ -40,10 +40,10 @@ public interface TraceContextProvider {
      * Provides a {@link TraceContext} in delayed fashion, accepts an application context to obtain/populate a particular
      * context in case required.
      * <p>
-     * Return value can be null depending on the implementation, and application context it is called from.
+     * Return value of the supplier, the {@link TraceContext}, can be null depending on the implementation, and application context it is called from.
      * 
      * @param appContext application context
-     * @return the {@link TraceContext}.
+     * @return the supplier for the {@link TraceContext}.
      */
     default Supplier<TraceContext> getTraceContextAsync(Map<Object, Object> appContext) {
         return () -> getTraceContext();
