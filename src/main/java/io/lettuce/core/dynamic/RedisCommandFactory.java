@@ -281,10 +281,11 @@ public class RedisCommandFactory {
 
             if (method.isReactiveExecution()) {
 
-                LettuceAssert.assertState(reactive != null, () -> String.format(
-                        "Cannot resolve reactive command method %s: Project Reactor is not available on the classpath. "
-                                + "Add a dependency on Project Reactor to use reactive command methods.",
-                        method));
+                LettuceAssert.assertState(reactive != null,
+                        () -> String.format(
+                                "Cannot resolve reactive command method %s: Project Reactor is not available on the classpath. "
+                                        + "Add a dependency on Project Reactor to use reactive command methods.",
+                                method));
 
                 return reactive.resolveCommandMethod(method, metadata);
             }
