@@ -6,6 +6,7 @@
  */
 package io.lettuce.core;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.cluster.RedisAdvancedClusterReactiveCommandsImpl;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.codec.StringCodec;
@@ -13,6 +14,7 @@ import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -29,6 +31,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Aleksandar Todorov
  */
+@Tag(TestTags.UNIT_TEST)
 class AbstractRedisReactiveCommandsTest {
 
     @Mock
