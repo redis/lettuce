@@ -184,6 +184,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     void publishToShardChannelViaNewClient() throws Exception {
         pubSubConnection.addListener(connectionListener);
         pubSubConnection.async().ssubscribe(shardChannel);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
 
         StatefulRedisClusterPubSubConnection<String, String> newPubsub = clusterClientWithNoRedirects.connectPubSub();
         newPubsub.async().spublish(shardChannel, shardMessage);
