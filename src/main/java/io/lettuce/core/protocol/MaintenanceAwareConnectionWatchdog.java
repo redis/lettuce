@@ -79,11 +79,10 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     public MaintenanceAwareConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap,
             Timer timer, EventExecutorGroup reconnectWorkers, Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
-            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
-            Endpoint endpoint) {
+            ReconnectionListener reconnectionListener, EventBus eventBus, Endpoint endpoint) {
 
         super(reconnectDelay, clientOptions, bootstrap, timer, reconnectWorkers, socketAddressSupplier, reconnectionListener,
-                connectionFacade, eventBus, endpoint);
+                eventBus, endpoint);
     }
 
     @Override

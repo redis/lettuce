@@ -152,7 +152,7 @@ public class ConnectionBuilder {
         if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
             MaintenanceAwareConnectionWatchdog maintenanceAwareWatchdog = new MaintenanceAwareConnectionWatchdog(
                     clientResources.reconnectDelay(), clientOptions, bootstrap, clientResources.timer(),
-                    clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener, connection,
+                    clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
                     clientResources.eventBus(), endpoint);
             if (connection.getChannelWriter() instanceof MaintenanceAwareComponent) {
                 maintenanceAwareWatchdog.setMaintenanceEventListener((MaintenanceAwareComponent) connection.getChannelWriter());
@@ -161,7 +161,7 @@ public class ConnectionBuilder {
         } else {
             watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
                     clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
-                    connection, clientResources.eventBus(), endpoint);
+                    clientResources.eventBus(), endpoint);
         }
 
         endpoint.registerConnectionWatchdog(watchdog);

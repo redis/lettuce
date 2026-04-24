@@ -84,9 +84,6 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     private ReconnectionListener reconnectionListener;
 
     @Mock
-    private ConnectionFacade connectionFacade;
-
-    @Mock
     private EventBus eventBus;
 
     @Mock
@@ -135,7 +132,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(endpoint.getId()).thenReturn("test-endpoint");
 
         watchdog = new MaintenanceAwareConnectionWatchdog(reconnectDelay, clientOptions, realBootstrap, timer, reconnectWorkers,
-                socketAddressSupplier, reconnectionListener, connectionFacade, eventBus, endpoint);
+                socketAddressSupplier, reconnectionListener, eventBus, endpoint);
 
         // Set up the reconnectionHandler field using ReflectionTestUtils
         setField(watchdog, "reconnectionHandler", reconnectionHandler);
