@@ -9,11 +9,15 @@ package io.lettuce.core.models.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import io.lettuce.TestTags;
 
 /**
  * Unit tests for {@link StreamEntryDeletionResult}.
  */
+@Tag(TestTags.UNIT_TEST)
 class StreamEntryDeletionResultUnitTests {
 
     @Test
