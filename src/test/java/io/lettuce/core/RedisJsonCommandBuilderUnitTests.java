@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Tihomir Mateev
  * @author SeugnSu Kim
+ * @author Yordan Tsintsov
  */
 @Tag(UNIT_TEST)
 class RedisJsonCommandBuilderUnitTests {
@@ -48,6 +49,8 @@ class RedisJsonCommandBuilderUnitTests {
     public static final JsonValue ELEMENT = PARSER.createJsonValue(ID_BIKE_6);
 
     public static final JsonPath MY_PATH = JsonPath.of("$..commuter_bikes");
+
+    public static final String RESP_ENCODED_ROOT_PATH = "$1\r\n" + JsonPath.ROOT_PATH + "\r\n";
 
     RedisJsonCommandBuilder<String, String> builder = new RedisJsonCommandBuilder<>(StringCodec.UTF8, () -> PARSER);
 
@@ -67,8 +70,8 @@ class RedisJsonCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
-                "*3\r\n" + "$14\r\nJSON.ARRAPPEND\r\n" + "$15\r\nbikes:inventory\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$14\r\nJSON.ARRAPPEND\r\n"
+                + "$15\r\nbikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH + "$14\r\n" + ID_BIKE_6 + "\r\n");
     }
 
     @Test
@@ -576,8 +579,8 @@ class RedisJsonCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
-                "*3\r\n" + "$14\r\nJSON.ARRAPPEND\r\n" + "$15\r\nbikes:inventory\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$14\r\nJSON.ARRAPPEND\r\n"
+                + "$15\r\nbikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH + "$14\r\n" + ID_BIKE_6 + "\r\n");
     }
 
     @Test
@@ -696,8 +699,8 @@ class RedisJsonCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*4\r\n$14\r\nJSON.ARRAPPEND\r\n$15\r\nbikes:inventory\r\n$1\r\nA\r\n$1\r\nB\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n$14\r\nJSON.ARRAPPEND\r\n$15\r\nbikes:inventory\r\n"
+                + RESP_ENCODED_ROOT_PATH + "$1\r\nA\r\n$1\r\nB\r\n");
     }
 
     @Test
