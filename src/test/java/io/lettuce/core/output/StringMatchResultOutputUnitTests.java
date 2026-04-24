@@ -10,13 +10,16 @@ import java.util.List;
 import java.util.Map;
 
 import io.netty.buffer.Unpooled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.RedisStateMachine;
 
+@Tag(TestTags.UNIT_TEST)
 public class StringMatchResultOutputUnitTests {
 
     @Test

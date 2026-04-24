@@ -13,8 +13,10 @@ import java.util.stream.StreamSupport;
 
 import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.DatabaseConfig;
@@ -40,6 +42,7 @@ import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
  * @author Ivo Gaydazhiev (original)
  * @author Ali Takavci (adapted)
  */
+@Tag(TestTags.INTEGRATION_TEST)
 class MultiDbClientIntegrationTests {
 
     private MultiDbClient client;
