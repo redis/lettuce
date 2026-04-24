@@ -27,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import io.lettuce.core.ClientOptions;
@@ -89,27 +90,18 @@ class ReconnectionHandler {
 
         // handle synchronous exceptions during get(), before obtaining the CompletionStage
         try {
-            socketAddressSupplierAsync.get().whenComplete((remoteAddress, ex) -> {
-                if (ex != null) {
-                    if (!address.isDone()) {
-                        address.completeExceptionally(ex);
-                    }
-                    future.completeExceptionally(ex);
-                    return;
-                }
-
+            socketAddressSupplierAsync.get().thenAccept(remoteAddress -> {
                 address.complete(remoteAddress);
-
-                if (future.isCancelled()) {
-                    return;
+                if (!future.isCancelled()) {
+                    reconnect0(future, remoteAddress);
                 }
-
-                reconnect0(future, remoteAddress);
+            }).exceptionally(error -> {
+                address.completeExceptionally(error);
+                future.completeExceptionally(error);
+                return null;
             });
         } catch (Exception e) {
-            if (!address.isDone()) {
-                address.completeExceptionally(e);
-            }
+            address.completeExceptionally(e);
             future.completeExceptionally(e);
         }
 
