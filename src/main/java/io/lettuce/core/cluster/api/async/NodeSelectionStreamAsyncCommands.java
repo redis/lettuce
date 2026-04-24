@@ -77,6 +77,34 @@ public interface NodeSelectionStreamAsyncCommands<K, V> {
     AsyncExecutions<List<StreamEntryDeletionResult>> xackdel(K key, K group, StreamDeletionPolicy policy, String... messageIds);
 
     /**
+     * Negatively acknowledge one or more pending messages in a consumer group, making them immediately available for
+     * reconsumption by other consumers (using {@code XREADGROUP CLAIM}). Depending on the {@link XNackMode}, the delivery
+     * counter is adjusted to reflect the reason for the NACK.
+     *
+     * @param key the stream key.
+     * @param group name of the consumer group.
+     * @param mode the nacking mode.
+     * @param messageIds message Id's to negatively acknowledge.
+     * @return the number of messages successfully NACKed.
+     * @since 7.6
+     */
+    AsyncExecutions<Long> xnack(K key, K group, XNackMode mode, String... messageIds);
+
+    /**
+     * Negatively acknowledge one or more pending messages in a consumer group with additional options. Depending on the
+     * {@link XNackMode}, the delivery counter is adjusted to reflect the reason for the NACK.
+     *
+     * @param key the stream key.
+     * @param group name of the consumer group.
+     * @param mode the nacking mode.
+     * @param args additional {@link XNackArgs}, must not be {@code null}.
+     * @param messageIds message Id's to negatively acknowledge.
+     * @return the number of messages successfully NACKed.
+     * @since 7.6
+     */
+    AsyncExecutions<Long> xnack(K key, K group, XNackMode mode, XNackArgs args, String... messageIds);
+
+    /**
      * Append a message to the stream {@code key}.
      *
      * @param key the stream key.

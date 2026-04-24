@@ -50,6 +50,34 @@ interface RedisStreamCoroutinesCommands<K : Any, V : Any> {
     suspend fun xack(key: K, group: K, vararg messageIds: String): Long?
 
     /**
+     * Negatively acknowledge one or more pending messages in a consumer group, making them immediately available for
+     * reconsumption by other consumers (using `XREADGROUP CLAIM`). Depending on the [XNackMode], the delivery counter is
+     * adjusted to reflect the reason for the NACK.
+     *
+     * @param key the stream key.
+     * @param group name of the consumer group.
+     * @param mode the nacking mode.
+     * @param messageIds message Id's to negatively acknowledge.
+     * @return the number of messages successfully NACKed.
+     * @since 7.6
+     */
+    suspend fun xnack(key: K, group: K, mode: XNackMode, vararg messageIds: String): Long?
+
+    /**
+     * Negatively acknowledge one or more pending messages in a consumer group with additional options. Depending on the
+     * [XNackMode], the delivery counter is adjusted to reflect the reason for the NACK.
+     *
+     * @param key the stream key.
+     * @param group name of the consumer group.
+     * @param mode the nacking mode.
+     * @param args additional [XNackArgs], must not be `null`.
+     * @param messageIds message Id's to negatively acknowledge.
+     * @return the number of messages successfully NACKed.
+     * @since 7.6
+     */
+    suspend fun xnack(key: K, group: K, mode: XNackMode, args: XNackArgs, vararg messageIds: String): Long?
+
+    /**
      * Append a message to the stream `key`.
      *
      * @param key the stream key.
