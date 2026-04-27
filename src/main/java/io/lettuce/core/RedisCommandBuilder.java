@@ -1527,6 +1527,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GETSET, new ValueOutput<>(codec), key, value);
     }
 
+    Command<K, V, GCRAResponse> gcra(K key, GCRAArgs gcraArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(gcraArgs, "GCRAArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        gcraArgs.build(args);
+
+        return createCommand(GCRA, new ComplexOutput<>(codec, GCRAResponseParser.INSTANCE), args);
+    }
+
     Command<K, V, Long> hdel(K key, K... fields) {
         keyAndFieldsProvided(key, fields);
 

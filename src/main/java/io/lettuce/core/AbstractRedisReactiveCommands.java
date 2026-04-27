@@ -1412,6 +1412,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<GCRAResponse> gcra(K key, GCRAArgs gcraArgs) {
+        return createMono(() -> commandBuilder.gcra(key, gcraArgs));
+    }
+
+    @Override
     public Mono<Long> hdel(K key, K... fields) {
         return createMono(() -> commandBuilder.hdel(key, fields));
     }
