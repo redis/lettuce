@@ -232,6 +232,28 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_GET, new JsonValueListOutput<>(codec, parser.get()), args);
     }
 
+    Command<K, V, JsonValue> jsonGetValue(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (options != null) {
+            // OPTIONAL as per API
+            options.build(args);
+        }
+
+        if (jsonPaths != null) {
+            // OPTIONAL as per API
+            for (JsonPath jsonPath : jsonPaths) {
+                if (jsonPath != null) {
+                    args.add(jsonPath.toString());
+                }
+            }
+        }
+
+        return createCommand(JSON_GET, new JsonValueOutput<>(codec, parser.get()), args);
+    }
+
     Command<K, V, List<String>> jsonGetRaw(K key, JsonGetArgs options, JsonPath... jsonPaths) {
         notNullKey(key);
 
@@ -252,6 +274,28 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         return createCommand(JSON_GET, new StringListOutput<>(codec), args);
+    }
+
+    Command<K, V, String> jsonGetValueRaw(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (options != null) {
+            // OPTIONAL as per API
+            options.build(args);
+        }
+
+        if (jsonPaths != null) {
+            // OPTIONAL as per API
+            for (JsonPath jsonPath : jsonPaths) {
+                if (jsonPath != null) {
+                    args.add(jsonPath.toString());
+                }
+            }
+        }
+
+        return createCommand(JSON_GET, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, String> jsonMerge(K key, JsonPath jsonPath, JsonValue value) {

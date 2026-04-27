@@ -311,8 +311,31 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
      * @return JsonValue the value at path in JSON serialized form, or null if the path does not exist.
      * @since 6.5
+     * @deprecated since 7.6, use {@link #jsonGetValue(Object, JsonGetArgs, JsonPath...)} instead. The {@code JSON.GET} command
+     *             always returns a single bulk string reply regardless of the number of paths, so returning a {@code List} is
+     *             misleading.
      */
+    @Deprecated
     Flux<JsonValue> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths);
+
+    /**
+     * Return the value at the specified path in JSON serialized form.
+     * <p>
+     * When using a single JSONPath, the root of the matching values is a JSON string with a top-level array of serialized JSON
+     * value. In contrast, a legacy path returns a single value.
+     * <p>
+     * When using multiple JSONPath arguments, the root of the matching values is a JSON string with a top-level object, with
+     * each object value being a top-level array of serialized JSON value. In contrast, if all paths are legacy paths, each
+     * object value is a single serialized JSON value. If there are multiple paths that include both legacy path and JSONPath,
+     * the returned value conforms to the JSONPath version (an array of values).
+     *
+     * @param key the key holding the JSON document.
+     * @param options the {@link JsonGetArgs} to use.
+     * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
+     * @return JsonValue the value at path in JSON serialized form, or null if the path does not exist.
+     * @since 7.6
+     */
+    Mono<JsonValue> jsonGetValue(K key, JsonGetArgs options, JsonPath... jsonPaths);
 
     /**
      * Return the value at the specified path in JSON serialized form as raw strings.
@@ -325,8 +348,26 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
      * @return List<String> the value at path in JSON serialized form, or null if the path does not exist.
      * @since 7.0
+     * @deprecated since 7.6, use {@link #jsonGetValueRaw(Object, JsonGetArgs, JsonPath...)} instead. The {@code JSON.GET}
+     *             command always returns a single bulk string reply regardless of the number of paths, so returning a
+     *             {@code List} is misleading.
      */
+    @Deprecated
     Flux<String> jsonGetRaw(K key, JsonGetArgs options, JsonPath... jsonPaths);
+
+    /**
+     * Return the value at the specified path in JSON serialized form as a raw string.
+     * <p>
+     * Behaves like {@link #jsonGetValue(Object, JsonGetArgs, JsonPath...)} but returns {@code String} with raw JSON instead of
+     * {@link JsonValue} wrapper.
+     *
+     * @param key the key holding the JSON document.
+     * @param options the {@link JsonGetArgs} to use.
+     * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
+     * @return String the value at path in JSON serialized form, or null if the path does not exist.
+     * @since 7.6
+     */
+    Mono<String> jsonGetValueRaw(K key, JsonGetArgs options, JsonPath... jsonPaths);
 
     /**
      * Return the value at the specified path in JSON serialized form. Uses defaults for the {@link JsonGetArgs}.
@@ -343,8 +384,30 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
      * @return JsonValue the value at path in JSON serialized form, or null if the path does not exist.
      * @since 6.5
+     * @deprecated since 7.6, use {@link #jsonGetValue(Object, JsonPath...)} instead. The {@code JSON.GET} command always
+     *             returns a single bulk string reply regardless of the number of paths, so returning a {@code List} is
+     *             misleading.
      */
+    @Deprecated
     Flux<JsonValue> jsonGet(K key, JsonPath... jsonPaths);
+
+    /**
+     * Return the value at the specified path in JSON serialized form. Uses defaults for the {@link JsonGetArgs}.
+     * <p>
+     * When using a single JSONPath, the root of the matching values is a JSON string with a top-level array of serialized JSON
+     * value. In contrast, a legacy path returns a single value.
+     * <p>
+     * When using multiple JSONPath arguments, the root of the matching values is a JSON string with a top-level object, with
+     * each object value being a top-level array of serialized JSON value. In contrast, if all paths are legacy paths, each
+     * object value is a single serialized JSON value. If there are multiple paths that include both legacy path and JSONPath,
+     * the returned value conforms to the JSONPath version (an array of values).
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
+     * @return JsonValue the value at path in JSON serialized form, or null if the path does not exist.
+     * @since 7.6
+     */
+    Mono<JsonValue> jsonGetValue(K key, JsonPath... jsonPaths);
 
     /**
      * Return the value at the specified path in JSON serialized form as raw strings. Uses defaults for the {@link JsonGetArgs}.
@@ -356,8 +419,26 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
      * @return List<String> the value at path in JSON serialized form, or null if the path does not exist.
      * @since 7.0
+     * @deprecated since 7.6, use {@link #jsonGetValueRaw(Object, JsonPath...)} instead. The {@code JSON.GET} command always
+     *             returns a single bulk string reply regardless of the number of paths, so returning a {@code List} is
+     *             misleading.
      */
+    @Deprecated
     Flux<String> jsonGetRaw(K key, JsonPath... jsonPaths);
+
+    /**
+     * Return the value at the specified path in JSON serialized form as a raw string. Uses defaults for the
+     * {@link JsonGetArgs}.
+     * <p>
+     * Behaves like {@link #jsonGetValue(Object, JsonPath...)} but returns {@code String} with raw JSON instead of
+     * {@link JsonValue} wrapper.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
+     * @return String the value at path in JSON serialized form, or null if the path does not exist.
+     * @since 7.6
+     */
+    Mono<String> jsonGetValueRaw(K key, JsonPath... jsonPaths);
 
     /**
      * Merge a given {@link JsonValue} with the value matching {@link JsonPath}. Consequently, JSON values at matching paths are
