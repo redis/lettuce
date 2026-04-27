@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.TransactionBuilder;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterClientOptions;
@@ -284,5 +285,41 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * @since 6.0
      */
     void removeListener(RedisClusterPushListener listener);
+
+    /**
+     * Create a new transaction builder for atomic transaction dispatch in cluster mode.
+     * <p>
+     * This method creates a {@link TransactionBuilder} that collects commands and validates that all keys hash to the same
+     * slot. If keys span multiple slots, a {@link RedisException} is thrown during command addition.
+     * <p>
+     * The transaction will be routed to the node responsible for the slot of the first key added.
+     * <p>
+     * Usage example:
+     * 
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     TransactionResult result = clusterConnection.transaction().set("{user:123}:name", "John").incr("{user:123}:visits")
+     *             .execute();
+     * }
+     * </pre>
+     *
+     * @return a new cluster-aware transaction builder.
+     * @since 6.6
+     */
+    TransactionBuilder<K, V> transaction();
+
+    /**
+     * Create a new transaction builder with WATCH support for optimistic locking in cluster mode.
+     * <p>
+     * All keys (including WATCH keys) must hash to the same slot.
+     *
+     * @param watchKeys the keys to watch.
+     * @return a new cluster-aware transaction builder with WATCH.
+     * @since 6.6
+     */
+    @SuppressWarnings("unchecked")
+    TransactionBuilder<K, V> transaction(K... watchKeys);
 
 }

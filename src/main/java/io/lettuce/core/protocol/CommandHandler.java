@@ -755,11 +755,23 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     /**
      * Decoding hook: Can the command be completed.
+     * <p>
+     * For commands that implement {@link MultiResponseCommand}, this method checks if all expected responses have been
+     * received. This method also unwraps decorated commands (like {@link AsyncCommand}) to check the underlying command.
      *
-     * @param command
-     * @return
+     * @param command the command to check
+     * @return {@code true} if the command can be completed
      */
     protected boolean canComplete(RedisCommand<?, ?, ?> command) {
+        // Unwrap decorated commands to get to the actual command
+        RedisCommand<?, ?, ?> actual = command;
+        while (actual instanceof DecoratedCommand) {
+            actual = ((DecoratedCommand<?, ?, ?>) actual).getDelegate();
+        }
+
+        if (actual instanceof MultiResponseCommand) {
+            return ((MultiResponseCommand) actual).isResponseComplete();
+        }
         return true;
     }
 
