@@ -139,6 +139,10 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param map the hash to apply.
      * @return String simple-string-reply.
      */
+    @Deprecated(
+        message = "@deprecated since 7.4.0. Use hset(key, map) instead. HMSET is deprecated by Redis since version 4.0.0.",
+        replaceWith = ReplaceWith("hset(key, map)")
+    )
     suspend fun hmset(key: K, map: Map<K, V>): String?
 
     /**
