@@ -17,27 +17,26 @@ import java.util.Optional;
 /**
  * Argument list builder for {@code HIGHLIGHT} clause.
  *
- * @param <K> Key type.
- * @param <V> Value type.
+ * @param <K> Key type - used for hash field names.
  * @see <a href=
- *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlighting/">Highlighting</a>
+ *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#highlighting">Highlighting</a>
  * @since 6.8
  * @author Tihomir Mateev
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class HighlightArgs<K, V> {
+public class HighlightArgs<K> {
 
     private final List<K> fields = new ArrayList<>();
 
-    private Optional<Tags<V>> tags = Optional.empty();
+    private Optional<Tags> tags = Optional.empty();
 
     /**
      * Used to build a new instance of the {@link HighlightArgs}.
      *
-     * @return a {@link HighlightArgs.Builder} that provides the option to build up a new instance of the {@link SearchArgs}
      * @param <K> the key type
+     * @return a {@link HighlightArgs.Builder} that provides the option to build up a new instance of the {@link SearchArgs}
      */
-    public static <K, V> HighlightArgs.Builder<K, V> builder() {
+    public static <K> HighlightArgs.Builder<K> builder() {
         return new HighlightArgs.Builder<>();
     }
 
@@ -50,17 +49,17 @@ public class HighlightArgs<K, V> {
      * @param <K> the key type
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      */
-    public static class Builder<K, V> {
+    public static class Builder<K> {
 
-        private final HighlightArgs<K, V> highlightArgs = new HighlightArgs<>();
+        private final HighlightArgs<K> highlightArgs = new HighlightArgs<>();
 
         /**
          * Add a field to highlight. If no FIELDS directive is passed, then all returned fields are highlighted.
          *
-         * @param field the field to summarize
+         * @param field the field name (hash field name)
          * @return the instance of the current {@link HighlightArgs.Builder} for the purpose of method chaining
          */
-        public HighlightArgs.Builder<K, V> field(K field) {
+        public HighlightArgs.Builder<K> field(K field) {
             highlightArgs.fields.add(field);
             return this;
         }
@@ -73,8 +72,8 @@ public class HighlightArgs<K, V> {
          * @param endTag the string is appended to each matched term
          * @return the instance of the current {@link HighlightArgs.Builder} for the purpose of method chaining
          */
-        public HighlightArgs.Builder<K, V> tags(V startTag, V endTag) {
-            highlightArgs.tags = Optional.of(new Tags<>(startTag, endTag));
+        public HighlightArgs.Builder<K> tags(String startTag, String endTag) {
+            highlightArgs.tags = Optional.of(new Tags(startTag, endTag));
             return this;
         }
 
@@ -83,7 +82,7 @@ public class HighlightArgs<K, V> {
          *
          * @return the {@link HighlightArgs}
          */
-        public HighlightArgs<K, V> build() {
+        public HighlightArgs<K> build() {
             return highlightArgs;
         }
 
@@ -94,30 +93,30 @@ public class HighlightArgs<K, V> {
      *
      * @param args the {@link CommandArgs} object
      */
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<K, ?> args) {
         args.add(CommandKeyword.HIGHLIGHT);
 
         if (!fields.isEmpty()) {
             args.add(CommandKeyword.FIELDS);
             args.add(fields.size());
-            args.addKeys(fields);
+            fields.forEach(args::addKey);
         }
 
         tags.ifPresent(tags -> {
             args.add(CommandKeyword.TAGS);
-            args.addValue(tags.startTag);
-            args.addValue(tags.endTag);
+            args.add(tags.startTag);
+            args.add(tags.endTag);
         });
 
     }
 
-    static class Tags<V> {
+    static class Tags {
 
-        private final V startTag;
+        private final String startTag;
 
-        private final V endTag;
+        private final String endTag;
 
-        Tags(V startTag, V endTag) {
+        Tags(String startTag, String endTag) {
             this.startTag = startTag;
             this.endTag = endTag;
         }

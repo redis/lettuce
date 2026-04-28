@@ -92,7 +92,7 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
             } else if (keyBuffer.equals(EXECUTION_TIME_KEY)) {
                 if (valueObj instanceof ByteBuffer) {
                     try {
-                        String asString = StringCodec.UTF8.decodeKey((ByteBuffer) valueObj);
+                        String asString = StringCodec.UTF8.decodeValue((ByteBuffer) valueObj);
                         reply.setExecutionTime(Double.parseDouble(asString));
                     } catch (NumberFormatException ignore) {
                         // leave default
@@ -107,7 +107,7 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
                     if (warnList != null) {
                         for (Object o : warnList) {
                             if (o instanceof ByteBuffer) {
-                                reply.addWarning(codec.decodeValue((ByteBuffer) o));
+                                reply.addWarning(StringCodec.UTF8.decodeValue((ByteBuffer) o));
                             }
                         }
                     }
@@ -146,7 +146,7 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
             reply.setExecutionTime((Double) executionTime);
         } else if (executionTime instanceof ByteBuffer) {
             try {
-                String asString = StringCodec.UTF8.decodeKey((ByteBuffer) executionTime);
+                String asString = StringCodec.UTF8.decodeValue((ByteBuffer) executionTime);
                 reply.setExecutionTime(Double.parseDouble(asString));
             } catch (NumberFormatException ignore) {
                 // leave default
@@ -160,7 +160,7 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
             if (warnList != null) {
                 for (Object o : warnList) {
                     if (o instanceof ByteBuffer) {
-                        reply.addWarning(codec.decodeValue((ByteBuffer) o));
+                        reply.addWarning(StringCodec.UTF8.decodeValue((ByteBuffer) o));
                     }
                 }
             }

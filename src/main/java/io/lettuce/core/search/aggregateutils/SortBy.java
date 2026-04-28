@@ -29,15 +29,14 @@ import io.lettuce.core.protocol.CommandKeyword;
  * {
  *     &#64;code
  *     // Simple sort by single field
- *     SortBy<String> sortBy = SortBy.of("price", SortDirection.DESC);
+ *     SortBy sortBy = SortBy.of("price", SortDirection.DESC);
  *
  *     // Multiple sort criteria
- *     SortBy<String> multiSort = SortBy.of(SortProperty.of("category", SortDirection.ASC),
+ *     SortBy multiSort = SortBy.of(SortProperty.of("category", SortDirection.ASC),
  *             SortProperty.of("price", SortDirection.DESC));
  * }
  * </pre>
  *
- * @param <K> Key type.
  * @author Aleksandar Todorov
  * @since 7.5
  * @see SortProperty
@@ -45,16 +44,16 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @see PostProcessingOperation
  */
 @Experimental
-public class SortBy<K> implements PostProcessingOperation<K, Object> {
+public class SortBy implements PostProcessingOperation {
 
-    private final List<SortProperty<K>> properties;
+    private final List<SortProperty> properties;
 
     /**
      * Creates a new SORTBY operation.
      *
      * @param properties the properties to sort by
      */
-    public SortBy(List<SortProperty<K>> properties) {
+    public SortBy(List<SortProperty> properties) {
         this.properties = new ArrayList<>(properties);
     }
 
@@ -63,37 +62,35 @@ public class SortBy<K> implements PostProcessingOperation<K, Object> {
      *
      * @param property the property to sort by
      * @param direction the sort direction
-     * @param <K> Key type
      * @return new SortBy instance
      */
-    public static <K> SortBy<K> of(K property, SortDirection direction) {
-        return new SortBy<>(Collections.singletonList(new SortProperty<>(property, direction)));
+    public static SortBy of(String property, SortDirection direction) {
+        return new SortBy(Collections.singletonList(new SortProperty(property, direction)));
     }
 
     /**
      * Static factory method to create a SortBy instance with multiple properties.
      *
      * @param properties the properties to sort by
-     * @param <K> Key type
      * @return new SortBy instance
      */
     @SafeVarargs
-    public static <K> SortBy<K> of(SortProperty<K>... properties) {
-        return new SortBy<>(Arrays.asList(properties));
+    public static SortBy of(SortProperty... properties) {
+        return new SortBy(Arrays.asList(properties));
     }
 
     @Override
-    public void build(CommandArgs<K, Object> args) {
+    public void build(CommandArgs<?, ?> args) {
         args.add(CommandKeyword.SORTBY);
         // Count includes property + direction pairs
         args.add(properties.size() * 2L);
-        for (SortProperty<K> property : properties) {
+        for (SortProperty property : properties) {
             // Add @ prefix if not already present
-            String propertyStr = property.getProperty().toString();
-            if (!propertyStr.startsWith("@")) {
-                args.add("@" + propertyStr);
+            String propertyName = property.getProperty();
+            if (!propertyName.startsWith("@")) {
+                args.add("@" + propertyName);
             } else {
-                args.add(propertyStr);
+                args.add(propertyName);
             }
             args.add(property.getDirection().name());
         }

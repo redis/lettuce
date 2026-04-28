@@ -26,7 +26,7 @@ class TagFieldArgsTest {
 
     @Test
     void testDefaultTagFieldArgs() {
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("category").build();
+        TagFieldArgs field = TagFieldArgs.builder().name("category").build();
 
         assertThat(field.getName()).isEqualTo("category");
         assertThat(field.getFieldType()).isEqualTo("TAG");
@@ -37,7 +37,7 @@ class TagFieldArgsTest {
 
     @Test
     void testTagFieldArgsWithSeparator() {
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("tags").separator("|").build();
+        TagFieldArgs field = TagFieldArgs.builder().name("tags").separator("|").build();
 
         assertThat(field.getName()).isEqualTo("tags");
         assertThat(field.getSeparator()).hasValue("|");
@@ -45,7 +45,7 @@ class TagFieldArgsTest {
 
     @Test
     void testTagFieldArgsWithCaseSensitive() {
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("status").caseSensitive().build();
+        TagFieldArgs field = TagFieldArgs.builder().name("status").caseSensitive().build();
 
         assertThat(field.getName()).isEqualTo("status");
         assertThat(field.isCaseSensitive()).isTrue();
@@ -53,7 +53,7 @@ class TagFieldArgsTest {
 
     @Test
     void testTagFieldArgsWithSuffixTrie() {
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("keywords").withSuffixTrie().build();
+        TagFieldArgs field = TagFieldArgs.builder().name("keywords").withSuffixTrie().build();
 
         assertThat(field.getName()).isEqualTo("keywords");
         assertThat(field.isWithSuffixTrie()).isTrue();
@@ -61,8 +61,8 @@ class TagFieldArgsTest {
 
     @Test
     void testTagFieldArgsWithAllOptions() {
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("complex_tags").as("tags").separator(";")
-                .caseSensitive().withSuffixTrie().sortable().unNormalizedForm().build();
+        TagFieldArgs field = TagFieldArgs.builder().name("complex_tags").as("tags").separator(";").caseSensitive()
+                .withSuffixTrie().sortable().unNormalizedForm().build();
 
         assertThat(field.getName()).isEqualTo("complex_tags");
         assertThat(field.getAs()).hasValue("tags");
@@ -75,8 +75,8 @@ class TagFieldArgsTest {
 
     @Test
     void testTagFieldArgsBuild() {
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("labels").as("tag_labels").separator(",")
-                .caseSensitive().withSuffixTrie().sortable().indexEmpty().build();
+        TagFieldArgs field = TagFieldArgs.builder().name("labels").as("tag_labels").separator(",").caseSensitive()
+                .withSuffixTrie().sortable().indexEmpty().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -96,7 +96,7 @@ class TagFieldArgsTest {
 
     @Test
     void testTagFieldArgsMinimalBuild() {
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("simple_tag").build();
+        TagFieldArgs field = TagFieldArgs.builder().name("simple_tag").build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -112,7 +112,7 @@ class TagFieldArgsTest {
 
     @Test
     void testTagFieldArgsWithSeparatorOnly() {
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("pipe_separated").separator("|").build();
+        TagFieldArgs field = TagFieldArgs.builder().name("pipe_separated").separator("|").build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -126,7 +126,7 @@ class TagFieldArgsTest {
 
     @Test
     void testTagFieldArgsWithCaseSensitiveOnly() {
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("case_sensitive_tag").caseSensitive().build();
+        TagFieldArgs field = TagFieldArgs.builder().name("case_sensitive_tag").caseSensitive().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -139,7 +139,7 @@ class TagFieldArgsTest {
 
     @Test
     void testTagFieldArgsWithSuffixTrieOnly() {
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("suffix_trie_tag").withSuffixTrie().build();
+        TagFieldArgs field = TagFieldArgs.builder().name("suffix_trie_tag").withSuffixTrie().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -153,10 +153,10 @@ class TagFieldArgsTest {
     @Test
     void testTagFieldArgsWithCustomSeparators() {
         // Test various separator characters
-        TagFieldArgs<String> commaField = TagFieldArgs.<String> builder().name("comma_tags").separator(",").build();
-        TagFieldArgs<String> pipeField = TagFieldArgs.<String> builder().name("pipe_tags").separator("|").build();
-        TagFieldArgs<String> semicolonField = TagFieldArgs.<String> builder().name("semicolon_tags").separator(";").build();
-        TagFieldArgs<String> spaceField = TagFieldArgs.<String> builder().name("space_tags").separator(" ").build();
+        TagFieldArgs commaField = TagFieldArgs.builder().name("comma_tags").separator(",").build();
+        TagFieldArgs pipeField = TagFieldArgs.builder().name("pipe_tags").separator("|").build();
+        TagFieldArgs semicolonField = TagFieldArgs.builder().name("semicolon_tags").separator(";").build();
+        TagFieldArgs spaceField = TagFieldArgs.builder().name("space_tags").separator(" ").build();
 
         assertThat(commaField.getSeparator()).hasValue(",");
         assertThat(pipeField.getSeparator()).hasValue("|");
@@ -167,8 +167,8 @@ class TagFieldArgsTest {
     @Test
     void testBuilderMethodChaining() {
         // Test that builder methods return the correct type for method chaining
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("chained_tag").as("chained_alias").separator(":")
-                .caseSensitive().withSuffixTrie().sortable().noIndex().indexMissing().build();
+        TagFieldArgs field = TagFieldArgs.builder().name("chained_tag").as("chained_alias").separator(":").caseSensitive()
+                .withSuffixTrie().sortable().noIndex().indexMissing().build();
 
         assertThat(field.getName()).isEqualTo("chained_tag");
         assertThat(field.getAs()).hasValue("chained_alias");
@@ -183,8 +183,7 @@ class TagFieldArgsTest {
     @Test
     void testTagFieldArgsInheritedMethods() {
         // Test that inherited methods from FieldArgs work correctly
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("inherited_tag").noIndex().indexEmpty().indexMissing()
-                .build();
+        TagFieldArgs field = TagFieldArgs.builder().name("inherited_tag").noIndex().indexEmpty().indexMissing().build();
 
         assertThat(field.isNoIndex()).isTrue();
         assertThat(field.isIndexEmpty()).isTrue();
@@ -202,8 +201,7 @@ class TagFieldArgsTest {
     @Test
     void testTagFieldArgsTypeSpecificBehavior() {
         // Test that tag fields have their specific arguments and not others
-        TagFieldArgs<String> field = TagFieldArgs.<String> builder().name("tag_field").separator(",").caseSensitive()
-                .withSuffixTrie().build();
+        TagFieldArgs field = TagFieldArgs.builder().name("tag_field").separator(",").caseSensitive().withSuffixTrie().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);

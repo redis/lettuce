@@ -26,7 +26,7 @@ class VectorFieldArgsTest {
 
     @Test
     void testDefaultVectorFieldArgs() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("embedding").build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("embedding").build();
 
         assertThat(field.getName()).isEqualTo("embedding");
         assertThat(field.getFieldType()).isEqualTo("VECTOR");
@@ -42,7 +42,7 @@ class VectorFieldArgsTest {
 
     @Test
     void testVectorFieldArgsWithFlat() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").flat().build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("vector").flat().build();
 
         assertThat(field.getName()).isEqualTo("vector");
         assertThat(field.getAlgorithm()).hasValue(VectorFieldArgs.Algorithm.FLAT);
@@ -50,7 +50,7 @@ class VectorFieldArgsTest {
 
     @Test
     void testVectorFieldArgsWithHnsw() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").hnsw().build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("vector").hnsw().build();
 
         assertThat(field.getName()).isEqualTo("vector");
         assertThat(field.getAlgorithm()).hasValue(VectorFieldArgs.Algorithm.HNSW);
@@ -58,39 +58,37 @@ class VectorFieldArgsTest {
 
     @Test
     void testVectorFieldArgsWithType() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector")
-                .type(VectorFieldArgs.VectorType.FLOAT32).build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("vector").type(VectorFieldArgs.VectorType.FLOAT32).build();
 
         assertThat(field.getAttributes()).containsEntry("TYPE", "FLOAT32");
     }
 
     @Test
     void testVectorFieldArgsWithDimensions() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").dimensions(128).build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("vector").dimensions(128).build();
 
         assertThat(field.getAttributes()).containsEntry("DIM", 128);
     }
 
     @Test
     void testVectorFieldArgsWithDistanceMetric() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector")
-                .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("vector").distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
+                .build();
 
         assertThat(field.getAttributes()).containsEntry("DISTANCE_METRIC", "COSINE");
     }
 
     @Test
     void testVectorFieldArgsWithCustomAttribute() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").attribute("INITIAL_CAP", 1000)
-                .build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("vector").attribute("INITIAL_CAP", 1000).build();
 
         assertThat(field.getAttributes()).containsEntry("INITIAL_CAP", 1000);
     }
 
     @Test
     void testVectorFieldArgsWithMultipleAttributes() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").attribute("BLOCK_SIZE", 512)
-                .attribute("M", 16).attribute("EF_CONSTRUCTION", 200).build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("vector").attribute("BLOCK_SIZE", 512).attribute("M", 16)
+                .attribute("EF_CONSTRUCTION", 200).build();
 
         assertThat(field.getAttributes()).containsEntry("BLOCK_SIZE", 512);
         assertThat(field.getAttributes()).containsEntry("M", 16);
@@ -99,7 +97,7 @@ class VectorFieldArgsTest {
 
     @Test
     void testVectorFieldArgsWithAllFlatOptions() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("flat_vector").as("vector").flat()
+        VectorFieldArgs field = VectorFieldArgs.builder().name("flat_vector").as("vector").flat()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(256).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
                 .attribute("INITIAL_CAP", 2000).attribute("BLOCK_SIZE", 1024).sortable().build();
 
@@ -116,7 +114,7 @@ class VectorFieldArgsTest {
 
     @Test
     void testVectorFieldArgsWithAllHnswOptions() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("hnsw_vector").as("vector").hnsw()
+        VectorFieldArgs field = VectorFieldArgs.builder().name("hnsw_vector").as("vector").hnsw()
                 .type(VectorFieldArgs.VectorType.FLOAT64).dimensions(512).distanceMetric(VectorFieldArgs.DistanceMetric.IP)
                 .attribute("INITIAL_CAP", 5000).attribute("M", 32).attribute("EF_CONSTRUCTION", 400).attribute("EF_RUNTIME", 20)
                 .attribute("EPSILON", 0.005).sortable().build();
@@ -159,7 +157,7 @@ class VectorFieldArgsTest {
 
     @Test
     void testVectorFieldArgsBuildFlat() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("test_vector").as("vector").flat()
+        VectorFieldArgs field = VectorFieldArgs.builder().name("test_vector").as("vector").flat()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(128).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .attribute("INITIAL_CAP", 1000).attribute("BLOCK_SIZE", 512).sortable().build();
 
@@ -187,10 +185,9 @@ class VectorFieldArgsTest {
 
     @Test
     void testVectorFieldArgsBuildHnsw() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("hnsw_test").hnsw()
-                .type(VectorFieldArgs.VectorType.FLOAT64).dimensions(256).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
-                .attribute("M", 16).attribute("EF_CONSTRUCTION", 200).attribute("EF_RUNTIME", 10).attribute("EPSILON", 0.01)
-                .build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("hnsw_test").hnsw().type(VectorFieldArgs.VectorType.FLOAT64)
+                .dimensions(256).distanceMetric(VectorFieldArgs.DistanceMetric.L2).attribute("M", 16)
+                .attribute("EF_CONSTRUCTION", 200).attribute("EF_RUNTIME", 10).attribute("EPSILON", 0.01).build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -217,7 +214,7 @@ class VectorFieldArgsTest {
 
     @Test
     void testVectorFieldArgsMinimalBuild() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("simple_vector").build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("simple_vector").build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -237,7 +234,7 @@ class VectorFieldArgsTest {
     @Test
     void testBuilderMethodChaining() {
         // Test that builder methods return the correct type for method chaining
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("chained_vector").as("chained_alias").flat()
+        VectorFieldArgs field = VectorFieldArgs.builder().name("chained_vector").as("chained_alias").flat()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(64).distanceMetric(VectorFieldArgs.DistanceMetric.IP)
                 .attribute("INITIAL_CAP", 500).attribute("BLOCK_SIZE", 256).sortable().noIndex().build();
 
@@ -255,7 +252,7 @@ class VectorFieldArgsTest {
 
     @Test
     void testVectorFieldArgsWithSvsVamana() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").svsVamana().build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("vector").svsVamana().build();
 
         assertThat(field.getName()).isEqualTo("vector");
         assertThat(field.getAlgorithm()).hasValue(VectorFieldArgs.Algorithm.SVS_VAMANA);
@@ -263,8 +260,8 @@ class VectorFieldArgsTest {
 
     @Test
     void testSvsVamanaWithCompression() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("compressed_vector").svsVamana()
-                .attribute("COMPRESSION", "LVQ").build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("compressed_vector").svsVamana().attribute("COMPRESSION", "LVQ")
+                .build();
 
         assertThat(field.getAlgorithm()).hasValue(VectorFieldArgs.Algorithm.SVS_VAMANA);
         assertThat(field.getAttributes()).containsEntry("COMPRESSION", "LVQ");
@@ -272,8 +269,8 @@ class VectorFieldArgsTest {
 
     @Test
     void testSvsVamanaWithLeanVecCompression() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("leanvec_vector").svsVamana()
-                .attribute("COMPRESSION", "LEANVEC").build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("leanvec_vector").svsVamana().attribute("COMPRESSION", "LEANVEC")
+                .build();
 
         assertThat(field.getAlgorithm()).hasValue(VectorFieldArgs.Algorithm.SVS_VAMANA);
         assertThat(field.getAttributes()).containsEntry("COMPRESSION", "LEANVEC");
@@ -281,31 +278,30 @@ class VectorFieldArgsTest {
 
     @Test
     void testSvsVamanaWithConstructionWindowSize() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").svsVamana()
-                .attribute("CONSTRUCTION_WINDOW_SIZE", 128).build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("vector").svsVamana().attribute("CONSTRUCTION_WINDOW_SIZE", 128)
+                .build();
 
         assertThat(field.getAttributes()).containsEntry("CONSTRUCTION_WINDOW_SIZE", 128);
     }
 
     @Test
     void testSvsVamanaWithGraphMaxDegree() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").svsVamana()
-                .attribute("GRAPH_MAX_DEGREE", 64).build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("vector").svsVamana().attribute("GRAPH_MAX_DEGREE", 64).build();
 
         assertThat(field.getAttributes()).containsEntry("GRAPH_MAX_DEGREE", 64);
     }
 
     @Test
     void testSvsVamanaWithSearchWindowSize() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").svsVamana()
-                .attribute("SEARCH_WINDOW_SIZE", 100).build();
+        VectorFieldArgs field = VectorFieldArgs.builder().name("vector").svsVamana().attribute("SEARCH_WINDOW_SIZE", 100)
+                .build();
 
         assertThat(field.getAttributes()).containsEntry("SEARCH_WINDOW_SIZE", 100);
     }
 
     @Test
     void testSvsVamanaWithAllOptions() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("svs_vector").as("vector").svsVamana()
+        VectorFieldArgs field = VectorFieldArgs.builder().name("svs_vector").as("vector").svsVamana()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(384).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .attribute("COMPRESSION", "LVQ").attribute("CONSTRUCTION_WINDOW_SIZE", 256).attribute("GRAPH_MAX_DEGREE", 64)
                 .attribute("SEARCH_WINDOW_SIZE", 128).sortable().build();
@@ -325,9 +321,9 @@ class VectorFieldArgsTest {
 
     @Test
     void testVectorFieldArgsBuildSvsVamana() {
-        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("svs_test").svsVamana()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(128).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
-                .attribute("COMPRESSION", "LVQ").attribute("CONSTRUCTION_WINDOW_SIZE", 256).attribute("GRAPH_MAX_DEGREE", 64)
+        VectorFieldArgs field = VectorFieldArgs.builder().name("svs_test").svsVamana().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(128).distanceMetric(VectorFieldArgs.DistanceMetric.L2).attribute("COMPRESSION", "LVQ")
+                .attribute("CONSTRUCTION_WINDOW_SIZE", 256).attribute("GRAPH_MAX_DEGREE", 64)
                 .attribute("SEARCH_WINDOW_SIZE", 128).build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);

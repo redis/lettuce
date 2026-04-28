@@ -21,7 +21,6 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * contained within an enclosing shape). You can also choose between geographical coordinates (on the surface of a sphere) or
  * standard Cartesian coordinates.
  *
- * @param <K> Key type
  * @see <a href=
  *      "https://redis.io/docs/latest/develop/interact/search-and-query/basic-constructs/field-and-type-options/#geoshape-fields">Geoshape
  *      Fields</a>
@@ -29,7 +28,7 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * @author Tihomir Mateev
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class GeoshapeFieldArgs<K> extends FieldArgs<K> {
+public class GeoshapeFieldArgs extends FieldArgs {
 
     /**
      * Coordinate system for geoshape fields.
@@ -50,11 +49,10 @@ public class GeoshapeFieldArgs<K> extends FieldArgs<K> {
     /**
      * Create a new {@link GeoshapeFieldArgs} using the builder pattern.
      * 
-     * @param <K> Key type
      * @return a new {@link Builder}
      */
-    public static <K> Builder<K> builder() {
-        return new Builder<>();
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -72,7 +70,7 @@ public class GeoshapeFieldArgs<K> extends FieldArgs<K> {
     }
 
     @Override
-    protected void buildTypeSpecificArgs(CommandArgs<K, ?> args) {
+    protected void buildTypeSpecificArgs(CommandArgs<?, ?> args) {
         coordinateSystem.ifPresent(cs -> {
             switch (cs) {
                 case FLAT:
@@ -88,12 +86,11 @@ public class GeoshapeFieldArgs<K> extends FieldArgs<K> {
     /**
      * Builder for {@link GeoshapeFieldArgs}.
      * 
-     * @param <K> Key type
      */
-    public static class Builder<K> extends FieldArgs.Builder<K, GeoshapeFieldArgs<K>, Builder<K>> {
+    public static class Builder extends FieldArgs.Builder<GeoshapeFieldArgs, Builder> {
 
         public Builder() {
-            super(new GeoshapeFieldArgs<>());
+            super(new GeoshapeFieldArgs());
         }
 
         /**
@@ -102,7 +99,7 @@ public class GeoshapeFieldArgs<K> extends FieldArgs<K> {
          * @param coordinateSystem the coordinate system
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> coordinateSystem(CoordinateSystem coordinateSystem) {
+        public Builder coordinateSystem(CoordinateSystem coordinateSystem) {
             instance.coordinateSystem = Optional.of(coordinateSystem);
             return self();
         }
@@ -112,7 +109,7 @@ public class GeoshapeFieldArgs<K> extends FieldArgs<K> {
          * 
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> flat() {
+        public Builder flat() {
             return coordinateSystem(CoordinateSystem.FLAT);
         }
 
@@ -121,7 +118,7 @@ public class GeoshapeFieldArgs<K> extends FieldArgs<K> {
          * 
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> spherical() {
+        public Builder spherical() {
             return coordinateSystem(CoordinateSystem.SPHERICAL);
         }
 
