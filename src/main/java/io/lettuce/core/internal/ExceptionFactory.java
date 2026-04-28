@@ -29,6 +29,7 @@ import io.lettuce.core.RedisBusyException;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisLoadingException;
+import io.lettuce.core.RedisNoFunctionException;
 import io.lettuce.core.RedisNoScriptException;
 import io.lettuce.core.RedisReadOnlyException;
 
@@ -37,6 +38,7 @@ import io.lettuce.core.RedisReadOnlyException;
  *
  * @author Mark Paluch
  * @author Tobias Nehrlich
+ * @author Sunwoo Ho
  * @since 4.5
  */
 public abstract class ExceptionFactory {
@@ -146,6 +148,10 @@ public abstract class ExceptionFactory {
 
             if (message.startsWith("READONLY")) {
                 return cause != null ? new RedisReadOnlyException(message, cause) : new RedisReadOnlyException(message);
+            }
+
+            if (message.startsWith("ERR Function not found")) {
+                return cause != null ? new RedisNoFunctionException(message, cause) : new RedisNoFunctionException(message);
             }
 
             return cause != null ? new RedisCommandExecutionException(message, cause)
