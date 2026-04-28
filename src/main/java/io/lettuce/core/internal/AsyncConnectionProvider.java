@@ -7,6 +7,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.BiConsumer;
@@ -26,14 +27,15 @@ import java.util.function.Function;
  * @author Mark Paluch
  * @param <T> connection type.
  * @param <K> connection key type.
- * @param <F> type of the {@link CompletionStage} handle of the connection progress.
  * @since 5.1
  */
-public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends CompletionStage<T>> {
+public class AsyncConnectionProvider<K, T extends AsyncCloseable> {
 
-    private final Function<K, F> connectionFactory;
+    private final Function<K, ? extends CompletionStage<T>> connectionFactory;
 
-    private final Map<K, Sync<K, T, F>> connections = new ConcurrentHashMap<>();
+    private final Executor connectStarter;
+
+    private final Map<K, Sync<K, T>> connections = new ConcurrentHashMap<>();
 
     private volatile boolean closed;
 
@@ -41,12 +43,17 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
      * Create a new {@link AsyncConnectionProvider}.
      *
      * @param connectionFactory must not be {@code null}.
+     * @param connectStarter executor used to start new connection attempts, must not be {@code null}.
      */
     @SuppressWarnings("unchecked")
-    public AsyncConnectionProvider(Function<? extends K, ? extends F> connectionFactory) {
+    public AsyncConnectionProvider(Function<? extends K, ? extends CompletionStage<T>> connectionFactory,
+            Executor connectStarter) {
 
         LettuceAssert.notNull(connectionFactory, "AsyncConnectionProvider must not be null");
-        this.connectionFactory = (Function<K, F>) connectionFactory;
+        LettuceAssert.notNull(connectStarter, "ConnectStarter must not be null");
+
+        this.connectionFactory = (Function<K, ? extends CompletionStage<T>>) connectionFactory;
+        this.connectStarter = connectStarter;
     }
 
     /**
@@ -56,8 +63,8 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
      * @param key the connection {@code key}, must not be {@code null}.
      * @return
      */
-    public F getConnection(K key) {
-        return getSynchronizer(key).getConnection();
+    public CompletableFuture<T> getConnection(K key) {
+        return getSynchronizer(key).createWaiter();
     }
 
     /**
@@ -66,42 +73,67 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
      * @param key the connection {@code key}.
      * @return
      */
-    private Sync<K, T, F> getSynchronizer(K key) {
+    private Sync<K, T> getSynchronizer(K key) {
 
         if (closed) {
             throw new IllegalStateException("ConnectionProvider is already closed");
         }
 
-        Sync<K, T, F> sync = connections.get(key);
+        Sync<K, T> sync = connections.get(key);
 
         if (sync != null) {
             return sync;
         }
 
-        AtomicBoolean atomicBoolean = new AtomicBoolean();
+        Sync<K, T> placeholder = new Sync<>(key);
+        Sync<K, T> existing = connections.putIfAbsent(key, placeholder);
 
-        sync = connections.computeIfAbsent(key, connectionKey -> {
-
-            Sync<K, T, F> createdSync = new Sync<>(key, connectionFactory.apply(key));
-
-            if (closed) {
-                createdSync.cancel();
-            }
-
-            return createdSync;
-        });
-
-        if (atomicBoolean.compareAndSet(false, true)) {
-
-            sync.getConnection().whenComplete((c, t) -> {
-
-                if (t != null) {
-                    connections.remove(key);
-                }
-            });
+        if (existing != null) {
+            return existing;
         }
 
-        return sync;
+        placeholder.getSharedConnection().whenComplete((value, error) -> {
+            if (error != null) {
+                connections.remove(key, placeholder);
+            }
+        });
+
+        if (closed) {
+            connections.remove(key, placeholder);
+            placeholder.close();
+            return placeholder;
+        }
+
+        try {
+            connectStarter.execute(() -> startConnect(key, placeholder));
+        } catch (Throwable t) {
+            placeholder.completeExceptionally(t);
+        }
+
+        return placeholder;
+    }
+
+    private void startConnect(K key, Sync<K, T> sync) {
+
+        if (closed || sync.isCloseRequested()) {
+            sync.completeCloseWithoutConnection();
+            return;
+        }
+
+        sync.markConnectStarted();
+
+        if (closed || sync.isCloseRequested()) {
+            sync.completeCloseWithoutConnection();
+            return;
+        }
+
+        try {
+            CompletionStage<T> connection = connectionFactory.apply(key);
+            LettuceAssert.notNull(connection, "ConnectionFuture must not be null");
+            sync.attach(connection);
+        } catch (Throwable t) {
+            sync.completeExceptionally(t);
+        }
     }
 
     /**
@@ -135,17 +167,16 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
     /**
      * Close all connections. Pending connections are closed using future chaining.
      */
-    @SuppressWarnings("unchecked")
     public CompletableFuture<Void> close() {
 
         this.closed = true;
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        forEach((connectionKey, closeable) -> {
-
-            futures.add(closeable.closeAsync());
-            connections.remove(connectionKey);
+        connections.forEach((connectionKey, sync) -> {
+            if (connections.remove(connectionKey, sync)) {
+                futures.add(sync.close());
+            }
         });
 
         return Futures.allOf(futures);
@@ -160,10 +191,9 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
 
         LettuceAssert.notNull(key, "ConnectionKey must not be null!");
 
-        Sync<K, T, F> sync = connections.get(key);
+        Sync<K, T> sync = connections.remove(key);
         if (sync != null) {
-            connections.remove(key);
-            sync.doWithConnection(AsyncCloseable::closeAsync);
+            sync.close();
         }
     }
 
@@ -192,7 +222,7 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
         connections.forEach((key, sync) -> sync.doWithConnection(action));
     }
 
-    static class Sync<K, T extends AsyncCloseable, F extends CompletionStage<T>> {
+    static class Sync<K, T extends AsyncCloseable> {
 
         private static final int PHASE_IN_PROGRESS = 0;
 
@@ -211,23 +241,61 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
 
         private volatile T connection;
 
+        private volatile CompletableFuture<T> delegate;
+
         private final K key;
 
-        private final F future;
+        private final CompletableFuture<T> sharedConnection = new CompletableFuture<>();
 
-        @SuppressWarnings("unchecked")
-        public Sync(K key, F future) {
+        private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
+
+        private final AtomicBoolean closeRequested = new AtomicBoolean();
+
+        private final AtomicBoolean closeStarted = new AtomicBoolean();
+
+        private final AtomicBoolean connectStarted = new AtomicBoolean();
+
+        public Sync(K key) {
+            this.key = key;
+        }
+
+        public Sync(K key, T value) {
 
             this.key = key;
-            this.future = (F) future.whenComplete((connection, throwable) -> {
+            this.connection = value;
+            this.sharedConnection.complete(value);
+            PHASE.set(this, PHASE_COMPLETE);
+        }
+
+        public void markConnectStarted() {
+            connectStarted.set(true);
+        }
+
+        public void attach(CompletionStage<T> future) {
+
+            CompletableFuture<T> delegate = future.toCompletableFuture();
+            this.delegate = delegate;
+
+            if (closeRequested.get()) {
+                delegate.cancel(false);
+            }
+
+            future.whenComplete((connection, throwable) -> {
 
                 if (throwable != null) {
 
                     if (throwable instanceof CancellationException) {
-                        PHASE.compareAndSet(this, PHASE_IN_PROGRESS, PHASE_CANCELED);
+                        if (PHASE.compareAndSet(this, PHASE_IN_PROGRESS, PHASE_CANCELED)) {
+                            sharedConnection.cancel(false);
+                        }
+                    } else if (PHASE.compareAndSet(this, PHASE_IN_PROGRESS, PHASE_FAILED)) {
+                        sharedConnection.completeExceptionally(throwable);
                     }
 
-                    PHASE.compareAndSet(this, PHASE_IN_PROGRESS, PHASE_FAILED);
+                    if (closeRequested.get()) {
+                        closeFuture.complete(null);
+                    }
+                    return;
                 }
 
                 if (PHASE.compareAndSet(this, PHASE_IN_PROGRESS, PHASE_COMPLETE)) {
@@ -235,26 +303,99 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
                     if (connection != null) {
                         Sync.this.connection = connection;
                     }
+
+                    sharedConnection.complete(connection);
+
+                    if (closeRequested.get()) {
+                        closeConnection(connection);
+                    }
+                    return;
                 }
+
+                closeConnection(connection);
             });
         }
 
-        @SuppressWarnings("unchecked")
-        public Sync(K key, T value) {
+        public void completeExceptionally(Throwable throwable) {
 
-            this.key = key;
-            this.connection = value;
-            this.future = (F) CompletableFuture.completedFuture(value);
-            PHASE.set(this, PHASE_COMPLETE);
+            if (throwable instanceof CancellationException) {
+                if (PHASE.compareAndSet(this, PHASE_IN_PROGRESS, PHASE_CANCELED)) {
+                    sharedConnection.cancel(false);
+                }
+            } else if (PHASE.compareAndSet(this, PHASE_IN_PROGRESS, PHASE_FAILED)) {
+                sharedConnection.completeExceptionally(throwable);
+            }
+
+            if (closeRequested.get()) {
+                closeFuture.complete(null);
+            }
         }
 
-        public void cancel() {
-            future.toCompletableFuture().cancel(false);
-            doWithConnection(AsyncCloseable::closeAsync);
+        public CompletableFuture<T> getSharedConnection() {
+            return sharedConnection;
         }
 
-        public F getConnection() {
-            return future;
+        public CompletableFuture<T> createWaiter() {
+
+            CompletableFuture<T> waiter = new CompletableFuture<>();
+
+            sharedConnection.whenComplete((connection, throwable) -> {
+                if (throwable != null) {
+                    if (throwable instanceof CancellationException) {
+                        waiter.cancel(false);
+                    } else {
+                        waiter.completeExceptionally(throwable);
+                    }
+                } else {
+                    waiter.complete(connection);
+                }
+            });
+
+            return waiter;
+        }
+
+        public CompletableFuture<Void> close() {
+
+            closeRequested.set(true);
+
+            while (true) {
+                int phase = PHASE.get(this);
+
+                if (phase == PHASE_COMPLETE) {
+                    closeConnection(connection);
+                    return closeFuture;
+                }
+
+                if (phase != PHASE_IN_PROGRESS) {
+                    closeFuture.complete(null);
+                    return closeFuture;
+                }
+
+                if (PHASE.compareAndSet(this, PHASE_IN_PROGRESS, PHASE_CANCELED)) {
+                    sharedConnection.cancel(false);
+                    break;
+                }
+            }
+
+            CompletableFuture<T> delegate = this.delegate;
+            if (delegate != null) {
+                delegate.cancel(false);
+            } else if (!connectStarted.get()) {
+                closeFuture.complete(null);
+            }
+
+            return closeFuture;
+        }
+
+        public boolean isCloseRequested() {
+            return closeRequested.get();
+        }
+
+        public void completeCloseWithoutConnection() {
+            if (PHASE.compareAndSet(this, PHASE_IN_PROGRESS, PHASE_CANCELED)) {
+                sharedConnection.cancel(false);
+            }
+            closeFuture.complete(null);
         }
 
         void doWithConnection(Consumer<? super T> action) {
@@ -262,7 +403,7 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
             if (isComplete()) {
                 action.accept(connection);
             } else {
-                future.thenAccept(action);
+                sharedConnection.thenAccept(action);
             }
         }
 
@@ -271,8 +412,28 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
             if (isComplete()) {
                 action.accept(key, connection);
             } else {
-                future.thenAccept(c -> action.accept(key, c));
+                sharedConnection.thenAccept(c -> action.accept(key, c));
             }
+        }
+
+        private void closeConnection(T connection) {
+
+            if (connection == null) {
+                closeFuture.complete(null);
+                return;
+            }
+
+            if (!closeStarted.compareAndSet(false, true)) {
+                return;
+            }
+
+            connection.closeAsync().whenComplete((unused, closeThrowable) -> {
+                if (closeThrowable != null) {
+                    closeFuture.completeExceptionally(closeThrowable);
+                } else {
+                    closeFuture.complete(null);
+                }
+            });
         }
 
         private boolean isComplete() {

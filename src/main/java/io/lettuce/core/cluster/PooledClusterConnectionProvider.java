@@ -19,6 +19,8 @@
  */
 package io.lettuce.core.cluster;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -96,7 +98,7 @@ class PooledClusterConnectionProvider<K, V>
 
     private final RedisCodec<K, V> redisCodec;
 
-    private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, ConnectionFuture<StatefulRedisConnection<K, V>>> connectionProvider;
+    private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>> connectionProvider;
 
     private Partitions partitions;
 
@@ -113,7 +115,8 @@ class PooledClusterConnectionProvider<K, V>
         this.clusterWriter = clusterWriter;
         this.clusterEventListener = clusterEventListener;
         this.connectionFactory = new NodeConnectionPostProcessor(getConnectionFactory(redisClusterClient));
-        this.connectionProvider = new AsyncConnectionProvider<>(this.connectionFactory);
+        this.connectionProvider = new AsyncConnectionProvider<>(this.connectionFactory,
+                redisClusterClient.getResources().eventExecutorGroup());
     }
 
     @Override
@@ -442,6 +445,7 @@ class PooledClusterConnectionProvider<K, V>
             logger.debug("getConnection(" + connectionIntent + ", " + nodeId + ")");
         }
 
+        beforeGetConnection(nodeId);
         return getConnection(new ConnectionKey(connectionIntent, nodeId));
     }
 
@@ -453,20 +457,21 @@ class PooledClusterConnectionProvider<K, V>
             logger.debug("getConnection(" + connectionIntent + ", " + nodeId + ")");
         }
 
+        beforeGetConnection(nodeId);
         return getConnectionAsync(new ConnectionKey(connectionIntent, nodeId)).toCompletableFuture();
     }
 
     protected ConnectionFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionKey key) {
 
-        ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectionProvider.getConnection(key);
+        SocketAddress remoteAddress = getRemoteAddress(key);
+        CompletableFuture<StatefulRedisConnection<K, V>> connectionFuture = connectionProvider.getConnection(key);
         CompletableFuture<StatefulRedisConnection<K, V>> result = new CompletableFuture<>();
 
         connectionFuture.handle((connection, throwable) -> {
 
             if (throwable != null) {
 
-                result.completeExceptionally(
-                        RedisConnectionException.create(connectionFuture.getRemoteAddress(), Exceptions.bubble(throwable)));
+                result.completeExceptionally(RedisConnectionException.create(remoteAddress, Exceptions.bubble(throwable)));
             } else {
                 result.complete(connection);
             }
@@ -474,7 +479,7 @@ class PooledClusterConnectionProvider<K, V>
             return null;
         });
 
-        return ConnectionFuture.from(connectionFuture.getRemoteAddress(), result);
+        return ConnectionFuture.from(remoteAddress, result);
     }
 
     @Override
@@ -510,12 +515,39 @@ class PooledClusterConnectionProvider<K, V>
         try {
             beforeGetConnection(connectionIntent, host, port);
 
-            return connectionProvider.getConnection(new ConnectionKey(connectionIntent, host, port)).toCompletableFuture();
+            return connectionProvider.getConnection(new ConnectionKey(connectionIntent, host, port));
         } catch (RedisException e) {
             throw e;
         } catch (RuntimeException e) {
             throw new RedisException(e);
         }
+    }
+
+    private void beforeGetConnection(String nodeId) {
+
+        RedisClusterNode redisClusterNode = partitions.getPartitionByNodeId(nodeId);
+
+        if (redisClusterNode == null) {
+            clusterEventListener.onUnknownNode();
+            throw connectionAttemptRejected("node id " + nodeId);
+        }
+    }
+
+    private SocketAddress getRemoteAddress(ConnectionKey key) {
+
+        if (key.host != null) {
+            return InetSocketAddress.createUnresolved(key.host, key.port);
+        }
+
+        if (key.nodeId != null && partitions != null) {
+            RedisClusterNode partition = partitions.getPartitionByNodeId(key.nodeId);
+            if (partition != null) {
+                RedisURI uri = partition.getUri();
+                return InetSocketAddress.createUnresolved(uri.getHost(), uri.getPort());
+            }
+        }
+
+        return null;
     }
 
     private void beforeGetConnection(ConnectionIntent connectionIntent, String host, int port) {
