@@ -19,6 +19,8 @@ import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
+import io.lettuce.core.json.arguments.JsonSetArgs;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -39,6 +41,8 @@ import java.util.concurrent.ExecutionException;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag(INTEGRATION_TEST)
 public class RedisJsonIntegrationTests {
@@ -484,6 +488,52 @@ public class RedisJsonIntegrationTests {
             assertThat(got.get(0).asJsonObject().get("id").asString()).isEqualTo("bike:99");
             assertThat(got.get(0).asJsonObject().get("model").asString()).isEqualTo("Stringy");
         }
+    }
+
+    @Test
+    void jsonSetWithFphaFp32() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.8"));
+        JsonParser parser = redis.getJsonParser();
+        JsonValue numericArray = parser.createJsonValue("[1.0, 2.0, 3.0]");
+        JsonSetArgs args = JsonSetArgs.Builder.fpha(JsonSetArgs.FphaType.FP32);
+
+        String result = redis.jsonSet("fpha:test", JsonPath.ROOT_PATH, numericArray, args);
+        assertThat(result).isEqualTo("OK");
+
+        List<JsonValue> fetched = redis.jsonGet("fpha:test", JsonPath.ROOT_PATH);
+        assertNotNull(fetched.get(0).asJsonArray());
+        assertThat(fetched.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("[1.0,2.0,3.0]");
+    }
+
+    @Test
+    void jsonSetWithNxAndFpha() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.8"));
+        JsonParser parser = redis.getJsonParser();
+        JsonValue numericArray = parser.createJsonValue("[4.0, 5.0, 6.0]");
+        JsonSetArgs args = JsonSetArgs.Builder.nx().fpha(JsonSetArgs.FphaType.FP64);
+
+        String result = redis.jsonSet("fpha:nxtest", JsonPath.ROOT_PATH, numericArray, args);
+        assertThat(result).isEqualTo("OK");
+
+        List<JsonValue> fetched = redis.jsonGet("fpha:nxtest", JsonPath.ROOT_PATH);
+        assertNotNull(fetched.get(0).asJsonArray());
+        assertThat(fetched.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("[4.0,5.0,6.0]");
+
+        // Second set with NX should return null since key already exists
+        String result2 = redis.jsonSet("fpha:nxtest", JsonPath.ROOT_PATH, numericArray, args);
+        assertThat(result2).isNull();
+    }
+
+    @Test
+    void jsonSetStringWithFpha() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.8"));
+        JsonSetArgs args = JsonSetArgs.Builder.fpha(JsonSetArgs.FphaType.BF16);
+        String result = redis.jsonSet("fpha:strtest", JsonPath.ROOT_PATH, "[1.5, 2.5, 3.5]", args);
+        assertThat(result).isEqualTo("OK");
+
+        List<JsonValue> fetched = redis.jsonGet("fpha:strtest", JsonPath.ROOT_PATH);
+        assertNotNull(fetched.get(0).asJsonArray());
+        assertThat(fetched.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("[1.5,2.5,3.5]");
     }
 
     @ParameterizedTest(name = "With {0} as path")

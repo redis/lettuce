@@ -392,6 +392,78 @@ class RedisJsonCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructJsonSetWithFphaFp16() {
+        JsonSetArgs args = JsonSetArgs.Builder.fpha(JsonSetArgs.FphaType.FP16);
+        Command<String, String, String> command = builder.jsonSet(MY_KEY, MY_PATH, ELEMENT, args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*6\r\n" + "$8\r\n" + "JSON.SET\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n"
+                        + "$14\r\n" + ID_BIKE_6 + "\r\n" + "$4\r\n" + "FPHA\r\n" + "$4\r\n" + "FP16\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonSetWithFphaBf16() {
+        JsonSetArgs args = JsonSetArgs.Builder.fpha(JsonSetArgs.FphaType.BF16);
+        Command<String, String, String> command = builder.jsonSet(MY_KEY, MY_PATH, ELEMENT, args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*6\r\n" + "$8\r\n" + "JSON.SET\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n"
+                        + "$14\r\n" + ID_BIKE_6 + "\r\n" + "$4\r\n" + "FPHA\r\n" + "$4\r\n" + "BF16\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonSetWithFphaFp32() {
+        JsonSetArgs args = JsonSetArgs.Builder.fpha(JsonSetArgs.FphaType.FP32);
+        Command<String, String, String> command = builder.jsonSet(MY_KEY, MY_PATH, ELEMENT, args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*6\r\n" + "$8\r\n" + "JSON.SET\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n"
+                        + "$14\r\n" + ID_BIKE_6 + "\r\n" + "$4\r\n" + "FPHA\r\n" + "$4\r\n" + "FP32\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonSetWithFphaFp64() {
+        JsonSetArgs args = JsonSetArgs.Builder.fpha(JsonSetArgs.FphaType.FP64);
+        Command<String, String, String> command = builder.jsonSet(MY_KEY, MY_PATH, ELEMENT, args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*6\r\n" + "$8\r\n" + "JSON.SET\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n"
+                        + "$14\r\n" + ID_BIKE_6 + "\r\n" + "$4\r\n" + "FPHA\r\n" + "$4\r\n" + "FP64\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonSetWithNxAndFpha() {
+        JsonSetArgs args = JsonSetArgs.Builder.nx().fpha(JsonSetArgs.FphaType.FP32);
+        Command<String, String, String> command = builder.jsonSet(MY_KEY, MY_PATH, ELEMENT, args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*7\r\n" + "$8\r\n" + "JSON.SET\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n"
+                        + "$14\r\n" + ID_BIKE_6 + "\r\n" + "$2\r\n" + "NX\r\n" + "$4\r\n" + "FPHA\r\n" + "$4\r\n" + "FP32\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonSetStringOverloadWithFpha() {
+        JsonSetArgs args = JsonSetArgs.Builder.fpha(JsonSetArgs.FphaType.BF16);
+        Command<String, String, String> command = builder.jsonSet(MY_KEY, MY_PATH, ID_BIKE_6, args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*6\r\n" + "$8\r\nJSON.SET\r\n" + "$15\r\nbikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n"
+                        + "$14\r\n" + ID_BIKE_6 + "\r\n" + "$4\r\nFPHA\r\n" + "$4\r\nBF16\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructJsonStrappend() {
         Command<String, String, List<Long>> command = builder.jsonStrappend(MY_KEY, MY_PATH, ELEMENT);
         ByteBuf buf = Unpooled.directBuffer();

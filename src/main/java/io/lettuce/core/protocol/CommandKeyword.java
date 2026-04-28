@@ -63,7 +63,9 @@ public enum CommandKeyword implements ProtocolKeyword {
 
     K, EF_RUNTIME, RANGE, RADIUS, RRF, WINDOW, CONSTANT, LINEAR, BETA, YIELD_SCORE_AS, SEARCH, COMBINE,
 
-    METRICS, DURATION, SAMPLE, CPU, NET, START, STOP;
+    METRICS, DURATION, SAMPLE, CPU, NET, START, STOP,
+
+    FP16, BF16, FP32, FP64, FPHA;
 
     public final byte[] bytes;
 
