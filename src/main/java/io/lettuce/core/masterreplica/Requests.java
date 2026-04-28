@@ -5,6 +5,7 @@ import static io.lettuce.core.masterreplica.TopologyComparators.LatencyComparato
 
 import java.util.*;
 
+import io.lettuce.core.Pair;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.masterreplica.TopologyComparators.SortAction;
 import io.lettuce.core.models.role.RedisNodeDescription;
