@@ -23,19 +23,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 
-import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.event.jfr.EventRecorder;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
@@ -54,7 +52,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
     private final RedisURI redisURI;
 
-    private final Map<RedisURI, StatefulRedisConnection<?, ?>> initialConnections = new ConcurrentHashMap<>();
+    private final Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections = new ConcurrentHashMap<>();
 
     AutodiscoveryConnector(RedisClient redisClient, RedisCodec<K, V> codec, RedisURI redisURI) {
         this.redisClient = redisClient;
@@ -66,34 +64,33 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
     public CompletableFuture<StatefulRedisMasterReplicaConnection<K, V>> connectAsync() {
 
         ConnectionFuture<StatefulRedisConnection<K, V>> initialConnection = redisClient.connectAsync(codec, redisURI);
-        Mono<StatefulRedisMasterReplicaConnection<K, V>> connect = Mono.fromCompletionStage(initialConnection)
-                .flatMap(nodeConnection -> {
+
+        ConnectionFuture<StatefulRedisMasterReplicaConnection<K, V>> connect1 = initialConnection
+                .thenCompose(nodeConnection -> {
 
                     initialConnections.put(redisURI, nodeConnection);
 
                     TopologyProvider topologyProvider = new ReplicaTopologyProvider(nodeConnection, redisURI);
 
-                    return Mono.fromCompletionStage(topologyProvider.getNodesAsync())
-                            .flatMap(nodes -> getMasterConnectionAndUri(nodes, Tuples.of(redisURI, nodeConnection), codec));
-                }).flatMap(connectionAndUri -> {
+                    return topologyProvider.getNodesAsync().thenCompose(nodes -> {
+                        return getMasterConnectionAndUriAsync(nodes, Pair.of(redisURI, nodeConnection), codec);
+                    });
+                }).thenCompose(connectionAndUri -> {
                     return initializeConnection(codec, connectionAndUri);
                 });
 
-        return connect.onErrorResume(t -> {
-
-            Mono<Void> close = Mono.empty();
-
-            for (StatefulRedisConnection<?, ?> connection : initialConnections.values()) {
-                close = close.then(Mono.fromFuture(connection.closeAsync()));
+        return Futures.unwrapExceptions(connect1.whenComplete((val, error) -> {
+            if (error != null) {
+                for (StatefulRedisConnection<?, ?> connection : initialConnections.values()) {
+                    connection.closeAsync();
+                }
             }
-
-            return close.then(Mono.error(t));
-        }).onErrorMap(ExecutionException.class, Throwable::getCause).toFuture();
-
+        }));
     }
 
-    private Mono<Tuple2<RedisURI, StatefulRedisConnection<K, V>>> getMasterConnectionAndUri(List<RedisNodeDescription> nodes,
-            Tuple2<RedisURI, StatefulRedisConnection<K, V>> connectionTuple, RedisCodec<K, V> codec) {
+    private CompletionStage<Pair<RedisURI, StatefulRedisConnection<K, V>>> getMasterConnectionAndUriAsync(
+            List<RedisNodeDescription> nodes, Pair<RedisURI, StatefulRedisConnection<K, V>> connectionPair,
+            RedisCodec<K, V> codec) {
 
         RedisNodeDescription node = getConnectedNode(redisURI, nodes);
 
@@ -102,29 +99,28 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
             RedisNodeDescription master = lookupMaster(nodes);
             ConnectionFuture<StatefulRedisConnection<K, V>> masterConnection = redisClient.connectAsync(codec, master.getUri());
 
-            return Mono.just(master.getUri()).zipWith(Mono.fromCompletionStage(masterConnection)) //
-                    .doOnNext(it -> {
-                        initialConnections.put(it.getT1(), it.getT2());
-                    });
+            return masterConnection.thenApply(conn -> {
+                initialConnections.put(master.getUri(), conn);
+                return Pair.of(master.getUri(), conn);
+            });
         }
 
-        return Mono.just(connectionTuple);
+        return CompletableFuture.completedFuture(connectionPair);
     }
 
-    @SuppressWarnings("unchecked")
-    private Mono<StatefulRedisMasterReplicaConnection<K, V>> initializeConnection(RedisCodec<K, V> codec,
-            Tuple2<RedisURI, StatefulRedisConnection<K, V>> connectionAndUri) {
+    private CompletionStage<StatefulRedisMasterReplicaConnection<K, V>> initializeConnection(RedisCodec<K, V> codec,
+            Pair<RedisURI, StatefulRedisConnection<K, V>> connectionAndUri) {
 
         ReplicaTopologyProvider topologyProvider = new ReplicaTopologyProvider(connectionAndUri.getT2(),
                 connectionAndUri.getT1());
 
         MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
-        MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<>(redisClient, codec,
-                redisURI, (Map) initialConnections);
+        MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<K, V>(redisClient, codec,
+                redisURI, initialConnections);
 
-        Mono<List<RedisNodeDescription>> refreshFuture = refresh.getNodes(redisURI);
+        CompletionStage<List<RedisNodeDescription>> refreshFuture = refresh.getNodesAsync(redisURI);
 
-        return refreshFuture.map(nodes -> {
+        return refreshFuture.thenApply(nodes -> {
 
             EventRecorder.getInstance().record(new MasterReplicaTopologyChangedEvent(redisURI, nodes));
 

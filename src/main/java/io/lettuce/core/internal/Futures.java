@@ -5,7 +5,9 @@ import java.util.Collection;
 import java.util.concurrent.*;
 
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.ChannelFuture;
+import io.netty.util.Timeout;
 
 /**
  * Utility methods for {@link java.util.concurrent.Future} handling. This class is part of the internal API and may change
@@ -236,6 +238,63 @@ public abstract class Futures {
         } catch (Exception e) {
             throw Exceptions.bubble(e);
         }
+    }
+
+    /**
+     * Unwrap exceptions from a {@link CompletionStage} into a new {@link CompletableFuture}.
+     *
+     * @param stage the original stage
+     * @param <T> the result type
+     * @return a new {@link CompletableFuture} with unwrapped exceptions
+     */
+    public static <T> CompletableFuture<T> unwrapExceptions(CompletionStage<T> stage) {
+        CompletableFuture<T> f = new CompletableFuture<>();
+        stage.whenComplete((v, t) -> {
+            if (t != null)
+                f.completeExceptionally(Exceptions.unwrap(t));
+            else
+                f.complete(v);
+        });
+        return f;
+    }
+
+    /**
+     * Return a new {@link CompletableFuture} that mirrors {@code source} but completes exceptionally with
+     * {@link TimeoutException} if {@code source} does not complete within {@code duration}. The timeout is scheduled on the
+     * {@link ClientResources#timer()} and cancelled upon source completion.
+     *
+     * @param source the source future, must not be {@code null}.
+     * @param duration timeout duration, must not be {@code null}.
+     * @param resources client resources providing the timer, must not be {@code null}.
+     * @param taskName short description of the awaited operation, used in the {@link TimeoutException} message; must not be
+     *        {@code null}.
+     * @param <T> the result type.
+     * @return a new {@link CompletableFuture} completing with the same result or a {@link TimeoutException}.
+     */
+    public static <T> CompletableFuture<T> withTimeout(CompletableFuture<T> source, Duration duration,
+            ClientResources resources, String taskName) {
+
+        LettuceAssert.notNull(source, "Source future must not be null");
+        LettuceAssert.notNull(duration, "Duration must not be null");
+        LettuceAssert.notNull(resources, "ClientResources must not be null");
+        LettuceAssert.notNull(taskName, "Task name must not be null");
+
+        CompletableFuture<T> result = new CompletableFuture<>();
+        Timeout scheduled = resources.timer().newTimeout(
+                t -> result.completeExceptionally(
+                        new TimeoutException(taskName + " timed out after " + duration.toMillis() + "ms")),
+                duration.toNanos(), TimeUnit.NANOSECONDS);
+
+        source.whenComplete((value, err) -> {
+            scheduled.cancel();
+            if (err != null) {
+                result.completeExceptionally(err);
+            } else {
+                result.complete(value);
+            }
+        });
+
+        return result;
     }
 
 }

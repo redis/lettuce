@@ -5,8 +5,6 @@ import static io.lettuce.core.masterreplica.TopologyComparators.LatencyComparato
 
 import java.util.*;
 
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.masterreplica.TopologyComparators.SortAction;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -17,7 +15,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  * @author Mark Paluch
  */
 class Requests extends
-        CompletableEventLatchSupport<Tuple2<RedisURI, TimedAsyncCommand<String, String, String>>, List<RedisNodeDescription>> {
+        CompletableEventLatchSupport<Pair<RedisURI, TimedAsyncCommand<String, String, String>>, List<RedisNodeDescription>> {
 
     private final Map<RedisURI, TimedAsyncCommand<String, String, String>> rawViews = new TreeMap<>(
             ReplicaUtils.RedisURIComparator.INSTANCE);
@@ -37,7 +35,7 @@ class Requests extends
             if (throwable != null) {
                 accept(throwable);
             } else {
-                accept(Tuples.of(redisURI, command));
+                accept(Pair.of(redisURI, command));
             }
         });
     }
