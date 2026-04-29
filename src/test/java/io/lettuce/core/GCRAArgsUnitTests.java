@@ -34,11 +34,11 @@ class GCRAArgsUnitTests {
     }
 
     @Test
-    void shouldBuildWithNumRequests() {
+    void shouldBuildWithTokens() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-        GCRAArgs.Builder.rate(5, 10, 60).numRequests(3).build(args);
+        GCRAArgs.Builder.rate(5, 10, 60).tokens(3).build(args);
 
-        assertThat(args.toCommandString()).isEqualTo("5 10 60.0 NUM_REQUESTS 3");
+        assertThat(args.toCommandString()).isEqualTo("5 10 60.0 TOKENS 3");
     }
 
     @Test
@@ -58,11 +58,11 @@ class GCRAArgsUnitTests {
     }
 
     @Test
-    void shouldBuildWithNumRequestsOne() {
+    void shouldBuildWithTokensOne() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-        GCRAArgs.Builder.rate(5, 10, 60).numRequests(1).build(args);
+        GCRAArgs.Builder.rate(5, 10, 60).tokens(1).build(args);
 
-        assertThat(args.toCommandString()).isEqualTo("5 10 60.0 NUM_REQUESTS 1");
+        assertThat(args.toCommandString()).isEqualTo("5 10 60.0 TOKENS 1");
     }
 
     @Test
@@ -72,15 +72,15 @@ class GCRAArgsUnitTests {
     }
 
     @Test
-    void shouldRejectZeroRequestsPerPeriod() {
+    void shouldRejectZeroTokensPerPeriod() {
         assertThatThrownBy(() -> GCRAArgs.Builder.rate(5, 0, 60)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("requestsPerPeriod must be >= 1");
+                .hasMessageContaining("tokensPerPeriod must be >= 1");
     }
 
     @Test
-    void shouldRejectNegativeRequestsPerPeriod() {
+    void shouldRejectNegativeTokensPerPeriod() {
         assertThatThrownBy(() -> GCRAArgs.Builder.rate(5, -1, 60)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("requestsPerPeriod must be >= 1");
+                .hasMessageContaining("tokensPerPeriod must be >= 1");
     }
 
     @Test
@@ -96,23 +96,23 @@ class GCRAArgsUnitTests {
     }
 
     @Test
-    void shouldRejectZeroNumRequests() {
-        assertThatThrownBy(() -> GCRAArgs.Builder.rate(5, 10, 60).numRequests(0)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("numRequests must be >= 1");
+    void shouldRejectZeroTokens() {
+        assertThatThrownBy(() -> GCRAArgs.Builder.rate(5, 10, 60).tokens(0)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("tokens must be >= 1");
     }
 
     @Test
-    void shouldRejectNegativeNumRequests() {
-        assertThatThrownBy(() -> GCRAArgs.Builder.rate(5, 10, 60).numRequests(-1)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("numRequests must be >= 1");
+    void shouldRejectNegativeTokens() {
+        assertThatThrownBy(() -> GCRAArgs.Builder.rate(5, 10, 60).tokens(-1)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("tokens must be >= 1");
     }
 
     @Test
-    void shouldNotIncludeNumRequestsWhenNotSet() {
+    void shouldNotIncludeTokensWhenNotSet() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
         GCRAArgs.Builder.rate(5, 10, 60).build(args);
 
-        assertThat(args.toCommandString()).doesNotContain("NUM_REQUESTS");
+        assertThat(args.toCommandString()).doesNotContain("TOKENS");
     }
 
 }

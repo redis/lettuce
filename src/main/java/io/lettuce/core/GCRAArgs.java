@@ -16,7 +16,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * <p>
  * {@link GCRAArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  * <p>
- * Command syntax: {@code GCRA key max_burst requests_per_period period [num_requests]}
+ * Command syntax: {@code GCRA key max_burst tokens_per_period period [TOKENS count]}
  *
  * @author Aleksandar Todorov
  * @since 7.6
@@ -26,11 +26,11 @@ public class GCRAArgs implements CompositeArgument {
 
     private long maxBurst;
 
-    private long requestsPerPeriod;
+    private long tokensPerPeriod;
 
     private double period;
 
-    private Long numRequests;
+    private Long tokens;
 
     /**
      * Builder entry points for {@link GCRAArgs}.
@@ -47,12 +47,12 @@ public class GCRAArgs implements CompositeArgument {
          * Creates new {@link GCRAArgs} with the required parameters.
          *
          * @param maxBurst maximum number of tokens allowed as a burst. Min: 0.
-         * @param requestsPerPeriod number of requests allowed per period. Min: 1.
+         * @param tokensPerPeriod number of tokens replenished per period. Min: 1.
          * @param period period in seconds. Min: 1.0, Max: 1e12.
          * @return new {@link GCRAArgs} with required parameters set.
          */
-        public static GCRAArgs rate(long maxBurst, long requestsPerPeriod, double period) {
-            return new GCRAArgs().maxBurst(maxBurst).requestsPerPeriod(requestsPerPeriod).period(period);
+        public static GCRAArgs rate(long maxBurst, long tokensPerPeriod, double period) {
+            return new GCRAArgs().maxBurst(maxBurst).tokensPerPeriod(tokensPerPeriod).period(period);
         }
 
     }
@@ -70,14 +70,14 @@ public class GCRAArgs implements CompositeArgument {
     }
 
     /**
-     * Set the number of requests allowed per period.
+     * Set the number of tokens replenished per period.
      *
-     * @param requestsPerPeriod requests per period. Min: 1.
+     * @param tokensPerPeriod tokens per period. Min: 1.
      * @return {@code this} {@link GCRAArgs}.
      */
-    public GCRAArgs requestsPerPeriod(long requestsPerPeriod) {
-        LettuceAssert.isTrue(requestsPerPeriod >= 1, "requestsPerPeriod must be >= 1");
-        this.requestsPerPeriod = requestsPerPeriod;
+    public GCRAArgs tokensPerPeriod(long tokensPerPeriod) {
+        LettuceAssert.isTrue(tokensPerPeriod >= 1, "tokensPerPeriod must be >= 1");
+        this.tokensPerPeriod = tokensPerPeriod;
         return this;
     }
 
@@ -95,26 +95,26 @@ public class GCRAArgs implements CompositeArgument {
     }
 
     /**
-     * Set the cost/weight of this request. Defaults to 1 if not specified.
+     * Set the number of tokens to consume. Defaults to 1 if not specified.
      *
-     * @param numRequests cost of the request. Min: 1.
+     * @param tokens number of tokens to consume. Min: 1.
      * @return {@code this} {@link GCRAArgs}.
      */
-    public GCRAArgs numRequests(long numRequests) {
-        LettuceAssert.isTrue(numRequests >= 1, "numRequests must be >= 1");
-        this.numRequests = numRequests;
+    public GCRAArgs tokens(long tokens) {
+        LettuceAssert.isTrue(tokens >= 1, "tokens must be >= 1");
+        this.tokens = tokens;
         return this;
     }
 
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
         args.add(maxBurst);
-        args.add(requestsPerPeriod);
+        args.add(tokensPerPeriod);
         args.add(period);
 
-        if (numRequests != null) {
-            args.add(CommandKeyword.NUM_REQUESTS);
-            args.add(numRequests);
+        if (tokens != null) {
+            args.add(CommandKeyword.TOKENS);
+            args.add(tokens);
         }
     }
 

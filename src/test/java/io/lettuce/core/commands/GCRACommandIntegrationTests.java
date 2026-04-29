@@ -81,8 +81,8 @@ public class GCRACommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void gcraWithNumRequests() {
-        GCRAArgs args = GCRAArgs.Builder.rate(5, 10, 60).numRequests(3);
+    void gcraWithTokens() {
+        GCRAArgs args = GCRAArgs.Builder.rate(5, 10, 60).tokens(3);
 
         GCRAResponse response = redis.gcra("rate:weighted", args);
 
@@ -94,9 +94,9 @@ public class GCRACommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void gcraWithNumRequestsExceedingBurst() {
+    void gcraWithTokensExceedingBurst() {
         // max_burst=2, so max_requests=3. Request 4 tokens at once.
-        GCRAArgs args = GCRAArgs.Builder.rate(2, 1, 60).numRequests(4);
+        GCRAArgs args = GCRAArgs.Builder.rate(2, 1, 60).tokens(4);
 
         GCRAResponse response = redis.gcra("rate:exceed", args);
 
@@ -105,9 +105,9 @@ public class GCRACommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void gcraWithZeroNumRequestsIsRejected() {
-        assertThatThrownBy(() -> GCRAArgs.Builder.rate(5, 10, 60).numRequests(0)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("numRequests must be >= 1");
+    void gcraWithZeroTokensIsRejected() {
+        assertThatThrownBy(() -> GCRAArgs.Builder.rate(5, 10, 60).tokens(0)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("tokens must be >= 1");
     }
 
     @Test
