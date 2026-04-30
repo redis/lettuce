@@ -21,6 +21,7 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * The data is tokenized, meaning it is split into individual words or tokens, which enables efficient full-text search
  * functionality.
  *
+ * @param <K> Key type
  * @see <a href=
  *      "https://redis.io/docs/latest/develop/interact/search-and-query/basic-constructs/field-and-type-options/#text-fields">Text
  *      Fields</a>
@@ -28,7 +29,7 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * @author Tihomir Mateev
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class TextFieldArgs extends FieldArgs {
+public class TextFieldArgs<K> extends FieldArgs<K> {
 
     /**
      * Phonetic matchers for text fields.
@@ -60,10 +61,11 @@ public class TextFieldArgs extends FieldArgs {
     /**
      * Create a new {@link TextFieldArgs} using the builder pattern.
      * 
+     * @param <K> Key type
      * @return a new {@link Builder}
      */
-    public static Builder builder() {
-        return new Builder();
+    public static <K> Builder<K> builder() {
+        return new Builder<>();
     }
 
     @Override
@@ -108,7 +110,7 @@ public class TextFieldArgs extends FieldArgs {
     }
 
     @Override
-    protected void buildTypeSpecificArgs(CommandArgs<?, ?> args) {
+    protected void buildTypeSpecificArgs(CommandArgs<K, ?> args) {
         weight.ifPresent(w -> args.add(WEIGHT).add(w));
         if (noStem) {
             args.add(NOSTEM);
@@ -122,11 +124,12 @@ public class TextFieldArgs extends FieldArgs {
     /**
      * Builder for {@link TextFieldArgs}.
      * 
+     * @param <K> Key type
      */
-    public static class Builder extends FieldArgs.Builder<TextFieldArgs, Builder> {
+    public static class Builder<K> extends FieldArgs.Builder<K, TextFieldArgs<K>, Builder<K>> {
 
         public Builder() {
-            super(new TextFieldArgs());
+            super(new TextFieldArgs<>());
         }
 
         /**
@@ -136,7 +139,7 @@ public class TextFieldArgs extends FieldArgs {
          * @param weight the weight of the field
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder weight(long weight) {
+        public Builder<K> weight(long weight) {
             instance.weight = Optional.of(weight);
             return self();
         }
@@ -147,7 +150,7 @@ public class TextFieldArgs extends FieldArgs {
          *
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder noStem() {
+        public Builder<K> noStem() {
             instance.noStem = true;
             return self();
         }
@@ -171,7 +174,7 @@ public class TextFieldArgs extends FieldArgs {
          * @param matcher the phonetic matcher
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder phonetic(PhoneticMatcher matcher) {
+        public Builder<K> phonetic(PhoneticMatcher matcher) {
             instance.phonetic = Optional.of(matcher);
             return self();
         }
@@ -183,7 +186,7 @@ public class TextFieldArgs extends FieldArgs {
          *
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder withSuffixTrie() {
+        public Builder<K> withSuffixTrie() {
             instance.withSuffixTrie = true;
             return self();
         }

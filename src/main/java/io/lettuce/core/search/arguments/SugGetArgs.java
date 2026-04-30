@@ -15,10 +15,12 @@ import io.lettuce.core.protocol.CommandArgs;
  * dictionary. The FT.SUGGET command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary.
  * </p>
  *
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  */
-public class SugGetArgs {
+public class SugGetArgs<K, V> {
 
     private boolean fuzzy;
 
@@ -45,8 +47,8 @@ public class SugGetArgs {
          * @return new {@link SugGetArgs} with {@literal FUZZY} set.
          * @see SugGetArgs#fuzzy()
          */
-        public static SugGetArgs fuzzy() {
-            return new SugGetArgs().fuzzy();
+        public static <K, V> SugGetArgs<K, V> fuzzy() {
+            return new SugGetArgs<K, V>().fuzzy();
         }
 
         /**
@@ -55,8 +57,8 @@ public class SugGetArgs {
          * @return new {@link SugGetArgs} with {@literal WITHSCORES} set.
          * @see SugGetArgs#withScores()
          */
-        public static SugGetArgs withScores() {
-            return new SugGetArgs().withScores();
+        public static <K, V> SugGetArgs<K, V> withScores() {
+            return new SugGetArgs<K, V>().withScores();
         }
 
         /**
@@ -65,8 +67,8 @@ public class SugGetArgs {
          * @return new {@link SugGetArgs} with {@literal WITHPAYLOADS} set.
          * @see SugGetArgs#withPayloads()
          */
-        public static SugGetArgs withPayloads() {
-            return new SugGetArgs().withPayloads();
+        public static <K, V> SugGetArgs<K, V> withPayloads() {
+            return new SugGetArgs<K, V>().withPayloads();
         }
 
         /**
@@ -76,8 +78,8 @@ public class SugGetArgs {
          * @return new {@link SugGetArgs} with {@literal MAX} set.
          * @see SugGetArgs#max(long)
          */
-        public static SugGetArgs max(long max) {
-            return new SugGetArgs().max(max);
+        public static <K, V> SugGetArgs<K, V> max(long max) {
+            return new SugGetArgs<K, V>().max(max);
         }
 
     }
@@ -87,7 +89,7 @@ public class SugGetArgs {
      *
      * @return {@code this} {@link SugGetArgs}.
      */
-    public SugGetArgs fuzzy() {
+    public SugGetArgs<K, V> fuzzy() {
         this.fuzzy = true;
         return this;
     }
@@ -97,7 +99,7 @@ public class SugGetArgs {
      *
      * @return {@code this} {@link SugGetArgs}.
      */
-    public SugGetArgs withScores() {
+    public SugGetArgs<K, V> withScores() {
         this.withScores = true;
         return this;
     }
@@ -108,7 +110,7 @@ public class SugGetArgs {
      *
      * @return {@code this} {@link SugGetArgs}.
      */
-    public SugGetArgs withPayloads() {
+    public SugGetArgs<K, V> withPayloads() {
         this.withPayloads = true;
         return this;
     }
@@ -119,7 +121,7 @@ public class SugGetArgs {
      * @param max the maximum number of suggestions to return.
      * @return {@code this} {@link SugGetArgs}.
      */
-    public SugGetArgs max(long max) {
+    public SugGetArgs<K, V> max(long max) {
         this.max = max;
         return this;
     }
@@ -147,7 +149,7 @@ public class SugGetArgs {
      *
      * @param args the command arguments to append to.
      */
-    public void build(CommandArgs<?, ?> args) {
+    public void build(CommandArgs<K, V> args) {
         if (fuzzy) {
             args.add("FUZZY");
         }

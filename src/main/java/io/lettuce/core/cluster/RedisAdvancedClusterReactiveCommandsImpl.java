@@ -591,7 +591,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K> args) {
+    public Mono<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K, V> args) {
         return routeKeyless(() -> super.ftAggregate(index, query, args),
                 (nodeId, conn) -> conn.ftAggregate(index, query, args).mapNotNull(reply -> {
                     if (reply != null) {
@@ -607,18 +607,18 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args) {
+    public Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args) {
         return routeKeyless(() -> super.ftSearch(index, query, args), conn -> conn.ftSearch(index, query, args),
                 CommandType.FT_SEARCH);
     }
 
     @Override
     public Mono<SearchReply<K, V>> ftSearch(String index, String query) {
-        return ftSearch(index, query, SearchArgs.<K> builder().build());
+        return ftSearch(index, query, SearchArgs.<K, V> builder().build());
     }
 
     @Override
-    public Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs args) {
+    public Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args) {
         return routeKeyless(() -> super.ftHybrid(index, args), conn -> conn.ftHybrid(index, args), CommandType.FT_HYBRID);
     }
 
@@ -633,7 +633,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
                 CommandType.FT_EXPLAIN);
     }
 
-    @Deprecated
     @Override
     public Flux<V> ftTagvals(String index, String fieldName) {
         return routeKeylessMany(() -> super.ftTagvals(index, fieldName), conn -> conn.ftTagvals(index, fieldName),
@@ -685,25 +684,25 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<String> ftCreate(String index, List<FieldArgs> fieldArgs) {
+    public Mono<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftCreate(index, fieldArgs), conn -> conn.ftCreate(index, fieldArgs),
                 CommandType.FT_CREATE);
     }
 
     @Override
-    public Mono<String> ftCreate(String index, CreateArgs arguments, List<FieldArgs> fieldArgs) {
+    public Mono<String> ftCreate(String index, CreateArgs<K> arguments, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftCreate(index, arguments, fieldArgs),
                 conn -> conn.ftCreate(index, arguments, fieldArgs), CommandType.FT_CREATE);
     }
 
     @Override
-    public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs) {
+    public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftAlter(index, skipInitialScan, fieldArgs),
                 conn -> conn.ftAlter(index, skipInitialScan, fieldArgs), CommandType.FT_ALTER);
     }
 
     @Override
-    public Mono<String> ftAlter(String index, List<FieldArgs> fieldArgs) {
+    public Mono<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftAlter(index, fieldArgs), conn -> conn.ftAlter(index, fieldArgs),
                 CommandType.FT_ALTER);
     }

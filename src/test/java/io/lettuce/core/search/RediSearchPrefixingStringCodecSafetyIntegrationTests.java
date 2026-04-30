@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, Redis Ltd. and Contributors
+ * Copyright 2026-present
  * All rights reserved.
  *
  * Licensed under the MIT License.
@@ -32,10 +32,29 @@ import java.util.Map;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Codec-safety invariants for RediSearch when the connection key codec is non-trivial. Scoped to {@code ON HASH} indexes
+ * because only {@code HSET}/{@code HMSET} route hash field names and values through the connection's {@link RedisCodec}
+ * ({@link io.lettuce.core.protocol.CommandArgs#add(java.util.Map)} encodes each map entry as
+ * {@code addKey(field).addValue(value)}). {@code JSON.SET} does not — the JSON payload is sent verbatim via
+ * {@link io.lettuce.core.protocol.CommandArgs#add(String)} (or {@code add(byte[])} for {@link io.lettuce.core.json.JsonValue}),
+ * bypassing the value codec entirely; consequently a non-trivial codec produces no observable mismatch on the JSON side and
+ * adding {@code ON JSON} variants here would only duplicate the HASH coverage. Schema-level identifiers (field names, aliases)
+ * must be sent raw; only the legitimately {@code K}-typed surface (e.g. {@code INKEYS}) must route through {@code encodeKey}.
+ *
+ * @author Viktoriya Kutsarova
+ */
 @Tag(INTEGRATION_TEST)
-public class RediSearchCodecSafetyIntegrationTests {
+public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
 
-    private static final String INDEX = "codec-safety-idx";
+    private static final String HASH_INDEX = "codec-safety-idx";
+
+    private static final String HASH_DOC_KEY = "1";
+
+    private static final String BODY_TEXT = "A long introduction to Redis that mentions search only deep into the body text. "
+            + "Much preamble about indices and storage, only later do we finally cover search. "
+            + "More content about search follows with many examples. "
+            + "Finally more content after the search occurrences ends the description.";
 
     private static final String CODEC_PREFIX = "tenant1:";
 
@@ -45,7 +64,7 @@ public class RediSearchCodecSafetyIntegrationTests {
 
     private static RedisCommands<String, String> redis;
 
-    public RediSearchCodecSafetyIntegrationTests() {
+    public RediSearchPrefixingStringCodecSafetyIntegrationTests() {
         RedisURI uri = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
         client = RedisClient.create(uri);
         connection = client.connect(new PrefixingStringCodec(CODEC_PREFIX));
@@ -56,21 +75,17 @@ public class RediSearchCodecSafetyIntegrationTests {
     void prepare() {
         redis.flushall();
 
-        CreateArgs createArgs = CreateArgs.builder().on(CreateArgs.TargetType.HASH).build();
-        FieldArgs title = TextFieldArgs.builder().name("title").build();
-        FieldArgs body = TextFieldArgs.builder().name("body").build();
-        FieldArgs category = TagFieldArgs.builder().name("category").build();
-        redis.ftCreate(INDEX, createArgs, Arrays.asList(title, body, category));
+        CreateArgs hashCreate = CreateArgs.builder().on(CreateArgs.TargetType.HASH).build();
+        FieldArgs hashTitle = TextFieldArgs.builder().name("title").build();
+        FieldArgs hashBody = TextFieldArgs.builder().name("body").build();
+        FieldArgs hashCategory = TagFieldArgs.builder().name("category").build();
+        redis.ftCreate(HASH_INDEX, hashCreate, Arrays.asList(hashTitle, hashBody, hashCategory));
 
         Map<String, String> doc = new HashMap<>();
         doc.put("title", "Redis search guide");
-        doc.put("body",
-                "A long introduction to Redis that mentions search only deep into the body text. "
-                        + "Much preamble about indices and storage, only later do we finally cover search. "
-                        + "More content about search follows with many examples. "
-                        + "Finally more content after the search occurrences ends the description.");
+        doc.put("body", BODY_TEXT);
         doc.put("category", "tutorial");
-        redis.hmset("1", doc);
+        redis.hmset(HASH_DOC_KEY, doc);
     }
 
     @AfterAll
@@ -89,7 +104,7 @@ public class RediSearchCodecSafetyIntegrationTests {
      */
     @Test
     void baselineSearchWorksThroughPrefixingCodec() {
-        SearchReply<String, String> result = redis.ftSearch(INDEX, "search");
+        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search");
         assertThat(result.getCount()).isEqualTo(1L);
     }
 
@@ -100,9 +115,9 @@ public class RediSearchCodecSafetyIntegrationTests {
      */
     @Test
     void inFieldMustNotBeMangledByCodec() {
-        SearchArgs<String> args = SearchArgs.<String> builder().inField("title").build();
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().inField("title").build();
 
-        SearchReply<String, String> result = redis.ftSearch(INDEX, "search", args);
+        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).as("INFIELDS schema field must be sent raw, not codec-encoded").isEqualTo(1L);
     }
@@ -113,9 +128,9 @@ public class RediSearchCodecSafetyIntegrationTests {
      */
     @Test
     void returnFieldMustNotBeMangledByCodec() {
-        SearchArgs<String> args = SearchArgs.<String> builder().returnField("title").build();
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().returnField("title").build();
 
-        SearchReply<String, String> result = redis.ftSearch(INDEX, "search", args);
+        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
         assertThat(result.getResults().get(0).getFields())
@@ -127,9 +142,9 @@ public class RediSearchCodecSafetyIntegrationTests {
      */
     @Test
     void returnFieldAliasMustNotBeMangledByCodec() {
-        SearchArgs<String> args = SearchArgs.<String> builder().returnField("title", "t").build();
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().returnField("title", "t").build();
 
-        SearchReply<String, String> result = redis.ftSearch(INDEX, "search", args);
+        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
         assertThat(result.getResults().get(0).getFields()).as("RETURN alias must appear verbatim as a key in the result map")
@@ -143,9 +158,9 @@ public class RediSearchCodecSafetyIntegrationTests {
      */
     @Test
     void summarizeFieldMustNotBeMangledByCodec() {
-        SearchArgs<String> args = SearchArgs.<String> builder().summarizeField("body").build();
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().summarizeField("body").build();
 
-        SearchReply<String, String> result = redis.ftSearch(INDEX, "search", args);
+        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
         String body = result.getResults().get(0).getFields().get("body");
@@ -158,9 +173,10 @@ public class RediSearchCodecSafetyIntegrationTests {
      */
     @Test
     void highlightFieldMustNotBeMangledByCodec() {
-        SearchArgs<String> args = SearchArgs.<String> builder().highlightField("body").highlightTags("<b>", "</b>").build();
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().highlightField("body")
+                .highlightTags("<b>", "</b>").build();
 
-        SearchReply<String, String> result = redis.ftSearch(INDEX, "search", args);
+        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
         String body = result.getResults().get(0).getFields().get("body");
@@ -174,14 +190,30 @@ public class RediSearchCodecSafetyIntegrationTests {
      */
     @Test
     void aggregateLoadFieldMustNotBeMangledByCodec() {
-        AggregateArgs<String> args = AggregateArgs.<String> builder().load("title").build();
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().load("title").build();
 
-        AggregationReply<String, String> result = redis.ftAggregate(INDEX, "*", args);
+        AggregationReply<String, String> result = redis.ftAggregate(HASH_INDEX, "*", args);
 
         assertThat(result.getReplies()).isNotEmpty();
         SearchReply<String, String> reply = result.getReplies().get(0);
         assertThat(reply.getResults()).isNotEmpty();
         assertThat(reply.getResults().get(0).getFields()).as("LOAD schema field must be fetched verbatim").containsKey("title");
+    }
+
+    /**
+     * {@code INKEYS} restricts the search to a list of actual document keys. Unlike the schema-identifier clauses above, this
+     * one is legitimately {@code K}-typed and {@link io.lettuce.core.protocol.CommandArgs#addKeys} must route through
+     * {@code encodeKey} so the prefix matches what was applied at write-time. Acts as a positive control: if the key channel
+     * stops routing through the codec, this assertion stops finding the document.
+     */
+    @Test
+    void inKeyMustBeRoutedThroughCodec() {
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().inKey(HASH_DOC_KEY).build();
+
+        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+
+        assertThat(result.getCount()).as("INKEYS must route the document key through encodeKey to match the stored prefix")
+                .isEqualTo(1L);
     }
 
     /**

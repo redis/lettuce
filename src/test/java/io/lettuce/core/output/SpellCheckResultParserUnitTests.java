@@ -12,7 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.SpellCheckResultParser;
 
@@ -23,8 +22,6 @@ import io.lettuce.core.search.SpellCheckResultParser;
  */
 @Tag(UNIT_TEST)
 class SpellCheckResultParserUnitTests {
-
-    private static final StringCodec CODEC = StringCodec.UTF8;
 
     @Test
     void shouldParseEmptySpellCheckResult() {
@@ -45,14 +42,14 @@ class SpellCheckResultParserUnitTests {
 
         // Create the nested structure for a single misspelled term
         ArrayComplexData termArray = new ArrayComplexData(3);
-        termArray.storeObject(CODEC.encodeValue("TERM"));
-        termArray.storeObject(CODEC.encodeValue("reids"));
+        termArray.store("TERM");
+        termArray.store("reids");
 
         // Create suggestions array with one suggestion
         ArrayComplexData suggestionsArray = new ArrayComplexData(1);
         ArrayComplexData suggestion = new ArrayComplexData(2);
-        suggestion.storeObject(CODEC.encodeValue("0.7"));
-        suggestion.storeObject(CODEC.encodeValue("redis"));
+        suggestion.store("0.7");
+        suggestion.store("redis");
         suggestionsArray.storeObject(suggestion);
 
         termArray.storeObject(suggestionsArray);
@@ -80,19 +77,19 @@ class SpellCheckResultParserUnitTests {
 
         // First misspelled term
         ArrayComplexData term1Array = new ArrayComplexData(3);
-        term1Array.storeObject(CODEC.encodeValue("TERM"));
-        term1Array.storeObject(CODEC.encodeValue("reids"));
+        term1Array.store("TERM");
+        term1Array.store("reids");
 
         ArrayComplexData suggestions1Array = new ArrayComplexData(2);
 
         ArrayComplexData suggestion1_1 = new ArrayComplexData(2);
-        suggestion1_1.storeObject(CODEC.encodeValue("0.7"));
-        suggestion1_1.storeObject(CODEC.encodeValue("redis"));
+        suggestion1_1.store("0.7");
+        suggestion1_1.store("redis");
         suggestions1Array.storeObject(suggestion1_1);
 
         ArrayComplexData suggestion1_2 = new ArrayComplexData(2);
-        suggestion1_2.storeObject(CODEC.encodeValue("0.5"));
-        suggestion1_2.storeObject(CODEC.encodeValue("reads"));
+        suggestion1_2.store("0.5");
+        suggestion1_2.store("reads");
         suggestions1Array.storeObject(suggestion1_2);
 
         term1Array.storeObject(suggestions1Array);
@@ -100,19 +97,19 @@ class SpellCheckResultParserUnitTests {
 
         // Second misspelled term
         ArrayComplexData term2Array = new ArrayComplexData(3);
-        term2Array.storeObject(CODEC.encodeValue("TERM"));
-        term2Array.storeObject(CODEC.encodeValue("serch"));
+        term2Array.store("TERM");
+        term2Array.store("serch");
 
         ArrayComplexData suggestions2Array = new ArrayComplexData(2);
 
         ArrayComplexData suggestion2_1 = new ArrayComplexData(2);
-        suggestion2_1.storeObject(CODEC.encodeValue("0.8"));
-        suggestion2_1.storeObject(CODEC.encodeValue("search"));
+        suggestion2_1.store("0.8");
+        suggestion2_1.store("search");
         suggestions2Array.storeObject(suggestion2_1);
 
         ArrayComplexData suggestion2_2 = new ArrayComplexData(2);
-        suggestion2_2.storeObject(CODEC.encodeValue("0.6"));
-        suggestion2_2.storeObject(CODEC.encodeValue("serve"));
+        suggestion2_2.store("0.6");
+        suggestion2_2.store("serve");
         suggestions2Array.storeObject(suggestion2_2);
 
         term2Array.storeObject(suggestions2Array);
@@ -206,12 +203,12 @@ class SpellCheckResultParserUnitTests {
 
         // Create a term array with invalid suggestion (only 1 element instead of 2)
         ArrayComplexData termArray = new ArrayComplexData(3);
-        termArray.storeObject(CODEC.encodeValue("TERM"));
-        termArray.storeObject(CODEC.encodeValue("reids"));
+        termArray.store("TERM");
+        termArray.store("reids");
 
         ArrayComplexData suggestionsArray = new ArrayComplexData(1);
         ArrayComplexData invalidSuggestion = new ArrayComplexData(1);
-        invalidSuggestion.storeObject(CODEC.encodeValue("0.7"));
+        invalidSuggestion.store("0.7");
         suggestionsArray.storeObject(invalidSuggestion);
 
         termArray.storeObject(suggestionsArray);

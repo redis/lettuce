@@ -18,7 +18,7 @@ import io.lettuce.core.output.ComplexDataParser;
 
 /**
  * Parser for FT.SYNDUMP command results that handles both RESP2 and RESP3 protocol responses.
- * 
+ *
  * <p>
  * This parser automatically detects the Redis protocol version and switches between RESP2 and RESP3 parsing strategies.
  * </p>
@@ -40,7 +40,7 @@ public class SynonymMapParser implements ComplexDataParser<Map<String, List<Stri
      * Parse the FT.SYNDUMP response data, automatically detecting RESP2 vs RESP3 format.
      *
      * @param data the response data from Redis
-     * @return a map where keys are terms and values are lists of synonym group IDs for each term
+     * @return a map where keys are terms and values are lists of synonyms for each term
      */
     @Override
     public Map<String, List<String>> parse(ComplexData data) {

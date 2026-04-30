@@ -29,13 +29,15 @@ import java.util.Optional;
  * {
  *     &#64;code
  *     HybridArgs<String, String> args = HybridArgs.<String, String> builder()
- *             .search(HybridSearchArgs.<String, String> builder().query("comfortable shoes").build())
+ *             .search(HybridSearchArgs.builder().query("comfortable shoes").build())
  *             .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector(vectorBlob)
  *                     .method(HybridVectorArgs.Knn.of(10)).build())
  *             .combine(Combiners.rrf().window(20).constant(60)).build();
  * }
  * </pre>
  *
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Aleksandar Todorov
  * @since 7.2
  * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
@@ -46,40 +48,40 @@ import java.util.Optional;
  * @see PostProcessingArgs
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class HybridArgs {
+public class HybridArgs<K, V> {
 
     private final List<HybridSearchArgs> searchArgs = new ArrayList<>();
 
-    private final List<HybridVectorArgs> vectorArgs = new ArrayList<>();
+    private final List<HybridVectorArgs<K, V>> vectorArgs = new ArrayList<>();
 
-    private Optional<Combiner> combiner = Optional.empty();
+    private Optional<Combiner<K>> combiner = Optional.empty();
 
-    private Optional<PostProcessingArgs> postProcessingArgs = Optional.empty();
+    private Optional<PostProcessingArgs<K, V>> postProcessingArgs = Optional.empty();
 
-    private final Map<String, Object> params = new HashMap<>();
+    private final Map<K, Object> params = new HashMap<>();
 
     private Optional<Duration> timeout = Optional.empty();
 
     /**
      * @return a new {@link Builder} for {@link HybridArgs}.
      */
-    public static Builder builder() {
-        return new Builder();
+    public static <K, V> Builder<K, V> builder() {
+        return new Builder<>();
     }
 
     /**
      * Builder for {@link HybridArgs}.
      */
-    public static class Builder {
+    public static class Builder<K, V> {
 
-        private final HybridArgs instance = new HybridArgs();
+        private final HybridArgs<K, V> instance = new HybridArgs<>();
 
         /**
          * Build the {@link HybridArgs} instance.
          *
          * @return the configured arguments
          */
-        public HybridArgs build() {
+        public HybridArgs<K, V> build() {
             return instance;
         }
 
@@ -89,7 +91,7 @@ public class HybridArgs {
          * @param searchArgs the search arguments
          * @return this builder
          */
-        public Builder search(HybridSearchArgs searchArgs) {
+        public Builder<K, V> search(HybridSearchArgs searchArgs) {
             LettuceAssert.notNull(searchArgs, "Search args must not be null");
             instance.searchArgs.add(searchArgs);
             return this;
@@ -101,7 +103,7 @@ public class HybridArgs {
          * @param vectorArgs the vector search arguments
          * @return this builder
          */
-        public Builder vectorSearch(HybridVectorArgs vectorArgs) {
+        public Builder<K, V> vectorSearch(HybridVectorArgs<K, V> vectorArgs) {
             LettuceAssert.notNull(vectorArgs, "Vector args must not be null");
             instance.vectorArgs.add(vectorArgs);
             return this;
@@ -117,7 +119,7 @@ public class HybridArgs {
          * @return this builder
          * @see Combiners
          */
-        public Builder combine(Combiner combiner) {
+        public Builder<K, V> combine(Combiner<K> combiner) {
             LettuceAssert.notNull(combiner, "Combiner must not be null");
             instance.combiner = Optional.of(combiner);
             return this;
@@ -129,7 +131,7 @@ public class HybridArgs {
          * @param postProcessingArgs the post-processing configuration
          * @return this builder
          */
-        public Builder postProcessing(PostProcessingArgs postProcessingArgs) {
+        public Builder<K, V> postProcessing(PostProcessingArgs<K, V> postProcessingArgs) {
             LettuceAssert.notNull(postProcessingArgs, "PostProcessingArgs must not be null");
             instance.postProcessingArgs = Optional.of(postProcessingArgs);
             return this;
@@ -145,7 +147,7 @@ public class HybridArgs {
          * @param value the parameter value
          * @return this builder
          */
-        public Builder param(String name, String value) {
+        public Builder<K, V> param(K name, V value) {
             LettuceAssert.notNull(name, "Parameter name must not be null");
             LettuceAssert.notNull(value, "Parameter value must not be null");
             instance.params.put(name, value);
@@ -163,7 +165,7 @@ public class HybridArgs {
          * @param value the binary parameter value (e.g., vector data)
          * @return this builder
          */
-        public Builder param(String name, byte[] value) {
+        public Builder<K, V> param(K name, byte[] value) {
             LettuceAssert.notNull(name, "Parameter name must not be null");
             LettuceAssert.notNull(value, "Parameter value must not be null");
             instance.params.put(name, value);
@@ -176,7 +178,7 @@ public class HybridArgs {
          * @param timeout the timeout duration (with millisecond resolution)
          * @return this builder
          */
-        public Builder timeout(Duration timeout) {
+        public Builder<K, V> timeout(Duration timeout) {
             LettuceAssert.notNull(timeout, "Timeout must not be null");
             instance.timeout = Optional.of(timeout);
             return this;
@@ -193,7 +195,8 @@ public class HybridArgs {
      *
      * @param args the {@link CommandArgs} to append to
      */
-    public void build(CommandArgs<?, ?> args) {
+    @SuppressWarnings("unchecked")
+    public void build(CommandArgs<K, V> args) {
         // Both SEARCH and VSIM must be configured (per PRD)
         LettuceAssert.notNull(searchArgs, "SEARCH clause is required - use search() or search(HybridSearchArgs)");
         LettuceAssert.notNull(vectorArgs, "VSIM clause is required - use vectorSearch() or vectorSearch(HybridVectorArgs)");
@@ -218,11 +221,11 @@ public class HybridArgs {
             args.add(CommandKeyword.PARAMS);
             args.add(params.size() * 2L);
             params.forEach((name, value) -> {
-                args.add(name);
+                args.addKey(name);
                 if (value instanceof byte[]) {
                     args.add((byte[]) value);
                 } else {
-                    args.add((String) value);
+                    args.addValue((V) value);
                 }
             });
         }

@@ -65,7 +65,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    Mono<String> ftCreate(String index, List<FieldArgs> fieldArgs);
+    Mono<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Create a new search index with the given name, custom configuration, and field definitions.
@@ -100,11 +100,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      * @see CreateArgs
      * @see FieldArgs
-     * @see #ftCreate(String, CreateArgs, List)
+     * @see #ftCreate(String, List)
      * @see #ftDropindex(String)
      */
     @Experimental
-    Mono<String> ftCreate(String index, CreateArgs arguments, List<FieldArgs> fieldArgs);
+    Mono<String> ftCreate(String index, CreateArgs<K> arguments, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Add an alias to a search index.
@@ -281,7 +281,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs);
+    Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Add new attributes to an existing search index.
@@ -316,7 +316,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    Mono<String> ftAlter(String index, List<FieldArgs> fieldArgs);
+    Mono<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Return a distinct set of values indexed in a Tag field.
@@ -370,10 +370,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>
      * @see #ftCreate(String, List)
      * @see #ftCreate(String, CreateArgs, List)
-     * @deprecated {@code FT.TAGVALS} has been deprecated by Redis. See
-     *             <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>.
      */
-    @Deprecated
     @Experimental
     Flux<V> ftTagvals(String index, String fieldName);
 
@@ -560,7 +557,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return the execution plan as a string
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.explain/">FT.EXPLAIN</a>
-     * @see #ftExplain(String, String)
+     * @see #ftExplain(String, String, ExplainArgs)
      * @see #ftSearch(String, String)
      */
     @Experimental
@@ -760,13 +757,13 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return the current size of the suggestion dictionary after adding the suggestion
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
-     * @see #ftSugadd(Object, String, double, SugAddArgs)
-     * @see #ftSugget(Object, String)
-     * @see #ftSugdel(Object, String)
-     * @see #ftSuglen(Object)
+     * @see #ftSugadd(K, V, double, SugAddArgs)
+     * @see #ftSugget(K, V)
+     * @see #ftSugdel(K, V)
+     * @see #ftSuglen(K)
      */
     @Experimental
-    Mono<Long> ftSugadd(K key, String suggestion, double score);
+    Mono<Long> ftSugadd(K key, V suggestion, double score);
 
     /**
      * Add a suggestion string to an auto-complete suggestion dictionary with additional options.
@@ -787,13 +784,13 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return the current size of the suggestion dictionary after adding the suggestion
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
-     * @see #ftSugadd(Object, String, double)
-     * @see #ftSugget(Object, String, SugGetArgs)
-     * @see #ftSugdel(Object, String)
-     * @see #ftSuglen(Object)
+     * @see #ftSugadd(K, V, double)
+     * @see #ftSugget(K, V, SugGetArgs)
+     * @see #ftSugdel(K, V)
+     * @see #ftSuglen(K)
      */
     @Experimental
-    Mono<Long> ftSugadd(K key, String suggestion, double score, SugAddArgs args);
+    Mono<Long> ftSugadd(K key, V suggestion, double score, SugAddArgs<K, V> args);
 
     /**
      * Delete a string from a suggestion dictionary.
@@ -812,12 +809,12 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return {@code true} if the string was found and deleted, {@code false} otherwise
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugdel/">FT.SUGDEL</a>
-     * @see #ftSugadd(Object, String, double)
-     * @see #ftSugget(Object, String)
-     * @see #ftSuglen(Object)
+     * @see #ftSugadd(K, V, double)
+     * @see #ftSugget(K, V)
+     * @see #ftSuglen(K)
      */
     @Experimental
-    Mono<Boolean> ftSugdel(K key, String suggestion);
+    Mono<Boolean> ftSugdel(K key, V suggestion);
 
     /**
      * Get completion suggestions for a prefix.
@@ -836,13 +833,13 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return a list of suggestions matching the prefix
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
-     * @see #ftSugget(Object, String, SugGetArgs)
-     * @see #ftSugadd(Object, String, double)
-     * @see #ftSugdel(Object, String)
-     * @see #ftSuglen(Object)
+     * @see #ftSugget(K, V, SugGetArgs)
+     * @see #ftSugadd(K, V, double)
+     * @see #ftSugdel(K, V)
+     * @see #ftSuglen(K)
      */
     @Experimental
-    Flux<Suggestion> ftSugget(K key, String prefix);
+    Flux<Suggestion<V>> ftSugget(K key, V prefix);
 
     /**
      * Get completion suggestions for a prefix with additional options.
@@ -862,13 +859,13 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return a list of suggestions matching the prefix, optionally with scores and payloads
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
-     * @see #ftSugget(Object, String)
-     * @see #ftSugadd(Object, String, double, SugAddArgs)
-     * @see #ftSugdel(Object, String)
-     * @see #ftSuglen(Object)
+     * @see #ftSugget(K, V)
+     * @see #ftSugadd(K, V, double, SugAddArgs)
+     * @see #ftSugdel(K, V)
+     * @see #ftSuglen(K)
      */
     @Experimental
-    Flux<Suggestion> ftSugget(K key, String prefix, SugGetArgs args);
+    Flux<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs<K, V> args);
 
     /**
      * Get the size of an auto-complete suggestion dictionary.
@@ -885,9 +882,9 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return the current size of the suggestion dictionary
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.suglen/">FT.SUGLEN</a>
-     * @see #ftSugadd(Object, String, double)
-     * @see #ftSugget(Object, String)
-     * @see #ftSugdel(Object, String)
+     * @see #ftSugadd(K, V, double)
+     * @see #ftSugget(K, V)
+     * @see #ftSugdel(K, V)
      */
     @Experimental
     Mono<Long> ftSuglen(K key);
@@ -1033,7 +1030,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args);
+    Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.
@@ -1131,7 +1128,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftCursorread(String, Cursor)
      */
     @Experimental
-    Mono<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K> args);
+    Mono<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K, V> args);
 
     /**
      * Read next results from an existing cursor and optionally override the batch size.
@@ -1154,7 +1151,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @param index the index name
      * @param cursor the cursor obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
      * @param count the number of results to read; overrides the {@code COUNT} from {@code FT.AGGREGATE}
-     * @return a {@link Mono} emitting the next batch of results; see {@link AggregationReply}
+     * @return the next batch of results; see {@link AggregationReply}
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-read/">FT.CURSOR READ</a>
      * @see <a href=
@@ -1224,7 +1221,7 @@ public interface RediSearchReactiveCommands<K, V> {
      *
      * @param index the index name, as a key
      * @param cursor the cursor obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
-     * @return a {@link Mono} emitting {@code "OK"} if the cursor was successfully deleted
+     * @return {@code "OK"} if the cursor was successfully deleted
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-del/">FT.CURSOR DEL</a>
      * @see <a href=
@@ -1249,6 +1246,6 @@ public interface RediSearchReactiveCommands<K, V> {
      * @since 7.2
      */
     @Experimental
-    Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs args);
+    Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args);
 
 }

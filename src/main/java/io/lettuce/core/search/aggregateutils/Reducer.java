@@ -44,6 +44,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * }
  * </pre>
  *
+ * @param <K> Key type.
  * @author Aleksandar Todorov
  * @since 7.5
  * @see Reducers
@@ -53,7 +54,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
  */
 @Experimental
-public abstract class Reducer {
+public abstract class Reducer<K> {
 
     private final String function;
 
@@ -104,7 +105,7 @@ public abstract class Reducer {
      * @return this reducer
      */
     @SuppressWarnings("unchecked")
-    public <T extends Reducer> T as(String alias) {
+    public <T extends Reducer<K>> T as(String alias) {
         LettuceAssert.notNull(alias, "Alias must not be null");
         this.alias = alias;
         return (T) this;

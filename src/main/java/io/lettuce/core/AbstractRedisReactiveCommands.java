@@ -1702,12 +1702,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<String> ftCreate(String index, CreateArgs options, List<FieldArgs> fieldArgs) {
+    public Mono<String> ftCreate(String index, CreateArgs<K> options, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftCreate(index, options, fieldArgs));
     }
 
     @Override
-    public Mono<String> ftCreate(String index, List<FieldArgs> fieldArgs) {
+    public Mono<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftCreate(index, null, fieldArgs));
     }
 
@@ -1727,12 +1727,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs) {
+    public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
     }
 
     @Override
-    @Deprecated
     public Flux<V> ftTagvals(String index, String fieldName) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftTagvals(index, fieldName));
     }
@@ -1793,27 +1792,27 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<Long> ftSugadd(K key, String string, double score) {
+    public Mono<Long> ftSugadd(K key, V string, double score) {
         return createMono(() -> searchCommandBuilder.ftSugadd(key, string, score));
     }
 
     @Override
-    public Mono<Long> ftSugadd(K key, String string, double score, SugAddArgs args) {
+    public Mono<Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
         return createMono(() -> searchCommandBuilder.ftSugadd(key, string, score, args));
     }
 
     @Override
-    public Mono<Boolean> ftSugdel(K key, String string) {
+    public Mono<Boolean> ftSugdel(K key, V string) {
         return createMono(() -> searchCommandBuilder.ftSugdel(key, string));
     }
 
     @Override
-    public Flux<Suggestion> ftSugget(K key, String prefix) {
+    public Flux<Suggestion<V>> ftSugget(K key, V prefix) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftSugget(key, prefix));
     }
 
     @Override
-    public Flux<Suggestion> ftSugget(K key, String prefix, SugGetArgs args) {
+    public Flux<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftSugget(key, prefix, args));
     }
 
@@ -1823,7 +1822,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<String> ftAlter(String index, List<FieldArgs> fieldArgs) {
+    public Mono<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftAlter(index, false, fieldArgs));
     }
 
@@ -1849,22 +1848,22 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args) {
+    public Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args) {
         return createMono(() -> searchCommandBuilder.ftSearch(index, query, args));
     }
 
     @Override
     public Mono<SearchReply<K, V>> ftSearch(String index, String query) {
-        return createMono(() -> searchCommandBuilder.ftSearch(index, query, SearchArgs.<K> builder().build()));
+        return createMono(() -> searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
     }
 
     @Override
-    public Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs args) {
+    public Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args) {
         return createMono(() -> searchCommandBuilder.ftHybrid(index, args));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K> args) {
+    public Mono<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K, V> args) {
         return createMono(() -> searchCommandBuilder.ftAggregate(index, query, args));
     }
 

@@ -84,7 +84,7 @@ class SearchReplyParserUnitTests {
 
     @Test
     void shouldParseResp2WithScores() {
-        SearchArgs<String> args = SearchArgs.<String> builder().withScores().build();
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().withScores().build();
         SearchReplyParser<String, String> parser = new SearchReplyParser<>(CODEC, args);
         ArrayComplexData data = new ArrayComplexData(4);
         data.storeObject(1L);
@@ -104,7 +104,7 @@ class SearchReplyParserUnitTests {
 
     @Test
     void shouldParseResp2WithNoContent() {
-        SearchArgs<String> args = SearchArgs.<String> builder().noContent().build();
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().noContent().build();
         SearchReplyParser<String, String> parser = new SearchReplyParser<>(CODEC, args);
         ArrayComplexData data = new ArrayComplexData(3);
         data.storeObject(2L);

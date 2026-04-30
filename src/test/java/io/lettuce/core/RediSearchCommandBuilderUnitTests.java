@@ -8,7 +8,6 @@ package io.lettuce.core;
  */
 import static io.lettuce.core.protocol.CommandType.FT_CURSOR;
 
-import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -90,17 +89,14 @@ class RediSearchCommandBuilderUnitTests {
 
     RediSearchCommandBuilder<String, String> builder = new RediSearchCommandBuilder<>(StringCodec.UTF8);
 
-    // Builder with ByteArrayCodec (V = byte[]) used to verify that String params are NOT encoded via the value codec
-    RediSearchCommandBuilder<byte[], byte[]> byteArrayBuilder = new RediSearchCommandBuilder<>(ByteArrayCodec.INSTANCE);
-
     // FT.CREATE idx ON HASH PREFIX 1 blog:post: SCHEMA title TEXT SORTABLE published_at NUMERIC SORTABLE category TAG SORTABLE
     @Test
     void shouldCorrectlyConstructFtCreateCommandScenario1() {
-        FieldArgs fieldArgs1 = TextFieldArgs.builder().name(FIELD1_NAME).sortable().build();
-        FieldArgs fieldArgs2 = NumericFieldArgs.builder().name(FIELD2_NAME).sortable().build();
-        FieldArgs fieldArgs3 = TagFieldArgs.builder().name(FIELD3_NAME).sortable().build();
+        FieldArgs<String> fieldArgs1 = TextFieldArgs.<String> builder().name(FIELD1_NAME).sortable().build();
+        FieldArgs<String> fieldArgs2 = NumericFieldArgs.<String> builder().name(FIELD2_NAME).sortable().build();
+        FieldArgs<String> fieldArgs3 = TagFieldArgs.<String> builder().name(FIELD3_NAME).sortable().build();
 
-        CreateArgs createArgs = CreateArgs.builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs,
                 Arrays.asList(fieldArgs1, fieldArgs2, fieldArgs3));
         ByteBuf buf = Unpooled.directBuffer();
@@ -131,10 +127,10 @@ class RediSearchCommandBuilderUnitTests {
     // FT.CREATE idx ON HASH PREFIX 1 blog:post: SCHEMA sku AS sku_text TEXT sku AS sku_tag TAG SORTABLE
     @Test
     void shouldCorrectlyConstructFtCreateCommandScenario2() {
-        FieldArgs fieldArgs1 = TextFieldArgs.builder().name(FIELD4_NAME).as(FIELD4_ALIAS1).build();
-        FieldArgs fieldArgs2 = TagFieldArgs.builder().name(FIELD4_NAME).as(FIELD4_ALIAS2).sortable().build();
+        FieldArgs<String> fieldArgs1 = TextFieldArgs.<String> builder().name(FIELD4_NAME).as(FIELD4_ALIAS1).build();
+        FieldArgs<String> fieldArgs2 = TagFieldArgs.<String> builder().name(FIELD4_NAME).as(FIELD4_ALIAS2).sortable().build();
 
-        CreateArgs createArgs = CreateArgs.builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs, Arrays.asList(fieldArgs1, fieldArgs2));
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -448,7 +444,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.SUGADD key string score INCR PAYLOAD payload
     @Test
     void shouldCorrectlyConstructFtSugaddCommandWithArgs() {
-        SugAddArgs args = SugAddArgs.Builder.incr().payload("test-payload");
+        SugAddArgs<String, String> args = SugAddArgs.Builder.<String, String> incr().payload("test-payload");
         Command<String, String, Long> command = builder.ftSugadd(MY_KEY, "suggestion", 1.0, args);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -483,7 +479,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.SUGGET key prefix
     @Test
     void shouldCorrectlyConstructFtSuggetCommand() {
-        Command<String, String, List<Suggestion>> command = builder.ftSugget(MY_KEY, "pre");
+        Command<String, String, List<Suggestion<String>>> command = builder.ftSugget(MY_KEY, "pre");
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -498,8 +494,8 @@ class RediSearchCommandBuilderUnitTests {
     // FT.SUGGET key prefix FUZZY WITHSCORES WITHPAYLOADS MAX 10
     @Test
     void shouldCorrectlyConstructFtSuggetCommandWithArgs() {
-        SugGetArgs args = SugGetArgs.Builder.fuzzy().withScores().withPayloads().max(10);
-        Command<String, String, List<Suggestion>> command = builder.ftSugget(MY_KEY, "pre", args);
+        SugGetArgs<String, String> args = SugGetArgs.Builder.<String, String> fuzzy().withScores().withPayloads().max(10);
+        Command<String, String, List<Suggestion<String>>> command = builder.ftSugget(MY_KEY, "pre", args);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -533,7 +529,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.ALTER idx SCHEMA ADD title TEXT
     @Test
     void shouldCorrectlyConstructFtAlterCommand() {
-        FieldArgs fieldArgs = TextFieldArgs.builder().name(FIELD1_NAME).build();
+        FieldArgs<String> fieldArgs = TextFieldArgs.<String> builder().name(FIELD1_NAME).build();
 
         Command<String, String, String> command = builder.ftAlter(MY_KEY, false, Collections.singletonList(fieldArgs));
         ByteBuf buf = Unpooled.directBuffer();
@@ -553,8 +549,8 @@ class RediSearchCommandBuilderUnitTests {
     // FT.ALTER idx SKIPINITIALSCAN SCHEMA ADD title TEXT published_at NUMERIC SORTABLE
     @Test
     void shouldCorrectlyConstructFtAlterCommandWithSkipInitialScan() {
-        FieldArgs fieldArgs1 = TextFieldArgs.builder().name(FIELD1_NAME).build();
-        FieldArgs fieldArgs2 = NumericFieldArgs.builder().name(FIELD2_NAME).sortable().build();
+        FieldArgs<String> fieldArgs1 = TextFieldArgs.<String> builder().name(FIELD1_NAME).build();
+        FieldArgs<String> fieldArgs2 = NumericFieldArgs.<String> builder().name(FIELD2_NAME).sortable().build();
 
         Command<String, String, String> command = builder.ftAlter(MY_KEY, true, Arrays.asList(fieldArgs1, fieldArgs2));
         ByteBuf buf = Unpooled.directBuffer();
@@ -578,7 +574,7 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructFtSearchCommandNoSearchArgs() {
         Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY,
-                SearchArgs.<String> builder().build());
+                SearchArgs.<String, String> builder().build());
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -594,7 +590,8 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructFtSearchCommandLimit() {
 
-        SearchArgs<String> searchArgs = SearchArgs.<String> builder().limit(10, 10).returnField("title").build();
+        SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder().limit(10, 10).returnField("title")
+                .build();
 
         Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
         ByteBuf buf = Unpooled.directBuffer();
@@ -618,8 +615,8 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructFtSearchCommandParams() {
 
-        SearchArgs<String> searchArgs = SearchArgs.<String> builder().param("poly", "POLYGON((2 2, 2 50, 50 50, 50 2, 2 2))")
-                .build();
+        SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder()
+                .param("poly", "POLYGON((2 2, 2 50, 50 50, 50 2, 2 2))").build();
 
         Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
         ByteBuf buf = Unpooled.directBuffer();
@@ -657,10 +654,11 @@ class RediSearchCommandBuilderUnitTests {
     void shouldMaintainPipelineOperationOrder() {
         // Test that pipeline operations (GROUPBY, SORTBY, APPLY, FILTER, LIMIT)
         // are output in the order specified by the user, not in a fixed order
-        AggregateArgs<String> aggregateArgs = AggregateArgs.<String> builder()//
+        AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
                 .apply("@price * @quantity", "total_value")// First operation
                 .filter("@total_value > 100")// Second operation
-                .groupBy(AggregateArgs.GroupBy.of("category").reduce(AggregateArgs.Reducer.count().as("count")))// Third
+                .groupBy(AggregateArgs.GroupBy.<String> of("category")
+                        .reduce(AggregateArgs.Reducer.<String> count().as("count")))// Third
                 // operation
                 .limit(0, 5)// Fourth operation
                 .sortBy(AggregateArgs.SortBy.of("count", AggregateArgs.SortDirection.DESC))// Fifth operation
@@ -688,10 +686,11 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructFtAggregateCommandWithArgs() {
-        AggregateArgs<String> aggregateArgs = AggregateArgs.<String> builder()//
+        AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
                 .verbatim()//
                 .load("title")//
-                .groupBy(AggregateArgs.GroupBy.of("category").reduce(AggregateArgs.Reducer.count().as("count")))//
+                .groupBy(AggregateArgs.GroupBy.<String> of("category")
+                        .reduce(AggregateArgs.Reducer.<String> count().as("count")))//
                 .sortBy(AggregateArgs.SortBy.of("count", AggregateArgs.SortDirection.DESC))//
                 .apply(AggregateArgs.Apply.of("@title", "title_upper"))//
                 .limit(0, 10)//
@@ -777,13 +776,15 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void returnFieldsWithAlias() {
-        SearchArgs<String> options = SearchArgs.<String> builder().returnField("as_is").returnField("$.field", "alias").build();
+        SearchArgs<String, String> options = SearchArgs.<String, String> builder().returnField("as_is")
+                .returnField("$.field", "alias").build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         options.build(args);
 
-        // buggy implementation returns "RETURN 2 key<as_is> key<$.field> key<alias> DIALECT "
-        assertThat("RETURN 4 key<as_is> key<$.field> AS key<alias> DIALECT 2").isEqualTo(args.toCommandString());
+        // The RETURN field name routes through the key codec (schema field reference).
+        // The AS alias is a logical identifier and is sent as a raw String, not codec-encoded.
+        assertThat("RETURN 4 key<as_is> key<$.field> AS alias DIALECT 2").isEqualTo(args.toCommandString());
     }
 
     @Test
@@ -791,17 +792,17 @@ class RediSearchCommandBuilderUnitTests {
 
         byte[] queryVector = floatArrayToByteArray(new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
 
-        HybridArgs hybridArgs = HybridArgs.builder()
-                .search(HybridSearchArgs.builder().query("@category:{electronics} smartphone camera")
+        HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
+                .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
                         .scorer(Scorers.tfidfDocNorm()).scoreAlias("text_score").build())
-                .vectorSearch(HybridVectorArgs
-                        .builder().field("@image_embedding").vector("$vec").method(HybridVectorArgs.Knn.of(20).efRuntime(150))
-                        .filter("@brand:{apple|samsung|google}").scoreAlias("vector_score").build())
-                .combine(Combiners.linear().alpha(0.7).beta(0.3).window(26))
-                .postProcessing(PostProcessingArgs.builder().load("@price", "@brand", "@category")
-                        .groupBy(GroupBy.of("@brand").reduce(Reducers.sum("@price").as("sum"))
-                                .reduce(Reducers.count().as("count")))
-                        .sortBy(SortBy.of(new SortProperty("@sum", SortDirection.ASC)))
+                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector("$vec")
+                        .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
+                        .scoreAlias("vector_score").build())
+                .combine(Combiners.<String> linear().alpha(0.7).beta(0.3).window(26))
+                .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
+                        .groupBy(GroupBy.<String> of("@brand").reduce(Reducers.<String> sum("@price").as("sum"))
+                                .reduce(Reducers.<String> count().as("count")))
+                        .sortBy(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC)))
                         .apply(Apply.of("@sum * 0.9", "discounted_price")).filter(Filter.of("@sum > 700"))
                         .limit(Limit.of(0, 20)).build())
                 .param("vec", queryVector).param("discount_rate", "0.9").build();
@@ -810,29 +811,30 @@ class RediSearchCommandBuilderUnitTests {
 
         String args = command.getArgs().toCommandString();
 
-        // fieldName and vectorData are plain string args, not key/value encoded
-        assertThat(args).contains("VSIM @image_embedding $vec");
+        // Vector data is passed via PARAMS, referenced as $vec in VSIM
+        assertThat(args).contains("VSIM key<@image_embedding> value<$vec>");
         assertThat(args).contains("PARAMS 4");
-        assertThat(args).contains("discount_rate 0.9");
+        assertThat(args).contains("key<discount_rate> value<0.9>");
 
         // Verify LOAD is emitted with count prefix (LOAD 3 @price @brand @category)
-        assertThat(args).contains("LOAD 3 @price @brand @category");
+        assertThat(args).contains("LOAD 3 key<@price> key<@brand> key<@category>");
     }
 
     @Test
     void postProcessingArgsWithLoadFieldsShouldEmitLoadWithCount() {
-        PostProcessingArgs postProcessingArgs = PostProcessingArgs.builder().load("@price", "@brand", "@category").build();
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
+                .load("@price", "@brand", "@category").build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         postProcessingArgs.build(args);
 
         // Should emit: LOAD 3 @price @brand @category
-        assertThat(args.toCommandString()).isEqualTo("LOAD 3 @price @brand @category");
+        assertThat(args.toCommandString()).isEqualTo("LOAD 3 key<@price> key<@brand> key<@category>");
     }
 
     @Test
     void postProcessingArgsWithLoadAllShouldEmitLoadStar() {
-        PostProcessingArgs postProcessingArgs = PostProcessingArgs.builder().loadAll().build();
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder().loadAll().build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         postProcessingArgs.build(args);
@@ -843,7 +845,8 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void postProcessingArgsWithoutLoadShouldNotEmitLoad() {
-        PostProcessingArgs postProcessingArgs = PostProcessingArgs.builder().filter(Filter.of("@price > 100")).build();
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
+                .filter(Filter.of("@price > 100")).build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         postProcessingArgs.build(args);
@@ -855,9 +858,9 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void postProcessingArgsWithOperationsOnlyShouldNotEmitLoad() {
-        PostProcessingArgs postProcessingArgs = PostProcessingArgs.builder()
-                .groupBy(GroupBy.of("@category").reduce(Reducers.count().as("count")))
-                .sortBy(SortBy.of(new SortProperty("@count", SortDirection.DESC))).limit(Limit.of(0, 10)).build();
+        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
+                .groupBy(GroupBy.<String> of("@category").reduce(Reducers.<String> count().as("count")))
+                .sortBy(SortBy.of(new SortProperty<>("@count", SortDirection.DESC))).limit(Limit.of(0, 10)).build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         postProcessingArgs.build(args);
@@ -873,97 +876,8 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void loadWithAsteriskShouldThrowException() {
         // Passing "*" to load() should throw an exception directing users to use loadAll() instead
-        assertThatThrownBy(() -> PostProcessingArgs.builder().load("*")).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("loadAll()");
-    }
-
-    // --- Tests verifying String params are NOT encoded through the value codec (use ByteArrayCodec where V=byte[]) ---
-
-    @Test
-    void ftSpellcheckQueryShouldBeEncodedAsPlainString() {
-        // Before the change, this would not compile with ByteArrayCodec (V query = byte[], not String)
-        Command<byte[], byte[], SpellCheckResult> command = byteArrayBuilder.ftSpellcheck("idx", "hello wrold");
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-        assertThat(buf.toString(StandardCharsets.UTF_8)).contains("$11\r\nhello wrold\r\n");
-    }
-
-    @Test
-    void ftExplainQueryShouldBeEncodedAsPlainString() {
-        Command<byte[], byte[], String> command = byteArrayBuilder.ftExplain("idx", "my query");
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-        assertThat(buf.toString(StandardCharsets.UTF_8)).contains("$8\r\nmy query\r\n");
-    }
-
-    @Test
-    void ftSearchQueryShouldBeEncodedAsPlainString() {
-        Command<byte[], byte[], SearchReply<byte[], byte[]>> command = byteArrayBuilder.ftSearch("idx", "my query",
-                SearchArgs.<byte[]> builder().build());
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-        assertThat(buf.toString(StandardCharsets.UTF_8)).contains("$8\r\nmy query\r\n");
-    }
-
-    @Test
-    void ftAggregateQueryShouldBeEncodedAsPlainString() {
-        Command<byte[], byte[], AggregationReply<byte[], byte[]>> command = byteArrayBuilder.ftAggregate("idx", "my query",
-                null);
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-        assertThat(buf.toString(StandardCharsets.UTF_8)).contains("$8\r\nmy query\r\n");
-    }
-
-    @Test
-    void ftDictaddTermsShouldBeEncodedAsPlainStrings() {
-        Command<byte[], byte[], Long> command = byteArrayBuilder.ftDictadd("mydict", "elasticsearch", "solr");
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-        String encoded = buf.toString(StandardCharsets.UTF_8);
-        assertThat(encoded).contains("$13\r\nelasticsearch\r\n");
-        assertThat(encoded).contains("$4\r\nsolr\r\n");
-    }
-
-    @Test
-    void ftDictdelTermsShouldBeEncodedAsPlainStrings() {
-        Command<byte[], byte[], Long> command = byteArrayBuilder.ftDictdel("mydict", "elasticsearch", "solr");
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-        String encoded = buf.toString(StandardCharsets.UTF_8);
-        assertThat(encoded).contains("$13\r\nelasticsearch\r\n");
-        assertThat(encoded).contains("$4\r\nsolr\r\n");
-    }
-
-    @Test
-    void ftDictdumpShouldReturnListOfString() {
-        // Return type is List<String>, not List<byte[]>
-        Command<byte[], byte[], List<String>> command = byteArrayBuilder.ftDictdump("mydict");
-        assertThat(command).isNotNull();
-    }
-
-    @Test
-    void ftListShouldReturnListOfString() {
-        // Return type is List<String>, not List<byte[]>
-        Command<byte[], byte[], List<String>> command = byteArrayBuilder.ftList();
-        assertThat(command).isNotNull();
-    }
-
-    @Test
-    void ftSyndumpShouldReturnMapOfStringToListOfString() {
-        // Return type is Map<String, List<String>>, not Map<byte[], List<byte[]>>
-        Command<byte[], byte[], Map<String, List<String>>> command = byteArrayBuilder.ftSyndump("idx");
-        assertThat(command).isNotNull();
-    }
-
-    @Test
-    void ftSynupdateShouldEncodeGroupIdAndTermsAsPlainStrings() {
-        Command<byte[], byte[], String> command = byteArrayBuilder.ftSynupdate("idx", "group1", "hello", "world");
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-        String encoded = buf.toString(StandardCharsets.UTF_8);
-        assertThat(encoded).contains("$6\r\ngroup1\r\n");
-        assertThat(encoded).contains("$5\r\nhello\r\n");
-        assertThat(encoded).contains("$5\r\nworld\r\n");
+        assertThatThrownBy(() -> PostProcessingArgs.<String, String> builder().load("*"))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("loadAll()");
     }
 
     private byte[] floatArrayToByteArray(float[] vector) {

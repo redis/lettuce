@@ -1661,12 +1661,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftCreate(String index, CreateArgs options, List<FieldArgs> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, CreateArgs<K> options, List<FieldArgs<K>> fieldArgs) {
         return dispatch(searchCommandBuilder.ftCreate(index, options, fieldArgs));
     }
 
     @Override
-    public RedisFuture<String> ftCreate(String index, List<FieldArgs> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs) {
         return dispatch(searchCommandBuilder.ftCreate(index, null, fieldArgs));
     }
 
@@ -1686,12 +1686,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs) {
+    public RedisFuture<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
         return dispatch(searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
     }
 
     @Override
-    @Deprecated
     public RedisFuture<List<V>> ftTagvals(String index, String fieldName) {
         return dispatch(searchCommandBuilder.ftTagvals(index, fieldName));
     }
@@ -1752,27 +1751,27 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Long> ftSugadd(K key, String string, double score) {
+    public RedisFuture<Long> ftSugadd(K key, V string, double score) {
         return dispatch(searchCommandBuilder.ftSugadd(key, string, score));
     }
 
     @Override
-    public RedisFuture<Long> ftSugadd(K key, String string, double score, SugAddArgs args) {
+    public RedisFuture<Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
         return dispatch(searchCommandBuilder.ftSugadd(key, string, score, args));
     }
 
     @Override
-    public RedisFuture<Boolean> ftSugdel(K key, String string) {
+    public RedisFuture<Boolean> ftSugdel(K key, V string) {
         return dispatch(searchCommandBuilder.ftSugdel(key, string));
     }
 
     @Override
-    public RedisFuture<List<Suggestion>> ftSugget(K key, String prefix) {
+    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix) {
         return dispatch(searchCommandBuilder.ftSugget(key, prefix));
     }
 
     @Override
-    public RedisFuture<List<Suggestion>> ftSugget(K key, String prefix, SugGetArgs args) {
+    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
         return dispatch(searchCommandBuilder.ftSugget(key, prefix, args));
     }
 
@@ -1782,7 +1781,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftAlter(String index, List<FieldArgs> fieldArgs) {
+    public RedisFuture<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs) {
         return dispatch(searchCommandBuilder.ftAlter(index, false, fieldArgs));
     }
 
@@ -1797,22 +1796,22 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args) {
+    public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args) {
         return dispatch(searchCommandBuilder.ftSearch(index, query, args));
     }
 
     @Override
     public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query) {
-        return dispatch(searchCommandBuilder.ftSearch(index, query, SearchArgs.<K> builder().build()));
+        return dispatch(searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
     }
 
     @Override
-    public RedisFuture<HybridReply<K, V>> ftHybrid(String index, HybridArgs args) {
+    public RedisFuture<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args) {
         return dispatch(searchCommandBuilder.ftHybrid(index, args));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K> args) {
+    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K, V> args) {
         return dispatch(searchCommandBuilder.ftAggregate(index, query, args));
     }
 
