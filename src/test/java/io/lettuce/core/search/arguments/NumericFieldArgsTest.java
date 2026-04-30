@@ -26,7 +26,7 @@ class NumericFieldArgsTest {
 
     @Test
     void testDefaultNumericFieldArgs() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("price").build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("price").build();
 
         assertThat(field.getName()).isEqualTo("price");
         assertThat(field.getFieldType()).isEqualTo("NUMERIC");
@@ -40,7 +40,7 @@ class NumericFieldArgsTest {
 
     @Test
     void testNumericFieldArgsWithAlias() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("product_price").as("price").build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("product_price").as("price").build();
 
         assertThat(field.getName()).isEqualTo("product_price");
         assertThat(field.getAs()).hasValue("price");
@@ -49,7 +49,7 @@ class NumericFieldArgsTest {
 
     @Test
     void testNumericFieldArgsWithSortable() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("rating").sortable().build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("rating").sortable().build();
 
         assertThat(field.getName()).isEqualTo("rating");
         assertThat(field.isSortable()).isTrue();
@@ -58,7 +58,8 @@ class NumericFieldArgsTest {
 
     @Test
     void testNumericFieldArgsWithSortableAndUnnormalized() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("score").sortable().unNormalizedForm().build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("score").sortable().unNormalizedForm()
+                .build();
 
         assertThat(field.getName()).isEqualTo("score");
         assertThat(field.isSortable()).isTrue();
@@ -67,7 +68,7 @@ class NumericFieldArgsTest {
 
     @Test
     void testNumericFieldArgsWithNoIndex() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("internal_id").noIndex().build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("internal_id").noIndex().build();
 
         assertThat(field.getName()).isEqualTo("internal_id");
         assertThat(field.isNoIndex()).isTrue();
@@ -75,7 +76,7 @@ class NumericFieldArgsTest {
 
     @Test
     void testNumericFieldArgsWithIndexEmpty() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("optional_value").indexEmpty().build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("optional_value").indexEmpty().build();
 
         assertThat(field.getName()).isEqualTo("optional_value");
         assertThat(field.isIndexEmpty()).isTrue();
@@ -83,7 +84,7 @@ class NumericFieldArgsTest {
 
     @Test
     void testNumericFieldArgsWithIndexMissing() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("nullable_field").indexMissing().build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("nullable_field").indexMissing().build();
 
         assertThat(field.getName()).isEqualTo("nullable_field");
         assertThat(field.isIndexMissing()).isTrue();
@@ -91,7 +92,7 @@ class NumericFieldArgsTest {
 
     @Test
     void testNumericFieldArgsWithAllOptions() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("comprehensive_numeric").as("num").sortable()
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("comprehensive_numeric").as("num").sortable()
                 .unNormalizedForm().noIndex().indexEmpty().indexMissing().build();
 
         assertThat(field.getName()).isEqualTo("comprehensive_numeric");
@@ -105,8 +106,8 @@ class NumericFieldArgsTest {
 
     @Test
     void testNumericFieldArgsBuild() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("amount").as("total_amount").sortable().unNormalizedForm()
-                .indexEmpty().indexMissing().build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("amount").as("total_amount").sortable()
+                .unNormalizedForm().indexEmpty().indexMissing().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -124,7 +125,7 @@ class NumericFieldArgsTest {
 
     @Test
     void testNumericFieldArgsMinimalBuild() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("simple_number").build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("simple_number").build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -142,7 +143,7 @@ class NumericFieldArgsTest {
 
     @Test
     void testNumericFieldArgsSortableWithoutUnnormalized() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("sortable_number").sortable().build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("sortable_number").sortable().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -154,7 +155,7 @@ class NumericFieldArgsTest {
 
     @Test
     void testNumericFieldArgsWithNoIndexOnly() {
-        NumericFieldArgs field = NumericFieldArgs.builder().name("no_index_number").noIndex().build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("no_index_number").noIndex().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -169,8 +170,8 @@ class NumericFieldArgsTest {
     @Test
     void testBuilderMethodChaining() {
         // Test that builder methods return the correct type for method chaining
-        NumericFieldArgs field = NumericFieldArgs.builder().name("chained_numeric").as("chained_alias").sortable()
-                .unNormalizedForm().noIndex().indexEmpty().indexMissing().build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("chained_numeric").as("chained_alias")
+                .sortable().unNormalizedForm().noIndex().indexEmpty().indexMissing().build();
 
         assertThat(field.getName()).isEqualTo("chained_numeric");
         assertThat(field.getAs()).hasValue("chained_alias");
@@ -184,7 +185,7 @@ class NumericFieldArgsTest {
     @Test
     void testNumericFieldArgsTypeSpecificBehavior() {
         // Test that numeric fields don't have type-specific arguments beyond common ones
-        NumericFieldArgs field = NumericFieldArgs.builder().name("numeric_field").build();
+        NumericFieldArgs<String> field = NumericFieldArgs.<String> builder().name("numeric_field").build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);

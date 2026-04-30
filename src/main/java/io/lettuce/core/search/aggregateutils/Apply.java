@@ -20,7 +20,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * <h3>Example Usage:</h3>
  *
  * <pre>
- * 
+ *
  * {
  *     &#64;code
  *     // Calculate total value from price and quantity

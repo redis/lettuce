@@ -64,7 +64,7 @@ public class SpellCheckArgs {
          * Creates new {@link SpellCheckArgs} setting {@literal TERMS INCLUDE}.
          *
          * @return new {@link SpellCheckArgs} with {@literal TERMS INCLUDE} set.
-         * @see SpellCheckArgs#termsInclude(String, String[])
+         * @see SpellCheckArgs#termsInclude(String, String...)
          */
         public static SpellCheckArgs termsInclude(String dictionary, String... terms) {
             return new SpellCheckArgs().termsInclude(dictionary, terms);
@@ -74,7 +74,7 @@ public class SpellCheckArgs {
          * Creates new {@link SpellCheckArgs} setting {@literal TERMS EXCLUDE}.
          *
          * @return new {@link SpellCheckArgs} with {@literal TERMS EXCLUDE} set.
-         * @see SpellCheckArgs#termsExclude(String, String[])
+         * @see SpellCheckArgs#termsExclude(String, String...)
          */
         public static SpellCheckArgs termsExclude(String dictionary, String... terms) {
             return new SpellCheckArgs().termsExclude(dictionary, terms);

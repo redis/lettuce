@@ -87,11 +87,12 @@ public class RediSearchClusterIntegrationTests {
     @Test
     void testFtSearchAcrossMultipleShards() {
         // Create field definitions
-        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
-        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
-        FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
+        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
+        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
 
-        CreateArgs createArgs = CreateArgs.builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH)
+                .build();
 
         // Create index on all cluster nodes
         assertThat(redis.ftCreate(PRODUCTS_INDEX, createArgs, Arrays.asList(nameField, categoryField, priceField)))
@@ -158,7 +159,7 @@ public class RediSearchClusterIntegrationTests {
         assertThat(searchResults.getResults()).hasSize(4);
 
         // Test 2: Search with price range across cluster
-        SearchArgs<String> priceSearchArgs = SearchArgs.<String> builder().build();
+        SearchArgs<String, String> priceSearchArgs = SearchArgs.<String, String> builder().build();
         SearchReply<String, String> priceResults = redis.ftSearch(PRODUCTS_INDEX, "@price:[100 500]", priceSearchArgs);
 
         // Should find keyboard, monitor, tablet (prices 149.99, 399.99, 299.99)
@@ -182,12 +183,13 @@ public class RediSearchClusterIntegrationTests {
     @Test
     void testFtCursorAcrossMultipleShards() {
         // Create field definitions for books
-        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
-        FieldArgs authorField = TagFieldArgs.builder().name("author").build();
-        FieldArgs yearField = NumericFieldArgs.builder().name("year").sortable().build();
-        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> authorField = TagFieldArgs.<String> builder().name("author").build();
+        FieldArgs<String> yearField = NumericFieldArgs.<String> builder().name("year").sortable().build();
+        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").sortable().build();
 
-        CreateArgs createArgs = CreateArgs.builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH)
+                .build();
 
         // Create index on cluster
         String createResult = redis.ftCreate(BOOKS_INDEX, createArgs,
@@ -216,8 +218,9 @@ public class RediSearchClusterIntegrationTests {
         }
 
         // Test aggregation with cursor - group by author and get average rating
-        AggregateArgs<String> aggregateArgs = AggregateArgs.<String> builder()
-                .groupBy(AggregateArgs.GroupBy.of("author").reduce(AggregateArgs.Reducer.avg("@rating").as("avg_rating")))
+        AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()
+                .groupBy(AggregateArgs.GroupBy.<String> of("author")
+                        .reduce(AggregateArgs.Reducer.<String> avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(2L)) // Small batch size to test cursor functionality
                 .build();
 

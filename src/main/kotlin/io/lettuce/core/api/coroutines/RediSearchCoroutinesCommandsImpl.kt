@@ -42,10 +42,10 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RediSearchReactiveCommands<K, V>) :
     RediSearchCoroutinesCommands<K, V> {
 
-    override suspend fun ftCreate(index: String, arguments: CreateArgs, fieldArgs: List<FieldArgs>): String? =
+    override suspend fun ftCreate(index: String, arguments: CreateArgs<K>, fieldArgs: List<FieldArgs<K>>): String? =
         ops.ftCreate(index, arguments, fieldArgs).awaitFirstOrNull()
 
-    override suspend fun ftCreate(index: String, fieldArgs: List<FieldArgs>): String? =
+    override suspend fun ftCreate(index: String, fieldArgs: List<FieldArgs<K>>): String? =
         ops.ftCreate(index, fieldArgs).awaitFirstOrNull()
 
     override suspend fun ftAliasadd(alias: String, index: String): String? =
@@ -57,14 +57,13 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftAliasdel(alias: String): String? =
         ops.ftAliasdel(alias).awaitFirstOrNull()
 
-    override suspend fun ftAlter(index: String, skipInitialScan: Boolean, fieldArgs: List<FieldArgs>): String? =
+    override suspend fun ftAlter(index: String, skipInitialScan: Boolean, fieldArgs: List<FieldArgs<K>>): String? =
         ops.ftAlter(index, skipInitialScan, fieldArgs).awaitFirstOrNull()
 
-     @Deprecated("FT.TAGVALS has been deprecated by Redis")
      override suspend fun ftTagvals(index: String, fieldName: String): List<V> =
          ops.ftTagvals(index, fieldName).asFlow().toList()
 
-    override suspend fun ftAlter(index: String, fieldArgs: List<FieldArgs>): String? =
+    override suspend fun ftAlter(index: String, fieldArgs: List<FieldArgs<K>>): String? =
         ops.ftAlter(index, fieldArgs).awaitFirstOrNull()
 
     override suspend fun ftDropindex(index: String, deleteDocuments: Boolean): String? =
@@ -76,10 +75,10 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftSearch(index: String, query: String): SearchReply<K, V>? =
         ops.ftSearch(index, query).awaitFirstOrNull()
 
-    override suspend fun ftSearch(index: String, query: String, args: SearchArgs<K>): SearchReply<K, V>? =
+    override suspend fun ftSearch(index: String, query: String, args: SearchArgs<K, V>): SearchReply<K, V>? =
         ops.ftSearch(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftAggregate(index: String, query: String, args: AggregateArgs<K>): AggregationReply<K, V>? =
+    override suspend fun ftAggregate(index: String, query: String, args: AggregateArgs<K, V>): AggregationReply<K, V>? =
         ops.ftAggregate(index, query, args).awaitFirstOrNull()
 
     override suspend fun ftAggregate(index: String, query: String): AggregationReply<K, V>? =
@@ -94,7 +93,7 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftCursordel(index: String, cursor: Cursor): String? =
         ops.ftCursordel(index, cursor).awaitFirstOrNull()
 
-    override suspend fun ftHybrid(index: String, args: HybridArgs): HybridReply<K, V>? =
+    override suspend fun ftHybrid(index: String, args: HybridArgs<K, V>): HybridReply<K, V>? =
         ops.ftHybrid(index, args).awaitFirstOrNull()
 
     override suspend fun ftDictadd(dict: String, vararg terms: String): Long? =
@@ -112,19 +111,19 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftSpellcheck(index: String, query: String, args: SpellCheckArgs): SpellCheckResult? =
         ops.ftSpellcheck(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftSugadd(key: K, suggestion: String, score: Double): Long? =
+    override suspend fun ftSugadd(key: K, suggestion: V, score: Double): Long? =
         ops.ftSugadd(key, suggestion, score).awaitFirstOrNull()
 
-    override suspend fun ftSugadd(key: K, suggestion: String, score: Double, args: SugAddArgs): Long? =
+    override suspend fun ftSugadd(key: K, suggestion: V, score: Double, args: SugAddArgs<K, V>): Long? =
         ops.ftSugadd(key, suggestion, score, args).awaitFirstOrNull()
 
-    override suspend fun ftSugdel(key: K, suggestion: String): Boolean? =
+    override suspend fun ftSugdel(key: K, suggestion: V): Boolean? =
         ops.ftSugdel(key, suggestion).awaitFirstOrNull()
 
-    override suspend fun ftSugget(key: K, prefix: String): List<Suggestion> =
+    override suspend fun ftSugget(key: K, prefix: V): List<Suggestion<V>> =
         ops.ftSugget(key, prefix).asFlow().toList()
 
-    override suspend fun ftSugget(key: K, prefix: String, args: SugGetArgs): List<Suggestion> =
+    override suspend fun ftSugget(key: K, prefix: V, args: SugGetArgs<K, V>): List<Suggestion<V>> =
         ops.ftSugget(key, prefix, args).asFlow().toList()
 
     override suspend fun ftSuglen(key: K): Long? =

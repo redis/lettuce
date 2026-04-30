@@ -59,7 +59,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    String ftCreate(String index, List<FieldArgs> fieldArgs);
+    String ftCreate(String index, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Create a new search index with the given name, custom configuration, and field definitions.
@@ -98,7 +98,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    String ftCreate(String index, CreateArgs arguments, List<FieldArgs> fieldArgs);
+    String ftCreate(String index, CreateArgs<K> arguments, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Add an alias to a search index.
@@ -275,7 +275,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    String ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs);
+    String ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Add new attributes to an existing search index.
@@ -310,7 +310,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    String ftAlter(String index, List<FieldArgs> fieldArgs);
+    String ftAlter(String index, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Return a distinct set of values indexed in a Tag field.
@@ -364,10 +364,7 @@ public interface RediSearchCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>
      * @see #ftCreate(String, List)
      * @see #ftCreate(String, CreateArgs, List)
-     * @deprecated {@code FT.TAGVALS} has been deprecated by Redis. See
-     *             <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>.
      */
-    @Deprecated
     @Experimental
     List<V> ftTagvals(String index, String fieldName);
 
@@ -621,7 +618,7 @@ public interface RediSearchCommands<K, V> {
      * @return a list of index names
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft._list/">FT._LIST</a>
-     * @see #ftCreate(String, CreateArgs, FieldArgs[])
+     * @see #ftCreate(String, CreateArgs, List)
      * @see #ftDropindex(String)
      */
     @Experimental
@@ -754,13 +751,13 @@ public interface RediSearchCommands<K, V> {
      * @return the current size of the suggestion dictionary after adding the suggestion
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
-     * @see #ftSugadd(Object, String, double, SugAddArgs)
-     * @see #ftSugget(Object, String)
-     * @see #ftSugdel(Object, String)
-     * @see #ftSuglen(Object)
+     * @see #ftSugadd(K, V, double, SugAddArgs)
+     * @see #ftSugget(K, V)
+     * @see #ftSugdel(K, V)
+     * @see #ftSuglen(K)
      */
     @Experimental
-    Long ftSugadd(K key, String suggestion, double score);
+    Long ftSugadd(K key, V suggestion, double score);
 
     /**
      * Add a suggestion string to an auto-complete suggestion dictionary with additional options.
@@ -781,13 +778,13 @@ public interface RediSearchCommands<K, V> {
      * @return the current size of the suggestion dictionary after adding the suggestion
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
-     * @see #ftSugadd(Object, String, double)
-     * @see #ftSugget(Object, String, SugGetArgs)
-     * @see #ftSugdel(Object, String)
-     * @see #ftSuglen(Object)
+     * @see #ftSugadd(K, V, double)
+     * @see #ftSugget(K, V, SugGetArgs)
+     * @see #ftSugdel(K, V)
+     * @see #ftSuglen(K)
      */
     @Experimental
-    Long ftSugadd(K key, String suggestion, double score, SugAddArgs args);
+    Long ftSugadd(K key, V suggestion, double score, SugAddArgs<K, V> args);
 
     /**
      * Delete a string from a suggestion dictionary.
@@ -806,12 +803,12 @@ public interface RediSearchCommands<K, V> {
      * @return {@code true} if the string was found and deleted, {@code false} otherwise
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugdel/">FT.SUGDEL</a>
-     * @see #ftSugadd(Object, String, double)
-     * @see #ftSugget(Object, String)
-     * @see #ftSuglen(Object)
+     * @see #ftSugadd(K, V, double)
+     * @see #ftSugget(K, V)
+     * @see #ftSuglen(K)
      */
     @Experimental
-    Boolean ftSugdel(K key, String suggestion);
+    Boolean ftSugdel(K key, V suggestion);
 
     /**
      * Get completion suggestions for a prefix.
@@ -830,13 +827,13 @@ public interface RediSearchCommands<K, V> {
      * @return a list of suggestions matching the prefix
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
-     * @see #ftSugget(Object, String, SugGetArgs)
-     * @see #ftSugadd(Object, String, double)
-     * @see #ftSugdel(Object, String)
-     * @see #ftSuglen(Object)
+     * @see #ftSugget(K, V, SugGetArgs)
+     * @see #ftSugadd(K, V, double)
+     * @see #ftSugdel(K, V)
+     * @see #ftSuglen(K)
      */
     @Experimental
-    List<Suggestion> ftSugget(K key, String prefix);
+    List<Suggestion<V>> ftSugget(K key, V prefix);
 
     /**
      * Get completion suggestions for a prefix with additional options.
@@ -856,13 +853,13 @@ public interface RediSearchCommands<K, V> {
      * @return a list of suggestions matching the prefix, optionally with scores and payloads
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
-     * @see #ftSugget(Object, String)
-     * @see #ftSugadd(Object, String, double, SugAddArgs)
-     * @see #ftSugdel(Object, String)
-     * @see #ftSuglen(Object)
+     * @see #ftSugget(K, V)
+     * @see #ftSugadd(K, V, double, SugAddArgs)
+     * @see #ftSugdel(K, V)
+     * @see #ftSuglen(K)
      */
     @Experimental
-    List<Suggestion> ftSugget(K key, String prefix, SugGetArgs args);
+    List<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs<K, V> args);
 
     /**
      * Get the size of an auto-complete suggestion dictionary.
@@ -879,9 +876,9 @@ public interface RediSearchCommands<K, V> {
      * @return the current size of the suggestion dictionary
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.suglen/">FT.SUGLEN</a>
-     * @see #ftSugadd(Object, String, double)
-     * @see #ftSugget(Object, String)
-     * @see #ftSugdel(Object, String)
+     * @see #ftSugadd(K, V, double)
+     * @see #ftSugget(K, V)
+     * @see #ftSugdel(K, V)
      */
     @Experimental
     Long ftSuglen(K key);
@@ -1027,7 +1024,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    SearchReply<K, V> ftSearch(String index, String query, SearchArgs<K> args);
+    SearchReply<K, V> ftSearch(String index, String query, SearchArgs<K, V> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.
@@ -1125,7 +1122,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftCursorread(String, Cursor)
      */
     @Experimental
-    AggregationReply<K, V> ftAggregate(String index, String query, AggregateArgs<K> args);
+    AggregationReply<K, V> ftAggregate(String index, String query, AggregateArgs<K, V> args);
 
     /**
      * Read next results from an existing cursor and optionally override the batch size.
@@ -1243,6 +1240,6 @@ public interface RediSearchCommands<K, V> {
      * @since 7.2
      */
     @Experimental
-    HybridReply<K, V> ftHybrid(String index, HybridArgs args);
+    HybridReply<K, V> ftHybrid(String index, HybridArgs<K, V> args);
 
 }

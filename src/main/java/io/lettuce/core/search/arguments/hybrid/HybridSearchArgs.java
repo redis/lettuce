@@ -87,9 +87,9 @@ public class HybridSearchArgs {
         }
 
         /**
-         * Set an alias for the text search score field (YIELD_SCORE_AS).
+         * Set an alias for the text search score field.
          *
-         * @param alias the label to assign to the combined fusion score
+         * @param alias the field name to use for the search score
          * @return this builder
          */
         public Builder scoreAlias(String alias) {

@@ -34,7 +34,7 @@ class AggregateArgsTest {
     void groupByFieldWithoutAtPrefixShouldAddPrefix() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
 
-        GroupBy.of("category").build(args);
+        GroupBy.<String> of("category").build(args);
 
         assertThat(args.toString()).contains("@category");
     }
@@ -43,7 +43,7 @@ class AggregateArgsTest {
     void groupByFieldWithAtPrefixShouldNotDoublePrefix() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
 
-        GroupBy.of("@category").build(args);
+        GroupBy.<String> of("@category").build(args);
 
         String output = args.toString();
         assertThat(output).contains("@category");
@@ -54,7 +54,7 @@ class AggregateArgsTest {
     void groupByMultipleFieldsMixedPrefixShouldNormalise() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
 
-        GroupBy.of("brand", "@price").build(args);
+        GroupBy.<String> of("brand", "@price").build(args);
 
         String output = args.toString();
         assertThat(output).contains("@brand");
@@ -67,8 +67,9 @@ class AggregateArgsTest {
     // -------------------------------------------------------------------------
 
     @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     void sortByFieldWithoutAtPrefixShouldAddPrefix() {
-        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
+        CommandArgs<String, Object> args = new CommandArgs(StringCodec.UTF8);
 
         SortBy.of("price", SortDirection.ASC).build(args);
 
@@ -76,8 +77,9 @@ class AggregateArgsTest {
     }
 
     @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     void sortByFieldWithAtPrefixShouldNotDoublePrefix() {
-        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
+        CommandArgs<String, Object> args = new CommandArgs(StringCodec.UTF8);
 
         SortBy.of("@price", SortDirection.DESC).build(args);
 
@@ -94,7 +96,7 @@ class AggregateArgsTest {
     void reducerAvgWithAtPrefixShouldWork() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
 
-        Reducer.avg("@price").as("avg_price").build(args);
+        Reducer.<String> avg("@price").as("avg_price").build(args);
 
         assertThat(args.toString()).contains("@price");
     }

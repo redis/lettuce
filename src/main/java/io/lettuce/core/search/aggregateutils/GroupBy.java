@@ -24,18 +24,19 @@ import io.lettuce.core.protocol.CommandKeyword;
  * <h3>Example Usage:</h3>
  *
  * <pre>
- * 
+ *
  * {
  *     &#64;code
  *     // Group by category and count items
- *     GroupBy groupBy = GroupBy.of("category").reduce(Reducers.count().as("item_count"));
+ *     GroupBy<String> groupBy = GroupBy.of("category").reduce(Reducers.count().as("item_count"));
  *
  *     // Group by multiple fields with multiple reducers
- *     GroupBy complexGroup = GroupBy.of("category", "brand").reduce(Reducers.count().as("count"))
+ *     GroupBy<String> complexGroup = GroupBy.of("category", "brand").reduce(Reducers.count().as("count"))
  *             .reduce(Reducers.avg("@price").as("avg_price"));
  * }
  * </pre>
  *
+ * @param <K> Key type.
  * @author Aleksandar Todorov
  * @since 7.5
  * @see Reducer
@@ -44,18 +45,18 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @see PostProcessingOperation
  */
 @Experimental
-public class GroupBy implements PostProcessingOperation {
+public class GroupBy<K> implements PostProcessingOperation {
 
-    private final List<String> properties;
+    private final List<K> properties;
 
-    private final List<Reducer> reducers;
+    private final List<Reducer<K>> reducers;
 
     /**
      * Creates a new GROUPBY operation.
      *
      * @param properties the properties to group by
      */
-    public GroupBy(List<String> properties) {
+    public GroupBy(List<K> properties) {
         this.properties = new ArrayList<>(properties);
         this.reducers = new ArrayList<>();
     }
@@ -64,11 +65,12 @@ public class GroupBy implements PostProcessingOperation {
      * Static factory method to create a GroupBy instance.
      *
      * @param properties the properties to group by
+     * @param <K> Key type
      * @return new GroupBy instance
      */
     @SafeVarargs
-    public static GroupBy of(String... properties) {
-        return new GroupBy(Arrays.asList(properties));
+    public static <K> GroupBy<K> of(K... properties) {
+        return new GroupBy<>(Arrays.asList(properties));
     }
 
     /**
@@ -77,7 +79,7 @@ public class GroupBy implements PostProcessingOperation {
      * @param reducer the reducer to add
      * @return this GroupBy instance
      */
-    public GroupBy reduce(Reducer reducer) {
+    public GroupBy<K> reduce(Reducer<K> reducer) {
         this.reducers.add(reducer);
         return this;
     }
@@ -86,16 +88,17 @@ public class GroupBy implements PostProcessingOperation {
     public void build(CommandArgs<?, ?> args) {
         args.add(CommandKeyword.GROUPBY);
         args.add(properties.size());
-        for (String property : properties) {
+        for (K property : properties) {
             // Add @ prefix if not already present
-            if (!property.startsWith("@")) {
-                args.add("@" + property);
+            String propertyStr = property.toString();
+            if (!propertyStr.startsWith("@")) {
+                args.add("@" + propertyStr);
             } else {
-                args.add(property);
+                args.add(propertyStr);
             }
         }
 
-        for (Reducer reducer : reducers) {
+        for (Reducer<K> reducer : reducers) {
             reducer.build(args);
         }
     }

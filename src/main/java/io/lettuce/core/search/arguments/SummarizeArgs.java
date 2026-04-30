@@ -18,14 +18,15 @@ import java.util.Optional;
 /**
  * Argument list builder for {@code SUMMARIZE} clause.
  *
- * @param <K> Key type
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @see <a href=
  *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#summarization">Summarization</a>
  * @since 6.8
  * @author Tihomir Mateev
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class SummarizeArgs<K> {
+public class SummarizeArgs<K, V> {
 
     private final List<K> fields = new ArrayList<>();
 
@@ -33,15 +34,15 @@ public class SummarizeArgs<K> {
 
     private Optional<Long> len = Optional.empty();
 
-    private Optional<String> separator = Optional.empty();
+    private Optional<V> separator = Optional.empty();
 
     /**
      * Used to build a new instance of the {@link SummarizeArgs}.
      *
-     * @param <K> the key type
      * @return a {@link SummarizeArgs.Builder} that provides the option to build up a new instance of the {@link SearchArgs}
+     * @param <K> the key type
      */
-    public static <K> SummarizeArgs.Builder<K> builder() {
+    public static <K, V> SummarizeArgs.Builder<K, V> builder() {
         return new SummarizeArgs.Builder<>();
     }
 
@@ -54,18 +55,18 @@ public class SummarizeArgs<K> {
      * @param <K> the key type
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      */
-    public static class Builder<K> {
+    public static class Builder<K, V> {
 
-        private final SummarizeArgs<K> summarizeArgs = new SummarizeArgs<>();
+        private final SummarizeArgs<K, V> summarizeArgs = new SummarizeArgs<>();
 
         /**
          * Add a field to summarize. Each field is summarized. If no FIELDS directive is passed, then all returned fields are
          * summarized.
          *
-         * @param field the field name
+         * @param field the field to summarize
          * @return the instance of the current {@link SummarizeArgs.Builder} for the purpose of method chaining
          */
-        public SummarizeArgs.Builder<K> field(K field) {
+        public SummarizeArgs.Builder<K, V> field(K field) {
             summarizeArgs.fields.add(field);
             return this;
         }
@@ -76,7 +77,7 @@ public class SummarizeArgs<K> {
          * @param frags the number of fragments to return
          * @return the instance of the current {@link SummarizeArgs.Builder} for the purpose of method chaining
          */
-        public SummarizeArgs.Builder<K> fragments(long frags) {
+        public SummarizeArgs.Builder<K, V> fragments(long frags) {
             summarizeArgs.frags = Optional.of(frags);
             return this;
         }
@@ -88,7 +89,8 @@ public class SummarizeArgs<K> {
          * @param len the length of the fragments
          * @return the instance of the current {@link SummarizeArgs.Builder} for the purpose of method chaining
          */
-        public SummarizeArgs.Builder<K> len(long len) {
+
+        public SummarizeArgs.Builder<K, V> len(long len) {
             summarizeArgs.len = Optional.of(len);
             return this;
         }
@@ -101,7 +103,7 @@ public class SummarizeArgs<K> {
          * @param separator the separator between fragments
          * @return the instance of the current {@link SummarizeArgs.Builder} for the purpose of method chaining
          */
-        public SummarizeArgs.Builder<K> separator(String separator) {
+        public SummarizeArgs.Builder<K, V> separator(V separator) {
             summarizeArgs.separator = Optional.of(separator);
             return this;
         }
@@ -111,7 +113,7 @@ public class SummarizeArgs<K> {
          *
          * @return the {@link SummarizeArgs}
          */
-        public SummarizeArgs<K> build() {
+        public SummarizeArgs<K, V> build() {
             return summarizeArgs;
         }
 
@@ -122,7 +124,7 @@ public class SummarizeArgs<K> {
      *
      * @param args the {@link CommandArgs} object
      */
-    public void build(CommandArgs<K, ?> args) {
+    public void build(CommandArgs<K, V> args) {
         args.add(CommandKeyword.SUMMARIZE);
 
         if (!fields.isEmpty()) {
@@ -143,7 +145,7 @@ public class SummarizeArgs<K> {
 
         separator.ifPresent(s -> {
             args.add(CommandKeyword.SEPARATOR);
-            args.add(s);
+            args.addValue(s);
         });
     }
 

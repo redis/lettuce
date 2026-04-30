@@ -26,7 +26,7 @@ class TextFieldArgsTest {
 
     @Test
     void testDefaultTextFieldArgs() {
-        TextFieldArgs field = TextFieldArgs.builder().name("title").build();
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("title").build();
 
         assertThat(field.getName()).isEqualTo("title");
         assertThat(field.getFieldType()).isEqualTo("TEXT");
@@ -38,35 +38,36 @@ class TextFieldArgsTest {
 
     @Test
     void testTextFieldArgsWithWeight() {
-        TextFieldArgs field = TextFieldArgs.builder().name("title").weight(2L).build();
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("title").weight(2L).build();
 
         assertThat(field.getWeight()).hasValue(2L);
     }
 
     @Test
     void testTextFieldArgsWithNoStem() {
-        TextFieldArgs field = TextFieldArgs.builder().name("title").noStem().build();
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("title").noStem().build();
 
         assertThat(field.isNoStem()).isTrue();
     }
 
     @Test
     void testTextFieldArgsWithPhonetic() {
-        TextFieldArgs field = TextFieldArgs.builder().name("title").phonetic(TextFieldArgs.PhoneticMatcher.ENGLISH).build();
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("title")
+                .phonetic(TextFieldArgs.PhoneticMatcher.ENGLISH).build();
 
         assertThat(field.getPhonetic()).hasValue(TextFieldArgs.PhoneticMatcher.ENGLISH);
     }
 
     @Test
     void testTextFieldArgsWithSuffixTrie() {
-        TextFieldArgs field = TextFieldArgs.builder().name("title").withSuffixTrie().build();
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("title").withSuffixTrie().build();
 
         assertThat(field.isWithSuffixTrie()).isTrue();
     }
 
     @Test
     void testTextFieldArgsWithAllOptions() {
-        TextFieldArgs field = TextFieldArgs.builder().name("content").as("text_content").weight(2L).noStem()
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("content").as("text_content").weight(2L).noStem()
                 .phonetic(TextFieldArgs.PhoneticMatcher.FRENCH).withSuffixTrie().sortable().build();
 
         assertThat(field.getName()).isEqualTo("content");
@@ -88,7 +89,7 @@ class TextFieldArgsTest {
 
     @Test
     void testTextFieldArgsBuild() {
-        TextFieldArgs field = TextFieldArgs.builder().name("description").as("desc").weight(3L).noStem()
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("description").as("desc").weight(3L).noStem()
                 .phonetic(TextFieldArgs.PhoneticMatcher.SPANISH).withSuffixTrie().sortable().unNormalizedForm().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
@@ -111,7 +112,7 @@ class TextFieldArgsTest {
 
     @Test
     void testTextFieldArgsMinimalBuild() {
-        TextFieldArgs field = TextFieldArgs.builder().name("simple_text").build();
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("simple_text").build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -128,7 +129,7 @@ class TextFieldArgsTest {
 
     @Test
     void testTextFieldArgsWithWeightOnly() {
-        TextFieldArgs field = TextFieldArgs.builder().name("weighted_field").weight(1L).build();
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("weighted_field").weight(1L).build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -143,8 +144,8 @@ class TextFieldArgsTest {
 
     @Test
     void testTextFieldArgsWithPhoneticOnly() {
-        TextFieldArgs field = TextFieldArgs.builder().name("phonetic_field").phonetic(TextFieldArgs.PhoneticMatcher.PORTUGUESE)
-                .build();
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("phonetic_field")
+                .phonetic(TextFieldArgs.PhoneticMatcher.PORTUGUESE).build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -160,7 +161,7 @@ class TextFieldArgsTest {
     @Test
     void testBuilderMethodChaining() {
         // Test that builder methods return the correct type for method chaining
-        TextFieldArgs field = TextFieldArgs.builder().name("chained_field").weight(2L).noStem()
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("chained_field").weight(2L).noStem()
                 .phonetic(TextFieldArgs.PhoneticMatcher.ENGLISH).withSuffixTrie().sortable().as("alias").build();
 
         assertThat(field.getName()).isEqualTo("chained_field");
@@ -175,7 +176,8 @@ class TextFieldArgsTest {
     @Test
     void testTextFieldArgsInheritedMethods() {
         // Test that inherited methods from FieldArgs work correctly
-        TextFieldArgs field = TextFieldArgs.builder().name("inherited_field").noIndex().indexEmpty().indexMissing().build();
+        TextFieldArgs<String> field = TextFieldArgs.<String> builder().name("inherited_field").noIndex().indexEmpty()
+                .indexMissing().build();
 
         assertThat(field.isNoIndex()).isTrue();
         assertThat(field.isIndexEmpty()).isTrue();

@@ -15,14 +15,16 @@ import io.lettuce.core.protocol.CommandArgs;
  * FT.SUGADD command adds a suggestion string to an auto-complete suggestion dictionary with a specified score.
  * </p>
  *
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  */
-public class SugAddArgs {
+public class SugAddArgs<K, V> {
 
     private boolean incr;
 
-    private String payload;
+    private V payload;
 
     /**
      * Builder entry points for {@link SugAddArgs}.
@@ -41,8 +43,8 @@ public class SugAddArgs {
          * @return new {@link SugAddArgs} with {@literal INCR} set.
          * @see SugAddArgs#incr()
          */
-        public static SugAddArgs incr() {
-            return new SugAddArgs().incr();
+        public static <K, V> SugAddArgs<K, V> incr() {
+            return new SugAddArgs<K, V>().incr();
         }
 
         /**
@@ -50,12 +52,10 @@ public class SugAddArgs {
          *
          * @param payload the payload to save with the suggestion.
          * @return new {@link SugAddArgs} with {@literal PAYLOAD} set.
-         * @see SugAddArgs#payload(String)
-         * @deprecated The {@code PAYLOAD} argument was deprecated in Redis Search 2.0.0.
+         * @see SugAddArgs#payload(Object)
          */
-        @Deprecated
-        public static SugAddArgs payload(String payload) {
-            return new SugAddArgs().payload(payload);
+        public static <K, V> SugAddArgs<K, V> payload(V payload) {
+            return new SugAddArgs<K, V>().payload(payload);
         }
 
     }
@@ -66,7 +66,7 @@ public class SugAddArgs {
      *
      * @return {@code this} {@link SugAddArgs}.
      */
-    public SugAddArgs incr() {
+    public SugAddArgs<K, V> incr() {
         this.incr = true;
         return this;
     }
@@ -76,10 +76,8 @@ public class SugAddArgs {
      *
      * @param payload the payload to save with the suggestion.
      * @return {@code this} {@link SugAddArgs}.
-     * @deprecated The {@code PAYLOAD} argument was deprecated in Redis Search 2.0.0.
      */
-    @Deprecated
-    public SugAddArgs payload(String payload) {
+    public SugAddArgs<K, V> payload(V payload) {
         this.payload = payload;
         return this;
     }
@@ -89,13 +87,13 @@ public class SugAddArgs {
      *
      * @param args the command arguments to append to.
      */
-    public void build(CommandArgs<?, ?> args) {
+    public void build(CommandArgs<K, V> args) {
         if (incr) {
             args.add("INCR");
         }
 
         if (payload != null) {
-            args.add("PAYLOAD").add(payload);
+            args.add("PAYLOAD").addValue(payload);
         }
     }
 

@@ -150,10 +150,10 @@ public class SearchReply<K, V> {
     /**
      * Add a new warning to the list of warnings
      *
-     * @param warning the warning to add
+     * @param v the warning to add
      */
-    void addWarning(String warning) {
-        this.warnings.add(warning);
+    void addWarning(String v) {
+        this.warnings.add(v);
     }
 
     /**
