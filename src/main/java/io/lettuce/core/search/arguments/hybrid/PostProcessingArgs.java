@@ -41,13 +41,15 @@ import java.util.List;
  * 
  * {
  *     &#64;code
- *     PostProcessingArgs args = PostProcessingArgs.builder().load("@price", "@category")
+ *     PostProcessingArgs<String, String> args = PostProcessingArgs.<String, String> builder().load("@price", "@category")
  *             .groupBy(GroupBy.of("@category").reduce(Reducers.count().as("total")))
  *             .apply(Apply.of("@price * 0.9", "discounted_price")).sortBy(SortBy.of("@discounted_price", SortDirection.DESC))
  *             .filter(Filter.of("@discounted_price > 100")).limit(Limit.of(0, 10)).build();
  * }
  * </pre>
  *
+ * @param <K> Key type.
+ * @param <V> Value type.
  * @author Aleksandar Todorov
  * @since 7.2
  * @see GroupBy
@@ -57,9 +59,9 @@ import java.util.List;
  * @see Limit
  */
 @Experimental
-public class PostProcessingArgs {
+public class PostProcessingArgs<K, V> {
 
-    private final List<String> loadFields = new ArrayList<>();
+    private final List<K> loadFields = new ArrayList<>();
 
     private boolean loadAll = false;
 
@@ -81,16 +83,19 @@ public class PostProcessingArgs {
     /**
      * @return a new {@link Builder} for {@link PostProcessingArgs}.
      */
-    public static Builder builder() {
-        return new Builder();
+    public static <K, V> Builder<K, V> builder() {
+        return new Builder<>();
     }
 
     /**
      * Builder for {@link PostProcessingArgs}.
+     *
+     * @param <K> Key type.
+     * @param <V> Value type.
      */
-    public static class Builder {
+    public static class Builder<K, V> {
 
-        private final PostProcessingArgs instance = new PostProcessingArgs();
+        private final PostProcessingArgs<K, V> instance = new PostProcessingArgs<>();
 
         /**
          * Request loading of document attributes.
@@ -104,9 +109,9 @@ public class PostProcessingArgs {
          * @throws IllegalArgumentException if {@code "*"} is passed as a field name
          */
         @SafeVarargs
-        public final Builder load(String... fields) {
+        public final Builder<K, V> load(K... fields) {
             LettuceAssert.notNull(fields, "Fields must not be null");
-            for (String field : fields) {
+            for (K field : fields) {
                 LettuceAssert.notNull(field, "Field must not be null");
                 if ("*".equals(field)) {
                     throw new IllegalArgumentException("Use loadAll() instead of load(\"*\") to load all document attributes");
@@ -129,7 +134,7 @@ public class PostProcessingArgs {
          * @return this builder
          * @since Redis OSS 8.6
          */
-        public Builder loadAll() {
+        public Builder<K, V> loadAll() {
             instance.loadAll = true;
             return this;
         }
@@ -145,7 +150,7 @@ public class PostProcessingArgs {
          * @return this builder
          * @throws IllegalStateException if a GROUPBY operation has already been added
          */
-        public Builder groupBy(GroupBy groupBy) {
+        public Builder<K, V> groupBy(GroupBy<K> groupBy) {
             LettuceAssert.notNull(groupBy, "GroupBy must not be null");
             if (instance.hasGroupBy) {
                 throw new IllegalStateException("GROUPBY operation has already been added. Only one GROUPBY is allowed.");
@@ -165,7 +170,7 @@ public class PostProcessingArgs {
          * @return this builder
          * @throws IllegalStateException if a SORTBY operation has already been added
          */
-        public Builder sortBy(SortBy sortBy) {
+        public Builder<K, V> sortBy(SortBy<K> sortBy) {
             LettuceAssert.notNull(sortBy, "SortBy must not be null");
             if (instance.hasSortBy) {
                 throw new IllegalStateException("SORTBY operation has already been added. Only one SORTBY is allowed.");
@@ -185,7 +190,7 @@ public class PostProcessingArgs {
          * @return this builder
          * @throws IllegalStateException if a LIMIT operation has already been added
          */
-        public Builder limit(Limit limit) {
+        public Builder<K, V> limit(Limit limit) {
             LettuceAssert.notNull(limit, "Limit must not be null");
             if (instance.hasLimit) {
                 throw new IllegalStateException("LIMIT operation has already been added. Only one LIMIT is allowed.");
@@ -204,7 +209,7 @@ public class PostProcessingArgs {
          * @param apply the APPLY operation
          * @return this builder
          */
-        public Builder apply(Apply apply) {
+        public Builder<K, V> apply(Apply apply) {
             LettuceAssert.notNull(apply, "Apply must not be null");
             instance.postProcessingOperations.add(apply);
             return this;
@@ -220,7 +225,7 @@ public class PostProcessingArgs {
          * @return this builder
          * @throws IllegalStateException if a FILTER operation has already been added
          */
-        public Builder filter(Filter filter) {
+        public Builder<K, V> filter(Filter filter) {
             LettuceAssert.notNull(filter, "Filter must not be null");
             if (instance.hasFilter) {
                 throw new IllegalStateException("FILTER operation has already been added. Only one FILTER is allowed.");
@@ -235,7 +240,7 @@ public class PostProcessingArgs {
          *
          * @return the built {@link PostProcessingArgs}
          */
-        public PostProcessingArgs build() {
+        public PostProcessingArgs<K, V> build() {
             return instance;
         }
 
@@ -249,7 +254,7 @@ public class PostProcessingArgs {
      *
      * @param args the {@link CommandArgs} to append to
      */
-    public void build(CommandArgs<?, ?> args) {
+    public void build(CommandArgs<K, V> args) {
         // LOAD clause - only emit if loadAll or loadFields is specified
         if (loadAll) {
             // LOAD * (no count prefix for wildcard)
@@ -259,7 +264,7 @@ public class PostProcessingArgs {
             // LOAD count field [field ...]
             args.add(CommandKeyword.LOAD);
             args.add(loadFields.size());
-            loadFields.forEach(args::add);
+            loadFields.forEach(args::addKey);
         }
         // No LOAD emitted if neither loadAll nor loadFields specified
 
