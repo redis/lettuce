@@ -15,23 +15,24 @@ import java.util.Objects;
  * with WITHSCORES and/or WITHPAYLOADS options.
  * </p>
  *
+ * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  */
-public class Suggestion {
+public class Suggestion<V> {
 
-    private final String value;
+    private final V value;
 
     private Double score;
 
-    private String payload;
+    private V payload;
 
     /**
      * Create a new suggestion with only the value.
      *
      * @param value the suggestion string
      */
-    public Suggestion(String value) {
+    public Suggestion(V value) {
         this.value = value;
     }
 
@@ -39,7 +40,7 @@ public class Suggestion {
         this.score = score;
     }
 
-    void setPayload(String payload) {
+    void setPayload(V payload) {
         this.payload = payload;
     }
 
@@ -48,7 +49,7 @@ public class Suggestion {
      *
      * @return the suggestion value
      */
-    public String getValue() {
+    public V getValue() {
         return value;
     }
 
@@ -66,7 +67,7 @@ public class Suggestion {
      *
      * @return the suggestion payload, or {@code null} if not available
      */
-    public String getPayload() {
+    public V getPayload() {
         return payload;
     }
 
@@ -94,7 +95,7 @@ public class Suggestion {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        Suggestion that = (Suggestion) o;
+        Suggestion<?> that = (Suggestion<?>) o;
         return Objects.equals(value, that.value) && Objects.equals(score, that.score) && Objects.equals(payload, that.payload);
     }
 

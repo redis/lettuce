@@ -19,16 +19,17 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * This class contains common options shared by all field types. Specific field types should extend this class and add their
  * type-specific options.
  *
+ * @param <K> Key type
  * @see <a href= "https://redis.io/docs/latest/develop/interact/search-and-query/basic-constructs/field-and-type-options/">Field
  *      and type options</a>
  * @since 6.8
  * @author Tihomir Mateev
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public abstract class FieldArgs {
+public abstract class FieldArgs<K> {
 
     // Common field properties
-    protected String name;
+    protected K name;
 
     protected Optional<String> as = Optional.empty();
 
@@ -54,7 +55,7 @@ public abstract class FieldArgs {
      *
      * @return the field name
      */
-    public String getName() {
+    public K getName() {
         return name;
     }
 
@@ -117,8 +118,8 @@ public abstract class FieldArgs {
      *
      * @param args the command arguments to modify
      */
-    public final void build(CommandArgs<?, ?> args) {
-        args.add(name);
+    public final void build(CommandArgs<K, ?> args) {
+        args.addKey(name);
         as.ifPresent(a -> args.add(AS).add(a));
         args.add(getFieldType());
 
@@ -148,15 +149,16 @@ public abstract class FieldArgs {
      *
      * @param args the command arguments to modify
      */
-    protected abstract void buildTypeSpecificArgs(CommandArgs<?, ?> args);
+    protected abstract void buildTypeSpecificArgs(CommandArgs<K, ?> args);
 
     /**
      * Base builder for field arguments.
      *
+     * @param <K> Key type
      * @param <T> The concrete field args type
      * @param <B> The concrete builder type
      */
-    public abstract static class Builder<T extends FieldArgs, B extends Builder<T, B>> {
+    public abstract static class Builder<K, T extends FieldArgs<K>, B extends Builder<K, T, B>> {
 
         protected final T instance;
 
@@ -185,7 +187,7 @@ public abstract class FieldArgs {
          * @param name the name of the field
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public B name(String name) {
+        public B name(K name) {
             instance.name = name;
             return self();
         }
