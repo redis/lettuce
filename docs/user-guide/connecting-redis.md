@@ -255,8 +255,8 @@ public class MyStreamingRedisCredentialsProvider implements RedisCredentialsProv
     }
 
     @Override
-    public Mono<RedisCredentials> resolveCredentials() {
-        return credentialsSink.asFlux().next();
+    public CompletionStage<RedisCredentials> resolveCredentials() {
+        return credentialsSink.asFlux().next().toFuture();
     }
     
     @Override
@@ -356,9 +356,8 @@ You can test the credentials provider by obtaining a token.
 
 ```java
   // Test Entra ID credentials provider can resolve credentials
-  credentialsSP.resolveCredentials()
-      .doOnNext(c-> System.out.println(c.getUsername()))
-      .block();
+  RedisCredentials c = credentialsSP.resolveCredentials().toCompletableFuture().join();
+  System.out.println(c.getUsername());
 ```
 
 ### Step 3 - Enable automatic re-authentication

@@ -20,7 +20,8 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.WithPassword;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
-import reactor.core.publisher.Mono;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Integration tests for Redis Sentinel using ACL authentication.
@@ -54,8 +55,8 @@ public class SentinelAclIntegrationTests extends TestSupport {
 
         // sentinel node auth
         for (RedisURI sentinel : sentinelWithAcl.getSentinels()) {
-            sentinel.setCredentialsProvider(
-                    () -> Mono.just(RedisCredentials.just(TestSettings.aclUsername(), TestSettings.aclPassword())));
+            sentinel.setCredentialsProvider(() -> CompletableFuture
+                    .completedFuture(RedisCredentials.just(TestSettings.aclUsername(), TestSettings.aclPassword())));
         }
     }
 

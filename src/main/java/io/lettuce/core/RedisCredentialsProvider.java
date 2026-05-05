@@ -1,9 +1,11 @@
 package io.lettuce.core;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -25,9 +27,9 @@ public interface RedisCredentialsProvider {
      * might load credentials from an existing key management system, or load new credentials when credentials are rotated. If
      * an error occurs during the loading of credentials or credentials could not be found, a runtime exception will be raised.
      *
-     * @return a {@link Mono} emitting {@link RedisCredentials} that can be used to authorize a Redis connection.
+     * @return a {@link CompletionStage} emitting {@link RedisCredentials} that can be used to authorize a Redis connection.
      */
-    Mono<RedisCredentials> resolveCredentials();
+    CompletionStage<RedisCredentials> resolveCredentials();
 
     /**
      * Creates a new {@link RedisCredentialsProvider} from a given {@link Supplier}.
@@ -39,7 +41,13 @@ public interface RedisCredentialsProvider {
 
         LettuceAssert.notNull(supplier, "Supplier must not be null");
 
-        return () -> Mono.fromSupplier(supplier);
+        return () -> {
+            try {
+                return CompletableFuture.completedFuture(supplier.get());
+            } catch (Throwable t) {
+                return Futures.failed(t);
+            }
+        };
     }
 
     /**
@@ -78,8 +86,12 @@ public interface RedisCredentialsProvider {
     interface ImmediateRedisCredentialsProvider extends RedisCredentialsProvider {
 
         @Override
-        default Mono<RedisCredentials> resolveCredentials() {
-            return Mono.just(resolveCredentialsNow());
+        default CompletionStage<RedisCredentials> resolveCredentials() {
+            try {
+                return CompletableFuture.completedFuture(resolveCredentialsNow());
+            } catch (Throwable t) {
+                return Futures.failed(t);
+            }
         }
 
         /**
