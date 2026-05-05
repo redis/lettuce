@@ -973,7 +973,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // compatibility with versions before 7.0 - in previous versions of the Lettuce driver there was an option to
                 // have a username and password pair as part of the RedisURI; in these cases when we were masking credentials we
                 // would get asterix for each character of the password.
-                RedisCredentials creds = Futures.unwrapExceptions(credentialsProvider.resolveCredentials().toCompletableFuture()).join();
+                RedisCredentials creds = Futures
+                        .unwrapExceptions(credentialsProvider.resolveCredentials().toCompletableFuture()).join();
                 if (creds != null) {
                     String credentials = "";
 
