@@ -341,10 +341,29 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     @Test
     void randomKey() {
 
-        writeKeysToTwoNodes();
+        // RedisAdvancedClusterReactiveCommands#randomkey() queries one randomly picked partition. Seed every master
+        // partition so any random pick (or its replica) lands on a non-empty keyspace.
+        Set<String> writtenKeys = new HashSet<>();
+        for (RedisClusterNode partition : clusterClient.getPartitions()) {
+            if (partition.getSlots().isEmpty()) {
+                continue; // replicas have no owned slots
+            }
+            String partitionKey = keyForSlot(partition.getSlots().get(0));
+            syncCommands.set(partitionKey, value);
+            writtenKeys.add(partitionKey);
+        }
 
-        StepVerifier.create(commands.randomkey())
-                .consumeNextWith(actual -> assertThat(actual).isIn(KEY_ON_NODE_1, KEY_ON_NODE_2)).verifyComplete();
+        StepVerifier.create(commands.randomkey()).consumeNextWith(actual -> assertThat(actual).isIn(writtenKeys))
+                .verifyComplete();
+    }
+
+    private static String keyForSlot(int targetSlot) {
+        for (int j = 0;; j++) {
+            String k = "rk:{rk-" + j + "}";
+            if (SlotHash.getSlot(k) == targetSlot) {
+                return k;
+            }
+        }
     }
 
     @Test
