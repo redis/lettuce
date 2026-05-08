@@ -6,6 +6,7 @@
  */
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.test.settings.TestSettings.host;
 import static io.lettuce.test.settings.TestSettings.mtlsClusterPort;
 import static io.lettuce.test.settings.TlsSettings.ClientCertificate;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Path;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.AbstractMtlsClientAuthIntegrationTests;
@@ -39,6 +41,7 @@ import io.lettuce.test.condition.RedisConditions;
  *
  * @author Aleksandar Todorov
  */
+@Tag(INTEGRATION_TEST)
 class ClusterMtlsClientAuthIntegrationTests extends AbstractMtlsClientAuthIntegrationTests {
 
     private RedisClusterClient redisClusterClient;

@@ -6,6 +6,9 @@
  */
 package io.lettuce.core;
 
+import org.junit.jupiter.api.Tag;
+
+import io.lettuce.TestTags;
 import io.lettuce.core.protocol.ProtocolVersion;
 
 /**
@@ -16,6 +19,7 @@ import io.lettuce.core.protocol.ProtocolVersion;
  *
  * @author Aleksandar Todorov
  */
+@Tag(TestTags.INTEGRATION_TEST)
 class MtlsClientAuthResp2IntegrationTests extends MtlsClientAuthIntegrationTests {
 
     @Override

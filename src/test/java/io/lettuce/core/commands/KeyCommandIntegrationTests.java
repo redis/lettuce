@@ -33,7 +33,6 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -52,7 +51,6 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
 import io.lettuce.test.condition.EnabledOnCommand;
-import io.lettuce.test.condition.RedisConditions;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisKeyCommands}.
@@ -307,11 +305,14 @@ public class KeyCommandIntegrationTests extends TestSupport {
 
     @Test
     void pexpireat() {
-        Date expiration = new Date(System.currentTimeMillis() + 5000);
+        long expiryMillis = System.currentTimeMillis() + 5000;
+        Date expiration = new Date(expiryMillis);
         assertThat(redis.pexpireat(key, expiration)).isFalse();
         redis.set(key, value);
         assertThat(redis.pexpireat(key, expiration)).isTrue();
-        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(5000);
+        long clockSkewToleranceMs = 50;
+        long upperBound = expiryMillis - System.currentTimeMillis() + clockSkewToleranceMs;
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(upperBound);
 
         assertThat(redis.pexpireat(key, Instant.now().plusSeconds(15))).isTrue();
         assertThat(redis.ttl(key)).isBetween(10L, 20L);
@@ -404,10 +405,12 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(1000);
 
         redis.del(key);
-        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(System.currentTimeMillis() + 3000).replace().absttl()))
-                .isEqualTo("OK");
+        long expiryMillis = System.currentTimeMillis() + 5000;
+        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(expiryMillis).replace().absttl())).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
-        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(3000);
+        long clockSkewToleranceMs = 50;
+        long upperBound = expiryMillis - System.currentTimeMillis() + clockSkewToleranceMs;
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(upperBound);
     }
 
     @Test

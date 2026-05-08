@@ -11,8 +11,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.CommandArgs;
 
@@ -21,6 +23,7 @@ import io.lettuce.core.protocol.CommandArgs;
  *
  * @author Tihomir Mateev
  */
+@Tag(TestTags.UNIT_TEST)
 class SearchArgsTest {
 
     @Test

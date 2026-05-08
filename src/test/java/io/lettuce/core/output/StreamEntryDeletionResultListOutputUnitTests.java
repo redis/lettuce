@@ -11,14 +11,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Collection;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.stream.StreamEntryDeletionResult;
 
 /**
  * Unit tests for {@link StreamEntryDeletionResultListOutput}.
  */
+@Tag(TestTags.UNIT_TEST)
 class StreamEntryDeletionResultListOutputUnitTests {
 
     private StreamEntryDeletionResultListOutput<String, String> output = new StreamEntryDeletionResultListOutput<>(

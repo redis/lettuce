@@ -12,13 +12,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import io.lettuce.TestTags;
 
 /**
  * Unit tests for {@link SearchReply}.
  *
  * @author Tihomir Mateev
  */
+@Tag(TestTags.UNIT_TEST)
 class SearchResultsTest {
 
     @Test

@@ -3,6 +3,7 @@
  */
 package io.lettuce.core.cluster;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -18,6 +19,7 @@ import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.test.LoggingTestUtils;
 import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -34,6 +36,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+@Tag(TestTags.UNIT_TEST)
 class RedisAdvancedClusterReactiveCommandsImplTest {
 
     private RedisAdvancedClusterReactiveCommandsImpl<String, String> reactive;

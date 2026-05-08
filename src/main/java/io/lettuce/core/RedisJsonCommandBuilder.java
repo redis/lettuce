@@ -31,6 +31,7 @@ import static io.lettuce.core.protocol.CommandType.*;
  *
  * @author Tihomir Mateev
  * @author SeugnSu Kim
+ * @author Yordan Tsintsov
  * @since 6.5
  */
 class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -47,10 +48,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
-        if (jsonPath != null && !jsonPath.isRootPath()) {
-            // OPTIONAL as per API
-            args.add(jsonPath.toString());
-        }
+        args.add(jsonPath.toString());
 
         for (JsonValue value : jsonValues) {
             args.add(value.asByteBuffer().array());
@@ -64,10 +62,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
-        if (jsonPath != null && !jsonPath.isRootPath()) {
-            // OPTIONAL as per API
-            args.add(jsonPath.toString());
-        }
+        args.add(jsonPath.toString());
 
         for (String value : jsonValues) {
             args.add(value);

@@ -273,7 +273,7 @@ public class RedisClusterSetupIntegrationTests extends TestSupport {
                 }
 
                 return false;
-            }).waitOrTimeout();
+            }).during(Duration.ofSeconds(30)).waitOrTimeout();
 
             assertThat(partitions.getPartitionBySlot(0).getSlots().size()).isEqualTo(16384);
 

@@ -19,11 +19,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -47,6 +49,7 @@ import io.lettuce.core.search.arguments.TextFieldArgs;
  *
  * @author Tihomir Mateev
  */
+@Tag(TestTags.INTEGRATION_TEST)
 class RediSearchAggregateIntegrationTests extends TestSupport {
 
     private final RedisClient client;

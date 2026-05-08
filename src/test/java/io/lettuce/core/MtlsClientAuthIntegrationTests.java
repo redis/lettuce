@@ -16,8 +16,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Path;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.condition.RedisConditions;
@@ -30,6 +32,7 @@ import io.lettuce.test.condition.RedisConditions;
  *
  * @author Aleksandar Todorov
  */
+@Tag(TestTags.INTEGRATION_TEST)
 class MtlsClientAuthIntegrationTests extends AbstractMtlsClientAuthIntegrationTests {
 
     private RedisClient redisClient;

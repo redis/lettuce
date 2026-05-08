@@ -9,9 +9,11 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.AbstractRedisMultiDbConnectionBuilder.DatabaseFutureMap;
@@ -27,6 +29,7 @@ import io.lettuce.core.failover.health.HealthStatus;
  * @author Ali Takavci
  * @since 7.4
  */
+@Tag(TestTags.UNIT_TEST)
 @DisplayName("ConnectionInitializationContext Unit Tests")
 class ConnectionInitializationContextUnitTests {
 

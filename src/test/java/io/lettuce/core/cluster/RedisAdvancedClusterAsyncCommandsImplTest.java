@@ -17,6 +17,7 @@ import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -34,10 +35,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+@Tag(UNIT_TEST)
 class RedisAdvancedClusterAsyncCommandsImplTest {
 
     @Spy

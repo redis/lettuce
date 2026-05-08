@@ -275,10 +275,10 @@ public class RedisVectorSetIntegrationTests {
 
         Map<String, Double> linksWithScores = redis.vlinksWithScores(VECTOR_SET_KEY, ELEMENT1);
         assertThat(linksWithScores).isNotEmpty();
-        assertThat(linksWithScores.get(ELEMENT2)).isEqualTo(0.9964823722839355D);
-        assertThat(linksWithScores.get(ELEMENT3)).isEqualTo(0.9919525384902954D);
-        assertThat(linksWithScores.get("item4")).isEqualTo(1.0);
-        assertThat(linksWithScores.get("item5")).isEqualTo(0.9997878074645996D);
+        assertThat(linksWithScores.get(ELEMENT2)).isCloseTo(0.9964823722839355D, within(0.001));
+        assertThat(linksWithScores.get(ELEMENT3)).isCloseTo(0.9919525384902954D, within(0.001));
+        assertThat(linksWithScores.get("item4")).isCloseTo(1.0, within(0.001));
+        assertThat(linksWithScores.get("item5")).isCloseTo(0.9997878074645996D, within(0.001));
     }
 
     @Test

@@ -1,8 +1,10 @@
 package io.lettuce.authx;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.TestTokenManager;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -18,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@Tag(TestTags.UNIT_TEST)
 public class TokenBasedRedisCredentialsProviderTest {
 
     private TestTokenManager tokenManager;

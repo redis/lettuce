@@ -6,11 +6,13 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -21,6 +23,7 @@ import io.lettuce.core.failover.api.RawConnectionFactory;
  *
  * @author Ivo Gaydazhiev
  */
+@Tag(TestTags.UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PingStrategy Unit Tests")
 class PingStrategyTest {

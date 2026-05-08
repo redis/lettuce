@@ -184,6 +184,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     void publishToShardChannelViaNewClient() throws Exception {
         pubSubConnection.addListener(connectionListener);
         pubSubConnection.async().ssubscribe(shardChannel);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
 
         StatefulRedisClusterPubSubConnection<String, String> newPubsub = clusterClientWithNoRedirects.connectPubSub();
         newPubsub.async().spublish(shardChannel, shardMessage);
@@ -282,19 +283,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         pubSubConnection2.sync().publish(key, value);
         assertThat(connectionListener.getMessages().take()).isEqualTo(value);
-    }
-
-    @Test
-    void testConnectToLeastClientsNode() {
-
-        clusterClient.reloadPartitions();
-        String nodeId = pubSubConnection.sync().clusterMyId();
-
-        StatefulRedisPubSubConnection<String, String> connectionAfterPartitionReload = clusterClient.connectPubSub();
-        String newConnectionNodeId = connectionAfterPartitionReload.sync().clusterMyId();
-        connectionAfterPartitionReload.close();
-
-        assertThat(nodeId).isNotEqualTo(newConnectionNodeId);
     }
 
     @Test

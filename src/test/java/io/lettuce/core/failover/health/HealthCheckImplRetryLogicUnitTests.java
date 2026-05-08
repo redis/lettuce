@@ -12,8 +12,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.RedisURI;
 
 /**
@@ -21,6 +23,7 @@ import io.lettuce.core.RedisURI;
  *
  * @author Ivo Gaydazhiev
  */
+@Tag(TestTags.UNIT_TEST)
 class HealthCheckImplRetryLogicUnitTests {
 
     private RedisURI testEndpoint;
