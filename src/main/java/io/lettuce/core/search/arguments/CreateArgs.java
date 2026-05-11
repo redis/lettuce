@@ -491,7 +491,7 @@ public class CreateArgs<K> {
         on.ifPresent(targetType -> args.add(ON).add(targetType.name()));
         if (!prefixes.isEmpty()) {
             args.add(PREFIX).add(prefixes.size());
-            prefixes.forEach(p -> args.add(p.toString()));
+            prefixes.forEach(args::addKey);
         }
         filter.ifPresent(filter -> args.add(FILTER).add(filter));
         defaultLanguage.ifPresent(language -> args.add(LANGUAGE).add(language.toString()));
