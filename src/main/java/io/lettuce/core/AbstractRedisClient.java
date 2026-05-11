@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.api.BaseRedisClient;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
@@ -260,38 +259,6 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents == this.connectionEvents ? connectionEvents
                 : ConnectionEvents.of(this.connectionEvents, connectionEvents));
         connectionBuilder.socketAddressSupplier(socketAddressSupplier);
-    }
-
-    /**
-     * Populate connection builder with necessary resources.
-     *
-     * @param socketAddressSupplier address supplier for initial connect and re-connect
-     * @param connectionBuilder connection builder to configure the connection
-     * @param redisURI URI of the Redis instance
-     * @deprecated since 7.0, use {@link #connectionBuilder(Supplier, ConnectionBuilder, RedisURI)} instead. This method will be
-     *             removed in a future major release as part of the effort to make Reactor an optional dependency.
-     */
-    @Deprecated
-    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
-            RedisURI redisURI) {
-        connectionBuilder(() -> socketAddressSupplier.toFuture(), connectionBuilder, connectionEvents, redisURI);
-    }
-
-    /**
-     * Populate connection builder with necessary resources.
-     *
-     * @param socketAddressSupplier address supplier for initial connect and re-connect
-     * @param connectionBuilder connection builder to configure the connection
-     * @param connectionEvents connection events dispatcher
-     * @param redisURI URI of the Redis instance
-     * @deprecated since 7.0, use {@link #connectionBuilder(Supplier, ConnectionBuilder, ConnectionEvents, RedisURI)} instead.
-     *             This method will be removed in a future major release as part of the effort to make Reactor an optional
-     *             dependency.
-     */
-    @Deprecated
-    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
-            ConnectionEvents connectionEvents, RedisURI redisURI) {
-        connectionBuilder(() -> socketAddressSupplier.toFuture(), connectionBuilder, connectionEvents, redisURI);
     }
 
     protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
