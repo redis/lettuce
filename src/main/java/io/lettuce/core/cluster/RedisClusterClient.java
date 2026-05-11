@@ -702,8 +702,9 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new CommandHandler(getClusterClientOptions(), getResources(),
                 endpoint);
-        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = () -> getSocketAddressSupplier(
-                connection::getPartitions, TopologyComparators::sortByClientCount).toFuture();
+        Mono<SocketAddress> socketAddressMono = getSocketAddressSupplier(connection::getPartitions,
+                TopologyComparators::sortByClientCount);
+        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = () -> socketAddressMono.toFuture();
         Mono<StatefulRedisClusterConnectionImpl<K, V>> connectionMono = Mono
                 .defer(() -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
 
@@ -821,8 +822,9 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(getClusterClientOptions(),
                 getResources(), codec, endpoint);
-        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = () -> getSocketAddressSupplier(
-                connection::getPartitions, TopologyComparators::sortByClientCount).toFuture();
+        Mono<SocketAddress> pubSubSocketAddressMono = getSocketAddressSupplier(connection::getPartitions,
+                TopologyComparators::sortByClientCount);
+        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = () -> pubSubSocketAddressMono.toFuture();
         Mono<StatefulRedisClusterPubSubConnectionImpl<K, V>> connectionMono = Mono
                 .defer(() -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
 
