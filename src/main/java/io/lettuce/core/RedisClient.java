@@ -765,8 +765,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplier(RedisURI redisURI) {
-        Supplier<CompletionStage<SocketAddress>> delegate = getSocketAddressStage(redisURI);
-        return () -> delegate.get().thenApply(addr -> {
+        return () -> getSocketAddress(redisURI).toFuture().thenApply(addr -> {
             logger.debug("Resolved SocketAddress {} using {}", addr, redisURI);
             return addr;
         });

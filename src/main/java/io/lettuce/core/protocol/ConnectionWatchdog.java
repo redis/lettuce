@@ -141,8 +141,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
         this.epid = endpoint.getId();
 
-        Supplier<CompletionStage<SocketAddress>> wrappedSocketAddressSupplier = wrapSocketAddressSupplierStage(
-                socketAddressSupplier);
+        Supplier<CompletionStage<SocketAddress>> wrappedSocketAddressSupplier = () -> wrapSocketAddressSupplier(
+                Mono.defer(() -> Mono.fromCompletionStage(socketAddressSupplier.get()))).toFuture();
         this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier);
 
         resetReconnectDelay();
