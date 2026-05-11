@@ -702,8 +702,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new CommandHandler(getClusterClientOptions(), getResources(),
                 endpoint);
-        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = getSocketAddressSupplier(connection::getPartitions,
-                TopologyComparators::sortByClientCount);
+        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = getSocketAddressSupplierStage(
+                connection::getPartitions, TopologyComparators::sortByClientCount);
         Mono<StatefulRedisClusterConnectionImpl<K, V>> connectionMono = Mono
                 .defer(() -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
 
@@ -821,8 +821,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(getClusterClientOptions(),
                 getResources(), codec, endpoint);
-        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = getSocketAddressSupplier(connection::getPartitions,
-                TopologyComparators::sortByClientCount);
+        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = getSocketAddressSupplierStage(
+                connection::getPartitions, TopologyComparators::sortByClientCount);
         Mono<StatefulRedisClusterPubSubConnectionImpl<K, V>> connectionMono = Mono
                 .defer(() -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
 
@@ -1172,13 +1172,15 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Returns a {@link Supplier} for a {@link SocketAddress}
+     * Returns a {@link Supplier} that produces a {@link CompletionStage} for a {@link SocketAddress}.
      *
+     * @param partitionsSupplier supplier for the current partitions, must not be {@code null}.
      * @param sortFunction Sort function to enforce a specific order. The sort function must not change the order or the input
      *        parameter but create a new collection with the desired order, must not be {@code null}.
      * @return {@link Supplier} for {@link SocketAddress connection points}.
+     * @since 7.0
      */
-    protected Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplier(Supplier<Partitions> partitionsSupplier,
+    protected Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplierStage(Supplier<Partitions> partitionsSupplier,
             Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
 
         LettuceAssert.notNull(sortFunction, "Sort function must not be null");
@@ -1200,6 +1202,23 @@ public class RedisClusterClient extends AbstractRedisClient {
                 return Futures.failed(e);
             }
         };
+    }
+
+    /**
+     * Returns a {@link Supplier} for {@link SocketAddress connection points}.
+     *
+     * @param partitionsSupplier supplier for the current partitions, must not be {@code null}.
+     * @param sortFunction Sort function to enforce a specific order. The sort function must not change the order or the input
+     *        parameter but create a new collection with the desired order, must not be {@code null}.
+     * @return {@link Supplier} for {@link SocketAddress connection points}.
+     * @deprecated since 7.0, use {@link #getSocketAddressSupplierStage(Supplier, Function)} instead. This method will be
+     *             removed in a future major release as part of the effort to make Reactor an optional dependency.
+     */
+    @Deprecated
+    protected Mono<SocketAddress> getSocketAddressSupplier(Supplier<Partitions> partitionsSupplier,
+            Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
+        Supplier<CompletionStage<SocketAddress>> delegate = getSocketAddressSupplierStage(partitionsSupplier, sortFunction);
+        return Mono.defer(() -> Mono.fromCompletionStage(delegate.get()));
     }
 
     /**

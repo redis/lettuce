@@ -697,8 +697,9 @@ public class RedisClient extends AbstractRedisClient {
      * @see ClientResources#addressResolverGroup()
      * @see RedisURI#getSentinels()
      * @see RedisURI#getSentinelMasterId()
+     * @since 7.0
      */
-    protected Supplier<CompletionStage<SocketAddress>> getSocketAddress(RedisURI redisURI) {
+    protected Supplier<CompletionStage<SocketAddress>> getSocketAddressStage(RedisURI redisURI) {
         return () -> {
             if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
                 logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(),
@@ -714,6 +715,25 @@ public class RedisClient extends AbstractRedisClient {
                 return CompletableFuture.completedFuture(getResources().socketAddressResolver().resolve(redisURI));
             }
         };
+    }
+
+    /**
+     * Get a {@link Mono} that resolves {@link RedisURI} to a {@link SocketAddress}. Resolution is performed either using Redis
+     * Sentinel (if the {@link RedisURI} is configured with Sentinels) or via DNS resolution.
+     * <p>
+     * Subclasses of {@link RedisClient} may override that method.
+     *
+     * @param redisURI must not be {@code null}.
+     * @return the resolved {@link SocketAddress}.
+     * @see ClientResources#addressResolverGroup()
+     * @see RedisURI#getSentinels()
+     * @see RedisURI#getSentinelMasterId()
+     * @deprecated since 7.0, use {@link #getSocketAddressStage(RedisURI)} instead. This method will be removed in a future
+     *             major release as part of the effort to make Reactor an optional dependency.
+     */
+    @Deprecated
+    protected Mono<SocketAddress> getSocketAddress(RedisURI redisURI) {
+        return Mono.defer(() -> Mono.fromCompletionStage(getSocketAddressStage(redisURI).get()));
     }
 
     /**
@@ -745,7 +765,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplier(RedisURI redisURI) {
-        Supplier<CompletionStage<SocketAddress>> delegate = getSocketAddress(redisURI);
+        Supplier<CompletionStage<SocketAddress>> delegate = getSocketAddressStage(redisURI);
         return () -> delegate.get().thenApply(addr -> {
             logger.debug("Resolved SocketAddress {} using {}", addr, redisURI);
             return addr;

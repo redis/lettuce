@@ -112,9 +112,9 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     }
 
     @Override
-    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplier(
+    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplierStage(
             Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
-        Supplier<CompletionStage<SocketAddress>> source = super.wrapSocketAddressSupplier(socketAddressSupplier);
+        Supplier<CompletionStage<SocketAddress>> source = super.wrapSocketAddressSupplierStage(socketAddressSupplier);
         rebindAwareAddressSupplier = new RebindAwareAddressSupplier();
         return rebindAwareAddressSupplier.wrappedSupplier(source);
     }

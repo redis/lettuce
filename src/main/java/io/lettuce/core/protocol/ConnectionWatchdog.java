@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import reactor.core.publisher.Mono;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.ConnectionEvents;
@@ -140,14 +141,21 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
         this.epid = endpoint.getId();
 
-        Supplier<CompletionStage<SocketAddress>> wrappedSocketAddressSupplier = wrapSocketAddressSupplier(
+        Supplier<CompletionStage<SocketAddress>> wrappedSocketAddressSupplier = wrapSocketAddressSupplierStage(
                 socketAddressSupplier);
         this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier);
 
         resetReconnectDelay();
     }
 
-    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplier(
+    /**
+     * Wrap the socket address supplier with error handling and caching logic.
+     *
+     * @param source the original supplier
+     * @return the wrapped supplier
+     * @since 7.0
+     */
+    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplierStage(
             Supplier<CompletionStage<SocketAddress>> source) {
         return () -> {
             try {
@@ -164,6 +172,20 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
                 return CompletableFuture.completedFuture(remoteAddress);
             }
         };
+    }
+
+    /**
+     * Wrap the socket address supplier with error handling and caching logic.
+     *
+     * @param source the original supplier
+     * @return the wrapped supplier
+     * @deprecated since 7.0, use {@link #wrapSocketAddressSupplierStage(Supplier)} instead. This method will be removed in a
+     *             future major release as part of the effort to make Reactor an optional dependency.
+     */
+    @Deprecated
+    protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> source) {
+        Supplier<CompletionStage<SocketAddress>> wrapped = wrapSocketAddressSupplierStage(() -> source.toFuture());
+        return Mono.defer(() -> Mono.fromCompletionStage(wrapped.get()));
     }
 
     private void log(SocketAddress cached, Throwable t) {
