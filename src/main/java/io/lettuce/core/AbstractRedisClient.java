@@ -66,6 +66,7 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import reactor.core.publisher.Mono;
 
 /**
  * Base Redis client. This class holds the netty infrastructure, {@link ClientOptions} and the basic connection procedure. This
@@ -245,10 +246,43 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @param connectionBuilder connection builder to configure the connection
      * @param connectionEvents connection events dispatcher
      * @param redisURI URI of the Redis instance
-     * @since 6.2
+     * @since 7.0
      */
     protected void connectionBuilder(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
             ConnectionBuilder connectionBuilder, ConnectionEvents connectionEvents, RedisURI redisURI) {
+        connectionBuilder(Mono.defer(() -> Mono.fromCompletionStage(socketAddressSupplier.get())), connectionBuilder,
+                connectionEvents, redisURI);
+    }
+
+    /**
+     * Populate connection builder with necessary resources.
+     *
+     * @param socketAddressSupplier address supplier for initial connect and re-connect
+     * @param connectionBuilder connection builder to configure the connection
+     * @param redisURI URI of the Redis instance
+     * @deprecated since 7.0, use {@link #connectionBuilder(Supplier, ConnectionBuilder, RedisURI)} instead. This method will be
+     *             removed in a future major release as part of the effort to make Reactor an optional dependency.
+     */
+    @Deprecated
+    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
+            RedisURI redisURI) {
+        connectionBuilder(socketAddressSupplier, connectionBuilder, connectionEvents, redisURI);
+    }
+
+    /**
+     * Populate connection builder with necessary resources.
+     *
+     * @param socketAddressSupplier address supplier for initial connect and re-connect
+     * @param connectionBuilder connection builder to configure the connection
+     * @param connectionEvents connection events dispatcher
+     * @param redisURI URI of the Redis instance
+     * @deprecated since 7.0, use {@link #connectionBuilder(Supplier, ConnectionBuilder, ConnectionEvents, RedisURI)} instead.
+     *             This method will be removed in a future major release as part of the effort to make Reactor an optional
+     *             dependency.
+     */
+    @Deprecated
+    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
+            ConnectionEvents connectionEvents, RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap();
         redisBootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT);
@@ -258,7 +292,7 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
         connectionBuilder.configureBootstrap(!LettuceStrings.isEmpty(redisURI.getSocket()), this::getEventLoopGroup);
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents == this.connectionEvents ? connectionEvents
                 : ConnectionEvents.of(this.connectionEvents, connectionEvents));
-        connectionBuilder.socketAddressSupplier(socketAddressSupplier);
+        connectionBuilder.socketAddressSupplier(() -> socketAddressSupplier.toFuture());
     }
 
     protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
