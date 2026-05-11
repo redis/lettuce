@@ -250,8 +250,16 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      */
     protected void connectionBuilder(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
             ConnectionBuilder connectionBuilder, ConnectionEvents connectionEvents, RedisURI redisURI) {
-        connectionBuilder(Mono.defer(() -> Mono.fromCompletionStage(socketAddressSupplier.get())), connectionBuilder,
-                connectionEvents, redisURI);
+
+        Bootstrap redisBootstrap = new Bootstrap();
+        redisBootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT);
+
+        connectionBuilder.bootstrap(redisBootstrap);
+        connectionBuilder.apply(redisURI);
+        connectionBuilder.configureBootstrap(!LettuceStrings.isEmpty(redisURI.getSocket()), this::getEventLoopGroup);
+        connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents == this.connectionEvents ? connectionEvents
+                : ConnectionEvents.of(this.connectionEvents, connectionEvents));
+        connectionBuilder.socketAddressSupplier(socketAddressSupplier);
     }
 
     /**
@@ -266,7 +274,7 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
     @Deprecated
     protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
             RedisURI redisURI) {
-        connectionBuilder(socketAddressSupplier, connectionBuilder, connectionEvents, redisURI);
+        connectionBuilder(() -> socketAddressSupplier.toFuture(), connectionBuilder, connectionEvents, redisURI);
     }
 
     /**
@@ -283,16 +291,7 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
     @Deprecated
     protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
             ConnectionEvents connectionEvents, RedisURI redisURI) {
-
-        Bootstrap redisBootstrap = new Bootstrap();
-        redisBootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT);
-
-        connectionBuilder.bootstrap(redisBootstrap);
-        connectionBuilder.apply(redisURI);
-        connectionBuilder.configureBootstrap(!LettuceStrings.isEmpty(redisURI.getSocket()), this::getEventLoopGroup);
-        connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents == this.connectionEvents ? connectionEvents
-                : ConnectionEvents.of(this.connectionEvents, connectionEvents));
-        connectionBuilder.socketAddressSupplier(() -> socketAddressSupplier.toFuture());
+        connectionBuilder(() -> socketAddressSupplier.toFuture(), connectionBuilder, connectionEvents, redisURI);
     }
 
     protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
