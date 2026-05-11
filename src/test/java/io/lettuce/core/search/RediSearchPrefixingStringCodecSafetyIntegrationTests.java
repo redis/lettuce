@@ -24,6 +24,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -35,14 +37,13 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Codec-safety invariants for RediSearch when the connection key codec is non-trivial. Scoped to {@code ON HASH} indexes
- * because only {@code HSET}/{@code HMSET} route hash field names and values through the connection's {@link RedisCodec}
- * ({@link io.lettuce.core.protocol.CommandArgs#add(java.util.Map)} encodes each map entry as
- * {@code addKey(field).addValue(value)}). {@code JSON.SET} does not — the JSON payload is sent verbatim via
+ * Codec-safety invariants for RediSearch when the connection key codec is non-trivial. Covers both {@code ON HASH} and
+ * {@code ON JSON} indexes. {@code HSET}/{@code HMSET} route hash field names and values through the connection's
+ * {@link RedisCodec} ({@link io.lettuce.core.protocol.CommandArgs#add(java.util.Map)} encodes each map entry as
+ * {@code addKey(field).addValue(value)}); {@code JSON.SET} sends its payload verbatim via
  * {@link io.lettuce.core.protocol.CommandArgs#add(String)} (or {@code add(byte[])} for {@link io.lettuce.core.json.JsonValue}),
- * bypassing the value codec entirely; consequently a non-trivial codec produces no observable mismatch on the JSON side and
- * adding {@code ON JSON} variants here would only duplicate the HASH coverage. Schema-level identifiers (field names, aliases)
- * must be sent raw; only the legitimately {@code K}-typed surface (e.g. {@code INKEYS}) must route through {@code encodeKey}.
+ * bypassing the value codec entirely. The schema-level identifiers exercised below (field names, aliases) must be sent raw on
+ * both target types; only the legitimately {@code K}-typed surface (e.g. {@code INKEYS}) must route through {@code encodeKey}.
  *
  * @author Viktoriya Kutsarova
  */
@@ -51,7 +52,11 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
 
     private static final String HASH_INDEX = "codec-safety-idx";
 
+    private static final String JSON_INDEX = "codec-safety-json-idx";
+
     private static final String HASH_DOC_KEY = "1";
+
+    private static final String JSON_DOC_KEY = "json:1";
 
     private static final String BODY_TEXT = "A long introduction to Redis that mentions search only deep into the body text. "
             + "Much preamble about indices and storage, only later do we finally cover search. "
@@ -78,7 +83,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         redis.flushall();
 
         CreateArgs hashCreate = CreateArgs.builder().on(CreateArgs.TargetType.HASH).build();
-        FieldArgs hashTitle = TextFieldArgs.builder().name("title").build();
+        FieldArgs hashTitle = TextFieldArgs.builder().name("title").sortable().build();
         FieldArgs hashBody = TextFieldArgs.builder().name("body").build();
         FieldArgs hashCategory = TagFieldArgs.builder().name("category").build();
         redis.ftCreate(HASH_INDEX, hashCreate, Arrays.asList(hashTitle, hashBody, hashCategory));
@@ -88,6 +93,15 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         doc.put("body", BODY_TEXT);
         doc.put("category", "tutorial");
         redis.hmset(HASH_DOC_KEY, doc);
+
+        CreateArgs jsonCreate = CreateArgs.builder().on(CreateArgs.TargetType.JSON).build();
+        FieldArgs jsonTitle = TextFieldArgs.builder().name("$.title").as("title").sortable().build();
+        FieldArgs jsonBody = TextFieldArgs.builder().name("$.body").as("body").build();
+        FieldArgs jsonCategory = TagFieldArgs.builder().name("$.category").as("category").build();
+        redis.ftCreate(JSON_INDEX, jsonCreate, Arrays.asList(jsonTitle, jsonBody, jsonCategory));
+
+        String jsonDoc = "{\"title\":\"Redis search guide\",\"body\":\"" + BODY_TEXT + "\",\"category\":\"tutorial\"}";
+        redis.jsonSet(JSON_DOC_KEY, JsonPath.ROOT_PATH, jsonDoc);
     }
 
     @AfterAll
@@ -104,9 +118,10 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
      * Sanity check. The query string is written raw via {@code args.add(query)} so this must work even when a prefixing codec
      * is installed on the connection.
      */
-    @Test
-    void baselineSearchWorksThroughPrefixingCodec() {
-        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search");
+    @ParameterizedTest
+    @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
+    void baselineSearchWorksThroughCodec(String indexName) {
+        SearchReply<String, String> result = redis.ftSearch(indexName, "search");
         assertThat(result.getCount()).isEqualTo(1L);
     }
 
@@ -115,11 +130,12 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
      * {@code addKeys(inFields)} routes them through the codec producing {@code tenant1:title}, and the server rejects it with
      * {@code Unknown field}.
      */
-    @Test
-    void inFieldMustNotBeMangledByCodec() {
+    @ParameterizedTest
+    @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
+    void inFieldMustNotBeMangledByCodec(String indexName) {
         SearchArgs<String, String> args = SearchArgs.<String, String> builder().inField("title").build();
 
-        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+        SearchReply<String, String> result = redis.ftSearch(indexName, "search", args);
 
         assertThat(result.getCount()).as("INFIELDS schema field must be sent raw, not codec-encoded").isEqualTo(1L);
     }
@@ -128,11 +144,12 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
      * {@code RETURN} field names and their {@code AS} aliases are schema identifiers. With the current bug, both get
      * codec-encoded (the map key and the alias), producing a mismatch against the index schema.
      */
-    @Test
-    void returnFieldMustNotBeMangledByCodec() {
+    @ParameterizedTest
+    @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
+    void returnFieldMustNotBeMangledByCodec(String indexName) {
         SearchArgs<String, String> args = SearchArgs.<String, String> builder().returnField("title").build();
 
-        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+        SearchReply<String, String> result = redis.ftSearch(indexName, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
         assertThat(result.getResults().get(0).getFields())
@@ -142,11 +159,12 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     /**
      * {@code RETURN ... AS alias} — the alias is also a schema-level identifier and must not be codec-encoded.
      */
-    @Test
-    void returnFieldAliasMustNotBeMangledByCodec() {
+    @ParameterizedTest
+    @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
+    void returnFieldAliasMustNotBeMangledByCodec(String indexName) {
         SearchArgs<String, String> args = SearchArgs.<String, String> builder().returnField("title", "t").build();
 
-        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+        SearchReply<String, String> result = redis.ftSearch(indexName, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
         assertThat(result.getResults().get(0).getFields()).as("RETURN alias must appear verbatim as a key in the result map")
@@ -190,16 +208,64 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
      * {@link io.lettuce.core.search.arguments.hybrid.PostProcessingArgs} which already sends it verbatim. {@link AggregateArgs}
      * currently routes the field name through {@code addKey} and produces a mismatch.
      */
-    @Test
-    void aggregateLoadFieldMustNotBeMangledByCodec() {
+    @ParameterizedTest
+    @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
+    void aggregateLoadFieldMustNotBeMangledByCodec(String indexName) {
         AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().load("title").build();
 
-        AggregationReply<String, String> result = redis.ftAggregate(HASH_INDEX, "*", args);
+        AggregationReply<String, String> result = redis.ftAggregate(indexName, "*", args);
 
         assertThat(result.getReplies()).isNotEmpty();
         SearchReply<String, String> reply = result.getReplies().get(0);
         assertThat(reply.getResults()).isNotEmpty();
         assertThat(reply.getResults().get(0).getFields()).as("LOAD schema field must be fetched verbatim").containsKey("title");
+    }
+
+    /**
+     * {@code SORTBY} names a {@code SORTABLE} schema field. {@link SortByArgs} routes the attribute through {@code addKey}, so
+     * a non-trivial codec mangles it on the wire and the server fails to resolve the sort attribute against the index schema.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
+    void sortByMustNotBeMangledByCodec(String indexName) {
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder()
+                .sortBy(SortByArgs.<String> builder().attribute("title").build()).build();
+
+        SearchReply<String, String> result = redis.ftSearch(indexName, "search", args);
+
+        assertThat(result.getCount()).as("SORTBY schema field must be sent raw, not codec-encoded").isEqualTo(1L);
+    }
+
+    /**
+     * {@code PARAMS} substitution names are referenced from the query string as {@code $name}. The query is sent verbatim, but
+     * {@link SearchArgs.Builder#param} routes the parameter name through {@code addKey}; with a non-trivial codec the server
+     * registers {@code tenant1:term} while the query references {@code $term} and parameter resolution fails.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
+    void searchParamNameMustNotBeMangledByCodec(String indexName) {
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().param("term", "search").build();
+
+        SearchReply<String, String> result = redis.ftSearch(indexName, "@body:$term", args);
+
+        assertThat(result.getCount()).as("PARAMS substitution name must be sent raw so $term resolves on the server side")
+                .isEqualTo(1L);
+    }
+
+    /**
+     * Aggregate variant of {@link #searchParamNameMustNotBeMangledByCodec}. {@link AggregateArgs.Builder#param} is built via
+     * the same {@code addKey} routing and exhibits the same asymmetric failure mode.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
+    void aggregateParamNameMustNotBeMangledByCodec(String indexName) {
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().param("term", "search").build();
+
+        AggregationReply<String, String> result = redis.ftAggregate(indexName, "@body:$term", args);
+
+        assertThat(result.getReplies()).isNotEmpty();
+        SearchReply<String, String> reply = result.getReplies().get(0);
+        assertThat(reply.getResults()).as("PARAMS substitution name must resolve on the server side").isNotEmpty();
     }
 
     /**
@@ -217,8 +283,6 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         assertThat(result.getCount()).as("INKEYS must route the document key through encodeKey to match the stored prefix")
                 .isEqualTo(1L);
     }
-
-    // ── CreateArgs.prefix ────────────────────────────────────────────────────────
 
     /**
      * {@code FT.CREATE ... PREFIX 1 doc:} restricts the index to keys whose raw Redis key starts with the given prefix. When a
@@ -255,152 +319,6 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         // If prefix goes raw while keys are encoded, the prefix "doc:" won't match "tenant1:doc:1" and count will be 0.
         assertThat(result.getCount()).as("PREFIX in CreateArgs should be encoded through codec to match stored keys; "
                 + "if this fails with 0, the prefix is being sent raw instead of through addKey").isEqualTo(1L);
-    }
-
-    // ── SortBy ─────────────────────────────────────────────────────────────────
-
-    /**
-     * {@code SORTBY} names a schema field declared at {@code FT.CREATE} time. Since the "everything encoded" model routes
-     * schema field names through {@code encodeKey} in both {@code FT.CREATE} (via {@code FieldArgs.addKey(name)}) and
-     * {@code SORTBY} (via {@code SortByArgs.addKey(attribute)}), the encoding is symmetric and the server should resolve the
-     * field correctly.
-     */
-    @Test
-    void sortByFieldMustNotBeMangledByCodec() {
-        SearchArgs<String, String> args = SearchArgs.<String, String> builder()
-                .sortBy(SortByArgs.<String> builder().attribute("title").build()).build();
-
-        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "*", args);
-
-        assertThat(result.getCount()).as("SORTBY schema field must resolve correctly through codec").isEqualTo(1L);
-    }
-
-    // ── JSON index tests ───────────────────────────────────────────────────────
-
-    /**
-     * Baseline for JSON indexes with a prefixing codec. {@code JSON.SET} sends the JSON payload via {@code args.add(String)}
-     * (raw), so field names inside JSON are never touched by the codec. Schema field names (JSONPaths like {@code $.title}) go
-     * through {@code addKey} in {@code FieldArgs.build()}, but since the codec prefixes them to {@code "tenant1:$.title"} on
-     * the wire, the server won't match them against the literal {@code $.title} inside the JSON document — unless the same
-     * encoding is applied symmetrically at create and query time. This test documents the current behavior.
-     */
-    @Test
-    void jsonBaselineSearchWorksThroughPrefixingCodec() {
-        redis.flushall();
-
-        // Create JSON index — no prefix filter (defaults to all keys)
-        CreateArgs jsonCreate = CreateArgs.builder().on(CreateArgs.TargetType.JSON).build();
-        FieldArgs<String> jsonTitle = TextFieldArgs.<String> builder().name("$.title").as("title").build();
-        FieldArgs<String> jsonBody = TextFieldArgs.<String> builder().name("$.body").as("body").build();
-        FieldArgs<String> jsonCategory = TagFieldArgs.<String> builder().name("$.category").as("category").build();
-        redis.ftCreate("json-codec-idx", jsonCreate, Arrays.asList(jsonTitle, jsonBody, jsonCategory));
-
-        // Add JSON document — the key goes through codec, but JSON payload is raw
-        String jsonDoc = "{\"title\":\"Redis search guide\","
-                + "\"body\":\"A long introduction to Redis that mentions search in the body text.\","
-                + "\"category\":\"tutorial\"}";
-        redis.jsonSet("json:1", JsonPath.ROOT_PATH, jsonDoc);
-
-        // Wait for indexing
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        SearchReply<String, String> result = redis.ftSearch("json-codec-idx", "search");
-
-        assertThat(result.getCount()).as("JSON baseline search should find the document").isEqualTo(1L);
-    }
-
-    /**
-     * {@code INFIELDS} on a JSON index references the AS alias declared at schema creation time. With a prefixing codec, the
-     * alias is sent raw (it's a {@code String}, not routed through codec) while the field path goes through {@code addKey}.
-     * This test verifies whether INFIELDS resolves correctly against the schema alias.
-     */
-    @Test
-    void jsonInFieldMustNotBeMangledByCodec() {
-        redis.flushall();
-
-        CreateArgs jsonCreate = CreateArgs.builder().on(CreateArgs.TargetType.JSON).build();
-        FieldArgs<String> jsonTitle = TextFieldArgs.<String> builder().name("$.title").as("title").build();
-        FieldArgs<String> jsonBody = TextFieldArgs.<String> builder().name("$.body").as("body").build();
-        redis.ftCreate("json-infield-idx", jsonCreate, Arrays.asList(jsonTitle, jsonBody));
-
-        String jsonDoc = "{\"title\":\"Redis search guide\",\"body\":\"Some body text about search\"}";
-        redis.jsonSet("json:1", JsonPath.ROOT_PATH, jsonDoc);
-
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        // INFIELDS uses the alias "title" — which must match the AS alias in the schema
-        SearchArgs<String, String> args = SearchArgs.<String, String> builder().inField("title").build();
-        SearchReply<String, String> result = redis.ftSearch("json-infield-idx", "search", args);
-
-        assertThat(result.getCount()).as("JSON INFIELDS with alias must resolve correctly").isEqualTo(1L);
-    }
-
-    /**
-     * {@code RETURN} on a JSON index should return field values using the schema alias. Verifies that the alias appears
-     * verbatim in the result map despite the prefixing codec.
-     */
-    @Test
-    void jsonReturnFieldMustNotBeMangledByCodec() {
-        redis.flushall();
-
-        CreateArgs jsonCreate = CreateArgs.builder().on(CreateArgs.TargetType.JSON).build();
-        FieldArgs<String> jsonTitle = TextFieldArgs.<String> builder().name("$.title").as("title").build();
-        redis.ftCreate("json-return-idx", jsonCreate, Arrays.asList(jsonTitle));
-
-        String jsonDoc = "{\"title\":\"Redis search guide\"}";
-        redis.jsonSet("json:1", JsonPath.ROOT_PATH, jsonDoc);
-
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        SearchArgs<String, String> args = SearchArgs.<String, String> builder().returnField("title").build();
-        SearchReply<String, String> result = redis.ftSearch("json-return-idx", "search", args);
-
-        assertThat(result.getCount()).isEqualTo(1L);
-        assertThat(result.getResults().get(0).getFields())
-                .as("JSON RETURN field must appear verbatim as a key in the result map").containsKey("title");
-    }
-
-    /**
-     * {@code FT.AGGREGATE ... LOAD} on a JSON index with prefixing codec. The LOAD field should reference the schema alias and
-     * the value must be returned correctly.
-     */
-    @Test
-    void jsonAggregateLoadFieldMustNotBeMangledByCodec() {
-        redis.flushall();
-
-        CreateArgs jsonCreate = CreateArgs.builder().on(CreateArgs.TargetType.JSON).build();
-        FieldArgs<String> jsonTitle = TextFieldArgs.<String> builder().name("$.title").as("title").build();
-        redis.ftCreate("json-agg-idx", jsonCreate, Arrays.asList(jsonTitle));
-
-        String jsonDoc = "{\"title\":\"Redis search guide\"}";
-        redis.jsonSet("json:1", JsonPath.ROOT_PATH, jsonDoc);
-
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().load("title").build();
-        AggregationReply<String, String> result = redis.ftAggregate("json-agg-idx", "*", args);
-
-        assertThat(result.getReplies()).isNotEmpty();
-        SearchReply<String, String> reply = result.getReplies().get(0);
-        assertThat(reply.getResults()).isNotEmpty();
-        assertThat(reply.getResults().get(0).getFields()).as("JSON AGGREGATE LOAD field must be fetched verbatim")
-                .containsKey("title");
     }
 
     /**
