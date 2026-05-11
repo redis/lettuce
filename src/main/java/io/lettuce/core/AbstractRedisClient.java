@@ -268,8 +268,8 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @param socketAddressSupplier address supplier for initial connect and re-connect
      * @param connectionBuilder connection builder to configure the connection
      * @param redisURI URI of the Redis instance
-     * @deprecated since 7.0, use {@link #connectionBuilder(Supplier, ConnectionBuilder, RedisURI)} instead. This method will
-     *             be removed in a future major release as part of the effort to make Reactor an optional dependency.
+     * @deprecated since 7.0, use {@link #connectionBuilder(Supplier, ConnectionBuilder, RedisURI)} instead. This method will be
+     *             removed in a future major release as part of the effort to make Reactor an optional dependency.
      */
     @Deprecated
     protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
