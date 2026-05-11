@@ -709,13 +709,12 @@ public class RedisClusterClient extends AbstractRedisClient {
                 connection, commandHandlerSupplier);
 
         for (int i = 1; i < getConnectionAttempts(); i++) {
-            result = result
-                    .<CompletableFuture<StatefulRedisClusterConnection<K, V>>> handle((v, t) -> {
-                        if (t != null) {
-                            return connectFuture(socketAddressSupplier, endpoint, connection, commandHandlerSupplier);
-                        }
-                        return CompletableFuture.completedFuture(v);
-                    }).thenCompose(f -> f);
+            result = result.<CompletableFuture<StatefulRedisClusterConnection<K, V>>> handle((v, t) -> {
+                if (t != null) {
+                    return connectFuture(socketAddressSupplier, endpoint, connection, commandHandlerSupplier);
+                }
+                return CompletableFuture.completedFuture(v);
+            }).thenCompose(f -> f);
         }
 
         return result.thenApply(c -> {
@@ -864,13 +863,12 @@ public class RedisClusterClient extends AbstractRedisClient {
                 connection, commandHandlerSupplier);
 
         for (int i = 1; i < getConnectionAttempts(); i++) {
-            result = result
-                    .<CompletableFuture<StatefulRedisClusterPubSubConnection<K, V>>> handle((v, t) -> {
-                        if (t != null) {
-                            return connectFuture(socketAddressSupplier, endpoint, connection, commandHandlerSupplier);
-                        }
-                        return CompletableFuture.completedFuture(v);
-                    }).thenCompose(f -> f);
+            result = result.<CompletableFuture<StatefulRedisClusterPubSubConnection<K, V>>> handle((v, t) -> {
+                if (t != null) {
+                    return connectFuture(socketAddressSupplier, endpoint, connection, commandHandlerSupplier);
+                }
+                return CompletableFuture.completedFuture(v);
+            }).thenCompose(f -> f);
         }
 
         return result.thenApply(c -> {
