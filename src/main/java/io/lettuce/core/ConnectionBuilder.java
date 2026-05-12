@@ -158,8 +158,7 @@ public class ConnectionBuilder {
         if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
             MaintenanceAwareConnectionWatchdog maintenanceAwareWatchdog = new MaintenanceAwareConnectionWatchdog(
                     clientResources.reconnectDelay(), clientOptions, bootstrap, clientResources.timer(),
-                    clientResources.eventExecutorGroup(), supplier, reconnectionListener, clientResources.eventBus(),
-                    endpoint);
+                    clientResources.eventExecutorGroup(), supplier, reconnectionListener, clientResources.eventBus(), endpoint);
             if (connection.getChannelWriter() instanceof MaintenanceAwareComponent) {
                 maintenanceAwareWatchdog.setMaintenanceEventListener((MaintenanceAwareComponent) connection.getChannelWriter());
             }
