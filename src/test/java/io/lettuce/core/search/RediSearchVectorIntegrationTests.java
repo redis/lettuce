@@ -150,7 +150,7 @@ public class RediSearchVectorIntegrationTests {
 
         // Perform vector search using binary query vector
         ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 1.0f, 0.0f, 0.0f, 0.0f });
-        ByteBuffer blobKey = ByteBuffer.wrap("query_vec".getBytes());
+        String blobKey = "query_vec";
         SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryVector).build();
 
@@ -218,7 +218,7 @@ public class RediSearchVectorIntegrationTests {
 
         // Perform vector search with category filter
         ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 1.0f, 0.5f, 0.2f, 0.8f, 0.3f, 0.9f, 0.1f, 0.6f });
-        ByteBuffer blobKey = ByteBuffer.wrap("query_vec".getBytes());
+        String blobKey = "query_vec";
         SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryVector).build();
 
@@ -359,7 +359,7 @@ public class RediSearchVectorIntegrationTests {
 
             // Query with vector similar to vec1
             ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 0.9f, 0.1f, 0.0f });
-            ByteBuffer blobKey = ByteBuffer.wrap("query_vec".getBytes());
+            String blobKey = "query_vec";
             SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                     .param(blobKey, queryVector).build();
 
@@ -465,7 +465,7 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
         // Use binary connection for search to handle binary vector data properly
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
+        String blobKey = "BLOB";
         SearchArgs<ByteBuffer, ByteBuffer> knnArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryVectorBuffer).limit(0, 2).build();
 
@@ -558,7 +558,7 @@ public class RediSearchVectorIntegrationTests {
         float[] queryVector = { 0.8f, 0.6f, 0.2f }; // Similar to action-drama
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
+        String blobKey = "BLOB";
         SearchArgs<ByteBuffer, ByteBuffer> filterArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryVectorBuffer).limit(0, 10).build();
 
@@ -584,7 +584,7 @@ public class RediSearchVectorIntegrationTests {
         assertThat(results.getCount()).isEqualTo(2); // The Matrix (1999) and Heat (1995)
 
         // Test 3: KNN search with runtime EF parameter
-        ByteBuffer efKey = ByteBuffer.wrap("EF".getBytes(StandardCharsets.UTF_8));
+        String efKey = "EF";
         ByteBuffer efValue = ByteBuffer.wrap("150".getBytes(StandardCharsets.UTF_8));
         SearchArgs<ByteBuffer, ByteBuffer> efArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryVectorBuffer).param(efKey, efValue).limit(0, 10).build();
@@ -657,7 +657,7 @@ public class RediSearchVectorIntegrationTests {
         float[] queryVector = { 0.9f, 0.1f, 0.0f }; // Close to electronics
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
+        String blobKey = "BLOB";
         SearchArgs<ByteBuffer, ByteBuffer> rangeArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryVectorBuffer).limit(0, 100).build();
 
@@ -734,7 +734,7 @@ public class RediSearchVectorIntegrationTests {
             float[] queryVector = { 0.7f, 0.3f };
             ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
-            ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
+            String blobKey = "BLOB";
             SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                     .param(blobKey, queryVectorBuffer).limit(0, 2).build();
 
@@ -789,7 +789,7 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
         // Test 1: KNN search with ADHOC_BF hybrid policy using binary codec
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
+        String blobKey = "BLOB";
         SearchArgs<ByteBuffer, ByteBuffer> adhocArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryVectorBuffer).limit(0, 3).build();
 
@@ -849,7 +849,7 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
         // Test 1: KNN search with ADHOC_BF hybrid policy using binary codec
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
+        String blobKey = "BLOB";
         SearchArgs<ByteBuffer, ByteBuffer> adhocArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryVectorBuffer).limit(0, 5).build();
 
@@ -859,7 +859,7 @@ public class RediSearchVectorIntegrationTests {
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         // Test 2: KNN search with BATCHES hybrid policy and custom batch size
-        ByteBuffer batchSizeKey = ByteBuffer.wrap("BATCH_SIZE".getBytes(StandardCharsets.UTF_8));
+        String batchSizeKey = "BATCH_SIZE";
         ByteBuffer batchSizeValue = ByteBuffer.wrap("3".getBytes(StandardCharsets.UTF_8));
         SearchArgs<ByteBuffer, ByteBuffer> batchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryVectorBuffer).param(batchSizeKey, batchSizeValue).limit(0, 5).build();
@@ -870,7 +870,7 @@ public class RediSearchVectorIntegrationTests {
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         // Test 3: Vector search with custom EF_RUNTIME parameter
-        ByteBuffer efKey = ByteBuffer.wrap("EF".getBytes(StandardCharsets.UTF_8));
+        String efKey = "EF";
         ByteBuffer efValue = ByteBuffer.wrap("50".getBytes(StandardCharsets.UTF_8));
         SearchArgs<ByteBuffer, ByteBuffer> efArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryVectorBuffer).param(efKey, efValue).limit(0, 3).build();
@@ -963,7 +963,7 @@ public class RediSearchVectorIntegrationTests {
         }
         queryBuffer.flip();
 
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
+        String blobKey = "BLOB";
         SearchArgs<ByteBuffer, ByteBuffer> precisionArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryBuffer).limit(0, 2).build();
 
@@ -1012,7 +1012,7 @@ public class RediSearchVectorIntegrationTests {
         float[] queryVector = { 0.9f, 0.1f, 0.0f };
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
+        String blobKey = "BLOB";
         SearchArgs<ByteBuffer, ByteBuffer> validArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryVectorBuffer).limit(0, 1).build();
 
@@ -1236,7 +1236,7 @@ public class RediSearchVectorIntegrationTests {
 
         // Test KNN search
         ByteBuffer queryBuffer = ByteBuffer.wrap(queryVector);
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
+        String blobKey = "BLOB";
         SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
                 .param(blobKey, queryBuffer).limit(0, 2).build();
 
