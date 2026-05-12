@@ -187,7 +187,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
                         + ", reusing cached address " + remoteAddress);
             }
 
-            return Mono.just(remoteAddress);
+            return Mono.justOrEmpty(remoteAddress);
         });
     }
 

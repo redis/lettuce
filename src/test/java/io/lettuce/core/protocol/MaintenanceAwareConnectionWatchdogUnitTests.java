@@ -50,10 +50,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import reactor.core.publisher.Mono;
 
 /**
  * Unit tests for {@link MaintenanceAwareConnectionWatchdog}.
@@ -514,15 +514,14 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
         SocketAddress rebindAddress = new InetSocketAddress("127.0.0.1", 6380);
-        Supplier<CompletionStage<SocketAddress>> originalSupplier = () -> CompletableFuture.completedFuture(originalAddress);
 
         // When - rebind with 30 seconds duration
         supplier.rebind(Duration.ofSeconds(30), rebindAddress);
 
         // Then - should return rebind address since we're within the cutoff time
-        Supplier<CompletionStage<SocketAddress>> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(Mono.just(originalAddress));
 
-        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(rebindAddress);
+        assertThat(wrappedSupplier.block()).isEqualTo(rebindAddress);
     }
 
     @Test
@@ -534,21 +533,20 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
         // Null rebind address - should return original address
         SocketAddress rebindAddress = null;
-        Supplier<CompletionStage<SocketAddress>> originalSupplier = () -> CompletableFuture.completedFuture(originalAddress);
 
         // When - rebind with 30 seconds duration
         supplier.rebind(Duration.ofSeconds(30), rebindAddress);
 
         // Should return original address since rebind address is null
-        Supplier<CompletionStage<SocketAddress>> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(Mono.just(originalAddress));
 
-        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(originalAddress);
+        assertThat(wrappedSupplier.block()).isEqualTo(originalAddress);
 
         // Step 5: Advance clock past expiration (31 seconds)
         clock.tick(Duration.ofSeconds(31));
 
         // Step 6: New call to same wrappedSupplier should return original address again
-        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(originalAddress);
+        assertThat(wrappedSupplier.block()).isEqualTo(originalAddress);
     }
 
     @Test
@@ -559,25 +557,24 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         RebindAwareAddressSupplier supplier = new RebindAwareAddressSupplier(clock);
         SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
         SocketAddress rebindAddress = new InetSocketAddress("127.0.0.1", 6380);
-        Supplier<CompletionStage<SocketAddress>> originalSupplier = () -> CompletableFuture.completedFuture(originalAddress);
 
         // Step 1: Create wrapped supplier once (same instance used throughout)
-        Supplier<CompletionStage<SocketAddress>> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(Mono.just(originalAddress));
 
         // Step 2: First call should return original address (no rebind set yet)
-        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(originalAddress);
+        assertThat(wrappedSupplier.block()).isEqualTo(originalAddress);
 
         // Step 3: Invoke rebind with 30 seconds duration
         supplier.rebind(Duration.ofSeconds(30), rebindAddress);
 
         // Step 4: New call to same wrappedSupplier should return rebind address
-        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(rebindAddress);
+        assertThat(wrappedSupplier.block()).isEqualTo(rebindAddress);
 
         // Step 5: Advance clock past expiration (31 seconds)
         clock.tick(Duration.ofSeconds(31));
 
         // Step 6: New call to same wrappedSupplier should return original address again
-        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(originalAddress);
+        assertThat(wrappedSupplier.block()).isEqualTo(originalAddress);
     }
 
     @Test
@@ -587,13 +584,12 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         RebindAwareAddressSupplier supplier = new RebindAwareAddressSupplier(fixedClock);
 
         SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
-        Supplier<CompletionStage<SocketAddress>> originalSupplier = () -> CompletableFuture.completedFuture(originalAddress);
 
         // When - no rebind has been set
-        Supplier<CompletionStage<SocketAddress>> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(Mono.just(originalAddress));
 
         // Then - should return original address
-        assertThat(wrappedSupplier.get().toCompletableFuture().get()).isEqualTo(originalAddress);
+        assertThat(wrappedSupplier.block()).isEqualTo(originalAddress);
 
     }
 

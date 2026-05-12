@@ -1253,7 +1253,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     protected Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplierStage(Supplier<Partitions> partitionsSupplier,
             Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
-        return () -> getSocketAddressSupplier(partitionsSupplier, sortFunction).toFuture();
+        Mono<SocketAddress> mono = getSocketAddressSupplier(partitionsSupplier, sortFunction);
+        return mono::toFuture;
     }
 
     /**
