@@ -16,6 +16,7 @@ import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortByArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
@@ -86,21 +87,24 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         FieldArgs hashTitle = TextFieldArgs.builder().name("title").sortable().build();
         FieldArgs hashBody = TextFieldArgs.builder().name("body").build();
         FieldArgs hashCategory = TagFieldArgs.builder().name("category").build();
-        redis.ftCreate(HASH_INDEX, hashCreate, Arrays.asList(hashTitle, hashBody, hashCategory));
+        FieldArgs hashPrice = NumericFieldArgs.builder().name("price").sortable().build();
+        redis.ftCreate(HASH_INDEX, hashCreate, Arrays.asList(hashTitle, hashBody, hashCategory, hashPrice));
 
         Map<String, String> doc = new HashMap<>();
         doc.put("title", "Redis search guide");
         doc.put("body", BODY_TEXT);
         doc.put("category", "tutorial");
+        doc.put("price", "50");
         redis.hmset(HASH_DOC_KEY, doc);
 
         // JSON index disabled: FieldArgs.build() routes name(K) through addKey, so name("$.title") is encoded by the
         // PrefixingStringCodec to "tenant1:$.title" and Redis rejects it as an invalid JSONPath at FT.CREATE time.
-        // Re-enable together with the JSON_INDEX entries in the @ValueSource arrays below.
-        // CreateArgs jsonCreate = CreateArgs.builder().on(CreateArgs.TargetType.JSON).build();
-        // FieldArgs jsonTitle = TextFieldArgs.builder().name("$.title").as("title").sortable().build();
-        // FieldArgs jsonBody = TextFieldArgs.builder().name("$.body").as("body").build();
-        // FieldArgs jsonCategory = TagFieldArgs.builder().name("$.category").as("category").build();
+        // Re-enable together with the JSON_INDEX entries in the @ValueSource arrays below once schema-identifier routing
+        // is fixed library-wide.
+        // CreateArgs<String> jsonCreate = CreateArgs.<String> builder().on(CreateArgs.TargetType.JSON).build();
+        // FieldArgs<String> jsonTitle = TextFieldArgs.<String> builder().name("$.title").as("title").sortable().build();
+        // FieldArgs<String> jsonBody = TextFieldArgs.<String> builder().name("$.body").as("body").build();
+        // FieldArgs<String> jsonCategory = TagFieldArgs.<String> builder().name("$.category").as("category").build();
         // redis.ftCreate(JSON_INDEX, jsonCreate, Arrays.asList(jsonTitle, jsonBody, jsonCategory));
         //
         // String jsonDoc = "{\"title\":\"Redis search guide\",\"body\":\"" + BODY_TEXT + "\",\"category\":\"tutorial\"}";
@@ -126,6 +130,182 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     void baselineSearchWorksThroughCodec(String indexName) {
         SearchReply<String, String> result = redis.ftSearch(indexName, "search");
         assertThat(result.getCount()).isEqualTo(1L);
+    }
+
+    /**
+     * Field-scoped query syntax: the user writes {@code @field:value} directly into the query string, which is sent verbatim
+     * via {@code args.add(query)}. Schema field names registered through {@link FieldArgs.Builder#name(Object)} are
+     * codec-routed via {@code addKey} and the server stores the field as {@code tenant1:title}. The query references
+     * {@code @title} raw, so the server reports {@code Unknown field at offset 0 near title}. There is no programmatic seam to
+     * encode a token inside a raw query string, so the only way this can succeed today is for the schema name to also be raw on
+     * the wire — i.e. for schema identifiers to bypass the key codec.
+     */
+    @Test
+    void fieldScopedQueryMustResolveAgainstSchemaThroughCodec() {
+        // Manual workaround: the user has to (a) know the codec exists, (b) reproduce its prefix, and (c) escape any
+        // RediSearch-reserved characters that the prefix introduces (here, ':' must be escaped as '\:' inside the field
+        // reference because ':' is the field/value separator). On the wire this becomes "@tenant1\:title:Redis", which the
+        // server unescapes to look up the schema field "tenant1:title".
+        String query = "@" + escapedFieldRef("title") + ":Redis";
+
+        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, query);
+
+        assertThat(result.getCount()).as("@field:value must resolve against the schema field name on the server side")
+                .isEqualTo(1L);
+    }
+
+    /**
+     * Reproduces what the codec applies to a key, then escapes RediSearch-reserved characters introduced by the prefix so the
+     * result is safe to splice into a query/filter expression as {@code @<ref>}. Every call site that references a schema field
+     * inside a raw expression has to pay this cost.
+     */
+    private static String escapedFieldRef(String field) {
+        String encoded = StandardCharsets.UTF_8.decode(new PrefixingStringCodec(CODEC_PREFIX).encodeKey(field)).toString();
+        return encoded.replace(":", "\\:");
+    }
+
+    /**
+     * Reproduces what the codec applies to a key without escaping. Used where the field name is sent as a standalone command
+     * argument (e.g. {@code GROUPBY <prop>}) rather than embedded in a query/filter expression with delimiters.
+     */
+    private static String encodedFieldRef(String field) {
+        return StandardCharsets.UTF_8.decode(new PrefixingStringCodec(CODEC_PREFIX).encodeKey(field)).toString();
+    }
+
+    /**
+     * Numeric range query: the user writes {@code @price:[40 60]} directly into the query string, sent verbatim via
+     * {@code args.add(query)}. The {@code price} schema field was registered through {@link FieldArgs.Builder#name(Object)} and
+     * codec-encoded to {@code tenant1:price} at {@code FT.CREATE} time. The query references {@code @price} raw, so the server
+     * reports {@code Unknown field}. This is the same root cause as
+     * {@link #fieldScopedQueryMustResolveAgainstSchemaThroughCodec} but on a NUMERIC field.
+     */
+    @Test
+    void numericRangeQueryMustResolveAgainstSchemaThroughCodec() {
+        // Manual workaround: schema field "price" is codec-encoded to "tenant1:price"; the ':' must be escaped inside the
+        // @field reference so the RediSearch query parser resolves the encoded schema name.
+        String query = "@" + escapedFieldRef("price") + ":[40 60]";
+
+        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, query);
+
+        assertThat(result.getCount()).as("@price:[40 60] must resolve against the schema field name on the server side")
+                .isEqualTo(1L);
+    }
+
+    /**
+     * Tag query: the user writes {@code @category:{tutorial}} directly into the query string. The {@code category} schema field
+     * was registered through {@link FieldArgs.Builder#name(Object)} and codec-encoded to {@code tenant1:category} at
+     * {@code FT.CREATE} time. The query references {@code @category} raw, so the server reports {@code Unknown field}. Same
+     * root cause as {@link #fieldScopedQueryMustResolveAgainstSchemaThroughCodec} on a TAG field.
+     */
+    @Test
+    void tagQueryMustResolveAgainstSchemaThroughCodec() {
+        // Manual workaround: schema field "category" is codec-encoded to "tenant1:category"; ':' must be escaped inside the
+        // @field reference so the RediSearch query parser resolves the encoded schema name.
+        String query = "@" + escapedFieldRef("category") + ":{tutorial}";
+
+        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, query);
+
+        assertThat(result.getCount()).as("@category:{tutorial} must resolve against the schema field name on the server side")
+                .isEqualTo(1L);
+    }
+
+    /**
+     * Aggregate {@code GROUPBY}: {@link AggregateArgs.GroupBy#build(io.lettuce.core.protocol.CommandArgs)} renders properties
+     * via {@code args.add("@" + property)} (raw, no codec). Schema field {@code category} was codec-encoded to
+     * {@code tenant1:category} at {@code FT.CREATE} time, so the raw {@code @category} reference in {@code GROUPBY} does not
+     * resolve and the server reports {@code Property `@category` not loaded nor in pipeline}.
+     */
+    @Test
+    void aggregateGroupByMustResolveAgainstSchemaThroughCodec() {
+        // Manual workaround: GroupBy.build emits "@" + property as a standalone command argument (not embedded in an
+        // expression with delimiters), so we pre-encode the property to "tenant1:category" without escaping the ':'.
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().groupBy(AggregateArgs.GroupBy
+                .<String> of(encodedFieldRef("category")).reduce(AggregateArgs.Reducer.<String> count().as("cnt"))).build();
+
+        AggregationReply<String, String> result = redis.ftAggregate(HASH_INDEX, "*", args);
+
+        assertThat(result.getReplies()).isNotEmpty();
+        SearchReply<String, String> reply = result.getReplies().get(0);
+        assertThat(reply.getResults()).as("GROUPBY @category must resolve against the schema field on the server side")
+                .isNotEmpty();
+        assertThat(reply.getResults().get(0).getFields()).containsKey("cnt");
+    }
+
+    /**
+     * {@code FT.CREATE ... FILTER <expression>}: the filter expression is sent raw via {@code args.add(filter)} and is
+     * evaluated by the server at indexing time. With the current bug, the schema field {@code category} is codec-encoded to
+     * {@code tenant1:category}, but the filter references {@code @category} raw. RediSearch silently treats the unresolved
+     * {@code @category} as matching every document, so the predicate becomes a no-op. We use an exclusion filter
+     * ({@code !='tutorial'}) and seed only {@code tutorial} documents: the filter should exclude every document and produce
+     * count {@code 0}. With the bug it produces count {@code 1} because the filter never fires.
+     */
+    @Test
+    void createArgsFilterExpressionMustResolveAgainstSchemaThroughCodec() {
+        String filteredIndex = "filter-expr-idx";
+
+        // Seed the hash BEFORE creating the index so the FILTER predicate is exercised during the initial scan.
+        Map<String, String> doc = new HashMap<>();
+        doc.put("title", "Filtered Redis search guide");
+        doc.put("price", "50");
+        redis.hmset("filtered:1", doc);
+
+        // Manual workaround: schema field "price" is codec-encoded to "tenant1:price"; ':' must be escaped inside the
+        // @field reference so the FT.CREATE FILTER expression parser resolves the encoded schema name. Use a NUMERIC
+        // predicate that excludes the seeded document (price=50) so the filter fires unambiguously.
+        CreateArgs<String> create = CreateArgs.<String> builder().on(CreateArgs.TargetType.HASH).withPrefix("filtered:")
+                .filter("@" + escapedFieldRef("price") + ">1000").build();
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").build();
+        redis.ftCreate(filteredIndex, create, Arrays.asList(titleField, priceField));
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        SearchReply<String, String> result = redis.ftSearch(filteredIndex, "*");
+
+        assertThat(result.getCount())
+                .as("FILTER @price>1000 must resolve against the schema field; if this fails with 1, the filter expression "
+                        + "references the field raw while the schema codec-encoded it, and the predicate is silently treated "
+                        + "as match-all")
+                .isEqualTo(0L);
+    }
+
+    /**
+     * Positive control for the document-key channel under {@code NOCONTENT}. The server returns only document IDs and the
+     * parser runs them back through {@code decodeKey}; the round-trip must yield the user-facing key the caller passed at write
+     * time ({@code HASH_DOC_KEY}), not the on-the-wire prefixed form. If this regresses, the key channel has stopped routing
+     * through the connection codec on the read path.
+     */
+    @Test
+    void noContentDocumentIdRoundTripsThroughCodec() {
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().noContent().build();
+
+        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+
+        assertThat(result.getCount()).isEqualTo(1L);
+        assertThat(result.getResults()).hasSize(1);
+        assertThat(result.getResults().get(0).getId())
+                .as("NOCONTENT document id must be decoded through the codec back to the user-facing key")
+                .isEqualTo(HASH_DOC_KEY);
+        assertThat(result.getResults().get(0).getFields()).as("NOCONTENT must suppress field payloads").isNullOrEmpty();
+    }
+
+    /**
+     * Positive control for {@code FT.DROPINDEX ... DD}. With {@code DD}, the server deletes every document the index pointed to
+     * — those keys are stored under their codec-encoded form ({@code tenant1:1}). After the drop the underlying key must be
+     * gone from the database when looked up through the same codec ({@code EXISTS} routes through {@code encodeKey}).
+     */
+    @Test
+    void dropIndexWithDeleteDocumentsRemovesCodecEncodedKeys() {
+        assertThat(redis.exists(HASH_DOC_KEY)).as("document must exist before DROPINDEX DD").isEqualTo(1L);
+
+        redis.ftDropindex(HASH_INDEX, true);
+
+        assertThat(redis.exists(HASH_DOC_KEY)).as("DROPINDEX DD must delete the underlying document at its codec-encoded key")
+                .isEqualTo(0L);
     }
 
     /**
