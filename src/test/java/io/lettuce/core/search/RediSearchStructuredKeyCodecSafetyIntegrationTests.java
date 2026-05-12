@@ -258,7 +258,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void searchParamNameMustNotBeMangledByCodec(String indexName) {
-        SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder().param(field("term"), "search").build();
+        SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder().param("term", "search").build();
 
         SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "@body:$term", args);
 
@@ -273,8 +273,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void aggregateParamNameMustNotBeMangledByCodec(String indexName) {
-        AggregateArgs<RedisKey, String> args = AggregateArgs.<RedisKey, String> builder().param(field("term"), "search")
-                .build();
+        AggregateArgs<RedisKey, String> args = AggregateArgs.<RedisKey, String> builder().param("term", "search").build();
 
         AggregationReply<RedisKey, String> result = redis.ftAggregate(indexName, "@body:$term", args);
 

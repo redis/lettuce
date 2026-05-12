@@ -63,7 +63,7 @@ public class SearchArgs<K, V> {
 
     private Optional<Duration> timeout = Optional.empty();
 
-    private final Map<K, Object> params = new HashMap<>();
+    private final Map<String, Object> params = new HashMap<>();
 
     private QueryDialects dialect = QueryDialects.DIALECT2;
 
@@ -475,7 +475,7 @@ public class SearchArgs<K, V> {
          * @param value the value of the parameter
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> param(K name, V value) {
+        public SearchArgs.Builder<K, V> param(String name, V value) {
             instance.params.put(name, value);
             return this;
         }
@@ -490,7 +490,7 @@ public class SearchArgs<K, V> {
          * @param value the binary value of the parameter
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> param(K name, byte[] value) {
+        public SearchArgs.Builder<K, V> param(String name, byte[] value) {
             instance.params.put(name, value);
             return this;
         }
@@ -634,7 +634,7 @@ public class SearchArgs<K, V> {
             args.add(CommandKeyword.PARAMS);
             args.add(params.size() * 2L);
             params.forEach((name, value) -> {
-                args.addKey(name);
+                args.add(name);
                 if (value instanceof byte[]) {
                     args.add((byte[]) value);
                 } else {

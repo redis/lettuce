@@ -94,7 +94,7 @@ public class AggregateArgs<K, V> {
 
     private Optional<WithCursor> withCursor = Optional.empty();
 
-    private final Map<K, Object> params = new HashMap<>();
+    private final Map<String, Object> params = new HashMap<>();
 
     private Optional<V> scorer = Optional.empty();
 
@@ -367,7 +367,7 @@ public class AggregateArgs<K, V> {
          * @param value the parameter value
          * @return the builder.
          */
-        public Builder<K, V> param(K name, V value) {
+        public Builder<K, V> param(String name, V value) {
             args.params.put(name, value);
             return this;
         }
@@ -389,7 +389,7 @@ public class AggregateArgs<K, V> {
          * @param value the binary parameter value (e.g., vector data)
          * @return the builder.
          */
-        public Builder<K, V> param(K name, byte[] value) {
+        public Builder<K, V> param(String name, byte[] value) {
             args.params.put(name, value);
             return this;
         }
@@ -554,7 +554,7 @@ public class AggregateArgs<K, V> {
             args.add(CommandKeyword.PARAMS);
             args.add(params.size() * 2L);
             params.forEach((key, value) -> {
-                args.addKey(key);
+                args.add(key);
                 if (value instanceof byte[]) {
                     args.add((byte[]) value);
                 } else {
