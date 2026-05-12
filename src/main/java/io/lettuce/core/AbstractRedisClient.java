@@ -37,6 +37,7 @@ import java.util.function.Supplier;
 
 import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
 import io.lettuce.core.api.BaseRedisClient;
+import reactor.core.publisher.Mono;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
 import io.lettuce.core.event.connection.ConnectionCreatedEvent;
@@ -231,10 +232,33 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      *
      * @param socketAddressSupplier address supplier for initial connect and re-connect
      * @param connectionBuilder connection builder to configure the connection
+     * @param connectionEvents connection events dispatcher
      * @param redisURI URI of the Redis instance
+     * @since 7.6
      */
     protected void connectionBuilder(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
-            ConnectionBuilder connectionBuilder, RedisURI redisURI) {
+            ConnectionBuilder connectionBuilder, ConnectionEvents connectionEvents, RedisURI redisURI) {
+
+        Mono<SocketAddress> monoWrapper = Mono.fromCompletionStage(socketAddressSupplier);
+        connectionBuilder(monoWrapper, connectionBuilder, connectionEvents, redisURI);
+
+        // If the deprecated method (or an override) did not replace the Mono we passed in,
+        // overwrite with the raw Supplier<CompletionStage> to avoid Mono.subscribe() on the hot path.
+        if (connectionBuilder.socketAddress() == monoWrapper) {
+            connectionBuilder.socketAddressSupplier(socketAddressSupplier);
+        }
+    }
+
+    /**
+     * Populate connection builder with necessary resources.
+     *
+     * @param socketAddressSupplier address supplier for initial connect and re-connect
+     * @param connectionBuilder connection builder to configure the connection
+     * @param redisURI URI of the Redis instance
+     */
+    @Deprecated
+    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
+            RedisURI redisURI) {
         connectionBuilder(socketAddressSupplier, connectionBuilder, connectionEvents, redisURI);
     }
 
@@ -247,8 +271,9 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @param redisURI URI of the Redis instance
      * @since 6.2
      */
-    protected void connectionBuilder(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
-            ConnectionBuilder connectionBuilder, ConnectionEvents connectionEvents, RedisURI redisURI) {
+    @Deprecated
+    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
+            ConnectionEvents connectionEvents, RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap();
         redisBootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT);
@@ -261,6 +286,7 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
         connectionBuilder.socketAddressSupplier(socketAddressSupplier);
     }
 
+    @Deprecated
     protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
 
         LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
@@ -349,7 +375,7 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
     protected <K, V, T extends RedisChannelHandler<K, V>> ConnectionFuture<T> initializeChannelAsync(
             ConnectionBuilder connectionBuilder) {
 
-        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = connectionBuilder.socketAddress();
+        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = connectionBuilder.socketAddressAsync();
 
         if (clientResources.eventExecutorGroup().isShuttingDown()) {
             throw new IllegalStateException("Cannot connect, Event executor group is terminated.");

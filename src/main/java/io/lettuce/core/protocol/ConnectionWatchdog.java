@@ -27,10 +27,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import io.lettuce.core.Pair;
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.ConnectionEvents;
-import io.lettuce.core.Pair;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.connection.ReconnectAttemptEvent;
 import io.lettuce.core.event.connection.ReconnectFailedEvent;
@@ -115,10 +117,36 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      * @param reconnectionListener the reconnection listener, must not be {@code null}
      * @param eventBus Event bus to emit reconnect events.
      * @param endpoint must not be {@code null}
+     * @since 7.6
      */
     public ConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
             EventExecutorGroup reconnectWorkers, Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
             ReconnectionListener reconnectionListener, EventBus eventBus, Endpoint endpoint) {
+
+        this(reconnectDelay, clientOptions, bootstrap, timer, reconnectWorkers, Mono.fromCompletionStage(socketAddressSupplier),
+                reconnectionListener, null, eventBus, endpoint);
+    }
+
+    /**
+     * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
+     * {@link Channel} when disconnected, while reconnect is true. The socketAddressSupplier can supply the reconnect address.
+     *
+     * @param reconnectDelay reconnect delay, must not be {@code null}
+     * @param clientOptions client options for the current connection, must not be {@code null}
+     * @param bootstrap Configuration for new channels, must not be {@code null}
+     * @param timer Timer used for delayed reconnect, must not be {@code null}
+     * @param reconnectWorkers executor group for reconnect tasks, must not be {@code null}
+     * @param socketAddressSupplier the socket address supplier to obtain an address for reconnection, may be {@code null}
+     * @param reconnectionListener the reconnection listener, must not be {@code null}
+     * @param connectionFacade the connection facade, must not be {@code null}
+     * @param eventBus Event bus to emit reconnect events.
+     * @param endpoint must not be {@code null}
+     */
+    @Deprecated
+    public ConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
+            EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
+            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
+            Endpoint endpoint) {
 
         LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
@@ -140,40 +168,33 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
         this.epid = endpoint.getId();
 
-        Supplier<CompletionStage<SocketAddress>> wrappedSocketAddressSupplier = wrapSocketAddressSupplier(
-                socketAddressSupplier);
+        Supplier<CompletionStage<SocketAddress>> wrappedSocketAddressSupplier = wrapSocketAddressSupplierAsync(
+                socketAddressSupplier::toFuture);
         this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier);
 
         resetReconnectDelay();
     }
 
-    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplier(
-            Supplier<CompletionStage<SocketAddress>> source) {
-        return () -> {
-            try {
-                return source.get().handle((addr, t) -> {
-                    if (t != null) {
-                        log(remoteAddress, t);
-                        return remoteAddress;
-                    }
-                    remoteAddress = addr;
-                    return addr;
-                });
-            } catch (Exception e) {
-                log(remoteAddress, e);
-                return CompletableFuture.completedFuture(remoteAddress);
+    @Deprecated
+    protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> source) {
+        return source.doOnNext(addr -> remoteAddress = addr).onErrorResume(t -> {
+
+            if (logger.isDebugEnabled()) {
+                logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
+                        + ", reusing cached address " + remoteAddress, t);
+            } else {
+                logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
+                        + ", reusing cached address " + remoteAddress);
             }
-        };
+
+            return Mono.just(remoteAddress);
+        });
     }
 
-    private void log(SocketAddress cached, Throwable t) {
-        if (logger.isDebugEnabled()) {
-            logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
-                    + ", reusing cached address " + cached, t);
-        } else {
-            logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
-                    + ", reusing cached address " + cached);
-        }
+    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplierAsync(
+            Supplier<CompletionStage<SocketAddress>> source) {
+        Mono<SocketAddress> delegate = wrapSocketAddressSupplier(Mono.fromCompletionStage(source));
+        return delegate::toFuture;
     }
 
     void prepareClose() {

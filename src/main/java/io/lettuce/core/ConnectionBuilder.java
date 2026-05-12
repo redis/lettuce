@@ -29,6 +29,7 @@ import java.util.function.Supplier;
 
 import io.lettuce.core.protocol.MaintenanceAwareComponent;
 import io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog;
+import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandEncoder;
 import io.lettuce.core.protocol.CommandHandler;
@@ -64,7 +65,9 @@ public class ConnectionBuilder {
 
     public static final AttributeKey<Throwable> INIT_FAILURE = AttributeKey.valueOf("ConnectionBuilder.INIT_FAILURE");
 
-    private Supplier<CompletionStage<SocketAddress>> socketAddressSupplier;
+    private Mono<SocketAddress> socketAddressSupplier;
+
+    private Supplier<CompletionStage<SocketAddress>> socketAddressSupplierAsync;
 
     private ConnectionEvents connectionEvents;
 
@@ -146,21 +149,24 @@ public class ConnectionBuilder {
         }
 
         LettuceAssert.assertState(bootstrap != null, "Bootstrap must be set for autoReconnect=true");
-        LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set for autoReconnect=true");
+        LettuceAssert.assertState(socketAddressSupplierAsync != null,
+                "SocketAddressSupplier must be set for autoReconnect=true");
+
+        Supplier<CompletionStage<SocketAddress>> supplier = socketAddressSupplierAsync;
 
         ConnectionWatchdog watchdog;
         if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
             MaintenanceAwareConnectionWatchdog maintenanceAwareWatchdog = new MaintenanceAwareConnectionWatchdog(
                     clientResources.reconnectDelay(), clientOptions, bootstrap, clientResources.timer(),
-                    clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
-                    clientResources.eventBus(), endpoint);
+                    clientResources.eventExecutorGroup(), supplier, reconnectionListener, clientResources.eventBus(),
+                    endpoint);
             if (connection.getChannelWriter() instanceof MaintenanceAwareComponent) {
                 maintenanceAwareWatchdog.setMaintenanceEventListener((MaintenanceAwareComponent) connection.getChannelWriter());
             }
             watchdog = maintenanceAwareWatchdog;
         } else {
             watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
-                    clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
+                    clientResources.timer(), clientResources.eventExecutorGroup(), supplier, reconnectionListener,
                     clientResources.eventBus(), endpoint);
         }
 
@@ -174,14 +180,28 @@ public class ConnectionBuilder {
         return new PlainChannelInitializer(this::buildHandlers, clientResources);
     }
 
-    public ConnectionBuilder socketAddressSupplier(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
+    @Deprecated
+    public ConnectionBuilder socketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
         this.socketAddressSupplier = socketAddressSupplier;
+        this.socketAddressSupplierAsync = socketAddressSupplier::toFuture;
         return this;
     }
 
-    public Supplier<CompletionStage<SocketAddress>> socketAddress() {
+    @Deprecated
+    public Mono<SocketAddress> socketAddress() {
         LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set");
         return socketAddressSupplier;
+    }
+
+    public ConnectionBuilder socketAddressSupplier(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
+        this.socketAddressSupplierAsync = socketAddressSupplier;
+        this.socketAddressSupplier = Mono.fromCompletionStage(socketAddressSupplier);
+        return this;
+    }
+
+    public Supplier<CompletionStage<SocketAddress>> socketAddressAsync() {
+        LettuceAssert.assertState(socketAddressSupplierAsync != null, "SocketAddressSupplier must be set");
+        return socketAddressSupplierAsync;
     }
 
     public ConnectionBuilder timeout(Duration timeout) {

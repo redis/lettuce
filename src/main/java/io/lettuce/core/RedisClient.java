@@ -686,6 +686,36 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
+     * Resolve a {@link RedisURI} to a {@link SocketAddress}. Resolution is performed either using Redis Sentinel (if the
+     * {@link RedisURI} is configured with Sentinels) or via DNS resolution.
+     * <p>
+     * Subclasses of {@link RedisClient} may override that method.
+     *
+     * @param redisURI must not be {@code null}.
+     * @return the resolved {@link SocketAddress}.
+     * @see ClientResources#addressResolverGroup()
+     * @see RedisURI#getSentinels()
+     * @see RedisURI#getSentinelMasterId()
+     * @deprecated since 6.6, use {@link #getSocketAddressStage(RedisURI)} instead.
+     */
+    @Deprecated
+    protected Mono<SocketAddress> getSocketAddress(RedisURI redisURI) {
+
+        return Mono.defer(() -> {
+
+            if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
+                logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(),
+                        redisURI.getSentinelMasterId());
+                return Mono.fromCompletionStage(lookupRedisAsync(redisURI))
+                        .switchIfEmpty(Mono.error(new RedisConnectionException(
+                                "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId())));
+            } else {
+                return Mono.just(getResources().socketAddressResolver().resolve(redisURI));
+            }
+        });
+    }
+
+    /**
      * Get a {@link Supplier} that produces a {@link CompletionStage} resolving {@link RedisURI} to a {@link SocketAddress}.
      * Resolution is performed either using Redis Sentinel (if the {@link RedisURI} is configured with Sentinels) or via DNS
      * resolution.
@@ -697,23 +727,10 @@ public class RedisClient extends AbstractRedisClient {
      * @see ClientResources#addressResolverGroup()
      * @see RedisURI#getSentinels()
      * @see RedisURI#getSentinelMasterId()
+     * @since 7.6
      */
-    protected Supplier<CompletionStage<SocketAddress>> getSocketAddress(RedisURI redisURI) {
-        return () -> {
-            if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
-                logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(),
-                        redisURI.getSentinelMasterId());
-                return lookupRedisAsync(redisURI).thenApply(addr -> {
-                    if (addr == null) {
-                        throw new RedisConnectionException(
-                                "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId());
-                    }
-                    return addr;
-                });
-            } else {
-                return CompletableFuture.completedFuture(getResources().socketAddressResolver().resolve(redisURI));
-            }
-        };
+    protected Supplier<CompletionStage<SocketAddress>> getSocketAddressStage(RedisURI redisURI) {
+        return () -> getSocketAddress(redisURI).toFuture();
     }
 
     /**
@@ -745,7 +762,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplier(RedisURI redisURI) {
-        Supplier<CompletionStage<SocketAddress>> delegate = getSocketAddress(redisURI);
+        Supplier<CompletionStage<SocketAddress>> delegate = getSocketAddressStage(redisURI);
         return () -> delegate.get().thenApply(addr -> {
             logger.debug("Resolved SocketAddress {} using {}", addr, redisURI);
             return addr;
