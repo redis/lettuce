@@ -346,7 +346,7 @@ public class CreateArgs<K> {
      * Get the filter for the index.
      *
      * @return the filter
-     * @see Builder#filter(Object)
+     * @see Builder#filter(String)
      */
     public Optional<String> getFilter() {
         return filter;
