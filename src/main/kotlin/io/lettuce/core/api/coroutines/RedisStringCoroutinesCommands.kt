@@ -275,6 +275,37 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
     suspend fun incrbyfloat(key: K, amount: Double): Double?
 
     /**
+     * Increment the integer value of a key by 1 using INCREX.
+     *
+     * @param key the key.
+     * @return IncrexValue containing the new value and actual increment applied.
+     * @since 7.6
+     */
+    suspend fun increx(key: K): IncrexValue<Long>?
+
+    /**
+     * Increment the integer value of a key by the given amount with bounds, overflow, and expiration options.
+     *
+     * @param key the key.
+     * @param amount the increment type: long.
+     * @param increxArgs the [IncrexArgs] specifying bounds, overflow, and expiration options.
+     * @return IncrexValue containing the new value and actual increment applied.
+     * @since 7.6
+     */
+    suspend fun increx(key: K, amount: Long, increxArgs: IncrexArgs): IncrexValue<Long>?
+
+    /**
+     * Increment the float value of a key by the given amount with bounds, overflow, and expiration options.
+     *
+     * @param key the key.
+     * @param amount the increment type: Double.
+     * @param increxArgs the [IncrexArgs] specifying bounds, overflow, and expiration options.
+     * @return IncrexValue containing the new value and actual increment applied.
+     * @since 7.6
+     */
+    suspend fun increxfloat(key: K, amount: Double, increxArgs: IncrexArgs): IncrexValue<Double>?
+
+    /**
      * Get the values of all the given keys.
      *
      * @param keys the key.

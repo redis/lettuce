@@ -54,7 +54,7 @@ public enum CommandType implements ProtocolKeyword {
 
     // Numeric
 
-    DECR, DECRBY, INCR, INCRBY, INCRBYFLOAT,
+    DECR, DECRBY, INCR, INCRBY, INCRBYFLOAT, INCREX,
 
     // List
 

@@ -1659,6 +1659,21 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<IncrexValue<Long>> increx(K key) {
+        return createMono(() -> commandBuilder.increx(key));
+    }
+
+    @Override
+    public Mono<IncrexValue<Long>> increx(K key, long amount, IncrexArgs increxArgs) {
+        return createMono(() -> commandBuilder.increx(key, amount, increxArgs));
+    }
+
+    @Override
+    public Mono<IncrexValue<Double>> increxfloat(K key, double amount, IncrexArgs increxArgs) {
+        return createMono(() -> commandBuilder.increxfloat(key, amount, increxArgs));
+    }
+
+    @Override
     public Mono<String> info() {
         return createMono(commandBuilder::info);
     }

@@ -24,6 +24,8 @@ import java.util.Map;
 
 import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.GetExArgs;
+import io.lettuce.core.IncrexArgs;
+import io.lettuce.core.IncrexValue;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.SetArgs;
@@ -328,6 +330,37 @@ public interface NodeSelectionStringCommands<K, V> {
      * @return Double bulk-string-reply the value of {@code key} after the increment.
      */
     Executions<Double> incrbyfloat(K key, double amount);
+
+    /**
+     * Increment the integer value of a key by 1 using INCREX.
+     *
+     * @param key the key.
+     * @return IncrexValue containing the new value and actual increment applied.
+     * @since 7.6
+     */
+    Executions<IncrexValue<Long>> increx(K key);
+
+    /**
+     * Increment the integer value of a key by the given amount with bounds, overflow, and expiration options.
+     *
+     * @param key the key.
+     * @param amount the increment type: long.
+     * @param increxArgs the {@link IncrexArgs} specifying bounds, overflow, and expiration options.
+     * @return IncrexValue containing the new value and actual increment applied.
+     * @since 7.6
+     */
+    Executions<IncrexValue<Long>> increx(K key, long amount, IncrexArgs increxArgs);
+
+    /**
+     * Increment the float value of a key by the given amount with bounds, overflow, and expiration options.
+     *
+     * @param key the key.
+     * @param amount the increment type: double.
+     * @param increxArgs the {@link IncrexArgs} specifying bounds, overflow, and expiration options.
+     * @return IncrexValue containing the new value and actual increment applied.
+     * @since 7.6
+     */
+    Executions<IncrexValue<Double>> increxfloat(K key, double amount, IncrexArgs increxArgs);
 
     /**
      * Get the values of all the given keys.
