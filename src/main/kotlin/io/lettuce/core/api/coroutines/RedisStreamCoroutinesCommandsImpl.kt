@@ -46,8 +46,6 @@ internal class RedisStreamCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun xnack(key: K, group: K, mode: XNackMode, vararg messageIds: String): Long? = ops.xnack(key, group, mode, *messageIds).awaitFirstOrNull()
 
-    override suspend fun xnack(key: K, group: K, mode: XNackMode, args: XNackArgs, vararg messageIds: String): Long? = ops.xnack(key, group, mode, args, *messageIds).awaitFirstOrNull()
-
     override suspend fun xadd(key: K, body: Map<K, V>): String? = ops.xadd(key, body).awaitFirstOrNull()
 
     override suspend fun xadd(key: K, args: XAddArgs, body: Map<K, V>): String? = ops.xadd(key, args, body).awaitFirstOrNull()

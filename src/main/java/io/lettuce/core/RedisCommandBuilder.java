@@ -3270,10 +3270,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, Long> xnack(K key, K group, XNackMode mode, String[] messageIds) {
-        return xnack(key, group, mode, null, messageIds);
-    }
-
-    public Command<K, V, Long> xnack(K key, K group, XNackMode mode, XNackArgs xNackArgs, String[] messageIds) {
         notNullKey(key);
         LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(mode, "XNackMode " + MUST_NOT_BE_NULL);
@@ -3286,10 +3282,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         for (String messageId : messageIds) {
             args.add(messageId);
-        }
-
-        if (xNackArgs != null) {
-            xNackArgs.build(args);
         }
 
         return createCommand(XNACK, new IntegerOutput<>(codec), args);
