@@ -77,7 +77,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
 
     @BeforeEach
     void setUp() {
-        this.connection.async().flushall();
+        this.redis.flushall();
     }
 
     @Test
