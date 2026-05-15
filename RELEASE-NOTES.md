@@ -1,17 +1,17 @@
-Lettuce 7.2.2 RELEASE NOTES
+Lettuce 7.2.3 RELEASE NOTES
 ==============================
 
-The Lettuce team is pleased to announce the Lettuce 7.2.2 patch release!
+The Lettuce team is pleased to announce the Lettuce 7.2.3 patch release!
 
-Lettuce 7.2.2 supports Redis 2.6+ up to Redis 8.x. In terms of Java runtime, Lettuce requires at least Java 8 and
+Lettuce 7.2.3 supports Redis 2.6+ up to Redis 8.x. In terms of Java runtime, Lettuce requires at least Java 8 and
 works with Java 24. The driver is tested against Redis 8.4, Redis 8.2, Redis 8.0, Redis 7.4 and Redis 7.2.
 
-Thanks to all contributors who made Lettuce 7.2.2.RELEASE possible.
+Thanks to all contributors who made Lettuce 7.2.3.RELEASE possible.
 
 📗 Links
-Reference documentation: https://lettuce.io/core/7.2.2.RELEASE/reference/
+Reference documentation: https://lettuce.io/core/7.2.3.RELEASE/reference/
 
-🐞 Bug Fixes
-* ERR unknown subcommand 'MYID' with Azure Managed Redis #3495 (#3693) by @a-TODO-rov in https://github.com/redis/lettuce/pull/3700
+## 💡 Other
+*  Bump Netty 4.2.13.Final in https://github.com/redis/lettuce/pull/3754
 
-**Full Changelog**: https://github.com/redis/lettuce/compare/7.2.1.RELEASE...7.2.2.RELEASE
+**Full Changelog**: https://github.com/redis/lettuce/compare/7.2.2.RELEASE...7.2.3.RELEASE
