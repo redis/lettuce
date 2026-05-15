@@ -6,67 +6,51 @@
  */
 package io.lettuce.core.array;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.Range;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
-import io.lettuce.test.condition.RedisConditions;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+import javax.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
- * Integration tests for Redis Array commands. Requires Redis >= 8.8.0.
+ * Integration tests for Redis Array commands.
  *
  * @author Aleksandar Todorov
+ * @since 7.6
  */
 @Tag(INTEGRATION_TEST)
+@ExtendWith(LettuceExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledOnCommand("ARSET")
-public class RedisArrayIntegrationTests {
+public class RedisArrayIntegrationTests extends TestSupport {
 
     private static final String KEY = "test:array";
 
-    protected static RedisClient client;
+    protected final RedisCommands<String, String> redis;
 
-    protected static StatefulRedisConnection<String, String> connection;
-
-    protected static RedisCommands<String, String> redis;
-
-    public RedisArrayIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(6480).build();
-        client = RedisClient.create(redisURI);
-        client.setOptions(getOptions());
-        connection = client.connect();
-        redis = connection.sync();
-    }
-
-    protected ClientOptions getOptions() {
-        return ClientOptions.builder().build();
+    @Inject
+    protected RedisArrayIntegrationTests(RedisCommands<String, String> redis) {
+        this.redis = redis;
     }
 
     @BeforeEach
     public void prepare() {
-        assumeTrue(RedisConditions.of(redis).hasCommandArity("ARSET", -4));
         redis.del(KEY);
     }
 
     @AfterAll
-    static void teardown() {
-        if (client != null) {
-            client.shutdown();
-        }
+    void teardown() {
+        redis.del(KEY);
     }
 
     // --- ARSET / ARGET ---

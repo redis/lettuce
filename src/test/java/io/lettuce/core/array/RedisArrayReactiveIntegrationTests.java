@@ -6,10 +6,14 @@
  */
 package io.lettuce.core.array;
 
-import io.lettuce.test.ReactiveSyncInvocationHandler;
+import javax.inject.Inject;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.test.ReactiveSyncInvocationHandler;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 
@@ -23,9 +27,9 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 @Tag(INTEGRATION_TEST)
 public class RedisArrayReactiveIntegrationTests extends RedisArrayIntegrationTests {
 
-    public RedisArrayReactiveIntegrationTests() {
-        super();
-        redis = ReactiveSyncInvocationHandler.sync(connection);
+    @Inject
+    RedisArrayReactiveIntegrationTests(StatefulRedisConnection<String, String> connection) {
+        super(ReactiveSyncInvocationHandler.sync(connection));
     }
 
     // armget and argetrange return arrays with null holes for empty slots.

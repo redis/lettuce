@@ -6,9 +6,14 @@
  */
 package io.lettuce.core.array;
 
-import io.lettuce.core.ClientOptions;
-import io.lettuce.core.protocol.ProtocolVersion;
+import javax.inject.Inject;
+
 import org.junit.jupiter.api.Tag;
+
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.protocol.ProtocolVersion;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 
@@ -21,9 +26,14 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 @Tag(INTEGRATION_TEST)
 public class RedisArrayResp2IntegrationTests extends RedisArrayIntegrationTests {
 
-    @Override
-    protected ClientOptions getOptions() {
-        return ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build();
+    @Inject
+    RedisArrayResp2IntegrationTests(RedisClient client) {
+        super(connectWithResp2(client));
+    }
+
+    private static RedisCommands<String, String> connectWithResp2(RedisClient client) {
+        client.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build());
+        return client.connect().sync();
     }
 
 }
