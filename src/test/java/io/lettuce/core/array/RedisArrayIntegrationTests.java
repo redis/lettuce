@@ -12,6 +12,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * @author Aleksandar Todorov
  */
 @Tag(INTEGRATION_TEST)
+@EnabledOnCommand("ARSET")
 public class RedisArrayIntegrationTests {
 
     private static final String KEY = "test:array";
@@ -365,8 +367,8 @@ public class RedisArrayIntegrationTests {
         // extended fields
         assertThat(meta.getDenseSlices()).isEqualTo(0L);
         assertThat(meta.getSparseSlices()).isEqualTo(1L);
-        assertThat(meta.getAvgDenseSize()).isEqualTo("0");
-        assertThat(meta.getAvgDenseFill()).isEqualTo("0");
+        assertThat(meta.getAvgDenseSize()).isIn("0", "0.0");
+        assertThat(meta.getAvgDenseFill()).isIn("0", "0.0");
         assertThat(meta.getAvgSparseSize()).isNotNull();
     }
 

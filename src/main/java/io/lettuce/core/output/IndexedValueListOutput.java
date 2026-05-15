@@ -49,6 +49,10 @@ public class IndexedValueListOutput<K, V> extends CommandOutput<K, V, List<Index
 
     @Override
     public void set(ByteBuffer bytes) {
+        if (!initialized) {
+            multi(1);
+        }
+
         if (hasIndex) {
             V value = (bytes != null) ? codec.decodeValue(bytes) : null;
             subscriber.onNext(output, new IndexedValue<>(currentIndex, value));
@@ -59,7 +63,7 @@ public class IndexedValueListOutput<K, V> extends CommandOutput<K, V, List<Index
     @Override
     public void multi(int count) {
         if (!initialized) {
-            output = OutputFactory.newList(count / 2);
+            output = OutputFactory.newList(Math.max(1, count / 2));
             initialized = true;
         }
     }
