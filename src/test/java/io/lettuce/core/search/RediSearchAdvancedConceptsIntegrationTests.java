@@ -11,8 +11,8 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.search.arguments.ScoringFunction;
 import io.lettuce.core.search.arguments.*;
+import io.lettuce.test.Wait;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -718,9 +718,9 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("stem:2", "content_stemmed", "runs fast");
         redis.hset("stem:3", "content_stemmed", "runner speed");
 
-        // Search for "run" should find all variations due to stemming
-        SearchReply<String, String> results = redis.ftSearch("stemming-idx", "@content_stemmed:run");
-        assertThat(results.getCount()).isGreaterThanOrEqualTo(2); // Should find "running" and "runs"
+        // Search for "run" should find all variations due to stemming. Poll to absorb the brief
+        // indexing lag between HSET and the keyspace-notification driven RediSearch indexer.
+        Wait.untilTrue(() -> redis.ftSearch("stemming-idx", "@content_stemmed:run").getCount() >= 2).waitOrTimeout();
 
         redis.ftDropindex("stemming-idx");
 
@@ -738,12 +738,12 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("nostem:3", "content_exact", "runner speed");
         redis.hset("nostem:4", "content_exact", "run now");
 
-        // Search for "run" should only find exact matches
-        results = redis.ftSearch("nostemming-idx", "@content_exact:run");
-        assertThat(results.getCount()).isEqualTo(1); // Only "run now"
+        // Search for "run" should only find exact matches. Poll the first search against the
+        // freshly-populated index to absorb the indexing lag.
+        Wait.untilEquals(1L, () -> redis.ftSearch("nostemming-idx", "@content_exact:run").getCount()).waitOrTimeout();
 
         // Search for "running" should only find exact matches
-        results = redis.ftSearch("nostemming-idx", "@content_exact:running");
+        SearchReply<String, String> results = redis.ftSearch("nostemming-idx", "@content_exact:running");
         assertThat(results.getCount()).isEqualTo(1); // Only "running quickly"
 
         // Search for "runs" should only find exact matches
@@ -767,9 +767,9 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         mixedDoc.put("exact_content", "running marathon");
         redis.hmset("mixed:1", mixedDoc);
 
-        // Search in stemmed field should find with "run"
-        results = redis.ftSearch("mixed-idx", "@stemmed_content:run");
-        assertThat(results.getCount()).isEqualTo(1);
+        // Search in stemmed field should find with "run". Poll the first search against the
+        // freshly-populated index to absorb the indexing lag.
+        Wait.untilEquals(1L, () -> redis.ftSearch("mixed-idx", "@stemmed_content:run").getCount()).waitOrTimeout();
 
         // Search in exact field should not find with "run"
         results = redis.ftSearch("mixed-idx", "@exact_content:run");
