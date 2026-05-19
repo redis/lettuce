@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.api.sync;
 
+import io.lettuce.core.bf.BfInfoValue;
 import io.lettuce.core.bf.arguments.BfInfoArgs;
 import io.lettuce.core.bf.BfInsertValue;
 import io.lettuce.core.bf.arguments.BfInsertArgs;
@@ -26,7 +27,6 @@ import io.lettuce.core.bf.arguments.BfReserveArgs;
 import io.lettuce.core.bf.BfScanDumpValue;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Synchronous executed commands for Bloom Filter
@@ -45,9 +45,9 @@ public interface RedisBloomFilterCommands<K, V> {
 
     Boolean bfExists(K key, V value);
 
-    Map<String, Long> bfInfo(K key);
+    BfInfoValue bfInfo(K key);
 
-    Map<String, Long> bfInfo(K key, BfInfoArgs infoArgs);
+    BfInfoValue bfInfo(K key, BfInfoArgs infoArgs);
 
     @SuppressWarnings("unchecked")
     List<BfInsertValue> bfInsert(K key, V... values);
