@@ -681,4 +681,12 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(res.getIncrement()).isEqualTo(5.0);
     }
 
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxFloatThenIntFails() {
+        redis.set(key, "1.5");
+        IncrexArgs args = new IncrexArgs();
+        assertThatThrownBy(() -> redis.increx(key, 1, args)).isInstanceOf(RedisCommandExecutionException.class);
+    }
+
 }
