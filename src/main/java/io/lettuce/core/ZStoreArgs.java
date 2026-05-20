@@ -27,7 +27,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * chain the method calls: {@code weights(1, 2).max()}.
  *
  * <p>
- * {@link ZAddArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
+ * {@link ZStoreArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Will Glozer
  * @author Xy Ma
@@ -50,7 +50,7 @@ public class ZStoreArgs extends ZAggregateArgs {
         /**
          * Creates new {@link ZStoreArgs} setting {@literal WEIGHTS} using long.
          *
-         * @return new {@link ZAddArgs} with {@literal WEIGHTS} set.
+         * @return new {@link ZStoreArgs} with {@literal WEIGHTS} set.
          * @see ZStoreArgs#weights(long[])
          * @deprecated use {@link #weights(double...)}.
          */
@@ -62,7 +62,7 @@ public class ZStoreArgs extends ZAggregateArgs {
         /**
          * Creates new {@link ZStoreArgs} setting {@literal WEIGHTS}.
          *
-         * @return new {@link ZAddArgs} with {@literal WEIGHTS} set.
+         * @return new {@link ZStoreArgs} with {@literal WEIGHTS} set.
          * @see ZStoreArgs#weights(double...)
          */
         public static ZStoreArgs weights(double... weights) {
@@ -72,7 +72,7 @@ public class ZStoreArgs extends ZAggregateArgs {
         /**
          * Creates new {@link ZStoreArgs} setting {@literal AGGREGATE SUM}.
          *
-         * @return new {@link ZAddArgs} with {@literal AGGREGATE SUM} set.
+         * @return new {@link ZStoreArgs} with {@literal AGGREGATE SUM} set.
          * @see ZStoreArgs#sum()
          */
         public static ZStoreArgs sum() {
@@ -82,7 +82,7 @@ public class ZStoreArgs extends ZAggregateArgs {
         /**
          * Creates new {@link ZStoreArgs} setting {@literal AGGREGATE MIN}.
          *
-         * @return new {@link ZAddArgs} with {@literal AGGREGATE MIN} set.
+         * @return new {@link ZStoreArgs} with {@literal AGGREGATE MIN} set.
          * @see ZStoreArgs#sum()
          */
         public static ZStoreArgs min() {
@@ -92,11 +92,22 @@ public class ZStoreArgs extends ZAggregateArgs {
         /**
          * Creates new {@link ZStoreArgs} setting {@literal AGGREGATE MAX}.
          *
-         * @return new {@link ZAddArgs} with {@literal AGGREGATE MAX} set.
+         * @return new {@link ZStoreArgs} with {@literal AGGREGATE MAX} set.
          * @see ZStoreArgs#sum()
          */
         public static ZStoreArgs max() {
             return new ZStoreArgs().max();
+        }
+
+        /**
+         * Creates new {@link ZStoreArgs} setting {@literal AGGREGATE COUNT}.
+         *
+         * @return new {@link ZStoreArgs} with {@literal AGGREGATE COUNT} set.
+         * @see ZStoreArgs#count()
+         * @since 7.6
+         */
+        public static ZStoreArgs count() {
+            return new ZStoreArgs().count();
         }
 
     }
@@ -162,6 +173,22 @@ public class ZStoreArgs extends ZAggregateArgs {
     public ZStoreArgs max() {
 
         super.max();
+        return this;
+    }
+
+    /**
+     * Aggregate scores of elements existing across multiple sets by using the number of input sets that contain each element.
+     * When {@code COUNT} is specified, the scores in the input sets are ignored. {@code WEIGHTS} are not ignored: the score of
+     * each element becomes the sum of the weights specified for the input sets that contain it (defaulting to {@code 1} per set
+     * when {@code WEIGHTS} is not provided).
+     *
+     * @return {@code this} {@link ZStoreArgs}.
+     * @since 7.6
+     */
+    @Override
+    public ZStoreArgs count() {
+
+        super.count();
         return this;
     }
 
