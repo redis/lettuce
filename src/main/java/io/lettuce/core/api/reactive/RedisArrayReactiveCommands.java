@@ -38,8 +38,20 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arset/">Redis Documentation: ARSET</a>
      */
-    @Experimental
     Mono<Long> arset(K key, long index, V value);
+
+    /**
+     * Set one or more contiguous values starting at the given index in the array stored at {@code key}.
+     *
+     * @param key the key of the array.
+     * @param index the starting index.
+     * @param values the values to store at consecutive indices.
+     * @return the number of new slots created.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/arset/">Redis Documentation: ARSET</a>
+     */
+    @SuppressWarnings("unchecked")
+    Mono<Long> arset(K key, long index, V... values);
 
     /**
      * Set multiple index-value pairs in the array stored at {@code key}.
@@ -50,7 +62,6 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/armset/">Redis Documentation: ARMSET</a>
      */
-    @Experimental
     Mono<Long> armset(K key, Map<Long, V> indexValueMap);
 
     /**
@@ -62,7 +73,6 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arget/">Redis Documentation: ARGET</a>
      */
-    @Experimental
     Mono<V> arget(K key, long index);
 
     /**
@@ -74,7 +84,6 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/armget/">Redis Documentation: ARMGET</a>
      */
-    @Experimental
     Flux<V> armget(K key, long... indices);
 
     /**
@@ -89,7 +98,6 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardel/">Redis Documentation: ARDEL</a>
      */
-    @Experimental
     Mono<Long> ardel(K key, long index);
 
     /**
@@ -101,8 +109,19 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardel/">Redis Documentation: ARDEL</a>
      */
-    @Experimental
     Mono<Long> ardel(K key, long... indices);
+
+    /**
+     * Delete elements in the given range (inclusive).
+     *
+     * @param key the key of the array.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
+     * @return the number of elements deleted.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
+     */
+    Mono<Long> ardelrange(K key, long start, long end);
 
     /**
      * Delete elements in the given ranges. Each range is a start/end pair (inclusive).
@@ -113,7 +132,6 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
      */
-    @Experimental
     @SuppressWarnings("unchecked")
     Mono<Long> ardelrange(K key, Range<Long>... ranges);
 
@@ -125,7 +143,6 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlen/">Redis Documentation: ARLEN</a>
      */
-    @Experimental
     Mono<Long> arlen(K key);
 
     /**
@@ -136,7 +153,6 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arcount/">Redis Documentation: ARCOUNT</a>
      */
-    @Experimental
     Mono<Long> arcount(K key);
 
     /**
@@ -145,13 +161,13 @@ public interface RedisArrayReactiveCommands<K, V> {
      * The range must not exceed 1,000,000 items.
      *
      * @param key the key of the array.
-     * @param range the range of indices.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
      * @return a list of values (with {@code null} for empty slots).
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/argetrange/">Redis Documentation: ARGETRANGE</a>
      */
-    @Experimental
-    Flux<V> argetrange(K key, Range<Long> range);
+    Flux<V> argetrange(K key, long start, long end);
 
     /**
      * Get the next insert index for the array.
@@ -161,7 +177,6 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arnext/">Redis Documentation: ARNEXT</a>
      */
-    @Experimental
     Mono<Long> arnext(K key);
 
     /**
@@ -173,32 +188,44 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlastitems/">Redis Documentation: ARLASTITEMS</a>
      */
-    @Experimental
     Flux<V> arlastitems(K key, long count);
 
     /**
-     * Get the last N items in reverse insertion order.
+     * Get the last N items, optionally in reverse order.
      *
      * @param key the key of the array.
      * @param count the number of items to return.
-     * @return a list of values in reverse insertion order.
+     * @param rev {@code true} to return items in reverse insertion order, {@code false} for insertion order.
+     * @return a list of values.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlastitems/">Redis Documentation: ARLASTITEMS</a>
      */
-    @Experimental
-    Flux<V> arlastitemsRev(K key, long count);
+    Flux<V> arlastitems(K key, long count, boolean rev);
 
     /**
      * Scan populated entries in a range, returning index/value pairs.
      *
      * @param key the key of the array.
-     * @param scanArgs the scan arguments (range and optional limit).
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
      * @return a list of {@link IndexedValue} pairs.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arscan/">Redis Documentation: ARSCAN</a>
      */
-    @Experimental
-    Flux<IndexedValue<V>> arscan(K key, ArScanArgs scanArgs);
+    Flux<IndexedValue<V>> arscan(K key, long start, long end);
+
+    /**
+     * Scan populated entries in a range with a limit, returning index/value pairs.
+     *
+     * @param key the key of the array.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
+     * @param limit the maximum number of entries to return.
+     * @return a list of {@link IndexedValue} pairs.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/arscan/">Redis Documentation: ARSCAN</a>
+     */
+    Flux<IndexedValue<V>> arscan(K key, long start, long end, long limit);
 
     /**
      * Search for elements matching predicates, returning matching indices.
@@ -213,10 +240,10 @@ public interface RedisArrayReactiveCommands<K, V> {
     Flux<Long> argrep(K key, ArGrepArgs grepArgs);
 
     /**
-     * Search for elements matching predicates, returning index/value pairs.
+     * Search for elements matching predicates, returning index/value pairs. WITHVALUES is automatically applied.
      *
      * @param key the key of the array.
-     * @param grepArgs the grep arguments (range, predicates, flags). WITHVALUES is automatically set.
+     * @param grepArgs the grep arguments (range, predicates, flags).
      * @return a list of matching {@link IndexedValue} pairs.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/argrep/">Redis Documentation: ARGREP</a>
@@ -228,40 +255,63 @@ public interface RedisArrayReactiveCommands<K, V> {
      * Perform an aggregate operation (SUM, MIN, MAX) over elements in a range.
      *
      * @param key the key of the array.
-     * @param range the range of indices.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
      * @param operation the aggregate operation.
      * @return the result as a value, or {@code null} if the range is empty or values are non-numeric.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
-    @Experimental
-    Mono<V> aropAggregate(K key, Range<Long> range, ArAggregateType operation);
+    Mono<V> aropAggregate(K key, long start, long end, ArAggregateType operation);
 
     /**
-     * Perform a count/bitwise operation (AND, OR, XOR, USED) over elements in a range.
+     * Perform a bitwise operation (AND, OR, XOR) over elements in a range.
      *
      * @param key the key of the array.
-     * @param range the range of indices.
-     * @param operation the count operation.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
+     * @param operation the bitwise operation.
      * @return the result as a long.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
-    @Experimental
-    Mono<Long> aropCount(K key, Range<Long> range, ArCountType operation);
+    Mono<Long> aropBitwise(K key, long start, long end, ArBitwiseType operation);
+
+    /**
+     * Count the number of non-empty (populated) elements in a range (AROP USED).
+     *
+     * @param key the key of the array.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
+     * @return the count of non-empty elements.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
+     */
+    Mono<Long> aropCount(K key, long start, long end);
 
     /**
      * Count occurrences of a value in a range (AROP MATCH).
      *
      * @param key the key of the array.
-     * @param range the range of indices.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
      * @param matchValue the value to match.
      * @return the count of matching elements.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
-    @Experimental
-    Mono<Long> aropMatch(K key, Range<Long> range, V matchValue);
+    Mono<Long> aropCount(K key, long start, long end, V matchValue);
+
+    /**
+     * Insert a single value at the next available index.
+     *
+     * @param key the key of the array.
+     * @param value the value to insert.
+     * @return the index used.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/arinsert/">Redis Documentation: ARINSERT</a>
+     */
+    Mono<Long> arinsert(K key, V value);
 
     /**
      * Insert one or more values at the next available index.
@@ -272,9 +322,20 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinsert/">Redis Documentation: ARINSERT</a>
      */
-    @Experimental
     @SuppressWarnings("unchecked")
     Mono<Long> arinsert(K key, V... values);
+
+    /**
+     * Insert a single value in a ring buffer fashion, wrapping around when the size is exceeded.
+     *
+     * @param key the key of the array.
+     * @param size the ring buffer size.
+     * @param value the value to insert.
+     * @return the index used.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/arring/">Redis Documentation: ARRING</a>
+     */
+    Mono<Long> arring(K key, long size, V value);
 
     /**
      * Insert values in a ring buffer fashion, wrapping around when the size is exceeded.
@@ -286,7 +347,6 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arring/">Redis Documentation: ARRING</a>
      */
-    @Experimental
     @SuppressWarnings("unchecked")
     Mono<Long> arring(K key, long size, V... values);
 
@@ -299,29 +359,28 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arseek/">Redis Documentation: ARSEEK</a>
      */
-    @Experimental
     Mono<Long> arseek(K key, long index);
 
     /**
-     * Get metadata about the array (7 top-level fields).
+     * Get metadata about the array. Known fields are available via typed getters; the raw server map is accessible via
+     * {@link ArrayInfo#getInfo()};
      *
      * @param key the key of the array.
-     * @return the array metadata.
+     * @return the array metadata, or {@code null} if the key does not exist.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
      */
-    @Experimental
-    Mono<ArrayMetadata> arinfo(K key);
+    Mono<ArrayInfo> arinfo(K key);
 
     /**
-     * Get extended metadata about the array (12 fields including per-slice stats).
+     * Get extended metadata about the array (including per-slice stats). Known fields are available via typed getters; the raw
+     * server map is accessible via {@link ArrayInfoFull#getInfo()};
      *
      * @param key the key of the array.
-     * @return the extended array metadata.
+     * @return the extended array metadata, or {@code null} if the key does not exist.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
      */
-    @Experimental
-    Mono<ArrayFullMetadata> arinfoFull(K key);
+    Mono<ArrayInfoFull> arinfoFull(K key);
 
 }

@@ -14,6 +14,7 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,13 @@ public class RedisArrayCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
     public Command<K, V, Long> arset(K key, long index, V value) {
         notNullKey(key);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(index).addValue(value);
+        return createCommand(ARSET, new IntegerOutput<>(codec), args);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Command<K, V, Long> arset(K key, long index, V... values) {
+        notNullKey(key);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(index).addValues(values);
         return createCommand(ARSET, new IntegerOutput<>(codec), args);
     }
 
@@ -78,6 +86,12 @@ public class RedisArrayCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         return createCommand(ARDEL, new IntegerOutput<>(codec), args);
     }
 
+    public Command<K, V, Long> ardelrange(K key, long start, long end) {
+        notNullKey(key);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(start).add(end);
+        return createCommand(ARDELRANGE, new IntegerOutput<>(codec), args);
+    }
+
     @SuppressWarnings("unchecked")
     public Command<K, V, Long> ardelrange(K key, Range<Long>... ranges) {
         notNullKey(key);
@@ -98,17 +112,21 @@ public class RedisArrayCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         return createCommand(ARCOUNT, new IntegerOutput<>(codec), key);
     }
 
-    public Command<K, V, List<V>> argetrange(K key, Range<Long> range) {
+    public Command<K, V, List<V>> argetrange(K key, long start, long end) {
         notNullKey(key);
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(range.getLower().getValue())
-                .add(range.getUpper().getValue());
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(start).add(end);
         return createCommand(ARGETRANGE, new ValueListOutput<>(codec), args);
     }
 
-    public Command<K, V, List<IndexedValue<V>>> arscan(K key, ArScanArgs scanArgs) {
+    public Command<K, V, List<IndexedValue<V>>> arscan(K key, long start, long end) {
         notNullKey(key);
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        scanArgs.build(args);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(start).add(end);
+        return createCommand(ARSCAN, new IndexedValueListOutput<>(codec), args);
+    }
+
+    public Command<K, V, List<IndexedValue<V>>> arscan(K key, long start, long end, long limit) {
+        notNullKey(key);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(start).add(end).add(CommandKeyword.LIMIT).add(limit);
         return createCommand(ARSCAN, new IndexedValueListOutput<>(codec), args);
     }
 
@@ -123,28 +141,39 @@ public class RedisArrayCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         notNullKey(key);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         grepArgs.build(args);
+        args.add(CommandKeyword.WITHVALUES);
         return createCommand(ARGREP, new IndexedValueListOutput<>(codec), args);
     }
 
-    public Command<K, V, V> aropAggregate(K key, Range<Long> range, ArAggregateType operation) {
+    public Command<K, V, V> aropAggregate(K key, long start, long end, ArAggregateType operation) {
         notNullKey(key);
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(range.getLower().getValue())
-                .add(range.getUpper().getValue()).add(operation.name());
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(start).add(end).add(operation.name());
         return createCommand(AROP, new ValueOutput<>(codec), args);
     }
 
-    public Command<K, V, Long> aropCount(K key, Range<Long> range, ArCountType operation) {
+    public Command<K, V, Long> aropBitwise(K key, long start, long end, ArBitwiseType operation) {
         notNullKey(key);
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(range.getLower().getValue())
-                .add(range.getUpper().getValue()).add(operation.name());
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(start).add(end).add(operation.name());
         return createCommand(AROP, new IntegerOutput<>(codec), args);
     }
 
-    public Command<K, V, Long> aropMatch(K key, Range<Long> range, V matchValue) {
+    public Command<K, V, Long> aropCount(K key, long start, long end) {
         notNullKey(key);
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(range.getLower().getValue())
-                .add(range.getUpper().getValue()).add(CommandKeyword.MATCH).addValue(matchValue);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(start).add(end).add(CommandKeyword.USED);
         return createCommand(AROP, new IntegerOutput<>(codec), args);
+    }
+
+    public Command<K, V, Long> aropCount(K key, long start, long end, V matchValue) {
+        notNullKey(key);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(start).add(end).add(CommandKeyword.MATCH)
+                .addValue(matchValue);
+        return createCommand(AROP, new IntegerOutput<>(codec), args);
+    }
+
+    public Command<K, V, Long> arinsert(K key, V value) {
+        notNullKey(key);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
+        return createCommand(ARINSERT, new IntegerOutput<>(codec), args);
     }
 
     @SuppressWarnings("unchecked")
@@ -152,6 +181,12 @@ public class RedisArrayCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         notNullKey(key);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValues(values);
         return createCommand(ARINSERT, new IntegerOutput<>(codec), args);
+    }
+
+    public Command<K, V, Long> arring(K key, long size, V value) {
+        notNullKey(key);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(size).addValue(value);
+        return createCommand(ARRING, new IntegerOutput<>(codec), args);
     }
 
     @SuppressWarnings("unchecked")
@@ -178,22 +213,25 @@ public class RedisArrayCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         return createCommand(ARLASTITEMS, new ValueListOutput<>(codec), args);
     }
 
-    public Command<K, V, List<V>> arlastitemsRev(K key, long count) {
+    public Command<K, V, List<V>> arlastitems(K key, long count, boolean rev) {
         notNullKey(key);
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(count).add(CommandKeyword.REV);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(count);
+        if (rev) {
+            args.add(CommandKeyword.REV);
+        }
         return createCommand(ARLASTITEMS, new ValueListOutput<>(codec), args);
     }
 
-    public Command<K, V, ArrayMetadata> arinfo(K key) {
+    public Command<K, V, ArrayInfo> arinfo(K key) {
         notNullKey(key);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        return createCommand(ARINFO, new ComplexOutput<>(codec, ArrayMetadataParser.INSTANCE), args);
+        return createCommand(ARINFO, new ComplexOutput<>(codec, ArrayInfoParser.INSTANCE), args);
     }
 
-    public Command<K, V, ArrayFullMetadata> arinfoFull(K key) {
+    public Command<K, V, ArrayInfoFull> arinfoFull(K key) {
         notNullKey(key);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.FULL);
-        return createCommand(ARINFO, new ComplexOutput<>(codec, ArrayFullMetadataParser.INSTANCE), args);
+        return createCommand(ARINFO, new ComplexOutput<>(codec, ArrayInfoFullParser.INSTANCE), args);
     }
 
 }

@@ -47,6 +47,12 @@ class RedisArrayCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructArsetVarargs() {
+        assertThat(encode(builder.arset(KEY, 0, "v1", "v2", "v3")))
+                .isEqualTo("*6\r\n$5\r\nARSET\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$2\r\nv1\r\n$2\r\nv2\r\n$2\r\nv3\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructArmset() {
         Map<Long, String> map = new LinkedHashMap<>();
         map.put(0L, "v0");
@@ -79,6 +85,12 @@ class RedisArrayCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructArdelrangeSingle() {
+        assertThat(encode(builder.ardelrange(KEY, 0, 10)))
+                .isEqualTo("*4\r\n$10\r\nARDELRANGE\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$2\r\n10\r\n");
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void shouldCorrectlyConstructArdelrange() {
         assertThat(encode(builder.ardelrange(KEY, Range.create(0L, 10L))))
@@ -104,19 +116,19 @@ class RedisArrayCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructArgetrange() {
-        assertThat(encode(builder.argetrange(KEY, Range.create(0L, 10L))))
+        assertThat(encode(builder.argetrange(KEY, 0, 10)))
                 .isEqualTo("*4\r\n$10\r\nARGETRANGE\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$2\r\n10\r\n");
     }
 
     @Test
     void shouldCorrectlyConstructArscan() {
-        assertThat(encode(builder.arscan(KEY, ArScanArgs.range(0, 100))))
+        assertThat(encode(builder.arscan(KEY, 0, 100)))
                 .isEqualTo("*4\r\n$6\r\nARSCAN\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$3\r\n100\r\n");
     }
 
     @Test
     void shouldCorrectlyConstructArscanWithLimit() {
-        assertThat(encode(builder.arscan(KEY, ArScanArgs.range(0, 100).limit(50))))
+        assertThat(encode(builder.arscan(KEY, 0, 100, 50)))
                 .isEqualTo("*6\r\n$6\r\nARSCAN\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$3\r\n100\r\n$5\r\nLIMIT\r\n$2\r\n50\r\n");
     }
 
@@ -137,7 +149,7 @@ class RedisArrayCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructArlastitemsRev() {
-        assertThat(encode(builder.arlastitemsRev(KEY, 10)))
+        assertThat(encode(builder.arlastitems(KEY, 10, true)))
                 .isEqualTo("*4\r\n$11\r\nARLASTITEMS\r\n$7\r\nmyarray\r\n$2\r\n10\r\n$3\r\nREV\r\n");
     }
 
@@ -156,32 +168,49 @@ class RedisArrayCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructArgrepWithValues() {
-        assertThat(encode(builder.argrepWithValues(KEY, ArGrepArgs.unbounded().exact("foo").withValues()))).isEqualTo(
+        assertThat(encode(builder.argrepWithValues(KEY, ArGrepArgs.unbounded().exact("foo")))).isEqualTo(
                 "*7\r\n$6\r\nARGREP\r\n$7\r\nmyarray\r\n$1\r\n-\r\n$1\r\n+\r\n$5\r\nEXACT\r\n$3\r\nfoo\r\n$10\r\nWITHVALUES\r\n");
     }
 
     @Test
     void shouldCorrectlyConstructAropSum() {
-        assertThat(encode(builder.aropAggregate(KEY, Range.create(0L, 100L), ArAggregateType.SUM)))
+        assertThat(encode(builder.aropAggregate(KEY, 0, 100, ArAggregateType.SUM)))
                 .isEqualTo("*5\r\n$4\r\nAROP\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$3\r\n100\r\n$3\r\nSUM\r\n");
     }
 
     @Test
+    void shouldCorrectlyConstructAropBitwise() {
+        assertThat(encode(builder.aropBitwise(KEY, 0, 100, ArBitwiseType.AND)))
+                .isEqualTo("*5\r\n$4\r\nAROP\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$3\r\n100\r\n$3\r\nAND\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructAropCount() {
-        assertThat(encode(builder.aropCount(KEY, Range.create(0L, 100L), ArCountType.USED)))
+        assertThat(encode(builder.aropCount(KEY, 0, 100)))
                 .isEqualTo("*5\r\n$4\r\nAROP\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$3\r\n100\r\n$4\r\nUSED\r\n");
     }
 
     @Test
-    void shouldCorrectlyConstructAropMatch() {
-        assertThat(encode(builder.aropMatch(KEY, Range.create(0L, 100L), "hello")))
+    void shouldCorrectlyConstructAropCountMatch() {
+        assertThat(encode(builder.aropCount(KEY, 0, 100, "hello")))
                 .isEqualTo("*6\r\n$4\r\nAROP\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$3\r\n100\r\n$5\r\nMATCH\r\n$5\r\nhello\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructArinsertSingle() {
+        assertThat(encode(builder.arinsert(KEY, "v1"))).isEqualTo("*3\r\n$8\r\nARINSERT\r\n$7\r\nmyarray\r\n$2\r\nv1\r\n");
     }
 
     @Test
     void shouldCorrectlyConstructArinsert() {
         assertThat(encode(builder.arinsert(KEY, "v1", "v2", "v3")))
                 .isEqualTo("*5\r\n$8\r\nARINSERT\r\n$7\r\nmyarray\r\n$2\r\nv1\r\n$2\r\nv2\r\n$2\r\nv3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructArringSingle() {
+        assertThat(encode(builder.arring(KEY, 10, "v1")))
+                .isEqualTo("*4\r\n$6\r\nARRING\r\n$7\r\nmyarray\r\n$2\r\n10\r\n$2\r\nv1\r\n");
     }
 
     @Test

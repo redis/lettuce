@@ -49,8 +49,6 @@ public class ArGrepArgs implements CompositeArgument {
 
     private boolean noCase = false;
 
-    private boolean withValues = false;
-
     private ArGrepArgs(Range<Long> range) {
         LettuceAssert.notNull(range, "Range must not be null");
         this.range = range;
@@ -151,25 +149,6 @@ public class ArGrepArgs implements CompositeArgument {
         return this;
     }
 
-    /**
-     * Enables returning values alongside indices.
-     *
-     * @return {@code this}.
-     */
-    public ArGrepArgs withValues() {
-        this.withValues = true;
-        return this;
-    }
-
-    /**
-     * Returns whether WITHVALUES flag is set.
-     *
-     * @return {@code true} if WITHVALUES is enabled.
-     */
-    public boolean isWithValues() {
-        return withValues;
-    }
-
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
         // Range: start end (unbounded maps to - / +)
@@ -218,11 +197,6 @@ public class ArGrepArgs implements CompositeArgument {
         // NOCASE
         if (noCase) {
             args.add(CommandKeyword.NOCASE);
-        }
-
-        // WITHVALUES
-        if (withValues) {
-            args.add(CommandKeyword.WITHVALUES);
         }
     }
 

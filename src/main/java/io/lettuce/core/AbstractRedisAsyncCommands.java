@@ -4041,6 +4041,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> arset(K key, long index, V... values) {
+        return dispatch(arrayCommandBuilder.arset(key, index, values));
+    }
+
+    @Override
     public RedisFuture<Long> armset(K key, Map<Long, V> indexValueMap) {
         return dispatch(arrayCommandBuilder.armset(key, indexValueMap));
     }
@@ -4066,6 +4071,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> ardelrange(K key, long start, long end) {
+        return dispatch(arrayCommandBuilder.ardelrange(key, start, end));
+    }
+
+    @Override
     public RedisFuture<Long> ardelrange(K key, Range<Long>... ranges) {
         return dispatch(arrayCommandBuilder.ardelrange(key, ranges));
     }
@@ -4081,8 +4091,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> argetrange(K key, Range<Long> range) {
-        return dispatch(arrayCommandBuilder.argetrange(key, range));
+    public RedisFuture<List<V>> argetrange(K key, long start, long end) {
+        return dispatch(arrayCommandBuilder.argetrange(key, start, end));
     }
 
     @Override
@@ -4096,13 +4106,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> arlastitemsRev(K key, long count) {
-        return dispatch(arrayCommandBuilder.arlastitemsRev(key, count));
+    public RedisFuture<List<V>> arlastitems(K key, long count, boolean rev) {
+        return dispatch(arrayCommandBuilder.arlastitems(key, count, rev));
     }
 
     @Override
-    public RedisFuture<List<IndexedValue<V>>> arscan(K key, ArScanArgs scanArgs) {
-        return dispatch(arrayCommandBuilder.arscan(key, scanArgs));
+    public RedisFuture<List<IndexedValue<V>>> arscan(K key, long start, long end) {
+        return dispatch(arrayCommandBuilder.arscan(key, start, end));
+    }
+
+    @Override
+    public RedisFuture<List<IndexedValue<V>>> arscan(K key, long start, long end, long limit) {
+        return dispatch(arrayCommandBuilder.arscan(key, start, end, limit));
     }
 
     @Override
@@ -4116,23 +4131,38 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<V> aropAggregate(K key, Range<Long> range, ArAggregateType operation) {
-        return dispatch(arrayCommandBuilder.aropAggregate(key, range, operation));
+    public RedisFuture<V> aropAggregate(K key, long start, long end, ArAggregateType operation) {
+        return dispatch(arrayCommandBuilder.aropAggregate(key, start, end, operation));
     }
 
     @Override
-    public RedisFuture<Long> aropCount(K key, Range<Long> range, ArCountType operation) {
-        return dispatch(arrayCommandBuilder.aropCount(key, range, operation));
+    public RedisFuture<Long> aropBitwise(K key, long start, long end, ArBitwiseType operation) {
+        return dispatch(arrayCommandBuilder.aropBitwise(key, start, end, operation));
     }
 
     @Override
-    public RedisFuture<Long> aropMatch(K key, Range<Long> range, V matchValue) {
-        return dispatch(arrayCommandBuilder.aropMatch(key, range, matchValue));
+    public RedisFuture<Long> aropCount(K key, long start, long end) {
+        return dispatch(arrayCommandBuilder.aropCount(key, start, end));
+    }
+
+    @Override
+    public RedisFuture<Long> aropCount(K key, long start, long end, V matchValue) {
+        return dispatch(arrayCommandBuilder.aropCount(key, start, end, matchValue));
+    }
+
+    @Override
+    public RedisFuture<Long> arinsert(K key, V value) {
+        return dispatch(arrayCommandBuilder.arinsert(key, value));
     }
 
     @Override
     public RedisFuture<Long> arinsert(K key, V... values) {
         return dispatch(arrayCommandBuilder.arinsert(key, values));
+    }
+
+    @Override
+    public RedisFuture<Long> arring(K key, long size, V value) {
+        return dispatch(arrayCommandBuilder.arring(key, size, value));
     }
 
     @Override
@@ -4146,12 +4176,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<ArrayMetadata> arinfo(K key) {
+    public RedisFuture<ArrayInfo> arinfo(K key) {
         return dispatch(arrayCommandBuilder.arinfo(key));
     }
 
     @Override
-    public RedisFuture<ArrayFullMetadata> arinfoFull(K key) {
+    public RedisFuture<ArrayInfoFull> arinfoFull(K key) {
         return dispatch(arrayCommandBuilder.arinfoFull(key));
     }
 

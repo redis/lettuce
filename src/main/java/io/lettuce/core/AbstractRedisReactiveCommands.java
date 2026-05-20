@@ -4089,6 +4089,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Long> arset(K key, long index, V... values) {
+        return createMono(() -> arrayCommandBuilder.arset(key, index, values));
+    }
+
+    @Override
     public Mono<Long> armset(K key, Map<Long, V> indexValueMap) {
         return createMono(() -> arrayCommandBuilder.armset(key, indexValueMap));
     }
@@ -4114,6 +4119,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Long> ardelrange(K key, long start, long end) {
+        return createMono(() -> arrayCommandBuilder.ardelrange(key, start, end));
+    }
+
+    @Override
     public Mono<Long> ardelrange(K key, Range<Long>... ranges) {
         return createMono(() -> arrayCommandBuilder.ardelrange(key, ranges));
     }
@@ -4129,8 +4139,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> argetrange(K key, Range<Long> range) {
-        return createDissolvingFlux(() -> arrayCommandBuilder.argetrange(key, range));
+    public Flux<V> argetrange(K key, long start, long end) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.argetrange(key, start, end));
     }
 
     @Override
@@ -4144,13 +4154,18 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> arlastitemsRev(K key, long count) {
-        return createDissolvingFlux(() -> arrayCommandBuilder.arlastitemsRev(key, count));
+    public Flux<V> arlastitems(K key, long count, boolean rev) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.arlastitems(key, count, rev));
     }
 
     @Override
-    public Flux<IndexedValue<V>> arscan(K key, ArScanArgs scanArgs) {
-        return createDissolvingFlux(() -> arrayCommandBuilder.arscan(key, scanArgs));
+    public Flux<IndexedValue<V>> arscan(K key, long start, long end) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.arscan(key, start, end));
+    }
+
+    @Override
+    public Flux<IndexedValue<V>> arscan(K key, long start, long end, long limit) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.arscan(key, start, end, limit));
     }
 
     @Override
@@ -4164,23 +4179,38 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<V> aropAggregate(K key, Range<Long> range, ArAggregateType operation) {
-        return createMono(() -> arrayCommandBuilder.aropAggregate(key, range, operation));
+    public Mono<V> aropAggregate(K key, long start, long end, ArAggregateType operation) {
+        return createMono(() -> arrayCommandBuilder.aropAggregate(key, start, end, operation));
     }
 
     @Override
-    public Mono<Long> aropCount(K key, Range<Long> range, ArCountType operation) {
-        return createMono(() -> arrayCommandBuilder.aropCount(key, range, operation));
+    public Mono<Long> aropBitwise(K key, long start, long end, ArBitwiseType operation) {
+        return createMono(() -> arrayCommandBuilder.aropBitwise(key, start, end, operation));
     }
 
     @Override
-    public Mono<Long> aropMatch(K key, Range<Long> range, V matchValue) {
-        return createMono(() -> arrayCommandBuilder.aropMatch(key, range, matchValue));
+    public Mono<Long> aropCount(K key, long start, long end) {
+        return createMono(() -> arrayCommandBuilder.aropCount(key, start, end));
+    }
+
+    @Override
+    public Mono<Long> aropCount(K key, long start, long end, V matchValue) {
+        return createMono(() -> arrayCommandBuilder.aropCount(key, start, end, matchValue));
+    }
+
+    @Override
+    public Mono<Long> arinsert(K key, V value) {
+        return createMono(() -> arrayCommandBuilder.arinsert(key, value));
     }
 
     @Override
     public Mono<Long> arinsert(K key, V... values) {
         return createMono(() -> arrayCommandBuilder.arinsert(key, values));
+    }
+
+    @Override
+    public Mono<Long> arring(K key, long size, V value) {
+        return createMono(() -> arrayCommandBuilder.arring(key, size, value));
     }
 
     @Override
@@ -4194,12 +4224,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<ArrayMetadata> arinfo(K key) {
+    public Mono<ArrayInfo> arinfo(K key) {
         return createMono(() -> arrayCommandBuilder.arinfo(key));
     }
 
     @Override
-    public Mono<ArrayFullMetadata> arinfoFull(K key) {
+    public Mono<ArrayInfoFull> arinfoFull(K key) {
         return createMono(() -> arrayCommandBuilder.arinfoFull(key));
     }
 

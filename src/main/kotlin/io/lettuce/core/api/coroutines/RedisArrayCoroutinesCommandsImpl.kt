@@ -30,6 +30,9 @@ internal class RedisArrayCoroutinesCommandsImpl<K : Any, V : Any>(internal val o
     override suspend fun arset(key: K, index: Long, value: V): Long? =
         ops.arset(key, index, value).awaitFirstOrNull()
 
+    override suspend fun arset(key: K, index: Long, vararg values: V): Long? =
+        ops.arset(key, index, *values).awaitFirstOrNull()
+
     override suspend fun armset(key: K, indexValueMap: Map<Long, V>): Long? =
         ops.armset(key, indexValueMap).awaitFirstOrNull()
 
@@ -45,6 +48,9 @@ internal class RedisArrayCoroutinesCommandsImpl<K : Any, V : Any>(internal val o
     override suspend fun ardel(key: K, vararg indices: Long): Long? =
         ops.ardel(key, *indices).awaitFirstOrNull()
 
+    override suspend fun ardelrange(key: K, start: Long, end: Long): Long? =
+        ops.ardelrange(key, start, end).awaitFirstOrNull()
+
     override suspend fun ardelrange(key: K, vararg ranges: Range<Long>): Long? =
         ops.ardelrange(key, *ranges).awaitFirstOrNull()
 
@@ -52,19 +58,22 @@ internal class RedisArrayCoroutinesCommandsImpl<K : Any, V : Any>(internal val o
 
     override suspend fun arcount(key: K): Long? = ops.arcount(key).awaitFirstOrNull()
 
-    override suspend fun argetrange(key: K, range: Range<Long>): List<V> =
-        ops.argetrange(key, range).asFlow().toList()
+    override suspend fun argetrange(key: K, start: Long, end: Long): List<V> =
+        ops.argetrange(key, start, end).asFlow().toList()
 
     override suspend fun arnext(key: K): Long? = ops.arnext(key).awaitFirstOrNull()
 
     override suspend fun arlastitems(key: K, count: Long): List<V> =
         ops.arlastitems(key, count).asFlow().toList()
 
-    override suspend fun arlastitemsRev(key: K, count: Long): List<V> =
-        ops.arlastitemsRev(key, count).asFlow().toList()
+    override suspend fun arlastitems(key: K, count: Long, rev: Boolean): List<V> =
+        ops.arlastitems(key, count, rev).asFlow().toList()
 
-    override suspend fun arscan(key: K, scanArgs: ArScanArgs): List<IndexedValue<V>> =
-        ops.arscan(key, scanArgs).asFlow().toList()
+    override suspend fun arscan(key: K, start: Long, end: Long): List<IndexedValue<V>> =
+        ops.arscan(key, start, end).asFlow().toList()
+
+    override suspend fun arscan(key: K, start: Long, end: Long, limit: Long): List<IndexedValue<V>> =
+        ops.arscan(key, start, end, limit).asFlow().toList()
 
     override suspend fun argrep(key: K, grepArgs: ArGrepArgs): List<Long> =
         ops.argrep(key, grepArgs).asFlow().toList()
@@ -72,17 +81,26 @@ internal class RedisArrayCoroutinesCommandsImpl<K : Any, V : Any>(internal val o
     override suspend fun argrepWithValues(key: K, grepArgs: ArGrepArgs): List<IndexedValue<V>> =
         ops.argrepWithValues(key, grepArgs).asFlow().toList()
 
-    override suspend fun aropAggregate(key: K, range: Range<Long>, operation: ArAggregateType): V? =
-        ops.aropAggregate(key, range, operation).awaitFirstOrNull()
+    override suspend fun aropAggregate(key: K, start: Long, end: Long, operation: ArAggregateType): V? =
+        ops.aropAggregate(key, start, end, operation).awaitFirstOrNull()
 
-    override suspend fun aropCount(key: K, range: Range<Long>, operation: ArCountType): Long? =
-        ops.aropCount(key, range, operation).awaitFirstOrNull()
+    override suspend fun aropBitwise(key: K, start: Long, end: Long, operation: ArBitwiseType): Long? =
+        ops.aropBitwise(key, start, end, operation).awaitFirstOrNull()
 
-    override suspend fun aropMatch(key: K, range: Range<Long>, matchValue: V): Long? =
-        ops.aropMatch(key, range, matchValue).awaitFirstOrNull()
+    override suspend fun aropCount(key: K, start: Long, end: Long): Long? =
+        ops.aropCount(key, start, end).awaitFirstOrNull()
+
+    override suspend fun aropCount(key: K, start: Long, end: Long, matchValue: V): Long? =
+        ops.aropCount(key, start, end, matchValue).awaitFirstOrNull()
+
+    override suspend fun arinsert(key: K, value: V): Long? =
+        ops.arinsert(key, value).awaitFirstOrNull()
 
     override suspend fun arinsert(key: K, vararg values: V): Long? =
         ops.arinsert(key, *values).awaitFirstOrNull()
+
+    override suspend fun arring(key: K, size: Long, value: V): Long? =
+        ops.arring(key, size, value).awaitFirstOrNull()
 
     override suspend fun arring(key: K, size: Long, vararg values: V): Long? =
         ops.arring(key, size, *values).awaitFirstOrNull()
@@ -90,10 +108,10 @@ internal class RedisArrayCoroutinesCommandsImpl<K : Any, V : Any>(internal val o
     override suspend fun arseek(key: K, index: Long): Long? =
         ops.arseek(key, index).awaitFirstOrNull()
 
-    override suspend fun arinfo(key: K): ArrayMetadata? =
+    override suspend fun arinfo(key: K): ArrayInfo? =
         ops.arinfo(key).awaitFirstOrNull()
 
-    override suspend fun arinfoFull(key: K): ArrayFullMetadata? =
+    override suspend fun arinfoFull(key: K): ArrayInfoFull? =
         ops.arinfoFull(key).awaitFirstOrNull()
 }
 

@@ -38,8 +38,20 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arset/">Redis Documentation: ARSET</a>
      */
-    @Experimental
     suspend fun arset(key: K, index: Long, value: V): Long?
+
+    /**
+     * Set one or more contiguous values starting at the given index in the array stored at `key`.
+     *
+     * @param key the key of the array.
+     * @param index the starting index.
+     * @param values the values to store at consecutive indices.
+     * @return the number of new slots created.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/arset/">Redis Documentation: ARSET</a>
+     */
+    @SuppressWarnings
+    suspend fun arset(key: K, index: Long, vararg values: V): Long?
 
     /**
      * Set multiple index-value pairs in the array stored at `key`.
@@ -50,7 +62,6 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/armset/">Redis Documentation: ARMSET</a>
      */
-    @Experimental
     suspend fun armset(key: K, indexValueMap: Map<Long, V>): Long?
 
     /**
@@ -62,7 +73,6 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arget/">Redis Documentation: ARGET</a>
      */
-    @Experimental
     suspend fun arget(key: K, index: Long): V?
 
     /**
@@ -74,7 +84,6 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/armget/">Redis Documentation: ARMGET</a>
      */
-    @Experimental
     suspend fun armget(key: K, vararg indices: Long): List<V>
 
     /**
@@ -89,7 +98,6 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardel/">Redis Documentation: ARDEL</a>
      */
-    @Experimental
     suspend fun ardel(key: K, index: Long): Long?
 
     /**
@@ -101,8 +109,19 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardel/">Redis Documentation: ARDEL</a>
      */
-    @Experimental
     suspend fun ardel(key: K, vararg indices: Long): Long?
+
+    /**
+     * Delete elements in the given range (inclusive).
+     *
+     * @param key the key of the array.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
+     * @return the number of elements deleted.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
+     */
+    suspend fun ardelrange(key: K, start: Long, end: Long): Long?
 
     /**
      * Delete elements in the given ranges. Each range is a start/end pair (inclusive).
@@ -113,7 +132,6 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
      */
-    @Experimental
     @SuppressWarnings
     suspend fun ardelrange(key: K, vararg ranges: Range<Long>): Long?
 
@@ -125,7 +143,6 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlen/">Redis Documentation: ARLEN</a>
      */
-    @Experimental
     suspend fun arlen(key: K): Long?
 
     /**
@@ -136,7 +153,6 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arcount/">Redis Documentation: ARCOUNT</a>
      */
-    @Experimental
     suspend fun arcount(key: K): Long?
 
     /**
@@ -145,13 +161,13 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * The range must not exceed 1,000,000 items.
      *
      * @param key the key of the array.
-     * @param range the range of indices.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
      * @return a list of values (with `null` for empty slots).
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/argetrange/">Redis Documentation: ARGETRANGE</a>
      */
-    @Experimental
-    suspend fun argetrange(key: K, range: Range<Long>): List<V>
+    suspend fun argetrange(key: K, start: Long, end: Long): List<V>
 
     /**
      * Get the next insert index for the array.
@@ -161,7 +177,6 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arnext/">Redis Documentation: ARNEXT</a>
      */
-    @Experimental
     suspend fun arnext(key: K): Long?
 
     /**
@@ -173,32 +188,44 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlastitems/">Redis Documentation: ARLASTITEMS</a>
      */
-    @Experimental
     suspend fun arlastitems(key: K, count: Long): List<V>
 
     /**
-     * Get the last N items in reverse insertion order.
+     * Get the last N items, optionally in reverse order.
      *
      * @param key the key of the array.
      * @param count the number of items to return.
-     * @return a list of values in reverse insertion order.
+     * @param rev @code true} to return items in reverse insertion order, `false` for insertion order.
+     * @return a list of values.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlastitems/">Redis Documentation: ARLASTITEMS</a>
      */
-    @Experimental
-    suspend fun arlastitemsRev(key: K, count: Long): List<V>
+    suspend fun arlastitems(key: K, count: Long, rev: Boolean): List<V>
 
     /**
      * Scan populated entries in a range, returning index/value pairs.
      *
      * @param key the key of the array.
-     * @param scanArgs the scan arguments (range and optional limit).
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
      * @return a list of [IndexedValue] pairs.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arscan/">Redis Documentation: ARSCAN</a>
      */
-    @Experimental
-    suspend fun arscan(key: K, scanArgs: ArScanArgs): List<IndexedValue<V>>
+    suspend fun arscan(key: K, start: Long, end: Long): List<IndexedValue<V>>
+
+    /**
+     * Scan populated entries in a range with a limit, returning index/value pairs.
+     *
+     * @param key the key of the array.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
+     * @param limit the maximum number of entries to return.
+     * @return a list of [IndexedValue] pairs.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/arscan/">Redis Documentation: ARSCAN</a>
+     */
+    suspend fun arscan(key: K, start: Long, end: Long, limit: Long): List<IndexedValue<V>>
 
     /**
      * Search for elements matching predicates, returning matching indices.
@@ -213,10 +240,10 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
     suspend fun argrep(key: K, grepArgs: ArGrepArgs): List<Long>
 
     /**
-     * Search for elements matching predicates, returning index/value pairs.
+     * Search for elements matching predicates, returning index/value pairs. WITHVALUES is automatically applied.
      *
      * @param key the key of the array.
-     * @param grepArgs the grep arguments (range, predicates, flags). WITHVALUES is automatically set.
+     * @param grepArgs the grep arguments (range, predicates, flags).
      * @return a list of matching [IndexedValue] pairs.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/argrep/">Redis Documentation: ARGREP</a>
@@ -228,40 +255,63 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * Perform an aggregate operation (SUM, MIN, MAX) over elements in a range.
      *
      * @param key the key of the array.
-     * @param range the range of indices.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
      * @param operation the aggregate operation.
      * @return the result as a value, or `null` if the range is empty or values are non-numeric.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
-    @Experimental
-    suspend fun aropAggregate(key: K, range: Range<Long>, operation: ArAggregateType): V?
+    suspend fun aropAggregate(key: K, start: Long, end: Long, operation: ArAggregateType): V?
 
     /**
-     * Perform a count/bitwise operation (AND, OR, XOR, USED) over elements in a range.
+     * Perform a bitwise operation (AND, OR, XOR) over elements in a range.
      *
      * @param key the key of the array.
-     * @param range the range of indices.
-     * @param operation the count operation.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
+     * @param operation the bitwise operation.
      * @return the result as a long.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
-    @Experimental
-    suspend fun aropCount(key: K, range: Range<Long>, operation: ArCountType): Long?
+    suspend fun aropBitwise(key: K, start: Long, end: Long, operation: ArBitwiseType): Long?
+
+    /**
+     * Count the number of non-empty (populated) elements in a range (AROP USED).
+     *
+     * @param key the key of the array.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
+     * @return the count of non-empty elements.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
+     */
+    suspend fun aropCount(key: K, start: Long, end: Long): Long?
 
     /**
      * Count occurrences of a value in a range (AROP MATCH).
      *
      * @param key the key of the array.
-     * @param range the range of indices.
+     * @param start the start index (inclusive).
+     * @param end the end index (inclusive).
      * @param matchValue the value to match.
      * @return the count of matching elements.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
-    @Experimental
-    suspend fun aropMatch(key: K, range: Range<Long>, matchValue: V): Long?
+    suspend fun aropCount(key: K, start: Long, end: Long, matchValue: V): Long?
+
+    /**
+     * Insert a single value at the next available index.
+     *
+     * @param key the key of the array.
+     * @param value the value to insert.
+     * @return the index used.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/arinsert/">Redis Documentation: ARINSERT</a>
+     */
+    suspend fun arinsert(key: K, value: V): Long?
 
     /**
      * Insert one or more values at the next available index.
@@ -272,9 +322,20 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinsert/">Redis Documentation: ARINSERT</a>
      */
-    @Experimental
     @SuppressWarnings
     suspend fun arinsert(key: K, vararg values: V): Long?
+
+    /**
+     * Insert a single value in a ring buffer fashion, wrapping around when the size is exceeded.
+     *
+     * @param key the key of the array.
+     * @param size the ring buffer size.
+     * @param value the value to insert.
+     * @return the index used.
+     * @since 7.6
+     * @see <a href="https://redis.io/docs/latest/commands/arring/">Redis Documentation: ARRING</a>
+     */
+    suspend fun arring(key: K, size: Long, value: V): Long?
 
     /**
      * Insert values in a ring buffer fashion, wrapping around when the size is exceeded.
@@ -286,7 +347,6 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arring/">Redis Documentation: ARRING</a>
      */
-    @Experimental
     @SuppressWarnings
     suspend fun arring(key: K, size: Long, vararg values: V): Long?
 
@@ -299,30 +359,29 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arseek/">Redis Documentation: ARSEEK</a>
      */
-    @Experimental
     suspend fun arseek(key: K, index: Long): Long?
 
     /**
-     * Get metadata about the array (7 top-level fields).
+     * Get metadata about the array. Known fields are available via typed getters; the raw server map is accessible via
+     * [ArrayInfo#getInfo];
      *
      * @param key the key of the array.
-     * @return the array metadata.
+     * @return the array metadata, or `null` if the key does not exist.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
      */
-    @Experimental
-    suspend fun arinfo(key: K): ArrayMetadata?
+    suspend fun arinfo(key: K): ArrayInfo?
 
     /**
-     * Get extended metadata about the array (12 fields including per-slice stats).
+     * Get extended metadata about the array (including per-slice stats). Known fields are available via typed getters; the raw
+     * server map is accessible via [ArrayInfoFull#getInfo];
      *
      * @param key the key of the array.
-     * @return the extended array metadata.
+     * @return the extended array metadata, or `null` if the key does not exist.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
      */
-    @Experimental
-    suspend fun arinfoFull(key: K): ArrayFullMetadata?
+    suspend fun arinfoFull(key: K): ArrayInfoFull?
 
 }
 
