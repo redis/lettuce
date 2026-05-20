@@ -7,7 +7,6 @@
 package io.lettuce.core.api.reactive;
 
 import java.util.Map;
-import io.lettuce.core.Range;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.array.*;
 import reactor.core.publisher.Flux;
@@ -132,8 +131,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
      */
-    @SuppressWarnings("unchecked")
-    Mono<Long> ardelrange(K key, Range<Long>... ranges);
+    Mono<Long> ardelrange(K key, ArrayIndexRange... ranges);
 
     /**
      * Get the logical length of the array (max index + 1).

@@ -8,7 +8,6 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.Range
 import io.lettuce.core.annotations.Experimental
 import io.lettuce.core.array.*
 
@@ -132,8 +131,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
      */
-    @SuppressWarnings
-    suspend fun ardelrange(key: K, vararg ranges: Range<Long>): Long?
+    suspend fun ardelrange(key: K, vararg ranges: ArrayIndexRange): Long?
 
     /**
      * Get the logical length of the array (max index + 1).

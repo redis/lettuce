@@ -92,12 +92,11 @@ public class RedisArrayCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         return createCommand(ARDELRANGE, new IntegerOutput<>(codec), args);
     }
 
-    @SuppressWarnings("unchecked")
-    public Command<K, V, Long> ardelrange(K key, Range<Long>... ranges) {
+    public Command<K, V, Long> ardelrange(K key, ArrayIndexRange... ranges) {
         notNullKey(key);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        for (Range<Long> range : ranges) {
-            args.add(range.getLower().getValue()).add(range.getUpper().getValue());
+        for (ArrayIndexRange range : ranges) {
+            args.add(range.getLower()).add(range.getUpper());
         }
         return createCommand(ARDELRANGE, new IntegerOutput<>(codec), args);
     }

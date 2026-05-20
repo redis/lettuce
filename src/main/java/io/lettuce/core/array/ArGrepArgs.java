@@ -7,8 +7,6 @@
 package io.lettuce.core.array;
 
 import io.lettuce.core.CompositeArgument;
-import io.lettuce.core.Range;
-import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
@@ -18,16 +16,17 @@ import java.util.List;
 /**
  * Argument builder for the Redis {@code ARGREP} command.
  * <p>
- * Bundles the range (start/end), one or more predicates, optional AND/OR combiner, LIMIT, NOCASE, and WITHVALUES flags.
+ * Bundles the range (start/end), one or more predicates, optional AND/OR combiner, LIMIT, and NOCASE flags.
  * <p>
- * The range is specified using {@link Range}{@code <Long>}. Use {@link Range.Boundary#unbounded()} to map to the Redis
- * {@code -} and {@code +} tokens.
+ * A {@code null} lower bound maps to the Redis {@code -} token and a {@code null} upper bound maps to {@code +}.
  * <p>
  * Example usage:
  *
  * <pre>
  * ArGrepArgs.unbounded().exact("hello");
  * ArGrepArgs.range(0, 100).match("world").nocase();
+ * ArGrepArgs.from(5).glob("prefix*");
+ * ArGrepArgs.to(100).re("^foo.*");
  * ArGrepArgs.unbounded().re("^foo.*").glob("bar*").and().limit(10);
  * </pre>
  *
@@ -39,7 +38,9 @@ import java.util.List;
  */
 public class ArGrepArgs implements CompositeArgument {
 
-    private Range<Long> range;
+    private final Long rangeStart;
+
+    private final Long rangeEnd;
 
     private final List<ArGrepPredicate> predicates = new ArrayList<>();
 
@@ -49,9 +50,9 @@ public class ArGrepArgs implements CompositeArgument {
 
     private boolean noCase = false;
 
-    private ArGrepArgs(Range<Long> range) {
-        LettuceAssert.notNull(range, "Range must not be null");
-        this.range = range;
+    private ArGrepArgs(Long rangeStart, Long rangeEnd) {
+        this.rangeStart = rangeStart;
+        this.rangeEnd = rangeEnd;
     }
 
     /**
@@ -60,7 +61,7 @@ public class ArGrepArgs implements CompositeArgument {
      * @return a new {@link ArGrepArgs} instance.
      */
     public static ArGrepArgs unbounded() {
-        return new ArGrepArgs(Range.unbounded());
+        return new ArGrepArgs(null, null);
     }
 
     /**
@@ -71,7 +72,27 @@ public class ArGrepArgs implements CompositeArgument {
      * @return a new {@link ArGrepArgs} instance.
      */
     public static ArGrepArgs range(long start, long end) {
-        return new ArGrepArgs(Range.create(start, end));
+        return new ArGrepArgs(start, end);
+    }
+
+    /**
+     * Creates a new {@link ArGrepArgs} with a lower bound only ({@code start +} in Redis).
+     *
+     * @param start the start index (inclusive); upper bound is unbounded.
+     * @return a new {@link ArGrepArgs} instance.
+     */
+    public static ArGrepArgs from(long start) {
+        return new ArGrepArgs(start, null);
+    }
+
+    /**
+     * Creates a new {@link ArGrepArgs} with an upper bound only ({@code - end} in Redis).
+     *
+     * @param end the end index (inclusive); lower bound is unbounded.
+     * @return a new {@link ArGrepArgs} instance.
+     */
+    public static ArGrepArgs to(long end) {
+        return new ArGrepArgs(null, end);
     }
 
     /**
@@ -151,17 +172,17 @@ public class ArGrepArgs implements CompositeArgument {
 
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
-        // Range: start end (unbounded maps to - / +)
-        if (range.getLower().isUnbounded()) {
+        // Range: start end (null maps to - / +)
+        if (rangeStart == null) {
             args.add("-");
         } else {
-            args.add(range.getLower().getValue());
+            args.add(rangeStart);
         }
 
-        if (range.getUpper().isUnbounded()) {
+        if (rangeEnd == null) {
             args.add("+");
         } else {
-            args.add(range.getUpper().getValue());
+            args.add(rangeEnd);
         }
 
         // Predicates

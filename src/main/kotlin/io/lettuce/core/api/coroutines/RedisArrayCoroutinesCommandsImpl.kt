@@ -8,7 +8,6 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.Range
 import io.lettuce.core.api.reactive.RedisArrayReactiveCommands
 import io.lettuce.core.array.*
 import kotlinx.coroutines.flow.toList
@@ -51,7 +50,7 @@ internal class RedisArrayCoroutinesCommandsImpl<K : Any, V : Any>(internal val o
     override suspend fun ardelrange(key: K, start: Long, end: Long): Long? =
         ops.ardelrange(key, start, end).awaitFirstOrNull()
 
-    override suspend fun ardelrange(key: K, vararg ranges: Range<Long>): Long? =
+    override suspend fun ardelrange(key: K, vararg ranges: ArrayIndexRange): Long? =
         ops.ardelrange(key, *ranges).awaitFirstOrNull()
 
     override suspend fun arlen(key: K): Long? = ops.arlen(key).awaitFirstOrNull()

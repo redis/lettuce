@@ -4124,7 +4124,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Long> ardelrange(K key, Range<Long>... ranges) {
+    public Mono<Long> ardelrange(K key, ArrayIndexRange... ranges) {
         return createMono(() -> arrayCommandBuilder.ardelrange(key, ranges));
     }
 

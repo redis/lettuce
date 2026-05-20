@@ -8,7 +8,6 @@ package io.lettuce.core.api.async;
 
 import java.util.Map;
 import java.util.List;
-import io.lettuce.core.Range;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.array.*;
@@ -132,8 +131,7 @@ public interface RedisArrayAsyncCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
      */
-    @SuppressWarnings("unchecked")
-    RedisFuture<Long> ardelrange(K key, Range<Long>... ranges);
+    RedisFuture<Long> ardelrange(K key, ArrayIndexRange... ranges);
 
     /**
      * Get the logical length of the array (max index + 1).

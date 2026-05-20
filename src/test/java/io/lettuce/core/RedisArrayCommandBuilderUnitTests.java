@@ -91,16 +91,14 @@ class RedisArrayCommandBuilderUnitTests {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void shouldCorrectlyConstructArdelrange() {
-        assertThat(encode(builder.ardelrange(KEY, Range.create(0L, 10L))))
+        assertThat(encode(builder.ardelrange(KEY, ArrayIndexRange.of(0, 10))))
                 .isEqualTo("*4\r\n$10\r\nARDELRANGE\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$2\r\n10\r\n");
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void shouldCorrectlyConstructArdelrangeMultiple() {
-        assertThat(encode(builder.ardelrange(KEY, Range.create(0L, 1L), Range.create(4L, 5L))))
+        assertThat(encode(builder.ardelrange(KEY, ArrayIndexRange.of(0, 1), ArrayIndexRange.of(4, 5))))
                 .isEqualTo("*6\r\n$10\r\nARDELRANGE\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$1\r\n1\r\n$1\r\n4\r\n$1\r\n5\r\n");
     }
 
@@ -164,6 +162,18 @@ class RedisArrayCommandBuilderUnitTests {
         assertThat(encode(builder.argrep(KEY, ArGrepArgs.range(0, 100).re("p1").glob("p2").and().limit(10).nocase())))
                 .isEqualTo(
                         "*12\r\n$6\r\nARGREP\r\n$7\r\nmyarray\r\n$1\r\n0\r\n$3\r\n100\r\n$2\r\nRE\r\n$2\r\np1\r\n$4\r\nGLOB\r\n$2\r\np2\r\n$3\r\nAND\r\n$5\r\nLIMIT\r\n$2\r\n10\r\n$6\r\nNOCASE\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructArgrepFrom() {
+        assertThat(encode(builder.argrep(KEY, ArGrepArgs.from(5).exact("foo"))))
+                .isEqualTo("*6\r\n$6\r\nARGREP\r\n$7\r\nmyarray\r\n$1\r\n5\r\n$1\r\n+\r\n$5\r\nEXACT\r\n$3\r\nfoo\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructArgrepTo() {
+        assertThat(encode(builder.argrep(KEY, ArGrepArgs.to(10).exact("foo"))))
+                .isEqualTo("*6\r\n$6\r\nARGREP\r\n$7\r\nmyarray\r\n$1\r\n-\r\n$2\r\n10\r\n$5\r\nEXACT\r\n$3\r\nfoo\r\n");
     }
 
     @Test

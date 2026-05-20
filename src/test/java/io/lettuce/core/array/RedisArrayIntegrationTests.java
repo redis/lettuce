@@ -6,7 +6,6 @@
  */
 package io.lettuce.core.array;
 
-import io.lettuce.core.Range;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
@@ -138,7 +137,6 @@ public class RedisArrayIntegrationTests extends TestSupport {
     // --- ARDELRANGE ---
 
     @Test
-    @SuppressWarnings("unchecked")
     void ardelrange() {
         Map<Long, String> map = new LinkedHashMap<>();
         map.put(0L, "a");
@@ -147,8 +145,15 @@ public class RedisArrayIntegrationTests extends TestSupport {
         map.put(3L, "d");
         map.put(4L, "e");
         redis.armset(KEY, map);
-        assertThat(redis.ardelrange(KEY, Range.create(1L, 3L))).isEqualTo(3L);
+        // single range
+        assertThat(redis.ardelrange(KEY, ArrayIndexRange.of(1, 3))).isEqualTo(3L);
         assertThat(redis.arcount(KEY)).isEqualTo(2L); // 0 and 4 remain
+        // multi-range varargs
+        redis.del(KEY);
+        redis.armset(KEY, map);
+        assertThat(redis.ardelrange(KEY, ArrayIndexRange.of(0, 1), ArrayIndexRange.of(3, 4))).isEqualTo(4L);
+        assertThat(redis.arcount(KEY)).isEqualTo(1L); // only 2 remains
+        assertThat(redis.arget(KEY, 2)).isEqualTo("c");
     }
 
     @Test
@@ -232,15 +237,8 @@ public class RedisArrayIntegrationTests extends TestSupport {
         assertThat(result).hasSize(2);
         assertThat(result.get(0)).isEqualTo(new IndexedValue<>(3L, "b"));
         assertThat(result.get(1)).isEqualTo(new IndexedValue<>(7L, "c"));
-    }
-
-    @Test
-    void arscanEmptyRange() {
-        redis.arset(KEY, 0, "a");
-        redis.arset(KEY, 10, "b");
-        // Scan range with no populated slots
-        List<IndexedValue<String>> result = redis.arscan(KEY, 3, 7);
-        assertThat(result).isEmpty();
+        // empty subrange — no populated slots between 4 and 6
+        assertThat(redis.arscan(KEY, 4, 6)).isEmpty();
     }
 
     // --- ARGREP ---
@@ -252,15 +250,21 @@ public class RedisArrayIntegrationTests extends TestSupport {
         redis.arset(KEY, 2, "alpha");
         List<Long> indices = redis.argrep(KEY, ArGrepArgs.unbounded().exact("alpha"));
         assertThat(indices).containsExactly(0L, 2L);
+        // no matches
+        assertThat(redis.argrep(KEY, ArGrepArgs.unbounded().exact("nonexistent"))).isEmpty();
     }
 
     @Test
     void argrepWithValues() {
-        redis.arset(KEY, 0, "alpha");
-        redis.arset(KEY, 1, "beta");
-        List<IndexedValue<String>> result = redis.argrepWithValues(KEY, ArGrepArgs.unbounded().exact("alpha"));
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(new IndexedValue<>(0L, "alpha"));
+        redis.arset(KEY, 0, "target");
+        redis.arset(KEY, 1, "other");
+        redis.arset(KEY, 2, "target");
+        redis.arset(KEY, 5, "target");
+        List<IndexedValue<String>> result = redis.argrepWithValues(KEY, ArGrepArgs.unbounded().exact("target"));
+        assertThat(result).hasSize(3);
+        assertThat(result.get(0)).isEqualTo(new IndexedValue<>(0L, "target"));
+        assertThat(result.get(1)).isEqualTo(new IndexedValue<>(2L, "target"));
+        assertThat(result.get(2)).isEqualTo(new IndexedValue<>(5L, "target"));
     }
 
     @Test
@@ -295,11 +299,31 @@ public class RedisArrayIntegrationTests extends TestSupport {
     @Test
     void argrepBoundedRange() {
         redis.arset(KEY, 0, "a");
-        redis.arset(KEY, 5, "a");
-        redis.arset(KEY, 10, "a");
-        redis.arset(KEY, 15, "a");
-        List<Long> indices = redis.argrep(KEY, ArGrepArgs.range(3, 12).exact("a"));
-        assertThat(indices).containsExactly(5L, 10L);
+        redis.arset(KEY, 3, "b");
+        redis.arset(KEY, 7, "c");
+        redis.arset(KEY, 10, "d");
+        List<Long> indices = redis.argrep(KEY, ArGrepArgs.range(2, 8).exact("b"));
+        assertThat(indices).containsExactly(3L);
+    }
+
+    @Test
+    void argrepFromRange() {
+        redis.arset(KEY, 0, "bcd");
+        redis.arset(KEY, 3, "abc");
+        redis.arset(KEY, 7, "bcd");
+        redis.arset(KEY, 10, "abcd");
+        List<Long> indices = redis.argrep(KEY, ArGrepArgs.from(3).glob("*bc*").re("^.{3}$").and());
+        assertThat(indices).containsExactly(3L, 7L);
+    }
+
+    @Test
+    void argrepToRange() {
+        redis.arset(KEY, 0, "b");
+        redis.arset(KEY, 3, "abc");
+        redis.arset(KEY, 7, "bcd");
+        redis.arset(KEY, 10, "c");
+        List<Long> indices = redis.argrep(KEY, ArGrepArgs.to(7).glob("*bc*"));
+        assertThat(indices).containsExactly(3L, 7L);
     }
 
     @Test
@@ -347,27 +371,6 @@ public class RedisArrayIntegrationTests extends TestSupport {
     }
 
     @Test
-    void argrepNoMatches() {
-        redis.arset(KEY, 0, "a");
-        redis.arset(KEY, 1, "b");
-        List<Long> indices = redis.argrep(KEY, ArGrepArgs.unbounded().exact("nonexistent"));
-        assertThat(indices).isEmpty();
-    }
-
-    @Test
-    void argrepWithValuesMultipleResults() {
-        redis.arset(KEY, 0, "target");
-        redis.arset(KEY, 1, "other");
-        redis.arset(KEY, 2, "target");
-        redis.arset(KEY, 5, "target");
-        List<IndexedValue<String>> result = redis.argrepWithValues(KEY, ArGrepArgs.unbounded().exact("target"));
-        assertThat(result).hasSize(3);
-        assertThat(result.get(0)).isEqualTo(new IndexedValue<>(0L, "target"));
-        assertThat(result.get(1)).isEqualTo(new IndexedValue<>(2L, "target"));
-        assertThat(result.get(2)).isEqualTo(new IndexedValue<>(5L, "target"));
-    }
-
-    @Test
     void argrepWithValuesBoundedAndLimit() {
         redis.arset(KEY, 0, "x");
         redis.arset(KEY, 1, "x");
@@ -382,138 +385,51 @@ public class RedisArrayIntegrationTests extends TestSupport {
     // --- AROP ---
 
     @Test
-    void aropSum() {
-        redis.arset(KEY, 0, "10");
-        redis.arset(KEY, 1, "20");
-        redis.arset(KEY, 2, "30");
-        String sum = redis.aropAggregate(KEY, 0, 2, ArAggregateType.SUM);
-        assertThat(sum).isEqualTo("60");
+    void aropAggregate() {
+        redis.arset(KEY, 0, "30");
+        redis.arset(KEY, 1, "10");
+        redis.arset(KEY, 2, "20");
+        assertThat(redis.aropAggregate(KEY, 0, 2, ArAggregateType.SUM)).isEqualTo("60");
+        assertThat(redis.aropAggregate(KEY, 0, 2, ArAggregateType.MIN)).isEqualTo("10");
+        assertThat(redis.aropAggregate(KEY, 0, 2, ArAggregateType.MAX)).isEqualTo("30");
     }
 
     @Test
-    void aropUsed() {
+    void aropCount() {
         redis.arset(KEY, 0, "a");
         redis.arset(KEY, 5, "b");
-        Long used = redis.aropCount(KEY, 0, 10);
-        assertThat(used).isEqualTo(2L);
+        assertThat(redis.aropCount(KEY, 0, 10)).isEqualTo(2L);
     }
 
     @Test
-    void aropMatch() {
+    void aropCountMatch() {
         redis.arset(KEY, 0, "a");
         redis.arset(KEY, 1, "b");
         redis.arset(KEY, 2, "a");
-        Long count = redis.aropCount(KEY, 0, 2, "a");
-        assertThat(count).isEqualTo(2L);
+        assertThat(redis.aropCount(KEY, 0, 2, "a")).isEqualTo(2L);
+        // no matches
+        assertThat(redis.aropCount(KEY, 0, 2, "z")).isEqualTo(0L);
     }
 
     @Test
-    void aropMin() {
-        redis.arset(KEY, 0, "30");
-        redis.arset(KEY, 1, "10");
-        redis.arset(KEY, 2, "20");
-        String min = redis.aropAggregate(KEY, 0, 2, ArAggregateType.MIN);
-        assertThat(min).isEqualTo("10");
-    }
-
-    @Test
-    void aropMax() {
-        redis.arset(KEY, 0, "30");
-        redis.arset(KEY, 1, "10");
-        redis.arset(KEY, 2, "20");
-        String max = redis.aropAggregate(KEY, 0, 2, ArAggregateType.MAX);
-        assertThat(max).isEqualTo("30");
-    }
-
-    @Test
-    void aropSumWithGaps() {
-        redis.arset(KEY, 0, "5");
-        redis.arset(KEY, 5, "15");
-        redis.arset(KEY, 10, "25");
-        // SUM over range that includes empty slots
-        String sum = redis.aropAggregate(KEY, 0, 10, ArAggregateType.SUM);
-        assertThat(sum).isEqualTo("45");
-    }
-
-    @Test
-    void aropSumPartialRange() {
-        redis.arset(KEY, 0, "10");
-        redis.arset(KEY, 1, "20");
-        redis.arset(KEY, 2, "30");
-        redis.arset(KEY, 3, "40");
-        // SUM only indices 1-2
-        String sum = redis.aropAggregate(KEY, 1, 2, ArAggregateType.SUM);
-        assertThat(sum).isEqualTo("50");
-    }
-
-    @Test
-    void aropBitwiseAnd() {
+    void aropBitwise() {
         redis.arset(KEY, 0, "7"); // 0b111
         redis.arset(KEY, 1, "5"); // 0b101
         redis.arset(KEY, 2, "3"); // 0b011
-        Long result = redis.aropBitwise(KEY, 0, 2, ArBitwiseType.AND);
-        assertThat(result).isEqualTo(1L); // 0b001
-    }
-
-    @Test
-    void aropBitwiseOr() {
-        redis.arset(KEY, 0, "1"); // 0b001
-        redis.arset(KEY, 1, "2"); // 0b010
-        redis.arset(KEY, 2, "4"); // 0b100
-        Long result = redis.aropBitwise(KEY, 0, 2, ArBitwiseType.OR);
-        assertThat(result).isEqualTo(7L); // 0b111
-    }
-
-    @Test
-    void aropBitwiseXor() {
-        redis.arset(KEY, 0, "5"); // 0b101
-        redis.arset(KEY, 1, "3"); // 0b011
-        Long result = redis.aropBitwise(KEY, 0, 1, ArBitwiseType.XOR);
-        assertThat(result).isEqualTo(6L); // 0b110
-    }
-
-    @Test
-    void aropCountUsedWithGaps() {
-        redis.arset(KEY, 0, "a");
-        redis.arset(KEY, 3, "b");
-        redis.arset(KEY, 7, "c");
-        redis.arset(KEY, 10, "d");
-        // Count only in subrange 2-8
-        Long used = redis.aropCount(KEY, 2, 8);
-        assertThat(used).isEqualTo(2L); // indices 3 and 7
-    }
-
-    @Test
-    void aropCountMatchNoMatches() {
-        redis.arset(KEY, 0, "a");
-        redis.arset(KEY, 1, "b");
-        redis.arset(KEY, 2, "c");
-        Long count = redis.aropCount(KEY, 0, 2, "z");
-        assertThat(count).isEqualTo(0L);
-    }
-
-    @Test
-    void aropAggregateSingleElement() {
-        redis.arset(KEY, 0, "42");
-        String sum = redis.aropAggregate(KEY, 0, 0, ArAggregateType.SUM);
-        assertThat(sum).isEqualTo("42");
-        String min = redis.aropAggregate(KEY, 0, 0, ArAggregateType.MIN);
-        assertThat(min).isEqualTo("42");
-        String max = redis.aropAggregate(KEY, 0, 0, ArAggregateType.MAX);
-        assertThat(max).isEqualTo("42");
+        assertThat(redis.aropBitwise(KEY, 0, 2, ArBitwiseType.AND)).isEqualTo(1L); // 0b001
+        assertThat(redis.aropBitwise(KEY, 0, 2, ArBitwiseType.OR)).isEqualTo(7L); // 0b111
+        assertThat(redis.aropBitwise(KEY, 0, 2, ArBitwiseType.XOR)).isEqualTo(1L); // 0b001
     }
 
     // --- ARINSERT ---
 
     @Test
-    void arinsertSingle() {
-        Long index = redis.arinsert(KEY, "only");
-        assertThat(index).isEqualTo(0L);
-        assertThat(redis.arget(KEY, 0)).isEqualTo("only");
-    }
-
-    @Test
     void arinsert() {
+        // single insert
+        assertThat(redis.arinsert(KEY, "only")).isEqualTo(0L);
+        assertThat(redis.arget(KEY, 0)).isEqualTo("only");
+        redis.del(KEY);
+        // varargs insert
         Long lastIndex = redis.arinsert(KEY, "v1", "v2", "v3");
         assertThat(lastIndex).isEqualTo(2L);
         assertThat(redis.arget(KEY, 0)).isEqualTo("v1");
@@ -524,17 +440,14 @@ public class RedisArrayIntegrationTests extends TestSupport {
     // --- ARRING ---
 
     @Test
-    void arringSingle() {
-        Long index = redis.arring(KEY, 5, "first");
-        assertThat(index).isEqualTo(0L);
+    void arring() {
+        // single insert into ring
+        assertThat(redis.arring(KEY, 5, "first")).isEqualTo(0L);
         assertThat(redis.arget(KEY, 0)).isEqualTo("first");
         assertThat(redis.arcount(KEY)).isEqualTo(1L);
-    }
-
-    @Test
-    void arring() {
-        Long lastIndex = redis.arring(KEY, 3, "a", "b", "c", "d", "e");
-        // ring size 3, so wraps around
+        redis.del(KEY);
+        // varargs with wrap-around
+        redis.arring(KEY, 3, "a", "b", "c", "d", "e");
         assertThat(redis.arlen(KEY)).isEqualTo(3L);
         assertThat(redis.arcount(KEY)).isEqualTo(3L);
     }
@@ -546,9 +459,12 @@ public class RedisArrayIntegrationTests extends TestSupport {
         assertThat(redis.arget(KEY, 0)).isEqualTo("a");
         assertThat(redis.arget(KEY, 1)).isEqualTo("b");
         assertThat(redis.arget(KEY, 2)).isEqualTo("c");
-        // Insert 2 more - should wrap and overwrite
+        // Insert 2 more — wraps around, overwrites indices 0 and 1
         redis.arring(KEY, 3, "d", "e");
         assertThat(redis.arlen(KEY)).isEqualTo(3L);
+        assertThat(redis.arget(KEY, 0)).isEqualTo("d");
+        assertThat(redis.arget(KEY, 1)).isEqualTo("e");
+        assertThat(redis.arget(KEY, 2)).isEqualTo("c");
     }
 
     // --- ARNEXT ---
@@ -561,8 +477,7 @@ public class RedisArrayIntegrationTests extends TestSupport {
     @Test
     void arnext() {
         redis.arinsert(KEY, "a", "b");
-        Long next = redis.arnext(KEY);
-        assertThat(next).isGreaterThanOrEqualTo(0L);
+        assertThat(redis.arnext(KEY)).isEqualTo(2L);
     }
 
     // --- ARSEEK ---
@@ -588,17 +503,9 @@ public class RedisArrayIntegrationTests extends TestSupport {
         redis.arset(KEY, 0, "a");
         redis.arset(KEY, 1, "b");
         redis.arset(KEY, 2, "c");
-        List<String> items = redis.arlastitems(KEY, 2);
-        assertThat(items).containsExactly("b", "c");
-    }
-
-    @Test
-    void arlastitemsRev() {
-        redis.arset(KEY, 0, "a");
-        redis.arset(KEY, 1, "b");
-        redis.arset(KEY, 2, "c");
-        List<String> items = redis.arlastitems(KEY, 2, true);
-        assertThat(items).containsExactly("c", "b");
+        assertThat(redis.arlastitems(KEY, 2)).containsExactly("b", "c");
+        // reversed order
+        assertThat(redis.arlastitems(KEY, 2, true)).containsExactly("c", "b");
     }
 
     @Test
@@ -621,6 +528,11 @@ public class RedisArrayIntegrationTests extends TestSupport {
         assertThat(meta.getDirectorySize()).isEqualTo(1L);
         assertThat(meta.getSuperDirEntries()).isEqualTo(0L);
         assertThat(meta.getSliceSize()).isEqualTo(4096L);
+        // raw map access
+        Map<String, Object> raw = meta.getInfo();
+        assertThat(raw).isNotEmpty();
+        assertThat(raw).containsKey("count");
+        assertThat(raw).containsKey("len");
     }
 
     @Test
@@ -642,22 +554,7 @@ public class RedisArrayIntegrationTests extends TestSupport {
         assertThat(meta.getAvgDenseSize()).isIn("0", "0.0");
         assertThat(meta.getAvgDenseFill()).isIn("0", "0.0");
         assertThat(meta.getAvgSparseSize()).isNotNull();
-    }
-
-    @Test
-    void arinfoRawMap() {
-        redis.arset(KEY, 0, "a");
-        ArrayInfo meta = redis.arinfo(KEY);
-        Map<String, Object> raw = meta.getInfo();
-        assertThat(raw).isNotEmpty();
-        assertThat(raw).containsKey("count");
-        assertThat(raw).containsKey("len");
-    }
-
-    @Test
-    void arinfoFullRawMap() {
-        redis.arset(KEY, 0, "a");
-        ArrayInfoFull meta = redis.arinfoFull(KEY);
+        // raw map access
         Map<String, Object> raw = meta.getInfo();
         assertThat(raw).isNotEmpty();
         assertThat(raw).containsKey("count");

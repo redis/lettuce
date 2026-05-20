@@ -4076,7 +4076,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Long> ardelrange(K key, Range<Long>... ranges) {
+    public RedisFuture<Long> ardelrange(K key, ArrayIndexRange... ranges) {
         return dispatch(arrayCommandBuilder.ardelrange(key, ranges));
     }
 
