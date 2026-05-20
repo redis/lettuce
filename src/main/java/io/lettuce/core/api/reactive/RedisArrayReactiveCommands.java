@@ -7,6 +7,7 @@
 package io.lettuce.core.api.reactive;
 
 import java.util.Map;
+import io.lettuce.core.Value;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.array.*;
 import reactor.core.publisher.Flux;
@@ -79,11 +80,11 @@ public interface RedisArrayReactiveCommands<K, V> {
      *
      * @param key the key of the array.
      * @param indices the indices to get.
-     * @return a list of values (with {@code null} for empty slots).
+     * @return values wrapped in {@link Value}, with {@link Value#empty()} for empty slots.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/armget/">Redis Documentation: ARMGET</a>
      */
-    Flux<V> armget(K key, long... indices);
+    Flux<Value<V>> armget(K key, long... indices);
 
     /**
      * Delete a single element at the given index. Returns 1 if the element existed, 0 otherwise.
@@ -154,18 +155,18 @@ public interface RedisArrayReactiveCommands<K, V> {
     Mono<Long> arcount(K key);
 
     /**
-     * Get all values in a range, including {@code null} for empty slots.
+     * Get all values in a range, including {@link Value#empty()} for empty slots.
      * <p>
      * The range must not exceed 1,000,000 items.
      *
      * @param key the key of the array.
      * @param start the start index (inclusive).
      * @param end the end index (inclusive).
-     * @return a list of values (with {@code null} for empty slots).
+     * @return values wrapped in {@link Value}, with {@link Value#empty()} for empty slots.
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/argetrange/">Redis Documentation: ARGETRANGE</a>
      */
-    Flux<V> argetrange(K key, long start, long end);
+    Flux<Value<V>> argetrange(K key, long start, long end);
 
     /**
      * Get the next insert index for the array.

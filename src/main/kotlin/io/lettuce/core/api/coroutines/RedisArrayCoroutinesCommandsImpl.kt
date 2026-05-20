@@ -39,7 +39,7 @@ internal class RedisArrayCoroutinesCommandsImpl<K : Any, V : Any>(internal val o
         ops.arget(key, index).awaitFirstOrNull()
 
     override suspend fun armget(key: K, vararg indices: Long): List<V> =
-        ops.armget(key, *indices).asFlow().toList()
+        ops.armget(key, *indices).asFlow().toList().map { it.getValueOrElse(null) }
 
     override suspend fun ardel(key: K, index: Long): Long? =
         ops.ardel(key, index).awaitFirstOrNull()
@@ -58,7 +58,7 @@ internal class RedisArrayCoroutinesCommandsImpl<K : Any, V : Any>(internal val o
     override suspend fun arcount(key: K): Long? = ops.arcount(key).awaitFirstOrNull()
 
     override suspend fun argetrange(key: K, start: Long, end: Long): List<V> =
-        ops.argetrange(key, start, end).asFlow().toList()
+        ops.argetrange(key, start, end).asFlow().toList().map { it.getValueOrElse(null) }
 
     override suspend fun arnext(key: K): Long? = ops.arnext(key).awaitFirstOrNull()
 

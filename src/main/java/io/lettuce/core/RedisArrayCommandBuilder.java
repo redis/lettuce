@@ -14,6 +14,8 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
+import io.lettuce.core.Value;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +73,15 @@ public class RedisArrayCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         return createCommand(ARMGET, new ValueListOutput<>(codec), args);
     }
 
+    public Command<K, V, List<Value<V>>> armgetValues(K key, long... indices) {
+        notNullKey(key);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        for (long index : indices) {
+            args.add(index);
+        }
+        return createCommand(ARMGET, new ValueValueListOutput<>(codec), args);
+    }
+
     public Command<K, V, Long> ardel(K key, long index) {
         notNullKey(key);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(index);
@@ -115,6 +126,12 @@ public class RedisArrayCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         notNullKey(key);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(start).add(end);
         return createCommand(ARGETRANGE, new ValueListOutput<>(codec), args);
+    }
+
+    public Command<K, V, List<Value<V>>> argetrangeValues(K key, long start, long end) {
+        notNullKey(key);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(start).add(end);
+        return createCommand(ARGETRANGE, new ValueValueListOutput<>(codec), args);
     }
 
     public Command<K, V, List<IndexedValue<V>>> arscan(K key, long start, long end) {

@@ -4104,8 +4104,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> armget(K key, long... indices) {
-        return createDissolvingFlux(() -> arrayCommandBuilder.armget(key, indices));
+    public Flux<Value<V>> armget(K key, long... indices) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.armgetValues(key, indices));
     }
 
     @Override
@@ -4139,8 +4139,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> argetrange(K key, long start, long end) {
-        return createDissolvingFlux(() -> arrayCommandBuilder.argetrange(key, start, end));
+    public Flux<Value<V>> argetrange(K key, long start, long end) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.argetrangeValues(key, start, end));
     }
 
     @Override

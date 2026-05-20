@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnabledOnCommand("ARSET")
 public class RedisArrayIntegrationTests extends TestSupport {
 
-    private static final String KEY = "test:array";
+    static final String KEY = "test:array";
 
     protected final RedisCommands<String, String> redis;
 
