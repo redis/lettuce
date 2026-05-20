@@ -17,40 +17,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.bf;
+package io.lettuce.core.bf.arguments;
 
 /**
- * Value object for the Redis <a href="https://redis.io/docs/latest/commands/bf.scandump/">BF.SCAN.DUMP</a> command.
+ * Enumeration for the Redis <a href="https://redis.io/docs/latest/commands/bf.info/">BF.INFO</a> command.
  *
  * @author Yordan Tsintsov
  * @since 7.6
  */
-public class BfScanDumpValue {
+public enum BfInfoType {
 
-    private final long iterator;
-    private final byte[] data;
-
-    public BfScanDumpValue(long iterator, byte[] data) {
-        this.iterator = iterator;
-        this.data = data;
-    }
-
-    /**
-     * Returns the iterator value.
-     *
-     * @return the iterator value
-     */
-    public long getIterator() {
-        return iterator;
-    }
-
-    /**
-     * Returns the data.
-     *
-     * @return the data
-     */
-    public byte[] getData() {
-        return data;
-    }
+    CAPACITY,
+    SIZE,
+    FILTERS,
+    ITEMS,
+    EXPANSION
 
 }
