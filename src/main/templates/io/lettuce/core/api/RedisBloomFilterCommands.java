@@ -87,7 +87,7 @@ public interface RedisBloomFilterCommands<K, V> {
      * @param key the key.
      * @param values the values.
      * @return a boolean list where {@code true} means that the item was added and {@code false} means that there's a
-     *      probability that the item was already added to the filter of the filter is full.
+     *         probability that the item was already added to the filter of the filter is full.
      */
     @SuppressWarnings("unchecked")
     List<Boolean> bfInsert(K key, V... values);
@@ -99,7 +99,7 @@ public interface RedisBloomFilterCommands<K, V> {
      * @param insertArgs the insert arguments.
      * @param values the values.
      * @return a boolean list where {@code true} means that the item was added and {@code false} means that there's a
-     *      probability that the item was already added to the filter of the filter is full.
+     *         probability that the item was already added to the filter of the filter is full.
      */
     @SuppressWarnings("unchecked")
     List<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V... values);
@@ -119,8 +119,8 @@ public interface RedisBloomFilterCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return a boolean list of {@code true} or {@code false} where true means that the item was newly added and false means that
-     *      there's a probability that the item was already added to the filter.
+     * @return a boolean list of {@code true} or {@code false} where true means that the item was newly added and false means
+     *         that there's a probability that the item was already added to the filter.
      */
     @SuppressWarnings("unchecked")
     List<Boolean> bfMAdd(K key, V... values);
@@ -131,13 +131,15 @@ public interface RedisBloomFilterCommands<K, V> {
      * @param key the key.
      * @param values the values.
      * @return a boolean list of {@code true} or {@code false} where true means that, with high probability, the item was
-     *      already added to the filter, and false means that key does not exist or that item was definitely not added to the filter.
+     *         already added to the filter, and false means that key does not exist or that item was definitely not added to the
+     *         filter.
      */
     @SuppressWarnings("unchecked")
     List<Boolean> bfMExists(K key, V... values);
 
     /**
-     * Creates an empty Bloom filter with a single sub-filter for the initial specified capacity and with an upper bound error rate.
+     * Creates an empty Bloom filter with a single sub-filter for the initial specified capacity and with an upper bound error
+     * rate.
      *
      * @param key the key.
      * @param errorRate the error rate.
@@ -147,7 +149,8 @@ public interface RedisBloomFilterCommands<K, V> {
     String bfReserve(K key, double errorRate, long capacity);
 
     /**
-     * Creates an empty Bloom filter with a single sub-filter for the initial specified capacity and with an upper bound error rate.
+     * Creates an empty Bloom filter with a single sub-filter for the initial specified capacity and with an upper bound error
+     * rate.
      *
      * @param key the key.
      * @param errorRate the error rate.

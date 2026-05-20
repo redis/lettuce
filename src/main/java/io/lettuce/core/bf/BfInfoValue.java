@@ -30,10 +30,15 @@ import java.util.Map;
 public class BfInfoValue {
 
     private final Map<String, Long> rawInfo;
+
     private final long capacity;
+
     private final long size;
+
     private final long filters;
+
     private final long items;
+
     private final long rate;
 
     public BfInfoValue(Map<String, Long> rawInfo) {

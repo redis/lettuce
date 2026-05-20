@@ -34,6 +34,7 @@ import io.lettuce.core.protocol.CommandKeyword;
 public class BfReserveArgs implements CompositeArgument {
 
     private Long expansion;
+
     private boolean nonScaling;
 
     /**

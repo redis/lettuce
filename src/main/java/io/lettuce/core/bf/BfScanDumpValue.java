@@ -28,6 +28,7 @@ package io.lettuce.core.bf;
 public class BfScanDumpValue {
 
     private final long iterator;
+
     private final byte[] data;
 
     public BfScanDumpValue(long iterator, byte[] data) {

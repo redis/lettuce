@@ -34,9 +34,13 @@ import io.lettuce.core.protocol.CommandKeyword;
 public class BfInsertArgs implements CompositeArgument {
 
     private Long capacity;
+
     private Double error;
+
     private Long expansion;
+
     private boolean noCreate;
+
     private boolean nonScaling;
 
     /**

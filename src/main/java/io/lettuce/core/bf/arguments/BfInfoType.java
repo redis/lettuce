@@ -27,10 +27,6 @@ package io.lettuce.core.bf.arguments;
  */
 public enum BfInfoType {
 
-    CAPACITY,
-    SIZE,
-    FILTERS,
-    ITEMS,
-    EXPANSION
+    CAPACITY, SIZE, FILTERS, ITEMS, EXPANSION
 
 }
