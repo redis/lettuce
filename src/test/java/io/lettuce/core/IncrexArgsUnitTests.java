@@ -19,24 +19,10 @@ class IncrexArgsUnitTests {
     }
 
     @Test
-    void shouldRenderOverflowSat() {
+    void shouldRenderSaturate() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-        IncrexArgs.Builder.overflow(IncrexArgs.Overflow.SAT).build(args);
-        assertThat(args.toCommandString()).isEqualTo("OVERFLOW SAT");
-    }
-
-    @Test
-    void shouldRenderOverflowReject() {
-        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-        IncrexArgs.Builder.overflow(IncrexArgs.Overflow.REJECT).build(args);
-        assertThat(args.toCommandString()).isEqualTo("OVERFLOW REJECT");
-    }
-
-    @Test
-    void shouldRenderOverflowFail() {
-        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-        IncrexArgs.Builder.overflow(IncrexArgs.Overflow.FAIL).build(args);
-        assertThat(args.toCommandString()).isEqualTo("OVERFLOW FAIL");
+        IncrexArgs.Builder.saturate().build(args);
+        assertThat(args.toCommandString()).isEqualTo("SATURATE");
     }
 
     @Test
@@ -84,8 +70,8 @@ class IncrexArgsUnitTests {
     @Test
     void shouldRenderFullArgs() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-        IncrexArgs.Builder.lbound(0).ubound(100).overflow(IncrexArgs.Overflow.SAT).ex(60).enx().build(args);
-        assertThat(args.toCommandString()).isEqualTo("LBOUND 0 UBOUND 100 OVERFLOW SAT EX 60 ENX");
+        IncrexArgs.Builder.lbound(0).ubound(100).saturate().ex(60).enx().build(args);
+        assertThat(args.toCommandString()).isEqualTo("LBOUND 0 UBOUND 100 SATURATE EX 60 ENX");
     }
 
     @Test

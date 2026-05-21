@@ -68,7 +68,7 @@ public enum CommandKeyword implements ProtocolKeyword {
     FP16, BF16, FP32, FP64, FPHA,
 
     // INCREX keywords
-    BYFLOAT, BYINT, ENX, FAIL, LBOUND, OVERFLOW, REJECT, SAT, UBOUND;
+    BYFLOAT, BYINT, ENX, LBOUND, SATURATE, UBOUND;
 
     public final byte[] bytes;
 

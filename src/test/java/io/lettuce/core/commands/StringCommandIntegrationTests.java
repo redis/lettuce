@@ -573,9 +573,9 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
-    void increxRejectOverflow() {
+    void increxDefaultRejectSilent() {
         redis.set(key, "0");
-        IncrexArgs args = IncrexArgs.Builder.ubound(5).overflow(IncrexArgs.Overflow.REJECT);
+        IncrexArgs args = IncrexArgs.Builder.ubound(5);
         IncrexValue<Long> res = redis.increx(key, 10, args);
         assertThat(res.getValue()).isEqualTo(0L);
         assertThat(res.getIncrement()).isEqualTo(0L);
@@ -583,9 +583,9 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
-    void increxSatOverflowUbound() {
+    void increxSaturateUbound() {
         redis.set(key, "0");
-        IncrexArgs args = IncrexArgs.Builder.ubound(5).overflow(IncrexArgs.Overflow.SAT);
+        IncrexArgs args = IncrexArgs.Builder.ubound(5).saturate();
         IncrexValue<Long> res = redis.increx(key, 10, args);
         assertThat(res.getValue()).isEqualTo(5L);
         assertThat(res.getIncrement()).isEqualTo(5L);
@@ -593,9 +593,9 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
-    void increxSatOverflowLbound() {
+    void increxSaturateLbound() {
         redis.set(key, "5");
-        IncrexArgs args = IncrexArgs.Builder.lbound(0).overflow(IncrexArgs.Overflow.SAT);
+        IncrexArgs args = IncrexArgs.Builder.lbound(0).saturate();
         IncrexValue<Long> res = redis.increx(key, -100, args);
         assertThat(res.getValue()).isEqualTo(0L);
         assertThat(res.getIncrement()).isEqualTo(-5L);
@@ -603,17 +603,9 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
-    void increxFailOverflow() {
-        redis.set(key, "0");
-        IncrexArgs args = IncrexArgs.Builder.ubound(5).overflow(IncrexArgs.Overflow.FAIL);
-        assertThatThrownBy(() -> redis.increx(key, 10, args)).isInstanceOf(RedisCommandExecutionException.class);
-    }
-
-    @Test
-    @EnabledOnCommand("INCREX")
-    void increxSatStillAppliesExpiry() {
+    void increxSaturateStillAppliesExpiry() {
         redis.set(key, "5");
-        IncrexArgs args = IncrexArgs.Builder.ubound(5).overflow(IncrexArgs.Overflow.SAT).ex(60);
+        IncrexArgs args = IncrexArgs.Builder.ubound(5).saturate().ex(60);
         IncrexValue<Long> res = redis.increx(key, 1, args);
         assertThat(res.getValue()).isEqualTo(5L);
         assertThat(res.getIncrement()).isEqualTo(0L);
@@ -673,9 +665,9 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
-    void increxFloatSatOverflow() {
+    void increxSaturateFloat() {
         redis.set(key, "0.0");
-        IncrexArgs args = IncrexArgs.Builder.ubound(5.0).overflow(IncrexArgs.Overflow.SAT);
+        IncrexArgs args = IncrexArgs.Builder.ubound(5.0).saturate();
         IncrexValue<Double> res = redis.increxfloat(key, 10.0, args);
         assertThat(res.getValue()).isEqualTo(5.0);
         assertThat(res.getIncrement()).isEqualTo(5.0);

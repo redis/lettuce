@@ -5,7 +5,7 @@ import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 
 /**
- * Argument list builder for the Redis {@code INCREX} command. Holds bounds, overflow, expiration, and ENX options.
+ * Argument list builder for the Redis {@code INCREX} command. Holds bounds, saturate flag, expiration, and ENX options.
  * <p>
  * The increment value and mode (BYINT/BYFLOAT) are determined by which method is called on the commands interface, not by this
  * args class.
@@ -13,8 +13,8 @@ import io.lettuce.core.protocol.CommandType;
  * Usage:
  *
  * <pre>
- * IncrexArgs.Builder.ubound(100).overflow(Overflow.SAT).ex(60)
- * IncrexArgs.Builder.lbound(0).ubound(100).overflow(Overflow.REJECT)
+ * IncrexArgs.Builder.ubound(100).saturate().ex(60)
+ * IncrexArgs.Builder.lbound(0).ubound(100).saturate()
  * new IncrexArgs().ex(30).enx()
  * </pre>
  *
@@ -22,15 +22,11 @@ import io.lettuce.core.protocol.CommandType;
  */
 public class IncrexArgs implements CompositeArgument {
 
-    public enum Overflow {
-        FAIL, SAT, REJECT
-    }
-
     private Number lbound;
 
     private Number ubound;
 
-    private Overflow overflow;
+    private boolean saturate = false;
 
     private Long ex;
 
@@ -67,8 +63,8 @@ public class IncrexArgs implements CompositeArgument {
             return new IncrexArgs().ubound(ubound);
         }
 
-        public static IncrexArgs overflow(Overflow overflow) {
-            return new IncrexArgs().overflow(overflow);
+        public static IncrexArgs saturate() {
+            return new IncrexArgs().saturate();
         }
 
         public static IncrexArgs ex(long seconds) {
@@ -119,8 +115,8 @@ public class IncrexArgs implements CompositeArgument {
         return this;
     }
 
-    public IncrexArgs overflow(Overflow overflow) {
-        this.overflow = overflow;
+    public IncrexArgs saturate() {
+        this.saturate = true;
         return this;
     }
 
@@ -167,19 +163,8 @@ public class IncrexArgs implements CompositeArgument {
             args.add(ubound);
         }
 
-        if (overflow != null) {
-            args.add(CommandKeyword.OVERFLOW);
-            switch (overflow) {
-                case FAIL:
-                    args.add(CommandKeyword.FAIL);
-                    break;
-                case SAT:
-                    args.add(CommandKeyword.SAT);
-                    break;
-                case REJECT:
-                    args.add(CommandKeyword.REJECT);
-                    break;
-            }
+        if (saturate) {
+            args.add(CommandKeyword.SATURATE);
         }
 
         if (ex != null) {

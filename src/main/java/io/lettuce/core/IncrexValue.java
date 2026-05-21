@@ -27,7 +27,8 @@ public class IncrexValue<T extends Number> {
     }
 
     /**
-     * The actual increment applied. May differ from the requested increment under {@code OVERFLOW SAT}.
+     * The actual increment applied. May differ from the requested increment when {@code SATURATE} is active and the result is
+     * clamped to a bound.
      */
     public T getIncrement() {
         return increment;
