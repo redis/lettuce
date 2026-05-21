@@ -98,8 +98,8 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun increx(key: K, amount: Long, increxArgs: IncrexArgs): IncrexValue<Long>? =
         ops.increx(key, amount, increxArgs).awaitFirstOrNull()
 
-    override suspend fun increxfloat(key: K, amount: Double, increxArgs: IncrexArgs): IncrexValue<Double>? =
-        ops.increxfloat(key, amount, increxArgs).awaitFirstOrNull()
+    override suspend fun increx(key: K, amount: Double, increxArgs: IncrexFloatArgs): IncrexValue<Double>? =
+        ops.increx(key, amount, increxArgs).awaitFirstOrNull()
 
     override fun mget(vararg keys: K): Flow<KeyValue<K, V>> = ops.mget(*keys).asFlow()
 

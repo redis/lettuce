@@ -1977,9 +1977,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(INCREX, new IncrexLongOutput<>(codec), args);
     }
 
-    Command<K, V, IncrexValue<Double>> increxfloat(K key, double amount, IncrexArgs increxArgs) {
+    Command<K, V, IncrexValue<Double>> increx(K key, double amount, IncrexFloatArgs increxArgs) {
         notNullKey(key);
-        LettuceAssert.notNull(increxArgs, "IncrexArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(increxArgs, "IncrexFloatArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(BYFLOAT).add(amount);
         increxArgs.build(args);

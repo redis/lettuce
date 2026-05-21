@@ -295,15 +295,15 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
     suspend fun increx(key: K, amount: Long, increxArgs: IncrexArgs): IncrexValue<Long>?
 
     /**
-     * Increment the float value of a key by the given amount with bounds, overflow, and expiration options.
+     * Increment the float value of a key by the given amount with bounds, saturation, and expiration options.
      *
      * @param key the key.
      * @param amount the increment type: Double.
-     * @param increxArgs the [IncrexArgs] specifying bounds, overflow, and expiration options.
+     * @param increxArgs the [IncrexFloatArgs] specifying bounds, [SATURATE] flag, and expiration options.
      * @return IncrexValue containing the new value and actual increment applied.
      * @since 7.6
      */
-    suspend fun increxfloat(key: K, amount: Double, increxArgs: IncrexArgs): IncrexValue<Double>?
+    suspend fun increx(key: K, amount: Double, increxArgs: IncrexFloatArgs): IncrexValue<Double>?
 
     /**
      * Get the values of all the given keys.

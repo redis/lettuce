@@ -1627,8 +1627,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<IncrexValue<Double>> increxfloat(K key, double amount, IncrexArgs increxArgs) {
-        return dispatch(commandBuilder.increxfloat(key, amount, increxArgs));
+    public RedisFuture<IncrexValue<Double>> increx(K key, double amount, IncrexFloatArgs increxArgs) {
+        return dispatch(commandBuilder.increx(key, amount, increxArgs));
     }
 
     @Override

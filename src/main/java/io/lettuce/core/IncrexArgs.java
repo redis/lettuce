@@ -2,13 +2,13 @@ package io.lettuce.core;
 
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
-import io.lettuce.core.protocol.CommandType;
 
 /**
- * Argument list builder for the Redis {@code INCREX} command. Holds bounds, saturate flag, expiration, and ENX options.
+ * Argument list builder for the integer-bounded form of the Redis {@code INCREX} command. Accepts {@code long} lower/upper
+ * bounds; paired with the {@code increx(K, long, IncrexArgs)} overload on the commands interface (sends {@code BYINT} on the
+ * wire).
  * <p>
- * The increment value and mode (BYINT/BYFLOAT) are determined by which method is called on the commands interface, not by this
- * args class.
+ * For float-bounded INCREX use {@link IncrexFloatArgs}.
  * <p>
  * Usage:
  *
@@ -20,25 +20,11 @@ import io.lettuce.core.protocol.CommandType;
  *
  * @since 7.6
  */
-public class IncrexArgs implements CompositeArgument {
+public class IncrexArgs extends BaseIncrexArgs<IncrexArgs> {
 
-    private Number lbound;
+    private Long lbound;
 
-    private Number ubound;
-
-    private boolean saturate = false;
-
-    private Long ex;
-
-    private Long px;
-
-    private Long exAt;
-
-    private Long pxAt;
-
-    private boolean persist = false;
-
-    private boolean enx = false;
+    private Long ubound;
 
     // ── Static Builder ─────────────────────────────
 
@@ -51,15 +37,7 @@ public class IncrexArgs implements CompositeArgument {
             return new IncrexArgs().lbound(lbound);
         }
 
-        public static IncrexArgs lbound(double lbound) {
-            return new IncrexArgs().lbound(lbound);
-        }
-
         public static IncrexArgs ubound(long ubound) {
-            return new IncrexArgs().ubound(ubound);
-        }
-
-        public static IncrexArgs ubound(double ubound) {
             return new IncrexArgs().ubound(ubound);
         }
 
@@ -100,58 +78,13 @@ public class IncrexArgs implements CompositeArgument {
         return this;
     }
 
-    public IncrexArgs lbound(double lbound) {
-        this.lbound = lbound;
-        return this;
-    }
-
     public IncrexArgs ubound(long ubound) {
         this.ubound = ubound;
         return this;
     }
 
-    public IncrexArgs ubound(double ubound) {
-        this.ubound = ubound;
-        return this;
-    }
-
-    public IncrexArgs saturate() {
-        this.saturate = true;
-        return this;
-    }
-
-    public IncrexArgs ex(long seconds) {
-        this.ex = seconds;
-        return this;
-    }
-
-    public IncrexArgs px(long milliseconds) {
-        this.px = milliseconds;
-        return this;
-    }
-
-    public IncrexArgs exAt(long timestampSeconds) {
-        this.exAt = timestampSeconds;
-        return this;
-    }
-
-    public IncrexArgs pxAt(long timestampMilliseconds) {
-        this.pxAt = timestampMilliseconds;
-        return this;
-    }
-
-    public IncrexArgs persist() {
-        this.persist = true;
-        return this;
-    }
-
-    public IncrexArgs enx() {
-        this.enx = true;
-        return this;
-    }
-
     @Override
-    public <K, V> void build(CommandArgs<K, V> args) {
+    protected <K, V> void buildBounds(CommandArgs<K, V> args) {
 
         if (lbound != null) {
             args.add(CommandKeyword.LBOUND);
@@ -161,30 +94,6 @@ public class IncrexArgs implements CompositeArgument {
         if (ubound != null) {
             args.add(CommandKeyword.UBOUND);
             args.add(ubound);
-        }
-
-        if (saturate) {
-            args.add(CommandKeyword.SATURATE);
-        }
-
-        if (ex != null) {
-            args.add(CommandKeyword.EX).add(ex);
-        }
-        if (px != null) {
-            args.add(CommandKeyword.PX).add(px);
-        }
-        if (exAt != null) {
-            args.add(CommandKeyword.EXAT).add(exAt);
-        }
-        if (pxAt != null) {
-            args.add(CommandKeyword.PXAT).add(pxAt);
-        }
-        if (persist) {
-            args.add(CommandType.PERSIST);
-        }
-
-        if (enx) {
-            args.add(CommandKeyword.ENX);
         }
     }
 

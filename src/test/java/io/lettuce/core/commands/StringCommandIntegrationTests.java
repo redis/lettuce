@@ -555,8 +555,8 @@ public class StringCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("INCREX")
     void increxByFloatWithBoundsAndExpiry() {
         redis.set(key, "3.25");
-        IncrexArgs args = IncrexArgs.Builder.lbound(-1.5).ubound(9.5).ex(60);
-        IncrexValue<Double> res = redis.increxfloat(key, 1.25, args);
+        IncrexFloatArgs args = IncrexFloatArgs.Builder.lbound(-1.5).ubound(9.5).ex(60);
+        IncrexValue<Double> res = redis.increx(key, 1.25, args);
         assertThat(res.getValue()).isEqualTo(4.5);
         assertThat(res.getIncrement()).isEqualTo(1.25);
     }
@@ -667,8 +667,8 @@ public class StringCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("INCREX")
     void increxSaturateFloat() {
         redis.set(key, "0.0");
-        IncrexArgs args = IncrexArgs.Builder.ubound(5.0).saturate();
-        IncrexValue<Double> res = redis.increxfloat(key, 10.0, args);
+        IncrexFloatArgs args = IncrexFloatArgs.Builder.ubound(5.0).saturate();
+        IncrexValue<Double> res = redis.increx(key, 10.0, args);
         assertThat(res.getValue()).isEqualTo(5.0);
         assertThat(res.getIncrement()).isEqualTo(5.0);
     }

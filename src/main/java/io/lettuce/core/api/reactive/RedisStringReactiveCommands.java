@@ -22,6 +22,7 @@ package io.lettuce.core.api.reactive;
 import java.util.Map;
 
 import io.lettuce.core.IncrexArgs;
+import io.lettuce.core.IncrexFloatArgs;
 import io.lettuce.core.IncrexValue;
 import io.lettuce.core.MSetExArgs;
 import reactor.core.publisher.Flux;
@@ -355,15 +356,15 @@ public interface RedisStringReactiveCommands<K, V> {
     Mono<IncrexValue<Long>> increx(K key, long amount, IncrexArgs increxArgs);
 
     /**
-     * Increment the float value of a key by the given amount with bounds, overflow, and expiration options.
+     * Increment the float value of a key by the given amount with bounds, saturation, and expiration options.
      *
      * @param key the key.
      * @param amount the increment type: double.
-     * @param increxArgs the {@link IncrexArgs} specifying bounds, overflow, and expiration options.
+     * @param increxArgs the {@link IncrexFloatArgs} specifying bounds, {@code SATURATE} flag, and expiration options.
      * @return IncrexValue containing the new value and actual increment applied.
      * @since 7.6
      */
-    Mono<IncrexValue<Double>> increxfloat(K key, double amount, IncrexArgs increxArgs);
+    Mono<IncrexValue<Double>> increx(K key, double amount, IncrexFloatArgs increxArgs);
 
     /**
      * Get the values of all the given keys.
