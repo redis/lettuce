@@ -205,20 +205,7 @@ public class ArGrepArgs implements CompositeArgument {
 
         // Predicates
         for (ArGrepPredicate predicate : predicates) {
-            switch (predicate.getType()) {
-                case EXACT:
-                    args.add(CommandKeyword.EXACT);
-                    break;
-                case MATCH:
-                    args.add(CommandKeyword.MATCH);
-                    break;
-                case GLOB:
-                    args.add(CommandKeyword.GLOB);
-                    break;
-                case RE:
-                    args.add(CommandKeyword.RE);
-                    break;
-            }
+            args.add(predicate.getType().getKeyword());
             args.add(predicate.getPattern());
         }
 

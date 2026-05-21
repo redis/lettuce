@@ -7,6 +7,7 @@
 package io.lettuce.core.array;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandKeyword;
 
 /**
  * Represents a single predicate for the Redis {@code ARGREP} command.
@@ -29,22 +30,37 @@ public class ArGrepPredicate {
         /**
          * Exact string match.
          */
-        EXACT,
+        EXACT(CommandKeyword.EXACT),
 
         /**
          * Substring match.
          */
-        MATCH,
+        MATCH(CommandKeyword.MATCH),
 
         /**
          * Glob-style pattern match.
          */
-        GLOB,
+        GLOB(CommandKeyword.GLOB),
 
         /**
          * Regular expression match.
          */
-        RE
+        RE(CommandKeyword.RE);
+
+        private final CommandKeyword keyword;
+
+        Type(CommandKeyword keyword) {
+            this.keyword = keyword;
+        }
+
+        /**
+         * Returns the corresponding {@link CommandKeyword}.
+         *
+         * @return the protocol keyword.
+         */
+        public CommandKeyword getKeyword() {
+            return keyword;
+        }
 
     }
 
