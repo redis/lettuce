@@ -327,6 +327,27 @@ public class RedisArrayIntegrationTests extends TestSupport {
     }
 
     @Test
+    void argrepReversed() {
+        redis.arset(KEY, 0, "a");
+        redis.arset(KEY, 3, "b");
+        redis.arset(KEY, 5, "c");
+        redis.arset(KEY, 7, "d");
+        redis.arset(KEY, 10, "e");
+        // unbounded reversed: all elements, descending order
+        List<Long> all = redis.argrep(KEY, ArGrepArgs.unbounded().reversed().glob("*"));
+        assertThat(all).containsExactly(10L, 7L, 5L, 3L, 0L);
+        // range reversed: elements in [3,7], descending
+        List<Long> bounded = redis.argrep(KEY, ArGrepArgs.range(3, 7).reversed().glob("*"));
+        assertThat(bounded).containsExactly(7L, 5L, 3L);
+        // from reversed: elements >= 5, descending
+        List<Long> fromRev = redis.argrep(KEY, ArGrepArgs.from(5).reversed().glob("*"));
+        assertThat(fromRev).containsExactly(10L, 7L, 5L);
+        // to reversed: elements <= 5, descending
+        List<Long> toRev = redis.argrep(KEY, ArGrepArgs.to(5).reversed().glob("*"));
+        assertThat(toRev).containsExactly(5L, 3L, 0L);
+    }
+
+    @Test
     void argrepLimit() {
         redis.arset(KEY, 0, "x");
         redis.arset(KEY, 1, "x");

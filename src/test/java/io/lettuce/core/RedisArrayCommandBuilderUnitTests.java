@@ -177,6 +177,30 @@ class RedisArrayCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructArgrepUnboundedReversed() {
+        assertThat(encode(builder.argrep(KEY, ArGrepArgs.unbounded().reversed().exact("foo"))))
+                .isEqualTo("*6\r\n$6\r\nARGREP\r\n$7\r\nmyarray\r\n$1\r\n+\r\n$1\r\n-\r\n$5\r\nEXACT\r\n$3\r\nfoo\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructArgrepRangeReversed() {
+        assertThat(encode(builder.argrep(KEY, ArGrepArgs.range(3, 7).reversed().exact("foo"))))
+                .isEqualTo("*6\r\n$6\r\nARGREP\r\n$7\r\nmyarray\r\n$1\r\n7\r\n$1\r\n3\r\n$5\r\nEXACT\r\n$3\r\nfoo\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructArgrepFromReversed() {
+        assertThat(encode(builder.argrep(KEY, ArGrepArgs.from(5).reversed().exact("foo"))))
+                .isEqualTo("*6\r\n$6\r\nARGREP\r\n$7\r\nmyarray\r\n$1\r\n+\r\n$1\r\n5\r\n$5\r\nEXACT\r\n$3\r\nfoo\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructArgrepToReversed() {
+        assertThat(encode(builder.argrep(KEY, ArGrepArgs.to(10).reversed().exact("foo"))))
+                .isEqualTo("*6\r\n$6\r\nARGREP\r\n$7\r\nmyarray\r\n$2\r\n10\r\n$1\r\n-\r\n$5\r\nEXACT\r\n$3\r\nfoo\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructArgrepWithValues() {
         assertThat(encode(builder.argrepWithValues(KEY, ArGrepArgs.unbounded().exact("foo")))).isEqualTo(
                 "*7\r\n$6\r\nARGREP\r\n$7\r\nmyarray\r\n$1\r\n-\r\n$1\r\n+\r\n$5\r\nEXACT\r\n$3\r\nfoo\r\n$10\r\nWITHVALUES\r\n");

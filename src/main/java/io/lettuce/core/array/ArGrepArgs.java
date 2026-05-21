@@ -28,6 +28,8 @@ import java.util.List;
  * ArGrepArgs.from(5).glob("prefix*");
  * ArGrepArgs.to(100).re("^foo.*");
  * ArGrepArgs.unbounded().re("^foo.*").glob("bar*").and().limit(10);
+ * ArGrepArgs.unbounded().reversed().exact("hello"); // all elements, descending
+ * ArGrepArgs.range(3, 7).reversed().exact("foo"); // elements in [3,7], descending
  * </pre>
  *
  * {@link ArGrepArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
@@ -49,6 +51,8 @@ public class ArGrepArgs implements CompositeArgument {
     private Long limit;
 
     private boolean noCase = false;
+
+    private boolean reversed = false;
 
     private ArGrepArgs(Long rangeStart, Long rangeEnd) {
         this.rangeStart = rangeStart;
@@ -170,19 +174,33 @@ public class ArGrepArgs implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Reverses the iteration order. The same elements are matched, but results are returned in descending index order instead
+     * of ascending.
+     * <p>
+     * On the wire, this swaps the two range arguments (e.g. {@code 3 7} becomes {@code 7 3}).
+     *
+     * @return {@code this}.
+     */
+    public ArGrepArgs reversed() {
+        this.reversed = true;
+        return this;
+    }
+
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
-        // Range: start end (null maps to - / +)
-        if (rangeStart == null) {
-            args.add("-");
-        } else {
-            args.add(rangeStart);
-        }
+        // Range: two tokens emitted in order. When reversed, the tokens are swapped.
+        // Forward: (start or '-') (end or '+')
+        // Reversed: (end or '+') (start or '-')
+        String startToken = rangeStart != null ? String.valueOf(rangeStart) : "-";
+        String endToken = rangeEnd != null ? String.valueOf(rangeEnd) : "+";
 
-        if (rangeEnd == null) {
-            args.add("+");
+        if (reversed) {
+            args.add(endToken);
+            args.add(startToken);
         } else {
-            args.add(rangeEnd);
+            args.add(startToken);
+            args.add(endToken);
         }
 
         // Predicates
