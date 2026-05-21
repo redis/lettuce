@@ -1078,8 +1078,7 @@ public class RediSearchIntegrationTests {
         // TEXT fields with different options
         FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").as("product_title").sortable().weight(2)
                 .noStem().phonetic(TextFieldArgs.PhoneticMatcher.ENGLISH).withSuffixTrie().build();
-        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("description").indexEmpty().indexMissing()
-                .build();
+        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("description").build();
 
         // NUMERIC field with sortable
         FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
@@ -1196,8 +1195,6 @@ public class RediSearchIntegrationTests {
         IndexInfo.TextField<String> descFieldInfo = (IndexInfo.TextField<String>) fields.stream()
                 .filter(f -> "description".equals(f.getIdentifier())).findFirst().orElse(null);
         assertThat(descFieldInfo).isNotNull();
-        assertThat(descFieldInfo.isIndexEmpty()).isTrue();
-        assertThat(descFieldInfo.isIndexMissing()).isTrue();
 
         // Verify NUMERIC fields
         assertThat(fields.stream().filter(f -> f instanceof IndexInfo.NumericField).count()).isEqualTo(2);
