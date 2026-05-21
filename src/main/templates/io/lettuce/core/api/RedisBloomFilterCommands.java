@@ -73,23 +73,13 @@ public interface RedisBloomFilterCommands<K, V> {
     BfInfoValue bfInfo(K key);
 
     /**
-     * Get information about the Bloom Filter.
-     *
-     * @param key the key.
-     * @param type the type of information to get.
-     * @return BfInfoValue the information about the filter.
-     */
-    BfInfoValue bfInfo(K key, BfInfoType type);
-
-    /**
      * Add one or more items to the Bloom Filter.
      *
      * @param key the key.
      * @param values the values.
-     * @return a boolean list where {@code true} means that the item was added and {@code false} means that there's a
-     *         probability that the item was already added to the filter of the filter is full.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added and {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full.
      */
-    @SuppressWarnings("unchecked")
     List<Boolean> bfInsert(K key, V... values);
 
     /**
@@ -98,10 +88,9 @@ public interface RedisBloomFilterCommands<K, V> {
      * @param key the key.
      * @param insertArgs the insert arguments.
      * @param values the values.
-     * @return a boolean list where {@code true} means that the item was added and {@code false} means that there's a
-     *         probability that the item was already added to the filter of the filter is full.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added and {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full.
      */
-    @SuppressWarnings("unchecked")
     List<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V... values);
 
     /**
@@ -119,10 +108,9 @@ public interface RedisBloomFilterCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return a boolean list of {@code true} or {@code false} where true means that the item was newly added and false means
-     *         that there's a probability that the item was already added to the filter.
+     * @return List&lt;Boolean&gt; of {@code true} or {@code false} where true means that the item was newly added and false
+     *         means that there's a probability that the item was already added to the filter.
      */
-    @SuppressWarnings("unchecked")
     List<Boolean> bfMAdd(K key, V... values);
 
     /**
@@ -130,11 +118,10 @@ public interface RedisBloomFilterCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return a boolean list of {@code true} or {@code false} where true means that, with high probability, the item was
+     * @return List&lt;Boolean&gt; of {@code true} or {@code false} where true means that, with high probability, the item was
      *         already added to the filter, and false means that key does not exist or that item was definitely not added to the
      *         filter.
      */
-    @SuppressWarnings("unchecked")
     List<Boolean> bfMExists(K key, V... values);
 
     /**

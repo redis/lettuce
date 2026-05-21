@@ -29,25 +29,25 @@ import java.util.Map;
  */
 public class BfInfoValue {
 
-    private final Map<String, Long> rawInfo;
+    private final Map<String, Object> rawInfo;
 
-    private final long capacity;
+    private final Long capacity;
 
-    private final long size;
+    private final Long size;
 
-    private final long filters;
+    private final Long filters;
 
-    private final long items;
+    private final Long items;
 
-    private final long rate;
+    private final Long rate;
 
-    public BfInfoValue(Map<String, Long> rawInfo) {
+    public BfInfoValue(Map<String, Object> rawInfo) {
         this.rawInfo = rawInfo;
-        this.capacity = rawInfo.get("Capacity");
-        this.size = rawInfo.get("Size");
-        this.filters = rawInfo.get("Number of filters");
-        this.items = rawInfo.get("Number of items inserted");
-        this.rate = rawInfo.get("Expansion rate");
+        this.capacity = (Long) rawInfo.get("Capacity");
+        this.size = (Long) rawInfo.get("Size");
+        this.filters = (Long) rawInfo.get("Number of filters");
+        this.items = (Long) rawInfo.get("Number of items inserted");
+        this.rate = (Long) rawInfo.get("Expansion rate");
     }
 
     /**
@@ -55,7 +55,7 @@ public class BfInfoValue {
      *
      * @return the raw info map returned by the Redis server
      */
-    public Map<String, Long> getRawInfo() {
+    public Map<String, Object> getRawInfo() {
         return rawInfo;
     }
 
@@ -64,7 +64,7 @@ public class BfInfoValue {
      *
      * @return the maximum number of items that can be inserted into the filter
      */
-    public long getCapacity() {
+    public Long getCapacity() {
         return capacity;
     }
 
@@ -73,7 +73,7 @@ public class BfInfoValue {
      *
      * @return the current size of the filter in bytes
      */
-    public long getSize() {
+    public Long getSize() {
         return size;
     }
 
@@ -82,7 +82,7 @@ public class BfInfoValue {
      *
      * @return the number of filters in the filter
      */
-    public long getFilters() {
+    public Long getFilters() {
         return filters;
     }
 
@@ -91,7 +91,7 @@ public class BfInfoValue {
      *
      * @return the number of items inserted into the filter
      */
-    public long getItems() {
+    public Long getItems() {
         return items;
     }
 
@@ -100,7 +100,7 @@ public class BfInfoValue {
      *
      * @return the expansion rate of the filter
      */
-    public long getRate() {
+    public Long getRate() {
         return rate;
     }
 
