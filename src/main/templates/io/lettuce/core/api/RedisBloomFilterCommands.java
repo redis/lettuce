@@ -22,7 +22,6 @@ package io.lettuce.core.api;
 import java.util.List;
 
 import io.lettuce.core.bf.BfInfoValue;
-import io.lettuce.core.bf.arguments.BfInfoType;
 import io.lettuce.core.bf.arguments.BfInsertArgs;
 import io.lettuce.core.bf.arguments.BfReserveArgs;
 import io.lettuce.core.bf.BfScanDumpValue;
