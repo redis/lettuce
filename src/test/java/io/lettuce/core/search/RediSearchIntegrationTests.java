@@ -1752,10 +1752,11 @@ public class RediSearchIntegrationTests {
         String testIndex = "comprehensive-idx";
 
         // Create index with all available CreateArgs options
+        // Note: MAXTEXTFIELDS cannot be used with NOFIELDS in Redis 8.8+
         CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.HASH)
                 .withPrefix("test:").filter("@category=='electronics'").defaultLanguage(DocumentLanguage.ENGLISH)
                 .languageField("lang").defaultScore(0.5).scoreField("score").payloadField("payload").noOffsets()
-                .noHighlighting().noFields().noFrequency().maxTextFields().skipInitialScan().build();
+                .noHighlighting().noFields().noFrequency().skipInitialScan().build();
 
         FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").sortable().noStem().build();
 
