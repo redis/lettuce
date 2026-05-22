@@ -22,6 +22,7 @@ package io.lettuce.core;
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.*;
+import io.lettuce.core.array.*;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -114,7 +115,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
         RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
         RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
-        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V> {
+        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -125,6 +126,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private final RediSearchCommandBuilder<K, V> searchCommandBuilder;
 
     private final RedisVectorSetCommandBuilder<K, V> vectorSetCommandBuilder;
+
+    private final RedisArrayCommandBuilder<K, V> arrayCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -149,6 +152,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
         this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
         this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
+        this.arrayCommandBuilder = new RedisArrayCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -4085,6 +4089,158 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         LettuceAssert.notNull(script, "Lua script must not be null");
         LettuceAssert.notEmpty(script, "Lua script must not be empty");
         return script.getBytes(getConnection().getOptions().getScriptCharset());
+    }
+
+    // --- Redis Array Commands ---
+
+    @Override
+    public Mono<Long> arset(K key, long index, V value) {
+        return createMono(() -> arrayCommandBuilder.arset(key, index, value));
+    }
+
+    @Override
+    public Mono<Long> arset(K key, long index, V... values) {
+        return createMono(() -> arrayCommandBuilder.arset(key, index, values));
+    }
+
+    @Override
+    public Mono<Long> armset(K key, Map<Long, V> indexValueMap) {
+        return createMono(() -> arrayCommandBuilder.armset(key, indexValueMap));
+    }
+
+    @Override
+    public Mono<V> arget(K key, long index) {
+        return createMono(() -> arrayCommandBuilder.arget(key, index));
+    }
+
+    @Override
+    public Flux<Value<V>> armget(K key, long... indices) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.armgetValues(key, indices));
+    }
+
+    @Override
+    public Mono<Long> ardel(K key, long index) {
+        return createMono(() -> arrayCommandBuilder.ardel(key, index));
+    }
+
+    @Override
+    public Mono<Long> ardel(K key, long... indices) {
+        return createMono(() -> arrayCommandBuilder.ardel(key, indices));
+    }
+
+    @Override
+    public Mono<Long> ardelrange(K key, long start, long end) {
+        return createMono(() -> arrayCommandBuilder.ardelrange(key, start, end));
+    }
+
+    @Override
+    public Mono<Long> ardelrange(K key, ArrayIndexRange... ranges) {
+        return createMono(() -> arrayCommandBuilder.ardelrange(key, ranges));
+    }
+
+    @Override
+    public Mono<Long> arlen(K key) {
+        return createMono(() -> arrayCommandBuilder.arlen(key));
+    }
+
+    @Override
+    public Mono<Long> arcount(K key) {
+        return createMono(() -> arrayCommandBuilder.arcount(key));
+    }
+
+    @Override
+    public Flux<Value<V>> argetrange(K key, long start, long end) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.argetrangeValues(key, start, end));
+    }
+
+    @Override
+    public Mono<Long> arnext(K key) {
+        return createMono(() -> arrayCommandBuilder.arnext(key));
+    }
+
+    @Override
+    public Flux<V> arlastitems(K key, long count) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.arlastitems(key, count));
+    }
+
+    @Override
+    public Flux<V> arlastitems(K key, long count, boolean rev) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.arlastitems(key, count, rev));
+    }
+
+    @Override
+    public Flux<IndexedValue<V>> arscan(K key, long start, long end) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.arscan(key, start, end));
+    }
+
+    @Override
+    public Flux<IndexedValue<V>> arscan(K key, long start, long end, long limit) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.arscan(key, start, end, limit));
+    }
+
+    @Override
+    public Flux<Long> argrep(K key, ArGrepArgs grepArgs) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.argrep(key, grepArgs));
+    }
+
+    @Override
+    public Flux<IndexedValue<V>> argrepWithValues(K key, ArGrepArgs grepArgs) {
+        return createDissolvingFlux(() -> arrayCommandBuilder.argrepWithValues(key, grepArgs));
+    }
+
+    @Override
+    public Mono<V> aropAggregate(K key, long start, long end, ArAggregateType operation) {
+        return createMono(() -> arrayCommandBuilder.aropAggregate(key, start, end, operation));
+    }
+
+    @Override
+    public Mono<Long> aropBitwise(K key, long start, long end, ArBitwiseType operation) {
+        return createMono(() -> arrayCommandBuilder.aropBitwise(key, start, end, operation));
+    }
+
+    @Override
+    public Mono<Long> aropCount(K key, long start, long end) {
+        return createMono(() -> arrayCommandBuilder.aropCount(key, start, end));
+    }
+
+    @Override
+    public Mono<Long> aropCount(K key, long start, long end, V matchValue) {
+        return createMono(() -> arrayCommandBuilder.aropCount(key, start, end, matchValue));
+    }
+
+    @Override
+    public Mono<Long> arinsert(K key, V value) {
+        return createMono(() -> arrayCommandBuilder.arinsert(key, value));
+    }
+
+    @Override
+    public Mono<Long> arinsert(K key, V... values) {
+        return createMono(() -> arrayCommandBuilder.arinsert(key, values));
+    }
+
+    @Override
+    public Mono<Long> arring(K key, long size, V value) {
+        return createMono(() -> arrayCommandBuilder.arring(key, size, value));
+    }
+
+    @Override
+    public Mono<Long> arring(K key, long size, V... values) {
+        return createMono(() -> arrayCommandBuilder.arring(key, size, values));
+    }
+
+    @Override
+    public Mono<Long> arseek(K key, long index) {
+        return createMono(() -> arrayCommandBuilder.arseek(key, index));
+    }
+
+    @Override
+    public Mono<ArrayInfo> arinfo(K key) {
+        return createMono(() -> arrayCommandBuilder.arinfo(key));
+    }
+
+    @Override
+    public Mono<ArrayInfoFull> arinfoFull(K key) {
+        return createMono(() -> arrayCommandBuilder.arinfoFull(key));
     }
 
 }
