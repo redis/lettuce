@@ -530,4 +530,155 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(matchResult.getMatchString()).isNullOrEmpty();
     }
 
+    // ── INCREX ──────────────────────────────────────────
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxBasic() {
+        IncrexValue<Long> res = redis.increx(key);
+        assertThat(res.getValue()).isEqualTo(1L);
+        assertThat(res.getIncrement()).isEqualTo(1L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxByIntWithBoundsAndExpiry() {
+        redis.set(key, "10");
+        IncrexArgs args = IncrexArgs.Builder.lbound(0).ubound(20).ex(60);
+        IncrexValue<Long> res = redis.increx(key, 2, args);
+        assertThat(res.getValue()).isEqualTo(12L);
+        assertThat(res.getIncrement()).isEqualTo(2L);
+        assertThat(redis.ttl(key)).isGreaterThan(0);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxByFloatWithBoundsAndExpiry() {
+        redis.set(key, "3.25");
+        IncrexFloatArgs args = IncrexFloatArgs.Builder.lbound(-1.5).ubound(9.5).ex(60);
+        IncrexValue<Double> res = redis.increx(key, 1.25, args);
+        assertThat(res.getValue()).isEqualTo(4.5);
+        assertThat(res.getIncrement()).isEqualTo(1.25);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxNegativeIncrement() {
+        redis.set(key, "10");
+        IncrexArgs args = new IncrexArgs();
+        IncrexValue<Long> res = redis.increx(key, -3, args);
+        assertThat(res.getValue()).isEqualTo(7L);
+        assertThat(res.getIncrement()).isEqualTo(-3L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxDefaultRejectSilent() {
+        redis.set(key, "0");
+        IncrexArgs args = IncrexArgs.Builder.ubound(5);
+        IncrexValue<Long> res = redis.increx(key, 10, args);
+        assertThat(res.getValue()).isEqualTo(0L);
+        assertThat(res.getIncrement()).isEqualTo(0L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxSaturateUbound() {
+        redis.set(key, "0");
+        IncrexArgs args = IncrexArgs.Builder.ubound(5).saturate();
+        IncrexValue<Long> res = redis.increx(key, 10, args);
+        assertThat(res.getValue()).isEqualTo(5L);
+        assertThat(res.getIncrement()).isEqualTo(5L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxSaturateLbound() {
+        redis.set(key, "5");
+        IncrexArgs args = IncrexArgs.Builder.lbound(0).saturate();
+        IncrexValue<Long> res = redis.increx(key, -100, args);
+        assertThat(res.getValue()).isEqualTo(0L);
+        assertThat(res.getIncrement()).isEqualTo(-5L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxSaturateStillAppliesExpiry() {
+        redis.set(key, "5");
+        IncrexArgs args = IncrexArgs.Builder.ubound(5).saturate().ex(60);
+        IncrexValue<Long> res = redis.increx(key, 1, args);
+        assertThat(res.getValue()).isEqualTo(5L);
+        assertThat(res.getIncrement()).isEqualTo(0L);
+        assertThat(redis.ttl(key)).isGreaterThan(0);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxPersist() {
+        redis.set(key, "5");
+        redis.expire(key, 300);
+        IncrexArgs args = IncrexArgs.Builder.persist();
+        IncrexValue<Long> res = redis.increx(key, 2, args);
+        assertThat(res.getValue()).isEqualTo(7L);
+        assertThat(res.getIncrement()).isEqualTo(2L);
+        assertThat(redis.ttl(key)).isEqualTo(-1);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxEnxNoExistingTtl() {
+        redis.set(key, "5");
+        IncrexArgs args = IncrexArgs.Builder.ex(60).enx();
+        IncrexValue<Long> res = redis.increx(key, 1, args);
+        assertThat(res.getValue()).isEqualTo(6L);
+        assertThat(redis.ttl(key)).isGreaterThan(0);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxEnxWithExistingTtl() {
+        redis.set(key, "5");
+        redis.expire(key, 300);
+        long ttlBefore = redis.ttl(key);
+        IncrexArgs args = IncrexArgs.Builder.ex(60).enx();
+        redis.increx(key, 1, args);
+        long ttlAfter = redis.ttl(key);
+        assertThat(ttlAfter).isGreaterThan(60);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxNonExistentKey() {
+        IncrexArgs args = new IncrexArgs();
+        IncrexValue<Long> res = redis.increx(key, 5, args);
+        assertThat(res.getValue()).isEqualTo(5L);
+        assertThat(res.getIncrement()).isEqualTo(5L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxNonNumericKey() {
+        redis.set(key, "hello");
+        IncrexArgs args = new IncrexArgs();
+        assertThatThrownBy(() -> redis.increx(key, 1, args)).isInstanceOf(RedisCommandExecutionException.class);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxSaturateFloat() {
+        redis.set(key, "0.0");
+        IncrexFloatArgs args = IncrexFloatArgs.Builder.ubound(5.0).saturate();
+        IncrexValue<Double> res = redis.increx(key, 10.0, args);
+        assertThat(res.getValue()).isEqualTo(5.0);
+        assertThat(res.getIncrement()).isEqualTo(5.0);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxFloatThenIntFails() {
+        redis.set(key, "1.5");
+        IncrexArgs args = new IncrexArgs();
+        assertThatThrownBy(() -> redis.increx(key, 1, args)).isInstanceOf(RedisCommandExecutionException.class);
+    }
+
 }

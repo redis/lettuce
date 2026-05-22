@@ -1621,6 +1621,21 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<IncrexValue<Long>> increx(K key) {
+        return dispatch(commandBuilder.increx(key));
+    }
+
+    @Override
+    public RedisFuture<IncrexValue<Long>> increx(K key, long amount, IncrexArgs increxArgs) {
+        return dispatch(commandBuilder.increx(key, amount, increxArgs));
+    }
+
+    @Override
+    public RedisFuture<IncrexValue<Double>> increx(K key, double amount, IncrexFloatArgs increxArgs) {
+        return dispatch(commandBuilder.increx(key, amount, increxArgs));
+    }
+
+    @Override
     public RedisFuture<String> info() {
         return dispatch(commandBuilder.info());
     }

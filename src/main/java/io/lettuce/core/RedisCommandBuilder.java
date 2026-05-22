@@ -1961,6 +1961,31 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(INCRBYFLOAT, new DoubleOutput<>(codec), args);
     }
 
+    Command<K, V, IncrexValue<Long>> increx(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        return createCommand(INCREX, new IncrexLongOutput<>(codec), args);
+    }
+
+    Command<K, V, IncrexValue<Long>> increx(K key, long amount, IncrexArgs increxArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(increxArgs, "IncrexArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(BYINT).add(amount);
+        increxArgs.build(args);
+        return createCommand(INCREX, new IncrexLongOutput<>(codec), args);
+    }
+
+    Command<K, V, IncrexValue<Double>> increx(K key, double amount, IncrexFloatArgs increxArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(increxArgs, "IncrexFloatArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(BYFLOAT).add(amount);
+        increxArgs.build(args);
+        return createCommand(INCREX, new IncrexDoubleOutput<>(codec), args);
+    }
+
     Command<K, V, String> info() {
         return createCommand(CommandType.INFO, new StatusOutput<>(codec));
     }
