@@ -67,4 +67,15 @@ public class RedisArrayReactiveIntegrationTests extends RedisArrayIntegrationTes
                 .expectNext(Value.just("c")).expectNext(Value.empty()).expectNext(Value.just("e")).verifyComplete();
     }
 
+    @Test
+    @Override
+    void argetrangeReversed() {
+        redis.arset(KEY, 0, "a");
+        redis.arset(KEY, 2, "c");
+        redis.arset(KEY, 4, "e");
+
+        StepVerifier.create(reactive.argetrange(KEY, 4, 0)).expectNext(Value.just("e")).expectNext(Value.empty())
+                .expectNext(Value.just("c")).expectNext(Value.empty()).expectNext(Value.just("a")).verifyComplete();
+    }
+
 }
