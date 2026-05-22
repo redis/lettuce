@@ -502,26 +502,9 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
             Map<String, Object> attributeMap = new LinkedHashMap<>();
             if (attr instanceof List) {
                 // Handle case where parseListValue already parsed the ComplexData into a List
-                // RESP2: alternating key-value pairs
+                // RESP2: mixed format - key-value pairs for attributes, standalone elements for flags
                 List<?> list = (List<?>) attr;
-                for (int i = 0; i < list.size(); i += 2) {
-                    if (i + 1 < list.size()) {
-                        String key = decodeStringAsString(list.get(i));
-                        Object val = list.get(i + 1);
-                        // Handle special case where SORTABLE has a flag as its value (e.g., SORTABLE NOSTEM)
-                        // In this case, we need to add both SORTABLE and the flag (NOSTEM) as separate keys
-                        if (FLAG_SORTABLE.equals(key)) {
-                            attributeMap.put(key, val);
-                            String valStr = decodeStringAsString(val);
-                            // Check if the value is a known flag
-                            if (isFieldFlag(valStr)) {
-                                attributeMap.put(valStr, valStr);
-                            }
-                        } else {
-                            attributeMap.put(key, val);
-                        }
-                    }
-                }
+                parseResp2FieldAttributes(list, attributeMap);
             } else if (attr instanceof Map) {
                 // Handle case where parseListValue already parsed the map
                 @SuppressWarnings("unchecked")
@@ -530,25 +513,9 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
             } else if (attr instanceof ComplexData) {
                 ComplexData data = (ComplexData) attr;
                 if (data.isList()) {
-                    // RESP2: alternating key-value pairs
+                    // RESP2: mixed format - key-value pairs for attributes, standalone elements for flags
                     List<Object> list = data.getDynamicList();
-                    for (int i = 0; i < list.size(); i += 2) {
-                        if (i + 1 < list.size()) {
-                            // Don't call parseValue - keep raw values for metadata fields
-                            String key = decodeStringAsString(list.get(i));
-                            Object val = list.get(i + 1);
-                            // Handle special case where SORTABLE has a flag as its value
-                            if (FLAG_SORTABLE.equals(key)) {
-                                attributeMap.put(key, val);
-                                String valStr = decodeStringAsString(val);
-                                if (isFieldFlag(valStr)) {
-                                    attributeMap.put(valStr, valStr);
-                                }
-                            } else {
-                                attributeMap.put(key, val);
-                            }
-                        }
-                    }
+                    parseResp2FieldAttributes(list, attributeMap);
                 } else if (data.isMap()) {
                     // RESP3: map
                     Map<Object, Object> map = data.getDynamicMap();
@@ -566,11 +533,71 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
     }
 
     /**
-     * Check if a string is a known field flag.
+     * Check if a string is a known standalone field flag (no value follows).
+     */
+    private boolean isStandaloneFlag(String str) {
+        return FLAG_SORTABLE.equals(str) || FLAG_UNF.equals(str) || FLAG_NOINDEX.equals(str) || FLAG_NOSTEM.equals(str)
+                || FLAG_WITHSUFFIXTRIE.equals(str) || FLAG_INDEXEMPTY.equals(str) || FLAG_INDEXMISSING.equals(str)
+                || FLAG_CASESENSITIVE.equals(str);
+    }
+
+    /**
+     * Check if a string is a known field flag that has a value following it.
+     */
+    private boolean isFlagWithValue(String str) {
+        return FLAG_WEIGHT.equals(str) || FLAG_SEPARATOR.equals(str) || FLAG_PHONETIC.equals(str)
+                || FLAG_COORD_SYSTEM.equals(str) || FLAG_ALGORITHM.equals(str);
+    }
+
+    /**
+     * Check if a string is a known field flag (for backward compatibility).
      */
     private boolean isFieldFlag(String str) {
         return FLAG_NOSTEM.equals(str) || FLAG_UNF.equals(str) || FLAG_NOINDEX.equals(str) || FLAG_PHONETIC.equals(str)
                 || FLAG_WITHSUFFIXTRIE.equals(str) || FLAG_INDEXEMPTY.equals(str) || FLAG_INDEXMISSING.equals(str);
+    }
+
+    /**
+     * Parse RESP2 field attributes from a list. RESP2 returns a mixed format: - Key-value pairs for basic attributes
+     * (identifier, attribute, type) and flags with values (WEIGHT, SEPARATOR, etc.) - Standalone elements for boolean flags
+     * (SORTABLE, NOSTEM, WITHSUFFIXTRIE, etc.)
+     *
+     * @param list the raw list from FT.INFO response
+     * @param attributeMap the map to populate with parsed attributes
+     */
+    private void parseResp2FieldAttributes(List<?> list, Map<String, Object> attributeMap) {
+        int i = 0;
+        while (i < list.size()) {
+            String key = decodeStringAsString(list.get(i));
+
+            // Check if this is a standalone flag (no value)
+            if (isStandaloneFlag(key)) {
+                attributeMap.put(key, key); // Add flag as key with itself as value
+                i++;
+                continue;
+            }
+
+            // Check if this is a flag with a value or a regular key-value pair
+            if (i + 1 < list.size()) {
+                Object val = list.get(i + 1);
+                String valStr = decodeStringAsString(val);
+
+                // If the next element is also a standalone flag, treat current as standalone
+                if (isStandaloneFlag(valStr) && !isFlagWithValue(key)) {
+                    attributeMap.put(key, key);
+                    i++;
+                    continue;
+                }
+
+                // Regular key-value pair
+                attributeMap.put(key, val);
+                i += 2;
+            } else {
+                // Last element with no value - treat as standalone flag
+                attributeMap.put(key, key);
+                i++;
+            }
+        }
     }
 
     /**
@@ -640,16 +667,15 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
             Map<String, Object> additionalFields) {
         Double weight = parseDouble(attributeMap.get(FLAG_WEIGHT));
         boolean noStem = getBoolean(attributeMap, FLAG_NOSTEM);
-        String phonetic = getString(attributeMap, FLAG_PHONETIC);
         boolean withSuffixTrie = getBoolean(attributeMap, FLAG_WITHSUFFIXTRIE);
 
         additionalFields.remove(FLAG_WEIGHT);
         additionalFields.remove(FLAG_NOSTEM);
-        additionalFields.remove(FLAG_PHONETIC);
         additionalFields.remove(FLAG_WITHSUFFIXTRIE);
+        // Note: PHONETIC is not removed from additionalFields because Redis FT.INFO never returns it
 
         return new IndexInfo.TextField<>(identifier, attribute, sortable, unNormalizedForm, noIndex, indexEmpty, indexMissing,
-                weight, noStem, phonetic, withSuffixTrie, additionalFields);
+                weight, noStem, withSuffixTrie, additionalFields);
     }
 
     private IndexInfo.TagField<V> createTagField(V identifier, V attribute, boolean sortable, boolean unNormalizedForm,
@@ -670,7 +696,11 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
     private IndexInfo.GeoshapeField<V> createGeoshapeField(V identifier, V attribute, boolean sortable,
             boolean unNormalizedForm, boolean noIndex, boolean indexEmpty, boolean indexMissing,
             Map<String, Object> attributeMap, Map<String, Object> additionalFields) {
+        // RESP2 returns lowercase "coord_system", RESP3 returns uppercase "COORD_SYSTEM"
         String coordinateSystemStr = getString(attributeMap, FLAG_COORD_SYSTEM);
+        if (coordinateSystemStr == null) {
+            coordinateSystemStr = getString(attributeMap, FLAG_COORD_SYSTEM.toLowerCase());
+        }
         IndexInfo.GeoshapeField.CoordinateSystem coordinateSystem = null;
         if (coordinateSystemStr != null) {
             try {
@@ -681,6 +711,7 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
         }
 
         additionalFields.remove(FLAG_COORD_SYSTEM);
+        additionalFields.remove(FLAG_COORD_SYSTEM.toLowerCase());
 
         return new IndexInfo.GeoshapeField<>(identifier, attribute, sortable, unNormalizedForm, noIndex, indexEmpty,
                 indexMissing, coordinateSystem, additionalFields);
@@ -689,7 +720,11 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
     private IndexInfo.VectorField<V> createVectorField(V identifier, V attribute, boolean sortable, boolean unNormalizedForm,
             boolean noIndex, boolean indexEmpty, boolean indexMissing, Map<String, Object> attributeMap,
             Map<String, Object> additionalFields) {
+        // RESP2 returns lowercase "algorithm", RESP3 returns uppercase "ALGORITHM"
         String algorithmStr = getString(attributeMap, FLAG_ALGORITHM);
+        if (algorithmStr == null) {
+            algorithmStr = getString(attributeMap, FLAG_ALGORITHM.toLowerCase());
+        }
         IndexInfo.VectorField.Algorithm algorithm = null;
         if (algorithmStr != null) {
             try {
@@ -702,21 +737,27 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
         }
 
         // Vector attributes are stored in a nested map
+        // Normalize keys to uppercase and numeric values to Long for consistency across RESP2/RESP3
         Map<String, Object> vectorAttributes = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : attributeMap.entrySet()) {
             String key = entry.getKey();
+            String keyUpper = key.toUpperCase();
             // Skip common fields and algorithm
-            if (!key.equals(ATTR_IDENTIFIER) && !key.equals(ATTR_ATTRIBUTE) && !key.equals(ATTR_TYPE)
-                    && !key.equals(FLAG_ALGORITHM) && !key.equals(FLAG_SORTABLE) && !key.equals(FLAG_UNF)
-                    && !key.equals(FLAG_NOINDEX) && !key.equals(FLAG_INDEXEMPTY) && !key.equals(FLAG_INDEXMISSING)) {
-                vectorAttributes.put(key, entry.getValue());
+            if (!keyUpper.equals(ATTR_IDENTIFIER.toUpperCase()) && !keyUpper.equals(ATTR_ATTRIBUTE.toUpperCase())
+                    && !keyUpper.equals(ATTR_TYPE.toUpperCase()) && !keyUpper.equals(FLAG_ALGORITHM)
+                    && !keyUpper.equals(FLAG_SORTABLE) && !keyUpper.equals(FLAG_UNF) && !keyUpper.equals(FLAG_NOINDEX)
+                    && !keyUpper.equals(FLAG_INDEXEMPTY) && !keyUpper.equals(FLAG_INDEXMISSING)) {
+                // Normalize vector attribute keys to uppercase and values
+                vectorAttributes.put(keyUpper, normalizeValue(entry.getValue()));
             }
         }
 
         additionalFields.remove(FLAG_ALGORITHM);
+        additionalFields.remove(FLAG_ALGORITHM.toLowerCase());
         // Remove vector attributes from additionalFields as they're in vectorAttributes
         for (String key : vectorAttributes.keySet()) {
             additionalFields.remove(key);
+            additionalFields.remove(key.toLowerCase());
         }
 
         return new IndexInfo.VectorField<>(identifier, attribute, sortable, unNormalizedForm, noIndex, indexEmpty, indexMissing,
@@ -996,6 +1037,28 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
             errorStats.setLastIndexingErrorKey(lastErrorKey);
         }
         return errorStats;
+    }
+
+    /**
+     * Normalize a value for consistent types across RESP2/RESP3. Integer values are normalized to Long, ByteBuffers are decoded
+     * to Long (if numeric) or String.
+     *
+     * @param value the value to normalize
+     * @return the normalized value
+     */
+    private Object normalizeValue(Object value) {
+        if (value instanceof Integer) {
+            return ((Integer) value).longValue();
+        } else if (value instanceof ByteBuffer) {
+            String str = decodeStringAsString(value);
+            // Try parsing as Long first (for numeric values like DIM)
+            try {
+                return Long.parseLong(str);
+            } catch (NumberFormatException e) {
+                return str;
+            }
+        }
+        return value;
     }
 
     /**

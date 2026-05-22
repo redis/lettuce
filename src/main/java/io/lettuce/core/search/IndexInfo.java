@@ -1428,8 +1428,6 @@ public class IndexInfo<V> {
 
         private final boolean noStem;
 
-        private final String phonetic;
-
         private final boolean withSuffixTrie;
 
         /**
@@ -1444,18 +1442,16 @@ public class IndexInfo<V> {
          * @param indexMissing whether missing values are indexed
          * @param weight the field weight (may be null)
          * @param noStem whether stemming is disabled
-         * @param phonetic the phonetic matcher (may be null)
          * @param withSuffixTrie whether suffix trie is enabled
          * @param additionalFields additional fields not explicitly mapped
          */
         public TextField(V identifier, V attribute, boolean sortable, boolean unNormalizedForm, boolean noIndex,
-                boolean indexEmpty, boolean indexMissing, Double weight, boolean noStem, String phonetic,
-                boolean withSuffixTrie, Map<String, Object> additionalFields) {
+                boolean indexEmpty, boolean indexMissing, Double weight, boolean noStem, boolean withSuffixTrie,
+                Map<String, Object> additionalFields) {
             super(identifier, attribute, FieldType.TEXT, sortable, unNormalizedForm, noIndex, indexEmpty, indexMissing,
                     additionalFields);
             this.weight = weight;
             this.noStem = noStem;
-            this.phonetic = phonetic;
             this.withSuffixTrie = withSuffixTrie;
         }
 
@@ -1475,15 +1471,6 @@ public class IndexInfo<V> {
          */
         public boolean isNoStem() {
             return noStem;
-        }
-
-        /**
-         * Get the phonetic matcher.
-         *
-         * @return the phonetic matcher, or null if not set
-         */
-        public String getPhonetic() {
-            return phonetic;
         }
 
         /**

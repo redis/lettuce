@@ -72,7 +72,7 @@ class IndexInfoTest {
         IndexInfo<String> info = new IndexInfo<>();
 
         IndexInfo.TextField textField = new IndexInfo.TextField("title", null, false, false, false, false, false, null, false,
-                null, false, new HashMap<>());
+                false, new HashMap<>());
         info.addField(textField);
 
         IndexInfo.NumericField numericField = new IndexInfo.NumericField("price", null, false, false, false, false, false,

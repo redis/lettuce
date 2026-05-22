@@ -1101,8 +1101,10 @@ public class RediSearchIntegrationTests {
                 .build();
 
         // Create index with comprehensive CreateArgs options
+        // Use FRENCH (non-default) so Redis returns default_language in FT.INFO
+        // Redis only returns default_language when it differs from the default (english)
         CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.HASH)
-                .withPrefix("product:").withPrefix("item:").defaultLanguage(DocumentLanguage.ENGLISH).languageField("lang")
+                .withPrefix("product:").withPrefix("item:").defaultLanguage(DocumentLanguage.FRENCH).languageField("lang")
                 .defaultScore(0.5).scoreField("doc_score").stopWords(Arrays.asList("the", "a", "an")).build();
 
         List<FieldArgs<String>> allFields = Arrays.asList(titleField, descriptionField, priceField, stockField, categoryField,
@@ -1174,7 +1176,8 @@ public class RediSearchIntegrationTests {
         assertThat(indexDef.getDefaultScore()).isEqualTo(0.5);
         assertThat(indexDef.getLanguageField()).isEqualTo("lang");
         assertThat(indexDef.getScoreField()).isEqualTo("doc_score");
-        assertThat(indexDef.getDefaultLanguage()).isEqualTo("english");
+        // Redis only returns default_language when it differs from the default (english)
+        assertThat(indexDef.getDefaultLanguage()).isEqualTo("french");
 
         // Verify all fields are present
         List<IndexInfo.Field<String>> fields = info.getFields();
@@ -1189,7 +1192,6 @@ public class RediSearchIntegrationTests {
         assertThat(titleFieldInfo.isSortable()).isTrue();
         assertThat(titleFieldInfo.getWeight()).isEqualTo(2.0);
         assertThat(titleFieldInfo.isNoStem()).isTrue();
-        assertThat(titleFieldInfo.getPhonetic()).isEqualTo("dm:en");
         assertThat(titleFieldInfo.isWithSuffixTrie()).isTrue();
 
         IndexInfo.TextField<String> descFieldInfo = (IndexInfo.TextField<String>) fields.stream()
@@ -1248,7 +1250,7 @@ public class RediSearchIntegrationTests {
         assertThat(vectorAttrs).isNotEmpty();
         assertThat(vectorAttrs.get("DIM")).isEqualTo(128L);
         assertThat(vectorAttrs.get("DISTANCE_METRIC")).isEqualTo("COSINE");
-        assertThat(vectorAttrs.get("TYPE")).isEqualTo("FLOAT32");
+        assertThat(vectorAttrs.get("DATA_TYPE")).isEqualTo("FLOAT32");
 
         // Verify document count
         assertThat(info.getNumDocs()).isEqualTo(2L);

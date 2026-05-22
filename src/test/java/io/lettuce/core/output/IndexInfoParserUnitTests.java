@@ -757,34 +757,9 @@ class IndexInfoParserUnitTests {
         assertThat(result.getIndexDefinition().getPayloadField()).isEqualTo("payload");
     }
 
-    @Test
-    void shouldHandleTextFieldWithPhonetic() {
-        ComplexData field = new ArrayComplexData(10);
-        field.store("identifier");
-        field.store("name");
-        field.store("attribute");
-        field.store("name");
-        field.store("type");
-        field.store("TEXT");
-        field.store("PHONETIC");
-        field.store("dm:en");
-        field.store("INDEXEMPTY");
-        field.store("INDEXEMPTY");
-
-        ComplexData attributes = new ArrayComplexData(1);
-        attributes.storeObject(field);
-
-        ComplexData input = new ArrayComplexData(2);
-        input.store("attributes");
-        input.storeObject(attributes);
-
-        IndexInfo<String> result = parser.parse(input);
-
-        assertThat(result.getFields()).hasSize(1);
-        IndexInfo.TextField<String> textField = (IndexInfo.TextField<String>) result.getFields().get(0);
-        assertThat(textField.getPhonetic()).isEqualTo("dm:en");
-        assertThat(textField.isIndexEmpty()).isTrue();
-    }
+    // Note: Test for phonetic was removed because Redis FT.INFO never returns PHONETIC,
+    // even when set during index creation. The phonetic functionality works for searches
+    // but is not exposed in index metadata.
 
     @Test
     void shouldHandleFieldWithIndexMissing() {
