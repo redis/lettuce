@@ -6,6 +6,7 @@
  */
 package io.lettuce.core.array;
 
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandKeyword;
 
@@ -20,6 +21,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @see ArGrepArgs
  * @see <a href="https://redis.io/docs/latest/commands/argrep/">Redis Documentation: ARGREP</a>
  */
+@Experimental
 public class ArGrepPredicate {
 
     /**

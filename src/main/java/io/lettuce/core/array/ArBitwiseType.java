@@ -6,6 +6,8 @@
  */
 package io.lettuce.core.array;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * Bitwise operations for the Redis {@code AROP} command that return an integer ({@code Long}).
  * <p>
@@ -15,6 +17,7 @@ package io.lettuce.core.array;
  * @since 7.6
  * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
  */
+@Experimental
 public enum ArBitwiseType {
 
     /**

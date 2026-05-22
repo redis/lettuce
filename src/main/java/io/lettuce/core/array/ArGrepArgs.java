@@ -7,6 +7,7 @@
 package io.lettuce.core.array;
 
 import io.lettuce.core.CompositeArgument;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
@@ -38,6 +39,7 @@ import java.util.List;
  * @since 7.6
  * @see <a href="https://redis.io/docs/latest/commands/argrep/">Redis Documentation: ARGREP</a>
  */
+@Experimental
 public class ArGrepArgs implements CompositeArgument {
 
     private final Long rangeStart;

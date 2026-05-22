@@ -38,6 +38,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arset/">Redis Documentation: ARSET</a>
      */
+    @Experimental
     Mono<Long> arset(K key, long index, V value);
 
     /**
@@ -50,6 +51,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arset/">Redis Documentation: ARSET</a>
      */
+    @Experimental
     @SuppressWarnings("unchecked")
     Mono<Long> arset(K key, long index, V... values);
 
@@ -62,6 +64,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/armset/">Redis Documentation: ARMSET</a>
      */
+    @Experimental
     Mono<Long> armset(K key, Map<Long, V> indexValueMap);
 
     /**
@@ -73,6 +76,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arget/">Redis Documentation: ARGET</a>
      */
+    @Experimental
     Mono<V> arget(K key, long index);
 
     /**
@@ -84,6 +88,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/armget/">Redis Documentation: ARMGET</a>
      */
+    @Experimental
     Flux<Value<V>> armget(K key, long... indices);
 
     /**
@@ -98,6 +103,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardel/">Redis Documentation: ARDEL</a>
      */
+    @Experimental
     Mono<Long> ardel(K key, long index);
 
     /**
@@ -109,6 +115,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardel/">Redis Documentation: ARDEL</a>
      */
+    @Experimental
     Mono<Long> ardel(K key, long... indices);
 
     /**
@@ -121,6 +128,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
      */
+    @Experimental
     Mono<Long> ardelrange(K key, long start, long end);
 
     /**
@@ -132,6 +140,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
      */
+    @Experimental
     Mono<Long> ardelrange(K key, ArrayIndexRange... ranges);
 
     /**
@@ -142,6 +151,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlen/">Redis Documentation: ARLEN</a>
      */
+    @Experimental
     Mono<Long> arlen(K key);
 
     /**
@@ -152,6 +162,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arcount/">Redis Documentation: ARCOUNT</a>
      */
+    @Experimental
     Mono<Long> arcount(K key);
 
     /**
@@ -166,6 +177,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/argetrange/">Redis Documentation: ARGETRANGE</a>
      */
+    @Experimental
     Flux<Value<V>> argetrange(K key, long start, long end);
 
     /**
@@ -176,6 +188,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arnext/">Redis Documentation: ARNEXT</a>
      */
+    @Experimental
     Mono<Long> arnext(K key);
 
     /**
@@ -187,6 +200,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlastitems/">Redis Documentation: ARLASTITEMS</a>
      */
+    @Experimental
     Flux<V> arlastitems(K key, long count);
 
     /**
@@ -199,6 +213,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlastitems/">Redis Documentation: ARLASTITEMS</a>
      */
+    @Experimental
     Flux<V> arlastitems(K key, long count, boolean rev);
 
     /**
@@ -211,6 +226,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arscan/">Redis Documentation: ARSCAN</a>
      */
+    @Experimental
     Flux<IndexedValue<V>> arscan(K key, long start, long end);
 
     /**
@@ -224,6 +240,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arscan/">Redis Documentation: ARSCAN</a>
      */
+    @Experimental
     Flux<IndexedValue<V>> arscan(K key, long start, long end, long limit);
 
     /**
@@ -261,6 +278,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     Mono<V> aropAggregate(K key, long start, long end, ArAggregateType operation);
 
     /**
@@ -274,6 +292,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     Mono<Long> aropBitwise(K key, long start, long end, ArBitwiseType operation);
 
     /**
@@ -286,6 +305,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     Mono<Long> aropCount(K key, long start, long end);
 
     /**
@@ -299,6 +319,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     Mono<Long> aropCount(K key, long start, long end, V matchValue);
 
     /**
@@ -310,6 +331,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinsert/">Redis Documentation: ARINSERT</a>
      */
+    @Experimental
     Mono<Long> arinsert(K key, V value);
 
     /**
@@ -321,6 +343,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinsert/">Redis Documentation: ARINSERT</a>
      */
+    @Experimental
     @SuppressWarnings("unchecked")
     Mono<Long> arinsert(K key, V... values);
 
@@ -334,6 +357,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arring/">Redis Documentation: ARRING</a>
      */
+    @Experimental
     Mono<Long> arring(K key, long size, V value);
 
     /**
@@ -346,6 +370,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arring/">Redis Documentation: ARRING</a>
      */
+    @Experimental
     @SuppressWarnings("unchecked")
     Mono<Long> arring(K key, long size, V... values);
 
@@ -358,6 +383,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arseek/">Redis Documentation: ARSEEK</a>
      */
+    @Experimental
     Mono<Long> arseek(K key, long index);
 
     /**
@@ -369,6 +395,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
      */
+    @Experimental
     Mono<ArrayInfo> arinfo(K key);
 
     /**
@@ -380,6 +407,7 @@ public interface RedisArrayReactiveCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
      */
+    @Experimental
     Mono<ArrayInfoFull> arinfoFull(K key);
 
 }

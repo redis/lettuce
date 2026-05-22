@@ -37,6 +37,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arset/">Redis Documentation: ARSET</a>
      */
+    @Experimental
     suspend fun arset(key: K, index: Long, value: V): Long?
 
     /**
@@ -49,6 +50,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arset/">Redis Documentation: ARSET</a>
      */
+    @Experimental
     @SuppressWarnings
     suspend fun arset(key: K, index: Long, vararg values: V): Long?
 
@@ -61,6 +63,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/armset/">Redis Documentation: ARMSET</a>
      */
+    @Experimental
     suspend fun armset(key: K, indexValueMap: Map<Long, V>): Long?
 
     /**
@@ -72,6 +75,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arget/">Redis Documentation: ARGET</a>
      */
+    @Experimental
     suspend fun arget(key: K, index: Long): V?
 
     /**
@@ -83,6 +87,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/armget/">Redis Documentation: ARMGET</a>
      */
+    @Experimental
     suspend fun armget(key: K, vararg indices: Long): List<V>
 
     /**
@@ -97,6 +102,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardel/">Redis Documentation: ARDEL</a>
      */
+    @Experimental
     suspend fun ardel(key: K, index: Long): Long?
 
     /**
@@ -108,6 +114,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardel/">Redis Documentation: ARDEL</a>
      */
+    @Experimental
     suspend fun ardel(key: K, vararg indices: Long): Long?
 
     /**
@@ -120,6 +127,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
      */
+    @Experimental
     suspend fun ardelrange(key: K, start: Long, end: Long): Long?
 
     /**
@@ -131,6 +139,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
      */
+    @Experimental
     suspend fun ardelrange(key: K, vararg ranges: ArrayIndexRange): Long?
 
     /**
@@ -141,6 +150,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlen/">Redis Documentation: ARLEN</a>
      */
+    @Experimental
     suspend fun arlen(key: K): Long?
 
     /**
@@ -151,6 +161,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arcount/">Redis Documentation: ARCOUNT</a>
      */
+    @Experimental
     suspend fun arcount(key: K): Long?
 
     /**
@@ -165,6 +176,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/argetrange/">Redis Documentation: ARGETRANGE</a>
      */
+    @Experimental
     suspend fun argetrange(key: K, start: Long, end: Long): List<V>
 
     /**
@@ -175,6 +187,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arnext/">Redis Documentation: ARNEXT</a>
      */
+    @Experimental
     suspend fun arnext(key: K): Long?
 
     /**
@@ -186,6 +199,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlastitems/">Redis Documentation: ARLASTITEMS</a>
      */
+    @Experimental
     suspend fun arlastitems(key: K, count: Long): List<V>
 
     /**
@@ -198,6 +212,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlastitems/">Redis Documentation: ARLASTITEMS</a>
      */
+    @Experimental
     suspend fun arlastitems(key: K, count: Long, rev: Boolean): List<V>
 
     /**
@@ -210,6 +225,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arscan/">Redis Documentation: ARSCAN</a>
      */
+    @Experimental
     suspend fun arscan(key: K, start: Long, end: Long): List<IndexedValue<V>>
 
     /**
@@ -223,6 +239,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arscan/">Redis Documentation: ARSCAN</a>
      */
+    @Experimental
     suspend fun arscan(key: K, start: Long, end: Long, limit: Long): List<IndexedValue<V>>
 
     /**
@@ -260,6 +277,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     suspend fun aropAggregate(key: K, start: Long, end: Long, operation: ArAggregateType): V?
 
     /**
@@ -273,6 +291,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     suspend fun aropBitwise(key: K, start: Long, end: Long, operation: ArBitwiseType): Long?
 
     /**
@@ -285,6 +304,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     suspend fun aropCount(key: K, start: Long, end: Long): Long?
 
     /**
@@ -298,6 +318,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     suspend fun aropCount(key: K, start: Long, end: Long, matchValue: V): Long?
 
     /**
@@ -309,6 +330,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinsert/">Redis Documentation: ARINSERT</a>
      */
+    @Experimental
     suspend fun arinsert(key: K, value: V): Long?
 
     /**
@@ -320,6 +342,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinsert/">Redis Documentation: ARINSERT</a>
      */
+    @Experimental
     @SuppressWarnings
     suspend fun arinsert(key: K, vararg values: V): Long?
 
@@ -333,6 +356,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arring/">Redis Documentation: ARRING</a>
      */
+    @Experimental
     suspend fun arring(key: K, size: Long, value: V): Long?
 
     /**
@@ -345,6 +369,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arring/">Redis Documentation: ARRING</a>
      */
+    @Experimental
     @SuppressWarnings
     suspend fun arring(key: K, size: Long, vararg values: V): Long?
 
@@ -357,6 +382,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arseek/">Redis Documentation: ARSEEK</a>
      */
+    @Experimental
     suspend fun arseek(key: K, index: Long): Long?
 
     /**
@@ -368,6 +394,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
      */
+    @Experimental
     suspend fun arinfo(key: K): ArrayInfo?
 
     /**
@@ -379,6 +406,7 @@ interface RedisArrayCoroutinesCommands<K : Any, V : Any> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
      */
+    @Experimental
     suspend fun arinfoFull(key: K): ArrayInfoFull?
 
 }

@@ -36,6 +36,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arset/">Redis Documentation: ARSET</a>
      */
+    @Experimental
     Executions<Long> arset(K key, long index, V value);
 
     /**
@@ -48,6 +49,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arset/">Redis Documentation: ARSET</a>
      */
+    @Experimental
     @SuppressWarnings("unchecked")
     Executions<Long> arset(K key, long index, V... values);
 
@@ -60,6 +62,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/armset/">Redis Documentation: ARMSET</a>
      */
+    @Experimental
     Executions<Long> armset(K key, Map<Long, V> indexValueMap);
 
     /**
@@ -71,6 +74,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arget/">Redis Documentation: ARGET</a>
      */
+    @Experimental
     Executions<V> arget(K key, long index);
 
     /**
@@ -82,6 +86,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/armget/">Redis Documentation: ARMGET</a>
      */
+    @Experimental
     Executions<List<V>> armget(K key, long... indices);
 
     /**
@@ -96,6 +101,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardel/">Redis Documentation: ARDEL</a>
      */
+    @Experimental
     Executions<Long> ardel(K key, long index);
 
     /**
@@ -107,6 +113,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardel/">Redis Documentation: ARDEL</a>
      */
+    @Experimental
     Executions<Long> ardel(K key, long... indices);
 
     /**
@@ -119,6 +126,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
      */
+    @Experimental
     Executions<Long> ardelrange(K key, long start, long end);
 
     /**
@@ -130,6 +138,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/ardelrange/">Redis Documentation: ARDELRANGE</a>
      */
+    @Experimental
     Executions<Long> ardelrange(K key, ArrayIndexRange... ranges);
 
     /**
@@ -140,6 +149,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlen/">Redis Documentation: ARLEN</a>
      */
+    @Experimental
     Executions<Long> arlen(K key);
 
     /**
@@ -150,6 +160,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arcount/">Redis Documentation: ARCOUNT</a>
      */
+    @Experimental
     Executions<Long> arcount(K key);
 
     /**
@@ -164,6 +175,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/argetrange/">Redis Documentation: ARGETRANGE</a>
      */
+    @Experimental
     Executions<List<V>> argetrange(K key, long start, long end);
 
     /**
@@ -174,6 +186,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arnext/">Redis Documentation: ARNEXT</a>
      */
+    @Experimental
     Executions<Long> arnext(K key);
 
     /**
@@ -185,6 +198,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlastitems/">Redis Documentation: ARLASTITEMS</a>
      */
+    @Experimental
     Executions<List<V>> arlastitems(K key, long count);
 
     /**
@@ -197,6 +211,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arlastitems/">Redis Documentation: ARLASTITEMS</a>
      */
+    @Experimental
     Executions<List<V>> arlastitems(K key, long count, boolean rev);
 
     /**
@@ -209,6 +224,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arscan/">Redis Documentation: ARSCAN</a>
      */
+    @Experimental
     Executions<List<IndexedValue<V>>> arscan(K key, long start, long end);
 
     /**
@@ -222,6 +238,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arscan/">Redis Documentation: ARSCAN</a>
      */
+    @Experimental
     Executions<List<IndexedValue<V>>> arscan(K key, long start, long end, long limit);
 
     /**
@@ -259,6 +276,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     Executions<V> aropAggregate(K key, long start, long end, ArAggregateType operation);
 
     /**
@@ -272,6 +290,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     Executions<Long> aropBitwise(K key, long start, long end, ArBitwiseType operation);
 
     /**
@@ -284,6 +303,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     Executions<Long> aropCount(K key, long start, long end);
 
     /**
@@ -297,6 +317,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
      */
+    @Experimental
     Executions<Long> aropCount(K key, long start, long end, V matchValue);
 
     /**
@@ -308,6 +329,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinsert/">Redis Documentation: ARINSERT</a>
      */
+    @Experimental
     Executions<Long> arinsert(K key, V value);
 
     /**
@@ -319,6 +341,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinsert/">Redis Documentation: ARINSERT</a>
      */
+    @Experimental
     @SuppressWarnings("unchecked")
     Executions<Long> arinsert(K key, V... values);
 
@@ -332,6 +355,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arring/">Redis Documentation: ARRING</a>
      */
+    @Experimental
     Executions<Long> arring(K key, long size, V value);
 
     /**
@@ -344,6 +368,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arring/">Redis Documentation: ARRING</a>
      */
+    @Experimental
     @SuppressWarnings("unchecked")
     Executions<Long> arring(K key, long size, V... values);
 
@@ -356,6 +381,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arseek/">Redis Documentation: ARSEEK</a>
      */
+    @Experimental
     Executions<Long> arseek(K key, long index);
 
     /**
@@ -367,6 +393,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
      */
+    @Experimental
     Executions<ArrayInfo> arinfo(K key);
 
     /**
@@ -378,6 +405,7 @@ public interface NodeSelectionArrayCommands<K, V> {
      * @since 7.6
      * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
      */
+    @Experimental
     Executions<ArrayInfoFull> arinfoFull(K key);
 
 }

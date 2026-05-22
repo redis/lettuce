@@ -9,6 +9,8 @@ package io.lettuce.core.array;
 import java.util.Collections;
 import java.util.Map;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * Immutable representation of extended metadata about a Redis array, returned by the {@code ARINFO key FULL} command.
  * <p>
@@ -24,6 +26,7 @@ import java.util.Map;
  * @see ArrayInfo
  * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
  */
+@Experimental
 public class ArrayInfoFull extends ArrayInfo {
 
     public static final String DENSE_SLICES = "dense-slices";

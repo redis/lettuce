@@ -8,6 +8,8 @@ package io.lettuce.core.array;
 
 import java.util.Objects;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * Represents an indexed value in a Redis array, pairing a long index with a value.
  * <p>
@@ -20,6 +22,7 @@ import java.util.Objects;
  * @see <a href="https://redis.io/docs/latest/commands/arscan/">Redis Documentation: ARSCAN</a>
  * @see <a href="https://redis.io/docs/latest/commands/argrep/">Redis Documentation: ARGREP</a>
  */
+@Experimental
 public class IndexedValue<V> {
 
     private final long index;

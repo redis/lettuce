@@ -6,6 +6,8 @@
  */
 package io.lettuce.core.array;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * Lightweight index range for Redis Array commands that require a start/end pair.
  * <p>
@@ -17,6 +19,7 @@ package io.lettuce.core.array;
  * @author Aleksandar Todorov
  * @since 7.6
  */
+@Experimental
 public class ArrayIndexRange {
 
     private final long lower;

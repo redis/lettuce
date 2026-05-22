@@ -9,6 +9,8 @@ package io.lettuce.core.array;
 import java.util.Collections;
 import java.util.Map;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * Immutable representation of metadata about a Redis array, returned by the {@code ARINFO} command.
  * <p>
@@ -19,6 +21,7 @@ import java.util.Map;
  * @since 7.6
  * @see <a href="https://redis.io/docs/latest/commands/arinfo/">Redis Documentation: ARINFO</a>
  */
+@Experimental
 public class ArrayInfo {
 
     public static final String COUNT = "count";

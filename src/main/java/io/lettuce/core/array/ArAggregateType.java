@@ -6,6 +6,8 @@
  */
 package io.lettuce.core.array;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * Aggregate operations for the Redis {@code AROP} command that return a bulk string value ({@code V}).
  * <p>
@@ -15,6 +17,7 @@ package io.lettuce.core.array;
  * @since 7.6
  * @see <a href="https://redis.io/docs/latest/commands/arop/">Redis Documentation: AROP</a>
  */
+@Experimental
 public enum ArAggregateType {
 
     /**
