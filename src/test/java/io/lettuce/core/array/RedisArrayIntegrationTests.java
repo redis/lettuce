@@ -203,6 +203,21 @@ public class RedisArrayIntegrationTests extends TestSupport {
         assertThat(result.get(4)).isEqualTo("e");
     }
 
+    @Test
+    void argetrangeReversed() {
+        redis.arset(KEY, 0, "a");
+        redis.arset(KEY, 2, "c");
+        redis.arset(KEY, 4, "e");
+        // start > end triggers reverse order on the server
+        List<String> result = redis.argetrange(KEY, 4, 0);
+        assertThat(result).hasSize(5);
+        assertThat(result.get(0)).isEqualTo("e");
+        assertThat(result.get(1)).isNull();
+        assertThat(result.get(2)).isEqualTo("c");
+        assertThat(result.get(3)).isNull();
+        assertThat(result.get(4)).isEqualTo("a");
+    }
+
     // --- ARSCAN ---
 
     @Test
@@ -239,6 +254,21 @@ public class RedisArrayIntegrationTests extends TestSupport {
         assertThat(result.get(1)).isEqualTo(new IndexedValue<>(7L, "c"));
         // empty subrange — no populated slots between 4 and 6
         assertThat(redis.arscan(KEY, 4, 6)).isEmpty();
+    }
+
+    @Test
+    void arscanReversed() {
+        redis.arset(KEY, 0, "a");
+        redis.arset(KEY, 3, "b");
+        redis.arset(KEY, 7, "c");
+        redis.arset(KEY, 10, "d");
+        // start > end triggers reverse iteration
+        List<IndexedValue<String>> result = redis.arscan(KEY, 10, 0);
+        assertThat(result).hasSize(4);
+        assertThat(result.get(0)).isEqualTo(new IndexedValue<>(10L, "d"));
+        assertThat(result.get(1)).isEqualTo(new IndexedValue<>(7L, "c"));
+        assertThat(result.get(2)).isEqualTo(new IndexedValue<>(3L, "b"));
+        assertThat(result.get(3)).isEqualTo(new IndexedValue<>(0L, "a"));
     }
 
     // --- ARGREP ---
@@ -440,6 +470,25 @@ public class RedisArrayIntegrationTests extends TestSupport {
         assertThat(redis.aropBitwise(KEY, 0, 2, ArBitwiseType.AND)).isEqualTo(1L); // 0b001
         assertThat(redis.aropBitwise(KEY, 0, 2, ArBitwiseType.OR)).isEqualTo(7L); // 0b111
         assertThat(redis.aropBitwise(KEY, 0, 2, ArBitwiseType.XOR)).isEqualTo(1L); // 0b001
+    }
+
+    @Test
+    void aropAggregateReversed() {
+        redis.arset(KEY, 0, "30");
+        redis.arset(KEY, 1, "10");
+        redis.arset(KEY, 2, "20");
+        // start > end: aggregation is order-independent, results should match forward
+        assertThat(redis.aropAggregate(KEY, 2, 0, ArAggregateType.SUM)).isEqualTo("60");
+        assertThat(redis.aropAggregate(KEY, 2, 0, ArAggregateType.MIN)).isEqualTo("10");
+        assertThat(redis.aropAggregate(KEY, 2, 0, ArAggregateType.MAX)).isEqualTo("30");
+    }
+
+    @Test
+    void aropCountReversed() {
+        redis.arset(KEY, 0, "a");
+        redis.arset(KEY, 5, "b");
+        // reversed range still counts all populated elements
+        assertThat(redis.aropCount(KEY, 10, 0)).isEqualTo(2L);
     }
 
     // --- ARINSERT ---
