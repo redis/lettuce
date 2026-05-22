@@ -559,6 +559,23 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructXnackSingleMessageId() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, MESSAGE_ID1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n"
+                        + "$4\r\n" + "FAIL\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void xnackSingleMessageIdShouldRejectNullMessageId() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, (String) null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageId must not be null");
+    }
+
+    @Test
     void shouldCorrectlyConstructSetWithExAndIfeq() {
         Command<String, String, ?> command = sut.set("mykey", "myvalue",
                 SetArgs.Builder.ex(100).compareCondition(CompareCondition.valueEq("oldvalue")));

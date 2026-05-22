@@ -77,6 +77,23 @@ public interface RedisStreamCommands<K, V> {
     List<StreamEntryDeletionResult> xackdel(K key, K group, StreamDeletionPolicy policy, String... messageIds);
 
     /**
+     * Negatively acknowledge a single pending message in a consumer group, making it immediately available for reconsumption by
+     * other consumers (using {@code XREADGROUP CLAIM}). Depending on the {@link XNackMode}, the delivery counter is adjusted to
+     * reflect the reason for the NACK.
+     * <p>
+     * NACKing a single message is expected to be the dominant case; this overload avoids the array allocation incurred by the
+     * varargs variant.
+     *
+     * @param key the stream key.
+     * @param group name of the consumer group.
+     * @param mode the nacking mode.
+     * @param messageId message Id to negatively acknowledge.
+     * @return the number of messages successfully NACKed.
+     * @since 7.6
+     */
+    Long xnack(K key, K group, XNackMode mode, String messageId);
+
+    /**
      * Negatively acknowledge one or more pending messages in a consumer group, making them immediately available for
      * reconsumption by other consumers (using {@code XREADGROUP CLAIM}). Depending on the {@link XNackMode}, the delivery
      * counter is adjusted to reflect the reason for the NACK.

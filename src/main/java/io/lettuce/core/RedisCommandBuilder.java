@@ -3269,6 +3269,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XACKDEL, new StreamEntryDeletionResultListOutput<>(codec), args);
     }
 
+    public Command<K, V, Long> xnack(K key, K group, XNackMode mode, String messageId) {
+        notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(mode, "XNackMode " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(messageId, "MessageId " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group).add(mode).add(CommandKeyword.IDS).add(1)
+                .add(messageId);
+
+        return createCommand(XNACK, new IntegerOutput<>(codec), args);
+    }
+
     public Command<K, V, Long> xnack(K key, K group, XNackMode mode, String[] messageIds) {
         notNullKey(key);
         LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);

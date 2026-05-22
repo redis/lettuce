@@ -3115,6 +3115,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> xnack(K key, K group, XNackMode mode, String messageId) {
+        return dispatch(commandBuilder.xnack(key, group, mode, messageId));
+    }
+
+    @Override
     public RedisFuture<Long> xnack(K key, K group, XNackMode mode, String... messageIds) {
         return dispatch(commandBuilder.xnack(key, group, mode, messageIds));
     }

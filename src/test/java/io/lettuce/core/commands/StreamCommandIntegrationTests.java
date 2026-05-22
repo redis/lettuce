@@ -1129,9 +1129,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("XNACK") // Redis 8.8
     void xnackSilent() {
-        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
-
         String groupName = "test-group";
         String consumerName = "test-consumer";
 
@@ -1145,9 +1144,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("XNACK") // Redis 8.8
     void xnackFail() {
-        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
-
         String groupName = "test-group";
         String consumerName = "test-consumer";
 
@@ -1161,9 +1159,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("XNACK") // Redis 8.8
     void xnackFatal() {
-        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
-
         String groupName = "test-group";
         String consumerName = "test-consumer";
 
@@ -1177,9 +1174,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("XNACK") // Redis 8.8
     void xnackMultipleMessages() {
-        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
-
         String groupName = "test-group";
         String consumerName = "test-consumer";
 
@@ -1194,9 +1190,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("XNACK") // Redis 8.8
     void xnackNonExistentMessage() {
-        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.7.225"));
-
         String groupName = "test-group";
 
         redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
