@@ -1805,9 +1805,8 @@ public class RediSearchIntegrationTests {
         assertThat(info.isNoHighlight()).isTrue();
         assertThat(info.isNoFields()).isTrue();
         assertThat(info.isNoFrequency()).isTrue();
-        assertThat(info.isMaxTextFields()).isTrue();
+        // Note: MAXTEXTFIELDS cannot be used with NOFIELDS in Redis 8.8+, so we don't test it here
         // Note: Redis FT.INFO does not return SKIPINITIALSCAN option
-        // assertThat(info.isSkipInitialScan()).isTrue();
 
         // Verify fields
         assertThat(info.getFields()).hasSize(3);
