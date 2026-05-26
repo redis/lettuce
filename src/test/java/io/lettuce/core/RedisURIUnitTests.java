@@ -104,6 +104,15 @@ class RedisURIUnitTests {
     }
 
     @Test
+    void shouldMaskCredentialsAfterSetAuthentication() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        redisURI.setAuthentication("alice", "secret");
+
+        assertThat(redisURI).hasToString("redis://alice:******@localhost:1234/5");
+    }
+
+    @Test
     void shouldOmitCredentialPrefixForNonImmediateProvider() {
 
         RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
