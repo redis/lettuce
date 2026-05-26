@@ -66,6 +66,7 @@ import io.lettuce.core.resource.ClientResources;
  * Unit tests for {@link PooledClusterConnectionProvider}.
  *
  * @author Mark Paluch
+ * @author PreAgile
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
@@ -459,6 +460,46 @@ class PooledClusterConnectionProviderUnitTests {
 
         assertThat(future).isCompletedExceptionally();
         verify(clusterEventListener).onUncoveredSlot(anyInt());
+    }
+
+    @Test
+    void shouldRecreateInactiveWriteConnection() {
+
+        StatefulRedisConnection<String, String> staleConnection = mock(StatefulRedisConnection.class);
+        StatefulRedisConnection<String, String> freshConnection = mock(StatefulRedisConnection.class);
+
+        when(staleConnection.isOpen()).thenReturn(false);
+        when(staleConnection.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+        when(freshConnection.isOpen()).thenReturn(true);
+
+        when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any())).thenReturn(
+                ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(staleConnection)),
+                ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(freshConnection)));
+
+        StatefulRedisConnection<String, String> first = sut.getConnection(ConnectionIntent.WRITE, 1);
+        assertThat(first).isSameAs(staleConnection);
+
+        StatefulRedisConnection<String, String> second = sut.getConnection(ConnectionIntent.WRITE, 1);
+
+        assertThat(second).isSameAs(freshConnection);
+        verify(staleConnection).closeAsync();
+        verify(clientMock, times(2)).connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any());
+    }
+
+    @Test
+    void shouldReuseOpenWriteConnection() {
+
+        when(channelHandlerMock.isOpen()).thenReturn(true);
+
+        when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any()))
+                .thenReturn(ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
+
+        StatefulRedisConnection<String, String> first = sut.getConnection(ConnectionIntent.WRITE, 1);
+        StatefulRedisConnection<String, String> second = sut.getConnection(ConnectionIntent.WRITE, 1);
+
+        assertThat(first).isSameAs(nodeConnectionMock);
+        assertThat(second).isSameAs(nodeConnectionMock);
+        verify(clientMock).connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any());
     }
 
 }
