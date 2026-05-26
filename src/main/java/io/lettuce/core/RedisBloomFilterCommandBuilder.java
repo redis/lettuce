@@ -70,10 +70,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
     final Command<K, V, List<Boolean>> bfInsert(K key, V... values) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec)
-                .addKey(key)
-                .add(CommandKeyword.ITEMS)
-                .addValues(values);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValues(values);
 
         return createCommand(BF_INSERT, new BooleanListOutput<>(codec), args);
     }
@@ -92,10 +89,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
     Command<K, V, String> bfLoadChunk(K key, long iterator, byte[] data) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec)
-                .addKey(key)
-                .add(iterator)
-                .add(data);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(iterator).add(data);
 
         return createCommand(BF_LOADCHUNK, new StatusOutput<>(codec), args);
     }
@@ -117,10 +111,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
     Command<K, V, String> bfReserve(K key, double errorRate, long capacity) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec)
-                .addKey(key)
-                .add(errorRate)
-                .add(capacity);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(errorRate).add(capacity);
 
         return createCommand(BF_RESERVE, new StatusOutput<>(codec), args);
     }
@@ -128,10 +119,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
     Command<K, V, String> bfReserve(K key, double errorRate, long capacity, BfReserveArgs reserveArgs) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec)
-                .addKey(key)
-                .add(errorRate)
-                .add(capacity);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(errorRate).add(capacity);
         reserveArgs.build(args);
 
         return createCommand(BF_RESERVE, new StatusOutput<>(codec), args);
@@ -140,9 +128,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
     Command<K, V, BfScanDumpValue> bfScanDump(K key, long iterator) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec)
-                .addKey(key)
-                .add(iterator);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(iterator);
 
         return createCommand(BF_SCANDUMP, new EncodedComplexOutput<>(codec, BfScanDumpValueParser.INSTANCE), args);
     }

@@ -155,4 +155,5 @@ public interface RedisBloomFilterAsyncCommands<K, V> {
      * @return BfScanDumpValue the scan dump value.
      */
     RedisFuture<BfScanDumpValue> bfScanDump(K key, long iterator);
+
 }

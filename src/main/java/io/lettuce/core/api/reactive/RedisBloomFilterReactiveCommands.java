@@ -77,8 +77,8 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return Boolean where {@code true} means that the item was added and {@code false} means that there's a
-     *         probability that the item was already added to the filter or the filter is full.
+     * @return Boolean where {@code true} means that the item was added and {@code false} means that there's a probability that
+     *         the item was already added to the filter or the filter is full.
      */
     Flux<Boolean> bfInsert(K key, V... values);
 
@@ -88,8 +88,8 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param insertArgs the insert arguments.
      * @param values the values.
-     * @return Boolean where {@code true} means that the item was added and {@code false} means that there's a
-     *         probability that the item was already added to the filter or the filter is full.
+     * @return Boolean where {@code true} means that the item was added and {@code false} means that there's a probability that
+     *         the item was already added to the filter or the filter is full.
      */
     Flux<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V... values);
 
@@ -108,8 +108,8 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return Boolean of {@code true} or {@code false} where true means that the item was newly added and false
-     *         means that there's a probability that the item was already added to the filter.
+     * @return Boolean of {@code true} or {@code false} where true means that the item was newly added and false means that
+     *         there's a probability that the item was already added to the filter.
      */
     Flux<Boolean> bfMAdd(K key, V... values);
 
@@ -118,9 +118,8 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return Boolean of {@code true} or {@code false} where true means that, with high probability, the item was
-     *         already added to the filter, and false means that key does not exist or that item was definitely not added to the
-     *         filter.
+     * @return Boolean of {@code true} or {@code false} where true means that, with high probability, the item was already added
+     *         to the filter, and false means that key does not exist or that item was definitely not added to the filter.
      */
     Flux<Boolean> bfMExists(K key, V... values);
 
@@ -155,4 +154,5 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      * @return BfScanDumpValue the scan dump value.
      */
     Mono<BfScanDumpValue> bfScanDump(K key, long iterator);
+
 }

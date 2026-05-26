@@ -154,4 +154,5 @@ public interface RedisBloomFilterCommands<K, V> {
      * @return BfScanDumpValue the scan dump value.
      */
     BfScanDumpValue bfScanDump(K key, long iterator);
+
 }
