@@ -66,6 +66,24 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
         return createCommand(BF_INFO, new EncodedComplexOutput<>(codec, BfInfoValueParser.INSTANCE), key);
     }
 
+    Command<K, V, List<Boolean>> bfInsert(K key, V value) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).add(value);
+
+        return createCommand(BF_INSERT, new BooleanListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V value) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        insertArgs.build(args);
+        args.add(CommandKeyword.ITEMS).add(value);
+
+        return createCommand(BF_INSERT, new BooleanListOutput<>(codec), args);
+    }
+
     @SafeVarargs
     final Command<K, V, List<Boolean>> bfInsert(K key, V... values) {
         notNullKey(key);

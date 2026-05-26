@@ -4094,12 +4094,22 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public final Flux<Boolean> bfInsert(K key, V... values) {
+    public Flux<Boolean> bfInsert(K key, V value) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsert(key, value));
+    }
+
+    @Override
+    public Flux<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V value) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsert(key, insertArgs, value));
+    }
+
+    @Override
+    public Flux<Boolean> bfInsert(K key, V... values) {
         return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsert(key, values));
     }
 
     @Override
-    public final Flux<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V... values) {
+    public Flux<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V... values) {
         return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsert(key, insertArgs, values));
     }
 
@@ -4109,12 +4119,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public final Flux<Boolean> bfMAdd(K key, V... values) {
+    public Flux<Boolean> bfMAdd(K key, V... values) {
         return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfMAdd(key, values));
     }
 
     @Override
-    public final Flux<Boolean> bfMExists(K key, V... values) {
+    public Flux<Boolean> bfMExists(K key, V... values) {
         return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfMExists(key, values));
     }
 

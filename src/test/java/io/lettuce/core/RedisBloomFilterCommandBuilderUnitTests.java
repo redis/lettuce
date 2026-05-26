@@ -104,6 +104,18 @@ class RedisBloomFilterCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructBfInsertCommandWithArgs() {
+        BfInsertArgs insertArgs = BfInsertArgs.Builder.capacity(100).error(0.01);
+        Command<String, String, List<Boolean>> command = builder.bfInsert(MY_KEY, insertArgs, MY_VALUE);
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$9\r\nBF.INSERT\r\n" + "$10\r\n" + MY_KEY + "\r\n" + "$8\r\nCAPACITY\r\n" + "$3\r\n100\r\n"
+                        + "$5\r\nERROR\r\n" + "$4\r\n0.01\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructBfInsertCommandWithVarargs() {
         Command<String, String, List<Boolean>> command = builder.bfInsert(MY_KEY, MY_VALUE, MY_VALUE_2);
         ByteBuf buff = Unpooled.buffer();
@@ -114,15 +126,15 @@ class RedisBloomFilterCommandBuilderUnitTests {
     }
 
     @Test
-    void shouldCorrectlyConstructBfInsertCommandWithArgs() {
+    void shouldCorrectlyConstructBfInsertCommandVarargWithArgs() {
         BfInsertArgs insertArgs = BfInsertArgs.Builder.capacity(100).error(0.01);
-        Command<String, String, List<Boolean>> command = builder.bfInsert(MY_KEY, insertArgs, MY_VALUE);
+        Command<String, String, List<Boolean>> command = builder.bfInsert(MY_KEY, insertArgs, MY_VALUE, MY_VALUE_2);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
-        assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo(
-                "*8\r\n" + "$9\r\nBF.INSERT\r\n" + "$10\r\n" + MY_KEY + "\r\n" + "$8\r\nCAPACITY\r\n" + "$3\r\n100\r\n"
-                        + "$5\r\nERROR\r\n" + "$4\r\n0.01\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n");
+        assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$9\r\nBF.INSERT\r\n" + "$10\r\n" + MY_KEY
+                + "\r\n" + "$8\r\nCAPACITY\r\n" + "$3\r\n100\r\n" + "$5\r\nERROR\r\n" + "$4\r\n0.01\r\n" + "$5\r\nITEMS\r\n"
+                + "$4\r\n" + MY_VALUE + "\r\n" + "$12\r\n" + MY_VALUE_2 + "\r\n");
     }
 
     @Test

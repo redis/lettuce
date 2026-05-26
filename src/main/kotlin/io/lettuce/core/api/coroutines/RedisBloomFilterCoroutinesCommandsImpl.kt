@@ -54,6 +54,12 @@ internal class RedisBloomFilterCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun bfInfo(key: K): BfInfoValue? =
         ops.bfInfo(key).awaitFirstOrNull()
 
+    override suspend fun bfInsert(key: K, value: V): List<Boolean> =
+        ops.bfInsert(key, value).asFlow().toList()
+
+    override suspend fun bfInsert(key: K, insertArgs: BfInsertArgs, value: V): List<Boolean> =
+        ops.bfInsert(key, insertArgs, value).asFlow().toList()
+
     override suspend fun bfInsert(key: K, vararg values: V): List<Boolean> =
         ops.bfInsert(key, *values).asFlow().toList()
 

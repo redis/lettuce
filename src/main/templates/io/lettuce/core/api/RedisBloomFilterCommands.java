@@ -53,6 +53,27 @@ public interface RedisBloomFilterCommands<K, V> {
     BfInfoValue bfInfo(K key);
 
     /**
+     * Add an item to the Bloom Filter.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added and {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full.
+     */
+    List<Boolean> bfInsert(K key, V value);
+
+    /**
+     * Add an item to the Bloom Filter.
+     *
+     * @param key the key.
+     * @param insertArgs the insert arguments.
+     * @param value the value.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added and {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full.
+     */
+    List<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V value);
+
+    /**
      * Add one or more items to the Bloom Filter.
      *
      * @param key the key.

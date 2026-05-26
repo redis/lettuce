@@ -4041,6 +4041,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<Boolean>> bfInsert(K key, V value) {
+        return dispatch(bloomFilterCommandBuilder.bfInsert(key, value));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V value) {
+        return dispatch(bloomFilterCommandBuilder.bfInsert(key, insertArgs, value));
+    }
+
+    @Override
     public RedisFuture<List<Boolean>> bfInsert(K key, V... values) {
         return dispatch(bloomFilterCommandBuilder.bfInsert(key, values));
     }

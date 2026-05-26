@@ -97,6 +97,17 @@ public class RedisBloomFilterIntegrationTests {
     }
 
     @Test
+    void bfInsertWithArgs() {
+        BfInsertArgs insertArgs = BfInsertArgs.Builder.capacity(100).error(0.01);
+        redis.bfInsert(MY_KEY, insertArgs, MY_VALUE);
+
+        BfInfoValue result = redis.bfInfo(MY_KEY);
+
+        assertThat(redis.bfExists(MY_KEY, MY_VALUE)).isTrue();
+        assertThat(result.getCapacity()).isEqualTo(100L);
+    }
+
+    @Test
     void bfInsertVararg() {
         redis.bfInsert(MY_KEY, MY_VALUE, MY_VALUE_2);
 
@@ -105,7 +116,7 @@ public class RedisBloomFilterIntegrationTests {
     }
 
     @Test
-    void bfInsertWithArgs() {
+    void bfInsertVarargWithArgs() {
         BfInsertArgs insertArgs = BfInsertArgs.Builder.capacity(100).error(0.01);
         redis.bfInsert(MY_KEY, insertArgs, MY_VALUE, MY_VALUE_2);
         BfInfoValue result = redis.bfInfo(MY_KEY);
