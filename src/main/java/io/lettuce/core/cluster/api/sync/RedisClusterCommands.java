@@ -45,7 +45,8 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
         RedisFunctionCommands<K, V>, RedisGeoCommands<K, V>, RedisHashCommands<K, V>, RedisHLLCommands<K, V>,
         RedisKeyCommands<K, V>, RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
         RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V>,
-        RedisJsonCommands<K, V>, RedisVectorSetCommands<K, V>, RediSearchCommands<K, V>, RedisBloomFilterCommands<K, V> {
+        RedisJsonCommands<K, V>, RedisVectorSetCommands<K, V>, RediSearchCommands<K, V>, RedisArrayCommands<K, V>,
+        RedisBloomFilterCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.

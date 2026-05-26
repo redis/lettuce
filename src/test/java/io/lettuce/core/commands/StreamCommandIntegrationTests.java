@@ -1129,6 +1129,79 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("XNACK") // Redis 8.8
+    void xnackSilent() {
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        String id = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.SILENT, id);
+
+        assertThat(nacked).isEqualTo(1L);
+    }
+
+    @Test
+    @EnabledOnCommand("XNACK") // Redis 8.8
+    void xnackFail() {
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        String id = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.FAIL, id);
+
+        assertThat(nacked).isEqualTo(1L);
+    }
+
+    @Test
+    @EnabledOnCommand("XNACK") // Redis 8.8
+    void xnackFatal() {
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        String id = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.FATAL, id);
+
+        assertThat(nacked).isEqualTo(1L);
+    }
+
+    @Test
+    @EnabledOnCommand("XNACK") // Redis 8.8
+    void xnackMultipleMessages() {
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.FAIL, id1, id2);
+
+        assertThat(nacked).isEqualTo(2L);
+    }
+
+    @Test
+    @EnabledOnCommand("XNACK") // Redis 8.8
+    void xnackNonExistentMessage() {
+        String groupName = "test-group";
+
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+
+        Long nacked = redis.xnack(key, groupName, XNackMode.SILENT, "999999-0");
+
+        assertThat(nacked).isEqualTo(0L);
+    }
+
+    @Test
     @EnabledOnCommand("XDELEX") // Redis 8.2
     void xaddWithTrimmingMode() {
         // Add initial entries to the stream

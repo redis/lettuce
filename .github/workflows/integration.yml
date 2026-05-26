@@ -25,6 +25,9 @@ on:
         required: false
         default: ''
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build and Test (Redis ${{ matrix.redis_version }})
