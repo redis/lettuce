@@ -56,6 +56,9 @@ on:
         description: 'Codecov token for uploading coverage'
         required: false
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Run Tests
