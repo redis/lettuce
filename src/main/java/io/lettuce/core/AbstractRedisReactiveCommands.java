@@ -22,6 +22,10 @@ package io.lettuce.core;
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.*;
+import io.lettuce.core.bf.BfInfoValue;
+import io.lettuce.core.bf.BfScanDumpValue;
+import io.lettuce.core.bf.arguments.BfInsertArgs;
+import io.lettuce.core.bf.arguments.BfReserveArgs;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -106,6 +110,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author Ali Takavci
  * @author Tihomir Mateev
  * @author SeugnSu Kim
+ * @author Yordan Tsintsov
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V>
@@ -114,7 +119,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
         RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
         RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
-        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V> {
+        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -125,6 +130,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private final RediSearchCommandBuilder<K, V> searchCommandBuilder;
 
     private final RedisVectorSetCommandBuilder<K, V> vectorSetCommandBuilder;
+
+    private final RedisBloomFilterCommandBuilder<K, V> bloomFilterCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -149,6 +156,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
         this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
         this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
+        this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -4063,6 +4071,66 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<List<Map<String, Object>>> clusterLinks() {
         return createMono(commandBuilder::clusterLinks);
+    }
+
+    @Override
+    public Mono<Boolean> bfAdd(K key, V value) {
+        return createMono(() -> bloomFilterCommandBuilder.bfAdd(key, value));
+    }
+
+    @Override
+    public Mono<Long> bfCard(K key) {
+        return createMono(() -> bloomFilterCommandBuilder.bfCard(key));
+    }
+
+    @Override
+    public Mono<Boolean> bfExists(K key, V value) {
+        return createMono(() -> bloomFilterCommandBuilder.bfExists(key, value));
+    }
+
+    @Override
+    public Mono<BfInfoValue> bfInfo(K key) {
+        return createMono(() -> bloomFilterCommandBuilder.bfInfo(key));
+    }
+
+    @Override
+    public final Flux<Boolean> bfInsert(K key, V... values) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsert(key, values));
+    }
+
+    @Override
+    public final Flux<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V... values) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsert(key, insertArgs, values));
+    }
+
+    @Override
+    public Mono<String> bfLoadChunk(K key, long iterator, byte[] data) {
+        return createMono(() -> bloomFilterCommandBuilder.bfLoadChunk(key, iterator, data));
+    }
+
+    @Override
+    public final Flux<Boolean> bfMAdd(K key, V... values) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfMAdd(key, values));
+    }
+
+    @Override
+    public final Flux<Boolean> bfMExists(K key, V... values) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfMExists(key, values));
+    }
+
+    @Override
+    public Mono<String> bfReserve(K key, double errorRate, long capacity) {
+        return createMono(() -> bloomFilterCommandBuilder.bfReserve(key, errorRate, capacity));
+    }
+
+    @Override
+    public Mono<String> bfReserve(K key, double errorRate, long capacity, BfReserveArgs reserveArgs) {
+        return createMono(() -> bloomFilterCommandBuilder.bfReserve(key, errorRate, capacity, reserveArgs));
+    }
+
+    @Override
+    public Mono<BfScanDumpValue> bfScanDump(K key, long iterator) {
+        return createMono(() -> bloomFilterCommandBuilder.bfScanDump(key, iterator));
     }
 
     private byte[] encodeFunction(String functionCode) {

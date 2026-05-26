@@ -22,6 +22,10 @@ package io.lettuce.core;
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.async.*;
+import io.lettuce.core.bf.BfInfoValue;
+import io.lettuce.core.bf.BfScanDumpValue;
+import io.lettuce.core.bf.arguments.BfInsertArgs;
+import io.lettuce.core.bf.arguments.BfReserveArgs;
 import io.lettuce.core.cluster.PipelinedRedisFuture;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
@@ -101,6 +105,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author Andrey Shlykov
  * @author Ali Takavci
  * @author SeugnSu Kim
+ * @author Yordan Tsintsov
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
@@ -108,7 +113,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
-        RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V> {
+        RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V>, RedisBloomFilterAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -119,6 +124,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     private final RediSearchCommandBuilder<K, V> searchCommandBuilder;
 
     private final RedisVectorSetCommandBuilder<K, V> vectorSetCommandBuilder;
+
+    private final RedisBloomFilterCommandBuilder<K, V> bloomFilterCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -137,6 +144,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
         this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
         this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
+        this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
     }
 
     /**
@@ -4010,6 +4018,66 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<Map<String, Object>>> clusterLinks() {
         return dispatch(commandBuilder.clusterLinks());
+    }
+
+    @Override
+    public RedisFuture<Boolean> bfAdd(K key, V value) {
+        return dispatch(bloomFilterCommandBuilder.bfAdd(key, value));
+    }
+
+    @Override
+    public RedisFuture<Long> bfCard(K key) {
+        return dispatch(bloomFilterCommandBuilder.bfCard(key));
+    }
+
+    @Override
+    public RedisFuture<Boolean> bfExists(K key, V value) {
+        return dispatch(bloomFilterCommandBuilder.bfExists(key, value));
+    }
+
+    @Override
+    public RedisFuture<BfInfoValue> bfInfo(K key) {
+        return dispatch(bloomFilterCommandBuilder.bfInfo(key));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> bfInsert(K key, V... values) {
+        return dispatch(bloomFilterCommandBuilder.bfInsert(key, values));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V... values) {
+        return dispatch(bloomFilterCommandBuilder.bfInsert(key, insertArgs, values));
+    }
+
+    @Override
+    public RedisFuture<String> bfLoadChunk(K key, long iterator, byte[] data) {
+        return dispatch(bloomFilterCommandBuilder.bfLoadChunk(key, iterator, data));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> bfMAdd(K key, V... values) {
+        return dispatch(bloomFilterCommandBuilder.bfMAdd(key, values));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> bfMExists(K key, V... values) {
+        return dispatch(bloomFilterCommandBuilder.bfMExists(key, values));
+    }
+
+    @Override
+    public RedisFuture<String> bfReserve(K key, double errorRate, long capacity) {
+        return dispatch(bloomFilterCommandBuilder.bfReserve(key, errorRate, capacity));
+    }
+
+    @Override
+    public RedisFuture<String> bfReserve(K key, double errorRate, long capacity, BfReserveArgs reserveArgs) {
+        return dispatch(bloomFilterCommandBuilder.bfReserve(key, errorRate, capacity, reserveArgs));
+    }
+
+    @Override
+    public RedisFuture<BfScanDumpValue> bfScanDump(K key, long iterator) {
+        return dispatch(bloomFilterCommandBuilder.bfScanDump(key, iterator));
     }
 
     @Override

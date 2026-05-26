@@ -38,6 +38,7 @@ import io.lettuce.core.json.JsonParser;
  * @param <V> Value type.
  * @author Mark Paluch
  * @author dengliming
+ * @author Yordan Tsintsov
  * @since 4.0
  */
 public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, RedisAclAsyncCommands<K, V>,
@@ -45,7 +46,8 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
         RedisHLLAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
         RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
-        RedisJsonAsyncCommands<K, V>, RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V> {
+        RedisJsonAsyncCommands<K, V>, RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V>,
+        RedisBloomFilterAsyncCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.

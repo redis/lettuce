@@ -27,7 +27,6 @@ import io.lettuce.core.HotkeysArgs;
 import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.Range;
-import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.sync.*;
 import io.lettuce.core.json.JsonParser;
 
@@ -39,13 +38,14 @@ import io.lettuce.core.json.JsonParser;
  * @author Mark Paluch
  * @author dengliming
  * @author Tihomir Mateev
+ * @author Yordan Tsintsov
  * @since 4.0
  */
 public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>,
         RedisFunctionCommands<K, V>, RedisGeoCommands<K, V>, RedisHashCommands<K, V>, RedisHLLCommands<K, V>,
         RedisKeyCommands<K, V>, RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
         RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V>,
-        RedisJsonCommands<K, V>, RedisVectorSetCommands<K, V>, RediSearchCommands<K, V> {
+        RedisJsonCommands<K, V>, RedisVectorSetCommands<K, V>, RediSearchCommands<K, V>, RedisBloomFilterCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.
