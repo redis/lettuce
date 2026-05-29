@@ -113,12 +113,12 @@ class RedisURIUnitTests {
     }
 
     @Test
-    void shouldOmitCredentialPrefixForNonImmediateProvider() {
+    void shouldMaskCredentialsForNonImmediateProvider() {
 
         RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
         redisURI.setCredentialsProvider(() -> Mono.fromCallable(() -> RedisCredentials.just("alice", "secret".toCharArray())));
 
-        assertThat(redisURI).hasToString("redis://localhost:1234/5");
+        assertThat(redisURI).hasToString("redis://alice:******@localhost:1234/5");
     }
 
     @Test

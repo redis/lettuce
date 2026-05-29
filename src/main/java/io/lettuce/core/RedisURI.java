@@ -520,7 +520,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public void setAuthentication(String username, char[] password) {
         LettuceAssert.notNull(password, "Password must not be null");
 
-        this.setCredentialsProvider(new StaticCredentialsProvider(username, password));
+        this.setCredentialsProvider(() -> Mono.just(RedisCredentials.just(username, password)));
     }
 
     /**
@@ -537,7 +537,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public void setAuthentication(String username, CharSequence password) {
         LettuceAssert.notNull(password, "Password must not be null");
 
-        this.setCredentialsProvider(new StaticCredentialsProvider(RedisCredentials.just(username, password)));
+        this.setCredentialsProvider(() -> Mono.just(RedisCredentials.just(username, password)));
     }
 
     /**
@@ -973,7 +973,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // compatibility with versions before 7.0 - in previous versions of the Lettuce driver there was an option to
                 // have a username and password pair as part of the RedisURI; in these cases when we were masking credentials we
                 // would get asterix for each character of the password.
-                RedisCredentials creds = resolveCredentialsForMasking();
+                // Resolve through CompletableFuture instead of Mono#block(): Reactor rejects block() on non-blocking
+                // threads (e.g. the reactor-http-nio workers used by Spring WebFlux), whereas CompletableFuture#join() is
+                // not subject to that check. This mirrors the approach taken on feature/reactor-optional-1 (#3739).
+                RedisCredentials creds = credentialsProvider.resolveCredentials().toFuture().join();
                 if (creds != null) {
                     String credentials = "";
 
@@ -993,34 +996,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
             }
         }
         return authority;
-    }
-
-    /**
-     * Resolves credentials for the masking path of {@link #toString()} without blocking the calling thread.
-     * <p>
-     * When the configured {@link RedisCredentialsProvider} is an
-     * {@link RedisCredentialsProvider.ImmediateRedisCredentialsProvider} (which covers the default
-     * {@link StaticCredentialsProvider} as well as user-defined providers that opt in to the marker), credentials are read
-     * through the synchronous {@link RedisCredentialsProvider.ImmediateRedisCredentialsProvider#resolveCredentialsNow()}
-     * method. This avoids calling {@link Mono#block()} from {@link #toString()}, which would otherwise raise an
-     * {@link IllegalStateException} when invoked from a Reactor non-blocking thread (for example a {@code reactor-http-nio}
-     * worker in a Spring WebFlux application).
-     * <p>
-     * For non-immediate providers, this method intentionally returns {@code null} instead of subscribing to the provider's
-     * {@link Mono}. Subscribing from {@link #toString()} could trigger token fetches, cache lookups, or network calls as a side
-     * effect of stringification and would break the expectation that {@link #toString()} is a cheap, side-effect free
-     * operation. The caller observes the {@code null} return value and emits the authority without the credentials prefix
-     * ({@code "host:port"} instead of {@code "user:****@host:port"}).
-     *
-     * @return resolved credentials when the provider supports immediate resolution, or {@code null} otherwise.
-     */
-    private RedisCredentials resolveCredentialsForMasking() {
-
-        if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
-            return ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider).resolveCredentialsNow();
-        }
-
-        return null;
     }
 
     private String getQueryString() {
@@ -1778,7 +1753,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             LettuceAssert.notNull(username, "User name must not be null");
             LettuceAssert.notNull(password, "Password must not be null");
 
-            return withAuthentication(new StaticCredentialsProvider(RedisCredentials.just(username, password)));
+            return withAuthentication(() -> Mono.just(RedisCredentials.just(username, password)));
         }
 
         /**
@@ -1808,7 +1783,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             LettuceAssert.notNull(username, "User name must not be null");
             LettuceAssert.notNull(password, "Password must not be null");
 
-            return withAuthentication(new StaticCredentialsProvider(username, password));
+            return withAuthentication(() -> Mono.just(RedisCredentials.just(username, password)));
         }
 
         /**
@@ -1849,7 +1824,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @since 4.4
          */
         public Builder withPassword(char[] password) {
-            return withAuthentication(new StaticCredentialsProvider(null, password));
+            return withAuthentication(() -> Mono.just(RedisCredentials.just(null, password)));
         }
 
         /**
