@@ -45,8 +45,8 @@ class RedisCommandsClusterIntegrationTests extends TestSupport {
 
         api.setSync(key, value, Timeout.create(Duration.ofSeconds(10)));
 
-        assertThat(api.get("key").get()).isEqualTo("value");
-        assertThat(api.getAsBytes("key")).isEqualTo("value".getBytes());
+        assertThat(api.get(key).get()).isEqualTo(value);
+        assertThat(api.getAsBytes(key)).isEqualTo(value.getBytes());
     }
 
     @Test

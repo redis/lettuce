@@ -337,7 +337,7 @@ public class GeoCommandIntegrationTests extends TestSupport {
 
         prepareGeo();
 
-        String resultKey = "38o54"; // yields in same slot as "key"
+        String resultKey = "{" + key + "}:result"; // same hash slot as key due to hash tag
         Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
                 new GeoRadiusStoreArgs<>().withStore(resultKey));
         assertThat(result).isEqualTo(2);
@@ -351,7 +351,7 @@ public class GeoCommandIntegrationTests extends TestSupport {
 
         prepareGeo();
 
-        String resultKey = "38o54"; // yields in same slot as "key"
+        String resultKey = "{" + key + "}:result"; // same hash slot as key due to hash tag
         Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
                 new GeoRadiusStoreArgs<>().withCount(1).desc().withStore(resultKey));
         assertThat(result).isEqualTo(1);
@@ -366,9 +366,9 @@ public class GeoCommandIntegrationTests extends TestSupport {
 
         prepareGeo();
 
-        String resultKey = "38o54"; // yields in same slot as "key"
+        String resultKey = "{" + key + "}:result"; // same hash slot as key due to hash tag
         Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
-                new GeoRadiusStoreArgs<>().withStoreDist("38o54"));
+                new GeoRadiusStoreArgs<>().withStoreDist(resultKey));
         assertThat(result).isEqualTo(2);
 
         List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
@@ -380,9 +380,9 @@ public class GeoCommandIntegrationTests extends TestSupport {
 
         prepareGeo();
 
-        String resultKey = "38o54"; // yields in same slot as "key"
+        String resultKey = "{" + key + "}:result"; // same hash slot as key due to hash tag
         Long result = redis.georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km,
-                new GeoRadiusStoreArgs<>().withCount(1).desc().withStoreDist("38o54"));
+                new GeoRadiusStoreArgs<>().withCount(1).desc().withStoreDist(resultKey));
         assertThat(result).isEqualTo(1);
 
         List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
@@ -421,9 +421,9 @@ public class GeoCommandIntegrationTests extends TestSupport {
 
         prepareGeo();
 
-        String resultKey = "38o54"; // yields in same slot as "key"
+        String resultKey = "{" + key + "}:result"; // same hash slot as key due to hash tag
         Long result = redis.georadiusbymember(key, "Bahn", 5, GeoArgs.Unit.km,
-                new GeoRadiusStoreArgs<>().withCount(1).desc().withStoreDist("38o54"));
+                new GeoRadiusStoreArgs<>().withCount(1).desc().withStoreDist(resultKey));
         assertThat(result).isEqualTo(1);
 
         List<ScoredValue<String>> dist = redis.zrangeWithScores(resultKey, 0, -1);
@@ -572,7 +572,7 @@ public class GeoCommandIntegrationTests extends TestSupport {
 
         prepareGeo();
 
-        String resultKey = "38o54"; // yields in same slot as "key"
+        String resultKey = "{" + key + "}:result"; // same hash slot as key due to hash tag
         Long result = redis.geosearchstore(resultKey, key, GeoSearch.fromMember("Bahn"), GeoSearch.byRadius(5, GeoArgs.Unit.km),
                 new GeoArgs(), true);
         assertThat(result).isEqualTo(2);

@@ -140,7 +140,7 @@ public class StringCommandIntegrationTests extends TestSupport {
     }
 
     protected void setupMget() {
-        assertThat(redis.mget(key)).isEqualTo(list(KeyValue.empty("key")));
+        assertThat(redis.mget(key)).isEqualTo(list(KeyValue.empty(key)));
         redis.set("one", "1");
         redis.set("two", "2");
     }
