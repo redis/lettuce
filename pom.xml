@@ -81,6 +81,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
         <skipITs>true</skipITs>
+        <!-- Inherits from skipTests for backward compatibility, can be overridden with -DskipUnitTests=true -->
+        <skipUnitTests>${skipTests}</skipUnitTests>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
 
     </properties>
@@ -906,6 +908,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <skipTests>${skipUnitTests}</skipTests>
                     <systemPropertyVariables>
                         <io.netty.eventLoopThreads>4</io.netty.eventLoopThreads>
                     </systemPropertyVariables>
