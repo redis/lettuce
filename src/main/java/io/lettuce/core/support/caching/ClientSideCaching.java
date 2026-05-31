@@ -124,10 +124,24 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         V value = cacheAccessor.get(key);
 
         if (value == null) {
-            value = redisCache.get(key);
+
+            // mark the key pending so a concurrent invalidation can be detected before we write the value back
+            cacheAccessor.setPending(key);
+
+            try {
+                value = redisCache.get(key);
+            } catch (RuntimeException e) {
+                // clean up the pending marker so it does not leak into the client-side cache
+                cacheAccessor.evict(key);
+                throw e;
+            }
 
             if (value != null) {
-                cacheAccessor.put(key, value);
+                // store the value only if no invalidation arrived while loading from Redis
+                cacheAccessor.putIfPending(key, value);
+            } else {
+                // Redis holds no value for this key, drop the pending marker
+                cacheAccessor.evict(key);
             }
         }
 
@@ -140,28 +154,43 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         V value = cacheAccessor.get(key);
 
         if (value == null) {
-            value = redisCache.get(key);
 
-            if (value == null) {
+            // mark the key pending so a concurrent invalidation can be detected before we write the value back
+            cacheAccessor.setPending(key);
 
-                try {
-                    value = valueLoader.call();
-                } catch (Exception e) {
-                    throw new ValueRetrievalException(
-                            String.format("Value loader %s failed with an exception for key %s", valueLoader, key), e);
-                }
+            boolean resolved = false;
+            try {
+                value = redisCache.get(key);
 
                 if (value == null) {
-                    throw new ValueRetrievalException(
-                            String.format("Value loader %s returned a null value for key %s", valueLoader, key));
-                }
-                redisCache.put(key, value);
 
-                // register interest in key
-                redisCache.get(key);
+                    try {
+                        value = valueLoader.call();
+                    } catch (Exception e) {
+                        throw new ValueRetrievalException(
+                                String.format("Value loader %s failed with an exception for key %s", valueLoader, key), e);
+                    }
+
+                    if (value == null) {
+                        throw new ValueRetrievalException(
+                                String.format("Value loader %s returned a null value for key %s", valueLoader, key));
+                    }
+                    redisCache.put(key, value);
+
+                    // register interest in key
+                    redisCache.get(key);
+                }
+
+                resolved = true;
+            } finally {
+                if (!resolved) {
+                    // clean up the pending marker so it does not leak into the client-side cache
+                    cacheAccessor.evict(key);
+                }
             }
 
-            cacheAccessor.put(key, value);
+            // store the value only if no invalidation arrived while loading from Redis
+            cacheAccessor.putIfPending(key, value);
         }
 
         return value;

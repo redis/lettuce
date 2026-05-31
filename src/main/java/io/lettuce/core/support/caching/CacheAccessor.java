@@ -22,7 +22,7 @@ public interface CacheAccessor<K, V> {
      * @return a {@link CacheAccessor} backed by a {@link Map} implementation.
      */
     static <K, V> CacheAccessor<K, V> forMap(Map<K, V> map) {
-        return new MapCacheAccessor<>(map);
+        return new PendingAwareCacheAccessor<>(map);
     }
 
     /**
@@ -58,5 +58,40 @@ public interface CacheAccessor<K, V> {
      * @param key the key whose mapping is to be removed from the cache.
      */
     void evict(K key);
+
+    /**
+     * Mark a {@code key} as pending while its value is being loaded from Redis.
+     * <p>
+     * Read-through caching reads a value from Redis and writes it into the client-side cache on a cache miss. An invalidation
+     * message may arrive in between the Redis read and the client-side cache write, which would otherwise be overwritten by the
+     * (now stale) value obtained from Redis. By marking a key as pending before the Redis read and clearing the pending state
+     * upon {@link #evict(Object) eviction}, a {@link CacheAccessor} can detect a concurrent invalidation and reject the stale
+     * write through {@link #putIfPending(Object, Object)}.
+     * <p>
+     * The default implementation is a no-op for backward compatibility. {@link CacheAccessor} implementations that do not track
+     * the pending state remain functional but are subject to the invalidation race described above.
+     *
+     * @param key the key to mark as pending.
+     * @since 7.7
+     */
+    default void setPending(K key) {
+        // no-op by default
+    }
+
+    /**
+     * Associate the specified value with the specified key, but only if the key is still {@link #setPending(Object) pending}
+     * (i.e. no invalidation arrived in the meantime). This is used by read-through caching to avoid overwriting a concurrent
+     * invalidation with a stale value obtained from Redis.
+     * <p>
+     * The default implementation delegates to {@link #put(Object, Object)} for backward compatibility, retaining the previous
+     * (racy) behavior for {@link CacheAccessor} implementations that do not track the pending state.
+     *
+     * @param key the key with which the specified value is to be associated.
+     * @param value the value to be associated with the specified key.
+     * @since 7.7
+     */
+    default void putIfPending(K key, V value) {
+        put(key, value);
+    }
 
 }

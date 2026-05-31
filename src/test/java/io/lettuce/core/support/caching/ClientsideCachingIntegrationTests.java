@@ -227,4 +227,23 @@ public class ClientsideCachingIntegrationTests extends TestSupport {
         frontend.close();
     }
 
+    @Test
+    void serverAssistedCachingShouldNotLeakPendingMarkerOnRedisMiss() {
+
+        Map<String, String> clientCache = new ConcurrentHashMap<>();
+
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        CacheFrontend<String, String> frontend = ClientSideCaching.enable(CacheAccessor.forMap(clientCache), connection,
+                TrackingArgs.Builder.enabled().noloop());
+
+        // key is absent in Redis
+        String shouldBeNull = frontend.get(key);
+
+        assertThat(shouldBeNull).isNull();
+        // the internal pending marker must not leak into the client-side cache (see issue 3481)
+        assertThat(clientCache).isEmpty();
+
+        frontend.close();
+    }
+
 }
