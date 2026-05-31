@@ -4,12 +4,14 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.dynamic.batch.BatchException;
 import io.lettuce.core.dynamic.batch.CommandBatching;
 import io.lettuce.core.dynamic.parameter.ExecutionSpecificParameters;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.RedisCommand;
@@ -74,13 +76,39 @@ class BatchExecutableCommand implements ExecutableCommand {
         }
 
         Duration timeout = connection.getTimeout();
+        long timeoutNs = timeout.toNanos();
+        long started = System.nanoTime();
+        boolean timeoutReached = false;
 
         BatchException exception = null;
         List<RedisCommand<?, ?, ?>> failures = null;
         for (RedisCommand<?, ?, ?> batchTask : batchTasks) {
 
+            RedisFuture<?> future = (RedisFuture<?>) batchTask;
+            boolean commandTimedOut = false;
+
             try {
-                Futures.await(timeout, (RedisFuture) batchTask);
+                if (timeoutReached && !future.isDone()) {
+                    continue;
+                }
+
+                long waitNs = 0;
+
+                if (!timeoutReached && timeoutNs > 0) {
+                    waitNs = timeoutNs - (System.nanoTime() - started);
+
+                    if (waitNs <= 0 && !future.isDone()) {
+                        commandTimedOut = true;
+                        throw ExceptionFactory.createTimeoutException(timeout);
+                    }
+
+                    waitNs = Math.max(waitNs, 0);
+                }
+
+                if (!Futures.await(waitNs, TimeUnit.NANOSECONDS, future)) {
+                    commandTimedOut = true;
+                    throw ExceptionFactory.createTimeoutException(timeout);
+                }
             } catch (Exception e) {
                 if (exception == null) {
                     failures = new ArrayList<>();
@@ -89,6 +117,10 @@ class BatchExecutableCommand implements ExecutableCommand {
 
                 failures.add(batchTask);
                 exception.addSuppressed(e);
+
+                if (commandTimedOut) {
+                    timeoutReached = true;
+                }
             }
         }
 
