@@ -131,6 +131,10 @@ class MasterReplicaConnectionProvider<K, V> {
                         knownNodes, readFrom));
             }
 
+            if (selection.size() == 1) {
+                return getConnection(selection.get(0));
+            }
+
             try {
 
                 Flux<StatefulRedisConnection<K, V>> connections = Flux.empty();
@@ -139,7 +143,7 @@ class MasterReplicaConnectionProvider<K, V> {
                     connections = connections.concatWith(Mono.fromFuture(getConnection(node)));
                 }
 
-                if (OrderingReadFromAccessor.isOrderSensitive(readFrom) || selection.size() == 1) {
+                if (OrderingReadFromAccessor.isOrderSensitive(readFrom)) {
                     return connections.filter(StatefulConnection::isOpen).next().switchIfEmpty(connections.next()).toFuture();
                 }
 

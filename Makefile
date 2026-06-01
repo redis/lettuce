@@ -3,9 +3,10 @@ PATH := ./work/redis-git/src:${PATH}
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 PROFILE ?= ci
 SUPPORTED_TEST_ENV_VERSIONS := 8.8 8.6 8.4 8.2 8.0 7.4 7.2
-DEFAULT_TEST_ENV_VERSION := 8.6
+DEFAULT_TEST_ENV_VERSION := 8.8
 export REDIS_ENV_WORK_DIR := $(or ${REDIS_ENV_WORK_DIR},$(ROOT_DIR)/work)
 MVN_SOCKET_ARGS := -Ddomainsocket="$(REDIS_ENV_WORK_DIR)/socket-6482" -Dsentineldomainsocket="$(REDIS_ENV_WORK_DIR)/socket-26379"
+MVN_EXTRA_ARGS ?=
 
 define COMPOSE_ENV
 	if [ -z "$(version)" ]; then \
@@ -43,10 +44,10 @@ start:
 	echo "Started test environment with Redis $$display_version.";
 
 test:
-	TEST_WORK_FOLDER=$(REDIS_ENV_WORK_DIR) mvn -DskipITs=false $(MVN_SOCKET_ARGS) clean compile verify -P$(PROFILE)
+	TEST_WORK_FOLDER=$(REDIS_ENV_WORK_DIR) mvn -DskipITs=false $(MVN_SOCKET_ARGS) $(MVN_EXTRA_ARGS) clean compile verify -P$(PROFILE)
 
 test-coverage:
-	TEST_WORK_FOLDER=$(REDIS_ENV_WORK_DIR) mvn -DskipITs=false $(MVN_SOCKET_ARGS) clean compile verify jacoco:report -P$(PROFILE)
+	TEST_WORK_FOLDER=$(REDIS_ENV_WORK_DIR) mvn -DskipITs=false $(MVN_SOCKET_ARGS) $(MVN_EXTRA_ARGS) clean compile verify jacoco:report -P$(PROFILE)
 
 stop:
 	@$(COMPOSE_ENV) \

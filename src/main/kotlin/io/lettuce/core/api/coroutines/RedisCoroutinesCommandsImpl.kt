@@ -55,7 +55,8 @@ open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
     RedisTransactionalCoroutinesCommands<K, V> by RedisTransactionalCoroutinesCommandsImpl(ops),
     RedisJsonCoroutinesCommands<K, V> by RedisJsonCoroutinesCommandsImpl(ops),
     RedisVectorSetCoroutinesCommands<K, V> by RedisVectorSetCoroutinesCommandsImpl(ops),
-    RediSearchCoroutinesCommands<K, V> by RediSearchCoroutinesCommandsImpl(ops){
+    RediSearchCoroutinesCommands<K, V> by RediSearchCoroutinesCommandsImpl(ops),
+    RedisArrayCoroutinesCommands<K, V> by RedisArrayCoroutinesCommandsImpl(ops){
 
 
     /**
