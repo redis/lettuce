@@ -19,12 +19,16 @@
  */
 package io.lettuce.core;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.test.settings.TestSettings;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 
 /**
  * @author Mark Paluch
@@ -44,7 +48,7 @@ public abstract class TestSupport {
 
     public static final CharSequence aclPasswd = TestSettings.aclPassword();
 
-    public static final String key = "key";
+    public String key = "key";
 
     public static final String value = "value";
 
@@ -74,6 +78,11 @@ public abstract class TestSupport {
 
     protected static Set<String> set(String... args) {
         return LettuceSets.newHashSet(args);
+    }
+
+    @BeforeEach
+    void changeKey(TestInfo testInfo) {
+        this.key = "key-" + testInfo.getTestMethod().map(Method::getName).orElse("unknown");
     }
 
 }

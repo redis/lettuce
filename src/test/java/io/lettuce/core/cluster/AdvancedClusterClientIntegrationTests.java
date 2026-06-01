@@ -77,7 +77,6 @@ import io.lettuce.test.settings.TestSettings;
  * @author Hari Mani
  */
 @Tag(INTEGRATION_TEST)
-@SuppressWarnings("rawtypes")
 @ExtendWith(LettuceExtension.class)
 class AdvancedClusterClientIntegrationTests extends TestSupport {
 
@@ -431,9 +430,28 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void randomKey() {
 
-        writeKeysToTwoNodes();
+        // RedisAdvancedClusterCommands#randomkey() queries one randomly picked partition. Seed every master partition
+        // so any random pick (or its replica) lands on a non-empty keyspace.
+        Set<String> writtenKeys = new HashSet<>();
+        for (RedisClusterNode partition : clusterClient.getPartitions()) {
+            if (partition.getSlots().isEmpty()) {
+                continue; // replicas have no owned slots
+            }
+            String partitionKey = keyForSlot(partition.getSlots().get(0));
+            sync.set(partitionKey, value);
+            writtenKeys.add(partitionKey);
+        }
 
-        assertThat(sync.randomkey()).isIn(KEY_ON_NODE_1, KEY_ON_NODE_2);
+        assertThat(sync.randomkey()).isIn(writtenKeys);
+    }
+
+    private static String keyForSlot(int targetSlot) {
+        for (int j = 0;; j++) {
+            String k = "rk:{rk-" + j + "}";
+            if (SlotHash.getSlot(k) == targetSlot) {
+                return k;
+            }
+        }
     }
 
     @Test

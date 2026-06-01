@@ -52,4 +52,49 @@ class ZAggregateArgsUnitTests {
         assertThat(args.toString()).doesNotContain("WEIGHTS");
     }
 
+    @Test
+    void shouldRenderAggregateSum() {
+
+        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
+        ZAggregateArgs.Builder.sum().build(args);
+
+        assertThat(args.toString()).contains("AGGREGATE").contains("SUM");
+    }
+
+    @Test
+    void shouldRenderAggregateMin() {
+
+        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
+        ZAggregateArgs.Builder.min().build(args);
+
+        assertThat(args.toString()).contains("AGGREGATE").contains("MIN");
+    }
+
+    @Test
+    void shouldRenderAggregateMax() {
+
+        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
+        ZAggregateArgs.Builder.max().build(args);
+
+        assertThat(args.toString()).contains("AGGREGATE").contains("MAX");
+    }
+
+    @Test
+    void shouldRenderAggregateCount() {
+
+        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
+        ZAggregateArgs.Builder.count().build(args);
+
+        assertThat(args.toString()).contains("AGGREGATE").contains("COUNT");
+    }
+
+    @Test
+    void shouldRenderWeightsWithAggregateCount() {
+
+        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
+        ZAggregateArgs.Builder.weights(10, 5, 3).count().build(args);
+
+        assertThat(args.toString()).contains("WEIGHTS").contains("AGGREGATE").contains("COUNT");
+    }
+
 }

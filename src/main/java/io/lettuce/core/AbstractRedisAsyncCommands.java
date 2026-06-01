@@ -22,6 +22,7 @@ package io.lettuce.core;
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.async.*;
+import io.lettuce.core.array.*;
 import io.lettuce.core.cluster.PipelinedRedisFuture;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
@@ -108,7 +109,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
-        RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V> {
+        RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -119,6 +120,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     private final RediSearchCommandBuilder<K, V> searchCommandBuilder;
 
     private final RedisVectorSetCommandBuilder<K, V> vectorSetCommandBuilder;
+
+    private final RedisArrayCommandBuilder<K, V> arrayCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -137,6 +140,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
         this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
         this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
+        this.arrayCommandBuilder = new RedisArrayCommandBuilder<>(codec);
     }
 
     /**
@@ -1614,6 +1618,21 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Double> incrbyfloat(K key, double amount) {
         return dispatch(commandBuilder.incrbyfloat(key, amount));
+    }
+
+    @Override
+    public RedisFuture<IncrexValue<Long>> increx(K key) {
+        return dispatch(commandBuilder.increx(key));
+    }
+
+    @Override
+    public RedisFuture<IncrexValue<Long>> increx(K key, long amount, IncrexArgs increxArgs) {
+        return dispatch(commandBuilder.increx(key, amount, increxArgs));
+    }
+
+    @Override
+    public RedisFuture<IncrexValue<Double>> increx(K key, double amount, IncrexFloatArgs increxArgs) {
+        return dispatch(commandBuilder.increx(key, amount, increxArgs));
     }
 
     @Override
@@ -3115,6 +3134,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> xnack(K key, K group, XNackMode mode, String messageId) {
+        return dispatch(commandBuilder.xnack(key, group, mode, messageId));
+    }
+
+    @Override
+    public RedisFuture<Long> xnack(K key, K group, XNackMode mode, String... messageIds) {
+        return dispatch(commandBuilder.xnack(key, group, mode, messageIds));
+    }
+
+    @Override
     public RedisFuture<String> xadd(K key, Map<K, V> body) {
         return dispatch(commandBuilder.xadd(key, null, body));
     }
@@ -4027,6 +4056,158 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         LettuceAssert.notNull(script, "Lua script must not be null");
         LettuceAssert.notEmpty(script, "Lua script must not be empty");
         return script.getBytes(getConnection().getOptions().getScriptCharset());
+    }
+
+    // --- Redis Array Commands ---
+
+    @Override
+    public RedisFuture<Long> arset(K key, long index, V value) {
+        return dispatch(arrayCommandBuilder.arset(key, index, value));
+    }
+
+    @Override
+    public RedisFuture<Long> arset(K key, long index, V... values) {
+        return dispatch(arrayCommandBuilder.arset(key, index, values));
+    }
+
+    @Override
+    public RedisFuture<Long> armset(K key, Map<Long, V> indexValueMap) {
+        return dispatch(arrayCommandBuilder.armset(key, indexValueMap));
+    }
+
+    @Override
+    public RedisFuture<V> arget(K key, long index) {
+        return dispatch(arrayCommandBuilder.arget(key, index));
+    }
+
+    @Override
+    public RedisFuture<List<V>> armget(K key, long... indices) {
+        return dispatch(arrayCommandBuilder.armget(key, indices));
+    }
+
+    @Override
+    public RedisFuture<Long> ardel(K key, long index) {
+        return dispatch(arrayCommandBuilder.ardel(key, index));
+    }
+
+    @Override
+    public RedisFuture<Long> ardel(K key, long... indices) {
+        return dispatch(arrayCommandBuilder.ardel(key, indices));
+    }
+
+    @Override
+    public RedisFuture<Long> ardelrange(K key, long start, long end) {
+        return dispatch(arrayCommandBuilder.ardelrange(key, start, end));
+    }
+
+    @Override
+    public RedisFuture<Long> ardelrange(K key, ArrayIndexRange... ranges) {
+        return dispatch(arrayCommandBuilder.ardelrange(key, ranges));
+    }
+
+    @Override
+    public RedisFuture<Long> arlen(K key) {
+        return dispatch(arrayCommandBuilder.arlen(key));
+    }
+
+    @Override
+    public RedisFuture<Long> arcount(K key) {
+        return dispatch(arrayCommandBuilder.arcount(key));
+    }
+
+    @Override
+    public RedisFuture<List<V>> argetrange(K key, long start, long end) {
+        return dispatch(arrayCommandBuilder.argetrange(key, start, end));
+    }
+
+    @Override
+    public RedisFuture<Long> arnext(K key) {
+        return dispatch(arrayCommandBuilder.arnext(key));
+    }
+
+    @Override
+    public RedisFuture<List<V>> arlastitems(K key, long count) {
+        return dispatch(arrayCommandBuilder.arlastitems(key, count));
+    }
+
+    @Override
+    public RedisFuture<List<V>> arlastitems(K key, long count, boolean rev) {
+        return dispatch(arrayCommandBuilder.arlastitems(key, count, rev));
+    }
+
+    @Override
+    public RedisFuture<List<IndexedValue<V>>> arscan(K key, long start, long end) {
+        return dispatch(arrayCommandBuilder.arscan(key, start, end));
+    }
+
+    @Override
+    public RedisFuture<List<IndexedValue<V>>> arscan(K key, long start, long end, long limit) {
+        return dispatch(arrayCommandBuilder.arscan(key, start, end, limit));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> argrep(K key, ArGrepArgs grepArgs) {
+        return dispatch(arrayCommandBuilder.argrep(key, grepArgs));
+    }
+
+    @Override
+    public RedisFuture<List<IndexedValue<V>>> argrepWithValues(K key, ArGrepArgs grepArgs) {
+        return dispatch(arrayCommandBuilder.argrepWithValues(key, grepArgs));
+    }
+
+    @Override
+    public RedisFuture<V> aropAggregate(K key, long start, long end, ArAggregateType operation) {
+        return dispatch(arrayCommandBuilder.aropAggregate(key, start, end, operation));
+    }
+
+    @Override
+    public RedisFuture<Long> aropBitwise(K key, long start, long end, ArBitwiseType operation) {
+        return dispatch(arrayCommandBuilder.aropBitwise(key, start, end, operation));
+    }
+
+    @Override
+    public RedisFuture<Long> aropCount(K key, long start, long end) {
+        return dispatch(arrayCommandBuilder.aropCount(key, start, end));
+    }
+
+    @Override
+    public RedisFuture<Long> aropCount(K key, long start, long end, V matchValue) {
+        return dispatch(arrayCommandBuilder.aropCount(key, start, end, matchValue));
+    }
+
+    @Override
+    public RedisFuture<Long> arinsert(K key, V value) {
+        return dispatch(arrayCommandBuilder.arinsert(key, value));
+    }
+
+    @Override
+    public RedisFuture<Long> arinsert(K key, V... values) {
+        return dispatch(arrayCommandBuilder.arinsert(key, values));
+    }
+
+    @Override
+    public RedisFuture<Long> arring(K key, long size, V value) {
+        return dispatch(arrayCommandBuilder.arring(key, size, value));
+    }
+
+    @Override
+    public RedisFuture<Long> arring(K key, long size, V... values) {
+        return dispatch(arrayCommandBuilder.arring(key, size, values));
+    }
+
+    @Override
+    public RedisFuture<Long> arseek(K key, long index) {
+        return dispatch(arrayCommandBuilder.arseek(key, index));
+    }
+
+    @Override
+    public RedisFuture<ArrayInfo> arinfo(K key) {
+        return dispatch(arrayCommandBuilder.arinfo(key));
+    }
+
+    @Override
+    public RedisFuture<ArrayInfoFull> arinfoFull(K key) {
+        return dispatch(arrayCommandBuilder.arinfoFull(key));
     }
 
 }
