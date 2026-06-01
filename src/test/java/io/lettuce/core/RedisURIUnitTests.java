@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Tag;
@@ -82,6 +83,38 @@ class RedisURIUnitTests {
         assertThat(RedisURI.create("redis://auth@localhost:1234/5")).hasToString("redis://****@localhost:1234/5");
         assertThat(RedisURI.create("redis://user:auth@localhost:1234/5")).hasToString("redis://user:****@localhost:1234/5");
         assertThat(RedisURI.create("redis://localhost:1234/5")).hasToString("redis://localhost:1234/5");
+    }
+
+    @Test
+    void toStringShouldUnwrapCredentialsProviderFailure() {
+
+        RedisException cause = new RedisException("auth failed");
+        RedisCredentialsProvider failing = () -> {
+            CompletableFuture<RedisCredentials> f = new CompletableFuture<>();
+            f.completeExceptionally(cause);
+            return f;
+        };
+
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        redisURI.setCredentialsProvider(failing);
+
+        assertThatThrownBy(redisURI::toString).isSameAs(cause).isNotInstanceOf(CompletionException.class);
+    }
+
+    @Test
+    void toStringShouldUnwrapCredentialsProviderRuntimeFailure() {
+
+        IllegalStateException cause = new IllegalStateException("boom");
+        RedisCredentialsProvider failing = () -> {
+            CompletableFuture<RedisCredentials> f = new CompletableFuture<>();
+            f.completeExceptionally(cause);
+            return f;
+        };
+
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        redisURI.setCredentialsProvider(failing);
+
+        assertThatThrownBy(redisURI::toString).isSameAs(cause).isNotInstanceOf(CompletionException.class);
     }
 
     @Test

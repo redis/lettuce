@@ -39,7 +39,7 @@ import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
@@ -973,8 +973,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // compatibility with versions before 7.0 - in previous versions of the Lettuce driver there was an option to
                 // have a username and password pair as part of the RedisURI; in these cases when we were masking credentials we
                 // would get asterix for each character of the password.
-                RedisCredentials creds = Futures
-                        .unwrapExceptions(credentialsProvider.resolveCredentials().toCompletableFuture()).join();
+                RedisCredentials creds;
+                try {
+                    creds = credentialsProvider.resolveCredentials().toCompletableFuture().join();
+                } catch (Exception e) {
+                    throw Exceptions.bubble(e);
+                }
                 if (creds != null) {
                     String credentials = "";
 

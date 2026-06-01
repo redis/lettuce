@@ -40,7 +40,7 @@ public class StaticCredentialsProvider
         LettuceAssert.notNull(credentials, "RedisCredentials must not be null");
 
         this.credentials = RedisCredentials.just(credentials.getUsername(), credentials.getPassword());
-        this.future = CompletableFuture.completedFuture(credentials);
+        this.future = CompletableFuture.completedFuture(this.credentials);
     }
 
     @Override

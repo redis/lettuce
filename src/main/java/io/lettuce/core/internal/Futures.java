@@ -238,22 +238,4 @@ public abstract class Futures {
         }
     }
 
-    /**
-     * Unwrap exceptions from a {@link CompletionStage} into a new {@link CompletableFuture}.
-     *
-     * @param stage the original stage
-     * @param <T> the result type
-     * @return a new {@link CompletableFuture} with unwrapped exceptions
-     */
-    public static <T> CompletableFuture<T> unwrapExceptions(CompletionStage<T> stage) {
-        CompletableFuture<T> f = new CompletableFuture<>();
-        stage.whenComplete((v, t) -> {
-            if (t != null)
-                f.completeExceptionally(Exceptions.unwrap(t));
-            else
-                f.complete(v);
-        });
-        return f;
-    }
-
 }
