@@ -603,7 +603,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         Set<String> expect = new HashSet<>();
         setup100KeyValues(expect);
 
-        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(200).match("key1*"));
+        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(200).match(key + "1*"));
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();

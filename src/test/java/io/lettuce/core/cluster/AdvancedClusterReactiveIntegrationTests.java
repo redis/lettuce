@@ -400,23 +400,25 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
     @Test
     void readFromReplicas() {
+        // Use KEY_A which is known to hash to a slot owned by port4's master
+        String testKey = ClusterTestSettings.KEY_A;
 
         RedisClusterReactiveCommands<String, String> connection = commands.getConnection(ClusterTestSettings.host,
                 ClusterTestSettings.port4);
         connection.readOnly().subscribe();
-        commands.set(key, value).subscribe();
+        commands.set(testKey, value).subscribe();
 
-        NodeSelectionAsyncIntegrationTests.waitForReplication(commands.getStatefulConnection().async(), ClusterTestSettings.key,
+        NodeSelectionAsyncIntegrationTests.waitForReplication(commands.getStatefulConnection().async(), testKey,
                 ClusterTestSettings.port4);
 
         AtomicBoolean error = new AtomicBoolean();
-        connection.get(key).doOnError(throwable -> error.set(true)).block();
+        connection.get(testKey).doOnError(throwable -> error.set(true)).block();
 
         assertThat(error.get()).isFalse();
 
         connection.readWrite().subscribe();
 
-        StepVerifier.create(connection.get(key)).expectError(RedisCommandExecutionException.class).verify();
+        StepVerifier.create(connection.get(testKey)).expectError(RedisCommandExecutionException.class).verify();
     }
 
     @Test

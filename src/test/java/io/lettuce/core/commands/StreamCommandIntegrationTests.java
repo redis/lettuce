@@ -427,7 +427,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.entriesRead(5).mkstream(true));
 
-        List<List<Object>> group = (List) redis.xinfoGroups("key");
+        List<List<Object>> group = (List) redis.xinfoGroups(key);
 
         assertThat(group.get(0)).containsSequence("entries-read", 5L, "lag");
     }
@@ -442,7 +442,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
         redis.xadd(key, Collections.singletonMap("key", "value"));
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.entriesRead(5).mkstream(true));
 
-        List<List<Object>> group = (List) redis.xinfoGroups("key");
+        List<List<Object>> group = (List) redis.xinfoGroups(key);
 
         assertThat(group.get(0)).containsSequence("entries-read", 2L, "lag");
     }
@@ -698,7 +698,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         StreamMessage<String, String> message = claimedMessages.getMessages().get(0);
         assertThat(message.getBody()).isNull();
-        assertThat(message.getStream()).isEqualTo("key");
+        assertThat(message.getStream()).isEqualTo(key);
         assertThat(message.getId()).isEqualTo(id1);
     }
 
@@ -760,7 +760,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
         StreamMessage<String, String> message = claimedMessages.get(0);
 
         assertThat(message.getBody()).isNull();
-        assertThat(message.getStream()).isEqualTo("key");
+        assertThat(message.getStream()).isEqualTo(key);
         assertThat(message.getId()).isEqualTo(id2);
     }
 
