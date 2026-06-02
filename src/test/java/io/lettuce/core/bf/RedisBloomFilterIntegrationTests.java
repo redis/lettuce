@@ -6,22 +6,33 @@
  */
 package io.lettuce.core.bf;
 
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
+import javax.inject.Inject;
+import java.util.List;
+
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.bf.arguments.BfInsertArgs;
-import org.junit.jupiter.api.AfterAll;
+import io.lettuce.core.bf.arguments.BfReserveArgs;
+import io.lettuce.test.LettuceExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.util.List;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * Integration tests for {@link io.lettuce.core.api.sync.RedisBloomFilterCommands}.
+ *
+ * @author Yordan Tsintsov
+ */
 @Tag(INTEGRATION_TEST)
+@ExtendWith(LettuceExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RedisBloomFilterIntegrationTests {
 
     private static final String MY_KEY = "books:name";
@@ -30,27 +41,16 @@ public class RedisBloomFilterIntegrationTests {
 
     private static final String MY_VALUE_2 = "Dune Messiah";
 
-    protected static RedisClient client;
+    private final RedisCommands<String, String> redis;
 
-    protected static RedisCommands<String, String> redis;
-
-    public RedisBloomFilterIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
-
-        client = RedisClient.create(redisURI);
-        redis = client.connect().sync();
+    @Inject
+    protected RedisBloomFilterIntegrationTests(RedisCommands<String, String> redis) {
+        this.redis = redis;
     }
 
     @BeforeEach
-    public void prepare() throws IOException {
+    void prepare() {
         redis.flushall();
-    }
-
-    @AfterAll
-    static void teardown() {
-        if (client != null) {
-            client.shutdown();
-        }
     }
 
     @Test
@@ -69,6 +69,11 @@ public class RedisBloomFilterIntegrationTests {
         Long result = redis.bfCard(MY_KEY);
 
         assertThat(result).isEqualTo(2L);
+    }
+
+    @Test
+    void bfCardOnMissingKey() {
+        assertThat(redis.bfCard("not_exist")).isEqualTo(0L);
     }
 
     @Test
@@ -124,18 +129,25 @@ public class RedisBloomFilterIntegrationTests {
         assertThat(redis.bfExists(MY_KEY, MY_VALUE)).isTrue();
         assertThat(redis.bfExists(MY_KEY, MY_VALUE_2)).isTrue();
         assertThat(result.getCapacity()).isEqualTo(100L);
-        assertThat(result.getItems()).isEqualTo(2L);
+        assertThat(result.getNumberOfItemsInserted()).isEqualTo(2L);
     }
 
     @Test
-    void bfLoadChunk() {
-        redis.bfAdd(MY_KEY, MY_VALUE);
-        BfScanDumpValue header = redis.bfScanDump(MY_KEY, 0);
-        BfScanDumpValue payload = redis.bfScanDump(MY_KEY, header.getIterator());
+    void bfInsertNoCreate() {
+        BfInsertArgs insertArgs = BfInsertArgs.Builder.noCreate();
 
-        assertThat(redis.bfLoadChunk("books:restored", header.getIterator(), header.getData())).isEqualTo("OK");
-        assertThat(redis.bfLoadChunk("books:restored", payload.getIterator(), payload.getData())).isEqualTo("OK");
-        assertThat(redis.bfExists("books:restored", MY_VALUE)).isTrue();
+        assertThatThrownBy(() -> redis.bfInsert(MY_KEY, insertArgs, MY_VALUE))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessage("ERR not found");
+    }
+
+    @Test
+    void bfInsertNonScaling() {
+        BfInsertArgs insertArgs = BfInsertArgs.Builder.capacity(4).nonScaling();
+
+        List<Boolean> insert = redis.bfInsert("nonscaling_err", insertArgs, "a", "b", "c");
+
+        assertThat(insert).containsExactly(true, true, true);
+        assertThat(redis.bfInsert("nonscaling_err", "d", "e")).containsExactly(true, null);
     }
 
     @Test
@@ -165,13 +177,48 @@ public class RedisBloomFilterIntegrationTests {
     }
 
     @Test
-    void bfScanDump() {
-        redis.bfReserve(MY_KEY, 0.01, 100);
-        redis.bfAdd(MY_KEY, MY_VALUE);
+    void bfReserveValidateZeroCapacity() {
+        assertThatThrownBy(() -> redis.bfReserve(MY_KEY, 0.01, 0)).isInstanceOf(RedisCommandExecutionException.class);
+    }
 
-        BfScanDumpValue result = redis.bfScanDump(MY_KEY, 0);
+    @Test
+    void bfReserveValidateZeroErrorRate() {
+        assertThatThrownBy(() -> redis.bfReserve(MY_KEY, 0, 100)).isInstanceOf(RedisCommandExecutionException.class);
+    }
 
-        assertThat(result.getIterator()).isEqualTo(1L);
+    @Test
+    void bfReserveAlreadyExists() {
+        redis.bfReserve(MY_KEY, 0.1, 100);
+
+        assertThatThrownBy(() -> redis.bfReserve(MY_KEY, 0.1, 100)).isInstanceOf(RedisCommandExecutionException.class);
+    }
+
+    @Test
+    void bfReserveNonScaling() {
+        redis.bfReserve("nonscaling", 0.001, 2, BfReserveArgs.Builder.nonScaling());
+
+        assertThat(redis.bfInsert("nonscaling", "a")).containsExactly(true);
+        assertThat(redis.bfInsert("nonscaling", "b")).containsExactly(true);
+        assertThat(redis.bfInsert("nonscaling", "c")).containsExactly((Boolean) null);
+    }
+
+    @Test
+    @Timeout(2)
+    void bfScanDumpAndLoadChunk() {
+        redis.bfAdd("bloom-dump", MY_VALUE);
+
+        long iterator = 0;
+        while (true) {
+            BfScanDumpValue chunkData = redis.bfScanDump("bloom-dump", iterator);
+            iterator = chunkData.getIterator();
+            if (iterator == 0L) {
+                break;
+            }
+            assertThat(redis.bfLoadChunk("bloom-load", iterator, chunkData.getData())).isEqualTo("OK");
+        }
+
+        assertThat(redis.bfInfo("bloom-load").getRawInfo()).isEqualTo(redis.bfInfo("bloom-dump").getRawInfo());
+        assertThat(redis.bfExists("bloom-load", MY_VALUE)).isTrue();
     }
 
 }

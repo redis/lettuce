@@ -35,19 +35,19 @@ public class BfInfoValue {
 
     private final Long size;
 
-    private final Long filters;
+    private final Long numberOfFilters;
 
-    private final Long items;
+    private final Long numberOfItemsInserted;
 
-    private final Long rate;
+    private final Long expansionRate;
 
     public BfInfoValue(Map<String, Object> rawInfo) {
         this.rawInfo = rawInfo;
         this.capacity = (Long) rawInfo.get("Capacity");
         this.size = (Long) rawInfo.get("Size");
-        this.filters = (Long) rawInfo.get("Number of filters");
-        this.items = (Long) rawInfo.get("Number of items inserted");
-        this.rate = (Long) rawInfo.get("Expansion rate");
+        this.numberOfFilters = (Long) rawInfo.get("Number of filters");
+        this.numberOfItemsInserted = (Long) rawInfo.get("Number of items inserted");
+        this.expansionRate = (Long) rawInfo.get("Expansion rate");
     }
 
     /**
@@ -82,8 +82,8 @@ public class BfInfoValue {
      *
      * @return the number of filters in the filter
      */
-    public Long getFilters() {
-        return filters;
+    public Long getNumberOfFilters() {
+        return numberOfFilters;
     }
 
     /**
@@ -91,8 +91,8 @@ public class BfInfoValue {
      *
      * @return the number of items inserted into the filter
      */
-    public Long getItems() {
-        return items;
+    public Long getNumberOfItemsInserted() {
+        return numberOfItemsInserted;
     }
 
     /**
@@ -100,8 +100,8 @@ public class BfInfoValue {
      *
      * @return the expansion rate of the filter
      */
-    public Long getRate() {
-        return rate;
+    public Long getExpansionRate() {
+        return expansionRate;
     }
 
 }
