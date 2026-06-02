@@ -35,7 +35,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Yordan Tsintsov
- * @since 7.6
+ * @since 7.7
  */
 @ExperimentalLettuceCoroutinesApi
 internal class RedisBloomFilterCoroutinesCommandsImpl<K : Any, V : Any>(

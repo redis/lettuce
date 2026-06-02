@@ -25,7 +25,7 @@ import java.util.Map;
  * Represents the result of the Redis <a href="https://redis.io/docs/latest/commands/bf.info/">BF.INFO</a> command.
  *
  * @author Yordan Tsintsov
- * @since 7.6
+ * @since 7.7
  */
 public class BfInfoValue {
 

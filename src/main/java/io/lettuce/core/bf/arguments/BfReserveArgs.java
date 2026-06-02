@@ -29,7 +29,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * {@link BfReserveArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Yordan Tsintsov
- * @since 7.6
+ * @since 7.7
  */
 public class BfReserveArgs implements CompositeArgument {
 

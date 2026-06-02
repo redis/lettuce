@@ -14,7 +14,7 @@ import io.lettuce.core.bf.BfScanDumpValue;
  * @param <K> Key type.
  * @param <V> Value type.
  * @see <a href="https://redis.io/docs/latest/develop/data-types/probabilistic/bloom-filter/">Redis Bloom Filter</a>
- * @since 7.6
+ * @since 7.7
  */
 public interface RedisBloomFilterCommands<K, V> {
 

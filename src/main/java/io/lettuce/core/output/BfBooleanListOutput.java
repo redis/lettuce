@@ -32,7 +32,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Yordan Tsintsov
- * @since 7.6
+ * @since 7.7
  */
 public class BfBooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>> implements StreamingOutput<Boolean> {
 

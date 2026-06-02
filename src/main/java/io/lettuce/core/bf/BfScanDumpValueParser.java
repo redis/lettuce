@@ -29,7 +29,7 @@ import io.lettuce.core.output.ComplexDataParser;
  * Parser for Redis <a href="https://redis.io/docs/latest/commands/bf.scandump/">BF.SCANDUMP</a> command output.
  *
  * @author Yordan Tsintsov
- * @since 7.6
+ * @since 7.7
  */
 public final class BfScanDumpValueParser implements ComplexDataParser<BfScanDumpValue> {
 

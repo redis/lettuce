@@ -36,6 +36,14 @@ import io.lettuce.core.protocol.CommandKeyword;
 
 import static io.lettuce.core.protocol.CommandType.*;
 
+/**
+ * Implementation of the {@link BaseRedisCommandBuilder} handling Bloom Filter commands.
+ *
+ * @param <K> Key type.
+ * @param <V> Value type.
+ * @author Yordan Tsintsov
+ * @since 7.7
+ */
 class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     RedisBloomFilterCommandBuilder(RedisCodec<K, V> codec) {

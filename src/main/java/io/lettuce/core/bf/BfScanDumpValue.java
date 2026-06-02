@@ -23,7 +23,7 @@ package io.lettuce.core.bf;
  * Value object for the Redis <a href="https://redis.io/docs/latest/commands/bf.scandump/">BF.SCANDUMP</a> command.
  *
  * @author Yordan Tsintsov
- * @since 7.6
+ * @since 7.7
  */
 public class BfScanDumpValue {
 
