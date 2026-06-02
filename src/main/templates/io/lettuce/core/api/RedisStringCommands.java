@@ -322,6 +322,37 @@ public interface RedisStringCommands<K, V> {
     Double incrbyfloat(K key, double amount);
 
     /**
+     * Increment the integer value of a key by 1 using INCREX.
+     *
+     * @param key the key.
+     * @return IncrexValue containing the new value and actual increment applied.
+     * @since 7.6
+     */
+    IncrexValue<Long> increx(K key);
+
+    /**
+     * Increment the integer value of a key by the given amount with bounds, overflow, and expiration options.
+     *
+     * @param key the key.
+     * @param amount the increment type: long.
+     * @param increxArgs the {@link IncrexArgs} specifying bounds, overflow, and expiration options.
+     * @return IncrexValue containing the new value and actual increment applied.
+     * @since 7.6
+     */
+    IncrexValue<Long> increx(K key, long amount, IncrexArgs increxArgs);
+
+    /**
+     * Increment the float value of a key by the given amount with bounds, saturation, and expiration options.
+     *
+     * @param key the key.
+     * @param amount the increment type: double.
+     * @param increxArgs the {@link IncrexFloatArgs} specifying bounds, {@code SATURATE} flag, and expiration options.
+     * @return IncrexValue containing the new value and actual increment applied.
+     * @since 7.6
+     */
+    IncrexValue<Double> increx(K key, double amount, IncrexFloatArgs increxArgs);
+
+    /**
      * Get the values of all the given keys.
      *
      * @param keys the key.

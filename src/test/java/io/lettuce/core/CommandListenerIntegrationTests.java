@@ -38,6 +38,7 @@ import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.command.CommandStartedEvent;
 import io.lettuce.core.event.command.CommandSucceededEvent;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.Wait;
 
 /**
  * Integration tests for {@link CommandListener}.
@@ -47,7 +48,6 @@ import io.lettuce.test.LettuceExtension;
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
-@SuppressWarnings({ "rawtypes", "unchecked" })
 public class CommandListenerIntegrationTests extends TestSupport {
 
     private final RedisClient client;
@@ -103,9 +103,14 @@ public class CommandListenerIntegrationTests extends TestSupport {
         } catch (RedisCommandExecutionException ignored) {
         }
 
-        assertThat(startedEvents).hasSize(3);
-        assertThat(succeededEvents).hasSize(2);
-        assertThat(failedEvents).hasSize(1);
+        // There is race condition here between command listener callback execution and the caller who blocks on command
+        // completion.
+        // Listener callbacks fire on the Netty I/O thread after the sync caller has already been
+        // unblocked by command.complete(), so the lists may not be populated yet at this point.
+        // That is why we need to 'wait' here.
+        Wait.untilEquals(3, startedEvents::size).waitOrTimeout();
+        Wait.untilEquals(2, succeededEvents::size).waitOrTimeout();
+        Wait.untilEquals(1, failedEvents::size).waitOrTimeout();
 
         client.removeListener(listener);
     }

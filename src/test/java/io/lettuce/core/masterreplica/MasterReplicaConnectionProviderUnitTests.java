@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -73,6 +74,20 @@ class MasterReplicaConnectionProviderUnitTests {
         sut.close();
 
         verify(channelHandlerMock).closeAsync();
+    }
+
+    @Test
+    void shouldUseDirectConnectionForSingleReadSelection() {
+
+        when(clientMock.connectAsync(eq(StringCodec.UTF8), any()))
+                .thenReturn(ConnectionFuture.completed(null, nodeConnectionMock));
+
+        sut.setReadFrom(ReadFrom.ANY);
+
+        StatefulRedisConnection<String, String> connection = sut.getConnectionAsync(ConnectionIntent.READ).join();
+
+        assertThat(connection).isSameAs(nodeConnectionMock);
+        verify(nodeConnectionMock, never()).isOpen();
     }
 
 }
