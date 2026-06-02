@@ -34,15 +34,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.internal.LettuceStrings;
-import reactor.core.publisher.Mono;
 
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, client name,
@@ -519,7 +520,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public void setAuthentication(String username, char[] password) {
         LettuceAssert.notNull(password, "Password must not be null");
 
-        this.setCredentialsProvider(() -> Mono.just(RedisCredentials.just(username, password)));
+        this.setCredentialsProvider(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
     }
 
     /**
@@ -536,7 +537,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public void setAuthentication(String username, CharSequence password) {
         LettuceAssert.notNull(password, "Password must not be null");
 
-        this.setCredentialsProvider(() -> Mono.just(RedisCredentials.just(username, password)));
+        this.setCredentialsProvider(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
     }
 
     /**
@@ -972,7 +973,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // compatibility with versions before 7.0 - in previous versions of the Lettuce driver there was an option to
                 // have a username and password pair as part of the RedisURI; in these cases when we were masking credentials we
                 // would get asterix for each character of the password.
-                RedisCredentials creds = credentialsProvider.resolveCredentials().block();
+                RedisCredentials creds;
+                try {
+                    creds = credentialsProvider.resolveCredentials().toCompletableFuture().join();
+                } catch (Exception e) {
+                    throw Exceptions.bubble(e);
+                }
                 if (creds != null) {
                     String credentials = "";
 
@@ -1749,7 +1755,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             LettuceAssert.notNull(username, "User name must not be null");
             LettuceAssert.notNull(password, "Password must not be null");
 
-            return withAuthentication(() -> Mono.just(RedisCredentials.just(username, password)));
+            return withAuthentication(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
         }
 
         /**
@@ -1779,7 +1785,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             LettuceAssert.notNull(username, "User name must not be null");
             LettuceAssert.notNull(password, "Password must not be null");
 
-            return withAuthentication(() -> Mono.just(RedisCredentials.just(username, password)));
+            return withAuthentication(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
         }
 
         /**
@@ -1820,7 +1826,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @since 4.4
          */
         public Builder withPassword(char[] password) {
-            return withAuthentication(() -> Mono.just(RedisCredentials.just(null, password)));
+            return withAuthentication(() -> CompletableFuture.completedFuture(RedisCredentials.just(null, password)));
         }
 
         /**

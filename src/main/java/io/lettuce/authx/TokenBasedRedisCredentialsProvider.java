@@ -11,12 +11,13 @@ import io.lettuce.core.RedisCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import redis.clients.authentication.core.Token;
 import redis.clients.authentication.core.TokenAuthConfig;
 import redis.clients.authentication.core.TokenListener;
 import redis.clients.authentication.core.TokenManager;
+
+import java.util.concurrent.CompletionStage;
 
 /**
  * A {@link RedisCredentialsProvider} implementation that supports token-based authentication for Redis.
@@ -78,18 +79,17 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
     }
 
     /**
-     * Resolve the latest available credentials as a Mono.
+     * Resolve the latest available credentials as a {@link CompletionStage}.
      * <p>
-     * This method returns a Mono that emits the most recent set of Redis credentials. The Mono will complete once the
-     * credentials are emitted. If no credentials are available at the time of subscription, the Mono will wait until
-     * credentials are available.
+     * This method returns a {@link CompletionStage} that completes with the most recent set of Redis credentials. If no
+     * credentials are available at the time of invocation, the returned stage will complete once credentials become available.
      *
-     * @return a Mono that emits the latest Redis credentials
+     * @return a {@link CompletionStage} that completes with the latest Redis credentials
      */
     @Override
-    public Mono<RedisCredentials> resolveCredentials() {
+    public CompletionStage<RedisCredentials> resolveCredentials() {
 
-        return credentialsSink.asFlux().next();
+        return credentialsSink.asFlux().next().toFuture();
     }
 
     /**
