@@ -109,7 +109,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(BF_INSERT, new BooleanListOutput<>(codec), args);
+        return createCommand(BF_INSERT, new BfBooleanListOutput<>(codec), args);
     }
 
     Command<K, V, String> bfLoadChunk(K key, long iterator, byte[] data) {
