@@ -44,8 +44,8 @@ public interface RedisCredentialsProvider {
         return () -> {
             try {
                 return CompletableFuture.completedFuture(supplier.get());
-            } catch (Throwable t) {
-                return Futures.failed(t);
+            } catch (Exception e) {
+                return Futures.failed(e);
             }
         };
     }
@@ -89,8 +89,8 @@ public interface RedisCredentialsProvider {
         default CompletionStage<RedisCredentials> resolveCredentials() {
             try {
                 return CompletableFuture.completedFuture(resolveCredentialsNow());
-            } catch (Throwable t) {
-                return Futures.failed(t);
+            } catch (Exception e) {
+                return Futures.failed(e);
             }
         }
 
