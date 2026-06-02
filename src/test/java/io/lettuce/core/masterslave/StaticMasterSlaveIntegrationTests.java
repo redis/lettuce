@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.lettuce.core.RedisCredentials;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -24,7 +23,6 @@ import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RoleParser;
 import io.lettuce.test.WithPassword;
 import io.lettuce.test.settings.TestSettings;
-import reactor.core.publisher.Mono;
 
 /**
  * @author Mark Paluch

@@ -1832,7 +1832,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         public Builder withTimeout(Duration timeout) {
 
             LettuceAssert.notNull(timeout, "Timeout must not be null");
-            LettuceAssert.notNull(!timeout.isNegative(), "Timeout must be greater or equal 0");
+            LettuceAssert.isTrue(!timeout.isNegative(), "Timeout must be greater or equal 0");
 
             this.timeout = timeout;
             return this;

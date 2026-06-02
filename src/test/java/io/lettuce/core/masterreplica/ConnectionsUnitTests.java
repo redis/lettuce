@@ -15,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import reactor.util.function.Tuples;
+import io.lettuce.core.Pair;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 
@@ -43,7 +43,7 @@ class ConnectionsUnitTests {
 
         verifyNoInteractions(connection1);
 
-        connections.onAccept(Tuples.of(RedisURI.create("localhost", 6379), connection1));
+        connections.onAccept(Pair.of(RedisURI.create("localhost", 6379), connection1));
 
         verify(connection1).closeAsync();
     }
