@@ -15,11 +15,7 @@ import io.lettuce.core.bf.arguments.BfInsertArgs;
 import io.lettuce.core.bf.arguments.BfReserveArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
@@ -52,6 +48,11 @@ public class RedisBloomFilterIntegrationTests {
 
     @BeforeEach
     void prepare() {
+        redis.flushall();
+    }
+
+    @AfterAll
+    void teardown() {
         redis.flushall();
     }
 

@@ -1,5 +1,6 @@
 package io.lettuce.core.api.reactive;
 
+import io.lettuce.core.Value;
 import io.lettuce.core.bf.BfInfoValue;
 import io.lettuce.core.bf.BfScanDumpValue;
 import io.lettuce.core.bf.arguments.BfInsertArgs;
@@ -58,10 +59,11 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return Boolean where {@code true} means that the item was added and {@code false} means that there's a probability that
-     *         the item was already added to the filter or the filter is full.
+     * @return {@link Value} with Boolean where {@code true} means that the item was added and {@code false} means that there's
+     *         a probability that the item was already added to the filter or the filter is full. {@link Value#empty()} for
+     *         empty slots.
      */
-    Flux<Boolean> bfInsert(K key, V value);
+    Flux<Value<Boolean>> bfInsert(K key, V value);
 
     /**
      * Add an item to the Bloom Filter.
@@ -69,20 +71,22 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param insertArgs the insert arguments.
      * @param value the value.
-     * @return Boolean where {@code true} means that the item was added and {@code false} means that there's a probability that
-     *         the item was already added to the filter or the filter is full.
+     * @return {@link Value} with Boolean where {@code true} means that the item was added and {@code false} means that there's
+     *         a probability that the item was already added to the filter or the filter is full. {@link Value#empty()} for
+     *         empty slots.
      */
-    Flux<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V value);
+    Flux<Value<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V value);
 
     /**
      * Add one or more items to the Bloom Filter.
      *
      * @param key the key.
      * @param values the values.
-     * @return Boolean where {@code true} means that the item was added and {@code false} means that there's a probability that
-     *         the item was already added to the filter or the filter is full.
+     * @return {@link Value} with Boolean where {@code true} means that the item was added and {@code false} means that there's
+     *         a probability that the item was already added to the filter or the filter is full. {@link Value#empty()} for
+     *         empty slots.
      */
-    Flux<Boolean> bfInsert(K key, V... values);
+    Flux<Value<Boolean>> bfInsert(K key, V... values);
 
     /**
      * Add one or more items to the Bloom Filter.
@@ -90,10 +94,11 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param insertArgs the insert arguments.
      * @param values the values.
-     * @return Boolean where {@code true} means that the item was added and {@code false} means that there's a probability that
-     *         the item was already added to the filter or the filter is full.
+     * @return {@link Value} with Boolean where {@code true} means that the item was added and {@code false} means that there's
+     *         a probability that the item was already added to the filter or the filter is full. {@link Value#empty()} for
+     *         empty slots.
      */
-    Flux<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V... values);
+    Flux<Value<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V... values);
 
     /**
      * Restores a Bloom filter previously saved using BF.SCANDUMP.

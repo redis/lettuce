@@ -112,6 +112,44 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
         return createCommand(BF_INSERT, new BfBooleanListOutput<>(codec), args);
     }
 
+    Command<K, V, List<Value<Boolean>>> bfInsertValues(K key, V value) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).add(value);
+
+        return createCommand(BF_INSERT, new BfBooleanValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Value<Boolean>>> bfInsertValues(K key, BfInsertArgs insertArgs, V value) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        insertArgs.build(args);
+        args.add(CommandKeyword.ITEMS).addValue(value);
+
+        return createCommand(BF_INSERT, new BfBooleanValueListOutput<>(codec), args);
+    }
+
+    @SafeVarargs
+    final Command<K, V, List<Value<Boolean>>> bfInsertValues(K key, V... values) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValues(values);
+
+        return createCommand(BF_INSERT, new BfBooleanValueListOutput<>(codec), args);
+    }
+
+    @SafeVarargs
+    final Command<K, V, List<Value<Boolean>>> bfInsertValues(K key, BfInsertArgs insertArgs, V... values) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        insertArgs.build(args);
+        args.add(CommandKeyword.ITEMS).addValues(values);
+
+        return createCommand(BF_INSERT, new BfBooleanValueListOutput<>(codec), args);
+    }
+
     Command<K, V, String> bfLoadChunk(K key, long iterator, byte[] data) {
         notNullKey(key);
 

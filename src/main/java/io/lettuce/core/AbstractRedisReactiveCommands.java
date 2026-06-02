@@ -4289,23 +4289,23 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Flux<Boolean> bfInsert(K key, V value) {
-        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsert(key, value));
+    public Flux<Value<Boolean>> bfInsert(K key, V value) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsertValues(key, value));
     }
 
     @Override
-    public Flux<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V value) {
-        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsert(key, insertArgs, value));
+    public Flux<Value<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V value) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsertValues(key, insertArgs, value));
     }
 
     @Override
-    public Flux<Boolean> bfInsert(K key, V... values) {
-        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsert(key, values));
+    public Flux<Value<Boolean>> bfInsert(K key, V... values) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsertValues(key, values));
     }
 
     @Override
-    public Flux<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V... values) {
-        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsert(key, insertArgs, values));
+    public Flux<Value<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V... values) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsertValues(key, insertArgs, values));
     }
 
     @Override

@@ -55,20 +55,20 @@ internal class RedisBloomFilterCoroutinesCommandsImpl<K : Any, V : Any>(
         ops.bfInfo(key).awaitFirstOrNull()
 
     override suspend fun bfInsert(key: K, value: V): List<Boolean> =
-        ops.bfInsert(key, value).asFlow().toList()
+        ops.bfInsert(key, value).asFlow().toList().map { it.getValueOrElse(null) }
 
     override suspend fun bfInsert(key: K, insertArgs: BfInsertArgs, value: V): List<Boolean> =
-        ops.bfInsert(key, insertArgs, value).asFlow().toList()
+        ops.bfInsert(key, insertArgs, value).asFlow().toList().map { it.getValueOrElse(null) }
 
     override suspend fun bfInsert(key: K, vararg values: V): List<Boolean> =
-        ops.bfInsert(key, *values).asFlow().toList()
+        ops.bfInsert(key, *values).asFlow().toList().map { it.getValueOrElse(null) }
 
     override suspend fun bfInsert(
         key: K,
         insertArgs: BfInsertArgs,
         vararg values: V
     ): List<Boolean> =
-        ops.bfInsert(key, insertArgs, *values).asFlow().toList()
+        ops.bfInsert(key, insertArgs, *values).asFlow().toList().map { it.getValueOrElse(null) }
 
     override suspend fun bfLoadChunk(key: K, iterator: Long, data: ByteArray): String? =
         ops.bfLoadChunk(key, iterator, data).awaitFirstOrNull()
