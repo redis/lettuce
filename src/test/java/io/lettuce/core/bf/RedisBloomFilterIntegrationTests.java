@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@EnabledOnCommand("BF.ADD")
 public class RedisBloomFilterIntegrationTests {
 
     private static final String MY_KEY = "books:name";
