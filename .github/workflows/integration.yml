@@ -25,6 +25,9 @@ on:
         required: false
         default: ''
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build and Test (Redis ${{ matrix.redis_version }})
@@ -52,5 +55,5 @@ jobs:
     uses: ./.github/workflows/run-tests.yml
     with:
       client_libs_test_image_tag: ${{ github.event.inputs.client_libs_test_image_tag }}
-    secrets:
-      codecov_token: ${{ secrets.CODECOV_TOKEN }}
+      skip_unit_tests: true
+      upload_coverage: false

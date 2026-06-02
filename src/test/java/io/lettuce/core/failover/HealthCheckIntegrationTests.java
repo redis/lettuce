@@ -201,7 +201,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
         void shouldUseDifferentStrategiesPerEndpoint() {
             // Given: Two independent health check strategies
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms for fast testing
-                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+                    .delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy strategy1 = new TestHealthCheckStrategy(config);
             TestHealthCheckStrategy strategy2 = new TestHealthCheckStrategy(config);

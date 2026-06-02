@@ -15,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.Delegating;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -26,9 +29,12 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import reactor.core.Disposable;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.ReflectionTestUtils;
+import io.lettuce.test.Wait;
 
 /**
  * Integration tests for command encoding error scenarios with GET/SET commands against a Redis test instance.
@@ -52,46 +58,56 @@ class CodecFailureIntegrationTests extends TestSupport {
 
     @BeforeEach
     void setUp() {
-        this.connection.async().flushall();
+        this.connection.sync().flushall();
     }
 
     @Test
     void testCommandsWithCustomCodecRuntimeException() {
 
-        final Integer[] reconnects = { 0 };
-        client.getResources().eventBus().get().subscribe(event -> {
-            if (event instanceof ReconnectAttemptEvent) {
-                reconnects[0]++;
-            }
-        });
-
         try (StatefulRedisConnection<String, String> customConnection = client.connect(failingCodec)) {
             RedisCommands<String, String> customRedis = customConnection.sync();
 
-            // First, test that normal values work fine
-            String normalKey = "normal-key";
-            String normalValue = "normal-value";
+            // Filter reconnect events by this connection's endpoint id to avoid contamination
+            // from other connections sharing the same EventBus (the RedisClient is a JVM-wide singleton).
+            final String epId = unwrapEndpoint(customConnection).getId();
+            final Integer[] reconnects = { 0 };
+            Disposable subscription = client.getResources().eventBus().get().subscribe(event -> {
+                if (event instanceof ReconnectAttemptEvent
+                        && epId.equals(ReflectionTestUtils.<String> getField(event, "epId"))) {
+                    reconnects[0]++;
+                }
+            });
 
-            String result = customRedis.set(normalKey, normalValue);
-            assertThat(result).isEqualTo("OK");
+            try {
+                // First, test that normal values work fine
+                String normalKey = "normal-key";
+                String normalValue = "normal-value";
 
-            String retrieved = customRedis.get(normalKey);
-            assertThat(retrieved).isEqualTo(normalValue);
+                String result = customRedis.set(normalKey, normalValue);
+                assertThat(result).isEqualTo("OK");
 
-            // Now test that the specific failure value throws an exception
-            String failingKey = "failing-key";
-            String failingValue = "encoding_failure";
+                String retrieved = customRedis.get(normalKey);
+                assertThat(retrieved).isEqualTo(normalValue);
 
-            assertThatThrownBy(() -> customRedis.set(failingKey, failingValue)).isInstanceOf(EncoderException.class)
-                    .hasMessageContaining(
-                            "Cannot encode command. Closing the connection as the connection state may be out of sync.");
+                // Now test that the specific failure value throws an exception
+                String failingKey = "failing-key";
+                String failingValue = "encoding_failure";
 
-            // test that commands are executed after reconnecting
-            retrieved = customRedis.get(normalKey);
-            assertThat(retrieved).isEqualTo(normalValue);
+                assertThatThrownBy(() -> customRedis.set(failingKey, failingValue)).isInstanceOf(EncoderException.class)
+                        .hasMessageContaining(
+                                "Cannot encode command. Closing the connection as the connection state may be out of sync.");
 
-            // verify that we have reconnected after the exception
-            assertThat(reconnects[0]).isEqualTo(1);
+                // test that commands are executed after reconnecting
+                retrieved = customRedis.get(normalKey);
+                assertThat(retrieved).isEqualTo(normalValue);
+
+                // verify that we have reconnected after the exception. Poll because EventBus delivery
+                // is asynchronous (publishOn scheduler); allow >= 1 to tolerate transient retry attempts
+                // on the same endpoint while still requiring a reconnect originating from this connection.
+                Wait.untilTrue(() -> reconnects[0] >= 1).waitOrTimeout();
+            } finally {
+                subscription.dispose();
+            }
         }
     }
 
@@ -310,5 +326,17 @@ class CodecFailureIntegrationTests extends TestSupport {
         }
 
     };
+
+    @SuppressWarnings("unchecked")
+    private static Endpoint unwrapEndpoint(StatefulRedisConnection<?, ?> connection) {
+        RedisChannelWriter writer = ((RedisChannelHandler<?, ?>) connection).getChannelWriter();
+        if (writer instanceof Delegating) {
+            writer = ((Delegating<RedisChannelWriter>) writer).unwrap();
+        }
+        if (!(writer instanceof Endpoint)) {
+            throw new IllegalStateException("Cannot unwrap " + writer + " to Endpoint");
+        }
+        return ((Endpoint) writer);
+    }
 
 }

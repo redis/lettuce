@@ -51,10 +51,18 @@ on:
         required: false
         type: boolean
         default: true
+      skip_unit_tests:
+        description: 'Skip unit tests and run only integration tests'
+        required: false
+        type: boolean
+        default: false
     secrets:
       codecov_token:
         description: 'Codecov token for uploading coverage'
         required: false
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -125,7 +133,12 @@ jobs:
       - name: Run tests
         run: |
           export TEST_WORK_FOLDER=$REDIS_ENV_WORK_DIR
-          make test-coverage
+          if [ "${{ inputs.skip_unit_tests }}" = "true" ]; then
+            echo "Skipping unit tests, running integration tests only"
+            make test MVN_EXTRA_ARGS="-DskipUnitTests=true"
+          else
+            make test-coverage
+          fi
         env:
           REDIS_ENV_WORK_DIR: ${{ steps.args.outputs.redis_env_work_dir }}
           JVM_OPTS: -Xmx3200m
