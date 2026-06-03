@@ -110,11 +110,23 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
                 NodeSelectionPubSubCommands.class, async());
     }
 
+    /**
+     * @deprecated since 7.7, use
+     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection)}
+     *             instead.
+     */
+    @Deprecated
     @Override
     public RedisClusterPubSubReactiveCommands<K, V> reactive() {
         return (RedisClusterPubSubReactiveCommands<K, V>) super.reactive();
     }
 
+    /**
+     * @deprecated since 7.7, use
+     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection)}
+     *             instead.
+     */
+    @Deprecated
     @Override
     protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisClusterPubSubReactiveCommandsImpl<K, V>(this, codec);

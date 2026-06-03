@@ -81,6 +81,12 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     protected final RedisAsyncCommandsImpl<K, V> async;
 
+    /**
+     * @deprecated since 7.7, use
+     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(io.lettuce.core.api.StatefulRedisConnection)}
+     *             instead.
+     */
+    @Deprecated
     protected final RedisReactiveCommandsImpl<K, V> reactive;
 
     protected final RedisCodec<K, V> codec;
@@ -466,7 +472,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * Returns the reactive API. The API is a dynamic proxy that remains valid across database switches.
      *
      * @return the reactive commands API.
+     * @deprecated since 7.7, use
+     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(io.lettuce.core.api.StatefulRedisConnection)}
+     *             instead.
      */
+    @Deprecated
     @Override
     public RedisReactiveCommands<K, V> reactive() {
         return reactive;
@@ -476,7 +486,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overridden to extend.
      *
      * @return a new instance
+     * @deprecated since 7.7, use
+     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(io.lettuce.core.api.StatefulRedisConnection)}
+     *             instead.
      */
+    @Deprecated
     protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisReactiveCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
     }

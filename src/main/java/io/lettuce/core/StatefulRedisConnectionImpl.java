@@ -62,6 +62,10 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     protected final RedisAsyncCommandsImpl<K, V> async;
 
+    /**
+     * @deprecated since 7.7, use {@link RedisReactiveCommands#from(StatefulRedisConnection)} instead.
+     */
+    @Deprecated
     protected final RedisReactiveCommandsImpl<K, V> reactive;
 
     private final ConnectionState state = new ConnectionState();
@@ -137,6 +141,10 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return new RedisAsyncCommandsImpl<>(this, codec, parser);
     }
 
+    /**
+     * @deprecated since 7.7, use {@link RedisReactiveCommands#from(StatefulRedisConnection)} instead.
+     */
+    @Deprecated
     @Override
     public RedisReactiveCommands<K, V> reactive() {
         return reactive;
@@ -146,7 +154,9 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
      *
      * @return a new instance
+     * @deprecated since 7.7, use {@link RedisReactiveCommands#from(StatefulRedisConnection)} instead.
      */
+    @Deprecated
     protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisReactiveCommandsImpl<>(this, codec, parser);
     }
