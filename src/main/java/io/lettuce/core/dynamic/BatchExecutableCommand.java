@@ -75,40 +75,20 @@ class BatchExecutableCommand implements ExecutableCommand {
             return null;
         }
 
-        Duration timeout = connection.getTimeout();
-        long timeoutNs = timeout.toNanos();
-        long started = System.nanoTime();
-        boolean timeoutReached = false;
+        BatchTimeout batchTimeout = new BatchTimeout(connection.getTimeout());
 
         BatchException exception = null;
         List<RedisCommand<?, ?, ?>> failures = null;
         for (RedisCommand<?, ?, ?> batchTask : batchTasks) {
 
             RedisFuture<?> future = (RedisFuture<?>) batchTask;
-            boolean commandTimedOut = false;
 
             try {
-                if (timeoutReached && !future.isDone()) {
+                if (batchTimeout.isReached() && !future.isDone()) {
                     continue;
                 }
 
-                long waitNs = 0;
-
-                if (!timeoutReached && timeoutNs > 0) {
-                    waitNs = timeoutNs - (System.nanoTime() - started);
-
-                    if (waitNs <= 0 && !future.isDone()) {
-                        commandTimedOut = true;
-                        throw ExceptionFactory.createTimeoutException(timeout);
-                    }
-
-                    waitNs = Math.max(waitNs, 0);
-                }
-
-                if (!Futures.await(waitNs, TimeUnit.NANOSECONDS, future)) {
-                    commandTimedOut = true;
-                    throw ExceptionFactory.createTimeoutException(timeout);
-                }
+                batchTimeout.await(future);
             } catch (Exception e) {
                 if (exception == null) {
                     failures = new ArrayList<>();
@@ -117,10 +97,6 @@ class BatchExecutableCommand implements ExecutableCommand {
 
                 failures.add(batchTask);
                 exception.addSuppressed(e);
-
-                if (commandTimedOut) {
-                    timeoutReached = true;
-                }
             }
         }
 
@@ -134,6 +110,60 @@ class BatchExecutableCommand implements ExecutableCommand {
     @Override
     public CommandMethod getCommandMethod() {
         return commandMethod;
+    }
+
+    private static final class BatchTimeout {
+
+        private final Duration timeout;
+
+        private final long timeoutNs;
+
+        private final long startedNs = System.nanoTime();
+
+        private boolean reached;
+
+        BatchTimeout(Duration timeout) {
+
+            this.timeout = timeout;
+            this.timeoutNs = timeout.toNanos();
+        }
+
+        boolean isReached() {
+            return reached;
+        }
+
+        void await(RedisFuture<?> future) {
+
+            if (future.isDone() || !isEnabled()) {
+                Futures.await(0, TimeUnit.NANOSECONDS, future);
+                return;
+            }
+
+            long remainingNs = remainingNs();
+
+            if (remainingNs <= 0) {
+                throwTimeoutException();
+            }
+
+            if (!Futures.await(remainingNs, TimeUnit.NANOSECONDS, future)) {
+                throwTimeoutException();
+            }
+        }
+
+        private boolean isEnabled() {
+            return timeoutNs > 0;
+        }
+
+        private long remainingNs() {
+            return timeoutNs - (System.nanoTime() - startedNs);
+        }
+
+        private void throwTimeoutException() {
+
+            reached = true;
+            throw ExceptionFactory.createTimeoutException(timeout);
+        }
+
     }
 
 }
