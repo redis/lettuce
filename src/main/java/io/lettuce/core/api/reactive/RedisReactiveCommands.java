@@ -66,7 +66,8 @@ public interface RedisReactiveCommands<K, V>
      */
     static <K, V> RedisReactiveCommands<K, V> from(StatefulRedisConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
-        return new RedisReactiveCommandsImpl<>(connection, connection.getCodec(), connection.getOptions().getJsonParser());
+        return new RedisReactiveCommandsImpl<>(connection, connection.getCodec(),
+                () -> connection.getOptions().getJsonParser().get());
     }
 
     /**
@@ -81,7 +82,7 @@ public interface RedisReactiveCommands<K, V>
     static <K, V> RedisAdvancedClusterReactiveCommands<K, V> from(StatefulRedisClusterConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
         return new RedisAdvancedClusterReactiveCommandsImpl<>(connection, connection.getCodec(),
-                connection.getOptions().getJsonParser());
+                () -> connection.getOptions().getJsonParser().get());
     }
 
     /**
@@ -110,7 +111,7 @@ public interface RedisReactiveCommands<K, V>
     static <K, V> RedisSentinelReactiveCommands<K, V> from(StatefulRedisSentinelConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
         return new RedisSentinelReactiveCommandsImpl<>(connection, connection.getCodec(),
-                connection.getOptions().getJsonParser());
+                () -> connection.getOptions().getJsonParser().get());
     }
 
     /**
