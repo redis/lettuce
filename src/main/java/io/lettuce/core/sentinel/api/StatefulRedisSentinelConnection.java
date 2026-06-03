@@ -37,7 +37,8 @@ public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnectio
      * Returns the {@link RedisSentinelReactiveCommands} API for the current connection. Does not create a new connection.
      *
      * @return the reactive API for the underlying connection.
-     * @deprecated since 7.7, use {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(StatefulRedisSentinelConnection)} instead.
+     * @deprecated since 7.7, use
+     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(StatefulRedisSentinelConnection)} instead.
      */
     @Deprecated
     RedisSentinelReactiveCommands<K, V> reactive();
