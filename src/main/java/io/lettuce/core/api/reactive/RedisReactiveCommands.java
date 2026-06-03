@@ -19,8 +19,22 @@
  */
 package io.lettuce.core.api.reactive;
 
+import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.cluster.RedisAdvancedClusterReactiveCommandsImpl;
+import io.lettuce.core.cluster.RedisClusterPubSubReactiveCommandsImpl;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
+import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
+import io.lettuce.core.cluster.pubsub.api.reactive.RedisClusterPubSubReactiveCommands;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.pubsub.RedisPubSubReactiveCommandsImpl;
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
+import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
+import io.lettuce.core.sentinel.RedisSentinelReactiveCommandsImpl;
+import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
+import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import reactor.core.publisher.Mono;
 
 /**
@@ -40,6 +54,78 @@ public interface RedisReactiveCommands<K, V>
         RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
         RedisTransactionalReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>,
         RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V> {
+
+    /**
+     * Obtain the {@link RedisReactiveCommands} API for the given connection.
+     *
+     * @param connection the stateful Redis connection, must not be {@code null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the reactive commands API.
+     * @since 7.7
+     */
+    static <K, V> RedisReactiveCommands<K, V> from(StatefulRedisConnection<K, V> connection) {
+        LettuceAssert.notNull(connection, "Connection must not be null");
+        return new RedisReactiveCommandsImpl<>(connection, connection.getCodec(), connection.getOptions().getJsonParser());
+    }
+
+    /**
+     * Obtain the {@link RedisAdvancedClusterReactiveCommands} API for the given cluster connection.
+     *
+     * @param connection the stateful Redis Cluster connection, must not be {@code null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the reactive Cluster commands API.
+     * @since 7.7
+     */
+    static <K, V> RedisAdvancedClusterReactiveCommands<K, V> from(StatefulRedisClusterConnection<K, V> connection) {
+        LettuceAssert.notNull(connection, "Connection must not be null");
+        return new RedisAdvancedClusterReactiveCommandsImpl<>(connection, connection.getCodec(),
+                connection.getOptions().getJsonParser());
+    }
+
+    /**
+     * Obtain the {@link RedisPubSubReactiveCommands} API for the given Pub/Sub connection.
+     *
+     * @param connection the stateful Redis Pub/Sub connection, must not be {@code null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the reactive Pub/Sub commands API.
+     * @since 7.7
+     */
+    static <K, V> RedisPubSubReactiveCommands<K, V> from(StatefulRedisPubSubConnection<K, V> connection) {
+        LettuceAssert.notNull(connection, "Connection must not be null");
+        return new RedisPubSubReactiveCommandsImpl<>(connection, connection.getCodec());
+    }
+
+    /**
+     * Obtain the {@link RedisSentinelReactiveCommands} API for the given Sentinel connection.
+     *
+     * @param connection the stateful Redis Sentinel connection, must not be {@code null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the reactive Sentinel commands API.
+     * @since 7.7
+     */
+    static <K, V> RedisSentinelReactiveCommands<K, V> from(StatefulRedisSentinelConnection<K, V> connection) {
+        LettuceAssert.notNull(connection, "Connection must not be null");
+        return new RedisSentinelReactiveCommandsImpl<>(connection, connection.getCodec(),
+                connection.getOptions().getJsonParser());
+    }
+
+    /**
+     * Obtain the {@link RedisClusterPubSubReactiveCommands} API for the given Cluster Pub/Sub connection.
+     *
+     * @param connection the stateful Redis Cluster Pub/Sub connection, must not be {@code null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the reactive Cluster Pub/Sub commands API.
+     * @since 7.7
+     */
+    static <K, V> RedisClusterPubSubReactiveCommands<K, V> from(StatefulRedisClusterPubSubConnection<K, V> connection) {
+        LettuceAssert.notNull(connection, "Connection must not be null");
+        return new RedisClusterPubSubReactiveCommandsImpl<>(connection, connection.getCodec());
+    }
 
     /**
      * Authenticate to the server.
