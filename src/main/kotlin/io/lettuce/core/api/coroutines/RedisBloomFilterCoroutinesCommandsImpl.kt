@@ -74,7 +74,7 @@ internal class RedisBloomFilterCoroutinesCommandsImpl<K : Any, V : Any>(
         ops.bfLoadChunk(key, iterator, data).awaitFirstOrNull()
 
     override suspend fun bfMAdd(key: K, vararg values: V): List<Boolean> =
-        ops.bfMAdd(key, *values).asFlow().toList()
+        ops.bfMAdd(key, *values).asFlow().toList().map { it.getValueOrElse(null) }
 
     override suspend fun bfMExists(key: K, vararg values: V): List<Boolean> =
         ops.bfMExists(key, *values).asFlow().toList()
