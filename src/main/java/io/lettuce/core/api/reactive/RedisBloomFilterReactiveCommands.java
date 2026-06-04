@@ -59,9 +59,9 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return {@link Value} with Boolean where {@code true} means that the item was added and {@code false} means that there's
-     *         a probability that the item was already added to the filter or the filter is full. {@link Value#empty()} for
-     *         empty slots.
+     * @return {@link Value} with where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {{@link Value#empty()} when
+     *         filter is full and nonscaling.
      */
     Flux<Value<Boolean>> bfInsert(K key, V value);
 
@@ -71,9 +71,9 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param insertArgs the insert arguments.
      * @param value the value.
-     * @return {@link Value} with Boolean where {@code true} means that the item was added and {@code false} means that there's
-     *         a probability that the item was already added to the filter or the filter is full. {@link Value#empty()} for
-     *         empty slots.
+     * @return {@link Value} with where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {{@link Value#empty()} when
+     *         filter is full and nonscaling.
      */
     Flux<Value<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V value);
 
@@ -82,9 +82,9 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return {@link Value} with Boolean where {@code true} means that the item was added and {@code false} means that there's
-     *         a probability that the item was already added to the filter or the filter is full. {@link Value#empty()} for
-     *         empty slots.
+     * @return {@link Value} with where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {{@link Value#empty()} when
+     *         filter is full and nonscaling.
      */
     Flux<Value<Boolean>> bfInsert(K key, V... values);
 
@@ -94,9 +94,9 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param insertArgs the insert arguments.
      * @param values the values.
-     * @return {@link Value} with Boolean where {@code true} means that the item was added and {@code false} means that there's
-     *         a probability that the item was already added to the filter or the filter is full. {@link Value#empty()} for
-     *         empty slots.
+     * @return {@link Value} with where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {{@link Value#empty()} when
+     *         filter is full and nonscaling.
      */
     Flux<Value<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V... values);
 
@@ -116,7 +116,8 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param values the values.
      * @return Boolean of {@code true} or {@code false} where true means that the item was newly added and false means that
-     *         there's a probability that the item was already added to the filter.
+     *         there's a probability that the item was already added to the filter; {@link Value#empty()} when filter is full
+     *         and nonscaling.
      */
     Flux<Value<Boolean>> bfMAdd(K key, V... values);
 

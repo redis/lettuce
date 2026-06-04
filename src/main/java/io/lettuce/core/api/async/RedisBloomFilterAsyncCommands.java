@@ -58,8 +58,9 @@ public interface RedisBloomFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return List&lt;Boolean&gt; where {@code true} means that the item was added and {@code false} means that there's a
-     *         probability that the item was already added to the filter or the filter is full.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {@code null} when filter is full
+     *         and nonscaling.
      */
     RedisFuture<List<Boolean>> bfInsert(K key, V value);
 
@@ -69,8 +70,9 @@ public interface RedisBloomFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param insertArgs the insert arguments.
      * @param value the value.
-     * @return List&lt;Boolean&gt; where {@code true} means that the item was added and {@code false} means that there's a
-     *         probability that the item was already added to the filter or the filter is full.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {@code null} when filter is full
+     *         and nonscaling.
      */
     RedisFuture<List<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V value);
 
@@ -79,8 +81,9 @@ public interface RedisBloomFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return List&lt;Boolean&gt; where {@code true} means that the item was added and {@code false} means that there's a
-     *         probability that the item was already added to the filter or the filter is full.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {@code null} when filter is full
+     *         and nonscaling.
      */
     RedisFuture<List<Boolean>> bfInsert(K key, V... values);
 
@@ -90,8 +93,9 @@ public interface RedisBloomFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param insertArgs the insert arguments.
      * @param values the values.
-     * @return List&lt;Boolean&gt; where {@code true} means that the item was added and {@code false} means that there's a
-     *         probability that the item was already added to the filter or the filter is full.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {@code null} when filter is full
+     *         and nonscaling.
      */
     RedisFuture<List<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V... values);
 
@@ -111,7 +115,8 @@ public interface RedisBloomFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param values the values.
      * @return List&lt;Boolean&gt; of {@code true} or {@code false} where true means that the item was newly added and false
-     *         means that there's a probability that the item was already added to the filter.
+     *         means that there's a probability that the item was already added to the filter; {@code null} when filter is full
+     *         and nonscaling.
      */
     RedisFuture<List<Boolean>> bfMAdd(K key, V... values);
 

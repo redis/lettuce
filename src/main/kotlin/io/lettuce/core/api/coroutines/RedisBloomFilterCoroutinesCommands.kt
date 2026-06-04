@@ -59,8 +59,9 @@ interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param value the value.
-     * @return List<Boolean> where `true` means that the item was added and `false` means that there's a
-     *         probability that the item was already added to the filter or the filter is full.
+     * @return List<Boolean> where `true` means that the item was added; `false` means that there's a
+     *         probability that the item was already added to the filter or the filter is full; `null` when filter
+     *         is full and nonscaling.
      */
     suspend fun bfInsert(key: K, value: V): List<Boolean?>
 
@@ -70,8 +71,9 @@ interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param insertArgs the insert arguments.
      * @param value the value.
-     * @return List<Boolean> where `true` means that the item was added and `false` means that there's a
-     *         probability that the item was already added to the filter or the filter is full.
+     * @return List<Boolean> where `true` means that the item was added; `false` means that there's a
+     *         probability that the item was already added to the filter or the filter is full; `null` when filter
+     *         is full and nonscaling.
      */
     suspend fun bfInsert(key: K, insertArgs: BfInsertArgs, value: V): List<Boolean?>
 
@@ -80,8 +82,9 @@ interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param values the values.
-     * @return List<Boolean> where `true` means that the item was added and `false` means that there's a
-     *         probability that the item was already added to the filter or the filter is full.
+     * @return List<Boolean> where `true` means that the item was added; `false` means that there's a
+     *         probability that the item was already added to the filter or the filter is full; `null` when filter
+     *         is full and nonscaling.
      */
     suspend fun bfInsert(key: K, vararg values: V): List<Boolean?>
 
@@ -91,8 +94,9 @@ interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param insertArgs the insert arguments.
      * @param values the values.
-     * @return List<Boolean> where `true` means that the item was added and `false` means that there's a
-     *         probability that the item was already added to the filter or the filter is full.
+     * @return List<Boolean> where `true` means that the item was added; `false` means that there's a
+     *         probability that the item was already added to the filter or the filter is full; `null` when filter
+     *         is full and nonscaling.
      */
     suspend fun bfInsert(key: K, insertArgs: BfInsertArgs, vararg values: V): List<Boolean?>
 
@@ -112,7 +116,8 @@ interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param values the values.
      * @return List<Boolean> of `true` or `false` where true means that the item was newly added and false
-     *         means that there's a probability that the item was already added to the filter.
+     *         means that there's a probability that the item was already added to the filter; `null` when filter
+     *         is full and nonscaling.
      */
     suspend fun bfMAdd(key: K, vararg values: V): List<Boolean?>
 
