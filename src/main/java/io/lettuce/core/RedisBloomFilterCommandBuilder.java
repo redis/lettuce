@@ -153,6 +153,13 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
     }
 
     @SafeVarargs
+    final Command<K, V, List<Value<Boolean>>> bfMAddValues(K key, V... values) {
+        notNullKey(key);
+
+        return createCommand(BF_MADD, new ErrorTolerantBooleanValueListOutput<>(codec), key, values);
+    }
+
+    @SafeVarargs
     final Command<K, V, List<Boolean>> bfMExists(K key, V... values) {
         notNullKey(key);
 

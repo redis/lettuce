@@ -4315,7 +4315,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
 
     @Override
     public Flux<Value<Boolean>> bfMAdd(K key, V... values) {
-        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfMAdd(key, values));
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfMAddValues(key, values));
     }
 
     @Override
