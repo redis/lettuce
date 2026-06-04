@@ -34,13 +34,13 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Yordan Tsintsov
  * @since 7.7
  */
-public class BfBooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>> implements StreamingOutput<Boolean> {
+public class ErrorTolerantBooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>> implements StreamingOutput<Boolean> {
 
     private boolean initialized;
 
     private Subscriber<Boolean> subscriber;
 
-    public BfBooleanListOutput(RedisCodec<K, V> codec) {
+    public ErrorTolerantBooleanListOutput(RedisCodec<K, V> codec) {
         super(codec, Collections.emptyList());
         setSubscriber(ListSubscriber.instance());
     }

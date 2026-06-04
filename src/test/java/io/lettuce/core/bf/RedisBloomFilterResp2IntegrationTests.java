@@ -17,7 +17,7 @@ import javax.inject.Inject;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 
 /**
- * RESP2 integration tests for Redis Array commands. Re-runs all tests from {@link RedisBloomFilterIntegrationTests} using
+ * RESP2 integration tests for Redis Bloom Filter commands. Re-runs all tests from {@link RedisBloomFilterIntegrationTests} using
  * RESP2.
  *
  * @author Yordan Tsintsov

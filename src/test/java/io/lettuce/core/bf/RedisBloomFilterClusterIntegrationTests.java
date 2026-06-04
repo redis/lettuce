@@ -16,7 +16,7 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 
 /**
- * Integration tests for Redis Array commands using Redis Cluster.
+ * Integration tests for Redis Bloom Filter commands using Redis Cluster.
  *
  * @author Yordan Tsintsov
  * @since 7.7

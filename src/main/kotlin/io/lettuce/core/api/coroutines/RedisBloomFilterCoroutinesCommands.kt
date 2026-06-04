@@ -62,7 +62,7 @@ interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
      * @return List<Boolean> where `true` means that the item was added and `false` means that there's a
      *         probability that the item was already added to the filter or the filter is full.
      */
-    suspend fun bfInsert(key: K, value: V): List<Boolean>
+    suspend fun bfInsert(key: K, value: V): List<Boolean?>
 
     /**
      * Add an item to the Bloom Filter.
@@ -73,7 +73,7 @@ interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
      * @return List<Boolean> where `true` means that the item was added and `false` means that there's a
      *         probability that the item was already added to the filter or the filter is full.
      */
-    suspend fun bfInsert(key: K, insertArgs: BfInsertArgs, value: V): List<Boolean>
+    suspend fun bfInsert(key: K, insertArgs: BfInsertArgs, value: V): List<Boolean?>
 
     /**
      * Add one or more items to the Bloom Filter.
@@ -83,7 +83,7 @@ interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
      * @return List<Boolean> where `true` means that the item was added and `false` means that there's a
      *         probability that the item was already added to the filter or the filter is full.
      */
-    suspend fun bfInsert(key: K, vararg values: V): List<Boolean>
+    suspend fun bfInsert(key: K, vararg values: V): List<Boolean?>
 
     /**
      * Add one or more items to the Bloom Filter.
@@ -94,7 +94,7 @@ interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
      * @return List<Boolean> where `true` means that the item was added and `false` means that there's a
      *         probability that the item was already added to the filter or the filter is full.
      */
-    suspend fun bfInsert(key: K, insertArgs: BfInsertArgs, vararg values: V): List<Boolean>
+    suspend fun bfInsert(key: K, insertArgs: BfInsertArgs, vararg values: V): List<Boolean?>
 
     /**
      * Restores a Bloom filter previously saved using BF.SCANDUMP.
@@ -114,7 +114,7 @@ interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
      * @return List<Boolean> of `true` or `false` where true means that the item was newly added and false
      *         means that there's a probability that the item was already added to the filter.
      */
-    suspend fun bfMAdd(key: K, vararg values: V): List<Boolean>
+    suspend fun bfMAdd(key: K, vararg values: V): List<Boolean?>
 
     /**
      * Check if one or more items exist in the filter.

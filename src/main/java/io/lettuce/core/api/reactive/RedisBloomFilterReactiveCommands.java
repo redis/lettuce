@@ -118,7 +118,7 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      * @return Boolean of {@code true} or {@code false} where true means that the item was newly added and false means that
      *         there's a probability that the item was already added to the filter.
      */
-    Flux<Boolean> bfMAdd(K key, V... values);
+    Flux<Value<Boolean>> bfMAdd(K key, V... values);
 
     /**
      * Check if one or more items exist in the filter.

@@ -35,14 +35,14 @@ import java.util.List;
  * @author Yordan Tsintsov
  * @since 7.7
  */
-public class BfBooleanValueListOutput<K, V> extends CommandOutput<K, V, List<Value<Boolean>>>
+public class ErrorTolerantBooleanValueListOutput<K, V> extends CommandOutput<K, V, List<Value<Boolean>>>
         implements StreamingOutput<Value<Boolean>> {
 
     private boolean initialized;
 
     private Subscriber<Value<Boolean>> subscriber;
 
-    public BfBooleanValueListOutput(RedisCodec<K, V> codec) {
+    public ErrorTolerantBooleanValueListOutput(RedisCodec<K, V> codec) {
         super(codec, Collections.emptyList());
         setSubscriber(ListSubscriber.instance());
     }

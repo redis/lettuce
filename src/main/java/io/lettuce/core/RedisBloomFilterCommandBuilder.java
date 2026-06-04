@@ -79,7 +79,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).add(value);
 
-        return createCommand(BF_INSERT, new BfBooleanListOutput<>(codec), args);
+        return createCommand(BF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
     }
 
     Command<K, V, List<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V value) {
@@ -89,7 +89,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(BF_INSERT, new BfBooleanListOutput<>(codec), args);
+        return createCommand(BF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -98,7 +98,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(BF_INSERT, new BfBooleanListOutput<>(codec), args);
+        return createCommand(BF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -109,15 +109,15 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(BF_INSERT, new BfBooleanListOutput<>(codec), args);
+        return createCommand(BF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
     }
 
     Command<K, V, List<Value<Boolean>>> bfInsertValues(K key, V value) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).add(value);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(BF_INSERT, new BfBooleanValueListOutput<>(codec), args);
+        return createCommand(BF_INSERT, new ErrorTolerantBooleanValueListOutput<>(codec), args);
     }
 
     Command<K, V, List<Value<Boolean>>> bfInsertValues(K key, BfInsertArgs insertArgs, V value) {
@@ -127,7 +127,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(BF_INSERT, new BfBooleanValueListOutput<>(codec), args);
+        return createCommand(BF_INSERT, new ErrorTolerantBooleanValueListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -136,7 +136,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(BF_INSERT, new BfBooleanValueListOutput<>(codec), args);
+        return createCommand(BF_INSERT, new ErrorTolerantBooleanValueListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -147,7 +147,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(BF_INSERT, new BfBooleanValueListOutput<>(codec), args);
+        return createCommand(BF_INSERT, new ErrorTolerantBooleanValueListOutput<>(codec), args);
     }
 
     Command<K, V, String> bfLoadChunk(K key, long iterator, byte[] data) {
@@ -162,7 +162,7 @@ class RedisBloomFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V>
     final Command<K, V, List<Boolean>> bfMAdd(K key, V... values) {
         notNullKey(key);
 
-        return createCommand(BF_MADD, new BooleanListOutput<>(codec), key, values);
+        return createCommand(BF_MADD, new ErrorTolerantBooleanListOutput<>(codec), key, values);
     }
 
     @SafeVarargs
