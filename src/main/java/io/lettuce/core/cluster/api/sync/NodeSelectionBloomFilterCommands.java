@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026-Present, Redis Ltd.
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: MIT
+ */
 package io.lettuce.core.cluster.api.sync;
 
 import java.util.List;

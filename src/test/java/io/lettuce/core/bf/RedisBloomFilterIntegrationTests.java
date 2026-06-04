@@ -1,8 +1,8 @@
 /*
- * Copyright 2026, Redis Ltd. and Contributors
+ * Copyright (c) 2026-Present, Redis Ltd.
  * All rights reserved.
  *
- * Licensed under the MIT License.
+ * SPDX-License-Identifier: MIT
  */
 package io.lettuce.core.bf;
 
