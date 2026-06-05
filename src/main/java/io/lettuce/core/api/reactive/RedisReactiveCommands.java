@@ -68,6 +68,9 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
      */
     static <K, V> RedisReactiveCommands<K, V> from(StatefulRedisConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
+        if (connection instanceof StatefulRedisPubSubConnection) {
+            return from((StatefulRedisPubSubConnection<K, V>) connection);
+        }
         return CommandsCache.stamp(connection, RedisReactiveCommands.class, () -> new RedisReactiveCommandsImpl<>(connection,
                 connection.getCodec(), () -> connection.getOptions().getJsonParser().get()));
     }
@@ -99,6 +102,9 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
      */
     static <K, V> RedisPubSubReactiveCommands<K, V> from(StatefulRedisPubSubConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
+        if (connection instanceof StatefulRedisClusterPubSubConnection) {
+            return from((StatefulRedisClusterPubSubConnection<K, V>) connection);
+        }
         return CommandsCache.stamp(connection, RedisPubSubReactiveCommands.class,
                 () -> new RedisPubSubReactiveCommandsImpl<>(connection, connection.getCodec()));
     }
