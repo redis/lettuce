@@ -752,7 +752,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * @return the newly created command API instance.
      */
     protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
-        return builder.fromStandalone(this);
+        return builder.from(this);
     }
 
     /**

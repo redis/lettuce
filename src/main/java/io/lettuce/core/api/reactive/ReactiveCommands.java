@@ -80,19 +80,19 @@ public interface ReactiveCommands<K, V> extends Commands<K, V>, BaseRedisReactiv
             }
 
             @Override
-            public ReactiveCommands<K, V> fromStandalone(StatefulRedisConnection<K, V> connection) {
+            public ReactiveCommands<K, V> from(StatefulRedisConnection<K, V> connection) {
                 return new RedisReactiveCommandsImpl<>(connection, connection.getCodec(),
                         () -> connection.getOptions().getJsonParser().get());
             }
 
             @Override
-            public ReactiveCommands<K, V> fromCluster(StatefulRedisClusterConnection<K, V> connection) {
+            public ReactiveCommands<K, V> from(StatefulRedisClusterConnection<K, V> connection) {
                 return new RedisAdvancedClusterReactiveCommandsImpl<>(connection, connection.getCodec(),
                         () -> connection.getOptions().getJsonParser().get());
             }
 
             @Override
-            public ReactiveCommands<K, V> fromPubSub(StatefulRedisPubSubConnection<K, V> connection) {
+            public ReactiveCommands<K, V> from(StatefulRedisPubSubConnection<K, V> connection) {
                 return new RedisPubSubReactiveCommandsImpl<>(connection, connection.getCodec());
             }
 
@@ -102,7 +102,7 @@ public interface ReactiveCommands<K, V> extends Commands<K, V>, BaseRedisReactiv
             }
 
             @Override
-            public ReactiveCommands<K, V> fromSentinel(StatefulRedisSentinelConnection<K, V> connection) {
+            public ReactiveCommands<K, V> from(StatefulRedisSentinelConnection<K, V> connection) {
                 return new RedisSentinelReactiveCommandsImpl<>(connection, connection.getCodec(),
                         () -> connection.getOptions().getJsonParser().get());
             }

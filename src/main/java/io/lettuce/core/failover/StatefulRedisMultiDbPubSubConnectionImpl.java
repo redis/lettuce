@@ -107,7 +107,7 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
 
     @Override
     protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
-        return builder.fromPubSub(this);
+        return builder.from(this);
     }
 
     @Override

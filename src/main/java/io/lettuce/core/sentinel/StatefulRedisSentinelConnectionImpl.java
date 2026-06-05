@@ -113,7 +113,7 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
 
     @Override
     protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
-        return builder.fromSentinel(this);
+        return builder.from(this);
     }
 
     /**

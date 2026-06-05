@@ -375,7 +375,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
      */
     @SuppressWarnings("unchecked")
     protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
-        return builder.fromStandalone((StatefulRedisConnection<K, V>) this);
+        return builder.from((StatefulRedisConnection<K, V>) this);
     }
 
     @SuppressWarnings("unchecked")

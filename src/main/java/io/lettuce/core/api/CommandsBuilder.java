@@ -57,7 +57,7 @@ public interface CommandsBuilder<K, V, T extends Commands<K, V>> {
      * @param connection the standalone connection.
      * @return the command API instance.
      */
-    T fromStandalone(StatefulRedisConnection<K, V> connection);
+    T from(StatefulRedisConnection<K, V> connection);
 
     /**
      * Create the command API for a Redis Cluster connection.
@@ -65,7 +65,7 @@ public interface CommandsBuilder<K, V, T extends Commands<K, V>> {
      * @param connection the cluster connection.
      * @return the command API instance.
      */
-    T fromCluster(StatefulRedisClusterConnection<K, V> connection);
+    T from(StatefulRedisClusterConnection<K, V> connection);
 
     /**
      * Create the command API for a Pub/Sub connection.
@@ -73,7 +73,7 @@ public interface CommandsBuilder<K, V, T extends Commands<K, V>> {
      * @param connection the Pub/Sub connection.
      * @return the command API instance.
      */
-    T fromPubSub(StatefulRedisPubSubConnection<K, V> connection);
+    T from(StatefulRedisPubSubConnection<K, V> connection);
 
     /**
      * Create the command API for a Redis Cluster Pub/Sub connection.
@@ -89,6 +89,6 @@ public interface CommandsBuilder<K, V, T extends Commands<K, V>> {
      * @param connection the Sentinel connection.
      * @return the command API instance.
      */
-    T fromSentinel(StatefulRedisSentinelConnection<K, V> connection);
+    T from(StatefulRedisSentinelConnection<K, V> connection);
 
 }
