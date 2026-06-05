@@ -5,7 +5,6 @@ import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -74,7 +73,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(StatefulRedisMultiDbConnectionImpl.class);
 
-    private final Map<Class<?>, Commands<K, V>> commandsCache = new HashMap<>();
+    private final Map<Class<?>, Commands<K, V>> commandsCache = new ConcurrentHashMap<>();
 
     protected final Map<RedisURI, RedisDatabaseImpl<C>> databases;
 
@@ -738,19 +737,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Commands<K, V>> T computeCommands(Class<T> type, Supplier<T> factory) {
-        T existing = (T) commandsCache.get(type);
-        if (existing != null) {
-            return existing;
-        }
-        synchronized (commandsCache) {
-            existing = (T) commandsCache.get(type);
-            if (existing != null) {
-                return existing;
-            }
-            T commands = factory.get();
-            commandsCache.put(type, commands);
-            return commands;
-        }
+        return (T) commandsCache.computeIfAbsent(type, k -> factory.get());
     }
 
     /**

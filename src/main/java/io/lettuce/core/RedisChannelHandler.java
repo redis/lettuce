@@ -7,8 +7,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Supplier;
@@ -62,7 +62,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
-    private final Map<Class<?>, Commands<K, V>> commandsCache = new HashMap<>();
+    private final Map<Class<?>, Commands<K, V>> commandsCache = new ConcurrentHashMap<>();
 
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
@@ -336,19 +336,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Commands<K, V>> T computeCommands(Class<T> type, Supplier<T> factory) {
-        T existing = (T) commandsCache.get(type);
-        if (existing != null) {
-            return existing;
-        }
-        synchronized (commandsCache) {
-            existing = (T) commandsCache.get(type);
-            if (existing != null) {
-                return existing;
-            }
-            T commands = factory.get();
-            commandsCache.put(type, commands);
-            return commands;
-        }
+        return (T) commandsCache.computeIfAbsent(type, k -> factory.get());
     }
 
     @SuppressWarnings("unchecked")
