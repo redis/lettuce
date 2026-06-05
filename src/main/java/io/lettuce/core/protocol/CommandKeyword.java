@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
  * @author dengliming
  * @author Tihomir Mateev
  * @author Ali Takavci
+ * @author Yordan Tsintsov
  */
 public enum CommandKeyword implements ProtocolKeyword {
 
@@ -68,7 +69,9 @@ public enum CommandKeyword implements ProtocolKeyword {
     FP16, BF16, FP32, FP64, FPHA,
 
     // INCREX keywords
-    BYFLOAT, BYINT, ENX, LBOUND, SATURATE, UBOUND;
+    BYFLOAT, BYINT, ENX, LBOUND, SATURATE, UBOUND,
+
+    CAPACITY, SIZE, FILTERS, ITEMS, EXPANSION, NONSCALING, ERROR, NOCREATE;
 
     public final byte[] bytes;
 
