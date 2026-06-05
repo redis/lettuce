@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.api.Commands;
-import io.lettuce.core.api.CommandsBuilder;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -334,20 +334,20 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     }
 
     /**
-     * Obtain a command API surface, creating and caching it on first access. Dispatches the builder to the factory method
-     * matching this connection's family via {@link #buildCommands(CommandsBuilder)}.
+     * Obtain a command API surface, creating and caching it on first access. Dispatches the factory to the method matching
+     * this connection's family via {@link #buildCommands(CommandsFactory)}.
      *
-     * @param builder the commands builder, must not be {@code null}.
+     * @param factory the commands factory, must not be {@code null}.
      * @param <T> the command API surface type.
      * @return the cached or newly created command API instance.
      * @since 7.7
      */
     @SuppressWarnings("unchecked")
-    public <T extends Commands<K, V>> T commands(CommandsBuilder<K, V, T> builder) {
+    public <T extends Commands<K, V>> T commands(CommandsFactory<K, V, T> factory) {
 
-        LettuceAssert.notNull(builder, "CommandsBuilder must not be null");
+        LettuceAssert.notNull(factory, "CommandsFactory must not be null");
 
-        Class<T> key = builder.cacheKey();
+        Class<T> key = factory.cacheKey();
         T existing = (T) commandsCache.get(key);
         if (existing != null) {
             return existing;
@@ -358,24 +358,24 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
             if (existing != null) {
                 return existing;
             }
-            T created = buildCommands(builder);
+            T created = buildCommands(factory);
             commandsCache.put(key, created);
             return created;
         }
     }
 
     /**
-     * Dispatch the builder to the factory method matching this connection's family. The default targets the standalone family;
+     * Dispatch the factory to the method matching this connection's family. The default targets the standalone family;
      * non-standalone connections override this to call the appropriate {@code from*} method.
      *
-     * @param builder the commands builder.
+     * @param factory the commands factory.
      * @param <T> the command API surface type.
      * @return the newly created command API instance.
      * @since 7.7
      */
     @SuppressWarnings("unchecked")
-    protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
-        return builder.from((StatefulRedisConnection<K, V>) this);
+    protected <T extends Commands<K, V>> T buildCommands(CommandsFactory<K, V, T> factory) {
+        return factory.from((StatefulRedisConnection<K, V>) this);
     }
 
     @SuppressWarnings("unchecked")

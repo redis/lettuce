@@ -35,7 +35,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.api.reactive.ReactiveCommands;
 import io.lettuce.core.api.reactive.RediSearchReactiveCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.search.HybridReply;
 import io.lettuce.core.search.arguments.hybrid.HybridArgs;
 import io.netty.util.internal.logging.InternalLogger;
@@ -171,7 +173,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             publishers.add(byNodeId.flatMap(conn -> {
 
                 if (conn.isOpen()) {
-                    return conn.reactive().clientSetname(name);
+                    return conn.commands(ReactiveCommands.reactive()).
                 }
                 return Mono.empty();
             }));

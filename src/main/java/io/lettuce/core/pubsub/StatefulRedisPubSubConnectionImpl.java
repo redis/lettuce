@@ -30,7 +30,7 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.Commands;
-import io.lettuce.core.api.CommandsBuilder;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
@@ -117,8 +117,8 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     }
 
     @Override
-    protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
-        return builder.from(this);
+    protected <T extends Commands<K, V>> T buildCommands(CommandsFactory<K, V, T> factory) {
+        return factory.from(this);
     }
 
     @Override

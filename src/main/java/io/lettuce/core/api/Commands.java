@@ -22,7 +22,7 @@ package io.lettuce.core.api;
 /**
  * Common supertype for every Redis command API surface. Extended by the flavor-specific umbrellas ({@code ReactiveCommands},
  * and in the future {@code SyncCommands} / {@code AsyncCommands}). Serves as the value type cached on a connection and the
- * upper bound for {@link CommandsBuilder}.
+ * upper bound for {@link CommandsFactory}.
  *
  * @param <K> Key type.
  * @param <V> Value type.

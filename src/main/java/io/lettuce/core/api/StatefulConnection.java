@@ -125,16 +125,16 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
 
     /**
      * Obtain a command API surface for this connection, creating and caching it on first access. The connection dispatches the
-     * given {@link CommandsBuilder} to the factory method matching its own family; subsequent calls with a builder reporting
-     * the same {@link CommandsBuilder#cacheKey() cache key} return the cached instance.
+     * given {@link CommandsFactory} to the method matching its own family; subsequent calls with a factory reporting the same
+     * {@link CommandsFactory#cacheKey() cache key} return the cached instance.
      * <p>
-     * Example: {@code connection.commands(RedisReactiveCommands.reactive())}
+     * Example: {@code connection.commands(ReactiveCommands.reactive())}
      *
-     * @param builder the commands builder for the desired flavor, must not be {@code null}.
+     * @param factory the commands factory for the desired flavor, must not be {@code null}.
      * @param <T> the command API surface type.
      * @return the cached or newly created command API instance.
      * @since 7.7
      */
-    <T extends Commands<K, V>> T commands(CommandsBuilder<K, V, T> builder);
+    <T extends Commands<K, V>> T commands(CommandsFactory<K, V, T> factory);
 
 }

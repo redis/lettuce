@@ -53,9 +53,9 @@ public class SentinelServerCommandIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;
 
-    private StatefulRedisSentinelConnection<String, String> connection;
+    protected StatefulRedisSentinelConnection<String, String> connection;
 
-    private RedisSentinelCommands<String, String> sentinel;
+    protected RedisSentinelCommands<String, String> sentinel;
 
     @Inject
     public SentinelServerCommandIntegrationTests(RedisClient redisClient) {

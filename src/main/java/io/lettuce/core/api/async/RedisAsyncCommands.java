@@ -19,9 +19,7 @@
  */
 package io.lettuce.core.api.async;
 
-import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.json.JsonParser;
 
 /**
@@ -33,49 +31,7 @@ import io.lettuce.core.json.JsonParser;
  * @author Tihomir Mateev
  * @since 3.0
  */
-public interface RedisAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, RedisAclAsyncCommands<K, V>,
-        RedisClusterAsyncCommands<K, V>, RedisFunctionAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>,
-        RedisHashAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
-        RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
-        RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
-        RedisTransactionalAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>, RedisVectorSetAsyncCommands<K, V>,
-        RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V> {
-
-    /**
-     * Authenticate to the server.
-     *
-     * @param password the password
-     * @return String simple-string-reply
-     */
-    RedisFuture<String> auth(CharSequence password);
-
-    /**
-     * Authenticate to the server with username and password. Requires Redis 6 or newer.
-     *
-     * @param username the username
-     * @param password the password
-     * @return String simple-string-reply
-     * @since 6.0
-     */
-    RedisFuture<String> auth(String username, CharSequence password);
-
-    /**
-     * Change the selected database for the current connection.
-     *
-     * @param db the database number
-     * @return String simple-string-reply
-     */
-    RedisFuture<String> select(int db);
-
-    /**
-     * Swap two Redis databases, so that immediately all the clients connected to a given DB will see the data of the other DB,
-     * and the other way around
-     *
-     * @param db1 the first database number
-     * @param db2 the second database number
-     * @return String simple-string-reply
-     */
-    RedisFuture<String> swapdb(int db1, int db2);
+public interface RedisAsyncCommands<K, V> extends AsyncCommands<K, V> {
 
     /**
      * @return the underlying connection.

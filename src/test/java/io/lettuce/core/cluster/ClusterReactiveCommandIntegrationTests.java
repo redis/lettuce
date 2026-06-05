@@ -8,6 +8,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.api.reactive.ReactiveCommands;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +52,7 @@ class ClusterReactiveCommandIntegrationTests {
         this.clusterClient = clusterClient;
         this.connection = connection;
 
-        this.reactive = connection.reactive();
+        this.reactive = connection.commands(ReactiveCommands.reactive());
         this.sync = connection.sync();
     }
 

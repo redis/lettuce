@@ -21,7 +21,7 @@ package io.lettuce.core.api.reactive;
 
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.api.Commands;
-import io.lettuce.core.api.CommandsBuilder;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.RedisAdvancedClusterReactiveCommandsImpl;
@@ -37,7 +37,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * Common reactive command surface shared by every connection family (standalone, cluster, Pub/Sub, sentinel). This is the value
- * type returned by {@link StatefulConnection#commands(CommandsBuilder) connection.commands(ReactiveCommands.reactive())} and
+ * type returned by {@link StatefulConnection#commands(CommandsFactory) connection.commands(ReactiveCommands.reactive())} and
  * the supertype of the family-specific reactive interfaces.
  * <p>
  * It aggregates the granular reactive command interfaces but, unlike {@code RedisReactiveCommands}, does not expose
@@ -57,21 +57,20 @@ public interface ReactiveCommands<K, V> extends Commands<K, V>, BaseRedisReactiv
         RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V> {
 
     /**
-     * Builder that resolves the reactive command API matching a connection's family. Use with
-     * {@link StatefulConnection#commands(CommandsBuilder)}:
+     * Factory that resolves the reactive command API matching a connection's family. Use with
+     * {@link StatefulConnection#commands(CommandsFactory)}:
      *
      * <pre class="code">
-     * 
      * ReactiveCommands&lt;K, V&gt; reactive = connection.commands(ReactiveCommands.reactive());
      * </pre>
      *
      * @param <K> Key type.
      * @param <V> Value type.
-     * @return the reactive commands builder.
+     * @return the reactive commands factory.
      * @since 7.7
      */
-    static <K, V> CommandsBuilder<K, V, ReactiveCommands<K, V>> builder() {
-        return new CommandsBuilder<K, V, ReactiveCommands<K, V>>() {
+    static <K, V> CommandsFactory<K, V, ReactiveCommands<K, V>> reactive() {
+        return new CommandsFactory<K, V, ReactiveCommands<K, V>>() {
 
             @Override
             @SuppressWarnings({ "unchecked", "rawtypes" })

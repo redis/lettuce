@@ -32,7 +32,7 @@ import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.Commands;
-import io.lettuce.core.api.CommandsBuilder;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
@@ -722,11 +722,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends Commands<K, V>> T commands(CommandsBuilder<K, V, T> builder) {
+    public <T extends Commands<K, V>> T commands(CommandsFactory<K, V, T> factory) {
 
-        LettuceAssert.notNull(builder, "CommandsBuilder must not be null");
+        LettuceAssert.notNull(factory, "CommandsFactory must not be null");
 
-        Class<T> key = builder.cacheKey();
+        Class<T> key = factory.cacheKey();
         T existing = (T) commandsCache.get(key);
         if (existing != null) {
             return existing;
@@ -737,7 +737,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             if (existing != null) {
                 return existing;
             }
-            T created = buildCommands(builder);
+            T created = buildCommands(factory);
             commandsCache.put(key, created);
             return created;
         }
@@ -751,8 +751,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * @param <T> the command API surface type.
      * @return the newly created command API instance.
      */
-    protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
-        return builder.from(this);
+    protected <T extends Commands<K, V>> T buildCommands(CommandsFactory<K, V, T> factory) {
+        return factory.from(this);
     }
 
     /**

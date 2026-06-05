@@ -25,26 +25,25 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
- * Builds a command API surface ({@code T}) for a connection, with one factory method per connection family.
+ * Creates a command API surface ({@code T}) for a connection, with one factory method per connection family.
  * <p>
  * This is the extension point for command "flavors" (reactive, and in the future RxJava, Mutiny, …). Each flavor provides a
- * {@code CommandsBuilder} implementation; the compiler obliges it to handle every connection family. Conversely, adding a new
+ * {@code CommandsFactory} implementation; the compiler obliges it to handle every connection family. Conversely, adding a new
  * connection family adds a method here, obliging every flavor to handle it.
  * <p>
  * A connection resolves the correct factory method based on its own family — the caller never selects it. Use through
- * {@link StatefulConnection#commands(CommandsBuilder)}:
+ * {@link StatefulConnection#commands(CommandsFactory)}:
  *
  * <pre class="code">
- * 
- * RedisReactiveCommands&lt;K, V&gt; reactive = connection.commands(RedisReactiveCommands.reactive());
+ * ReactiveCommands&lt;K, V&gt; reactive = connection.commands(ReactiveCommands.reactive());
  * </pre>
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @param <T> the command API surface produced by this builder.
+ * @param <T> the command API surface produced by this factory.
  * @since 7.7
  */
-public interface CommandsBuilder<K, V, T extends Commands<K, V>> {
+public interface CommandsFactory<K, V, T extends Commands<K, V>> {
 
     /**
      * @return the type produced by this builder, used as the cache key so repeated calls return the same instance.

@@ -3,6 +3,7 @@ package io.lettuce.core.sentinel.reactive;
 import javax.inject.Inject;
 
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.reactive.ReactiveCommands;
 import io.lettuce.core.sentinel.SentinelServerCommandIntegrationTests;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
@@ -26,6 +27,11 @@ public class SentinelServerReactiveCommandIntegrationTests extends SentinelServe
     protected RedisSentinelCommands<String, String> getSyncConnection(
             StatefulRedisSentinelConnection<String, String> connection) {
         return ReactiveSyncInvocationHandler.sync(connection);
+    }
+
+    @Override
+    public void clientKill() {
+        connection.commands(ReactiveCommands.reactive()).
     }
 
 }
