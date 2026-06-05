@@ -27,6 +27,10 @@ import io.lettuce.core.bf.BfInfoValue;
 import io.lettuce.core.bf.BfScanDumpValue;
 import io.lettuce.core.bf.arguments.BfInsertArgs;
 import io.lettuce.core.bf.arguments.BfReserveArgs;
+import io.lettuce.core.cf.CfInfoValue;
+import io.lettuce.core.cf.CfScanDumpValue;
+import io.lettuce.core.cf.arguments.CfInsertArgs;
+import io.lettuce.core.cf.arguments.CfReserveArgs;
 import io.lettuce.core.cluster.PipelinedRedisFuture;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
@@ -115,7 +119,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
         RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V>,
-        RedisBloomFilterAsyncCommands<K, V> {
+        RedisBloomFilterAsyncCommands<K, V>, RedisCuckooFilterAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -130,6 +134,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     private final RedisArrayCommandBuilder<K, V> arrayCommandBuilder;
 
     private final RedisBloomFilterCommandBuilder<K, V> bloomFilterCommandBuilder;
+
+    private final RedisCuckooFilterCommandBuilder<K, V> cuckooFilterCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -150,6 +156,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
         this.arrayCommandBuilder = new RedisArrayCommandBuilder<>(codec);
         this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
+        this.cuckooFilterCommandBuilder = new RedisCuckooFilterCommandBuilder<>(codec);
     }
 
     /**
@@ -4289,6 +4296,83 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<BfScanDumpValue> bfScanDump(K key, long iterator) {
         return dispatch(bloomFilterCommandBuilder.bfScanDump(key, iterator));
+    }
+
+    // --- Redis Cuckoo Filter Commands ---
+
+    @Override
+    public RedisFuture<String> cfReserve(K key, long capacity) {
+        return dispatch(cuckooFilterCommandBuilder.cfReserve(key, capacity));
+    }
+
+    @Override
+    public RedisFuture<String> cfReserve(K key, long capacity, CfReserveArgs args) {
+        return dispatch(cuckooFilterCommandBuilder.cfReserve(key, capacity, args));
+    }
+
+    @Override
+    public RedisFuture<Boolean> cfAdd(K key, V value) {
+        return dispatch(cuckooFilterCommandBuilder.cfAdd(key, value));
+    }
+
+    @Override
+    public RedisFuture<Boolean> cfAddNx(K key, V value) {
+        return dispatch(cuckooFilterCommandBuilder.cfAddNx(key, value));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> cfInsert(K key, V... values) {
+        return dispatch(cuckooFilterCommandBuilder.cfInsert(key, values));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> cfInsert(K key, CfInsertArgs args, V... values) {
+        return dispatch(cuckooFilterCommandBuilder.cfInsert(key, args, values));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> cfInsertNx(K key, V... values) {
+        return dispatch(cuckooFilterCommandBuilder.cfInsertNx(key, values));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> cfInsertNx(K key, CfInsertArgs args, V... values) {
+        return dispatch(cuckooFilterCommandBuilder.cfInsertNx(key, args, values));
+    }
+
+    @Override
+    public RedisFuture<Boolean> cfExists(K key, V value) {
+        return dispatch(cuckooFilterCommandBuilder.cfExists(key, value));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> cfMExists(K key, V... values) {
+        return dispatch(cuckooFilterCommandBuilder.cfMExists(key, values));
+    }
+
+    @Override
+    public RedisFuture<Boolean> cfDel(K key, V value) {
+        return dispatch(cuckooFilterCommandBuilder.cfDel(key, value));
+    }
+
+    @Override
+    public RedisFuture<Long> cfCount(K key, V value) {
+        return dispatch(cuckooFilterCommandBuilder.cfCount(key, value));
+    }
+
+    @Override
+    public RedisFuture<CfScanDumpValue> cfScanDump(K key, long cursor) {
+        return dispatch(cuckooFilterCommandBuilder.cfScanDump(key, cursor));
+    }
+
+    @Override
+    public RedisFuture<String> cfLoadChunk(K key, long cursor, byte[] data) {
+        return dispatch(cuckooFilterCommandBuilder.cfLoadChunk(key, cursor, data));
+    }
+
+    @Override
+    public RedisFuture<CfInfoValue> cfInfo(K key) {
+        return dispatch(cuckooFilterCommandBuilder.cfInfo(key));
     }
 
 }
