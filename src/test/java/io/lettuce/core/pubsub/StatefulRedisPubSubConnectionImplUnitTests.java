@@ -2,9 +2,12 @@ package io.lettuce.core.pubsub;
 
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.AsyncCommand;
+import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static io.lettuce.TestTags.UNIT_TEST;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.*;
@@ -46,6 +50,24 @@ class StatefulRedisPubSubConnectionImplUnitTests {
         when(mockedWriter.getClientResources()).thenReturn(mockedReseources);
 
         connection = new StatefulRedisPubSubConnectionImpl(mockedEndpoint, mockedWriter, codec, timeout);
+    }
+
+    @Test
+    void reactiveCommandsAreCached() {
+        RedisPubSubReactiveCommands first = RedisReactiveCommands.from(connection);
+        RedisPubSubReactiveCommands second = RedisReactiveCommands.from(connection);
+
+        assertThat(first).isNotNull();
+        assertThat(second).isSameAs(first);
+    }
+
+    @Test
+    void reactiveCommandsResolvedThroughWiderReferenceReturnSameCachedInstance() {
+        RedisPubSubReactiveCommands viaPubSub = RedisReactiveCommands.from(connection);
+        Object viaStandalone = RedisReactiveCommands.from((StatefulRedisConnection) connection);
+
+        assertThat(viaStandalone).isInstanceOf(RedisPubSubReactiveCommands.class);
+        assertThat(viaStandalone).isSameAs(viaPubSub);
     }
 
     @Test
