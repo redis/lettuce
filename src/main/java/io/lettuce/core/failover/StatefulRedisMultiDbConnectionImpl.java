@@ -5,6 +5,7 @@ import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -19,6 +20,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +32,8 @@ import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.api.Commands;
+import io.lettuce.core.internal.CommandsCache;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
@@ -66,9 +70,11 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 @Experimental
 class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
-        implements StatefulRedisMultiDbConnection<K, V> {
+        implements StatefulRedisMultiDbConnection<K, V>, CommandsCache<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(StatefulRedisMultiDbConnectionImpl.class);
+
+    private final Map<Class<?>, Commands<K, V>> commandsCache = new HashMap<>();
 
     protected final Map<RedisURI, RedisDatabaseImpl<C>> databases;
 
@@ -727,6 +733,24 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     @Override
     public RedisCodec<K, V> getCodec() {
         return codec;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Commands<K, V>> T computeCommands(Class<T> type, Supplier<T> factory) {
+        T existing = (T) commandsCache.get(type);
+        if (existing != null) {
+            return existing;
+        }
+        synchronized (commandsCache) {
+            existing = (T) commandsCache.get(type);
+            if (existing != null) {
+                return existing;
+            }
+            T commands = factory.get();
+            commandsCache.put(type, commands);
+            return commands;
+        }
     }
 
     /**

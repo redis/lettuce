@@ -20,6 +20,7 @@
 package io.lettuce.core.api.reactive;
 
 import io.lettuce.core.RedisReactiveCommandsImpl;
+import io.lettuce.core.api.Commands;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.RedisAdvancedClusterReactiveCommandsImpl;
 import io.lettuce.core.cluster.RedisClusterPubSubReactiveCommandsImpl;
@@ -28,6 +29,7 @@ import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import io.lettuce.core.cluster.pubsub.api.reactive.RedisClusterPubSubReactiveCommands;
+import io.lettuce.core.internal.CommandsCache;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.pubsub.RedisPubSubReactiveCommandsImpl;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
@@ -46,14 +48,14 @@ import reactor.core.publisher.Mono;
  * @author Yordan Tsintsov
  * @since 5.0
  */
-public interface RedisReactiveCommands<K, V>
-        extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>,
-        RedisFunctionReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>,
-        RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisListReactiveCommands<K, V>,
-        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
-        RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
-        RedisTransactionalReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>,
-        RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V> {
+public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>,
+        RedisClusterReactiveCommands<K, V>, RedisFunctionReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
+        RedisHashReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
+        RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
+        RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>,
+        RedisStringReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
+        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>,
+        RedisBloomFilterReactiveCommands<K, V>, Commands<K, V> {
 
     /**
      * Obtain the {@link RedisReactiveCommands} API for the given connection.
@@ -66,8 +68,8 @@ public interface RedisReactiveCommands<K, V>
      */
     static <K, V> RedisReactiveCommands<K, V> from(StatefulRedisConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
-        return new RedisReactiveCommandsImpl<>(connection, connection.getCodec(),
-                () -> connection.getOptions().getJsonParser().get());
+        return CommandsCache.stamp(connection, RedisReactiveCommands.class, () -> new RedisReactiveCommandsImpl<>(connection,
+                connection.getCodec(), () -> connection.getOptions().getJsonParser().get()));
     }
 
     /**
@@ -81,8 +83,9 @@ public interface RedisReactiveCommands<K, V>
      */
     static <K, V> RedisAdvancedClusterReactiveCommands<K, V> from(StatefulRedisClusterConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
-        return new RedisAdvancedClusterReactiveCommandsImpl<>(connection, connection.getCodec(),
-                () -> connection.getOptions().getJsonParser().get());
+        return CommandsCache.stamp(connection, RedisAdvancedClusterReactiveCommands.class,
+                () -> new RedisAdvancedClusterReactiveCommandsImpl<>(connection, connection.getCodec(),
+                        () -> connection.getOptions().getJsonParser().get()));
     }
 
     /**
@@ -96,7 +99,8 @@ public interface RedisReactiveCommands<K, V>
      */
     static <K, V> RedisPubSubReactiveCommands<K, V> from(StatefulRedisPubSubConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
-        return new RedisPubSubReactiveCommandsImpl<>(connection, connection.getCodec());
+        return CommandsCache.stamp(connection, RedisPubSubReactiveCommands.class,
+                () -> new RedisPubSubReactiveCommandsImpl<>(connection, connection.getCodec()));
     }
 
     /**
@@ -110,8 +114,9 @@ public interface RedisReactiveCommands<K, V>
      */
     static <K, V> RedisSentinelReactiveCommands<K, V> from(StatefulRedisSentinelConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
-        return new RedisSentinelReactiveCommandsImpl<>(connection, connection.getCodec(),
-                () -> connection.getOptions().getJsonParser().get());
+        return CommandsCache.stamp(connection, RedisSentinelReactiveCommands.class,
+                () -> new RedisSentinelReactiveCommandsImpl<>(connection, connection.getCodec(),
+                        () -> connection.getOptions().getJsonParser().get()));
     }
 
     /**
@@ -125,7 +130,8 @@ public interface RedisReactiveCommands<K, V>
      */
     static <K, V> RedisClusterPubSubReactiveCommands<K, V> from(StatefulRedisClusterPubSubConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
-        return new RedisClusterPubSubReactiveCommandsImpl<>(connection, connection.getCodec());
+        return CommandsCache.stamp(connection, RedisClusterPubSubReactiveCommands.class,
+                () -> new RedisClusterPubSubReactiveCommandsImpl<>(connection, connection.getCodec()));
     }
 
     /**
