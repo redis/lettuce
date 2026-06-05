@@ -41,6 +41,8 @@ import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.Commands;
+import io.lettuce.core.api.CommandsBuilder;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
@@ -165,6 +167,11 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     @Override
     public RedisAdvancedClusterReactiveCommands<K, V> reactive() {
         return reactive;
+    }
+
+    @Override
+    protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
+        return builder.fromCluster(this);
     }
 
     @Override

@@ -123,4 +123,18 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
      */
     RedisCodec<K, V> getCodec();
 
+    /**
+     * Obtain a command API surface for this connection, creating and caching it on first access. The connection dispatches the
+     * given {@link CommandsBuilder} to the factory method matching its own family; subsequent calls with a builder reporting
+     * the same {@link CommandsBuilder#cacheKey() cache key} return the cached instance.
+     * <p>
+     * Example: {@code connection.commands(RedisReactiveCommands.reactive())}
+     *
+     * @param builder the commands builder for the desired flavor, must not be {@code null}.
+     * @param <T> the command API surface type.
+     * @return the cached or newly created command API instance.
+     * @since 7.7
+     */
+    <T extends Commands<K, V>> T commands(CommandsBuilder<K, V, T> builder);
+
 }

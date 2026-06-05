@@ -26,6 +26,8 @@ import java.util.function.Supplier;
 import io.lettuce.core.ConnectionState;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.api.Commands;
+import io.lettuce.core.api.CommandsBuilder;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.JsonParser;
@@ -107,6 +109,11 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     @Override
     public RedisSentinelReactiveCommands<K, V> reactive() {
         return reactive;
+    }
+
+    @Override
+    protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
+        return builder.fromSentinel(this);
     }
 
     /**

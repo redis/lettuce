@@ -17,25 +17,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.api.reactive;
-
-import io.lettuce.core.api.StatefulRedisConnection;
+package io.lettuce.core.api;
 
 /**
- * A complete reactive and thread-safe Redis API with 400+ Methods.
+ * Common supertype for every Redis command API surface. Extended by the flavor-specific umbrellas ({@code ReactiveCommands},
+ * and in the future {@code SyncCommands} / {@code AsyncCommands}). Serves as the value type cached on a connection and the
+ * upper bound for {@link CommandsBuilder}.
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @author Mark Paluch
- * @since 5.0
+ * @since 7.7
  */
-public interface RedisReactiveCommands<K, V> extends ReactiveCommands<K, V> {
-
-    /**
-     * @return the underlying connection.
-     * @since 6.2, will be removed with Lettuce 7 to avoid exposing the underlying connection.
-     */
-    @Deprecated
-    StatefulRedisConnection<K, V> getStatefulConnection();
+public interface Commands<K, V> {
 
 }

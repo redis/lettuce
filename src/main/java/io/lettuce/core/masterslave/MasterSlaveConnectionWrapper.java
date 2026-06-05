@@ -7,6 +7,8 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisConnectionStateListener;
+import io.lettuce.core.api.Commands;
+import io.lettuce.core.api.CommandsBuilder;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -138,6 +140,11 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     @Override
     public RedisCodec<K, V> getCodec() {
         return delegate.getCodec();
+    }
+
+    @Override
+    public <T extends Commands<K, V>> T commands(CommandsBuilder<K, V, T> builder) {
+        return delegate.commands(builder);
     }
 
 }

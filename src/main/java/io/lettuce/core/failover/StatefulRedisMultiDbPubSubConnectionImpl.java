@@ -10,6 +10,8 @@ import java.util.function.Function;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.api.Commands;
+import io.lettuce.core.api.CommandsBuilder;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
@@ -101,6 +103,11 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     @SuppressWarnings("unchecked")
     public RedisPubSubReactiveCommands<K, V> reactive() {
         return (RedisPubSubReactiveCommands<K, V>) reactive;
+    }
+
+    @Override
+    protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
+        return builder.fromPubSub(this);
     }
 
     @Override

@@ -31,6 +31,8 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.Commands;
+import io.lettuce.core.api.CommandsBuilder;
 import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -113,6 +115,11 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     @Override
     public RedisClusterPubSubReactiveCommands<K, V> reactive() {
         return (RedisClusterPubSubReactiveCommands<K, V>) super.reactive();
+    }
+
+    @Override
+    protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
+        return builder.fromClusterPubSub(this);
     }
 
     @Override

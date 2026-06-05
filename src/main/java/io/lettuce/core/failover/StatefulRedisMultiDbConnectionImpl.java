@@ -5,6 +5,7 @@ import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -30,6 +31,8 @@ import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.api.Commands;
+import io.lettuce.core.api.CommandsBuilder;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
@@ -69,6 +72,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         implements StatefulRedisMultiDbConnection<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(StatefulRedisMultiDbConnectionImpl.class);
+
+    private final Map<Class<?>, Commands<K, V>> commandsCache = new HashMap<>();
 
     protected final Map<RedisURI, RedisDatabaseImpl<C>> databases;
 
@@ -713,6 +718,41 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     @Override
     public RedisCodec<K, V> getCodec() {
         return codec;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Commands<K, V>> T commands(CommandsBuilder<K, V, T> builder) {
+
+        LettuceAssert.notNull(builder, "CommandsBuilder must not be null");
+
+        Class<T> key = builder.cacheKey();
+        T existing = (T) commandsCache.get(key);
+        if (existing != null) {
+            return existing;
+        }
+
+        synchronized (commandsCache) {
+            existing = (T) commandsCache.get(key);
+            if (existing != null) {
+                return existing;
+            }
+            T created = buildCommands(builder);
+            commandsCache.put(key, created);
+            return created;
+        }
+    }
+
+    /**
+     * Dispatch the builder to the factory method matching this connection's family. Multi-database connections expose the
+     * standalone family; the Pub/Sub variant overrides this.
+     *
+     * @param builder the commands builder.
+     * @param <T> the command API surface type.
+     * @return the newly created command API instance.
+     */
+    protected <T extends Commands<K, V>> T buildCommands(CommandsBuilder<K, V, T> builder) {
+        return builder.fromStandalone(this);
     }
 
     /**
