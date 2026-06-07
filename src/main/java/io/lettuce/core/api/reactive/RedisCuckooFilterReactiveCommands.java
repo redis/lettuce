@@ -50,7 +50,9 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return Boolean integer-reply {@code true} if the item was added, {@code false} if it was already in the filter.
+     * @return Boolean integer-reply {@code true} if the item was added, {@code false} if it was already in the filter. The
+     *         {@code Mono} signals an error with {@code io.lettuce.core.RedisCommandExecutionException} if the filter is full
+     *         and cannot expand.
      */
     Mono<Boolean> cfAdd(K key, V value);
 
@@ -68,8 +70,12 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return Boolean where {@code true} means that the item was added; {@code false} means that the item already exists in the
-     *         filter.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code Value.just(true)} if added, {@code Value.empty()}
+     *         if the filter is full. CF.INSERT does not report already-existing items.
+     *         <p>
+     *         Note: over RESP3 a full-filter result may surface as {@code false}/{@code Value.just(false)} instead of
+     *         {@code null}/{@code Value.empty()}, as the server encodes -1 as a boolean.
+     *         </p>
      */
     Flux<Value<Boolean>> cfInsert(K key, V... values);
 
@@ -79,8 +85,12 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return Boolean where {@code true} means that the item was added; {@code false} means that the item already exists in the
-     *         filter.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code Value.just(true)} if added, {@code Value.empty()}
+     *         if the filter is full. CF.INSERT does not report already-existing items.
+     *         <p>
+     *         Note: over RESP3 a full-filter result may surface as {@code false}/{@code Value.just(false)} instead of
+     *         {@code null}/{@code Value.empty()}, as the server encodes -1 as a boolean.
+     *         </p>
      */
     Flux<Value<Boolean>> cfInsert(K key, CfInsertArgs args, V... values);
 
@@ -90,8 +100,12 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return Boolean where {@code true} means that the item was added; {@code false} means that the item already exists in the
-     *         filter.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code Value.just(true)} if added,
+     *         {@code Value.just(false)} if it already exists, {@code Value.empty()} if the filter is full.
+     *         <p>
+     *         Note: over RESP3 a full-filter result may surface as {@code false}/{@code Value.just(false)} instead of
+     *         {@code null}/{@code Value.empty()}, as the server encodes -1 as a boolean.
+     *         </p>
      */
     Flux<Value<Boolean>> cfInsertNx(K key, V... values);
 
@@ -102,8 +116,12 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return Boolean where {@code true} means that the item was added; {@code false} means that the item already exists in the
-     *         filter.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code Value.just(true)} if added,
+     *         {@code Value.just(false)} if it already exists, {@code Value.empty()} if the filter is full.
+     *         <p>
+     *         Note: over RESP3 a full-filter result may surface as {@code false}/{@code Value.just(false)} instead of
+     *         {@code null}/{@code Value.empty()}, as the server encodes -1 as a boolean.
+     *         </p>
      */
     Flux<Value<Boolean>> cfInsertNx(K key, CfInsertArgs args, V... values);
 
