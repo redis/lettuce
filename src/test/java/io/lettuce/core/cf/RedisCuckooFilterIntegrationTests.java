@@ -37,7 +37,7 @@ public class RedisCuckooFilterIntegrationTests {
 
     private static final String MY_VALUE_2 = "Dune Messiah";
 
-    private final RedisCommands<String, String> redis;
+    protected final RedisCommands<String, String> redis;
 
     @Inject
     protected RedisCuckooFilterIntegrationTests(RedisCommands<String, String> redis) {
@@ -164,39 +164,6 @@ public class RedisCuckooFilterIntegrationTests {
     }
 
     /**
-     * Verifies that CF.INSERT correctly handles items that cannot be inserted because the filter is full.
-     *
-     * <p>
-     * Redis returns integer {@code -1} per-item when the filter is full. The output class
-     * {@link io.lettuce.core.output.CuckooInsertBooleanListOutput} maps:
-     * <ul>
-     * <li>1 → {@code true} (inserted)</li>
-     * <li>0 → {@code false} (already exists)</li>
-     * <li>-1 → {@code null} (filter full)</li>
-     * </ul>
-     * This test reserves a tiny filter (BUCKETSIZE 1, EXPANSION 0) and inserts the same value repeatedly: the first two
-     * insertions succeed ({@code true}) while the remaining ones are full and return {@code -1}, which must map to {@code null}
-     * (distinct from {@code false}).
-     */
-    @Test
-    void cfInsertReturnsNullWhenFilterIsFull() {
-        String key = "cf:full:insert";
-        // BUCKETSIZE 1 EXPANSION 0: same value can appear in at most 2*BUCKETSIZE=2 slots; EXPANSION 0 disables growth
-        redis.cfReserve(key, 1000, CfReserveArgs.Builder.bucketSize(1).expansion(0));
-
-        // Same value repeated: first 2 succeed; subsequent inserts cannot be placed in the filter
-        List<Boolean> result = redis.cfInsert(key, "W", "W", "W", "W", "W", "W");
-
-        assertThat(result).hasSize(6);
-        assertThat(result.get(0)).isEqualTo(Boolean.TRUE);
-        assertThat(result.get(1)).isEqualTo(Boolean.TRUE);
-        // Elements 2-5: filter is full, server returns -1, which must map to null (distinct from false)
-        for (int i = 2; i < result.size(); i++) {
-            assertThat(result.get(i)).as("result[%d] must be null (filter full = -1)", i).isNull();
-        }
-    }
-
-    /**
      * Verifies that CF.INSERTNX distinguishes between "already exists" ({@code false}) and "filter full" ({@code null}).
      *
      * <p>
@@ -206,9 +173,11 @@ public class RedisCuckooFilterIntegrationTests {
      *
      * <p>
      * Note: reproducing -1 via INSERTNX is difficult because inserting the same value always returns 0 ("already exists"). The
-     * -1 → null mapping is verified end-to-end by {@link #cfInsertReturnsNullWhenFilterIsFull()}, which uses CF.INSERT and the
-     * same underlying output class ({@link io.lettuce.core.output.CuckooInsertBooleanListOutput}). This test focuses on
-     * confirming that 0 ("already exists") maps to {@code false}, NOT to {@code null}.
+     * -1 → null mapping is verified in the RESP2 integration tests
+     * ({@link RedisCuckooFilterResp2IntegrationTests#cfInsertReturnsNullWhenFilterIsFull()}) and in the unit tests
+     * (CuckooInsertBooleanListOutputUnitTests), which use CF.INSERT and the same underlying output class
+     * ({@link io.lettuce.core.output.CuckooInsertBooleanListOutput}). This test focuses on confirming that 0 ("already exists")
+     * maps to {@code false}, NOT to {@code null}.
      */
     @Test
     void cfInsertNxDistinguishesAlreadyExistsFromFilterFull() {

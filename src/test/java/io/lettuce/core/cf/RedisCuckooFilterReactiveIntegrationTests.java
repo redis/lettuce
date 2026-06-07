@@ -79,38 +79,13 @@ public class RedisCuckooFilterReactiveIntegrationTests extends RedisCuckooFilter
     }
 
     /**
-     * Reactive counterpart of {@link RedisCuckooFilterIntegrationTests#cfInsertReturnsNullWhenFilterIsFull()}.
-     *
-     * <p>
-     * Verifies that CF.INSERT emits the correct {@link Value} wrappers for a full filter. Redis returns {@code -1} per-item
-     * when the filter is full, which maps to {@code Value.empty()}. The first two insertions succeed ({@code Value.just(true)})
-     * while the remaining ones return {@code -1} and must map to {@code Value.empty()}.
-     */
-    @Test
-    @Override
-    void cfInsertReturnsNullWhenFilterIsFull() {
-        String key = "cf:full:reactive:insert";
-        // BUCKETSIZE 1 EXPANSION 0: same value can appear at most 2*BUCKETSIZE=2 times; expansion disabled
-        reactive.cfReserve(key, 1000, CfReserveArgs.Builder.bucketSize(1).expansion(0)).block();
-
-        List<Value<Boolean>> result = reactive.cfInsert(key, "W", "W", "W", "W", "W", "W").collectList().block();
-
-        assertThat(result).isNotNull().hasSize(6);
-        assertThat(result.get(0)).isEqualTo(Value.just(Boolean.TRUE));
-        assertThat(result.get(1)).isEqualTo(Value.just(Boolean.TRUE));
-        // Elements 2-5: filter full, server returns -1, which must map to Value.empty() (distinct from Value.just(false))
-        for (int i = 2; i < result.size(); i++) {
-            assertThat(result.get(i)).as("result[%d] must be Value.empty() (filter full = -1)", i).isEqualTo(Value.empty());
-        }
-    }
-
-    /**
      * Reactive counterpart of {@link RedisCuckooFilterIntegrationTests#cfInsertNxDistinguishesAlreadyExistsFromFilterFull()}.
      *
      * <p>
      * Verifies that CF.INSERTNX emits {@code Value.just(false)} for "already exists" (0), NOT {@code Value.empty()} which
      * represents "filter full" (-1). The -1 → Value.empty() mapping is verified by
-     * {@link #cfInsertReturnsNullWhenFilterIsFull()}.
+     * {@link RedisCuckooFilterResp2IntegrationTests#cfInsertReturnsNullWhenFilterIsFull()} (RESP2) and
+     * CuckooInsertBooleanValueListOutputUnitTests (unit tests).
      */
     @Test
     @Override
