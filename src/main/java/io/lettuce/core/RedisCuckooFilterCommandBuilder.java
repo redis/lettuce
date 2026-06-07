@@ -71,7 +71,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(CF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new CuckooInsertBooleanListOutput<>(codec), args);
     }
 
     Command<K, V, List<Boolean>> cfInsert(K key, CfInsertArgs insertArgs, V value) {
@@ -81,7 +81,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(CF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new CuckooInsertBooleanListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -90,7 +90,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(CF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new CuckooInsertBooleanListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -101,7 +101,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(CF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new CuckooInsertBooleanListOutput<>(codec), args);
     }
 
     Command<K, V, List<Value<Boolean>>> cfInsertValues(K key, V value) {
@@ -109,7 +109,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(CF_INSERT, new ErrorTolerantBooleanValueListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new CuckooInsertBooleanValueListOutput<>(codec), args);
     }
 
     Command<K, V, List<Value<Boolean>>> cfInsertValues(K key, CfInsertArgs insertArgs, V value) {
@@ -119,7 +119,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(CF_INSERT, new ErrorTolerantBooleanValueListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new CuckooInsertBooleanValueListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -128,7 +128,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(CF_INSERT, new ErrorTolerantBooleanValueListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new CuckooInsertBooleanValueListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -139,7 +139,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(CF_INSERT, new ErrorTolerantBooleanValueListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new CuckooInsertBooleanValueListOutput<>(codec), args);
     }
 
     Command<K, V, List<Boolean>> cfInsertNx(K key, V value) {
@@ -147,7 +147,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(CF_INSERTNX, new ErrorTolerantBooleanListOutput<>(codec), args);
+        return createCommand(CF_INSERTNX, new CuckooInsertBooleanListOutput<>(codec), args);
     }
 
     Command<K, V, List<Boolean>> cfInsertNx(K key, CfInsertArgs insertArgs, V value) {
@@ -157,7 +157,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(CF_INSERTNX, new ErrorTolerantBooleanListOutput<>(codec), args);
+        return createCommand(CF_INSERTNX, new CuckooInsertBooleanListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -166,7 +166,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(CF_INSERTNX, new ErrorTolerantBooleanListOutput<>(codec), args);
+        return createCommand(CF_INSERTNX, new CuckooInsertBooleanListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -177,7 +177,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(CF_INSERTNX, new ErrorTolerantBooleanListOutput<>(codec), args);
+        return createCommand(CF_INSERTNX, new CuckooInsertBooleanListOutput<>(codec), args);
     }
 
     Command<K, V, List<Value<Boolean>>> cfInsertNxValues(K key, V value) {
@@ -185,7 +185,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(CF_INSERTNX, new ErrorTolerantBooleanValueListOutput<>(codec), args);
+        return createCommand(CF_INSERTNX, new CuckooInsertBooleanValueListOutput<>(codec), args);
     }
 
     Command<K, V, List<Value<Boolean>>> cfInsertNxValues(K key, CfInsertArgs insertArgs, V value) {
@@ -195,7 +195,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(CF_INSERTNX, new ErrorTolerantBooleanValueListOutput<>(codec), args);
+        return createCommand(CF_INSERTNX, new CuckooInsertBooleanValueListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -204,7 +204,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(CF_INSERTNX, new ErrorTolerantBooleanValueListOutput<>(codec), args);
+        return createCommand(CF_INSERTNX, new CuckooInsertBooleanValueListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -215,7 +215,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(CF_INSERTNX, new ErrorTolerantBooleanValueListOutput<>(codec), args);
+        return createCommand(CF_INSERTNX, new CuckooInsertBooleanValueListOutput<>(codec), args);
     }
 
     Command<K, V, Boolean> cfExists(K key, V value) {
