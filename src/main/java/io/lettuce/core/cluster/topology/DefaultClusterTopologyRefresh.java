@@ -256,7 +256,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
                 allNodes.addAll(nodeWithStats);
 
                 Partitions partitions = new Partitions();
-                partitions.addAll(nodeWithStats);
+                partitions.addAllWithoutCache(nodeWithStats);
 
                 nodeTopologyView.setPartitions(partitions);
 
