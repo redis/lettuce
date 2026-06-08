@@ -31,6 +31,9 @@ import reactor.core.publisher.Flux;
 import io.lettuce.core.GeoArgs;
 import io.lettuce.core.GeoWithin;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulConnection;
+import io.lettuce.core.internal.CommandsBuilderFactory;
+import io.lettuce.core.internal.CommandsFor;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
@@ -136,6 +139,21 @@ public class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubRea
 
             return async.getConnectionAsync(ConnectionIntent.WRITE, uri.getHost(), uri.getPort())
                     .thenApply(it -> (StatefulRedisPubSubConnection<K, V>) it);
+        }
+
+    }
+
+    /**
+     * Factory for {@link RedisClusterPubSubReactiveCommands}.
+     */
+    @CommandsFor(api = RedisClusterPubSubReactiveCommands.class, connection = StatefulRedisClusterPubSubConnection.class)
+    public static class Factory implements CommandsBuilderFactory {
+
+        @Override
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        public Object create(StatefulConnection<?, ?> connection) {
+            StatefulRedisClusterPubSubConnection conn = (StatefulRedisClusterPubSubConnection) connection;
+            return new RedisClusterPubSubReactiveCommandsImpl<>(conn, conn.getCodec());
         }
 
     }

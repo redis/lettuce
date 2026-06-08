@@ -25,7 +25,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisReactiveCommandsImpl;
+import io.lettuce.core.api.StatefulConnection;
+import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.CommandsBuilderFactory;
+import io.lettuce.core.internal.CommandsFor;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.pubsub.api.reactive.ChannelMessage;
 import io.lettuce.core.pubsub.api.reactive.PatternMessage;
@@ -178,6 +182,27 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     @SuppressWarnings("unchecked")
     public StatefulRedisPubSubConnection<K, V> getStatefulConnection() {
         return (StatefulRedisPubSubConnection<K, V>) super.getStatefulConnection();
+    }
+
+    /**
+     * Factory for {@link RedisPubSubReactiveCommands}.
+     */
+    @CommandsFor(api = RedisPubSubReactiveCommands.class, connection = StatefulRedisPubSubConnection.class)
+    public static class Factory implements CommandsBuilderFactory {
+
+        @Override
+        public boolean supports(StatefulConnection<?, ?> connection, Class<?> connectionType) {
+            return connection instanceof StatefulRedisPubSubConnection
+                    && !(connection instanceof StatefulRedisClusterPubSubConnection);
+        }
+
+        @Override
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        public Object create(StatefulConnection<?, ?> connection) {
+            StatefulRedisPubSubConnection conn = (StatefulRedisPubSubConnection) connection;
+            return new RedisPubSubReactiveCommandsImpl<>(conn, conn.getCodec());
+        }
+
     }
 
 }

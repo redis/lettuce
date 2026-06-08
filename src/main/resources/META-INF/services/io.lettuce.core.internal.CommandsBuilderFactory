@@ -1,0 +1,10 @@
+io.lettuce.core.RedisAsyncCommandsImpl$Factory
+io.lettuce.core.RedisReactiveCommandsImpl$Factory
+io.lettuce.core.cluster.RedisAdvancedClusterAsyncCommandsImpl$Factory
+io.lettuce.core.cluster.RedisAdvancedClusterReactiveCommandsImpl$Factory
+io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl$Factory
+io.lettuce.core.pubsub.RedisPubSubReactiveCommandsImpl$Factory
+io.lettuce.core.cluster.RedisClusterPubSubAsyncCommandsImpl$Factory
+io.lettuce.core.cluster.RedisClusterPubSubReactiveCommandsImpl$Factory
+io.lettuce.core.sentinel.RedisSentinelAsyncCommandsImpl$Factory
+io.lettuce.core.sentinel.RedisSentinelReactiveCommandsImpl$Factory

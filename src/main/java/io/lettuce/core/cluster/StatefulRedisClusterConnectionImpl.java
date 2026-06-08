@@ -124,6 +124,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         this.async = newRedisAdvancedClusterAsyncCommandsImpl();
         this.sync = newRedisAdvancedClusterCommandsImpl();
         this.reactive = newRedisAdvancedClusterReactiveCommandsImpl();
+
+        initialiseCommands();
     }
 
     @Override

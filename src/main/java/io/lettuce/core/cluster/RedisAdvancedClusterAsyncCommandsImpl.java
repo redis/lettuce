@@ -45,7 +45,10 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import io.lettuce.core.*;
+import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.internal.CommandsBuilderFactory;
+import io.lettuce.core.internal.CommandsFor;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.async.RedisKeyAsyncCommands;
 import io.lettuce.core.api.async.RedisScriptingAsyncCommands;
@@ -1138,6 +1141,22 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         RedisFuture<T> scanCursor = new PipelinedRedisFuture<>(stage);
         return mapper.map(nodeIds, currentNodeId, scanCursor);
+    }
+
+    /**
+     * Factory for {@link RedisAdvancedClusterAsyncCommands}.
+     */
+    @CommandsFor(api = RedisAdvancedClusterAsyncCommands.class, connection = StatefulRedisClusterConnection.class)
+    public static class Factory implements CommandsBuilderFactory {
+
+        @Override
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        public Object create(StatefulConnection<?, ?> connection) {
+            StatefulRedisClusterConnection conn = (StatefulRedisClusterConnection) connection;
+            return new RedisAdvancedClusterAsyncCommandsImpl<>(conn, conn.getCodec(),
+                    () -> conn.getOptions().getJsonParser().get());
+        }
+
     }
 
 }

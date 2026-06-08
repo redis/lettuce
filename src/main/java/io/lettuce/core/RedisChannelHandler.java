@@ -59,6 +59,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
+    private Object[] commandSlots;
+
     // accessed via CLOSED
     @SuppressWarnings("unused")
     private volatile int closed = ST_OPEN;
@@ -324,6 +326,31 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     public Duration getTimeout() {
         return timeout;
+    }
+
+    /**
+     * Get a command API instance for the given type from this connection's cache. This method is used internally by the
+     * {@code from()} factory methods on command interfaces.
+     *
+     * @param connection the connection (cast to RedisChannelHandler internally)
+     * @param type the command API type
+     * @param <K> Key type
+     * @param <V> Value type
+     * @param <T> Command API type
+     * @return the command API instance
+     * @throws IllegalArgumentException if no provider is registered for the given type
+     * @since 7.0
+     */
+    public static <K, V, T> T getCommands(StatefulConnection<K, V> connection, Class<T> type) {
+        return CommandsRegistry.get(((RedisChannelHandler<K, V>) connection).commandSlots, type);
+    }
+
+    /**
+     * Initialize command slots for this connection. Called once after connection is fully constructed.
+     */
+    @SuppressWarnings("unchecked")
+    protected void initialiseCommands() {
+        this.commandSlots = CommandsRegistry.initialiseSlots((StatefulConnection<K, V>) this);
     }
 
     @SuppressWarnings("unchecked")

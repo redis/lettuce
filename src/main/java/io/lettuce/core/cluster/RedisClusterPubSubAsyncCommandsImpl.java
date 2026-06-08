@@ -32,6 +32,9 @@ import io.lettuce.core.GeoArgs;
 import io.lettuce.core.GeoWithin;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulConnection;
+import io.lettuce.core.internal.CommandsBuilderFactory;
+import io.lettuce.core.internal.CommandsFor;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
@@ -115,6 +118,21 @@ public class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncC
 
             return async.getConnectionAsync(ConnectionIntent.WRITE, uri.getHost(), uri.getPort())
                     .thenApply(it -> (StatefulRedisPubSubConnection<K, V>) it);
+        }
+
+    }
+
+    /**
+     * Factory for {@link RedisClusterPubSubAsyncCommands}.
+     */
+    @CommandsFor(api = RedisClusterPubSubAsyncCommands.class, connection = StatefulRedisClusterPubSubConnection.class)
+    public static class Factory implements CommandsBuilderFactory {
+
+        @Override
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        public Object create(StatefulConnection<?, ?> connection) {
+            StatefulRedisClusterPubSubConnection conn = (StatefulRedisClusterPubSubConnection) connection;
+            return new RedisClusterPubSubAsyncCommandsImpl<>(conn, conn.getCodec());
         }
 
     }

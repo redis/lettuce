@@ -1,11 +1,14 @@
 package io.lettuce.core;
 
+import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.CommandsBuilderFactory;
+import io.lettuce.core.internal.CommandsFor;
 import io.lettuce.core.json.JsonParser;
-import reactor.core.publisher.Mono;
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 
 import java.util.function.Supplier;
 
@@ -44,6 +47,26 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
     @Override
     public StatefulRedisConnection<K, V> getStatefulConnection() {
         return (StatefulRedisConnection<K, V>) super.getConnection();
+    }
+
+    /**
+     * Factory for {@link RedisReactiveCommands}.
+     */
+    @CommandsFor(api = RedisReactiveCommands.class, connection = StatefulRedisConnection.class)
+    public static class Factory implements CommandsBuilderFactory {
+
+        @Override
+        public boolean supports(StatefulConnection<?, ?> connection, Class<?> connectionType) {
+            return connection instanceof StatefulRedisConnection && !(connection instanceof StatefulRedisPubSubConnection);
+        }
+
+        @Override
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        public Object create(StatefulConnection<?, ?> connection) {
+            StatefulRedisConnection conn = (StatefulRedisConnection) connection;
+            return new RedisReactiveCommandsImpl<>(conn, conn.getCodec(), () -> conn.getOptions().getJsonParser().get());
+        }
+
     }
 
 }

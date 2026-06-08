@@ -28,6 +28,8 @@ import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.CommandsBuilderFactory;
+import io.lettuce.core.internal.CommandsFor;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.AsyncCommand;
@@ -199,6 +201,21 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
     @Override
     public StatefulRedisSentinelConnection<K, V> getStatefulConnection() {
         return (StatefulRedisSentinelConnection<K, V>) connection;
+    }
+
+    /**
+     * Factory for {@link RedisSentinelAsyncCommands}.
+     */
+    @CommandsFor(api = RedisSentinelAsyncCommands.class, connection = StatefulRedisSentinelConnection.class)
+    public static class Factory implements CommandsBuilderFactory {
+
+        @Override
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        public Object create(StatefulConnection<?, ?> connection) {
+            StatefulRedisSentinelConnection conn = (StatefulRedisSentinelConnection) connection;
+            return new RedisSentinelAsyncCommandsImpl<>(conn, conn.getCodec());
+        }
+
     }
 
 }
