@@ -605,4 +605,68 @@ class PubSubCommandIntegrationTests extends AbstractRedisClientTest {
         pubsub.unsubscribe(channel);
     }
 
+    @Test
+    void autoResubscribeOnShardChannelUnsubscribed() throws Exception {
+        final BlockingQueue<String> subscribedChannels = LettuceFactories.newBlockingQueue();
+        final BlockingQueue<String> unsubscribedChannels = LettuceFactories.newBlockingQueue();
+
+        RedisPubSubListener<String, String> listener = new RedisPubSubAdapter<String, String>() {
+
+            @Override
+            public void ssubscribed(String channel, long count) {
+                subscribedChannels.add(channel);
+            }
+
+            @Override
+            public void sunsubscribed(String channel, long count) {
+                unsubscribedChannels.add(channel);
+            }
+
+        };
+
+        pubsub.getStatefulConnection().addListener(listener);
+        pubsub.ssubscribe(shardChannel);
+
+        assertThat(subscribedChannels.take()).isEqualTo(shardChannel);
+
+        pubsub.sunsubscribe(shardChannel);
+
+        assertThat(unsubscribedChannels.take()).isEqualTo(shardChannel);
+        assertThat(subscribedChannels.poll(50, TimeUnit.MILLISECONDS)).isNull();
+
+        pubsub.getStatefulConnection().removeListener(listener);
+    }
+
+    @Test
+    void noAutoResubscribeOnIntentionalUnsubscribe() throws Exception {
+        final BlockingQueue<String> subscribedChannels = LettuceFactories.newBlockingQueue();
+        final BlockingQueue<String> unsubscribedChannels = LettuceFactories.newBlockingQueue();
+
+        RedisPubSubListener<String, String> listener = new RedisPubSubAdapter<String, String>() {
+
+            @Override
+            public void ssubscribed(String channel, long count) {
+                subscribedChannels.add(channel);
+            }
+
+            @Override
+            public void sunsubscribed(String channel, long count) {
+                unsubscribedChannels.add(channel);
+            }
+
+        };
+
+        pubsub.getStatefulConnection().addListener(listener);
+        pubsub.ssubscribe(shardChannel);
+
+        assertThat(subscribedChannels.take()).isEqualTo(shardChannel);
+
+        pubsub.sunsubscribe(shardChannel);
+        assertThat(unsubscribedChannels.take()).isEqualTo(shardChannel);
+
+        assertThat(subscribedChannels.poll(50, TimeUnit.MILLISECONDS)).isNull();
+
+        pubsub.getStatefulConnection().removeListener(listener);
+    }
+
 }
