@@ -296,7 +296,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             multi.add(local);
         }
 
-        if (commandType.equals(MULTI.name())) {
+        // TransactionBundle handles its own MULTI/EXEC - don't apply traditional transaction logic
+        if (commandType.equals(MULTI.name()) && !isTransactionBundle(command)) {
             authHandler.startTransaction();
             multi = (multi == null ? new MultiOutput<>(codec) : multi);
 
@@ -320,6 +321,22 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             completeable.onComplete(consumer);
         }
         return command;
+    }
+
+    /**
+     * Check if the command is or wraps a TransactionBundle.
+     *
+     * @param command the command to check.
+     * @return {@code true} if the command is a TransactionBundle or wraps one.
+     */
+    private boolean isTransactionBundle(RedisCommand<?, ?, ?> command) {
+        if (command instanceof TransactionBundle) {
+            return true;
+        }
+        if (command instanceof DecoratedCommand) {
+            return ((DecoratedCommand<?, ?, ?>) command).getDelegate() instanceof TransactionBundle;
+        }
+        return false;
     }
 
     /**
@@ -357,6 +374,36 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         if (handler != null) {
             authHandler = handler;
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Bundled Transaction Support
+    // -------------------------------------------------------------------------
+
+    @Override
+    public TransactionBuilder<K, V> transaction() {
+        return new TransactionBuilderImpl<>(this, codec);
+    }
+
+    @Override
+    @SafeVarargs
+    public final TransactionBuilder<K, V> transaction(K... watchKeys) {
+        return new TransactionBuilderImpl<>(this, codec, watchKeys);
+    }
+
+    /**
+     * Dispatch a transaction bundle as a single atomic unit.
+     * <p>
+     * This method is called by {@link TransactionBuilderImpl} and cluster transaction support to dispatch the collected
+     * commands atomically.
+     *
+     * @param bundle the transaction bundle to dispatch.
+     * @return a future that completes with the transaction result.
+     */
+    public RedisFuture<TransactionResult> dispatchTransactionBundle(TransactionBundle<K, V> bundle) {
+        AsyncCommand<K, V, TransactionResult> async = new AsyncCommand<>(bundle);
+        RedisCommand<K, V, TransactionResult> dispatched = dispatch(async);
+        return async;
     }
 
 }

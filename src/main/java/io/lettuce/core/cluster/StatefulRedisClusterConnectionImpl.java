@@ -383,4 +383,19 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         return options instanceof ClusterClientOptions ? (ClusterClientOptions) options : null;
     }
 
+    // -------------------------------------------------------------------------
+    // Bundled Transaction Support
+    // -------------------------------------------------------------------------
+
+    @Override
+    public io.lettuce.core.TransactionBuilder<K, V> transaction() {
+        return new ClusterTransactionBuilder<>(this, codec);
+    }
+
+    @Override
+    @SafeVarargs
+    public final io.lettuce.core.TransactionBuilder<K, V> transaction(K... watchKeys) {
+        return new ClusterTransactionBuilder<>(this, codec, watchKeys);
+    }
+
 }
