@@ -3,14 +3,11 @@ package io.lettuce.core.masterslave;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisConnectionStateListener;
-import io.lettuce.core.api.Commands;
 import io.lettuce.core.api.async.RedisAsyncCommands;
-import io.lettuce.core.internal.CommandsCache;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -25,7 +22,7 @@ import io.lettuce.core.resource.ClientResources;
  * @author Mark Paluch
  * @since 5.2
  */
-class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConnection<K, V>, CommandsCache<K, V> {
+class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConnection<K, V> {
 
     private final StatefulRedisMasterReplicaConnection<K, V> delegate;
 
@@ -140,14 +137,6 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     @Override
     public void flushCommands() {
         delegate.flushCommands();
-    }
-
-    @Override
-    public <T extends Commands<K, V>> T computeCommands(Class<T> type, Supplier<T> factory) {
-        if (delegate instanceof CommandsCache) {
-            return ((CommandsCache<K, V>) delegate).computeCommands(type, factory);
-        }
-        return factory.get();
     }
 
     @Override

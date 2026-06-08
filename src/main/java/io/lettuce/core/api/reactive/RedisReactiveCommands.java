@@ -19,22 +19,16 @@
  */
 package io.lettuce.core.api.reactive;
 
-import io.lettuce.core.RedisReactiveCommandsImpl;
-import io.lettuce.core.api.Commands;
+import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.cluster.RedisAdvancedClusterReactiveCommandsImpl;
-import io.lettuce.core.cluster.RedisClusterPubSubReactiveCommandsImpl;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import io.lettuce.core.cluster.pubsub.api.reactive.RedisClusterPubSubReactiveCommands;
-import io.lettuce.core.internal.CommandsCache;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.pubsub.RedisPubSubReactiveCommandsImpl;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
-import io.lettuce.core.sentinel.RedisSentinelReactiveCommandsImpl;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import reactor.core.publisher.Mono;
@@ -48,14 +42,14 @@ import reactor.core.publisher.Mono;
  * @author Yordan Tsintsov
  * @since 5.0
  */
-public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>,
-        RedisClusterReactiveCommands<K, V>, RedisFunctionReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
-        RedisHashReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
-        RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
-        RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>,
-        RedisStringReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
-        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>,
-        RedisBloomFilterReactiveCommands<K, V>, Commands<K, V> {
+public interface RedisReactiveCommands<K, V>
+        extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>,
+        RedisFunctionReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>,
+        RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisListReactiveCommands<K, V>,
+        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
+        RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
+        RedisTransactionalReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>,
+        RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V> {
 
     /**
      * Obtain the {@link RedisReactiveCommands} API for the given connection.
@@ -71,8 +65,7 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
         if (connection instanceof StatefulRedisPubSubConnection) {
             return from((StatefulRedisPubSubConnection<K, V>) connection);
         }
-        return CommandsCache.stamp(connection, RedisReactiveCommands.class, () -> new RedisReactiveCommandsImpl<>(connection,
-                connection.getCodec(), () -> connection.getOptions().getJsonParser().get()));
+        return RedisChannelHandler.getCommands(connection, RedisReactiveCommands.class);
     }
 
     /**
@@ -86,9 +79,7 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
      */
     static <K, V> RedisAdvancedClusterReactiveCommands<K, V> from(StatefulRedisClusterConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
-        return CommandsCache.stamp(connection, RedisAdvancedClusterReactiveCommands.class,
-                () -> new RedisAdvancedClusterReactiveCommandsImpl<>(connection, connection.getCodec(),
-                        () -> connection.getOptions().getJsonParser().get()));
+        return RedisChannelHandler.getCommands(connection, RedisAdvancedClusterReactiveCommands.class);
     }
 
     /**
@@ -105,8 +96,7 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
         if (connection instanceof StatefulRedisClusterPubSubConnection) {
             return from((StatefulRedisClusterPubSubConnection<K, V>) connection);
         }
-        return CommandsCache.stamp(connection, RedisPubSubReactiveCommands.class,
-                () -> new RedisPubSubReactiveCommandsImpl<>(connection, connection.getCodec()));
+        return RedisChannelHandler.getCommands(connection, RedisPubSubReactiveCommands.class);
     }
 
     /**
@@ -120,9 +110,7 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
      */
     static <K, V> RedisSentinelReactiveCommands<K, V> from(StatefulRedisSentinelConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
-        return CommandsCache.stamp(connection, RedisSentinelReactiveCommands.class,
-                () -> new RedisSentinelReactiveCommandsImpl<>(connection, connection.getCodec(),
-                        () -> connection.getOptions().getJsonParser().get()));
+        return RedisChannelHandler.getCommands(connection, RedisSentinelReactiveCommands.class);
     }
 
     /**
@@ -136,8 +124,7 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
      */
     static <K, V> RedisClusterPubSubReactiveCommands<K, V> from(StatefulRedisClusterPubSubConnection<K, V> connection) {
         LettuceAssert.notNull(connection, "Connection must not be null");
-        return CommandsCache.stamp(connection, RedisClusterPubSubReactiveCommands.class,
-                () -> new RedisClusterPubSubReactiveCommandsImpl<>(connection, connection.getCodec()));
+        return RedisChannelHandler.getCommands(connection, RedisClusterPubSubReactiveCommands.class);
     }
 
     /**

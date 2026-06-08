@@ -51,7 +51,10 @@ import io.lettuce.core.json.JsonParser;
 import org.reactivestreams.Publisher;
 
 import io.lettuce.core.*;
+import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.internal.CommandsBuilderFactory;
+import io.lettuce.core.internal.CommandsFor;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
@@ -950,6 +953,22 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     private static <T> Mono<T> getMono(CompletableFuture<T> future) {
         return Mono.fromCompletionStage(future);
+    }
+
+    /**
+     * Factory for {@link RedisAdvancedClusterReactiveCommands}.
+     */
+    @CommandsFor(api = RedisAdvancedClusterReactiveCommands.class, connection = StatefulRedisClusterConnection.class)
+    public static class Factory implements CommandsBuilderFactory {
+
+        @Override
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        public Object create(StatefulConnection<?, ?> connection) {
+            StatefulRedisClusterConnection conn = (StatefulRedisClusterConnection) connection;
+            return new RedisAdvancedClusterReactiveCommandsImpl<>(conn, conn.getCodec(),
+                    () -> conn.getOptions().getJsonParser().get());
+        }
+
     }
 
 }

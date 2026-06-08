@@ -7,16 +7,11 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.function.Supplier;
 
 import io.lettuce.core.api.AsyncCloseable;
-import io.lettuce.core.api.Commands;
 import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.internal.CommandsCache;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandWrapper;
@@ -36,7 +31,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  * @since 3.0
  */
-public abstract class RedisChannelHandler<K, V> implements Closeable, ConnectionFacade, CommandsCache<K, V> {
+public abstract class RedisChannelHandler<K, V> implements Closeable, ConnectionFacade {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
 
@@ -62,9 +57,9 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
-    private final Map<Class<?>, Commands<K, V>> commandsCache = new ConcurrentHashMap<>();
-
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
+
+    private Object[] commandSlots;
 
     // accessed via CLOSED
     @SuppressWarnings("unused")
@@ -333,10 +328,29 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
         return timeout;
     }
 
-    @Override
+    /**
+     * Get a command API instance for the given type from this connection's cache. This method is used internally by the
+     * {@code from()} factory methods on command interfaces.
+     *
+     * @param connection the connection (cast to RedisChannelHandler internally)
+     * @param type the command API type
+     * @param <K> Key type
+     * @param <V> Value type
+     * @param <T> Command API type
+     * @return the command API instance
+     * @throws IllegalArgumentException if no provider is registered for the given type
+     * @since 7.0
+     */
+    public static <K, V, T> T getCommands(StatefulConnection<K, V> connection, Class<T> type) {
+        return CommandsRegistry.get(((RedisChannelHandler<K, V>) connection).commandSlots, type);
+    }
+
+    /**
+     * Initialize command slots for this connection. Called once after connection is fully constructed.
+     */
     @SuppressWarnings("unchecked")
-    public <T extends Commands<K, V>> T computeCommands(Class<T> type, Supplier<T> factory) {
-        return (T) commandsCache.computeIfAbsent(type, k -> factory.get());
+    protected void initialiseCommands() {
+        this.commandSlots = CommandsRegistry.initialiseSlots((StatefulConnection<K, V>) this);
     }
 
     @SuppressWarnings("unchecked")

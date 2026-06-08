@@ -40,10 +40,7 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
      * Returns the {@link RedisPubSubReactiveCommands} API for the current connection. Does not create a new connection.
      *
      * @return the reactive API for the underlying connection.
-     * @deprecated since 7.7, use {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(StatefulRedisPubSubConnection)}
-     *             instead.
      */
-    @Deprecated
     RedisPubSubReactiveCommands<K, V> reactive();
 
     /**

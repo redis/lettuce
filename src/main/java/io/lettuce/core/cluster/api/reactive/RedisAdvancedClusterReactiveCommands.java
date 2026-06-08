@@ -21,16 +21,13 @@ package io.lettuce.core.cluster.api.reactive;
 
 import java.util.Map;
 
-import io.lettuce.core.MSetExArgs;
-import io.lettuce.core.SetArgs;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ScanCursor;
+import io.lettuce.core.SetArgs;
 import io.lettuce.core.StreamScanCursor;
-import io.lettuce.core.api.Commands;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
@@ -38,6 +35,8 @@ import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.output.KeyStreamingChannel;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Advanced reactive and thread-safe Redis Cluster API.
@@ -46,7 +45,7 @@ import io.lettuce.core.output.KeyStreamingChannel;
  * @author Jon Chambers
  * @since 5.0
  */
-public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisClusterReactiveCommands<K, V>, Commands<K, V> {
+public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisClusterReactiveCommands<K, V> {
 
     /**
      * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list. In

@@ -88,6 +88,8 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
         this.async = new RedisSentinelAsyncCommandsImpl<>(this, codec);
         this.sync = syncHandler(async, RedisSentinelCommands.class);
         this.reactive = new RedisSentinelReactiveCommandsImpl<>(this, codec, parser);
+
+        initialiseCommands();
     }
 
     @Override
