@@ -30,7 +30,7 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @author Yordan Tsintsov
+ * @author Gyumin Hwang
  * @since 7.7
  */
 public class CuckooInsertBooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>>

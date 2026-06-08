@@ -15,7 +15,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * <p>
  * {@link CfInsertArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
- * @author Yordan Tsintsov
+ * @author Gyumin Hwang
  * @since 7.7
  */
 public class CfInsertArgs implements CompositeArgument {

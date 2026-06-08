@@ -21,7 +21,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @author Yordan Tsintsov
+ * @author Gyumin Hwang
  * @since 7.7
  */
 @ExperimentalLettuceCoroutinesApi

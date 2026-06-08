@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests the reactive API returns {@code Flux<Value<V>>} are overridden. (wrapping nulls in {@link Value#empty()}) while the
  * sync API returns {@code List<V>} with raw booleans.
  *
- * @author Yordan Tsintsov
+ * @author Gyumin Hwang
  * @since 7.7
  */
 @Tag(INTEGRATION_TEST)

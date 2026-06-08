@@ -28,7 +28,7 @@ import static io.lettuce.core.protocol.CommandType.*;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @author Yordan Tsintsov
+ * @author Gyumin Hwang
  * @since 7.7
  */
 class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {

@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Unit tests for {@link RedisCuckooFilterCommandBuilder}.
  *
- * @author Yordan Tsintsov
+ * @author Gyumin Hwang
  */
 @Tag(UNIT_TEST)
 class RedisCuckooFilterCommandBuilderUnitTests {

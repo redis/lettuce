@@ -86,7 +86,7 @@ public class ReadOnlyCommands {
         // RediSearch (keyless read-only)
         FT_AGGREGATE, FT_SEARCH, FT_HYBRID, FT_EXPLAIN, FT_SPELLCHECK, FT_TAGVALS, FT_SYNDUMP, FT_LIST, FT_DICTDUMP, BF_CARD, BF_EXISTS, BF_INFO, BF_MEXISTS,
         // Cuckoo Filter read-only commands
-        CF_EXISTS, CF_MEXISTS, CF_COUNT, CF_INFO, CF_SCANDUMP,
+        CF_EXISTS, CF_MEXISTS, CF_COUNT, CF_INFO,
     }
 
     /**

@@ -18,7 +18,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 /**
  * Integration tests for Redis Cuckoo Filter commands using Redis Cluster.
  *
- * @author Yordan Tsintsov
+ * @author Gyumin Hwang
  * @since 7.7
  */
 @Tag(INTEGRATION_TEST)

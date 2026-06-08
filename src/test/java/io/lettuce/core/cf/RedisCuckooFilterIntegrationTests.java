@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisCuckooFilterCommands}.
  *
- * @author Yordan Tsintsov
+ * @author Gyumin Hwang
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)

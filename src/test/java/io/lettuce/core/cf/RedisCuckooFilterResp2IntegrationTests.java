@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * RESP3 differs: the server returns boolean {@code false} instead of integer {@code -1} for a full filter, so the filter-full
  * (-1 → {@code null}) distinction is only observable over RESP2. This class verifies it explicitly.
  *
- * @author Yordan Tsintsov
+ * @author Gyumin Hwang
  * @since 7.7
  */
 @Tag(INTEGRATION_TEST)

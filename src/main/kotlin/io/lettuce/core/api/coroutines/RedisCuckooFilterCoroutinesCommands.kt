@@ -15,7 +15,7 @@ import io.lettuce.core.cf.arguments.CfReserveArgs
 /**
  * Coroutine executed commands for Cuckoo Filter.
  *
- * @author Yordan Tsintsov
+ * @author Gyumin Hwang
  * @param <K> Key type.
  * @param <V> Value type.
  * @see <a href="https://redis.io/docs/latest/develop/data-types/probabilistic/cuckoo-filter/">Redis Cuckoo Filter</a>
