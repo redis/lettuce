@@ -1,15 +1,16 @@
 package io.lettuce.core.pubsub.api.reactive;
 
 /**
- * Message payload for a subscription to a pattern.
+ * Message payload for a subscription to a pattern or channel or shared
  *
- * @author Mark Paluch
- *
- * @deprecated use {@link io.lettuce.core.pubsub.api.reactive.SubscriptionMessage} instead.
+ * @author Ko Su
+ * @since 8.0
  */
-@Deprecated
-public class PatternMessage<K, V> {
+public class SubscriptionMessage<K, V> {
 
+    /**
+     * Can be {@code null}.
+     */
     private final K pattern;
 
     private final K channel;
@@ -22,8 +23,19 @@ public class PatternMessage<K, V> {
      * @param channel the channel
      * @param message the message
      */
-    public PatternMessage(K pattern, K channel, V message) {
+    public SubscriptionMessage(K pattern, K channel, V message) {
         this.pattern = pattern;
+        this.channel = channel;
+        this.message = message;
+    }
+
+    /**
+     *
+     * @param channel the channel
+     * @param message the message
+     */
+    public SubscriptionMessage(K channel, V message) {
+        this.pattern = null;
         this.channel = channel;
         this.message = message;
     }
