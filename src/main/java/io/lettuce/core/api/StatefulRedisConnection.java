@@ -43,7 +43,9 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      * Returns the {@link RedisReactiveCommands} API for the current connection. Does not create a new connection.
      *
      * @return the reactive API for the underlying connection.
+     * @deprecated since 7.7, use {@link RedisReactiveCommands#from(StatefulRedisConnection)} instead.
      */
+    @Deprecated
     RedisReactiveCommands<K, V> reactive();
 
     /**

@@ -109,11 +109,21 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
         return syncHandler(async(), RedisPubSubCommands.class);
     }
 
+    /**
+     * @deprecated since 7.7, use {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(StatefulRedisPubSubConnection)}
+     *             instead.
+     */
+    @Deprecated
     @Override
     public RedisPubSubReactiveCommands<K, V> reactive() {
         return (RedisPubSubReactiveCommands<K, V>) reactive;
     }
 
+    /**
+     * @deprecated since 7.7, use {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(StatefulRedisPubSubConnection)}
+     *             instead.
+     */
+    @Deprecated
     @Override
     protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisPubSubReactiveCommandsImpl<>(this, codec);

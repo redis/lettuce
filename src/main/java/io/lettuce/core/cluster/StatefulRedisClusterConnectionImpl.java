@@ -84,6 +84,12 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
 
+    /**
+     * @deprecated since 7.7, use
+     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(io.lettuce.core.cluster.api.StatefulRedisClusterConnection)}
+     *             instead.
+     */
+    @Deprecated
     protected final RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
 
     private final ClusterConnectionState connectionState = new ClusterConnectionState();
@@ -162,6 +168,12 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         return async;
     }
 
+    /**
+     * @deprecated since 7.7, use
+     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(io.lettuce.core.cluster.api.StatefulRedisClusterConnection)}
+     *             instead.
+     */
+    @Deprecated
     @Override
     public RedisAdvancedClusterReactiveCommands<K, V> reactive() {
         return reactive;
