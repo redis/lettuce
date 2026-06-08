@@ -67,13 +67,32 @@ interface RedisCuckooFilterCoroutinesCommands<K : Any, V : Any> {
      * Add one or more items to a Cuckoo Filter. A filter will be created if one does not exist.
      *
      * @param key the key.
-     * @param values the values.
-     * @return List<Boolean?> one entry per item: `true` if the item was added, `null` if the item could not be added because the
-     *         filter is full (server reply `-1`). CF.INSERT does not report already-existing items.
-     *
-     * Note: over RESP3 a full-filter result may surface as `false` instead of `null`, as the server encodes -1 as a boolean.
+     * @param value the value.
+     * @return List<Boolean> one entry per item: `true` if the item was added, `false` if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
-    suspend fun cfInsert(key: K, vararg values: V): List<Boolean?>
+    suspend fun cfInsert(key: K, value: V): List<Boolean>
+
+    /**
+     * Add one or more items to a Cuckoo Filter. A filter will be created if one does not exist.
+     *
+     * @param key the key.
+     * @param args the insert arguments.
+     * @param value the value.
+     * @return List<Boolean> one entry per item: `true` if the item was added, `false` if the filter is full.
+     *         CF.INSERT does not report already-existing items.
+     */
+    suspend fun cfInsert(key: K, args: CfInsertArgs, value: V): List<Boolean>
+
+    /**
+     * Add one or more items to a Cuckoo Filter. A filter will be created if one does not exist.
+     *
+     * @param key the key.
+     * @param values the values.
+     * @return List<Boolean> one entry per item: `true` if the item was added, `false` if the filter is full.
+     *         CF.INSERT does not report already-existing items.
+     */
+    suspend fun cfInsert(key: K, vararg values: V): List<Boolean>
 
     /**
      * Add one or more items to a Cuckoo Filter. A filter will be created if one does not exist.
@@ -81,12 +100,31 @@ interface RedisCuckooFilterCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return List<Boolean?> one entry per item: `true` if the item was added, `null` if the item could not be added because the
-     *         filter is full (server reply `-1`). CF.INSERT does not report already-existing items.
-     *
-     * Note: over RESP3 a full-filter result may surface as `false` instead of `null`, as the server encodes -1 as a boolean.
+     * @return List<Boolean> one entry per item: `true` if the item was added, `false` if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
-    suspend fun cfInsert(key: K, args: CfInsertArgs, vararg values: V): List<Boolean?>
+    suspend fun cfInsert(key: K, args: CfInsertArgs, vararg values: V): List<Boolean>
+
+    /**
+     * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
+     * exist.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return List<Long> one entry per item: `1` if the item was added, `0` if it already exists, `-1` if the filter is full.
+     */
+    suspend fun cfInsertNx(key: K, value: V): List<Long>
+
+    /**
+     * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
+     * exist.
+     *
+     * @param key the key.
+     * @param args the insert arguments.
+     * @param value the value.
+     * @return List<Long> one entry per item: `1` if the item was added, `0` if it already exists, `-1` if the filter is full.
+     */
+    suspend fun cfInsertNx(key: K, args: CfInsertArgs, value: V): List<Long>
 
     /**
      * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
@@ -94,12 +132,9 @@ interface RedisCuckooFilterCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param values the values.
-     * @return List<Boolean?> one entry per item: `true` if the item was added, `false` if the item already exists, `null` if the
-     *         item could not be added because the filter is full (server reply `-1`).
-     *
-     * Note: over RESP3 a full-filter result may surface as `false` instead of `null`, as the server encodes -1 as a boolean.
+     * @return List<Long> one entry per item: `1` if the item was added, `0` if it already exists, `-1` if the filter is full.
      */
-    suspend fun cfInsertNx(key: K, vararg values: V): List<Boolean?>
+    suspend fun cfInsertNx(key: K, vararg values: V): List<Long>
 
     /**
      * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
@@ -108,12 +143,9 @@ interface RedisCuckooFilterCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return List<Boolean?> one entry per item: `true` if the item was added, `false` if the item already exists, `null` if the
-     *         item could not be added because the filter is full (server reply `-1`).
-     *
-     * Note: over RESP3 a full-filter result may surface as `false` instead of `null`, as the server encodes -1 as a boolean.
+     * @return List<Long> one entry per item: `1` if the item was added, `0` if it already exists, `-1` if the filter is full.
      */
-    suspend fun cfInsertNx(key: K, args: CfInsertArgs, vararg values: V): List<Boolean?>
+    suspend fun cfInsertNx(key: K, args: CfInsertArgs, vararg values: V): List<Long>
 
     /**
      * Check if an item exists in the Cuckoo Filter.

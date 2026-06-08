@@ -81,6 +81,16 @@ class RedisCuckooFilterCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructCfInsertSingleValueCommand() {
+        Command<String, String, List<Boolean>> command = builder.cfInsert(MY_KEY, MY_VALUE);
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$9\r\nCF.INSERT\r\n" + "$10\r\n" + MY_KEY
+                + "\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructCfInsertCommand() {
         Command<String, String, List<Boolean>> command = builder.cfInsert(MY_KEY, MY_VALUE);
         ByteBuf buff = Unpooled.buffer();
@@ -125,8 +135,18 @@ class RedisCuckooFilterCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructCfInsertNxSingleValueCommand() {
+        Command<String, String, List<Long>> command = builder.cfInsertNx(MY_KEY, MY_VALUE);
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$11\r\nCF.INSERTNX\r\n" + "$10\r\n" + MY_KEY
+                + "\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructCfInsertNxCommand() {
-        Command<String, String, List<Boolean>> command = builder.cfInsertNx(MY_KEY, MY_VALUE);
+        Command<String, String, List<Long>> command = builder.cfInsertNx(MY_KEY, MY_VALUE);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
@@ -137,7 +157,7 @@ class RedisCuckooFilterCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructCfInsertNxCommandWithArgs() {
         CfInsertArgs insertArgs = CfInsertArgs.Builder.capacity(200).noCreate();
-        Command<String, String, List<Boolean>> command = builder.cfInsertNx(MY_KEY, insertArgs, MY_VALUE);
+        Command<String, String, List<Long>> command = builder.cfInsertNx(MY_KEY, insertArgs, MY_VALUE);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
@@ -148,7 +168,7 @@ class RedisCuckooFilterCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructCfInsertNxCommandWithVarargs() {
-        Command<String, String, List<Boolean>> command = builder.cfInsertNx(MY_KEY, MY_VALUE, MY_VALUE_2);
+        Command<String, String, List<Long>> command = builder.cfInsertNx(MY_KEY, MY_VALUE, MY_VALUE_2);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 

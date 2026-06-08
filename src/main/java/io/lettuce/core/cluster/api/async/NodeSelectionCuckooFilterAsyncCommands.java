@@ -68,12 +68,8 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code null} if the item could not be
-     *         added because the filter is full (server reply {@code -1}). CF.INSERT does not report already-existing items.
-     *         <p>
-     *         Note: over RESP3 a full-filter result may surface as {@code false}/{@code Value.just(false)} instead of
-     *         {@code null}/{@code Value.empty()}, as the server encodes -1 as a boolean.
-     *         </p>
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
+     *         item).
      */
     AsyncExecutions<List<Boolean>> cfInsert(K key, V... values);
 
@@ -81,31 +77,55 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      * Add one or more items to a Cuckoo Filter. A filter will be created if one does not exist.
      *
      * @param key the key.
+     * @param value the value.
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
+     *         item).
+     */
+    AsyncExecutions<List<Boolean>> cfInsert(K key, V value);
+
+    /**
+     * Add one or more items to a Cuckoo Filter. A filter will be created if one does not exist.
+     *
+     * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code null} if the item could not be
-     *         added because the filter is full (server reply {@code -1}). CF.INSERT does not report already-existing items.
-     *         <p>
-     *         Note: over RESP3 a full-filter result may surface as {@code false}/{@code Value.just(false)} instead of
-     *         {@code null}/{@code Value.empty()}, as the server encodes -1 as a boolean.
-     *         </p>
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
+     *         item).
      */
     AsyncExecutions<List<Boolean>> cfInsert(K key, CfInsertArgs args, V... values);
 
     /**
+     * Add one or more items to a Cuckoo Filter. A filter will be created if one does not exist.
+     *
+     * @param key the key.
+     * @param args the insert arguments.
+     * @param value the value.
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
+     *         item).
+     */
+    AsyncExecutions<List<Boolean>> cfInsert(K key, CfInsertArgs args, V value);
+
+    /**
      * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
      * exist.
      *
      * @param key the key.
      * @param values the values.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the item already
-     *         exists, {@code null} if the item could not be added because the filter is full (server reply {@code -1}).
-     *         <p>
-     *         Note: over RESP3 a full-filter result may surface as {@code false}/{@code Value.just(false)} instead of
-     *         {@code null}/{@code Value.empty()}, as the server encodes -1 as a boolean.
-     *         </p>
+     * @return List&lt;Long&gt; one entry per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if the
+     *         filter is full.
      */
-    AsyncExecutions<List<Boolean>> cfInsertNx(K key, V... values);
+    AsyncExecutions<List<Long>> cfInsertNx(K key, V... values);
+
+    /**
+     * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
+     * exist.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return List&lt;Long&gt; one entry per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if the
+     *         filter is full.
+     */
+    AsyncExecutions<List<Long>> cfInsertNx(K key, V value);
 
     /**
      * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
@@ -114,14 +134,22 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the item already
-     *         exists, {@code null} if the item could not be added because the filter is full (server reply {@code -1}).
-     *         <p>
-     *         Note: over RESP3 a full-filter result may surface as {@code false}/{@code Value.just(false)} instead of
-     *         {@code null}/{@code Value.empty()}, as the server encodes -1 as a boolean.
-     *         </p>
+     * @return List&lt;Long&gt; one entry per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if the
+     *         filter is full.
      */
-    AsyncExecutions<List<Boolean>> cfInsertNx(K key, CfInsertArgs args, V... values);
+    AsyncExecutions<List<Long>> cfInsertNx(K key, CfInsertArgs args, V... values);
+
+    /**
+     * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
+     * exist.
+     *
+     * @param key the key.
+     * @param args the insert arguments.
+     * @param value the value.
+     * @return List&lt;Long&gt; one entry per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if the
+     *         filter is full.
+     */
+    AsyncExecutions<List<Long>> cfInsertNx(K key, CfInsertArgs args, V value);
 
     /**
      * Check if an item exists in the Cuckoo Filter.

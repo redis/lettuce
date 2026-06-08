@@ -100,12 +100,20 @@ public class RedisCuckooFilterIntegrationTests {
     }
 
     @Test
+    void cfInsertSingleValue() {
+        List<Boolean> result = redis.cfInsert(MY_KEY, MY_VALUE);
+
+        assertThat(result).containsExactly(true);
+        assertThat(redis.cfExists(MY_KEY, MY_VALUE)).isTrue();
+    }
+
+    @Test
     void cfInsertNx() {
         redis.cfAdd(MY_KEY, MY_VALUE);
 
-        List<Boolean> result = redis.cfInsertNx(MY_KEY, MY_VALUE, MY_VALUE_2);
+        List<Long> result = redis.cfInsertNx(MY_KEY, MY_VALUE, MY_VALUE_2);
 
-        assertThat(result).containsExactly(false, true);
+        assertThat(result).containsExactly(0L, 1L);
     }
 
     @Test
@@ -113,9 +121,16 @@ public class RedisCuckooFilterIntegrationTests {
         CfInsertArgs insertArgs = CfInsertArgs.Builder.capacity(100);
         redis.cfAdd(MY_KEY, MY_VALUE);
 
-        List<Boolean> result = redis.cfInsertNx(MY_KEY, insertArgs, MY_VALUE, MY_VALUE_2);
+        List<Long> result = redis.cfInsertNx(MY_KEY, insertArgs, MY_VALUE, MY_VALUE_2);
 
-        assertThat(result).containsExactly(false, true);
+        assertThat(result).containsExactly(0L, 1L);
+    }
+
+    @Test
+    void cfInsertNxSingleValue() {
+        List<Long> result = redis.cfInsertNx(MY_KEY, MY_VALUE);
+
+        assertThat(result).containsExactly(1L);
     }
 
     @Test
@@ -164,33 +179,40 @@ public class RedisCuckooFilterIntegrationTests {
     }
 
     /**
-     * Verifies that CF.INSERTNX distinguishes between "already exists" ({@code false}) and "filter full" ({@code null}).
-     *
-     * <p>
-     * With the old {@link io.lettuce.core.output.ErrorTolerantBooleanListOutput} both 0 and -1 were mapped to {@code false},
-     * making them indistinguishable. The new {@link io.lettuce.core.output.CuckooInsertBooleanListOutput} maps 0 →
-     * {@code false} and -1 → {@code null}.
-     *
-     * <p>
-     * Note: reproducing -1 via INSERTNX is difficult because inserting the same value always returns 0 ("already exists"). The
-     * -1 → null mapping is verified in the RESP2 integration tests
-     * ({@link RedisCuckooFilterResp2IntegrationTests#cfInsertReturnsNullWhenFilterIsFull()}) and in the unit tests
-     * (CuckooInsertBooleanListOutputUnitTests), which use CF.INSERT and the same underlying output class
-     * ({@link io.lettuce.core.output.CuckooInsertBooleanListOutput}). This test focuses on confirming that 0 ("already exists")
-     * maps to {@code false}, NOT to {@code null}.
+     * Verifies that CF.INSERTNX returns {@code 0L} ("already exists") which is distinct from {@code -1L} ("filter full").
      */
     @Test
     void cfInsertNxDistinguishesAlreadyExistsFromFilterFull() {
         String key = "cf:full:insertnx";
         redis.cfReserve(key, 100, CfReserveArgs.Builder.bucketSize(2).expansion(1));
 
-        // Pre-populate the filter so INSERTNX sees "already exists" (0) for known items
         redis.cfAdd(key, "known");
 
-        // existing item must return false (0), NOT null — 0 and -1 must remain distinguishable
-        List<Boolean> existing = redis.cfInsertNx(key, "known");
+        List<Long> existing = redis.cfInsertNx(key, "known");
         assertThat(existing).hasSize(1);
-        assertThat(existing.get(0)).isEqualTo(Boolean.FALSE); // "already exists" = false, NOT null
+        assertThat(existing.get(0)).isEqualTo(0L);
+    }
+
+    /**
+     * Verifies that CF.INSERT returns {@code false} when the filter is full (server returns {@code -1}).
+     *
+     * <p>
+     * BUCKETSIZE 1 EXPANSION 0: same value fills at most 2 slots, so inserting the same value 6 times causes filter-full
+     * conditions. RESP2 and RESP3 both produce {@code false} for filter-full via
+     * {@link io.lettuce.core.output.BooleanListOutput}.
+     */
+    @Test
+    void cfInsertReturnsFalseWhenFilterIsFull() {
+        String key = "cf:full:insert";
+        redis.cfReserve(key, 1000, CfReserveArgs.Builder.bucketSize(1).expansion(0));
+
+        List<Boolean> result = redis.cfInsert(key, "W", "W", "W", "W", "W", "W");
+
+        assertThat(result).hasSize(6);
+        assertThat(result).startsWith(true, true);
+        for (int i = 2; i < result.size(); i++) {
+            assertThat(result.get(i)).as("result[%d] must be false (filter full)", i).isEqualTo(Boolean.FALSE);
+        }
     }
 
     @Test

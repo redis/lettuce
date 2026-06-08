@@ -4321,6 +4321,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<Boolean>> cfInsert(K key, V value) {
+        return dispatch(cuckooFilterCommandBuilder.cfInsert(key, value));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> cfInsert(K key, CfInsertArgs args, V value) {
+        return dispatch(cuckooFilterCommandBuilder.cfInsert(key, args, value));
+    }
+
+    @Override
     public RedisFuture<List<Boolean>> cfInsert(K key, V... values) {
         return dispatch(cuckooFilterCommandBuilder.cfInsert(key, values));
     }
@@ -4331,12 +4341,22 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Boolean>> cfInsertNx(K key, V... values) {
+    public RedisFuture<List<Long>> cfInsertNx(K key, V value) {
+        return dispatch(cuckooFilterCommandBuilder.cfInsertNx(key, value));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> cfInsertNx(K key, CfInsertArgs args, V value) {
+        return dispatch(cuckooFilterCommandBuilder.cfInsertNx(key, args, value));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> cfInsertNx(K key, V... values) {
         return dispatch(cuckooFilterCommandBuilder.cfInsertNx(key, values));
     }
 
     @Override
-    public RedisFuture<List<Boolean>> cfInsertNx(K key, CfInsertArgs args, V... values) {
+    public RedisFuture<List<Long>> cfInsertNx(K key, CfInsertArgs args, V... values) {
         return dispatch(cuckooFilterCommandBuilder.cfInsertNx(key, args, values));
     }
 

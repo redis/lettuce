@@ -41,17 +41,29 @@ internal class RedisCuckooFilterCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun cfAddNx(key: K, value: V): Boolean? =
         ops.cfAddNx(key, value).awaitFirstOrNull()
 
-    override suspend fun cfInsert(key: K, vararg values: V): List<Boolean?> =
-        ops.cfInsert(key, *values).asFlow().toList().map { it.getValueOrElse(null) }
+    override suspend fun cfInsert(key: K, value: V): List<Boolean> =
+        ops.cfInsert(key, value).asFlow().toList()
 
-    override suspend fun cfInsert(key: K, args: CfInsertArgs, vararg values: V): List<Boolean?> =
-        ops.cfInsert(key, args, *values).asFlow().toList().map { it.getValueOrElse(null) }
+    override suspend fun cfInsert(key: K, args: CfInsertArgs, value: V): List<Boolean> =
+        ops.cfInsert(key, args, value).asFlow().toList()
 
-    override suspend fun cfInsertNx(key: K, vararg values: V): List<Boolean?> =
-        ops.cfInsertNx(key, *values).asFlow().toList().map { it.getValueOrElse(null) }
+    override suspend fun cfInsert(key: K, vararg values: V): List<Boolean> =
+        ops.cfInsert(key, *values).asFlow().toList()
 
-    override suspend fun cfInsertNx(key: K, args: CfInsertArgs, vararg values: V): List<Boolean?> =
-        ops.cfInsertNx(key, args, *values).asFlow().toList().map { it.getValueOrElse(null) }
+    override suspend fun cfInsert(key: K, args: CfInsertArgs, vararg values: V): List<Boolean> =
+        ops.cfInsert(key, args, *values).asFlow().toList()
+
+    override suspend fun cfInsertNx(key: K, value: V): List<Long> =
+        ops.cfInsertNx(key, value).asFlow().toList()
+
+    override suspend fun cfInsertNx(key: K, args: CfInsertArgs, value: V): List<Long> =
+        ops.cfInsertNx(key, args, value).asFlow().toList()
+
+    override suspend fun cfInsertNx(key: K, vararg values: V): List<Long> =
+        ops.cfInsertNx(key, *values).asFlow().toList()
+
+    override suspend fun cfInsertNx(key: K, args: CfInsertArgs, vararg values: V): List<Long> =
+        ops.cfInsertNx(key, args, *values).asFlow().toList()
 
     override suspend fun cfExists(key: K, value: V): Boolean? =
         ops.cfExists(key, value).awaitFirstOrNull()
