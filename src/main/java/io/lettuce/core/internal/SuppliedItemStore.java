@@ -22,12 +22,7 @@ public final class SuppliedItemStore<C> {
 
     @SuppressWarnings("unchecked")
     public <T> T get(Function<C, T> supplier) {
-        T t = (T) cache.get(supplier);
-        if (t == null) {
-            t = supplier.apply(owner);
-            cache.put(supplier, t);
-        }
-        return t;
+        return (T) cache.computeIfAbsent(supplier, s -> s.apply(owner));
     }
 
 }
