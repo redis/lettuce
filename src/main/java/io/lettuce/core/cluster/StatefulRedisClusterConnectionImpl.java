@@ -54,6 +54,8 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.SuppliedItemStore;
+import io.lettuce.core.internal.SupplierCaching;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.protocol.CommandArgsAccessor;
 import io.lettuce.core.protocol.CompleteableCommand;
@@ -72,7 +74,7 @@ import reactor.core.publisher.Mono;
  * @since 4.0
  */
 public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandler<K, V>
-        implements StatefulRedisClusterConnection<K, V> {
+        implements StatefulRedisClusterConnection<K, V>, SupplierCaching<StatefulRedisClusterConnection<K, V>> {
 
     private final ClusterPushHandler pushHandler;
 
@@ -145,6 +147,13 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     protected RedisAdvancedClusterAsyncCommandsImpl<K, V> newRedisAdvancedClusterAsyncCommandsImpl() {
         return new RedisAdvancedClusterAsyncCommandsImpl((StatefulRedisClusterConnection<K, V>) this, codec, parser);
+    }
+
+    private final SuppliedItemStore<StatefulRedisClusterConnection<K, V>> commandsCache = new SuppliedItemStore<>(this);
+
+    @Override
+    public SuppliedItemStore<StatefulRedisClusterConnection<K, V>> getStore() {
+        return commandsCache;
     }
 
     @Override

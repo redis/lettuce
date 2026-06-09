@@ -24,6 +24,8 @@ import java.util.Collection;
 import java.util.function.Supplier;
 
 import io.lettuce.core.ConnectionState;
+import io.lettuce.core.internal.SuppliedItemStore;
+import io.lettuce.core.internal.SupplierCaching;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.codec.RedisCodec;
@@ -42,7 +44,7 @@ import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
  * @author Mark Paluch
  */
 public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandler<K, V>
-        implements StatefulRedisSentinelConnection<K, V> {
+        implements StatefulRedisSentinelConnection<K, V>, SupplierCaching<StatefulRedisSentinelConnection<K, V>> {
 
     protected final RedisCodec<K, V> codec;
 
@@ -107,6 +109,13 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     @Override
     public RedisSentinelReactiveCommands<K, V> reactive() {
         return reactive;
+    }
+
+    private final SuppliedItemStore<StatefulRedisSentinelConnection<K, V>> commandsCache = new SuppliedItemStore<>(this);
+
+    @Override
+    public SuppliedItemStore<StatefulRedisSentinelConnection<K, V>> getStore() {
+        return commandsCache;
     }
 
     /**

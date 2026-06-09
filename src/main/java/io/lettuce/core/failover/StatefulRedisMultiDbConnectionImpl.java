@@ -51,6 +51,8 @@ import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.SuppliedItemStore;
+import io.lettuce.core.internal.SupplierCaching;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLogger;
@@ -65,8 +67,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @since 7.4
  */
 @Experimental
-class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
-        implements StatefulRedisMultiDbConnection<K, V> {
+public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
+        implements StatefulRedisMultiDbConnection<K, V>, SupplierCaching<StatefulRedisMultiDbConnection<K, V>> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(StatefulRedisMultiDbConnectionImpl.class);
 
@@ -460,6 +462,13 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      */
     protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
         return new RedisAsyncCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
+    }
+
+    private final SuppliedItemStore<StatefulRedisMultiDbConnection<K, V>> commandsCache = new SuppliedItemStore<>(this);
+
+    @Override
+    public SuppliedItemStore<StatefulRedisMultiDbConnection<K, V>> getStore() {
+        return commandsCache;
     }
 
     /**

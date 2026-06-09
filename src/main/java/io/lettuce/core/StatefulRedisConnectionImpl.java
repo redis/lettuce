@@ -31,6 +31,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.internal.SuppliedItemStore;
+import io.lettuce.core.internal.SupplierCaching;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -54,7 +56,8 @@ import reactor.core.publisher.Mono;
  * @param <V> Value type.
  * @author Mark Paluch
  */
-public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements StatefulRedisConnection<K, V> {
+public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
+        implements StatefulRedisConnection<K, V>, SupplierCaching<StatefulRedisConnection<K, V>> {
 
     protected final RedisCodec<K, V> codec;
 
@@ -126,6 +129,13 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      */
     protected RedisCommands<K, V> newRedisSyncCommandsImpl() {
         return syncHandler(async(), RedisCommands.class, RedisClusterCommands.class);
+    }
+
+    private final SuppliedItemStore<StatefulRedisConnection<K, V>> commandsCache = new SuppliedItemStore<>(this);
+
+    @Override
+    public SuppliedItemStore<StatefulRedisConnection<K, V>> getStore() {
+        return commandsCache;
     }
 
     /**
