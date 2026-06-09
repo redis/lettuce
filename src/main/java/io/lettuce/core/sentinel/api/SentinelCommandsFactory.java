@@ -1,8 +1,8 @@
 package io.lettuce.core.sentinel.api;
 
 import java.util.function.Function;
+import io.lettuce.core.internal.SupplierCaching;
 import io.lettuce.core.sentinel.RedisSentinelReactiveCommandsImpl;
-import io.lettuce.core.sentinel.StatefulRedisSentinelConnectionImpl;
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 
 public final class SentinelCommandsFactory {
@@ -16,8 +16,7 @@ public final class SentinelCommandsFactory {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <K, V> RedisSentinelReactiveCommands<K, V> reactive(StatefulRedisSentinelConnection<K, V> conn) {
-        return (RedisSentinelReactiveCommands<K, V>) ((StatefulRedisSentinelConnectionImpl) conn)
-                .getCachedBySupplier(REACTIVE_COMMANDS_PROVIDER);
+        return (RedisSentinelReactiveCommands<K, V>) ((SupplierCaching) conn).getCachedBySupplier(REACTIVE_COMMANDS_PROVIDER);
     }
 
 }

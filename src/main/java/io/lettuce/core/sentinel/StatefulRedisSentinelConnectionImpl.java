@@ -21,12 +21,11 @@ package io.lettuce.core.sentinel;
 
 import java.time.Duration;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.lettuce.core.ConnectionState;
+import io.lettuce.core.internal.SuppliedItemStore;
+import io.lettuce.core.internal.SupplierCaching;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.codec.RedisCodec;
@@ -45,7 +44,7 @@ import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
  * @author Mark Paluch
  */
 public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandler<K, V>
-        implements StatefulRedisSentinelConnection<K, V> {
+        implements StatefulRedisSentinelConnection<K, V>, SupplierCaching<StatefulRedisSentinelConnection<K, V>> {
 
     protected final RedisCodec<K, V> codec;
 
@@ -112,16 +111,11 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
         return reactive;
     }
 
-    private Map<Function<StatefulRedisSentinelConnection<K, V>, ?>, Object> cache = new HashMap<>();
+    private final SuppliedItemStore<StatefulRedisSentinelConnection<K, V>> commandsCache = new SuppliedItemStore<>(this);
 
-    public <T> T getCachedBySupplier(Function<StatefulRedisSentinelConnection<K, V>, T> supplier) {
-        @SuppressWarnings("unchecked")
-        T t = (T) cache.get(supplier);
-        if (t == null) {
-            t = supplier.apply(this);
-            cache.put(supplier, t);
-        }
-        return t;
+    @Override
+    public SuppliedItemStore<StatefulRedisSentinelConnection<K, V>> getStore() {
+        return commandsCache;
     }
 
     /**

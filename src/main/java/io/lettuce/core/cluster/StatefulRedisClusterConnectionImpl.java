@@ -27,12 +27,9 @@ import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -57,6 +54,8 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.SuppliedItemStore;
+import io.lettuce.core.internal.SupplierCaching;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.protocol.CommandArgsAccessor;
 import io.lettuce.core.protocol.CompleteableCommand;
@@ -75,7 +74,7 @@ import reactor.core.publisher.Mono;
  * @since 4.0
  */
 public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandler<K, V>
-        implements StatefulRedisClusterConnection<K, V> {
+        implements StatefulRedisClusterConnection<K, V>, SupplierCaching<StatefulRedisClusterConnection<K, V>> {
 
     private final ClusterPushHandler pushHandler;
 
@@ -150,16 +149,11 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         return new RedisAdvancedClusterAsyncCommandsImpl((StatefulRedisClusterConnection<K, V>) this, codec, parser);
     }
 
-    private Map<Function<StatefulRedisClusterConnection<K, V>, ?>, Object> cache = new HashMap<>();
+    private final SuppliedItemStore<StatefulRedisClusterConnection<K, V>> commandsCache = new SuppliedItemStore<>(this);
 
-    public <T> T getCachedBySupplier(Function<StatefulRedisClusterConnection<K, V>, T> supplier) {
-        @SuppressWarnings("unchecked")
-        T t = (T) cache.get(supplier);
-        if (t == null) {
-            t = supplier.apply(this);
-            cache.put(supplier, t);
-        }
-        return t;
+    @Override
+    public SuppliedItemStore<StatefulRedisClusterConnection<K, V>> getStore() {
+        return commandsCache;
     }
 
     @Override

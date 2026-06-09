@@ -2,11 +2,10 @@ package io.lettuce.core.api;
 
 import java.util.function.Function;
 import io.lettuce.core.RedisReactiveCommandsImpl;
-import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import io.lettuce.core.internal.SupplierCaching;
 import io.lettuce.core.pubsub.RedisPubSubReactiveCommandsImpl;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
-import io.lettuce.core.pubsub.StatefulRedisPubSubConnectionImpl;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 
 public final class RedisCommandsFactory {
@@ -24,13 +23,12 @@ public final class RedisCommandsFactory {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <K, V> RedisReactiveCommands<K, V> reactive(StatefulRedisConnection<K, V> conn) {
-        return (RedisReactiveCommands<K, V>) ((StatefulRedisConnectionImpl) conn)
-                .getCachedBySupplier(REACTIVE_COMMANDS_PROVIDER);
+        return (RedisReactiveCommands<K, V>) ((SupplierCaching) conn).getCachedBySupplier(REACTIVE_COMMANDS_PROVIDER);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <K, V> RedisPubSubReactiveCommands<K, V> pubsubReactive(StatefulRedisPubSubConnection<K, V> conn) {
-        return (RedisPubSubReactiveCommands<K, V>) ((StatefulRedisPubSubConnectionImpl) conn)
+        return (RedisPubSubReactiveCommands<K, V>) ((SupplierCaching) conn)
                 .getCachedBySupplier(PUBSUB_REACTIVE_COMMANDS_PROVIDER);
     }
 
