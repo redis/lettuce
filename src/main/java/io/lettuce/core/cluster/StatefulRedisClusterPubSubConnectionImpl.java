@@ -54,7 +54,7 @@ import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 /**
  * @author Mark Paluch
  */
-class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSubConnectionImpl<K, V>
+public class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSubConnectionImpl<K, V>
         implements StatefulRedisClusterPubSubConnection<K, V> {
 
     private final PubSubClusterEndpoint<K, V> endpoint;

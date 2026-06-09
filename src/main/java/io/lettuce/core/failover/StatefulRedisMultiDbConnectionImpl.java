@@ -5,6 +5,7 @@ import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +19,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -65,7 +67,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @since 7.4
  */
 @Experimental
-class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
+public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
         implements StatefulRedisMultiDbConnection<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(StatefulRedisMultiDbConnectionImpl.class);
@@ -460,6 +462,18 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      */
     protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
         return new RedisAsyncCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
+    }
+
+    private Map<Function<StatefulRedisMultiDbConnection<K, V>, ?>, Object> cached = new HashMap<>();
+
+    public <T> T getCachedBySupplier(Function<StatefulRedisMultiDbConnection<K, V>, T> supplier) {
+        @SuppressWarnings("unchecked")
+        T t = (T) cached.get(supplier);
+        if (t == null) {
+            t = supplier.apply(this);
+            cached.put(supplier, t);
+        }
+        return t;
     }
 
     /**

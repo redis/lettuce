@@ -25,8 +25,11 @@ import static io.lettuce.core.protocol.CommandType.*;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -126,6 +129,18 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      */
     protected RedisCommands<K, V> newRedisSyncCommandsImpl() {
         return syncHandler(async(), RedisCommands.class, RedisClusterCommands.class);
+    }
+
+    private Map<Function<StatefulRedisConnection<K, V>, ?>, Object> cache = new HashMap<>();
+
+    public <T> T getCachedBySupplier(Function<StatefulRedisConnection<K, V>, T> supplier) {
+        @SuppressWarnings("unchecked")
+        T t = (T) cache.get(supplier);
+        if (t == null) {
+            t = supplier.apply(this);
+            cache.put(supplier, t);
+        }
+        return t;
     }
 
     /**

@@ -31,7 +31,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @since 7.4
  */
 @Experimental
-class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
+public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
         extends StatefulRedisMultiDbConnectionImpl<StatefulRedisPubSubConnection<K, V>, K, V>
         implements StatefulRedisMultiDbPubSubConnection<K, V> {
 

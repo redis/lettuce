@@ -27,9 +27,12 @@ import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -145,6 +148,18 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     protected RedisAdvancedClusterAsyncCommandsImpl<K, V> newRedisAdvancedClusterAsyncCommandsImpl() {
         return new RedisAdvancedClusterAsyncCommandsImpl((StatefulRedisClusterConnection<K, V>) this, codec, parser);
+    }
+
+    private Map<Function<StatefulRedisClusterConnection<K, V>, ?>, Object> cache = new HashMap<>();
+
+    public <T> T getCachedBySupplier(Function<StatefulRedisClusterConnection<K, V>, T> supplier) {
+        @SuppressWarnings("unchecked")
+        T t = (T) cache.get(supplier);
+        if (t == null) {
+            t = supplier.apply(this);
+            cache.put(supplier, t);
+        }
+        return t;
     }
 
     @Override

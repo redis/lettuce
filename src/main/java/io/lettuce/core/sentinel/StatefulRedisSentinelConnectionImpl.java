@@ -21,6 +21,9 @@ package io.lettuce.core.sentinel;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.lettuce.core.ConnectionState;
@@ -107,6 +110,18 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     @Override
     public RedisSentinelReactiveCommands<K, V> reactive() {
         return reactive;
+    }
+
+    private Map<Function<StatefulRedisSentinelConnection<K, V>, ?>, Object> cache = new HashMap<>();
+
+    public <T> T getCachedBySupplier(Function<StatefulRedisSentinelConnection<K, V>, T> supplier) {
+        @SuppressWarnings("unchecked")
+        T t = (T) cache.get(supplier);
+        if (t == null) {
+            t = supplier.apply(this);
+            cache.put(supplier, t);
+        }
+        return t;
     }
 
     /**
