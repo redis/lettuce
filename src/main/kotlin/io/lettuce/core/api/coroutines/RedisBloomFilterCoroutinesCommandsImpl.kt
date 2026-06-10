@@ -8,10 +8,10 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisBloomFilterReactiveCommands
-import io.lettuce.core.bf.BfInfoValue
+import io.lettuce.core.probabilistic.BfInfoValue
 import io.lettuce.core.probabilistic.ScanDumpValue
-import io.lettuce.core.bf.arguments.BfInsertArgs
-import io.lettuce.core.bf.arguments.BfReserveArgs
+import io.lettuce.core.probabilistic.arguments.BfInsertArgs
+import io.lettuce.core.probabilistic.arguments.BfReserveArgs
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull

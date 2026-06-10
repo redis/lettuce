@@ -8,10 +8,10 @@ package io.lettuce.core.api.async;
 
 import java.util.List;
 import io.lettuce.core.RedisFuture;
-import io.lettuce.core.bf.BfInfoValue;
+import io.lettuce.core.probabilistic.BfInfoValue;
 import io.lettuce.core.probabilistic.ScanDumpValue;
-import io.lettuce.core.bf.arguments.BfInsertArgs;
-import io.lettuce.core.bf.arguments.BfReserveArgs;
+import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 
 /**
  * Asynchronous executed commands for Bloom Filter.

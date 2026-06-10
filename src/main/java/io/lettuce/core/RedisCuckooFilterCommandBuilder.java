@@ -8,12 +8,12 @@ package io.lettuce.core;
 
 import java.util.List;
 
-import io.lettuce.core.cf.CfInfoValue;
-import io.lettuce.core.cf.CfInfoValueParser;
+import io.lettuce.core.probabilistic.CfInfoValue;
+import io.lettuce.core.probabilistic.CfInfoValueParser;
 import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.probabilistic.ScanDumpValueParser;
-import io.lettuce.core.cf.arguments.CfInsertArgs;
-import io.lettuce.core.cf.arguments.CfReserveArgs;
+import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;

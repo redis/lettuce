@@ -7,10 +7,10 @@
 package io.lettuce.core.cluster.api.async;
 
 import java.util.List;
-import io.lettuce.core.cf.CfInfoValue;
+import io.lettuce.core.probabilistic.CfInfoValue;
 import io.lettuce.core.probabilistic.ScanDumpValue;
-import io.lettuce.core.cf.arguments.CfInsertArgs;
-import io.lettuce.core.cf.arguments.CfReserveArgs;
+import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
 
 /**
  * Asynchronous executed commands on a node selection for Cuckoo Filter.

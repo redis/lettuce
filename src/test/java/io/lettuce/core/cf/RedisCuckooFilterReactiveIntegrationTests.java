@@ -11,8 +11,8 @@ import java.util.List;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
-import io.lettuce.core.cf.arguments.CfInsertArgs;
-import io.lettuce.core.cf.arguments.CfReserveArgs;
+import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

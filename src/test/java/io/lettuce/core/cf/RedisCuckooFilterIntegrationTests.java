@@ -10,9 +10,10 @@ import javax.inject.Inject;
 import java.util.List;
 
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.cf.arguments.CfInsertArgs;
-import io.lettuce.core.cf.arguments.CfReserveArgs;
+import io.lettuce.core.probabilistic.CfInfoValue;
 import io.lettuce.core.probabilistic.ScanDumpValue;
+import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.*;

@@ -8,10 +8,10 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisCuckooFilterReactiveCommands
-import io.lettuce.core.cf.CfInfoValue
+import io.lettuce.core.probabilistic.CfInfoValue
 import io.lettuce.core.probabilistic.ScanDumpValue
-import io.lettuce.core.cf.arguments.CfInsertArgs
-import io.lettuce.core.cf.arguments.CfReserveArgs
+import io.lettuce.core.probabilistic.arguments.CfInsertArgs
+import io.lettuce.core.probabilistic.arguments.CfReserveArgs
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull

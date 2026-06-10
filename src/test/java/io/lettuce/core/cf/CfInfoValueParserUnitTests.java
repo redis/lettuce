@@ -15,6 +15,8 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.output.ComplexData;
+import io.lettuce.core.probabilistic.CfInfoValue;
+import io.lettuce.core.probabilistic.CfInfoValueParser;
 
 /**
  * Unit tests for {@link CfInfoValueParser}.

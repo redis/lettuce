@@ -6,8 +6,8 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.cf.arguments.CfInsertArgs;
-import io.lettuce.core.cf.arguments.CfReserveArgs;
+import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
 import io.netty.buffer.ByteBuf;
