@@ -112,6 +112,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author Tihomir Mateev
  * @author SeugnSu Kim
  * @author Yordan Tsintsov
+ * @author dae won
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclReactiveCommands<K, V>,
@@ -474,6 +475,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Mono<String> clientNoEvict(boolean on) {
         return createMono(() -> commandBuilder.clientNoEvict(on));
+    }
+
+    @Override
+    public Mono<String> clientNoTouch(boolean on) {
+        return createMono(() -> commandBuilder.clientNoTouch(on));
     }
 
     @Override

@@ -107,6 +107,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author Ali Takavci
  * @author SeugnSu Kim
  * @author Yordan Tsintsov
+ * @author dae won
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
@@ -456,6 +457,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> clientNoEvict(boolean on) {
         return dispatch(commandBuilder.clientNoEvict(on));
+    }
+
+    @Override
+    public RedisFuture<String> clientNoTouch(boolean on) {
+        return dispatch(commandBuilder.clientNoTouch(on));
     }
 
     @Override
