@@ -136,7 +136,7 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
      * @return the cached or newly created command API.
      * @since 7.7
      */
-    default <C, T extends Commands<K, V>> T commands(CommandsFactory<C, T> factory) {
+    default <C, T> T commands(CommandsFactory<C, T> factory) {
         LettuceAssert.notNull(factory, "CommandsFactory must not be null");
         @SuppressWarnings("unchecked")
         C self = (C) this;

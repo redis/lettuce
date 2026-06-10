@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Supplier;
 
 import io.lettuce.core.api.AsyncCloseable;
-import io.lettuce.core.api.Commands;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.CommandsCache;
 import io.lettuce.core.internal.LettuceAssert;
@@ -62,7 +61,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
-    private final Map<Class<?>, Commands<K, V>> commandsCache = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Object> commandsCache = new ConcurrentHashMap<>();
 
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
@@ -335,7 +334,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends Commands<K, V>> T computeCommands(Class<T> type, Supplier<T> factory) {
+    public <T> T computeCommands(Class<T> type, Supplier<T> factory) {
         return (T) commandsCache.computeIfAbsent(type, k -> factory.get());
     }
 

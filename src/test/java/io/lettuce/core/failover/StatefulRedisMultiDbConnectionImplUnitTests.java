@@ -31,7 +31,6 @@ import org.testcontainers.shaded.org.awaitility.Durations;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
@@ -297,16 +296,6 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @DisplayName("Should return resources")
         void shouldReturnResources() {
             assertThat(connection.getResources()).isEqualTo(clientResources);
-        }
-
-        @Test
-        @DisplayName("Should cache reactive commands")
-        void shouldCacheReactiveCommands() {
-            RedisReactiveCommands<String, String> first = RedisReactiveCommands.from(connection);
-            RedisReactiveCommands<String, String> second = RedisReactiveCommands.from(connection);
-
-            assertThat(first).isNotNull();
-            assertThat(second).isSameAs(first);
         }
 
         @Test

@@ -50,12 +50,6 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
 
     protected final RedisSentinelAsyncCommands<K, V> async;
 
-    /**
-     * @deprecated since 7.7, use
-     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection)}
-     *             instead.
-     */
-    @Deprecated
     protected final RedisSentinelReactiveCommands<K, V> reactive;
 
     private final SentinelConnectionState connectionState = new SentinelConnectionState();
@@ -110,12 +104,6 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
         return async;
     }
 
-    /**
-     * @deprecated since 7.7, use
-     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection)}
-     *             instead.
-     */
-    @Deprecated
     @Override
     public RedisSentinelReactiveCommands<K, V> reactive() {
         return reactive;

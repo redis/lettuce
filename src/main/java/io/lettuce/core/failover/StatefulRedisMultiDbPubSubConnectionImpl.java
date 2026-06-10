@@ -97,24 +97,12 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
         return syncHandler(async(), RedisPubSubCommands.class);
     }
 
-    /**
-     * @deprecated since 7.7, use
-     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(io.lettuce.core.pubsub.StatefulRedisPubSubConnection)}
-     *             instead.
-     */
-    @Deprecated
     @Override
     @SuppressWarnings("unchecked")
     public RedisPubSubReactiveCommands<K, V> reactive() {
         return (RedisPubSubReactiveCommands<K, V>) reactive;
     }
 
-    /**
-     * @deprecated since 7.7, use
-     *             {@link io.lettuce.core.api.reactive.RedisReactiveCommands#from(io.lettuce.core.pubsub.StatefulRedisPubSubConnection)}
-     *             instead.
-     */
-    @Deprecated
     @Override
     protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisPubSubReactiveCommandsImpl<>(this, codec);

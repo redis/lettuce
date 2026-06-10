@@ -19,7 +19,6 @@
  */
 package io.lettuce.core.api.sync;
 
-import io.lettuce.core.api.Commands;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.json.JsonParser;
@@ -40,7 +39,7 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCo
         RedisKeyCommands<K, V>, RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
         RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V>,
         RedisTransactionalCommands<K, V>, RedisJsonCommands<K, V>, RedisVectorSetCommands<K, V>, RediSearchCommands<K, V>,
-        RedisArrayCommands<K, V>, RedisBloomFilterCommands<K, V>, Commands<K, V> {
+        RedisArrayCommands<K, V>, RedisBloomFilterCommands<K, V> {
 
     /**
      * Authenticate to the server.

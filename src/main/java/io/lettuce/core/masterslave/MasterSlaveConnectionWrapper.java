@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisConnectionStateListener;
-import io.lettuce.core.api.Commands;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.internal.CommandsCache;
 import io.lettuce.core.api.push.PushListener;
@@ -143,7 +142,7 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     }
 
     @Override
-    public <T extends Commands<K, V>> T computeCommands(Class<T> type, Supplier<T> factory) {
+    public <T> T computeCommands(Class<T> type, Supplier<T> factory) {
         if (delegate instanceof CommandsCache) {
             return ((CommandsCache<K, V>) delegate).computeCommands(type, factory);
         }

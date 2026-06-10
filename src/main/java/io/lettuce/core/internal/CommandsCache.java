@@ -6,7 +6,6 @@ package io.lettuce.core.internal;
 
 import java.util.function.Supplier;
 
-import io.lettuce.core.api.Commands;
 import io.lettuce.core.api.StatefulConnection;
 
 /**
@@ -32,7 +31,7 @@ public interface CommandsCache<K, V> {
      * @param <T> command API type.
      * @return the cached or newly created instance.
      */
-    <T extends Commands<K, V>> T computeCommands(Class<T> type, Supplier<T> factory);
+    <T> T computeCommands(Class<T> type, Supplier<T> factory);
 
     /**
      * Create-and-cache the command API on the connection when it supports caching, otherwise create a fresh instance. Used by
@@ -47,7 +46,7 @@ public interface CommandsCache<K, V> {
      * @return the cached or newly created instance.
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    static <K, V, T extends Commands<K, V>> T stamp(StatefulConnection<K, V> connection, Class<?> type, Supplier<T> factory) {
+    static <K, V, T> T stamp(StatefulConnection<K, V> connection, Class<?> type, Supplier<T> factory) {
         if (connection instanceof CommandsCache) {
             return (T) ((CommandsCache) connection).computeCommands(type, factory);
         }
