@@ -8,7 +8,7 @@ package io.lettuce.core.api.reactive;
 
 import io.lettuce.core.Value;
 import io.lettuce.core.bf.BfInfoValue;
-import io.lettuce.core.bf.BfScanDumpValue;
+import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.bf.arguments.BfInsertArgs;
 import io.lettuce.core.bf.arguments.BfReserveArgs;
 import reactor.core.publisher.Flux;
@@ -165,8 +165,8 @@ public interface RedisBloomFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param iterator the iterator.
-     * @return BfScanDumpValue the scan dump value.
+     * @return ScanDumpValue the scan dump value.
      */
-    Mono<BfScanDumpValue> bfScanDump(K key, long iterator);
+    Mono<ScanDumpValue> bfScanDump(K key, long iterator);
 
 }

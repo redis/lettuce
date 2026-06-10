@@ -24,11 +24,10 @@ import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.*;
 import io.lettuce.core.array.*;
 import io.lettuce.core.bf.BfInfoValue;
-import io.lettuce.core.bf.BfScanDumpValue;
 import io.lettuce.core.bf.arguments.BfInsertArgs;
 import io.lettuce.core.bf.arguments.BfReserveArgs;
 import io.lettuce.core.cf.CfInfoValue;
-import io.lettuce.core.cf.CfScanDumpValue;
+import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.cf.arguments.CfInsertArgs;
 import io.lettuce.core.cf.arguments.CfReserveArgs;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
@@ -4342,7 +4341,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<BfScanDumpValue> bfScanDump(K key, long iterator) {
+    public Mono<ScanDumpValue> bfScanDump(K key, long iterator) {
         return createMono(() -> bloomFilterCommandBuilder.bfScanDump(key, iterator));
     }
 
@@ -4429,7 +4428,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<CfScanDumpValue> cfScanDump(K key, long cursor) {
+    public Mono<ScanDumpValue> cfScanDump(K key, long cursor) {
         return createMono(() -> cuckooFilterCommandBuilder.cfScanDump(key, cursor));
     }
 

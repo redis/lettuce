@@ -8,7 +8,7 @@ package io.lettuce.core.cluster.api.sync;
 
 import java.util.List;
 import io.lettuce.core.cf.CfInfoValue;
-import io.lettuce.core.cf.CfScanDumpValue;
+import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.cf.arguments.CfInsertArgs;
 import io.lettuce.core.cf.arguments.CfReserveArgs;
 
@@ -198,9 +198,9 @@ public interface NodeSelectionCuckooFilterCommands<K, V> {
      *
      * @param key the key.
      * @param cursor the cursor.
-     * @return CfScanDumpValue the scan dump value.
+     * @return ScanDumpValue the scan dump value.
      */
-    Executions<CfScanDumpValue> cfScanDump(K key, long cursor);
+    Executions<ScanDumpValue> cfScanDump(K key, long cursor);
 
     /**
      * Restores a Cuckoo filter previously saved using CF.SCANDUMP.

@@ -7,7 +7,7 @@
 package io.lettuce.core.api.reactive;
 
 import io.lettuce.core.cf.CfInfoValue;
-import io.lettuce.core.cf.CfScanDumpValue;
+import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.cf.arguments.CfInsertArgs;
 import io.lettuce.core.cf.arguments.CfReserveArgs;
 import reactor.core.publisher.Flux;
@@ -195,9 +195,9 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param cursor the cursor.
-     * @return CfScanDumpValue the scan dump value.
+     * @return ScanDumpValue the scan dump value.
      */
-    Mono<CfScanDumpValue> cfScanDump(K key, long cursor);
+    Mono<ScanDumpValue> cfScanDump(K key, long cursor);
 
     /**
      * Restores a Cuckoo filter previously saved using CF.SCANDUMP.

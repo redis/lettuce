@@ -9,7 +9,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisBloomFilterReactiveCommands
 import io.lettuce.core.bf.BfInfoValue
-import io.lettuce.core.bf.BfScanDumpValue
+import io.lettuce.core.probabilistic.ScanDumpValue
 import io.lettuce.core.bf.arguments.BfInsertArgs
 import io.lettuce.core.bf.arguments.BfReserveArgs
 import kotlinx.coroutines.flow.toList
@@ -77,7 +77,7 @@ internal class RedisBloomFilterCoroutinesCommandsImpl<K : Any, V : Any>(
     ): String? =
         ops.bfReserve(key, errorRate, capacity, reserveArgs).awaitFirstOrNull()
 
-    override suspend fun bfScanDump(key: K, iterator: Long): BfScanDumpValue? =
+    override suspend fun bfScanDump(key: K, iterator: Long): ScanDumpValue? =
         ops.bfScanDump(key, iterator).awaitFirstOrNull()
 
 }

@@ -12,6 +12,7 @@ import java.util.List;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cf.arguments.CfInsertArgs;
 import io.lettuce.core.cf.arguments.CfReserveArgs;
+import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.*;
@@ -222,7 +223,7 @@ public class RedisCuckooFilterIntegrationTests {
 
         long cursor = 0;
         while (true) {
-            CfScanDumpValue chunkData = redis.cfScanDump("cuckoo-dump", cursor);
+            ScanDumpValue chunkData = redis.cfScanDump("cuckoo-dump", cursor);
             cursor = chunkData.getIterator();
             if (cursor == 0L) {
                 break;

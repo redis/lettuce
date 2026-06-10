@@ -24,11 +24,10 @@ import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.async.*;
 import io.lettuce.core.array.*;
 import io.lettuce.core.bf.BfInfoValue;
-import io.lettuce.core.bf.BfScanDumpValue;
 import io.lettuce.core.bf.arguments.BfInsertArgs;
 import io.lettuce.core.bf.arguments.BfReserveArgs;
 import io.lettuce.core.cf.CfInfoValue;
-import io.lettuce.core.cf.CfScanDumpValue;
+import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.cf.arguments.CfInsertArgs;
 import io.lettuce.core.cf.arguments.CfReserveArgs;
 import io.lettuce.core.cluster.PipelinedRedisFuture;
@@ -4294,7 +4293,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<BfScanDumpValue> bfScanDump(K key, long iterator) {
+    public RedisFuture<ScanDumpValue> bfScanDump(K key, long iterator) {
         return dispatch(bloomFilterCommandBuilder.bfScanDump(key, iterator));
     }
 
@@ -4381,7 +4380,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<CfScanDumpValue> cfScanDump(K key, long cursor) {
+    public RedisFuture<ScanDumpValue> cfScanDump(K key, long cursor) {
         return dispatch(cuckooFilterCommandBuilder.cfScanDump(key, cursor));
     }
 

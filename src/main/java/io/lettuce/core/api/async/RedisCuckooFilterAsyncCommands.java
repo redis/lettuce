@@ -9,7 +9,7 @@ package io.lettuce.core.api.async;
 import java.util.List;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.cf.CfInfoValue;
-import io.lettuce.core.cf.CfScanDumpValue;
+import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.cf.arguments.CfInsertArgs;
 import io.lettuce.core.cf.arguments.CfReserveArgs;
 
@@ -200,9 +200,9 @@ public interface RedisCuckooFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param cursor the cursor.
-     * @return CfScanDumpValue the scan dump value.
+     * @return ScanDumpValue the scan dump value.
      */
-    RedisFuture<CfScanDumpValue> cfScanDump(K key, long cursor);
+    RedisFuture<ScanDumpValue> cfScanDump(K key, long cursor);
 
     /**
      * Restores a Cuckoo filter previously saved using CF.SCANDUMP.

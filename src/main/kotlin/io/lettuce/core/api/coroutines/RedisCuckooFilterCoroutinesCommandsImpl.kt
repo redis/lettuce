@@ -9,7 +9,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisCuckooFilterReactiveCommands
 import io.lettuce.core.cf.CfInfoValue
-import io.lettuce.core.cf.CfScanDumpValue
+import io.lettuce.core.probabilistic.ScanDumpValue
 import io.lettuce.core.cf.arguments.CfInsertArgs
 import io.lettuce.core.cf.arguments.CfReserveArgs
 import kotlinx.coroutines.flow.toList
@@ -77,7 +77,7 @@ internal class RedisCuckooFilterCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun cfCount(key: K, value: V): Long? =
         ops.cfCount(key, value).awaitFirstOrNull()
 
-    override suspend fun cfScanDump(key: K, cursor: Long): CfScanDumpValue? =
+    override suspend fun cfScanDump(key: K, cursor: Long): ScanDumpValue? =
         ops.cfScanDump(key, cursor).awaitFirstOrNull()
 
     override suspend fun cfLoadChunk(key: K, cursor: Long, data: ByteArray): String? =

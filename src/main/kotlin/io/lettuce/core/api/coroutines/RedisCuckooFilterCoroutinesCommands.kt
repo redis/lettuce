@@ -8,7 +8,7 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.cf.CfInfoValue
-import io.lettuce.core.cf.CfScanDumpValue
+import io.lettuce.core.probabilistic.ScanDumpValue
 import io.lettuce.core.cf.arguments.CfInsertArgs
 import io.lettuce.core.cf.arguments.CfReserveArgs
 
@@ -192,9 +192,9 @@ interface RedisCuckooFilterCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param cursor the cursor.
-     * @return CfScanDumpValue the scan dump value.
+     * @return ScanDumpValue the scan dump value.
      */
-    suspend fun cfScanDump(key: K, cursor: Long): CfScanDumpValue?
+    suspend fun cfScanDump(key: K, cursor: Long): ScanDumpValue?
 
     /**
      * Restores a Cuckoo filter previously saved using CF.SCANDUMP.

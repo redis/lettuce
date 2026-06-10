@@ -10,8 +10,8 @@ import java.util.List;
 
 import io.lettuce.core.cf.CfInfoValue;
 import io.lettuce.core.cf.CfInfoValueParser;
-import io.lettuce.core.cf.CfScanDumpValue;
-import io.lettuce.core.cf.CfScanDumpValueParser;
+import io.lettuce.core.probabilistic.ScanDumpValue;
+import io.lettuce.core.probabilistic.ScanDumpValueParser;
 import io.lettuce.core.cf.arguments.CfInsertArgs;
 import io.lettuce.core.cf.arguments.CfReserveArgs;
 import io.lettuce.core.codec.RedisCodec;
@@ -167,12 +167,12 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         return createCommand(CF_COUNT, new IntegerOutput<>(codec), key, value);
     }
 
-    Command<K, V, CfScanDumpValue> cfScanDump(K key, long iterator) {
+    Command<K, V, ScanDumpValue> cfScanDump(K key, long iterator) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(iterator);
 
-        return createCommand(CF_SCANDUMP, new EncodedComplexOutput<>(codec, CfScanDumpValueParser.INSTANCE), args);
+        return createCommand(CF_SCANDUMP, new EncodedComplexOutput<>(codec, ScanDumpValueParser.INSTANCE), args);
     }
 
     Command<K, V, String> cfLoadChunk(K key, long iterator, byte[] data) {
