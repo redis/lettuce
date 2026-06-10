@@ -89,8 +89,7 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
         FieldArgs<String> year = NumericFieldArgs.<String> builder().name("year").sortable().build();
         FieldArgs<String> rating = NumericFieldArgs.<String> builder().name("rating").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         assertThat(sync.ftCreate(INDEX, createArgs, Arrays.asList(title, author, year, rating))).isEqualTo("OK");
 
@@ -121,8 +120,8 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
     @Test
     void sync_cursorLifecycle_and_stickiness() {
         AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
-                .groupBy(AggregateArgs.GroupBy.<String, String> of("author")
-                        .reduce(AggregateArgs.Reducer.<String, String> avg("@rating").as("avg_rating")))
+                .groupBy(AggregateArgs.GroupBy.<String> of("author")
+                        .reduce(AggregateArgs.Reducer.<String> avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
         AggregationReply<String, String> first = sync.ftAggregate(INDEX, "*", args);
@@ -153,8 +152,8 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
     @Test
     void async_cursorLifecycle_and_stickiness() {
         AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
-                .groupBy(AggregateArgs.GroupBy.<String, String> of("author")
-                        .reduce(AggregateArgs.Reducer.<String, String> avg("@rating").as("avg_rating")))
+                .groupBy(AggregateArgs.GroupBy.<String> of("author")
+                        .reduce(AggregateArgs.Reducer.<String> avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
         AggregationReply<String, String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
@@ -184,8 +183,8 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
     @Test
     void reactive_cursorLifecycle_and_stickiness() {
         AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
-                .groupBy(AggregateArgs.GroupBy.<String, String> of("author")
-                        .reduce(AggregateArgs.Reducer.<String, String> avg("@rating").as("avg_rating")))
+                .groupBy(AggregateArgs.GroupBy.<String> of("author")
+                        .reduce(AggregateArgs.Reducer.<String> avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
         AggregationReply<String, String> first = reactive.ftAggregate(INDEX, "*", args).block();
@@ -250,8 +249,8 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
         assumeTrue(upstreams >= 2, "requires >= 2 upstream nodes");
 
         AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
-                .groupBy(AggregateArgs.GroupBy.<String, String> of("author")
-                        .reduce(AggregateArgs.Reducer.<String, String> avg("@rating").as("avg_rating")))
+                .groupBy(AggregateArgs.GroupBy.<String> of("author")
+                        .reduce(AggregateArgs.Reducer.<String> avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(1L)).build();
 
         Set<String> nodeIds = new HashSet<>();

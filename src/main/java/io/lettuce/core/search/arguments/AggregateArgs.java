@@ -90,11 +90,11 @@ public class AggregateArgs<K, V> {
      * Ordered list of pipeline operations (GROUPBY, SORTBY, APPLY, FILTER). These operations must be applied in the order
      * specified by the user.
      */
-    private final List<PipelineOperation<K, ?>> pipelineOperations = new ArrayList<>();
+    private final List<PipelineOperation> pipelineOperations = new ArrayList<>();
 
     private Optional<WithCursor> withCursor = Optional.empty();
 
-    private final Map<K, V> params = new HashMap<>();
+    private final Map<String, Object> params = new HashMap<>();
 
     private Optional<V> scorer = Optional.empty();
 
@@ -172,7 +172,7 @@ public class AggregateArgs<K, V> {
          * @param alias the alias name to use in the result
          * @return the builder.
          */
-        public Builder<K, V> load(K field, K alias) {
+        public Builder<K, V> load(K field, String alias) {
             args.loadFields.add(new LoadField<>(field, alias));
             return this;
         }
@@ -209,7 +209,7 @@ public class AggregateArgs<K, V> {
          * @param groupBy the group by specification
          * @return the builder.
          */
-        public Builder<K, V> groupBy(GroupBy<K, V> groupBy) {
+        public Builder<K, V> groupBy(GroupBy<K> groupBy) {
             args.pipelineOperations.add(groupBy);
             return this;
         }
@@ -231,7 +231,7 @@ public class AggregateArgs<K, V> {
          * @param apply the apply specification
          * @return the builder.
          */
-        public Builder<K, V> apply(Apply<K, V> apply) {
+        public Builder<K, V> apply(Apply apply) {
             args.pipelineOperations.add(apply);
             return this;
         }
@@ -264,7 +264,7 @@ public class AggregateArgs<K, V> {
          * @return the builder.
          */
         public Builder<K, V> limit(long offset, long num) {
-            args.pipelineOperations.add(new Limit<>(offset, num));
+            args.pipelineOperations.add(new Limit(offset, num));
             return this;
         }
 
@@ -297,8 +297,8 @@ public class AggregateArgs<K, V> {
          * @param filter the filter expression (e.g., "@price > 100", "@category == 'electronics'")
          * @return the builder.
          */
-        public Builder<K, V> filter(V filter) {
-            args.pipelineOperations.add(new Filter<>(filter));
+        public Builder<K, V> filter(String filter) {
+            args.pipelineOperations.add(new Filter(filter));
             return this;
         }
 
@@ -367,7 +367,29 @@ public class AggregateArgs<K, V> {
          * @param value the parameter value
          * @return the builder.
          */
-        public Builder<K, V> param(K name, V value) {
+        public Builder<K, V> param(String name, V value) {
+            args.params.put(name, value);
+            return this;
+        }
+
+        /**
+         * Add a binary parameter for parameterized queries.
+         *
+         * <p>
+         * Defines a binary value parameter that can be referenced in the query using {@code $name}. The value bypasses the
+         * connection's value codec, which is useful for passing vector blobs (e.g. KNN {@code $BLOB}) over a non-binary
+         * connection.
+         * </p>
+         *
+         * <p>
+         * <strong>Note:</strong> To use PARAMS, set DIALECT to 2 or greater.
+         * </p>
+         *
+         * @param name the parameter name (referenced as $name in query)
+         * @param value the binary parameter value (e.g., vector data)
+         * @return the builder.
+         */
+        public Builder<K, V> param(String name, byte[] value) {
             args.params.put(name, value);
             return this;
         }
@@ -435,7 +457,7 @@ public class AggregateArgs<K, V> {
          */
         @SafeVarargs
         public final Builder<K, V> groupBy(K... properties) {
-            return groupBy(new GroupBy<>(Arrays.asList(properties)));
+            return groupBy(new GroupBy<K>(Arrays.asList(properties)));
         }
 
         /**
@@ -456,8 +478,8 @@ public class AggregateArgs<K, V> {
          * @param name the result field name
          * @return the builder.
          */
-        public Builder<K, V> apply(V expression, K name) {
-            return apply(new Apply<>(expression, name));
+        public Builder<K, V> apply(String expression, String name) {
+            return apply(new Apply(expression, name));
         }
 
         /**
@@ -476,6 +498,7 @@ public class AggregateArgs<K, V> {
      *
      * @param args the {@link CommandArgs} object
      */
+    @SuppressWarnings("unchecked")
     public void build(CommandArgs<K, V> args) {
         verbatim.ifPresent(v -> args.add(CommandKeyword.VERBATIM));
 
@@ -495,10 +518,10 @@ public class AggregateArgs<K, V> {
                 }
                 args.add(argCount);
                 for (LoadField<K> loadField : loadFields) {
-                    args.add(loadField.field.toString());
+                    args.addKey(loadField.field);
                     if (loadField.alias != null) {
                         args.add(CommandKeyword.AS);
-                        args.add(loadField.alias.toString());
+                        args.add(loadField.alias);
                     }
                 }
             }
@@ -510,11 +533,8 @@ public class AggregateArgs<K, V> {
         });
 
         // Add pipeline operations in user-specified order
-        for (PipelineOperation<K, ?> operation : pipelineOperations) {
-            // Cast is safe because all operations can build with CommandArgs<K, V>
-            @SuppressWarnings("unchecked")
-            PipelineOperation<K, V> typedOperation = (PipelineOperation<K, V>) operation;
-            typedOperation.build(args);
+        for (PipelineOperation operation : pipelineOperations) {
+            operation.build(args);
         }
 
         // Add WITHCURSOR clause
@@ -534,8 +554,12 @@ public class AggregateArgs<K, V> {
             args.add(CommandKeyword.PARAMS);
             args.add(params.size() * 2L);
             params.forEach((key, value) -> {
-                args.add(key.toString());
-                args.addValue(value);
+                args.add(key);
+                if (value instanceof byte[]) {
+                    args.add((byte[]) value);
+                } else {
+                    args.addValue((V) value);
+                }
             });
         }
 
@@ -558,14 +582,14 @@ public class AggregateArgs<K, V> {
      * Interface for pipeline operations that need to be applied in user-specified order. This includes GROUPBY, SORTBY, APPLY,
      * and FILTER operations.
      */
-    public interface PipelineOperation<K, V> {
+    public interface PipelineOperation {
 
         /**
          * Build the operation arguments into the command args.
-         * 
+         *
          * @param args the command args to build into
          */
-        void build(CommandArgs<K, V> args);
+        void build(CommandArgs<?, ?> args);
 
     }
 
@@ -574,16 +598,16 @@ public class AggregateArgs<K, V> {
 
         final K field;
 
-        final K alias;
+        final String alias;
 
-        LoadField(K field, K alias) {
+        LoadField(K field, String alias) {
             this.field = field;
             this.alias = alias;
         }
 
     }
 
-    public static class Limit<K, V> implements PipelineOperation<K, V> {
+    public static class Limit implements PipelineOperation {
 
         final long offset;
 
@@ -595,7 +619,7 @@ public class AggregateArgs<K, V> {
         }
 
         @Override
-        public void build(CommandArgs<K, V> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.LIMIT);
             args.add(offset);
             args.add(num);
@@ -674,18 +698,18 @@ public class AggregateArgs<K, V> {
      * performance.
      * </p>
      */
-    public static class GroupBy<K, V> implements PipelineOperation<K, V> {
+    public static class GroupBy<K> implements PipelineOperation {
 
         private final List<K> properties;
 
-        private final List<Reducer<K, V>> reducers;
+        private final List<Reducer<K>> reducers;
 
         public GroupBy(List<K> properties) {
             this.properties = new ArrayList<>(properties);
             this.reducers = new ArrayList<>();
         }
 
-        public GroupBy<K, V> reduce(Reducer<K, V> reducer) {
+        public GroupBy<K> reduce(Reducer<K> reducer) {
             this.reducers.add(reducer);
             return this;
         }
@@ -695,16 +719,15 @@ public class AggregateArgs<K, V> {
          *
          * @param properties the properties to group by
          * @param <K> Key type
-         * @param <V> Value type
          * @return new GroupBy instance
          */
         @SafeVarargs
-        public static <K, V> GroupBy<K, V> of(K... properties) {
+        public static <K> GroupBy<K> of(K... properties) {
             return new GroupBy<>(Arrays.asList(properties));
         }
 
         @Override
-        public void build(CommandArgs<K, V> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.GROUPBY);
             args.add(properties.size());
             for (K property : properties) {
@@ -717,7 +740,7 @@ public class AggregateArgs<K, V> {
                 }
             }
 
-            for (Reducer<K, V> reducer : reducers) {
+            for (Reducer<K> reducer : reducers) {
                 reducer.build(args);
             }
         }
@@ -763,7 +786,7 @@ public class AggregateArgs<K, V> {
      * using LIMIT.
      * </p>
      */
-    public static class SortBy<K> implements PipelineOperation<K, Object> {
+    public static class SortBy<K> implements PipelineOperation {
 
         private final List<SortProperty<K>> properties;
 
@@ -810,7 +833,7 @@ public class AggregateArgs<K, V> {
         }
 
         @Override
-        public void build(CommandArgs<K, Object> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.SORTBY);
             // Count includes property + direction pairs
             args.add(properties.size() * 2L);
@@ -853,16 +876,16 @@ public class AggregateArgs<K, V> {
      * {
      *     &#64;code
      *     // Calculate total value from price and quantity
-     *     Apply<String, String> totalValue = new Apply<>("@price * @quantity", "total_value");
+     *     Apply totalValue = new Apply("@price * @quantity", "total_value");
      *
      *     // Mathematical operations
-     *     Apply<String, String> discount = new Apply<>("@price * 0.9", "discounted_price");
+     *     Apply discount = new Apply("@price * 0.9", "discounted_price");
      *
      *     // String operations
-     *     Apply<String, String> fullName = new Apply<>("@first_name + ' ' + @last_name", "full_name");
+     *     Apply fullName = new Apply("@first_name + ' ' + @last_name", "full_name");
      *
      *     // Date operations
-     *     Apply<String, String> dayOfWeek = new Apply<>("day(@timestamp)", "day");
+     *     Apply dayOfWeek = new Apply("day(@timestamp)", "day");
      * }
      * </pre>
      *
@@ -880,23 +903,23 @@ public class AggregateArgs<K, V> {
      * can be referenced by further operations.
      * </p>
      */
-    public static class Apply<K, V> implements PipelineOperation<K, V> {
+    public static class Apply implements PipelineOperation {
 
-        private final V expression;
+        private final String expression;
 
-        private final K name;
+        private final String name;
 
-        public Apply(V expression, K name) {
+        public Apply(String expression, String name) {
             this.expression = expression;
             this.name = name;
         }
 
         @Override
-        public void build(CommandArgs<K, V> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.APPLY);
-            args.addValue(expression);
+            args.add(expression);
             args.add(CommandKeyword.AS);
-            args.add(name.toString());
+            args.add(name);
         }
 
         /**
@@ -904,12 +927,10 @@ public class AggregateArgs<K, V> {
          *
          * @param name the name of the expression
          * @param expression the expression to apply
-         * @param <K> Key type
-         * @param <V> Value type
          * @return new Apply instance
          */
-        public static <K, V> Apply<K, V> of(V expression, K name) {
-            return new Apply<>(expression, name);
+        public static Apply of(String expression, String name) {
+            return new Apply(expression, name);
         }
 
     }
@@ -929,20 +950,20 @@ public class AggregateArgs<K, V> {
      * {
      *     &#64;code
      *     // Count items in each group
-     *     Reducer<String, String> count = Reducer.count().as("item_count");
+     *     Reducer<String> count = Reducer.count().as("item_count");
      *
      *     // Sum numeric values
-     *     Reducer<String, String> totalSales = Reducer.sum("@sales").as("total_sales");
+     *     Reducer<String> totalSales = Reducer.sum("@sales").as("total_sales");
      *
      *     // Calculate average
-     *     Reducer<String, String> avgPrice = Reducer.avg("@price").as("average_price");
+     *     Reducer<String> avgPrice = Reducer.avg("@price").as("average_price");
      *
      *     // Find extremes
-     *     Reducer<String, String> maxScore = Reducer.max("@score").as("highest_score");
-     *     Reducer<String, String> minPrice = Reducer.min("@price").as("lowest_price");
+     *     Reducer<String> maxScore = Reducer.max("@score").as("highest_score");
+     *     Reducer<String> minPrice = Reducer.min("@price").as("lowest_price");
      *
      *     // Count distinct values
-     *     Reducer<String, String> uniqueUsers = Reducer.countDistinct("@user_id").as("unique_users");
+     *     Reducer<String> uniqueUsers = Reducer.countDistinct("@user_id").as("unique_users");
      * }
      * </pre>
      *
@@ -961,20 +982,20 @@ public class AggregateArgs<K, V> {
      * name (e.g., "count_distinct(@user_id)").
      * </p>
      */
-    public static class Reducer<K, V> {
+    public static class Reducer<K> {
 
         private final String function;
 
-        private final List<V> args;
+        private final List<K> args;
 
-        private Optional<K> alias = Optional.empty();
+        private Optional<String> alias = Optional.empty();
 
-        public Reducer(String function, List<V> args) {
+        public Reducer(String function, List<K> args) {
             this.function = function;
             this.args = new ArrayList<>(args);
         }
 
-        public Reducer<K, V> as(K alias) {
+        public Reducer<K> as(String alias) {
             this.alias = Optional.of(alias);
             return this;
         }
@@ -983,10 +1004,9 @@ public class AggregateArgs<K, V> {
          * Static factory method to create a COUNT reducer.
          *
          * @param <K> Key type
-         * @param <V> Value type
          * @return new COUNT Reducer instance
          */
-        public static <K, V> Reducer<K, V> count() {
+        public static <K> Reducer<K> count() {
             return new Reducer<>("COUNT", Collections.emptyList());
         }
 
@@ -995,10 +1015,9 @@ public class AggregateArgs<K, V> {
          *
          * @param field the field to sum
          * @param <K> Key type
-         * @param <V> Value type
          * @return new SUM Reducer instance
          */
-        public static <K, V> Reducer<K, V> sum(V field) {
+        public static <K> Reducer<K> sum(K field) {
             return new Reducer<>("SUM", Collections.singletonList(field));
         }
 
@@ -1007,10 +1026,9 @@ public class AggregateArgs<K, V> {
          *
          * @param field the field to average
          * @param <K> Key type
-         * @param <V> Value type
          * @return new AVG Reducer instance
          */
-        public static <K, V> Reducer<K, V> avg(V field) {
+        public static <K> Reducer<K> avg(K field) {
             return new Reducer<>("AVG", Collections.singletonList(field));
         }
 
@@ -1019,10 +1037,9 @@ public class AggregateArgs<K, V> {
          *
          * @param field the field to find minimum
          * @param <K> Key type
-         * @param <V> Value type
          * @return new MIN Reducer instance
          */
-        public static <K, V> Reducer<K, V> min(V field) {
+        public static <K> Reducer<K> min(K field) {
             return new Reducer<>("MIN", Collections.singletonList(field));
         }
 
@@ -1031,10 +1048,9 @@ public class AggregateArgs<K, V> {
          *
          * @param field the field to find maximum
          * @param <K> Key type
-         * @param <V> Value type
          * @return new MAX Reducer instance
          */
-        public static <K, V> Reducer<K, V> max(V field) {
+        public static <K> Reducer<K> max(K field) {
             return new Reducer<>("MAX", Collections.singletonList(field));
         }
 
@@ -1043,24 +1059,23 @@ public class AggregateArgs<K, V> {
          *
          * @param field the field to count distinct values
          * @param <K> Key type
-         * @param <V> Value type
          * @return new COUNT_DISTINCT Reducer instance
          */
-        public static <K, V> Reducer<K, V> countDistinct(V field) {
+        public static <K> Reducer<K> countDistinct(K field) {
             return new Reducer<>("COUNT_DISTINCT", Collections.singletonList(field));
         }
 
-        public void build(CommandArgs<K, V> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.REDUCE);
             args.add(function);
             args.add(this.args.size());
-            for (V arg : this.args) {
-                args.addValue(arg);
+            for (K arg : this.args) {
+                args.add(arg.toString());
             }
 
             alias.ifPresent(a -> {
                 args.add(CommandKeyword.AS);
-                args.add(a.toString());
+                args.add(a);
             });
         }
 
@@ -1075,18 +1090,18 @@ public class AggregateArgs<K, V> {
      * reducer results.
      * </p>
      */
-    public static class Filter<K, V> implements PipelineOperation<K, V> {
+    public static class Filter implements PipelineOperation {
 
-        private final V expression;
+        private final String expression;
 
-        public Filter(V expression) {
+        public Filter(String expression) {
             this.expression = expression;
         }
 
         @Override
-        public void build(CommandArgs<K, V> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.FILTER);
-            args.addValue(expression);
+            args.add(expression);
         }
 
     }

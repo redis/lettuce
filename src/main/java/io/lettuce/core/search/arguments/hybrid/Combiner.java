@@ -48,7 +48,7 @@ public abstract class Combiner<K> {
 
     private final String name;
 
-    private K scoreAlias;
+    private String scoreAlias;
 
     /**
      * Creates a new combiner with the specified name.
@@ -75,7 +75,7 @@ public abstract class Combiner<K> {
      * @return this instance
      */
     @SuppressWarnings("unchecked")
-    public final <T extends Combiner<K>> T as(K alias) {
+    public final <T extends Combiner<K>> T as(String alias) {
         this.scoreAlias = alias;
         return (T) this;
     }
@@ -104,7 +104,7 @@ public abstract class Combiner<K> {
 
         if (scoreAlias != null) {
             args.add(CommandKeyword.YIELD_SCORE_AS);
-            args.addKey(scoreAlias);
+            args.add(scoreAlias);
         }
     }
 

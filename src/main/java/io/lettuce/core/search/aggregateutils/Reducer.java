@@ -58,7 +58,7 @@ public abstract class Reducer<K> {
 
     private final String function;
 
-    private K alias;
+    private String alias;
 
     /**
      * Creates a new reducer with the specified function.
@@ -105,7 +105,7 @@ public abstract class Reducer<K> {
      * @return this reducer
      */
     @SuppressWarnings("unchecked")
-    public <T extends Reducer<K>> T as(K alias) {
+    public <T extends Reducer<K>> T as(String alias) {
         LettuceAssert.notNull(alias, "Alias must not be null");
         this.alias = alias;
         return (T) this;
@@ -118,9 +118,8 @@ public abstract class Reducer<K> {
      * </p>
      *
      * @param args the command args to build into
-     * @param <V> value type
      */
-    public final <V> void build(CommandArgs<K, V> args) {
+    public final void build(CommandArgs<?, ?> args) {
         args.add(CommandKeyword.REDUCE);
         args.add(function);
 
@@ -132,7 +131,7 @@ public abstract class Reducer<K> {
 
         if (alias != null) {
             args.add(CommandKeyword.AS);
-            args.addKey(alias);
+            args.add(alias);
         }
     }
 

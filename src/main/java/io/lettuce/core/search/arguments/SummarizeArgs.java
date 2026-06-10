@@ -20,7 +20,8 @@ import java.util.Optional;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighing</a>
+ * @see <a href=
+ *      "https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/highlight/#summarization">Summarization</a>
  * @since 6.8
  * @author Tihomir Mateev
  */

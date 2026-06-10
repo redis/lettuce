@@ -110,7 +110,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
         FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
 
-        CreateArgs<String, String> customStopWordsArgs = CreateArgs.<String, String> builder().withPrefix(ARTICLE_PREFIX)
+        CreateArgs<String> customStopWordsArgs = CreateArgs.<String> builder().withPrefix(ARTICLE_PREFIX)
                 .on(CreateArgs.TargetType.HASH).stopWords(Arrays.asList("foo", "bar", "baz")).build();
 
         redis.ftCreate(STOPWORDS_INDEX, customStopWordsArgs, Arrays.asList(titleField, contentField));
@@ -158,8 +158,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Create index for testing tokenization
         FieldArgs<String> textField = TextFieldArgs.<String> builder().name("text").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(DOCUMENT_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(DOCUMENT_PREFIX).on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate(TOKENIZATION_INDEX, createArgs, Collections.singletonList(textField));
 
@@ -218,8 +218,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         FieldArgs<String> lastNameField = TextFieldArgs.<String> builder().name("last_name").sortable().build();
         FieldArgs<String> ageField = NumericFieldArgs.<String> builder().name("age").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(USER_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(USER_PREFIX).on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate(SORTING_INDEX, createArgs, Arrays.asList(firstNameField, lastNameField, ageField));
 
@@ -280,8 +280,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         FieldArgs<String> categoriesField = TagFieldArgs.<String> builder().name("categories").separator(";").build();
         FieldArgs<String> tagsField = TagFieldArgs.<String> builder().name("tags").caseSensitive().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PRODUCT_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate(TAGS_INDEX, createArgs, Arrays.asList(titleField, categoriesField, tagsField));
 
@@ -353,8 +353,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
         FieldArgs<String> authorField = TextFieldArgs.<String> builder().name("author").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(BOOK_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate(HIGHLIGHT_INDEX, createArgs, Arrays.asList(titleField, contentField, authorField));
 
@@ -448,8 +448,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         TextFieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
         NumericFieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(REVIEW_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(REVIEW_PREFIX).on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate(SCORING_INDEX, createArgs, Arrays.asList(titleField, contentField, ratingField));
 
@@ -528,8 +528,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Test 1: English stemming
         FieldArgs<String> englishWordField = TextFieldArgs.<String> builder().name("word").build();
 
-        CreateArgs<String, String> englishArgs = CreateArgs.<String, String> builder().withPrefix(WORD_PREFIX)
-                .on(CreateArgs.TargetType.HASH).defaultLanguage(DocumentLanguage.ENGLISH).build();
+        CreateArgs<String> englishArgs = CreateArgs.<String> builder().withPrefix(WORD_PREFIX).on(CreateArgs.TargetType.HASH)
+                .defaultLanguage(DocumentLanguage.ENGLISH).build();
 
         redis.ftCreate(STEMMING_INDEX, englishArgs, Collections.singletonList(englishWordField));
 
@@ -581,8 +581,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Test 2: German stemming example from documentation
         FieldArgs<String> germanWordField = TextFieldArgs.<String> builder().name("wort").build();
 
-        CreateArgs<String, String> germanArgs = CreateArgs.<String, String> builder().withPrefix("wort:")
-                .on(CreateArgs.TargetType.HASH).defaultLanguage(DocumentLanguage.GERMAN).build();
+        CreateArgs<String> germanArgs = CreateArgs.<String> builder().withPrefix("wort:").on(CreateArgs.TargetType.HASH)
+                .defaultLanguage(DocumentLanguage.GERMAN).build();
 
         redis.ftCreate("idx:german", germanArgs, Collections.singletonList(germanWordField));
 
@@ -610,8 +610,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         FieldArgs<String> englishNameField = TextFieldArgs.<String> builder().name("name")
                 .phonetic(TextFieldArgs.PhoneticMatcher.ENGLISH).build();
 
-        CreateArgs<String, String> englishArgs = CreateArgs.<String, String> builder().withPrefix("person:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> englishArgs = CreateArgs.<String> builder().withPrefix("person:").on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate("phonetic-en-idx", englishArgs, Collections.singletonList(englishNameField));
 
@@ -636,8 +636,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         FieldArgs<String> frenchNameField = TextFieldArgs.<String> builder().name("nom")
                 .phonetic(TextFieldArgs.PhoneticMatcher.FRENCH).build();
 
-        CreateArgs<String, String> frenchArgs = CreateArgs.<String, String> builder().withPrefix("personne:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> frenchArgs = CreateArgs.<String> builder().withPrefix("personne:").on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate("phonetic-fr-idx", frenchArgs, Collections.singletonList(frenchNameField));
 
@@ -660,8 +660,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         FieldArgs<String> spanishNameField = TextFieldArgs.<String> builder().name("nombre")
                 .phonetic(TextFieldArgs.PhoneticMatcher.SPANISH).build();
 
-        CreateArgs<String, String> spanishArgs = CreateArgs.<String, String> builder().withPrefix("persona:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> spanishArgs = CreateArgs.<String> builder().withPrefix("persona:").on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate("phonetic-es-idx", spanishArgs, Collections.singletonList(spanishNameField));
 
@@ -681,8 +681,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         FieldArgs<String> portugueseNameField = TextFieldArgs.<String> builder().name("nome")
                 .phonetic(TextFieldArgs.PhoneticMatcher.PORTUGUESE).build();
 
-        CreateArgs<String, String> portugueseArgs = CreateArgs.<String, String> builder().withPrefix("pessoa:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> portugueseArgs = CreateArgs.<String> builder().withPrefix("pessoa:").on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate("phonetic-pt-idx", portugueseArgs, Collections.singletonList(portugueseNameField));
 
@@ -708,8 +708,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Test 1: Field with stemming enabled (default)
         FieldArgs<String> stemmingField = TextFieldArgs.<String> builder().name("content_stemmed").build();
 
-        CreateArgs<String, String> stemmingArgs = CreateArgs.<String, String> builder().withPrefix("stem:")
-                .on(CreateArgs.TargetType.HASH).defaultLanguage(DocumentLanguage.ENGLISH).build();
+        CreateArgs<String> stemmingArgs = CreateArgs.<String> builder().withPrefix("stem:").on(CreateArgs.TargetType.HASH)
+                .defaultLanguage(DocumentLanguage.ENGLISH).build();
 
         redis.ftCreate("stemming-idx", stemmingArgs, Collections.singletonList(stemmingField));
 
@@ -727,8 +727,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Test 2: Field with stemming disabled
         FieldArgs<String> noStemmingField = TextFieldArgs.<String> builder().name("content_exact").noStem().build();
 
-        CreateArgs<String, String> noStemmingArgs = CreateArgs.<String, String> builder().withPrefix("nostem:")
-                .on(CreateArgs.TargetType.HASH).defaultLanguage(DocumentLanguage.ENGLISH).build();
+        CreateArgs<String> noStemmingArgs = CreateArgs.<String> builder().withPrefix("nostem:").on(CreateArgs.TargetType.HASH)
+                .defaultLanguage(DocumentLanguage.ENGLISH).build();
 
         redis.ftCreate("nostemming-idx", noStemmingArgs, Collections.singletonList(noStemmingField));
 
@@ -756,8 +756,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         FieldArgs<String> mixedStemField = TextFieldArgs.<String> builder().name("stemmed_content").build();
         FieldArgs<String> mixedNoStemField = TextFieldArgs.<String> builder().name("exact_content").noStem().build();
 
-        CreateArgs<String, String> mixedArgs = CreateArgs.<String, String> builder().withPrefix("mixed:")
-                .on(CreateArgs.TargetType.HASH).defaultLanguage(DocumentLanguage.ENGLISH).build();
+        CreateArgs<String> mixedArgs = CreateArgs.<String> builder().withPrefix("mixed:").on(CreateArgs.TargetType.HASH)
+                .defaultLanguage(DocumentLanguage.ENGLISH).build();
 
         redis.ftCreate("mixed-idx", mixedArgs, Arrays.asList(mixedStemField, mixedNoStemField));
 
@@ -791,8 +791,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Test 1: Field without suffix trie (default)
         FieldArgs<String> normalField = TextFieldArgs.<String> builder().name("title").build();
 
-        CreateArgs<String, String> normalArgs = CreateArgs.<String, String> builder().withPrefix("normal:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> normalArgs = CreateArgs.<String> builder().withPrefix("normal:").on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate("normal-idx", normalArgs, Collections.singletonList(normalField));
 
@@ -811,8 +811,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Test 2: Field with suffix trie enabled
         FieldArgs<String> suffixTrieField = TextFieldArgs.<String> builder().name("title").withSuffixTrie().build();
 
-        CreateArgs<String, String> suffixTrieArgs = CreateArgs.<String, String> builder().withPrefix("suffix:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> suffixTrieArgs = CreateArgs.<String> builder().withPrefix("suffix:").on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate("suffix-idx", suffixTrieArgs, Collections.singletonList(suffixTrieField));
 
@@ -845,7 +845,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Test 3: Autocomplete-style functionality with suffix trie
         FieldArgs<String> autocompleteField = TextFieldArgs.<String> builder().name("product_name").withSuffixTrie().build();
 
-        CreateArgs<String, String> autocompleteArgs = CreateArgs.<String, String> builder().withPrefix("product:")
+        CreateArgs<String> autocompleteArgs = CreateArgs.<String> builder().withPrefix("product:")
                 .on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate("autocomplete-idx", autocompleteArgs, Collections.singletonList(autocompleteField));
@@ -883,8 +883,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Test 4: Performance comparison - complex wildcard queries
         FieldArgs<String> performanceField = TextFieldArgs.<String> builder().name("description").withSuffixTrie().build();
 
-        CreateArgs<String, String> performanceArgs = CreateArgs.<String, String> builder().withPrefix("perf:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> performanceArgs = CreateArgs.<String> builder().withPrefix("perf:").on(CreateArgs.TargetType.HASH)
+                .build();
 
         redis.ftCreate("performance-idx", performanceArgs, Collections.singletonList(performanceField));
 

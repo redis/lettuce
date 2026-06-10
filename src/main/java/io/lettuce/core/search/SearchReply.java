@@ -34,7 +34,7 @@ public class SearchReply<K, V> {
 
     private Long cursorId;
 
-    private final List<V> warnings = new ArrayList<>();
+    private final List<String> warnings = new ArrayList<>();
 
     /**
      * Creates a new empty SearchReply instance.
@@ -134,7 +134,7 @@ public class SearchReply<K, V> {
     /**
      * @return a {@link List} of all the warnings generated during the execution of this search
      */
-    public List<V> getWarnings() {
+    public List<String> getWarnings() {
         return this.warnings;
     }
 
@@ -152,7 +152,7 @@ public class SearchReply<K, V> {
      *
      * @param v the warning to add
      */
-    void addWarning(V v) {
+    void addWarning(String v) {
         this.warnings.add(v);
     }
 

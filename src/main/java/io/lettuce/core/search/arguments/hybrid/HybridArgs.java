@@ -29,7 +29,7 @@ import java.util.Optional;
  * {
  *     &#64;code
  *     HybridArgs<String, String> args = HybridArgs.<String, String> builder()
- *             .search(HybridSearchArgs.<String, String> builder().query("comfortable shoes").build())
+ *             .search(HybridSearchArgs.builder().query("comfortable shoes").build())
  *             .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector(vectorBlob)
  *                     .method(HybridVectorArgs.Knn.of(10)).build())
  *             .combine(Combiners.rrf().window(20).constant(60)).build();
@@ -50,7 +50,7 @@ import java.util.Optional;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class HybridArgs<K, V> {
 
-    private final List<HybridSearchArgs<K, V>> searchArgs = new ArrayList<>();
+    private final List<HybridSearchArgs> searchArgs = new ArrayList<>();
 
     private final List<HybridVectorArgs<K, V>> vectorArgs = new ArrayList<>();
 
@@ -91,7 +91,7 @@ public class HybridArgs<K, V> {
          * @param searchArgs the search arguments
          * @return this builder
          */
-        public Builder<K, V> search(HybridSearchArgs<K, V> searchArgs) {
+        public Builder<K, V> search(HybridSearchArgs searchArgs) {
             LettuceAssert.notNull(searchArgs, "Search args must not be null");
             instance.searchArgs.add(searchArgs);
             return this;

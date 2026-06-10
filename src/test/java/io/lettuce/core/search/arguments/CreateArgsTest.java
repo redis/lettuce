@@ -29,7 +29,7 @@ class CreateArgsTest {
 
     @Test
     void testDefaultCreateArgs() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().build();
+        CreateArgs<String> args = CreateArgs.<String> builder().build();
 
         assertThat(args.getOn()).hasValue(CreateArgs.TargetType.HASH);
         assertThat(args.getPrefixes()).isEmpty();
@@ -51,32 +51,32 @@ class CreateArgsTest {
 
     @Test
     void testCreateArgsWithTargetType() {
-        CreateArgs<String, String> hashArgs = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> hashArgs = CreateArgs.<String> builder().on(CreateArgs.TargetType.HASH).build();
         assertThat(hashArgs.getOn()).hasValue(CreateArgs.TargetType.HASH);
 
-        CreateArgs<String, String> jsonArgs = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON).build();
+        CreateArgs<String> jsonArgs = CreateArgs.<String> builder().on(CreateArgs.TargetType.JSON).build();
         assertThat(jsonArgs.getOn()).hasValue(CreateArgs.TargetType.JSON);
     }
 
     @Test
     void testCreateArgsWithPrefixes() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().withPrefix("blog:").withPrefix("post:")
-                .withPrefix("article:").build();
+        CreateArgs<String> args = CreateArgs.<String> builder().withPrefix("blog:").withPrefix("post:").withPrefix("article:")
+                .build();
 
         assertThat(args.getPrefixes()).containsExactly("blog:", "post:", "article:");
     }
 
     @Test
     void testCreateArgsWithFilter() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().filter("@status:published").build();
+        CreateArgs<String> args = CreateArgs.<String> builder().filter("@status:published").build();
 
         assertThat(args.getFilter()).hasValue("@status:published");
     }
 
     @Test
     void testCreateArgsWithLanguageSettings() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().defaultLanguage(DocumentLanguage.ENGLISH)
-                .languageField("lang").build();
+        CreateArgs<String> args = CreateArgs.<String> builder().defaultLanguage(DocumentLanguage.ENGLISH).languageField("lang")
+                .build();
 
         assertThat(args.getDefaultLanguage()).hasValue(DocumentLanguage.ENGLISH);
         assertThat(args.getLanguageField()).hasValue("lang");
@@ -84,7 +84,7 @@ class CreateArgsTest {
 
     @Test
     void testCreateArgsWithScoreSettings() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().defaultScore(0.5).scoreField("score").build();
+        CreateArgs<String> args = CreateArgs.<String> builder().defaultScore(0.5).scoreField("score").build();
 
         assertThat(args.getDefaultScore()).hasValue(0.5);
         assertThat(args.getScoreField()).hasValue("score");
@@ -92,15 +92,15 @@ class CreateArgsTest {
 
     @Test
     void testCreateArgsWithPayloadField() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().payloadField("payload").build();
+        CreateArgs<String> args = CreateArgs.<String> builder().payloadField("payload").build();
 
         assertThat(args.getPayloadField()).hasValue("payload");
     }
 
     @Test
     void testCreateArgsWithFlags() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().maxTextFields().noOffsets().noHighlighting()
-                .noFields().noFrequency().skipInitialScan().build();
+        CreateArgs<String> args = CreateArgs.<String> builder().maxTextFields().noOffsets().noHighlighting().noFields()
+                .noFrequency().skipInitialScan().build();
 
         assertThat(args.isMaxTextFields()).isTrue();
         assertThat(args.isNoOffsets()).isTrue();
@@ -112,7 +112,7 @@ class CreateArgsTest {
 
     @Test
     void testCreateArgsWithTemporary() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().temporary(3600).build();
+        CreateArgs<String> args = CreateArgs.<String> builder().temporary(3600).build();
 
         assertThat(args.getTemporary()).hasValue(3600L);
     }
@@ -120,25 +120,24 @@ class CreateArgsTest {
     @Test
     void testCreateArgsWithStopWords() {
         List<String> stopWords = Arrays.asList("the", "and", "or", "but");
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().stopWords(stopWords).build();
+        CreateArgs<String> args = CreateArgs.<String> builder().stopWords(stopWords).build();
 
         assertThat(args.getStopWords()).hasValue(stopWords);
     }
 
     @Test
     void testCreateArgsWithEmptyStopWords() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().stopWords(Arrays.asList()).build();
+        CreateArgs<String> args = CreateArgs.<String> builder().stopWords(Arrays.asList()).build();
 
         assertThat(args.getStopWords()).hasValue(Arrays.asList());
     }
 
     @Test
     void testCreateArgsBuild() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON)
-                .withPrefix("blog:").withPrefix("post:").filter("@status:published").defaultLanguage(DocumentLanguage.FRENCH)
-                .languageField("lang").defaultScore(0.8).scoreField("score").payloadField("payload").maxTextFields()
-                .temporary(7200).noOffsets().noHighlighting().noFields().noFrequency().skipInitialScan()
-                .stopWords(Arrays.asList("le", "la", "et")).build();
+        CreateArgs<String> args = CreateArgs.<String> builder().on(CreateArgs.TargetType.JSON).withPrefix("blog:")
+                .withPrefix("post:").filter("@status:published").defaultLanguage(DocumentLanguage.FRENCH).languageField("lang")
+                .defaultScore(0.8).scoreField("score").payloadField("payload").maxTextFields().temporary(7200).noOffsets()
+                .noHighlighting().noFields().noFrequency().skipInitialScan().stopWords(Arrays.asList("le", "la", "et")).build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         args.build(commandArgs);
@@ -173,7 +172,7 @@ class CreateArgsTest {
 
     @Test
     void testCreateArgsMinimalBuild() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().withPrefix("test:").build();
+        CreateArgs<String> args = CreateArgs.<String> builder().withPrefix("test:").build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         args.build(commandArgs);
