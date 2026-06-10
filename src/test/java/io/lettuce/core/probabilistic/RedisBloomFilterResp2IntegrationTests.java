@@ -4,7 +4,7 @@
  *
  * Licensed under the MIT License.
  */
-package io.lettuce.core.bf;
+package io.lettuce.core.probabilistic;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;

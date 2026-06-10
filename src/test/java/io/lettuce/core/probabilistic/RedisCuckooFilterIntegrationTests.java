@@ -4,14 +4,12 @@
  *
  * SPDX-License-Identifier: MIT
  */
-package io.lettuce.core.cf;
+package io.lettuce.core.probabilistic;
 
 import javax.inject.Inject;
 import java.util.List;
 
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.probabilistic.CfInfoValue;
-import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
 import io.lettuce.test.LettuceExtension;

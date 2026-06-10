@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier: MIT
  */
-package io.lettuce.core.bf;
+package io.lettuce.core.probabilistic;
 
 import javax.inject.Inject;
 
