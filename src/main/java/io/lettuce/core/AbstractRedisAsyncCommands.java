@@ -51,6 +51,9 @@ import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
+import io.lettuce.core.probabilistic.topk.TopKInfoValue;
+import io.lettuce.core.probabilistic.topk.TopKListValue;
+import io.lettuce.core.probabilistic.topk.arguments.TopKReserveArgs;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -116,7 +119,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
         RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V>,
-        RedisBloomFilterAsyncCommands<K, V> {
+        RedisBloomFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -131,6 +134,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     private final RedisArrayCommandBuilder<K, V> arrayCommandBuilder;
 
     private final RedisBloomFilterCommandBuilder<K, V> bloomFilterCommandBuilder;
+
+    private final RedisTopKCommandBuilder<K, V> topKCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -151,6 +156,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
         this.arrayCommandBuilder = new RedisArrayCommandBuilder<>(codec);
         this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
+        this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
     }
 
     /**
@@ -4295,6 +4301,63 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<BfScanDumpValue> bfScanDump(K key, long iterator) {
         return dispatch(bloomFilterCommandBuilder.bfScanDump(key, iterator));
+    }
+
+    // --- Redis Top-K Commands ---
+
+    @Override
+    public RedisFuture<List<String>> topKAdd(K key, V value) {
+        return dispatch(topKCommandBuilder.topKAdd(key, value));
+    }
+
+    @Override
+    public RedisFuture<List<String>> topKAdd(K key, V... values) {
+        return dispatch(topKCommandBuilder.topKAdd(key, values));
+    }
+
+    @Override
+    public RedisFuture<List<String>> topKIncrBy(K key, Pair<V, Long> pair) {
+        return dispatch(topKCommandBuilder.topKIncrBy(key, pair));
+    }
+
+    @Override
+    public RedisFuture<List<String>> topKIncrBy(K key, Pair<V, Long>... pairs) {
+        return dispatch(topKCommandBuilder.topKIncrBy(key, pairs));
+    }
+
+    @Override
+    public RedisFuture<TopKInfoValue> topKInfo(K key) {
+        return dispatch(topKCommandBuilder.topKInfo(key));
+    }
+
+    @Override
+    public RedisFuture<List<String>> topKList(K key) {
+        return dispatch(topKCommandBuilder.topKList(key));
+    }
+
+    @Override
+    public RedisFuture<List<TopKListValue>> topKList(K key, boolean withCount) {
+        return dispatch(topKCommandBuilder.topKList(key, withCount));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> topKQuery(K key, V value) {
+        return dispatch(topKCommandBuilder.topKQuery(key, value));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> topKQuery(K key, V... values) {
+        return dispatch(topKCommandBuilder.topKQuery(key, values));
+    }
+
+    @Override
+    public RedisFuture<String> topKReserve(K key, long k) {
+        return dispatch(topKCommandBuilder.topKReserve(key, k));
+    }
+
+    @Override
+    public RedisFuture<String> topKReserve(K key, long k, TopKReserveArgs args) {
+        return dispatch(topKCommandBuilder.topKReserve(key, k, args));
     }
 
 }

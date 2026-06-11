@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
  * @author Zhang Jessey
  * @author dengliming
  * @author Mikhael Sokolov
+ * @author Yordan Tsintsov
  */
 public enum CommandType implements ProtocolKeyword {
 
@@ -132,6 +133,10 @@ public enum CommandType implements ProtocolKeyword {
     // Bloom Filter
     BF_ADD("BF.ADD"), BF_CARD("BF.CARD"), BF_EXISTS("BF.EXISTS"), BF_INFO("BF.INFO"), BF_INSERT("BF.INSERT"), BF_LOADCHUNK(
             "BF.LOADCHUNK"), BF_MADD("BF.MADD"), BF_MEXISTS("BF.MEXISTS"), BF_RESERVE("BF.RESERVE"), BF_SCANDUMP("BF.SCANDUMP"),
+
+    // Top-K
+    TOPK_ADD("TOPK.ADD"), TOPK_INCRBY("TOPK.INCRBY"), TOPK_INFO("TOPK.INFO"), TOPK_LIST("TOPK.LIST"), TOPK_QUERY(
+            "TOPK.QUERY"), TOPK_RESERVE("TOPK.RESERVE"),
 
     // Others
 
