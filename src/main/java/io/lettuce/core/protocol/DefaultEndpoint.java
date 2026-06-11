@@ -989,7 +989,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             // Capture values before recycler clears these.
             RedisCommand<?, ?, ?> sentCommand = this.sentCommand;
             Collection<? extends RedisCommand<?, ?, ?>> sentCommands = this.sentCommands;
-            potentiallyRequeueCommands(channel, sentCommand, sentCommands);
+
+            if (endpoint.rejectCommandsWhileDisconnected) {
+                complete(new RedisException("Currently not connected. Commands are rejected."));
+            } else {
+                potentiallyRequeueCommands(channel, sentCommand, sentCommands);
+            }
 
             if (!(cause instanceof ClosedChannelException)) {
 
