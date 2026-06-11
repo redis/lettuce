@@ -126,9 +126,24 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
      * @param <V> Value type.
      * @return the reactive Cluster Pub/Sub factory.
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     static <K, V> PubSubCommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, RedisClusterPubSubReactiveCommands<K, V>> factory() {
-        return PubSubCommandsFactory.of(RedisClusterPubSubReactiveCommands.class,
-                conn -> new RedisClusterPubSubReactiveCommandsImpl<>(conn, conn.getCodec()));
+        return (PubSubCommandsFactory) FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton factory so {@link #factory()} returns one shared instance (no per-call allocation); {@code factory()}
+     * re-applies {@code <K, V>}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static final PubSubCommandsFactory INSTANCE = PubSubCommandsFactory.of(RedisClusterPubSubReactiveCommands.class,
+                (StatefulRedisClusterPubSubConnection c) -> new RedisClusterPubSubReactiveCommandsImpl(c, c.getCodec()));
+
     }
 
 }

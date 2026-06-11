@@ -387,10 +387,25 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param <V> Value type.
      * @return the reactive cluster factory.
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     static <K, V> CommandsFactory<StatefulRedisClusterConnection<K, V>, RedisAdvancedClusterReactiveCommands<K, V>> factory() {
-        return CommandsFactory.of(RedisAdvancedClusterReactiveCommands.class,
-                conn -> new RedisAdvancedClusterReactiveCommandsImpl<>(conn, conn.getCodec(),
-                        () -> conn.getOptions().getJsonParser().get()));
+        return (CommandsFactory) FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton factory so {@link #factory()} returns one shared instance (no per-call allocation); {@code factory()}
+     * re-applies {@code <K, V>}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static final CommandsFactory INSTANCE = CommandsFactory.of(RedisAdvancedClusterReactiveCommands.class,
+                (StatefulRedisClusterConnection c) -> new RedisAdvancedClusterReactiveCommandsImpl(c, c.getCodec(),
+                        () -> c.getOptions().getJsonParser().get()));
+
     }
 
 }

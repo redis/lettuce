@@ -272,9 +272,25 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @param <V> Value type.
      * @return the reactive Sentinel factory.
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     static <K, V> CommandsFactory<StatefulRedisSentinelConnection<K, V>, RedisSentinelReactiveCommands<K, V>> factory() {
-        return CommandsFactory.of(RedisSentinelReactiveCommands.class, conn -> new RedisSentinelReactiveCommandsImpl<>(conn,
-                conn.getCodec(), () -> conn.getOptions().getJsonParser().get()));
+        return (CommandsFactory) FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton factory so {@link #factory()} returns one shared instance (no per-call allocation); {@code factory()}
+     * re-applies {@code <K, V>}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static final CommandsFactory INSTANCE = CommandsFactory.of(RedisSentinelReactiveCommands.class,
+                (StatefulRedisSentinelConnection c) -> new RedisSentinelReactiveCommandsImpl(c, c.getCodec(),
+                        () -> c.getOptions().getJsonParser().get()));
+
     }
 
 }
