@@ -62,6 +62,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Default {@link Endpoint} implementation.
  *
  * @author Mark Paluch
+ * @author Vaibhav Vashisht
  */
 public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandler {
 
@@ -147,7 +148,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
-        this.rejectCommandsWhileDisconnected = isRejectCommand(clientOptions);
+        this.rejectCommandsWhileDisconnected = clientOptions.isRejectCommandsWhileDisconnected();
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
     }
 
@@ -820,25 +821,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     @Override
     public String getId() {
         return cachedEndpointId;
-    }
-
-    private static boolean isRejectCommand(ClientOptions clientOptions) {
-
-        switch (clientOptions.getDisconnectedBehavior()) {
-            case REJECT_COMMANDS:
-                return true;
-
-            case ACCEPT_COMMANDS:
-                return false;
-
-            default:
-            case DEFAULT:
-                if (!clientOptions.isAutoReconnect()) {
-                    return true;
-                }
-
-                return false;
-        }
     }
 
     static class ListenerSupport {
