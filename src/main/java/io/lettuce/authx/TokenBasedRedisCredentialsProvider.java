@@ -17,7 +17,11 @@ import redis.clients.authentication.core.TokenAuthConfig;
 import redis.clients.authentication.core.TokenListener;
 import redis.clients.authentication.core.TokenManager;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 /**
  * A {@link RedisCredentialsProvider} implementation that supports token-based authentication for Redis.
@@ -42,9 +46,33 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
 
     private static final Logger log = LoggerFactory.getLogger(TokenBasedRedisCredentialsProvider.class);
 
+    private static class SimpleSubscription implements CredentialsSubscription {
+
+        private final TokenBasedRedisCredentialsProvider provider;
+
+        private final Consumer<RedisCredentials> consumer;
+
+        private SimpleSubscription(TokenBasedRedisCredentialsProvider provider, Consumer<RedisCredentials> consumer) {
+            this.provider = provider;
+            this.consumer = consumer;
+        }
+
+        @Override
+        public void close() {
+            provider.subscriptions.remove(this);
+        }
+
+        private void onCredentials(RedisCredentials credentials) {
+            consumer.accept(credentials);
+        }
+
+    }
+
     private final TokenManager tokenManager;
 
-    private final Sinks.Many<RedisCredentials> credentialsSink = Sinks.many().replay().latest();
+    private final List<SimpleSubscription> subscriptions = new CopyOnWriteArrayList<>();
+
+    private volatile CompletableFuture<RedisCredentials> credentialsFuture = new CompletableFuture<>();
 
     private TokenBasedRedisCredentialsProvider(TokenManager tokenManager) {
         this.tokenManager = tokenManager;
@@ -59,7 +87,12 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
                 String username = token.getUser();
                 char[] pass = token.getValue().toCharArray();
                 RedisCredentials credentials = RedisCredentials.just(username, pass);
-                credentialsSink.tryEmitNext(credentials);
+
+                if (!credentialsFuture.isDone()) {
+                    credentialsFuture.complete(credentials);
+                }
+                credentialsFuture = CompletableFuture.completedFuture(credentials);
+                subscriptions.forEach(s -> s.onCredentials(credentials));
             }
 
             @Override
@@ -72,7 +105,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
         try {
             tokenManager.start(listener, false);
         } catch (Exception e) {
-            credentialsSink.tryEmitError(e);
+            credentialsFuture.completeExceptionally(e);
             tokenManager.stop();
             throw new RuntimeException("Failed to start TokenManager", e);
         }
@@ -88,22 +121,14 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      */
     @Override
     public CompletionStage<RedisCredentials> resolveCredentials() {
-
-        return credentialsSink.asFlux().next().toFuture();
+        return credentialsFuture;
     }
 
-    /**
-     * Expose the Flux for all credential updates.
-     * <p>
-     * This method returns a Flux that emits all updates to the Redis credentials. Subscribers will receive the latest
-     * credentials whenever they are updated. The Flux will continue to emit updates until the provider is shut down.
-     *
-     * @return a Flux that emits all updates to the Redis credentials
-     */
     @Override
-    public Flux<RedisCredentials> credentials() {
-
-        return credentialsSink.asFlux().onBackpressureLatest(); // Provide a continuous stream of credentials
+    public CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> consumer) {
+        SimpleSubscription subscription = new SimpleSubscription(this, consumer);
+        subscriptions.add(subscription);
+        return subscription;
     }
 
     @Override
@@ -119,7 +144,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      */
     @Override
     public void close() {
-        credentialsSink.tryEmitComplete();
+        subscriptions.clear();
         tokenManager.stop();
     }
 

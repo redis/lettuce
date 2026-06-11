@@ -6,6 +6,7 @@
  */
 package io.lettuce.core;
 
+import io.lettuce.core.RedisCredentialsProvider.CredentialsSubscription;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.event.connection.ReauthenticationEvent;
@@ -22,8 +23,6 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.RedisCommand;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
 
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,7 +48,7 @@ public class RedisAuthenticationHandler<K, V> {
 
     private final RedisCredentialsProvider credentialsProvider;
 
-    private final AtomicReference<Disposable> credentialsSubscription = new AtomicReference<>();
+    private final AtomicReference<CredentialsSubscription> credentialsSubscription = new AtomicReference<>();
 
     private final Boolean isPubSubConnection;
 
@@ -129,13 +128,15 @@ public class RedisAuthenticationHandler<K, V> {
             return;
         }
 
-        Flux<RedisCredentials> credentialsFlux = credentialsProvider.credentials();
+        CredentialsSubscription credentialsSub = credentialsProvider.subscribeToCredentials(c -> reauthenticate(c));
 
-        Disposable subscription = credentialsFlux.subscribe(this::onNext, this::onError, this::complete);
-
-        Disposable oldSubscription = credentialsSubscription.getAndSet(subscription);
-        if (oldSubscription != null && !oldSubscription.isDisposed()) {
-            oldSubscription.dispose();
+        CredentialsSubscription oldSub = credentialsSubscription.getAndSet(credentialsSub);
+        if (oldSub != null) {
+            try {
+                oldSub.close();
+            } catch (Exception e) {
+                log.warn("Failed to close old credentials subscription", e);
+            }
         }
     }
 
@@ -143,23 +144,10 @@ public class RedisAuthenticationHandler<K, V> {
      * Unsubscribes from the current credentials stream.
      */
     public void unsubscribe() {
-        Disposable subscription = credentialsSubscription.getAndSet(null);
-        if (subscription != null && !subscription.isDisposed()) {
-            subscription.dispose();
+        CredentialsSubscription sub = credentialsSubscription.getAndSet(null);
+        if (sub != null) {
+            sub.close();
         }
-    }
-
-    protected void complete() {
-        log.debug("Credentials stream completed");
-    }
-
-    protected void onNext(RedisCredentials credentials) {
-        reauthenticate(credentials);
-    }
-
-    protected void onError(Throwable e) {
-        log.error("Credentials renew failed.", e);
-        publishReauthFailedEvent(e);
     }
 
     /**
