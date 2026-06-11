@@ -6,7 +6,10 @@
  */
 package io.lettuce.core.probabilistic.topk;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
+
+import io.lettuce.core.codec.StringCodec;
 
 /**
  * Represents the result of the Redis <a href="https://redis.io/docs/latest/commands/topk.info/">TOPK.INFO</a> command.
@@ -31,7 +34,12 @@ public class TopKInfoValue {
         this.k = (Long) rawInfo.get("k");
         this.width = (Long) rawInfo.get("width");
         this.depth = (Long) rawInfo.get("depth");
-        this.decay = (Double) rawInfo.get("decay");
+
+        if (rawInfo.get("decay") instanceof Double) {
+            this.decay = (Double) rawInfo.get("decay");
+        } else {
+            this.decay = Double.valueOf(StringCodec.UTF8.decodeValue((ByteBuffer) rawInfo.get("decay")));
+        }
     }
 
     /**

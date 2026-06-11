@@ -6,11 +6,14 @@
  */
 package io.lettuce.core.probabilistic.topk;
 
+import io.lettuce.core.Pair;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import reactor.test.StepVerifier;
 
 import javax.inject.Inject;
 
@@ -35,6 +38,46 @@ public class RedisTopKReactiveIntegrationTests extends RedisTopKIntegrationTests
     public RedisTopKReactiveIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
         this.reactive = connection.reactive();
+    }
+
+    @Test
+    @Override
+    void topKAdd() {
+        reactive.topKReserve(MY_KEY, 3).block();
+
+        StepVerifier.create(reactive.topKAdd(MY_KEY, MY_VALUE)).expectNext(Value.empty()).verifyComplete();
+        StepVerifier.create(reactive.topKQuery(MY_KEY, MY_VALUE)).expectNext(Boolean.TRUE).verifyComplete();
+    }
+
+    @Test
+    @Override
+    void topKAddVararg() {
+        reactive.topKReserve(MY_KEY, 3).block();
+
+        StepVerifier.create(reactive.topKAdd(MY_KEY, MY_VALUE, MY_VALUE_2)).expectNext(Value.empty()).expectNext(Value.empty())
+                .verifyComplete();
+        StepVerifier.create(reactive.topKQuery(MY_KEY, MY_VALUE, MY_VALUE_2)).expectNext(Boolean.TRUE).expectNext(Boolean.TRUE)
+                .verifyComplete();
+    }
+
+    @Test
+    @Override
+    void topKIncrBy() {
+        reactive.topKReserve(MY_KEY, 3).block();
+
+        StepVerifier.create(reactive.topKIncrBy(MY_KEY, new Pair<>(MY_VALUE, 3L))).expectNext(Value.empty()).verifyComplete();
+        StepVerifier.create(reactive.topKQuery(MY_KEY, MY_VALUE)).expectNext(Boolean.TRUE).verifyComplete();
+    }
+
+    @Test
+    @Override
+    void topKIncrByVararg() {
+        reactive.topKReserve(MY_KEY, 3).block();
+
+        StepVerifier.create(reactive.topKIncrBy(MY_KEY, new Pair<>(MY_VALUE, 3L), new Pair<>(MY_VALUE_2, 5L)))
+                .expectNext(Value.empty()).expectNext(Value.empty()).verifyComplete();
+        StepVerifier.create(reactive.topKQuery(MY_KEY, MY_VALUE, MY_VALUE_2)).expectNext(Boolean.TRUE).expectNext(Boolean.TRUE)
+                .verifyComplete();
     }
 
 }
