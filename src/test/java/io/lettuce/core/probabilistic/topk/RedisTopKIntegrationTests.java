@@ -92,13 +92,13 @@ public class RedisTopKIntegrationTests {
 
     @Test
     void topKInfo() {
-        redis.topKReserve(MY_KEY, 50);
+        redis.topKReserve(MY_KEY, 10, TopKReserveArgs.Builder.width(50).depth(5).decay(0.9));
 
         TopKInfoValue info = redis.topKInfo(MY_KEY);
-        assertThat(info.getK()).isEqualTo(50L);
-        assertThat(info.getWidth()).isNotNull();
-        assertThat(info.getDepth()).isNotNull();
-        assertThat(info.getDecay()).isNotNull();
+        assertThat(info.getK()).isEqualTo(10L);
+        assertThat(info.getWidth()).isEqualTo(50L);
+        assertThat(info.getDepth()).isEqualTo(5L);
+        assertThat(info.getDecay()).isEqualTo(0.9);
         assertThat(info.getRawInfo()).isNotEmpty();
     }
 

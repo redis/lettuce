@@ -34,12 +34,14 @@ public class TopKInfoValue {
         this.k = (Long) rawInfo.get("k");
         this.width = (Long) rawInfo.get("width");
         this.depth = (Long) rawInfo.get("depth");
+        this.decay = toDouble(rawInfo.get("decay"));
+    }
 
-        if (rawInfo.get("decay") instanceof Double) {
-            this.decay = (Double) rawInfo.get("decay");
-        } else {
-            this.decay = Double.valueOf(StringCodec.UTF8.decodeValue((ByteBuffer) rawInfo.get("decay")));
+    private static Double toDouble(Object value) {
+        if (value instanceof Double) {
+            return (Double) value;
         }
+        return Double.valueOf(StringCodec.UTF8.decodeValue((ByteBuffer) value));
     }
 
     /**
