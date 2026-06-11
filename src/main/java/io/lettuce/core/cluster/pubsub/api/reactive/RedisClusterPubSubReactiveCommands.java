@@ -2,6 +2,8 @@ package io.lettuce.core.cluster.pubsub.api.reactive;
 
 import java.util.function.Predicate;
 
+import io.lettuce.core.api.CommandsFactory;
+import io.lettuce.core.cluster.RedisClusterPubSubReactiveCommandsImpl;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
@@ -106,5 +108,55 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
      * @return API with reactive executed commands on a selection of cluster nodes matching {@code predicate}
      */
     PubSubReactiveNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate);
+
+    /**
+     * Obtain the reactive {@link CommandsFactory} for a Cluster Pub/Sub connection, suitable for
+     * {@link io.lettuce.core.api.StatefulConnection#commands(CommandsFactory)}:
+     *
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     RedisClusterPubSubReactiveCommands<K, V> reactive = connection
+     *             .commands(RedisClusterPubSubReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the reactive Cluster Pub/Sub factory (a shared singleton, with {@code <K, V>} re-applied).
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    static <K, V> CommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, RedisClusterPubSubReactiveCommands<K, V>> factory() {
+        return (CommandsFactory) FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton (raw) {@link CommandsFactory} so {@link #factory()} can re-apply {@code <K, V>} without allocating a
+     * new factory on each call. Interface member types are implicitly {@code public static}, so encapsulation is via the
+     * private constructor and private {@code INSTANCE}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static final CommandsFactory INSTANCE = new CommandsFactory() {
+
+            @Override
+            public Class type() {
+                return RedisClusterPubSubReactiveCommands.class;
+            }
+
+            @Override
+            public Object apply(Object connection) {
+                StatefulRedisClusterPubSubConnection conn = (StatefulRedisClusterPubSubConnection) connection;
+                return new RedisClusterPubSubReactiveCommandsImpl(conn, conn.getCodec());
+            }
+
+        };
+
+    }
 
 }

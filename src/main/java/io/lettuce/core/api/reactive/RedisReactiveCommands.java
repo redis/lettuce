@@ -19,6 +19,8 @@
  */
 package io.lettuce.core.api.reactive;
 
+import io.lettuce.core.RedisReactiveCommandsImpl;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import reactor.core.publisher.Mono;
@@ -83,5 +85,54 @@ public interface RedisReactiveCommands<K, V>
      */
     @Deprecated
     StatefulRedisConnection<K, V> getStatefulConnection();
+
+    /**
+     * Obtain the reactive {@link CommandsFactory} for a standalone connection, suitable for
+     * {@link io.lettuce.core.api.StatefulConnection#commands(CommandsFactory)}:
+     *
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     RedisReactiveCommands<K, V> reactive = connection.commands(RedisReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the reactive factory (a shared singleton, with {@code <K, V>} re-applied).
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    static <K, V> CommandsFactory<StatefulRedisConnection<K, V>, RedisReactiveCommands<K, V>> factory() {
+        return (CommandsFactory) FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton (raw) {@link CommandsFactory} so {@link #factory()} can re-apply {@code <K, V>} without allocating a
+     * new factory on each call. Interface member types are implicitly {@code public static}, so encapsulation is via the
+     * private constructor and private {@code INSTANCE}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static final CommandsFactory INSTANCE = new CommandsFactory() {
+
+            @Override
+            public Class type() {
+                return RedisReactiveCommands.class;
+            }
+
+            @Override
+            public Object apply(Object connection) {
+                StatefulRedisConnection conn = (StatefulRedisConnection) connection;
+                return new RedisReactiveCommandsImpl(conn, conn.getCodec(), () -> conn.getOptions().getJsonParser().get());
+            }
+
+        };
+
+    }
 
 }

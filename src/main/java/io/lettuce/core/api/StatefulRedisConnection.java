@@ -62,4 +62,6 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      */
     void removeListener(PushListener listener);
 
+    <T> T commands(CommandsFactory<? extends StatefulRedisConnection<K, V>, T> f);
+
 }

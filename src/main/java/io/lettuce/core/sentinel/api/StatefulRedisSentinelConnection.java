@@ -1,6 +1,8 @@
 package io.lettuce.core.sentinel.api;
 
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulConnection;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
@@ -39,5 +41,7 @@ public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnectio
      * @return the reactive API for the underlying connection.
      */
     RedisSentinelReactiveCommands<K, V> reactive();
+
+    <T> T commands(CommandsFactory<? extends StatefulRedisSentinelConnection<K, V>, T> f);
 
 }
