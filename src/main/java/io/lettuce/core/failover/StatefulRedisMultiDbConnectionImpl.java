@@ -19,7 +19,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,7 +30,7 @@ import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
-import io.lettuce.core.internal.CommandsCache;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
@@ -68,11 +67,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  */
 @Experimental
 class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
-        implements StatefulRedisMultiDbConnection<K, V>, CommandsCache<K, V> {
+        implements StatefulRedisMultiDbConnection<K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(StatefulRedisMultiDbConnectionImpl.class);
-
-    private final Map<Class<?>, Object> commandsCache = new ConcurrentHashMap<>();
 
     protected final Map<RedisURI, RedisDatabaseImpl<C>> databases;
 
@@ -88,6 +85,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     protected final RedisReactiveCommandsImpl<K, V> reactive;
 
     protected final RedisCodec<K, V> codec;
+
+    private final Map<Object, Object> store = new ConcurrentHashMap<>();
 
     protected final Set<PushListener> pushListeners = ConcurrentHashMap.newKeySet();
 
@@ -720,9 +719,9 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T> T computeCommands(Class<T> type, Supplier<T> factory) {
-        return (T) commandsCache.computeIfAbsent(type, k -> factory.get());
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> f) {
+        return (T) store.computeIfAbsent(f.type(), k -> f.apply(this));
     }
 
     /**

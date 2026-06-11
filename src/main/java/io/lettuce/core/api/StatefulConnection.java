@@ -7,8 +7,6 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.internal.CommandsCache;
-import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 
@@ -124,17 +122,5 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
      * @return the {@link RedisCodec} used by this connection.
      */
     RedisCodec<K, V> getCodec();
-
-    /**
-     * Obtain the command API produced by {@code factory} for this connection, creating and caching ("stamping") it on first
-     * access and returning the same instance on subsequent calls. Combine with a provider to pick the family-precise factory,
-     * e.g. {@code connection.commands(CommandsFactoryProvider.from(connection))}.
-     *
-     * @param factory the command API factory, must not be {@code null}.
-     * @param <C> connection type the factory accepts.
-     * @param <T> command API type.
-     * @return the cached or newly created command API.
-     * @since 7.7
-     */
 
 }

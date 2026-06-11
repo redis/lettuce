@@ -8,14 +8,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Supplier;
 
 import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.internal.CommandsCache;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandWrapper;
@@ -35,7 +34,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  * @since 3.0
  */
-public abstract class RedisChannelHandler<K, V> implements Closeable, ConnectionFacade, CommandsCache<K, V> {
+public abstract class RedisChannelHandler<K, V> implements Closeable, ConnectionFacade {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisChannelHandler.class);
 
@@ -61,7 +60,7 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
-    private final Map<Class<?>, Object> commandsCache = new ConcurrentHashMap<>();
+    private final Map<Object, Object> store = new ConcurrentHashMap<>();
 
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
@@ -332,10 +331,13 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
         return timeout;
     }
 
-    @Override
+    /**
+     * Return the command API cached for {@code type}, building it via {@code builder} on first access. Backs the
+     * {@code commands(...)} accessors so a connection hands out a single instance per command-API type.
+     */
     @SuppressWarnings("unchecked")
-    public <T> T computeCommands(Class<T> type, Supplier<T> factory) {
-        return (T) commandsCache.computeIfAbsent(type, k -> factory.get());
+    protected <T> T computeStore(Object key, Supplier<T> builder) {
+        return (T) store.computeIfAbsent(key, k -> builder.get());
     }
 
     @SuppressWarnings("unchecked")

@@ -10,6 +10,7 @@ import java.util.function.Function;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
@@ -74,6 +75,11 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
             pubSubListeners.remove(listener);
             current.getConnection().removeListener(listener);
         });
+    }
+
+    @Override
+    public <T> T commands(PubSubCommandsFactory<? extends StatefulRedisPubSubConnection<K, V>, T> f) {
+
     }
 
     @Override

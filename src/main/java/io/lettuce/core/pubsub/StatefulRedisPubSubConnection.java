@@ -1,5 +1,6 @@
 package io.lettuce.core.pubsub;
 
+import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
@@ -56,5 +57,7 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
      * @param listener the listener, must not be {@code null}.
      */
     void removeListener(RedisPubSubListener<K, V> listener);
+
+    <T> T commands(PubSubCommandsFactory<? extends StatefulRedisPubSubConnection<K, V>, T> f);
 
 }

@@ -42,6 +42,6 @@ public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnectio
      */
     RedisSentinelReactiveCommands<K, V> reactive();
 
-    <T> T commands(CommandsFactory<? extends StatefulRedisSentinelConnection<K, V>, T> f);
+    <T> T commands(CommandsFactory<StatefulRedisSentinelConnection<K, V>, T> f);
 
 }
