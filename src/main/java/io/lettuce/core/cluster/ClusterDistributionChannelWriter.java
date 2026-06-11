@@ -66,6 +66,7 @@ import io.lettuce.core.resource.ClientResources;
  *
  * @author Mark Paluch
  * @author Jim Brunner
+ * @author Vaibhav Vashisht
  * @since 3.0
  */
 class ClusterDistributionChannelWriter implements RedisChannelWriter {
@@ -158,6 +159,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
                 if (isSuccessfullyCompleted(connectFuture)) {
                     writeCommand(command, asking, connectFuture.join(), null);
+                } else if (shouldRejectPendingConnection(connectFuture)) {
+                    command.completeExceptionally(disconnectedRejectedException());
                 } else {
                     connectFuture.whenComplete((connection, throwable) -> writeCommand(command, asking, connection, throwable));
                 }
@@ -183,6 +186,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
                 if (isSuccessfullyCompleted(connectFuture)) {
                     writeCommand(commandToSend, false, connectFuture.join(), null);
+                } else if (shouldRejectPendingConnection(connectFuture)) {
+                    commandToSend.completeExceptionally(disconnectedRejectedException());
                 } else {
                     connectFuture
                             .whenComplete((connection, throwable) -> writeCommand(commandToSend, false, connection, throwable));
@@ -207,6 +212,14 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
     private static boolean isSuccessfullyCompleted(CompletableFuture<?> connectFuture) {
         return connectFuture.isDone() && !connectFuture.isCompletedExceptionally();
+    }
+
+    private boolean shouldRejectPendingConnection(CompletableFuture<?> connectFuture) {
+        return !connectFuture.isDone() && clientOptions.isRejectCommandsWhileDisconnected();
+    }
+
+    private static RedisException disconnectedRejectedException() {
+        return new RedisException("Currently not connected. Commands are rejected.");
     }
 
     @SuppressWarnings("unchecked")
