@@ -62,6 +62,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Default {@link Endpoint} implementation.
  *
  * @author Mark Paluch
+ * @author Vaibhav Vashisht
  */
 public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandler {
 
@@ -147,7 +148,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
-        this.rejectCommandsWhileDisconnected = isRejectCommand(clientOptions);
+        this.rejectCommandsWhileDisconnected = clientOptions.isRejectCommandsWhileDisconnected();
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
     }
 
@@ -822,25 +823,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         return cachedEndpointId;
     }
 
-    private static boolean isRejectCommand(ClientOptions clientOptions) {
-
-        switch (clientOptions.getDisconnectedBehavior()) {
-            case REJECT_COMMANDS:
-                return true;
-
-            case ACCEPT_COMMANDS:
-                return false;
-
-            default:
-            case DEFAULT:
-                if (!clientOptions.isAutoReconnect()) {
-                    return true;
-                }
-
-                return false;
-        }
-    }
-
     static class ListenerSupport {
 
         Collection<? extends RedisCommand<?, ?, ?>> sentCommands;
@@ -1007,7 +989,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             // Capture values before recycler clears these.
             RedisCommand<?, ?, ?> sentCommand = this.sentCommand;
             Collection<? extends RedisCommand<?, ?, ?>> sentCommands = this.sentCommands;
-            potentiallyRequeueCommands(channel, sentCommand, sentCommands);
+
+            if (endpoint.rejectCommandsWhileDisconnected) {
+                complete(new RedisException("Currently not connected. Commands are rejected."));
+            } else {
+                potentiallyRequeueCommands(channel, sentCommand, sentCommands);
+            }
 
             if (!(cause instanceof ClosedChannelException)) {
 
