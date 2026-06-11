@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link RedisTopKCommandBuilder}.
@@ -199,6 +200,24 @@ class RedisTopKCommandBuilderUnitTests {
 
         assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$12\r\nTOPK.RESERVE\r\n" + "$9\r\n" + MY_KEY
                 + "\r\n" + "$2\r\n50\r\n" + "$1\r\n8\r\n" + "$1\r\n7\r\n" + "$3\r\n0.9\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructTopKReserveCommandWithEmptyArgs() {
+        Command<String, String, String> command = builder.topKReserve(MY_KEY, 50, new TopKReserveArgs());
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$12\r\nTOPK.RESERVE\r\n" + "$9\r\n" + MY_KEY + "\r\n" + "$2\r\n50\r\n");
+    }
+
+    @Test
+    void shouldRejectPartialTopKReserveArgs() {
+        TopKReserveArgs reserveArgs = TopKReserveArgs.Builder.width(8).depth(7);
+
+        assertThatThrownBy(() -> builder.topKReserve(MY_KEY, 50, reserveArgs)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("width, depth and decay must be provided together");
     }
 
 }

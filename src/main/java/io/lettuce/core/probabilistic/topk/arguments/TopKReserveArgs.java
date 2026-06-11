@@ -101,15 +101,16 @@ public class TopKReserveArgs implements CompositeArgument {
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
-        if (width != null) {
-            args.add(width);
+        if (width == null && depth == null && decay == null) {
+            return;
         }
-        if (depth != null) {
-            args.add(depth);
+        if (width == null || depth == null || decay == null) {
+            throw new IllegalArgumentException(
+                    "TOPK.RESERVE optional parameters width, depth and decay must be provided together");
         }
-        if (decay != null) {
-            args.add(decay);
-        }
+        args.add(width);
+        args.add(depth);
+        args.add(decay);
     }
 
 }
