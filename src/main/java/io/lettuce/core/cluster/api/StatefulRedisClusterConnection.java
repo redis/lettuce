@@ -286,6 +286,6 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      */
     void removeListener(RedisClusterPushListener listener);
 
-    <T> T commands(CommandsFactory<? super StatefulRedisClusterConnection<K, V>, T> f);
+    <T> T commands(CommandsFactory<StatefulRedisClusterConnection<K, V>, T> f);
 
 }

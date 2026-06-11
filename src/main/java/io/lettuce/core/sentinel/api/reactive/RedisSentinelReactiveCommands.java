@@ -24,9 +24,11 @@ import java.util.Map;
 
 import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.KillArgs;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.sentinel.RedisSentinelReactiveCommandsImpl;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -253,5 +255,26 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
+
+    /**
+     * Obtain the reactive {@link CommandsFactory} for a Sentinel connection, for use with
+     * {@link io.lettuce.core.api.StatefulConnection#commands(CommandsFactory)}:
+     *
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     RedisSentinelReactiveCommands<K, V> reactive = connection.commands(RedisSentinelReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the reactive Sentinel factory.
+     */
+    static <K, V> CommandsFactory<StatefulRedisSentinelConnection<K, V>, RedisSentinelReactiveCommands<K, V>> factory() {
+        return CommandsFactory.of(RedisSentinelReactiveCommands.class, conn -> new RedisSentinelReactiveCommandsImpl<>(conn,
+                conn.getCodec(), () -> conn.getOptions().getJsonParser().get()));
+    }
 
 }

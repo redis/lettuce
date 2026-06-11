@@ -33,8 +33,10 @@ import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
+import io.lettuce.core.cluster.RedisAdvancedClusterReactiveCommandsImpl;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.output.KeyStreamingChannel;
 
@@ -367,5 +369,28 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return Long integer-reply the number of found keys.
      */
     Mono<Long> touch(K... keys);
+
+    /**
+     * Obtain the reactive {@link CommandsFactory} for a cluster connection, for use with
+     * {@link io.lettuce.core.api.StatefulConnection#commands(CommandsFactory)}:
+     *
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     RedisAdvancedClusterReactiveCommands<K, V> reactive = connection
+     *             .commands(RedisAdvancedClusterReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the reactive cluster factory.
+     */
+    static <K, V> CommandsFactory<StatefulRedisClusterConnection<K, V>, RedisAdvancedClusterReactiveCommands<K, V>> factory() {
+        return CommandsFactory.of(RedisAdvancedClusterReactiveCommands.class,
+                conn -> new RedisAdvancedClusterReactiveCommandsImpl<>(conn, conn.getCodec(),
+                        () -> conn.getOptions().getJsonParser().get()));
+    }
 
 }

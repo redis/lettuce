@@ -3,7 +3,9 @@ package io.lettuce.core.pubsub.api.reactive;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import io.lettuce.core.pubsub.RedisPubSubReactiveCommandsImpl;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 
 /**
@@ -123,5 +125,26 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
      */
     @Deprecated
     StatefulRedisPubSubConnection<K, V> getStatefulConnection();
+
+    /**
+     * Obtain the reactive {@link PubSubCommandsFactory} for a Pub/Sub connection, for use with
+     * {@link io.lettuce.core.api.StatefulConnection#commands(PubSubCommandsFactory)}:
+     *
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     RedisPubSubReactiveCommands<K, V> reactive = connection.commands(RedisPubSubReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the reactive Pub/Sub factory.
+     */
+    static <K, V> PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, RedisPubSubReactiveCommands<K, V>> factory() {
+        return PubSubCommandsFactory.of(RedisPubSubReactiveCommands.class,
+                conn -> new RedisPubSubReactiveCommandsImpl<>(conn, conn.getCodec()));
+    }
 
 }

@@ -2,9 +2,7 @@ package io.lettuce.core.masterslave;
 
 import java.time.Duration;
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ReadFrom;
@@ -16,6 +14,7 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.Store;
 import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
@@ -30,7 +29,7 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
 
     private final StatefulRedisMasterReplicaConnection<K, V> delegate;
 
-    private final Map<Object, Object> store = new ConcurrentHashMap<>();
+    private final Store store = new Store();
 
     public MasterSlaveConnectionWrapper(StatefulRedisMasterReplicaConnection<K, V> delegate) {
         this.delegate = delegate;
@@ -146,9 +145,8 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     }
 
     @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> f) {
-        return (T) store.computeIfAbsent(f.type(), k -> f.apply(this));
+        return store.compute(f.key(), () -> f.apply(this));
     }
 
     @Override

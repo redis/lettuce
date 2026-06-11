@@ -4,6 +4,8 @@
  */
 package io.lettuce.core.api;
 
+import java.util.function.Function;
+
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 
 /**
@@ -20,5 +22,31 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
  * @since 7.7
  */
 public interface PubSubCommandsFactory<C extends StatefulRedisPubSubConnection<?, ?>, T> extends CommandsFactory<C, T> {
+
+    /**
+     * Create a {@link PubSubCommandsFactory} from a cache {@code key} and a {@code builder}.
+     *
+     * @param key the cache key (see {@link #key()}).
+     * @param builder builds the command API from the Pub/Sub connection.
+     * @param <C> Pub/Sub connection type.
+     * @param <T> command API type.
+     * @return a new factory.
+     */
+    static <C extends StatefulRedisPubSubConnection<?, ?>, T> PubSubCommandsFactory<C, T> of(Object key,
+            Function<C, T> builder) {
+        return new PubSubCommandsFactory<C, T>() {
+
+            @Override
+            public Object key() {
+                return key;
+            }
+
+            @Override
+            public T apply(C connection) {
+                return builder.apply(connection);
+            }
+
+        };
+    }
 
 }

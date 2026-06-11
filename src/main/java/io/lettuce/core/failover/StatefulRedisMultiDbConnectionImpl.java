@@ -52,6 +52,7 @@ import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.Store;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLogger;
@@ -86,7 +87,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     protected final RedisCodec<K, V> codec;
 
-    private final Map<Object, Object> store = new ConcurrentHashMap<>();
+    protected final Store store = new Store();
 
     protected final Set<PushListener> pushListeners = ConcurrentHashMap.newKeySet();
 
@@ -719,9 +720,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> f) {
-        return (T) store.computeIfAbsent(f.type(), k -> f.apply(this));
+        return store.compute(f.key(), () -> f.apply(this));
     }
 
     /**

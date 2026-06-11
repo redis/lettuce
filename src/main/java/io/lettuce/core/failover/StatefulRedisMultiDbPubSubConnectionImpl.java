@@ -78,8 +78,10 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public <T> T commands(PubSubCommandsFactory<? extends StatefulRedisPubSubConnection<K, V>, T> f) {
-
+        PubSubCommandsFactory raw = f;
+        return (T) store.compute(raw.key(), () -> raw.apply(this));
     }
 
     @Override

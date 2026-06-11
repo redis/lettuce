@@ -132,9 +132,9 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     @Override
-    public <T> T commands(CommandsFactory<? super StatefulRedisClusterConnection<K, V>, T> f) {
+    public <T> T commands(CommandsFactory<StatefulRedisClusterConnection<K, V>, T> f) {
         LettuceAssert.notNull(f, "CommandsFactory must not be null");
-        return computeStore(f.type(), () -> f.apply(this));
+        return store.compute(f.key(), () -> f.apply(this));
     }
 
     protected RedisAdvancedClusterReactiveCommandsImpl<K, V> newRedisAdvancedClusterReactiveCommandsImpl() {

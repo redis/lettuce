@@ -116,10 +116,9 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> f) {
         LettuceAssert.notNull(f, "CommandsFactory must not be null");
-        return computeStore(f.type(), () -> f.apply(this));
+        return store.compute(f.key(), () -> f.apply(this));
     }
 
     @Override

@@ -29,7 +29,6 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.StatefulRedisConnectionImpl;
-import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.protocol.ConnectionWatchdog;
@@ -166,9 +165,10 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     }
 
     @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public <T> T commands(PubSubCommandsFactory<? extends StatefulRedisPubSubConnection<K, V>, T> f) {
-        CommandsFactory factory = f;
-        return (T) super.computeStore(factory.type(), () -> factory.apply(this));
+        PubSubCommandsFactory raw = f;
+        return (T) store.compute(raw.key(), () -> raw.apply(this));
     }
 
 }
