@@ -14,7 +14,6 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.internal.Store;
 import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
@@ -28,8 +27,6 @@ import io.lettuce.core.resource.ClientResources;
 class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConnection<K, V> {
 
     private final StatefulRedisMasterReplicaConnection<K, V> delegate;
-
-    private final Store store = new Store();
 
     public MasterSlaveConnectionWrapper(StatefulRedisMasterReplicaConnection<K, V> delegate) {
         this.delegate = delegate;
@@ -146,7 +143,7 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
 
     @Override
     public <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> f) {
-        return store.compute(f.key(), () -> f.apply(this));
+        return delegate.commands(f);
     }
 
     @Override
