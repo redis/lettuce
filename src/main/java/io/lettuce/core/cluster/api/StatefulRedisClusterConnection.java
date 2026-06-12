@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterClientOptions;
@@ -284,5 +285,7 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * @since 6.0
      */
     void removeListener(RedisClusterPushListener listener);
+
+    <T> T commands(CommandsFactory<StatefulRedisClusterConnection<K, V>, T> f);
 
 }

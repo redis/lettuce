@@ -10,7 +10,9 @@ import java.util.function.Function;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.failover.event.SwitchReason;
@@ -58,6 +60,12 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
             RedisDatabaseDeferredCompletion<StatefulRedisPubSubConnection<K, V>> completion, MultiDbOptions multiDbOptions) {
         super(initialDatabase, connections, resources, codec, connectionFactory, healthStatusManager, completion,
                 multiDbOptions);
+    }
+
+    @Override
+    public <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory) {
+        LettuceAssert.notNull(factory, "CommandsFactory must not be null");
+        return store.compute(factory.key(), () -> factory.apply(this));
     }
 
     @Override

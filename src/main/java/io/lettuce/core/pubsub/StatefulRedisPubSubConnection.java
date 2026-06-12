@@ -1,5 +1,6 @@
 package io.lettuce.core.pubsub;
 
+import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
@@ -56,5 +57,17 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
      * @param listener the listener, must not be {@code null}.
      */
     void removeListener(RedisPubSubListener<K, V> listener);
+
+    /**
+     * Obtain the command API produced by {@code factory} for this Pub/Sub connection (see
+     * {@link io.lettuce.core.api.StatefulConnection#commands}). The {@link PubSubCommandsFactory} overload binds the Pub/Sub
+     * connection type, so a Pub/Sub factory cannot be applied to a non–Pub/Sub connection.
+     *
+     * @param factory the Pub/Sub command API factory, must not be {@code null}.
+     * @param <T> command API type.
+     * @return the cached or newly created command API.
+     * @since 7.7
+     */
+    <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory);
 
 }

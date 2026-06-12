@@ -4,6 +4,7 @@ import javax.inject.Inject;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
+import io.lettuce.core.cluster.pubsub.api.reactive.RedisClusterPubSubReactiveCommands;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -151,7 +152,7 @@ class ConnectMethodsIntegrationTests {
     @Test
     void clusterPubSubReactive() {
         try (StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub()) {
-            connection.reactive();
+            connection.commands(RedisClusterPubSubReactiveCommands.factory());
         }
     }
 

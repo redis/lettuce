@@ -31,6 +31,8 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
+import io.lettuce.core.api.CommandsFactory;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
@@ -131,6 +133,12 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     @Override
     public RedisCodec<K, V> getCodec() {
         return codec;
+    }
+
+    @Override
+    public <T> T commands(CommandsFactory<StatefulRedisSentinelConnection<K, V>, T> f) {
+        LettuceAssert.notNull(f, "CommandsFactory must not be null");
+        return store.compute(f.key(), () -> f.apply(this));
     }
 
     static class SentinelConnectionState extends ConnectionState {

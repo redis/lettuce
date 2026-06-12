@@ -19,6 +19,8 @@
  */
 package io.lettuce.core.api.reactive;
 
+import io.lettuce.core.RedisReactiveCommandsImpl;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import reactor.core.publisher.Mono;
@@ -83,5 +85,42 @@ public interface RedisReactiveCommands<K, V>
      */
     @Deprecated
     StatefulRedisConnection<K, V> getStatefulConnection();
+
+    /**
+     * Obtain the reactive {@link CommandsFactory} for a standalone connection, for use with
+     * {@link io.lettuce.core.api.StatefulConnection#commands(CommandsFactory)}:
+     *
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     RedisReactiveCommands<K, V> reactive = connection.commands(RedisReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the reactive standalone factory.
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    static <K, V> CommandsFactory<StatefulRedisConnection<K, V>, RedisReactiveCommands<K, V>> factory() {
+        return (CommandsFactory) FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton factory so {@link #factory()} returns one shared instance (no per-call allocation); {@code factory()}
+     * re-applies {@code <K, V>}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static final CommandsFactory INSTANCE = CommandsFactory.of(RedisReactiveCommands.class,
+                (StatefulRedisConnection c) -> new RedisReactiveCommandsImpl(c, c.getCodec(),
+                        () -> c.getOptions().getJsonParser().get()));
+
+    }
 
 }
