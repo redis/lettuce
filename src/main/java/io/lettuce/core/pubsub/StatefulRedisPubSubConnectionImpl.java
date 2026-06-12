@@ -31,6 +31,7 @@ import io.lettuce.core.RedisFuture;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
@@ -165,10 +166,9 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     }
 
     @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public <T> T commands(PubSubCommandsFactory<? extends StatefulRedisPubSubConnection<K, V>, T> f) {
-        PubSubCommandsFactory raw = f;
-        return (T) store.compute(raw.key(), () -> raw.apply(this));
+    public <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory) {
+        LettuceAssert.notNull(factory, "CommandsFactory must not be null");
+        return store.compute(factory.key(), () -> factory.apply(this));
     }
 
 }

@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import io.lettuce.core.RedisException;
+import io.lettuce.core.api.ClusterPubSubCommandsFactory;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.api.sync.NodeSelection;
@@ -188,5 +189,17 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * @since 6.0
      */
     void removeListener(RedisClusterPushListener listener);
+
+    /**
+     * Obtain the command API produced by {@code factory} for this Cluster Pub/Sub connection (see
+     * {@link io.lettuce.core.api.StatefulConnection#commands}). The {@link ClusterPubSubCommandsFactory} overload binds the
+     * Cluster Pub/Sub connection type, so a Cluster Pub/Sub factory cannot be applied to a plain Pub/Sub connection.
+     *
+     * @param factory the Cluster Pub/Sub command API factory, must not be {@code null}.
+     * @param <T> command API type.
+     * @return the cached or newly created command API.
+     * @since 7.7
+     */
+    <T> T commands(ClusterPubSubCommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, T> factory);
 
 }

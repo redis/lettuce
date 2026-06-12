@@ -12,6 +12,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.failover.event.SwitchReason;
@@ -62,6 +63,12 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     @Override
+    public <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory) {
+        LettuceAssert.notNull(factory, "CommandsFactory must not be null");
+        return store.compute(factory.key(), () -> factory.apply(this));
+    }
+
+    @Override
     public void addListener(RedisPubSubListener<K, V> listener) {
         doBySharedLock(() -> {
             pubSubListeners.add(listener);
@@ -75,13 +82,6 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
             pubSubListeners.remove(listener);
             current.getConnection().removeListener(listener);
         });
-    }
-
-    @Override
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public <T> T commands(PubSubCommandsFactory<? extends StatefulRedisPubSubConnection<K, V>, T> f) {
-        PubSubCommandsFactory raw = f;
-        return (T) store.compute(raw.key(), () -> raw.apply(this));
     }
 
     @Override

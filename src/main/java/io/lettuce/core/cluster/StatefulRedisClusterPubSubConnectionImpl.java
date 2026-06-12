@@ -32,6 +32,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
+import io.lettuce.core.api.ClusterPubSubCommandsFactory;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
@@ -271,6 +272,12 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
 
         ClientOptions options = getOptions();
         return options instanceof ClusterClientOptions ? (ClusterClientOptions) options : null;
+    }
+
+    @Override
+    public <T> T commands(ClusterPubSubCommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, T> factory) {
+        LettuceAssert.notNull(factory, "CommandsFactory must not be null");
+        return store.compute(factory.key(), () -> factory.apply(this));
     }
 
 }

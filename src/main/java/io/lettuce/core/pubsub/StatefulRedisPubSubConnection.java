@@ -58,6 +58,16 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
      */
     void removeListener(RedisPubSubListener<K, V> listener);
 
-    <T> T commands(PubSubCommandsFactory<? extends StatefulRedisPubSubConnection<K, V>, T> f);
+    /**
+     * Obtain the command API produced by {@code factory} for this Pub/Sub connection (see
+     * {@link io.lettuce.core.api.StatefulConnection#commands}). The {@link PubSubCommandsFactory} overload binds the Pub/Sub
+     * connection type, so a Pub/Sub factory cannot be applied to a non–Pub/Sub connection.
+     *
+     * @param factory the Pub/Sub command API factory, must not be {@code null}.
+     * @param <T> command API type.
+     * @return the cached or newly created command API.
+     * @since 7.7
+     */
+    <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory);
 
 }

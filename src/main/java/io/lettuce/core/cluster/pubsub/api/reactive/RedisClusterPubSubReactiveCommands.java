@@ -2,7 +2,7 @@ package io.lettuce.core.cluster.pubsub.api.reactive;
 
 import java.util.function.Predicate;
 
-import io.lettuce.core.api.PubSubCommandsFactory;
+import io.lettuce.core.api.ClusterPubSubCommandsFactory;
 import io.lettuce.core.cluster.RedisClusterPubSubReactiveCommandsImpl;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
@@ -110,8 +110,8 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
     PubSubReactiveNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate);
 
     /**
-     * Obtain the reactive {@link PubSubCommandsFactory} for a Cluster Pub/Sub connection, for use with
-     * {@link io.lettuce.core.api.StatefulConnection#commands(PubSubCommandsFactory)}:
+     * Obtain the reactive {@link ClusterPubSubCommandsFactory} for a Cluster Pub/Sub connection, for use with
+     * {@link io.lettuce.core.api.StatefulConnection#commands(ClusterPubSubCommandsFactory)}:
      *
      * <pre>
      * 
@@ -127,8 +127,8 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
      * @return the reactive Cluster Pub/Sub factory.
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    static <K, V> PubSubCommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, RedisClusterPubSubReactiveCommands<K, V>> factory() {
-        return (PubSubCommandsFactory) FactoryHolder.INSTANCE;
+    static <K, V> ClusterPubSubCommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, RedisClusterPubSubReactiveCommands<K, V>> factory() {
+        return (ClusterPubSubCommandsFactory) FactoryHolder.INSTANCE;
     }
 
     /**
@@ -141,7 +141,8 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
         }
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        private static final PubSubCommandsFactory INSTANCE = PubSubCommandsFactory.of(RedisClusterPubSubReactiveCommands.class,
+        private static final ClusterPubSubCommandsFactory INSTANCE = ClusterPubSubCommandsFactory.of(
+                RedisClusterPubSubReactiveCommands.class,
                 (StatefulRedisClusterPubSubConnection c) -> new RedisClusterPubSubReactiveCommandsImpl(c, c.getCodec()));
 
     }

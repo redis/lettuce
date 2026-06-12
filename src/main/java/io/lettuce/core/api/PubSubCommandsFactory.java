@@ -9,13 +9,12 @@ import java.util.function.Function;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 
 /**
- * A {@link CommandsFactory} for the Pub/Sub family. Its connection type is bound to {@link StatefulRedisPubSubConnection}, so a
- * {@code PubSubCommandsFactory} can only ever be built for (and applied to) a Pub/Sub — or Cluster Pub/Sub — connection.
+ * A {@link CommandsFactory} for the Pub/Sub family. Its connection type is bound to {@link StatefulRedisPubSubConnection}.
  * <p>
- * Being a distinct type from {@link CommandsFactory} (rather than just a differently-bounded one) is deliberate: it gives
- * connections a {@code commands(PubSubCommandsFactory)} overload with a different erasure from
- * {@code commands(CommandsFactory)}, so the two coexist on the Pub/Sub connection without a name clash and overload resolution
- * picks the right one.
+ * Being a distinct type from {@link CommandsFactory} is deliberate: it gives Pub/Sub connections a
+ * {@code commands(PubSubCommandsFactory)} overload with a different erasure from {@code commands(CommandsFactory)}, so the
+ * invariant overloads coexist and overload resolution rejects a Pub/Sub factory on a plain standalone connection at compile
+ * time.
  *
  * @param <C> Pub/Sub connection type the factory accepts.
  * @param <T> command API type the factory produces.
