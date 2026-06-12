@@ -461,4 +461,36 @@ class PooledClusterConnectionProviderUnitTests {
         verify(clusterEventListener).onUncoveredSlot(anyInt());
     }
 
+    @Test
+    void shouldCloseReadConnectionsIfNodeBecomesMaster() {
+
+        when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:2"), any(), any()))
+                .thenReturn(ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
+
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<>(CommandType.READONLY, null, null));
+        async.complete();
+
+        when(asyncCommandsMock.readOnly()).thenReturn(async);
+
+        sut.setReadFrom(ReadFrom.REPLICA);
+
+        StatefulRedisConnection<String, String> readConnection = sut.getConnection(ConnectionIntent.READ, 1);
+        assertThat(readConnection).isSameAs(nodeConnectionMock);
+
+        RedisClusterNode master = partitions.getPartition(0);
+        RedisClusterNode replica = partitions.getPartition(1);
+
+        RedisClusterNode promotedReplica = new RedisClusterNode(replica.getUri(), replica.getNodeId(), true, null,
+                replica.getPingSentTimestamp(), replica.getPongReceivedTimestamp(), replica.getConfigEpoch(),
+                replica.getSlots(), Collections.singleton(RedisClusterNode.NodeFlag.UPSTREAM));
+
+        Partitions newPartitions = new Partitions();
+        newPartitions.add(master);
+        newPartitions.add(promotedReplica);
+
+        sut.setPartitions(newPartitions);
+
+        verify(channelHandlerMock).closeAsync();
+    }
+
 }
