@@ -5,6 +5,7 @@ import io.lettuce.core.RedisFuture;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.AsyncCommand;
+import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static io.lettuce.TestTags.UNIT_TEST;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.*;
@@ -24,7 +26,7 @@ import java.util.List;
 @Tag(UNIT_TEST)
 class StatefulRedisPubSubConnectionImplUnitTests {
 
-    private StatefulRedisPubSubConnectionImpl connection;
+    private StatefulRedisPubSubConnectionImpl<String, String> connection;
 
     private final RedisCodec<String, String> codec = StringCodec.UTF8;
 
@@ -45,7 +47,28 @@ class StatefulRedisPubSubConnectionImplUnitTests {
         when(mockedTracing.isEnabled()).thenReturn(Boolean.FALSE);
         when(mockedWriter.getClientResources()).thenReturn(mockedReseources);
 
-        connection = new StatefulRedisPubSubConnectionImpl(mockedEndpoint, mockedWriter, codec, timeout);
+        connection = new StatefulRedisPubSubConnectionImpl<>(mockedEndpoint, mockedWriter, codec, timeout);
+    }
+
+    @Test
+    void reactiveCommandsAreCached() {
+        RedisPubSubReactiveCommands first = connection.commands(RedisPubSubReactiveCommands.factory());
+        RedisPubSubReactiveCommands second = connection.commands(RedisPubSubReactiveCommands.factory());
+
+        assertThat(first).isNotNull();
+        assertThat(second).isSameAs(first);
+    }
+
+    @Test
+    void factoryIsSingleton() {
+        assertThat(RedisPubSubReactiveCommands.factory()).isSameAs(RedisPubSubReactiveCommands.factory());
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void factoryProducesSameTypeAsReactive() {
+        assertThat(connection.commands(RedisPubSubReactiveCommands.factory()).getClass())
+                .isSameAs(connection.reactive().getClass());
     }
 
     @Test
