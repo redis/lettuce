@@ -75,7 +75,7 @@ class BatchExecutableCommand implements ExecutableCommand {
             return null;
         }
 
-        BatchTimeout batchTimeout = new BatchTimeout(connection.getTimeout());
+        BatchDeadline deadline = new BatchDeadline(connection.getTimeout());
 
         BatchException exception = null;
         List<RedisCommand<?, ?, ?>> failures = null;
@@ -84,11 +84,11 @@ class BatchExecutableCommand implements ExecutableCommand {
             RedisFuture<?> future = (RedisFuture<?>) batchTask;
 
             try {
-                if (batchTimeout.isReached() && !future.isDone()) {
+                if (deadline.isExpiredAndPending(future)) {
                     continue;
                 }
 
-                batchTimeout.await(future);
+                deadline.await(future);
             } catch (Exception e) {
                 if (exception == null) {
                     failures = new ArrayList<>();
@@ -112,7 +112,7 @@ class BatchExecutableCommand implements ExecutableCommand {
         return commandMethod;
     }
 
-    private static final class BatchTimeout {
+    private static final class BatchDeadline {
 
         private final Duration timeout;
 
@@ -120,16 +120,16 @@ class BatchExecutableCommand implements ExecutableCommand {
 
         private final long startedNs = System.nanoTime();
 
-        private boolean reached;
+        private boolean expired;
 
-        BatchTimeout(Duration timeout) {
+        BatchDeadline(Duration timeout) {
 
             this.timeout = timeout;
             this.timeoutNs = timeout.toNanos();
         }
 
-        boolean isReached() {
-            return reached;
+        boolean isExpiredAndPending(RedisFuture<?> future) {
+            return expired && !future.isDone();
         }
 
         void await(RedisFuture<?> future) {
@@ -160,7 +160,7 @@ class BatchExecutableCommand implements ExecutableCommand {
 
         private void throwTimeoutException() {
 
-            reached = true;
+            expired = true;
             throw ExceptionFactory.createTimeoutException(timeout);
         }
 
