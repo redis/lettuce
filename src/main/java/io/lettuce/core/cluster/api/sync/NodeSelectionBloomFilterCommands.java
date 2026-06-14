@@ -7,10 +7,10 @@
 package io.lettuce.core.cluster.api.sync;
 
 import java.util.List;
-import io.lettuce.core.bf.BfInfoValue;
-import io.lettuce.core.bf.BfScanDumpValue;
-import io.lettuce.core.bf.arguments.BfInsertArgs;
-import io.lettuce.core.bf.arguments.BfReserveArgs;
+import io.lettuce.core.probabilistic.BfInfoValue;
+import io.lettuce.core.probabilistic.ScanDumpValue;
+import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 
 /**
  * Synchronous executed commands on a node selection for Bloom Filter.
@@ -164,8 +164,8 @@ public interface NodeSelectionBloomFilterCommands<K, V> {
      *
      * @param key the key.
      * @param iterator the iterator.
-     * @return BfScanDumpValue the scan dump value.
+     * @return ScanDumpValue the scan dump value.
      */
-    Executions<BfScanDumpValue> bfScanDump(K key, long iterator);
+    Executions<ScanDumpValue> bfScanDump(K key, long iterator);
 
 }
