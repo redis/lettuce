@@ -4,12 +4,14 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.dynamic.batch.BatchException;
 import io.lettuce.core.dynamic.batch.CommandBatching;
 import io.lettuce.core.dynamic.parameter.ExecutionSpecificParameters;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.RedisCommand;
@@ -73,14 +75,20 @@ class BatchExecutableCommand implements ExecutableCommand {
             return null;
         }
 
-        Duration timeout = connection.getTimeout();
+        BatchDeadline deadline = new BatchDeadline(connection.getTimeout());
 
         BatchException exception = null;
         List<RedisCommand<?, ?, ?>> failures = null;
         for (RedisCommand<?, ?, ?> batchTask : batchTasks) {
 
+            RedisFuture<?> future = (RedisFuture<?>) batchTask;
+
             try {
-                Futures.await(timeout, (RedisFuture) batchTask);
+                if (deadline.isExpiredAndPending(future)) {
+                    continue;
+                }
+
+                deadline.await(future);
             } catch (Exception e) {
                 if (exception == null) {
                     failures = new ArrayList<>();
@@ -102,6 +110,60 @@ class BatchExecutableCommand implements ExecutableCommand {
     @Override
     public CommandMethod getCommandMethod() {
         return commandMethod;
+    }
+
+    private static final class BatchDeadline {
+
+        private final Duration timeout;
+
+        private final long timeoutNs;
+
+        private final long startedNs = System.nanoTime();
+
+        private boolean expired;
+
+        BatchDeadline(Duration timeout) {
+
+            this.timeout = timeout;
+            this.timeoutNs = timeout.toNanos();
+        }
+
+        boolean isExpiredAndPending(RedisFuture<?> future) {
+            return expired && !future.isDone();
+        }
+
+        void await(RedisFuture<?> future) {
+
+            if (future.isDone() || !isEnabled()) {
+                Futures.await(0, TimeUnit.NANOSECONDS, future);
+                return;
+            }
+
+            long remainingNs = remainingNs();
+
+            if (remainingNs <= 0) {
+                throwTimeoutException();
+            }
+
+            if (!Futures.await(remainingNs, TimeUnit.NANOSECONDS, future)) {
+                throwTimeoutException();
+            }
+        }
+
+        private boolean isEnabled() {
+            return timeoutNs > 0;
+        }
+
+        private long remainingNs() {
+            return timeoutNs - (System.nanoTime() - startedNs);
+        }
+
+        private void throwTimeoutException() {
+
+            expired = true;
+            throw ExceptionFactory.createTimeoutException(timeout);
+        }
+
     }
 
 }
