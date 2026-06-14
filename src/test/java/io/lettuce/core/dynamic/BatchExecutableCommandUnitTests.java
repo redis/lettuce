@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisCommandInterruptedException;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.dynamic.batch.BatchException;
@@ -166,6 +167,118 @@ class BatchExecutableCommandUnitTests {
         assertThat(command.timedGetCalls()).isZero();
     }
 
+    @Test
+    void synchronizeShouldUseUnboundedWaitForNegativeTimeout() {
+
+        when(connection.getTimeout()).thenReturn(Duration.ofNanos(-1));
+
+        CompletesOnUnboundedGetCommand command = new CompletesOnUnboundedGetCommand();
+
+        assertThat(BatchExecutableCommand.synchronize(batchTasks(command), connection)).isNull();
+
+        assertThat(command.unboundedGetCalls()).isEqualTo(1);
+        assertThat(command.timedGetCalls()).isZero();
+    }
+
+    @Test
+    void synchronizeShouldUseUnboundedWaitForCompletedCommandWithPositiveTimeout() {
+
+        when(connection.getTimeout()).thenReturn(Duration.ofSeconds(1));
+
+        CompletedGetTrackingCommand command = new CompletedGetTrackingCommand();
+
+        assertThat(BatchExecutableCommand.synchronize(batchTasks(command), connection)).isNull();
+
+        assertThat(command.unboundedGetCalls()).isEqualTo(1);
+        assertThat(command.timedGetCalls()).isZero();
+    }
+
+    @Test
+    void synchronizeShouldUseUnboundedWaitForCompletedFailureWithPositiveTimeout() {
+
+        when(connection.getTimeout()).thenReturn(Duration.ofSeconds(1));
+
+        RedisCommandExecutionException failure = new RedisCommandExecutionException("completed failure");
+        FailedCompletedGetTrackingCommand command = new FailedCompletedGetTrackingCommand(failure);
+
+        BatchException exception = catchThrowableOfType(
+                () -> BatchExecutableCommand.synchronize(batchTasks(command), connection), BatchException.class);
+
+        assertThat(exception.getFailedCommands()).containsExactly(command);
+        assertThat(exception.getSuppressed()).hasSize(1);
+        assertThat(exception.getSuppressed()[0]).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("completed failure");
+        assertThat(command.unboundedGetCalls()).isEqualTo(1);
+        assertThat(command.timedGetCalls()).isZero();
+    }
+
+    @Test
+    void synchronizeShouldExpireDeadlineBeforeAwaitingPendingCommand() {
+
+        when(connection.getTimeout()).thenReturn(Duration.ofMillis(50));
+
+        DelayingCommand completedAfterDeadline = new DelayingCommand(Duration.ofMillis(75));
+        FailIfAwaitedCommand timedOutAfterDeadline = new FailIfAwaitedCommand();
+        FailIfAwaitedCommand skippedAfterDeadline = new FailIfAwaitedCommand();
+
+        BatchException exception = catchThrowableOfType(
+                () -> BatchExecutableCommand.synchronize(
+                        batchTasks(completedAfterDeadline, timedOutAfterDeadline, skippedAfterDeadline), connection),
+                BatchException.class);
+
+        assertThat(exception.getFailedCommands()).containsExactly(timedOutAfterDeadline);
+        assertThat(exception.getSuppressed()).hasSize(1);
+        assertThat(exception.getSuppressed()[0]).isInstanceOf(RedisCommandTimeoutException.class);
+        assertThat(timedOutAfterDeadline.wasAwaited()).isFalse();
+        assertThat(skippedAfterDeadline.wasAwaited()).isFalse();
+    }
+
+    @Test
+    void synchronizeShouldCollectCompletedFailuresAfterDeadlineExpiredBeforeAwait() {
+
+        when(connection.getTimeout()).thenReturn(Duration.ofMillis(50));
+
+        DelayingCommand completedAfterDeadline = new DelayingCommand(Duration.ofMillis(75));
+        FailIfAwaitedCommand timedOutAfterDeadline = new FailIfAwaitedCommand();
+        AsyncCommand<Object, Object, Object> failedAfterDeadline = failedCommand(
+                new RedisCommandExecutionException("completed after deadline"));
+        FailIfAwaitedCommand skippedAfterDeadline = new FailIfAwaitedCommand();
+
+        BatchException exception = catchThrowableOfType(() -> BatchExecutableCommand.synchronize(
+                batchTasks(completedAfterDeadline, timedOutAfterDeadline, failedAfterDeadline, skippedAfterDeadline),
+                connection), BatchException.class);
+
+        assertThat(exception.getFailedCommands()).containsExactly(timedOutAfterDeadline, failedAfterDeadline);
+        assertThat(exception.getSuppressed()).hasSize(2);
+        assertThat(exception.getSuppressed()[0]).isInstanceOf(RedisCommandTimeoutException.class);
+        assertThat(exception.getSuppressed()[1]).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("completed after deadline");
+        assertThat(timedOutAfterDeadline.wasAwaited()).isFalse();
+        assertThat(skippedAfterDeadline.wasAwaited()).isFalse();
+    }
+
+    @Test
+    void synchronizeShouldAggregateInterruptedAwaitAsBatchFailure() {
+
+        when(connection.getTimeout()).thenReturn(Duration.ofSeconds(1));
+
+        InterruptingCommand command = new InterruptingCommand();
+
+        try {
+            BatchException exception = catchThrowableOfType(
+                    () -> BatchExecutableCommand.synchronize(batchTasks(command), connection), BatchException.class);
+
+            assertThat(exception.getFailedCommands()).containsExactly(command);
+            assertThat(exception.getSuppressed()).hasSize(1);
+            assertThat(exception.getSuppressed()[0]).isInstanceOf(RedisCommandInterruptedException.class);
+            assertThat(command.timedGetCalls()).isEqualTo(1);
+            assertThat(command.unboundedGetCalls()).isZero();
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
     private static BatchTasks batchTasks(RedisCommand<?, ?, ?>... commands) {
         return new BatchTasks(Arrays.asList(commands));
     }
@@ -286,6 +399,92 @@ class BatchExecutableCommandUnitTests {
 
             timedGetCalls.incrementAndGet();
             throw new AssertionError("Zero timeout must use Future.get() without a timeout");
+        }
+
+        int unboundedGetCalls() {
+            return unboundedGetCalls.get();
+        }
+
+        int timedGetCalls() {
+            return timedGetCalls.get();
+        }
+
+    }
+
+    private static class CompletedGetTrackingCommand extends AsyncCommand<Object, Object, Object> {
+
+        private final AtomicInteger unboundedGetCalls = new AtomicInteger();
+
+        private final AtomicInteger timedGetCalls = new AtomicInteger();
+
+        CompletedGetTrackingCommand() {
+            this(null);
+        }
+
+        CompletedGetTrackingCommand(Throwable throwable) {
+            super(new Command<>(CommandType.COMMAND, null, null));
+
+            if (throwable == null) {
+                complete();
+            } else {
+                completeExceptionally(throwable);
+            }
+        }
+
+        @Override
+        public Object get() throws InterruptedException, ExecutionException {
+
+            unboundedGetCalls.incrementAndGet();
+            return super.get();
+        }
+
+        @Override
+        public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+
+            timedGetCalls.incrementAndGet();
+            throw new AssertionError("Completed command must use Future.get() without a timeout");
+        }
+
+        int unboundedGetCalls() {
+            return unboundedGetCalls.get();
+        }
+
+        int timedGetCalls() {
+            return timedGetCalls.get();
+        }
+
+    }
+
+    private static class FailedCompletedGetTrackingCommand extends CompletedGetTrackingCommand {
+
+        FailedCompletedGetTrackingCommand(Throwable throwable) {
+            super(throwable);
+        }
+
+    }
+
+    private static class InterruptingCommand extends AsyncCommand<Object, Object, Object> {
+
+        private final AtomicInteger unboundedGetCalls = new AtomicInteger();
+
+        private final AtomicInteger timedGetCalls = new AtomicInteger();
+
+        InterruptingCommand() {
+            super(new Command<>(CommandType.COMMAND, null, null));
+        }
+
+        @Override
+        public Object get() throws InterruptedException, ExecutionException {
+
+            unboundedGetCalls.incrementAndGet();
+            throw new InterruptedException("interrupted");
+        }
+
+        @Override
+        public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+
+            timedGetCalls.incrementAndGet();
+            throw new InterruptedException("interrupted");
         }
 
         int unboundedGetCalls() {
