@@ -2,19 +2,23 @@ package io.lettuce.authx;
 
 import io.lettuce.TestTags;
 import io.lettuce.core.RedisCredentials;
+import io.lettuce.core.RedisCredentialsProvider.CredentialsSubscription;
 import io.lettuce.core.TestTokenManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import redis.clients.authentication.core.SimpleToken;
 import redis.clients.authentication.core.TokenManagerConfig;
 
-import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -95,62 +99,117 @@ public class TokenBasedRedisCredentialsProviderTest {
     }
 
     @Test
-    public void shouldCompleteAllSubscribersOnStop() {
-        Flux<RedisCredentials> credentialsFlux1 = credentialsProvider.credentials();
-        Flux<RedisCredentials> credentialsFlux2 = credentialsProvider.credentials();
+    public void shouldStopDeliveringToSubscribersOnClose() throws InterruptedException {
+        List<RedisCredentials> received1 = new CopyOnWriteArrayList<>();
+        List<RedisCredentials> received2 = new CopyOnWriteArrayList<>();
+        CountDownLatch firstTokenLatch = new CountDownLatch(2);
 
-        Disposable subscription1 = credentialsFlux1.subscribe();
-        Disposable subscription2 = credentialsFlux2.subscribe();
+        CredentialsSubscription sub1 = credentialsProvider.subscribeToCredentials(c -> {
+            received1.add(c);
+            firstTokenLatch.countDown();
+        }, t -> {
+        });
+        CredentialsSubscription sub2 = credentialsProvider.subscribeToCredentials(c -> {
+            received2.add(c);
+            firstTokenLatch.countDown();
+        }, t -> {
+        });
 
         tokenManager.emitToken(testToken("test-user", "token-1"));
 
-        new Thread(() -> {
-            try {
-                Thread.sleep(100); // Delay of 100 milliseconds
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            credentialsProvider.close();
-        }).start();
+        assertThat(firstTokenLatch.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(received1).hasSize(1);
+        assertThat(String.valueOf(received1.get(0).getPassword())).isEqualTo("token-1");
+        assertThat(received2).hasSize(1);
+        assertThat(String.valueOf(received2.get(0).getPassword())).isEqualTo("token-1");
 
-        StepVerifier.create(credentialsFlux1)
-                .assertNext(credentials -> assertThat(String.valueOf(credentials.getPassword())).isEqualTo("token-1"))
-                .verifyComplete();
+        credentialsProvider.close();
+        // Emissions after close must not reach subscribers.
+        tokenManager.emitToken(testToken("test-user", "token-2"));
+        Thread.sleep(50);
 
-        StepVerifier.create(credentialsFlux2)
-                .assertNext(credentials -> assertThat(String.valueOf(credentials.getPassword())).isEqualTo("token-1"))
-                .verifyComplete();
+        assertThat(received1).hasSize(1);
+        assertThat(received2).hasSize(1);
 
-        assertThat(subscription1.isDisposed()).isTrue();
-        assertThat(subscription2.isDisposed()).isTrue();
-
+        sub1.close();
+        sub2.close();
     }
 
     @Test
-    public void shouldPropagateMultipleTokensOnStream() {
+    public void shouldPropagateMultipleTokensOnStream() throws InterruptedException {
+        List<RedisCredentials> received = new CopyOnWriteArrayList<>();
+        CountDownLatch latch = new CountDownLatch(2);
 
-        Flux<RedisCredentials> result = credentialsProvider.credentials();
-        StepVerifier.create(result).then(() -> tokenManager.emitToken(testToken("test-user", "token1")))
-                .then(() -> tokenManager.emitToken(testToken("test-user", "token2")))
-                .assertNext(credentials -> assertThat(String.valueOf(credentials.getPassword())).isEqualTo("token1"))
-                .assertNext(credentials -> assertThat(String.valueOf(credentials.getPassword())).isEqualTo("token2"))
-                .thenCancel().verify(Duration.ofMillis(100));
+        CredentialsSubscription sub = credentialsProvider.subscribeToCredentials(c -> {
+            received.add(c);
+            latch.countDown();
+        }, t -> {
+        });
+
+        tokenManager.emitToken(testToken("test-user", "token1"));
+        tokenManager.emitToken(testToken("test-user", "token2"));
+
+        assertThat(latch.await(1, TimeUnit.SECONDS)).isTrue();
+        List<String> passwords = new ArrayList<>();
+        for (RedisCredentials c : received) {
+            passwords.add(String.valueOf(c.getPassword()));
+        }
+        assertThat(passwords).containsExactly("token1", "token2");
+
+        sub.close();
     }
 
     @Test
-    public void shouldHandleTokenRequestErrorGracefully() {
+    public void shouldReplayLatestTokenToNewSubscriber() throws InterruptedException {
+        tokenManager.emitToken(testToken("test-user", "token-1"));
+
+        AtomicReference<RedisCredentials> received = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        CredentialsSubscription sub = credentialsProvider.subscribeToCredentials(c -> {
+            received.set(c);
+            latch.countDown();
+        }, t -> {
+        });
+
+        assertThat(latch.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(String.valueOf(received.get().getPassword())).isEqualTo("token-1");
+
+        sub.close();
+    }
+
+    @Test
+    public void shouldPropagateTokenRequestErrorsToSubscribers() throws InterruptedException {
         Exception simulatedError = new RuntimeException("Token request failed");
 
-        Flux<RedisCredentials> result = credentialsProvider.credentials();
+        List<RedisCredentials> received = new CopyOnWriteArrayList<>();
+        List<Throwable> errors = new CopyOnWriteArrayList<>();
+        CountDownLatch tokensLatch = new CountDownLatch(2);
+        CountDownLatch errorLatch = new CountDownLatch(1);
 
-        StepVerifier.create(result).then(() -> {
-            tokenManager.emitToken(testToken("test-user", "token1"));
-            tokenManager.emitError(simulatedError);
-            tokenManager.emitToken(testToken("test-user", "token2"));
-        }).assertNext(credentials -> assertThat(String.valueOf(credentials.getPassword())).isEqualTo("token1"))
-                .assertNext(credentials -> assertThat(String.valueOf(credentials.getPassword())).isEqualTo("token2"))
-                .thenCancel().verify(Duration.ofMillis(100));
+        CredentialsSubscription sub = credentialsProvider.subscribeToCredentials(c -> {
+            received.add(c);
+            tokensLatch.countDown();
+        }, t -> {
+            errors.add(t);
+            errorLatch.countDown();
+        });
 
+        tokenManager.emitToken(testToken("test-user", "token1"));
+        tokenManager.emitError(simulatedError);
+        tokenManager.emitToken(testToken("test-user", "token2"));
+
+        assertThat(tokensLatch.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(errorLatch.await(1, TimeUnit.SECONDS)).isTrue();
+
+        List<String> passwords = new ArrayList<>();
+        for (RedisCredentials c : received) {
+            passwords.add(String.valueOf(c.getPassword()));
+        }
+        assertThat(passwords).containsExactly("token1", "token2");
+        assertThat(errors).containsExactly(simulatedError);
+
+        sub.close();
     }
 
     private SimpleToken testToken(String username, String value) {

@@ -247,7 +247,10 @@ A simple example of a streaming credentials provider that emits new credentials.
 ```java
 public class MyStreamingRedisCredentialsProvider implements RedisCredentialsProvider {
 
-    private final Sinks.Many<RedisCredentials> credentialsSink = Sinks.many().replay().latest();
+    private final Object lock = new Object();
+    private final List<Listener> listeners = new ArrayList<>();
+    private final AtomicReference<CompletableFuture<RedisCredentials>> credentialsFutureRef =
+            new AtomicReference<>(new CompletableFuture<>());
 
     @Override
     public boolean supportsStreaming() {
@@ -256,23 +259,60 @@ public class MyStreamingRedisCredentialsProvider implements RedisCredentialsProv
 
     @Override
     public CompletionStage<RedisCredentials> resolveCredentials() {
-        return credentialsSink.asFlux().next().toFuture();
+        return credentialsFutureRef.get();
     }
-    
+
     @Override
-    // Provide a continuous stream of credentials
-    public Flux<RedisCredentials> credentials() {
-        return credentialsSink.asFlux().onBackpressureLatest(); 
+    public CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> onNext,
+            Consumer<Throwable> onError) {
+        Listener listener = new Listener(onNext, onError);
+        RedisCredentials toReplay;
+        synchronized (lock) {
+            listeners.add(listener);
+            CompletableFuture<RedisCredentials> latest = credentialsFutureRef.get();
+            toReplay = (latest.isDone() && !latest.isCompletedExceptionally()) ? latest.getNow(null) : null;
+        }
+        if (toReplay != null) {
+            onNext.accept(toReplay);
+        }
+        return () -> {
+            synchronized (lock) {
+                listeners.remove(listener);
+            }
+        };
     }
 
     public void close() {
-        credentialsSink.tryEmitComplete();
-    }
-    // Emit new credentials when needed
-    public void emitCredentials(String username, char[] password) {
-        credentialsSink.tryEmitNext(new StaticRedisCredentials(username, password));
+        synchronized (lock) {
+            listeners.clear();
+        }
     }
 
+    // Emit new credentials when needed
+    public void emitCredentials(String username, char[] password) {
+        RedisCredentials credentials = new StaticRedisCredentials(username, password);
+        List<Listener> snapshot;
+        synchronized (lock) {
+            CompletableFuture<RedisCredentials> previous = credentialsFutureRef
+                    .getAndSet(CompletableFuture.completedFuture(credentials));
+            if (!previous.isDone()) {
+                previous.complete(credentials);
+            }
+            snapshot = new ArrayList<>(listeners);
+        }
+        for (Listener l : snapshot) {
+            l.onNext.accept(credentials);
+        }
+    }
+
+    private static class Listener {
+        final Consumer<RedisCredentials> onNext;
+        final Consumer<Throwable> onError;
+        Listener(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+            this.onNext = onNext;
+            this.onError = onError;
+        }
+    }
 }
 ```
 ###  Step 2 - Create a RedisURI with streaming credentials provider

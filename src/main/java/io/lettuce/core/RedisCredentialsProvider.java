@@ -22,7 +22,11 @@ import io.lettuce.core.internal.LettuceAssert;
 @FunctionalInterface
 public interface RedisCredentialsProvider {
 
-    public static interface CredentialsSubscription extends Closeable {
+    /**
+     * Handle to a subscription created by {@link #subscribeToCredentials(Consumer, Consumer)}. Closing the subscription stops
+     * the provider from delivering further credential updates to the registered consumers.
+     */
+    interface CredentialsSubscription extends Closeable {
 
         @Override
         void close();
@@ -69,7 +73,34 @@ public interface RedisCredentialsProvider {
         return false;
     }
 
-    default CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> consumer) {
+    /**
+     * Subscribe to credential updates produced by this provider.
+     * <p>
+     * For implementations that support streaming credentials (as indicated by {@link #supportsStreaming()} returning
+     * {@code true}), the {@code onNext} consumer is invoked whenever new credentials become available, typically as a result of
+     * external events such as token renewal or rotation. The {@code onError} consumer is invoked when the provider observes a
+     * failure while obtaining new credentials.
+     * <p>
+     * Replay semantics on subscription are defined by the implementation and callers should consult the concrete provider's
+     * documentation. Typical aspects an implementation may choose to specify include:
+     * <ul>
+     * <li>whether the most recently known credentials are delivered to {@code onNext} immediately on subscription;</li>
+     * <li>whether prior errors observed before subscription are delivered to {@code onError}, or are silently dropped in favour
+     * of waiting for the next credentials or next error event;</li>
+     * <li>the threading context on which {@code onNext} and {@code onError} are invoked, and any ordering guarantees between
+     * replay deliveries and live updates.</li>
+     * </ul>
+     * Subscribers must not assume any specific replay behaviour from this interface alone.
+     * <p>
+     * Implementations that do not support streaming credentials (where {@link #supportsStreaming()} returns {@code false})
+     * throw an {@link UnsupportedOperationException} by default.
+     *
+     * @param onNext consumer invoked with each new {@link RedisCredentials} value, must not be {@code null}.
+     * @param onError consumer invoked with errors observed while producing credentials, must not be {@code null}.
+     * @return a {@link CredentialsSubscription} that can be used to stop receiving updates.
+     * @throws UnsupportedOperationException if the provider does not support streaming credentials.
+     */
+    default CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
         throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
     }
 

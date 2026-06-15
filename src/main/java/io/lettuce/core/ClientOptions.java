@@ -755,8 +755,8 @@ public class ClientOptions implements Serializable {
          * <p/>
          * <p>
          * No re-authentication is performed when new credentials are emitted by a {@link RedisCredentialsProvider} that
-         * supports streaming. The client does not subscribe to or react to any updates in the credential stream provided by
-         * {@link RedisCredentialsProvider#credentials()}.
+         * supports streaming. The client does not subscribe to or react to any updates published by
+         * {@link RedisCredentialsProvider#subscribeToCredentials(java.util.function.Consumer, java.util.function.Consumer)}.
          * </p>
          */
         DEFAULT,
@@ -766,10 +766,11 @@ public class ClientOptions implements Serializable {
          * that supports streaming, as indicated by {@link RedisCredentialsProvider#supportsStreaming()}.
          *
          * <p>
-         * When this behavior is enabled, the client subscribes to the credential stream provided by
-         * {@link RedisCredentialsProvider#credentials()} and issues an {@code AUTH} command to the Redis server each time new
-         * credentials are received. This behavior supports dynamic credential scenarios, such as token-based authentication, or
-         * credential rotation where credentials are refreshed periodically to maintain access.
+         * When this behavior is enabled, the client subscribes to credential updates via
+         * {@link RedisCredentialsProvider#subscribeToCredentials(java.util.function.Consumer, java.util.function.Consumer)} and
+         * issues an {@code AUTH} command to the Redis server each time new credentials are received. This behavior supports
+         * dynamic credential scenarios, such as token-based authentication, or credential rotation where credentials are
+         * refreshed periodically to maintain access.
          * </p>
          *
          * <p>

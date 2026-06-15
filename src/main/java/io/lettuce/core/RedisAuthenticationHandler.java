@@ -128,7 +128,8 @@ public class RedisAuthenticationHandler<K, V> {
             return;
         }
 
-        CredentialsSubscription credentialsSub = credentialsProvider.subscribeToCredentials(c -> reauthenticate(c));
+        CredentialsSubscription credentialsSub = credentialsProvider.subscribeToCredentials(this::reauthenticate,
+                this::onError);
 
         CredentialsSubscription oldSub = credentialsSubscription.getAndSet(credentialsSub);
         if (oldSub != null) {
@@ -157,6 +158,16 @@ public class RedisAuthenticationHandler<K, V> {
      */
     protected void reauthenticate(RedisCredentials credentials) {
         setCredentials(credentials);
+    }
+
+    /**
+     * Handles errors observed by the underlying {@link RedisCredentialsProvider} while producing credentials.
+     *
+     * @param e the error reported by the credentials provider
+     */
+    protected void onError(Throwable e) {
+        log.error("Credentials renew failed.", e);
+        publishReauthFailedEvent(e);
     }
 
     boolean isSupportedConnection() {
