@@ -59,10 +59,9 @@ class StatefulRedisClusterPubSubConnectionImplUnitTests {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    void factoryProducesSameTypeAsReactive() {
-        assertThat(connection.commands(RedisClusterPubSubReactiveCommands.factory()).getClass())
-                .isSameAs(connection.reactive().getClass());
+    void factoryProducesReactiveCommands() {
+        assertThat(connection.commands(RedisClusterPubSubReactiveCommands.factory()))
+                .isInstanceOf(RedisClusterPubSubReactiveCommandsImpl.class);
     }
 
 }

@@ -12,6 +12,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -92,7 +93,7 @@ public class ReactiveIntegrationTests extends SampleTestRunner {
 
             // Propagate the Observation via the Observation.class key.
             // This exercises the Observation.class branch in getTraceContextAsync.
-            connection.reactive().ping()
+            connection.commands(RedisReactiveCommands.factory()).ping()
                     .contextWrite(ctx -> ctx.put(Observation.class, observationRegistry.getCurrentObservation()))
                     .as(StepVerifier::create).expectNext("PONG").verifyComplete();
 
