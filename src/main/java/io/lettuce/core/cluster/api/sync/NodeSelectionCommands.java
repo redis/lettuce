@@ -13,5 +13,5 @@ public interface NodeSelectionCommands<K, V> extends BaseNodeSelectionCommands<K
         NodeSelectionKeyCommands<K, V>, NodeSelectionListCommands<K, V>, NodeSelectionScriptingCommands<K, V>,
         NodeSelectionServerCommands<K, V>, NodeSelectionSetCommands<K, V>, NodeSelectionSortedSetCommands<K, V>,
         NodeSelectionStreamCommands<K, V>, NodeSelectionStringCommands<K, V>, NodeSelectionJsonCommands<K, V>,
-        NodeSelectionVectorSetCommands<K, V>, NodeSelectionSearchCommands<K, V> {
+        NodeSelectionVectorSetCommands<K, V>, NodeSelectionSearchCommands<K, V>, NodeSelectionBloomFilterCommands<K, V> {
 }

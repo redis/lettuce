@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Unit tests for {@link RedisCommandBuilder}.
  *
  * @author Mark Paluch
+ * @author dae won
  */
 @Tag(UNIT_TEST)
 class RedisCommandBuilderUnitTests {
@@ -812,6 +813,28 @@ class RedisCommandBuilderUnitTests {
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
         assertThat(s).isEqualTo("2 key<k1> value<v1> key<k2> value<v2> KEEPTTL");
+    }
+
+    @Test
+    void shouldCorrectlyConstructClientNoTouch() {
+
+        Command<String, String, ?> command = sut.clientNoTouch(true);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$2\r\n" + "ON\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructClientNoTouchOff() {
+
+        Command<String, String, ?> command = sut.clientNoTouch(false);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$3\r\n" + "OFF\r\n");
     }
 
 }
