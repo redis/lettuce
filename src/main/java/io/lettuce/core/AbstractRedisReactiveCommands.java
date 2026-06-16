@@ -23,6 +23,10 @@ import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.*;
 import io.lettuce.core.array.*;
+import io.lettuce.core.bf.BfInfoValue;
+import io.lettuce.core.bf.BfScanDumpValue;
+import io.lettuce.core.bf.arguments.BfInsertArgs;
+import io.lettuce.core.bf.arguments.BfReserveArgs;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -109,15 +113,17 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author Ali Takavci
  * @author Tihomir Mateev
  * @author SeugnSu Kim
+ * @author Yordan Tsintsov
+ * @author dae won
  * @since 4.0
  */
-public abstract class AbstractRedisReactiveCommands<K, V>
-        implements RedisAclReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
-        RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
-        RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
-        RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
-        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
-        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V> {
+public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclReactiveCommands<K, V>,
+        RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
+        RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
+        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
+        BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
+        RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>,
+        RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -130,6 +136,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private final RedisVectorSetCommandBuilder<K, V> vectorSetCommandBuilder;
 
     private final RedisArrayCommandBuilder<K, V> arrayCommandBuilder;
+
+    private final RedisBloomFilterCommandBuilder<K, V> bloomFilterCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -187,6 +195,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
         this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
         this.arrayCommandBuilder = new RedisArrayCommandBuilder<>(codec);
+        this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -500,6 +509,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> clientNoEvict(boolean on) {
         return createMono(() -> commandBuilder.clientNoEvict(on));
+    }
+
+    @Override
+    public Mono<String> clientNoTouch(boolean on) {
+        return createMono(() -> commandBuilder.clientNoTouch(on));
     }
 
     @Override
@@ -4291,6 +4305,78 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<ArrayInfoFull> arinfoFull(K key) {
         return createMono(() -> arrayCommandBuilder.arinfoFull(key));
+    }
+
+    // --- Redis Bloom Filter Commands ---
+
+    @Override
+    public Mono<Boolean> bfAdd(K key, V value) {
+        return createMono(() -> bloomFilterCommandBuilder.bfAdd(key, value));
+    }
+
+    @Override
+    public Mono<Long> bfCard(K key) {
+        return createMono(() -> bloomFilterCommandBuilder.bfCard(key));
+    }
+
+    @Override
+    public Mono<Boolean> bfExists(K key, V value) {
+        return createMono(() -> bloomFilterCommandBuilder.bfExists(key, value));
+    }
+
+    @Override
+    public Mono<BfInfoValue> bfInfo(K key) {
+        return createMono(() -> bloomFilterCommandBuilder.bfInfo(key));
+    }
+
+    @Override
+    public Flux<Value<Boolean>> bfInsert(K key, V value) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsertValues(key, value));
+    }
+
+    @Override
+    public Flux<Value<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V value) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsertValues(key, insertArgs, value));
+    }
+
+    @Override
+    public Flux<Value<Boolean>> bfInsert(K key, V... values) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsertValues(key, values));
+    }
+
+    @Override
+    public Flux<Value<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V... values) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfInsertValues(key, insertArgs, values));
+    }
+
+    @Override
+    public Mono<String> bfLoadChunk(K key, long iterator, byte[] data) {
+        return createMono(() -> bloomFilterCommandBuilder.bfLoadChunk(key, iterator, data));
+    }
+
+    @Override
+    public Flux<Value<Boolean>> bfMAdd(K key, V... values) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfMAddValues(key, values));
+    }
+
+    @Override
+    public Flux<Boolean> bfMExists(K key, V... values) {
+        return createDissolvingFlux(() -> bloomFilterCommandBuilder.bfMExists(key, values));
+    }
+
+    @Override
+    public Mono<String> bfReserve(K key, double errorRate, long capacity) {
+        return createMono(() -> bloomFilterCommandBuilder.bfReserve(key, errorRate, capacity));
+    }
+
+    @Override
+    public Mono<String> bfReserve(K key, double errorRate, long capacity, BfReserveArgs reserveArgs) {
+        return createMono(() -> bloomFilterCommandBuilder.bfReserve(key, errorRate, capacity, reserveArgs));
+    }
+
+    @Override
+    public Mono<BfScanDumpValue> bfScanDump(K key, long iterator) {
+        return createMono(() -> bloomFilterCommandBuilder.bfScanDump(key, iterator));
     }
 
 }
