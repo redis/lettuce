@@ -987,7 +987,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @Test
         @DisplayName("Should provide reactive commands")
         void shouldProvideReactiveCommands() {
-            assertThat(connection.reactive()).isNotNull();
+            assertThat(connection.commands(RedisReactiveCommands.factory())).isNotNull();
         }
 
     }
