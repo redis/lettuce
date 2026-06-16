@@ -32,6 +32,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
+import io.lettuce.core.api.ClusterPubSubCommandsFactory;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
@@ -110,11 +111,21 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
                 NodeSelectionPubSubCommands.class, async());
     }
 
+    /**
+     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisClusterPubSubReactiveCommands#factory()} instead;
+     *             scheduled for removal in Lettuce 8.0.
+     */
+    @Deprecated
     @Override
     public RedisClusterPubSubReactiveCommands<K, V> reactive() {
         return (RedisClusterPubSubReactiveCommands<K, V>) super.reactive();
     }
 
+    /**
+     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisClusterPubSubReactiveCommands#factory()} instead;
+     *             scheduled for removal in Lettuce 8.0.
+     */
+    @Deprecated
     @Override
     protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisClusterPubSubReactiveCommandsImpl<K, V>(this, codec);
@@ -271,6 +282,12 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
 
         ClientOptions options = getOptions();
         return options instanceof ClusterClientOptions ? (ClusterClientOptions) options : null;
+    }
+
+    @Override
+    public <T> T commands(ClusterPubSubCommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, T> factory) {
+        LettuceAssert.notNull(factory, "CommandsFactory must not be null");
+        return store.compute(factory.key(), () -> factory.apply(this));
     }
 
 }

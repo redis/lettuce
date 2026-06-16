@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import io.lettuce.core.RedisException;
+import io.lettuce.core.api.ClusterPubSubCommandsFactory;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.api.sync.NodeSelection;
@@ -60,6 +61,9 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
 
     /**
      * Returns the {@link RedisClusterPubSubCommands} API for the current connection. Does not create a new connection.
+     * <p>
+     * Note: this accessor is scheduled for removal in a future major release; a {@code commands(...)}-based replacement is
+     * planned.
      *
      * @return the synchronous API for the underlying connection.
      */
@@ -67,6 +71,9 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
 
     /**
      * Returns the {@link RedisClusterPubSubAsyncCommands} API for the current connection. Does not create a new connection.
+     * <p>
+     * Note: this accessor is scheduled for removal in a future major release; a {@code commands(...)}-based replacement is
+     * planned.
      *
      * @return the asynchronous API for the underlying connection.
      */
@@ -76,7 +83,10 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * Returns the {@link RedisClusterPubSubReactiveCommands} API for the current connection. Does not create a new connection.
      *
      * @return the reactive API for the underlying connection.
+     * @deprecated since 7.7, use {@link #commands(ClusterPubSubCommandsFactory)} with
+     *             {@link RedisClusterPubSubReactiveCommands#factory()} instead; scheduled for removal in Lettuce 8.0.
      */
+    @Deprecated
     RedisClusterPubSubReactiveCommands<K, V> reactive();
 
     /**
@@ -188,5 +198,18 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * @since 6.0
      */
     void removeListener(RedisClusterPushListener listener);
+
+    /**
+     * Returns the command API created by {@code factory}, bound to this connection. Does not create a new connection.
+     * <p>
+     * The command API is created once per connection and cached; calling this method again with the same {@code factory}
+     * returns the same instance.
+     *
+     * @param factory the command API factory, must not be {@code null}
+     * @param <T> the command API type
+     * @return the command API bound to this connection
+     * @since 7.7
+     */
+    <T> T commands(ClusterPubSubCommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, T> factory);
 
 }
