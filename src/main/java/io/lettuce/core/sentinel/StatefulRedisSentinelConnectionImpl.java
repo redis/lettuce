@@ -35,7 +35,6 @@ import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
-import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
 
 import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;

@@ -98,7 +98,7 @@ public class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubRea
                 predicate);
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
-                RedisPubSubReactiveCommands.class, REACTIVE);
+                RedisPubSubReactiveCommands.class, REACTIVE, RedisPubSubReactiveCommands.factory());
         return (PubSubReactiveNodeSelection<K, V>) Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(),
                 new Class<?>[] { NodeSelectionPubSubReactiveCommands.class, PubSubReactiveNodeSelection.class }, h);
     }

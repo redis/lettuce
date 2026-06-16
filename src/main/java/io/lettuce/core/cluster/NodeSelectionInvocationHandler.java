@@ -22,8 +22,8 @@ import org.reactivestreams.Publisher;
 
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisCommandTimeoutException;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.AbstractInvocationHandler;
@@ -56,6 +56,8 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
     private final TimeoutProvider timeoutProvider;
 
+    private final CommandsFactory<?, ?> reactiveCommandsFactory;
+
     static {
         try {
             NULL_MARKER_METHOD = NodeSelectionInvocationHandler.class.getDeclaredMethod("handleInvocation", Object.class,
@@ -67,16 +69,21 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
     NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface,
             ExecutionModel executionModel) {
-        this(selection, commandsInterface, null, executionModel);
+        this(selection, commandsInterface, null, executionModel, null);
+    }
+
+    NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface,
+            ExecutionModel executionModel, CommandsFactory<?, ?> reactiveCommandsFactory) {
+        this(selection, commandsInterface, null, executionModel, reactiveCommandsFactory);
     }
 
     NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface,
             TimeoutProvider timeoutProvider) {
-        this(selection, commandsInterface, timeoutProvider, ExecutionModel.SYNC);
+        this(selection, commandsInterface, timeoutProvider, ExecutionModel.SYNC, null);
     }
 
     private NodeSelectionInvocationHandler(AbstractNodeSelection<?, ?, ?, ?> selection, Class<?> commandsInterface,
-            TimeoutProvider timeoutProvider, ExecutionModel executionModel) {
+            TimeoutProvider timeoutProvider, ExecutionModel executionModel, CommandsFactory<?, ?> reactiveCommandsFactory) {
 
         if (executionModel == ExecutionModel.SYNC) {
             LettuceAssert.notNull(timeoutProvider, "TimeoutProvider must not be null");
@@ -88,6 +95,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         this.commandsInterface = commandsInterface;
         this.timeoutProvider = timeoutProvider;
         this.executionModel = executionModel;
+        this.reactiveCommandsFactory = reactiveCommandsFactory;
     }
 
     @Override
@@ -157,6 +165,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         }
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private Object doInvoke(Object[] args, Method targetMethod, StatefulRedisConnection<?, ?> it)
             throws IllegalAccessException, InvocationTargetException {
 
@@ -170,9 +179,13 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
             argsToUse[1] = ((Supplier) args[1]).get();
         }
 
-        return targetMethod.invoke(
-                executionModel == ExecutionModel.REACTIVE ? it.commands(RedisReactiveCommands.factory()) : it.async(),
-                argsToUse);
+        // The reactive command API is supplied by the reactive impl that created this handler (which lives in a reactive
+        // package); the neutral cluster handler never names a reactive type. async() stays polymorphic on the connection.
+        Object commands = executionModel == ExecutionModel.REACTIVE
+                ? ((StatefulRedisConnection) it).commands(reactiveCommandsFactory)
+                : it.async();
+
+        return targetMethod.invoke(commands, argsToUse);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
