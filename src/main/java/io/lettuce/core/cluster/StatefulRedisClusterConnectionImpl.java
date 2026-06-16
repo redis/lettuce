@@ -84,13 +84,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
 
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisAdvancedClusterReactiveCommands#factory()} instead;
-     *             scheduled for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    protected final RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
-
     private final ClusterConnectionState connectionState = new ClusterConnectionState();
 
     private volatile Partitions partitions;
@@ -128,7 +121,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
         this.async = newRedisAdvancedClusterAsyncCommandsImpl();
         this.sync = newRedisAdvancedClusterCommandsImpl();
-        this.reactive = newRedisAdvancedClusterReactiveCommandsImpl();
     }
 
     @Override
@@ -140,10 +132,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     public <T> T commands(CommandsFactory<StatefulRedisClusterConnection<K, V>, T> f) {
         LettuceAssert.notNull(f, "CommandsFactory must not be null");
         return store.compute(f.key(), () -> f.apply(this));
-    }
-
-    protected RedisAdvancedClusterReactiveCommandsImpl<K, V> newRedisAdvancedClusterReactiveCommandsImpl() {
-        return new RedisAdvancedClusterReactiveCommandsImpl<>((StatefulRedisClusterConnection<K, V>) this, codec, parser);
     }
 
     protected RedisAdvancedClusterCommands<K, V> newRedisAdvancedClusterCommandsImpl() {
@@ -171,16 +159,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     @Override
     public RedisAdvancedClusterAsyncCommands<K, V> async() {
         return async;
-    }
-
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisAdvancedClusterReactiveCommands#factory()} instead;
-     *             scheduled for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    @Override
-    public RedisAdvancedClusterReactiveCommands<K, V> reactive() {
-        return reactive;
     }
 
     @Override

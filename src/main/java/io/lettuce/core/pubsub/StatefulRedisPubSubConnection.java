@@ -44,16 +44,6 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
     RedisPubSubAsyncCommands<K, V> async();
 
     /**
-     * Returns the {@link RedisPubSubReactiveCommands} API for the current connection. Does not create a new connection.
-     *
-     * @return the reactive API for the underlying connection.
-     * @deprecated since 7.7, use {@link #commands(PubSubCommandsFactory)} with {@link RedisPubSubReactiveCommands#factory()}
-     *             instead; scheduled for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    RedisPubSubReactiveCommands<K, V> reactive();
-
-    /**
      * Add a new {@link RedisPubSubListener listener}.
      *
      * @param listener the listener, must not be {@code null}.
