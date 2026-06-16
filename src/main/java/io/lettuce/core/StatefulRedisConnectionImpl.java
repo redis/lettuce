@@ -63,13 +63,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     protected final RedisAsyncCommandsImpl<K, V> async;
 
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
-     *             removal in Lettuce 8.0.
-     */
-    @Deprecated
-    protected final RedisReactiveCommandsImpl<K, V> reactive;
-
     private final ConnectionState state = new ConnectionState();
 
     private final PushHandler pushHandler;
@@ -112,7 +105,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         this.parser = parser;
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
-        this.reactive = newRedisReactiveCommandsImpl();
     }
 
     @Override
@@ -147,28 +139,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      */
     protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
         return new RedisAsyncCommandsImpl<>(this, codec, parser);
-    }
-
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
-     *             removal in Lettuce 8.0.
-     */
-    @Deprecated
-    @Override
-    public RedisReactiveCommands<K, V> reactive() {
-        return reactive;
-    }
-
-    /**
-     * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
-     *
-     * @return a new instance
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
-     *             removal in Lettuce 8.0.
-     */
-    @Deprecated
-    protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
-        return new RedisReactiveCommandsImpl<>(this, codec, parser);
     }
 
     @Override

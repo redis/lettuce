@@ -80,16 +80,6 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
     RedisClusterPubSubAsyncCommands<K, V> async();
 
     /**
-     * Returns the {@link RedisClusterPubSubReactiveCommands} API for the current connection. Does not create a new connection.
-     *
-     * @return the reactive API for the underlying connection.
-     * @deprecated since 7.7, use {@link #commands(ClusterPubSubCommandsFactory)} with
-     *             {@link RedisClusterPubSubReactiveCommands#factory()} instead; scheduled for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    RedisClusterPubSubReactiveCommands<K, V> reactive();
-
-    /**
      * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list. This
      * connection is bound to the node id. Once the cluster topology view is updated, the connection will try to reconnect the
      * to the node with the specified {@code nodeId}, that behavior can also lead to a closed connection once the node with the

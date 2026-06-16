@@ -121,7 +121,7 @@ public class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubRea
 
         @Override
         protected CompletableFuture<RedisPubSubReactiveCommands<K, V>> getApi(RedisClusterNode redisClusterNode) {
-            return getConnection(redisClusterNode).thenApply(StatefulRedisPubSubConnection::reactive);
+            return getConnection(redisClusterNode).thenApply(c -> c.commands(RedisPubSubReactiveCommands.factory()));
         }
 
         protected List<RedisClusterNode> nodes() {
