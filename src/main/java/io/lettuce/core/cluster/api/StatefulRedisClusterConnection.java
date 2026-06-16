@@ -67,17 +67,6 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
     RedisAdvancedClusterAsyncCommands<K, V> async();
 
     /**
-     * Returns the {@link RedisAdvancedClusterReactiveCommands} API for the current connection. Does not create a new
-     * connection.
-     *
-     * @return the reactive API for the underlying connection.
-     * @deprecated since 7.7, use {@link #commands(CommandsFactory)} with {@link RedisAdvancedClusterReactiveCommands#factory()}
-     *             instead; scheduled for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    RedisAdvancedClusterReactiveCommands<K, V> reactive();
-
-    /**
      * Retrieve a connection to the specified cluster node using the {@code nodeId} suitable for {@link ConnectionIntent#WRITE
      * write operations}. Host and port are looked up in the node list. This connection is bound to the node id. Once the
      * cluster topology view is updated, the connection will try to reconnect the to the node with the specified {@code nodeId},

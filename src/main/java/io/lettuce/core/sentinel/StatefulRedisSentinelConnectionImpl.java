@@ -52,13 +52,6 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
 
     protected final RedisSentinelAsyncCommands<K, V> async;
 
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisSentinelReactiveCommands#factory()} instead; scheduled
-     *             for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    protected final RedisSentinelReactiveCommands<K, V> reactive;
-
     private final SentinelConnectionState connectionState = new SentinelConnectionState();
 
     /**
@@ -88,7 +81,6 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
         this.codec = codec;
         this.async = new RedisSentinelAsyncCommandsImpl<>(this, codec);
         this.sync = syncHandler(async, RedisSentinelCommands.class);
-        this.reactive = new RedisSentinelReactiveCommandsImpl<>(this, codec, parser);
     }
 
     @Override
@@ -109,16 +101,6 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     @Override
     public RedisSentinelAsyncCommands<K, V> async() {
         return async;
-    }
-
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisSentinelReactiveCommands#factory()} instead; scheduled
-     *             for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    @Override
-    public RedisSentinelReactiveCommands<K, V> reactive() {
-        return reactive;
     }
 
     /**

@@ -57,16 +57,6 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
         return delegate.async();
     }
 
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
-     *             removal in Lettuce 8.0.
-     */
-    @Deprecated
-    @Override
-    public RedisReactiveCommands<K, V> reactive() {
-        return delegate.reactive();
-    }
-
     @Override
     public void addListener(RedisConnectionStateListener listener) {
         this.delegate.addListener(listener);

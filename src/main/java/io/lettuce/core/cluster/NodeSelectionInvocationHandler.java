@@ -23,6 +23,7 @@ import org.reactivestreams.Publisher;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.AbstractInvocationHandler;
@@ -169,7 +170,9 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
             argsToUse[1] = ((Supplier) args[1]).get();
         }
 
-        return targetMethod.invoke(executionModel == ExecutionModel.REACTIVE ? it.reactive() : it.async(), argsToUse);
+        return targetMethod.invoke(
+                executionModel == ExecutionModel.REACTIVE ? it.commands(RedisReactiveCommands.factory()) : it.async(),
+                argsToUse);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
