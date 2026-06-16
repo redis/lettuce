@@ -44,6 +44,7 @@ import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.pubsub.api.reactive.ChannelMessage;
 import io.lettuce.core.pubsub.api.reactive.PatternMessage;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.test.Delay;
 import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
@@ -88,8 +89,8 @@ class PubSubReactiveIntegrationTests extends AbstractRedisClientTest implements 
     void openPubSubConnection() {
         pubSubConnection = client.connectPubSub();
         pubSubConnection2 = client.connectPubSub();
-        pubsub = pubSubConnection.reactive();
-        pubsub2 = pubSubConnection2.reactive();
+        pubsub = pubSubConnection.commands(RedisPubSubReactiveCommands.factory());
+        pubsub2 = pubSubConnection2.commands(RedisPubSubReactiveCommands.factory());
         pubSubConnection.addListener(this);
         channels = LettuceFactories.newBlockingQueue();
         shardChannels = LettuceFactories.newBlockingQueue();
@@ -139,8 +140,8 @@ class PubSubReactiveIntegrationTests extends AbstractRedisClientTest implements 
 
         pubsub.observeChannels().doOnNext(channelMessages::add).subscribe().dispose();
 
-        block(statefulRedisConnection.reactive().publish(channel, message));
-        block(statefulRedisConnection.reactive().publish(channel, message));
+        block(statefulRedisConnection.commands(RedisReactiveCommands.factory()).publish(channel, message));
+        block(statefulRedisConnection.commands(RedisReactiveCommands.factory()).publish(channel, message));
 
         Delay.delay(Duration.ofMillis(500));
         assertThat(channelMessages).isEmpty();

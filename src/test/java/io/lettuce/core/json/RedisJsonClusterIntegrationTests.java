@@ -10,6 +10,7 @@ package io.lettuce.core.json;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.json.arguments.JsonGetArgs;
@@ -120,7 +121,8 @@ public class RedisJsonClusterIntegrationTests {
     @Test
     void jsonArrLenAsyncAndReactive() throws ExecutionException, InterruptedException {
         RedisClusterAsyncCommands<String, String> asyncCommands = client.connect().async();
-        RedisClusterReactiveCommands<String, String> reactiveCommands = client.connect().reactive();
+        RedisClusterReactiveCommands<String, String> reactiveCommands = client.connect()
+                .commands(RedisAdvancedClusterReactiveCommands.factory());
 
         JsonPath myPath = JsonPath.of(MOUNTAIN_BIKES_V1);
 

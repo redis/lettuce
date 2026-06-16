@@ -74,7 +74,8 @@ class ScanStreamIntegrationTests extends TestSupport {
         ScanIterator<String> scan = ScanIterator.scan(redis);
         List<String> list = Flux.fromIterable(() -> scan).collectList().block();
 
-        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
+        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection()
+                .commands(RedisReactiveCommands.factory());
 
         StepVerifier.create(ScanStream.scan(reactive, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
                 .verifyComplete();
@@ -88,7 +89,8 @@ class ScanStreamIntegrationTests extends TestSupport {
             redis.hset(key, "field-" + i, "value-" + i);
         }
 
-        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
+        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection()
+                .commands(RedisReactiveCommands.factory());
 
         StepVerifier.create(ScanStream.hscan(reactive, key, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
                 .verifyComplete();
@@ -104,7 +106,8 @@ class ScanStreamIntegrationTests extends TestSupport {
             redis.hset(key, "field-" + i, "value-" + i);
         }
 
-        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
+        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection()
+                .commands(RedisReactiveCommands.factory());
 
         StepVerifier.create(ScanStream.hscanNovalues(reactive, key, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
                 .verifyComplete();
@@ -118,7 +121,8 @@ class ScanStreamIntegrationTests extends TestSupport {
             redis.sadd(key, "value-" + i);
         }
 
-        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
+        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection()
+                .commands(RedisReactiveCommands.factory());
 
         StepVerifier.create(ScanStream.sscan(reactive, key, ScanArgs.Builder.limit(200)), 0).thenRequest(250)
                 .expectNextCount(250).thenCancel().verify();
@@ -132,7 +136,8 @@ class ScanStreamIntegrationTests extends TestSupport {
             redis.zadd(key, (double) i, "value-" + i);
         }
 
-        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
+        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection()
+                .commands(RedisReactiveCommands.factory());
 
         StepVerifier.create(ScanStream.zscan(reactive, key, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
                 .verifyComplete();
@@ -142,7 +147,7 @@ class ScanStreamIntegrationTests extends TestSupport {
     @Test
     void shouldCorrectlyEmitItemsWithConcurrentPoll() {
 
-        RedisReactiveCommands<String, String> commands = connection.reactive();
+        RedisReactiveCommands<String, String> commands = connection.commands(RedisReactiveCommands.factory());
 
         String sourceKey = "source";
         String targetKey = "target";
@@ -167,7 +172,7 @@ class ScanStreamIntegrationTests extends TestSupport {
         // NOVALUES flag (since Redis 7.4)
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
 
-        RedisReactiveCommands<String, String> commands = connection.reactive();
+        RedisReactiveCommands<String, String> commands = connection.commands(RedisReactiveCommands.factory());
 
         String sourceKey = "source";
         String targetKey = "target";

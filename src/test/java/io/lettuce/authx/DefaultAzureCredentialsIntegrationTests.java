@@ -9,6 +9,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.env.Endpoints.Endpoint;
@@ -86,7 +87,7 @@ public class DefaultAzureCredentialsIntegrationTests {
             sync.set(key, "value");
             assertThat(sync.get(key)).isEqualTo("value");
             assertThat(connection.async().get(key).get()).isEqualTo("value");
-            assertThat(connection.reactive().get(key).block()).isEqualTo("value");
+            assertThat(connection.commands(RedisReactiveCommands.factory()).get(key).block()).isEqualTo("value");
             sync.del(key);
         }
     }
