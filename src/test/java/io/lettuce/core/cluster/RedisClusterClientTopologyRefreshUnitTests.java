@@ -85,5 +85,7 @@ class RedisClusterClientTopologyRefreshUnitTests {
                 partitionsWhenPublished.set(new ArrayList<>(partitionsSupplier.get()));
             }
         }
+
     }
+
 }
