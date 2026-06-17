@@ -31,7 +31,8 @@ import io.netty.resolver.dns.DnsAddressResolverGroup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import reactor.test.StepVerifier;
+import io.lettuce.core.Subscription;
+import java.util.concurrent.ArrayBlockingQueue;
 import io.lettuce.core.event.Event;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.metrics.CommandLatencyCollector;
@@ -199,14 +200,19 @@ class DefaultClientResourcesUnitTests {
     }
 
     @Test
-    void testEventBus() {
+    void testEventBus() throws Exception {
 
         DefaultClientResources sut = DefaultClientResources.create();
 
         EventBus eventBus = sut.eventBus();
         Event event = mock(Event.class);
+        ArrayBlockingQueue<Event> received = new ArrayBlockingQueue<>(8);
 
-        StepVerifier.create(eventBus.get()).then(() -> eventBus.publish(event)).expectNext(event).thenCancel().verify();
+        Subscription subscription = eventBus.subscribe(received::add);
+        eventBus.publish(event);
+
+        assertThat(received.poll(1, TimeUnit.SECONDS)).isSameAs(event);
+        subscription.close();
 
         assertThat(TestFutures.getOrTimeout(sut.shutdown(0, 0, TimeUnit.MILLISECONDS))).isTrue();
     }
