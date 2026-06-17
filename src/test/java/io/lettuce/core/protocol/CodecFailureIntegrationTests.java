@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import reactor.core.Disposable;
+import io.lettuce.core.Subscription;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.test.LettuceExtension;
@@ -71,7 +71,7 @@ class CodecFailureIntegrationTests extends TestSupport {
             // from other connections sharing the same EventBus (the RedisClient is a JVM-wide singleton).
             final String epId = unwrapEndpoint(customConnection).getId();
             final Integer[] reconnects = { 0 };
-            Disposable subscription = client.getResources().eventBus().get().subscribe(event -> {
+            Subscription subscription = client.getResources().eventBus().subscribe(event -> {
                 if (event instanceof ReconnectAttemptEvent
                         && epId.equals(ReflectionTestUtils.<String> getField(event, "epId"))) {
                     reconnects[0]++;
@@ -106,7 +106,7 @@ class CodecFailureIntegrationTests extends TestSupport {
                 // on the same endpoint while still requiring a reconnect originating from this connection.
                 Wait.untilTrue(() -> reconnects[0] >= 1).waitOrTimeout();
             } finally {
-                subscription.dispose();
+                subscription.close();
             }
         }
     }
