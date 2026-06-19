@@ -8,11 +8,12 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.json.JsonPath
+import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.json.JsonType
 import io.lettuce.core.json.JsonValue
 import io.lettuce.core.json.arguments.JsonGetArgs
 import io.lettuce.core.json.arguments.JsonMsetArgs
+import io.lettuce.core.json.JsonPath
 import io.lettuce.core.json.arguments.JsonRangeArgs
 import io.lettuce.core.json.arguments.JsonSetArgs
 
@@ -225,9 +226,11 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
     suspend fun jsonArrpop(key: K): List<JsonValue>
 
     /**
-     * Remove and return the JSON value at index -1 (last element) in the array at the {@link JsonPath#ROOT_PATH} as raw JSON strings.
+     * Remove and return the JSON value at index -1 (last element) in the array at the {@link JsonPath#ROOT_PATH} as raw JSON
+     * strings.
      * <p>
-     * Behaves like [jsonArrpop(Any)] but returns {@code List<String>} with raw JSON instead of [JsonValue] wrappers.
+     * Behaves like [jsonArrpop(Any)] but returns {@code List<String>} with raw JSON instead of [JsonValue]
+     * wrappers.
      *
      * @param key the key holding the JSON document.
      * @return List<String> the removed element, or null if the specified path is not an array.
