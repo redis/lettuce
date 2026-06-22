@@ -349,8 +349,8 @@ public class ListCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("LMOVE") // Redis 6.2
     void lmove() {
-        String list1 = key;
-        String list2 = "38o54"; // yields in same slot as "key"
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
 
         redis.rpush(list1, "one", "two", "three");
         redis.lmove(list1, list2, LMoveArgs.Builder.rightLeft());
@@ -362,8 +362,8 @@ public class ListCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("BLMOVE") // Redis 6.2
     void blmove() {
-        String list1 = key;
-        String list2 = "38o54"; // yields in same slot as "key"
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
 
         redis.rpush(list1, "one", "two", "three");
         redis.blmove(list1, list2, LMoveArgs.Builder.leftRight(), 1000);
@@ -375,8 +375,8 @@ public class ListCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("BLMOVE") // Redis 6.2
     void blmoveDoubleTimeout() {
-        String list1 = key;
-        String list2 = "38o54"; // yields in same slot as "key"
+        String list1 = "{" + key + "}:1";
+        String list2 = "{" + key + "}:2"; // same hash slot as list1 due to hash tag
 
         redis.rpush(list1, "one", "two", "three");
         redis.blmove(list1, list2, LMoveArgs.Builder.leftRight(), 1.5);

@@ -62,6 +62,7 @@ import static io.lettuce.core.protocol.CommandType.SAVE;
  * @author Tihomir Mateev
  * @author Ali Takavci
  * @author Seonghwan Lee
+ * @author dae won
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -528,6 +529,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, String> clientNoEvict(boolean on) {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add("NO-EVICT").add(on ? ON : OFF);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> clientNoTouch(boolean on) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add("NO-TOUCH").add(on ? ON : OFF);
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
@@ -1961,6 +1967,31 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(INCRBYFLOAT, new DoubleOutput<>(codec), args);
     }
 
+    Command<K, V, IncrexValue<Long>> increx(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        return createCommand(INCREX, new IncrexLongOutput<>(codec), args);
+    }
+
+    Command<K, V, IncrexValue<Long>> increx(K key, long amount, IncrexArgs increxArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(increxArgs, "IncrexArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(BYINT).add(amount);
+        increxArgs.build(args);
+        return createCommand(INCREX, new IncrexLongOutput<>(codec), args);
+    }
+
+    Command<K, V, IncrexValue<Double>> increx(K key, double amount, IncrexFloatArgs increxArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(increxArgs, "IncrexFloatArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(BYFLOAT).add(amount);
+        increxArgs.build(args);
+        return createCommand(INCREX, new IncrexDoubleOutput<>(codec), args);
+    }
+
     Command<K, V, String> info() {
         return createCommand(CommandType.INFO, new StatusOutput<>(codec));
     }
@@ -3267,6 +3298,36 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         return createCommand(XACKDEL, new StreamEntryDeletionResultListOutput<>(codec), args);
+    }
+
+    public Command<K, V, Long> xnack(K key, K group, XNackMode mode, String messageId) {
+        notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(mode, "XNackMode " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(messageId, "MessageId " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group).add(mode).add(CommandKeyword.IDS).add(1)
+                .add(messageId);
+
+        return createCommand(XNACK, new IntegerOutput<>(codec), args);
+    }
+
+    public Command<K, V, Long> xnack(K key, K group, XNackMode mode, String[] messageIds) {
+        notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(mode, "XNackMode " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group).add(mode);
+
+        args.add(CommandKeyword.IDS).add(messageIds.length);
+
+        for (String messageId : messageIds) {
+            args.add(messageId);
+        }
+
+        return createCommand(XNACK, new IntegerOutput<>(codec), args);
     }
 
     public Command<K, V, ClaimedMessages<K, V>> xautoclaim(K key, XAutoClaimArgs<K> xAutoClaimArgs) {

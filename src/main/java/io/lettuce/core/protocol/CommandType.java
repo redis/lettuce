@@ -54,7 +54,7 @@ public enum CommandType implements ProtocolKeyword {
 
     // Numeric
 
-    DECR, DECRBY, INCR, INCRBY, INCRBYFLOAT,
+    DECR, DECRBY, INCR, INCRBY, INCRBYFLOAT, INCREX,
 
     // List
 
@@ -101,7 +101,7 @@ public enum CommandType implements ProtocolKeyword {
 
     // Stream
 
-    XACK, XACKDEL, XADD, XAUTOCLAIM, XCFGSET, XCLAIM, XDEL, XDELEX, XGROUP, XINFO, XLEN, XPENDING, XRANGE, XREVRANGE, XREAD, XREADGROUP, XTRIM,
+    XACK, XACKDEL, XADD, XAUTOCLAIM, XCFGSET, XCLAIM, XDEL, XDELEX, XGROUP, XINFO, XLEN, XNACK, XPENDING, XRANGE, XREVRANGE, XREAD, XREADGROUP, XTRIM,
 
     // JSON
 
@@ -111,6 +111,10 @@ public enum CommandType implements ProtocolKeyword {
                             "JSON.MSET"), JSON_NUMINCRBY("JSON.NUMINCRBY"), JSON_OBJKEYS("JSON.OBJKEYS"), JSON_OBJLEN(
                                     "JSON.OBJLEN"), JSON_SET("JSON.SET"), JSON_STRAPPEND("JSON.STRAPPEND"), JSON_STRLEN(
                                             "JSON.STRLEN"), JSON_TOGGLE("JSON.TOGGLE"), JSON_TYPE("JSON.TYPE"),
+
+    // Array
+
+    ARCOUNT, ARDEL, ARDELRANGE, ARGET, ARGETRANGE, ARGREP, ARINFO, ARINSERT, ARLASTITEMS, ARLEN, ARMGET, ARMSET, ARNEXT, AROP, ARRING, ARSCAN, ARSEEK, ARSET,
 
     // Vector Set
 
@@ -124,6 +128,10 @@ public enum CommandType implements ProtocolKeyword {
                                     "FT.SEARCH"), FT_SPELLCHECK("FT.SPELLCHECK"), FT_SUGADD("FT.SUGADD"), FT_SUGDEL(
                                             "FT.SUGDEL"), FT_SUGGET("FT.SUGGET"), FT_SUGLEN("FT.SUGLEN"), FT_SYNDUMP(
                                                     "FT.SYNDUMP"), FT_SYNUPDATE("FT.SYNUPDATE"), FT_TAGVALS("FT.TAGVALS"),
+
+    // Bloom Filter
+    BF_ADD("BF.ADD"), BF_CARD("BF.CARD"), BF_EXISTS("BF.EXISTS"), BF_INFO("BF.INFO"), BF_INSERT("BF.INSERT"), BF_LOADCHUNK(
+            "BF.LOADCHUNK"), BF_MADD("BF.MADD"), BF_MEXISTS("BF.MEXISTS"), BF_RESERVE("BF.RESERVE"), BF_SCANDUMP("BF.SCANDUMP"),
 
     // Others
 

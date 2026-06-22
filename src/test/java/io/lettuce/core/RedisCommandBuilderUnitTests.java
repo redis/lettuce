@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Unit tests for {@link RedisCommandBuilder}.
  *
  * @author Mark Paluch
+ * @author dae won
  */
 @Tag(UNIT_TEST)
 class RedisCommandBuilderUnitTests {
@@ -486,6 +487,96 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructXnackSilent() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.SILENT,
+                new String[] { MESSAGE_ID1, MESSAGE_ID2 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*8\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n"
+                + "test-stream\r\n" + "$10\r\n" + "test-group\r\n" + "$6\r\n" + "SILENT\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n"
+                + "2\r\n" + "$12\r\n" + "1234567890-0\r\n" + "$12\r\n" + "1234567891-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXnackFail() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, new String[] { MESSAGE_ID1 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n"
+                        + "$4\r\n" + "FAIL\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXnackFatal() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FATAL,
+                new String[] { MESSAGE_ID1 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n"
+                        + "$5\r\n" + "FATAL\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void xnackShouldRejectNullKey() {
+        assertThatThrownBy(() -> sut.xnack(null, GROUP_NAME, XNackMode.FAIL, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Key must not be null");
+    }
+
+    @Test
+    void xnackShouldRejectNullGroup() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, null, XNackMode.FAIL, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Group must not be null");
+    }
+
+    @Test
+    void xnackShouldRejectNullMode() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, null, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("XNackMode must not be null");
+    }
+
+    @Test
+    void xnackShouldRejectEmptyMessageIds() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, new String[] {}))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageIds must not be empty");
+    }
+
+    @Test
+    void xnackShouldRejectNullMessageIds() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, (String[]) null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageIds must not be empty");
+    }
+
+    @Test
+    void xnackShouldRejectNullElementsInMessageIds() {
+        assertThatThrownBy(
+                () -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, new String[] { MESSAGE_ID1, null, MESSAGE_ID2 }))
+                        .isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("MessageIds must not contain null elements");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXnackSingleMessageId() {
+        Command<String, String, Long> command = sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, MESSAGE_ID1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "XNACK\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n"
+                        + "$4\r\n" + "FAIL\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void xnackSingleMessageIdShouldRejectNullMessageId() {
+        assertThatThrownBy(() -> sut.xnack(STREAM_KEY, GROUP_NAME, XNackMode.FAIL, (String) null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageId must not be null");
+    }
+
+    @Test
     void shouldCorrectlyConstructSetWithExAndIfeq() {
         Command<String, String, ?> command = sut.set("mykey", "myvalue",
                 SetArgs.Builder.ex(100).compareCondition(CompareCondition.valueEq("oldvalue")));
@@ -722,6 +813,28 @@ class RedisCommandBuilderUnitTests {
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
         assertThat(s).isEqualTo("2 key<k1> value<v1> key<k2> value<v2> KEEPTTL");
+    }
+
+    @Test
+    void shouldCorrectlyConstructClientNoTouch() {
+
+        Command<String, String, ?> command = sut.clientNoTouch(true);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$2\r\n" + "ON\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructClientNoTouchOff() {
+
+        Command<String, String, ?> command = sut.clientNoTouch(false);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$3\r\n" + "OFF\r\n");
     }
 
 }

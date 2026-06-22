@@ -33,8 +33,10 @@ import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
+import io.lettuce.core.cluster.RedisAdvancedClusterReactiveCommandsImpl;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.output.KeyStreamingChannel;
 
@@ -367,5 +369,44 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return Long integer-reply the number of found keys.
      */
     Mono<Long> touch(K... keys);
+
+    /**
+     * Returns the {@link CommandsFactory} that creates {@link RedisAdvancedClusterReactiveCommands}, for use with
+     * {@link io.lettuce.core.cluster.api.StatefulRedisClusterConnection#commands(CommandsFactory)}:
+     *
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     RedisAdvancedClusterReactiveCommands<K, V> reactive = connection
+     *             .commands(RedisAdvancedClusterReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return the factory that creates {@link RedisAdvancedClusterReactiveCommands}
+     * @since 7.7
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    static <K, V> CommandsFactory<StatefulRedisClusterConnection<K, V>, RedisAdvancedClusterReactiveCommands<K, V>> factory() {
+        return (CommandsFactory) FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton factory so {@link #factory()} returns one shared instance (no per-call allocation); {@code factory()}
+     * re-applies {@code <K, V>}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static final CommandsFactory INSTANCE = CommandsFactory.of(RedisAdvancedClusterReactiveCommands.class,
+                (StatefulRedisClusterConnection c) -> new RedisAdvancedClusterReactiveCommandsImpl(c, c.getCodec(),
+                        () -> c.getOptions().getJsonParser().get()));
+
+    }
 
 }

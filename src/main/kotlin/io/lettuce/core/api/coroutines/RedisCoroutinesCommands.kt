@@ -50,7 +50,9 @@ interface RedisCoroutinesCommands<K : Any, V : Any> :
     RedisTransactionalCoroutinesCommands<K, V>,
     RedisClusterCoroutinesCommands<K, V>,
     RedisJsonCoroutinesCommands<K, V>,
-    RedisVectorSetCoroutinesCommands<K, V>{
+    RedisVectorSetCoroutinesCommands<K, V>,
+    RedisArrayCoroutinesCommands<K, V>,
+    RedisBloomFilterCoroutinesCommands<K, V> {
 
     /**
      * Authenticate to the server.

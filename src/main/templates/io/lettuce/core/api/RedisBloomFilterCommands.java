@@ -1,0 +1,171 @@
+/*
+ * Copyright (c) 2026-Present, Redis Ltd.
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+package io.lettuce.core.api;
+
+import java.util.List;
+
+import io.lettuce.core.bf.BfInfoValue;
+import io.lettuce.core.bf.arguments.BfInsertArgs;
+import io.lettuce.core.bf.arguments.BfReserveArgs;
+import io.lettuce.core.bf.BfScanDumpValue;
+
+/**
+ * ${intent} for Bloom Filter.
+ *
+ * @author Yordan Tsintsov
+ * @param <K> Key type.
+ * @param <V> Value type.
+ * @see <a href="https://redis.io/docs/latest/develop/data-types/probabilistic/bloom-filter/">Redis Bloom Filter</a>
+ * @since 7.7
+ */
+public interface RedisBloomFilterCommands<K, V> {
+
+    /**
+     * Add an item to the Bloom Filter.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return Boolean integer-reply {@code true} if the item was added, {@code false} if it was already in the filter.
+     */
+    Boolean bfAdd(K key, V value);
+
+    /**
+     * Get the number of items added and detected as unique in the Bloom Filter.
+     *
+     * @param key the key.
+     * @return Long integer-reply the number of items in the filter.
+     */
+    Long bfCard(K key);
+
+    /**
+     * Check if an item exists in the Bloom Filter.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return Boolean integer-reply {@code true} if the item may exist in the filter, {@code false} if it definitely does not.
+     */
+    Boolean bfExists(K key, V value);
+
+    /**
+     * Get information about the Bloom Filter.
+     *
+     * @param key the key.
+     * @return BfInfoValue the information about the filter.
+     */
+    BfInfoValue bfInfo(K key);
+
+    /**
+     * Add an item to the Bloom Filter.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {@code null} when filter is full
+     *         and nonscaling.
+     */
+    List<Boolean> bfInsert(K key, V value);
+
+    /**
+     * Add an item to the Bloom Filter.
+     *
+     * @param key the key.
+     * @param insertArgs the insert arguments.
+     * @param value the value.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {@code null} when filter is full
+     *         and nonscaling.
+     */
+    List<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V value);
+
+    /**
+     * Add one or more items to the Bloom Filter.
+     *
+     * @param key the key.
+     * @param values the values.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {@code null} when filter is full
+     *         and nonscaling.
+     */
+    List<Boolean> bfInsert(K key, V... values);
+
+    /**
+     * Add one or more items to the Bloom Filter.
+     *
+     * @param key the key.
+     * @param insertArgs the insert arguments.
+     * @param values the values.
+     * @return List&lt;Boolean&gt; where {@code true} means that the item was added; {@code false} means that there's a
+     *         probability that the item was already added to the filter or the filter is full; {@code null} when filter is full
+     *         and nonscaling.
+     */
+    List<Boolean> bfInsert(K key, BfInsertArgs insertArgs, V... values);
+
+    /**
+     * Restores a Bloom filter previously saved using BF.SCANDUMP.
+     *
+     * @param key the key.
+     * @param iterator the iterator.
+     * @param data the data.
+     * @return String simple-string-reply {@code OK} if {@code BF.LOADCHUNK} was executed correctly.
+     */
+    String bfLoadChunk(K key, long iterator, byte[] data);
+
+    /**
+     * Add one or more items to the Bloom Filter.
+     *
+     * @param key the key.
+     * @param values the values.
+     * @return List&lt;Boolean&gt; of {@code true} or {@code false} where true means that the item was newly added and false
+     *         means that there's a probability that the item was already added to the filter; {@code null} when filter is full
+     *         and nonscaling.
+     */
+    List<Boolean> bfMAdd(K key, V... values);
+
+    /**
+     * Check if one or more items exist in the filter.
+     *
+     * @param key the key.
+     * @param values the values.
+     * @return List&lt;Boolean&gt; of {@code true} or {@code false} where true means that, with high probability, the item was
+     *         already added to the filter, and false means that key does not exist or that item was definitely not added to the
+     *         filter.
+     */
+    List<Boolean> bfMExists(K key, V... values);
+
+    /**
+     * Creates an empty Bloom filter with a single sub-filter for the initial specified capacity and with an upper bound error
+     * rate.
+     *
+     * @param key the key.
+     * @param errorRate the error rate.
+     * @param capacity the capacity.
+     * @return String simple-string-reply {@code OK} if {@code BF.RESERVE} was executed correctly.
+     */
+    String bfReserve(K key, double errorRate, long capacity);
+
+    /**
+     * Creates an empty Bloom filter with a single sub-filter for the initial specified capacity and with an upper bound error
+     * rate.
+     *
+     * @param key the key.
+     * @param errorRate the error rate.
+     * @param capacity the capacity.
+     * @param reserveArgs the reserve arguments.
+     * @return String simple-string-reply {@code OK} if {@code BF.RESERVE} was executed correctly.
+     */
+    String bfReserve(K key, double errorRate, long capacity, BfReserveArgs reserveArgs);
+
+    /**
+     * Begins an incremental save of the Bloom filter.
+     *
+     * @param key the key.
+     * @param iterator the iterator.
+     * @return BfScanDumpValue the scan dump value.
+     */
+    BfScanDumpValue bfScanDump(K key, long iterator);
+
+}

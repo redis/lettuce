@@ -31,13 +31,15 @@ import io.lettuce.core.json.JsonParser;
  * @param <V> Value type.
  * @author Mark Paluch
  * @author Tihomir Mateev
+ * @author Yordan Tsintsov
  * @since 3.0
  */
 public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>, RedisClusterCommands<K, V>,
         RedisFunctionCommands<K, V>, RedisGeoCommands<K, V>, RedisHashCommands<K, V>, RedisHLLCommands<K, V>,
         RedisKeyCommands<K, V>, RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
         RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V>,
-        RedisTransactionalCommands<K, V>, RedisJsonCommands<K, V>, RedisVectorSetCommands<K, V>, RediSearchCommands<K, V> {
+        RedisTransactionalCommands<K, V>, RedisJsonCommands<K, V>, RedisVectorSetCommands<K, V>, RediSearchCommands<K, V>,
+        RedisArrayCommands<K, V>, RedisBloomFilterCommands<K, V> {
 
     /**
      * Authenticate to the server.

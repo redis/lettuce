@@ -51,10 +51,18 @@ on:
         required: false
         type: boolean
         default: true
+      skip_unit_tests:
+        description: 'Skip unit tests and run only integration tests'
+        required: false
+        type: boolean
+        default: false
     secrets:
       codecov_token:
         description: 'Codecov token for uploading coverage'
         required: false
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -62,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.ref }}
@@ -100,7 +108,7 @@ jobs:
           fi
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ inputs.java_version }}
           distribution: ${{ inputs.java_distribution }}
@@ -125,7 +133,12 @@ jobs:
       - name: Run tests
         run: |
           export TEST_WORK_FOLDER=$REDIS_ENV_WORK_DIR
-          make test-coverage
+          if [ "${{ inputs.skip_unit_tests }}" = "true" ]; then
+            echo "Skipping unit tests, running integration tests only"
+            make test MVN_EXTRA_ARGS="-DskipUnitTests=true"
+          else
+            make test-coverage
+          fi
         env:
           REDIS_ENV_WORK_DIR: ${{ steps.args.outputs.redis_env_work_dir }}
           JVM_OPTS: -Xmx3200m
@@ -140,7 +153,7 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         if: inputs.upload_coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.codecov_token }}
 
