@@ -23,7 +23,7 @@ import static io.lettuce.core.protocol.CommandKeyword.WITHCOUNT;
 import static io.lettuce.core.protocol.CommandType.*;
 
 /**
- * Implementation of the {@link BaseRedisCommandBuilder} handling Bloom Filter commands.
+ * Implementation of the {@link BaseRedisCommandBuilder} handling Top-K commands.
  *
  * @param <K> Key type.
  * @param <V> Value type.

@@ -63,18 +63,18 @@ public class TopKInfoValue {
     }
 
     /**
-     * Returns the number of counters kept per item.
+     * Returns the number of counters per array (buckets).
      *
-     * @return the number of counters kept per item
+     * @return the number of counters per array (buckets)
      */
     public Long getWidth() {
         return width;
     }
 
     /**
-     * Returns the number of counters per item.
+     * Returns the number of hash arrays.
      *
-     * @return the number of counters per item
+     * @return the number of hash arrays.
      */
     public Long getDepth() {
         return depth;
