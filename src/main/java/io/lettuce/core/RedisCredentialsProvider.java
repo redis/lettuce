@@ -57,7 +57,7 @@ public interface RedisCredentialsProvider {
             try {
                 RedisCredentials credentials = supplier.get();
                 if (credentials == null) {
-                    return Futures.failed(new NullPointerException("Provided RedisCredentials supplier returned null"));
+                    return Futures.failed(new IllegalStateException("Provided RedisCredentials supplier returned null"));
                 }
                 return CompletableFuture.completedFuture(credentials);
             } catch (Exception e) {
@@ -120,7 +120,7 @@ public interface RedisCredentialsProvider {
             try {
                 RedisCredentials credentials = resolveCredentialsNow();
                 if (credentials == null) {
-                    return Futures.failed(new NullPointerException("RedisCredentials resolved to null"));
+                    return Futures.failed(new IllegalStateException("RedisCredentials resolved to null"));
                 }
                 return CompletableFuture.completedFuture(credentials);
             } catch (Exception e) {

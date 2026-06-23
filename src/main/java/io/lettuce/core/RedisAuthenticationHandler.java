@@ -147,7 +147,6 @@ public class RedisAuthenticationHandler<K, V> {
     public void unsubscribe() {
         CredentialsSubscription sub = credentialsSubscription.getAndSet(null);
         if (sub != null) {
-            sub.close();
             try {
                 sub.close();
             } catch (Exception e) {
