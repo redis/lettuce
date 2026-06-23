@@ -376,6 +376,24 @@ class RedisURIBuilderUnitTests {
     }
 
     @Test
+    void shouldMaskCredentialsForBuilderWithAuthentication() {
+
+        RedisURI result = RedisURI.Builder.redis("localhost", 1234).withAuthentication("alice", "secret").withDatabase(5)
+                .build();
+
+        assertThat(result).hasToString("redis://alice:******@localhost:1234/5");
+    }
+
+    @Test
+    void shouldMaskCredentialsForBuilderWithPassword() {
+
+        RedisURI result = RedisURI.Builder.redis("localhost", 1234).withPassword("secret".toCharArray()).withDatabase(5)
+                .build();
+
+        assertThat(result).hasToString("redis://******@localhost:1234/5");
+    }
+
+    @Test
     void redisSentinelWithInvalidPort() {
         assertThatThrownBy(() -> RedisURI.Builder.sentinel("a", 65536)).isInstanceOf(IllegalArgumentException.class);
     }

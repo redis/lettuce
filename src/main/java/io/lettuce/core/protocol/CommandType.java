@@ -129,6 +129,10 @@ public enum CommandType implements ProtocolKeyword {
                                             "FT.SUGDEL"), FT_SUGGET("FT.SUGGET"), FT_SUGLEN("FT.SUGLEN"), FT_SYNDUMP(
                                                     "FT.SYNDUMP"), FT_SYNUPDATE("FT.SYNUPDATE"), FT_TAGVALS("FT.TAGVALS"),
 
+    // Bloom Filter
+    BF_ADD("BF.ADD"), BF_CARD("BF.CARD"), BF_EXISTS("BF.EXISTS"), BF_INFO("BF.INFO"), BF_INSERT("BF.INSERT"), BF_LOADCHUNK(
+            "BF.LOADCHUNK"), BF_MADD("BF.MADD"), BF_MEXISTS("BF.MEXISTS"), BF_RESERVE("BF.RESERVE"), BF_SCANDUMP("BF.SCANDUMP"),
+
     // Others
 
     TIME, WAIT,

@@ -62,6 +62,7 @@ import static io.lettuce.core.protocol.CommandType.SAVE;
  * @author Tihomir Mateev
  * @author Ali Takavci
  * @author Seonghwan Lee
+ * @author dae won
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -528,6 +529,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, String> clientNoEvict(boolean on) {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add("NO-EVICT").add(on ? ON : OFF);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> clientNoTouch(boolean on) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add("NO-TOUCH").add(on ? ON : OFF);
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 

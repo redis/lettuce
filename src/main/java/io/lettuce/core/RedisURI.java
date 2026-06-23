@@ -159,6 +159,7 @@ import io.lettuce.core.internal.LettuceStrings;
  * @author Jacob Halsey
  * @author Tihomir Mateev
  * @author Kim Sung Hyun
+ * @author PreAgile
  * @since 3.0
  */
 public class RedisURI implements Serializable, ConnectionPoint {

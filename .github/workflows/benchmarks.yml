@@ -27,18 +27,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - name: Checkout project
-        uses: actions/checkout@v4
-      - name: Set Java up in the runner
-        uses: actions/setup-java@v4
-        with:
-          java-version: '8'
-          distribution: 'temurin'
-          cache: 'maven'
       - name: Setup Maven
-        uses: s4u/setup-maven-action@v1.8.0
+        uses: s4u/setup-maven-action@v1.19.0
         with:
           java-version: 8
+          java-distribution: temurin
       - name: Install missing dependencies to container
         run: |
           sudo apt update
@@ -62,7 +55,7 @@ jobs:
           docker compose $COMPOSE_ENV_FILES -f src/test/resources/docker-env/docker-compose.yml down
       # Download previous benchmark result from cache (if exists)
       - name: Download previous benchmark data
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ./cache
           key: ${{ runner.os }}-benchmark

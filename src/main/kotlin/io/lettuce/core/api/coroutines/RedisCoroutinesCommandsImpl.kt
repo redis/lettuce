@@ -32,6 +32,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Tihomir Mateev
+ * @author Yordan Tsintsov
  * @since 6.5
  */
 @ExperimentalLettuceCoroutinesApi
@@ -56,7 +57,8 @@ open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
     RedisJsonCoroutinesCommands<K, V> by RedisJsonCoroutinesCommandsImpl(ops),
     RedisVectorSetCoroutinesCommands<K, V> by RedisVectorSetCoroutinesCommandsImpl(ops),
     RediSearchCoroutinesCommands<K, V> by RediSearchCoroutinesCommandsImpl(ops),
-    RedisArrayCoroutinesCommands<K, V> by RedisArrayCoroutinesCommandsImpl(ops){
+    RedisArrayCoroutinesCommands<K, V> by RedisArrayCoroutinesCommandsImpl(ops),
+    RedisBloomFilterCoroutinesCommands<K, V> by RedisBloomFilterCoroutinesCommandsImpl(ops) {
 
 
     /**

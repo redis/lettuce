@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.internal.LettuceSets;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 
 /**
@@ -115,6 +116,43 @@ class RedisURIUnitTests {
         redisURI.setCredentialsProvider(failing);
 
         assertThatThrownBy(redisURI::toString).isSameAs(cause).isNotInstanceOf(CompletionException.class);
+    }
+
+    void shouldNotBlockOnReactiveThreadForToString() {
+
+        RedisURI redisURI = RedisURI.create("redis://user:secret@localhost:1234/5");
+
+        String onReactiveThread = Mono.fromCallable(redisURI::toString).subscribeOn(Schedulers.parallel()).block();
+
+        assertThat(onReactiveThread).isEqualTo("redis://user:******@localhost:1234/5");
+    }
+
+    @Test
+    void shouldMaskCredentialsForImmediateProvider() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        redisURI.setCredentialsProvider(new StaticCredentialsProvider("alice", "secret".toCharArray()));
+
+        assertThat(redisURI).hasToString("redis://alice:******@localhost:1234/5");
+    }
+
+    @Test
+    void shouldMaskCredentialsAfterSetAuthentication() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        redisURI.setAuthentication("alice", "secret");
+
+        assertThat(redisURI).hasToString("redis://alice:******@localhost:1234/5");
+    }
+
+    @Test
+    void shouldMaskCredentialsForNonImmediateProvider() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        redisURI.setCredentialsProvider(
+                () -> CompletableFuture.completedFuture(RedisCredentials.just("alice", "secret".toCharArray())));
+
+        assertThat(redisURI).hasToString("redis://alice:******@localhost:1234/5");
     }
 
     @Test
