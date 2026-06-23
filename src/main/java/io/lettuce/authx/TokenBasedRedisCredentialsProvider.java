@@ -62,6 +62,8 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
 
         private final AtomicReference<RedisCredentials> lastPlayed = new AtomicReference<>();
 
+        private volatile boolean closed = false;
+
         private SimpleSubscription(TokenBasedRedisCredentialsProvider provider, Consumer<RedisCredentials> onNext,
                 Consumer<Throwable> onError) {
             this.provider = provider;
@@ -71,10 +73,14 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
 
         @Override
         public void close() {
+            closed = true;
             provider.subscriptions.remove(this);
         }
 
         private void onCredentials(RedisCredentials credentials) {
+            if (closed) {
+                return;
+            }
             RedisCredentials played = lastPlayed.getAndSet(credentials);
             if (played != credentials) {
                 onNext.accept(credentials);
@@ -82,12 +88,18 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
         }
 
         private void replay(RedisCredentials candidate) {
+            if (closed) {
+                return;
+            }
             if (candidate != null && lastPlayed.compareAndSet(null, candidate)) {
                 onNext.accept(candidate);
             }
         }
 
         private void onError(Throwable throwable) {
+            if (closed) {
+                return;
+            }
             onError.accept(throwable);
         }
 
@@ -138,8 +150,11 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
                 log.error("Token renew failed!", exception);
                 CompletableFuture<RedisCredentials> previous = credentialsFutureRef.get();
                 if (!previous.isDone()) {
-                    credentialsFutureRef.compareAndSet(previous, new CompletableFuture<>());
-                    executor.execute(() -> previous.completeExceptionally(exception));
+                    boolean previousReplaced = credentialsFutureRef.compareAndSet(previous, new CompletableFuture<>());
+                    // previousReplaced means current thread won the race and own the responsibility to complete the future
+                    if (previousReplaced) {
+                        executor.execute(() -> previous.completeExceptionally(exception));
+                    }
                     // here we need to react if provider gets closed meanwhile
                     if (isClosed) {
                         credentialsFutureRef.get()
@@ -212,6 +227,13 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
 
         SimpleSubscription subscription = new SimpleSubscription(this, onNext, onError);
         subscriptions.add(subscription);
+        // Re-check after registration: close() may have run between the entry check and add(),
+        // in which case its subscriptions.clear() ran first and our subscription would otherwise
+        // remain registered and still receive the queued replay.
+        if (isClosed) {
+            subscription.close();
+            throw new IllegalStateException("Credentials provider closed");
+        }
         executor.execute(() -> subscription.replay(getReplayCandidate()));
         return subscription;
     }
@@ -242,6 +264,11 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
         CompletableFuture<RedisCredentials> credentialsFuture = credentialsFutureRef.get();
         if (!credentialsFuture.isDone()) {
             credentialsFuture.completeExceptionally(new IllegalStateException("Credentials provider closed"));
+        }
+        // Mark each registered subscription as closed before clearing the list so that any
+        // executor task already in flight (replay or dispatch) becomes a no-op on delivery.
+        for (SimpleSubscription s : subscriptions) {
+            s.closed = true;
         }
         subscriptions.clear();
     }

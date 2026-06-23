@@ -148,6 +148,11 @@ public class RedisAuthenticationHandler<K, V> {
         CredentialsSubscription sub = credentialsSubscription.getAndSet(null);
         if (sub != null) {
             sub.close();
+            try {
+                sub.close();
+            } catch (Exception e) {
+                log.warn("Failed to close subscription", e);
+            }
         }
     }
 

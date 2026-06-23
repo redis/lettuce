@@ -55,7 +55,11 @@ public interface RedisCredentialsProvider {
 
         return () -> {
             try {
-                return CompletableFuture.completedFuture(supplier.get());
+                RedisCredentials credentials = supplier.get();
+                if (credentials == null) {
+                    return Futures.failed(new NullPointerException("Provided RedisCredentials supplier returned null"));
+                }
+                return CompletableFuture.completedFuture(credentials);
             } catch (Exception e) {
                 return Futures.failed(e);
             }
@@ -114,7 +118,11 @@ public interface RedisCredentialsProvider {
         @Override
         default CompletionStage<RedisCredentials> resolveCredentials() {
             try {
-                return CompletableFuture.completedFuture(resolveCredentialsNow());
+                RedisCredentials credentials = resolveCredentialsNow();
+                if (credentials == null) {
+                    return Futures.failed(new NullPointerException("RedisCredentials resolved to null"));
+                }
+                return CompletableFuture.completedFuture(credentials);
             } catch (Exception e) {
                 return Futures.failed(e);
             }
