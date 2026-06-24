@@ -45,11 +45,6 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
     }
 
     @Override
-    public Object commands(CommandsFactory factory) {
-        return null;
-    }
-
-    @Override
     public void close() {
     }
 
