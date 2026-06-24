@@ -3,6 +3,7 @@ package io.lettuce.authx;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.support.PubSubTestListener;
@@ -79,7 +80,7 @@ public class EntraIdIntegrationTests {
             sync.set(key, "value");
             assertThat(connection.sync().get(key)).isEqualTo("value");
             assertThat(connection.async().get(key).get()).isEqualTo("value");
-            assertThat(connection.reactive().get(key).block()).isEqualTo("value");
+            assertThat(connection.commands(RedisReactiveCommands.factory()).get(key).block()).isEqualTo("value");
             sync.del(key);
         }
     }

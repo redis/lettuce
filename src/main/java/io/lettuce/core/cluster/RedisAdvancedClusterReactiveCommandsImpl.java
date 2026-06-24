@@ -53,6 +53,7 @@ import org.reactivestreams.Publisher;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -171,7 +172,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             publishers.add(byNodeId.flatMap(conn -> {
 
                 if (conn.isOpen()) {
-                    return conn.reactive().clientSetname(name);
+                    return conn.commands(RedisReactiveCommands.factory()).clientSetname(name);
                 }
                 return Mono.empty();
             }));
@@ -182,7 +183,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             publishers.add(byHost.flatMap(conn -> {
 
                 if (conn.isOpen()) {
-                    return conn.reactive().clientSetname(name);
+                    return conn.commands(RedisReactiveCommands.factory()).clientSetname(name);
                 }
                 return Mono.empty();
             }));
@@ -505,7 +506,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public RedisClusterReactiveCommands<K, V> getConnection(String nodeId) {
-        return getStatefulConnection().getConnection(nodeId).reactive();
+        return getStatefulConnection().getConnection(nodeId).commands(RedisReactiveCommands.factory());
     }
 
     private Mono<StatefulRedisConnection<K, V>> getStatefulConnection(String nodeId) {
@@ -514,17 +515,17 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     private Mono<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String nodeId) {
         return getMono(getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, nodeId))
-                .map(StatefulRedisConnection::reactive);
+                .map(c -> c.commands(RedisReactiveCommands.factory()));
     }
 
     @Override
     public RedisClusterReactiveCommands<K, V> getConnection(String host, int port) {
-        return getStatefulConnection().getConnection(host, port).reactive();
+        return getStatefulConnection().getConnection(host, port).commands(RedisReactiveCommands.factory());
     }
 
     private Mono<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String host, int port) {
         return getMono(getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, host, port))
-                .map(StatefulRedisConnection::reactive);
+                .map(c -> c.commands(RedisReactiveCommands.factory()));
     }
 
     private Mono<StatefulRedisConnection<K, V>> getStatefulConnection(String host, int port) {
@@ -755,7 +756,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         }
         String nodeId = nodeIdOpt.get();
         StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
-        return byNode.reactive().ftCursorread(index, cursor, count).map(reply -> {
+        return byNode.commands(RedisReactiveCommands.factory()).ftCursorread(index, cursor, count).map(reply -> {
             if (reply != null) {
                 reply.getCursor().ifPresent(c -> c.setNodeId(nodeId));
             }
@@ -783,7 +784,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         }
         String nodeId = nodeIdOpt.get();
         StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
-        return byNode.reactive().ftCursordel(index, cursor);
+        return byNode.commands(RedisReactiveCommands.factory()).ftCursordel(index, cursor);
     }
 
     /**
@@ -796,10 +797,11 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         ConnectionIntent intent = getConnectionIntent(commandType);
 
-        return getStatefulConnection(intent).map(StatefulRedisConnection::reactive).flatMap(routedCall).onErrorResume(err -> {
-            logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
-            return superCall.get();
-        });
+        return getStatefulConnection(intent).map(c -> c.commands(RedisReactiveCommands.factory())).flatMap(routedCall)
+                .onErrorResume(err -> {
+                    logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
+                    return superCall.get();
+                });
     }
 
     /**
@@ -812,7 +814,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         ConnectionIntent intent = getConnectionIntent(commandType);
 
-        return getStatefulConnection(intent).map(StatefulRedisConnection::reactive).flatMapMany(routedCall)
+        return getStatefulConnection(intent).map(c -> c.commands(RedisReactiveCommands.factory())).flatMapMany(routedCall)
                 .onErrorResume(err -> {
                     logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
                     return superCall.get();
@@ -829,7 +831,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         ConnectionIntent intent = getConnectionIntent(commandType);
 
-        return getStatefulConnection(intent).map(StatefulRedisConnection::reactive)
+        return getStatefulConnection(intent).map(c -> c.commands(RedisReactiveCommands.factory()))
                 .flatMap(conn -> conn.clusterMyId().flatMap(nodeId -> routedCall.apply(nodeId, conn))).onErrorResume(err -> {
                     logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
                     return superCall.get();
@@ -944,7 +946,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         ScanCursor continuationCursor = ClusterScanSupport.getContinuationCursor(cursor);
 
         Mono<T> scanCursor = getMono(connectionProvider.<K, V> getConnectionAsync(ConnectionIntent.WRITE, currentNodeId))
-                .flatMap(conn -> scanFunction.apply(conn.reactive(), continuationCursor));
+                .flatMap(conn -> scanFunction.apply(conn.commands(RedisReactiveCommands.factory()), continuationCursor));
         return mapper.map(nodeIds, currentNodeId, scanCursor);
     }
 

@@ -46,6 +46,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.StatusOutput;
@@ -411,7 +412,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
 
             connection.async().clientPause(300);
 
-            Mono<String> mono = connection.reactive().ping();
+            Mono<String> mono = connection.commands(RedisReactiveCommands.factory()).ping();
 
             StepVerifier.create(mono).expectError(RedisCommandTimeoutException.class).verify();
         }

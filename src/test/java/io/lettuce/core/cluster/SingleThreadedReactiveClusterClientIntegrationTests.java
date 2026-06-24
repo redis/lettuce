@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.lettuce.core.resource.DefaultEventLoopGroupProvider;
@@ -50,8 +51,9 @@ class SingleThreadedReactiveClusterClientIntegrationTests {
         StatefulRedisClusterConnection<String, String> connect = client.connect();
         connect.sync().flushall();
 
-        List<String> keys = connect.reactive().set("key", "value").flatMap(s -> connect.reactive().set("foo", "bar"))
-                .flatMapMany(s -> connect.reactive().keys("*")) //
+        List<String> keys = connect.commands(RedisAdvancedClusterReactiveCommands.factory()).set("key", "value")
+                .flatMap(s -> connect.commands(RedisAdvancedClusterReactiveCommands.factory()).set("foo", "bar"))
+                .flatMapMany(s -> connect.commands(RedisAdvancedClusterReactiveCommands.factory()).keys("*")) //
                 .doOnError(Throwable::printStackTrace) //
                 .collectList() //
                 .block();

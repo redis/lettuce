@@ -42,7 +42,8 @@ class ScanStreamIntegrationTests extends TestSupport {
             redis.set("key-" + i, value);
         }
 
-        RedisAdvancedClusterReactiveCommands<String, String> reactive = connection.reactive();
+        RedisAdvancedClusterReactiveCommands<String, String> reactive = connection
+                .commands(RedisAdvancedClusterReactiveCommands.factory());
 
         StepVerifier.create(ScanStream.scan(reactive, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
                 .verifyComplete();
