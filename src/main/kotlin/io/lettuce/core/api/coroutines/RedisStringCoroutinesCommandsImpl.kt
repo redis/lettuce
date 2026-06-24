@@ -81,9 +81,6 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun getrange(key: K, start: Long, end: Long): V? =
         ops.getrange(key, start, end).awaitFirstOrNull()
 
-    override suspend fun getset(key: K, value: V): V? =
-        ops.getset(key, value).awaitFirstOrNull()
-
     override suspend fun incr(key: K): Long? = ops.incr(key).awaitFirstOrNull()
 
     override suspend fun incrby(key: K, amount: Long): Long? =
@@ -118,12 +115,6 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun setGet(key: K, value: V, setArgs: SetArgs): V? = ops.setGet(key, value, setArgs).awaitFirstOrNull()
 
     override suspend fun setbit(key: K, offset: Long, value: Int): Long? = ops.setbit(key, offset, value).awaitFirstOrNull()
-
-    override suspend fun setex(key: K, seconds: Long, value: V): String? = ops.setex(key, seconds, value).awaitFirstOrNull()
-
-    override suspend fun psetex(key: K, milliseconds: Long, value: V): String? = ops.psetex(key, milliseconds, value).awaitFirstOrNull()
-
-    override suspend fun setnx(key: K, value: V): Boolean? = ops.setnx(key, value).awaitFirstOrNull()
 
     override suspend fun setrange(key: K, offset: Long, value: V): Long? = ops.setrange(key, offset, value).awaitFirstOrNull()
 

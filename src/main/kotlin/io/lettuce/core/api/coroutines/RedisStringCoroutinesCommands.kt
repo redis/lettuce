@@ -240,15 +240,6 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
     suspend fun getrange(key: K, start: Long, end: Long): V?
 
     /**
-     * Set the string value of a key and return its old value.
-     *
-     * @param key the key.
-     * @param value the value.
-     * @return V bulk-string-reply the old value stored at `key`, or `null` when `key` did not exist.
-     */
-    suspend fun getset(key: K, value: V): V?
-
-    /**
      * Increment the integer value of a key by one.
      *
      * @param key the key.
@@ -391,37 +382,6 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @return Long integer-reply the original bit value stored at <em>offset</em>.
      */
     suspend fun setbit(key: K, offset: Long, value: Int): Long?
-
-    /**
-     * Set the value and expiration of a key.
-     *
-     * @param key the key.
-     * @param seconds the seconds type: long.
-     * @param value the value.
-     * @return String simple-string-reply.
-     */
-    suspend fun setex(key: K, seconds: Long, value: V): String?
-
-    /**
-     * Set the value and expiration in milliseconds of a key.
-     *
-     * @param key the key.
-     * @param milliseconds the milliseconds type: long.
-     * @param value the value.
-     * @return String simple-string-reply.
-     */
-    suspend fun psetex(key: K, milliseconds: Long, value: V): String?
-
-    /**
-     * Set the value of a key, only if the key does not exist.
-     *
-     * @param key the key.
-     * @param value the value.
-     * @return Boolean integer-reply specifically:
-     *
-     *         `1` if the key was set `0` if the key was not set.
-     */
-    suspend fun setnx(key: K, value: V): Boolean?
 
     /**
      * Overwrite part of a string at key starting at the specified offset.
