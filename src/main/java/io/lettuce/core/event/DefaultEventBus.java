@@ -2,7 +2,6 @@ package io.lettuce.core.event;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -79,7 +78,7 @@ public class DefaultEventBus implements EventBus {
 
         private final AtomicInteger inFlight = new AtomicInteger();
 
-        private final AtomicBoolean closed = new AtomicBoolean();
+        private volatile boolean closed;
 
         EventSubscription(Consumer<Event> listener, EventExecutor executor) {
             this.listener = listener;
@@ -88,7 +87,7 @@ public class DefaultEventBus implements EventBus {
 
         void dispatch(Event event) {
 
-            if (closed.get()) {
+            if (closed) {
                 return;
             }
 
@@ -102,7 +101,7 @@ public class DefaultEventBus implements EventBus {
             try {
                 executor.execute(() -> {
                     try {
-                        if (!closed.get()) {
+                        if (!closed) {
                             listener.accept(event);
                         }
                     } catch (Throwable t) {
@@ -118,9 +117,11 @@ public class DefaultEventBus implements EventBus {
 
         @Override
         public void close() {
-            if (closed.compareAndSet(false, true)) {
-                subscriptions.remove(this);
+            if (closed) {
+                return;
             }
+            closed = true;
+            subscriptions.remove(this);
         }
 
     }
