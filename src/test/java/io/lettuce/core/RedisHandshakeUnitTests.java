@@ -290,6 +290,39 @@ class RedisHandshakeUnitTests {
         assertThat(maintCommand.getArgs().toString()).doesNotContain("moving-endpoint-type");
     }
 
+    @Test
+    void handshakeWithMaintNotificationsErrorResponseShouldNotFailHandshake() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        // Mock address type source
+        MaintNotificationsConfig.EndpointTypeSource endpointTypeSource = mock(
+                MaintNotificationsConfig.EndpointTypeSource.class);
+        when(endpointTypeSource.getEndpointType(any(SocketAddress.class), anyBoolean()))
+                .thenReturn(MaintNotificationsConfig.EndpointType.INTERNAL_IP);
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, endpointTypeSource);
+        CompletionStage<Void> handshakeInit = handshake.initialize(channel);
+
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        // Server rejects CLIENT MAINT_NOTIFICATIONS ON with an ERR response
+        List<AsyncCommand<?, ?, ?>> commands = channel.readOutbound();
+        assertThat(commands).hasSize(1);
+
+        AsyncCommand<?, ?, ?> maintCommand = commands.get(0);
+        maintCommand.getOutput().setError(ERR_UNKNOWN_COMMAND);
+        maintCommand.completeExceptionally(new RedisException(ERR_UNKNOWN_COMMAND));
+        maintCommand.complete();
+
+        // The error should be swallowed and the handshake should still complete successfully
+        assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isFalse();
+    }
+
     private static void helloResponse(CommandOutput<String, String, Map<String, String>> output) {
 
         output.multiMap(8);
