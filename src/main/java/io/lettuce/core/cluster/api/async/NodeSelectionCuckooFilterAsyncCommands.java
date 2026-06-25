@@ -48,7 +48,7 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return Boolean integer-reply {@code true} if the item was added, {@code false} if it was already in the filter.
+     * @return Boolean integer-reply {@code true} if the item was added.
      * @throws io.lettuce.core.RedisCommandExecutionException if the filter is full and cannot expand (future fails with this
      *         exception).
      */

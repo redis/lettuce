@@ -49,9 +49,8 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return Boolean integer-reply {@code true} if the item was added, {@code false} if it was already in the filter. The
-     *         {@code Mono} signals an error with {@code io.lettuce.core.RedisCommandExecutionException} if the filter is full
-     *         and cannot expand.
+     * @return Boolean integer-reply {@code true} if the item was added. The {@code Mono} signals an error with
+     *         {@code io.lettuce.core.RedisCommandExecutionException} if the filter is full and cannot expand.
      */
     Mono<Boolean> cfAdd(K key, V value);
 

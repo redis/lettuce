@@ -84,17 +84,6 @@ public class CfInsertArgs implements CompositeArgument {
         return this;
     }
 
-    /**
-     * Set the default settings.
-     *
-     * @return {@code this} {@link CfInsertArgs}.
-     */
-    public CfInsertArgs defaults() {
-        this.capacity = null;
-        this.noCreate = false;
-        return this;
-    }
-
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 

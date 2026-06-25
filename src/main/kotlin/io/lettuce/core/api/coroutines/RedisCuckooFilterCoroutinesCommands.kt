@@ -49,7 +49,7 @@ interface RedisCuckooFilterCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param value the value.
-     * @return Boolean integer-reply `true` if the item was added, `false` if it was already in the filter.
+     * @return Boolean integer-reply `true` if the item was added.
      * @throws io.lettuce.core.RedisCommandExecutionException if the filter is full and cannot expand.
      */
     suspend fun cfAdd(key: K, value: V): Boolean?
