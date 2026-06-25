@@ -28,7 +28,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Tihomir Mateev
  * @since 6.5
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisJsonReactiveCommands<K, V>) :
     RedisJsonCoroutinesCommands<K, V> {
     override suspend fun jsonArrappend(key: K, jsonPath: JsonPath, vararg values: JsonValue): List<Long> =

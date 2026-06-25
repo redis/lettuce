@@ -61,11 +61,10 @@ val foo2 = api.keys("fo*")
 ```
 
 !!! NOTE
-    Coroutine Extensions are experimental and require opt-in using
-    `@ExperimentalLettuceCoroutinesApi`. The API ships with a reduced
-    feature set. Deprecated methods and `StreamingChannel` are left out
-    intentionally. Expect evolution towards a `Flow`-based API to consume
-    large Redis responses.
+    Coroutine Extensions ship with a reduced feature set. Deprecated
+    methods and `StreamingChannel` are left out intentionally. Expect
+    evolution towards a `Flow`-based API to consume large Redis
+    responses.
 
 ### Extensions for existing APIs
 

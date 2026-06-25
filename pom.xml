@@ -817,8 +817,6 @@
                     <apiVersion>1.4</apiVersion>
                     <args>
                         <arg>-Xopt-in=kotlin.RequiresOptIn</arg>
-                        <arg>-Xopt-in=io.lettuce.core.ExperimentalLettuceCoroutinesApi
-                        </arg>
                     </args>
                 </configuration>
                 <executions>

@@ -31,7 +31,6 @@ import kotlinx.coroutines.reactive.asFlow
  * @author Mark Paluch
  * @since 6.1
  */
-@ExperimentalLettuceCoroutinesApi
 object ScanFlow {
 
     /**
