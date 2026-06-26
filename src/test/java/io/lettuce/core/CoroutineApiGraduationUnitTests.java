@@ -23,12 +23,16 @@ class CoroutineApiGraduationUnitTests {
     private static final Path PROJECT_ROOT = Paths.get("").toAbsolutePath();
 
     @Test
-    void coroutineApiDeclarationsShouldNotRequireExperimentalOptIn() throws IOException {
+    void kotlinSourcesShouldNotReferenceExperimentalCoroutineApi() throws IOException {
 
-        try (Stream<Path> files = Files.walk(PROJECT_ROOT.resolve("src/main/kotlin"))) {
-            List<String> violations = files.filter(path -> path.getFileName().toString().endsWith(".kt"))
-                    .filter(path -> !path.getFileName().toString().equals("ExperimentalLettuceCoroutinesApi.kt"))
-                    .filter(CoroutineApiGraduationUnitTests::containsExperimentalOptInMarker).map(PROJECT_ROOT::relativize)
+        Path marker = PROJECT_ROOT.resolve("src/main/kotlin/io/lettuce/core/ExperimentalLettuceCoroutinesApi.kt");
+
+        try (Stream<Path> mainFiles = Files.walk(PROJECT_ROOT.resolve("src/main/kotlin"));
+                Stream<Path> testFiles = Files.walk(PROJECT_ROOT.resolve("src/test/kotlin"))) {
+
+            List<String> violations = Stream.concat(mainFiles, testFiles)
+                    .filter(path -> path.getFileName().toString().endsWith(".kt")).filter(path -> !path.equals(marker))
+                    .filter(CoroutineApiGraduationUnitTests::referencesExperimentalCoroutineApi).map(PROJECT_ROOT::relativize)
                     .map(Path::toString).sorted().collect(Collectors.toList());
 
             assertThat(violations).isEmpty();
@@ -62,12 +66,11 @@ class CoroutineApiGraduationUnitTests {
         assertThat(source).doesNotContain("-Xopt-in=io.lettuce.core.ExperimentalLettuceCoroutinesApi");
     }
 
-    private static boolean containsExperimentalOptInMarker(Path path) {
+    private static boolean referencesExperimentalCoroutineApi(Path path) {
 
         try {
             String source = read(path);
-            return source.contains("@ExperimentalLettuceCoroutinesApi")
-                    || source.contains("import io.lettuce.core.ExperimentalLettuceCoroutinesApi");
+            return source.contains("ExperimentalLettuceCoroutinesApi");
         } catch (IOException e) {
             throw new IllegalStateException("Cannot read " + path, e);
         }
