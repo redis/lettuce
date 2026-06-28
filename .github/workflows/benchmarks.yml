@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 40
     steps:
       - name: Setup Maven
-        uses: s4u/setup-maven-action@v1.19.0
+        uses: s4u/setup-maven-action@6c4e9964d4ecb8f1026310cd8618791fd51a8016 # v1.19.0
         with:
           java-version: 8
           java-distribution: temurin
@@ -55,13 +55,13 @@ jobs:
           docker compose $COMPOSE_ENV_FILES -f src/test/resources/docker-env/docker-compose.yml down
       # Download previous benchmark result from cache (if exists)
       - name: Download previous benchmark data
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ./cache
           key: ${{ runner.os }}-benchmark
       # Run `github-action-benchmark` action
       - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           tool: 'jmh'
