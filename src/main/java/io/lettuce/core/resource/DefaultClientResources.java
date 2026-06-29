@@ -55,7 +55,6 @@ import io.netty.util.concurrent.PromiseCombiner;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.scheduler.Schedulers;
 
 /**
  * Default instance of the client resources.
@@ -222,7 +221,7 @@ public class DefaultClientResources implements ClientResources {
         }
 
         if (builder.eventBus == null) {
-            eventBus = new DefaultEventBus(Schedulers.fromExecutorService(eventExecutorGroup, "lettuce-event-bus"));
+            eventBus = new DefaultEventBus(eventExecutorGroup);
         } else {
             eventBus = builder.eventBus;
         }
