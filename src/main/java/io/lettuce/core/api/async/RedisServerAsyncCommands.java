@@ -146,6 +146,15 @@ public interface RedisServerAsyncCommands<K, V> {
     RedisFuture<String> clientNoEvict(boolean on);
 
     /**
+     * Controls whether commands sent by the client will alter the LRU/LFU of the keys they access.
+     *
+     * @param on {@code true} will turn no-touch mode on, and {@code false} will turn it off.
+     * @return String simple-string-reply {@code OK}.
+     * @since 7.7
+     */
+    RedisFuture<String> clientNoTouch(boolean on);
+
+    /**
      * Stop processing commands from clients for some time.
      *
      * @param timeout the timeout value in milliseconds.

@@ -158,6 +158,7 @@ import reactor.core.publisher.Mono;
  * @author Jacob Halsey
  * @author Tihomir Mateev
  * @author Kim Sung Hyun
+ * @author PreAgile
  * @since 3.0
  */
 public class RedisURI implements Serializable, ConnectionPoint {
@@ -972,7 +973,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // compatibility with versions before 7.0 - in previous versions of the Lettuce driver there was an option to
                 // have a username and password pair as part of the RedisURI; in these cases when we were masking credentials we
                 // would get asterix for each character of the password.
-                RedisCredentials creds = credentialsProvider.resolveCredentials().block();
+                // Resolve through CompletableFuture instead of Mono#block(): Reactor rejects block() on non-blocking
+                // threads (e.g. the reactor-http-nio workers used by Spring WebFlux), whereas CompletableFuture#join() is
+                // not subject to that check. This mirrors the approach taken on feature/reactor-optional-1 (#3739).
+                RedisCredentials creds = credentialsProvider.resolveCredentials().toFuture().join();
                 if (creds != null) {
                     String credentials = "";
 

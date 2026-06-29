@@ -33,6 +33,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @param <V> Value type.
  * @author Mikhael Sokolov
  * @author Mark Paluch
+ * @author Yordan Tsintsov
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
@@ -51,7 +52,8 @@ internal class RedisClusterCoroutinesCommandsImpl<K : Any, V : Any>(
     RedisSetCoroutinesCommands<K, V> by RedisSetCoroutinesCommandsImpl(ops),
     RedisSortedSetCoroutinesCommands<K, V> by RedisSortedSetCoroutinesCommandsImpl(ops),
     RedisStreamCoroutinesCommands<K, V> by RedisStreamCoroutinesCommandsImpl(ops),
-    RedisStringCoroutinesCommands<K, V> by RedisStringCoroutinesCommandsImpl(ops) {
+    RedisStringCoroutinesCommands<K, V> by RedisStringCoroutinesCommandsImpl(ops),
+    RedisBloomFilterCoroutinesCommands<K, V> by RedisBloomFilterCoroutinesCommandsImpl(ops) {
 
     /**
      * Authenticate to the server.

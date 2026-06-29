@@ -23,6 +23,10 @@ import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.async.*;
 import io.lettuce.core.array.*;
+import io.lettuce.core.bf.BfInfoValue;
+import io.lettuce.core.bf.BfScanDumpValue;
+import io.lettuce.core.bf.arguments.BfInsertArgs;
+import io.lettuce.core.bf.arguments.BfReserveArgs;
 import io.lettuce.core.cluster.PipelinedRedisFuture;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
@@ -102,6 +106,8 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author Andrey Shlykov
  * @author Ali Takavci
  * @author SeugnSu Kim
+ * @author Yordan Tsintsov
+ * @author dae won
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
@@ -109,7 +115,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
-        RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V> {
+        RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V>,
+        RedisBloomFilterAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -122,6 +129,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     private final RedisVectorSetCommandBuilder<K, V> vectorSetCommandBuilder;
 
     private final RedisArrayCommandBuilder<K, V> arrayCommandBuilder;
+
+    private final RedisBloomFilterCommandBuilder<K, V> bloomFilterCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -141,6 +150,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
         this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
         this.arrayCommandBuilder = new RedisArrayCommandBuilder<>(codec);
+        this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
     }
 
     /**
@@ -394,11 +404,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.brpop(timeout, keys));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<V> brpoplpush(long timeout, K source, K destination) {
         return dispatch(commandBuilder.brpoplpush(timeout, source, destination));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<V> brpoplpush(double timeout, K source, K destination) {
         return dispatch(commandBuilder.brpoplpush(timeout, source, destination));
@@ -447,6 +459,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> clientNoEvict(boolean on) {
         return dispatch(commandBuilder.clientNoEvict(on));
+    }
+
+    @Override
+    public RedisFuture<String> clientNoTouch(boolean on) {
+        return dispatch(commandBuilder.clientNoTouch(on));
     }
 
     @Override
@@ -1265,17 +1282,20 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.geopos(key, members));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
         return georadius_ro(key, longitude, latitude, distance, unit);
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance,
             GeoArgs.Unit unit, GeoArgs geoArgs) {
         return georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> georadius(K key, double longitude, double latitude, double distance, Unit unit,
             GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
@@ -1291,17 +1311,20 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.georadius(GEORADIUS_RO, key, longitude, latitude, distance, unit.name(), geoArgs));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
         return georadiusbymember_ro(key, member, distance, unit);
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
         return georadiusbymember_ro(key, member, distance, unit, geoArgs);
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> georadiusbymember(K key, V member, double distance, Unit unit,
             GeoRadiusStoreArgs<K> geoRadiusStoreArgs) {
@@ -1368,6 +1391,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.getrange(key, start, end));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<V> getset(K key, V value) {
         return dispatch(commandBuilder.getset(key, value));
@@ -1434,6 +1458,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    @Deprecated
     public RedisFuture<String> hmset(K key, Map<K, V> map) {
         return dispatch(commandBuilder.hmset(key, map));
     }
@@ -2535,6 +2560,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.ping());
     }
 
+    @Deprecated
     @Override
     public RedisFuture<String> psetex(K key, long milliseconds, V value) {
         return dispatch(commandBuilder.psetex(key, milliseconds, value));
@@ -2650,6 +2676,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.rpop(key, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<V> rpoplpush(K source, K destination) {
         return dispatch(commandBuilder.rpoplpush(source, destination));
@@ -2799,11 +2826,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.setbit(key, offset, value));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<String> setex(K key, long seconds, V value) {
         return dispatch(commandBuilder.setex(key, seconds, value));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Boolean> setnx(K key, V value) {
         return dispatch(commandBuilder.setnx(key, value));
@@ -4208,6 +4237,78 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<ArrayInfoFull> arinfoFull(K key) {
         return dispatch(arrayCommandBuilder.arinfoFull(key));
+    }
+
+    // --- Redis Bloom Filter Commands ---
+
+    @Override
+    public RedisFuture<Boolean> bfAdd(K key, V value) {
+        return dispatch(bloomFilterCommandBuilder.bfAdd(key, value));
+    }
+
+    @Override
+    public RedisFuture<Long> bfCard(K key) {
+        return dispatch(bloomFilterCommandBuilder.bfCard(key));
+    }
+
+    @Override
+    public RedisFuture<Boolean> bfExists(K key, V value) {
+        return dispatch(bloomFilterCommandBuilder.bfExists(key, value));
+    }
+
+    @Override
+    public RedisFuture<BfInfoValue> bfInfo(K key) {
+        return dispatch(bloomFilterCommandBuilder.bfInfo(key));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> bfInsert(K key, V value) {
+        return dispatch(bloomFilterCommandBuilder.bfInsert(key, value));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V value) {
+        return dispatch(bloomFilterCommandBuilder.bfInsert(key, insertArgs, value));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> bfInsert(K key, V... values) {
+        return dispatch(bloomFilterCommandBuilder.bfInsert(key, values));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> bfInsert(K key, BfInsertArgs insertArgs, V... values) {
+        return dispatch(bloomFilterCommandBuilder.bfInsert(key, insertArgs, values));
+    }
+
+    @Override
+    public RedisFuture<String> bfLoadChunk(K key, long iterator, byte[] data) {
+        return dispatch(bloomFilterCommandBuilder.bfLoadChunk(key, iterator, data));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> bfMAdd(K key, V... values) {
+        return dispatch(bloomFilterCommandBuilder.bfMAdd(key, values));
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> bfMExists(K key, V... values) {
+        return dispatch(bloomFilterCommandBuilder.bfMExists(key, values));
+    }
+
+    @Override
+    public RedisFuture<String> bfReserve(K key, double errorRate, long capacity) {
+        return dispatch(bloomFilterCommandBuilder.bfReserve(key, errorRate, capacity));
+    }
+
+    @Override
+    public RedisFuture<String> bfReserve(K key, double errorRate, long capacity, BfReserveArgs reserveArgs) {
+        return dispatch(bloomFilterCommandBuilder.bfReserve(key, errorRate, capacity, reserveArgs));
+    }
+
+    @Override
+    public RedisFuture<BfScanDumpValue> bfScanDump(K key, long iterator) {
+        return dispatch(bloomFilterCommandBuilder.bfScanDump(key, iterator));
     }
 
 }

@@ -136,6 +136,15 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     suspend fun clientNoEvict(on: Boolean): String?
 
     /**
+     * Controls whether commands sent by the client will alter the LRU/LFU of the keys they access.
+     *
+     * @param on `true` will turn no-touch mode on, and `false` will turn it off.
+     * @return String simple-string-reply `OK`.
+     * @since 7.7
+     */
+    suspend fun clientNoTouch(on: Boolean): String?
+
+    /**
      * Stop processing commands from clients for some time.
      *
      * @param timeout the timeout value in milliseconds.
