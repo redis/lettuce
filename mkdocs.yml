@@ -82,4 +82,7 @@ nav:
   - Integration and Extension: integration-extension.md
   - Frequently Asked Questions: faq.md
   - API Reference: https://www.javadoc.io/doc/io.lettuce/lettuce-core/latest/index.html
-  - JMH Micro-benchmarks: static/benchmarks/index.html
+  - Development guide:
+      - Contributing: .github/CONTRIBUTING.md
+      - Integration Testing: integration-testing.md
+      - Benchmark results: static/benchmarks/index.html
