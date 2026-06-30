@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/deny-protected-paths.sh" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "mvn -q formatter:format >/dev/null 2>&1 || true" },
+          { "type": "command", "command": ".claude/hooks/compile-gate.sh" }
+        ]
+      }
+    ]
+  }
+}

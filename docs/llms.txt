@@ -1,0 +1,38 @@
+# Lettuce
+
+> Lettuce is a scalable, thread-safe Redis client for the JVM, built on netty and Project Reactor. It provides synchronous, asynchronous, and reactive APIs to interact with Redis. Lettuce 7.x requires JDK 8+ and Redis 2.6+.
+
+Key facts an assistant should know: a single Lettuce connection is thread-safe and can be shared across threads; you typically do not need a connection pool for non-blocking usage. Use connection pooling only for blocking/synchronous workloads. Lettuce supports standalone, Redis Sentinel, and Redis Cluster topologies.
+
+## Getting Started
+- [Overview](https://redis.github.io/lettuce/overview/): Concepts, semantics, and requirements
+- [Getting Started](https://redis.github.io/lettuce/getting-started/): Add the dependency and run your first commands
+- [New & Noteworthy](https://redis.github.io/lettuce/new-features/): What changed across versions
+- [Compatibility & Roadmap](https://redis.github.io/lettuce/compatibility-roadmap/): Supported Redis and JDK versions
+
+## User Guide
+- [Connecting Redis](https://redis.github.io/lettuce/user-guide/connecting-redis/): Basic synchronous usage and connection setup
+- [Asynchronous API](https://redis.github.io/lettuce/user-guide/async-api/): Future-based non-blocking commands
+- [Reactive API](https://redis.github.io/lettuce/user-guide/reactive-api/): Project Reactor Flux/Mono APIs
+- [Kotlin API](https://redis.github.io/lettuce/user-guide/kotlin-api/): Coroutine-based API
+- [Publish/Subscribe](https://redis.github.io/lettuce/user-guide/pubsub/): Pub/Sub messaging
+- [Transactions/Multi](https://redis.github.io/lettuce/user-guide/transactions-multi/): MULTI/EXEC transactions
+
+## Advanced Usage
+- [Client Options](https://redis.github.io/lettuce/advanced-usage/client-options/): Behavioral configuration
+- [SSL Connections](https://redis.github.io/lettuce/advanced-usage/ssl-connections/): TLS setup
+- [Pipelining](https://redis.github.io/lettuce/advanced-usage/pipelining/): Batching commands
+- [Connection Pooling](https://redis.github.io/lettuce/advanced-usage/connection-pooling/): Pooling for blocking usage
+- [Command Execution Reliability](https://redis.github.io/lettuce/advanced-usage/command-execution-reliability/): at-least-once vs at-most-once
+- [Failover](https://redis.github.io/lettuce/advanced-usage/failover/): Handling failover scenarios
+
+## Reference
+- [API Reference (Javadoc)](https://www.javadoc.io/doc/io.lettuce/lettuce-core/latest/index.html): Full API documentation
+- [High-Availability and Sharding](https://redis.github.io/lettuce/ha-sharding/): Master/Replica, Sentinel, Cluster
+- [FAQ](https://redis.github.io/lettuce/faq/): Common questions
+
+## Optional
+- [Native Transports](https://redis.github.io/lettuce/advanced-usage/native-transports/): epoll/kqueue
+- [Graal Native Image](https://redis.github.io/lettuce/advanced-usage/graal-native-image/): GraalVM support
+- [Observability](https://redis.github.io/lettuce/advanced-usage/observability/): Metrics and tracing
+- [JMH Micro-benchmarks](https://redis.github.io/lettuce/static/benchmarks/): Performance benchmarks
