@@ -9,6 +9,9 @@ package io.lettuce.authx;
 import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisCredentialsProvider;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.ClientResources.ResourceAssignable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.authentication.core.Token;
@@ -48,7 +51,7 @@ import java.util.function.Consumer;
  *
  * @since 6.6
  */
-public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvider, AutoCloseable {
+public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvider, AutoCloseable, ResourceAssignable {
 
     private static final Logger log = LoggerFactory.getLogger(TokenBasedRedisCredentialsProvider.class);
 
@@ -107,7 +110,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
 
     private final TokenManager tokenManager;
 
-    private final Executor executor;
+    private Executor executor;
 
     private final List<SimpleSubscription> subscriptions = new CopyOnWriteArrayList<>();
 
@@ -119,6 +122,13 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
     private TokenBasedRedisCredentialsProvider(TokenManager tokenManager, Executor executor) {
         this.tokenManager = tokenManager;
         this.executor = executor;
+    }
+
+    @Override
+    public void accept(ClientResources clientResources) {
+        if (this.executor == null) {
+            executor = clientResources.eventExecutorGroup().next();
+        }
     }
 
     private void init() {
@@ -333,7 +343,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      * @return a started {@link TokenBasedRedisCredentialsProvider}
      */
     public static TokenBasedRedisCredentialsProvider create(TokenManager tokenManager) {
-        return create(tokenManager, r -> r.run());
+        return create(tokenManager, null);
     }
 
     /**
