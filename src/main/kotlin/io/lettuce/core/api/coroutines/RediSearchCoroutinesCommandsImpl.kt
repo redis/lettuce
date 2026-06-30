@@ -123,7 +123,7 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftSugget(key: K, prefix: V): List<Suggestion<V>> =
         ops.ftSugget(key, prefix).asFlow().toList()
 
-    override suspend fun ftSugget(key: K, prefix: V, args: SugGetArgs<K, V>): List<Suggestion<V>> =
+    override suspend fun ftSugget(key: K, prefix: V, args: SugGetArgs): List<Suggestion<V>> =
         ops.ftSugget(key, prefix, args).asFlow().toList()
 
     override suspend fun ftSuglen(key: K): Long? =

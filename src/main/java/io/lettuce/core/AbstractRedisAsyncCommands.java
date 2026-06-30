@@ -1794,7 +1794,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
+    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs args) {
         return dispatch(searchCommandBuilder.ftSugget(key, prefix, args));
     }
 

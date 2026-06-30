@@ -863,7 +863,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftSuglen(K)
      */
     @Experimental
-    RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args);
+    RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs args);
 
     /**
      * Get the size of an auto-complete suggestion dictionary.

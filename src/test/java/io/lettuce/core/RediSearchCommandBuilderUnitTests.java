@@ -494,7 +494,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.SUGGET key prefix FUZZY WITHSCORES WITHPAYLOADS MAX 10
     @Test
     void shouldCorrectlyConstructFtSuggetCommandWithArgs() {
-        SugGetArgs<String, String> args = SugGetArgs.Builder.<String, String> fuzzy().withScores().withPayloads().max(10);
+        SugGetArgs args = SugGetArgs.Builder.fuzzy().withScores().withPayloads().max(10);
         Command<String, String, List<Suggestion<String>>> command = builder.ftSugget(MY_KEY, "pre", args);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);

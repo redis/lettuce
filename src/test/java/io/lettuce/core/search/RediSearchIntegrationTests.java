@@ -796,12 +796,12 @@ public class RediSearchIntegrationTests {
                 "Newark");
 
         // Test FT.SUGGET with MAX limit
-        SugGetArgs<String, String> maxArgs = SugGetArgs.Builder.max(2);
+        SugGetArgs maxArgs = SugGetArgs.Builder.max(2);
         List<Suggestion<String>> limitedSuggestions = redis.ftSugget(suggestionKey, "New", maxArgs);
         assertThat(limitedSuggestions).hasSize(2);
 
         // Test FT.SUGGET with FUZZY matching
-        SugGetArgs<String, String> fuzzyArgs = SugGetArgs.Builder.fuzzy();
+        SugGetArgs fuzzyArgs = SugGetArgs.Builder.fuzzy();
         List<Suggestion<String>> fuzzySuggestions = redis.ftSugget(suggestionKey, "Bost", fuzzyArgs);
         assertThat(fuzzySuggestions.stream().map(Suggestion::getValue)).contains("Boston");
 
@@ -822,7 +822,7 @@ public class RediSearchIntegrationTests {
         assertThat(redis.ftSugadd(suggestionKey, "New York", 0.5, incrArgs)).isEqualTo(4L);
 
         // Test FT.SUGGET with WITHSCORES and WITHPAYLOADS
-        SugGetArgs<String, String> withExtrasArgs = SugGetArgs.Builder.<String, String> withScores().withPayloads();
+        SugGetArgs withExtrasArgs = SugGetArgs.Builder.withScores().withPayloads();
         List<Suggestion<String>> detailedSuggestions = redis.ftSugget(suggestionKey, "New", withExtrasArgs);
         assertThat(detailedSuggestions).isNotEmpty();
 

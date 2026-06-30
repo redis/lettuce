@@ -863,7 +863,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftSuglen(K)
      */
     @Experimental
-    List<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs<K, V> args);
+    List<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs args);
 
     /**
      * Get the size of an auto-complete suggestion dictionary.

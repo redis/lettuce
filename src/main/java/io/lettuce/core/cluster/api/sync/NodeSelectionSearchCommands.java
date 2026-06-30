@@ -863,7 +863,7 @@ public interface NodeSelectionSearchCommands<K, V> {
      * @see #ftSuglen(K)
      */
     @Experimental
-    Executions<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args);
+    Executions<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs args);
 
     /**
      * Get the size of an auto-complete suggestion dictionary.

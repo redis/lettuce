@@ -544,7 +544,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param args the suggestion get arguments
      * @return the result of the sugget command
      */
-    public Command<K, V, List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
+    public Command<K, V, List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs args) {
         notNullKey(key);
         LettuceAssert.notNull(prefix, "Prefix must not be null");
 

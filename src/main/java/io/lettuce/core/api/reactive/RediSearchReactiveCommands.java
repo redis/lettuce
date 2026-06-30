@@ -865,7 +865,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftSuglen(K)
      */
     @Experimental
-    Flux<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs<K, V> args);
+    Flux<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs args);
 
     /**
      * Get the size of an auto-complete suggestion dictionary.

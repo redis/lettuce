@@ -863,7 +863,7 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * @see #ftSuglen(K)
      */
     @Experimental
-    AsyncExecutions<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args);
+    AsyncExecutions<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs args);
 
     /**
      * Get the size of an auto-complete suggestion dictionary.

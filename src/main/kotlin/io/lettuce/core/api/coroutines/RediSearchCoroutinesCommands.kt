@@ -864,7 +864,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftSuglen(K)
      */
     @Experimental
-    suspend fun ftSugget(key: K, prefix: V, args: SugGetArgs<K, V>): List<Suggestion<V>>
+    suspend fun ftSugget(key: K, prefix: V, args: SugGetArgs): List<Suggestion<V>>
 
     /**
      * Get the size of an auto-complete suggestion dictionary.
