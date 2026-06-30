@@ -126,13 +126,13 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
 
     @Override
     public void accept(ClientResources clientResources) {
-        if (this.executor == null) {
+        if (executor == null) {
             executor = clientResources.eventExecutorGroup().next();
         }
     }
 
     private void init() {
-
+        LettuceAssert.notNull(executor, "Executor must be provided before initialization");
         TokenListener listener = new TokenListener() {
 
             @Override
@@ -244,6 +244,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
             subscription.close();
             throw new IllegalStateException("Credentials provider closed");
         }
+        LettuceAssert.notNull(executor, "Executor must be provided before subscription");
         executor.execute(() -> subscription.replay(getReplayCandidate()));
         return subscription;
     }
@@ -343,7 +344,10 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      * @return a started {@link TokenBasedRedisCredentialsProvider}
      */
     public static TokenBasedRedisCredentialsProvider create(TokenManager tokenManager) {
-        return create(tokenManager, null);
+        LettuceAssert.notNull(tokenManager, "TokenManager must not be null");
+        TokenBasedRedisCredentialsProvider credentialManager = new TokenBasedRedisCredentialsProvider(tokenManager, null);
+        credentialManager.init();
+        return credentialManager;
     }
 
     /**
