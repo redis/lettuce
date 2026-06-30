@@ -60,8 +60,12 @@ make stop                            # tear the environment down
 Run one integration test fast (env already started):
 
 ```bash
-TEST_WORK_FOLDER=./work/docker mvn -DskipITs=false -Dtest=FooIntegrationTests verify -Pci
+TEST_WORK_FOLDER=./work/docker mvn -DskipITs=false -DskipUnitTests=true \
+  -Dit.test=FooIntegrationTests verify -Pci
 ```
+
+Failsafe filters on `it.test`, **not** `test` — `-Dtest=` will not narrow it and
+runs the whole IT suite. `-DskipUnitTests=true` skips the Surefire (unit) phase.
 
 **Apply formatting** (required before committing):
 
@@ -73,6 +77,7 @@ mvn formatter:format                 # applies formatting.xml; do NOT submit for
 |------|---------|
 | `-DskipITs=false` | Enable integration tests (`make test` sets this) |
 | `-DskipUnitTests=true` | Run integration tests only |
+| `-Dit.test=<Class>` | Run a single integration test (Failsafe; `-Dtest=` won't filter it) |
 | `-Pci` | CI profile used by `make test` |
 | `make start version=<v>` | Pick Redis version; supported list and default are defined in the `Makefile` (`SUPPORTED_TEST_ENV_VERSIONS` / `DEFAULT_TEST_ENV_VERSION`) |
 
