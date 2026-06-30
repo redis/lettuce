@@ -4,31 +4,28 @@
  *
  * Licensed under the MIT License.
  */
-package io.lettuce.core.api.sync;
-
-import java.util.Map;
-import java.util.List;
+package io.lettuce.core.api;
 
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.search.AggregationReply;
-import io.lettuce.core.search.HybridReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
-import io.lettuce.core.search.AggregationReply.Cursor;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
-import io.lettuce.core.search.arguments.hybrid.HybridArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 
+import java.util.List;
+import java.util.Map;
+
 /**
- * Synchronous executed commands for RediSearch functionality
+ * ${intent} for RediSearch functionality
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -232,23 +229,6 @@ public interface RediSearchCommands<K, V> {
      */
     @Experimental
     String ftAliasdel(String alias);
-
-    /**
-     * List all aliases associated with the given index.
-     *
-     * <p>
-     * <strong>Time complexity:</strong> O(N) where N is the number of aliases on the index.
-     * </p>
-     *
-     * @param index the index name, as created with {@code FT.CREATE}. An alias name is not accepted as a substitute.
-     * @return the aliases associated with the index, as an unordered collection (the order is unspecified)
-     * @since 7.7
-     * @see <a href="https://redis.io/docs/latest/commands/ft.aliaslist/">FT.ALIASLIST</a>
-     * @see #ftAliasadd(String, String)
-     * @see #ftAliasdel(String)
-     */
-    @Experimental
-    List<String> ftAliaslist(String index);
 
     /**
      * Add new attributes to an existing search index.
