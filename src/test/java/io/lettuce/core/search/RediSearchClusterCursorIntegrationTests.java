@@ -84,10 +84,10 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
         sync.flushall();
 
         // Create schema
-        FieldArgs<String> title = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> author = TagFieldArgs.<String> builder().name("author").build();
-        FieldArgs<String> year = NumericFieldArgs.<String> builder().name("year").sortable().build();
-        FieldArgs<String> rating = NumericFieldArgs.<String> builder().name("rating").sortable().build();
+        FieldArgs title = TextFieldArgs.builder().name("title").build();
+        FieldArgs author = TagFieldArgs.builder().name("author").build();
+        FieldArgs year = NumericFieldArgs.builder().name("year").sortable().build();
+        FieldArgs rating = NumericFieldArgs.builder().name("rating").sortable().build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
 

@@ -63,7 +63,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    RedisFuture<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs);
+    RedisFuture<String> ftCreate(String index, List<FieldArgs> fieldArgs);
 
     /**
      * Create a new search index with the given name, custom configuration, and field definitions.
@@ -102,7 +102,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    RedisFuture<String> ftCreate(String index, CreateArgs<K> arguments, List<FieldArgs<K>> fieldArgs);
+    RedisFuture<String> ftCreate(String index, CreateArgs<K> arguments, List<FieldArgs> fieldArgs);
 
     /**
      * Add an alias to a search index.
@@ -279,7 +279,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    RedisFuture<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs);
+    RedisFuture<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs);
 
     /**
      * Add new attributes to an existing search index.
@@ -314,7 +314,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    RedisFuture<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs);
+    RedisFuture<String> ftAlter(String index, List<FieldArgs> fieldArgs);
 
     /**
      * Return a distinct set of values indexed in a Tag field.

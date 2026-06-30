@@ -64,7 +64,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    suspend fun ftCreate(index: String, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftCreate(index: String, fieldArgs: List<FieldArgs>): String?
 
     /**
      * Create a new search index with the given name, custom configuration, and field definitions.
@@ -103,7 +103,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    suspend fun ftCreate(index: String, arguments: CreateArgs<K>, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftCreate(index: String, arguments: CreateArgs<K>, fieldArgs: List<FieldArgs>): String?
 
     /**
      * Add an alias to a search index.
@@ -280,7 +280,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    suspend fun ftAlter(index: String, skipInitialScan: Boolean, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftAlter(index: String, skipInitialScan: Boolean, fieldArgs: List<FieldArgs>): String?
 
     /**
      * Add new attributes to an existing search index.
@@ -315,7 +315,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    suspend fun ftAlter(index: String, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftAlter(index: String, fieldArgs: List<FieldArgs>): String?
 
     /**
      * Return a distinct set of values indexed in a Tag field.

@@ -87,9 +87,9 @@ public class RediSearchClusterIntegrationTests {
     @Test
     void testFtSearchAcrossMultipleShards() {
         // Create field definitions
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();
@@ -183,10 +183,10 @@ public class RediSearchClusterIntegrationTests {
     @Test
     void testFtCursorAcrossMultipleShards() {
         // Create field definitions for books
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> authorField = TagFieldArgs.<String> builder().name("author").build();
-        FieldArgs<String> yearField = NumericFieldArgs.<String> builder().name("year").sortable().build();
-        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").sortable().build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs authorField = TagFieldArgs.builder().name("author").build();
+        FieldArgs yearField = NumericFieldArgs.builder().name("year").sortable().build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();

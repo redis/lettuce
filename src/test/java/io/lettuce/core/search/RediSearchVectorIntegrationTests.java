@@ -120,11 +120,10 @@ public class RediSearchVectorIntegrationTests {
         String indexName = "svs-vamana-basic-idx";
 
         // Create SVS-VAMANA vector field
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
-                .build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").svsVamana().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
 
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("svs:").on(CreateArgs.TargetType.HASH).build();
 
@@ -183,12 +182,11 @@ public class RediSearchVectorIntegrationTests {
         String indexName = "svs-vamana-advanced-idx";
 
         // Create SVS-VAMANA vector field with advanced parameters (no compression)
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(8).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
-                .attribute("CONSTRUCTION_WINDOW_SIZE", 128).attribute("GRAPH_MAX_DEGREE", 32)
-                .attribute("SEARCH_WINDOW_SIZE", 64).build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").svsVamana().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(8).distanceMetric(VectorFieldArgs.DistanceMetric.L2).attribute("CONSTRUCTION_WINDOW_SIZE", 128)
+                .attribute("GRAPH_MAX_DEGREE", 32).attribute("SEARCH_WINDOW_SIZE", 64).build();
 
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("advanced:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -253,12 +251,12 @@ public class RediSearchVectorIntegrationTests {
         String indexName = "svs-vamana-agg-idx";
 
         // Create SVS-VAMANA vector field optimized for aggregation (no compression)
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
-                .attribute("SEARCH_WINDOW_SIZE", 64).build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").svsVamana().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).attribute("SEARCH_WINDOW_SIZE", 64)
+                .build();
 
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").sortable().build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").sortable().build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("agg:").on(CreateArgs.TargetType.HASH).build();
 
@@ -324,12 +322,12 @@ public class RediSearchVectorIntegrationTests {
         for (String metric : metrics) {
             String indexName = "svs-vamana-" + metric.toLowerCase() + "-idx";
 
-            FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
+            FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").svsVamana()
                     .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3)
                     .distanceMetric(VectorFieldArgs.DistanceMetric.valueOf(metric)).attribute("CONSTRUCTION_WINDOW_SIZE", 64)
                     .build();
 
-            FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+            FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
             CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(metric.toLowerCase() + ":")
                     .on(CreateArgs.TargetType.HASH).build();
@@ -420,11 +418,11 @@ public class RediSearchVectorIntegrationTests {
         // Create FLAT vector index based on Redis documentation:
         // FT.CREATE documents ON HASH PREFIX 1 docs: SCHEMA doc_embedding VECTOR FLAT 6 TYPE FLOAT32 DIM 1536 DISTANCE_METRIC
         // COSINE
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("doc_embedding").flat()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4) // Using smaller dimensions for testing
+        FieldArgs vectorField = VectorFieldArgs.builder().name("doc_embedding").flat().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(4) // Using smaller dimensions for testing
                 .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(DOCS_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();
@@ -496,14 +494,14 @@ public class RediSearchVectorIntegrationTests {
     @Test
     void testHnswVectorIndexWithFiltering() {
         // Create HNSW vector index with custom parameters
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("movie_embedding").hnsw()
+        FieldArgs vectorField = VectorFieldArgs.builder().name("movie_embedding").hnsw()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
                 .attribute("M", 40).attribute("EF_CONSTRUCTION", 250).build();
 
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> genreField = TagFieldArgs.<String> builder().name("genre").build();
-        FieldArgs<String> yearField = NumericFieldArgs.<String> builder().name("year").sortable().build();
-        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").sortable().build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs genreField = TagFieldArgs.builder().name("genre").build();
+        FieldArgs yearField = NumericFieldArgs.builder().name("year").sortable().build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();
@@ -602,13 +600,13 @@ public class RediSearchVectorIntegrationTests {
     @Test
     void testVectorRangeQueries() {
         // Create vector index for range query testing
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("description_vector").flat()
+        FieldArgs vectorField = VectorFieldArgs.builder().name("description_vector").flat()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .build();
 
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
-        FieldArgs<String> typeField = TagFieldArgs.<String> builder().name("type").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs typeField = TagFieldArgs.builder().name("type").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();
@@ -702,11 +700,10 @@ public class RediSearchVectorIntegrationTests {
         for (String metric : metrics) {
             String indexName = "test-" + metric.toLowerCase() + "-idx";
 
-            FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").flat()
-                    .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(2)
-                    .distanceMetric(VectorFieldArgs.DistanceMetric.valueOf(metric)).build();
+            FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").flat().type(VectorFieldArgs.VectorType.FLOAT32)
+                    .dimensions(2).distanceMetric(VectorFieldArgs.DistanceMetric.valueOf(metric)).build();
 
-            FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+            FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
             CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("test:").on(CreateArgs.TargetType.HASH)
                     .build();
@@ -753,12 +750,12 @@ public class RediSearchVectorIntegrationTests {
     @Test
     void testJsonVectorStorage() {
         // Create vector index for JSON documents with field aliases (key for proper search syntax)
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("$.vector").as("vector").flat()
+        FieldArgs vectorField = VectorFieldArgs.builder().name("$.vector").as("vector").flat()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .build();
 
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("$.title").as("title").build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("$.category").as("category").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("$.title").as("title").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("$.category").as("category").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("json:").on(CreateArgs.TargetType.JSON)
                 .build();
@@ -817,13 +814,13 @@ public class RediSearchVectorIntegrationTests {
     @Test
     void testAdvancedVectorSearchFeatures() {
         // Create HNSW index for advanced testing
-        VectorFieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("content_vector").hnsw()
+        VectorFieldArgs vectorField = VectorFieldArgs.builder().name("content_vector").hnsw()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .attribute("M", 16).attribute("EF_CONSTRUCTION", 200).build();
 
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> statusField = TagFieldArgs.<String> builder().name("status").build();
-        FieldArgs<String> priorityField = NumericFieldArgs.<String> builder().name("priority").sortable().build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs statusField = TagFieldArgs.builder().name("status").build();
+        FieldArgs priorityField = NumericFieldArgs.builder().name("priority").sortable().build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("task:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -915,11 +912,10 @@ public class RediSearchVectorIntegrationTests {
     @Test
     void testVectorTypesAndPrecision() {
         // Test FLOAT64 vectors
-        FieldArgs<String> float64Field = VectorFieldArgs.<String> builder().name("embedding_f64").flat()
-                .type(VectorFieldArgs.VectorType.FLOAT64).dimensions(2).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
-                .build();
+        FieldArgs float64Field = VectorFieldArgs.builder().name("embedding_f64").flat().type(VectorFieldArgs.VectorType.FLOAT64)
+                .dimensions(2).distanceMetric(VectorFieldArgs.DistanceMetric.L2).build();
 
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("precision:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -990,9 +986,8 @@ public class RediSearchVectorIntegrationTests {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
 
         // Create a simple vector index
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("test_vector").flat()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
-                .build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("test_vector").flat().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("error:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -1106,9 +1101,9 @@ public class RediSearchVectorIntegrationTests {
             redisMixed.hset(keyName, "vector_emb", fakeVecBytes);
 
             // Create index with both text and vector fields
-            FieldArgs<String> textField = TagFieldArgs.<String> builder().name("first_name").build();
+            FieldArgs textField = TagFieldArgs.builder().name("first_name").build();
 
-            FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embeddings_bio").hnsw()
+            FieldArgs vectorField = VectorFieldArgs.builder().name("embeddings_bio").hnsw()
                     .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4)
                     .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
 
@@ -1181,19 +1176,19 @@ public class RediSearchVectorIntegrationTests {
         String fieldName = "embedding_" + typeName.toLowerCase();
 
         // Create vector field with appropriate algorithm based on type
-        FieldArgs<String> vectorField;
+        FieldArgs vectorField;
         if (vectorType == VectorFieldArgs.VectorType.INT8) {
             // INT8 with FLAT algorithm and L2 distance
-            vectorField = VectorFieldArgs.<String> builder().name(fieldName).flat().type(vectorType).dimensions(4)
+            vectorField = VectorFieldArgs.builder().name(fieldName).flat().type(vectorType).dimensions(4)
                     .distanceMetric(VectorFieldArgs.DistanceMetric.L2).build();
         } else {
             // UINT8 with HNSW algorithm and COSINE distance
-            vectorField = VectorFieldArgs.<String> builder().name(fieldName).hnsw().type(vectorType).dimensions(4)
+            vectorField = VectorFieldArgs.builder().name(fieldName).hnsw().type(vectorType).dimensions(4)
                     .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).attribute("M", 16).attribute("EF_CONSTRUCTION", 200)
                     .build();
         }
 
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(prefix).on(CreateArgs.TargetType.HASH).build();
 

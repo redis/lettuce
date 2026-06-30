@@ -78,14 +78,13 @@ public class FtHybridIntegrationTests {
         redis.flushall();
 
         // Create index with all needed fields
-        FieldArgs titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs categoryField = TagFieldArgs.<String> builder().name("category").build();
-        FieldArgs brandField = TagFieldArgs.<String> builder().name("brand").build();
-        FieldArgs priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
-        FieldArgs ratingField = NumericFieldArgs.<String> builder().name("rating").sortable().build();
-        FieldArgs vectorField = VectorFieldArgs.<String> builder().name("embedding").hnsw()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(8).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
-                .build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
+        FieldArgs brandField = TagFieldArgs.builder().name("brand").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").hnsw().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(8).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
 
         CreateArgs createArgs = CreateArgs.builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
 

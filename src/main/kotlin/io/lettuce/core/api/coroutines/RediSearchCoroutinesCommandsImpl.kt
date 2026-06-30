@@ -42,10 +42,10 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RediSearchReactiveCommands<K, V>) :
     RediSearchCoroutinesCommands<K, V> {
 
-    override suspend fun ftCreate(index: String, arguments: CreateArgs<K>, fieldArgs: List<FieldArgs<K>>): String? =
+    override suspend fun ftCreate(index: String, arguments: CreateArgs<K>, fieldArgs: List<FieldArgs>): String? =
         ops.ftCreate(index, arguments, fieldArgs).awaitFirstOrNull()
 
-    override suspend fun ftCreate(index: String, fieldArgs: List<FieldArgs<K>>): String? =
+    override suspend fun ftCreate(index: String, fieldArgs: List<FieldArgs>): String? =
         ops.ftCreate(index, fieldArgs).awaitFirstOrNull()
 
     override suspend fun ftAliasadd(alias: String, index: String): String? =
@@ -57,13 +57,13 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftAliasdel(alias: String): String? =
         ops.ftAliasdel(alias).awaitFirstOrNull()
 
-    override suspend fun ftAlter(index: String, skipInitialScan: Boolean, fieldArgs: List<FieldArgs<K>>): String? =
+    override suspend fun ftAlter(index: String, skipInitialScan: Boolean, fieldArgs: List<FieldArgs>): String? =
         ops.ftAlter(index, skipInitialScan, fieldArgs).awaitFirstOrNull()
 
      override suspend fun ftTagvals(index: String, fieldName: String): List<V> =
          ops.ftTagvals(index, fieldName).asFlow().toList()
 
-    override suspend fun ftAlter(index: String, fieldArgs: List<FieldArgs<K>>): String? =
+    override suspend fun ftAlter(index: String, fieldArgs: List<FieldArgs>): String? =
         ops.ftAlter(index, fieldArgs).awaitFirstOrNull()
 
     override suspend fun ftDropindex(index: String, deleteDocuments: Boolean): String? =

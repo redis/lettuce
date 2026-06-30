@@ -70,7 +70,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param fieldArgs the fieldArgs
      * @return the result of the create command
      */
-    public Command<K, V, String> ftCreate(String index, CreateArgs<K> createArgs, List<FieldArgs<K>> fieldArgs) {
+    public Command<K, V, String> ftCreate(String index, CreateArgs<K> createArgs, List<FieldArgs> fieldArgs) {
         LettuceAssert.notNull(index, "Index must not be null");
         notEmpty(fieldArgs.toArray());
 
@@ -82,7 +82,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(CommandKeyword.SCHEMA);
 
-        for (FieldArgs<K> arg : fieldArgs) {
+        for (FieldArgs arg : fieldArgs) {
             arg.build(args);
         }
 
@@ -253,7 +253,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param fieldArgs the field arguments for the new attributes to add
      * @return the result of the alter command
      */
-    public Command<K, V, String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+    public Command<K, V, String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs) {
         LettuceAssert.notNull(index, "Index must not be null");
         notEmpty(fieldArgs.toArray());
 
@@ -266,7 +266,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.add(CommandKeyword.SCHEMA);
         args.add(CommandKeyword.ADD);
 
-        for (FieldArgs<K> arg : fieldArgs) {
+        for (FieldArgs arg : fieldArgs) {
             arg.build(args);
         }
 

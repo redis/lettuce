@@ -133,11 +133,11 @@ public class RediSearchIntegrationTests {
         // Create index based on Redis documentation example:
         // FT.CREATE idx ON HASH PREFIX 1 blog:post: SCHEMA title TEXT WEIGHT 5.0 content TEXT author TAG created_date NUMERIC
         // SORTABLE views NUMERIC
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").weight(5).build();
-        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
-        FieldArgs<String> authorField = TagFieldArgs.<String> builder().name("author").build();
-        FieldArgs<String> createdDateField = NumericFieldArgs.<String> builder().name("created_date").sortable().build();
-        FieldArgs<String> viewsField = NumericFieldArgs.<String> builder().name("views").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").weight(5).build();
+        FieldArgs contentField = TextFieldArgs.builder().name("content").build();
+        FieldArgs authorField = TagFieldArgs.builder().name("author").build();
+        FieldArgs createdDateField = NumericFieldArgs.builder().name("created_date").sortable().build();
+        FieldArgs viewsField = NumericFieldArgs.builder().name("views").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();
@@ -203,8 +203,8 @@ public class RediSearchIntegrationTests {
     @Test
     void testSearchOptionsAndModifiers() {
         // Create a simple index for testing search options
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").sortable().build();
-        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").sortable().build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").sortable().build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();
@@ -289,8 +289,8 @@ public class RediSearchIntegrationTests {
     void testTagFieldsWithCustomSeparator() {
         // Create index with TAG field using custom separator
         // FT.CREATE books-idx ON HASH PREFIX 1 book:details SCHEMA title TEXT categories TAG SEPARATOR ";"
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> categoriesField = TagFieldArgs.<String> builder().name("categories").separator(";").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs categoriesField = TagFieldArgs.builder().name("categories").separator(";").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();
@@ -340,9 +340,9 @@ public class RediSearchIntegrationTests {
     @Test
     void testNumericFieldOperations() {
         // Create index with numeric fields for testing range queries
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
-        FieldArgs<String> stockField = NumericFieldArgs.<String> builder().name("stock").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
+        FieldArgs stockField = NumericFieldArgs.builder().name("stock").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();
@@ -409,9 +409,9 @@ public class RediSearchIntegrationTests {
     @Test
     void testAdvancedSearchFeatures() {
         // Create a simple index for testing advanced features
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs contentField = TextFieldArgs.builder().name("content").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();
@@ -469,10 +469,10 @@ public class RediSearchIntegrationTests {
     @Test
     void testComplexQueriesAndBooleanOperations() {
         // Create index for testing complex queries
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("description").build();
-        FieldArgs<String> tagsField = TagFieldArgs.<String> builder().name("tags").build();
-        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs descriptionField = TextFieldArgs.builder().name("description").build();
+        FieldArgs tagsField = TagFieldArgs.builder().name("tags").build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();
@@ -549,7 +549,7 @@ public class RediSearchIntegrationTests {
     @Test
     void testEmptyResultsAndEdgeCases() {
         // Create a simple index
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH)
                 .build();
@@ -592,8 +592,7 @@ public class RediSearchIntegrationTests {
         String testIndex = "alter-test-idx";
 
         // Create initial index with one field
-        List<FieldArgs<String>> initialFields = Collections
-                .singletonList(TextFieldArgs.<String> builder().name("title").build());
+        List<FieldArgs> initialFields = Collections.singletonList(TextFieldArgs.builder().name("title").build());
 
         assertThat(redis.ftCreate(testIndex, initialFields)).isEqualTo("OK");
 
@@ -607,9 +606,8 @@ public class RediSearchIntegrationTests {
         assertThat(initialSearch.getCount()).isEqualTo(1);
 
         // Add new fields to the index
-        List<FieldArgs<String>> newFields = Arrays.asList(
-                NumericFieldArgs.<String> builder().name("published_at").sortable().build(),
-                TextFieldArgs.<String> builder().name("author").build());
+        List<FieldArgs> newFields = Arrays.asList(NumericFieldArgs.builder().name("published_at").sortable().build(),
+                TextFieldArgs.builder().name("author").build());
 
         assertThat(redis.ftAlter(testIndex, false, newFields)).isEqualTo("OK");
 
@@ -646,8 +644,7 @@ public class RediSearchIntegrationTests {
         String testIndex = "alter-skip-test-idx";
 
         // Create initial index
-        List<FieldArgs<String>> initialFields = Collections
-                .singletonList(TextFieldArgs.<String> builder().name("title").build());
+        List<FieldArgs> initialFields = Collections.singletonList(TextFieldArgs.builder().name("title").build());
 
         assertThat(redis.ftCreate(testIndex, initialFields)).isEqualTo("OK");
 
@@ -658,8 +655,7 @@ public class RediSearchIntegrationTests {
         redis.hset("doc:1", doc1);
 
         // Add new field with SKIPINITIALSCAN
-        List<FieldArgs<String>> newFields = Collections
-                .singletonList(TextFieldArgs.<String> builder().name("category").build());
+        List<FieldArgs> newFields = Collections.singletonList(TextFieldArgs.builder().name("category").build());
 
         assertThat(redis.ftAlter(testIndex, true, newFields)).isEqualTo("OK");
 
@@ -690,7 +686,7 @@ public class RediSearchIntegrationTests {
         String alias = "test-alias";
 
         // Create test indexes
-        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+        List<FieldArgs> fields = Collections.singletonList(TextFieldArgs.builder().name("title").build());
 
         assertThat(redis.ftCreate(testIndex, fields)).isEqualTo("OK");
         assertThat(redis.ftCreate(testIndex2, fields)).isEqualTo("OK");
@@ -736,8 +732,8 @@ public class RediSearchIntegrationTests {
         String testIndex = "tagvals-test-idx";
 
         // Create index with a tag field
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TagFieldArgs.<String> builder().name("category").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TagFieldArgs.builder().name("category").build());
 
         assertThat(redis.ftCreate(testIndex, fields)).isEqualTo("OK");
 
@@ -903,8 +899,8 @@ public class RediSearchIntegrationTests {
         String testIndex = "spellcheck-idx";
 
         // Create field definitions
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs contentField = TextFieldArgs.builder().name("content").build();
 
         // Create an index with some documents
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
@@ -988,8 +984,8 @@ public class RediSearchIntegrationTests {
         String testIndex = "explain-idx";
 
         // Create field definitions
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs contentField = TextFieldArgs.builder().name("content").build();
 
         // Create an index
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
@@ -1031,7 +1027,7 @@ public class RediSearchIntegrationTests {
         List<String> initialIndexes = redis.ftList();
 
         // Create field definitions
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
 
         // Create first index
         CreateArgs<String> createArgs1 = CreateArgs.<String> builder().withPrefix("doc1:").on(CreateArgs.TargetType.HASH)
@@ -1068,9 +1064,9 @@ public class RediSearchIntegrationTests {
         String testIndex = "alias-field-idx";
 
         // Create index with multiple fields
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> authorField = TextFieldArgs.<String> builder().name("author").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs authorField = TextFieldArgs.builder().name("author").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("book:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -1152,8 +1148,8 @@ public class RediSearchIntegrationTests {
         String testIndex = "synonym-idx";
 
         // Create field definitions
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs contentField = TextFieldArgs.builder().name("content").build();
 
         // Create an index
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
@@ -1214,13 +1210,13 @@ public class RediSearchIntegrationTests {
     void ftHybridAdvancedMultiQueryWithPostProcessing() {
         String indexName = "idx:ecommerce";
 
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
-        FieldArgs<String> brandField = TagFieldArgs.<String> builder().name("brand").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").build();
-        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
+        FieldArgs brandField = TagFieldArgs.builder().name("brand").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").build();
 
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("image_embedding").hnsw()
+        FieldArgs vectorField = VectorFieldArgs.<String> builder().name("image_embedding").hnsw()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(10).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .build();
 
@@ -1331,7 +1327,7 @@ public class RediSearchIntegrationTests {
 
             testRedis.ftCreate(testIndex,
                     CreateArgs.<String> builder().on(CreateArgs.TargetType.JSON).withPrefix(prefix).build(),
-                    Collections.singletonList(NumericFieldArgs.<String> builder().name("$.pos").as("pos").build()));
+                    Collections.singletonList(NumericFieldArgs.builder().name("$.pos").as("pos").build()));
 
             // Add sorting by pos to ensure deterministic order
             SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder()

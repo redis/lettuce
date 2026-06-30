@@ -92,9 +92,9 @@ class RediSearchCommandBuilderUnitTests {
     // FT.CREATE idx ON HASH PREFIX 1 blog:post: SCHEMA title TEXT SORTABLE published_at NUMERIC SORTABLE category TAG SORTABLE
     @Test
     void shouldCorrectlyConstructFtCreateCommandScenario1() {
-        FieldArgs<String> fieldArgs1 = TextFieldArgs.<String> builder().name(FIELD1_NAME).sortable().build();
-        FieldArgs<String> fieldArgs2 = NumericFieldArgs.<String> builder().name(FIELD2_NAME).sortable().build();
-        FieldArgs<String> fieldArgs3 = TagFieldArgs.<String> builder().name(FIELD3_NAME).sortable().build();
+        FieldArgs fieldArgs1 = TextFieldArgs.builder().name(FIELD1_NAME).sortable().build();
+        FieldArgs fieldArgs2 = NumericFieldArgs.builder().name(FIELD2_NAME).sortable().build();
+        FieldArgs fieldArgs3 = TagFieldArgs.builder().name(FIELD3_NAME).sortable().build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs,
@@ -127,8 +127,8 @@ class RediSearchCommandBuilderUnitTests {
     // FT.CREATE idx ON HASH PREFIX 1 blog:post: SCHEMA sku AS sku_text TEXT sku AS sku_tag TAG SORTABLE
     @Test
     void shouldCorrectlyConstructFtCreateCommandScenario2() {
-        FieldArgs<String> fieldArgs1 = TextFieldArgs.<String> builder().name(FIELD4_NAME).as(FIELD4_ALIAS1).build();
-        FieldArgs<String> fieldArgs2 = TagFieldArgs.<String> builder().name(FIELD4_NAME).as(FIELD4_ALIAS2).sortable().build();
+        FieldArgs fieldArgs1 = TextFieldArgs.builder().name(FIELD4_NAME).as(FIELD4_ALIAS1).build();
+        FieldArgs fieldArgs2 = TagFieldArgs.builder().name(FIELD4_NAME).as(FIELD4_ALIAS2).sortable().build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs, Arrays.asList(fieldArgs1, fieldArgs2));
@@ -529,7 +529,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.ALTER idx SCHEMA ADD title TEXT
     @Test
     void shouldCorrectlyConstructFtAlterCommand() {
-        FieldArgs<String> fieldArgs = TextFieldArgs.<String> builder().name(FIELD1_NAME).build();
+        FieldArgs fieldArgs = TextFieldArgs.builder().name(FIELD1_NAME).build();
 
         Command<String, String, String> command = builder.ftAlter(MY_KEY, false, Collections.singletonList(fieldArgs));
         ByteBuf buf = Unpooled.directBuffer();
@@ -549,8 +549,8 @@ class RediSearchCommandBuilderUnitTests {
     // FT.ALTER idx SKIPINITIALSCAN SCHEMA ADD title TEXT published_at NUMERIC SORTABLE
     @Test
     void shouldCorrectlyConstructFtAlterCommandWithSkipInitialScan() {
-        FieldArgs<String> fieldArgs1 = TextFieldArgs.<String> builder().name(FIELD1_NAME).build();
-        FieldArgs<String> fieldArgs2 = NumericFieldArgs.<String> builder().name(FIELD2_NAME).sortable().build();
+        FieldArgs fieldArgs1 = TextFieldArgs.builder().name(FIELD1_NAME).build();
+        FieldArgs fieldArgs2 = NumericFieldArgs.builder().name(FIELD2_NAME).sortable().build();
 
         Command<String, String, String> command = builder.ftAlter(MY_KEY, true, Arrays.asList(fieldArgs1, fieldArgs2));
         ByteBuf buf = Unpooled.directBuffer();
