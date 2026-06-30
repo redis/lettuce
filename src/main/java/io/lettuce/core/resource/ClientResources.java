@@ -63,6 +63,12 @@ import io.netty.util.concurrent.Future;
  */
 public interface ClientResources {
 
+    public static interface ResourceAssignable {
+
+        void accept(ClientResources clientResources);
+
+    }
+
     /**
      * Create a new {@link ClientResources} using default settings.
      *

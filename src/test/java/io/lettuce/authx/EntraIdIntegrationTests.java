@@ -1,6 +1,7 @@
 package io.lettuce.authx;
 
 import io.lettuce.core.*;
+import io.lettuce.core.RedisCredentialsProvider.CredentialsSubscription;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -114,12 +115,16 @@ public class EntraIdIntegrationTests {
         commandThread.start();
 
         CountDownLatch latch = new CountDownLatch(10); // Wait for at least 10 token renewalss
-        credentialsProvider.credentials().subscribe(cred -> latch.countDown());
+        CredentialsSubscription subscription = credentialsProvider.subscribeToCredentials(cred -> latch.countDown(), t -> {
+        });
+        try {
+            assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue(); // Wait to reach 10 renewals
+            commandThread.join(); // Wait for the command thread to finish
 
-        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue(); // Wait to reach 10 renewals
-        commandThread.join(); // Wait for the command thread to finish
-
-        assertThat(commandCycleCount.get()).isGreaterThanOrEqualTo(10);
+            assertThat(commandCycleCount.get()).isGreaterThanOrEqualTo(10);
+        } finally {
+            subscription.close();
+        }
     }
 
     // T.2.2
@@ -144,13 +149,17 @@ public class EntraIdIntegrationTests {
             pubsubThread.start();
 
             CountDownLatch latch = new CountDownLatch(10);
-            credentialsProvider.credentials().subscribe(cred -> latch.countDown());
+            CredentialsSubscription subscription = credentialsProvider.subscribeToCredentials(cred -> latch.countDown(), t -> {
+            });
+            try {
+                assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue(); // Wait for at least 10 token renewals
+                pubsubThread.join(); // Wait for the pub/sub thread to finish
 
-            assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue(); // Wait for at least 10 token renewals
-            pubsubThread.join(); // Wait for the pub/sub thread to finish
-
-            Wait.untilEquals(100, () -> listener.getMessages().size()).waitOrTimeout();
-            assertThat(listener.getMessages()).allMatch(msg -> msg.equals("message"));
+                Wait.untilEquals(100, () -> listener.getMessages().size()).waitOrTimeout();
+                assertThat(listener.getMessages()).allMatch(msg -> msg.equals("message"));
+            } finally {
+                subscription.close();
+            }
         }
     }
 
