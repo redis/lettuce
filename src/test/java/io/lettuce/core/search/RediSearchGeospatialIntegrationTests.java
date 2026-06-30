@@ -86,9 +86,9 @@ public class RediSearchGeospatialIntegrationTests {
     @Test
     void testGeoFieldBasicFunctionality() {
         // Create index with GEO field for location data
-        FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("location").build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
-        FieldArgs<String> cityField = TextFieldArgs.<String> builder().name("city").build();
+        FieldArgs locationField = GeoFieldArgs.builder().name("location").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs cityField = TextFieldArgs.builder().name("city").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("store:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -145,8 +145,8 @@ public class RediSearchGeospatialIntegrationTests {
     @Test
     void testGeoFieldMultipleLocations() {
         // Create index for products with multiple store locations
-        FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("locations").build();
-        FieldArgs<String> productField = TextFieldArgs.<String> builder().name("product").build();
+        FieldArgs locationField = GeoFieldArgs.builder().name("locations").build();
+        FieldArgs productField = TextFieldArgs.builder().name("product").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("product:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -182,8 +182,8 @@ public class RediSearchGeospatialIntegrationTests {
     @Test
     void testGeoshapePointSphericalCoordinates() {
         // Create index with GEOSHAPE field using spherical coordinates (default)
-        FieldArgs<String> geomField = GeoshapeFieldArgs.<String> builder().name("geom").spherical().build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs geomField = GeoshapeFieldArgs.builder().name("geom").spherical().build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("location:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -229,8 +229,8 @@ public class RediSearchGeospatialIntegrationTests {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
 
         // Create index with GEOSHAPE field using Cartesian coordinates for easier testing
-        FieldArgs<String> geomField = GeoshapeFieldArgs.<String> builder().name("geom").flat().build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs geomField = GeoshapeFieldArgs.builder().name("geom").flat().build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("shape:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -313,11 +313,11 @@ public class RediSearchGeospatialIntegrationTests {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
 
         // Create index with mixed field types including geospatial
-        FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("location").build();
-        FieldArgs<String> serviceAreaField = GeoshapeFieldArgs.<String> builder().name("service_area").spherical().build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
-        FieldArgs<String> categoryField = TextFieldArgs.<String> builder().name("category").build();
-        FieldArgs<String> ratingField = TextFieldArgs.<String> builder().name("rating").build();
+        FieldArgs locationField = GeoFieldArgs.builder().name("location").build();
+        FieldArgs serviceAreaField = GeoshapeFieldArgs.builder().name("service_area").spherical().build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs categoryField = TextFieldArgs.builder().name("category").build();
+        FieldArgs ratingField = TextFieldArgs.builder().name("rating").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("business:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -377,8 +377,8 @@ public class RediSearchGeospatialIntegrationTests {
     @Test
     void testGeospatialUnitsAndCoordinateSystems() {
         // Create index for testing different units
-        FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("location").build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs locationField = GeoFieldArgs.builder().name("location").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("poi:").on(CreateArgs.TargetType.HASH).build();
 
@@ -423,9 +423,9 @@ public class RediSearchGeospatialIntegrationTests {
     @Test
     void testGeospatialErrorHandling() {
         // Create index for error testing
-        FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("location").build();
-        FieldArgs<String> geomField = GeoshapeFieldArgs.<String> builder().name("geom").build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs locationField = GeoFieldArgs.builder().name("location").build();
+        FieldArgs geomField = GeoshapeFieldArgs.builder().name("geom").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("test:").on(CreateArgs.TargetType.HASH)
                 .build();

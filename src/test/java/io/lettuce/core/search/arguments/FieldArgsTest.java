@@ -27,7 +27,7 @@ class FieldArgsTest {
     /**
      * Concrete implementation of FieldArgs for testing purposes.
      */
-    private static class TestFieldArgs<K> extends FieldArgs<K> {
+    private static class TestFieldArgs extends FieldArgs {
 
         @Override
         public String getFieldType() {
@@ -35,18 +35,18 @@ class FieldArgsTest {
         }
 
         @Override
-        protected void buildTypeSpecificArgs(CommandArgs<K, ?> args) {
+        protected void buildTypeSpecificArgs(CommandArgs<?, ?> args) {
             // No type-specific arguments for test field
         }
 
-        public static <K> Builder<K> builder() {
-            return new Builder<>();
+        public static Builder builder() {
+            return new Builder();
         }
 
-        public static class Builder<K> extends FieldArgs.Builder<K, TestFieldArgs<K>, Builder<K>> {
+        public static class Builder extends FieldArgs.Builder<TestFieldArgs, Builder> {
 
             public Builder() {
-                super(new TestFieldArgs<>());
+                super(new TestFieldArgs());
             }
 
         }
@@ -55,7 +55,7 @@ class FieldArgsTest {
 
     @Test
     void testDefaultFieldArgs() {
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("test_field").build();
+        TestFieldArgs field = TestFieldArgs.builder().name("test_field").build();
 
         assertThat(field.getName()).isEqualTo("test_field");
         assertThat(field.getAs()).isEmpty();
@@ -69,7 +69,7 @@ class FieldArgsTest {
 
     @Test
     void testFieldArgsWithAlias() {
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("complex_field_name").as("simple_alias").build();
+        TestFieldArgs field = TestFieldArgs.builder().name("complex_field_name").as("simple_alias").build();
 
         assertThat(field.getName()).isEqualTo("complex_field_name");
         assertThat(field.getAs()).hasValue("simple_alias");
@@ -77,7 +77,7 @@ class FieldArgsTest {
 
     @Test
     void testFieldArgsWithSortable() {
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("sortable_field").sortable().build();
+        TestFieldArgs field = TestFieldArgs.builder().name("sortable_field").sortable().build();
 
         assertThat(field.isSortable()).isTrue();
         assertThat(field.isUnNormalizedForm()).isFalse();
@@ -85,8 +85,7 @@ class FieldArgsTest {
 
     @Test
     void testFieldArgsWithSortableAndUnnormalized() {
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("sortable_field").sortable().unNormalizedForm()
-                .build();
+        TestFieldArgs field = TestFieldArgs.builder().name("sortable_field").sortable().unNormalizedForm().build();
 
         assertThat(field.isSortable()).isTrue();
         assertThat(field.isUnNormalizedForm()).isTrue();
@@ -94,29 +93,29 @@ class FieldArgsTest {
 
     @Test
     void testFieldArgsWithNoIndex() {
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("no_index_field").noIndex().build();
+        TestFieldArgs field = TestFieldArgs.builder().name("no_index_field").noIndex().build();
 
         assertThat(field.isNoIndex()).isTrue();
     }
 
     @Test
     void testFieldArgsWithIndexEmpty() {
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("index_empty_field").indexEmpty().build();
+        TestFieldArgs field = TestFieldArgs.builder().name("index_empty_field").indexEmpty().build();
 
         assertThat(field.isIndexEmpty()).isTrue();
     }
 
     @Test
     void testFieldArgsWithIndexMissing() {
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("index_missing_field").indexMissing().build();
+        TestFieldArgs field = TestFieldArgs.builder().name("index_missing_field").indexMissing().build();
 
         assertThat(field.isIndexMissing()).isTrue();
     }
 
     @Test
     void testFieldArgsWithAllOptions() {
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("full_field").as("alias").sortable()
-                .unNormalizedForm().noIndex().indexEmpty().indexMissing().build();
+        TestFieldArgs field = TestFieldArgs.builder().name("full_field").as("alias").sortable().unNormalizedForm().noIndex()
+                .indexEmpty().indexMissing().build();
 
         assertThat(field.getName()).isEqualTo("full_field");
         assertThat(field.getAs()).hasValue("alias");
@@ -129,8 +128,8 @@ class FieldArgsTest {
 
     @Test
     void testFieldArgsBuild() {
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("test_field").as("alias").sortable()
-                .unNormalizedForm().noIndex().indexEmpty().indexMissing().build();
+        TestFieldArgs field = TestFieldArgs.builder().name("test_field").as("alias").sortable().unNormalizedForm().noIndex()
+                .indexEmpty().indexMissing().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -149,7 +148,7 @@ class FieldArgsTest {
 
     @Test
     void testFieldArgsMinimalBuild() {
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("simple_field").build();
+        TestFieldArgs field = TestFieldArgs.builder().name("simple_field").build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -167,7 +166,7 @@ class FieldArgsTest {
 
     @Test
     void testFieldArgsSortableWithoutUnnormalized() {
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("sortable_field").sortable().build();
+        TestFieldArgs field = TestFieldArgs.builder().name("sortable_field").sortable().build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         field.build(commandArgs);
@@ -180,8 +179,8 @@ class FieldArgsTest {
     @Test
     void testBuilderMethodChaining() {
         // Test that builder methods return the correct type for method chaining
-        TestFieldArgs<String> field = TestFieldArgs.<String> builder().name("chained_field").as("chained_alias").sortable()
-                .unNormalizedForm().noIndex().indexEmpty().indexMissing().build();
+        TestFieldArgs field = TestFieldArgs.builder().name("chained_field").as("chained_alias").sortable().unNormalizedForm()
+                .noIndex().indexEmpty().indexMissing().build();
 
         assertThat(field.getName()).isEqualTo("chained_field");
         assertThat(field.getAs()).hasValue("chained_alias");

@@ -92,9 +92,9 @@ public class RedisJsonIndexingIntegrationTests {
         // Create index based on Redis documentation example:
         // FT.CREATE itemIdx ON JSON PREFIX 1 item: SCHEMA $.name AS name TEXT $.description as description TEXT $.price AS
         // price NUMERIC
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("$.name").as("name").build();
-        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("$.price").as("price").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("$.name").as("name").build();
+        FieldArgs descriptionField = TextFieldArgs.builder().name("$.description").as("description").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("$.price").as("price").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
                 .build();
@@ -145,9 +145,9 @@ public class RedisJsonIndexingIntegrationTests {
     void testJsonArraysAsTagFields() {
         // Create index with TAG field for colors using wildcard JSONPath
         // FT.CREATE itemIdx2 ON JSON PREFIX 1 item: SCHEMA $.colors.* AS colors TAG $.name AS name TEXT
-        FieldArgs<String> colorsField = TagFieldArgs.<String> builder().name("$.colors.*").as("colors").build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("$.name").as("name").build();
-        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
+        FieldArgs colorsField = TagFieldArgs.builder().name("$.colors.*").as("colors").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("$.name").as("name").build();
+        FieldArgs descriptionField = TextFieldArgs.builder().name("$.description").as("description").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
                 .build();
@@ -197,9 +197,9 @@ public class RedisJsonIndexingIntegrationTests {
     void testJsonArraysAsTextFields() {
         // Create index with TEXT field for colors array
         // FT.CREATE itemIdx3 ON JSON PREFIX 1 item: SCHEMA $.colors AS colors TEXT $.name AS name TEXT
-        FieldArgs<String> colorsField = TextFieldArgs.<String> builder().name("$.colors").as("colors").build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("$.name").as("name").build();
-        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
+        FieldArgs colorsField = TextFieldArgs.builder().name("$.colors").as("colors").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("$.name").as("name").build();
+        FieldArgs descriptionField = TextFieldArgs.builder().name("$.description").as("description").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
                 .build();
@@ -235,7 +235,7 @@ public class RedisJsonIndexingIntegrationTests {
     void testJsonArraysAsNumericFields() {
         // Create index with NUMERIC field for max_level array
         // FT.CREATE itemIdx4 ON JSON PREFIX 1 item: SCHEMA $.max_level AS dB NUMERIC
-        FieldArgs<String> dbField = NumericFieldArgs.<String> builder().name("$.max_level").as("dB").build();
+        FieldArgs dbField = NumericFieldArgs.builder().name("$.max_level").as("dB").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
                 .build();
@@ -275,9 +275,9 @@ public class RedisJsonIndexingIntegrationTests {
     @Test
     void testFieldProjectionWithJsonPath() {
         // Create basic index
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("$.name").as("name").build();
-        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("$.price").as("price").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("$.name").as("name").build();
+        FieldArgs descriptionField = TextFieldArgs.builder().name("$.description").as("description").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("$.price").as("price").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
                 .build();
@@ -330,9 +330,8 @@ public class RedisJsonIndexingIntegrationTests {
     void testJsonObjectIndexing() {
         // Create index for individual object elements
         // FT.CREATE itemIdx ON JSON SCHEMA $.connection.wireless AS wireless TAG $.connection.type AS connectionType TEXT
-        FieldArgs<String> wirelessField = TagFieldArgs.<String> builder().name("$.connection.wireless").as("wireless").build();
-        FieldArgs<String> connectionTypeField = TextFieldArgs.<String> builder().name("$.connection.type").as("connectionType")
-                .build();
+        FieldArgs wirelessField = TagFieldArgs.builder().name("$.connection.wireless").as("wireless").build();
+        FieldArgs connectionTypeField = TextFieldArgs.builder().name("$.connection.type").as("connectionType").build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
                 .build();

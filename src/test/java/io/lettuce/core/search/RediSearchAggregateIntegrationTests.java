@@ -77,8 +77,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformBasicAggregation() {
         // Create an index with prefix
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TextFieldArgs.<String> builder().name("category").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TextFieldArgs.builder().name("category").build());
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
 
@@ -138,8 +138,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithArgs() {
         // Create an index
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TextFieldArgs.<String> builder().name("category").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TextFieldArgs.builder().name("category").build());
 
         assertThat(redis.ftCreate("args-test-idx", fields)).isEqualTo("OK");
 
@@ -185,8 +185,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithParams() {
         // Create an index
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TextFieldArgs.<String> builder().name("category").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TextFieldArgs.builder().name("category").build());
 
         assertThat(redis.ftCreate("params-test-idx", fields)).isEqualTo("OK");
 
@@ -231,8 +231,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithLoadAll() {
         // Create an index
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TextFieldArgs.<String> builder().name("category").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TextFieldArgs.builder().name("category").build());
 
         assertThat(redis.ftCreate("loadall-test-idx", fields)).isEqualTo("OK");
 
@@ -273,8 +273,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldHandleEmptyResults() {
         // Create an index
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TextFieldArgs.<String> builder().name("category").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TextFieldArgs.builder().name("category").build());
 
         assertThat(redis.ftCreate("empty-test-idx", fields)).isEqualTo("OK");
 
@@ -295,12 +295,12 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldDemonstrateAdvancedAggregationScenarios() {
         // Create an index for e-commerce data similar to Redis documentation examples
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TextFieldArgs.<String> builder().name("brand").sortable().build(),
-                TextFieldArgs.<String> builder().name("category").sortable().build(),
-                NumericFieldArgs.<String> builder().name("price").sortable().build(),
-                NumericFieldArgs.<String> builder().name("rating").sortable().build(),
-                NumericFieldArgs.<String> builder().name("stock").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TextFieldArgs.builder().name("brand").sortable().build(),
+                TextFieldArgs.builder().name("category").sortable().build(),
+                NumericFieldArgs.builder().name("price").sortable().build(),
+                NumericFieldArgs.builder().name("rating").sortable().build(),
+                NumericFieldArgs.builder().name("stock").sortable().build());
 
         assertThat(redis.ftCreate("products-idx", fields)).isEqualTo("OK");
 
@@ -512,11 +512,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldHandleNestedGroupByOperations() {
         // Create an index for hierarchical grouping scenarios
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("department").sortable().build(),
-                TextFieldArgs.<String> builder().name("category").sortable().build(),
-                TextFieldArgs.<String> builder().name("product").build(),
-                NumericFieldArgs.<String> builder().name("sales").sortable().build(),
-                NumericFieldArgs.<String> builder().name("profit").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("department").sortable().build(),
+                TextFieldArgs.builder().name("category").sortable().build(), TextFieldArgs.builder().name("product").build(),
+                NumericFieldArgs.builder().name("sales").sortable().build(),
+                NumericFieldArgs.builder().name("profit").sortable().build());
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("sales:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -589,10 +588,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldHandleAdvancedFilteringAndConditionals() {
         // Create an index for advanced filtering scenarios
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("status").sortable().build(),
-                TextFieldArgs.<String> builder().name("priority").sortable().build(),
-                NumericFieldArgs.<String> builder().name("score").sortable().build(),
-                NumericFieldArgs.<String> builder().name("age").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("status").sortable().build(),
+                TextFieldArgs.builder().name("priority").sortable().build(),
+                NumericFieldArgs.builder().name("score").sortable().build(),
+                NumericFieldArgs.builder().name("age").sortable().build());
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("task:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -659,10 +658,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldHandleAdvancedStatisticalFunctions() {
         // Create an index for statistical analysis
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("region").sortable().build(),
-                NumericFieldArgs.<String> builder().name("temperature").sortable().build(),
-                NumericFieldArgs.<String> builder().name("humidity").sortable().build(),
-                NumericFieldArgs.<String> builder().name("pressure").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("region").sortable().build(),
+                NumericFieldArgs.builder().name("temperature").sortable().build(),
+                NumericFieldArgs.builder().name("humidity").sortable().build(),
+                NumericFieldArgs.builder().name("pressure").sortable().build());
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("weather:").on(CreateArgs.TargetType.HASH)
                 .build();
@@ -719,7 +718,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldHandleTimeoutParameter() {
         // Create a simple index
-        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+        List<FieldArgs> fields = Collections.singletonList(TextFieldArgs.builder().name("title").build());
 
         assertThat(redis.ftCreate("timeout-test-idx", fields)).isEqualTo("OK");
 
@@ -747,10 +746,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithGroupBy() {
         // Create an index with numeric fields for aggregation
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TextFieldArgs.<String> builder().name("category").build(),
-                NumericFieldArgs.<String> builder().name("price").build(),
-                NumericFieldArgs.<String> builder().name("rating").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TextFieldArgs.builder().name("category").build(), NumericFieldArgs.builder().name("price").build(),
+                NumericFieldArgs.builder().name("rating").build());
 
         assertThat(redis.ftCreate("groupby-agg-test-idx", fields)).isEqualTo("OK");
 
@@ -808,10 +806,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithGroupByAndMultipleReducers() {
         // Create an index with numeric fields
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TextFieldArgs.<String> builder().name("category").build(),
-                NumericFieldArgs.<String> builder().name("price").build(),
-                NumericFieldArgs.<String> builder().name("stock").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TextFieldArgs.builder().name("category").build(), NumericFieldArgs.builder().name("price").build(),
+                NumericFieldArgs.builder().name("stock").build());
 
         assertThat(redis.ftCreate("multi-reducer-test-idx", fields)).isEqualTo("OK");
 
@@ -872,9 +869,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithSortBy() {
         // Create an index with sortable fields
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                NumericFieldArgs.<String> builder().name("price").sortable().build(),
-                NumericFieldArgs.<String> builder().name("rating").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                NumericFieldArgs.builder().name("price").sortable().build(),
+                NumericFieldArgs.builder().name("rating").sortable().build());
 
         assertThat(redis.ftCreate("sortby-test-idx", fields)).isEqualTo("OK");
 
@@ -921,9 +918,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithApply() {
         // Create an index with numeric fields
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                NumericFieldArgs.<String> builder().name("price").build(),
-                NumericFieldArgs.<String> builder().name("quantity").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                NumericFieldArgs.builder().name("price").build(), NumericFieldArgs.builder().name("quantity").build());
 
         assertThat(redis.ftCreate("apply-agg-test-idx", fields)).isEqualTo("OK");
 
@@ -966,8 +962,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithLimit() {
         // Create an index
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                NumericFieldArgs.<String> builder().name("score").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                NumericFieldArgs.builder().name("score").sortable().build());
 
         assertThat(redis.ftCreate("limit-test-idx", fields)).isEqualTo("OK");
 
@@ -1008,9 +1004,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithFilter() {
         // Create an index with numeric fields
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                NumericFieldArgs.<String> builder().name("price").build(),
-                NumericFieldArgs.<String> builder().name("rating").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                NumericFieldArgs.builder().name("price").build(), NumericFieldArgs.builder().name("rating").build());
 
         assertThat(redis.ftCreate("filter-test-idx", fields)).isEqualTo("OK");
 
@@ -1057,8 +1052,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithBasicCursor() {
         // Create an index
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TextFieldArgs.<String> builder().name("category").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TextFieldArgs.builder().name("category").build());
 
         assertThat(redis.ftCreate("cursor-basic-test-idx", fields)).isEqualTo("OK");
 
@@ -1108,8 +1103,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithCursorAndCount() {
         // Create an index
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                NumericFieldArgs.<String> builder().name("score").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                NumericFieldArgs.builder().name("score").build());
 
         assertThat(redis.ftCreate("cursor-count-test-idx", fields)).isEqualTo("OK");
 
@@ -1163,7 +1158,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithCursorAndMaxIdle() {
         // Create an index
-        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+        List<FieldArgs> fields = Collections.singletonList(TextFieldArgs.builder().name("title").build());
 
         assertThat(redis.ftCreate("cursor-maxidle-test-idx", fields)).isEqualTo("OK");
 
@@ -1201,7 +1196,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldDeleteCursorExplicitly() {
         // Create an index
-        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+        List<FieldArgs> fields = Collections.singletonList(TextFieldArgs.builder().name("title").build());
 
         assertThat(redis.ftCreate("cursor-delete-test-idx", fields)).isEqualTo("OK");
 
@@ -1235,8 +1230,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldHandleCursorPaginationCompletely() {
         // Create an index
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                NumericFieldArgs.<String> builder().name("id").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                NumericFieldArgs.builder().name("id").sortable().build());
         assertThat(redis.ftCreate("cursor-pagination-test-idx", fields)).isEqualTo("OK");
 
         // Add test documents
@@ -1290,10 +1285,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformCursorWithComplexAggregation() {
         // Create an index with multiple field types
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TextFieldArgs.<String> builder().name("category").build(),
-                NumericFieldArgs.<String> builder().name("price").build(),
-                NumericFieldArgs.<String> builder().name("rating").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TextFieldArgs.builder().name("category").build(), NumericFieldArgs.builder().name("price").build(),
+                NumericFieldArgs.builder().name("rating").build());
 
         assertThat(redis.ftCreate("cursor-complex-test-idx", fields)).isEqualTo("OK");
 
@@ -1387,7 +1381,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldHandleEmptyResultsWithCursor() {
         // Create an index
-        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+        List<FieldArgs> fields = Collections.singletonList(TextFieldArgs.builder().name("title").build());
 
         assertThat(redis.ftCreate("cursor-empty-test-idx", fields)).isEqualTo("OK");
 
@@ -1413,11 +1407,11 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithGroupByAndAdvancedReducers() {
         // Create an index with multiple field types for comprehensive grouping tests
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("department").sortable().build(),
-                TextFieldArgs.<String> builder().name("role").sortable().build(),
-                NumericFieldArgs.<String> builder().name("salary").sortable().build(),
-                NumericFieldArgs.<String> builder().name("experience").sortable().build(),
-                NumericFieldArgs.<String> builder().name("performance_score").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("department").sortable().build(),
+                TextFieldArgs.builder().name("role").sortable().build(),
+                NumericFieldArgs.builder().name("salary").sortable().build(),
+                NumericFieldArgs.builder().name("experience").sortable().build(),
+                NumericFieldArgs.builder().name("performance_score").sortable().build());
 
         assertThat(redis.ftCreate("groupby-advanced-test-idx", fields)).isEqualTo("OK");
 
@@ -1534,11 +1528,11 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     void shouldPerformAggregationWithSortByAndMaxOptimization() {
         // Create an index with sortable numeric fields for testing sorting
         // functionality
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("product_name").build(),
-                TextFieldArgs.<String> builder().name("category").sortable().build(),
-                NumericFieldArgs.<String> builder().name("price").sortable().build(),
-                NumericFieldArgs.<String> builder().name("rating").sortable().build(),
-                NumericFieldArgs.<String> builder().name("sales_count").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("product_name").build(),
+                TextFieldArgs.builder().name("category").sortable().build(),
+                NumericFieldArgs.builder().name("price").sortable().build(),
+                NumericFieldArgs.builder().name("rating").sortable().build(),
+                NumericFieldArgs.builder().name("sales_count").sortable().build());
 
         assertThat(redis.ftCreate("sortby-max-test-idx", fields)).isEqualTo("OK");
 
@@ -1611,11 +1605,11 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithGroupByAndComplexReducers() {
         // Create an index for testing advanced reducer functions with grouping
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("region").sortable().build(),
-                TextFieldArgs.<String> builder().name("product_type").sortable().build(),
-                NumericFieldArgs.<String> builder().name("revenue").sortable().build(),
-                NumericFieldArgs.<String> builder().name("units_sold").sortable().build(),
-                NumericFieldArgs.<String> builder().name("profit_margin").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("region").sortable().build(),
+                TextFieldArgs.builder().name("product_type").sortable().build(),
+                NumericFieldArgs.builder().name("revenue").sortable().build(),
+                NumericFieldArgs.builder().name("units_sold").sortable().build(),
+                NumericFieldArgs.builder().name("profit_margin").sortable().build());
 
         assertThat(redis.ftCreate("groupby-complex-test-idx", fields)).isEqualTo("OK");
 
@@ -1720,11 +1714,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationWithSortByMultipleFields() {
         // Create an index for testing multi-field sorting with withCount
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("team").sortable().build(),
-                TextFieldArgs.<String> builder().name("player").build(),
-                NumericFieldArgs.<String> builder().name("score").sortable().build(),
-                NumericFieldArgs.<String> builder().name("assists").sortable().build(),
-                NumericFieldArgs.<String> builder().name("rebounds").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("team").sortable().build(),
+                TextFieldArgs.builder().name("player").build(), NumericFieldArgs.builder().name("score").sortable().build(),
+                NumericFieldArgs.builder().name("assists").sortable().build(),
+                NumericFieldArgs.builder().name("rebounds").sortable().build());
 
         assertThat(redis.ftCreate("sortby-multi-test-idx", fields)).isEqualTo("OK");
 
@@ -1790,10 +1783,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldRespectUserSpecifiedPipelineOperationOrder() {
         // Create an index for testing pipeline operation order
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                NumericFieldArgs.<String> builder().name("price").sortable().build(),
-                NumericFieldArgs.<String> builder().name("quantity").sortable().build(),
-                TagFieldArgs.<String> builder().name("category").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                NumericFieldArgs.builder().name("price").sortable().build(),
+                NumericFieldArgs.builder().name("quantity").sortable().build(),
+                TagFieldArgs.builder().name("category").sortable().build());
 
         assertThat(redis.ftCreate("pipeline-order-test-idx", fields)).isEqualTo("OK");
 
@@ -1857,12 +1850,12 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Example from Redis docs: group by property X, sort top 100 by group size,
         // then group by property Y and sort by some other property
 
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("product_name").build(),
-                TagFieldArgs.<String> builder().name("category").sortable().build(),
-                TagFieldArgs.<String> builder().name("brand").sortable().build(),
-                NumericFieldArgs.<String> builder().name("price").sortable().build(),
-                NumericFieldArgs.<String> builder().name("rating").sortable().build(),
-                NumericFieldArgs.<String> builder().name("sales_count").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("product_name").build(),
+                TagFieldArgs.builder().name("category").sortable().build(),
+                TagFieldArgs.builder().name("brand").sortable().build(),
+                NumericFieldArgs.builder().name("price").sortable().build(),
+                NumericFieldArgs.builder().name("rating").sortable().build(),
+                NumericFieldArgs.builder().name("sales_count").sortable().build());
 
         assertThat(redis.ftCreate("reentrant-pipeline-idx", fields)).isEqualTo("OK");
 
@@ -1938,12 +1931,12 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // This demonstrates the re-entrant nature where each operation can appear
         // multiple times
 
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("employee_name").build(),
-                TagFieldArgs.<String> builder().name("department").sortable().build(),
-                TagFieldArgs.<String> builder().name("level").sortable().build(),
-                NumericFieldArgs.<String> builder().name("salary").sortable().build(),
-                NumericFieldArgs.<String> builder().name("experience").sortable().build(),
-                NumericFieldArgs.<String> builder().name("performance_score").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("employee_name").build(),
+                TagFieldArgs.builder().name("department").sortable().build(),
+                TagFieldArgs.builder().name("level").sortable().build(),
+                NumericFieldArgs.builder().name("salary").sortable().build(),
+                NumericFieldArgs.builder().name("experience").sortable().build(),
+                NumericFieldArgs.builder().name("performance_score").sortable().build());
 
         assertThat(redis.ftCreate("repeated-ops-idx", fields)).isEqualTo("OK");
 
@@ -2025,13 +2018,13 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // "group by property X, sort the top 100 results by group size,
         // then group by property Y and sort the results by some other property"
 
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("transaction_id").build(),
-                TagFieldArgs.<String> builder().name("customer_segment").sortable().build(),
-                TagFieldArgs.<String> builder().name("product_category").sortable().build(),
-                TagFieldArgs.<String> builder().name("region").sortable().build(),
-                NumericFieldArgs.<String> builder().name("amount").sortable().build(),
-                NumericFieldArgs.<String> builder().name("quantity").sortable().build(),
-                NumericFieldArgs.<String> builder().name("discount").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("transaction_id").build(),
+                TagFieldArgs.builder().name("customer_segment").sortable().build(),
+                TagFieldArgs.builder().name("product_category").sortable().build(),
+                TagFieldArgs.builder().name("region").sortable().build(),
+                NumericFieldArgs.builder().name("amount").sortable().build(),
+                NumericFieldArgs.builder().name("quantity").sortable().build(),
+                NumericFieldArgs.builder().name("discount").sortable().build());
 
         assertThat(redis.ftCreate("interleaved-ops-idx", fields)).isEqualTo("OK");
 
@@ -2115,13 +2108,13 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // This demonstrates that operations can be repeated and applied at various
         // pipeline stages
 
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("product_id").build(),
-                TagFieldArgs.<String> builder().name("category").sortable().build(),
-                TagFieldArgs.<String> builder().name("brand").sortable().build(),
-                NumericFieldArgs.<String> builder().name("price").sortable().build(),
-                NumericFieldArgs.<String> builder().name("stock").sortable().build(),
-                NumericFieldArgs.<String> builder().name("rating").sortable().build(),
-                NumericFieldArgs.<String> builder().name("reviews_count").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("product_id").build(),
+                TagFieldArgs.builder().name("category").sortable().build(),
+                TagFieldArgs.builder().name("brand").sortable().build(),
+                NumericFieldArgs.builder().name("price").sortable().build(),
+                NumericFieldArgs.builder().name("stock").sortable().build(),
+                NumericFieldArgs.builder().name("rating").sortable().build(),
+                NumericFieldArgs.builder().name("reviews_count").sortable().build());
 
         assertThat(redis.ftCreate("multi-filter-sort-idx", fields)).isEqualTo("OK");
 
@@ -2219,15 +2212,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // each other
         // This represents a real-world business intelligence scenario
 
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("order_id").build(),
-                TagFieldArgs.<String> builder().name("customer_type").sortable().build(),
-                TagFieldArgs.<String> builder().name("product_line").sortable().build(),
-                TagFieldArgs.<String> builder().name("sales_channel").sortable().build(),
-                TagFieldArgs.<String> builder().name("season").sortable().build(),
-                NumericFieldArgs.<String> builder().name("order_value").sortable().build(),
-                NumericFieldArgs.<String> builder().name("cost").sortable().build(),
-                NumericFieldArgs.<String> builder().name("shipping_cost").sortable().build(),
-                NumericFieldArgs.<String> builder().name("customer_satisfaction").sortable().build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("order_id").build(),
+                TagFieldArgs.builder().name("customer_type").sortable().build(),
+                TagFieldArgs.builder().name("product_line").sortable().build(),
+                TagFieldArgs.builder().name("sales_channel").sortable().build(),
+                TagFieldArgs.builder().name("season").sortable().build(),
+                NumericFieldArgs.builder().name("order_value").sortable().build(),
+                NumericFieldArgs.builder().name("cost").sortable().build(),
+                NumericFieldArgs.builder().name("shipping_cost").sortable().build(),
+                NumericFieldArgs.builder().name("customer_satisfaction").sortable().build());
 
         assertThat(redis.ftCreate("advanced-pipeline-idx", fields)).isEqualTo("OK");
 
@@ -2352,10 +2345,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationOnJson() {
         // Create an index
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("$.country").as("country").build(),
-                TextFieldArgs.<String> builder().name("$.city").as("city").build(),
-                TextFieldArgs.<String> builder().name("$.office").as("office").build(),
-                TextFieldArgs.<String> builder().name("$.code").as("code").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("$.country").as("country").build(),
+                TextFieldArgs.builder().name("$.city").as("city").build(),
+                TextFieldArgs.builder().name("$.office").as("office").build(),
+                TextFieldArgs.builder().name("$.code").as("code").build());
         CreateArgs<String> args = CreateArgs.<String> builder().on(CreateArgs.TargetType.JSON).withPrefix("doc:").build();
 
         assertThat(redis.ftCreate("args-test-idx", args, fields)).isEqualTo("OK");
@@ -2410,10 +2403,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldPerformAggregationOnJsonWithNulls() {
         // Create an index
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("$.country").as("country").build(),
-                TextFieldArgs.<String> builder().name("$.city").as("city").build(),
-                TextFieldArgs.<String> builder().name("$.office").as("office").build(),
-                TextFieldArgs.<String> builder().name("$.code").as("code").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("$.country").as("country").build(),
+                TextFieldArgs.builder().name("$.city").as("city").build(),
+                TextFieldArgs.builder().name("$.office").as("office").build(),
+                TextFieldArgs.builder().name("$.code").as("code").build());
         CreateArgs<String> args = CreateArgs.<String> builder().on(CreateArgs.TargetType.JSON).withPrefix("doc:").build();
 
         assertThat(redis.ftCreate("args-test-idx", args, fields)).isEqualTo("OK");

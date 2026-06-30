@@ -100,10 +100,10 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         connection.sync().flushall();
 
         // Schema for text search tests
-        FieldArgs<String> title = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> author = TagFieldArgs.<String> builder().name("author").build();
-        FieldArgs<String> year = NumericFieldArgs.<String> builder().name("year").sortable().build();
-        FieldArgs<String> rating = NumericFieldArgs.<String> builder().name("rating").sortable().build();
+        FieldArgs title = TextFieldArgs.builder().name("title").build();
+        FieldArgs author = TagFieldArgs.builder().name("author").build();
+        FieldArgs year = NumericFieldArgs.builder().name("year").sortable().build();
+        FieldArgs rating = NumericFieldArgs.builder().name("rating").sortable().build();
 
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         assertThat(connection.sync().ftCreate(INDEX, createArgs, Arrays.asList(title, author, year, rating))).isEqualTo("OK");
@@ -217,7 +217,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         clearLatencyMetrics();
 
         String tmpIndex = INDEX + ":create:" + UUID.randomUUID();
-        FieldArgs<String> title = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs title = TextFieldArgs.builder().name("title").build();
         CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         assertThat(connection.sync().ftCreate(tmpIndex, createArgs, Arrays.asList(title))).isEqualTo("OK");
 
@@ -365,11 +365,10 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
 
     private void prepareHybrid() {
         // Schema for hybrid search tests
-        FieldArgs<String> category = TagFieldArgs.<String> builder().name("category").build();
-        FieldArgs<String> price = NumericFieldArgs.<String> builder().name("price").sortable().build();
-        FieldArgs<String> embedding = VectorFieldArgs.<String> builder().name("embedding").hnsw()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
-                .build();
+        FieldArgs category = TagFieldArgs.builder().name("category").build();
+        FieldArgs price = NumericFieldArgs.builder().name("price").sortable().build();
+        FieldArgs embedding = VectorFieldArgs.builder().name("embedding").hnsw().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
 
         CreateArgs<String> hybridCreateArgs = CreateArgs.<String> builder().withPrefix(HYBRID_PREFIX)
                 .on(CreateArgs.TargetType.HASH).build();

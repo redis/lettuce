@@ -39,17 +39,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Mirror of {@link RediSearchPrefixingStringCodecSafetyIntegrationTests} using a connection codec whose key type is a
- * structured POJO instead of {@link String}. Asserts the codec-routing invariants for RediSearch: every schema-level identifier
- * (field names) is {@code K}-typed and routed through {@code codec.encodeKey} both at {@code FT.CREATE} and at
- * {@code FT.SEARCH}/{@code FT.AGGREGATE} time. Identifiers are passed as "bare" {@link RedisKey} instances built via
- * {@link #field(String)}; {@link RedisKeyCodec} encodes a bare key as its {@code id} bytes only, with no tenant/entity prefix,
- * so the wire shape matches the literal field name on both sides. If the codec ever bypasses one of these surfaces (or applies
- * a non-trivial transformation when it shouldn't), the bytes sent to the server diverge between {@code FT.CREATE} and the read
- * clauses, the schema lookup fails and the assertions below break. Covers both {@code ON HASH} and {@code ON JSON} indexes:
- * {@code HSET}/{@code HMSET} route hash field names and values through the connection's {@link RedisCodec}; {@code JSON.SET}
- * sends its payload verbatim via {@link io.lettuce.core.protocol.CommandArgs#add(String)} (or {@code add(byte[])} for
- * {@link io.lettuce.core.json.JsonValue}), bypassing the value codec entirely. The JSON schema uses bare {@link RedisKey} JSON
- * paths (e.g. {@code $.title}) and aliases them back to plain field names so the same read-side identifiers exercise both
+ * structured POJO instead of {@link String}. {@link FieldArgs} sends schema field names raw at {@code FT.CREATE}; the read-side
+ * identifiers ({@code INFIELDS}, {@code RETURN}, {@code SORTBY}, {@code LOAD}) are {@code K}-typed and routed through
+ * {@code codec.encodeKey} at {@code FT.SEARCH}/{@code FT.AGGREGATE} time. They are passed as "bare" {@link RedisKey} instances
+ * built via {@link #field(String)}; {@link RedisKeyCodec} encodes a bare key as its {@code id} bytes only (no tenant/entity
+ * prefix), so the read-side bytes match the raw create-side field name. If a read clause skips the codec (or mangles a bare
+ * key), the bytes diverge, the schema lookup fails and the assertions below break. Covers both {@code ON HASH} and
+ * {@code ON JSON} indexes: {@code HSET}/{@code HMSET} route hash field names and values through the connection's
+ * {@link RedisCodec}; {@code JSON.SET} sends its payload verbatim via {@link io.lettuce.core.protocol.CommandArgs#add(String)}
+ * (or {@code add(byte[])} for {@link io.lettuce.core.json.JsonValue}), bypassing the value codec entirely. The JSON schema uses
+ * raw JSONPath names (e.g. {@code $.title}) aliased back to plain field names so the same read-side identifiers exercise both
  * indexes.
  *
  * @author Viktoriya Kutsarova
@@ -92,9 +91,9 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
         redis.flushall();
 
         CreateArgs<RedisKey> hashCreate = CreateArgs.<RedisKey> builder().on(CreateArgs.TargetType.HASH).build();
-        FieldArgs<RedisKey> hashTitle = TextFieldArgs.<RedisKey> builder().name(field("title")).sortable().build();
-        FieldArgs<RedisKey> hashBody = TextFieldArgs.<RedisKey> builder().name(field("body")).build();
-        FieldArgs<RedisKey> hashCategory = TagFieldArgs.<RedisKey> builder().name(field("category")).build();
+        FieldArgs hashTitle = TextFieldArgs.builder().name("title").sortable().build();
+        FieldArgs hashBody = TextFieldArgs.builder().name("body").build();
+        FieldArgs hashCategory = TagFieldArgs.builder().name("category").build();
         redis.ftCreate(HASH_INDEX, hashCreate, Arrays.asList(hashTitle, hashBody, hashCategory));
 
         Map<RedisKey, String> doc = new HashMap<>();
@@ -104,10 +103,9 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
         redis.hmset(new RedisKey(TENANT, ENTITY, HASH_DOC_ID), doc);
 
         CreateArgs<RedisKey> jsonCreate = CreateArgs.<RedisKey> builder().on(CreateArgs.TargetType.JSON).build();
-        FieldArgs<RedisKey> jsonTitle = TextFieldArgs.<RedisKey> builder().name(field("$.title")).as("title").sortable()
-                .build();
-        FieldArgs<RedisKey> jsonBody = TextFieldArgs.<RedisKey> builder().name(field("$.body")).as("body").build();
-        FieldArgs<RedisKey> jsonCategory = TagFieldArgs.<RedisKey> builder().name(field("$.category")).as("category").build();
+        FieldArgs jsonTitle = TextFieldArgs.builder().name("$.title").as("title").sortable().build();
+        FieldArgs jsonBody = TextFieldArgs.builder().name("$.body").as("body").build();
+        FieldArgs jsonCategory = TagFieldArgs.builder().name("$.category").as("category").build();
         redis.ftCreate(JSON_INDEX, jsonCreate, Arrays.asList(jsonTitle, jsonBody, jsonCategory));
 
         String jsonDoc = "{\"title\":\"Redis search guide\",\"body\":\"" + BODY_TEXT + "\",\"category\":\"tutorial\"}";
@@ -125,8 +123,8 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     }
 
     /**
-     * Build a "bare" {@link RedisKey} that round-trips through {@link RedisKeyCodec} as its {@code id} bytes only, with no
-     * tenant/entity prefix. Used for hash field names and result-map keys so they retain their literal byte shape.
+     * Build a "bare" {@link RedisKey} that round-trips through {@link RedisKeyCodec} as its {@code id} bytes only (no
+     * tenant/entity prefix). Used for read-side schema identifiers and result-map keys so they retain their literal byte shape.
      */
     private static RedisKey field(String name) {
         return new RedisKey("", "", name);
@@ -191,6 +189,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
      * {@code SUMMARIZE FIELDS} names schema fields. When applied correctly Redis abbreviates the field content and terminates
      * it with the configured separator (default {@code ...}).
      */
+    // HASH only: SUMMARIZE/HIGHLIGHT are not supported on JSON indexes (server rejects with SEARCH_QUERY_BAD).
     @Test
     void summarizeFieldMustNotBeMangledByCodec() {
         SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder().summarizeField(field("body")).build();
@@ -205,6 +204,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     /**
      * {@code HIGHLIGHT FIELDS} names schema fields. When applied, matching terms are wrapped with the configured tags.
      */
+    // HASH only: SUMMARIZE/HIGHLIGHT are not supported on JSON indexes (server rejects with SEARCH_QUERY_BAD).
     @Test
     void highlightFieldMustNotBeMangledByCodec() {
         SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder().highlightField(field("body"))
@@ -251,9 +251,8 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     }
 
     /**
-     * {@code PARAMS} substitution names are referenced from the query string as {@code $name}. The query is sent verbatim, but
-     * {@link SearchArgs.Builder#param} routes the parameter name through {@code addKey}; with a bare {@link RedisKey} it
-     * round-trips as plain {@code "term"} bytes so the server can resolve {@code $term} in the query.
+     * {@code PARAMS} substitution names are referenced as {@code $name} from the verbatim query. The name is a {@link String}
+     * sent raw (not {@code K}-typed), so {@code $term} resolves on the server regardless of the connection codec.
      */
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
@@ -267,8 +266,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     }
 
     /**
-     * Aggregate variant of {@link #searchParamNameMustNotBeMangledByCodec}. {@link AggregateArgs.Builder#param} is built via
-     * the same {@code addKey} routing and a bare {@link RedisKey} round-trips as plain bytes.
+     * Aggregate variant of {@link #searchParamNameMustNotBeMangledByCodec}; the parameter name is a {@link String} sent raw.
      */
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
@@ -299,17 +297,13 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     }
 
     /**
-     * Codec-routing witness. The other tests in this class pass schema identifiers as <em>bare</em> {@link RedisKey} instances
-     * so {@link RedisKeyCodec} encodes them to plain {@code id} bytes on both the {@code FT.CREATE} side (where
-     * {@link FieldArgs} routes the field name through {@code addKey}) and the read side. That symmetry keeps the round-trip
-     * lossless but it also makes the positive assertions insensitive to whether the read side actually invokes the codec — bare
-     * keys would round-trip correctly even if {@code inField} were sent raw. Here we deliberately pass a <em>non-bare</em>
-     * {@link RedisKey} into {@link SearchArgs.Builder#inField} so the codec produces {@code "tenant1:doc:title"} instead of
-     * {@code "title"}. The schema field is still {@code "title"} (registered via a bare key in {@link #prepare()}), so the
-     * server treats the {@code INFIELDS} entry as an unknown field, restricts the query to a non-existent field and yields zero
-     * hits. Asserting {@code count == 0} (vs. the baseline count of 1 with no {@code INFIELDS}) proves {@code inField} is
-     * routed through {@code encodeKey}; if the codec were bypassed for a non-bare {@link RedisKey}, the wire bytes would be
-     * {@code "title"} and the query would find the document.
+     * Codec-routing witness. The schema field is registered raw as {@code "title"} in {@link #prepare()}; the other tests pass
+     * read-side identifiers as <em>bare</em> {@link RedisKey} instances that also encode to {@code "title"}, so their positive
+     * assertions are insensitive to whether the read side actually invokes the codec. Here we deliberately pass a
+     * <em>non-bare</em> {@link RedisKey} into {@link SearchArgs.Builder#inField} so {@code encodeKey} produces
+     * {@code "tenant1:doc:title"} instead of {@code "title"}; the server then treats {@code INFIELDS} as an unknown field and
+     * yields zero hits. Asserting {@code count == 0} (vs. the baseline 1) proves {@code inField} is routed through
+     * {@code encodeKey} — were it sent raw, the wire bytes would be {@code "title"} and the document would match.
      */
     @Test
     void inFieldWithNonBareKeyDemonstratesCodecRouting() {

@@ -1689,12 +1689,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftCreate(String index, CreateArgs<K> options, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, CreateArgs<K> options, List<FieldArgs> fieldArgs) {
         return dispatch(searchCommandBuilder.ftCreate(index, options, fieldArgs));
     }
 
     @Override
-    public RedisFuture<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, List<FieldArgs> fieldArgs) {
         return dispatch(searchCommandBuilder.ftCreate(index, null, fieldArgs));
     }
 
@@ -1719,7 +1719,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs) {
         return dispatch(searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
     }
 
@@ -1814,7 +1814,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftAlter(String index, List<FieldArgs> fieldArgs) {
         return dispatch(searchCommandBuilder.ftAlter(index, false, fieldArgs));
     }
 
