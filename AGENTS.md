@@ -122,8 +122,4 @@ before doing that type of work.
 
 | Skill | When to use |
 |-------|-------------|
-| `building-and-testing` | Build commands, unit vs. integration tests, Docker test env |
-| `writing-tests` | Adding or changing tests; `*UnitTests` vs. `*IntegrationTests` rules |
-| `idiomatic-usage` | Writing code that uses Lettuce (thread-safety, pooling, async/reactive) |
-| `version-migration` | Upgrading across Lettuce major versions |
-| `pr-helper` | Opening a PR: diff summary, PR-template checklist, conventions |
+| `creating-description-for-gh-pr` | Generate a GitHub PR title and description from the diff between two local branches |
