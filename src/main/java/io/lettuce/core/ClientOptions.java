@@ -37,7 +37,6 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
-import reactor.core.publisher.Mono;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
@@ -432,7 +431,7 @@ public class ClientOptions implements Serializable {
         /**
          * Set a custom implementation for the {@link JsonParser} to use.
          *
-         * @param parser a {@link Mono} that emits the {@link JsonParser} to use.
+         * @param parser a {@link Supplier} that emits the {@link JsonParser} to use.
          * @return {@code this}
          * @see JsonParser
          * @since 6.5

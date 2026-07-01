@@ -31,6 +31,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import io.lettuce.core.annotations.Experimental;
@@ -684,31 +686,34 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Get a {@link Mono} that resolves {@link RedisURI} to a {@link SocketAddress}. Resolution is performed either using Redis
-     * Sentinel (if the {@link RedisURI} is configured with Sentinels) or via DNS resolution.
+     * Get a {@link Supplier} that produces a {@link CompletionStage} resolving {@link RedisURI} to a {@link SocketAddress}.
+     * Resolution is performed either using Redis Sentinel (if the {@link RedisURI} is configured with Sentinels) or via DNS
+     * resolution.
      * <p>
      * Subclasses of {@link RedisClient} may override that method.
      *
      * @param redisURI must not be {@code null}.
-     * @return the resolved {@link SocketAddress}.
+     * @return a {@link Supplier} that produces the resolved {@link SocketAddress}.
      * @see ClientResources#addressResolverGroup()
      * @see RedisURI#getSentinels()
      * @see RedisURI#getSentinelMasterId()
      */
-    protected Mono<SocketAddress> getSocketAddress(RedisURI redisURI) {
-
-        return Mono.defer(() -> {
-
+    protected Supplier<CompletionStage<SocketAddress>> getSocketAddress(RedisURI redisURI) {
+        return () -> {
             if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
                 logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(),
                         redisURI.getSentinelMasterId());
-                return lookupRedis(redisURI).switchIfEmpty(Mono.error(new RedisConnectionException(
-                        "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId())));
-
+                return lookupRedisAsync(redisURI).thenApply(addr -> {
+                    if (addr == null) {
+                        throw new RedisConnectionException(
+                                "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId());
+                    }
+                    return addr;
+                });
             } else {
-                return Mono.fromCallable(() -> getResources().socketAddressResolver().resolve((redisURI)));
+                return CompletableFuture.completedFuture(getResources().socketAddressResolver().resolve(redisURI));
             }
-        });
+        };
     }
 
     /**
@@ -739,45 +744,70 @@ public class RedisClient extends AbstractRedisClient {
         }
     }
 
-    private Mono<SocketAddress> getSocketAddressSupplier(RedisURI redisURI) {
-        return getSocketAddress(redisURI).doOnNext(addr -> logger.debug("Resolved SocketAddress {} using {}", addr, redisURI));
+    private Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplier(RedisURI redisURI) {
+        Supplier<CompletionStage<SocketAddress>> delegate = getSocketAddress(redisURI);
+        return () -> delegate.get().thenApply(addr -> {
+            logger.debug("Resolved SocketAddress {} using {}", addr, redisURI);
+            return addr;
+        });
     }
 
-    private Mono<SocketAddress> lookupRedis(RedisURI sentinelUri) {
+    private CompletionStage<SocketAddress> lookupRedisAsync(RedisURI sentinelUri) {
 
         Duration timeout = sentinelUri.getTimeout();
 
-        return Mono.usingWhen(
-                Mono.fromCompletionStage(() -> connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout)), c -> {
+        return connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout).thenCompose(c -> {
+            ScheduledFuture<?> timeoutTask = null;
+            try {
+                String sentinelMasterId = sentinelUri.getSentinelMasterId();
 
-                    String sentinelMasterId = sentinelUri.getSentinelMasterId();
-                    return c.reactive().getMasterAddrByName(sentinelMasterId).map(it -> {
+                CompletableFuture<SocketAddress> resultFuture = new CompletableFuture<>();
 
-                        if (it instanceof InetSocketAddress) {
+                // Schedule timeout unless Duration.ZERO which means "do not time out"
+                timeoutTask = timeout.isZero() ? null : getResources().eventExecutorGroup().next().schedule(() -> {
+                    if (!resultFuture.isDone()) {
+                        RedisCommandTimeoutException ex = ExceptionFactory
+                                .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
+                        resultFuture.completeExceptionally(ex);
+                    }
+                }, timeout.toMillis(), TimeUnit.MILLISECONDS);
+                final ScheduledFuture<?> scheduledTimeout = timeoutTask;
 
-                            InetSocketAddress isa = (InetSocketAddress) it;
-                            SocketAddress resolved = getResources().socketAddressResolver()
-                                    .resolve(RedisURI.create(isa.getHostString(), isa.getPort()));
+                c.async().getMasterAddrByName(sentinelMasterId).whenComplete((addr, e) -> {
+                    if (scheduledTimeout != null) {
+                        scheduledTimeout.cancel(false);
+                    }
+                    if (e != null) {
+                        resultFuture.completeExceptionally(e);
+                    } else {
+                        try {
+                            if (addr instanceof InetSocketAddress) {
+                                InetSocketAddress isa = (InetSocketAddress) addr;
+                                SocketAddress resolved = getResources().socketAddressResolver()
+                                        .resolve(RedisURI.create(isa.getHostString(), isa.getPort()));
 
-                            logger.debug("Resolved Master {} SocketAddress {}:{} to {}", sentinelMasterId, isa.getHostString(),
-                                    isa.getPort(), resolved);
+                                logger.debug("Resolved Master {} SocketAddress {}:{} to {}", sentinelMasterId,
+                                        isa.getHostString(), isa.getPort(), resolved);
 
-                            return resolved;
+                                resultFuture.complete(resolved);
+                            } else {
+                                resultFuture.complete(addr);
+                            }
+                        } catch (Exception ex) {
+                            resultFuture.completeExceptionally(ex);
                         }
+                    }
+                });
 
-                        return it;
-                    }).timeout(timeout) //
-                            .onErrorMap(e -> {
-
-                                RedisCommandTimeoutException ex = ExceptionFactory
-                                        .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
-                                ex.addSuppressed(e);
-
-                                return ex;
-                            });
-                }, c -> Mono.fromCompletionStage(c::closeAsync), //
-                (c, ex) -> Mono.fromCompletionStage(c::closeAsync), //
-                c -> Mono.fromCompletionStage(c::closeAsync));
+                return resultFuture.whenComplete((result, ex) -> c.closeAsync());
+            } catch (Exception e) {
+                if (timeoutTask != null) {
+                    timeoutTask.cancel(false);
+                }
+                c.closeAsync();
+                throw e;
+            }
+        });
     }
 
     private static <T> ConnectionFuture<T> transformAsyncConnectionException(ConnectionFuture<T> future) {
