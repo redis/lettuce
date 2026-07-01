@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier: MIT
  */
-package io.lettuce.core.bf;
+package io.lettuce.core.probabilistic;
 
 import javax.inject.Inject;
 
@@ -16,16 +16,16 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 
 /**
- * Integration tests for Redis Bloom Filter commands using Redis Cluster.
+ * Integration tests for Redis Cuckoo Filter commands using Redis Cluster.
  *
- * @author Yordan Tsintsov
+ * @author Gyumin Hwang
  * @since 7.7
  */
 @Tag(INTEGRATION_TEST)
-public class RedisBloomFilterClusterIntegrationTests extends RedisBloomFilterIntegrationTests {
+public class RedisCuckooFilterClusterIntegrationTests extends RedisCuckooFilterIntegrationTests {
 
     @Inject
-    RedisBloomFilterClusterIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
+    RedisCuckooFilterClusterIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
         super(ClusterTestUtil.redisCommandsOverCluster(connection));
     }
 

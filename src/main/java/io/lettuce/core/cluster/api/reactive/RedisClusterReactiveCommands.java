@@ -48,7 +48,7 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
         RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
         RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
         RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>,
-        RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V> {
+        RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.

@@ -32,7 +32,7 @@ class Constants {
             "RedisScriptingCommands", "RedisSentinelCommands", "RedisServerCommands", "RedisSetCommands",
             "RedisSortedSetCommands", "RedisStreamCommands", "RedisStringCommands", "RedisTransactionalCommands",
             "RedisJsonCommands", "RedisVectorSetCommands", "RediSearchCommands", "RedisArrayCommands",
-            "RedisBloomFilterCommands" };
+            "RedisBloomFilterCommands", "RedisCuckooFilterCommands" };
 
     public static final File TEMPLATES = new File("src/main/templates");
 

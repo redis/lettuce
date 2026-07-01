@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier: MIT
  */
-package io.lettuce.core.bf;
+package io.lettuce.core.probabilistic;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
@@ -15,22 +15,22 @@ import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
 
 /**
- * Parser for Redis <a href="https://redis.io/docs/latest/commands/bf.info/">BF.INFO</a> command output.
+ * Parser for Redis <a href="https://redis.io/docs/latest/commands/cf.info/">CF.INFO</a> command output.
  *
- * @author Yordan Tsintsov
+ * @author HwangRock
  * @since 7.7
  */
-public final class BfInfoValueParser implements ComplexDataParser<BfInfoValue> {
+public final class CfInfoValueParser implements ComplexDataParser<CfInfoValue> {
 
-    public static final BfInfoValueParser INSTANCE = new BfInfoValueParser();
+    public static final CfInfoValueParser INSTANCE = new CfInfoValueParser();
 
-    private BfInfoValueParser() {
+    private CfInfoValueParser() {
     }
 
     @Override
-    public BfInfoValue parse(ComplexData data) {
+    public CfInfoValue parse(ComplexData data) {
         if (data == null) {
-            throw new IllegalArgumentException("Failed parsing BF.INFO: data must not be null");
+            throw new IllegalArgumentException("Failed parsing CF.INFO: data must not be null");
         }
         Map<Object, Object> raw = data.getDynamicMap();
         Map<String, Object> info = new LinkedHashMap<>(raw.size());
@@ -38,7 +38,7 @@ public final class BfInfoValueParser implements ComplexDataParser<BfInfoValue> {
             String k = StringCodec.UTF8.decodeKey((ByteBuffer) e.getKey());
             info.put(k, e.getValue());
         }
-        return new BfInfoValue(info);
+        return new CfInfoValue(info);
     }
 
 }

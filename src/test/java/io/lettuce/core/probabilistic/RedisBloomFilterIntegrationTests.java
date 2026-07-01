@@ -4,15 +4,15 @@
  *
  * SPDX-License-Identifier: MIT
  */
-package io.lettuce.core.bf;
+package io.lettuce.core.probabilistic;
 
 import javax.inject.Inject;
 import java.util.List;
 
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.bf.arguments.BfInsertArgs;
-import io.lettuce.core.bf.arguments.BfReserveArgs;
+import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.*;
@@ -212,7 +212,7 @@ public class RedisBloomFilterIntegrationTests {
 
         long iterator = 0;
         while (true) {
-            BfScanDumpValue chunkData = redis.bfScanDump("bloom-dump", iterator);
+            ScanDumpValue chunkData = redis.bfScanDump("bloom-dump", iterator);
             iterator = chunkData.getIterator();
             if (iterator == 0L) {
                 break;
