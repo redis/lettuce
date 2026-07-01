@@ -20,7 +20,7 @@ import io.lettuce.core.codec.StringCodec;
 /**
  * Unit tests for {@link CuckooInsertBooleanListOutput}.
  *
- * Verifies the 3-state mapping required by CF.INSERT / CF.INSERTNX:
+ * Verifies the 3-state mapping required by CF.INSERTNX:
  * <ul>
  * <li>1 → {@code Boolean.TRUE} (item added)</li>
  * <li>0 → {@code Boolean.FALSE} (item already exists, INSERTNX only)</li>

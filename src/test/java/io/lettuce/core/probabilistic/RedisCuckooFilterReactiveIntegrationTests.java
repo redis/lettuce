@@ -27,11 +27,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * routing every call through the reactive API via {@link ReactiveSyncInvocationHandler}.
  *
  * <p>
- * Overrides verify reactive-specific streaming behaviour ({@code Flux<Value<Boolean>>}) for cfInsert and cfInsertNx:
+ * Overrides verify reactive-specific streaming behaviour:
  * <ul>
- * <li>1 → {@code Value.just(true)}</li>
- * <li>0 → {@code Value.just(false)}</li>
- * <li>-1 (filter full) → {@code Value.empty()}</li>
+ * <li>cfInsert: {@code Flux<Boolean>} &ndash; {@code true} if added, {@code false} if filter full</li>
+ * <li>cfInsertNx: {@code Flux<Value<Boolean>>} &ndash; {@code Value.just(true)} if added, {@code Value.just(false)} if already
+ * exists, {@code Value.empty()} if filter full</li>
  * </ul>
  *
  * @author Gyumin Hwang
@@ -51,8 +51,8 @@ public class RedisCuckooFilterReactiveIntegrationTests extends RedisCuckooFilter
     @Test
     @Override
     void cfInsert() {
-        StepVerifier.create(reactive.cfInsert("books:name", "Dune", "Dune Messiah")).expectNext(Value.just(Boolean.TRUE))
-                .expectNext(Value.just(Boolean.TRUE)).verifyComplete();
+        StepVerifier.create(reactive.cfInsert("books:name", "Dune", "Dune Messiah")).expectNext(Boolean.TRUE)
+                .expectNext(Boolean.TRUE).verifyComplete();
     }
 
     @Test
@@ -60,14 +60,14 @@ public class RedisCuckooFilterReactiveIntegrationTests extends RedisCuckooFilter
     void cfInsertWithArgs() {
         CfInsertArgs insertArgs = CfInsertArgs.Builder.capacity(100);
 
-        StepVerifier.create(reactive.cfInsert("books:name", insertArgs, "Dune", "Dune Messiah"))
-                .expectNext(Value.just(Boolean.TRUE)).expectNext(Value.just(Boolean.TRUE)).verifyComplete();
+        StepVerifier.create(reactive.cfInsert("books:name", insertArgs, "Dune", "Dune Messiah")).expectNext(Boolean.TRUE)
+                .expectNext(Boolean.TRUE).verifyComplete();
     }
 
     @Test
     @Override
     void cfInsertSingleValue() {
-        StepVerifier.create(reactive.cfInsert("books:name", "Dune")).expectNext(Value.just(Boolean.TRUE)).verifyComplete();
+        StepVerifier.create(reactive.cfInsert("books:name", "Dune")).expectNext(Boolean.TRUE).verifyComplete();
     }
 
     @Test
@@ -119,9 +119,8 @@ public class RedisCuckooFilterReactiveIntegrationTests extends RedisCuckooFilter
      * Reactive counterpart of {@link RedisCuckooFilterIntegrationTests#cfInsertReturnsFalseWhenFilterIsFull()}.
      *
      * <p>
-     * Under RESP3, redis-stack encodes the per-item {@code -1} (filter full) as a boolean {@code false}, so each filter-full
-     * slot emits {@code Value.just(false)}. The first two slots succeed ({@code Value.just(true)}); the remaining ones are
-     * filter-full.
+     * CF.INSERT uses {@link io.lettuce.core.output.ErrorTolerantBooleanListOutput} which maps any non-{@code 1} integer to
+     * {@code false}. The reactive API emits plain {@code Flux<Boolean>}, so filter-full slots are {@code false}.
      */
     @Test
     @Override
@@ -129,14 +128,13 @@ public class RedisCuckooFilterReactiveIntegrationTests extends RedisCuckooFilter
         String key = "cf:full:reactive:insert";
         reactive.cfReserve(key, 1000, CfReserveArgs.Builder.bucketSize(1).expansion(0)).block();
 
-        List<Value<Boolean>> result = reactive.cfInsert(key, "W", "W", "W", "W", "W", "W").collectList().block();
+        List<Boolean> result = reactive.cfInsert(key, "W", "W", "W", "W", "W", "W").collectList().block();
 
         assertThat(result).isNotNull().hasSize(6);
-        assertThat(result.get(0)).isEqualTo(Value.just(Boolean.TRUE));
-        assertThat(result.get(1)).isEqualTo(Value.just(Boolean.TRUE));
+        assertThat(result.get(0)).isEqualTo(Boolean.TRUE);
+        assertThat(result.get(1)).isEqualTo(Boolean.TRUE);
         for (int i = 2; i < result.size(); i++) {
-            assertThat(result.get(i)).as("result[%d] must be Value.just(false) (filter full under RESP3)", i)
-                    .isEqualTo(Value.just(Boolean.FALSE));
+            assertThat(result.get(i)).as("result[%d] must be false (filter full)", i).isEqualTo(Boolean.FALSE);
         }
     }
 

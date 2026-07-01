@@ -4374,23 +4374,23 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Value<Boolean>> cfInsert(K key, V value) {
-        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsertValues(key, value));
+    public Flux<Boolean> cfInsert(K key, V value) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsert(key, value));
     }
 
     @Override
-    public Flux<Value<Boolean>> cfInsert(K key, CfInsertArgs args, V value) {
-        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsertValues(key, args, value));
+    public Flux<Boolean> cfInsert(K key, CfInsertArgs args, V value) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsert(key, args, value));
     }
 
     @Override
-    public Flux<Value<Boolean>> cfInsert(K key, V... values) {
-        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsertValues(key, values));
+    public Flux<Boolean> cfInsert(K key, V... values) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsert(key, values));
     }
 
     @Override
-    public Flux<Value<Boolean>> cfInsert(K key, CfInsertArgs args, V... values) {
-        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsertValues(key, args, values));
+    public Flux<Boolean> cfInsert(K key, CfInsertArgs args, V... values) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsert(key, args, values));
     }
 
     @Override

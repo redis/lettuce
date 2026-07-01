@@ -6,97 +6,41 @@
  */
 package io.lettuce.core.output;
 
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.List;
-
 import io.lettuce.core.Value;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * {@link List} of {@link Value}-wrapped boolean output for reactive CF.INSERT / CF.INSERTNX commands.
+ * {@link java.util.List} of {@link Value}-wrapped boolean output for the reactive CF.INSERTNX command.
  *
  * <p>
- * Maps the per-item integer response to a 3-state {@link Value}:
+ * Extends {@link ErrorTolerantBooleanValueListOutput} to add a 3-state mapping for the per-item integer response:
  * <ul>
  * <li>{@code 1} &rarr; {@code Value.just(Boolean.TRUE)} &ndash; item was added</li>
- * <li>{@code 0} &rarr; {@code Value.just(Boolean.FALSE)} &ndash; item already exists (INSERTNX only)</li>
+ * <li>{@code 0} &rarr; {@code Value.just(Boolean.FALSE)} &ndash; item already exists</li>
  * <li>negative (e.g. {@code -1}) &rarr; {@code Value.empty()} &ndash; filter is full</li>
  * </ul>
  *
  * <p>
- * Unlike {@link ErrorTolerantBooleanValueListOutput} (used by BF commands), this output distinguishes "already exists"
- * ({@code Value.just(false)}) from "filter full" ({@code Value.empty()}), which is required by the CF.INSERT / CF.INSERTNX
- * semantics.
+ * The base class maps any non-{@code 1} integer to {@code Value.just(false)}, which is correct for BF and CF.INSERT.
+ * CF.INSERTNX additionally returns {@code 0} for "already exists", so this subclass overrides {@link #set(long)} to distinguish
+ * {@code 0} ({@code Value.just(false)}) from negative ({@code Value.empty()}).
  *
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Gyumin Hwang
  * @since 7.7
  */
-public class CuckooInsertBooleanValueListOutput<K, V> extends CommandOutput<K, V, List<Value<Boolean>>>
-        implements StreamingOutput<Value<Boolean>> {
-
-    private boolean initialized;
-
-    private Subscriber<Value<Boolean>> subscriber;
+public class CuckooInsertBooleanValueListOutput<K, V> extends ErrorTolerantBooleanValueListOutput<K, V> {
 
     public CuckooInsertBooleanValueListOutput(RedisCodec<K, V> codec) {
-        super(codec, Collections.emptyList());
-        setSubscriber(ListSubscriber.instance());
+        super(codec);
     }
 
     @Override
     public void set(long integer) {
         Value<Boolean> value = integer == 1 ? Value.just(Boolean.TRUE)
                 : (integer == 0 ? Value.just(Boolean.FALSE) : Value.empty());
-        subscriber.onNext(output, value);
-    }
-
-    @Override
-    public void set(boolean value) {
-        subscriber.onNext(output, Value.just(value));
-    }
-
-    @Override
-    public void setError(ByteBuffer error) {
-
-        if (initialized) {
-            subscriber.onNext(output, Value.empty());
-            return;
-        }
-        super.setError(error);
-    }
-
-    @Override
-    public void set(ByteBuffer bytes) {
-
-        if (initialized) {
-            subscriber.onNext(output, (bytes == null ? Value.empty() : Value.just(Boolean.parseBoolean(decodeString(bytes)))));
-            return;
-        }
-        super.set(bytes);
-    }
-
-    @Override
-    public void multi(int count) {
-
-        if (!initialized) {
-            output = OutputFactory.newList(count);
-            initialized = true;
-        }
-    }
-
-    @Override
-    public void setSubscriber(Subscriber<Value<Boolean>> subscriber) {
-        LettuceAssert.notNull(subscriber, "Subscriber must not be null");
-        this.subscriber = subscriber;
-    }
-
-    @Override
-    public Subscriber<Value<Boolean>> getSubscriber() {
-        return subscriber;
+        getSubscriber().onNext(output, value);
     }
 
 }

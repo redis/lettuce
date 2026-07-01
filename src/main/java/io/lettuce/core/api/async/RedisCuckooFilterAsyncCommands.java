@@ -50,8 +50,7 @@ public interface RedisCuckooFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param value the value.
      * @return Boolean integer-reply {@code true} if the item was added.
-     * @throws io.lettuce.core.RedisCommandExecutionException if the filter is full and cannot expand (future fails with this
-     *         exception).
+     * @throws io.lettuce.core.RedisCommandExecutionException if the filter is full and cannot expand.
      */
     RedisFuture<Boolean> cfAdd(K key, V value);
 
@@ -69,8 +68,7 @@ public interface RedisCuckooFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return RedisFuture&lt;List&lt;Boolean&gt;&gt; one entry per item: {@code true} if the item was added (server reply
-     *         {@code 1}); {@code null} if the item could not be added because the filter is full (server reply {@code -1}).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
      *         CF.INSERT does not report already-existing items.
      */
     RedisFuture<List<Boolean>> cfInsert(K key, V... values);
@@ -80,8 +78,7 @@ public interface RedisCuckooFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return RedisFuture&lt;List&lt;Boolean&gt;&gt; one entry per item: {@code true} if the item was added (server reply
-     *         {@code 1}); {@code null} if the item could not be added because the filter is full (server reply {@code -1}).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
      *         CF.INSERT does not report already-existing items.
      */
     RedisFuture<List<Boolean>> cfInsert(K key, V value);
@@ -92,8 +89,7 @@ public interface RedisCuckooFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return RedisFuture&lt;List&lt;Boolean&gt;&gt; one entry per item: {@code true} if the item was added (server reply
-     *         {@code 1}); {@code null} if the item could not be added because the filter is full (server reply {@code -1}).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
      *         CF.INSERT does not report already-existing items.
      */
     RedisFuture<List<Boolean>> cfInsert(K key, CfInsertArgs args, V... values);
@@ -104,8 +100,7 @@ public interface RedisCuckooFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param value the value.
-     * @return RedisFuture&lt;List&lt;Boolean&gt;&gt; one entry per item: {@code true} if the item was added (server reply
-     *         {@code 1}); {@code null} if the item could not be added because the filter is full (server reply {@code -1}).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
      *         CF.INSERT does not report already-existing items.
      */
     RedisFuture<List<Boolean>> cfInsert(K key, CfInsertArgs args, V value);
@@ -116,9 +111,9 @@ public interface RedisCuckooFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return RedisFuture&lt;List&lt;Boolean&gt;&gt; one entry per item: {@code true} if the item was added (server reply
-     *         {@code 1}); {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the
-     *         item could not be added because the filter is full (server reply {@code -1}).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1});
+     *         {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the item could
+     *         not be added because the filter is full (server reply {@code -1}).
      */
     RedisFuture<List<Boolean>> cfInsertNx(K key, V... values);
 
@@ -128,9 +123,9 @@ public interface RedisCuckooFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return RedisFuture&lt;List&lt;Boolean&gt;&gt; one entry per item: {@code true} if the item was added (server reply
-     *         {@code 1}); {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the
-     *         item could not be added because the filter is full (server reply {@code -1}).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1});
+     *         {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the item could
+     *         not be added because the filter is full (server reply {@code -1}).
      */
     RedisFuture<List<Boolean>> cfInsertNx(K key, V value);
 
@@ -141,9 +136,9 @@ public interface RedisCuckooFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return RedisFuture&lt;List&lt;Boolean&gt;&gt; one entry per item: {@code true} if the item was added (server reply
-     *         {@code 1}); {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the
-     *         item could not be added because the filter is full (server reply {@code -1}).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1});
+     *         {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the item could
+     *         not be added because the filter is full (server reply {@code -1}).
      */
     RedisFuture<List<Boolean>> cfInsertNx(K key, CfInsertArgs args, V... values);
 
@@ -154,9 +149,9 @@ public interface RedisCuckooFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param value the value.
-     * @return RedisFuture&lt;List&lt;Boolean&gt;&gt; one entry per item: {@code true} if the item was added (server reply
-     *         {@code 1}); {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the
-     *         item could not be added because the filter is full (server reply {@code -1}).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1});
+     *         {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the item could
+     *         not be added because the filter is full (server reply {@code -1}).
      */
     RedisFuture<List<Boolean>> cfInsertNx(K key, CfInsertArgs args, V value);
 

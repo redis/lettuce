@@ -8,7 +8,6 @@ package io.lettuce.core.api;
 
 import java.util.List;
 
-import io.lettuce.core.Value;
 import io.lettuce.core.probabilistic.CfInfoValue;
 import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
@@ -68,9 +67,8 @@ public interface RedisCuckooFilterCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1}); {@code null}
-     *         if the item could not be added because the filter is full (server reply {@code -1}). CF.INSERT does not report
-     *         already-existing items.
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     List<Boolean> cfInsert(K key, V... values);
 
@@ -79,9 +77,8 @@ public interface RedisCuckooFilterCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1}); {@code null}
-     *         if the item could not be added because the filter is full (server reply {@code -1}). CF.INSERT does not report
-     *         already-existing items.
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     List<Boolean> cfInsert(K key, V value);
 
@@ -91,9 +88,8 @@ public interface RedisCuckooFilterCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1}); {@code null}
-     *         if the item could not be added because the filter is full (server reply {@code -1}). CF.INSERT does not report
-     *         already-existing items.
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     List<Boolean> cfInsert(K key, CfInsertArgs args, V... values);
 
@@ -103,9 +99,8 @@ public interface RedisCuckooFilterCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param value the value.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1}); {@code null}
-     *         if the item could not be added because the filter is full (server reply {@code -1}). CF.INSERT does not report
-     *         already-existing items.
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     List<Boolean> cfInsert(K key, CfInsertArgs args, V value);
 

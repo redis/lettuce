@@ -194,13 +194,11 @@ public class RedisCuckooFilterIntegrationTests {
     }
 
     /**
-     * Verifies that CF.INSERT returns {@code false} when the filter is full under RESP3.
+     * Verifies that CF.INSERT returns {@code false} when the filter is full.
      *
      * <p>
-     * Under RESP3, redis-stack encodes the per-item {@code -1} (filter full) as a boolean {@code false}; the server-side
-     * protocol collapses it before the client sees it. RESP2, on the other hand, sends the raw integer {@code -1} which the
-     * client maps to {@code null}. The RESP2-specific assertion (null) is covered by an override in
-     * {@link RedisCuckooFilterResp2IntegrationTests#cfInsertReturnsNullWhenFilterIsFull()}.
+     * CF.INSERT uses {@link io.lettuce.core.output.ErrorTolerantBooleanListOutput} which maps any non-{@code 1} integer to
+     * {@code false}. This is consistent across both RESP2 ({@code -1} integer) and RESP3 (boolean {@code false}).
      *
      * <p>
      * BUCKETSIZE 1 EXPANSION 0: same value fills at most 2 slots; inserting the same value 6 times causes filter-full for slots

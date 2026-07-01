@@ -11,6 +11,7 @@ import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.CuckooInsertBooleanListOutput;
 import io.lettuce.core.output.CuckooInsertBooleanValueListOutput;
+import io.lettuce.core.output.ErrorTolerantBooleanListOutput;
 import io.lettuce.core.protocol.Command;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -82,7 +83,7 @@ class RedisCuckooFilterCommandBuilderUnitTests {
                 .isEqualTo("*3\r\n" + "$8\r\nCF.ADDNX\r\n" + "$10\r\n" + MY_KEY + "\r\n" + "$4\r\n" + MY_VALUE + "\r\n");
     }
 
-    // --- CF.INSERT (returns List<Boolean>, uses CuckooInsertBooleanListOutput) ---
+    // --- CF.INSERT (returns List<Boolean>, uses ErrorTolerantBooleanListOutput) ---
 
     @Test
     void shouldCorrectlyConstructCfInsertCommand() {
@@ -92,7 +93,7 @@ class RedisCuckooFilterCommandBuilderUnitTests {
 
         assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$9\r\nCF.INSERT\r\n" + "$10\r\n" + MY_KEY
                 + "\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n");
-        assertThat(command.getOutput()).isInstanceOf(CuckooInsertBooleanListOutput.class);
+        assertThat(command.getOutput()).isInstanceOf(ErrorTolerantBooleanListOutput.class);
     }
 
     @Test
@@ -105,7 +106,7 @@ class RedisCuckooFilterCommandBuilderUnitTests {
         assertThat(buff.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*7\r\n" + "$9\r\nCF.INSERT\r\n" + "$10\r\n" + MY_KEY + "\r\n" + "$8\r\nCAPACITY\r\n"
                         + "$3\r\n100\r\n" + "$8\r\nNOCREATE\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n");
-        assertThat(command.getOutput()).isInstanceOf(CuckooInsertBooleanListOutput.class);
+        assertThat(command.getOutput()).isInstanceOf(ErrorTolerantBooleanListOutput.class);
     }
 
     @Test
@@ -116,7 +117,7 @@ class RedisCuckooFilterCommandBuilderUnitTests {
 
         assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$9\r\nCF.INSERT\r\n" + "$10\r\n" + MY_KEY
                 + "\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n" + "$12\r\n" + MY_VALUE_2 + "\r\n");
-        assertThat(command.getOutput()).isInstanceOf(CuckooInsertBooleanListOutput.class);
+        assertThat(command.getOutput()).isInstanceOf(ErrorTolerantBooleanListOutput.class);
     }
 
     @Test
@@ -129,58 +130,7 @@ class RedisCuckooFilterCommandBuilderUnitTests {
         assertThat(buff.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*7\r\n" + "$9\r\nCF.INSERT\r\n" + "$10\r\n" + MY_KEY + "\r\n" + "$8\r\nCAPACITY\r\n"
                         + "$3\r\n100\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n" + "$12\r\n" + MY_VALUE_2 + "\r\n");
-        assertThat(command.getOutput()).isInstanceOf(CuckooInsertBooleanListOutput.class);
-    }
-
-    // --- CF.INSERT with Value wrapper (returns List<Value<Boolean>>, uses CuckooInsertBooleanValueListOutput) ---
-
-    @Test
-    void shouldCorrectlyConstructCfInsertValuesCommand() {
-        Command<String, String, List<Value<Boolean>>> command = builder.cfInsertValues(MY_KEY, MY_VALUE);
-        ByteBuf buff = Unpooled.buffer();
-        command.encode(buff);
-
-        assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$9\r\nCF.INSERT\r\n" + "$10\r\n" + MY_KEY
-                + "\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n");
-        assertThat(command.getOutput()).isInstanceOf(CuckooInsertBooleanValueListOutput.class);
-    }
-
-    @Test
-    void shouldCorrectlyConstructCfInsertValuesCommandWithArgs() {
-        CfInsertArgs insertArgs = CfInsertArgs.Builder.capacity(100).noCreate();
-        Command<String, String, List<Value<Boolean>>> command = builder.cfInsertValues(MY_KEY, insertArgs, MY_VALUE);
-        ByteBuf buff = Unpooled.buffer();
-        command.encode(buff);
-
-        assertThat(buff.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*7\r\n" + "$9\r\nCF.INSERT\r\n" + "$10\r\n" + MY_KEY + "\r\n" + "$8\r\nCAPACITY\r\n"
-                        + "$3\r\n100\r\n" + "$8\r\nNOCREATE\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n");
-        assertThat(command.getOutput()).isInstanceOf(CuckooInsertBooleanValueListOutput.class);
-    }
-
-    @Test
-    void shouldCorrectlyConstructCfInsertValuesCommandWithVarargs() {
-        Command<String, String, List<Value<Boolean>>> command = builder.cfInsertValues(MY_KEY, MY_VALUE, MY_VALUE_2);
-        ByteBuf buff = Unpooled.buffer();
-        command.encode(buff);
-
-        assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$9\r\nCF.INSERT\r\n" + "$10\r\n" + MY_KEY
-                + "\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n" + "$12\r\n" + MY_VALUE_2 + "\r\n");
-        assertThat(command.getOutput()).isInstanceOf(CuckooInsertBooleanValueListOutput.class);
-    }
-
-    @Test
-    void shouldCorrectlyConstructCfInsertValuesVarargWithArgs() {
-        CfInsertArgs insertArgs = CfInsertArgs.Builder.capacity(100);
-        Command<String, String, List<Value<Boolean>>> command = builder.cfInsertValues(MY_KEY, insertArgs, MY_VALUE,
-                MY_VALUE_2);
-        ByteBuf buff = Unpooled.buffer();
-        command.encode(buff);
-
-        assertThat(buff.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*7\r\n" + "$9\r\nCF.INSERT\r\n" + "$10\r\n" + MY_KEY + "\r\n" + "$8\r\nCAPACITY\r\n"
-                        + "$3\r\n100\r\n" + "$5\r\nITEMS\r\n" + "$4\r\n" + MY_VALUE + "\r\n" + "$12\r\n" + MY_VALUE_2 + "\r\n");
-        assertThat(command.getOutput()).isInstanceOf(CuckooInsertBooleanValueListOutput.class);
+        assertThat(command.getOutput()).isInstanceOf(ErrorTolerantBooleanListOutput.class);
     }
 
     // --- CF.INSERTNX (returns List<Boolean>, uses CuckooInsertBooleanListOutput) ---

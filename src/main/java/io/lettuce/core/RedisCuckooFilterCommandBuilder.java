@@ -8,7 +8,6 @@ package io.lettuce.core;
 
 import java.util.List;
 
-import io.lettuce.core.Value;
 import io.lettuce.core.probabilistic.CfInfoValue;
 import io.lettuce.core.probabilistic.CfInfoValueParser;
 import io.lettuce.core.probabilistic.ScanDumpValue;
@@ -72,7 +71,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(CF_INSERT, new CuckooInsertBooleanListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
     }
 
     Command<K, V, List<Boolean>> cfInsert(K key, CfInsertArgs insertArgs, V value) {
@@ -82,7 +81,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValue(value);
 
-        return createCommand(CF_INSERT, new CuckooInsertBooleanListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -91,7 +90,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(CF_INSERT, new CuckooInsertBooleanListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
     }
 
     @SafeVarargs
@@ -102,45 +101,7 @@ class RedisCuckooFilterCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V
         insertArgs.build(args);
         args.add(CommandKeyword.ITEMS).addValues(values);
 
-        return createCommand(CF_INSERT, new CuckooInsertBooleanListOutput<>(codec), args);
-    }
-
-    Command<K, V, List<Value<Boolean>>> cfInsertValues(K key, V value) {
-        notNullKey(key);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValue(value);
-
-        return createCommand(CF_INSERT, new CuckooInsertBooleanValueListOutput<>(codec), args);
-    }
-
-    Command<K, V, List<Value<Boolean>>> cfInsertValues(K key, CfInsertArgs insertArgs, V value) {
-        notNullKey(key);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        insertArgs.build(args);
-        args.add(CommandKeyword.ITEMS).addValue(value);
-
-        return createCommand(CF_INSERT, new CuckooInsertBooleanValueListOutput<>(codec), args);
-    }
-
-    @SafeVarargs
-    final Command<K, V, List<Value<Boolean>>> cfInsertValues(K key, V... values) {
-        notNullKey(key);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(CommandKeyword.ITEMS).addValues(values);
-
-        return createCommand(CF_INSERT, new CuckooInsertBooleanValueListOutput<>(codec), args);
-    }
-
-    @SafeVarargs
-    final Command<K, V, List<Value<Boolean>>> cfInsertValues(K key, CfInsertArgs insertArgs, V... values) {
-        notNullKey(key);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        insertArgs.build(args);
-        args.add(CommandKeyword.ITEMS).addValues(values);
-
-        return createCommand(CF_INSERT, new CuckooInsertBooleanValueListOutput<>(codec), args);
+        return createCommand(CF_INSERT, new ErrorTolerantBooleanListOutput<>(codec), args);
     }
 
     Command<K, V, List<Boolean>> cfInsertNx(K key, V value) {

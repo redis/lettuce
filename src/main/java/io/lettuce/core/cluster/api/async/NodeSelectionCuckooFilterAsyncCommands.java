@@ -49,8 +49,7 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param value the value.
      * @return Boolean integer-reply {@code true} if the item was added.
-     * @throws io.lettuce.core.RedisCommandExecutionException if the filter is full and cannot expand (future fails with this
-     *         exception).
+     * @throws io.lettuce.core.RedisCommandExecutionException if the filter is full and cannot expand.
      */
     AsyncExecutions<Boolean> cfAdd(K key, V value);
 
@@ -68,8 +67,8 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
-     *         item).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     AsyncExecutions<List<Boolean>> cfInsert(K key, V... values);
 
@@ -78,8 +77,8 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
-     *         item).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     AsyncExecutions<List<Boolean>> cfInsert(K key, V value);
 
@@ -89,8 +88,8 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
-     *         item).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     AsyncExecutions<List<Boolean>> cfInsert(K key, CfInsertArgs args, V... values);
 
@@ -100,8 +99,8 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param value the value.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
-     *         item).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     AsyncExecutions<List<Boolean>> cfInsert(K key, CfInsertArgs args, V value);
 

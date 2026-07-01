@@ -67,8 +67,8 @@ public interface NodeSelectionCuckooFilterCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
-     *         item).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     Executions<List<Boolean>> cfInsert(K key, V... values);
 
@@ -77,8 +77,8 @@ public interface NodeSelectionCuckooFilterCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
-     *         item).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     Executions<List<Boolean>> cfInsert(K key, V value);
 
@@ -88,8 +88,8 @@ public interface NodeSelectionCuckooFilterCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
-     *         item).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     Executions<List<Boolean>> cfInsert(K key, CfInsertArgs args, V... values);
 
@@ -99,8 +99,8 @@ public interface NodeSelectionCuckooFilterCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param value the value.
-     * @return List&lt;Boolean&gt; one entry per item: {@code true} if added, {@code false} if the filter is full (one entry per
-     *         item).
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added, {@code false} if the filter is full.
+     *         CF.INSERT does not report already-existing items.
      */
     Executions<List<Boolean>> cfInsert(K key, CfInsertArgs args, V value);
 
