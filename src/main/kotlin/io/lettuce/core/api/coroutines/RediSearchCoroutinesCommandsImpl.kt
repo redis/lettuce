@@ -111,19 +111,19 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftSpellcheck(index: String, query: String, args: SpellCheckArgs): SpellCheckResult? =
         ops.ftSpellcheck(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftSugadd(key: K, suggestion: V, score: Double): Long? =
+    override suspend fun ftSugadd(key: K, suggestion: String, score: Double): Long? =
         ops.ftSugadd(key, suggestion, score).awaitFirstOrNull()
 
-    override suspend fun ftSugadd(key: K, suggestion: V, score: Double, args: SugAddArgs<K, V>): Long? =
+    override suspend fun ftSugadd(key: K, suggestion: String, score: Double, args: SugAddArgs): Long? =
         ops.ftSugadd(key, suggestion, score, args).awaitFirstOrNull()
 
-    override suspend fun ftSugdel(key: K, suggestion: V): Boolean? =
+    override suspend fun ftSugdel(key: K, suggestion: String): Boolean? =
         ops.ftSugdel(key, suggestion).awaitFirstOrNull()
 
-    override suspend fun ftSugget(key: K, prefix: V): List<Suggestion<V>> =
+    override suspend fun ftSugget(key: K, prefix: String): List<Suggestion> =
         ops.ftSugget(key, prefix).asFlow().toList()
 
-    override suspend fun ftSugget(key: K, prefix: V, args: SugGetArgs): List<Suggestion<V>> =
+    override suspend fun ftSugget(key: K, prefix: String, args: SugGetArgs): List<Suggestion> =
         ops.ftSugget(key, prefix, args).asFlow().toList()
 
     override suspend fun ftSuglen(key: K): Long? =

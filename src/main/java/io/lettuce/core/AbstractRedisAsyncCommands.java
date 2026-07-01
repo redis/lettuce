@@ -1774,27 +1774,27 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Long> ftSugadd(K key, V string, double score) {
-        return dispatch(searchCommandBuilder.ftSugadd(key, string, score));
+    public RedisFuture<Long> ftSugadd(K key, String suggestion, double score) {
+        return dispatch(searchCommandBuilder.ftSugadd(key, suggestion, score));
     }
 
     @Override
-    public RedisFuture<Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
-        return dispatch(searchCommandBuilder.ftSugadd(key, string, score, args));
+    public RedisFuture<Long> ftSugadd(K key, String suggestion, double score, SugAddArgs args) {
+        return dispatch(searchCommandBuilder.ftSugadd(key, suggestion, score, args));
     }
 
     @Override
-    public RedisFuture<Boolean> ftSugdel(K key, V string) {
-        return dispatch(searchCommandBuilder.ftSugdel(key, string));
+    public RedisFuture<Boolean> ftSugdel(K key, String suggestion) {
+        return dispatch(searchCommandBuilder.ftSugdel(key, suggestion));
     }
 
     @Override
-    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix) {
+    public RedisFuture<List<Suggestion>> ftSugget(K key, String prefix) {
         return dispatch(searchCommandBuilder.ftSugget(key, prefix));
     }
 
     @Override
-    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs args) {
+    public RedisFuture<List<Suggestion>> ftSugget(K key, String prefix, SugGetArgs args) {
         return dispatch(searchCommandBuilder.ftSugget(key, prefix, args));
     }
 

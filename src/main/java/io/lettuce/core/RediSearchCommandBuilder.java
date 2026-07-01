@@ -10,8 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.BooleanOutput;
+import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.ComplexOutput;
 import io.lettuce.core.output.EncodedComplexOutput;
 import io.lettuce.core.output.IntegerOutput;
@@ -479,28 +481,28 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * Add a suggestion string to an auto-complete suggestion dictionary.
      *
      * @param key the suggestion dictionary key
-     * @param string the suggestion string to index
+     * @param suggestion the suggestion string to index
      * @param score the floating point number of the suggestion string's weight
      * @return the result of the sugadd command
      */
-    public Command<K, V, Long> ftSugadd(K key, V string, double score) {
-        return ftSugadd(key, string, score, null);
+    public Command<K, V, Long> ftSugadd(K key, String suggestion, double score) {
+        return ftSugadd(key, suggestion, score, null);
     }
 
     /**
      * Add a suggestion string to an auto-complete suggestion dictionary.
      *
      * @param key the suggestion dictionary key
-     * @param string the suggestion string to index
+     * @param suggestion the suggestion string to index
      * @param score the floating point number of the suggestion string's weight
      * @param args the suggestion add arguments
      * @return the result of the sugadd command
      */
-    public Command<K, V, Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
+    public Command<K, V, Long> ftSugadd(K key, String suggestion, double score, SugAddArgs args) {
         notNullKey(key);
-        LettuceAssert.notNull(string, "String must not be null");
+        LettuceAssert.notNull(suggestion, "Suggestion must not be null");
 
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).addValue(string).add(score);
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).add(suggestion).add(score);
 
         if (args != null) {
             args.build(commandArgs);
@@ -513,14 +515,14 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * Delete a string from a suggestion dictionary.
      *
      * @param key the suggestion dictionary key
-     * @param string the suggestion string to delete
+     * @param suggestion the suggestion string to delete
      * @return the result of the sugdel command
      */
-    public Command<K, V, Boolean> ftSugdel(K key, V string) {
+    public Command<K, V, Boolean> ftSugdel(K key, String suggestion) {
         notNullKey(key);
-        LettuceAssert.notNull(string, "String must not be null");
+        LettuceAssert.notNull(suggestion, "Suggestion must not be null");
 
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).addValue(string);
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).add(suggestion);
 
         return createCommand(FT_SUGDEL, new BooleanOutput<>(codec), commandArgs);
     }
@@ -532,7 +534,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param prefix the prefix to complete on
      * @return the result of the sugget command
      */
-    public Command<K, V, List<Suggestion<V>>> ftSugget(K key, V prefix) {
+    public Command<K, V, List<Suggestion>> ftSugget(K key, String prefix) {
         return ftSugget(key, prefix, null);
     }
 
@@ -544,11 +546,11 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param args the suggestion get arguments
      * @return the result of the sugget command
      */
-    public Command<K, V, List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs args) {
+    public Command<K, V, List<Suggestion>> ftSugget(K key, String prefix, SugGetArgs args) {
         notNullKey(key);
         LettuceAssert.notNull(prefix, "Prefix must not be null");
 
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).addValue(prefix);
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).add(prefix);
 
         boolean withScores = false;
         boolean withPayloads = false;
@@ -559,8 +561,10 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.build(commandArgs);
         }
 
-        SuggestionParser<V> parser = new SuggestionParser<>(withScores, withPayloads);
-        return createCommand(FT_SUGGET, new ComplexOutput<>(codec, parser), commandArgs);
+        // Suggestions and payloads are auto-complete text, sent and parsed raw (UTF-8) rather than through the connection
+        // value codec, so prefix matching is not affected by a non-trivial codec on the connection.
+        SuggestionParser parser = new SuggestionParser(withScores, withPayloads);
+        return createCommand(FT_SUGGET, (CommandOutput) new ComplexOutput<>(StringCodec.UTF8, parser), commandArgs);
     }
 
     /**

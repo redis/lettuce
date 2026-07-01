@@ -1860,27 +1860,27 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Long> ftSugadd(K key, V string, double score) {
-        return createMono(() -> searchCommandBuilder.ftSugadd(key, string, score));
+    public Mono<Long> ftSugadd(K key, String suggestion, double score) {
+        return createMono(() -> searchCommandBuilder.ftSugadd(key, suggestion, score));
     }
 
     @Override
-    public Mono<Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
-        return createMono(() -> searchCommandBuilder.ftSugadd(key, string, score, args));
+    public Mono<Long> ftSugadd(K key, String suggestion, double score, SugAddArgs args) {
+        return createMono(() -> searchCommandBuilder.ftSugadd(key, suggestion, score, args));
     }
 
     @Override
-    public Mono<Boolean> ftSugdel(K key, V string) {
-        return createMono(() -> searchCommandBuilder.ftSugdel(key, string));
+    public Mono<Boolean> ftSugdel(K key, String suggestion) {
+        return createMono(() -> searchCommandBuilder.ftSugdel(key, suggestion));
     }
 
     @Override
-    public Flux<Suggestion<V>> ftSugget(K key, V prefix) {
+    public Flux<Suggestion> ftSugget(K key, String prefix) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftSugget(key, prefix));
     }
 
     @Override
-    public Flux<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs args) {
+    public Flux<Suggestion> ftSugget(K key, String prefix, SugGetArgs args) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftSugget(key, prefix, args));
     }
 

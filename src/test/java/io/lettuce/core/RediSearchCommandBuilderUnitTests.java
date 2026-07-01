@@ -444,7 +444,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.SUGADD key string score INCR PAYLOAD payload
     @Test
     void shouldCorrectlyConstructFtSugaddCommandWithArgs() {
-        SugAddArgs<String, String> args = SugAddArgs.Builder.<String, String> incr().payload("test-payload");
+        SugAddArgs args = SugAddArgs.Builder.incr().payload("test-payload");
         Command<String, String, Long> command = builder.ftSugadd(MY_KEY, "suggestion", 1.0, args);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -479,7 +479,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.SUGGET key prefix
     @Test
     void shouldCorrectlyConstructFtSuggetCommand() {
-        Command<String, String, List<Suggestion<String>>> command = builder.ftSugget(MY_KEY, "pre");
+        Command<String, String, List<Suggestion>> command = builder.ftSugget(MY_KEY, "pre");
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -495,7 +495,7 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructFtSuggetCommandWithArgs() {
         SugGetArgs args = SugGetArgs.Builder.fuzzy().withScores().withPayloads().max(10);
-        Command<String, String, List<Suggestion<String>>> command = builder.ftSugget(MY_KEY, "pre", args);
+        Command<String, String, List<Suggestion>> command = builder.ftSugget(MY_KEY, "pre", args);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 

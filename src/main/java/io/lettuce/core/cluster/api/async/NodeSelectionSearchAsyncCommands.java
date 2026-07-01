@@ -755,13 +755,13 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * @return the current size of the suggestion dictionary after adding the suggestion
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
-     * @see #ftSugadd(K, V, double, SugAddArgs)
-     * @see #ftSugget(K, V)
-     * @see #ftSugdel(K, V)
+     * @see #ftSugadd(K, String, double, SugAddArgs)
+     * @see #ftSugget(K, String)
+     * @see #ftSugdel(K, String)
      * @see #ftSuglen(K)
      */
     @Experimental
-    AsyncExecutions<Long> ftSugadd(K key, V suggestion, double score);
+    AsyncExecutions<Long> ftSugadd(K key, String suggestion, double score);
 
     /**
      * Add a suggestion string to an auto-complete suggestion dictionary with additional options.
@@ -782,13 +782,13 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * @return the current size of the suggestion dictionary after adding the suggestion
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
-     * @see #ftSugadd(K, V, double)
-     * @see #ftSugget(K, V, SugGetArgs)
-     * @see #ftSugdel(K, V)
+     * @see #ftSugadd(K, String, double)
+     * @see #ftSugget(K, String, SugGetArgs)
+     * @see #ftSugdel(K, String)
      * @see #ftSuglen(K)
      */
     @Experimental
-    AsyncExecutions<Long> ftSugadd(K key, V suggestion, double score, SugAddArgs<K, V> args);
+    AsyncExecutions<Long> ftSugadd(K key, String suggestion, double score, SugAddArgs args);
 
     /**
      * Delete a string from a suggestion dictionary.
@@ -807,12 +807,12 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * @return {@code true} if the string was found and deleted, {@code false} otherwise
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugdel/">FT.SUGDEL</a>
-     * @see #ftSugadd(K, V, double)
-     * @see #ftSugget(K, V)
+     * @see #ftSugadd(K, String, double)
+     * @see #ftSugget(K, String)
      * @see #ftSuglen(K)
      */
     @Experimental
-    AsyncExecutions<Boolean> ftSugdel(K key, V suggestion);
+    AsyncExecutions<Boolean> ftSugdel(K key, String suggestion);
 
     /**
      * Get completion suggestions for a prefix.
@@ -831,13 +831,13 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * @return a list of suggestions matching the prefix
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
-     * @see #ftSugget(K, V, SugGetArgs)
-     * @see #ftSugadd(K, V, double)
-     * @see #ftSugdel(K, V)
+     * @see #ftSugget(K, String, SugGetArgs)
+     * @see #ftSugadd(K, String, double)
+     * @see #ftSugdel(K, String)
      * @see #ftSuglen(K)
      */
     @Experimental
-    AsyncExecutions<List<Suggestion<V>>> ftSugget(K key, V prefix);
+    AsyncExecutions<List<Suggestion>> ftSugget(K key, String prefix);
 
     /**
      * Get completion suggestions for a prefix with additional options.
@@ -857,13 +857,13 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * @return a list of suggestions matching the prefix, optionally with scores and payloads
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
-     * @see #ftSugget(K, V)
-     * @see #ftSugadd(K, V, double, SugAddArgs)
-     * @see #ftSugdel(K, V)
+     * @see #ftSugget(K, String)
+     * @see #ftSugadd(K, String, double, SugAddArgs)
+     * @see #ftSugdel(K, String)
      * @see #ftSuglen(K)
      */
     @Experimental
-    AsyncExecutions<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs args);
+    AsyncExecutions<List<Suggestion>> ftSugget(K key, String prefix, SugGetArgs args);
 
     /**
      * Get the size of an auto-complete suggestion dictionary.
@@ -880,9 +880,9 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * @return the current size of the suggestion dictionary
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.suglen/">FT.SUGLEN</a>
-     * @see #ftSugadd(K, V, double)
-     * @see #ftSugget(K, V)
-     * @see #ftSugdel(K, V)
+     * @see #ftSugadd(K, String, double)
+     * @see #ftSugget(K, String)
+     * @see #ftSugdel(K, String)
      */
     @Experimental
     AsyncExecutions<Long> ftSuglen(K key);

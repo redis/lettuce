@@ -756,13 +756,13 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return the current size of the suggestion dictionary after adding the suggestion
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
-     * @see #ftSugadd(K, V, Double, SugAddArgs)
-     * @see #ftSugget(K, V)
-     * @see #ftSugdel(K, V)
+     * @see #ftSugadd(K, String, Double, SugAddArgs)
+     * @see #ftSugget(K, String)
+     * @see #ftSugdel(K, String)
      * @see #ftSuglen(K)
      */
     @Experimental
-    suspend fun ftSugadd(key: K, suggestion: V, score: Double): Long?
+    suspend fun ftSugadd(key: K, suggestion: String, score: Double): Long?
 
     /**
      * Add a suggestion string to an auto-complete suggestion dictionary with additional options.
@@ -783,13 +783,13 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return the current size of the suggestion dictionary after adding the suggestion
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
-     * @see #ftSugadd(K, V, Double)
-     * @see #ftSugget(K, V, SugGetArgs)
-     * @see #ftSugdel(K, V)
+     * @see #ftSugadd(K, String, Double)
+     * @see #ftSugget(K, String, SugGetArgs)
+     * @see #ftSugdel(K, String)
      * @see #ftSuglen(K)
      */
     @Experimental
-    suspend fun ftSugadd(key: K, suggestion: V, score: Double, args: SugAddArgs<K, V>): Long?
+    suspend fun ftSugadd(key: K, suggestion: String, score: Double, args: SugAddArgs): Long?
 
     /**
      * Delete a string from a suggestion dictionary.
@@ -808,12 +808,12 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return @code true} if the string was found and deleted, `false` otherwise
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugdel/">FT.SUGDEL</a>
-     * @see #ftSugadd(K, V, Double)
-     * @see #ftSugget(K, V)
+     * @see #ftSugadd(K, String, Double)
+     * @see #ftSugget(K, String)
      * @see #ftSuglen(K)
      */
     @Experimental
-    suspend fun ftSugdel(key: K, suggestion: V): Boolean?
+    suspend fun ftSugdel(key: K, suggestion: String): Boolean?
 
     /**
      * Get completion suggestions for a prefix.
@@ -832,13 +832,13 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return a list of suggestions matching the prefix
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
-     * @see #ftSugget(K, V, SugGetArgs)
-     * @see #ftSugadd(K, V, Double)
-     * @see #ftSugdel(K, V)
+     * @see #ftSugget(K, String, SugGetArgs)
+     * @see #ftSugadd(K, String, Double)
+     * @see #ftSugdel(K, String)
      * @see #ftSuglen(K)
      */
     @Experimental
-    suspend fun ftSugget(key: K, prefix: V): List<Suggestion<V>>
+    suspend fun ftSugget(key: K, prefix: String): List<Suggestion>
 
     /**
      * Get completion suggestions for a prefix with additional options.
@@ -858,13 +858,13 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return a list of suggestions matching the prefix, optionally with scores and payloads
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
-     * @see #ftSugget(K, V)
-     * @see #ftSugadd(K, V, Double, SugAddArgs)
-     * @see #ftSugdel(K, V)
+     * @see #ftSugget(K, String)
+     * @see #ftSugadd(K, String, Double, SugAddArgs)
+     * @see #ftSugdel(K, String)
      * @see #ftSuglen(K)
      */
     @Experimental
-    suspend fun ftSugget(key: K, prefix: V, args: SugGetArgs): List<Suggestion<V>>
+    suspend fun ftSugget(key: K, prefix: String, args: SugGetArgs): List<Suggestion>
 
     /**
      * Get the size of an auto-complete suggestion dictionary.
@@ -881,9 +881,9 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return the current size of the suggestion dictionary
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.suglen/">FT.SUGLEN</a>
-     * @see #ftSugadd(K, V, Double)
-     * @see #ftSugget(K, V)
-     * @see #ftSugdel(K, V)
+     * @see #ftSugadd(K, String, Double)
+     * @see #ftSugget(K, String)
+     * @see #ftSugdel(K, String)
      */
     @Experimental
     suspend fun ftSuglen(key: K): Long?

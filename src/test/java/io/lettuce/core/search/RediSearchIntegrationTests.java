@@ -790,19 +790,19 @@ public class RediSearchIntegrationTests {
         assertThat(redis.ftSuglen(suggestionKey)).isEqualTo(5L);
 
         // Test FT.SUGGET - Get suggestions for prefix
-        List<Suggestion<String>> suggestions = redis.ftSugget(suggestionKey, "New");
+        List<Suggestion> suggestions = redis.ftSugget(suggestionKey, "New");
         assertThat(suggestions).hasSize(3);
         assertThat(suggestions.stream().map(Suggestion::getValue)).containsExactlyInAnyOrder("New York", "New Orleans",
                 "Newark");
 
         // Test FT.SUGGET with MAX limit
         SugGetArgs maxArgs = SugGetArgs.Builder.max(2);
-        List<Suggestion<String>> limitedSuggestions = redis.ftSugget(suggestionKey, "New", maxArgs);
+        List<Suggestion> limitedSuggestions = redis.ftSugget(suggestionKey, "New", maxArgs);
         assertThat(limitedSuggestions).hasSize(2);
 
         // Test FT.SUGGET with FUZZY matching
         SugGetArgs fuzzyArgs = SugGetArgs.Builder.fuzzy();
-        List<Suggestion<String>> fuzzySuggestions = redis.ftSugget(suggestionKey, "Bost", fuzzyArgs);
+        List<Suggestion> fuzzySuggestions = redis.ftSugget(suggestionKey, "Bost", fuzzyArgs);
         assertThat(fuzzySuggestions.stream().map(Suggestion::getValue)).contains("Boston");
 
         // Test FT.SUGDEL - Delete a suggestion
@@ -810,7 +810,7 @@ public class RediSearchIntegrationTests {
         assertThat(redis.ftSuglen(suggestionKey)).isEqualTo(4L);
 
         // Verify deletion
-        List<Suggestion<String>> afterDeletion = redis.ftSugget(suggestionKey, "New");
+        List<Suggestion> afterDeletion = redis.ftSugget(suggestionKey, "New");
         assertThat(afterDeletion).hasSize(2);
         assertThat(afterDeletion.stream().map(Suggestion::getValue)).containsExactlyInAnyOrder("New York", "New Orleans");
 
@@ -818,19 +818,21 @@ public class RediSearchIntegrationTests {
         assertThat(redis.ftSugdel(suggestionKey, "NonExistent")).isFalse();
 
         // Test FT.SUGADD with INCR and PAYLOAD
-        SugAddArgs<String, String> incrArgs = SugAddArgs.Builder.<String, String> incr().payload("US-East");
+        SugAddArgs incrArgs = SugAddArgs.Builder.incr().payload("US-East");
         assertThat(redis.ftSugadd(suggestionKey, "New York", 0.5, incrArgs)).isEqualTo(4L);
 
         // Test FT.SUGGET with WITHSCORES and WITHPAYLOADS
         SugGetArgs withExtrasArgs = SugGetArgs.Builder.withScores().withPayloads();
-        List<Suggestion<String>> detailedSuggestions = redis.ftSugget(suggestionKey, "New", withExtrasArgs);
+        List<Suggestion> detailedSuggestions = redis.ftSugget(suggestionKey, "New", withExtrasArgs);
         assertThat(detailedSuggestions).isNotEmpty();
 
         // Verify that suggestions with scores and payloads are properly parsed
-        for (Suggestion<String> suggestion : detailedSuggestions) {
+        for (Suggestion suggestion : detailedSuggestions) {
             assertThat(suggestion.getValue()).isNotNull();
             if ("New York".equals(suggestion.getValue())) {
                 assertThat(suggestion.hasScore()).isTrue();
+                // the score is returned as a string on the wire and must be parsed to its numeric value, not 0.0
+                assertThat(suggestion.getScore()).isGreaterThan(0.0);
                 assertThat(suggestion.hasPayload()).isTrue();
                 assertThat(suggestion.getPayload()).isEqualTo("US-East");
             }
