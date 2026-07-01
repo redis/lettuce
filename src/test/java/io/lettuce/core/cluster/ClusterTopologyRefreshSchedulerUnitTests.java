@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -37,11 +38,11 @@ class ClusterTopologyRefreshSchedulerUnitTests {
 
     private ClusterTopologyRefreshScheduler sut;
 
-    private ClusterTopologyRefreshOptions immediateRefresh = ClusterTopologyRefreshOptions.builder()
+    private final ClusterTopologyRefreshOptions immediateRefresh = ClusterTopologyRefreshOptions.builder()
             .enablePeriodicRefresh(1, TimeUnit.MILLISECONDS).enableAllAdaptiveRefreshTriggers().build();
 
-    private ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder().topologyRefreshOptions(immediateRefresh)
-            .build();
+    private final ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder()
+            .topologyRefreshOptions(immediateRefresh).build();
 
     @Mock
     private ClientResources clientResources;
@@ -78,7 +79,7 @@ class ClusterTopologyRefreshSchedulerUnitTests {
     void runnableShouldCallPartitionRefresh() {
 
         when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
-
+        when(clusterClient.refreshPartitionsAsync()).thenReturn(new CompletableFuture<>());
         when(eventExecutors.submit(any(Runnable.class))).then(invocation -> {
             ((Runnable) invocation.getArguments()[0]).run();
             return null;
@@ -93,6 +94,7 @@ class ClusterTopologyRefreshSchedulerUnitTests {
     void shouldNotSubmitIfExecutorIsShuttingDown() {
 
         when(eventExecutors.isShuttingDown()).thenReturn(true);
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
 
         sut.run();
         verify(eventExecutors, never()).submit(any(Runnable.class));
@@ -102,6 +104,7 @@ class ClusterTopologyRefreshSchedulerUnitTests {
     void shouldNotSubmitIfExecutorIsShutdown() {
 
         when(eventExecutors.isShutdown()).thenReturn(true);
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
 
         sut.run();
         verify(eventExecutors, never()).submit(any(Runnable.class));
@@ -111,6 +114,7 @@ class ClusterTopologyRefreshSchedulerUnitTests {
     void shouldNotSubmitIfExecutorIsTerminated() {
 
         when(eventExecutors.isTerminated()).thenReturn(true);
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
 
         sut.run();
         verify(eventExecutors, never()).submit(any(Runnable.class));
