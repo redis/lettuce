@@ -370,7 +370,7 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    AsyncExecutions<List<V>> ftTagvals(String index, String fieldName);
+    AsyncExecutions<List<String>> ftTagvals(String index, String fieldName);
 
     /**
      * Perform spelling correction on a query, returning suggestions for misspelled terms.

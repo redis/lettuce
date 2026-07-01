@@ -20,7 +20,6 @@ import io.lettuce.core.output.IntegerOutput;
 
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.StringListOutput;
-import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -282,13 +281,13 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param fieldName the name of a Tag field defined in the schema
      * @return the result of the tagvals command
      */
-    public Command<K, V, List<V>> ftTagvals(String index, String fieldName) {
+    public Command<K, V, List<String>> ftTagvals(String index, String fieldName) {
         LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(fieldName, "Field name must not be null");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(index).add(fieldName);
 
-        return createCommand(FT_TAGVALS, new ValueListOutput<>(codec), args);
+        return createCommand(FT_TAGVALS, new StringListOutput<>(codec), args);
     }
 
     /**
@@ -561,8 +560,6 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.build(commandArgs);
         }
 
-        // Suggestions and payloads are auto-complete text, sent and parsed raw (UTF-8) rather than through the connection
-        // value codec, so prefix matching is not affected by a non-trivial codec on the connection.
         SuggestionParser parser = new SuggestionParser(withScores, withPayloads);
         return createCommand(FT_SUGGET, (CommandOutput) new ComplexOutput<>(StringCodec.UTF8, parser), commandArgs);
     }

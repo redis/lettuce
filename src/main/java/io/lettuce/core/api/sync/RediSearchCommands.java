@@ -370,7 +370,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    List<V> ftTagvals(String index, String fieldName);
+    List<String> ftTagvals(String index, String fieldName);
 
     /**
      * Perform spelling correction on a query, returning suggestions for misspelled terms.

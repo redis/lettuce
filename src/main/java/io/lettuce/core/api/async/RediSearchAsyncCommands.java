@@ -370,7 +370,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    RedisFuture<List<V>> ftTagvals(String index, String fieldName);
+    RedisFuture<List<String>> ftTagvals(String index, String fieldName);
 
     /**
      * Perform spelling correction on a query, returning suggestions for misspelled terms.

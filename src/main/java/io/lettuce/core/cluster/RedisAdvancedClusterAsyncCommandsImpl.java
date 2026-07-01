@@ -819,7 +819,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<List<V>> ftTagvals(String index, String fieldName) {
+    public RedisFuture<List<String>> ftTagvals(String index, String fieldName) {
         return routeKeyless(() -> super.ftTagvals(index, fieldName), (conn) -> conn.ftTagvals(index, fieldName),
                 CommandType.FT_TAGVALS);
     }

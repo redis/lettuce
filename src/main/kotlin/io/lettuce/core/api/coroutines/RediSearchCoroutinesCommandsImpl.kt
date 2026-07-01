@@ -60,7 +60,7 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftAlter(index: String, skipInitialScan: Boolean, fieldArgs: List<FieldArgs>): String? =
         ops.ftAlter(index, skipInitialScan, fieldArgs).awaitFirstOrNull()
 
-     override suspend fun ftTagvals(index: String, fieldName: String): List<V> =
+     override suspend fun ftTagvals(index: String, fieldName: String): List<String> =
          ops.ftTagvals(index, fieldName).asFlow().toList()
 
     override suspend fun ftAlter(index: String, fieldArgs: List<FieldArgs>): String? =

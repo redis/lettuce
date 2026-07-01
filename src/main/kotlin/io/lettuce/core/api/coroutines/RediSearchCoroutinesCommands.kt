@@ -371,7 +371,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    suspend fun ftTagvals(index: String, fieldName: String): List<V>
+    suspend fun ftTagvals(index: String, fieldName: String): List<String>
 
     /**
      * Perform spelling correction on a query, returning suggestions for misspelled terms.

@@ -370,7 +370,7 @@ public interface NodeSelectionSearchCommands<K, V> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    Executions<List<V>> ftTagvals(String index, String fieldName);
+    Executions<List<String>> ftTagvals(String index, String fieldName);
 
     /**
      * Perform spelling correction on a query, returning suggestions for misspelled terms.

@@ -372,7 +372,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    Flux<V> ftTagvals(String index, String fieldName);
+    Flux<String> ftTagvals(String index, String fieldName);
 
     /**
      * Perform spelling correction on a query, returning suggestions for misspelled terms.

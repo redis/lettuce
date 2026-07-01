@@ -1800,7 +1800,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> ftTagvals(String index, String fieldName) {
+    public Flux<String> ftTagvals(String index, String fieldName) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftTagvals(index, fieldName));
     }
 
