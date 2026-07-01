@@ -121,7 +121,12 @@ public class SuggestionParser implements ComplexDataParser<List<Suggestion>> {
             return (Double) scoreObj;
         }
 
-        return 0.0;
+        try {
+            return Double.parseDouble(scoreObj.toString());
+        } catch (NumberFormatException e) {
+            LOG.warn("Failed while parsing FT.SUGGET score: {}", scoreObj);
+            return null;
+        }
     }
 
 }
