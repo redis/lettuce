@@ -9,6 +9,7 @@ package io.lettuce.core.output;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.junit.jupiter.api.Tag;
@@ -18,19 +19,19 @@ import io.lettuce.core.Value;
 import io.lettuce.core.codec.StringCodec;
 
 /**
- * Unit tests for {@link CuckooInsertBooleanValueListOutput}.
+ * Unit tests for {@link ErrorTolerantBooleanValueListOutput}.
  *
- * Verifies the 3-state mapping required by reactive CF.INSERTNX:
+ * Verifies the {@link Value}-wrapped mapping used by reactive BF.INSERT, BF.MADD, and CF.INSERT:
  * <ul>
- * <li>1 → {@code Value.just(Boolean.TRUE)} (item added)</li>
- * <li>0 → {@code Value.just(Boolean.FALSE)} (item already exists, INSERTNX only)</li>
- * <li>-1 → {@code Value.empty()} (filter is full)</li>
+ * <li>{@code 1} &rarr; {@code Value.just(Boolean.TRUE)} (item added)</li>
+ * <li>{@code 0} or other non-{@code 1} integer &rarr; {@code Value.just(Boolean.FALSE)} (item may already exist)</li>
+ * <li>simple string / inline error / nil &rarr; {@code Value.empty()} (filter full or error)</li>
  * </ul>
  */
 @Tag(UNIT_TEST)
-class CuckooInsertBooleanValueListOutputUnitTests {
+class ErrorTolerantBooleanValueListOutputUnitTests {
 
-    private final CuckooInsertBooleanValueListOutput<String, String> sut = new CuckooInsertBooleanValueListOutput<>(
+    private final ErrorTolerantBooleanValueListOutput<String, String> sut = new ErrorTolerantBooleanValueListOutput<>(
             StringCodec.UTF8);
 
     @Test
@@ -59,43 +60,29 @@ class CuckooInsertBooleanValueListOutputUnitTests {
     }
 
     @Test
-    void setNegativeOneMappedToValueEmpty() {
+    void setNegativeOneMappedToValueFalse() {
         sut.multi(1);
         sut.set(-1L);
 
         List<Value<Boolean>> result = sut.get();
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(Value.empty());
+        assertThat(result.get(0)).isEqualTo(Value.just(Boolean.FALSE));
     }
 
     @Test
-    void otherNegativeValueMappedToValueEmpty() {
-        sut.multi(1);
-        sut.set(-2L);
+    void setBooleanPassthrough() {
+        sut.multi(2);
+        sut.set(true);
+        sut.set(false);
 
         List<Value<Boolean>> result = sut.get();
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(Value.empty());
-    }
-
-    @Test
-    void mixedResponsesAllDistinct() {
-        sut.multi(3);
-        sut.set(1L);
-        sut.set(0L);
-        sut.set(-1L);
-
-        List<Value<Boolean>> result = sut.get();
-        assertThat(result).hasSize(3);
-        assertThat(result.get(0)).isEqualTo(Value.just(Boolean.TRUE));
-        assertThat(result.get(1)).isEqualTo(Value.just(Boolean.FALSE));
-        assertThat(result.get(2)).isEqualTo(Value.empty());
+        assertThat(result).containsExactly(Value.just(Boolean.TRUE), Value.just(Boolean.FALSE));
     }
 
     @Test
     void setErrorPushesValueEmptyWhenInitialized() {
         sut.multi(1);
-        sut.setError(java.nio.ByteBuffer.wrap("ERR filter full".getBytes()));
+        sut.setError(ByteBuffer.wrap("ERR filter full".getBytes()));
 
         List<Value<Boolean>> result = sut.get();
         assertThat(result).hasSize(1);
@@ -105,7 +92,7 @@ class CuckooInsertBooleanValueListOutputUnitTests {
     @Test
     void setNullByteBufferPushesValueEmptyWhenInitialized() {
         sut.multi(1);
-        sut.set((java.nio.ByteBuffer) null);
+        sut.set((ByteBuffer) null);
 
         List<Value<Boolean>> result = sut.get();
         assertThat(result).hasSize(1);
@@ -115,7 +102,7 @@ class CuckooInsertBooleanValueListOutputUnitTests {
     @Test
     void setSimpleStringPushesValueEmptyWhenInitialized() {
         sut.multi(1);
-        sut.set(java.nio.ByteBuffer.wrap("Filter is full".getBytes()));
+        sut.set(ByteBuffer.wrap("Filter is full".getBytes()));
 
         List<Value<Boolean>> result = sut.get();
         assertThat(result).hasSize(1);

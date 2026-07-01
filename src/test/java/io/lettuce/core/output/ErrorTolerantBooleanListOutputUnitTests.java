@@ -18,19 +18,19 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.codec.StringCodec;
 
 /**
- * Unit tests for {@link CuckooInsertBooleanListOutput}.
+ * Unit tests for {@link ErrorTolerantBooleanListOutput}.
  *
- * Verifies the 3-state mapping required by CF.INSERTNX:
+ * Verifies the mapping used by BF.INSERT, BF.MADD, and CF.INSERT:
  * <ul>
- * <li>1 → {@code Boolean.TRUE} (item added)</li>
- * <li>0 → {@code Boolean.FALSE} (item already exists, INSERTNX only)</li>
- * <li>-1 → {@code null} (filter is full)</li>
+ * <li>{@code 1} &rarr; {@code Boolean.TRUE} (item added)</li>
+ * <li>{@code 0} or other non-{@code 1} integer &rarr; {@code Boolean.FALSE} (item may already exist)</li>
+ * <li>simple string / inline error / nil &rarr; {@code null} (filter full or error)</li>
  * </ul>
  */
 @Tag(UNIT_TEST)
-class CuckooInsertBooleanListOutputUnitTests {
+class ErrorTolerantBooleanListOutputUnitTests {
 
-    private final CuckooInsertBooleanListOutput<String, String> sut = new CuckooInsertBooleanListOutput<>(StringCodec.UTF8);
+    private final ErrorTolerantBooleanListOutput<String, String> sut = new ErrorTolerantBooleanListOutput<>(StringCodec.UTF8);
 
     @Test
     void defaultSubscriberIsSet() {
@@ -58,37 +58,23 @@ class CuckooInsertBooleanListOutputUnitTests {
     }
 
     @Test
-    void setNegativeOneMappedToNull() {
+    void setNegativeOneMappedToFalse() {
         sut.multi(1);
         sut.set(-1L);
 
         List<Boolean> result = sut.get();
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isNull();
+        assertThat(result.get(0)).isEqualTo(Boolean.FALSE);
     }
 
     @Test
-    void otherNegativeValueMappedToNull() {
-        sut.multi(1);
-        sut.set(-2L);
+    void setBooleanPassthrough() {
+        sut.multi(2);
+        sut.set(true);
+        sut.set(false);
 
         List<Boolean> result = sut.get();
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isNull();
-    }
-
-    @Test
-    void mixedResponsesAllDistinct() {
-        sut.multi(3);
-        sut.set(1L);
-        sut.set(0L);
-        sut.set(-1L);
-
-        List<Boolean> result = sut.get();
-        assertThat(result).hasSize(3);
-        assertThat(result.get(0)).isEqualTo(Boolean.TRUE);
-        assertThat(result.get(1)).isEqualTo(Boolean.FALSE);
-        assertThat(result.get(2)).isNull();
+        assertThat(result).containsExactly(Boolean.TRUE, Boolean.FALSE);
     }
 
     @Test
