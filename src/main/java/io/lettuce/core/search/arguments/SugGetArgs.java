@@ -45,7 +45,7 @@ public class SugGetArgs {
          * @return new {@link SugGetArgs} with {@literal FUZZY} set.
          * @see SugGetArgs#fuzzy()
          */
-        public static <K, V> SugGetArgs fuzzy() {
+        public static SugGetArgs fuzzy() {
             return new SugGetArgs().fuzzy();
         }
 
@@ -55,7 +55,7 @@ public class SugGetArgs {
          * @return new {@link SugGetArgs} with {@literal WITHSCORES} set.
          * @see SugGetArgs#withScores()
          */
-        public static <K, V> SugGetArgs withScores() {
+        public static SugGetArgs withScores() {
             return new SugGetArgs().withScores();
         }
 
@@ -65,7 +65,7 @@ public class SugGetArgs {
          * @return new {@link SugGetArgs} with {@literal WITHPAYLOADS} set.
          * @see SugGetArgs#withPayloads()
          */
-        public static <K, V> SugGetArgs withPayloads() {
+        public static SugGetArgs withPayloads() {
             return new SugGetArgs().withPayloads();
         }
 
@@ -76,7 +76,7 @@ public class SugGetArgs {
          * @return new {@link SugGetArgs} with {@literal MAX} set.
          * @see SugGetArgs#max(long)
          */
-        public static <K, V> SugGetArgs max(long max) {
+        public static SugGetArgs max(long max) {
             return new SugGetArgs().max(max);
         }
 
