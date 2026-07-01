@@ -1,6 +1,5 @@
 package io.lettuce.core.event.jfr;
 
-import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
@@ -8,7 +7,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 
 import jdk.jfr.Recording;
 import jdk.jfr.consumer.RecordedEvent;
@@ -17,14 +15,15 @@ import jdk.jfr.consumer.RecordingFile;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.event.Event;
 import io.lettuce.core.event.connection.ConnectionActivatedEvent;
-import io.lettuce.core.event.metrics.CommandLatencyEvent;
 import io.netty.channel.unix.DomainSocketAddress;
 
 /**
  * Unit tests for {@link JfrEventRecorder}.
  *
  * @author Mark Paluch
+ * @author Sanghun Lee
  */
 @Tag(UNIT_TEST)
 class JfrEventRecorderUnitTests {
@@ -56,7 +55,7 @@ class JfrEventRecorderUnitTests {
         Recording recording = new Recording();
         recording.start();
 
-        EventRecorder.getInstance().record(new CommandLatencyEvent(Collections.emptyMap()));
+        EventRecorder.getInstance().record(new EventWithoutJfrType());
         recording.stop();
 
         File temp = getFile(recording);
@@ -83,6 +82,9 @@ class JfrEventRecorderUnitTests {
         fos.close();
 
         return temp;
+    }
+
+    private static class EventWithoutJfrType implements Event {
     }
 
 }

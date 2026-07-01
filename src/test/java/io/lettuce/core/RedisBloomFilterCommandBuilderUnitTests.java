@@ -6,10 +6,10 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.bf.BfInfoValue;
-import io.lettuce.core.bf.BfScanDumpValue;
-import io.lettuce.core.bf.arguments.BfInsertArgs;
-import io.lettuce.core.bf.arguments.BfReserveArgs;
+import io.lettuce.core.probabilistic.BfInfoValue;
+import io.lettuce.core.probabilistic.ScanDumpValue;
+import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
 import io.netty.buffer.ByteBuf;
@@ -179,7 +179,7 @@ class RedisBloomFilterCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructBfScanDumpCommand() {
-        Command<String, String, BfScanDumpValue> command = builder.bfScanDump(MY_KEY, 0);
+        Command<String, String, ScanDumpValue> command = builder.bfScanDump(MY_KEY, 0);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 

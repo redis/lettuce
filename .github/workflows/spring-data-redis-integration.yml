@@ -46,7 +46,7 @@ jobs:
       - name: Build Lettuce (skip tests)
         working-directory: lettuce
         run: |
-          mvn -B clean install -DskipTests -Dgpg.skip=true
+          mvn -B clean javadoc:jar install -DskipTests -Dgpg.skip=true -Dmaven.javadoc.failOnError=false
           LETTUCE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "LETTUCE_VERSION=$LETTUCE_VERSION" >> $GITHUB_ENV
           echo "Built Lettuce version: $LETTUCE_VERSION"

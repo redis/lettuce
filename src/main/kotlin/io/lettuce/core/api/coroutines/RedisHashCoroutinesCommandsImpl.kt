@@ -80,9 +80,6 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun hrandfieldWithvalues(key: K, count: Long): List<KeyValue<K, V>> =
         ops.hrandfieldWithvalues(key, count).asFlow().toList()
 
-    override suspend fun hmset(key: K, map: Map<K, V>): String? =
-        ops.hmset(key, map).awaitFirstOrNull()
-
     override suspend fun hscan(key: K): MapScanCursor<K, V>? =
         ops.hscan(key).awaitFirstOrNull()
 

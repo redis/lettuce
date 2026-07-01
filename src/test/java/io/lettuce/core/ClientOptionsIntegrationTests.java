@@ -96,6 +96,22 @@ class ClientOptionsIntegrationTests extends TestSupport {
     }
 
     @Test
+    void maintNotificationsEnabledShouldNotFailHandshakeOnUnsupportedServer() {
+
+        // Redis OSS does not support the CLIENT MAINT_NOTIFICATIONS command. Enabling maintenance
+        // notifications must not break the connection handshake - the error response is expected to
+        // be swallowed and the connection should still come up.
+        client.setOptions(ClientOptions.builder()
+                .maintNotificationsConfig(MaintNotificationsConfig.enabled(MaintNotificationsConfig.EndpointType.INTERNAL_IP))
+                .build());
+
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+            assertThat(connection.isOpen()).isTrue();
+            assertThat(connection.sync().ping()).isEqualTo("PONG");
+        }
+    }
+
+    @Test
     void requestQueueSize() {
         client.setOptions(ClientOptions.builder().requestQueueSize(10).timeoutOptions(DISABLE_COMMAND_TIMEOUT).build());
         try (StatefulRedisConnection<String, String> connection = client.connect()) {

@@ -53,6 +53,7 @@ interface RedisCoroutinesCommands<K : Any, V : Any> :
     RedisVectorSetCoroutinesCommands<K, V>,
     RedisArrayCoroutinesCommands<K, V>,
     RedisBloomFilterCoroutinesCommands<K, V>,
+    RedisCuckooFilterCoroutinesCommands<K, V>,
     RedisTopKCoroutinesCommands<K, V> {
 
     /**

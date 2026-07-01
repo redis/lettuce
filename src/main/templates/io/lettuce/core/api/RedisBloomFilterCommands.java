@@ -8,10 +8,10 @@ package io.lettuce.core.api;
 
 import java.util.List;
 
-import io.lettuce.core.bf.BfInfoValue;
-import io.lettuce.core.bf.arguments.BfInsertArgs;
-import io.lettuce.core.bf.arguments.BfReserveArgs;
-import io.lettuce.core.bf.BfScanDumpValue;
+import io.lettuce.core.probabilistic.BfInfoValue;
+import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
+import io.lettuce.core.probabilistic.ScanDumpValue;
 
 /**
  * ${intent} for Bloom Filter.
@@ -164,8 +164,8 @@ public interface RedisBloomFilterCommands<K, V> {
      *
      * @param key the key.
      * @param iterator the iterator.
-     * @return BfScanDumpValue the scan dump value.
+     * @return ScanDumpValue the scan dump value.
      */
-    BfScanDumpValue bfScanDump(K key, long iterator);
+    ScanDumpValue bfScanDump(K key, long iterator);
 
 }

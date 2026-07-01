@@ -8,10 +8,10 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import io.lettuce.core.bf.BfInfoValue
-import io.lettuce.core.bf.arguments.BfInsertArgs
-import io.lettuce.core.bf.arguments.BfReserveArgs
-import io.lettuce.core.bf.BfScanDumpValue
+import io.lettuce.core.probabilistic.BfInfoValue
+import io.lettuce.core.probabilistic.arguments.BfInsertArgs
+import io.lettuce.core.probabilistic.arguments.BfReserveArgs
+import io.lettuce.core.probabilistic.ScanDumpValue
 
 /**
  * Coroutine executed commands for Bloom Filter.
@@ -166,9 +166,9 @@ interface RedisBloomFilterCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param iterator the iterator.
-     * @return BfScanDumpValue the scan dump value.
+     * @return ScanDumpValue the scan dump value.
      */
-    suspend fun bfScanDump(key: K, iterator: Long): BfScanDumpValue?
+    suspend fun bfScanDump(key: K, iterator: Long): ScanDumpValue?
 
 }
 

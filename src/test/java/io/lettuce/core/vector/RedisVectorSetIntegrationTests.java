@@ -128,6 +128,13 @@ public class RedisVectorSetIntegrationTests {
     }
 
     @Test
+    void vaddSingleElementVector() {
+        Boolean result = redis.vadd(VECTOR_SET_KEY + ":single", "item", 0.1);
+        assertThat(result).isTrue();
+        assertThat(redis.vcard(VECTOR_SET_KEY + ":single")).isEqualTo(1L);
+    }
+
+    @Test
     void vcard() {
         Long count = redis.vcard(VECTOR_SET_KEY);
         assertThat(count).isEqualTo(3);

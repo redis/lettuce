@@ -4,21 +4,23 @@
  *
  * SPDX-License-Identifier: MIT
  */
-package io.lettuce.core.bf;
+package io.lettuce.core.probabilistic;
 
 /**
- * Value object for the Redis <a href="https://redis.io/docs/latest/commands/bf.scandump/">BF.SCANDUMP</a> command.
+ * Value object for the scan-dump commands of the RedisBloom module, such as
+ * <a href="https://redis.io/docs/latest/commands/bf.scandump/">BF.SCANDUMP</a> and
+ * <a href="https://redis.io/docs/latest/commands/cf.scandump/">CF.SCANDUMP</a>.
  *
  * @author Yordan Tsintsov
  * @since 7.7
  */
-public class BfScanDumpValue {
+public class ScanDumpValue {
 
     private final long iterator;
 
     private final byte[] data;
 
-    public BfScanDumpValue(long iterator, byte[] data) {
+    public ScanDumpValue(long iterator, byte[] data) {
         this.iterator = iterator;
         this.data = data;
     }
