@@ -6,6 +6,7 @@
  */
 package io.lettuce.core.api.reactive;
 
+import io.lettuce.core.Value;
 import io.lettuce.core.probabilistic.CfInfoValue;
 import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
@@ -68,18 +69,22 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return Flux&lt;Boolean&gt; one element per item: {@code true} if added, {@code false} if the filter is full.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code true} if the item was added (server reply
+     *         {@code 1}); {@code null} if the item could not be added because the filter is full (server reply {@code -1}).
+     *         CF.INSERT does not report already-existing items.
      */
-    Flux<Boolean> cfInsert(K key, V... values);
+    Flux<Value<Boolean>> cfInsert(K key, V... values);
 
     /**
      * Add one or more items to a Cuckoo Filter. A filter will be created if one does not exist.
      *
      * @param key the key.
      * @param value the value.
-     * @return Flux&lt;Boolean&gt; one element per item: {@code true} if added, {@code false} if the filter is full.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code true} if the item was added (server reply
+     *         {@code 1}); {@code null} if the item could not be added because the filter is full (server reply {@code -1}).
+     *         CF.INSERT does not report already-existing items.
      */
-    Flux<Boolean> cfInsert(K key, V value);
+    Flux<Value<Boolean>> cfInsert(K key, V value);
 
     /**
      * Add one or more items to a Cuckoo Filter. A filter will be created if one does not exist.
@@ -87,9 +92,11 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return Flux&lt;Boolean&gt; one element per item: {@code true} if added, {@code false} if the filter is full.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code true} if the item was added (server reply
+     *         {@code 1}); {@code null} if the item could not be added because the filter is full (server reply {@code -1}).
+     *         CF.INSERT does not report already-existing items.
      */
-    Flux<Boolean> cfInsert(K key, CfInsertArgs args, V... values);
+    Flux<Value<Boolean>> cfInsert(K key, CfInsertArgs args, V... values);
 
     /**
      * Add one or more items to a Cuckoo Filter. A filter will be created if one does not exist.
@@ -97,9 +104,11 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param value the value.
-     * @return Flux&lt;Boolean&gt; one element per item: {@code true} if added, {@code false} if the filter is full.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code true} if the item was added (server reply
+     *         {@code 1}); {@code null} if the item could not be added because the filter is full (server reply {@code -1}).
+     *         CF.INSERT does not report already-existing items.
      */
-    Flux<Boolean> cfInsert(K key, CfInsertArgs args, V value);
+    Flux<Value<Boolean>> cfInsert(K key, CfInsertArgs args, V value);
 
     /**
      * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
@@ -107,10 +116,11 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return Flux&lt;Long&gt; one element per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if
-     *         the filter is full.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code true} if the item was added (server reply
+     *         {@code 1}); {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the
+     *         item could not be added because the filter is full (server reply {@code -1}).
      */
-    Flux<Long> cfInsertNx(K key, V... values);
+    Flux<Value<Boolean>> cfInsertNx(K key, V... values);
 
     /**
      * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
@@ -118,10 +128,11 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return Flux&lt;Long&gt; one element per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if
-     *         the filter is full.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code true} if the item was added (server reply
+     *         {@code 1}); {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the
+     *         item could not be added because the filter is full (server reply {@code -1}).
      */
-    Flux<Long> cfInsertNx(K key, V value);
+    Flux<Value<Boolean>> cfInsertNx(K key, V value);
 
     /**
      * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
@@ -130,10 +141,11 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return Flux&lt;Long&gt; one element per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if
-     *         the filter is full.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code true} if the item was added (server reply
+     *         {@code 1}); {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the
+     *         item could not be added because the filter is full (server reply {@code -1}).
      */
-    Flux<Long> cfInsertNx(K key, CfInsertArgs args, V... values);
+    Flux<Value<Boolean>> cfInsertNx(K key, CfInsertArgs args, V... values);
 
     /**
      * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
@@ -142,10 +154,11 @@ public interface RedisCuckooFilterReactiveCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param value the value.
-     * @return Flux&lt;Long&gt; one element per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if
-     *         the filter is full.
+     * @return Flux&lt;Value&lt;Boolean&gt;&gt; one element per item: {@code true} if the item was added (server reply
+     *         {@code 1}); {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the
+     *         item could not be added because the filter is full (server reply {@code -1}).
      */
-    Flux<Long> cfInsertNx(K key, CfInsertArgs args, V value);
+    Flux<Value<Boolean>> cfInsertNx(K key, CfInsertArgs args, V value);
 
     /**
      * Check if an item exists in the Cuckoo Filter.

@@ -9,6 +9,7 @@ package io.lettuce.core.probabilistic;
 import javax.inject.Inject;
 import java.util.List;
 
+import io.lettuce.core.Value;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
@@ -26,8 +27,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * routing every call through the reactive API via {@link ReactiveSyncInvocationHandler}.
  *
  * <p>
- * Overrides that verify reactive-specific streaming behaviour (Flux) for cfInsert ({@code Flux<Boolean>}) and cfInsertNx
- * ({@code Flux<Long>}).
+ * Overrides verify reactive-specific streaming behaviour ({@code Flux<Value<Boolean>>}) for cfInsert and cfInsertNx:
+ * <ul>
+ * <li>1 → {@code Value.just(true)}</li>
+ * <li>0 → {@code Value.just(false)}</li>
+ * <li>-1 (filter full) → {@code Value.empty()}</li>
+ * </ul>
  *
  * @author Gyumin Hwang
  * @since 7.7
@@ -46,8 +51,8 @@ public class RedisCuckooFilterReactiveIntegrationTests extends RedisCuckooFilter
     @Test
     @Override
     void cfInsert() {
-        StepVerifier.create(reactive.cfInsert("books:name", "Dune", "Dune Messiah")).expectNext(Boolean.TRUE)
-                .expectNext(Boolean.TRUE).verifyComplete();
+        StepVerifier.create(reactive.cfInsert("books:name", "Dune", "Dune Messiah")).expectNext(Value.just(Boolean.TRUE))
+                .expectNext(Value.just(Boolean.TRUE)).verifyComplete();
     }
 
     @Test
@@ -55,14 +60,14 @@ public class RedisCuckooFilterReactiveIntegrationTests extends RedisCuckooFilter
     void cfInsertWithArgs() {
         CfInsertArgs insertArgs = CfInsertArgs.Builder.capacity(100);
 
-        StepVerifier.create(reactive.cfInsert("books:name", insertArgs, "Dune", "Dune Messiah")).expectNext(Boolean.TRUE)
-                .expectNext(Boolean.TRUE).verifyComplete();
+        StepVerifier.create(reactive.cfInsert("books:name", insertArgs, "Dune", "Dune Messiah"))
+                .expectNext(Value.just(Boolean.TRUE)).expectNext(Value.just(Boolean.TRUE)).verifyComplete();
     }
 
     @Test
     @Override
     void cfInsertSingleValue() {
-        StepVerifier.create(reactive.cfInsert("books:name", "Dune")).expectNext(Boolean.TRUE).verifyComplete();
+        StepVerifier.create(reactive.cfInsert("books:name", "Dune")).expectNext(Value.just(Boolean.TRUE)).verifyComplete();
     }
 
     @Test
@@ -70,8 +75,8 @@ public class RedisCuckooFilterReactiveIntegrationTests extends RedisCuckooFilter
     void cfInsertNx() {
         reactive.cfAdd("books:name", "Dune").block();
 
-        StepVerifier.create(reactive.cfInsertNx("books:name", "Dune", "Dune Messiah")).expectNext(0L).expectNext(1L)
-                .verifyComplete();
+        StepVerifier.create(reactive.cfInsertNx("books:name", "Dune", "Dune Messiah")).expectNext(Value.just(Boolean.FALSE))
+                .expectNext(Value.just(Boolean.TRUE)).verifyComplete();
     }
 
     @Test
@@ -80,21 +85,22 @@ public class RedisCuckooFilterReactiveIntegrationTests extends RedisCuckooFilter
         CfInsertArgs insertArgs = CfInsertArgs.Builder.capacity(100);
         reactive.cfAdd("books:name", "Dune").block();
 
-        StepVerifier.create(reactive.cfInsertNx("books:name", insertArgs, "Dune", "Dune Messiah")).expectNext(0L).expectNext(1L)
-                .verifyComplete();
+        StepVerifier.create(reactive.cfInsertNx("books:name", insertArgs, "Dune", "Dune Messiah"))
+                .expectNext(Value.just(Boolean.FALSE)).expectNext(Value.just(Boolean.TRUE)).verifyComplete();
     }
 
     @Test
     @Override
     void cfInsertNxSingleValue() {
-        StepVerifier.create(reactive.cfInsertNx("books:name", "Dune")).expectNext(1L).verifyComplete();
+        StepVerifier.create(reactive.cfInsertNx("books:name", "Dune")).expectNext(Value.just(Boolean.TRUE)).verifyComplete();
     }
 
     /**
      * Reactive counterpart of {@link RedisCuckooFilterIntegrationTests#cfInsertNxDistinguishesAlreadyExistsFromFilterFull()}.
      *
      * <p>
-     * Verifies that CF.INSERTNX emits {@code 0L} for "already exists", distinct from {@code -1L} for "filter full".
+     * Verifies that CF.INSERTNX emits {@code Value.just(false)} for "already exists" (0), NOT {@code Value.empty()} which
+     * represents "filter full" (-1).
      */
     @Test
     @Override
@@ -104,9 +110,34 @@ public class RedisCuckooFilterReactiveIntegrationTests extends RedisCuckooFilter
 
         reactive.cfAdd(key, "known").block();
 
-        List<Long> existing = reactive.cfInsertNx(key, "known").collectList().block();
+        List<Value<Boolean>> existing = reactive.cfInsertNx(key, "known").collectList().block();
         assertThat(existing).isNotNull().hasSize(1);
-        assertThat(existing.get(0)).isEqualTo(0L);
+        assertThat(existing.get(0)).isEqualTo(Value.just(Boolean.FALSE));
+    }
+
+    /**
+     * Reactive counterpart of {@link RedisCuckooFilterIntegrationTests#cfInsertReturnsFalseWhenFilterIsFull()}.
+     *
+     * <p>
+     * Under RESP3, redis-stack encodes the per-item {@code -1} (filter full) as a boolean {@code false}, so each filter-full
+     * slot emits {@code Value.just(false)}. The first two slots succeed ({@code Value.just(true)}); the remaining ones are
+     * filter-full.
+     */
+    @Test
+    @Override
+    void cfInsertReturnsFalseWhenFilterIsFull() {
+        String key = "cf:full:reactive:insert";
+        reactive.cfReserve(key, 1000, CfReserveArgs.Builder.bucketSize(1).expansion(0)).block();
+
+        List<Value<Boolean>> result = reactive.cfInsert(key, "W", "W", "W", "W", "W", "W").collectList().block();
+
+        assertThat(result).isNotNull().hasSize(6);
+        assertThat(result.get(0)).isEqualTo(Value.just(Boolean.TRUE));
+        assertThat(result.get(1)).isEqualTo(Value.just(Boolean.TRUE));
+        for (int i = 2; i < result.size(); i++) {
+            assertThat(result.get(i)).as("result[%d] must be Value.just(false) (filter full under RESP3)", i)
+                    .isEqualTo(Value.just(Boolean.FALSE));
+        }
     }
 
 }

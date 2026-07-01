@@ -111,10 +111,11 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param values the values.
-     * @return List&lt;Long&gt; one entry per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if the
-     *         filter is full.
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1});
+     *         {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the item could
+     *         not be added because the filter is full (server reply {@code -1}).
      */
-    AsyncExecutions<List<Long>> cfInsertNx(K key, V... values);
+    AsyncExecutions<List<Boolean>> cfInsertNx(K key, V... values);
 
     /**
      * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
@@ -122,10 +123,11 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param value the value.
-     * @return List&lt;Long&gt; one entry per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if the
-     *         filter is full.
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1});
+     *         {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the item could
+     *         not be added because the filter is full (server reply {@code -1}).
      */
-    AsyncExecutions<List<Long>> cfInsertNx(K key, V value);
+    AsyncExecutions<List<Boolean>> cfInsertNx(K key, V value);
 
     /**
      * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
@@ -134,10 +136,11 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param values the values.
-     * @return List&lt;Long&gt; one entry per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if the
-     *         filter is full.
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1});
+     *         {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the item could
+     *         not be added because the filter is full (server reply {@code -1}).
      */
-    AsyncExecutions<List<Long>> cfInsertNx(K key, CfInsertArgs args, V... values);
+    AsyncExecutions<List<Boolean>> cfInsertNx(K key, CfInsertArgs args, V... values);
 
     /**
      * Add one or more items to a Cuckoo Filter only if the items do not already exist. A filter will be created if one does not
@@ -146,10 +149,11 @@ public interface NodeSelectionCuckooFilterAsyncCommands<K, V> {
      * @param key the key.
      * @param args the insert arguments.
      * @param value the value.
-     * @return List&lt;Long&gt; one entry per item: {@code 1} if added, {@code 0} if the item already exists, {@code -1} if the
-     *         filter is full.
+     * @return List&lt;Boolean&gt; one entry per item: {@code true} if the item was added (server reply {@code 1});
+     *         {@code false} if the item already exists in the filter (server reply {@code 0}); {@code null} if the item could
+     *         not be added because the filter is full (server reply {@code -1}).
      */
-    AsyncExecutions<List<Long>> cfInsertNx(K key, CfInsertArgs args, V value);
+    AsyncExecutions<List<Boolean>> cfInsertNx(K key, CfInsertArgs args, V value);
 
     /**
      * Check if an item exists in the Cuckoo Filter.

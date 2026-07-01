@@ -111,9 +111,9 @@ public class RedisCuckooFilterIntegrationTests {
     void cfInsertNx() {
         redis.cfAdd(MY_KEY, MY_VALUE);
 
-        List<Long> result = redis.cfInsertNx(MY_KEY, MY_VALUE, MY_VALUE_2);
+        List<Boolean> result = redis.cfInsertNx(MY_KEY, MY_VALUE, MY_VALUE_2);
 
-        assertThat(result).containsExactly(0L, 1L);
+        assertThat(result).containsExactly(false, true);
     }
 
     @Test
@@ -121,16 +121,16 @@ public class RedisCuckooFilterIntegrationTests {
         CfInsertArgs insertArgs = CfInsertArgs.Builder.capacity(100);
         redis.cfAdd(MY_KEY, MY_VALUE);
 
-        List<Long> result = redis.cfInsertNx(MY_KEY, insertArgs, MY_VALUE, MY_VALUE_2);
+        List<Boolean> result = redis.cfInsertNx(MY_KEY, insertArgs, MY_VALUE, MY_VALUE_2);
 
-        assertThat(result).containsExactly(0L, 1L);
+        assertThat(result).containsExactly(false, true);
     }
 
     @Test
     void cfInsertNxSingleValue() {
-        List<Long> result = redis.cfInsertNx(MY_KEY, MY_VALUE);
+        List<Boolean> result = redis.cfInsertNx(MY_KEY, MY_VALUE);
 
-        assertThat(result).containsExactly(1L);
+        assertThat(result).containsExactly(true);
     }
 
     @Test
@@ -179,7 +179,7 @@ public class RedisCuckooFilterIntegrationTests {
     }
 
     /**
-     * Verifies that CF.INSERTNX returns {@code 0L} ("already exists") which is distinct from {@code -1L} ("filter full").
+     * Verifies that CF.INSERTNX returns {@code false} ("already exists") which is distinct from {@code null} ("filter full").
      */
     @Test
     void cfInsertNxDistinguishesAlreadyExistsFromFilterFull() {
@@ -188,18 +188,23 @@ public class RedisCuckooFilterIntegrationTests {
 
         redis.cfAdd(key, "known");
 
-        List<Long> existing = redis.cfInsertNx(key, "known");
+        List<Boolean> existing = redis.cfInsertNx(key, "known");
         assertThat(existing).hasSize(1);
-        assertThat(existing.get(0)).isEqualTo(0L);
+        assertThat(existing.get(0)).isEqualTo(Boolean.FALSE);
     }
 
     /**
-     * Verifies that CF.INSERT returns {@code false} when the filter is full (server returns {@code -1}).
+     * Verifies that CF.INSERT returns {@code false} when the filter is full under RESP3.
      *
      * <p>
-     * BUCKETSIZE 1 EXPANSION 0: same value fills at most 2 slots, so inserting the same value 6 times causes filter-full
-     * conditions. RESP2 and RESP3 both produce {@code false} for filter-full via
-     * {@link io.lettuce.core.output.BooleanListOutput}.
+     * Under RESP3, redis-stack encodes the per-item {@code -1} (filter full) as a boolean {@code false}; the server-side
+     * protocol collapses it before the client sees it. RESP2, on the other hand, sends the raw integer {@code -1} which the
+     * client maps to {@code null}. The RESP2-specific assertion (null) is covered by an override in
+     * {@link RedisCuckooFilterResp2IntegrationTests#cfInsertReturnsNullWhenFilterIsFull()}.
+     *
+     * <p>
+     * BUCKETSIZE 1 EXPANSION 0: same value fills at most 2 slots; inserting the same value 6 times causes filter-full for slots
+     * 2-5.
      */
     @Test
     void cfInsertReturnsFalseWhenFilterIsFull() {
