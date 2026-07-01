@@ -4,7 +4,10 @@ package io.lettuce.core.pubsub.api.reactive;
  * Message payload for a subscription to a channel.
  *
  * @author Mark Paluch
+ *
+ * @deprecated use {@link io.lettuce.core.pubsub.api.reactive.SubscriptionMessage} instead.
  */
+@Deprecated
 public class ChannelMessage<K, V> {
 
     private final K channel;
