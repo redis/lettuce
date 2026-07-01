@@ -946,6 +946,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         return loadPartitionsAsync().thenAccept(loadedPartitions -> {
 
+            ClusterTopologyChangedEvent topologyChangedEvent = null;
+
             if (TopologyComparators.isChanged(getPartitions(), loadedPartitions)) {
 
                 logger.debug("Using a new cluster topology");
@@ -953,11 +955,15 @@ public class RedisClusterClient extends AbstractRedisClient {
                 List<RedisClusterNode> before = new ArrayList<>(getPartitions());
                 List<RedisClusterNode> after = new ArrayList<>(loadedPartitions);
 
-                getResources().eventBus().publish(new ClusterTopologyChangedEvent(before, after));
+                topologyChangedEvent = new ClusterTopologyChangedEvent(before, after);
             }
 
             this.partitions.reload(loadedPartitions.getPartitions());
             updatePartitionsInConnections();
+
+            if (topologyChangedEvent != null) {
+                getResources().eventBus().publish(topologyChangedEvent);
+            }
         }).whenComplete((unused, throwable) -> event.record());
     }
 

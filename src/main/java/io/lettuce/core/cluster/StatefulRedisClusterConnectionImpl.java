@@ -42,6 +42,7 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
@@ -60,7 +61,6 @@ import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisCommand;
-import reactor.core.publisher.Mono;
 
 /**
  * A thread-safe connection to a Redis Cluster. Multiple threads may share one {@link StatefulRedisClusterConnectionImpl}
@@ -84,6 +84,11 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
 
+    /**
+     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisAdvancedClusterReactiveCommands#factory()} instead;
+     *             scheduled for removal in Lettuce 8.0.
+     */
+    @Deprecated
     protected final RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
 
     private final ClusterConnectionState connectionState = new ClusterConnectionState();
@@ -131,6 +136,12 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         return codec;
     }
 
+    @Override
+    public <T> T commands(CommandsFactory<StatefulRedisClusterConnection<K, V>, T> f) {
+        LettuceAssert.notNull(f, "CommandsFactory must not be null");
+        return store.compute(f.key(), () -> f.apply(this));
+    }
+
     protected RedisAdvancedClusterReactiveCommandsImpl<K, V> newRedisAdvancedClusterReactiveCommandsImpl() {
         return new RedisAdvancedClusterReactiveCommandsImpl<>((StatefulRedisClusterConnection<K, V>) this, codec, parser);
     }
@@ -162,6 +173,11 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         return async;
     }
 
+    /**
+     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisAdvancedClusterReactiveCommands#factory()} instead;
+     *             scheduled for removal in Lettuce 8.0.
+     */
+    @Deprecated
     @Override
     public RedisAdvancedClusterReactiveCommands<K, V> reactive() {
         return reactive;

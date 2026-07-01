@@ -30,6 +30,7 @@ import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
@@ -51,6 +52,7 @@ import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.Store;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLogger;
@@ -81,9 +83,16 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     protected final RedisAsyncCommandsImpl<K, V> async;
 
+    /**
+     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
+     *             removal in Lettuce 8.0.
+     */
+    @Deprecated
     protected final RedisReactiveCommandsImpl<K, V> reactive;
 
     protected final RedisCodec<K, V> codec;
+
+    protected final Store store = new Store();
 
     protected final Set<PushListener> pushListeners = ConcurrentHashMap.newKeySet();
 
@@ -466,7 +475,10 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * Returns the reactive API. The API is a dynamic proxy that remains valid across database switches.
      *
      * @return the reactive commands API.
+     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
+     *             removal in Lettuce 8.0.
      */
+    @Deprecated
     @Override
     public RedisReactiveCommands<K, V> reactive() {
         return reactive;
@@ -476,7 +488,10 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overridden to extend.
      *
      * @return a new instance
+     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
+     *             removal in Lettuce 8.0.
      */
+    @Deprecated
     protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisReactiveCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
     }
@@ -713,6 +728,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     @Override
     public RedisCodec<K, V> getCodec() {
         return codec;
+    }
+
+    @Override
+    public <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> f) {
+        return store.compute(f.key(), () -> f.apply(this));
     }
 
     /**

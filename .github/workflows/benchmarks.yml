@@ -27,18 +27,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - name: Checkout project
-        uses: actions/checkout@v6
-      - name: Set Java up in the runner
-        uses: actions/setup-java@v5
-        with:
-          java-version: '8'
-          distribution: 'temurin'
-          cache: 'maven'
       - name: Setup Maven
         uses: s4u/setup-maven-action@v1.19.0
         with:
           java-version: 8
+          java-distribution: temurin
       - name: Install missing dependencies to container
         run: |
           sudo apt update

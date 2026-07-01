@@ -24,9 +24,11 @@ import java.util.Map;
 
 import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.KillArgs;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.sentinel.RedisSentinelReactiveCommandsImpl;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -253,5 +255,43 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
+
+    /**
+     * Returns the {@link CommandsFactory} that creates {@link RedisSentinelReactiveCommands}, for use with
+     * {@link io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection#commands(CommandsFactory)}:
+     *
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     RedisSentinelReactiveCommands<K, V> reactive = connection.commands(RedisSentinelReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return the factory that creates {@link RedisSentinelReactiveCommands}
+     * @since 7.7
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    static <K, V> CommandsFactory<StatefulRedisSentinelConnection<K, V>, RedisSentinelReactiveCommands<K, V>> factory() {
+        return (CommandsFactory) FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton factory so {@link #factory()} returns one shared instance (no per-call allocation); {@code factory()}
+     * re-applies {@code <K, V>}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static final CommandsFactory INSTANCE = CommandsFactory.of(RedisSentinelReactiveCommands.class,
+                (StatefulRedisSentinelConnection c) -> new RedisSentinelReactiveCommandsImpl(c, c.getCodec(),
+                        () -> c.getOptions().getJsonParser().get()));
+
+    }
 
 }

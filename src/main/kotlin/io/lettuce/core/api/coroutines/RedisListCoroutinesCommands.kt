@@ -151,29 +151,6 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
     suspend fun brpop(timeout: Double, vararg keys: K): KeyValue<K, V>?
 
     /**
-     * Pop a value from a list, push it to another list and return it; or block until one is available.
-     *
-     * @param timeout the timeout in seconds.
-     * @param source the source key.
-     * @param destination the destination type: key.
-     * @return V bulk-string-reply the element being popped from `source` and pushed to `destination`. If
-     *         `timeout` is reached, a.
-     */
-    suspend fun brpoplpush(timeout: Long, source: K, destination: K): V?
-
-    /**
-     * Pop a value from a list, push it to another list and return it; or block until one is available.
-     *
-     * @param timeout the timeout in seconds.
-     * @param source the source key.
-     * @param destination the destination type: key.
-     * @return V bulk-string-reply the element being popped from `source` and pushed to `destination`. If
-     *         `timeout` is reached, a.
-     * @since 6.1.3
-     */
-    suspend fun brpoplpush(timeout: Double, source: K, destination: K): V?
-
-    /**
      * Get an element from a list by its index.
      *
      * @param key the key.
@@ -376,15 +353,6 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      * @since 6.1
      */
     suspend fun rpop(key: K, count: Long): List<V>
-
-    /**
-     * Remove the last element in a list, append it to another list and return it.
-     *
-     * @param source the source key.
-     * @param destination the destination type: key.
-     * @return V bulk-string-reply the element being popped and pushed.
-     */
-    suspend fun rpoplpush(source: K, destination: K): V?
 
     /**
      * Append one or multiple values to a list.

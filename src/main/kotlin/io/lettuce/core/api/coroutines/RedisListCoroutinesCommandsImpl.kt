@@ -81,12 +81,6 @@ internal class RedisListCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun brpop(timeout: Double, vararg keys: K): KeyValue<K, V>? =
         ops.brpop(timeout, *keys).awaitFirstOrNull()
 
-    override suspend fun brpoplpush(timeout: Long, source: K, destination: K): V? =
-        ops.brpoplpush(timeout, source, destination).awaitFirstOrNull()
-
-    override suspend fun brpoplpush(timeout: Double, source: K, destination: K): V? =
-        ops.brpoplpush(timeout, source, destination).awaitFirstOrNull()
-
     override suspend fun lindex(key: K, index: Long): V? =
         ops.lindex(key, index).awaitFirstOrNull()
 
@@ -140,9 +134,6 @@ internal class RedisListCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun rpop(key: K, count: Long): List<V> =
         ops.rpop(key, count).asFlow().toList()
-
-    override suspend fun rpoplpush(source: K, destination: K): V? =
-        ops.rpoplpush(source, destination).awaitFirstOrNull()
 
     override suspend fun rpush(key: K, vararg values: V): Long? =
         ops.rpush(key, *values).awaitFirstOrNull()
