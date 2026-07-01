@@ -60,7 +60,7 @@ public class CreateReactiveApi {
     public static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "evalReadOnly",
             "evalshaReadOnly", "fcall", "fcallReadOnly", "dispatch");
 
-    public static Set<String> VALUE_WRAP = LettuceSets.unmodifiableSet("geopos", "bitfield");
+    public static Set<String> VALUE_WRAP = LettuceSets.unmodifiableSet("geopos", "bitfield", "topKAdd", "topKIncrBy");
 
     private static final Map<String, String> RESULT_SPEC;
 
