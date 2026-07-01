@@ -22,7 +22,6 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.AclCategory
 import io.lettuce.core.AclSetuserArgs
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisAclReactiveCommands
 import io.lettuce.core.protocol.CommandType
 import io.lettuce.core.protocol.RedisCommand
@@ -41,7 +40,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisAclCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisAclReactiveCommands<K, V>) : RedisAclCoroutinesCommands<K, V> {
 
     override suspend fun aclCat(): Set<AclCategory> =

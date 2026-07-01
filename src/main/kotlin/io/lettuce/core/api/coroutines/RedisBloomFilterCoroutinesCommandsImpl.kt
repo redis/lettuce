@@ -6,7 +6,6 @@
  */
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisBloomFilterReactiveCommands
 import io.lettuce.core.bf.BfInfoValue
 import io.lettuce.core.bf.BfScanDumpValue
@@ -24,7 +23,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Yordan Tsintsov
  * @since 7.7
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisBloomFilterCoroutinesCommandsImpl<K : Any, V : Any>(
     internal val ops: RedisBloomFilterReactiveCommands<K, V>
 ) : RedisBloomFilterCoroutinesCommands<K, V> {

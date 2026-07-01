@@ -7,7 +7,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisArrayReactiveCommands
 import io.lettuce.core.array.*
 import kotlinx.coroutines.flow.toList
@@ -22,7 +21,6 @@ import kotlinx.coroutines.reactive.asFlow
  * @author Aleksandar Todorov
  * @since 7.6
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisArrayCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisArrayReactiveCommands<K, V>) :
     RedisArrayCoroutinesCommands<K, V> {
 

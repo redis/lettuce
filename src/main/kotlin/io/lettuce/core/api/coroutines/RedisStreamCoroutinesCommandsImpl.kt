@@ -39,7 +39,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Mikhael Sokolov
  * @since 5.1
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisStreamCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisStreamReactiveCommands<K, V>) : RedisStreamCoroutinesCommands<K, V> {
 
     override suspend fun xack(key: K, group: K, vararg messageIds: String): Long? = ops.xack(key, group, *messageIds).awaitFirstOrNull()
