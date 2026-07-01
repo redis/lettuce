@@ -43,13 +43,13 @@ public class CreateArgs<K> {
 
     private Optional<DocumentLanguage> defaultLanguage = Optional.empty();
 
-    private Optional<K> languageField = Optional.empty();
+    private Optional<String> languageField = Optional.empty();
 
     private OptionalDouble defaultScore = OptionalDouble.empty();
 
-    private Optional<K> scoreField = Optional.empty();
+    private Optional<String> scoreField = Optional.empty();
 
-    private Optional<K> payloadField = Optional.empty();
+    private Optional<String> payloadField = Optional.empty();
 
     private boolean maxTextFields = false;
 
@@ -157,7 +157,7 @@ public class CreateArgs<K> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/stemming/">Stemming</a>
          */
-        public Builder<K> languageField(K field) {
+        public Builder<K> languageField(String field) {
             instance.languageField = Optional.of(field);
             return this;
         }
@@ -181,7 +181,7 @@ public class CreateArgs<K> {
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/scoring/">Scoring</a>
          */
-        public Builder<K> scoreField(K field) {
+        public Builder<K> scoreField(String field) {
             instance.scoreField = Optional.of(field);
             return this;
         }
@@ -197,7 +197,7 @@ public class CreateArgs<K> {
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/scoring/">Scoring</a>
          */
-        public Builder<K> payloadField(K field) {
+        public Builder<K> payloadField(String field) {
             instance.payloadField = Optional.of(field);
             return this;
         }
@@ -366,9 +366,9 @@ public class CreateArgs<K> {
      * Get the field that contains the language setting for the documents in the index.
      *
      * @return the language field
-     * @see Builder#languageField(Object)
+     * @see Builder#languageField(String)
      */
-    public Optional<K> getLanguageField() {
+    public Optional<String> getLanguageField() {
         return languageField;
     }
 
@@ -386,9 +386,9 @@ public class CreateArgs<K> {
      * Get the field that contains the score setting for the documents in the index.
      *
      * @return the score field
-     * @see Builder#scoreField(Object)
+     * @see Builder#scoreField(String)
      */
-    public Optional<K> getScoreField() {
+    public Optional<String> getScoreField() {
         return scoreField;
     }
 
@@ -396,9 +396,9 @@ public class CreateArgs<K> {
      * Get the field that contains the payload setting for the documents in the index.
      *
      * @return the payload field
-     * @see Builder#payloadField(Object)
+     * @see Builder#payloadField(String)
      */
-    public Optional<K> getPayloadField() {
+    public Optional<String> getPayloadField() {
         return payloadField;
     }
 
@@ -495,10 +495,10 @@ public class CreateArgs<K> {
         }
         filter.ifPresent(filter -> args.add(FILTER).add(filter));
         defaultLanguage.ifPresent(language -> args.add(LANGUAGE).add(language.toString()));
-        languageField.ifPresent(field -> args.add(LANGUAGE_FIELD).addKey(field));
+        languageField.ifPresent(field -> args.add(LANGUAGE_FIELD).add(field));
         defaultScore.ifPresent(score -> args.add(SCORE).add(score));
-        scoreField.ifPresent(field -> args.add(SCORE_FIELD).addKey(field));
-        payloadField.ifPresent(field -> args.add(PAYLOAD_FIELD).addKey(field));
+        scoreField.ifPresent(field -> args.add(SCORE_FIELD).add(field));
+        payloadField.ifPresent(field -> args.add(PAYLOAD_FIELD).add(field));
         if (maxTextFields) {
             args.add(MAXTEXTFIELDS);
         }
