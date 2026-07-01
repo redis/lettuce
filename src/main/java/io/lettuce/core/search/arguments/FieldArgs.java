@@ -31,7 +31,7 @@ public abstract class FieldArgs<K> {
     // Common field properties
     protected K name;
 
-    protected Optional<K> as = Optional.empty();
+    protected Optional<String> as = Optional.empty();
 
     protected boolean sortable;
 
@@ -64,7 +64,7 @@ public abstract class FieldArgs<K> {
      *
      * @return the field alias
      */
-    public Optional<K> getAs() {
+    public Optional<String> getAs() {
         return as;
     }
 
@@ -119,8 +119,8 @@ public abstract class FieldArgs<K> {
      * @param args the command arguments to modify
      */
     public final void build(CommandArgs<K, ?> args) {
-        args.add(name.toString());
-        as.ifPresent(a -> args.add(AS).add(a.toString()));
+        args.addKey(name);
+        as.ifPresent(a -> args.add(AS).add(a));
         args.add(getFieldType());
 
         // Add type-specific arguments
@@ -199,7 +199,7 @@ public abstract class FieldArgs<K> {
          * @param as the field name to be used in queries
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public B as(K as) {
+        public B as(String as) {
             instance.as = Optional.of(as);
             return self();
         }

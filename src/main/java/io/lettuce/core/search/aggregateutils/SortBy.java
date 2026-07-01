@@ -45,7 +45,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @see PostProcessingOperation
  */
 @Experimental
-public class SortBy<K> implements PostProcessingOperation<K, Object> {
+public class SortBy<K> implements PostProcessingOperation {
 
     private final List<SortProperty<K>> properties;
 
@@ -83,7 +83,7 @@ public class SortBy<K> implements PostProcessingOperation<K, Object> {
     }
 
     @Override
-    public void build(CommandArgs<K, Object> args) {
+    public void build(CommandArgs<?, ?> args) {
         args.add(CommandKeyword.SORTBY);
         // Count includes property + direction pairs
         args.add(properties.size() * 2L);

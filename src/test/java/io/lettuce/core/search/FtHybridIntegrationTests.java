@@ -87,8 +87,7 @@ public class FtHybridIntegrationTests {
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(8).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(INDEX, createArgs,
                 Arrays.asList(titleField, categoryField, brandField, priceField, ratingField, vectorField))).isEqualTo("OK");
@@ -315,7 +314,7 @@ public class FtHybridIntegrationTests {
                         .method(HybridVectorArgs.Knn.of(10)).build())
                 .combine(Combiners.<String> rrf().window(20))
                 .postProcessing(PostProcessingArgs.<String, String> builder()
-                        .groupBy(GroupBy.<String, String> of("@brand").reduce(Reducers.<String> avg("@price").as("avg_price"))
+                        .groupBy(GroupBy.<String> of("@brand").reduce(Reducers.<String> avg("@price").as("avg_price"))
                                 .reduce(Reducers.min("@price").as("min_price")).reduce(Reducers.max("@price").as("max_price")))
                         .build())
                 .param("vec", queryVectorClose).build();
@@ -352,8 +351,7 @@ public class FtHybridIntegrationTests {
                         .method(HybridVectorArgs.Knn.of(10)).build())
                 .combine(Combiners.<String> rrf().window(20))
                 .postProcessing(PostProcessingArgs.<String, String> builder()
-                        .groupBy(GroupBy.<String, String> of("@category")
-                                .reduce(Reducers.quantile("@price", 0.5).as("median_price"))
+                        .groupBy(GroupBy.<String> of("@category").reduce(Reducers.quantile("@price", 0.5).as("median_price"))
                                 .reduce(Reducers.<String> count().as("count")))
                         .build())
                 .param("vec", queryVectorClose).build();

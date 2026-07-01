@@ -96,8 +96,7 @@ class RediSearchCommandBuilderUnitTests {
         FieldArgs<String> fieldArgs2 = NumericFieldArgs.<String> builder().name(FIELD2_NAME).sortable().build();
         FieldArgs<String> fieldArgs3 = TagFieldArgs.<String> builder().name(FIELD3_NAME).sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs,
                 Arrays.asList(fieldArgs1, fieldArgs2, fieldArgs3));
         ByteBuf buf = Unpooled.directBuffer();
@@ -131,8 +130,7 @@ class RediSearchCommandBuilderUnitTests {
         FieldArgs<String> fieldArgs1 = TextFieldArgs.<String> builder().name(FIELD4_NAME).as(FIELD4_ALIAS1).build();
         FieldArgs<String> fieldArgs2 = TagFieldArgs.<String> builder().name(FIELD4_NAME).as(FIELD4_ALIAS2).sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs, Arrays.asList(fieldArgs1, fieldArgs2));
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -248,7 +246,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.SPELLCHECK index query
     @Test
     void shouldCorrectlyConstructFtSpellcheckCommand() {
-        Command<String, String, SpellCheckResult<String>> command = builder.ftSpellcheck(MY_KEY, "hello wrold");
+        Command<String, String, SpellCheckResult> command = builder.ftSpellcheck(MY_KEY, "hello wrold");
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -263,9 +261,8 @@ class RediSearchCommandBuilderUnitTests {
     // FT.SPELLCHECK index query DISTANCE 2 TERMS INCLUDE dict term1 term2 DIALECT 1
     @Test
     void shouldCorrectlyConstructFtSpellcheckCommandWithArgs() {
-        SpellCheckArgs<String, String> args = SpellCheckArgs.Builder.<String, String> distance(2)
-                .termsInclude("dict", "term1", "term2").dialect(1);
-        Command<String, String, SpellCheckResult<String>> command = builder.ftSpellcheck(MY_KEY, "hello wrold", args);
+        SpellCheckArgs args = SpellCheckArgs.Builder.distance(2).termsInclude("dict", "term1", "term2").dialect(1);
+        Command<String, String, SpellCheckResult> command = builder.ftSpellcheck(MY_KEY, "hello wrold", args);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -350,7 +347,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.EXPLAIN index query DIALECT 1
     @Test
     void shouldCorrectlyConstructFtExplainCommandWithArgs() {
-        ExplainArgs<String, String> args = ExplainArgs.Builder.dialect(QueryDialects.DIALECT1);
+        ExplainArgs args = ExplainArgs.Builder.dialect(QueryDialects.DIALECT1);
         Command<String, String, String> command = builder.ftExplain(MY_KEY, "hello world", args);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -412,7 +409,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.SYNUPDATE index synonymGroupId SKIPINITIALSCAN term1 term2
     @Test
     void shouldCorrectlyConstructFtSynupdateCommandWithArgs() {
-        SynUpdateArgs<String, String> args = SynUpdateArgs.Builder.skipInitialScan();
+        SynUpdateArgs args = SynUpdateArgs.Builder.skipInitialScan();
         Command<String, String, String> command = builder.ftSynupdate(MY_KEY, "group1", args, "term1", "term2");
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -660,8 +657,8 @@ class RediSearchCommandBuilderUnitTests {
         AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
                 .apply("@price * @quantity", "total_value")// First operation
                 .filter("@total_value > 100")// Second operation
-                .groupBy(AggregateArgs.GroupBy.<String, String> of("category")
-                        .reduce(AggregateArgs.Reducer.<String, String> count().as("count")))// Third
+                .groupBy(AggregateArgs.GroupBy.<String> of("category")
+                        .reduce(AggregateArgs.Reducer.<String> count().as("count")))// Third
                 // operation
                 .limit(0, 5)// Fourth operation
                 .sortBy(AggregateArgs.SortBy.of("count", AggregateArgs.SortDirection.DESC))// Fifth operation
@@ -692,8 +689,8 @@ class RediSearchCommandBuilderUnitTests {
         AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
                 .verbatim()//
                 .load("title")//
-                .groupBy(AggregateArgs.GroupBy.<String, String> of("category")
-                        .reduce(AggregateArgs.Reducer.<String, String> count().as("count")))//
+                .groupBy(AggregateArgs.GroupBy.<String> of("category")
+                        .reduce(AggregateArgs.Reducer.<String> count().as("count")))//
                 .sortBy(AggregateArgs.SortBy.of("count", AggregateArgs.SortDirection.DESC))//
                 .apply(AggregateArgs.Apply.of("@title", "title_upper"))//
                 .limit(0, 10)//
@@ -785,8 +782,9 @@ class RediSearchCommandBuilderUnitTests {
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         options.build(args);
 
-        // buggy implementation returns "RETURN 2 key<as_is> key<$.field> key<alias> DIALECT "
-        assertThat("RETURN 4 key<as_is> key<$.field> AS key<alias> DIALECT 2").isEqualTo(args.toCommandString());
+        // The RETURN field name routes through the key codec (schema field reference).
+        // The AS alias is a logical identifier and is sent as a raw String, not codec-encoded.
+        assertThat("RETURN 4 key<as_is> key<$.field> AS alias DIALECT 2").isEqualTo(args.toCommandString());
     }
 
     @Test
@@ -802,7 +800,7 @@ class RediSearchCommandBuilderUnitTests {
                         .scoreAlias("vector_score").build())
                 .combine(Combiners.<String> linear().alpha(0.7).beta(0.3).window(26))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
-                        .groupBy(GroupBy.<String, String> of("@brand").reduce(Reducers.<String> sum("@price").as("sum"))
+                        .groupBy(GroupBy.<String> of("@brand").reduce(Reducers.<String> sum("@price").as("sum"))
                                 .reduce(Reducers.<String> count().as("count")))
                         .sortBy(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC)))
                         .apply(Apply.of("@sum * 0.9", "discounted_price")).filter(Filter.of("@sum > 700"))
@@ -861,7 +859,7 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void postProcessingArgsWithOperationsOnlyShouldNotEmitLoad() {
         PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
-                .groupBy(GroupBy.<String, String> of("@category").reduce(Reducers.<String> count().as("count")))
+                .groupBy(GroupBy.<String> of("@category").reduce(Reducers.<String> count().as("count")))
                 .sortBy(SortBy.of(new SortProperty<>("@count", SortDirection.DESC))).limit(Limit.of(0, 10)).build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());

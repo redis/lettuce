@@ -69,7 +69,7 @@ public class PostProcessingArgs<K, V> {
      * Ordered list of pipeline operations (GROUPBY, SORTBY, APPLY, FILTER, LIMIT). These operations are applied in the order
      * specified by the user.
      */
-    private final List<PostProcessingOperation<K, ?>> postProcessingOperations = new ArrayList<>();
+    private final List<PostProcessingOperation> postProcessingOperations = new ArrayList<>();
 
     // Tracking flags for single-use operations
     private boolean hasGroupBy = false;
@@ -150,7 +150,7 @@ public class PostProcessingArgs<K, V> {
          * @return this builder
          * @throws IllegalStateException if a GROUPBY operation has already been added
          */
-        public Builder<K, V> groupBy(GroupBy<K, V> groupBy) {
+        public Builder<K, V> groupBy(GroupBy<K> groupBy) {
             LettuceAssert.notNull(groupBy, "GroupBy must not be null");
             if (instance.hasGroupBy) {
                 throw new IllegalStateException("GROUPBY operation has already been added. Only one GROUPBY is allowed.");
@@ -209,7 +209,7 @@ public class PostProcessingArgs<K, V> {
          * @param apply the APPLY operation
          * @return this builder
          */
-        public Builder<K, V> apply(Apply<K, V> apply) {
+        public Builder<K, V> apply(Apply apply) {
             LettuceAssert.notNull(apply, "Apply must not be null");
             instance.postProcessingOperations.add(apply);
             return this;
@@ -225,7 +225,7 @@ public class PostProcessingArgs<K, V> {
          * @return this builder
          * @throws IllegalStateException if a FILTER operation has already been added
          */
-        public Builder<K, V> filter(Filter<K, V> filter) {
+        public Builder<K, V> filter(Filter filter) {
             LettuceAssert.notNull(filter, "Filter must not be null");
             if (instance.hasFilter) {
                 throw new IllegalStateException("FILTER operation has already been added. Only one FILTER is allowed.");
@@ -268,11 +268,8 @@ public class PostProcessingArgs<K, V> {
         }
         // No LOAD emitted if neither loadAll nor loadFields specified
 
-        for (PostProcessingOperation<K, ?> operation : postProcessingOperations) {
-            // Cast is safe because all operations can build with CommandArgs<K, V>
-            @SuppressWarnings("unchecked")
-            PostProcessingOperation<K, V> typedOperation = (PostProcessingOperation<K, V>) operation;
-            typedOperation.build(args);
+        for (PostProcessingOperation operation : postProcessingOperations) {
+            operation.build(args);
         }
     }
 

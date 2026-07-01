@@ -21,13 +21,12 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * Argument list builder for {@code FT.CREATE}.
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
  * @since 6.8
  * @author Tihomir Mateev
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class CreateArgs<K, V> {
+public class CreateArgs<K> {
 
     /**
      * Possible target types for the index.
@@ -40,7 +39,7 @@ public class CreateArgs<K, V> {
 
     private final List<K> prefixes = new ArrayList<>();
 
-    private Optional<V> filter = Optional.empty();
+    private Optional<String> filter = Optional.empty();
 
     private Optional<DocumentLanguage> defaultLanguage = Optional.empty();
 
@@ -66,16 +65,15 @@ public class CreateArgs<K, V> {
 
     private boolean skipInitialScan = false;
 
-    private Optional<List<V>> stopWords = Optional.empty();
+    private Optional<List<String>> stopWords = Optional.empty();
 
     /**
      * Used to build a new instance of the {@link CreateArgs}.
      *
      * @return a {@link Builder} that provides the option to build up a new instance of the {@link CreateArgs}
      * @param <K> the key type
-     * @param <V> the value type
      */
-    public static <K, V> Builder<K, V> builder() {
+    public static <K> Builder<K> builder() {
         return new Builder<>();
     }
 
@@ -83,44 +81,43 @@ public class CreateArgs<K, V> {
      * Builder for {@link CreateArgs}.
      * <p>
      * As a final step the {@link Builder#build()} method needs to be executed to create the final {@link CreateArgs} instance.
-     * 
+     *
      * @param <K> the key type
-     * @param <V> the value type
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      */
-    public static class Builder<K, V> {
+    public static class Builder<K> {
 
-        private final CreateArgs<K, V> instance = new CreateArgs<>();
+        private final CreateArgs<K> instance = new CreateArgs<>();
 
         /**
          * Set the {@link TargetType} type for the index. Defaults to {@link TargetType#HASH}.
-         * 
+         *
          * @param targetType the target type
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> on(TargetType targetType) {
+        public Builder<K> on(TargetType targetType) {
             instance.on = Optional.of(targetType);
             return this;
         }
 
         /**
          * Add a prefix to the index. You can add several prefixes to index. Default setting is * (all keys).
-         * 
+         *
          * @param prefix the prefix
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> withPrefix(K prefix) {
+        public Builder<K> withPrefix(K prefix) {
             instance.prefixes.add(prefix);
             return this;
         }
 
         /**
          * Add a list of prefixes to the index. You can add several prefixes to index. Default setting is * (all keys).
-         * 
+         *
          * @param prefixes a {@link List} of prefixes
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> withPrefixes(List<K> prefixes) {
+        public Builder<K> withPrefixes(List<K> prefixes) {
             instance.prefixes.addAll(prefixes);
             return this;
         }
@@ -130,23 +127,23 @@ public class CreateArgs<K, V> {
          * <p/>
          * It is possible to use @__key to access the key that was just added/changed. A field can be used to set field name by
          * passing 'FILTER @indexName=="myindexname"'.
-         * 
+         *
          * @param filter a filter expression with the full RediSearch aggregation expression language
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/query/">RediSearch Query</a>
          */
-        public Builder<K, V> filter(V filter) {
+        public Builder<K> filter(String filter) {
             instance.filter = Optional.of(filter);
             return this;
         }
 
         /**
          * Set the default language for the documents in the index. The default setting is English.
-         * 
+         *
          * @param language the default language
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> defaultLanguage(DocumentLanguage language) {
+        public Builder<K> defaultLanguage(DocumentLanguage language) {
             instance.defaultLanguage = Optional.of(language);
             return this;
         }
@@ -154,37 +151,37 @@ public class CreateArgs<K, V> {
         /**
          * Set the field that contains the language setting for the documents in the index. The default setting is to have no
          * language field.
-         * 
+         *
          * @param field the language field
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/stemming/">Stemming</a>
          */
-        public Builder<K, V> languageField(K field) {
+        public Builder<K> languageField(K field) {
             instance.languageField = Optional.of(field);
             return this;
         }
 
         /**
          * Set the default score for the documents in the index. The default setting is 1.0.
-         * 
+         *
          * @param score the default score
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/scoring/">Scoring</a>
          */
-        public Builder<K, V> defaultScore(double score) {
+        public Builder<K> defaultScore(double score) {
             instance.defaultScore = OptionalDouble.of(score);
             return this;
         }
 
         /**
          * Set the field that contains the score setting for the documents in the index. The default setting is a score of 1.0.
-         * 
+         *
          * @param field the score field
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/scoring/">Scoring</a>
          */
-        public Builder<K, V> scoreField(K field) {
+        public Builder<K> scoreField(K field) {
             instance.scoreField = Optional.of(field);
             return this;
         }
@@ -195,12 +192,12 @@ public class CreateArgs<K, V> {
          * <p/>
          * This should be a document attribute that you use as a binary safe payload string to the document that can be
          * evaluated at query time by a custom scoring function or retrieved to the client
-         * 
+         *
          * @param field the payload field
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/scoring/">Scoring</a>
          */
-        public Builder<K, V> payloadField(K field) {
+        public Builder<K> payloadField(K field) {
             instance.payloadField = Optional.of(field);
             return this;
         }
@@ -214,7 +211,7 @@ public class CreateArgs<K, V> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> maxTextFields() {
+        public Builder<K> maxTextFields() {
             instance.maxTextFields = true;
             return this;
         }
@@ -232,11 +229,11 @@ public class CreateArgs<K, V> {
          * are deleted along with the index. Historically, RediSearch used an FT.ADD command, which made a connection between
          * the document and the index. Then, FT.DROP, also a hystoric command, deleted documents by default. In version 2.x,
          * RediSearch indexes hashes and JSONs, and the dependency between the index and documents no longer exists.
-         * 
+         *
          * @param seconds the temporary index expiration time in seconds
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> temporary(long seconds) {
+        public Builder<K> temporary(long seconds) {
             instance.temporary = OptionalLong.of(seconds);
             return this;
         }
@@ -249,7 +246,7 @@ public class CreateArgs<K, V> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> noOffsets() {
+        public Builder<K> noOffsets() {
             instance.noOffsets = true;
             return this;
         }
@@ -262,7 +259,7 @@ public class CreateArgs<K, V> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> noHighlighting() {
+        public Builder<K> noHighlighting() {
             instance.noHighlight = true;
             return this;
         }
@@ -274,7 +271,7 @@ public class CreateArgs<K, V> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> noFields() {
+        public Builder<K> noFields() {
             instance.noFields = true;
             return this;
         }
@@ -287,7 +284,7 @@ public class CreateArgs<K, V> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> noFrequency() {
+        public Builder<K> noFrequency() {
             instance.noFrequency = true;
             return this;
         }
@@ -297,7 +294,7 @@ public class CreateArgs<K, V> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> skipInitialScan() {
+        public Builder<K> skipInitialScan() {
             instance.skipInitialScan = true;
             return this;
         }
@@ -312,12 +309,12 @@ public class CreateArgs<K, V> {
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/stopwords/">Stop
          *      words</a>
          */
-        public Builder<K, V> stopWords(List<V> stopWords) {
+        public Builder<K> stopWords(List<String> stopWords) {
             instance.stopWords = Optional.of(stopWords);
             return this;
         }
 
-        public CreateArgs<K, V> build() {
+        public CreateArgs<K> build() {
             return instance;
         }
 
@@ -349,9 +346,9 @@ public class CreateArgs<K, V> {
      * Get the filter for the index.
      *
      * @return the filter
-     * @see Builder#filter(Object)
+     * @see Builder#filter(String)
      */
-    public Optional<V> getFilter() {
+    public Optional<String> getFilter() {
         return filter;
     }
 
@@ -481,7 +478,7 @@ public class CreateArgs<K, V> {
      * @return the stop words
      * @see Builder#stopWords(List)
      */
-    public Optional<List<V>> getStopWords() {
+    public Optional<List<String>> getStopWords() {
         return stopWords;
     }
 
@@ -490,13 +487,13 @@ public class CreateArgs<K, V> {
      *
      * @param args the {@link CommandArgs} object
      */
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<K, ?> args) {
         on.ifPresent(targetType -> args.add(ON).add(targetType.name()));
         if (!prefixes.isEmpty()) {
             args.add(PREFIX).add(prefixes.size());
-            prefixes.forEach(p -> args.add(p.toString()));
+            prefixes.forEach(args::addKey);
         }
-        filter.ifPresent(filter -> args.add(FILTER).addValue(filter));
+        filter.ifPresent(filter -> args.add(FILTER).add(filter));
         defaultLanguage.ifPresent(language -> args.add(LANGUAGE).add(language.toString()));
         languageField.ifPresent(field -> args.add(LANGUAGE_FIELD).addKey(field));
         defaultScore.ifPresent(score -> args.add(SCORE).add(score));
@@ -523,7 +520,7 @@ public class CreateArgs<K, V> {
         }
         stopWords.ifPresent(words -> {
             args.add(STOPWORDS).add(words.size());
-            words.forEach(args::addValue);
+            words.forEach(args::add);
         });
     }
 

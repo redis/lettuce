@@ -39,7 +39,7 @@ public class HybridVectorArgs<K, V> {
 
     private final List<String> filters;
 
-    private final K scoreAlias;
+    private final String scoreAlias;
 
     private HybridVectorArgs(Builder<K, V> builder) {
         this.fieldName = builder.fieldName;
@@ -69,7 +69,7 @@ public class HybridVectorArgs<K, V> {
         return filters;
     }
 
-    public Optional<K> getScoreAlias() {
+    public Optional<String> getScoreAlias() {
         return Optional.ofNullable(scoreAlias);
     }
 
@@ -83,7 +83,7 @@ public class HybridVectorArgs<K, V> {
 
         private final List<String> filters = new ArrayList<>();
 
-        private K scoreAlias;
+        private String scoreAlias;
 
         /**
          * Set the vector field name.
@@ -145,7 +145,7 @@ public class HybridVectorArgs<K, V> {
          * @param alias the field name to use for the normalized vector distance
          * @return this builder
          */
-        public Builder<K, V> scoreAlias(K alias) {
+        public Builder<K, V> scoreAlias(String alias) {
             LettuceAssert.notNull(alias, "Score alias must not be null");
             this.scoreAlias = alias;
             return this;
@@ -188,7 +188,7 @@ public class HybridVectorArgs<K, V> {
         // YIELD_SCORE_AS for VSIM (normalized vector distance)
         if (scoreAlias != null) {
             args.add(CommandKeyword.YIELD_SCORE_AS);
-            args.addKey(scoreAlias);
+            args.add(scoreAlias);
         }
     }
 

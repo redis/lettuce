@@ -42,7 +42,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RediSearchReactiveCommands<K, V>) :
     RediSearchCoroutinesCommands<K, V> {
 
-    override suspend fun ftCreate(index: String, arguments: CreateArgs<K, V>, fieldArgs: List<FieldArgs<K>>): String? =
+    override suspend fun ftCreate(index: String, arguments: CreateArgs<K>, fieldArgs: List<FieldArgs<K>>): String? =
         ops.ftCreate(index, arguments, fieldArgs).awaitFirstOrNull()
 
     override suspend fun ftCreate(index: String, fieldArgs: List<FieldArgs<K>>): String? =
@@ -72,16 +72,16 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftDropindex(index: String): String? =
         ops.ftDropindex(index).awaitFirstOrNull()
 
-    override suspend fun ftSearch(index: String, query: V): SearchReply<K, V>? =
+    override suspend fun ftSearch(index: String, query: String): SearchReply<K, V>? =
         ops.ftSearch(index, query).awaitFirstOrNull()
 
-    override suspend fun ftSearch(index: String, query: V, args: SearchArgs<K, V>): SearchReply<K, V>? =
+    override suspend fun ftSearch(index: String, query: String, args: SearchArgs<K, V>): SearchReply<K, V>? =
         ops.ftSearch(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftAggregate(index: String, query: V, args: AggregateArgs<K, V>): AggregationReply<K, V>? =
+    override suspend fun ftAggregate(index: String, query: String, args: AggregateArgs<K, V>): AggregationReply<K, V>? =
         ops.ftAggregate(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftAggregate(index: String, query: V): AggregationReply<K, V>? =
+    override suspend fun ftAggregate(index: String, query: String): AggregationReply<K, V>? =
         ops.ftAggregate(index, query).awaitFirstOrNull()
 
     override suspend fun ftCursorread(index: String, cursor: Cursor, count: Int): AggregationReply<K, V>? =
@@ -96,19 +96,19 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftHybrid(index: String, args: HybridArgs<K, V>): HybridReply<K, V>? =
         ops.ftHybrid(index, args).awaitFirstOrNull()
 
-    override suspend fun ftDictadd(dict: String, vararg terms: V): Long? =
+    override suspend fun ftDictadd(dict: String, vararg terms: String): Long? =
         ops.ftDictadd(dict, *terms).awaitFirstOrNull()
 
-    override suspend fun ftDictdel(dict: String, vararg terms: V): Long? =
+    override suspend fun ftDictdel(dict: String, vararg terms: String): Long? =
         ops.ftDictdel(dict, *terms).awaitFirstOrNull()
 
-    override suspend fun ftDictdump(dict: String): List<V> =
+    override suspend fun ftDictdump(dict: String): List<String> =
         ops.ftDictdump(dict).asFlow().toList()
 
-    override suspend fun ftSpellcheck(index: String, query: V): SpellCheckResult<V>? =
+    override suspend fun ftSpellcheck(index: String, query: String): SpellCheckResult? =
         ops.ftSpellcheck(index, query).awaitFirstOrNull()
 
-    override suspend fun ftSpellcheck(index: String, query: V, args: SpellCheckArgs<K, V>): SpellCheckResult<V>? =
+    override suspend fun ftSpellcheck(index: String, query: String, args: SpellCheckArgs): SpellCheckResult? =
         ops.ftSpellcheck(index, query, args).awaitFirstOrNull()
 
     override suspend fun ftSugadd(key: K, suggestion: V, score: Double): Long? =
@@ -129,22 +129,22 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftSuglen(key: K): Long? =
         ops.ftSuglen(key).awaitFirstOrNull()
 
-    override suspend fun ftSynupdate(index: String, synonymGroupId: V, vararg terms: V): String? =
+    override suspend fun ftSynupdate(index: String, synonymGroupId: String, vararg terms: String): String? =
         ops.ftSynupdate(index, synonymGroupId, *terms).awaitFirstOrNull()
 
-    override suspend fun ftSynupdate(index: String, synonymGroupId: V, args: SynUpdateArgs<K, V>, vararg terms: V): String? =
+    override suspend fun ftSynupdate(index: String, synonymGroupId: String, args: SynUpdateArgs, vararg terms: String): String? =
         ops.ftSynupdate(index, synonymGroupId, args, *terms).awaitFirstOrNull()
 
-    override suspend fun ftSyndump(index: String): Map<V, List<V>>? =
+    override suspend fun ftSyndump(index: String): Map<String, List<String>>? =
         ops.ftSyndump(index).awaitFirstOrNull()
 
-    override suspend fun ftExplain(index: String, query: V): String? =
+    override suspend fun ftExplain(index: String, query: String): String? =
         ops.ftExplain(index, query).awaitFirstOrNull()
 
-    override suspend fun ftExplain(index: String, query: V, args: ExplainArgs<K, V>): String? =
+    override suspend fun ftExplain(index: String, query: String, args: ExplainArgs): String? =
         ops.ftExplain(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftList(): List<V> =
+    override suspend fun ftList(): List<String> =
         ops.ftList().asFlow().toList()
 
 

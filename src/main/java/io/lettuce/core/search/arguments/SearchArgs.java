@@ -41,7 +41,7 @@ public class SearchArgs<K, V> {
 
     private final List<K> inFields = new ArrayList<>();
 
-    private final Map<K, Optional<K>> returnFields = new HashMap<>();
+    private final Map<K, Optional<String>> returnFields = new HashMap<>();
 
     private Optional<SummarizeArgs<K, V>> summarize = Optional.empty();
 
@@ -53,7 +53,7 @@ public class SearchArgs<K, V> {
 
     private Optional<DocumentLanguage> language = Optional.empty();
 
-    private Optional<V> expander = Optional.empty();
+    private Optional<String> expander = Optional.empty();
 
     private Optional<ScoringFunction> scorer = Optional.empty();
 
@@ -63,7 +63,7 @@ public class SearchArgs<K, V> {
 
     private Optional<Duration> timeout = Optional.empty();
 
-    private final Map<K, V> params = new HashMap<>();
+    private final Map<String, Object> params = new HashMap<>();
 
     private QueryDialects dialect = QueryDialects.DIALECT2;
 
@@ -188,7 +188,7 @@ public class SearchArgs<K, V> {
          * @param as the alias to use for this field in the result
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> returnField(K field, K as) {
+        public SearchArgs.Builder<K, V> returnField(K field, String as) {
             instance.returnFields.put(field, Optional.ofNullable(as));
             return this;
         }
@@ -404,7 +404,7 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/administration/extensions/">Extensions</a>
          */
-        public SearchArgs.Builder<K, V> expander(V expander) {
+        public SearchArgs.Builder<K, V> expander(String expander) {
             instance.expander = Optional.ofNullable(expander);
             return this;
         }
@@ -475,7 +475,22 @@ public class SearchArgs<K, V> {
          * @param value the value of the parameter
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> param(K name, V value) {
+        public SearchArgs.Builder<K, V> param(String name, V value) {
+            instance.params.put(name, value);
+            return this;
+        }
+
+        /**
+         * Add a binary value parameter. Each parameter has a name and a binary value that bypasses the connection's value
+         * codec, which is useful for passing vector blobs (e.g. KNN {@code $BLOB}) over a non-binary connection.
+         * <p/>
+         * Requires {@link QueryDialects#DIALECT2} or higher.
+         *
+         * @param name the name of the parameter
+         * @param value the binary value of the parameter
+         * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
+         */
+        public SearchArgs.Builder<K, V> param(String name, byte[] value) {
             instance.params.put(name, value);
             return this;
         }
@@ -526,6 +541,7 @@ public class SearchArgs<K, V> {
      *
      * @param args the {@link CommandArgs} object
      */
+    @SuppressWarnings("unchecked")
     public void build(CommandArgs<K, V> args) {
 
         if (noContent) {
@@ -569,7 +585,7 @@ public class SearchArgs<K, V> {
                 args.addKey(field);
                 if (as.isPresent()) {
                     args.add(CommandKeyword.AS);
-                    args.addKey(as.get());
+                    args.add(as.get());
                 }
             });
         }
@@ -598,7 +614,7 @@ public class SearchArgs<K, V> {
 
         expander.ifPresent(v -> {
             args.add(CommandKeyword.EXPANDER);
-            args.addValue(v);
+            args.add(v);
         });
 
         scorer.ifPresent(scoringFunction -> {
@@ -618,8 +634,12 @@ public class SearchArgs<K, V> {
             args.add(CommandKeyword.PARAMS);
             args.add(params.size() * 2L);
             params.forEach((name, value) -> {
-                args.addKey(name);
-                args.addValue(value);
+                args.add(name);
+                if (value instanceof byte[]) {
+                    args.add((byte[]) value);
+                } else {
+                    args.addValue((V) value);
+                }
             });
         }
 

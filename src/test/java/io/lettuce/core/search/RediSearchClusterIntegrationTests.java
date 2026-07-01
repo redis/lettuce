@@ -91,8 +91,8 @@ public class RediSearchClusterIntegrationTests {
         FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
         FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PRODUCT_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH)
+                .build();
 
         // Create index on all cluster nodes
         assertThat(redis.ftCreate(PRODUCTS_INDEX, createArgs, Arrays.asList(nameField, categoryField, priceField)))
@@ -188,8 +188,8 @@ public class RediSearchClusterIntegrationTests {
         FieldArgs<String> yearField = NumericFieldArgs.<String> builder().name("year").sortable().build();
         FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(BOOK_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH)
+                .build();
 
         // Create index on cluster
         String createResult = redis.ftCreate(BOOKS_INDEX, createArgs,
@@ -219,8 +219,8 @@ public class RediSearchClusterIntegrationTests {
 
         // Test aggregation with cursor - group by author and get average rating
         AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()
-                .groupBy(AggregateArgs.GroupBy.<String, String> of("author")
-                        .reduce(AggregateArgs.Reducer.<String, String> avg("@rating").as("avg_rating")))
+                .groupBy(AggregateArgs.GroupBy.<String> of("author")
+                        .reduce(AggregateArgs.Reducer.<String> avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(2L)) // Small batch size to test cursor functionality
                 .build();
 

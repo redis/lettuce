@@ -24,20 +24,19 @@ import io.lettuce.core.protocol.CommandKeyword;
  * <h3>Example Usage:</h3>
  *
  * <pre>
- * 
+ *
  * {
  *     &#64;code
  *     // Group by category and count items
- *     GroupBy<String, String> groupBy = GroupBy.of("category").reduce(Reducers.count().as("item_count"));
+ *     GroupBy<String> groupBy = GroupBy.of("category").reduce(Reducers.count().as("item_count"));
  *
  *     // Group by multiple fields with multiple reducers
- *     GroupBy<String, String> complexGroup = GroupBy.of("category", "brand").reduce(Reducers.count().as("count"))
+ *     GroupBy<String> complexGroup = GroupBy.of("category", "brand").reduce(Reducers.count().as("count"))
  *             .reduce(Reducers.avg("@price").as("avg_price"));
  * }
  * </pre>
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @since 7.5
  * @see Reducer
@@ -46,7 +45,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @see PostProcessingOperation
  */
 @Experimental
-public class GroupBy<K, V> implements PostProcessingOperation<K, V> {
+public class GroupBy<K> implements PostProcessingOperation {
 
     private final List<K> properties;
 
@@ -67,11 +66,10 @@ public class GroupBy<K, V> implements PostProcessingOperation<K, V> {
      *
      * @param properties the properties to group by
      * @param <K> Key type
-     * @param <V> Value type
      * @return new GroupBy instance
      */
     @SafeVarargs
-    public static <K, V> GroupBy<K, V> of(K... properties) {
+    public static <K> GroupBy<K> of(K... properties) {
         return new GroupBy<>(Arrays.asList(properties));
     }
 
@@ -81,13 +79,13 @@ public class GroupBy<K, V> implements PostProcessingOperation<K, V> {
      * @param reducer the reducer to add
      * @return this GroupBy instance
      */
-    public GroupBy<K, V> reduce(Reducer<K> reducer) {
+    public GroupBy<K> reduce(Reducer<K> reducer) {
         this.reducers.add(reducer);
         return this;
     }
 
     @Override
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<?, ?> args) {
         args.add(CommandKeyword.GROUPBY);
         args.add(properties.size());
         for (K property : properties) {

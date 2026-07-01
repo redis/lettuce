@@ -96,8 +96,8 @@ public class RedisJsonIndexingIntegrationTests {
         FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
         FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("$.price").as("price").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
+                .build();
 
         String result = redis.ftCreate(ITEM_INDEX, createArgs, Arrays.asList(nameField, descriptionField, priceField));
         assertThat(result).isEqualTo("OK");
@@ -149,8 +149,8 @@ public class RedisJsonIndexingIntegrationTests {
         FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("$.name").as("name").build();
         FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
+                .build();
 
         redis.ftCreate(ITEM_INDEX_2, createArgs, Arrays.asList(colorsField, nameField, descriptionField));
 
@@ -201,8 +201,8 @@ public class RedisJsonIndexingIntegrationTests {
         FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("$.name").as("name").build();
         FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
+                .build();
 
         redis.ftCreate(ITEM_INDEX_3, createArgs, Arrays.asList(colorsField, nameField, descriptionField));
 
@@ -237,8 +237,8 @@ public class RedisJsonIndexingIntegrationTests {
         // FT.CREATE itemIdx4 ON JSON PREFIX 1 item: SCHEMA $.max_level AS dB NUMERIC
         FieldArgs<String> dbField = NumericFieldArgs.<String> builder().name("$.max_level").as("dB").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
+                .build();
 
         redis.ftCreate(ITEM_INDEX_4, createArgs, Collections.singletonList(dbField));
 
@@ -279,8 +279,8 @@ public class RedisJsonIndexingIntegrationTests {
         FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
         FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("$.price").as("price").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
+                .build();
 
         redis.ftCreate(ITEM_INDEX, createArgs, Arrays.asList(nameField, descriptionField, priceField));
 
@@ -334,8 +334,8 @@ public class RedisJsonIndexingIntegrationTests {
         FieldArgs<String> connectionTypeField = TextFieldArgs.<String> builder().name("$.connection.type").as("connectionType")
                 .build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON)
+                .build();
 
         redis.ftCreate(ITEM_INDEX, createArgs, Arrays.asList(wirelessField, connectionTypeField));
 
