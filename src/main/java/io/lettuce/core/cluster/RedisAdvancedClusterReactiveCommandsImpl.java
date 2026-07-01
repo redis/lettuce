@@ -635,7 +635,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Flux<V> ftTagvals(String index, String fieldName) {
+    public Flux<String> ftTagvals(String index, String fieldName) {
         return routeKeylessMany(() -> super.ftTagvals(index, fieldName), conn -> conn.ftTagvals(index, fieldName),
                 CommandType.FT_TAGVALS);
     }
