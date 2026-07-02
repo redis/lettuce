@@ -10,9 +10,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.probabilistic.topk.TopKInfoValue;
-import io.lettuce.core.probabilistic.topk.TopKListValue;
-import io.lettuce.core.probabilistic.topk.arguments.TopKReserveArgs;
+import io.lettuce.core.probabilistic.TopKInfoValue;
+import io.lettuce.core.probabilistic.TopKListValue;
+import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 import io.lettuce.core.protocol.Command;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

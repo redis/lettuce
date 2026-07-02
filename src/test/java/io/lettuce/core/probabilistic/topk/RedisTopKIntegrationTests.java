@@ -8,7 +8,9 @@ package io.lettuce.core.probabilistic.topk;
 
 import io.lettuce.core.Pair;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.probabilistic.topk.arguments.TopKReserveArgs;
+import io.lettuce.core.probabilistic.TopKInfoValue;
+import io.lettuce.core.probabilistic.TopKListValue;
+import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterAll;

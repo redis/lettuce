@@ -8,9 +8,9 @@ package io.lettuce.core.cluster.api.async;
 
 import java.util.List;
 import io.lettuce.core.Pair;
-import io.lettuce.core.probabilistic.topk.TopKInfoValue;
-import io.lettuce.core.probabilistic.topk.TopKListValue;
-import io.lettuce.core.probabilistic.topk.arguments.TopKReserveArgs;
+import io.lettuce.core.probabilistic.TopKInfoValue;
+import io.lettuce.core.probabilistic.TopKListValue;
+import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 
 /**
  * Asynchronous executed commands on a node selection for Top-K.

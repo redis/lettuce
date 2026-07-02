@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier: MIT
  */
-package io.lettuce.core.probabilistic.topk;
+package io.lettuce.core.probabilistic;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;

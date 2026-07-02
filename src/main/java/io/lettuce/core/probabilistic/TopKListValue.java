@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier: MIT
  */
-package io.lettuce.core.probabilistic.topk;
+package io.lettuce.core.probabilistic;
 
 /**
  * Represents the result of the Redis <a href="https://redis.io/docs/latest/commands/topk.list/">TOPK.LIST</a> command.

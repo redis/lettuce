@@ -10,11 +10,11 @@ import java.util.List;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.*;
-import io.lettuce.core.probabilistic.topk.TopKInfoValue;
-import io.lettuce.core.probabilistic.topk.TopKInfoValueParser;
-import io.lettuce.core.probabilistic.topk.TopKListValue;
-import io.lettuce.core.probabilistic.topk.TopKListValueParser;
-import io.lettuce.core.probabilistic.topk.arguments.TopKReserveArgs;
+import io.lettuce.core.probabilistic.TopKInfoValue;
+import io.lettuce.core.probabilistic.TopKInfoValueParser;
+import io.lettuce.core.probabilistic.TopKListValue;
+import io.lettuce.core.probabilistic.TopKListValueParser;
+import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;

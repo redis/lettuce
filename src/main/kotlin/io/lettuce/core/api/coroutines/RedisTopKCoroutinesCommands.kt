@@ -8,11 +8,10 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.Pair
-import io.lettuce.core.probabilistic.topk.TopKInfoValue
-import io.lettuce.core.probabilistic.topk.TopKListValue
-import io.lettuce.core.probabilistic.topk.arguments.TopKReserveArgs
+import io.lettuce.core.probabilistic.TopKInfoValue
+import io.lettuce.core.probabilistic.TopKListValue
+import io.lettuce.core.probabilistic.arguments.TopKReserveArgs
 
 /**
  * Coroutine executed commands for Top-K.

@@ -9,9 +9,9 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.Pair
 import io.lettuce.core.api.reactive.RedisTopKReactiveCommands
-import io.lettuce.core.probabilistic.topk.TopKInfoValue
-import io.lettuce.core.probabilistic.topk.TopKListValue
-import io.lettuce.core.probabilistic.topk.arguments.TopKReserveArgs
+import io.lettuce.core.probabilistic.TopKListValue
+import io.lettuce.core.probabilistic.TopKInfoValue
+import io.lettuce.core.probabilistic.arguments.TopKReserveArgs
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
