@@ -791,14 +791,14 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args) {
+    public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args) {
         return routeKeyless(() -> super.ftSearch(index, query, args), (conn) -> conn.ftSearch(index, query, args),
                 CommandType.FT_SEARCH);
     }
 
     @Override
     public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query) {
-        return ftSearch(index, query, SearchArgs.<K, V> builder().build());
+        return ftSearch(index, query, SearchArgs.<K> builder().build());
     }
 
     @Override

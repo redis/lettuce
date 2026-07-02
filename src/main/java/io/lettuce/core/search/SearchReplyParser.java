@@ -66,7 +66,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
      *        <li>Document IDs are always parsed when using this constructor</li>
      *        </ul>
      */
-    public SearchReplyParser(RedisCodec<K, V> codec, SearchArgs<K, V> args) {
+    public SearchReplyParser(RedisCodec<K, V> codec, SearchArgs<K> args) {
         this.codec = codec;
         this.withScores = args != null && args.isWithScores();
         this.withContent = args == null || !args.isNoContent();
