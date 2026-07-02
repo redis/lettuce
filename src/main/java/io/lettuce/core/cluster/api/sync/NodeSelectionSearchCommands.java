@@ -1028,7 +1028,7 @@ public interface NodeSelectionSearchCommands<K, V> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    Executions<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args);
+    Executions<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.

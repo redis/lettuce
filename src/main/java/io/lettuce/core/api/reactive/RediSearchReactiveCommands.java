@@ -1030,7 +1030,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args);
+    Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.

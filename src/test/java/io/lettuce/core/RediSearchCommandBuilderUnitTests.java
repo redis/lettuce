@@ -574,7 +574,7 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructFtSearchCommandNoSearchArgs() {
         Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY,
-                SearchArgs.<String, String> builder().build());
+                SearchArgs.<String> builder().build());
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -590,8 +590,7 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructFtSearchCommandLimit() {
 
-        SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder().limit(10, 10).returnField("title")
-                .build();
+        SearchArgs<String> searchArgs = SearchArgs.<String> builder().limit(10, 10).returnField("title").build();
 
         Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
         ByteBuf buf = Unpooled.directBuffer();
@@ -615,8 +614,8 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructFtSearchCommandParams() {
 
-        SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder()
-                .param("poly", "POLYGON((2 2, 2 50, 50 50, 50 2, 2 2))").build();
+        SearchArgs<String> searchArgs = SearchArgs.<String> builder().param("poly", "POLYGON((2 2, 2 50, 50 50, 50 2, 2 2))")
+                .build();
 
         Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
         ByteBuf buf = Unpooled.directBuffer();
@@ -776,15 +775,13 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void returnFieldsWithAlias() {
-        SearchArgs<String, String> options = SearchArgs.<String, String> builder().returnField("as_is")
-                .returnField("$.field", "alias").build();
+        SearchArgs<String> options = SearchArgs.<String> builder().returnField("as_is").returnField("$.field", "alias").build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         options.build(args);
 
-        // The RETURN field name routes through the key codec (schema field reference).
-        // The AS alias is a logical identifier and is sent as a raw String, not codec-encoded.
-        assertThat("RETURN 4 key<as_is> key<$.field> AS alias DIALECT 2").isEqualTo(args.toCommandString());
+        // Both the RETURN field name and the AS alias are schema identifiers, sent as raw Strings (not codec-encoded).
+        assertThat("RETURN 4 as_is $.field AS alias DIALECT 2").isEqualTo(args.toCommandString());
     }
 
     @Test
@@ -793,7 +790,7 @@ class RediSearchCommandBuilderUnitTests {
         byte[] queryVector = floatArrayToByteArray(new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
 
         HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
+                .search(HybridSearchArgs.<String> builder().query("@category:{electronics} smartphone camera")
                         .scorer(Scorers.tfidfDocNorm()).scoreAlias("text_score").build())
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector("$vec")
                         .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")

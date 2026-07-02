@@ -1819,13 +1819,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args) {
+    public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args) {
         return dispatch(searchCommandBuilder.ftSearch(index, query, args));
     }
 
     @Override
     public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query) {
-        return dispatch(searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
+        return dispatch(searchCommandBuilder.ftSearch(index, query, SearchArgs.<K> builder().build()));
     }
 
     @Override

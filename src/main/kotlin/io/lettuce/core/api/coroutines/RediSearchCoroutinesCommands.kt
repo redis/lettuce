@@ -1029,7 +1029,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    suspend fun ftSearch(index: String, query: String, args: SearchArgs<K, V>): SearchReply<K, V>?
+    suspend fun ftSearch(index: String, query: String, args: SearchArgs<K>): SearchReply<K, V>?
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.

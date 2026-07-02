@@ -180,7 +180,7 @@ public class RediSearchIntegrationTests {
         assertThat(searchReply.getResults().get(0).getFields().get("author")).isEqualTo("jane_smith");
 
         // Test 2: Search with field-specific query
-        SearchArgs<String, String> titleSearchArgs = SearchArgs.<String, String> builder().build();
+        SearchArgs<String> titleSearchArgs = SearchArgs.<String> builder().build();
         searchReply = redis.ftSearch(BLOG_INDEX, "@title:Redis", titleSearchArgs);
         assertThat(searchReply.getCount()).isEqualTo(2);
 
@@ -227,7 +227,7 @@ public class RediSearchIntegrationTests {
         redis.hmset("movie:3", movie3);
 
         // Test 1: Search with WITHSCORES
-        SearchArgs<String, String> withScoresArgs = SearchArgs.<String, String> builder().withScores().build();
+        SearchArgs<String> withScoresArgs = SearchArgs.<String> builder().withScores().build();
         SearchReply<String, String> results = redis.ftSearch(MOVIES_INDEX, "Matrix", withScoresArgs);
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
@@ -238,7 +238,7 @@ public class RediSearchIntegrationTests {
         }
 
         // Test 2: Search with NOCONTENT
-        SearchArgs<String, String> noContentArgs = SearchArgs.<String, String> builder().noContent().build();
+        SearchArgs<String> noContentArgs = SearchArgs.<String> builder().noContent().build();
         results = redis.ftSearch(MOVIES_INDEX, "Matrix", noContentArgs);
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
@@ -248,14 +248,14 @@ public class RediSearchIntegrationTests {
         }
 
         // Test 3: Search with LIMIT
-        SearchArgs<String, String> limitArgs = SearchArgs.<String, String> builder().limit(0, 2).build();
+        SearchArgs<String> limitArgs = SearchArgs.<String> builder().limit(0, 2).build();
         results = redis.ftSearch(MOVIES_INDEX, "Matrix", limitArgs);
         assertThat(results.getCount()).isEqualTo(3); // Total count should still be 3
         assertThat(results.getResults()).hasSize(2); // But only 2 results returned
 
         // Test 4: Search with SORTBY
-        SortByArgs<String> sortByArgs = SortByArgs.<String> builder().attribute("rating").descending().build();
-        SearchArgs<String, String> sortArgs = SearchArgs.<String, String> builder().sortBy(sortByArgs).build();
+        SortByArgs sortByArgs = SortByArgs.builder().attribute("rating").descending().build();
+        SearchArgs<String> sortArgs = SearchArgs.<String> builder().sortBy(sortByArgs).build();
         results = redis.ftSearch(MOVIES_INDEX, "Matrix", sortArgs);
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
@@ -268,7 +268,7 @@ public class RediSearchIntegrationTests {
         }
 
         // Test 5: Search with RETURN fields
-        SearchArgs<String, String> returnArgs = SearchArgs.<String, String> builder().returnField("title").build();
+        SearchArgs<String> returnArgs = SearchArgs.<String> builder().returnField("title").build();
         results = redis.ftSearch(MOVIES_INDEX, "Matrix", returnArgs);
         assertThat(results.getCount()).isEqualTo(3);
         for (SearchReply.SearchResult<String, String> result : results.getResults()) {
@@ -437,24 +437,22 @@ public class RediSearchIntegrationTests {
         redis.hmset("blog:post:3", post3);
 
         // Test 1: Search with INKEYS (limit search to specific keys)
-        SearchArgs<String, String> inKeysArgs = SearchArgs.<String, String> builder().inKey("blog:post:1").inKey("blog:post:2")
-                .build();
+        SearchArgs<String> inKeysArgs = SearchArgs.<String> builder().inKey("blog:post:1").inKey("blog:post:2").build();
         SearchReply<String, String> results = redis.ftSearch(BLOG_INDEX, "Redis", inKeysArgs);
         assertThat(results.getCount()).isEqualTo(2); // Only posts 1 and 2
 
         // Test 2: Search with INFIELDS (limit search to specific fields)
-        SearchArgs<String, String> inFieldsArgs = SearchArgs.<String, String> builder().inField("title").build();
+        SearchArgs<String> inFieldsArgs = SearchArgs.<String> builder().inField("title").build();
         results = redis.ftSearch(BLOG_INDEX, "Redis", inFieldsArgs);
         assertThat(results.getCount()).isEqualTo(2); // Only matches in title field
 
         // Test 3: Search with TIMEOUT
-        SearchArgs<String, String> timeoutArgs = SearchArgs.<String, String> builder().timeout(Duration.ofSeconds(5)).build();
+        SearchArgs<String> timeoutArgs = SearchArgs.<String> builder().timeout(Duration.ofSeconds(5)).build();
         results = redis.ftSearch(BLOG_INDEX, "Redis", timeoutArgs);
         assertThat(results.getCount()).isEqualTo(2);
 
         // Test 4: Search with PARAMS (parameterized query)
-        SearchArgs<String, String> paramsArgs = SearchArgs.<String, String> builder().param("category_param", "tutorial")
-                .build();
+        SearchArgs<String> paramsArgs = SearchArgs.<String> builder().param("category_param", "tutorial").build();
         results = redis.ftSearch(BLOG_INDEX, "@category:{$category_param}", paramsArgs);
         assertThat(results.getCount()).isEqualTo(2); // Posts with tutorial category
 
@@ -566,13 +564,13 @@ public class RediSearchIntegrationTests {
         assertThat(results.getResults()).isEmpty();
 
         // Test 2: Search with LIMIT beyond available results
-        SearchArgs<String, String> limitArgs = SearchArgs.<String, String> builder().limit(10, 20).build();
+        SearchArgs<String> limitArgs = SearchArgs.<String> builder().limit(10, 20).build();
         results = redis.ftSearch(BLOG_INDEX, "Redis", limitArgs);
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults()).isEmpty(); // No results in range 10-20
 
         // Test 3: Search with NOCONTENT and WITHSCORES
-        SearchArgs<String, String> combinedArgs = SearchArgs.<String, String> builder().noContent().withScores().build();
+        SearchArgs<String> combinedArgs = SearchArgs.<String> builder().noContent().withScores().build();
         results = redis.ftSearch(BLOG_INDEX, "Redis", combinedArgs);
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults()).hasSize(1);
@@ -1088,7 +1086,7 @@ public class RediSearchIntegrationTests {
         redis.hmset("book:2", book2);
 
         // Test 1: Search with field alias - rename single field
-        SearchArgs<String, String> aliasArgs = SearchArgs.<String, String> builder().returnField("title", "book_title").build();
+        SearchArgs<String> aliasArgs = SearchArgs.<String> builder().returnField("title", "book_title").build();
         SearchReply<String, String> results = redis.ftSearch(testIndex, "Redis", aliasArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
@@ -1102,7 +1100,7 @@ public class RediSearchIntegrationTests {
         }
 
         // Test 2: Search with multiple field aliases
-        SearchArgs<String, String> multiAliasArgs = SearchArgs.<String, String> builder().returnField("title", "book_title")
+        SearchArgs<String> multiAliasArgs = SearchArgs.<String> builder().returnField("title", "book_title")
                 .returnField("author", "writer").returnField("price", "cost").build();
         results = redis.ftSearch(testIndex, "Redis", multiAliasArgs);
 
@@ -1120,8 +1118,8 @@ public class RediSearchIntegrationTests {
         }
 
         // Test 3: Mix of aliased and non-aliased fields
-        SearchArgs<String, String> mixedArgs = SearchArgs.<String, String> builder().returnField("title", "book_title")
-                .returnField("author").build();
+        SearchArgs<String> mixedArgs = SearchArgs.<String> builder().returnField("title", "book_title").returnField("author")
+                .build();
         results = redis.ftSearch(testIndex, "Redis", mixedArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
@@ -1261,7 +1259,7 @@ public class RediSearchIntegrationTests {
         byte[] queryVector = floatArrayToByteArray(new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
 
         HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
+                .search(HybridSearchArgs.<String> builder().query("@category:{electronics} smartphone camera")
                         .scoreAlias("text_score").build())
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector("$vec")
                         .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
@@ -1331,8 +1329,8 @@ public class RediSearchIntegrationTests {
                     Collections.singletonList(NumericFieldArgs.builder().name("$.pos").as("pos").build()));
 
             // Add sorting by pos to ensure deterministic order
-            SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder()
-                    .sortBy(SortByArgs.<String> builder().attribute("pos").build()).limit(0, 10_000).build();
+            SearchArgs<String> searchArgs = SearchArgs.<String> builder().sortBy(SortByArgs.builder().attribute("pos").build())
+                    .limit(0, 10_000).build();
 
             // Store expected values for exact comparison
             ArrayList<String> expected = new ArrayList<>();

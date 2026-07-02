@@ -148,7 +148,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void inFieldMustNotBeMangledByCodec(String indexName) {
-        SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder().inField(field("title")).build();
+        SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().inField("title").build();
 
         SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "search", args);
 
@@ -161,7 +161,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void returnFieldMustNotBeMangledByCodec(String indexName) {
-        SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder().returnField(field("title")).build();
+        SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().returnField("title").build();
 
         SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "search", args);
 
@@ -176,7 +176,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void returnFieldAliasMustNotBeMangledByCodec(String indexName) {
-        SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder().returnField(field("title"), "t").build();
+        SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().returnField("title", "t").build();
 
         SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "search", args);
 
@@ -192,7 +192,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     // HASH only: SUMMARIZE/HIGHLIGHT are not supported on JSON indexes (server rejects with SEARCH_QUERY_BAD).
     @Test
     void summarizeFieldMustNotBeMangledByCodec() {
-        SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder().summarizeField(field("body")).build();
+        SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().summarizeField("body").build();
 
         SearchReply<RedisKey, String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
@@ -207,8 +207,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     // HASH only: SUMMARIZE/HIGHLIGHT are not supported on JSON indexes (server rejects with SEARCH_QUERY_BAD).
     @Test
     void highlightFieldMustNotBeMangledByCodec() {
-        SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder().highlightField(field("body"))
-                .highlightTags("<b>", "</b>").build();
+        SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().highlightField("body").highlightTags("<b>", "</b>").build();
 
         SearchReply<RedisKey, String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
@@ -242,8 +241,8 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void sortByMustNotBeMangledByCodec(String indexName) {
-        SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder()
-                .sortBy(SortByArgs.<RedisKey> builder().attribute(field("title")).build()).build();
+        SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().sortBy(SortByArgs.builder().attribute("title").build())
+                .build();
 
         SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "search", args);
 
@@ -257,7 +256,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void searchParamNameMustNotBeMangledByCodec(String indexName) {
-        SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder().param("term", "search").build();
+        SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().param("term", "search").build();
 
         SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "@body:$term", args);
 
@@ -287,34 +286,12 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
      */
     @Test
     void inKeyMustBeRoutedThroughCodec() {
-        SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder()
-                .inKey(new RedisKey(TENANT, ENTITY, HASH_DOC_ID)).build();
+        SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().inKey(new RedisKey(TENANT, ENTITY, HASH_DOC_ID)).build();
 
         SearchReply<RedisKey, String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).as("INKEYS must route the document key through encodeKey to match the stored key")
                 .isEqualTo(1L);
-    }
-
-    /**
-     * Codec-routing witness. The schema field is registered raw as {@code "title"} in {@link #prepare()}; the other tests pass
-     * read-side identifiers as <em>bare</em> {@link RedisKey} instances that also encode to {@code "title"}, so their positive
-     * assertions are insensitive to whether the read side actually invokes the codec. Here we deliberately pass a
-     * <em>non-bare</em> {@link RedisKey} into {@link SearchArgs.Builder#inField} so {@code encodeKey} produces
-     * {@code "tenant1:doc:title"} instead of {@code "title"}; the server then treats {@code INFIELDS} as an unknown field and
-     * yields zero hits. Asserting {@code count == 0} (vs. the baseline 1) proves {@code inField} is routed through
-     * {@code encodeKey} — were it sent raw, the wire bytes would be {@code "title"} and the document would match.
-     */
-    @Test
-    void inFieldWithNonBareKeyDemonstratesCodecRouting() {
-        SearchArgs<RedisKey, String> args = SearchArgs.<RedisKey, String> builder()
-                .inField(new RedisKey(TENANT, ENTITY, "title")).build();
-
-        SearchReply<RedisKey, String> result = redis.ftSearch(HASH_INDEX, "search", args);
-
-        assertThat(result.getCount())
-                .as("inField routed through encodeKey must mangle a non-bare RedisKey into an unknown field name (0 hits)")
-                .isEqualTo(0L);
     }
 
     /**

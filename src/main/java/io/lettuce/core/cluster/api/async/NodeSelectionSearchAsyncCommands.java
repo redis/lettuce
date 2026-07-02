@@ -1028,7 +1028,7 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    AsyncExecutions<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args);
+    AsyncExecutions<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.

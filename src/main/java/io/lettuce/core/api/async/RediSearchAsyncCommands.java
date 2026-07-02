@@ -1028,7 +1028,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    RedisFuture<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args);
+    RedisFuture<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.

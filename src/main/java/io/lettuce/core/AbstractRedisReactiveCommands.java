@@ -1916,13 +1916,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args) {
+    public Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args) {
         return createMono(() -> searchCommandBuilder.ftSearch(index, query, args));
     }
 
     @Override
     public Mono<SearchReply<K, V>> ftSearch(String index, String query) {
-        return createMono(() -> searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
+        return createMono(() -> searchCommandBuilder.ftSearch(index, query, SearchArgs.<K> builder().build()));
     }
 
     @Override

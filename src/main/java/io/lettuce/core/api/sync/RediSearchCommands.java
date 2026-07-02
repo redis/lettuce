@@ -1028,7 +1028,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    SearchReply<K, V> ftSearch(String index, String query, SearchArgs<K, V> args);
+    SearchReply<K, V> ftSearch(String index, String query, SearchArgs<K> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.

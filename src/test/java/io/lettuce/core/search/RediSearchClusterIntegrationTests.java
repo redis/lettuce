@@ -159,7 +159,7 @@ public class RediSearchClusterIntegrationTests {
         assertThat(searchResults.getResults()).hasSize(4);
 
         // Test 2: Search with price range across cluster
-        SearchArgs<String, String> priceSearchArgs = SearchArgs.<String, String> builder().build();
+        SearchArgs<String> priceSearchArgs = SearchArgs.<String> builder().build();
         SearchReply<String, String> priceResults = redis.ftSearch(PRODUCTS_INDEX, "@price:[100 500]", priceSearchArgs);
 
         // Should find keyboard, monitor, tablet (prices 149.99, 399.99, 299.99)

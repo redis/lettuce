@@ -140,7 +140,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
 
         // FIXME DISABLED - not working on the server
 
-        // SearchArgs<String, String> noStopWordsArgs = SearchArgs.<String, String>builder().noStopWords().build();
+        // SearchArgs<String> noStopWordsArgs = SearchArgs.<String>builder().noStopWords().build();
         // results = redis.ftSearch(STOPWORDS_INDEX, "foo", noStopWordsArgs);
         // assertThat(results.getCount()).isEqualTo(1); // "foo" should be found when stop words are disabled
 
@@ -243,8 +243,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hmset("user:3", user3);
 
         // Test 1: Sort by first name descending
-        SortByArgs<String> sortByFirstName = SortByArgs.<String> builder().attribute("first_name").descending().build();
-        SearchArgs<String, String> sortArgs = SearchArgs.<String, String> builder().sortBy(sortByFirstName).build();
+        SortByArgs sortByFirstName = SortByArgs.builder().attribute("first_name").descending().build();
+        SearchArgs<String> sortArgs = SearchArgs.<String> builder().sortBy(sortByFirstName).build();
         SearchReply<String, String> results = redis.ftSearch(SORTING_INDEX, "@last_name:jones", sortArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
@@ -254,8 +254,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getResults().get(1).getFields().get("first_name")).isEqualTo("alice");
 
         // Test 2: Sort by age ascending
-        SortByArgs<String> sortByAge = SortByArgs.<String> builder().attribute("age").build();
-        SearchArgs<String, String> ageSort = SearchArgs.<String, String> builder().sortBy(sortByAge).build();
+        SortByArgs sortByAge = SortByArgs.builder().attribute("age").build();
+        SearchArgs<String> ageSort = SearchArgs.<String> builder().sortBy(sortByAge).build();
         results = redis.ftSearch(SORTING_INDEX, "*", ageSort);
 
         assertThat(results.getCount()).isEqualTo(3);
@@ -381,8 +381,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hmset("book:2", book2);
 
         // Test 1: Basic highlighting with default tags
-        HighlightArgs<String, String> basicHighlight = HighlightArgs.<String, String> builder().build();
-        SearchArgs<String, String> highlightArgs = SearchArgs.<String, String> builder().highlightArgs(basicHighlight).build();
+        HighlightArgs basicHighlight = HighlightArgs.builder().build();
+        SearchArgs<String> highlightArgs = SearchArgs.<String> builder().highlightArgs(basicHighlight).build();
 
         SearchReply<String, String> results = redis.ftSearch(HIGHLIGHT_INDEX, "Redis", highlightArgs);
         assertThat(results.getCount()).isEqualTo(1);
@@ -392,8 +392,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(highlightedContent).contains("<b>Redis</b>"); // Default highlighting tags
 
         // Test 2: Custom highlighting tags
-        SearchArgs<String, String> customHighlightArgs = SearchArgs.<String, String> builder().highlightField("title")
-                .highlightField("content").highlightTags("<mark>", "</mark>").build();
+        SearchArgs<String> customHighlightArgs = SearchArgs.<String> builder().highlightField("title").highlightField("content")
+                .highlightTags("<mark>", "</mark>").build();
 
         results = redis.ftSearch(HIGHLIGHT_INDEX, "database", customHighlightArgs);
         assertThat(results.getCount()).isEqualTo(2);
@@ -407,9 +407,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         }
 
         // Test 3: Summarization with custom parameters
-        SummarizeArgs<String, String> summarize = SummarizeArgs.<String, String> builder().field("content").fragments(2).len(25)
-                .separator(" ... ").build();
-        SearchArgs<String, String> summarizeArgs = SearchArgs.<String, String> builder().summarizeArgs(summarize).build();
+        SummarizeArgs summarize = SummarizeArgs.builder().field("content").fragments(2).len(25).separator(" ... ").build();
+        SearchArgs<String> summarizeArgs = SearchArgs.<String> builder().summarizeArgs(summarize).build();
 
         results = redis.ftSearch(HIGHLIGHT_INDEX, "patterns", summarizeArgs);
         assertThat(results.getCount()).isEqualTo(1);
@@ -420,9 +419,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(summarizedContent.length()).isLessThan(book2.get("content").length()); // Should be shorter
 
         // Test 4: Combined highlighting and summarization
-        HighlightArgs<String, String> combineHighlight = HighlightArgs.<String, String> builder().field("content")
-                .tags("**", "**").build();
-        SearchArgs<String, String> combinedArgs = SearchArgs.<String, String> builder().highlightArgs(combineHighlight)
+        HighlightArgs combineHighlight = HighlightArgs.builder().field("content").tags("**", "**").build();
+        SearchArgs<String> combinedArgs = SearchArgs.<String> builder().highlightArgs(combineHighlight)
                 .summarizeField("content").summarizeFragments(1).summarizeLen(30).build();
 
         results = redis.ftSearch(HIGHLIGHT_INDEX, "Redis data", combinedArgs);
@@ -474,7 +472,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hmset("review:3", review3);
 
         // Test 1: Default BM25 scoring with scores
-        SearchArgs<String, String> withScores = SearchArgs.<String, String> builder().withScores().build();
+        SearchArgs<String> withScores = SearchArgs.<String> builder().withScores().build();
         SearchReply<String, String> results = redis.ftSearch(SCORING_INDEX, "Redis", withScores);
 
         assertThat(results.getCount()).isEqualTo(3);
@@ -489,8 +487,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         }
 
         // Test 2: TFIDF scoring
-        SearchArgs<String, String> tfidfScoring = SearchArgs.<String, String> builder().withScores()
-                .scorer(ScoringFunction.TF_IDF).build();
+        SearchArgs<String> tfidfScoring = SearchArgs.<String> builder().withScores().scorer(ScoringFunction.TF_IDF).build();
         results = redis.ftSearch(SCORING_INDEX, "Redis guide", tfidfScoring);
 
         assertThat(results.getCount()).isEqualTo(2);
@@ -498,8 +495,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getResults().get(0).getId()).isEqualTo("review:3");
 
         // Test 3: DISMAX scoring
-        SearchArgs<String, String> dismaxScoring = SearchArgs.<String, String> builder().withScores()
-                .scorer(ScoringFunction.DIS_MAX).build();
+        SearchArgs<String> dismaxScoring = SearchArgs.<String> builder().withScores().scorer(ScoringFunction.DIS_MAX).build();
         results = redis.ftSearch(SCORING_INDEX, "Redis guide", dismaxScoring);
 
         assertThat(results.getCount()).isEqualTo(2);
@@ -507,8 +503,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getResults().get(0).getId()).isEqualTo("review:2");
 
         // Test 4: DOCSCORE scoring (uses document's inherent score)
-        SearchArgs<String, String> docScoring = SearchArgs.<String, String> builder().withScores()
-                .scorer(ScoringFunction.DOCUMENT_SCORE).build();
+        SearchArgs<String> docScoring = SearchArgs.<String> builder().withScores().scorer(ScoringFunction.DOCUMENT_SCORE)
+                .build();
         results = redis.ftSearch(SCORING_INDEX, "*", docScoring);
 
         assertThat(results.getCount()).isEqualTo(3);
@@ -561,7 +557,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getCount()).isEqualTo(3);
 
         // Test VERBATIM search (disable stemming)
-        SearchArgs<String, String> verbatimArgs = SearchArgs.<String, String> builder().verbatim().build();
+        SearchArgs<String> verbatimArgs = SearchArgs.<String> builder().verbatim().build();
         results = redis.ftSearch(STEMMING_INDEX, "run", verbatimArgs);
         assertThat(results.getCount()).isEqualTo(1); // Only exact match
 
@@ -569,8 +565,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getCount()).isEqualTo(1); // Only exact match
 
         // Test with language parameter in search (should override index language)
-        SearchArgs<String, String> languageArgs = SearchArgs.<String, String> builder().language(DocumentLanguage.GERMAN)
-                .build();
+        SearchArgs<String> languageArgs = SearchArgs.<String> builder().language(DocumentLanguage.GERMAN).build();
         results = redis.ftSearch(STEMMING_INDEX, "run", languageArgs);
         // German stemming rules would be different, but for this test we just verify it works
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
