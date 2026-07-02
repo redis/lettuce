@@ -1244,6 +1244,6 @@ public interface RediSearchCommands<K, V> {
      * @since 7.2
      */
     @Experimental
-    HybridReply<K, V> ftHybrid(String index, HybridArgs<K, V> args);
+    HybridReply<K, V> ftHybrid(String index, HybridArgs args);
 
 }

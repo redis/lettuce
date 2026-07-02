@@ -787,17 +787,17 @@ class RediSearchCommandBuilderUnitTests {
 
         byte[] queryVector = floatArrayToByteArray(new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
 
-        HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String> builder().query("@category:{electronics} smartphone camera")
+        HybridArgs hybridArgs = HybridArgs.builder()
+                .search(HybridSearchArgs.builder().query("@category:{electronics} smartphone camera")
                         .scorer(Scorers.tfidfDocNorm()).scoreAlias("text_score").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
-                        .scoreAlias("vector_score").build())
-                .combine(Combiners.<String> linear().alpha(0.7).beta(0.3).window(26))
-                .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
-                        .groupBy(GroupBy.<String> of("@brand").reduce(Reducers.<String> sum("@price").as("sum"))
-                                .reduce(Reducers.<String> count().as("count")))
-                        .sortBy(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC)))
+                .vectorSearch(HybridVectorArgs
+                        .builder().field("@image_embedding").vector("$vec").method(HybridVectorArgs.Knn.of(20).efRuntime(150))
+                        .filter("@brand:{apple|samsung|google}").scoreAlias("vector_score").build())
+                .combine(Combiners.linear().alpha(0.7).beta(0.3).window(26))
+                .postProcessing(PostProcessingArgs.builder().load("@price", "@brand", "@category")
+                        .groupBy(GroupBy.of("@brand").reduce(Reducers.sum("@price").as("sum"))
+                                .reduce(Reducers.count().as("count")))
+                        .sortBy(SortBy.of(new SortProperty("@sum", SortDirection.ASC)))
                         .apply(Apply.of("@sum * 0.9", "discounted_price")).filter(Filter.of("@sum > 700"))
                         .limit(Limit.of(0, 20)).build())
                 .param("vec", queryVector).param("discount_rate", "0.9").build();
@@ -807,29 +807,28 @@ class RediSearchCommandBuilderUnitTests {
         String args = command.getArgs().toCommandString();
 
         // Vector data is passed via PARAMS, referenced as $vec in VSIM
-        assertThat(args).contains("VSIM key<@image_embedding> value<$vec>");
+        assertThat(args).contains("VSIM @image_embedding $vec");
         assertThat(args).contains("PARAMS 4");
-        assertThat(args).contains("key<discount_rate> value<0.9>");
+        assertThat(args).contains("discount_rate 0.9");
 
         // Verify LOAD is emitted with count prefix (LOAD 3 @price @brand @category)
-        assertThat(args).contains("LOAD 3 key<@price> key<@brand> key<@category>");
+        assertThat(args).contains("LOAD 3 @price @brand @category");
     }
 
     @Test
     void postProcessingArgsWithLoadFieldsShouldEmitLoadWithCount() {
-        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
-                .load("@price", "@brand", "@category").build();
+        PostProcessingArgs postProcessingArgs = PostProcessingArgs.builder().load("@price", "@brand", "@category").build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         postProcessingArgs.build(args);
 
         // Should emit: LOAD 3 @price @brand @category
-        assertThat(args.toCommandString()).isEqualTo("LOAD 3 key<@price> key<@brand> key<@category>");
+        assertThat(args.toCommandString()).isEqualTo("LOAD 3 @price @brand @category");
     }
 
     @Test
     void postProcessingArgsWithLoadAllShouldEmitLoadStar() {
-        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder().loadAll().build();
+        PostProcessingArgs postProcessingArgs = PostProcessingArgs.builder().loadAll().build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         postProcessingArgs.build(args);
@@ -840,8 +839,7 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void postProcessingArgsWithoutLoadShouldNotEmitLoad() {
-        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
-                .filter(Filter.of("@price > 100")).build();
+        PostProcessingArgs postProcessingArgs = PostProcessingArgs.builder().filter(Filter.of("@price > 100")).build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         postProcessingArgs.build(args);
@@ -853,9 +851,9 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void postProcessingArgsWithOperationsOnlyShouldNotEmitLoad() {
-        PostProcessingArgs<String, String> postProcessingArgs = PostProcessingArgs.<String, String> builder()
-                .groupBy(GroupBy.<String> of("@category").reduce(Reducers.<String> count().as("count")))
-                .sortBy(SortBy.of(new SortProperty<>("@count", SortDirection.DESC))).limit(Limit.of(0, 10)).build();
+        PostProcessingArgs postProcessingArgs = PostProcessingArgs.builder()
+                .groupBy(GroupBy.of("@category").reduce(Reducers.count().as("count")))
+                .sortBy(SortBy.of(new SortProperty("@count", SortDirection.DESC))).limit(Limit.of(0, 10)).build();
 
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         postProcessingArgs.build(args);
@@ -871,8 +869,8 @@ class RediSearchCommandBuilderUnitTests {
     @Test
     void loadWithAsteriskShouldThrowException() {
         // Passing "*" to load() should throw an exception directing users to use loadAll() instead
-        assertThatThrownBy(() -> PostProcessingArgs.<String, String> builder().load("*"))
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("loadAll()");
+        assertThatThrownBy(() -> PostProcessingArgs.builder().load("*")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("loadAll()");
     }
 
     @Test

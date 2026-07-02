@@ -1246,6 +1246,6 @@ public interface RediSearchReactiveCommands<K, V> {
      * @since 7.2
      */
     @Experimental
-    Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args);
+    Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs args);
 
 }
