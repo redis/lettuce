@@ -802,7 +802,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args) {
+    public RedisFuture<HybridReply<K, V>> ftHybrid(String index, HybridArgs args) {
         return routeKeyless(() -> super.ftHybrid(index, args), (conn) -> conn.ftHybrid(index, args), CommandType.FT_HYBRID);
     }
 

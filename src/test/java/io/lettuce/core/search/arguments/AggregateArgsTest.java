@@ -34,7 +34,7 @@ class AggregateArgsTest {
     void groupByFieldWithoutAtPrefixShouldAddPrefix() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
 
-        GroupBy.<String> of("category").build(args);
+        GroupBy.of("category").build(args);
 
         assertThat(args.toString()).contains("@category");
     }
@@ -43,7 +43,7 @@ class AggregateArgsTest {
     void groupByFieldWithAtPrefixShouldNotDoublePrefix() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
 
-        GroupBy.<String> of("@category").build(args);
+        GroupBy.of("@category").build(args);
 
         String output = args.toString();
         assertThat(output).contains("@category");
@@ -54,7 +54,7 @@ class AggregateArgsTest {
     void groupByMultipleFieldsMixedPrefixShouldNormalise() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
 
-        GroupBy.<String> of("brand", "@price").build(args);
+        GroupBy.of("brand", "@price").build(args);
 
         String output = args.toString();
         assertThat(output).contains("@brand");
@@ -96,7 +96,7 @@ class AggregateArgsTest {
     void reducerAvgWithAtPrefixShouldWork() {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
 
-        Reducer.<String> avg("@price").as("avg_price").build(args);
+        Reducer.avg("@price").as("avg_price").build(args);
 
         assertThat(args.toString()).contains("@price");
     }

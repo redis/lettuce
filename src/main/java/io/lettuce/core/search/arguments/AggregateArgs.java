@@ -9,6 +9,7 @@ package io.lettuce.core.search.arguments;
 
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.search.AggregationReply;
 
 import java.time.Duration;
 import java.util.*;
@@ -317,8 +318,8 @@ public class AggregateArgs {
          * </pre>
          *
          * <p>
-         * Use {@link io.lettuce.core.api.RediSearchCommands#ftCursorread(Object, long)} and
-         * {@link io.lettuce.core.api.RediSearchCommands#ftCursordel(Object, long)} to iterate through and manage the cursor.
+         * Use {@link io.lettuce.core.api.sync.RediSearchCommands#ftCursorread(String, AggregationReply.Cursor, int)} and
+         * {@link io.lettuce.core.api.sync.RediSearchCommands#ftCursordel(String, AggregationReply.Cursor)} to iterate through and manage the cursor.
          * </p>
          *
          * @param withCursor the cursor specification with count and optional idle timeout
@@ -671,10 +672,10 @@ public class AggregateArgs {
      * {
      *     &#64;code
      *     // Group by category and count items
-     *     GroupBy<String, String> groupBy = GroupBy.of("category").reduce(Reducer.count().as("item_count"));
+     *     GroupBy groupBy = GroupBy.of("category").reduce(Reducer.count().as("item_count"));
      *
      *     // Group by multiple fields with multiple reducers
-     *     GroupBy<String, String> complexGroup = GroupBy.of("category", "brand").reduce(Reducer.count().as("count"))
+     *     GroupBy complexGroup = GroupBy.of("category", "brand").reduce(Reducer.count().as("count"))
      *             .reduce(Reducer.avg("@price").as("avg_price")).reduce(Reducer.sum("@quantity").as("total_quantity"));
      * }
      * </pre>
@@ -756,14 +757,14 @@ public class AggregateArgs {
      * {
      *     &#64;code
      *     // Simple sort by single field
-     *     SortBy<String> sortBy = SortBy.of("price", SortDirection.DESC);
+     *     SortBy sortBy = SortBy.of("price", SortDirection.DESC);
      *
      *     // Sort with MAX optimization for top-N queries
-     *     SortBy<String> topN = SortBy.of("score", SortDirection.DESC).max(100) // Only sort top 100 results
+     *     SortBy topN = SortBy.of("score", SortDirection.DESC).max(100) // Only sort top 100 results
      *             .withCount(); // Include accurate count
      *
      *     // Multiple sort criteria
-     *     SortBy<String> multiSort = SortBy.of(new SortProperty("category", SortDirection.ASC),
+     *     SortBy multiSort = SortBy.of(new SortProperty("category", SortDirection.ASC),
      *             new SortProperty("price", SortDirection.DESC));
      * }
      * </pre>
@@ -942,20 +943,20 @@ public class AggregateArgs {
      * {
      *     &#64;code
      *     // Count items in each group
-     *     Reducer<String> count = Reducer.count().as("item_count");
+     *     Reducer count = Reducer.count().as("item_count");
      *
      *     // Sum numeric values
-     *     Reducer<String> totalSales = Reducer.sum("@sales").as("total_sales");
+     *     Reducer totalSales = Reducer.sum("@sales").as("total_sales");
      *
      *     // Calculate average
-     *     Reducer<String> avgPrice = Reducer.avg("@price").as("average_price");
+     *     Reducer avgPrice = Reducer.avg("@price").as("average_price");
      *
      *     // Find extremes
-     *     Reducer<String> maxScore = Reducer.max("@score").as("highest_score");
-     *     Reducer<String> minPrice = Reducer.min("@price").as("lowest_price");
+     *     Reducer maxScore = Reducer.max("@score").as("highest_score");
+     *     Reducer minPrice = Reducer.min("@price").as("lowest_price");
      *
      *     // Count distinct values
-     *     Reducer<String> uniqueUsers = Reducer.countDistinct("@user_id").as("unique_users");
+     *     Reducer uniqueUsers = Reducer.countDistinct("@user_id").as("unique_users");
      * }
      * </pre>
      *

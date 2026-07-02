@@ -1260,6 +1260,6 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * @since 7.2
      */
     @Experimental
-    AsyncExecutions<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args);
+    AsyncExecutions<HybridReply<K, V>> ftHybrid(String index, HybridArgs args);
 
 }

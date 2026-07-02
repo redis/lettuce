@@ -126,7 +126,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param hybridArgs the hybrid query arguments containing SEARCH and/or VSIM clauses
      * @return the command
      */
-    public Command<K, V, HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> hybridArgs) {
+    public Command<K, V, HybridReply<K, V>> ftHybrid(String index, HybridArgs hybridArgs) {
         LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(hybridArgs, "HybridArgs must not be null");
 
