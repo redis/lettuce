@@ -278,10 +278,9 @@ public class RediSearchVectorIntegrationTests {
 
         // Perform aggregation: group by category and calculate average price
         AggregationReply<String, String> aggregationResult = redis.ftAggregate(indexName, "*",
-                AggregateArgs.<String, String> builder()
-                        .groupBy(AggregateArgs.GroupBy.<String> of("category")
-                                .reduce(AggregateArgs.Reducer.<String> count().as("count"))
-                                .reduce(AggregateArgs.Reducer.<String> avg("@price").as("avg_price")))
+                AggregateArgs.builder()
+                        .groupBy(AggregateArgs.GroupBy.of("category").reduce(AggregateArgs.Reducer.count().as("count"))
+                                .reduce(AggregateArgs.Reducer.avg("@price").as("avg_price")))
                         .sortBy(AggregateArgs.SortBy.of("avg_price", AggregateArgs.SortDirection.DESC)).build());
 
         // Verify aggregation results

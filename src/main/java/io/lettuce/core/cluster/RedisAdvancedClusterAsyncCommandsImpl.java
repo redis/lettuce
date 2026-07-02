@@ -775,7 +775,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K, V> args) {
+    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs args) {
         return routeKeyless(() -> super.ftAggregate(index, query, args),
                 (nodeId, conn) -> conn.ftAggregate(index, query, args).thenApply(reply -> {
                     if (reply != null) {
