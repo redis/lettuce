@@ -150,8 +150,7 @@ public class RediSearchVectorIntegrationTests {
         // Perform vector search using binary query vector
         ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 1.0f, 0.0f, 0.0f, 0.0f });
         String blobKey = "query_vec";
-        SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVector).build();
+        SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVector.array()).build();
 
         String queryString = "*=>[KNN 2 @embedding $query_vec]";
         SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
@@ -217,8 +216,7 @@ public class RediSearchVectorIntegrationTests {
         // Perform vector search with category filter
         ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 1.0f, 0.5f, 0.2f, 0.8f, 0.3f, 0.9f, 0.1f, 0.6f });
         String blobKey = "query_vec";
-        SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVector).build();
+        SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVector.array()).build();
 
         String queryString = "(@category:{electronics})=>[KNN 2 @embedding $query_vec]";
         SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
@@ -358,8 +356,7 @@ public class RediSearchVectorIntegrationTests {
             // Query with vector similar to vec1
             ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 0.9f, 0.1f, 0.0f });
             String blobKey = "query_vec";
-            SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                    .param(blobKey, queryVector).build();
+            SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVector.array()).build();
 
             String queryString = "*=>[KNN 3 @embedding $query_vec]";
             SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
@@ -464,8 +461,8 @@ public class RediSearchVectorIntegrationTests {
 
         // Use binary connection for search to handle binary vector data properly
         String blobKey = "BLOB";
-        SearchArgs<ByteBuffer, ByteBuffer> knnArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 2).build();
+        SearchArgs<ByteBuffer> knnArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array()).limit(0, 2)
+                .build();
 
         String queryString = "*=>[KNN 2 @doc_embedding $BLOB AS vector_score]";
 
@@ -557,8 +554,8 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
         String blobKey = "BLOB";
-        SearchArgs<ByteBuffer, ByteBuffer> filterArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 10).build();
+        SearchArgs<ByteBuffer> filterArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 10).build();
 
         String queryString = "(@genre:{action})=>[KNN 3 @movie_embedding $BLOB AS movie_distance]";
 
@@ -573,8 +570,8 @@ public class RediSearchVectorIntegrationTests {
         }
 
         // Test 2: KNN search with year range filter
-        SearchArgs<ByteBuffer, ByteBuffer> yearFilterArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 10).build();
+        SearchArgs<ByteBuffer> yearFilterArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 10).build();
 
         String yearQueryString = "(@year:[1990 2000])=>[KNN 2 @movie_embedding $BLOB AS movie_distance]";
         results = redisBinary.ftSearch(MOVIES_INDEX, yearQueryString, yearFilterArgs);
@@ -584,8 +581,8 @@ public class RediSearchVectorIntegrationTests {
         // Test 3: KNN search with runtime EF parameter
         String efKey = "EF";
         ByteBuffer efValue = ByteBuffer.wrap("150".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> efArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).param(efKey, efValue).limit(0, 10).build();
+        SearchArgs<ByteBuffer> efArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .param(efKey, efValue.array()).limit(0, 10).build();
 
         String efQueryString = "*=>[KNN 3 @movie_embedding $BLOB EF_RUNTIME $EF AS movie_distance]";
         results = redisBinary.ftSearch(MOVIES_INDEX, efQueryString, efArgs);
@@ -656,8 +653,8 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
         String blobKey = "BLOB";
-        SearchArgs<ByteBuffer, ByteBuffer> rangeArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 100).build();
+        SearchArgs<ByteBuffer> rangeArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 100).build();
 
         String queryString = "@description_vector:[VECTOR_RANGE 0.5 $BLOB]";
         SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(PRODUCTS_INDEX, queryString, rangeArgs);
@@ -671,8 +668,8 @@ public class RediSearchVectorIntegrationTests {
         }
 
         // Test 2: Vector range query with distance field and sorting
-        SearchArgs<ByteBuffer, ByteBuffer> sortedRangeArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 100).build();
+        SearchArgs<ByteBuffer> sortedRangeArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 100).build();
 
         String sortedQueryString = "@description_vector:[VECTOR_RANGE 1.0 $BLOB]=>{$YIELD_DISTANCE_AS: vector_distance}";
         results = redisBinary.ftSearch(PRODUCTS_INDEX, sortedQueryString, sortedRangeArgs);
@@ -680,8 +677,8 @@ public class RediSearchVectorIntegrationTests {
         assertThat(results.getCount()).isGreaterThanOrEqualTo(2);
 
         // Test 3: Combined filter - vector range + price filter
-        SearchArgs<ByteBuffer, ByteBuffer> combinedArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 100).build();
+        SearchArgs<ByteBuffer> combinedArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 100).build();
 
         String combinedQueryString = "(@price:[200 1000]) | @description_vector:[VECTOR_RANGE 0.8 $BLOB]";
         results = redisBinary.ftSearch(PRODUCTS_INDEX, combinedQueryString, combinedArgs);
@@ -732,8 +729,8 @@ public class RediSearchVectorIntegrationTests {
             ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
             String blobKey = "BLOB";
-            SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                    .param(blobKey, queryVectorBuffer).limit(0, 2).build();
+            SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                    .limit(0, 2).build();
 
             String queryString = "*=>[KNN 2 @embedding $BLOB AS distance]";
             SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);
@@ -787,8 +784,8 @@ public class RediSearchVectorIntegrationTests {
 
         // Test 1: KNN search with ADHOC_BF hybrid policy using binary codec
         String blobKey = "BLOB";
-        SearchArgs<ByteBuffer, ByteBuffer> adhocArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 3).build();
+        SearchArgs<ByteBuffer> adhocArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 3).build();
 
         String queryString = "*=>[KNN 3 @vector $BLOB]";
         SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("json-vector-idx", queryString, adhocArgs);
@@ -797,8 +794,8 @@ public class RediSearchVectorIntegrationTests {
         assertThat(results.getResults()).hasSize(3);
 
         // Test filtering with JSON vectors
-        SearchArgs<ByteBuffer, ByteBuffer> filterArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 10).build();
+        SearchArgs<ByteBuffer> filterArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 10).build();
 
         String filterQueryString = "(@category:{tech})=>[KNN 2 @vector $BLOB]";
         results = redisBinary.ftSearch("json-vector-idx", filterQueryString, filterArgs);
@@ -847,8 +844,8 @@ public class RediSearchVectorIntegrationTests {
 
         // Test 1: KNN search with ADHOC_BF hybrid policy using binary codec
         String blobKey = "BLOB";
-        SearchArgs<ByteBuffer, ByteBuffer> adhocArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 5).build();
+        SearchArgs<ByteBuffer> adhocArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 5).build();
 
         String queryString = "(@status:{active})=>[KNN 5 @content_vector $BLOB HYBRID_POLICY ADHOC_BF AS task_score]";
         SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("tasks-idx", queryString, adhocArgs);
@@ -858,8 +855,8 @@ public class RediSearchVectorIntegrationTests {
         // Test 2: KNN search with BATCHES hybrid policy and custom batch size
         String batchSizeKey = "BATCH_SIZE";
         ByteBuffer batchSizeValue = ByteBuffer.wrap("3".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> batchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).param(batchSizeKey, batchSizeValue).limit(0, 5).build();
+        SearchArgs<ByteBuffer> batchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .param(batchSizeKey, batchSizeValue.array()).limit(0, 5).build();
 
         String batchQueryString = "(@status:{active})=>[KNN 5 @content_vector $BLOB HYBRID_POLICY BATCHES BATCH_SIZE $BATCH_SIZE AS task_score]";
         results = redisBinary.ftSearch("tasks-idx", batchQueryString, batchArgs);
@@ -869,8 +866,8 @@ public class RediSearchVectorIntegrationTests {
         // Test 3: Vector search with custom EF_RUNTIME parameter
         String efKey = "EF";
         ByteBuffer efValue = ByteBuffer.wrap("50".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> efArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).param(efKey, efValue).limit(0, 3).build();
+        SearchArgs<ByteBuffer> efArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .param(efKey, efValue.array()).limit(0, 3).build();
 
         String efQueryString = "*=>[KNN 3 @content_vector $BLOB EF_RUNTIME $EF AS task_score]";
         results = redisBinary.ftSearch("tasks-idx", efQueryString, efArgs);
@@ -878,8 +875,8 @@ public class RediSearchVectorIntegrationTests {
         assertThat(results.getCount()).isEqualTo(3);
 
         // Test 4: Complex query with multiple filters and vector search
-        SearchArgs<ByteBuffer, ByteBuffer> complexArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 10).build();
+        SearchArgs<ByteBuffer> complexArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 10).build();
 
         String complexQueryString = "((@status:{active}) (@priority:[3 5]))=>[KNN 5 @content_vector $BLOB AS task_score]";
         results = redisBinary.ftSearch("tasks-idx", complexQueryString, complexArgs);
@@ -896,8 +893,8 @@ public class RediSearchVectorIntegrationTests {
         }
 
         // Test 5: Vector search with timeout
-        SearchArgs<ByteBuffer, ByteBuffer> timeoutArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).timeout(Duration.ofSeconds(5)).limit(0, 5).build();
+        SearchArgs<ByteBuffer> timeoutArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .timeout(Duration.ofSeconds(5)).limit(0, 5).build();
 
         String timeoutQueryString = "*=>[KNN 5 @content_vector $BLOB AS task_score]";
         results = redisBinary.ftSearch("tasks-idx", timeoutQueryString, timeoutArgs);
@@ -960,8 +957,8 @@ public class RediSearchVectorIntegrationTests {
         queryBuffer.flip();
 
         String blobKey = "BLOB";
-        SearchArgs<ByteBuffer, ByteBuffer> precisionArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryBuffer).limit(0, 2).build();
+        SearchArgs<ByteBuffer> precisionArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryBuffer.array()).limit(0, 2)
+                .build();
 
         String queryString = "*=>[KNN 2 @embedding_f64 $BLOB AS distance]";
         SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("precision-idx", queryString, precisionArgs);
@@ -1008,8 +1005,8 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
         String blobKey = "BLOB";
-        SearchArgs<ByteBuffer, ByteBuffer> validArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 1).build();
+        SearchArgs<ByteBuffer> validArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 1).build();
 
         String queryString = "*=>[KNN 1 @test_vector $BLOB]";
         SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("error-test-idx", queryString, validArgs);
@@ -1017,8 +1014,8 @@ public class RediSearchVectorIntegrationTests {
         assertThat(results.getCount()).isEqualTo(1);
 
         // Test 2: Search with invalid field should throw exception
-        SearchArgs<ByteBuffer, ByteBuffer> noResultsArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 10).build();
+        SearchArgs<ByteBuffer> noResultsArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 10).build();
 
         String noResultsQueryString = "(@nonexistent_field:value)=>[KNN 5 @test_vector $BLOB]";
 
@@ -1116,12 +1113,12 @@ public class RediSearchVectorIntegrationTests {
             redis.ftCreate(indexName, createArgs, Arrays.asList(textField, vectorField));
 
             // Search with specific field returns - equivalent to Python's return_field with decode_field=False
-            SearchArgs<String, Object> searchArgs = SearchArgs.<String, Object> builder().returnField("vector_emb") // This
-                                                                                                                    // should
-                                                                                                                    // return
-                                                                                                                    // raw
-                                                                                                                    // binary
-                                                                                                                    // data
+            SearchArgs<String> searchArgs = SearchArgs.<String> builder().returnField("vector_emb") // This
+                                                                                                    // should
+                                                                                                    // return
+                                                                                                    // raw
+                                                                                                    // binary
+                                                                                                    // data
                     .returnField("first_name") // This should return decoded text
                     .build();
 
@@ -1232,8 +1229,8 @@ public class RediSearchVectorIntegrationTests {
         // Test KNN search
         ByteBuffer queryBuffer = ByteBuffer.wrap(queryVector);
         String blobKey = "BLOB";
-        SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryBuffer).limit(0, 2).build();
+        SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryBuffer.array()).limit(0, 2)
+                .build();
 
         String queryString = "*=>[KNN 2 @" + fieldName + " $BLOB AS distance]";
         SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);

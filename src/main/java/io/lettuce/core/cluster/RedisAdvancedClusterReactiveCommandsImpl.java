@@ -608,14 +608,14 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> args) {
+    public Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args) {
         return routeKeyless(() -> super.ftSearch(index, query, args), conn -> conn.ftSearch(index, query, args),
                 CommandType.FT_SEARCH);
     }
 
     @Override
     public Mono<SearchReply<K, V>> ftSearch(String index, String query) {
-        return ftSearch(index, query, SearchArgs.<K, V> builder().build());
+        return ftSearch(index, query, SearchArgs.<K> builder().build());
     }
 
     @Override

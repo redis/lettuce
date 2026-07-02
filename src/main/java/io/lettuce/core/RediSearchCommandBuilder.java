@@ -99,7 +99,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param searchArgs the search arguments
      * @return the result of the search command
      */
-    public Command<K, V, SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K, V> searchArgs) {
+    public Command<K, V, SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> searchArgs) {
         LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(query, "Query must not be null");
 

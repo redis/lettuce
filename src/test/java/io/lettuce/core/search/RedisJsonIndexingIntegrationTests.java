@@ -217,7 +217,7 @@ public class RedisJsonIndexingIntegrationTests {
         redis.jsonSet("item:3", JsonPath.ROOT_PATH, item3);
 
         // Test full text search for light colored headphones
-        SearchArgs<String, String> returnArgs = SearchArgs.<String, String> builder().returnField("$.colors").build();
+        SearchArgs<String> returnArgs = SearchArgs.<String> builder().returnField("$.colors").build();
         SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX_3,
                 "@colors:(white|light) (@name|description:(headphones))", returnArgs);
         assertThat(results.getCount()).isEqualTo(2);
@@ -297,8 +297,7 @@ public class RedisJsonIndexingIntegrationTests {
         redis.jsonSet("item:2", JsonPath.ROOT_PATH, item2);
 
         // Test 1: Return specific attributes (name and price)
-        SearchArgs<String, String> returnArgs = SearchArgs.<String, String> builder().returnField("name").returnField("price")
-                .build();
+        SearchArgs<String> returnArgs = SearchArgs.<String> builder().returnField("name").returnField("price").build();
         SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX, "@description:(headphones)", returnArgs);
         assertThat(results.getCount()).isEqualTo(2);
         for (SearchReply.SearchResult<String, String> result : results.getResults()) {
@@ -308,7 +307,7 @@ public class RedisJsonIndexingIntegrationTests {
         }
 
         // Test 2: Project with JSONPath expression (including non-indexed field)
-        SearchArgs<String, String> jsonPathArgs = SearchArgs.<String, String> builder().returnField("name").returnField("price")
+        SearchArgs<String> jsonPathArgs = SearchArgs.<String> builder().returnField("name").returnField("price")
                 .returnField("$.stock") // JSONPath without alias
                 .build();
         results = redis.ftSearch(ITEM_INDEX, "@description:(headphones)", jsonPathArgs);
