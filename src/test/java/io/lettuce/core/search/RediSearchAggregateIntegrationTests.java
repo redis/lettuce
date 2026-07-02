@@ -161,8 +161,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("doc:3", doc3)).isEqualTo("OK");
 
         // Perform aggregation with arguments - LOAD fields
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().verbatim().load("title").load("category")
-                .build();
+        AggregateArgs args = AggregateArgs.builder().verbatim().load("title").load("category").build();
 
         AggregationReply<String, String> result = redis.ftAggregate("args-test-idx", "*", args);
 
@@ -208,8 +207,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("doc:3", doc3)).isEqualTo("OK");
 
         // Perform aggregation with parameters - requires DIALECT 2
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().load("title").load("category")
-                .param("cat", "electronics").build();
+        AggregateArgs args = AggregateArgs.builder().load("title").load("category").param("cat", "electronics").build();
 
         AggregationReply<String, String> result = redis.ftAggregate("params-test-idx", "@category:$cat", args);
 
@@ -249,7 +247,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("doc:2", doc2)).isEqualTo("OK");
 
         // Perform aggregation with LOAD * (load all fields)
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll().build();
+        AggregateArgs args = AggregateArgs.builder().loadAll().build();
 
         AggregationReply<String, String> result = redis.ftAggregate("loadall-test-idx", "*", args);
 
@@ -343,7 +341,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("product:4", product4)).isEqualTo("OK");
 
         // Test basic aggregation with all fields loaded
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll().build();
+        AggregateArgs args = AggregateArgs.builder().loadAll().build();
 
         AggregationReply<String, String> result = redis.ftAggregate("products-idx", "*", args);
 
@@ -362,11 +360,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(categories).containsExactlyInAnyOrder("smartphones", "laptops");
 
         // 1. Group by category with statistics
-        AggregateArgs<String, String> statsArgs = AggregateArgs.<String, String> builder()
-                .groupBy(GroupBy.<String> of("category").reduce(Reducer.<String> count().as("count"))
-                        .reduce(Reducer.<String> avg("@price").as("avg_price"))
-                        .reduce(Reducer.<String> min("@price").as("min_price"))
-                        .reduce(Reducer.<String> max("@price").as("max_price")))
+        AggregateArgs statsArgs = AggregateArgs.builder().groupBy(GroupBy.<String> of("category")
+                .reduce(Reducer.<String> count().as("count")).reduce(Reducer.<String> avg("@price").as("avg_price"))
+                .reduce(Reducer.<String> min("@price").as("min_price")).reduce(Reducer.<String> max("@price").as("max_price")))
                 .build();
 
         AggregationReply<String, String> statsResult = redis.ftAggregate("products-idx", "*", statsArgs);
@@ -392,9 +388,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // 2. Apply mathematical expressions
-        AggregateArgs<String, String> mathArgs = AggregateArgs.<String, String> builder().load("title").load("price")
-                .load("stock").load("rating").apply("@price * @stock", "inventory_value")
-                .apply("ceil(@rating)", "rating_rounded").build();
+        AggregateArgs mathArgs = AggregateArgs.builder().load("title").load("price").load("stock").load("rating")
+                .apply("@price * @stock", "inventory_value").apply("ceil(@rating)", "rating_rounded").build();
 
         AggregationReply<String, String> mathResult = redis.ftAggregate("products-idx", "*", mathArgs);
 
@@ -422,8 +417,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // 3. Filter and sort results
-        AggregateArgs<String, String> filterArgs = AggregateArgs.<String, String> builder().load("title").load("price")
-                .load("rating").filter("@price > 1000").sortBy("rating", SortDirection.DESC).build();
+        AggregateArgs filterArgs = AggregateArgs.builder().load("title").load("price").load("rating").filter("@price > 1000")
+                .sortBy("rating", SortDirection.DESC).build();
 
         AggregationReply<String, String> filterResult = redis.ftAggregate("products-idx", "*", filterArgs);
 
@@ -449,7 +444,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // 4. Complex pipeline with multiple operations
-        AggregateArgs<String, String> complexArgs = AggregateArgs.<String, String> builder()
+        AggregateArgs complexArgs = AggregateArgs.builder()
                 .groupBy(GroupBy.<String> of("brand").reduce(Reducer.<String> count().as("product_count"))
                         .reduce(Reducer.<String> avg("@rating").as("avg_rating"))
                         .reduce(Reducer.<String> sum("@stock").as("total_stock")))
@@ -482,8 +477,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(complexReply.getResults().size()).isLessThanOrEqualTo(3);
 
         // 5. String operations and functions
-        AggregateArgs<String, String> stringArgs = AggregateArgs.<String, String> builder().load("title").load("brand")
-                .apply("upper(@brand)", "brand_upper").apply("substr(@title, 0, 10)", "title_short").build();
+        AggregateArgs stringArgs = AggregateArgs.builder().load("title").load("brand").apply("upper(@brand)", "brand_upper")
+                .apply("substr(@title, 0, 10)", "title_short").build();
 
         AggregationReply<String, String> stringResult = redis.ftAggregate("products-idx", "*", stringArgs);
 
@@ -554,7 +549,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         redis.hmset("sales:4", salesData);
 
         // Test nested grouping by department and category
-        AggregateArgs<String, String> nestedArgs = AggregateArgs.<String, String> builder()
+        AggregateArgs nestedArgs = AggregateArgs.builder()
                 .groupBy(GroupBy.<String> of("department", "category").reduce(Reducer.<String> count().as("product_count"))
                         .reduce(Reducer.<String> sum("@sales").as("total_sales"))
                         .reduce(Reducer.<String> sum("@profit").as("total_profit")))
@@ -626,9 +621,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         redis.hmset("task:4", taskData);
 
         // Test complex filtering with multiple conditions
-        AggregateArgs<String, String> filterArgs = AggregateArgs.<String, String> builder().loadAll()
-                .filter("@score > 80 && @age < 12").apply("@score * 0.1", "normalized_score")
-                .sortBy("score", SortDirection.DESC).build();
+        AggregateArgs filterArgs = AggregateArgs.builder().loadAll().filter("@score > 80 && @age < 12")
+                .apply("@score * 0.1", "normalized_score").sortBy("score", SortDirection.DESC).build();
 
         AggregationReply<String, String> filterResult = redis.ftAggregate("tasks-idx", "*", filterArgs);
 
@@ -680,7 +674,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Test advanced statistical functions
-        AggregateArgs<String, String> statsArgs = AggregateArgs.<String, String> builder()
+        AggregateArgs statsArgs = AggregateArgs.builder()
                 .groupBy(GroupBy.<String> of("region").reduce(Reducer.<String> count().as("count"))
                         .reduce(Reducer.<String> avg("@temperature").as("avg_temp"))
                         .reduce(Reducer.<String> min("@temperature").as("min_temp"))
@@ -729,8 +723,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("doc:1", doc)).isEqualTo("OK");
 
         // Test with timeout parameter
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().load("title")
-                .timeout(Duration.ofSeconds(5)).build();
+        AggregateArgs args = AggregateArgs.builder().load("title").timeout(Duration.ofSeconds(5)).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("timeout-test-idx", "*", args);
 
@@ -783,7 +776,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("product:4", product4)).isEqualTo("OK");
 
         // Perform aggregation with GROUPBY and COUNT reducer
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
+        AggregateArgs args = AggregateArgs.builder()
                 .groupBy(GroupBy.<String> of("category").reduce(Reducer.<String> count().as("count"))).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("groupby-agg-test-idx", "*", args);
@@ -843,7 +836,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("item:4", item4)).isEqualTo("OK");
 
         // Perform aggregation with multiple reducers
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
+        AggregateArgs args = AggregateArgs.builder()
                 .groupBy(GroupBy.<String> of("category").reduce(Reducer.<String> count().as("count"))
                         .reduce(Reducer.<String> avg("@price").as("avg_price"))
                         .reduce(Reducer.<String> sum("@stock").as("total_stock")))
@@ -896,8 +889,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("prod:3", prod3)).isEqualTo("OK");
 
         // Perform aggregation with SORTBY price DESC
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
-                .sortBy("price", SortDirection.DESC).build();
+        AggregateArgs args = AggregateArgs.builder().loadAll().sortBy("price", SortDirection.DESC).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("sortby-test-idx", "*", args);
 
@@ -938,8 +930,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("order:2", order2)).isEqualTo("OK");
 
         // Perform aggregation with APPLY to calculate total value
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().load("title").load("price")
-                .load("quantity").apply("@price * @quantity", "total_value").build();
+        AggregateArgs args = AggregateArgs.builder().load("title").load("price").load("quantity")
+                .apply("@price * @quantity", "total_value").build();
 
         AggregationReply<String, String> result = redis.ftAggregate("apply-agg-test-idx", "*", args);
 
@@ -977,8 +969,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Perform aggregation with LIMIT
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
-                .sortBy("score", SortDirection.DESC).limit(2, 3) // Skip 2, take 3
+        AggregateArgs args = AggregateArgs.builder().loadAll().sortBy("score", SortDirection.DESC).limit(2, 3) // Skip 2, take 3
                 .build();
 
         AggregationReply<String, String> result = redis.ftAggregate("limit-test-idx", "*", args);
@@ -1030,8 +1021,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("item:3", item3)).isEqualTo("OK");
 
         // Perform aggregation with FILTER for high-rated items
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll().filter("@rating >= 4.0")
-                .build();
+        AggregateArgs args = AggregateArgs.builder().loadAll().filter("@rating >= 4.0").build();
 
         AggregationReply<String, String> result = redis.ftAggregate("filter-test-idx", "*", args);
 
@@ -1075,8 +1065,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("doc:3", doc3)).isEqualTo("OK");
 
         // Perform aggregation with cursor
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
-                .withCursor(AggregateArgs.WithCursor.of(2L)).build();
+        AggregateArgs args = AggregateArgs.builder().loadAll().withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("cursor-basic-test-idx", "*", args);
 
@@ -1118,8 +1107,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Perform aggregation with cursor and custom count
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
-                .withCursor(AggregateArgs.WithCursor.of(3L)).build();
+        AggregateArgs args = AggregateArgs.builder().loadAll().withCursor(AggregateArgs.WithCursor.of(3L)).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("cursor-count-test-idx", "*", args);
 
@@ -1171,7 +1159,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Perform aggregation with cursor and custom max idle timeout
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
+        AggregateArgs args = AggregateArgs.builder().loadAll()
                 .withCursor(AggregateArgs.WithCursor.of(2L, Duration.ofSeconds(10))).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("cursor-maxidle-test-idx", "*", args);
@@ -1209,8 +1197,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Perform aggregation with cursor
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
-                .withCursor(AggregateArgs.WithCursor.of(2L)).build();
+        AggregateArgs args = AggregateArgs.builder().loadAll().withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("cursor-delete-test-idx", "*", args);
 
@@ -1244,8 +1231,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Perform aggregation with cursor and sorting
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
-                .sortBy("id", AggregateArgs.SortDirection.ASC).withCursor(AggregateArgs.WithCursor.of(4L)).build();
+        AggregateArgs args = AggregateArgs.builder().loadAll().sortBy("id", AggregateArgs.SortDirection.ASC)
+                .withCursor(AggregateArgs.WithCursor.of(4L)).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("cursor-pagination-test-idx", "*", args);
 
@@ -1329,10 +1316,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("product:5", product5)).isEqualTo("OK");
 
         // Perform complex aggregation with groupby, reducers, and cursor
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
-                .groupBy(
-                        AggregateArgs.GroupBy.<String> of("category").reduce(AggregateArgs.Reducer.<String> count().as("count"))
-                                .reduce(AggregateArgs.Reducer.<String> avg("@price").as("avg_price")))
+        AggregateArgs args = AggregateArgs.builder()
+                .groupBy(AggregateArgs.GroupBy.of("category").reduce(AggregateArgs.Reducer.count().as("count"))
+                        .reduce(AggregateArgs.Reducer.avg("@price").as("avg_price")))
                 .withCursor(AggregateArgs.WithCursor.of(1L)).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("cursor-complex-test-idx", "*", args);
@@ -1389,8 +1375,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Don't add any documents
 
         // Perform aggregation with cursor on empty index
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
-                .withCursor(AggregateArgs.WithCursor.of(5L)).build();
+        AggregateArgs args = AggregateArgs.builder().loadAll().withCursor(AggregateArgs.WithCursor.of(5L)).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("cursor-empty-test-idx", "*", args);
 
@@ -1458,7 +1443,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("emp:5", emp5)).isEqualTo("OK");
 
         // Test 1: Group by department with comprehensive statistics
-        AggregateArgs<String, String> deptStatsArgs = AggregateArgs.<String, String> builder()
+        AggregateArgs deptStatsArgs = AggregateArgs.builder()
                 .groupBy(GroupBy.<String> of("department").reduce(Reducer.<String> count().as("employee_count"))
                         .reduce(Reducer.<String> sum("@salary").as("total_salary"))
                         .reduce(Reducer.<String> avg("@salary").as("avg_salary"))
@@ -1494,7 +1479,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Test 2: Multi-level grouping by department and role
-        AggregateArgs<String, String> multiGroupArgs = AggregateArgs.<String, String> builder()
+        AggregateArgs multiGroupArgs = AggregateArgs.builder()
                 .groupBy(GroupBy.<String> of("department", "role").reduce(Reducer.<String> count().as("count"))
                         .reduce(Reducer.<String> avg("@salary").as("avg_salary"))
                         .reduce(Reducer.<String> avg("@performance_score").as("avg_performance")))
@@ -1549,7 +1534,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Test 1: Basic sorting (should return results in correct order)
-        AggregateArgs<String, String> basicSortArgs = AggregateArgs.<String, String> builder().loadAll()
+        AggregateArgs basicSortArgs = AggregateArgs.builder().loadAll()
                 .sortBy(AggregateArgs.SortBy.of("price", SortDirection.ASC)).limit(0, 5) // Only get top
                                                                                          // 5 results
                 .build();
@@ -1582,7 +1567,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Test 2: Sorting with MAX optimization
-        AggregateArgs<String, String> maxSortArgs = AggregateArgs.<String, String> builder().loadAll()
+        AggregateArgs maxSortArgs = AggregateArgs.builder().loadAll()
                 .sortBy(AggregateArgs.SortBy.of("rating", SortDirection.DESC).max(10)).build();
 
         AggregationReply<String, String> maxSortResult = redis.ftAggregate("sortby-max-test-idx", "*", maxSortArgs);
@@ -1637,7 +1622,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Test 1: Group by region with comprehensive statistical reducers
-        AggregateArgs<String, String> regionStatsArgs = AggregateArgs.<String, String> builder()
+        AggregateArgs regionStatsArgs = AggregateArgs.builder()
                 .groupBy(GroupBy.<String> of("region").reduce(Reducer.<String> count().as("total_records"))
                         .reduce(Reducer.<String> sum("@revenue").as("total_revenue"))
                         .reduce(Reducer.<String> avg("@revenue").as("avg_revenue"))
@@ -1679,7 +1664,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Test 2: Multi-dimensional grouping by region and product_type
-        AggregateArgs<String, String> multiDimArgs = AggregateArgs.<String, String> builder()
+        AggregateArgs multiDimArgs = AggregateArgs.builder()
                 .groupBy(GroupBy.<String> of("region", "product_type").reduce(Reducer.<String> count().as("record_count"))
                         .reduce(Reducer.<String> avg("@revenue").as("avg_revenue"))
                         .reduce(Reducer.<String> avg("@units_sold").as("avg_units"))
@@ -1741,9 +1726,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Test: Sort by multiple fields (score DESC, then assists DESC)
-        AggregateArgs<String, String> multiSortArgs = AggregateArgs.<String, String> builder().loadAll()
-                .sortBy(AggregateArgs.SortBy.of(new AggregateArgs.SortProperty<>("score", SortDirection.DESC),
-                        new AggregateArgs.SortProperty<>("assists", SortDirection.DESC)))
+        AggregateArgs multiSortArgs = AggregateArgs.builder().loadAll()
+                .sortBy(AggregateArgs.SortBy.of(new AggregateArgs.SortProperty("score", SortDirection.DESC),
+                        new AggregateArgs.SortProperty("assists", SortDirection.DESC)))
                 .limit(0, 8) // Get top 8 players
                 .build();
 
@@ -1816,9 +1801,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Test that operations are applied in user-specified order
         // This specific order: APPLY -> FILTER -> GROUPBY -> LIMIT -> SORTBY
         // should work correctly and produce meaningful results
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().load("title").load("price")
-                .load("quantity").load("category").apply("@price * @quantity", "total_value") // Calculate
-                                                                                              // total
+        AggregateArgs args = AggregateArgs.builder().load("title").load("price").load("quantity").load("category")
+                .apply("@price * @quantity", "total_value") // Calculate
+                                                            // total
                 // value first
                 .filter("@total_value > 550") // Filter by total value (should keep only products 1 and
                                               // 2, both electronics)
@@ -1889,8 +1874,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // 5. Sort by different criteria
         // 6. Apply another transformation
         // 7. Final filtering and limiting
-        AggregateArgs<String, String> complexArgs = AggregateArgs.<String, String> builder().load("category").load("brand")
-                .load("price").load("rating").load("sales_count")
+        AggregateArgs complexArgs = AggregateArgs.builder().load("category").load("brand").load("price").load("rating")
+                .load("sales_count")
                 // First aggregation: group by category
                 .groupBy(GroupBy.<String> of("category").reduce(Reducer.<String> count().as("product_count"))
                         .reduce(Reducer.<String> avg("@price").as("avg_price"))
@@ -1964,8 +1949,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Pipeline with repeated operations demonstrating re-entrant nature:
         // Multiple APPLY operations, multiple FILTER operations, multiple GROUPBY
         // operations
-        AggregateArgs<String, String> repeatedOpsArgs = AggregateArgs.<String, String> builder().load("department")
-                .load("level").load("salary").load("experience").load("performance_score")
+        AggregateArgs repeatedOpsArgs = AggregateArgs.builder().load("department").load("level").load("salary")
+                .load("experience").load("performance_score")
                 // First APPLY: Calculate salary per experience year
                 .apply("@salary / @experience", "salary_per_year")
                 // First FILTER: Filter experienced employees
@@ -2055,8 +2040,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Complex interleaved pipeline demonstrating the Redis docs example:
-        AggregateArgs<String, String> interleavedArgs = AggregateArgs.<String, String> builder().load("customer_segment")
-                .load("product_category").load("region").load("amount").load("quantity").load("discount")
+        AggregateArgs interleavedArgs = AggregateArgs.builder().load("customer_segment").load("product_category").load("region")
+                .load("amount").load("quantity").load("discount")
                 // Calculate net amount after discount
                 .apply("@amount * (100 - @discount) / 100", "net_amount")
                 // First grouping: Group by customer_segment (property X)
@@ -2144,8 +2129,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Pipeline with multiple filters and sorts at different stages:
-        AggregateArgs<String, String> multiFilterSortArgs = AggregateArgs.<String, String> builder().load("category")
-                .load("brand").load("price").load("stock").load("rating").load("reviews_count")
+        AggregateArgs multiFilterSortArgs = AggregateArgs.builder().load("category").load("brand").load("price").load("stock")
+                .load("rating").load("reviews_count")
                 // First filter: Only products with decent ratings
                 .filter("@rating >= 4.0")
                 // Calculate popularity score
@@ -2253,9 +2238,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Advanced dynamic pipeline with conditional logic and multiple re-entrant
         // operations:
-        AggregateArgs<String, String> advancedArgs = AggregateArgs.<String, String> builder().load("customer_type")
-                .load("product_line").load("sales_channel").load("season").load("order_value").load("cost")
-                .load("shipping_cost").load("customer_satisfaction")
+        AggregateArgs advancedArgs = AggregateArgs.builder().load("customer_type").load("product_line").load("sales_channel")
+                .load("season").load("order_value").load("cost").load("shipping_cost").load("customer_satisfaction")
 
                 // Stage 1: Calculate basic business metrics
                 .apply("@order_value - @cost - @shipping_cost", "profit").apply("@profit / @order_value * 100", "profit_margin")
@@ -2372,11 +2356,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.jsonSet("doc:2", JsonPath.ROOT_PATH, doc2)).isEqualTo("OK");
 
         // Perform aggregation with arguments - LOAD fields
-        AggregateArgs.GroupBy<String> groupBy = AggregateArgs.GroupBy.<String> of("country", "city", "office", "code")
-                .reduce(AggregateArgs.Reducer.<String> count().as("__count"));
+        AggregateArgs.GroupBy groupBy = AggregateArgs.GroupBy.of("country", "city", "office", "code")
+                .reduce(AggregateArgs.Reducer.count().as("__count"));
 
-        AggregateArgs<String, String> aggargs = AggregateArgs.<String, String> builder().loadAll().groupBy(groupBy)
-                .dialect(QueryDialects.DIALECT2).build();
+        AggregateArgs aggargs = AggregateArgs.builder().loadAll().groupBy(groupBy).dialect(QueryDialects.DIALECT2).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("args-test-idx", "*", aggargs);
 
@@ -2423,11 +2406,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.jsonSet("doc:1", JsonPath.ROOT_PATH, doc1)).isEqualTo("OK");
 
         // Perform aggregation with arguments - LOAD fields
-        AggregateArgs.GroupBy<String> groupBy = AggregateArgs.GroupBy.<String> of("country", "city", "office", "code")
-                .reduce(AggregateArgs.Reducer.<String> count().as("__count"));
+        AggregateArgs.GroupBy groupBy = AggregateArgs.GroupBy.of("country", "city", "office", "code")
+                .reduce(AggregateArgs.Reducer.count().as("__count"));
 
-        AggregateArgs<String, String> aggArgs = AggregateArgs.<String, String> builder().loadAll().groupBy(groupBy)
-                .dialect(QueryDialects.DIALECT2).build();
+        AggregateArgs aggArgs = AggregateArgs.builder().loadAll().groupBy(groupBy).dialect(QueryDialects.DIALECT2).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("args-test-idx", "*", aggArgs);
 

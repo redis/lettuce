@@ -224,8 +224,9 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     void aggregateGroupByMustResolveAgainstSchemaThroughCodec(String indexName) {
         // Manual workaround: GroupBy.build emits "@" + property as a standalone command argument (not embedded in an
         // expression with delimiters), so we pre-encode the property to "tenant1:category" without escaping the ':'.
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().groupBy(AggregateArgs.GroupBy
-                .<String> of(encodedFieldRef("category")).reduce(AggregateArgs.Reducer.<String> count().as("cnt"))).build();
+        AggregateArgs args = AggregateArgs.builder()
+                .groupBy(AggregateArgs.GroupBy.of(encodedFieldRef("category")).reduce(AggregateArgs.Reducer.count().as("cnt")))
+                .build();
 
         AggregationReply<String, String> result = redis.ftAggregate(indexName, "*", args);
 
@@ -398,7 +399,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void aggregateLoadFieldMustNotBeMangledByCodec(String indexName) {
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().load("title").build();
+        AggregateArgs args = AggregateArgs.builder().load(encodedFieldRef("title")).build();
 
         AggregationReply<String, String> result = redis.ftAggregate(indexName, "*", args);
 
@@ -446,7 +447,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void aggregateParamNameMustNotBeMangledByCodec(String indexName) {
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().param("term", "search").build();
+        AggregateArgs args = AggregateArgs.builder().param("term", "search").build();
 
         AggregationReply<String, String> result = redis.ftAggregate(indexName, "$term", args);
 
