@@ -359,9 +359,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(categories).containsExactlyInAnyOrder("smartphones", "laptops");
 
         // 1. Group by category with statistics
-        AggregateArgs statsArgs = AggregateArgs.builder().groupBy(GroupBy.<String> of("category")
-                .reduce(Reducer.<String> count().as("count")).reduce(Reducer.<String> avg("@price").as("avg_price"))
-                .reduce(Reducer.<String> min("@price").as("min_price")).reduce(Reducer.<String> max("@price").as("max_price")))
+        AggregateArgs statsArgs = AggregateArgs.builder()
+                .groupBy(
+                        GroupBy.of("category").reduce(Reducer.count().as("count")).reduce(Reducer.avg("@price").as("avg_price"))
+                                .reduce(Reducer.min("@price").as("min_price")).reduce(Reducer.max("@price").as("max_price")))
                 .build();
 
         AggregationReply<String, String> statsResult = redis.ftAggregate("products-idx", "*", statsArgs);
@@ -444,9 +445,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // 4. Complex pipeline with multiple operations
         AggregateArgs complexArgs = AggregateArgs.builder()
-                .groupBy(GroupBy.<String> of("brand").reduce(Reducer.<String> count().as("product_count"))
-                        .reduce(Reducer.<String> avg("@rating").as("avg_rating"))
-                        .reduce(Reducer.<String> sum("@stock").as("total_stock")))
+                .groupBy(GroupBy.of("brand").reduce(Reducer.count().as("product_count"))
+                        .reduce(Reducer.avg("@rating").as("avg_rating")).reduce(Reducer.sum("@stock").as("total_stock")))
                 .sortBy("avg_rating", SortDirection.DESC).limit(0, 3) // Skip 0, take 3
                 .build();
 
@@ -549,9 +549,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Test nested grouping by department and category
         AggregateArgs nestedArgs = AggregateArgs.builder()
-                .groupBy(GroupBy.<String> of("department", "category").reduce(Reducer.<String> count().as("product_count"))
-                        .reduce(Reducer.<String> sum("@sales").as("total_sales"))
-                        .reduce(Reducer.<String> sum("@profit").as("total_profit")))
+                .groupBy(GroupBy.of("department", "category").reduce(Reducer.count().as("product_count"))
+                        .reduce(Reducer.sum("@sales").as("total_sales")).reduce(Reducer.sum("@profit").as("total_profit")))
                 .sortBy("total_sales", SortDirection.DESC).build();
 
         AggregationReply<String, String> nestedResult = redis.ftAggregate("sales-idx", "*", nestedArgs);
@@ -674,10 +673,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Test advanced statistical functions
         AggregateArgs statsArgs = AggregateArgs.builder()
-                .groupBy(GroupBy.<String> of("region").reduce(Reducer.<String> count().as("count"))
-                        .reduce(Reducer.<String> avg("@temperature").as("avg_temp"))
-                        .reduce(Reducer.<String> min("@temperature").as("min_temp"))
-                        .reduce(Reducer.<String> max("@temperature").as("max_temp")))
+                .groupBy(GroupBy.of("region").reduce(Reducer.count().as("count"))
+                        .reduce(Reducer.avg("@temperature").as("avg_temp")).reduce(Reducer.min("@temperature").as("min_temp"))
+                        .reduce(Reducer.max("@temperature").as("max_temp")))
                 .build();
 
         AggregationReply<String, String> statsResult = redis.ftAggregate("weather-idx", "*", statsArgs);
@@ -775,8 +773,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("product:4", product4)).isEqualTo("OK");
 
         // Perform aggregation with GROUPBY and COUNT reducer
-        AggregateArgs args = AggregateArgs.builder()
-                .groupBy(GroupBy.<String> of("category").reduce(Reducer.<String> count().as("count"))).build();
+        AggregateArgs args = AggregateArgs.builder().groupBy(GroupBy.of("category").reduce(Reducer.count().as("count")))
+                .build();
 
         AggregationReply<String, String> result = redis.ftAggregate("groupby-agg-test-idx", "*", args);
 
@@ -835,11 +833,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("item:4", item4)).isEqualTo("OK");
 
         // Perform aggregation with multiple reducers
-        AggregateArgs args = AggregateArgs.builder()
-                .groupBy(GroupBy.<String> of("category").reduce(Reducer.<String> count().as("count"))
-                        .reduce(Reducer.<String> avg("@price").as("avg_price"))
-                        .reduce(Reducer.<String> sum("@stock").as("total_stock")))
-                .build();
+        AggregateArgs args = AggregateArgs.builder().groupBy(GroupBy.of("category").reduce(Reducer.count().as("count"))
+                .reduce(Reducer.avg("@price").as("avg_price")).reduce(Reducer.sum("@stock").as("total_stock"))).build();
 
         AggregationReply<String, String> result = redis.ftAggregate("multi-reducer-test-idx", "*", args);
 
@@ -1443,13 +1438,11 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Test 1: Group by department with comprehensive statistics
         AggregateArgs deptStatsArgs = AggregateArgs.builder()
-                .groupBy(GroupBy.<String> of("department").reduce(Reducer.<String> count().as("employee_count"))
-                        .reduce(Reducer.<String> sum("@salary").as("total_salary"))
-                        .reduce(Reducer.<String> avg("@salary").as("avg_salary"))
-                        .reduce(Reducer.<String> min("@salary").as("min_salary"))
-                        .reduce(Reducer.<String> max("@salary").as("max_salary"))
-                        .reduce(Reducer.<String> avg("@performance_score").as("avg_performance"))
-                        .reduce(Reducer.<String> countDistinct("@role").as("role_diversity")))
+                .groupBy(GroupBy.of("department").reduce(Reducer.count().as("employee_count"))
+                        .reduce(Reducer.sum("@salary").as("total_salary")).reduce(Reducer.avg("@salary").as("avg_salary"))
+                        .reduce(Reducer.min("@salary").as("min_salary")).reduce(Reducer.max("@salary").as("max_salary"))
+                        .reduce(Reducer.avg("@performance_score").as("avg_performance"))
+                        .reduce(Reducer.countDistinct("@role").as("role_diversity")))
                 .sortBy("avg_salary", SortDirection.DESC).build();
 
         AggregationReply<String, String> deptStatsResult = redis.ftAggregate("groupby-advanced-test-idx", "*", deptStatsArgs);
@@ -1479,9 +1472,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Test 2: Multi-level grouping by department and role
         AggregateArgs multiGroupArgs = AggregateArgs.builder()
-                .groupBy(GroupBy.<String> of("department", "role").reduce(Reducer.<String> count().as("count"))
-                        .reduce(Reducer.<String> avg("@salary").as("avg_salary"))
-                        .reduce(Reducer.<String> avg("@performance_score").as("avg_performance")))
+                .groupBy(GroupBy.of("department", "role").reduce(Reducer.count().as("count"))
+                        .reduce(Reducer.avg("@salary").as("avg_salary"))
+                        .reduce(Reducer.avg("@performance_score").as("avg_performance")))
                 .sortBy("avg_salary", SortDirection.DESC).build();
 
         AggregationReply<String, String> multiGroupResult = redis.ftAggregate("groupby-advanced-test-idx", "*", multiGroupArgs);
@@ -1622,14 +1615,12 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Test 1: Group by region with comprehensive statistical reducers
         AggregateArgs regionStatsArgs = AggregateArgs.builder()
-                .groupBy(GroupBy.<String> of("region").reduce(Reducer.<String> count().as("total_records"))
-                        .reduce(Reducer.<String> sum("@revenue").as("total_revenue"))
-                        .reduce(Reducer.<String> avg("@revenue").as("avg_revenue"))
-                        .reduce(Reducer.<String> min("@revenue").as("min_revenue"))
-                        .reduce(Reducer.<String> max("@revenue").as("max_revenue"))
-                        .reduce(Reducer.<String> sum("@units_sold").as("total_units"))
-                        .reduce(Reducer.<String> avg("@profit_margin").as("avg_profit_margin"))
-                        .reduce(Reducer.<String> countDistinct("@product_type").as("product_diversity")))
+                .groupBy(GroupBy.of("region").reduce(Reducer.count().as("total_records"))
+                        .reduce(Reducer.sum("@revenue").as("total_revenue")).reduce(Reducer.avg("@revenue").as("avg_revenue"))
+                        .reduce(Reducer.min("@revenue").as("min_revenue")).reduce(Reducer.max("@revenue").as("max_revenue"))
+                        .reduce(Reducer.sum("@units_sold").as("total_units"))
+                        .reduce(Reducer.avg("@profit_margin").as("avg_profit_margin"))
+                        .reduce(Reducer.countDistinct("@product_type").as("product_diversity")))
                 .sortBy("total_revenue", SortDirection.DESC).build();
 
         AggregationReply<String, String> regionStatsResult = redis.ftAggregate("groupby-complex-test-idx", "*",
@@ -1664,10 +1655,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Test 2: Multi-dimensional grouping by region and product_type
         AggregateArgs multiDimArgs = AggregateArgs.builder()
-                .groupBy(GroupBy.<String> of("region", "product_type").reduce(Reducer.<String> count().as("record_count"))
-                        .reduce(Reducer.<String> avg("@revenue").as("avg_revenue"))
-                        .reduce(Reducer.<String> avg("@units_sold").as("avg_units"))
-                        .reduce(Reducer.<String> avg("@profit_margin").as("avg_margin")))
+                .groupBy(GroupBy.of("region", "product_type").reduce(Reducer.count().as("record_count"))
+                        .reduce(Reducer.avg("@revenue").as("avg_revenue")).reduce(Reducer.avg("@units_sold").as("avg_units"))
+                        .reduce(Reducer.avg("@profit_margin").as("avg_margin")))
                 .sortBy("avg_revenue", SortDirection.DESC).build();
 
         AggregationReply<String, String> multiDimResult = redis.ftAggregate("groupby-complex-test-idx", "*", multiDimArgs);
@@ -1806,8 +1796,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // value first
                 .filter("@total_value > 550") // Filter by total value (should keep only products 1 and
                                               // 2, both electronics)
-                .groupBy(GroupBy.<String> of("category").reduce(Reducer.<String> count().as("product_count"))
-                        .reduce(Reducer.<String> sum("@total_value").as("category_total")))
+                .groupBy(GroupBy.of("category").reduce(Reducer.count().as("product_count"))
+                        .reduce(Reducer.sum("@total_value").as("category_total")))
                 .limit(0, 10) // Limit results
                 .sortBy("category_total", SortDirection.DESC) // Sort by category total
                 .build();
@@ -1876,10 +1866,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs complexArgs = AggregateArgs.builder().load("category").load("brand").load("price").load("rating")
                 .load("sales_count")
                 // First aggregation: group by category
-                .groupBy(GroupBy.<String> of("category").reduce(Reducer.<String> count().as("product_count"))
-                        .reduce(Reducer.<String> avg("@price").as("avg_price"))
-                        .reduce(Reducer.<String> sum("@sales_count").as("total_sales"))
-                        .reduce(Reducer.<String> avg("@rating").as("avg_rating")))
+                .groupBy(GroupBy.of("category").reduce(Reducer.count().as("product_count"))
+                        .reduce(Reducer.avg("@price").as("avg_price")).reduce(Reducer.sum("@sales_count").as("total_sales"))
+                        .reduce(Reducer.avg("@rating").as("avg_rating")))
                 // Apply transformation to create performance score
                 .apply("@avg_rating * @total_sales / 100", "performance_score")
                 // Filter categories with good performance
@@ -1957,9 +1946,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // Second APPLY: Calculate performance bonus
                 .apply("@performance_score * 1000", "performance_bonus")
                 // First GROUPBY: Group by department
-                .groupBy(GroupBy.<String> of("department").reduce(Reducer.<String> count().as("employee_count"))
-                        .reduce(Reducer.<String> avg("@salary").as("avg_salary"))
-                        .reduce(Reducer.<String> avg("@performance_score").as("avg_performance")))
+                .groupBy(GroupBy.of("department").reduce(Reducer.count().as("employee_count"))
+                        .reduce(Reducer.avg("@salary").as("avg_salary"))
+                        .reduce(Reducer.avg("@performance_score").as("avg_performance")))
                 // Third APPLY: Calculate department efficiency
                 .apply("@avg_performance / (@avg_salary / 1000)", "efficiency_ratio")
                 // Second FILTER: Filter efficient departments
@@ -1969,8 +1958,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // Fourth APPLY: Calculate performance score
                 .apply("@efficiency_ratio * 100", "performance_score")
                 // Second GROUPBY: Re-group by efficiency level (using rounded efficiency ratio)
-                .groupBy(GroupBy.<String> of("efficiency_ratio").reduce(Reducer.<String> count().as("dept_count"))
-                        .reduce(Reducer.<String> avg("@avg_salary").as("class_avg_salary")))
+                .groupBy(GroupBy.of("efficiency_ratio").reduce(Reducer.count().as("dept_count"))
+                        .reduce(Reducer.avg("@avg_salary").as("class_avg_salary")))
                 // Second SORTBY: Sort by class average salary
                 .sortBy("class_avg_salary", SortDirection.DESC)
                 // Third FILTER: Final filter
@@ -2044,9 +2033,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // Calculate net amount after discount
                 .apply("@amount * (100 - @discount) / 100", "net_amount")
                 // First grouping: Group by customer_segment (property X)
-                .groupBy(GroupBy.<String> of("customer_segment").reduce(Reducer.<String> count().as("segment_transactions"))
-                        .reduce(Reducer.<String> sum("@net_amount").as("segment_revenue"))
-                        .reduce(Reducer.<String> avg("@quantity").as("avg_quantity")))
+                .groupBy(GroupBy.of("customer_segment").reduce(Reducer.count().as("segment_transactions"))
+                        .reduce(Reducer.sum("@net_amount").as("segment_revenue"))
+                        .reduce(Reducer.avg("@quantity").as("avg_quantity")))
                 // Apply transformation to calculate revenue per transaction
                 .apply("@segment_revenue / @segment_transactions", "revenue_per_transaction")
                 // Sort by group size (segment_transactions) and limit to top results
@@ -2057,9 +2046,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // Apply value score calculation
                 .apply("@revenue_per_transaction / 100", "value_score")
                 // Second grouping: Group by value_score (property Y)
-                .groupBy(GroupBy.<String> of("value_score").reduce(Reducer.<String> count().as("tier_count"))
-                        .reduce(Reducer.<String> sum("@segment_revenue").as("tier_total_revenue"))
-                        .reduce(Reducer.<String> avg("@revenue_per_transaction").as("tier_avg_revenue")))
+                .groupBy(GroupBy.of("value_score").reduce(Reducer.count().as("tier_count"))
+                        .reduce(Reducer.sum("@segment_revenue").as("tier_total_revenue"))
+                        .reduce(Reducer.avg("@revenue_per_transaction").as("tier_avg_revenue")))
                 // Sort by different property (tier_total_revenue)
                 .sortBy("tier_total_revenue", SortDirection.DESC)
                 // Final transformation and filtering
@@ -2141,10 +2130,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // Calculate inventory value
                 .apply("@price * @stock", "inventory_value")
                 // Group by category to analyze category performance
-                .groupBy(GroupBy.<String> of("category").reduce(Reducer.<String> count().as("product_count"))
-                        .reduce(Reducer.<String> sum("@inventory_value").as("total_inventory_value"))
-                        .reduce(Reducer.<String> avg("@popularity_score").as("avg_popularity"))
-                        .reduce(Reducer.<String> max("@price").as("max_price")))
+                .groupBy(GroupBy.of("category").reduce(Reducer.count().as("product_count"))
+                        .reduce(Reducer.sum("@inventory_value").as("total_inventory_value"))
+                        .reduce(Reducer.avg("@popularity_score").as("avg_popularity"))
+                        .reduce(Reducer.max("@price").as("max_price")))
                 // Third filter: Categories with significant inventory
                 .filter("@total_inventory_value > 5000")
                 // Calculate value density
@@ -2156,9 +2145,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // Apply final score calculation
                 .apply("@avg_popularity / 100", "category_score")
                 // Group by score for final analysis
-                .groupBy(GroupBy.<String> of("category_score").reduce(Reducer.<String> count().as("tier_category_count"))
-                        .reduce(Reducer.<String> sum("@total_inventory_value").as("tier_inventory_value"))
-                        .reduce(Reducer.<String> avg("@max_price").as("tier_avg_max_price")))
+                .groupBy(GroupBy.of("category_score").reduce(Reducer.count().as("tier_category_count"))
+                        .reduce(Reducer.sum("@total_inventory_value").as("tier_inventory_value"))
+                        .reduce(Reducer.avg("@max_price").as("tier_avg_max_price")))
                 // Third sort: Final sort by tier inventory value
                 .sortBy("tier_inventory_value", SortDirection.DESC)
                 // Fifth filter: Final filter for meaningful tiers
@@ -2250,10 +2239,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 .apply("@order_value / 1000", "customer_value_score")
 
                 // Stage 4: First aggregation - group by customer type
-                .groupBy(GroupBy.<String> of("customer_type").reduce(Reducer.<String> count().as("segment_orders"))
-                        .reduce(Reducer.<String> sum("@profit").as("segment_profit"))
-                        .reduce(Reducer.<String> avg("@profit_margin").as("avg_margin"))
-                        .reduce(Reducer.<String> avg("@customer_satisfaction").as("avg_satisfaction")))
+                .groupBy(GroupBy.of("customer_type").reduce(Reducer.count().as("segment_orders"))
+                        .reduce(Reducer.sum("@profit").as("segment_profit"))
+                        .reduce(Reducer.avg("@profit_margin").as("avg_margin"))
+                        .reduce(Reducer.avg("@customer_satisfaction").as("avg_satisfaction")))
 
                 // Stage 5: Calculate segment performance score
                 .apply("(@avg_satisfaction * @avg_margin * @segment_orders) / 100", "performance_score")
@@ -2272,11 +2261,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 .apply("@profit_per_order / 1000", "business_impact_score")
 
                 // Stage 10: Second aggregation - re-group by business impact score
-                .groupBy(
-                        GroupBy.<String> of("business_impact_score").reduce(Reducer.<String> count().as("impact_segment_count"))
-                                .reduce(Reducer.<String> sum("@segment_profit").as("total_impact_profit"))
-                                .reduce(Reducer.<String> avg("@performance_score").as("avg_impact_performance"))
-                                .reduce(Reducer.<String> max("@avg_satisfaction").as("max_satisfaction")))
+                .groupBy(GroupBy.of("business_impact_score").reduce(Reducer.count().as("impact_segment_count"))
+                        .reduce(Reducer.sum("@segment_profit").as("total_impact_profit"))
+                        .reduce(Reducer.avg("@performance_score").as("avg_impact_performance"))
+                        .reduce(Reducer.max("@avg_satisfaction").as("max_satisfaction")))
 
                 // Stage 11: Calculate final business metrics
                 .apply("@total_impact_profit / @impact_segment_count", "profit_efficiency")
