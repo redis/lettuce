@@ -144,7 +144,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param aggregateArgs the aggregate arguments
      * @return the result of the aggregate command
      */
-    public Command<K, V, AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K, V> aggregateArgs) {
+    public Command<K, V, AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs aggregateArgs) {
         LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(query, "Query must not be null");
 

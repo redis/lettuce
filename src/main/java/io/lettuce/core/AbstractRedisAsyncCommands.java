@@ -1834,7 +1834,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K, V> args) {
+    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs args) {
         return dispatch(searchCommandBuilder.ftAggregate(index, query, args));
     }
 

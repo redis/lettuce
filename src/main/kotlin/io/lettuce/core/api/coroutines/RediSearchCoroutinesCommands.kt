@@ -1127,7 +1127,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftCursorread(String, Cursor)
      */
     @Experimental
-    suspend fun ftAggregate(index: String, query: String, args: AggregateArgs<K, V>): AggregationReply<K, V>?
+    suspend fun ftAggregate(index: String, query: String, args: AggregateArgs): AggregationReply<K, V>?
 
     /**
      * Read next results from an existing cursor and optionally override the batch size.

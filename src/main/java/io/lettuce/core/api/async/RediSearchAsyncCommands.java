@@ -1126,7 +1126,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftCursorread(String, Cursor)
      */
     @Experimental
-    RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K, V> args);
+    RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs args);
 
     /**
      * Read next results from an existing cursor and optionally override the batch size.

@@ -136,10 +136,9 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         connection.sync().flushall();
     }
 
-    private AggregateArgs<String, String> aggWithCursor(long count) {
-        return AggregateArgs.<String, String> builder()
-                .groupBy(AggregateArgs.GroupBy.<String> of("author")
-                        .reduce(AggregateArgs.Reducer.<String> avg("@rating").as("avg_rating")))
+    private AggregateArgs aggWithCursor(long count) {
+        return AggregateArgs.builder()
+                .groupBy(AggregateArgs.GroupBy.of("author").reduce(AggregateArgs.Reducer.avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(count)).build();
     }
 
@@ -152,7 +151,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
 
         Set<String> nodeIds = new HashSet<>();
         int observedCursors = 0;
-        AggregateArgs<String, String> args = aggWithCursor(1L);
+        AggregateArgs args = aggWithCursor(1L);
         for (int i = 0; i < 40 && nodeIds.size() < upstreams; i++) {
             AggregationReply<String, String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
             assertThat(first).isNotNull();
@@ -181,7 +180,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
 
         Set<String> nodeIds = new HashSet<>();
         int observedCursors = 0;
-        AggregateArgs<String, String> args = aggWithCursor(1L);
+        AggregateArgs args = aggWithCursor(1L);
         for (int i = 0; i < 60 && nodeIds.size() < replicas; i++) {
             AggregationReply<String, String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
             assertThat(first).isNotNull();

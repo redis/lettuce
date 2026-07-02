@@ -1126,7 +1126,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftCursorread(String, Cursor)
      */
     @Experimental
-    AggregationReply<K, V> ftAggregate(String index, String query, AggregateArgs<K, V> args);
+    AggregationReply<K, V> ftAggregate(String index, String query, AggregateArgs args);
 
     /**
      * Read next results from an existing cursor and optionally override the batch size.

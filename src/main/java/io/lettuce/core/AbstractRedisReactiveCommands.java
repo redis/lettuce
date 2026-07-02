@@ -1931,7 +1931,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs<K, V> args) {
+    public Mono<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs args) {
         return createMono(() -> searchCommandBuilder.ftAggregate(index, query, args));
     }
 

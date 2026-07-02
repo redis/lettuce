@@ -78,7 +78,7 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftSearch(index: String, query: String, args: SearchArgs<K>): SearchReply<K, V>? =
         ops.ftSearch(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftAggregate(index: String, query: String, args: AggregateArgs<K, V>): AggregationReply<K, V>? =
+    override suspend fun ftAggregate(index: String, query: String, args: AggregateArgs): AggregationReply<K, V>? =
         ops.ftAggregate(index, query, args).awaitFirstOrNull()
 
     override suspend fun ftAggregate(index: String, query: String): AggregationReply<K, V>? =

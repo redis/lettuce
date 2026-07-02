@@ -218,9 +218,8 @@ public class RediSearchClusterIntegrationTests {
         }
 
         // Test aggregation with cursor - group by author and get average rating
-        AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()
-                .groupBy(AggregateArgs.GroupBy.<String> of("author")
-                        .reduce(AggregateArgs.Reducer.<String> avg("@rating").as("avg_rating")))
+        AggregateArgs aggregateArgs = AggregateArgs.builder()
+                .groupBy(AggregateArgs.GroupBy.of("author").reduce(AggregateArgs.Reducer.avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(2L)) // Small batch size to test cursor functionality
                 .build();
 

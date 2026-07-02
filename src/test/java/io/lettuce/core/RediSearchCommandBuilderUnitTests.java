@@ -653,11 +653,10 @@ class RediSearchCommandBuilderUnitTests {
     void shouldMaintainPipelineOperationOrder() {
         // Test that pipeline operations (GROUPBY, SORTBY, APPLY, FILTER, LIMIT)
         // are output in the order specified by the user, not in a fixed order
-        AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
+        AggregateArgs aggregateArgs = AggregateArgs.builder()//
                 .apply("@price * @quantity", "total_value")// First operation
                 .filter("@total_value > 100")// Second operation
-                .groupBy(AggregateArgs.GroupBy.<String> of("category")
-                        .reduce(AggregateArgs.Reducer.<String> count().as("count")))// Third
+                .groupBy(AggregateArgs.GroupBy.of("category").reduce(AggregateArgs.Reducer.count().as("count")))// Third
                 // operation
                 .limit(0, 5)// Fourth operation
                 .sortBy(AggregateArgs.SortBy.of("count", AggregateArgs.SortDirection.DESC))// Fifth operation
@@ -685,11 +684,10 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructFtAggregateCommandWithArgs() {
-        AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
+        AggregateArgs aggregateArgs = AggregateArgs.builder()//
                 .verbatim()//
                 .load("title")//
-                .groupBy(AggregateArgs.GroupBy.<String> of("category")
-                        .reduce(AggregateArgs.Reducer.<String> count().as("count")))//
+                .groupBy(AggregateArgs.GroupBy.of("category").reduce(AggregateArgs.Reducer.count().as("count")))//
                 .sortBy(AggregateArgs.SortBy.of("count", AggregateArgs.SortDirection.DESC))//
                 .apply(AggregateArgs.Apply.of("@title", "title_upper"))//
                 .limit(0, 10)//
