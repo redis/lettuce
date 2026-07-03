@@ -344,7 +344,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return mget(Arrays.asList(keys));
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public Flux<KeyValue<K, V>> mget(Iterable<K> keys) {
         List<K> keyList = LettuceLists.newList(keys);
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keyList);
@@ -353,24 +352,26 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             return super.mget(keyList);
         }
 
-        List<Publisher<KeyValue<K, V>>> publishers = partitioned.values().stream().map(super::mget)
-                .collect(Collectors.toList());
+        // Maps each key to its position within the flattened, partition-ordered result list for O(1) lookups below
+        Map<K, Integer> keyToResultIndex = new HashMap<>(keyList.size());
+        List<Publisher<KeyValue<K, V>>> publishers = new ArrayList<>(partitioned.size());
+        int offset = 0;
+
+        for (List<K> partitionKeys : partitioned.values()) {
+            publishers.add(super.mget(partitionKeys));
+            for (int i = 0; i < partitionKeys.size(); i++) {
+                keyToResultIndex.put(partitionKeys.get(i), offset + i);
+            }
+            offset += partitionKeys.size();
+        }
 
         return Flux.mergeSequential(publishers).collectList().map(results -> {
-            KeyValue<K, V>[] values = new KeyValue[keyList.size()];
-            int offset = 0;
-
-            for (List<K> partitionKeys : partitioned.values()) {
-                for (int i = 0; i < keyList.size(); i++) {
-                    int index = partitionKeys.indexOf(keyList.get(i));
-                    if (index != -1) {
-                        values[i] = results.get(offset + index);
-                    }
-                }
-                offset += partitionKeys.size();
+            List<KeyValue<K, V>> orderedResults = new ArrayList<>(keyList.size());
+            for (K key : keyList) {
+                orderedResults.add(results.get(keyToResultIndex.get(key)));
             }
 
-            return Arrays.asList(values);
+            return orderedResults;
         }).flatMapMany(Flux::fromIterable);
     }
 
