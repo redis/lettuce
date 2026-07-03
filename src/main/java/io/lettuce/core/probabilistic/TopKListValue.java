@@ -16,9 +16,9 @@ public class TopKListValue {
 
     private final String name;
 
-    private final Integer count;
+    private final Long count;
 
-    public TopKListValue(String name, Integer count) {
+    public TopKListValue(String name, Long count) {
         this.name = name;
         this.count = count;
     }
@@ -35,9 +35,9 @@ public class TopKListValue {
     /**
      * Returns the count of the value.
      *
-     * @return the count of the value or null if not requested
+     * @return the count of the value or null if not requested.
      */
-    public Integer getCount() {
+    public Long getCount() {
         return count;
     }
 

@@ -40,9 +40,9 @@ public final class TopKListValueParser implements ComplexDataParser<List<TopKLis
         for (int i = 0; i < raw.size(); i++) {
             String name = StringCodec.UTF8.decodeKey((ByteBuffer) (raw.get(i)));
 
-            Integer count = null;
+            Long count = null;
             if (i + 1 < raw.size() && raw.get(i + 1) instanceof Number) {
-                count = ((Number) raw.get(i + 1)).intValue();
+                count = ((Number) raw.get(i + 1)).longValue();
                 i++;
             }
 

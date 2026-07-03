@@ -121,7 +121,7 @@ public class RedisTopKIntegrationTests {
 
         List<TopKListValue> list = redis.topKList(MY_KEY, true);
         assertThat(list.get(0).getName()).isEqualTo(MY_VALUE);
-        assertThat(list.get(0).getCount()).isEqualTo(3);
+        assertThat(list.get(0).getCount()).isEqualTo(3L);
         assertThat(list).extracting(TopKListValue::getName).contains(MY_VALUE, MY_VALUE_2);
     }
 
