@@ -170,15 +170,15 @@ public class FtHybridIntegrationTests {
                 .postProcessing(PostProcessingArgs.builder().load("@title", "@brand").build()).param("vec", queryVectorClose)
                 .build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
         assertThat(reply.getTotalResults()).isGreaterThan(0);
 
         // Verify we get electronics products with "smartphone camera" in title
-        boolean hasSmartphone = reply.getResults().stream()
-                .anyMatch(r -> r.get("title") != null && r.get("title").toLowerCase().contains("smartphone"));
+        boolean hasSmartphone = reply.getResults().stream().anyMatch(
+                r -> r.getFields().get("title") != null && r.getFields().get("title").toLowerCase().contains("smartphone"));
         assertThat(hasSmartphone).isTrue();
     }
 
@@ -193,7 +193,7 @@ public class FtHybridIntegrationTests {
                 .combine(Combiners.rrf().window(20)).postProcessing(PostProcessingArgs.builder().load("@title").build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         // RANGE returns all vectors within radius 0.5 - should include close vectors
@@ -214,12 +214,12 @@ public class FtHybridIntegrationTests {
                 .postProcessing(PostProcessingArgs.builder().load("@title", "@brand").build()).param("vec", queryVectorClose)
                 .build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
         // Products with "smartphone camera" should rank higher with BM25
-        String firstTitle = reply.getResults().get(0).get("title");
+        String firstTitle = reply.getResults().get(0).getFields().get("title");
         assertThat(firstTitle).isNotNull();
         assertThat(firstTitle.toLowerCase()).containsAnyOf("smartphone", "camera");
     }
@@ -244,13 +244,13 @@ public class FtHybridIntegrationTests {
                 .combine(Combiners.rrf().window(20)).postProcessing(PostProcessingArgs.builder().loadAll().build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
 
         // With LOAD *, all fields should be present
-        Map<String, String> firstResult = reply.getResults().get(0);
+        Map<String, String> firstResult = reply.getResults().get(0).getFields();
         assertThat(firstResult).containsKeys("title", "category", "brand", "price", "rating");
     }
 
@@ -265,7 +265,7 @@ public class FtHybridIntegrationTests {
                 .combine(Combiners.rrf().window(20)).timeout(Duration.ofSeconds(30))
                 .postProcessing(PostProcessingArgs.builder().load("@title").build()).param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
@@ -287,7 +287,7 @@ public class FtHybridIntegrationTests {
                 .postProcessing(PostProcessingArgs.builder().load("@title", "@brand").build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
@@ -312,14 +312,15 @@ public class FtHybridIntegrationTests {
                         .build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
 
         // Find Apple result and verify aggregations
         // Apple has products at $999 and $2499, so avg=1749, min=999, max=2499
-        for (Map<String, String> result : reply.getResults()) {
+        for (HybridReply.HybridResult hybridResult : reply.getResults()) {
+            Map<String, String> result = hybridResult.getFields();
             if ("apple".equals(result.get("brand"))) {
                 assertThat(result.get("avg_price")).isEqualTo("1749");
                 assertThat(result.get("min_price")).isEqualTo("999");
@@ -347,14 +348,15 @@ public class FtHybridIntegrationTests {
                         .build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
 
         // Find electronics category and verify quantile was computed
         boolean foundElectronics = false;
-        for (Map<String, String> result : reply.getResults()) {
+        for (HybridReply.HybridResult hybridResult : reply.getResults()) {
+            Map<String, String> result = hybridResult.getFields();
             if ("electronics".equals(result.get("category"))) {
                 foundElectronics = true;
                 assertThat(result.get("median_price")).isNotNull();
@@ -504,14 +506,14 @@ public class FtHybridIntegrationTests {
                 .combine(Combiners.linear().alpha(0.8).beta(0.2))
                 .postProcessing(PostProcessingArgs.builder().load("@title").build()).param("vec", queryVectorMid).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
 
         // With mid-distance vector and high text weight, products with "Pro" in title should rank high
         // Our dataset has: "iPhone 15 Pro", "MacBook Pro"
-        String firstTitle = reply.getResults().get(0).get("title");
+        String firstTitle = reply.getResults().get(0).getFields().get("title");
         assertThat(firstTitle).containsIgnoringCase("Pro");
     }
 

@@ -153,7 +153,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         int observedCursors = 0;
         AggregateArgs args = aggWithCursor(1L);
         for (int i = 0; i < 40 && nodeIds.size() < upstreams; i++) {
-            AggregationReply<String, String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
+            AggregationReply<String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
             assertThat(first).isNotNull();
             if (first.getCursor().isPresent() && first.getCursor().get().getCursorId() > 0) {
                 observedCursors++;
@@ -182,7 +182,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         int observedCursors = 0;
         AggregateArgs args = aggWithCursor(1L);
         for (int i = 0; i < 60 && nodeIds.size() < replicas; i++) {
-            AggregationReply<String, String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
+            AggregationReply<String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
             assertThat(first).isNotNull();
             if (first.getCursor().isPresent() && first.getCursor().get().getCursorId() > 0) {
                 observedCursors++;

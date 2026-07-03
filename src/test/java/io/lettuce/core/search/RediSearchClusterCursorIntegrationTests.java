@@ -123,21 +123,21 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
                 .groupBy(AggregateArgs.GroupBy.of("author").reduce(AggregateArgs.Reducer.avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
-        AggregationReply<String, String> first = sync.ftAggregate(INDEX, "*", args);
+        AggregationReply<String> first = sync.ftAggregate(INDEX, "*", args);
         assertThat(first.getCursor().get().getCursorId()).isGreaterThan(0);
         assertThat(first.getCursor().get().getNodeId()).isPresent();
         assertThat(first.getReplies()).isNotEmpty();
         String nodeId = first.getCursor().get().getNodeId().get();
 
         // Stickiness: reads route to the same node and pages advance
-        AggregationReply<String, String> page2 = sync.ftCursorread(INDEX, first.getCursor().get());
+        AggregationReply<String> page2 = sync.ftCursorread(INDEX, first.getCursor().get());
         assertThat(page2).isNotNull();
         assertThat(page2.getCursor().get().getNodeId()).isPresent();
         assertThat(page2.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page2.getReplies()).isNotEmpty();
         assertThat(page2.getReplies()).isNotEqualTo(first.getReplies());
 
-        AggregationReply<String, String> page3 = sync.ftCursorread(INDEX, page2.getCursor().get());
+        AggregationReply<String> page3 = sync.ftCursorread(INDEX, page2.getCursor().get());
         assertThat(page3.getCursor().get().getNodeId()).isPresent();
         assertThat(page3.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page3.getReplies()).isNotEmpty();
@@ -154,21 +154,19 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
                 .groupBy(AggregateArgs.GroupBy.of("author").reduce(AggregateArgs.Reducer.avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
-        AggregationReply<String, String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
+        AggregationReply<String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
         assertThat(first.getCursor().get().getCursorId()).isGreaterThan(0);
         assertThat(first.getCursor().get().getNodeId()).isPresent();
         assertThat(first.getReplies()).isNotEmpty();
         String nodeId = first.getCursor().get().getNodeId().get();
 
-        AggregationReply<String, String> page2 = async.ftCursorread(INDEX, first.getCursor().get()).toCompletableFuture()
-                .join();
+        AggregationReply<String> page2 = async.ftCursorread(INDEX, first.getCursor().get()).toCompletableFuture().join();
         assertThat(page2.getCursor().get().getNodeId()).isPresent();
         assertThat(page2.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page2.getReplies()).isNotEmpty();
         assertThat(page2.getReplies()).isNotEqualTo(first.getReplies());
 
-        AggregationReply<String, String> page3 = async.ftCursorread(INDEX, page2.getCursor().get()).toCompletableFuture()
-                .join();
+        AggregationReply<String> page3 = async.ftCursorread(INDEX, page2.getCursor().get()).toCompletableFuture().join();
         assertThat(page3.getCursor().get().getNodeId()).isPresent();
         assertThat(page3.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page3.getReplies()).isNotEmpty();
@@ -184,21 +182,21 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
                 .groupBy(AggregateArgs.GroupBy.of("author").reduce(AggregateArgs.Reducer.avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
-        AggregationReply<String, String> first = reactive.ftAggregate(INDEX, "*", args).block();
+        AggregationReply<String> first = reactive.ftAggregate(INDEX, "*", args).block();
         assertThat(first).isNotNull();
         assertThat(first.getCursor().get().getCursorId()).isGreaterThan(0);
         assertThat(first.getCursor().get().getNodeId()).isPresent();
         assertThat(first.getReplies()).isNotEmpty();
         String nodeId = first.getCursor().get().getNodeId().get();
 
-        AggregationReply<String, String> page2 = reactive.ftCursorread(INDEX, first.getCursor().get()).block();
+        AggregationReply<String> page2 = reactive.ftCursorread(INDEX, first.getCursor().get()).block();
         assertThat(page2).isNotNull();
         assertThat(page2.getCursor().get().getNodeId()).isPresent();
         assertThat(page2.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page2.getReplies()).isNotEmpty();
         assertThat(page2.getReplies()).isNotEqualTo(first.getReplies());
 
-        AggregationReply<String, String> page3 = reactive.ftCursorread(INDEX, page2.getCursor().get()).block();
+        AggregationReply<String> page3 = reactive.ftCursorread(INDEX, page2.getCursor().get()).block();
         assertThat(page3.getCursor().get().getNodeId()).isPresent();
         assertThat(page3.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page3.getReplies()).isNotEmpty();
@@ -252,7 +250,7 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
         Set<String> nodeIds = new HashSet<>();
         int observedCursors = 0;
         for (int i = 0; i < 30 && nodeIds.size() < upstreams; i++) {
-            AggregationReply<String, String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
+            AggregationReply<String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
             assertThat(first).isNotNull();
             if (first.getCursor().isPresent() && first.getCursor().get().getCursorId() > 0) {
                 observedCursors++;

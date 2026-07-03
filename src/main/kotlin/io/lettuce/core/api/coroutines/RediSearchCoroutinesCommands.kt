@@ -978,7 +978,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftSearch(String, String, SearchArgs)
      */
     @Experimental
-    suspend fun ftSearch(index: String, query: String): SearchReply<K, V>?
+    suspend fun ftSearch(index: String, query: String): SearchReply<K>?
 
     /**
      * Search the index with a textual query using advanced search options and filters.
@@ -1029,7 +1029,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    suspend fun ftSearch(index: String, query: String, args: SearchArgs<K>): SearchReply<K, V>?
+    suspend fun ftSearch(index: String, query: String, args: SearchArgs<K>): SearchReply<K>?
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.
@@ -1071,7 +1071,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    suspend fun ftAggregate(index: String, query: String): AggregationReply<K, V>?
+    suspend fun ftAggregate(index: String, query: String): AggregationReply<K>?
 
     /**
      * Run a search query on an index and perform advanced aggregate transformations with a processing pipeline.
@@ -1127,7 +1127,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftCursorread(String, Cursor)
      */
     @Experimental
-    suspend fun ftAggregate(index: String, query: String, args: AggregateArgs): AggregationReply<K, V>?
+    suspend fun ftAggregate(index: String, query: String, args: AggregateArgs): AggregationReply<K>?
 
     /**
      * Read next results from an existing cursor and optionally override the batch size.
@@ -1160,7 +1160,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    suspend fun ftCursorread(index: String, cursor: Cursor, count: Int): AggregationReply<K, V>?
+    suspend fun ftCursorread(index: String, cursor: Cursor, count: Int): AggregationReply<K>?
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -1192,7 +1192,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    suspend fun ftCursorread(index: String, cursor: Cursor): AggregationReply<K, V>?
+    suspend fun ftCursorread(index: String, cursor: Cursor): AggregationReply<K>?
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1245,7 +1245,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @since 7.2
      */
     @Experimental
-    suspend fun ftHybrid(index: String, args: HybridArgs): HybridReply<K, V>?
+    suspend fun ftHybrid(index: String, args: HybridArgs): HybridReply?
 
 }
 

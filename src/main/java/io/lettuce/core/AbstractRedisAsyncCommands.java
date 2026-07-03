@@ -1819,32 +1819,32 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args) {
+    public RedisFuture<SearchReply<K>> ftSearch(String index, String query, SearchArgs<K> args) {
         return dispatch(searchCommandBuilder.ftSearch(index, query, args));
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query) {
+    public RedisFuture<SearchReply<K>> ftSearch(String index, String query) {
         return dispatch(searchCommandBuilder.ftSearch(index, query, SearchArgs.<K> builder().build()));
     }
 
     @Override
-    public RedisFuture<HybridReply<K, V>> ftHybrid(String index, HybridArgs args) {
+    public RedisFuture<HybridReply> ftHybrid(String index, HybridArgs args) {
         return dispatch(searchCommandBuilder.ftHybrid(index, args));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs args) {
+    public RedisFuture<AggregationReply<K>> ftAggregate(String index, String query, AggregateArgs args) {
         return dispatch(searchCommandBuilder.ftAggregate(index, query, args));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query) {
+    public RedisFuture<AggregationReply<K>> ftAggregate(String index, String query) {
         return dispatch(searchCommandBuilder.ftAggregate(index, query, null));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
+    public RedisFuture<AggregationReply<K>> ftCursorread(String index, Cursor cursor, int count) {
         if (cursor == null) {
             throw new IllegalArgumentException("cursor must not be null");
         }
@@ -1853,7 +1853,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
+    public RedisFuture<AggregationReply<K>> ftCursorread(String index, Cursor cursor) {
         return ftCursorread(index, cursor, -1);
     }
 

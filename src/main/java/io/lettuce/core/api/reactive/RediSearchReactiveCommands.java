@@ -979,7 +979,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftSearch(String, String, SearchArgs)
      */
     @Experimental
-    Mono<SearchReply<K, V>> ftSearch(String index, String query);
+    Mono<SearchReply<K>> ftSearch(String index, String query);
 
     /**
      * Search the index with a textual query using advanced search options and filters.
@@ -1030,7 +1030,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args);
+    Mono<SearchReply<K>> ftSearch(String index, String query, SearchArgs<K> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.
@@ -1072,7 +1072,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    Mono<AggregationReply<K, V>> ftAggregate(String index, String query);
+    Mono<AggregationReply<K>> ftAggregate(String index, String query);
 
     /**
      * Run a search query on an index and perform advanced aggregate transformations with a processing pipeline.
@@ -1128,7 +1128,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftCursorread(String, Cursor)
      */
     @Experimental
-    Mono<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs args);
+    Mono<AggregationReply<K>> ftAggregate(String index, String query, AggregateArgs args);
 
     /**
      * Read next results from an existing cursor and optionally override the batch size.
@@ -1161,7 +1161,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count);
+    Mono<AggregationReply<K>> ftCursorread(String index, Cursor cursor, int count);
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -1193,7 +1193,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor);
+    Mono<AggregationReply<K>> ftCursorread(String index, Cursor cursor);
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1246,6 +1246,6 @@ public interface RediSearchReactiveCommands<K, V> {
      * @since 7.2
      */
     @Experimental
-    Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs args);
+    Mono<HybridReply> ftHybrid(String index, HybridArgs args);
 
 }

@@ -29,7 +29,6 @@ import io.lettuce.core.json.JsonValue;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -153,15 +152,14 @@ public class RediSearchVectorIntegrationTests {
         SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVector.array()).build();
 
         String queryString = "*=>[KNN 2 @embedding $query_vec]";
-        SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
+        SearchReply<ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
 
         // Verify results
         assertThat(searchResult.getCount()).isEqualTo(2);
         assertThat(searchResult.getResults()).hasSize(2);
 
         // First result should be doc1 (exact match)
-        ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes());
-        String firstName = new String(searchResult.getResults().get(0).getFields().get(nameKey).array());
+        String firstName = searchResult.getResults().get(0).getFields().get("name");
         assertThat(firstName).isEqualTo("Document 1");
 
         // Cleanup
@@ -219,16 +217,15 @@ public class RediSearchVectorIntegrationTests {
         SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVector.array()).build();
 
         String queryString = "(@category:{electronics})=>[KNN 2 @embedding $query_vec]";
-        SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
+        SearchReply<ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
 
         // Verify results - should find electronics products only
         assertThat(searchResult.getCount()).isEqualTo(2);
         assertThat(searchResult.getResults()).hasSize(2);
 
         // All results should be electronics
-        ByteBuffer categoryKey = ByteBuffer.wrap("category".getBytes());
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> searchResultItem : searchResult.getResults()) {
-            String category = new String(searchResultItem.getFields().get(categoryKey).array());
+        for (SearchReply.SearchResult<ByteBuffer> searchResultItem : searchResult.getResults()) {
+            String category = searchResultItem.getFields().get("category");
             assertThat(category).isEqualTo("electronics");
         }
 
@@ -277,7 +274,7 @@ public class RediSearchVectorIntegrationTests {
         }
 
         // Perform aggregation: group by category and calculate average price
-        AggregationReply<String, String> aggregationResult = redis.ftAggregate(indexName, "*",
+        AggregationReply<String> aggregationResult = redis.ftAggregate(indexName, "*",
                 AggregateArgs.builder()
                         .groupBy(AggregateArgs.GroupBy.of("category").reduce(AggregateArgs.Reducer.count().as("count"))
                                 .reduce(AggregateArgs.Reducer.avg("@price").as("avg_price")))
@@ -288,13 +285,13 @@ public class RediSearchVectorIntegrationTests {
         assertThat(aggregationResult.getAggregationGroups()).isEqualTo(1); // 1 aggregation operation
         assertThat(aggregationResult.getReplies()).hasSize(1); // One reply containing all groups
 
-        SearchReply<String, String> reply = aggregationResult.getReplies().get(0);
+        SearchReply<String> reply = aggregationResult.getReplies().get(0);
         assertThat(reply.getResults()).hasSize(2); // 2 category groups
 
         // Verify we have both categories represented
-        List<SearchResult<String, String>> aggregationResults = reply.getResults();
+        List<SearchResult<String>> aggregationResults = reply.getResults();
         Set<String> foundCategories = new HashSet<>();
-        for (SearchResult<String, String> groupResult : aggregationResults) {
+        for (SearchResult<String> groupResult : aggregationResults) {
             foundCategories.add(groupResult.getFields().get("category"));
         }
         assertThat(foundCategories).containsExactlyInAnyOrder("electronics", "books");
@@ -355,7 +352,7 @@ public class RediSearchVectorIntegrationTests {
             SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVector.array()).build();
 
             String queryString = "*=>[KNN 3 @embedding $query_vec]";
-            SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
+            SearchReply<ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
 
             // Verify we get results
             assertThat(searchResult.getCount()).isEqualTo(3);
@@ -363,11 +360,10 @@ public class RediSearchVectorIntegrationTests {
 
             // For all metrics, the most similar should be found
             // The exact ranking may vary by metric, but we should get valid results
-            List<SearchReply.SearchResult<ByteBuffer, ByteBuffer>> results = searchResult.getResults();
-            ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes());
-            assertThat(results.get(0).getFields().get(nameKey)).isNotNull();
-            assertThat(results.get(1).getFields().get(nameKey)).isNotNull();
-            assertThat(results.get(2).getFields().get(nameKey)).isNotNull();
+            List<SearchReply.SearchResult<ByteBuffer>> results = searchResult.getResults();
+            assertThat(results.get(0).getFields().get("name")).isNotNull();
+            assertThat(results.get(1).getFields().get("name")).isNotNull();
+            assertThat(results.get(2).getFields().get("name")).isNotNull();
 
             // Cleanup
             redis.ftDropindex(indexName);
@@ -462,23 +458,27 @@ public class RediSearchVectorIntegrationTests {
 
         String queryString = "*=>[KNN 2 @doc_embedding $BLOB AS vector_score]";
 
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(DOCUMENTS_INDEX, queryString, knnArgs);
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch(DOCUMENTS_INDEX, queryString, knnArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
 
         // The results should be sorted by vector similarity (closest first)
         // vector1 and vector2 should be more similar to queryVector than vector3
-        SearchReply.SearchResult<ByteBuffer, ByteBuffer> firstResult = results.getResults().get(0);
-        SearchReply.SearchResult<ByteBuffer, ByteBuffer> secondResult = results.getResults().get(1);
+        SearchReply.SearchResult<ByteBuffer> firstResult = results.getResults().get(0);
+        SearchReply.SearchResult<ByteBuffer> secondResult = results.getResults().get(1);
 
-        // Convert ByteBuffer results back to strings for assertions
-        ByteBuffer titleFieldKey = ByteBuffer.wrap("title".getBytes(StandardCharsets.UTF_8));
-        String firstTitle = new String(firstResult.getFields().get(titleFieldKey).array(), StandardCharsets.UTF_8);
-        String secondTitle = new String(secondResult.getFields().get(titleFieldKey).array(), StandardCharsets.UTF_8);
+        String firstTitle = firstResult.getFields().get("title");
+        String secondTitle = secondResult.getFields().get("title");
 
         assertThat(firstTitle).isIn("Redis Vector Search Tutorial", "Advanced Vector Techniques");
         assertThat(secondTitle).isIn("Redis Vector Search Tutorial", "Advanced Vector Techniques");
+
+        // the binary vector field comes back byte-exact via getFieldBytes; the two closest documents are vector1 and vector2
+        assertThat(firstResult.getFieldBytes("doc_embedding")).isIn(floatArrayToByteBuffer(vector1).array(),
+                floatArrayToByteBuffer(vector2).array());
+        assertThat(secondResult.getFieldBytes("doc_embedding")).isIn(floatArrayToByteBuffer(vector1).array(),
+                floatArrayToByteBuffer(vector2).array());
 
         // Cleanup
         redis.ftDropindex(DOCUMENTS_INDEX);
@@ -556,12 +556,11 @@ public class RediSearchVectorIntegrationTests {
         String queryString = "(@genre:{action})=>[KNN 3 @movie_embedding $BLOB AS movie_distance]";
 
         // Search for action movies with vector similarity
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(MOVIES_INDEX, queryString, filterArgs);
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch(MOVIES_INDEX, queryString, filterArgs);
 
         assertThat(results.getCount()).isEqualTo(2); // The Matrix and Heat have action genre
-        ByteBuffer genreFieldKey = ByteBuffer.wrap("genre".getBytes(StandardCharsets.UTF_8));
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
-            String genre = new String(result.getFields().get(genreFieldKey).array(), StandardCharsets.UTF_8);
+        for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
+            String genre = result.getFields().get("genre");
             assertThat(genre).contains("action");
         }
 
@@ -653,13 +652,12 @@ public class RediSearchVectorIntegrationTests {
                 .limit(0, 100).build();
 
         String queryString = "@description_vector:[VECTOR_RANGE 0.5 $BLOB]";
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(PRODUCTS_INDEX, queryString, rangeArgs);
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch(PRODUCTS_INDEX, queryString, rangeArgs);
 
         // Should find electronics products and smart watch (mixed vector)
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
-        ByteBuffer typeKey = ByteBuffer.wrap("type".getBytes(StandardCharsets.UTF_8));
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
-            String productType = new String(result.getFields().get(typeKey).array(), StandardCharsets.UTF_8);
+        for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
+            String productType = result.getFields().get("type");
             assertThat(productType).isIn("electronics"); // Electronics should be within range
         }
 
@@ -729,7 +727,7 @@ public class RediSearchVectorIntegrationTests {
                     .limit(0, 2).build();
 
             String queryString = "*=>[KNN 2 @embedding $BLOB AS distance]";
-            SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);
+            SearchReply<ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);
 
             assertThat(results.getCount()).isEqualTo(2);
             assertThat(results.getResults()).hasSize(2);
@@ -784,7 +782,7 @@ public class RediSearchVectorIntegrationTests {
                 .limit(0, 3).build();
 
         String queryString = "*=>[KNN 3 @vector $BLOB]";
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("json-vector-idx", queryString, adhocArgs);
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch("json-vector-idx", queryString, adhocArgs);
 
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
@@ -844,7 +842,7 @@ public class RediSearchVectorIntegrationTests {
                 .limit(0, 5).build();
 
         String queryString = "(@status:{active})=>[KNN 5 @content_vector $BLOB HYBRID_POLICY ADHOC_BF AS task_score]";
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("tasks-idx", queryString, adhocArgs);
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch("tasks-idx", queryString, adhocArgs);
 
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
@@ -878,11 +876,9 @@ public class RediSearchVectorIntegrationTests {
         results = redisBinary.ftSearch("tasks-idx", complexQueryString, complexArgs);
 
         // Verify all results match the filter criteria
-        ByteBuffer statusKey = ByteBuffer.wrap("status".getBytes(StandardCharsets.UTF_8));
-        ByteBuffer priorityKey = ByteBuffer.wrap("priority".getBytes(StandardCharsets.UTF_8));
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
-            String status = new String(result.getFields().get(statusKey).array(), StandardCharsets.UTF_8);
-            String priorityStr = new String(result.getFields().get(priorityKey).array(), StandardCharsets.UTF_8);
+        for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
+            String status = result.getFields().get("status");
+            String priorityStr = result.getFields().get("priority");
             assertThat(status).isEqualTo("active");
             int priority = Integer.parseInt(priorityStr);
             assertThat(priority).isBetween(3, 5);
@@ -957,15 +953,14 @@ public class RediSearchVectorIntegrationTests {
                 .build();
 
         String queryString = "*=>[KNN 2 @embedding_f64 $BLOB AS distance]";
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("precision-idx", queryString, precisionArgs);
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch("precision-idx", queryString, precisionArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
 
         // Verify that the search worked with high precision vectors
-        ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes(StandardCharsets.UTF_8));
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
-            String name = new String(result.getFields().get(nameKey).array(), StandardCharsets.UTF_8);
+        for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
+            String name = result.getFields().get("name");
             assertThat(name).contains("High Precision Vector");
         }
 
@@ -1005,7 +1000,7 @@ public class RediSearchVectorIntegrationTests {
                 .limit(0, 1).build();
 
         String queryString = "*=>[KNN 1 @test_vector $BLOB]";
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("error-test-idx", queryString, validArgs);
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch("error-test-idx", queryString, validArgs);
 
         assertThat(results.getCount()).isEqualTo(1);
 
@@ -1024,136 +1019,48 @@ public class RediSearchVectorIntegrationTests {
     }
 
     /**
-     * Test vector search with mixed binary and text fields, following the Python example. This test demonstrates handling both
-     * binary vector data and text data in the same hash, with proper decoding of each field type.
+     * A mixed text+vector response on a single {@code String} connection. A typical Lettuce app uses one shared {@code String}
+     * connection; its documents, however, often hold a mix of text and binary vector fields, where the vectors were written
+     * binary-safe by an ingestion pipeline (another service, a Python job, etc.). {@link SearchReply} keeps the returned field
+     * values as raw bytes: the text field is read through {@code getFields()} (UTF-8 view) while the vector's exact bytes are
+     * read through {@link SearchReply.SearchResult#getFieldBytes(String)}, so both survive the round-trip.
      */
     @Test
-    @Disabled("Test is being very flaky on the pipeline")
-    void testVectorSearchBinaryAndTextFields() {
-        // Create a custom codec that can handle both strings and byte arrays
-        RedisCodec<String, Object> mixedCodec = new RedisCodec<String, Object>() {
+    void mixedTextAndVectorResponseRoundTripsBothOnSingleConnection() {
+        String indexName = "mixed-response-idx";
+        String key = indexName + ":1";
 
-            @Override
-            public String decodeKey(ByteBuffer bytes) {
-                return StandardCharsets.UTF_8.decode(bytes).toString();
-            }
+        float[] vec = { 0.1f, 0.2f, 0.3f, 0.4f };
+        byte[] vecBytes = floatArrayToByteBuffer(vec).array();
 
-            @Override
-            public Object decodeValue(ByteBuffer bytes) {
-                // Try to decode as UTF-8 string first
-                try {
-                    String str = StandardCharsets.UTF_8.decode(bytes.duplicate()).toString();
-                    // Check if it's a valid UTF-8 string (no replacement characters)
-                    if (!str.contains("\uFFFD")) {
-                        return str;
-                    }
-                } catch (Exception e) {
-                    // Fall through to return raw bytes
-                }
-                // Return raw bytes for binary data
-                byte[] result = new byte[bytes.remaining()];
-                bytes.get(result);
-                return result;
-            }
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").hnsw().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
+        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(indexName + ":").on(CreateArgs.TargetType.HASH)
+                .build();
+        redis.ftCreate(indexName, createArgs, Arrays.asList(nameField, vectorField));
 
-            @Override
-            public ByteBuffer encodeKey(String key) {
-                return ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8));
-            }
-
-            @Override
-            public ByteBuffer encodeValue(Object value) {
-                if (value instanceof String) {
-                    return ByteBuffer.wrap(((String) value).getBytes(StandardCharsets.UTF_8));
-                } else if (value instanceof byte[]) {
-                    return ByteBuffer.wrap((byte[]) value);
-                } else if (value instanceof float[]) {
-                    float[] floats = (float[]) value;
-                    ByteBuffer buffer = ByteBuffer.allocate(floats.length * 4).order(ByteOrder.LITTLE_ENDIAN);
-                    for (float f : floats) {
-                        buffer.putFloat(f);
-                    }
-                    return (ByteBuffer) buffer.flip();
-                } else {
-                    return ByteBuffer.wrap(value.toString().getBytes(StandardCharsets.UTF_8));
-                }
-            }
-
-        };
-
-        // Create connection with mixed codec
-        RedisCommands<String, Object> redisMixed = client.connect(mixedCodec).sync();
+        // The application's single connection is the String one below. The binary write via redisBinary is only a fixture
+        // standing in for the ingestion pipeline that stored the vector binary-safe (same key/field bytes on the wire).
+        redis.hset(key, "name", "Lettuce");
+        redisBinary.hset(ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8)),
+                ByteBuffer.wrap("embedding".getBytes(StandardCharsets.UTF_8)), ByteBuffer.wrap(vecBytes));
 
         try {
-            // Create fake vector similar to Python example
-            float[] fakeVec = { 0.1f, 0.2f, 0.3f, 0.4f };
-            byte[] fakeVecBytes = floatArrayToByteBuffer(fakeVec).array();
+            SearchReply<String> result = redis.ftSearch(indexName, "*",
+                    SearchArgs.<String> builder().returnField("name").returnField("embedding").build());
 
-            String indexName = "mixed_index";
-            String keyName = indexName + ":1";
+            assertThat(result.getCount()).isEqualTo(1L);
+            SearchReply.SearchResult<String> searchResult = result.getResults().get(0);
 
-            // Store mixed data: text field and binary vector field
-            redisMixed.hset(keyName, "first_name", "🥬 Lettuce");
-            redisMixed.hset(keyName, "vector_emb", fakeVecBytes);
+            // the text field is read through the UTF-8 view
+            assertThat(searchResult.getFields().get("name")).isEqualTo("Lettuce");
 
-            // Create index with both text and vector fields
-            FieldArgs textField = TagFieldArgs.builder().name("first_name").build();
-
-            FieldArgs vectorField = VectorFieldArgs.builder().name("embeddings_bio").hnsw()
-                    .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4)
-                    .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
-
-            CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(indexName + ":")
-                    .on(CreateArgs.TargetType.HASH).build();
-
-            redis.ftCreate(indexName, createArgs, Arrays.asList(textField, vectorField));
-
-            // Search with specific field returns - equivalent to Python's return_field with decode_field=False
-            SearchArgs<String> searchArgs = SearchArgs.<String> builder().returnField("vector_emb") // This
-                                                                                                    // should
-                                                                                                    // return
-                                                                                                    // raw
-                                                                                                    // binary
-                                                                                                    // data
-                    .returnField("first_name") // This should return decoded text
-                    .build();
-
-            SearchReply<String, Object> results = redisMixed.ftSearch(indexName, "*", searchArgs);
-
-            assertThat(results.getCount()).isEqualTo(1);
-            assertThat(results.getResults()).hasSize(1);
-
-            SearchReply.SearchResult<String, Object> result = results.getResults().get(0);
-            Map<String, Object> fields = result.getFields();
-
-            // Verify text field is properly decoded
-            Object firstNameValue = fields.get("first_name");
-            assertThat(firstNameValue).isInstanceOf(String.class);
-            assertThat((String) firstNameValue).isEqualTo("🥬 Lettuce");
-
-            // Verify vector field returns binary data
-            Object vectorValue = fields.get("vector_emb");
-            assertThat(vectorValue).isInstanceOf(byte[].class);
-
-            // Convert retrieved binary data back to float array and compare
-            byte[] retrievedVecBytes = (byte[]) vectorValue;
-            ByteBuffer buffer = ByteBuffer.wrap(retrievedVecBytes).order(ByteOrder.LITTLE_ENDIAN);
-            float[] retrievedVec = new float[4];
-            for (int i = 0; i < 4; i++) {
-                retrievedVec[i] = buffer.getFloat();
-            }
-
-            // Assert that the vectors are equal (equivalent to Python's np.array_equal)
-            assertThat(retrievedVec).containsExactly(fakeVec);
-
-            // Cleanup
-            redis.ftDropindex(indexName);
-
+            // the vector field's raw bytes survive the round-trip via getFieldBytes
+            assertThat(searchResult.getFieldBytes("embedding"))
+                    .as("vector bytes must be preserved in a mixed text+vector response").isEqualTo(vecBytes);
         } finally {
-            // Close the mixed codec connection
-            if (redisMixed != null) {
-                redisMixed.getStatefulConnection().close();
-            }
+            redis.ftDropindex(indexName);
         }
     }
 
@@ -1229,15 +1136,14 @@ public class RediSearchVectorIntegrationTests {
                 .build();
 
         String queryString = "*=>[KNN 2 @" + fieldName + " $BLOB AS distance]";
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
 
         // Verify that the search worked with the quantized vectors
-        ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes(StandardCharsets.UTF_8));
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
-            String name = new String(result.getFields().get(nameKey).array(), StandardCharsets.UTF_8);
+        for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
+            String name = result.getFields().get("name");
             assertThat(name).contains(typeName + " Vector");
         }
 

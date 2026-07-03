@@ -592,7 +592,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs args) {
+    public Mono<AggregationReply<K>> ftAggregate(String index, String query, AggregateArgs args) {
         return routeKeyless(() -> super.ftAggregate(index, query, args),
                 (nodeId, conn) -> conn.ftAggregate(index, query, args).mapNotNull(reply -> {
                     if (reply != null) {
@@ -603,23 +603,23 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(String index, String query) {
+    public Mono<AggregationReply<K>> ftAggregate(String index, String query) {
         return ftAggregate(index, query, null);
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args) {
+    public Mono<SearchReply<K>> ftSearch(String index, String query, SearchArgs<K> args) {
         return routeKeyless(() -> super.ftSearch(index, query, args), conn -> conn.ftSearch(index, query, args),
                 CommandType.FT_SEARCH);
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(String index, String query) {
+    public Mono<SearchReply<K>> ftSearch(String index, String query) {
         return ftSearch(index, query, SearchArgs.<K> builder().build());
     }
 
     @Override
-    public Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs args) {
+    public Mono<HybridReply> ftHybrid(String index, HybridArgs args) {
         return routeKeyless(() -> super.ftHybrid(index, args), conn -> conn.ftHybrid(index, args), CommandType.FT_HYBRID);
     }
 
@@ -742,7 +742,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
+    public Mono<AggregationReply<K>> ftCursorread(String index, Cursor cursor, int count) {
         if (cursor == null) {
             return Mono.error(new IllegalArgumentException("cursor must not be null"));
         }
@@ -765,7 +765,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
+    public Mono<AggregationReply<K>> ftCursorread(String index, Cursor cursor) {
         return ftCursorread(index, cursor, -1);
     }
 

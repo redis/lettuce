@@ -1916,32 +1916,32 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args) {
+    public Mono<SearchReply<K>> ftSearch(String index, String query, SearchArgs<K> args) {
         return createMono(() -> searchCommandBuilder.ftSearch(index, query, args));
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(String index, String query) {
+    public Mono<SearchReply<K>> ftSearch(String index, String query) {
         return createMono(() -> searchCommandBuilder.ftSearch(index, query, SearchArgs.<K> builder().build()));
     }
 
     @Override
-    public Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs args) {
+    public Mono<HybridReply> ftHybrid(String index, HybridArgs args) {
         return createMono(() -> searchCommandBuilder.ftHybrid(index, args));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs args) {
+    public Mono<AggregationReply<K>> ftAggregate(String index, String query, AggregateArgs args) {
         return createMono(() -> searchCommandBuilder.ftAggregate(index, query, args));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(String index, String query) {
+    public Mono<AggregationReply<K>> ftAggregate(String index, String query) {
         return createMono(() -> searchCommandBuilder.ftAggregate(index, query, null));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
+    public Mono<AggregationReply<K>> ftCursorread(String index, Cursor cursor, int count) {
         return createMono(() -> {
             if (cursor == null) {
                 throw new IllegalArgumentException("cursor must not be null");
@@ -1952,7 +1952,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
+    public Mono<AggregationReply<K>> ftCursorread(String index, Cursor cursor) {
         return ftCursorread(index, cursor, -1);
     }
 

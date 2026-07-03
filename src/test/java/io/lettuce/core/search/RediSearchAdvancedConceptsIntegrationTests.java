@@ -127,7 +127,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hmset("article:2", article2);
 
         // Test that custom stop words are ignored in search
-        SearchReply<String, String> results = redis.ftSearch(STOPWORDS_INDEX, "foo");
+        SearchReply<String> results = redis.ftSearch(STOPWORDS_INDEX, "foo");
         assertThat(results.getCount()).isEqualTo(0); // "foo" should be ignored as stop word
 
         results = redis.ftSearch(STOPWORDS_INDEX, "guide");
@@ -177,7 +177,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hmset("doc:3", doc3);
 
         // Test 1: Punctuation marks separate tokens
-        SearchReply<String, String> results = redis.ftSearch(TOKENIZATION_INDEX, "hello");
+        SearchReply<String> results = redis.ftSearch(TOKENIZATION_INDEX, "hello");
         // FIXME seems that doc:2 is created with hello\\-world instead of hello\-world
         assertThat(results.getCount()).isEqualTo(1); // Both "hello-world" and "hello\\-world"
 
@@ -245,7 +245,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Test 1: Sort by first name descending
         SortByArgs sortByFirstName = SortByArgs.builder().attribute("first_name").descending().build();
         SearchArgs<String> sortArgs = SearchArgs.<String> builder().sortBy(sortByFirstName).build();
-        SearchReply<String, String> results = redis.ftSearch(SORTING_INDEX, "@last_name:jones", sortArgs);
+        SearchReply<String> results = redis.ftSearch(SORTING_INDEX, "@last_name:jones", sortArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
@@ -305,7 +305,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hmset("product:3", product3);
 
         // Test 1: Search by category with custom separator
-        SearchReply<String, String> results = redis.ftSearch(TAGS_INDEX, "@categories:{gaming}");
+        SearchReply<String> results = redis.ftSearch(TAGS_INDEX, "@categories:{gaming}");
         assertThat(results.getCount()).isEqualTo(2); // Gaming laptop and mouse
 
         results = redis.ftSearch(TAGS_INDEX, "@categories:{computers}");
@@ -384,7 +384,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         HighlightArgs basicHighlight = HighlightArgs.builder().build();
         SearchArgs<String> highlightArgs = SearchArgs.<String> builder().highlightArgs(basicHighlight).build();
 
-        SearchReply<String, String> results = redis.ftSearch(HIGHLIGHT_INDEX, "Redis", highlightArgs);
+        SearchReply<String> results = redis.ftSearch(HIGHLIGHT_INDEX, "Redis", highlightArgs);
         assertThat(results.getCount()).isEqualTo(1);
 
         // Check that highlighting tags are present in the content
@@ -399,7 +399,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getCount()).isEqualTo(2);
 
         // Check custom highlighting tags
-        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String> result : results.getResults()) {
             String content = result.getFields().get("content");
             if (content.contains("database")) {
                 assertThat(content).contains("<mark>database</mark>");
@@ -473,14 +473,14 @@ public class RediSearchAdvancedConceptsIntegrationTests {
 
         // Test 1: Default BM25 scoring with scores
         SearchArgs<String> withScores = SearchArgs.<String> builder().withScores().build();
-        SearchReply<String, String> results = redis.ftSearch(SCORING_INDEX, "Redis", withScores);
+        SearchReply<String> results = redis.ftSearch(SCORING_INDEX, "Redis", withScores);
 
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
 
         // Verify scores are present and ordered (higher scores first)
         double previousScore = Double.MAX_VALUE;
-        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String> result : results.getResults()) {
             assertThat(result.getScore()).isNotNull();
             assertThat(result.getScore()).isLessThanOrEqualTo(previousScore);
             previousScore = result.getScore();
@@ -548,7 +548,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
 
         // Test stemming: searching for "run" should find all variations
         // FIXME Seems like a bug in the server, "runner" needs to also be stemmed, but it is not
-        SearchReply<String, String> results = redis.ftSearch(STEMMING_INDEX, "run");
+        SearchReply<String> results = redis.ftSearch(STEMMING_INDEX, "run");
         assertThat(results.getCount()).isEqualTo(3); // All forms should be found due to stemming
 
         // Test stemming: searching for "running" should also find all variations
@@ -618,7 +618,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("person:5", "name", "Jonson");
 
         // Search for "Smith" should find phonetically similar names
-        SearchReply<String, String> results = redis.ftSearch("phonetic-en-idx", "@name:Smith");
+        SearchReply<String> results = redis.ftSearch("phonetic-en-idx", "@name:Smith");
         assertThat(results.getCount()).isGreaterThanOrEqualTo(2); // Should find Smith and Smyth at minimum
 
         // Search for "Johnson" should find phonetically similar names
@@ -737,7 +737,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         Wait.untilEquals(1L, () -> redis.ftSearch("nostemming-idx", "@content_exact:run").getCount()).waitOrTimeout();
 
         // Search for "running" should only find exact matches
-        SearchReply<String, String> results = redis.ftSearch("nostemming-idx", "@content_exact:running");
+        SearchReply<String> results = redis.ftSearch("nostemming-idx", "@content_exact:running");
         assertThat(results.getCount()).isEqualTo(1); // Only "running quickly"
 
         // Search for "runs" should only find exact matches
@@ -797,7 +797,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("normal:4", "title", "Programming Languages");
 
         // Basic search should work
-        SearchReply<String, String> results = redis.ftSearch("normal-idx", "@title:Java*");
+        SearchReply<String> results = redis.ftSearch("normal-idx", "@title:Java*");
         assertThat(results.getCount()).isEqualTo(2); // JavaScript and Java
 
         redis.ftDropindex("normal-idx");

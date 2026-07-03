@@ -775,7 +775,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs args) {
+    public RedisFuture<AggregationReply<K>> ftAggregate(String index, String query, AggregateArgs args) {
         return routeKeyless(() -> super.ftAggregate(index, query, args),
                 (nodeId, conn) -> conn.ftAggregate(index, query, args).thenApply(reply -> {
                     if (reply != null) {
@@ -786,23 +786,23 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, String query) {
+    public RedisFuture<AggregationReply<K>> ftAggregate(String index, String query) {
         return ftAggregate(index, query, null);
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args) {
+    public RedisFuture<SearchReply<K>> ftSearch(String index, String query, SearchArgs<K> args) {
         return routeKeyless(() -> super.ftSearch(index, query, args), (conn) -> conn.ftSearch(index, query, args),
                 CommandType.FT_SEARCH);
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(String index, String query) {
+    public RedisFuture<SearchReply<K>> ftSearch(String index, String query) {
         return ftSearch(index, query, SearchArgs.<K> builder().build());
     }
 
     @Override
-    public RedisFuture<HybridReply<K, V>> ftHybrid(String index, HybridArgs args) {
+    public RedisFuture<HybridReply> ftHybrid(String index, HybridArgs args) {
         return routeKeyless(() -> super.ftHybrid(index, args), (conn) -> conn.ftHybrid(index, args), CommandType.FT_HYBRID);
     }
 
@@ -926,9 +926,9 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
+    public RedisFuture<AggregationReply<K>> ftCursorread(String index, Cursor cursor, int count) {
         if (cursor == null) {
-            CompletableFuture<AggregationReply<K, V>> failed = new CompletableFuture<>();
+            CompletableFuture<AggregationReply<K>> failed = new CompletableFuture<>();
             failed.completeExceptionally(new IllegalArgumentException("cursor must not be null"));
             return new PipelinedRedisFuture<>(failed);
         }
@@ -938,15 +938,15 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
         Optional<String> nodeIdOpt = cursor.getNodeId();
         if (!nodeIdOpt.isPresent()) {
-            CompletableFuture<AggregationReply<K, V>> failed = new CompletableFuture<>();
+            CompletableFuture<AggregationReply<K>> failed = new CompletableFuture<>();
             failed.completeExceptionally(
                     new IllegalArgumentException("Cursor missing nodeId; cannot route cursor READ in cluster mode"));
             return new PipelinedRedisFuture<>(failed);
         }
         String nodeId = nodeIdOpt.get();
         StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.READ);
-        RedisFuture<AggregationReply<K, V>> f = byNode.async().ftCursorread(index, cursor, count);
-        CompletableFuture<AggregationReply<K, V>> mapped = new CompletableFuture<>();
+        RedisFuture<AggregationReply<K>> f = byNode.async().ftCursorread(index, cursor, count);
+        CompletableFuture<AggregationReply<K>> mapped = new CompletableFuture<>();
         f.whenComplete((reply, err) -> {
             if (err != null) {
                 mapped.completeExceptionally(err);
@@ -961,7 +961,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
+    public RedisFuture<AggregationReply<K>> ftCursorread(String index, Cursor cursor) {
         return ftCursorread(index, cursor, -1);
     }
 

@@ -124,7 +124,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
 
     /**
      * Build a "bare" {@link RedisKey} that round-trips through {@link RedisKeyCodec} as its {@code id} bytes only (no
-     * tenant/entity prefix). Used for read-side schema identifiers and result-map keys so they retain their literal byte shape.
+     * tenant/entity prefix). Used for hash field names written via {@code hmset} so they retain their literal byte shape.
      */
     private static RedisKey field(String name) {
         return new RedisKey("", "", name);
@@ -137,7 +137,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void baselineSearchWorksThroughCodec(String indexName) {
-        SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "search");
+        SearchReply<RedisKey> result = redis.ftSearch(indexName, "search");
         assertThat(result.getCount()).isEqualTo(1L);
     }
 
@@ -150,7 +150,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     void inFieldMustNotBeMangledByCodec(String indexName) {
         SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().inField("title").build();
 
-        SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "search", args);
+        SearchReply<RedisKey> result = redis.ftSearch(indexName, "search", args);
 
         assertThat(result.getCount()).as("INFIELDS schema field must be sent raw, not codec-encoded").isEqualTo(1L);
     }
@@ -163,11 +163,11 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     void returnFieldMustNotBeMangledByCodec(String indexName) {
         SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().returnField("title").build();
 
-        SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "search", args);
+        SearchReply<RedisKey> result = redis.ftSearch(indexName, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
         assertThat(result.getResults().get(0).getFields())
-                .as("RETURN schema field must appear verbatim as a key in the result map").containsKey(field("title"));
+                .as("RETURN schema field must appear verbatim as a key in the result map").containsKey("title");
     }
 
     /**
@@ -178,11 +178,11 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     void returnFieldAliasMustNotBeMangledByCodec(String indexName) {
         SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().returnField("title", "t").build();
 
-        SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "search", args);
+        SearchReply<RedisKey> result = redis.ftSearch(indexName, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
         assertThat(result.getResults().get(0).getFields()).as("RETURN alias must appear verbatim as a key in the result map")
-                .containsKey(field("t"));
+                .containsKey("t");
     }
 
     /**
@@ -194,10 +194,10 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     void summarizeFieldMustNotBeMangledByCodec() {
         SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().summarizeField("body").build();
 
-        SearchReply<RedisKey, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+        SearchReply<RedisKey> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
-        String body = result.getResults().get(0).getFields().get(field("body"));
+        String body = result.getResults().get(0).getFields().get("body");
         assertThat(body).as("SUMMARIZE must be applied to the 'body' field").contains("...");
     }
 
@@ -209,10 +209,10 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     void highlightFieldMustNotBeMangledByCodec() {
         SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().highlightField("body").highlightTags("<b>", "</b>").build();
 
-        SearchReply<RedisKey, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+        SearchReply<RedisKey> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
-        String body = result.getResults().get(0).getFields().get(field("body"));
+        String body = result.getResults().get(0).getFields().get("body");
         assertThat(body).as("HIGHLIGHT must wrap 'search' occurrences with the configured tags").contains("<b>search</b>");
     }
 
@@ -225,13 +225,12 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     void aggregateLoadFieldMustNotBeMangledByCodec(String indexName) {
         AggregateArgs args = AggregateArgs.builder().load("title").build();
 
-        AggregationReply<RedisKey, String> result = redis.ftAggregate(indexName, "*", args);
+        AggregationReply<RedisKey> result = redis.ftAggregate(indexName, "*", args);
 
         assertThat(result.getReplies()).isNotEmpty();
-        SearchReply<RedisKey, String> reply = result.getReplies().get(0);
+        SearchReply<RedisKey> reply = result.getReplies().get(0);
         assertThat(reply.getResults()).isNotEmpty();
-        assertThat(reply.getResults().get(0).getFields()).as("LOAD schema field must be fetched verbatim")
-                .containsKey(field("title"));
+        assertThat(reply.getResults().get(0).getFields()).as("LOAD schema field must be fetched verbatim").containsKey("title");
     }
 
     /**
@@ -244,7 +243,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
         SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().sortBy(SortByArgs.builder().attribute("title").build())
                 .build();
 
-        SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "search", args);
+        SearchReply<RedisKey> result = redis.ftSearch(indexName, "search", args);
 
         assertThat(result.getCount()).as("SORTBY schema field must be sent raw, not codec-encoded").isEqualTo(1L);
     }
@@ -258,7 +257,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     void searchParamNameMustNotBeMangledByCodec(String indexName) {
         SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().param("term", "search").build();
 
-        SearchReply<RedisKey, String> result = redis.ftSearch(indexName, "@body:$term", args);
+        SearchReply<RedisKey> result = redis.ftSearch(indexName, "@body:$term", args);
 
         assertThat(result.getCount()).as("PARAMS substitution name must be sent raw so $term resolves on the server side")
                 .isEqualTo(1L);
@@ -272,10 +271,10 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     void aggregateParamNameMustNotBeMangledByCodec(String indexName) {
         AggregateArgs args = AggregateArgs.builder().param("term", "search").build();
 
-        AggregationReply<RedisKey, String> result = redis.ftAggregate(indexName, "@body:$term", args);
+        AggregationReply<RedisKey> result = redis.ftAggregate(indexName, "@body:$term", args);
 
         assertThat(result.getReplies()).isNotEmpty();
-        SearchReply<RedisKey, String> reply = result.getReplies().get(0);
+        SearchReply<RedisKey> reply = result.getReplies().get(0);
         assertThat(reply.getResults()).as("PARAMS substitution name must resolve on the server side").isNotEmpty();
     }
 
@@ -288,7 +287,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     void inKeyMustBeRoutedThroughCodec() {
         SearchArgs<RedisKey> args = SearchArgs.<RedisKey> builder().inKey(new RedisKey(TENANT, ENTITY, HASH_DOC_ID)).build();
 
-        SearchReply<RedisKey, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+        SearchReply<RedisKey> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).as("INKEYS must route the document key through encodeKey to match the stored key")
                 .isEqualTo(1L);

@@ -72,28 +72,28 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftDropindex(index: String): String? =
         ops.ftDropindex(index).awaitFirstOrNull()
 
-    override suspend fun ftSearch(index: String, query: String): SearchReply<K, V>? =
+    override suspend fun ftSearch(index: String, query: String): SearchReply<K>? =
         ops.ftSearch(index, query).awaitFirstOrNull()
 
-    override suspend fun ftSearch(index: String, query: String, args: SearchArgs<K>): SearchReply<K, V>? =
+    override suspend fun ftSearch(index: String, query: String, args: SearchArgs<K>): SearchReply<K>? =
         ops.ftSearch(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftAggregate(index: String, query: String, args: AggregateArgs): AggregationReply<K, V>? =
+    override suspend fun ftAggregate(index: String, query: String, args: AggregateArgs): AggregationReply<K>? =
         ops.ftAggregate(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftAggregate(index: String, query: String): AggregationReply<K, V>? =
+    override suspend fun ftAggregate(index: String, query: String): AggregationReply<K>? =
         ops.ftAggregate(index, query).awaitFirstOrNull()
 
-    override suspend fun ftCursorread(index: String, cursor: Cursor, count: Int): AggregationReply<K, V>? =
+    override suspend fun ftCursorread(index: String, cursor: Cursor, count: Int): AggregationReply<K>? =
         ops.ftCursorread(index, cursor, count).awaitFirstOrNull()
 
-    override suspend fun ftCursorread(index: String, cursor: Cursor): AggregationReply<K, V>? =
+    override suspend fun ftCursorread(index: String, cursor: Cursor): AggregationReply<K>? =
         ops.ftCursorread(index, cursor).awaitFirstOrNull()
 
     override suspend fun ftCursordel(index: String, cursor: Cursor): String? =
         ops.ftCursordel(index, cursor).awaitFirstOrNull()
 
-    override suspend fun ftHybrid(index: String, args: HybridArgs): HybridReply<K, V>? =
+    override suspend fun ftHybrid(index: String, args: HybridArgs): HybridReply? =
         ops.ftHybrid(index, args).awaitFirstOrNull()
 
     override suspend fun ftDictadd(dict: String, vararg terms: String): Long? =

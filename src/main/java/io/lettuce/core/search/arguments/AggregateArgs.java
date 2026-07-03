@@ -32,7 +32,7 @@ import java.util.Arrays;
  *     // Simple aggregation with grouping and counting
  *     AggregateArgs args = AggregateArgs.builder().groupBy("category").reduce(Reducer.count().as("count"))
  *             .sortBy("count", SortDirection.DESC).build();
- *     SearchReply<String, String> result = redis.ftAggregate("myindex", "*", args);
+ *     SearchReply<String> result = redis.ftAggregate("myindex", "*", args);
  * }
  * </pre>
  *
@@ -319,7 +319,8 @@ public class AggregateArgs {
          *
          * <p>
          * Use {@link io.lettuce.core.api.sync.RediSearchCommands#ftCursorread(String, AggregationReply.Cursor, int)} and
-         * {@link io.lettuce.core.api.sync.RediSearchCommands#ftCursordel(String, AggregationReply.Cursor)} to iterate through and manage the cursor.
+         * {@link io.lettuce.core.api.sync.RediSearchCommands#ftCursordel(String, AggregationReply.Cursor)} to iterate through
+         * and manage the cursor.
          * </p>
          *
          * @param withCursor the cursor specification with count and optional idle timeout

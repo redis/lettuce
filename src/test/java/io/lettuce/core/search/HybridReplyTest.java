@@ -9,8 +9,7 @@ package io.lettuce.core.search;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,7 @@ class HybridReplyTest {
 
     @Test
     void testEmptyHybridReply() {
-        HybridReply<String, String> reply = new HybridReply<>();
+        HybridReply reply = new HybridReply();
 
         assertThat(reply.getTotalResults()).isEqualTo(0);
         assertThat(reply.getExecutionTime()).isEqualTo(0.0);
@@ -37,7 +36,7 @@ class HybridReplyTest {
 
     @Test
     void testSetAndGetTotalResults() {
-        HybridReply<String, String> reply = new HybridReply<>();
+        HybridReply reply = new HybridReply();
         reply.setTotalResults(42L);
 
         assertThat(reply.getTotalResults()).isEqualTo(42L);
@@ -45,7 +44,7 @@ class HybridReplyTest {
 
     @Test
     void testSetAndGetExecutionTime() {
-        HybridReply<String, String> reply = new HybridReply<>();
+        HybridReply reply = new HybridReply();
         reply.setExecutionTime(1.23);
 
         assertThat(reply.getExecutionTime()).isEqualTo(1.23);
@@ -53,14 +52,14 @@ class HybridReplyTest {
 
     @Test
     void testAddAndGetResults() {
-        HybridReply<String, String> reply = new HybridReply<>();
+        HybridReply reply = new HybridReply();
 
-        Map<String, String> result1 = new HashMap<>();
-        result1.put("title", "Redis Search");
-        result1.put("__key", "doc:1");
+        HybridReply.HybridResult result1 = new HybridReply.HybridResult();
+        result1.addField("title", "Redis Search".getBytes(StandardCharsets.UTF_8));
+        result1.addField("__key", "doc:1".getBytes(StandardCharsets.UTF_8));
 
-        Map<String, String> result2 = new HashMap<>();
-        result2.put("title", "Advanced Techniques");
+        HybridReply.HybridResult result2 = new HybridReply.HybridResult();
+        result2.addField("title", "Advanced Techniques".getBytes(StandardCharsets.UTF_8));
 
         reply.addResult(result1);
         reply.addResult(result2);
@@ -68,13 +67,31 @@ class HybridReplyTest {
         assertThat(reply.size()).isEqualTo(2);
         assertThat(reply.isEmpty()).isFalse();
         assertThat(reply.getResults()).hasSize(2);
-        assertThat(reply.getResults().get(0)).containsEntry("title", "Redis Search").containsEntry("__key", "doc:1");
-        assertThat(reply.getResults().get(1)).containsEntry("title", "Advanced Techniques");
+        assertThat(reply.getResults().get(0).getFields()).containsEntry("title", "Redis Search").containsEntry("__key",
+                "doc:1");
+        assertThat(reply.getResults().get(1).getFields()).containsEntry("title", "Advanced Techniques");
+    }
+
+    @Test
+    void testGetFieldBytesPreservesBinaryValues() {
+        HybridReply.HybridResult result = new HybridReply.HybridResult();
+
+        // a binary value that is not valid UTF-8 (e.g. a little-endian float32 vector)
+        byte[] vector = new byte[] { -51, -52, -52, 61, -51, -52, 76, 62 };
+        result.addField("embedding", vector);
+        result.addField("title", "Lettuce".getBytes(StandardCharsets.UTF_8));
+
+        // getFieldBytes returns the exact bytes, untouched by UTF-8 decoding
+        assertThat(result.getFieldBytes("embedding")).isEqualTo(vector);
+
+        // absent fields yield null; the UTF-8 view still serves the text field
+        assertThat(result.getFieldBytes("missing")).isNull();
+        assertThat(result.getFields().get("title")).isEqualTo("Lettuce");
     }
 
     @Test
     void testAddAndGetWarnings() {
-        HybridReply<String, String> reply = new HybridReply<>();
+        HybridReply reply = new HybridReply();
         reply.addWarning("Timeout limit was reached");
         reply.addWarning("Partial results returned");
 
@@ -83,8 +100,8 @@ class HybridReplyTest {
 
     @Test
     void testGetResultsIsUnmodifiable() {
-        HybridReply<String, String> reply = new HybridReply<>();
-        reply.addResult(new HashMap<>());
+        HybridReply reply = new HybridReply();
+        reply.addResult(new HybridReply.HybridResult());
 
         assertThat(reply.getResults()).hasSize(1);
         try {
@@ -97,7 +114,7 @@ class HybridReplyTest {
 
     @Test
     void testGetWarningsIsUnmodifiable() {
-        HybridReply<String, String> reply = new HybridReply<>();
+        HybridReply reply = new HybridReply();
         reply.addWarning("warn");
 
         assertThat(reply.getWarnings()).hasSize(1);
