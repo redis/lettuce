@@ -21,7 +21,6 @@ import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.Endpoint;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.RedisCommand;
-import io.lettuce.core.resource.ClientResources.ResourceAssignable;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -87,10 +86,6 @@ public class RedisAuthenticationHandler<K, V> {
      */
     public static <K, V> RedisAuthenticationHandler<K, V> createHandler(StatefulRedisConnectionImpl<K, V> connection,
             RedisCredentialsProvider credentialsProvider, Boolean isPubSubConnection, ClientOptions options) {
-
-        if (credentialsProvider instanceof ResourceAssignable) {
-            ((ResourceAssignable) credentialsProvider).accept(connection.getResources());
-        }
 
         if (isSupported(options)) {
 
