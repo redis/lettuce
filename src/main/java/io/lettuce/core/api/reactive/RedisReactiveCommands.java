@@ -41,7 +41,7 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
         RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>,
         RedisStringReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
         RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>,
-        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V> {
+        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V> {
 
     /**
      * Authenticate to the server.
@@ -91,7 +91,7 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
      * {@link io.lettuce.core.api.StatefulRedisConnection#commands(CommandsFactory)}:
      *
      * <pre>
-     * 
+     *
      * {
      *     &#64;code
      *     RedisReactiveCommands<K, V> reactive = connection.commands(RedisReactiveCommands.factory());

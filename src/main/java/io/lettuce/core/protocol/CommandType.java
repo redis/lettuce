@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
  * @author Zhang Jessey
  * @author dengliming
  * @author Mikhael Sokolov
+ * @author Yordan Tsintsov
  */
 public enum CommandType implements ProtocolKeyword {
 
@@ -137,6 +138,10 @@ public enum CommandType implements ProtocolKeyword {
     CF_ADD("CF.ADD"), CF_ADDNX("CF.ADDNX"), CF_COUNT("CF.COUNT"), CF_DEL("CF.DEL"), CF_EXISTS("CF.EXISTS"), CF_INFO(
             "CF.INFO"), CF_INSERT("CF.INSERT"), CF_INSERTNX("CF.INSERTNX"), CF_LOADCHUNK(
                     "CF.LOADCHUNK"), CF_MEXISTS("CF.MEXISTS"), CF_RESERVE("CF.RESERVE"), CF_SCANDUMP("CF.SCANDUMP"),
+
+    // Top-K
+    TOPK_ADD("TOPK.ADD"), TOPK_INCRBY("TOPK.INCRBY"), TOPK_INFO("TOPK.INFO"), TOPK_LIST("TOPK.LIST"), TOPK_QUERY(
+            "TOPK.QUERY"), TOPK_RESERVE("TOPK.RESERVE"),
 
     // Others
 

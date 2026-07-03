@@ -24,6 +24,7 @@ import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.*;
 import io.lettuce.core.array.*;
 import io.lettuce.core.probabilistic.BfInfoValue;
+import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.probabilistic.CfInfoValue;
@@ -53,6 +54,9 @@ import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
+import io.lettuce.core.probabilistic.TopKInfoValue;
+import io.lettuce.core.probabilistic.TopKListValue;
+import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
@@ -125,7 +129,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
         RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
         RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>,
-        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V> {
+        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -142,6 +146,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private final RedisBloomFilterCommandBuilder<K, V> bloomFilterCommandBuilder;
 
     private final RedisCuckooFilterCommandBuilder<K, V> cuckooFilterCommandBuilder;
+
+    private final RedisTopKCommandBuilder<K, V> topKCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -169,6 +175,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         this.arrayCommandBuilder = new RedisArrayCommandBuilder<>(codec);
         this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
         this.cuckooFilterCommandBuilder = new RedisCuckooFilterCommandBuilder<>(codec);
+        this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -4460,6 +4467,63 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<CfInfoValue> cfInfo(K key) {
         return createMono(() -> cuckooFilterCommandBuilder.cfInfo(key));
+    }
+
+    // --- Redis Top-K Commands ---
+
+    @Override
+    public Flux<Value<String>> topKAdd(K key, V value) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKAddValues(key, value));
+    }
+
+    @Override
+    public Flux<Value<String>> topKAdd(K key, V... values) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKAddValues(key, values));
+    }
+
+    @Override
+    public Flux<Value<String>> topKIncrBy(K key, V value, long increment) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKIncrByValues(key, value, increment));
+    }
+
+    @Override
+    public Flux<Value<String>> topKIncrBy(K key, IncrementPair<V>... pairs) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKIncrByValues(key, pairs));
+    }
+
+    @Override
+    public Mono<TopKInfoValue> topKInfo(K key) {
+        return createMono(() -> topKCommandBuilder.topKInfo(key));
+    }
+
+    @Override
+    public Flux<String> topKList(K key) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKList(key));
+    }
+
+    @Override
+    public Flux<TopKListValue> topKList(K key, boolean withCount) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKList(key, withCount));
+    }
+
+    @Override
+    public Flux<Boolean> topKQuery(K key, V value) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKQuery(key, value));
+    }
+
+    @Override
+    public Flux<Boolean> topKQuery(K key, V... values) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKQuery(key, values));
+    }
+
+    @Override
+    public Mono<String> topKReserve(K key, long k) {
+        return createMono(() -> topKCommandBuilder.topKReserve(key, k));
+    }
+
+    @Override
+    public Mono<String> topKReserve(K key, long k, TopKReserveArgs args) {
+        return createMono(() -> topKCommandBuilder.topKReserve(key, k, args));
     }
 
 }

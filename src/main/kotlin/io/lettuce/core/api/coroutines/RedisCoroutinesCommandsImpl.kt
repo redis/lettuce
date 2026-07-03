@@ -59,7 +59,8 @@ open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
     RediSearchCoroutinesCommands<K, V> by RediSearchCoroutinesCommandsImpl(ops),
     RedisArrayCoroutinesCommands<K, V> by RedisArrayCoroutinesCommandsImpl(ops),
     RedisBloomFilterCoroutinesCommands<K, V> by RedisBloomFilterCoroutinesCommandsImpl(ops),
-    RedisCuckooFilterCoroutinesCommands<K, V> by RedisCuckooFilterCoroutinesCommandsImpl(ops) {
+    RedisCuckooFilterCoroutinesCommands<K, V> by RedisCuckooFilterCoroutinesCommandsImpl(ops),
+    RedisTopKCoroutinesCommands<K, V> by RedisTopKCoroutinesCommandsImpl(ops) {
 
 
     /**
