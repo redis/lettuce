@@ -973,7 +973,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftSearch(String, String, SearchArgs)
      */
     @Experimental
-    SearchReply<K, V> ftSearch(String index, String query);
+    SearchReply<K> ftSearch(String index, String query);
 
     /**
      * Search the index with a textual query using advanced search options and filters.
@@ -1024,7 +1024,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    SearchReply<K, V> ftSearch(String index, String query, SearchArgs<K> args);
+    SearchReply<K> ftSearch(String index, String query, SearchArgs<K> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.
@@ -1066,7 +1066,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    AggregationReply<K, V> ftAggregate(String index, String query);
+    AggregationReply<K> ftAggregate(String index, String query);
 
     /**
      * Run a search query on an index and perform advanced aggregate transformations with a processing pipeline.
@@ -1122,7 +1122,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftCursorread(String, Cursor)
      */
     @Experimental
-    AggregationReply<K, V> ftAggregate(String index, String query, AggregateArgs args);
+    AggregationReply<K> ftAggregate(String index, String query, AggregateArgs args);
 
     /**
      * Read next results from an existing cursor and optionally override the batch size.
@@ -1155,7 +1155,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    AggregationReply<K, V> ftCursorread(String index, Cursor cursor, int count);
+    AggregationReply<K> ftCursorread(String index, Cursor cursor, int count);
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -1187,7 +1187,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    AggregationReply<K, V> ftCursorread(String index, Cursor cursor);
+    AggregationReply<K> ftCursorread(String index, Cursor cursor);
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1240,6 +1240,6 @@ public interface RediSearchCommands<K, V> {
      * @since 7.2
      */
     @Experimental
-    HybridReply<K, V> ftHybrid(String index, HybridArgs args);
+    HybridReply ftHybrid(String index, HybridArgs args);
 
 }

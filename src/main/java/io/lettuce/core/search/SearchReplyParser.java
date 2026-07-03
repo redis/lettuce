@@ -35,16 +35,21 @@ import java.util.Map;
  * <li>Total result counts</li>
  * </ul>
  *
- * @param <K> the type of keys used in the search results
- * @param <V> the type of values used in the search results
+ * <p>
+ * Document ids are decoded through the connection's key codec. Field names are schema identifiers (hash field names, JSONPath
+ * expressions or aliases) and are decoded as raw UTF-8; field values are kept as raw bytes so that binary content (for example
+ * vector embeddings) survives the round-trip.
+ * </p>
+ *
+ * @param <K> the type of the document id in the search results
  * @author Redis Ltd.
  * @since 6.8
  */
-public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K, V>> {
+public class SearchReplyParser<K> implements ComplexDataParser<SearchReply<K>> {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SearchReplyParser.class);
 
-    private final RedisCodec<K, V> codec;
+    private final RedisCodec<K, ?> codec;
 
     private final boolean withScores;
 
@@ -57,7 +62,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
      * arguments to determine which components of the search results should be parsed and included in the final
      * {@link SearchReply}.
      *
-     * @param codec the Redis codec used for encoding/decoding keys and values. Must not be {@code null}.
+     * @param codec the Redis codec used for decoding document ids. Must not be {@code null}.
      * @param args the search arguments that determine parsing behavior. If {@code null}, default parsing behavior is used (with
      *        content, without scores, with IDs).
      *        <ul>
@@ -66,7 +71,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
      *        <li>Document IDs are always parsed when using this constructor</li>
      *        </ul>
      */
-    public SearchReplyParser(RedisCodec<K, V> codec, SearchArgs<K> args) {
+    public SearchReplyParser(RedisCodec<K, ?> codec, SearchArgs<K> args) {
         this.codec = codec;
         this.withScores = args != null && args.isWithScores();
         this.withContent = args == null || !args.isNoContent();
@@ -86,9 +91,9 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
      * <li>IDs are not parsed ({@code withIds = false})</li>
      * </ul>
      *
-     * @param codec the Redis codec used for encoding/decoding keys and values. Must not be {@code null}.
+     * @param codec the Redis codec used for decoding document ids. Must not be {@code null}.
      */
-    public SearchReplyParser(RedisCodec<K, V> codec) {
+    public SearchReplyParser(RedisCodec<K, ?> codec) {
         this.codec = codec;
         this.withScores = false;
         this.withContent = true;
@@ -104,7 +109,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
      *         {@link SearchReply} if parsing fails.
      */
     @Override
-    public SearchReply<K, V> parse(ComplexData data) {
+    public SearchReply<K> parse(ComplexData data) {
         try {
             if (data.isList()) {
                 return new Resp2SearchResultsParser().parse(data);
@@ -117,11 +122,17 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
         }
     }
 
-    class Resp2SearchResultsParser implements ComplexDataParser<SearchReply<K, V>> {
+    private static byte[] toBytes(ByteBuffer buffer) {
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.duplicate().get(bytes);
+        return bytes;
+    }
+
+    class Resp2SearchResultsParser implements ComplexDataParser<SearchReply<K>> {
 
         @Override
-        public SearchReply<K, V> parse(ComplexData data) {
-            final SearchReply<K, V> searchReply = new SearchReply<>();
+        public SearchReply<K> parse(ComplexData data) {
+            final SearchReply<K> searchReply = new SearchReply<>();
 
             final List<Object> resultsList = data.getDynamicList();
 
@@ -164,7 +175,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
             return searchReply;
         }
 
-        private void parseResults(SearchReply<K, V> searchReply, List<Object> resultsList) {
+        private void parseResults(SearchReply<K> searchReply, List<Object> resultsList) {
             for (int i = 1; i < resultsList.size();) {
 
                 K id = codec.decodeKey(StringCodec.UTF8.encodeKey("0"));
@@ -173,7 +184,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                     i++;
                 }
 
-                final SearchReply.SearchResult<K, V> searchResult = new SearchReply.SearchResult<>(id);
+                final SearchReply.SearchResult<K> searchResult = new SearchReply.SearchResult<>(id);
 
                 if (withScores) {
                     searchResult.setScore(Double.parseDouble(StringCodec.UTF8.decodeKey((ByteBuffer) resultsList.get(i))));
@@ -185,10 +196,10 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                     List<Object> resultEntries = resultData.getDynamicList();
 
                     for (int idx = 0; idx < resultEntries.size(); idx += 2) {
-                        K decodedKey = codec.decodeKey((ByteBuffer) resultEntries.get(idx));
+                        String fieldName = StringCodec.UTF8.decodeKey((ByteBuffer) resultEntries.get(idx));
                         Object value = resultEntries.get(idx + 1);
-                        V decodedValue = value == null ? null : codec.decodeValue((ByteBuffer) value);
-                        searchResult.addFields(decodedKey, decodedValue);
+                        byte[] fieldValue = value == null ? null : toBytes((ByteBuffer) value);
+                        searchResult.addField(fieldName, fieldValue);
                     }
 
                     i++;
@@ -200,7 +211,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
 
     }
 
-    class Resp3SearchResultsParser implements ComplexDataParser<SearchReply<K, V>> {
+    class Resp3SearchResultsParser implements ComplexDataParser<SearchReply<K>> {
 
         private final ByteBuffer ATTRIBUTES_KEY = StringCodec.UTF8.encodeKey("attributes");
 
@@ -223,8 +234,8 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
         private final ByteBuffer CURSOR_KEY = StringCodec.UTF8.encodeKey("cursor");
 
         @Override
-        public SearchReply<K, V> parse(ComplexData data) {
-            final SearchReply<K, V> searchReply = new SearchReply<>();
+        public SearchReply<K> parse(ComplexData data) {
+            final SearchReply<K> searchReply = new SearchReply<>();
 
             final Map<Object, Object> resultsMap = data.getDynamicMap();
 
@@ -243,7 +254,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                     ComplexData resultData = (ComplexData) result;
                     Map<Object, Object> resultEntry = resultData.getDynamicMap();
 
-                    SearchReply.SearchResult<K, V> searchResult;
+                    SearchReply.SearchResult<K> searchResult;
                     if (resultEntry.containsKey(ID_KEY)) {
                         final K id = codec.decodeKey((ByteBuffer) resultEntry.get(ID_KEY));
                         searchResult = new SearchReply.SearchResult<>(id);
@@ -264,9 +275,9 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                     if (resultEntry.containsKey(EXTRA_ATTRIBUTES_KEY)) {
                         ComplexData extraAttributes = (ComplexData) resultEntry.get(EXTRA_ATTRIBUTES_KEY);
                         extraAttributes.getDynamicMap().forEach((key, value) -> {
-                            K decodedKey = codec.decodeKey((ByteBuffer) key);
-                            V decodedValue = value == null ? null : codec.decodeValue((ByteBuffer) value);
-                            searchResult.addFields(decodedKey, decodedValue);
+                            String fieldName = StringCodec.UTF8.decodeKey((ByteBuffer) key);
+                            byte[] fieldValue = value == null ? null : toBytes((ByteBuffer) value);
+                            searchResult.addField(fieldName, fieldValue);
                         });
                     }
                     searchReply.addResult(searchResult);

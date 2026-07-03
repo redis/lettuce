@@ -993,7 +993,7 @@ public interface NodeSelectionSearchCommands<K, V> {
      * @see #ftSearch(String, String, SearchArgs)
      */
     @Experimental
-    Executions<SearchReply<K, V>> ftSearch(String index, String query);
+    Executions<SearchReply<K>> ftSearch(String index, String query);
 
     /**
      * Search the index with a textual query using advanced search options and filters.
@@ -1044,7 +1044,7 @@ public interface NodeSelectionSearchCommands<K, V> {
      * @see #ftSearch(String, String)
      */
     @Experimental
-    Executions<SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> args);
+    Executions<SearchReply<K>> ftSearch(String index, String query, SearchArgs<K> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.
@@ -1086,7 +1086,7 @@ public interface NodeSelectionSearchCommands<K, V> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    Executions<AggregationReply<K, V>> ftAggregate(String index, String query);
+    Executions<AggregationReply<K>> ftAggregate(String index, String query);
 
     /**
      * Run a search query on an index and perform advanced aggregate transformations with a processing pipeline.
@@ -1142,7 +1142,7 @@ public interface NodeSelectionSearchCommands<K, V> {
      * @see #ftCursorread(String, Cursor)
      */
     @Experimental
-    Executions<AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs args);
+    Executions<AggregationReply<K>> ftAggregate(String index, String query, AggregateArgs args);
 
     /**
      * Read next results from an existing cursor and optionally override the batch size.
@@ -1175,7 +1175,7 @@ public interface NodeSelectionSearchCommands<K, V> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    Executions<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count);
+    Executions<AggregationReply<K>> ftCursorread(String index, Cursor cursor, int count);
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -1207,7 +1207,7 @@ public interface NodeSelectionSearchCommands<K, V> {
      * @see #ftAggregate(String, String, AggregateArgs)
      */
     @Experimental
-    Executions<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor);
+    Executions<AggregationReply<K>> ftCursorread(String index, Cursor cursor);
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1260,6 +1260,6 @@ public interface NodeSelectionSearchCommands<K, V> {
      * @since 7.2
      */
     @Experimental
-    Executions<HybridReply<K, V>> ftHybrid(String index, HybridArgs args);
+    Executions<HybridReply> ftHybrid(String index, HybridArgs args);
 
 }

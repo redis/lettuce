@@ -106,11 +106,11 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.hmset("doc:4", doc4)).isEqualTo("OK");
 
         // First, let's verify the documents are indexed by doing a search
-        SearchReply<String, String> searchResult = redis.ftSearch("basic-test-idx", "*");
+        SearchReply<String> searchResult = redis.ftSearch("basic-test-idx", "*");
         assertThat(searchResult.getCount()).isEqualTo(4); // Verify documents are indexed
 
         // Perform basic aggregation without LOAD - should return empty field maps
-        AggregationReply<String, String> result = redis.ftAggregate("basic-test-idx", "*");
+        AggregationReply<String> result = redis.ftAggregate("basic-test-idx", "*");
 
         assertThat(result).isNotNull();
         // If documents are indexed, we should have 1 aggregation group (no grouping)
@@ -124,7 +124,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                                                                             // the single reply
 
             // Each result should be empty since no LOAD was specified
-            for (SearchReply.SearchResult<String, String> aggregateResult : result.getReplies().get(0).getResults()) {
+            for (SearchReply.SearchResult<String> aggregateResult : result.getReplies().get(0).getResults()) {
                 assertThat(aggregateResult.getFields()).isEmpty();
             }
         } else {
@@ -162,16 +162,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Perform aggregation with arguments - LOAD fields
         AggregateArgs args = AggregateArgs.builder().verbatim().load("title").load("category").build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("args-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("args-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(3); // Should have 3 documents (doc:1, doc:2, doc:3)
 
         // Check that loaded fields are present in results
-        for (SearchReply.SearchResult<String, String> aggregateResult : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> aggregateResult : searchReply.getResults()) {
             assertThat(aggregateResult.getFields().containsKey("title")).isTrue();
             assertThat(aggregateResult.getFields().containsKey("category")).isTrue();
             assertThat(aggregateResult.getFields().get("title")).isNotNull();
@@ -208,16 +208,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Perform aggregation with parameters - requires DIALECT 2
         AggregateArgs args = AggregateArgs.builder().load("title").load("category").param("cat", "electronics").build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("params-test-idx", "@category:$cat", args);
+        AggregationReply<String> result = redis.ftAggregate("params-test-idx", "@category:$cat", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(2); // Should have 2 electronics documents
 
         // All results should be electronics
-        for (SearchReply.SearchResult<String, String> aggregateResult : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> aggregateResult : searchReply.getResults()) {
             assertThat(aggregateResult.getFields().containsKey("title")).isTrue();
             assertThat(aggregateResult.getFields().containsKey("category")).isTrue();
             assertThat(aggregateResult.getFields().get("category")).isEqualTo("electronics");
@@ -248,17 +248,17 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Perform aggregation with LOAD * (load all fields)
         AggregateArgs args = AggregateArgs.builder().loadAll().build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("loadall-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("loadall-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(2); // Should have 2 documents (only doc:1 and doc:2 added
                                                          // in this test)
 
         // Check that all fields are loaded
-        for (SearchReply.SearchResult<String, String> aggregateResult : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> aggregateResult : searchReply.getResults()) {
             assertThat(aggregateResult.getFields().containsKey("title")).isTrue();
             assertThat(aggregateResult.getFields().containsKey("category")).isTrue();
             assertThat(aggregateResult.getFields().get("title")).isNotNull();
@@ -279,7 +279,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Don't add any documents
 
         // Perform aggregation on empty index
-        AggregationReply<String, String> result = redis.ftAggregate("empty-test-idx", "*");
+        AggregationReply<String> result = redis.ftAggregate("empty-test-idx", "*");
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 0 aggregation groups for empty
@@ -342,12 +342,12 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Test basic aggregation with all fields loaded
         AggregateArgs args = AggregateArgs.builder().loadAll().build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("products-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("products-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(4);
 
         // Verify data structure for future aggregation operations
@@ -365,17 +365,17 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                                 .reduce(Reducer.min("@price").as("min_price")).reduce(Reducer.max("@price").as("max_price")))
                 .build();
 
-        AggregationReply<String, String> statsResult = redis.ftAggregate("products-idx", "*", statsArgs);
+        AggregationReply<String> statsResult = redis.ftAggregate("products-idx", "*", statsArgs);
 
         assertThat(statsResult).isNotNull();
         assertThat(statsResult.getAggregationGroups()).isEqualTo(1); // smartphones and laptops
         assertThat(statsResult.getReplies()).hasSize(1);
 
-        SearchReply<String, String> statsReply = statsResult.getReplies().get(0);
+        SearchReply<String> statsReply = statsResult.getReplies().get(0);
         assertThat(statsReply.getResults()).hasSize(2);
 
         // Verify each category group has the expected statistics fields
-        for (SearchReply.SearchResult<String, String> group : statsReply.getResults()) {
+        for (SearchReply.SearchResult<String> group : statsReply.getResults()) {
             assertThat(group.getFields()).containsKeys("category", "count", "avg_price", "min_price", "max_price");
 
             // Verify the values make sense (e.g., min_price <= avg_price <= max_price)
@@ -391,17 +391,17 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs mathArgs = AggregateArgs.builder().load("title").load("price").load("stock").load("rating")
                 .apply("@price * @stock", "inventory_value").apply("ceil(@rating)", "rating_rounded").build();
 
-        AggregationReply<String, String> mathResult = redis.ftAggregate("products-idx", "*", mathArgs);
+        AggregationReply<String> mathResult = redis.ftAggregate("products-idx", "*", mathArgs);
 
         assertThat(mathResult).isNotNull();
         assertThat(mathResult.getAggregationGroups()).isEqualTo(1);
         assertThat(mathResult.getReplies()).hasSize(1);
 
-        SearchReply<String, String> mathReply = mathResult.getReplies().get(0);
+        SearchReply<String> mathReply = mathResult.getReplies().get(0);
         assertThat(mathReply.getResults()).hasSize(4);
 
         // Verify computed fields exist and have correct values
-        for (SearchReply.SearchResult<String, String> item : mathReply.getResults()) {
+        for (SearchReply.SearchResult<String> item : mathReply.getResults()) {
             assertThat(item.getFields()).containsKeys("title", "price", "stock", "rating", "inventory_value", "rating_rounded");
 
             // Verify inventory_value = price * stock
@@ -420,22 +420,22 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs filterArgs = AggregateArgs.builder().load("title").load("price").load("rating").filter("@price > 1000")
                 .sortBy("rating", SortDirection.DESC).build();
 
-        AggregationReply<String, String> filterResult = redis.ftAggregate("products-idx", "*", filterArgs);
+        AggregationReply<String> filterResult = redis.ftAggregate("products-idx", "*", filterArgs);
 
         assertThat(filterResult).isNotNull();
         assertThat(filterResult.getReplies()).hasSize(1);
 
-        SearchReply<String, String> filterReply = filterResult.getReplies().get(0);
+        SearchReply<String> filterReply = filterResult.getReplies().get(0);
 
         // Verify all returned items have price > 1000
-        for (SearchReply.SearchResult<String, String> item : filterReply.getResults()) {
+        for (SearchReply.SearchResult<String> item : filterReply.getResults()) {
             double price = Double.parseDouble(item.getFields().get("price"));
             assertThat(price).isGreaterThan(1000);
         }
 
         // Verify results are sorted by rating in descending order
         if (filterReply.getResults().size() >= 2) {
-            List<SearchReply.SearchResult<String, String>> results = filterReply.getResults();
+            List<SearchReply.SearchResult<String>> results = filterReply.getResults();
             for (int i = 0; i < results.size() - 1; i++) {
                 double rating1 = Double.parseDouble(results.get(i).getFields().get("rating"));
                 double rating2 = Double.parseDouble(results.get(i + 1).getFields().get("rating"));
@@ -450,21 +450,21 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 .sortBy("avg_rating", SortDirection.DESC).limit(0, 3) // Skip 0, take 3
                 .build();
 
-        AggregationReply<String, String> complexResult = redis.ftAggregate("products-idx", "*", complexArgs);
+        AggregationReply<String> complexResult = redis.ftAggregate("products-idx", "*", complexArgs);
 
         assertThat(complexResult).isNotNull();
         assertThat(complexResult.getReplies()).hasSize(1);
 
-        SearchReply<String, String> complexReply = complexResult.getReplies().get(0);
+        SearchReply<String> complexReply = complexResult.getReplies().get(0);
 
         // Verify each brand group has the expected fields
-        for (SearchReply.SearchResult<String, String> group : complexReply.getResults()) {
+        for (SearchReply.SearchResult<String> group : complexReply.getResults()) {
             assertThat(group.getFields()).containsKeys("brand", "product_count", "avg_rating", "total_stock");
         }
 
         // Verify results are sorted by avg_rating in descending order
         if (complexReply.getResults().size() >= 2) {
-            List<SearchReply.SearchResult<String, String>> results = complexReply.getResults();
+            List<SearchReply.SearchResult<String>> results = complexReply.getResults();
             for (int i = 0; i < results.size() - 1; i++) {
                 double rating1 = Double.parseDouble(results.get(i).getFields().get("avg_rating"));
                 double rating2 = Double.parseDouble(results.get(i + 1).getFields().get("avg_rating"));
@@ -479,15 +479,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs stringArgs = AggregateArgs.builder().load("title").load("brand").apply("upper(@brand)", "brand_upper")
                 .apply("substr(@title, 0, 10)", "title_short").build();
 
-        AggregationReply<String, String> stringResult = redis.ftAggregate("products-idx", "*", stringArgs);
+        AggregationReply<String> stringResult = redis.ftAggregate("products-idx", "*", stringArgs);
 
         assertThat(stringResult).isNotNull();
         assertThat(stringResult.getReplies()).hasSize(1);
 
-        SearchReply<String, String> stringReply = stringResult.getReplies().get(0);
+        SearchReply<String> stringReply = stringResult.getReplies().get(0);
 
         // Verify string operations are applied correctly
-        for (SearchReply.SearchResult<String, String> item : stringReply.getResults()) {
+        for (SearchReply.SearchResult<String> item : stringReply.getResults()) {
             assertThat(item.getFields()).containsKeys("title", "brand", "brand_upper", "title_short");
 
             // Verify brand_upper is uppercase of brand
@@ -553,22 +553,22 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                         .reduce(Reducer.sum("@sales").as("total_sales")).reduce(Reducer.sum("@profit").as("total_profit")))
                 .sortBy("total_sales", SortDirection.DESC).build();
 
-        AggregationReply<String, String> nestedResult = redis.ftAggregate("sales-idx", "*", nestedArgs);
+        AggregationReply<String> nestedResult = redis.ftAggregate("sales-idx", "*", nestedArgs);
 
         assertThat(nestedResult).isNotNull();
         assertThat(nestedResult.getReplies()).hasSize(1);
 
-        SearchReply<String, String> nestedReply = nestedResult.getReplies().get(0);
+        SearchReply<String> nestedReply = nestedResult.getReplies().get(0);
 
         // Verify each group has the expected fields
-        for (SearchReply.SearchResult<String, String> group : nestedReply.getResults()) {
+        for (SearchReply.SearchResult<String> group : nestedReply.getResults()) {
             assertThat(group.getFields()).containsKeys("department", "category", "product_count", "total_sales",
                     "total_profit");
         }
 
         // Verify results are sorted by total_sales in descending order
         if (nestedReply.getResults().size() >= 2) {
-            List<SearchReply.SearchResult<String, String>> results = nestedReply.getResults();
+            List<SearchReply.SearchResult<String>> results = nestedReply.getResults();
             for (int i = 0; i < results.size() - 1; i++) {
                 double sales1 = Double.parseDouble(results.get(i).getFields().get("total_sales"));
                 double sales2 = Double.parseDouble(results.get(i + 1).getFields().get("total_sales"));
@@ -622,15 +622,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs filterArgs = AggregateArgs.builder().loadAll().filter("@score > 80 && @age < 12")
                 .apply("@score * 0.1", "normalized_score").sortBy("score", SortDirection.DESC).build();
 
-        AggregationReply<String, String> filterResult = redis.ftAggregate("tasks-idx", "*", filterArgs);
+        AggregationReply<String> filterResult = redis.ftAggregate("tasks-idx", "*", filterArgs);
 
         assertThat(filterResult).isNotNull();
         assertThat(filterResult.getReplies()).hasSize(1);
 
-        SearchReply<String, String> filterReply = filterResult.getReplies().get(0);
+        SearchReply<String> filterReply = filterResult.getReplies().get(0);
 
         // Verify all returned items meet the filter criteria
-        for (SearchReply.SearchResult<String, String> item : filterReply.getResults()) {
+        for (SearchReply.SearchResult<String> item : filterReply.getResults()) {
             double score = Double.parseDouble(item.getFields().get("score"));
             double age = Double.parseDouble(item.getFields().get("age"));
 
@@ -678,16 +678,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                         .reduce(Reducer.max("@temperature").as("max_temp")))
                 .build();
 
-        AggregationReply<String, String> statsResult = redis.ftAggregate("weather-idx", "*", statsArgs);
+        AggregationReply<String> statsResult = redis.ftAggregate("weather-idx", "*", statsArgs);
 
         assertThat(statsResult).isNotNull();
         assertThat(statsResult.getReplies()).hasSize(1);
 
-        SearchReply<String, String> statsReply = statsResult.getReplies().get(0);
+        SearchReply<String> statsReply = statsResult.getReplies().get(0);
         assertThat(statsReply.getResults()).hasSize(2); // north and south regions
 
         // Verify each region has the expected statistical fields
-        for (SearchReply.SearchResult<String, String> region : statsReply.getResults()) {
+        for (SearchReply.SearchResult<String> region : statsReply.getResults()) {
             assertThat(region.getFields()).containsKeys("region", "count", "avg_temp", "min_temp", "max_temp");
 
             // Verify statistical relationships
@@ -722,12 +722,12 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Test with timeout parameter
         AggregateArgs args = AggregateArgs.builder().load("title").timeout(Duration.ofSeconds(5)).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("timeout-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("timeout-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1);
         assertThat(searchReply.getResults().get(0).getFields().get("title")).isEqualTo("Test Document");
 
@@ -776,16 +776,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs args = AggregateArgs.builder().groupBy(GroupBy.of("category").reduce(Reducer.count().as("count")))
                 .build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("groupby-agg-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("groupby-agg-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all groups
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(2); // Should have 2 group results
 
         // Verify group results contain category and count fields
         // Based on redis-cli testing: electronics=2, computers=2
-        for (SearchReply.SearchResult<String, String> group : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> group : searchReply.getResults()) {
             assertThat(group.getFields()).containsKey("category");
             assertThat(group.getFields()).containsKey("count");
             assertThat(group.getFields().get("count")).isIn("1", "2"); // computers=2, electronics=2
@@ -836,15 +836,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs args = AggregateArgs.builder().groupBy(GroupBy.of("category").reduce(Reducer.count().as("count"))
                 .reduce(Reducer.avg("@price").as("avg_price")).reduce(Reducer.sum("@stock").as("total_stock"))).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("multi-reducer-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("multi-reducer-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all groups
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(2);
 
         // Verify each group has all reducer results
-        for (SearchReply.SearchResult<String, String> group : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> group : searchReply.getResults()) {
             assertThat(group.getFields()).containsKey("category");
             assertThat(group.getFields()).containsKey("count");
             assertThat(group.getFields()).containsKey("avg_price");
@@ -885,16 +885,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Perform aggregation with SORTBY price DESC
         AggregateArgs args = AggregateArgs.builder().loadAll().sortBy("price", SortDirection.DESC).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("sortby-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("sortby-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(3);
 
         // Verify results are sorted by price in descending order
-        List<SearchReply.SearchResult<String, String>> results = searchReply.getResults();
+        List<SearchReply.SearchResult<String>> results = searchReply.getResults();
         assertThat(results.get(0).getFields().get("price")).isEqualTo("300"); // Highest price first
         assertThat(results.get(1).getFields().get("price")).isEqualTo("200");
         assertThat(results.get(2).getFields().get("price")).isEqualTo("100"); // Lowest price last
@@ -927,16 +927,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs args = AggregateArgs.builder().load("title").load("price").load("quantity")
                 .apply("@price * @quantity", "total_value").build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("apply-agg-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("apply-agg-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(2);
 
         // Verify computed field exists
-        for (SearchReply.SearchResult<String, String> item : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> item : searchReply.getResults()) {
             assertThat(item.getFields()).containsKey("total_value");
             assertThat(item.getFields()).containsKey("title");
             assertThat(item.getFields()).containsKey("price");
@@ -966,16 +966,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs args = AggregateArgs.builder().loadAll().sortBy("score", SortDirection.DESC).limit(2, 3) // Skip 2, take 3
                 .build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("limit-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("limit-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(3); // Should return exactly 3 results
 
         // Verify we got the correct subset - let's check what we actually get
-        List<SearchReply.SearchResult<String, String>> results = searchReply.getResults();
+        List<SearchReply.SearchResult<String>> results = searchReply.getResults();
         // The results should be sorted in descending order and limited to 3 items
         // starting from offset 2
         // So we should get items with scores: 80, 70, 60 (3rd, 4th, 5th highest)
@@ -1017,16 +1017,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Perform aggregation with FILTER for high-rated items
         AggregateArgs args = AggregateArgs.builder().loadAll().filter("@rating >= 4.0").build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("filter-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("filter-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(2); // Should filter to 2 items with rating >= 4.0
 
         // Verify all returned items have rating >= 4.0
-        for (SearchReply.SearchResult<String, String> item : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> item : searchReply.getResults()) {
             double rating = Double.parseDouble(item.getFields().get("rating"));
             assertThat(rating).isGreaterThanOrEqualTo(4.0);
         }
@@ -1061,22 +1061,22 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Perform aggregation with cursor
         AggregateArgs args = AggregateArgs.builder().loadAll().withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("cursor-basic-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("cursor-basic-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getCursor()).isPresent();
         assertThat(result.getCursor().get().getCursorId()).isNotEqualTo(0L); // Should have a valid cursor ID
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(2); // Should return 2 results per page
 
         // Read next page from cursor
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-basic-test-idx", result.getCursor().get());
+        AggregationReply<String> nextResult = redis.ftCursorread("cursor-basic-test-idx", result.getCursor().get());
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
-        SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
+        SearchReply<String> nextSearchReply = nextResult.getReplies().get(0);
         assertThat(nextSearchReply.getResults()).hasSize(1); // Should return remaining 1 result
         assertThat(nextResult.getCursor()).isPresent();
         assertThat(nextResult.getCursor().get().getCursorId()).isEqualTo(0L); // Should indicate end of results
@@ -1103,34 +1103,33 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Perform aggregation with cursor and custom count
         AggregateArgs args = AggregateArgs.builder().loadAll().withCursor(AggregateArgs.WithCursor.of(3L)).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("cursor-count-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("cursor-count-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getCursor()).isPresent();
         assertThat(result.getCursor().get().getCursorId()).isNotEqualTo(0L);
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(3); // Should return 3 results per page
 
         // Read next page with different count
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-count-test-idx", result.getCursor().get(), 5);
+        AggregationReply<String> nextResult = redis.ftCursorread("cursor-count-test-idx", result.getCursor().get(), 5);
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
-        SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
+        SearchReply<String> nextSearchReply = nextResult.getReplies().get(0);
         assertThat(nextSearchReply.getResults()).hasSize(5); // Should return 5 results as specified
         assertThat(nextResult.getCursor()).isPresent();
         assertThat(nextResult.getCursor().get().getCursorId()).isNotEqualTo(0L); // Should still have more
                                                                                  // results
 
         // Read final page
-        AggregationReply<String, String> finalResult = redis.ftCursorread("cursor-count-test-idx",
-                nextResult.getCursor().get());
+        AggregationReply<String> finalResult = redis.ftCursorread("cursor-count-test-idx", nextResult.getCursor().get());
 
         assertThat(finalResult).isNotNull();
         assertThat(finalResult.getReplies()).hasSize(1); // Should have 1 SearchReply
-        SearchReply<String, String> finalSearchReply = finalResult.getReplies().get(0);
+        SearchReply<String> finalSearchReply = finalResult.getReplies().get(0);
         assertThat(finalSearchReply.getResults()).hasSize(2); // Should return remaining 2 results
         assertThat(finalResult.getCursor()).isPresent();
         assertThat(finalResult.getCursor().get().getCursorId()).isEqualTo(0L); // Should indicate end of results
@@ -1156,18 +1155,18 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs args = AggregateArgs.builder().loadAll()
                 .withCursor(AggregateArgs.WithCursor.of(2L, Duration.ofSeconds(10))).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("cursor-maxidle-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("cursor-maxidle-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getCursor()).isPresent();
         assertThat(result.getCursor().get().getCursorId()).isNotEqualTo(0L);
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(2);
 
         // Read from cursor should work within timeout
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-maxidle-test-idx", result.getCursor().get());
+        AggregationReply<String> nextResult = redis.ftCursorread("cursor-maxidle-test-idx", result.getCursor().get());
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
@@ -1193,7 +1192,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Perform aggregation with cursor
         AggregateArgs args = AggregateArgs.builder().loadAll().withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("cursor-delete-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("cursor-delete-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1);
@@ -1228,25 +1227,24 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs args = AggregateArgs.builder().loadAll().sortBy("id", AggregateArgs.SortDirection.ASC)
                 .withCursor(AggregateArgs.WithCursor.of(4L)).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("cursor-pagination-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("cursor-pagination-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getCursor()).isPresent();
         assertThat(result.getCursor().get().getCursorId()).isNotEqualTo(0L);
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(4);
 
         // Collect all results by paginating through cursor
-        List<SearchReply.SearchResult<String, String>> allResults = new ArrayList<>(searchReply.getResults());
-        AggregationReply<String, String> current = result;
+        List<SearchReply.SearchResult<String>> allResults = new ArrayList<>(searchReply.getResults());
+        AggregationReply<String> current = result;
         while (current.getCursor().isPresent() && current.getCursor().get().getCursorId() != 0L) {
-            AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-pagination-test-idx",
-                    current.getCursor().get());
+            AggregationReply<String> nextResult = redis.ftCursorread("cursor-pagination-test-idx", current.getCursor().get());
             assertThat(nextResult).isNotNull();
             assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
-            SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
+            SearchReply<String> nextSearchReply = nextResult.getReplies().get(0);
 
             allResults.addAll(nextSearchReply.getResults());
             current = nextResult;
@@ -1315,35 +1313,34 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                         .reduce(AggregateArgs.Reducer.avg("@price").as("avg_price")))
                 .withCursor(AggregateArgs.WithCursor.of(1L)).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("cursor-complex-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("cursor-complex-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getCursor()).isPresent();
         assertThat(result.getCursor().get().getCursorId()).isNotEqualTo(0L);
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1); // Should return 1 group per page
 
         // Verify first group has expected fields
-        SearchReply.SearchResult<String, String> firstGroup = searchReply.getResults().get(0);
+        SearchReply.SearchResult<String> firstGroup = searchReply.getResults().get(0);
         assertThat(firstGroup.getFields()).containsKey("category");
         assertThat(firstGroup.getFields()).containsKey("count");
         assertThat(firstGroup.getFields()).containsKey("avg_price");
 
         // Read next group from cursor
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-complex-test-idx", result.getCursor().get());
+        AggregationReply<String> nextResult = redis.ftCursorread("cursor-complex-test-idx", result.getCursor().get());
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
-        SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
+        SearchReply<String> nextSearchReply = nextResult.getReplies().get(0);
         assertThat(nextSearchReply.getResults()).hasSize(1); // Should return second group
         // RediSearch may either omit the cursor on the final page, or return a non-zero
         // cursor
         // that requires one more empty READ to return 0. Be tolerant across versions.
         long effective = nextResult.getCursor().map(AggregationReply.Cursor::getCursorId).orElse(0L);
         if (effective != 0L) {
-            AggregationReply<String, String> finalPage = redis.ftCursorread("cursor-complex-test-idx",
-                    nextResult.getCursor().get());
+            AggregationReply<String> finalPage = redis.ftCursorread("cursor-complex-test-idx", nextResult.getCursor().get());
             assertThat(finalPage).isNotNull();
             assertThat(finalPage.getReplies()).hasSize(1);
             assertThat(finalPage.getReplies().get(0).getResults()).isEmpty();
@@ -1351,7 +1348,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Verify second group has expected fields
-        SearchReply.SearchResult<String, String> secondGroup = nextSearchReply.getResults().get(0);
+        SearchReply.SearchResult<String> secondGroup = nextSearchReply.getResults().get(0);
         assertThat(secondGroup.getFields()).containsKey("category");
         assertThat(secondGroup.getFields()).containsKey("count");
         assertThat(secondGroup.getFields()).containsKey("avg_price");
@@ -1371,7 +1368,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Perform aggregation with cursor on empty index
         AggregateArgs args = AggregateArgs.builder().loadAll().withCursor(AggregateArgs.WithCursor.of(5L)).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("cursor-empty-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("cursor-empty-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 0 aggregation groups for empty
@@ -1445,15 +1442,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                         .reduce(Reducer.countDistinct("@role").as("role_diversity")))
                 .sortBy("avg_salary", SortDirection.DESC).build();
 
-        AggregationReply<String, String> deptStatsResult = redis.ftAggregate("groupby-advanced-test-idx", "*", deptStatsArgs);
+        AggregationReply<String> deptStatsResult = redis.ftAggregate("groupby-advanced-test-idx", "*", deptStatsArgs);
 
         assertThat(deptStatsResult).isNotNull();
         assertThat(deptStatsResult.getReplies()).hasSize(1);
-        SearchReply<String, String> deptStatsReply = deptStatsResult.getReplies().get(0);
+        SearchReply<String> deptStatsReply = deptStatsResult.getReplies().get(0);
         assertThat(deptStatsReply.getResults()).hasSize(2); // Engineering and Marketing departments
 
         // Verify each department group has all expected statistical fields
-        for (SearchReply.SearchResult<String, String> deptGroup : deptStatsReply.getResults()) {
+        for (SearchReply.SearchResult<String> deptGroup : deptStatsReply.getResults()) {
             assertThat(deptGroup.getFields()).containsKeys("department", "employee_count", "total_salary", "avg_salary",
                     "min_salary", "max_salary", "avg_performance", "role_diversity");
 
@@ -1477,18 +1474,18 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                         .reduce(Reducer.avg("@performance_score").as("avg_performance")))
                 .sortBy("avg_salary", SortDirection.DESC).build();
 
-        AggregationReply<String, String> multiGroupResult = redis.ftAggregate("groupby-advanced-test-idx", "*", multiGroupArgs);
+        AggregationReply<String> multiGroupResult = redis.ftAggregate("groupby-advanced-test-idx", "*", multiGroupArgs);
 
         assertThat(multiGroupResult).isNotNull();
         assertThat(multiGroupResult.getReplies()).hasSize(1);
-        SearchReply<String, String> multiGroupReply = multiGroupResult.getReplies().get(0);
+        SearchReply<String> multiGroupReply = multiGroupResult.getReplies().get(0);
 
         // Should have 4 groups: Engineering-Senior, Engineering-Junior,
         // Marketing-Senior, Marketing-Junior
         assertThat(multiGroupReply.getResults()).hasSize(4);
 
         // Verify each group has the expected fields
-        for (SearchReply.SearchResult<String, String> group : multiGroupReply.getResults()) {
+        for (SearchReply.SearchResult<String> group : multiGroupReply.getResults()) {
             assertThat(group.getFields()).containsKeys("department", "role", "count", "avg_salary", "avg_performance");
 
             // Verify department and role combinations are valid (Redis may normalize to
@@ -1531,15 +1528,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                                                                                          // 5 results
                 .build();
 
-        AggregationReply<String, String> basicSortResult = redis.ftAggregate("sortby-max-test-idx", "*", basicSortArgs);
+        AggregationReply<String> basicSortResult = redis.ftAggregate("sortby-max-test-idx", "*", basicSortArgs);
 
         assertThat(basicSortResult).isNotNull();
         assertThat(basicSortResult.getReplies()).hasSize(1);
-        SearchReply<String, String> basicSortReply = basicSortResult.getReplies().get(0);
+        SearchReply<String> basicSortReply = basicSortResult.getReplies().get(0);
         assertThat(basicSortReply.getResults()).hasSize(5); // Limited to 5 results
 
         // Verify results are sorted by price in descending order
-        List<SearchReply.SearchResult<String, String>> sortedResults = basicSortReply.getResults();
+        List<SearchReply.SearchResult<String>> sortedResults = basicSortReply.getResults();
         assertThat(sortedResults).isNotEmpty();
 
         // Check that we have the expected number of results
@@ -1562,15 +1559,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregateArgs maxSortArgs = AggregateArgs.builder().loadAll()
                 .sortBy(AggregateArgs.SortBy.of("rating", SortDirection.DESC).max(10)).build();
 
-        AggregationReply<String, String> maxSortResult = redis.ftAggregate("sortby-max-test-idx", "*", maxSortArgs);
+        AggregationReply<String> maxSortResult = redis.ftAggregate("sortby-max-test-idx", "*", maxSortArgs);
 
         assertThat(maxSortResult).isNotNull();
         assertThat(maxSortResult.getReplies()).hasSize(1);
-        SearchReply<String, String> maxSortReply = maxSortResult.getReplies().get(0);
+        SearchReply<String> maxSortReply = maxSortResult.getReplies().get(0);
         assertThat(maxSortReply.getResults()).hasSize(10); // Limited by MAX to 10 results
 
         // Verify results are sorted by rating in descending order
-        List<SearchReply.SearchResult<String, String>> maxSortedResults = maxSortReply.getResults();
+        List<SearchReply.SearchResult<String>> maxSortedResults = maxSortReply.getResults();
         for (int i = 0; i < maxSortedResults.size() - 1; i++) {
             double rating1 = Double.parseDouble(maxSortedResults.get(i).getFields().get("rating"));
             double rating2 = Double.parseDouble(maxSortedResults.get(i + 1).getFields().get("rating"));
@@ -1623,16 +1620,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                         .reduce(Reducer.countDistinct("@product_type").as("product_diversity")))
                 .sortBy("total_revenue", SortDirection.DESC).build();
 
-        AggregationReply<String, String> regionStatsResult = redis.ftAggregate("groupby-complex-test-idx", "*",
-                regionStatsArgs);
+        AggregationReply<String> regionStatsResult = redis.ftAggregate("groupby-complex-test-idx", "*", regionStatsArgs);
 
         assertThat(regionStatsResult).isNotNull();
         assertThat(regionStatsResult.getReplies()).hasSize(1);
-        SearchReply<String, String> regionStatsReply = regionStatsResult.getReplies().get(0);
+        SearchReply<String> regionStatsReply = regionStatsResult.getReplies().get(0);
         assertThat(regionStatsReply.getResults()).hasSize(4); // 4 regions
 
         // Verify each region group has all expected fields and valid statistics
-        for (SearchReply.SearchResult<String, String> regionGroup : regionStatsReply.getResults()) {
+        for (SearchReply.SearchResult<String> regionGroup : regionStatsReply.getResults()) {
             assertThat(regionGroup.getFields()).containsKeys("region", "total_records", "total_revenue", "avg_revenue",
                     "min_revenue", "max_revenue", "total_units", "avg_profit_margin", "product_diversity");
 
@@ -1660,15 +1656,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                         .reduce(Reducer.avg("@profit_margin").as("avg_margin")))
                 .sortBy("avg_revenue", SortDirection.DESC).build();
 
-        AggregationReply<String, String> multiDimResult = redis.ftAggregate("groupby-complex-test-idx", "*", multiDimArgs);
+        AggregationReply<String> multiDimResult = redis.ftAggregate("groupby-complex-test-idx", "*", multiDimArgs);
 
         assertThat(multiDimResult).isNotNull();
         assertThat(multiDimResult.getReplies()).hasSize(1);
-        SearchReply<String, String> multiDimReply = multiDimResult.getReplies().get(0);
+        SearchReply<String> multiDimReply = multiDimResult.getReplies().get(0);
         assertThat(multiDimReply.getResults()).hasSize(8); // 4 regions × 2 product types = 8 combinations
 
         // Verify each combination group has expected fields
-        for (SearchReply.SearchResult<String, String> comboGroup : multiDimReply.getResults()) {
+        for (SearchReply.SearchResult<String> comboGroup : multiDimReply.getResults()) {
             assertThat(comboGroup.getFields()).containsKeys("region", "product_type", "record_count", "avg_revenue",
                     "avg_units", "avg_margin");
 
@@ -1721,15 +1717,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 .limit(0, 8) // Get top 8 players
                 .build();
 
-        AggregationReply<String, String> multiSortResult = redis.ftAggregate("sortby-multi-test-idx", "*", multiSortArgs);
+        AggregationReply<String> multiSortResult = redis.ftAggregate("sortby-multi-test-idx", "*", multiSortArgs);
 
         assertThat(multiSortResult).isNotNull();
         assertThat(multiSortResult.getReplies()).hasSize(1);
-        SearchReply<String, String> multiSortReply = multiSortResult.getReplies().get(0);
+        SearchReply<String> multiSortReply = multiSortResult.getReplies().get(0);
         assertThat(multiSortReply.getResults()).hasSize(8); // Limited to 8 results
 
         // Verify results are sorted correctly by score DESC, then assists DESC
-        List<SearchReply.SearchResult<String, String>> sortedPlayers = multiSortReply.getResults();
+        List<SearchReply.SearchResult<String>> sortedPlayers = multiSortReply.getResults();
         for (int i = 0; i < sortedPlayers.size() - 1; i++) {
             int score1 = Integer.parseInt(sortedPlayers.get(i).getFields().get("score"));
             int score2 = Integer.parseInt(sortedPlayers.get(i + 1).getFields().get("score"));
@@ -1746,7 +1742,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Verify all results have the expected fields
-        for (SearchReply.SearchResult<String, String> player : sortedPlayers) {
+        for (SearchReply.SearchResult<String> player : sortedPlayers) {
             assertThat(player.getFields()).containsKeys("team", "player", "score", "assists", "rebounds");
             String team = player.getFields().get("team");
             assertThat(team.toLowerCase()).isIn("lakers", "warriors", "celtics");
@@ -1802,18 +1798,18 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 .sortBy("category_total", SortDirection.DESC) // Sort by category total
                 .build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("pipeline-order-test-idx", "*", args);
+        AggregationReply<String> result = redis.ftAggregate("pipeline-order-test-idx", "*", args);
 
         assertThat(result).isNotNull();
         assertThat(result.getReplies()).hasSize(1);
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
 
         // Should have only electronics category since books total_value (50*10=500) <
         // 550
         // but electronics products (100*5=500, 200*3=600) both > 550
         assertThat(searchReply.getResults()).hasSize(1);
 
-        SearchReply.SearchResult<String, String> electronicsGroup = searchReply.getResults().get(0);
+        SearchReply.SearchResult<String> electronicsGroup = searchReply.getResults().get(0);
         assertThat(electronicsGroup.getFields().get("category")).isEqualTo("electronics");
         assertThat(electronicsGroup.getFields().get("product_count")).isEqualTo("1");
         assertThat(electronicsGroup.getFields().get("category_total")).isEqualTo("600");
@@ -1880,17 +1876,17 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // Apply another transformation for price tier calculation
                 .apply("@avg_price / 100", "price_tier").build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("reentrant-pipeline-idx", "*", complexArgs);
+        AggregationReply<String> result = redis.ftAggregate("reentrant-pipeline-idx", "*", complexArgs);
 
         assertThat(result).isNotNull();
         assertThat(result.getReplies()).hasSize(1);
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
 
         // Should have results (electronics should be top performer)
         assertThat(searchReply.getResults()).isNotEmpty();
 
         // Verify the pipeline operations were applied in correct order
-        SearchReply.SearchResult<String, String> topCategory = searchReply.getResults().get(0);
+        SearchReply.SearchResult<String> topCategory = searchReply.getResults().get(0);
         assertThat(topCategory.getFields()).containsKey("category");
         assertThat(topCategory.getFields()).containsKey("performance_score");
         assertThat(topCategory.getFields()).containsKey("price_tier");
@@ -1965,17 +1961,17 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // Third FILTER: Final filter
                 .filter("@dept_count > 0").build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("repeated-ops-idx", "*", repeatedOpsArgs);
+        AggregationReply<String> result = redis.ftAggregate("repeated-ops-idx", "*", repeatedOpsArgs);
 
         assertThat(result).isNotNull();
         assertThat(result.getReplies()).hasSize(1);
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
 
         // Should have results showing performance classes
         assertThat(searchReply.getResults()).isNotEmpty();
 
         // Verify the repeated operations worked correctly
-        for (SearchReply.SearchResult<String, String> efficiencyGroup : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> efficiencyGroup : searchReply.getResults()) {
             assertThat(efficiencyGroup.getFields()).containsKey("efficiency_ratio");
             assertThat(efficiencyGroup.getFields()).containsKey("dept_count");
             assertThat(efficiencyGroup.getFields()).containsKey("class_avg_salary");
@@ -2054,17 +2050,17 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // Final transformation and filtering
                 .apply("@tier_total_revenue / @tier_count", "revenue_efficiency").filter("@tier_count > 0").build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("interleaved-ops-idx", "*", interleavedArgs);
+        AggregationReply<String> result = redis.ftAggregate("interleaved-ops-idx", "*", interleavedArgs);
 
         assertThat(result).isNotNull();
         assertThat(result.getReplies()).hasSize(1);
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
 
         // Should have results showing value tiers
         assertThat(searchReply.getResults()).isNotEmpty();
 
         // Verify the complex interleaved operations worked correctly
-        for (SearchReply.SearchResult<String, String> valueGroup : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> valueGroup : searchReply.getResults()) {
             assertThat(valueGroup.getFields()).containsKey("value_score");
             assertThat(valueGroup.getFields()).containsKey("tier_count");
             assertThat(valueGroup.getFields()).containsKey("tier_total_revenue");
@@ -2153,17 +2149,17 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // Fifth filter: Final filter for meaningful tiers
                 .filter("@tier_category_count > 0").limit(0, 5).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("multi-filter-sort-idx", "*", multiFilterSortArgs);
+        AggregationReply<String> result = redis.ftAggregate("multi-filter-sort-idx", "*", multiFilterSortArgs);
 
         assertThat(result).isNotNull();
         assertThat(result.getReplies()).hasSize(1);
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
 
         // Should have results showing category tiers
         assertThat(searchReply.getResults()).isNotEmpty();
 
         // Verify the multiple filters and sorts worked correctly
-        for (SearchReply.SearchResult<String, String> categoryGroup : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> categoryGroup : searchReply.getResults()) {
             assertThat(categoryGroup.getFields()).containsKey("category_score");
             assertThat(categoryGroup.getFields()).containsKey("tier_category_count");
             assertThat(categoryGroup.getFields()).containsKey("tier_inventory_value");
@@ -2278,17 +2274,17 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
                 .build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("advanced-pipeline-idx", "*", advancedArgs);
+        AggregationReply<String> result = redis.ftAggregate("advanced-pipeline-idx", "*", advancedArgs);
 
         assertThat(result).isNotNull();
         assertThat(result.getReplies()).hasSize(1);
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
 
         // Should have results showing business impact analysis
         assertThat(searchReply.getResults()).isNotEmpty();
 
         // Verify the advanced dynamic pipeline worked correctly
-        for (SearchReply.SearchResult<String, String> impactGroup : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> impactGroup : searchReply.getResults()) {
             // Verify all computed fields are present
             assertThat(impactGroup.getFields()).containsKey("business_impact_score");
             assertThat(impactGroup.getFields()).containsKey("impact_segment_count");
@@ -2348,16 +2344,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         AggregateArgs aggargs = AggregateArgs.builder().loadAll().groupBy(groupBy).dialect(QueryDialects.DIALECT2).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("args-test-idx", "*", aggargs);
+        AggregationReply<String> result = redis.ftAggregate("args-test-idx", "*", aggargs);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(2); // Should have 2 documents (doc:1, doc:2)
 
         // Check that loaded fields are present in results
-        for (SearchReply.SearchResult<String, String> aggregateResult : searchReply.getResults()) {
+        for (SearchReply.SearchResult<String> aggregateResult : searchReply.getResults()) {
             assertThat(aggregateResult.getFields().containsKey("country")).isTrue();
             assertThat(aggregateResult.getFields().containsKey("city")).isTrue();
             assertThat(aggregateResult.getFields().containsKey("office")).isTrue();
@@ -2398,16 +2394,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         AggregateArgs aggArgs = AggregateArgs.builder().loadAll().groupBy(groupBy).dialect(QueryDialects.DIALECT2).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate("args-test-idx", "*", aggArgs);
+        AggregationReply<String> result = redis.ftAggregate("args-test-idx", "*", aggArgs);
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1); // Should have 1 documents (doc:1)
 
         // Check that loaded fields are present in results
-        SearchReply.SearchResult<String, String> aggregateResult = searchReply.getResults().get(0);
+        SearchReply.SearchResult<String> aggregateResult = searchReply.getResults().get(0);
         assertThat(aggregateResult.getFields().containsKey("country")).isTrue();
         assertThat(aggregateResult.getFields().containsKey("city")).isTrue();
         assertThat(aggregateResult.getFields().containsKey("office")).isTrue();

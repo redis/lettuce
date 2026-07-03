@@ -30,10 +30,10 @@ class SearchReplyParserUnitTests {
 
     @Test
     void shouldReturnEmptyReplyForEmptyResp2List() {
-        SearchReplyParser<String, String> parser = new SearchReplyParser<>(CODEC, null);
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
         ArrayComplexData data = new ArrayComplexData(0);
 
-        SearchReply<String, String> reply = parser.parse(data);
+        SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getCount()).isEqualTo(0);
@@ -42,11 +42,11 @@ class SearchReplyParserUnitTests {
 
     @Test
     void shouldParseResp2WithCountAndNoResults() {
-        SearchReplyParser<String, String> parser = new SearchReplyParser<>(CODEC, null);
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
         ArrayComplexData data = new ArrayComplexData(1);
         data.storeObject(0L);
 
-        SearchReply<String, String> reply = parser.parse(data);
+        SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply.getCount()).isEqualTo(0);
         assertThat(reply.getResults()).isEmpty();
@@ -54,7 +54,7 @@ class SearchReplyParserUnitTests {
 
     @Test
     void shouldParseResp2WithMultipleDocuments() {
-        SearchReplyParser<String, String> parser = new SearchReplyParser<>(CODEC, null);
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
         ArrayComplexData data = new ArrayComplexData(5);
         data.storeObject(2L);
 
@@ -72,7 +72,7 @@ class SearchReplyParserUnitTests {
         fields2.storeObject(CODEC.encodeValue("Advanced Techniques"));
         data.storeObject(fields2);
 
-        SearchReply<String, String> reply = parser.parse(data);
+        SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply.getCount()).isEqualTo(2);
         assertThat(reply.getResults()).hasSize(2);
@@ -85,7 +85,7 @@ class SearchReplyParserUnitTests {
     @Test
     void shouldParseResp2WithScores() {
         SearchArgs<String> args = SearchArgs.<String> builder().withScores().build();
-        SearchReplyParser<String, String> parser = new SearchReplyParser<>(CODEC, args);
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, args);
         ArrayComplexData data = new ArrayComplexData(4);
         data.storeObject(1L);
         data.storeObject(CODEC.encodeKey("doc:1"));
@@ -95,7 +95,7 @@ class SearchReplyParserUnitTests {
         fields.storeObject(CODEC.encodeValue("Test"));
         data.storeObject(fields);
 
-        SearchReply<String, String> reply = parser.parse(data);
+        SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply.getResults()).hasSize(1);
         assertThat(reply.getResults().get(0).getScore()).isEqualTo(0.95);
@@ -105,13 +105,13 @@ class SearchReplyParserUnitTests {
     @Test
     void shouldParseResp2WithNoContent() {
         SearchArgs<String> args = SearchArgs.<String> builder().noContent().build();
-        SearchReplyParser<String, String> parser = new SearchReplyParser<>(CODEC, args);
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, args);
         ArrayComplexData data = new ArrayComplexData(3);
         data.storeObject(2L);
         data.storeObject(CODEC.encodeKey("doc:1"));
         data.storeObject(CODEC.encodeKey("doc:2"));
 
-        SearchReply<String, String> reply = parser.parse(data);
+        SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply.getCount()).isEqualTo(2);
         assertThat(reply.getResults()).hasSize(2);
@@ -122,7 +122,7 @@ class SearchReplyParserUnitTests {
 
     @Test
     void shouldParseResp2CursorResponse() {
-        SearchReplyParser<String, String> parser = new SearchReplyParser<>(CODEC, null);
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
         ArrayComplexData innerResults = new ArrayComplexData(3);
         innerResults.storeObject(1L);
         innerResults.storeObject(CODEC.encodeKey("doc:1"));
@@ -135,7 +135,7 @@ class SearchReplyParserUnitTests {
         data.storeObject(innerResults);
         data.storeObject(42L);
 
-        SearchReply<String, String> reply = parser.parse(data);
+        SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply.getCursorId()).isEqualTo(42L);
         assertThat(reply.getCount()).isEqualTo(1);
@@ -147,7 +147,7 @@ class SearchReplyParserUnitTests {
 
     @Test
     void shouldParseResp3SearchResult() {
-        SearchReplyParser<String, String> parser = new SearchReplyParser<>(CODEC, null);
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
 
         MapComplexData extraAttributes = new MapComplexData(1);
         extraAttributes.storeObject(CODEC.encodeKey("title"));
@@ -170,11 +170,11 @@ class SearchReplyParserUnitTests {
         data.storeObject(CODEC.encodeKey("results"));
         data.storeObject(resultsList);
 
-        SearchReply<String, String> reply = parser.parse(data);
+        SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply.getCount()).isEqualTo(1);
         assertThat(reply.getResults()).hasSize(1);
-        SearchReply.SearchResult<String, String> result = reply.getResults().get(0);
+        SearchReply.SearchResult<String> result = reply.getResults().get(0);
         assertThat(result.getId()).isEqualTo("doc:1");
         assertThat(result.getScore()).isEqualTo(1.0);
         assertThat(result.getFields()).containsEntry("title", "Redis Search");
@@ -182,7 +182,7 @@ class SearchReplyParserUnitTests {
 
     @Test
     void shouldParseResp3WithWarningsAndCursor() {
-        SearchReplyParser<String, String> parser = new SearchReplyParser<>(CODEC, null);
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
 
         ArrayComplexData warningList = new ArrayComplexData(1);
         warningList.storeObject(CODEC.encodeValue("Timeout limit was reached"));
@@ -197,7 +197,7 @@ class SearchReplyParserUnitTests {
         data.storeObject(CODEC.encodeKey("cursor"));
         data.storeObject(99L);
 
-        SearchReply<String, String> reply = parser.parse(data);
+        SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply.getCount()).isEqualTo(0);
         assertThat(reply.getWarnings()).containsExactly("Timeout limit was reached");
@@ -206,10 +206,10 @@ class SearchReplyParserUnitTests {
 
     @Test
     void shouldReturnEmptyReplyOnMalformedInput() {
-        SearchReplyParser<String, String> parser = new SearchReplyParser<>(CODEC, null);
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
         MapComplexData data = new MapComplexData(0);
 
-        SearchReply<String, String> reply = parser.parse(data);
+        SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isEmpty();

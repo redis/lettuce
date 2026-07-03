@@ -99,7 +99,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param searchArgs the search arguments
      * @return the result of the search command
      */
-    public Command<K, V, SearchReply<K, V>> ftSearch(String index, String query, SearchArgs<K> searchArgs) {
+    public Command<K, V, SearchReply<K>> ftSearch(String index, String query, SearchArgs<K> searchArgs) {
         LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(query, "Query must not be null");
 
@@ -126,14 +126,14 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param hybridArgs the hybrid query arguments containing SEARCH and/or VSIM clauses
      * @return the command
      */
-    public Command<K, V, HybridReply<K, V>> ftHybrid(String index, HybridArgs hybridArgs) {
+    public Command<K, V, HybridReply> ftHybrid(String index, HybridArgs hybridArgs) {
         LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(hybridArgs, "HybridArgs must not be null");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
         hybridArgs.build(args);
 
-        return createCommand(FT_HYBRID, new EncodedComplexOutput<>(codec, new HybridReplyParser<>(codec)), args);
+        return createCommand(FT_HYBRID, new EncodedComplexOutput<>(codec, new HybridReplyParser()), args);
     }
 
     /**
@@ -144,7 +144,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param aggregateArgs the aggregate arguments
      * @return the result of the aggregate command
      */
-    public Command<K, V, AggregationReply<K, V>> ftAggregate(String index, String query, AggregateArgs aggregateArgs) {
+    public Command<K, V, AggregationReply<K>> ftAggregate(String index, String query, AggregateArgs aggregateArgs) {
         LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(query, "Query must not be null");
 
@@ -170,7 +170,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param count the number of results to read
      * @return the result of the cursor read command
      */
-    public Command<K, V, AggregationReply<K, V>> ftCursorread(String index, long cursorId, int count) {
+    public Command<K, V, AggregationReply<K>> ftCursorread(String index, long cursorId, int count) {
         LettuceAssert.notNull(index, "Index must not be null");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).add(index);

@@ -137,7 +137,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void baselineSearchWorksThroughCodec(String indexName) {
-        SearchReply<String, String> result = redis.ftSearch(indexName, "search");
+        SearchReply<String> result = redis.ftSearch(indexName, "search");
         assertThat(result.getCount()).isEqualTo(1L);
     }
 
@@ -155,7 +155,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         // server unescapes to look up the schema field "tenant1:title".
         String query = "@" + escapedFieldRef("title") + ":Redis";
 
-        SearchReply<String, String> result = redis.ftSearch(indexName, query);
+        SearchReply<String> result = redis.ftSearch(indexName, query);
 
         assertThat(result.getCount()).as("@field:value must resolve against the schema field name on the server side")
                 .isEqualTo(1L);
@@ -191,7 +191,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         // @field reference so the RediSearch query parser resolves the encoded schema name.
         String query = "@" + escapedFieldRef("price") + ":[40 60]";
 
-        SearchReply<String, String> result = redis.ftSearch(indexName, query);
+        SearchReply<String> result = redis.ftSearch(indexName, query);
 
         assertThat(result.getCount()).as("@price:[40 60] must resolve against the schema field name on the server side")
                 .isEqualTo(1L);
@@ -209,7 +209,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         // @field reference so the RediSearch query parser resolves the encoded schema name.
         String query = "@" + escapedFieldRef("category") + ":{tutorial}";
 
-        SearchReply<String, String> result = redis.ftSearch(indexName, query);
+        SearchReply<String> result = redis.ftSearch(indexName, query);
 
         assertThat(result.getCount()).as("@category:{tutorial} must resolve against the schema field name on the server side")
                 .isEqualTo(1L);
@@ -228,10 +228,10 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
                 .groupBy(AggregateArgs.GroupBy.of(encodedFieldRef("category")).reduce(AggregateArgs.Reducer.count().as("cnt")))
                 .build();
 
-        AggregationReply<String, String> result = redis.ftAggregate(indexName, "*", args);
+        AggregationReply<String> result = redis.ftAggregate(indexName, "*", args);
 
         assertThat(result.getReplies()).isNotEmpty();
-        SearchReply<String, String> reply = result.getReplies().get(0);
+        SearchReply<String> reply = result.getReplies().get(0);
         assertThat(reply.getResults()).as("GROUPBY @category must resolve against the schema field on the server side")
                 .isNotEmpty();
         assertThat(reply.getResults().get(0).getFields()).containsKey("cnt");
@@ -267,7 +267,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
             Thread.currentThread().interrupt();
         }
 
-        SearchReply<String, String> result = redis.ftSearch(filteredIndex, "*");
+        SearchReply<String> result = redis.ftSearch(filteredIndex, "*");
 
         assertThat(result.getCount())
                 .as("FILTER @price>1000 must resolve against the schema field; if this fails with 1, the filter expression "
@@ -286,7 +286,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     void noContentDocumentIdRoundTripsThroughCodec() {
         SearchArgs<String> args = SearchArgs.<String> builder().noContent().build();
 
-        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+        SearchReply<String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
         assertThat(result.getResults()).hasSize(1);
@@ -320,25 +320,25 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     void inFieldMustNotBeMangledByCodec(String indexName) {
         SearchArgs<String> args = SearchArgs.<String> builder().inField(encodedFieldRef("title")).build();
 
-        SearchReply<String, String> result = redis.ftSearch(indexName, "search", args);
+        SearchReply<String> result = redis.ftSearch(indexName, "search", args);
 
         assertThat(result.getCount()).as("INFIELDS must resolve against the encoded schema field").isEqualTo(1L);
     }
 
     /**
      * {@code RETURN} names a schema field, sent raw; the caller passes the encoded name ({@code tenant1:title}) to match the
-     * schema. The result map key is decoded back to {@code title}.
+     * schema. Result-map field names are returned raw too, so the key appears in its encoded form.
      */
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void returnFieldMustNotBeMangledByCodec(String indexName) {
         SearchArgs<String> args = SearchArgs.<String> builder().returnField(encodedFieldRef("title")).build();
 
-        SearchReply<String, String> result = redis.ftSearch(indexName, "search", args);
+        SearchReply<String> result = redis.ftSearch(indexName, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
         assertThat(result.getResults().get(0).getFields()).as("RETURN schema field must appear as a key in the result map")
-                .containsKey("title");
+                .containsKey(encodedFieldRef("title"));
     }
 
     /**
@@ -350,7 +350,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     void returnFieldAliasMustNotBeMangledByCodec(String indexName) {
         SearchArgs<String> args = SearchArgs.<String> builder().returnField(encodedFieldRef("title"), "t").build();
 
-        SearchReply<String, String> result = redis.ftSearch(indexName, "search", args);
+        SearchReply<String> result = redis.ftSearch(indexName, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
         assertThat(result.getResults().get(0).getFields()).as("RETURN alias must appear verbatim as a key in the result map")
@@ -367,10 +367,10 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     void summarizeFieldMustNotBeMangledByCodec() {
         SearchArgs<String> args = SearchArgs.<String> builder().summarizeField(encodedFieldRef("body")).build();
 
-        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+        SearchReply<String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
-        String body = result.getResults().get(0).getFields().get("body");
+        String body = result.getResults().get(0).getFields().get(encodedFieldRef("body"));
         assertThat(body).as("SUMMARIZE must be applied to the 'body' field").contains("...");
     }
 
@@ -385,28 +385,29 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         SearchArgs<String> args = SearchArgs.<String> builder().highlightField(encodedFieldRef("body"))
                 .highlightTags("<b>", "</b>").build();
 
-        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+        SearchReply<String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
-        String body = result.getResults().get(0).getFields().get("body");
+        String body = result.getResults().get(0).getFields().get(encodedFieldRef("body"));
         assertThat(body).as("HIGHLIGHT must wrap 'search' occurrences with the configured tags").contains("<b>search</b>");
     }
 
     /**
-     * {@code FT.AGGREGATE ... LOAD} routes the field through {@code encodeKey} ({@code addKey}) to {@code tenant1:title},
-     * matching the encoded schema field.
+     * {@code FT.AGGREGATE ... LOAD} names a schema field, sent raw; the caller passes the encoded name ({@code tenant1:title})
+     * to match the schema, and the result-map key comes back in the same encoded form.
      */
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })
     void aggregateLoadFieldMustNotBeMangledByCodec(String indexName) {
         AggregateArgs args = AggregateArgs.builder().load(encodedFieldRef("title")).build();
 
-        AggregationReply<String, String> result = redis.ftAggregate(indexName, "*", args);
+        AggregationReply<String> result = redis.ftAggregate(indexName, "*", args);
 
         assertThat(result.getReplies()).isNotEmpty();
-        SearchReply<String, String> reply = result.getReplies().get(0);
+        SearchReply<String> reply = result.getReplies().get(0);
         assertThat(reply.getResults()).isNotEmpty();
-        assertThat(reply.getResults().get(0).getFields()).as("LOAD schema field must be fetched verbatim").containsKey("title");
+        assertThat(reply.getResults().get(0).getFields()).as("LOAD schema field must be fetched verbatim")
+                .containsKey(encodedFieldRef("title"));
     }
 
     /**
@@ -419,7 +420,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         SearchArgs<String> args = SearchArgs.<String> builder()
                 .sortBy(SortByArgs.builder().attribute(encodedFieldRef("title")).build()).build();
 
-        SearchReply<String, String> result = redis.ftSearch(indexName, "search", args);
+        SearchReply<String> result = redis.ftSearch(indexName, "search", args);
 
         assertThat(result.getCount()).as("SORTBY schema field must be sent raw, not codec-encoded").isEqualTo(1L);
     }
@@ -434,7 +435,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     void searchParamNameMustNotBeMangledByCodec(String indexName) {
         SearchArgs<String> args = SearchArgs.<String> builder().param("term", "search").build();
 
-        SearchReply<String, String> result = redis.ftSearch(indexName, "$term", args);
+        SearchReply<String> result = redis.ftSearch(indexName, "$term", args);
 
         assertThat(result.getCount()).as("PARAMS substitution name must be sent raw so $term resolves on the server side")
                 .isEqualTo(1L);
@@ -449,10 +450,10 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     void aggregateParamNameMustNotBeMangledByCodec(String indexName) {
         AggregateArgs args = AggregateArgs.builder().param("term", "search").build();
 
-        AggregationReply<String, String> result = redis.ftAggregate(indexName, "$term", args);
+        AggregationReply<String> result = redis.ftAggregate(indexName, "$term", args);
 
         assertThat(result.getReplies()).isNotEmpty();
-        SearchReply<String, String> reply = result.getReplies().get(0);
+        SearchReply<String> reply = result.getReplies().get(0);
         assertThat(reply.getResults()).as("PARAMS substitution name must resolve on the server side").isNotEmpty();
     }
 
@@ -466,7 +467,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     void inKeyMustBeRoutedThroughCodecOnHash() {
         SearchArgs<String> args = SearchArgs.<String> builder().inKey(HASH_DOC_KEY).build();
 
-        SearchReply<String, String> result = redis.ftSearch(HASH_INDEX, "search", args);
+        SearchReply<String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).as("INKEYS must route the document key through encodeKey to match the stored prefix")
                 .isEqualTo(1L);
@@ -480,7 +481,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     void inKeyMustBeRoutedThroughCodecOnJson() {
         SearchArgs<String> args = SearchArgs.<String> builder().inKey(JSON_DOC_KEY).build();
 
-        SearchReply<String, String> result = redis.ftSearch(JSON_INDEX, "search", args);
+        SearchReply<String> result = redis.ftSearch(JSON_INDEX, "search", args);
 
         assertThat(result.getCount()).as("INKEYS must route the document key through encodeKey to match the stored prefix")
                 .isEqualTo(1L);
@@ -512,7 +513,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
             Thread.currentThread().interrupt();
         }
 
-        SearchReply<String, String> result = redis.ftSearch("prefix-test-idx", "search");
+        SearchReply<String> result = redis.ftSearch("prefix-test-idx", "search");
 
         assertThat(result.getCount()).as(
                 "PREFIX must be encoded through the codec to match the stored HASH keys ('tenant1:doc:' vs 'tenant1:doc:1')")
@@ -541,7 +542,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
             Thread.currentThread().interrupt();
         }
 
-        SearchReply<String, String> result = redis.ftSearch("prefix-test-json-idx", "search");
+        SearchReply<String> result = redis.ftSearch("prefix-test-json-idx", "search");
 
         assertThat(result.getCount()).as(
                 "PREFIX must be encoded through the codec to match the stored JSON keys ('tenant1:doc:' vs 'tenant1:doc:1')")
