@@ -587,7 +587,7 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructFtSearchCommandNoSearchArgs() {
-        Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY,
+        Command<String, String, SearchReply<String>> command = builder.ftSearch(MY_KEY, MY_QUERY,
                 SearchArgs.<String> builder().build());
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -606,7 +606,7 @@ class RediSearchCommandBuilderUnitTests {
 
         SearchArgs<String> searchArgs = SearchArgs.<String> builder().limit(10, 10).returnField("title").build();
 
-        Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
+        Command<String, String, SearchReply<String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -631,7 +631,7 @@ class RediSearchCommandBuilderUnitTests {
         SearchArgs<String> searchArgs = SearchArgs.<String> builder().param("poly", "POLYGON((2 2, 2 50, 50 50, 50 2, 2 2))")
                 .build();
 
-        Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
+        Command<String, String, SearchReply<String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -651,7 +651,7 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructFtAggregateCommandBasic() {
-        Command<String, String, AggregationReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY, null);
+        Command<String, String, AggregationReply<String>> command = builder.ftAggregate(MY_KEY, MY_QUERY, null);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -676,8 +676,7 @@ class RediSearchCommandBuilderUnitTests {
                 .sortBy(AggregateArgs.SortBy.of("count", AggregateArgs.SortDirection.DESC))// Fifth operation
                 .build();
 
-        Command<String, String, AggregationReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY,
-                aggregateArgs);
+        Command<String, String, AggregationReply<String>> command = builder.ftAggregate(MY_KEY, MY_QUERY, aggregateArgs);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -713,8 +712,7 @@ class RediSearchCommandBuilderUnitTests {
                 .dialect(QueryDialects.DIALECT2) //
                 .build();
 
-        Command<String, String, AggregationReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY,
-                aggregateArgs);
+        Command<String, String, AggregationReply<String>> command = builder.ftAggregate(MY_KEY, MY_QUERY, aggregateArgs);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -740,7 +738,7 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructFtCursorreadCommandWithCount() {
-        Command<String, String, AggregationReply<String, String>> command = builder.ftCursorread("idx", 123L, 10);
+        Command<String, String, AggregationReply<String>> command = builder.ftCursorread("idx", 123L, 10);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -757,7 +755,7 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructFtCursorreadCommandWithoutCount() {
-        Command<String, String, AggregationReply<String, String>> command = builder.ftCursorread("idx", 456L, -1);
+        Command<String, String, AggregationReply<String>> command = builder.ftCursorread("idx", 456L, -1);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -816,7 +814,7 @@ class RediSearchCommandBuilderUnitTests {
                         .limit(Limit.of(0, 20)).build())
                 .param("vec", queryVector).param("discount_rate", "0.9").build();
 
-        Command<String, String, HybridReply<String, String>> command = builder.ftHybrid("idx:ecommerce", hybridArgs);
+        Command<String, String, HybridReply> command = builder.ftHybrid("idx:ecommerce", hybridArgs);
 
         String args = command.getArgs().toCommandString();
 

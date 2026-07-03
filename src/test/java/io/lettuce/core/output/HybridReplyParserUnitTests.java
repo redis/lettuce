@@ -29,10 +29,10 @@ class HybridReplyParserUnitTests {
 
     @Test
     void shouldReturnEmptyReplyForEmptyResp2List() {
-        HybridReplyParser<String, String> parser = new HybridReplyParser<>(CODEC);
+        HybridReplyParser parser = new HybridReplyParser();
         ArrayComplexData data = new ArrayComplexData(0);
 
-        HybridReply<String, String> reply = parser.parse(data);
+        HybridReply reply = parser.parse(data);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getTotalResults()).isEqualTo(0);
@@ -42,7 +42,7 @@ class HybridReplyParserUnitTests {
 
     @Test
     void shouldParseResp2WithTotalResultsAndResults() {
-        HybridReplyParser<String, String> parser = new HybridReplyParser<>(CODEC);
+        HybridReplyParser parser = new HybridReplyParser();
 
         // Build one result entry as key-value flat list
         ArrayComplexData resultEntry = new ArrayComplexData(4);
@@ -65,18 +65,19 @@ class HybridReplyParserUnitTests {
         data.storeObject(CODEC.encodeKey("warnings"));
         data.storeObject(new ArrayComplexData(0));
 
-        HybridReply<String, String> reply = parser.parse(data);
+        HybridReply reply = parser.parse(data);
 
         assertThat(reply.getTotalResults()).isEqualTo(1);
         assertThat(reply.getExecutionTime()).isEqualTo(0.5);
         assertThat(reply.getResults()).hasSize(1);
-        assertThat(reply.getResults().get(0)).containsEntry("title", "Redis Search").containsEntry("__key", "doc:1");
+        assertThat(reply.getResults().get(0).getFields()).containsEntry("title", "Redis Search").containsEntry("__key",
+                "doc:1");
         assertThat(reply.getWarnings()).isEmpty();
     }
 
     @Test
     void shouldParseResp2WithExecutionTimeAsDouble() {
-        HybridReplyParser<String, String> parser = new HybridReplyParser<>(CODEC);
+        HybridReplyParser parser = new HybridReplyParser();
 
         ArrayComplexData data = new ArrayComplexData(4);
         data.storeObject(CODEC.encodeKey("total_results"));
@@ -84,14 +85,14 @@ class HybridReplyParserUnitTests {
         data.storeObject(CODEC.encodeKey("execution_time"));
         data.storeObject(1.23); // Double in RESP2 (e.g. via RESP3 upgrade on same connection)
 
-        HybridReply<String, String> reply = parser.parse(data);
+        HybridReply reply = parser.parse(data);
 
         assertThat(reply.getExecutionTime()).isEqualTo(1.23);
     }
 
     @Test
     void shouldParseResp2WithWarnings() {
-        HybridReplyParser<String, String> parser = new HybridReplyParser<>(CODEC);
+        HybridReplyParser parser = new HybridReplyParser();
 
         ArrayComplexData warningList = new ArrayComplexData(1);
         warningList.storeObject(CODEC.encodeValue("Timeout limit was reached"));
@@ -102,7 +103,7 @@ class HybridReplyParserUnitTests {
         data.storeObject(CODEC.encodeKey("warnings"));
         data.storeObject(warningList);
 
-        HybridReply<String, String> reply = parser.parse(data);
+        HybridReply reply = parser.parse(data);
 
         assertThat(reply.getWarnings()).containsExactly("Timeout limit was reached");
     }
@@ -111,10 +112,10 @@ class HybridReplyParserUnitTests {
 
     @Test
     void shouldReturnEmptyReplyForEmptyResp3Map() {
-        HybridReplyParser<String, String> parser = new HybridReplyParser<>(CODEC);
+        HybridReplyParser parser = new HybridReplyParser();
         MapComplexData data = new MapComplexData(0);
 
-        HybridReply<String, String> reply = parser.parse(data);
+        HybridReply reply = parser.parse(data);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getTotalResults()).isEqualTo(0);
@@ -123,7 +124,7 @@ class HybridReplyParserUnitTests {
 
     @Test
     void shouldParseResp3WithTotalResultsAndResults() {
-        HybridReplyParser<String, String> parser = new HybridReplyParser<>(CODEC);
+        HybridReplyParser parser = new HybridReplyParser();
 
         // One result: a MapComplexData with field entries
         MapComplexData resultEntry = new MapComplexData(2);
@@ -143,17 +144,18 @@ class HybridReplyParserUnitTests {
         data.storeObject(CODEC.encodeKey("results"));
         data.storeObject(resultsList);
 
-        HybridReply<String, String> reply = parser.parse(data);
+        HybridReply reply = parser.parse(data);
 
         assertThat(reply.getTotalResults()).isEqualTo(1);
         assertThat(reply.getExecutionTime()).isEqualTo(0.75);
         assertThat(reply.getResults()).hasSize(1);
-        assertThat(reply.getResults().get(0)).containsEntry("title", "Redis Search").containsEntry("__key", "doc:1");
+        assertThat(reply.getResults().get(0).getFields()).containsEntry("title", "Redis Search").containsEntry("__key",
+                "doc:1");
     }
 
     @Test
     void shouldParseResp3WithWarnings() {
-        HybridReplyParser<String, String> parser = new HybridReplyParser<>(CODEC);
+        HybridReplyParser parser = new HybridReplyParser();
 
         ArrayComplexData warningList = new ArrayComplexData(2);
         warningList.storeObject(CODEC.encodeValue("Timeout limit was reached"));
@@ -167,7 +169,7 @@ class HybridReplyParserUnitTests {
         data.storeObject(CODEC.encodeKey("warnings"));
         data.storeObject(warningList);
 
-        HybridReply<String, String> reply = parser.parse(data);
+        HybridReply reply = parser.parse(data);
 
         assertThat(reply.getWarnings()).containsExactly("Timeout limit was reached", "Results may be incomplete");
     }
@@ -175,12 +177,12 @@ class HybridReplyParserUnitTests {
     @Test
     void shouldReturnEmptyReplyOnMalformedInput() {
         // Passing null or an object that triggers exception path
-        HybridReplyParser<String, String> parser = new HybridReplyParser<>(CODEC);
+        HybridReplyParser parser = new HybridReplyParser();
         // An empty list (not a map) with unexpected structure — should not throw
         ArrayComplexData data = new ArrayComplexData(1);
         data.storeObject("not-a-byte-buffer");
 
-        HybridReply<String, String> reply = parser.parse(data);
+        HybridReply reply = parser.parse(data);
 
         assertThat(reply).isNotNull();
     }

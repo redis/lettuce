@@ -41,16 +41,15 @@ import java.util.Optional;
  * </p>
  *
  * @param <K> the type of keys used in the aggregation results
- * @param <V> the type of values used in the aggregation results
  * @author Redis Ltd.
  * @since 6.8
  * @see SearchReply
  */
-public class AggregationReply<K, V> {
+public class AggregationReply<K> {
 
     long aggregationGroups = 1;
 
-    List<SearchReply<K, V>> replies = new ArrayList<>();
+    List<SearchReply<K>> replies = new ArrayList<>();
 
     /**
      * Optional Cursor metadata of the shard that created/owns the cursor. Present only when running in cluster mode, WITHCURSOR
@@ -117,7 +116,7 @@ public class AggregationReply<K, V> {
      * @return a mutable list of {@link SearchReply} objects containing the aggregation results. Never {@code null}, but may be
      *         empty if no results were found.
      */
-    public List<SearchReply<K, V>> getReplies() {
+    public List<SearchReply<K>> getReplies() {
         return replies;
     }
 
@@ -150,7 +149,7 @@ public class AggregationReply<K, V> {
         this.aggregationGroups = value;
     }
 
-    void addSearchReply(SearchReply<K, V> searchReply) {
+    void addSearchReply(SearchReply<K> searchReply) {
         this.replies.add(searchReply);
     }
 

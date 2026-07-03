@@ -28,9 +28,9 @@ class AggregateReplyParserUnitTests {
 
     @Test
     void shouldReturnEmptyReplyForNullData() {
-        AggregateReplyParser<String, String> parser = new AggregateReplyParser<>(CODEC, false);
+        AggregateReplyParser<String> parser = new AggregateReplyParser<>(CODEC, false);
 
-        AggregationReply<String, String> reply = parser.parse(null);
+        AggregationReply<String> reply = parser.parse(null);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getReplies()).isEmpty();
@@ -40,7 +40,7 @@ class AggregateReplyParserUnitTests {
     void shouldParseResp2DataWithoutCursor() {
         // Without cursor: data is passed directly to SearchReplyParser (no-ID mode).
         // Format: [count, fields_complexData, ...]
-        AggregateReplyParser<String, String> parser = new AggregateReplyParser<>(CODEC, false);
+        AggregateReplyParser<String> parser = new AggregateReplyParser<>(CODEC, false);
 
         ArrayComplexData fields = new ArrayComplexData(4);
         fields.storeObject(CODEC.encodeKey("category"));
@@ -52,10 +52,10 @@ class AggregateReplyParserUnitTests {
         data.storeObject(1L);
         data.storeObject(fields);
 
-        AggregationReply<String, String> reply = parser.parse(data);
+        AggregationReply<String> reply = parser.parse(data);
 
         assertThat(reply.getReplies()).hasSize(1);
-        SearchReply<String, String> searchReply = reply.getReplies().get(0);
+        SearchReply<String> searchReply = reply.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1);
         assertThat(searchReply.getResults().get(0).getFields()).containsEntry("category", "electronics").containsEntry("count",
                 "5");
@@ -64,7 +64,7 @@ class AggregateReplyParserUnitTests {
     @Test
     void shouldParseResp2DataWithCursor() {
         // With cursor: format is [groupCount, resultsComplexData, cursorId].
-        AggregateReplyParser<String, String> parser = new AggregateReplyParser<>(CODEC, true);
+        AggregateReplyParser<String> parser = new AggregateReplyParser<>(CODEC, true);
 
         ArrayComplexData fields = new ArrayComplexData(2);
         fields.storeObject(CODEC.encodeKey("brand"));
@@ -80,23 +80,23 @@ class AggregateReplyParserUnitTests {
         data.storeObject(innerResults);
         data.storeObject(77L); // cursorId
 
-        AggregationReply<String, String> reply = parser.parse(data);
+        AggregationReply<String> reply = parser.parse(data);
 
         assertThat(reply.getAggregationGroups()).isEqualTo(3);
         assertThat(reply.getReplies()).hasSize(1);
         assertThat(reply.getCursor()).isPresent();
         assertThat(reply.getCursor().get().getCursorId()).isEqualTo(77L);
-        SearchReply<String, String> searchReply = reply.getReplies().get(0);
+        SearchReply<String> searchReply = reply.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1);
         assertThat(searchReply.getResults().get(0).getFields()).containsEntry("brand", "apple");
     }
 
     @Test
     void shouldReturnEmptyReplyForEmptyListWithCursor() {
-        AggregateReplyParser<String, String> parser = new AggregateReplyParser<>(CODEC, true);
+        AggregateReplyParser<String> parser = new AggregateReplyParser<>(CODEC, true);
         ArrayComplexData data = new ArrayComplexData(0);
 
-        AggregationReply<String, String> reply = parser.parse(data);
+        AggregationReply<String> reply = parser.parse(data);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getReplies()).isEmpty();
@@ -105,7 +105,7 @@ class AggregateReplyParserUnitTests {
     @Test
     void shouldParseResp3DataWithoutCursor() {
         // Without cursor: RESP3 map is passed directly to SearchReplyParser.
-        AggregateReplyParser<String, String> parser = new AggregateReplyParser<>(CODEC, false);
+        AggregateReplyParser<String> parser = new AggregateReplyParser<>(CODEC, false);
 
         MapComplexData extraAttributes = new MapComplexData(1);
         extraAttributes.storeObject(CODEC.encodeKey("category"));
@@ -124,10 +124,10 @@ class AggregateReplyParserUnitTests {
         data.storeObject(CODEC.encodeKey("results"));
         data.storeObject(resultsList);
 
-        AggregationReply<String, String> reply = parser.parse(data);
+        AggregationReply<String> reply = parser.parse(data);
 
         assertThat(reply.getReplies()).hasSize(1);
-        SearchReply<String, String> searchReply = reply.getReplies().get(0);
+        SearchReply<String> searchReply = reply.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1);
         assertThat(searchReply.getResults().get(0).getFields()).containsEntry("category", "computers");
     }

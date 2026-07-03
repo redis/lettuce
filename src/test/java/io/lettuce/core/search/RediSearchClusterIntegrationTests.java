@@ -152,7 +152,7 @@ public class RediSearchClusterIntegrationTests {
         redis.hmset(productKeys[5], phone);
 
         // Test 1: Search for all electronics across cluster
-        SearchReply<String, String> searchResults = redis.ftSearch(PRODUCTS_INDEX, "@category:{electronics}");
+        SearchReply<String> searchResults = redis.ftSearch(PRODUCTS_INDEX, "@category:{electronics}");
 
         // Verify we get results - should find laptop, mouse, keyboard, monitor
         assertThat(searchResults.getCount()).isEqualTo(4);
@@ -160,13 +160,13 @@ public class RediSearchClusterIntegrationTests {
 
         // Test 2: Search with price range across cluster
         SearchArgs<String> priceSearchArgs = SearchArgs.<String> builder().build();
-        SearchReply<String, String> priceResults = redis.ftSearch(PRODUCTS_INDEX, "@price:[100 500]", priceSearchArgs);
+        SearchReply<String> priceResults = redis.ftSearch(PRODUCTS_INDEX, "@price:[100 500]", priceSearchArgs);
 
         // Should find keyboard, monitor, tablet (prices 149.99, 399.99, 299.99)
         assertThat(priceResults.getCount()).isEqualTo(3);
 
         // Test 3: Text search across cluster
-        SearchReply<String, String> textResults = redis.ftSearch(PRODUCTS_INDEX, "@name:Gaming");
+        SearchReply<String> textResults = redis.ftSearch(PRODUCTS_INDEX, "@name:Gaming");
 
         // Should find only the Gaming Laptop
         assertThat(textResults.getCount()).isEqualTo(1);
@@ -224,7 +224,7 @@ public class RediSearchClusterIntegrationTests {
                 .build();
 
         // Execute aggregation with cursor
-        AggregationReply<String, String> aggregateResults = redis.ftAggregate(BOOKS_INDEX, "*", aggregateArgs);
+        AggregationReply<String> aggregateResults = redis.ftAggregate(BOOKS_INDEX, "*", aggregateArgs);
 
         // Verify we get results with cursor
         assertThat(aggregateResults).isNotNull();
@@ -233,8 +233,7 @@ public class RediSearchClusterIntegrationTests {
         // Test cursor read functionality if cursor is available
         if (aggregateResults.getCursor().isPresent() && aggregateResults.getCursor().get().getCursorId() > 0) {
             // Read next batch using cursor
-            AggregationReply<String, String> cursorResults = redis.ftCursorread(BOOKS_INDEX,
-                    aggregateResults.getCursor().get());
+            AggregationReply<String> cursorResults = redis.ftCursorread(BOOKS_INDEX, aggregateResults.getCursor().get());
 
             // Verify cursor read works
             assertThat(cursorResults).isNotNull();
