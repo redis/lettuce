@@ -24,6 +24,7 @@ import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.*;
 import io.lettuce.core.array.*;
 import io.lettuce.core.probabilistic.BfInfoValue;
+import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.probabilistic.CfInfoValue;
@@ -4481,12 +4482,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Value<String>> topKIncrBy(K key, Pair<V, Long> pair) {
-        return createDissolvingFlux(() -> topKCommandBuilder.topKIncrByValues(key, pair));
+    public Flux<Value<String>> topKIncrBy(K key, V value, long increment) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKIncrByValues(key, value, increment));
     }
 
     @Override
-    public Flux<Value<String>> topKIncrBy(K key, Pair<V, Long>... pairs) {
+    public Flux<Value<String>> topKIncrBy(K key, IncrementPair<V>... pairs) {
         return createDissolvingFlux(() -> topKCommandBuilder.topKIncrByValues(key, pairs));
     }
 

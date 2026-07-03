@@ -24,6 +24,7 @@ import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.async.*;
 import io.lettuce.core.array.*;
 import io.lettuce.core.probabilistic.BfInfoValue;
+import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.probabilistic.CfInfoValue;
@@ -4433,12 +4434,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<String>> topKIncrBy(K key, Pair<V, Long> pair) {
-        return dispatch(topKCommandBuilder.topKIncrBy(key, pair));
+    public RedisFuture<List<String>> topKIncrBy(K key, V value, long increment) {
+        return dispatch(topKCommandBuilder.topKIncrBy(key, value, increment));
     }
 
     @Override
-    public RedisFuture<List<String>> topKIncrBy(K key, Pair<V, Long>... pairs) {
+    public RedisFuture<List<String>> topKIncrBy(K key, IncrementPair<V>... pairs) {
         return dispatch(topKCommandBuilder.topKIncrBy(key, pairs));
     }
 

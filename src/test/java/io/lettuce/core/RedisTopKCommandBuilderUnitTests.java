@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.TopKInfoValue;
 import io.lettuce.core.probabilistic.TopKListValue;
 import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
@@ -81,7 +82,7 @@ class RedisTopKCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTopKIncrByCommand() {
-        Command<String, String, List<String>> command = builder.topKIncrBy(MY_KEY, new Pair<>(MY_VALUE, 3L));
+        Command<String, String, List<String>> command = builder.topKIncrBy(MY_KEY, MY_VALUE, 3L);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
@@ -91,8 +92,8 @@ class RedisTopKCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTopKIncrByCommandWithVarargs() {
-        Command<String, String, List<String>> command = builder.topKIncrBy(MY_KEY, new Pair<>(MY_VALUE, 3L),
-                new Pair<>(MY_VALUE_2, 5L));
+        Command<String, String, List<String>> command = builder.topKIncrBy(MY_KEY, IncrementPair.of(MY_VALUE, 3L),
+                IncrementPair.of(MY_VALUE_2, 5L));
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
@@ -102,7 +103,7 @@ class RedisTopKCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTopKIncrByValuesCommand() {
-        Command<String, String, List<Value<String>>> command = builder.topKIncrByValues(MY_KEY, new Pair<>(MY_VALUE, 3L));
+        Command<String, String, List<Value<String>>> command = builder.topKIncrByValues(MY_KEY, MY_VALUE, 3L);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
@@ -112,8 +113,8 @@ class RedisTopKCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTopKIncrByValuesCommandWithVarargs() {
-        Command<String, String, List<Value<String>>> command = builder.topKIncrByValues(MY_KEY, new Pair<>(MY_VALUE, 3L),
-                new Pair<>(MY_VALUE_2, 5L));
+        Command<String, String, List<Value<String>>> command = builder.topKIncrByValues(MY_KEY, IncrementPair.of(MY_VALUE, 3L),
+                IncrementPair.of(MY_VALUE_2, 5L));
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 

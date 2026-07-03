@@ -6,7 +6,7 @@
  */
 package io.lettuce.core.probabilistic.topk;
 
-import io.lettuce.core.Pair;
+import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -65,7 +65,7 @@ public class RedisTopKReactiveIntegrationTests extends RedisTopKIntegrationTests
     void topKIncrBy() {
         reactive.topKReserve(MY_KEY, 3).block();
 
-        StepVerifier.create(reactive.topKIncrBy(MY_KEY, new Pair<>(MY_VALUE, 3L))).expectNext(Value.empty()).verifyComplete();
+        StepVerifier.create(reactive.topKIncrBy(MY_KEY, MY_VALUE, 3L)).expectNext(Value.empty()).verifyComplete();
         StepVerifier.create(reactive.topKQuery(MY_KEY, MY_VALUE)).expectNext(Boolean.TRUE).verifyComplete();
     }
 
@@ -74,7 +74,7 @@ public class RedisTopKReactiveIntegrationTests extends RedisTopKIntegrationTests
     void topKIncrByVararg() {
         reactive.topKReserve(MY_KEY, 3).block();
 
-        StepVerifier.create(reactive.topKIncrBy(MY_KEY, new Pair<>(MY_VALUE, 3L), new Pair<>(MY_VALUE_2, 5L)))
+        StepVerifier.create(reactive.topKIncrBy(MY_KEY, IncrementPair.of(MY_VALUE, 3L), IncrementPair.of(MY_VALUE_2, 5L)))
                 .expectNext(Value.empty()).expectNext(Value.empty()).verifyComplete();
         StepVerifier.create(reactive.topKQuery(MY_KEY, MY_VALUE, MY_VALUE_2)).expectNext(Boolean.TRUE).expectNext(Boolean.TRUE)
                 .verifyComplete();

@@ -7,7 +7,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.Pair
+import io.lettuce.core.probabilistic.IncrementPair
 import io.lettuce.core.api.reactive.RedisTopKReactiveCommands
 import io.lettuce.core.probabilistic.TopKListValue
 import io.lettuce.core.probabilistic.TopKInfoValue
@@ -37,13 +37,14 @@ internal class RedisTopKCoroutinesCommandsImpl<K : Any, V : Any>(
 
     override suspend fun topKIncrBy(
         key: K,
-        pair: Pair<V, Long>
+        value: V,
+        increment: Long
     ): List<String?> =
-        ops.topKIncrBy(key, pair).asFlow().toList().map { it.getValueOrElse(null) }
+        ops.topKIncrBy(key, value, increment).asFlow().toList().map { it.getValueOrElse(null) }
 
     override suspend fun topKIncrBy(
         key: K,
-        vararg pairs: Pair<V, Long>
+        vararg pairs: IncrementPair<V>
     ): List<String> =
         ops.topKIncrBy(key, *pairs).asFlow().toList().map { it.getValueOrElse(null) }
 

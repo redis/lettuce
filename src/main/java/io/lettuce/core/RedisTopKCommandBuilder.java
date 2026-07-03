@@ -10,6 +10,7 @@ import java.util.List;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.*;
+import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.TopKInfoValue;
 import io.lettuce.core.probabilistic.TopKInfoValueParser;
 import io.lettuce.core.probabilistic.TopKListValue;
@@ -72,43 +73,43 @@ class RedisTopKCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(TOPK_ADD, new StringValueListOutput<>(codec), args);
     }
 
-    Command<K, V, List<String>> topKIncrBy(K key, Pair<V, Long> pair) {
+    Command<K, V, List<String>> topKIncrBy(K key, V value, long increment) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(pair.getFirst()).add(pair.getSecond());
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value).add(increment);
 
         return createCommand(TOPK_INCRBY, new StringListOutput<>(codec), args);
     }
 
     @SafeVarargs
-    final Command<K, V, List<String>> topKIncrBy(K key, Pair<V, Long>... pairs) {
+    final Command<K, V, List<String>> topKIncrBy(K key, IncrementPair<V>... pairs) {
         notNullKey(key);
         notEmptyValues(pairs);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        for (Pair<V, Long> pair : pairs) {
-            args.addValue(pair.getFirst()).add(pair.getSecond());
+        for (IncrementPair<V> pair : pairs) {
+            args.addValue(pair.getValue()).add(pair.getIncrement());
         }
 
         return createCommand(TOPK_INCRBY, new StringListOutput<>(codec), args);
     }
 
-    Command<K, V, List<Value<String>>> topKIncrByValues(K key, Pair<V, Long> pair) {
+    Command<K, V, List<Value<String>>> topKIncrByValues(K key, V value, long increment) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(pair.getFirst()).add(pair.getSecond());
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value).add(increment);
 
         return createCommand(TOPK_INCRBY, new StringValueListOutput<>(codec), args);
     }
 
     @SafeVarargs
-    final Command<K, V, List<Value<String>>> topKIncrByValues(K key, Pair<V, Long>... pairs) {
+    final Command<K, V, List<Value<String>>> topKIncrByValues(K key, IncrementPair<V>... pairs) {
         notNullKey(key);
         notEmptyValues(pairs);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        for (Pair<V, Long> pair : pairs) {
-            args.addValue(pair.getFirst()).add(pair.getSecond());
+        for (IncrementPair<V> pair : pairs) {
+            args.addValue(pair.getValue()).add(pair.getIncrement());
         }
 
         return createCommand(TOPK_INCRBY, new StringValueListOutput<>(codec), args);

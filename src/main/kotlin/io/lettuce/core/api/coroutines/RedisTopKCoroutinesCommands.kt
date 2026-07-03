@@ -8,7 +8,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.Pair
+import io.lettuce.core.probabilistic.IncrementPair
 import io.lettuce.core.probabilistic.TopKInfoValue
 import io.lettuce.core.probabilistic.TopKListValue
 import io.lettuce.core.probabilistic.arguments.TopKReserveArgs
@@ -50,15 +50,16 @@ interface RedisTopKCoroutinesCommands<K : Any, V : Any> {
     suspend fun topKAdd(key: K, vararg values: V): List<String?>
 
     /**
-     * Adds a `value` to a Top-k sketch. If the `value` enters the Top-K sketch, the value that is expelled (if any)
-     * is returned. This allows dynamic heavy-hitter detection of values being entered or expelled from Top-K sketch.
+     * Increments the count of a `value` in a Top-K sketch by the given `increment`. If the `value` enters the
+     * Top-K sketch, the value that is expelled (if any) is returned.
      *
      * @param key the key.
-     * @param pair the value and count pair.
+     * @param value the value.
+     * @param increment the increment.
      * @return List<String> where each element is the value expelled from the Top-K sketch when the corresponding value
      *         entered it, or `null` if no value was expelled.
      */
-    suspend fun topKIncrBy(key: K, pair: Pair<V, Long>): List<String?>
+    suspend fun topKIncrBy(key: K, value: V, increment: Long): List<String?>
 
     /**
      * Adds a `value` to a Top-k sketch. Multiple values can be added at the same time. If a `value` enters the
@@ -66,11 +67,11 @@ interface RedisTopKCoroutinesCommands<K : Any, V : Any> {
      * entered or expelled from Top-K sketch.
      *
      * @param key the key.
-     * @param pairs the value and count pairs.
+     * @param pairs the value and increment pairs.
      * @return List<String> where each element is the value expelled from the Top-K sketch when the corresponding value
      *         entered it, or `null` if no value was expelled.
      */
-    suspend fun topKIncrBy(key: K, vararg pairs: Pair<V, Long>): List<String?>
+    suspend fun topKIncrBy(key: K, vararg pairs: IncrementPair<V>): List<String?>
 
     /**
      * Returns information about the Top-K sketch.

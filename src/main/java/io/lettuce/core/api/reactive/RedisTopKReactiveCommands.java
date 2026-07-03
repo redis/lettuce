@@ -6,7 +6,7 @@
  */
 package io.lettuce.core.api.reactive;
 
-import io.lettuce.core.Pair;
+import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.Value;
 import io.lettuce.core.probabilistic.TopKInfoValue;
 import io.lettuce.core.probabilistic.TopKListValue;
@@ -50,15 +50,16 @@ public interface RedisTopKReactiveCommands<K, V> {
     Flux<Value<String>> topKAdd(K key, V... values);
 
     /**
-     * Adds a {@code value} to a Top-k sketch. If the {@code value} enters the Top-K sketch, the value that is expelled (if any)
-     * is returned. This allows dynamic heavy-hitter detection of values being entered or expelled from Top-K sketch.
+     * Increments the count of a {@code value} in a Top-K sketch by the given {@code increment}. If the {@code value} enters the
+     * Top-K sketch, the value that is expelled (if any) is returned.
      *
      * @param key the key.
-     * @param pair the value and count pair.
+     * @param value the value.
+     * @param increment the increment.
      * @return String where each element is the value expelled from the Top-K sketch when the corresponding value entered it, or
      *         {@code null} if no value was expelled.
      */
-    Flux<Value<String>> topKIncrBy(K key, Pair<V, Long> pair);
+    Flux<Value<String>> topKIncrBy(K key, V value, long increment);
 
     /**
      * Adds a {@code value} to a Top-k sketch. Multiple values can be added at the same time. If a {@code value} enters the
@@ -66,11 +67,11 @@ public interface RedisTopKReactiveCommands<K, V> {
      * entered or expelled from Top-K sketch.
      *
      * @param key the key.
-     * @param pairs the value and count pairs.
+     * @param pairs the value and increment pairs.
      * @return String where each element is the value expelled from the Top-K sketch when the corresponding value entered it, or
      *         {@code null} if no value was expelled.
      */
-    Flux<Value<String>> topKIncrBy(K key, Pair<V, Long>... pairs);
+    Flux<Value<String>> topKIncrBy(K key, IncrementPair<V>... pairs);
 
     /**
      * Returns information about the Top-K sketch.

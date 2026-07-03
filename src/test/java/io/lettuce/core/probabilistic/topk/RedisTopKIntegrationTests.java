@@ -6,7 +6,7 @@
  */
 package io.lettuce.core.probabilistic.topk;
 
-import io.lettuce.core.Pair;
+import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.probabilistic.TopKInfoValue;
 import io.lettuce.core.probabilistic.TopKListValue;
@@ -80,7 +80,7 @@ public class RedisTopKIntegrationTests {
     void topKIncrBy() {
         redis.topKReserve(MY_KEY, 3);
 
-        assertThat(redis.topKIncrBy(MY_KEY, new Pair<>(MY_VALUE, 3L))).containsExactly((String) null);
+        assertThat(redis.topKIncrBy(MY_KEY, MY_VALUE, 3L)).containsExactly((String) null);
         assertThat(redis.topKQuery(MY_KEY, MY_VALUE)).containsExactly(true);
     }
 
@@ -88,7 +88,8 @@ public class RedisTopKIntegrationTests {
     void topKIncrByVararg() {
         redis.topKReserve(MY_KEY, 3);
 
-        assertThat(redis.topKIncrBy(MY_KEY, new Pair<>(MY_VALUE, 3L), new Pair<>(MY_VALUE_2, 5L))).containsExactly(null, null);
+        assertThat(redis.topKIncrBy(MY_KEY, IncrementPair.of(MY_VALUE, 3L), IncrementPair.of(MY_VALUE_2, 5L)))
+                .containsExactly(null, null);
         assertThat(redis.topKQuery(MY_KEY, MY_VALUE, MY_VALUE_2)).containsExactly(true, true);
     }
 
@@ -115,7 +116,7 @@ public class RedisTopKIntegrationTests {
     @Test
     void topKListWithCount() {
         redis.topKReserve(MY_KEY, 3);
-        redis.topKIncrBy(MY_KEY, new Pair<>(MY_VALUE, 3L));
+        redis.topKIncrBy(MY_KEY, MY_VALUE, 3L);
         redis.topKAdd(MY_KEY, MY_VALUE_2);
 
         List<TopKListValue> list = redis.topKList(MY_KEY, true);
