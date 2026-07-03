@@ -287,12 +287,15 @@ public class ConnectionBuilder {
 
                 SocketOptions.TcpUserTimeoutOptions tcpUserTimeoutOptions = options.getTcpUserTimeout();
 
+                // Order must match the native transport priority used to build the channel/event loop
+                // (see Transports.NativeTransports: Epoll > Kqueue > IOUring), otherwise options for
+                // the wrong transport get applied to the bootstrap.
                 boolean applied = false;
-                if (IOUringProvider.isAvailable()) {
-                    IOUringProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
-                    applied = true;
-                } else if (io.lettuce.core.resource.EpollProvider.isAvailable()) {
+                if (io.lettuce.core.resource.EpollProvider.isAvailable()) {
                     EpollProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
+                    applied = true;
+                } else if (IOUringProvider.isAvailable()) {
+                    IOUringProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
                     applied = true;
                 }
 
