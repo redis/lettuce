@@ -154,6 +154,26 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     }
 
     @Test
+    void mgetCrossSlotWithDuplicateKeys() {
+
+        msetCrossSlot();
+
+        List<String> keysWithDuplicates = new ArrayList<>(KeysAndValues.KEYS);
+        keysWithDuplicates.add(KeysAndValues.KEYS.get(0));
+        keysWithDuplicates.add(KeysAndValues.KEYS.get(1));
+
+        List<String> expectedValues = new ArrayList<>(KeysAndValues.VALUES);
+        expectedValues.add(KeysAndValues.VALUES.get(0));
+        expectedValues.add(KeysAndValues.VALUES.get(1));
+
+        Flux<KeyValue<String, String>> flux = commands.mget(keysWithDuplicates.toArray(new String[0]));
+        List<KeyValue<String, String>> result = flux.collectList().block();
+
+        assertThat(result).hasSize(keysWithDuplicates.size());
+        assertThat(result.stream().map(Value::getValue).collect(Collectors.toList())).isEqualTo(expectedValues);
+    }
+
+    @Test
     void mgetCrossSlotStreaming() {
 
         msetCrossSlot();
