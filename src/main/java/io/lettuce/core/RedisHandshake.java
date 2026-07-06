@@ -210,7 +210,7 @@ class RedisHandshake implements ConnectionInitializer {
                     ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider).resolveCredentialsNow());
         }
 
-        CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toFuture();
+        CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toCompletableFuture();
 
         return credentialsFuture.thenComposeAsync(credentials -> dispatchAuthOrPing(channel, credentials));
     }
@@ -243,7 +243,7 @@ class RedisHandshake implements ConnectionInitializer {
                     ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider).resolveCredentialsNow());
         }
 
-        CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toFuture();
+        CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toCompletableFuture();
 
         return credentialsFuture.thenComposeAsync(credentials -> dispatchHello(channel, credentials));
     }
