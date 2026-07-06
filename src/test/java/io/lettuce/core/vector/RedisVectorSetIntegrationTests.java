@@ -148,6 +148,18 @@ public class RedisVectorSetIntegrationTests {
     }
 
     @Test
+    void vismember() {
+        assertThat(redis.vismember(VECTOR_SET_KEY, ELEMENT1)).isTrue();
+        assertThat(redis.vismember(VECTOR_SET_KEY, "missing-element")).isFalse();
+    }
+
+    @Test
+    void vismemberMissingOrWrong() {
+        assertThat(redis.vismember(MISSING_KEY, ELEMENT1)).isFalse();
+        assertThrows(RedisCommandExecutionException.class, () -> redis.vismember(WRONG_KEY, ELEMENT1));
+    }
+
+    @Test
     void vdim() {
         Long dim = redis.vdim(VECTOR_SET_KEY);
         assertThat(dim).isEqualTo(3L);
@@ -395,9 +407,19 @@ public class RedisVectorSetIntegrationTests {
     }
 
     @Test
+    void asyncVismember() throws ExecutionException, InterruptedException {
+        assertThat(asyncRedis.vismember(VECTOR_SET_KEY, ELEMENT1).get()).isTrue();
+    }
+
+    @Test
     void reactiveVadd() {
         StepVerifier.create(reactiveRedis.vadd(VECTOR_SET_KEY + ":reactive", "reactive1", 0.1, 0.2, 0.3)).expectNext(true)
                 .verifyComplete();
+    }
+
+    @Test
+    void reactiveVismember() {
+        StepVerifier.create(reactiveRedis.vismember(VECTOR_SET_KEY, ELEMENT1)).expectNext(true).verifyComplete();
     }
 
     @Test
