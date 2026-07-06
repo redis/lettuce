@@ -55,13 +55,7 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * @return Long integer-reply the number of elements that were added to the set.
      * @since 6.1
      */
-    suspend fun geoadd(
-        key: K,
-        longitude: Double,
-        latitude: Double,
-        member: V,
-        args: GeoAddArgs
-    ): Long?
+    suspend fun geoadd(key: K, longitude: Double, latitude: Double, member: V, args: GeoAddArgs): Long?
 
     /**
      * Multi geo add.
@@ -138,87 +132,8 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
     suspend fun geopos(key: K, vararg members: V): List<GeoCoordinates>
 
     /**
-     * Retrieve members selected by distance with the center of `longitude` and `latitude`.
-     *
-     * @param key the key of the geo set.
-     * @param longitude the longitude coordinate according to WGS84.
-     * @param latitude the latitude coordinate according to WGS84.
-     * @param distance radius distance.
-     * @param unit distance unit.
-     * @return bulk reply.
-     */
-    fun georadius(key: K, longitude: Double, latitude: Double, distance: Double, unit: GeoArgs.Unit): Flow<V>
-
-    /**
-     * Retrieve members selected by distance with the center of `longitude` and `latitude`.
-     *
-     * @param key the key of the geo set.
-     * @param longitude the longitude coordinate according to WGS84.
-     * @param latitude the latitude coordinate according to WGS84.
-     * @param distance radius distance.
-     * @param unit distance unit.
-     * @param geoArgs args to control the result.
-     * @return nested multi-bulk reply. The [GeoWithin] contains only fields which were requested by [GeoArgs].
-     */
-    fun georadius(key: K, longitude: Double, latitude: Double, distance: Double, unit: GeoArgs.Unit, geoArgs: GeoArgs): Flow<GeoWithin<V>>
-
-    /**
-     * Perform a [georadius(Any, Double, Double, Double, GeoArgs.Unit, GeoArgs)] query and store the results in a
-     * sorted set.
-     *
-     * @param key the key of the geo set.
-     * @param longitude the longitude coordinate according to WGS84.
-     * @param latitude the latitude coordinate according to WGS84.
-     * @param distance radius distance.
-     * @param unit distance unit.
-     * @param geoRadiusStoreArgs args to store either the resulting elements with their distance or the resulting elements with
-     *        their locations a sorted set.
-     * @return Long integer-reply the number of elements in the result.
-     */
-    suspend fun georadius(key: K, longitude: Double, latitude: Double, distance: Double, unit: GeoArgs.Unit, geoRadiusStoreArgs: GeoRadiusStoreArgs<K>): Long?
-
-    /**
-     * Retrieve members selected by distance with the center of `member`. The member itself is always contained in the
-     * results.
-     *
-     * @param key the key of the geo set.
-     * @param member reference member.
-     * @param distance radius distance.
-     * @param unit distance unit.
-     * @return set of members.
-     */
-    fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit): Flow<V>
-
-    /**
-     * Retrieve members selected by distance with the center of `member`. The member itself is always contained in the
-     * results.
-     *
-     * @param key the key of the geo set.
-     * @param member reference member.
-     * @param distance radius distance.
-     * @param unit distance unit.
-     * @param geoArgs args to control the result.
-     * @return nested multi-bulk reply. The [GeoWithin] contains only fields which were requested by [GeoArgs].
-     */
-    fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoArgs: GeoArgs): Flow<GeoWithin<V>>
-
-    /**
-     * Perform a [georadiusbymember(Any, Any, Double, GeoArgs.Unit, GeoArgs)] query and store the results in a
-     * sorted set.
-     *
-     * @param key the key of the geo set.
-     * @param member reference member.
-     * @param distance radius distance.
-     * @param unit distance unit.
-     * @param geoRadiusStoreArgs args to store either the resulting elements with their distance or the resulting elements with
-     *        their locations a sorted set.
-     * @return Long integer-reply the number of elements in the result.
-     */
-    suspend fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoRadiusStoreArgs: GeoRadiusStoreArgs<K>): Long?
-
-    /**
-     * Retrieve members selected by distance with the center of `reference` the search `predicate`.
-     * Use [GeoSearch] to create reference and predicate objects.
+     * Retrieve members selected by distance with the center of `reference` the search `predicate`. Use
+     * [GeoSearch] to create reference and predicate objects.
      *
      * @param key the key of the geo set.
      * @param reference the reference member or longitude/latitude coordinates.
@@ -229,8 +144,8 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
     fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate): Flow<V>
 
     /**
-     * Retrieve members selected by distance with the center of `reference` the search `predicate`.
-     * Use [GeoSearch] to create reference and predicate objects.
+     * Retrieve members selected by distance with the center of `reference` the search `predicate`. Use
+     * [GeoSearch] to create reference and predicate objects.
      *
      * @param key the key of the geo set.
      * @param reference the reference member or longitude/latitude coordinates.
@@ -250,7 +165,8 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * @param reference the reference member or longitude/latitude coordinates.
      * @param predicate the bounding box or radius to search in.
      * @param geoArgs args to control the result.
-     * @param storeDist stores the items in a sorted set populated with their distance from the center of the circle or box, as a floating-point number, in the same unit specified for that shape.
+     * @param storeDist stores the items in a sorted set populated with their distance from the center of the circle or box, as
+     *        a floating-point number, in the same unit specified for that shape.
      * @return Long integer-reply the number of elements in the result.
      * @since 6.1
      */

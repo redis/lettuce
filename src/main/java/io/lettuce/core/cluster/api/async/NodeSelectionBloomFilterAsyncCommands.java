@@ -7,10 +7,10 @@
 package io.lettuce.core.cluster.api.async;
 
 import java.util.List;
-import io.lettuce.core.bf.BfInfoValue;
-import io.lettuce.core.bf.BfScanDumpValue;
-import io.lettuce.core.bf.arguments.BfInsertArgs;
-import io.lettuce.core.bf.arguments.BfReserveArgs;
+import io.lettuce.core.probabilistic.BfInfoValue;
+import io.lettuce.core.probabilistic.ScanDumpValue;
+import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 
 /**
  * Asynchronous executed commands on a node selection for Bloom Filter.
@@ -164,8 +164,8 @@ public interface NodeSelectionBloomFilterAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param iterator the iterator.
-     * @return BfScanDumpValue the scan dump value.
+     * @return ScanDumpValue the scan dump value.
      */
-    AsyncExecutions<BfScanDumpValue> bfScanDump(K key, long iterator);
+    AsyncExecutions<ScanDumpValue> bfScanDump(K key, long iterator);
 
 }
