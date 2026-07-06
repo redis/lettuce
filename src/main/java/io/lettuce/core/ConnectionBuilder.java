@@ -287,7 +287,17 @@ public class ConnectionBuilder {
 
                 SocketOptions.TcpUserTimeoutOptions tcpUserTimeoutOptions = options.getTcpUserTimeout();
 
-                boolean applied = applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
+                // Order must match the native transport priority used to build the channel/event loop
+                // (see Transports.NativeTransports: Epoll > Kqueue > IOUring), otherwise options for
+                // the wrong transport get applied to the bootstrap.
+                boolean applied = false;
+                if (io.lettuce.core.resource.EpollProvider.isAvailable()) {
+                    EpollProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
+                    applied = true;
+                } else if (IOUringProvider.isAvailable()) {
+                    IOUringProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
+                    applied = true;
+                }
 
                 LettuceAssert.assertState(applied,
                         "TCP User Timeout options could not be applied. Native transports (io_uring or epoll) are required.");
@@ -306,32 +316,6 @@ public class ConnectionBuilder {
                     "Extended TCP keepalive options could not be applied. Native transports (io_uring or epoll) or a compatible NIO transport are required.");
         }
 
-    }
-
-    /**
-     * Applies the {@code TCP_USER_TIMEOUT} option using the native transport that will build the channel.
-     * <p>
-     * The check order must match the native transport priority in {@code Transports.NativeTransports}
-     * ({@code Epoll > Kqueue > IOUring}); applying io_uring options to an epoll channel (or vice versa) is silently rejected by
-     * Netty as an unknown channel option, leaving the timeout unconfigured.
-     *
-     * @param bootstrap the Netty bootstrap to configure
-     * @param tcpUserTimeout the TCP user timeout to apply
-     * @return {@code true} if the option was applied by a native transport, {@code false} otherwise
-     */
-    static boolean applyTcpUserTimeout(Bootstrap bootstrap, Duration tcpUserTimeout) {
-
-        if (EpollProvider.isAvailable()) {
-            EpollProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeout);
-            return true;
-        }
-
-        if (IOUringProvider.isAvailable()) {
-            IOUringProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeout);
-            return true;
-        }
-
-        return false;
     }
 
     public RedisChannelHandler<?, ?> connection() {
