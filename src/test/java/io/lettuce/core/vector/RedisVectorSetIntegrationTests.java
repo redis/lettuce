@@ -75,7 +75,7 @@ public class RedisVectorSetIntegrationTests {
         StatefulRedisConnection<String, String> connection = client.connect();
         redis = connection.sync();
         asyncRedis = connection.async();
-        reactiveRedis = connection.reactive();
+        reactiveRedis = connection.commands(RedisReactiveCommands.factory());
     }
 
     @BeforeEach

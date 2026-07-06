@@ -79,7 +79,7 @@ class RedisAdvancedClusterReactiveCommandsImplTest {
         partitions.addPartition(node);
         partitions.updateCache();
 
-        when(nodeConn.reactive()).thenReturn(nodeReactive);
+        when(nodeConn.commands(RedisReactiveCommands.factory())).thenReturn(nodeReactive);
         when(nodeReactive.clusterMyId()).thenReturn(Mono.just("node-1"));
 
         when(clusterConn.getChannelWriter()).thenReturn(writer);

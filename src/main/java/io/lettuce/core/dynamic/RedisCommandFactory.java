@@ -10,7 +10,9 @@ import io.lettuce.core.AbstractRedisReactiveCommands;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
@@ -260,11 +262,12 @@ public class RedisCommandFactory {
             Object reactive = null;
 
             if (connection instanceof StatefulRedisConnection) {
-                reactive = ((StatefulRedisConnection) connection).reactive();
+                reactive = ((StatefulRedisConnection) connection).commands(RedisReactiveCommands.factory());
             }
 
             if (connection instanceof StatefulRedisClusterConnection) {
-                reactive = ((StatefulRedisClusterConnection) connection).reactive();
+                reactive = ((StatefulRedisClusterConnection) connection)
+                        .commands(RedisAdvancedClusterReactiveCommands.factory());
             }
 
             if (reactive != null && Proxy.isProxyClass(reactive.getClass())) {
