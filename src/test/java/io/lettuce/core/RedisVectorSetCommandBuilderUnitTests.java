@@ -65,8 +65,9 @@ class RedisVectorSetCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$4\r\n" + "VADD\r\n" + "$10\r\n"
-                + "vector:set\r\n" + "$3\r\n" + "0.1\r\n" + "$8\r\n" + "element1\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*6\r\n" + "$4\r\n" + "VADD\r\n" + "$10\r\n" + "vector:set\r\n" + "$6\r\n" + "VALUES\r\n" + "$1\r\n"
+                        + "1\r\n" + "$3\r\n" + "0.1\r\n" + "$8\r\n" + "element1\r\n");
     }
 
     @Test

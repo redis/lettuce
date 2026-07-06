@@ -23,10 +23,14 @@ import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.*;
 import io.lettuce.core.array.*;
-import io.lettuce.core.bf.BfInfoValue;
-import io.lettuce.core.bf.BfScanDumpValue;
-import io.lettuce.core.bf.arguments.BfInsertArgs;
-import io.lettuce.core.bf.arguments.BfReserveArgs;
+import io.lettuce.core.probabilistic.BfInfoValue;
+import io.lettuce.core.probabilistic.IncrementPair;
+import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
+import io.lettuce.core.probabilistic.CfInfoValue;
+import io.lettuce.core.probabilistic.ScanDumpValue;
+import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
+import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -50,6 +54,9 @@ import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
+import io.lettuce.core.probabilistic.TopKInfoValue;
+import io.lettuce.core.probabilistic.TopKListValue;
+import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
@@ -117,13 +124,14 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author dae won
  * @since 4.0
  */
-public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclReactiveCommands<K, V>,
-        RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
-        RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
-        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
-        BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
-        RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>,
-        RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V> {
+public abstract class AbstractRedisReactiveCommands<K, V>
+        implements RedisAclReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
+        RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
+        RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
+        RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
+        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
+        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>,
+        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -138,6 +146,10 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     private final RedisArrayCommandBuilder<K, V> arrayCommandBuilder;
 
     private final RedisBloomFilterCommandBuilder<K, V> bloomFilterCommandBuilder;
+
+    private final RedisCuckooFilterCommandBuilder<K, V> cuckooFilterCommandBuilder;
+
+    private final RedisTopKCommandBuilder<K, V> topKCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -196,6 +208,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
         this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
         this.arrayCommandBuilder = new RedisArrayCommandBuilder<>(codec);
         this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
+        this.cuckooFilterCommandBuilder = new RedisCuckooFilterCommandBuilder<>(codec);
+        this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -4389,8 +4403,162 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<BfScanDumpValue> bfScanDump(K key, long iterator) {
+    public Mono<ScanDumpValue> bfScanDump(K key, long iterator) {
         return createMono(() -> bloomFilterCommandBuilder.bfScanDump(key, iterator));
+    }
+
+    // --- Redis Cuckoo Filter Commands ---
+
+    @Override
+    public Mono<String> cfReserve(K key, long capacity) {
+        return createMono(() -> cuckooFilterCommandBuilder.cfReserve(key, capacity));
+    }
+
+    @Override
+    public Mono<String> cfReserve(K key, long capacity, CfReserveArgs args) {
+        return createMono(() -> cuckooFilterCommandBuilder.cfReserve(key, capacity, args));
+    }
+
+    @Override
+    public Mono<Boolean> cfAdd(K key, V value) {
+        return createMono(() -> cuckooFilterCommandBuilder.cfAdd(key, value));
+    }
+
+    @Override
+    public Mono<Boolean> cfAddNx(K key, V value) {
+        return createMono(() -> cuckooFilterCommandBuilder.cfAddNx(key, value));
+    }
+
+    @Override
+    public Flux<Boolean> cfInsert(K key, V value) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsert(key, value));
+    }
+
+    @Override
+    public Flux<Boolean> cfInsert(K key, CfInsertArgs args, V value) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsert(key, args, value));
+    }
+
+    @Override
+    public Flux<Boolean> cfInsert(K key, V... values) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsert(key, values));
+    }
+
+    @Override
+    public Flux<Boolean> cfInsert(K key, CfInsertArgs args, V... values) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsert(key, args, values));
+    }
+
+    @Override
+    public Flux<Value<Boolean>> cfInsertNx(K key, V value) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsertNxValues(key, value));
+    }
+
+    @Override
+    public Flux<Value<Boolean>> cfInsertNx(K key, CfInsertArgs args, V value) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsertNxValues(key, args, value));
+    }
+
+    @Override
+    public Flux<Value<Boolean>> cfInsertNx(K key, V... values) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsertNxValues(key, values));
+    }
+
+    @Override
+    public Flux<Value<Boolean>> cfInsertNx(K key, CfInsertArgs args, V... values) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfInsertNxValues(key, args, values));
+    }
+
+    @Override
+    public Mono<Boolean> cfExists(K key, V value) {
+        return createMono(() -> cuckooFilterCommandBuilder.cfExists(key, value));
+    }
+
+    @Override
+    public Flux<Boolean> cfMExists(K key, V... values) {
+        return createDissolvingFlux(() -> cuckooFilterCommandBuilder.cfMExists(key, values));
+    }
+
+    @Override
+    public Mono<Boolean> cfDel(K key, V value) {
+        return createMono(() -> cuckooFilterCommandBuilder.cfDel(key, value));
+    }
+
+    @Override
+    public Mono<Long> cfCount(K key, V value) {
+        return createMono(() -> cuckooFilterCommandBuilder.cfCount(key, value));
+    }
+
+    @Override
+    public Mono<ScanDumpValue> cfScanDump(K key, long cursor) {
+        return createMono(() -> cuckooFilterCommandBuilder.cfScanDump(key, cursor));
+    }
+
+    @Override
+    public Mono<String> cfLoadChunk(K key, long cursor, byte[] data) {
+        return createMono(() -> cuckooFilterCommandBuilder.cfLoadChunk(key, cursor, data));
+    }
+
+    @Override
+    public Mono<CfInfoValue> cfInfo(K key) {
+        return createMono(() -> cuckooFilterCommandBuilder.cfInfo(key));
+    }
+
+    // --- Redis Top-K Commands ---
+
+    @Override
+    public Flux<Value<String>> topKAdd(K key, V value) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKAddValues(key, value));
+    }
+
+    @Override
+    public Flux<Value<String>> topKAdd(K key, V... values) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKAddValues(key, values));
+    }
+
+    @Override
+    public Flux<Value<String>> topKIncrBy(K key, V value, long increment) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKIncrByValues(key, value, increment));
+    }
+
+    @Override
+    public Flux<Value<String>> topKIncrBy(K key, IncrementPair<V>... pairs) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKIncrByValues(key, pairs));
+    }
+
+    @Override
+    public Mono<TopKInfoValue> topKInfo(K key) {
+        return createMono(() -> topKCommandBuilder.topKInfo(key));
+    }
+
+    @Override
+    public Flux<String> topKList(K key) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKList(key));
+    }
+
+    @Override
+    public Flux<TopKListValue> topKList(K key, boolean withCount) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKList(key, withCount));
+    }
+
+    @Override
+    public Flux<Boolean> topKQuery(K key, V value) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKQuery(key, value));
+    }
+
+    @Override
+    public Flux<Boolean> topKQuery(K key, V... values) {
+        return createDissolvingFlux(() -> topKCommandBuilder.topKQuery(key, values));
+    }
+
+    @Override
+    public Mono<String> topKReserve(K key, long k) {
+        return createMono(() -> topKCommandBuilder.topKReserve(key, k));
+    }
+
+    @Override
+    public Mono<String> topKReserve(K key, long k, TopKReserveArgs args) {
+        return createMono(() -> topKCommandBuilder.topKReserve(key, k, args));
     }
 
 }

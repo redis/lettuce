@@ -116,13 +116,9 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
             args.add(dimensionality);
         }
 
-        if (vectors.length > 1) {
-            args.add(CommandKeyword.VALUES);
-            args.add(vectors.length);
-            Arrays.stream(vectors).map(Object::toString).forEach(args::add);
-        } else {
-            args.add(vectors[0]);
-        }
+        args.add(CommandKeyword.VALUES);
+        args.add(vectors.length);
+        Arrays.stream(vectors).map(Object::toString).forEach(args::add);
 
         args.addValue(element);
 

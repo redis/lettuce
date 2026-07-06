@@ -52,7 +52,6 @@ import java.util.UUID;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.core.protocol.CommandType.XINFO;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -67,7 +66,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 @Tag(INTEGRATION_TEST)
 public class StreamCommandIntegrationTests extends TestSupport {
 
-    private final RedisCommands<String, String> redis;
+    protected final RedisCommands<String, String> redis;
 
     @Inject
     protected StreamCommandIntegrationTests(RedisCommands<String, String> redis) {
