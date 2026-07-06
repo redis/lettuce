@@ -88,7 +88,9 @@ public class ReadOnlyCommands {
         // Cuckoo Filter read-only commands
         CF_EXISTS, CF_MEXISTS, CF_COUNT, CF_INFO, CF_SCANDUMP,
         // Top-K read-only commands
-        TOPK_INFO, TOPK_LIST, TOPK_QUERY //
+        TOPK_INFO, TOPK_LIST, TOPK_QUERY,
+        // T-Digest read-only commands
+        TDIGEST_BYRANK, TDIGEST_BYREVRANK, TDIGEST_CDF, TDIGEST_INFO, TDIGEST_MAX, TDIGEST_MIN, TDIGEST_QUANTILE, TDIGEST_RANK, TDIGEST_REVRANK, TDIGEST_TRIMMED_MEAN,
     }
 
     /**

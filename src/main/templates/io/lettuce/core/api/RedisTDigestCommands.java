@@ -1,0 +1,304 @@
+/*
+ * Copyright (c) 2026-Present, Redis Ltd.
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+package io.lettuce.core.api;
+
+import java.util.List;
+
+import io.lettuce.core.probabilistic.TDigestInfoValue;
+
+/**
+ * ${intent} for T-Digest sketch.
+ *
+ * @author Yordan Tsintsov
+ * @param <K> Key type.
+ * @param <V> Value type.
+ * @see <a href="https://redis.io/docs/latest/develop/data-types/probabilistic/t-digest/">Redis T-Digest</a>
+ * @since 7.7
+ */
+public interface RedisTDigestCommands<K, V> {
+
+    /**
+     * Adds one observation to a t-digest sketch. The sketch must have been created beforehand with {@code TDIGEST.CREATE}.
+     *
+     * @param key the key.
+     * @param value the value of the observation.
+     * @return String simple-string-reply {@code OK} if the command was executed correctly.
+     */
+    String tdigestAdd(K key, V value);
+
+    /**
+     * Adds one or more observations to a t-digest sketch. The sketch must have been created beforehand with
+     * {@code TDIGEST.CREATE}.
+     *
+     * @param key the key.
+     * @param values the values of the observations.
+     * @return String simple-string-reply {@code OK} if the command was executed correctly.
+     */
+    String tdigestAdd(K key, V... values);
+
+    /**
+     * Returns, for the given rank, an estimation of the value with that rank. Ranks are zero-based, where rank {@code 0}
+     * corresponds to the smallest observation (the minimum).
+     *
+     * @param key the key.
+     * @param rank the rank for which the value should be estimated.
+     * @return List&lt;Double&gt; a single-element list holding the estimated value with the given rank. The value is
+     *         {@code -inf} if the rank is negative and {@code inf} if the rank exceeds the number of observations.
+     */
+    List<Double> tdigestByRank(K key, long rank);
+
+    /**
+     * Returns, for each given rank, an estimation of the value with that rank. Ranks are zero-based, where rank {@code 0}
+     * corresponds to the smallest observation (the minimum).
+     *
+     * @param key the key.
+     * @param ranks the ranks for which the values should be estimated.
+     * @return List&lt;Double&gt; one entry per input rank holding the estimated value with that rank. An entry is {@code -inf}
+     *         if the rank is negative and {@code inf} if the rank exceeds the number of observations.
+     */
+    List<Double> tdigestByRank(K key, long... ranks);
+
+    /**
+     * Returns, for the given reverse rank, an estimation of the value with that reverse rank. Reverse ranks are zero-based,
+     * where reverse rank {@code 0} corresponds to the largest observation (the maximum).
+     *
+     * @param key the key.
+     * @param reverseRank the reverse rank for which the value should be estimated.
+     * @return List&lt;Double&gt; a single-element list holding the estimated value with the given reverse rank. The value is
+     *         {@code inf} if the reverse rank is negative and {@code -inf} if it exceeds the number of observations.
+     */
+    List<Double> tdigestByRevRank(K key, long reverseRank);
+
+    /**
+     * Returns, for each given reverse rank, an estimation of the value with that reverse rank. Reverse ranks are zero-based,
+     * where reverse rank {@code 0} corresponds to the largest observation (the maximum).
+     *
+     * @param key the key.
+     * @param reverseRanks the reverse ranks for which the values should be estimated.
+     * @return List&lt;Double&gt; one entry per input reverse rank holding the estimated value with that reverse rank. An entry
+     *         is {@code inf} if the reverse rank is negative and {@code -inf} if it exceeds the number of observations.
+     */
+    List<Double> tdigestByRevRank(K key, long... reverseRanks);
+
+    /**
+     * Returns, for the given value, an estimation of the fraction (cumulative distribution) of observations that are smaller
+     * than or equal to it.
+     *
+     * @param key the key.
+     * @param value the value for which the fraction should be estimated.
+     * @return List&lt;Double&gt; a single-element list holding the estimated fraction, in the range {@code [0, 1]}, of
+     *         observations smaller than or equal to the given value.
+     */
+    List<Double> tdigestCDF(K key, V value);
+
+    /**
+     * Returns, for each given value, an estimation of the fraction (cumulative distribution) of observations that are smaller
+     * than or equal to it.
+     *
+     * @param key the key.
+     * @param values the values for which the fractions should be estimated.
+     * @return List&lt;Double&gt; one entry per input value holding the estimated fraction, in the range {@code [0, 1]}, of
+     *         observations smaller than or equal to that value.
+     */
+    List<Double> tdigestCDF(K key, V... values);
+
+    /**
+     * Creates a new t-digest sketch with the default compression. The default compression is {@code 100}.
+     *
+     * @param key the key.
+     * @return String simple-string-reply {@code OK} if the command was executed correctly.
+     */
+    String tdigestCreate(K key);
+
+    /**
+     * Creates a new t-digest sketch with the given compression. Higher compression values yield more accurate estimates at the
+     * cost of more memory and slower operations.
+     *
+     * @param key the key.
+     * @param compression the compression parameter that controls the accuracy versus memory trade-off.
+     * @return String simple-string-reply {@code OK} if the command was executed correctly.
+     */
+    String tdigestCreate(K key, long compression);
+
+    /**
+     * Returns information and configuration about a t-digest sketch.
+     *
+     * @param key the key.
+     * @return TDigestInfoValue the information about the sketch.
+     */
+    TDigestInfoValue tdigestInfo(K key);
+
+    /**
+     * Returns the maximum observation value from a t-digest sketch.
+     *
+     * @param key the key.
+     * @return Double the maximum observation value, or {@code nan} if the sketch is empty.
+     */
+    Double tdigestMax(K key);
+
+    /**
+     * Merges a source sketch into the destination sketch. The destination sketch is created if it does not exist.
+     *
+     * @param destination the key of the destination sketch that receives the merged data.
+     * @param sourceKey the key of the source sketch to merge.
+     * @return String simple-string-reply {@code OK} if the command was executed correctly.
+     */
+    String tdigestMerge(K destination, K sourceKey);
+
+    /**
+     * Merges a source sketch into the destination sketch using the given compression. The destination sketch is created if it
+     * does not exist.
+     *
+     * @param destination the key of the destination sketch that receives the merged data.
+     * @param sourceKey the key of the source sketch to merge.
+     * @param compression the compression parameter of the destination sketch.
+     * @return String simple-string-reply {@code OK} if the command was executed correctly.
+     */
+    String tdigestMerge(K destination, K sourceKey, long compression);
+
+    /**
+     * Merges a source sketch into the destination sketch using the given compression. The destination sketch is created if it
+     * does not exist.
+     *
+     * @param destination the key of the destination sketch that receives the merged data.
+     * @param sourceKey the key of the source sketch to merge.
+     * @param compression the compression parameter of the destination sketch.
+     * @param override if {@code true}, the destination sketch is reset before the merge so that only the source data is
+     *        retained; if {@code false}, the source data is merged into the existing destination data.
+     * @return String simple-string-reply {@code OK} if the command was executed correctly.
+     */
+    String tdigestMerge(K destination, K sourceKey, long compression, boolean override);
+
+    /**
+     * Merges one or more source sketches into the destination sketch. The destination sketch is created if it does not exist.
+     *
+     * @param destination the key of the destination sketch that receives the merged data.
+     * @param sourceKeys the keys of the source sketches to merge.
+     * @return String simple-string-reply {@code OK} if the command was executed correctly.
+     */
+    String tdigestMerge(K destination, K... sourceKeys);
+
+    /**
+     * Merges one or more source sketches into the destination sketch using the given compression. The destination sketch is
+     * created if it does not exist.
+     *
+     * @param destination the key of the destination sketch that receives the merged data.
+     * @param compression the compression parameter of the destination sketch.
+     * @param sourceKeys the keys of the source sketches to merge.
+     * @return String simple-string-reply {@code OK} if the command was executed correctly.
+     */
+    String tdigestMerge(K destination, long compression, K... sourceKeys);
+
+    /**
+     * Merges one or more source sketches into the destination sketch using the given compression. The destination sketch is
+     * created if it does not exist.
+     *
+     * @param destination the key of the destination sketch that receives the merged data.
+     * @param compression the compression parameter of the destination sketch.
+     * @param override if {@code true}, the destination sketch is reset before the merge so that only the source data is
+     *        retained; if {@code false}, the source data is merged into the existing destination data.
+     * @param sourceKeys the keys of the source sketches to merge.
+     * @return String simple-string-reply {@code OK} if the command was executed correctly.
+     */
+    String tdigestMerge(K destination, long compression, boolean override, K... sourceKeys);
+
+    /**
+     * Returns the minimum observation value from a t-digest sketch.
+     *
+     * @param key the key.
+     * @return Double the minimum observation value, or {@code nan} if the sketch is empty.
+     */
+    Double tdigestMin(K key);
+
+    /**
+     * Returns, for the given quantile, an estimation of the value at that quantile.
+     *
+     * @param key the key.
+     * @param quantile the quantile, in the range {@code [0, 1]}, for which the value should be estimated.
+     * @return List&lt;Double&gt; a single-element list holding the estimated value at the given quantile, or {@code nan} if the
+     *         sketch is empty.
+     */
+    List<Double> tdigestQuantile(K key, double quantile);
+
+    /**
+     * Returns, for each given quantile, an estimation of the value at that quantile.
+     *
+     * @param key the key.
+     * @param quantiles the quantiles, each in the range {@code [0, 1]}, for which the values should be estimated.
+     * @return List&lt;Double&gt; one entry per input quantile holding the estimated value at that quantile, or {@code nan} if
+     *         the sketch is empty.
+     */
+    List<Double> tdigestQuantile(K key, double... quantiles);
+
+    /**
+     * Returns, for the given value, the estimated rank, that is the number of observations that are smaller than the value.
+     * Ranks are zero-based.
+     *
+     * @param key the key.
+     * @param value the value for which the rank should be estimated.
+     * @return List&lt;Long&gt; a single-element list holding the estimated rank of the value. The rank is {@code -1} if the
+     *         value is smaller than the minimum observation and equal to the number of observations if it is larger than the
+     *         maximum.
+     */
+    List<Long> tdigestRank(K key, V value);
+
+    /**
+     * Returns, for each given value, the estimated rank, that is the number of observations that are smaller than the value.
+     * Ranks are zero-based.
+     *
+     * @param key the key.
+     * @param values the values for which the ranks should be estimated.
+     * @return List&lt;Long&gt; one entry per input value holding its estimated rank. An entry is {@code -1} if the value is
+     *         smaller than the minimum observation and equal to the number of observations if it is larger than the maximum.
+     */
+    List<Long> tdigestRank(K key, V... values);
+
+    /**
+     * Resets a t-digest sketch, removing all its observations while keeping the sketch and its configuration in place.
+     *
+     * @param key the key.
+     * @return String simple-string-reply {@code OK} if the command was executed correctly.
+     */
+    String tdigestReset(K key);
+
+    /**
+     * Returns, for the given value, the estimated reverse rank, that is the number of observations that are larger than the
+     * value. Reverse ranks are zero-based.
+     *
+     * @param key the key.
+     * @param value the value for which the reverse rank should be estimated.
+     * @return List&lt;Long&gt; a single-element list holding the estimated reverse rank of the value. The reverse rank is
+     *         {@code -1} if the value is larger than the maximum observation and equal to the number of observations if it is
+     *         smaller than the minimum.
+     */
+    List<Long> tdigestRevRank(K key, V value);
+
+    /**
+     * Returns, for each given value, the estimated reverse rank, that is the number of observations that are larger than the
+     * value. Reverse ranks are zero-based.
+     *
+     * @param key the key.
+     * @param values the values for which the reverse ranks should be estimated.
+     * @return List&lt;Long&gt; one entry per input value holding its estimated reverse rank. An entry is {@code -1} if the value
+     *         is larger than the maximum observation and equal to the number of observations if it is smaller than the minimum.
+     */
+    List<Long> tdigestRevRank(K key, V... values);
+
+    /**
+     * Returns an estimation of the mean value from the sketch, excluding observation values outside the low and high cutoff
+     * quantiles.
+     *
+     * @param key the key.
+     * @param lowCutQuantile the low cutoff quantile, in the range {@code [0, 1]}; observations below it are excluded. Must be
+     *        smaller than {@code highCutQuantile}.
+     * @param highCutQuantile the high cutoff quantile, in the range {@code [0, 1]}; observations above it are excluded. Must be
+     *        larger than {@code lowCutQuantile}.
+     * @return Double the estimated trimmed mean, or {@code nan} if the sketch is empty.
+     */
+    Double tdigestTrimmedMean(K key, double lowCutQuantile, double highCutQuantile);
+
+}
