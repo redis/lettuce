@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 
-import reactor.core.publisher.Mono;
-import reactor.util.function.Tuples;
+import io.lettuce.core.Pair;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -37,7 +37,7 @@ class AsyncConnections {
         connections.put(redisURI, connection);
     }
 
-    public Mono<Connections> asMono(Duration timeout, ScheduledExecutorService timeoutExecutor) {
+    public CompletionStage<Connections> asAsync(Duration timeout, ScheduledExecutorService timeoutExecutor) {
 
         Connections connections = new Connections(this.connections.size(), nodeList);
 
@@ -51,12 +51,12 @@ class AsyncConnections {
                 if (throwable != null) {
                     connections.accept(throwable);
                 } else {
-                    connections.accept(Tuples.of(entry.getKey(), connection));
+                    connections.accept(Pair.of(entry.getKey(), connection));
                 }
             });
         }
 
-        return Mono.fromCompletionStage(connections.getOrTimeout(timeout, timeoutExecutor));
+        return connections.getOrTimeout(timeout, timeoutExecutor);
     }
 
 }
