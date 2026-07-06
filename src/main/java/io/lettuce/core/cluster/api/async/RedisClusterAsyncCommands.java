@@ -48,7 +48,7 @@ public interface RedisClusterAsyncCommands<K, V>
         RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>,
         RedisStringAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>, RedisVectorSetAsyncCommands<K, V>,
         RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V>, RedisBloomFilterAsyncCommands<K, V>,
-        RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V> {
+        RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V>, RedisCMSAsyncCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.

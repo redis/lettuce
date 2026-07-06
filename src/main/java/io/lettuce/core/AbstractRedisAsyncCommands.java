@@ -28,6 +28,8 @@ import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.probabilistic.CfInfoValue;
+import io.lettuce.core.probabilistic.CMSInfoValue;
+import io.lettuce.core.probabilistic.MergePair;
 import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
@@ -123,7 +125,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
         RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V>,
-        RedisBloomFilterAsyncCommands<K, V>, RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V> {
+        RedisBloomFilterAsyncCommands<K, V>, RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V>,
+        RedisCMSAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -142,6 +145,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     private final RedisCuckooFilterCommandBuilder<K, V> cuckooFilterCommandBuilder;
 
     private final RedisTopKCommandBuilder<K, V> topKCommandBuilder;
+
+    private final RedisCMSCommandBuilder<K, V> cmsCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -164,6 +169,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
         this.cuckooFilterCommandBuilder = new RedisCuckooFilterCommandBuilder<>(codec);
         this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
+        this.cmsCommandBuilder = new RedisCMSCommandBuilder<>(codec);
     }
 
     /**
@@ -4476,6 +4482,56 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> topKReserve(K key, long k, TopKReserveArgs args) {
         return dispatch(topKCommandBuilder.topKReserve(key, k, args));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> cmsIncrBy(K key, IncrementPair<V> pair) {
+        return dispatch(cmsCommandBuilder.cmsIncrBy(key, pair));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> cmsIncrBy(K key, IncrementPair<V>... pairs) {
+        return dispatch(cmsCommandBuilder.cmsIncrBy(key, pairs));
+    }
+
+    @Override
+    public RedisFuture<CMSInfoValue> cmsInfo(K key) {
+        return dispatch(cmsCommandBuilder.cmsInfo(key));
+    }
+
+    @Override
+    public RedisFuture<String> cmsInitByDim(K key, long width, long depth) {
+        return dispatch(cmsCommandBuilder.cmsInitByDim(key, width, depth));
+    }
+
+    @Override
+    public RedisFuture<String> cmsInitByProb(K key, double error, double probability) {
+        return dispatch(cmsCommandBuilder.cmsInitByProb(key, error, probability));
+    }
+
+    @Override
+    public RedisFuture<String> cmsMerge(K destination, K source) {
+        return dispatch(cmsCommandBuilder.cmsMerge(destination, source));
+    }
+
+    @Override
+    public RedisFuture<String> cmsMerge(K destination, K... sources) {
+        return dispatch(cmsCommandBuilder.cmsMerge(destination, sources));
+    }
+
+    @Override
+    public RedisFuture<String> cmsMerge(K destination, K source, long weight) {
+        return dispatch(cmsCommandBuilder.cmsMerge(destination, source, weight));
+    }
+
+    @Override
+    public RedisFuture<String> cmsMerge(K destination, MergePair<K>... sources) {
+        return dispatch(cmsCommandBuilder.cmsMerge(destination, sources));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> cmsQuery(K key, V... values) {
+        return dispatch(cmsCommandBuilder.cmsQuery(key, values));
     }
 
 }
