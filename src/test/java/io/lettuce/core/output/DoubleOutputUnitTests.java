@@ -20,9 +20,9 @@ import io.lettuce.core.codec.StringCodec;
 /**
  * Unit tests for {@link DoubleOutput}.
  * <p>
- * Covers the two decode paths ({@link DoubleOutput#set(ByteBuffer)} for RESP2 bulk strings and
- * {@link DoubleOutput#set(double)} for the RESP3 native double) and the Redis {@code nan}/{@code inf}/{@code -inf} spellings,
- * which are decoded via {@code LettuceStrings.toDouble}.
+ * Covers the two decode paths ({@link DoubleOutput#set(ByteBuffer)} for RESP2 bulk strings and {@link DoubleOutput#set(double)}
+ * for the RESP3 native double) and the Redis {@code nan}/{@code inf}/{@code -inf} spellings, which are decoded via
+ * {@code LettuceStrings.toDouble}.
  */
 @Tag(UNIT_TEST)
 class DoubleOutputUnitTests {
