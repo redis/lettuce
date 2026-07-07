@@ -2151,6 +2151,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Boolean> vismember(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vismember(key, element));
+    }
+
+    @Override
     public RedisFuture<Boolean> vClearAttributes(K key, V element) {
         return dispatch(vectorSetCommandBuilder.vsetattr(key, element, ""));
     }

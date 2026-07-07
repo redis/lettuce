@@ -142,6 +142,21 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
     }
 
     /**
+     * Create a new {@code VISMEMBER} command to check whether an element exists in a vector set.
+     *
+     * @param key the key of the vector set, must not be {@code null}
+     * @param element the name of the element in the vector set, must not be {@code null}
+     * @return a new {@link Command} that returns whether the element exists
+     * @see <a href="https://redis.io/docs/latest/commands/vismember/">Redis Documentation: VISMEMBER</a>
+     */
+    public Command<K, V, Boolean> vismember(K key, V element) {
+        notNullKey(key);
+        notNullKey(element);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(element);
+        return createCommand(VISMEMBER, new BooleanOutput<>(codec), args);
+    }
+
+    /**
      * Create a new {@code VDIM} command to get the dimensionality of a vector set.
      *
      * @param key the key of the vector set, must not be {@code null}
