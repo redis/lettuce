@@ -123,6 +123,20 @@ public interface RedisVectorSetAsyncCommands<K, V> {
     RedisFuture<Long> vcard(K key);
 
     /**
+     * Checks whether {@code element} exists in the vector set stored at {@code key}.
+     * <p>
+     * Time complexity: O(1)
+     *
+     * @param key the key of the vector set
+     * @param element the name of the element in the vector set
+     * @return {@literal true} if the element exists, {@literal false} otherwise
+     * @since 7.7
+     * @see <a href="https://redis.io/docs/latest/commands/vismember/">Redis Documentation: VISMEMBER</a>
+     */
+    @Experimental
+    RedisFuture<Boolean> vismember(K key, V element);
+
+    /**
      * Clears all attributes for the specified {@code element} in the vector set stored at {@code key}.
      * <p>
      * Time complexity: O(1)
