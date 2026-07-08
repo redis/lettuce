@@ -82,7 +82,6 @@ import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.tracing.TraceContext;
-import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VSimScoreAttribs;
@@ -91,9 +90,11 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.context.ContextView;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.AbstractMap;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -120,6 +121,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author SeugnSu Kim
  * @author Yordan Tsintsov
  * @author dae won
+ * @author Aleksandar Todorov
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V>
@@ -156,6 +158,37 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private final boolean tracingEnabled;
 
     private volatile EventExecutorGroup scheduler;
+
+    /**
+     * Adapts a Reactor {@link ContextView} to the {@link Map} interface, delegating reads directly to the underlying
+     * {@link ContextView} without copying. This allows reusing code that expects a {@link Map}-shaped context, such as
+     * {@link TraceContextProvider#getTraceContextAsync(Map)}.
+     */
+    static class ContextViewMapAdapter extends AbstractMap<Object, Object> {
+
+        private final ContextView ctx;
+
+        public ContextViewMapAdapter(ContextView ctx) {
+            this.ctx = ctx;
+        }
+
+        @Override
+        public Object get(Object key) {
+            return ctx.hasKey(key) ? ctx.get(key) : null;
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return ctx.hasKey(key);
+        }
+
+        @Override
+        public Set<Entry<Object, Object>> entrySet() {
+            // no need to implement, just for the sake of AbstractMap contract
+            throw new UnsupportedOperationException();
+        }
+
+    }
 
     /**
      * Initialize a new instance.
@@ -781,10 +814,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     private Mono<TraceContext> withTraceContext() {
-
         return Tracing.getContext()
                 .switchIfEmpty(Mono.fromSupplier(() -> clientResources.tracing().initialTraceContextProvider()))
-                .flatMap(TraceContextProvider::getTraceContextLater).defaultIfEmpty(TraceContext.EMPTY);
+                .flatMap(p -> Mono
+                        .deferContextual(ctx -> Mono.justOrEmpty(p.getTraceContextAsync(new ContextViewMapAdapter(ctx)).get())))
+                .defaultIfEmpty(TraceContext.EMPTY);
     }
 
     protected <T> Mono<T> createMono(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
