@@ -8,10 +8,13 @@
 package io.lettuce.core.search;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.json.JsonPath;
@@ -1388,6 +1391,97 @@ public class RediSearchIntegrationTests {
             buffer.putFloat(value);
         }
         return buffer.array();
+    }
+
+    // Index name for the on-timeout policy tests
+    private static final String TIMEOUT_INDEX = "timeout-idx";
+
+    private static final String TIMEOUT_PREFIX = "tdoc:";
+
+    /**
+     * Number of documents indexed by the on-timeout tests. Large enough that scanning, scoring and sorting them cannot complete
+     * within the 1ms per-query timeout, so the query engine's on-timeout policy is guaranteed to kick in.
+     */
+    private static final int TIMEOUT_DOC_COUNT = 1_000;
+
+    private void populateTimeoutIndex() {
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> numField = NumericFieldArgs.<String> builder().name("n").sortable().build();
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(TIMEOUT_PREFIX)
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate(TIMEOUT_INDEX, createArgs, Arrays.asList(titleField, numField))).isEqualTo("OK");
+
+        // Bulk-load with pipelining so 1k documents load quickly.
+        StatefulRedisConnection<String, String> connection = redis.getStatefulConnection();
+        RedisAsyncCommands<String, String> async = connection.async();
+        connection.setAutoFlushCommands(false);
+        try {
+            List<RedisFuture<?>> futures = new ArrayList<>(TIMEOUT_DOC_COUNT);
+            for (int i = 0; i < TIMEOUT_DOC_COUNT; i++) {
+                Map<String, String> fields = new HashMap<>();
+                fields.put("title", "hello world " + i);
+                fields.put("n", Integer.toString(i));
+                futures.add(async.hmset(TIMEOUT_PREFIX + i, fields));
+            }
+            connection.flushCommands();
+            assertThat(LettuceFutures.awaitAll(Duration.ofSeconds(60), futures.toArray(new RedisFuture[0]))).isTrue();
+        } finally {
+            connection.setAutoFlushCommands(true);
+        }
+    }
+
+    /**
+     * A query heavy enough that it cannot finish within a 1ms timeout: it matches every document and forces a full scan,
+     * scoring and sort over the whole index.
+     */
+    private SearchArgs<String, String> timingOutSearchArgs() {
+        SortByArgs<String> sortBy = SortByArgs.<String> builder().attribute("n").descending().build();
+        return SearchArgs.<String, String> builder().timeout(Duration.ofMillis(1)).withScores().sortBy(sortBy)
+                .limit(0, TIMEOUT_DOC_COUNT).build();
+    }
+
+    /**
+     * With the {@code FAIL} on-timeout policy the server returns an error on a timed-out search instead of partial results. The
+     * client must surface that error (as a {@link RedisCommandExecutionException}) rather than swallowing it into an
+     * empty/partial result, and it must not be automatically retried. See CAE-3003 (initiative RED-132340: "Timeout
+     * guardrails").
+     */
+    @Test
+    void testSearchOnTimeoutFailReturnsError() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+
+        populateTimeoutIndex();
+
+        // search-on-timeout is a global server config; set it via CONFIG SET (broadcast to all nodes on a cluster).
+        assertThat(redis.configSet("search-on-timeout", "fail")).isEqualTo("OK");
+        try {
+            RedisCommandExecutionException e = assertThrows(RedisCommandExecutionException.class,
+                    () -> redis.ftSearch(TIMEOUT_INDEX, "hello world", timingOutSearchArgs()));
+            assertThat(e.getMessage().toLowerCase()).contains("timeout");
+        } finally {
+            // Restore the default policy so we don't leak the FAIL setting into other tests.
+            assertThat(redis.configSet("search-on-timeout", "return")).isEqualTo("OK");
+        }
+    }
+
+    /**
+     * With the default {@code RETURN} on-timeout policy the server returns a (possibly partial) result together with a warning
+     * instead of failing. The client must not throw and must expose the warning via {@link SearchReply#getWarnings()}. Warnings
+     * are only carried on RESP3 for FT.SEARCH; the default connection here is RESP3. See CAE-3003.
+     */
+    @Test
+    void testSearchOnTimeoutReturnPopulatesWarnings() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+
+        populateTimeoutIndex();
+
+        // RETURN is the default, but set it explicitly to keep the test independent of any policy left behind elsewhere.
+        assertThat(redis.configSet("search-on-timeout", "return")).isEqualTo("OK");
+        SearchReply<String, String> reply = redis.ftSearch(TIMEOUT_INDEX, "hello world", timingOutSearchArgs());
+
+        // RETURN must not fail the query, and the timeout must be reported as a warning.
+        assertThat(reply.getWarnings()).isNotEmpty();
+        assertThat(reply.getWarnings().toString().toLowerCase()).contains("timeout");
     }
 
 }
