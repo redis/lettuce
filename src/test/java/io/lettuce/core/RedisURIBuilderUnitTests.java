@@ -171,7 +171,7 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getSentinels()).isEmpty();
         assertThat(result.getHost()).isEqualTo("localhost");
         assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
-        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("password".toCharArray());
@@ -183,14 +183,14 @@ class RedisURIBuilderUnitTests {
     @Test
     void redisFromUrlNoPassword() {
         RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
-        StepVerifier.create(Mono.fromCompletionStage(redisURI.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(redisURI.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isNull();
                 }).verifyComplete();
 
         redisURI = RedisURI.create("redis://h:@localhost.com:14589");
-        StepVerifier.create(Mono.fromCompletionStage(redisURI.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(redisURI.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isNull();
@@ -201,7 +201,7 @@ class RedisURIBuilderUnitTests {
     void redisFromUrlPassword() {
         RedisURI redisURI = RedisURI.create("redis://h:password@localhost.com:14589");
 
-        StepVerifier.create(Mono.fromCompletionStage(redisURI.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(redisURI.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isEqualTo("h");
                     assertThat(credentials.getPassword()).isEqualTo("password".toCharArray());
@@ -236,7 +236,7 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getSentinels()).isEmpty();
         assertThat(result.getHost()).isEqualTo("localhost");
         assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
-        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("password".toCharArray());
@@ -254,7 +254,7 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(result.getSentinelMasterId()).isEqualTo("master");
         assertThat(result.toString()).contains("master");
-        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("password".toCharArray());
@@ -266,7 +266,7 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getHost()).isNull();
         assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(result.getSentinelMasterId()).isEqualTo("master");
-        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("password".toCharArray());
@@ -291,7 +291,7 @@ class RedisURIBuilderUnitTests {
         RedisURI result = RedisURI.Builder.sentinel("host", 1234, "master", "foo").build();
 
         RedisURI sentinel = result.getSentinels().get(0);
-        StepVerifier.create(Mono.fromCompletionStage(sentinel.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(sentinel.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("foo".toCharArray());
@@ -309,7 +309,7 @@ class RedisURIBuilderUnitTests {
         assertThat(sentinel.isStartTls()).isTrue();
         assertThat(sentinel.isVerifyPeer()).isFalse();
 
-        StepVerifier.create(Mono.fromCompletionStage(sentinel.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(sentinel.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("foo".toCharArray());
@@ -324,14 +324,16 @@ class RedisURIBuilderUnitTests {
         RedisURI result = RedisURI.Builder.sentinel("host", 1234, "master").withSentinel(sentinel).build();
 
         StepVerifier
-                .create(Mono.fromCompletionStage(result.getSentinels().get(0).getCredentialsProvider().resolveCredentials()))
+                .create(Mono
+                        .fromCompletionStage(result.getSentinels().get(0).getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isNull();
                 }).verifyComplete();
 
         StepVerifier
-                .create(Mono.fromCompletionStage(result.getSentinels().get(1).getCredentialsProvider().resolveCredentials()))
+                .create(Mono
+                        .fromCompletionStage(result.getSentinels().get(1).getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("bar".toCharArray());
@@ -344,14 +346,16 @@ class RedisURIBuilderUnitTests {
         RedisURI result = RedisURI.Builder.sentinel("host", 1234, "master", "foo").withSentinel("bar").build();
 
         StepVerifier
-                .create(Mono.fromCompletionStage(result.getSentinels().get(0).getCredentialsProvider().resolveCredentials()))
+                .create(Mono
+                        .fromCompletionStage(result.getSentinels().get(0).getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("foo".toCharArray());
                 }).verifyComplete();
 
         StepVerifier
-                .create(Mono.fromCompletionStage(result.getSentinels().get(1).getCredentialsProvider().resolveCredentials()))
+                .create(Mono
+                        .fromCompletionStage(result.getSentinels().get(1).getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isNull();
@@ -361,14 +365,16 @@ class RedisURIBuilderUnitTests {
                 .withSentinel("bar", 1234, "baz").build();
 
         StepVerifier
-                .create(Mono.fromCompletionStage(result.getSentinels().get(0).getCredentialsProvider().resolveCredentials()))
+                .create(Mono
+                        .fromCompletionStage(result.getSentinels().get(0).getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isNull();
                 }).verifyComplete();
 
         StepVerifier
-                .create(Mono.fromCompletionStage(result.getSentinels().get(1).getCredentialsProvider().resolveCredentials()))
+                .create(Mono
+                        .fromCompletionStage(result.getSentinels().get(1).getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("baz".toCharArray());
@@ -425,7 +431,7 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(result.isSsl()).isFalse();
 
-        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isNull();
@@ -444,7 +450,7 @@ class RedisURIBuilderUnitTests {
         assertThat(result.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT);
         assertThat(result.isSsl()).isFalse();
 
-        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(result.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("password".toCharArray());
@@ -497,7 +503,7 @@ class RedisURIBuilderUnitTests {
         assertThat(target.isSsl()).isEqualTo(source.isSsl());
         assertThat(target.isVerifyPeer()).isEqualTo(source.isVerifyPeer());
 
-        StepVerifier.create(Mono.fromCompletionStage(target.getCredentialsProvider().resolveCredentials()))
+        StepVerifier.create(Mono.fromCompletionStage(target.getCredentialsProvider().resolveCredentialsAsync()))
                 .assertNext(credentials -> {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("baz".toCharArray());

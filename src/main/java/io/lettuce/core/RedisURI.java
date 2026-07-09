@@ -976,7 +976,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // would get asterix for each character of the password.
                 RedisCredentials creds;
                 try {
-                    creds = credentialsProvider.resolveCredentials().toCompletableFuture().join();
+                    creds = credentialsProvider.resolveCredentialsAsync().toCompletableFuture().join();
                 } catch (Exception e) {
                     throw Exceptions.bubble(e);
                 }
