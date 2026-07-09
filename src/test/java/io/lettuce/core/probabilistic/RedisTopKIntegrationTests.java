@@ -4,12 +4,9 @@
  *
  * SPDX-License-Identifier: MIT
  */
-package io.lettuce.core.probabilistic.topk;
+package io.lettuce.core.probabilistic;
 
-import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.probabilistic.TopKInfoValue;
-import io.lettuce.core.probabilistic.TopKListValue;
 import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
