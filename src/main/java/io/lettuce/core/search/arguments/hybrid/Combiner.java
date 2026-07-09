@@ -97,7 +97,15 @@ public abstract class Combiner<K> {
         args.add(name);
 
         List<Object> ownArgs = getOwnArgs();
-        args.add(ownArgs.size());
+        // The COMBINE clause is serialized as COMBINE <method> <count> <args...>, where <count> must cover every token that
+        // follows, including the two YIELD_SCORE_AS <alias> tokens appended below. Omitting them makes Redis read past the
+        // clause and reject the command with "YIELD_SCORE_AS: Unknown argument".
+        int argCount = ownArgs.size();
+        if (scoreAlias != null) {
+            argCount += 2;
+        }
+        args.add(argCount);
+
         for (Object arg : ownArgs) {
             args.add(arg);
         }
