@@ -281,20 +281,20 @@ public class FtHybridIntegrationTests {
         // Test YIELD_SCORE_AS for SEARCH, VSIM and the COMBINE combiner
         HybridArgs args = HybridArgs.builder()
                 .search(HybridSearchArgs.builder().query("smartphone").scoreAlias("text_score").build())
-                .vectorSearch(HybridVectorArgs.builder().field("@embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(10)).scoreAlias("vector_score").build())
+                .vectorSearch(HybridVectorArgs.builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10))
+                        .scoreAlias("vector_score").build())
                 .combine(Combiners.rrf().window(20).constant(60).as("combined_score"))
-                .postProcessing(PostProcessingArgs.builder().load("@title", "@brand").build())
-                .param("vec", queryVectorClose).build();
+                .postProcessing(PostProcessingArgs.builder().load("@title", "@brand").build()).param("vec", queryVectorClose)
+                .build();
 
         HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
         assertThat(reply.getTotalResults()).isGreaterThan(0);
-        assertThat(reply.getResults()).allSatisfy(result -> assertThat(result).containsKey("combined_score"));
-        assertThat(reply.getResults()).anySatisfy(result -> assertThat(result).containsKey("text_score"));
-        assertThat(reply.getResults()).anySatisfy(result -> assertThat(result).containsKey("vector_score"));
+        assertThat(reply.getResults()).allSatisfy(result -> assertThat(result.getFields()).containsKey("combined_score"));
+        assertThat(reply.getResults()).anySatisfy(result -> assertThat(result.getFields()).containsKey("text_score"));
+        assertThat(reply.getResults()).anySatisfy(result -> assertThat(result.getFields()).containsKey("vector_score"));
     }
 
     // ==================== TEST 7: Reducers AVG, MIN, MAX ====================
@@ -379,15 +379,15 @@ public class FtHybridIntegrationTests {
                         .reduce(Reducers.toList("@brand").as("brands")).reduce(Reducers.count().as("count"))).build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
-        // TOLIST reducer returns a Redis array, which HybridReply<K,V> cannot store as a plain Map<String,String>
+        // TOLIST reducer returns a Redis array, which HybridReply cannot store as a plain Map<String,String>
         // value — addFieldsFromComplexData skips non-ByteBuffer values. We verify the count reducer (a scalar)
         // is present and that the server accepted the TOLIST clause without error.
-        for (Map<String, String> result : reply.getResults()) {
-            assertThat(result.get("count")).isNotNull();
+        for (HybridReply.HybridResult result : reply.getResults()) {
+            assertThat(result.getFields().get("count")).isNotNull();
         }
     }
 
@@ -404,13 +404,13 @@ public class FtHybridIntegrationTests {
                         .reduce(Reducers.firstValue("@brand").as("first_brand")).reduce(Reducers.count().as("count"))).build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
-        for (Map<String, String> result : reply.getResults()) {
-            assertThat(result.get("first_brand")).isNotNull();
-            assertThat(result.get("count")).isNotNull();
+        for (HybridReply.HybridResult result : reply.getResults()) {
+            assertThat(result.getFields().get("first_brand")).isNotNull();
+            assertThat(result.getFields().get("count")).isNotNull();
         }
     }
 
@@ -428,15 +428,15 @@ public class FtHybridIntegrationTests {
                         .build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
         // RANDOM_SAMPLE returns a Redis array, which cannot be stored in Map<String,String>.
         // addFieldsFromComplexData skips non-ByteBuffer values, so "sample_brands" will not appear
         // in the result map. Verify the count reducer (a scalar) is present without error.
-        for (Map<String, String> result : reply.getResults()) {
-            assertThat(result.get("count")).isNotNull();
+        for (HybridReply.HybridResult result : reply.getResults()) {
+            assertThat(result.getFields().get("count")).isNotNull();
         }
     }
 
@@ -453,11 +453,11 @@ public class FtHybridIntegrationTests {
                         .reduce(Reducers.stddev("@price").as("price_stddev")).reduce(Reducers.count().as("count"))).build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
-        Map<String, String> electronicsGroup = reply.getResults().get(0);
+        Map<String, String> electronicsGroup = reply.getResults().get(0).getFields();
         assertThat(electronicsGroup.get("price_stddev")).isNotNull();
         // STDDEV is a scalar string. KNN+RRF may return only one electronics item per group,
         // giving stddev=0. Just verify the value is a parseable non-negative double.
@@ -480,14 +480,14 @@ public class FtHybridIntegrationTests {
                         .build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
-        for (Map<String, String> result : reply.getResults()) {
-            assertThat(result.get("approx_brand_count")).isNotNull();
+        for (HybridReply.HybridResult result : reply.getResults()) {
+            assertThat(result.getFields().get("approx_brand_count")).isNotNull();
             // HyperLogLog approx count should be a positive integer
-            long approxCount = Long.parseLong(result.get("approx_brand_count"));
+            long approxCount = Long.parseLong(result.getFields().get("approx_brand_count"));
             assertThat(approxCount).isGreaterThan(0);
         }
     }
