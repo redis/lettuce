@@ -28,6 +28,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import io.lettuce.core.AbstractRedisReactiveCommands.ReactorTraceContext;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.MaintNotificationsConfig;
 import org.junit.jupiter.api.AfterAll;
@@ -245,7 +246,7 @@ class BraveTracingIntegrationTests extends TestSupport {
         StatefulRedisConnection<String, String> connect = client.connect();
         connect.commands(RedisReactiveCommands.factory()).set("foo", "bar")
                 .then(connect.commands(RedisReactiveCommands.factory()).get("foo"))
-                .contextWrite(io.lettuce.core.tracing.Tracing
+                .contextWrite(ReactorTraceContext
                         .withTraceContextProvider(() -> BraveTracing.BraveTraceContext.create(trace.context()))) //
                 .as(StepVerifier::create) //
                 .expectNext("bar").verifyComplete();

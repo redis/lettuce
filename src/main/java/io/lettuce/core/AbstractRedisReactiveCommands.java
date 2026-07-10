@@ -83,7 +83,6 @@ import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
-import io.lettuce.core.tracing.Tracing;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VSimScoreAttribs;
 import io.lettuce.core.vector.VectorMetadata;
@@ -91,6 +90,7 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.context.Context;
 import reactor.util.context.ContextView;
 
 import java.time.Duration;
@@ -99,6 +99,7 @@ import java.util.AbstractMap;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -815,11 +816,55 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     private Mono<TraceContext> withTraceContext() {
-        return Tracing.getContext()
+
+        return ReactorTraceContext.getContext()
                 .switchIfEmpty(Mono.fromSupplier(() -> clientResources.tracing().initialTraceContextProvider()))
                 .flatMap(p -> Mono
                         .deferContextual(ctx -> Mono.justOrEmpty(p.getTraceContextAsync(new ContextViewMapAdapter(ctx)).get())))
                 .defaultIfEmpty(TraceContext.EMPTY);
+    }
+
+    /**
+     * Helpers for propagating a {@link TraceContextProvider} through a Reactor {@link Context} on the reactive command path.
+     *
+     * @author Aleksandar Todorov
+     * @since 7.7
+     */
+    public static final class ReactorTraceContext {
+
+        private ReactorTraceContext() {
+        }
+
+        /**
+         * Gets the {@link TraceContextProvider} from the Reactor {@link Context}.
+         *
+         * @return a {@link Mono} emitting the {@link TraceContextProvider} held in the subscriber {@link Context}, if any.
+         */
+        public static Mono<TraceContextProvider> getContext() {
+            return Mono.deferContextual(Mono::justOrEmpty).filter(c -> c.hasKey(TraceContextProvider.class))
+                    .map(c -> c.get(TraceContextProvider.class));
+        }
+
+        /**
+         * Returns a {@link Function} that clears the {@link TraceContextProvider} from a Reactor {@link Context}.
+         *
+         * @return a {@link Function} that removes the {@link TraceContextProvider} from a {@link Context}.
+         */
+        public static Function<Context, Context> clearContext() {
+            return context -> context.delete(TraceContextProvider.class);
+        }
+
+        /**
+         * Creates a Reactor {@link Context} holding the given {@link TraceContextProvider} that can be merged into another
+         * {@link Context}.
+         *
+         * @param provider the {@link TraceContextProvider} to place into the returned Reactor {@link Context}.
+         * @return a Reactor {@link Context} containing the {@link TraceContextProvider}.
+         */
+        public static Context withTraceContextProvider(TraceContextProvider provider) {
+            return Context.of(TraceContextProvider.class, provider);
+        }
+
     }
 
     protected <T> Mono<T> createMono(CommandType type, CommandOutput<K, V, T> output, CommandArgs<K, V> args) {
