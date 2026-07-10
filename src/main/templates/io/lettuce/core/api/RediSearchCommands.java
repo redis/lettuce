@@ -28,12 +28,11 @@ import java.util.Map;
  * ${intent} for RediSearch functionality
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @see <a href="https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/search/">RediSearch</a>
  * @since 6.8
  */
-public interface RediSearchCommands<K, V> {
+public interface RediSearchCommands<K> {
 
     /**
      * Create a new search index with the given name and field definitions using default settings.
