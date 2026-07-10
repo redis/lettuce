@@ -23,6 +23,7 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.protocol.DecodeBufferPolicies;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.search.aggregateutils.Apply;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.hybrid.Combiners;
@@ -1574,6 +1575,8 @@ public class RediSearchIntegrationTests {
     @Test
     void testSearchOnTimeoutReturnPopulatesWarnings() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+        assumeTrue(getOptions().getProtocolVersion() != ProtocolVersion.RESP2,
+                "warnings field is only available on RESP3");
 
         populateTimeoutIndex();
 
@@ -1629,6 +1632,8 @@ public class RediSearchIntegrationTests {
     @Test
     void testAggregateOnTimeoutReturnPopulatesWarnings() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+        assumeTrue(getOptions().getProtocolVersion() != ProtocolVersion.RESP2,
+                "warnings field is only available on RESP3");
 
         populateTimeoutIndex();
 
