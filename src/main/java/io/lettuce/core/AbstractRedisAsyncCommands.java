@@ -122,7 +122,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
-        RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V>,
+        RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K>, RedisArrayAsyncCommands<K, V>,
         RedisBloomFilterAsyncCommands<K, V>, RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;

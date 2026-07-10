@@ -31,13 +31,12 @@ import io.lettuce.core.search.arguments.hybrid.HybridArgs
  * Coroutine executed commands for RediSearch functionality
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @see <a href="https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/search/">RediSearch</a>
  * @since 6.8
  */
 @ExperimentalLettuceCoroutinesApi
-interface RediSearchCoroutinesCommands<K : Any, V : Any> {
+interface RediSearchCoroutinesCommands<K : Any> {
 
     /**
      * Create a new search index with the given name and field definitions using default settings.
