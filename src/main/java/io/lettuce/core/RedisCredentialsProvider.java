@@ -18,7 +18,9 @@ import reactor.core.publisher.Mono;
  *
  * @author Mark Paluch
  * @since 6.2
+ * @deprecated since 7.7, use {@link CredentialsProvider} instead; scheduled for removal in Lettuce 8.0.
  */
+@Deprecated
 @FunctionalInterface
 public interface RedisCredentialsProvider {
 
@@ -29,17 +31,11 @@ public interface RedisCredentialsProvider {
      * an error occurs during the loading of credentials or credentials could not be found, a runtime exception will be raised.
      *
      * @return a {@link Mono} emitting {@link RedisCredentials} that can be used to authorize a Redis connection.
-     * @deprecated since 7.7, use {@link #resolveCredentialsAsync()} instead. This Reactor-typed method is removed in Lettuce
-     *             8.0, when {@code reactor-core} becomes optional and {@link #resolveCredentialsAsync()} becomes the primary
-     *             credential-resolution contract.
      */
-    @Deprecated
     Mono<RedisCredentials> resolveCredentials();
 
     /**
-     * Resolve the latest available credentials as a {@link CompletionStage}. This Reactor-free method replaces
-     * {@link #resolveCredentials()} and becomes the primary credential-resolution contract in Lettuce 8.0. Prefer it for new
-     * code; implementations continue to supply credentials through {@link #resolveCredentials()} until 8.0.
+     * Resolves the latest available credentials as a {@link CompletionStage}.
      *
      * @return a {@link CompletionStage} that completes with the {@link RedisCredentials} used to authorize a Redis connection.
      * @since 7.7
@@ -86,7 +82,7 @@ public interface RedisCredentialsProvider {
      * @return a {@link Flux} emitting {@link RedisCredentials}, or throws an exception if streaming is not supported.
      * @throws UnsupportedOperationException if the provider does not support streaming credentials.
      * @deprecated since 7.7, use {@link #subscribeToCredentials(Consumer, Consumer)} instead; scheduled for removal in Lettuce
-     *             8.0 (when {@code reactor-core} becomes optional).
+     *             8.0.
      */
     @Deprecated
     default Flux<RedisCredentials> credentials() {
