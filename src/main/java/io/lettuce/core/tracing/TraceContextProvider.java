@@ -1,6 +1,8 @@
 package io.lettuce.core.tracing;
 
+import java.util.AbstractMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Mono;
@@ -32,11 +34,31 @@ public interface TraceContextProvider {
      * @return a {@link Mono} emitting the {@link TraceContext}.
      * @deprecated since 7.7, override {@link #getTraceContextAsync(Map)} instead; scheduled for removal in Lettuce 8.0 as part
      *             of making Reactor an optional dependency. See
-     *             <a href="https://github.com/redis/lettuce/issues/3614">lettuce#3614</a>.
+     *             <a href="https://github.com/redis/lettuce/issues/3614">lettuce#3614</a>. The default implementation delegates
+     *             to {@link #getTraceContextAsync(Map)}, exposing the subscriber {@link reactor.util.context.ContextView} as a
+     *             read-only {@link Map}, so implementations that override only {@code getTraceContextAsync(Map)} are honored on
+     *             the reactive path without reimplementing this method.
      */
     @Deprecated
     default Mono<TraceContext> getTraceContextLater() {
-        return Mono.justOrEmpty(getTraceContext());
+        return Mono.deferContextual(ctx -> Mono.justOrEmpty(getTraceContextAsync(new AbstractMap<Object, Object>() {
+
+            @Override
+            public Object get(Object key) {
+                return ctx.hasKey(key) ? ctx.get(key) : null;
+            }
+
+            @Override
+            public boolean containsKey(Object key) {
+                return ctx.hasKey(key);
+            }
+
+            @Override
+            public Set<Entry<Object, Object>> entrySet() {
+                throw new UnsupportedOperationException();
+            }
+
+        }).get()));
     }
 
     /**
@@ -51,7 +73,7 @@ public interface TraceContextProvider {
      * @since 7.7
      */
     default Supplier<TraceContext> getTraceContextAsync(Map<Object, Object> appContext) {
-        return () -> getTraceContext();
+        return this::getTraceContext;
     }
 
 }
