@@ -90,7 +90,7 @@ class RedisURIUnitTests {
     void toStringShouldUnwrapCredentialsProviderFailure() {
 
         RedisException cause = new RedisException("auth failed");
-        RedisCredentialsProvider failing = () -> {
+        CredentialsProvider failing = () -> {
             CompletableFuture<RedisCredentials> f = new CompletableFuture<>();
             f.completeExceptionally(cause);
             return f;
@@ -106,7 +106,7 @@ class RedisURIUnitTests {
     void toStringShouldUnwrapCredentialsProviderRuntimeFailure() {
 
         IllegalStateException cause = new IllegalStateException("boom");
-        RedisCredentialsProvider failing = () -> {
+        CredentialsProvider failing = () -> {
             CompletableFuture<RedisCredentials> f = new CompletableFuture<>();
             f.completeExceptionally(cause);
             return f;
@@ -442,7 +442,7 @@ class RedisURIUnitTests {
                     assertThat(credentials.getPassword()).isEqualTo("bar".toCharArray());
                 }).verifyComplete();
 
-        RedisCredentialsProvider provider = () -> CompletableFuture
+        CredentialsProvider provider = () -> CompletableFuture
                 .completedFuture(RedisCredentials.just("suppliedUsername", "suppliedPassword".toCharArray()));
 
         RedisURI sourceCp = new RedisURI();

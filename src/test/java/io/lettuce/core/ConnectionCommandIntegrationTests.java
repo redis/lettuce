@@ -157,8 +157,8 @@ class ConnectionCommandIntegrationTests extends TestSupport {
 
             AtomicReference<CharSequence> passwd = new AtomicReference<>(TestSettings.aclPassword());
 
-            RedisCredentialsProvider.ImmediateRedisCredentialsProvider rcp = () -> RedisCredentials
-                    .just(TestSettings.aclUsername(), passwd.get());
+            CredentialsProvider.ImmediateRedisCredentialsProvider rcp = () -> RedisCredentials.just(TestSettings.aclUsername(),
+                    passwd.get());
 
             RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withAuthentication(rcp).build();
             try (StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {

@@ -19,13 +19,13 @@ import io.lettuce.core.internal.LettuceAssert;
  * @since 6.2
  */
 @FunctionalInterface
-public interface RedisCredentialsProvider {
+public interface CredentialsProvider {
 
     /**
      * Returns {@link RedisCredentials} that can be used to authorize a Redis connection. Each implementation of
-     * {@code RedisCredentialsProvider} can choose its own strategy for loading credentials. For example, an implementation
-     * might load credentials from an existing key management system, or load new credentials when credentials are rotated. If
-     * an error occurs during the loading of credentials or credentials could not be found, the returned {@link CompletionStage}
+     * {@code CredentialsProvider} can choose its own strategy for loading credentials. For example, an implementation might
+     * load credentials from an existing key management system, or load new credentials when credentials are rotated. If an
+     * error occurs during the loading of credentials or credentials could not be found, the returned {@link CompletionStage}
      * completes exceptionally.
      *
      * @return a {@link CompletionStage} that completes with the {@link RedisCredentials} used to authorize a Redis connection.
@@ -34,12 +34,12 @@ public interface RedisCredentialsProvider {
     CompletionStage<RedisCredentials> resolveCredentialsAsync();
 
     /**
-     * Creates a new {@link RedisCredentialsProvider} from a given {@link Supplier}.
+     * Creates a new {@link CredentialsProvider} from a given {@link Supplier}.
      *
      * @param supplier must not be {@code null}.
      * @return the {@link RedisCredentials} using credentials from {@link Supplier}.
      */
-    static RedisCredentialsProvider from(Supplier<RedisCredentials> supplier) {
+    static CredentialsProvider from(Supplier<RedisCredentials> supplier) {
 
         LettuceAssert.notNull(supplier, "Supplier must not be null");
 
@@ -57,11 +57,11 @@ public interface RedisCredentialsProvider {
     }
 
     /**
-     * Some implementations of the {@link RedisCredentialsProvider} may support streaming new credentials, based on some event
-     * that originates outside the driver. In this case they should indicate that so the {@link RedisAuthenticationHandler} is
-     * able to process these new credentials.
+     * Some implementations of the {@link CredentialsProvider} may support streaming new credentials, based on some event that
+     * originates outside the driver. In this case they should indicate that so the {@link RedisAuthenticationHandler} is able
+     * to process these new credentials.
      * 
-     * @return whether the {@link RedisCredentialsProvider} supports streaming credentials.
+     * @return whether the {@link CredentialsProvider} supports streaming credentials.
      */
     default boolean supportsStreaming() {
         return false;
@@ -99,11 +99,11 @@ public interface RedisCredentialsProvider {
     }
 
     /**
-     * Extension to {@link RedisCredentialsProvider} that resolves credentials immediately without the need to defer the
-     * credential resolution.
+     * Extension to {@link CredentialsProvider} that resolves credentials immediately without the need to defer the credential
+     * resolution.
      */
     @FunctionalInterface
-    interface ImmediateRedisCredentialsProvider extends RedisCredentialsProvider {
+    interface ImmediateRedisCredentialsProvider extends CredentialsProvider {
 
         @Override
         default CompletionStage<RedisCredentials> resolveCredentialsAsync() {
@@ -120,10 +120,9 @@ public interface RedisCredentialsProvider {
 
         /**
          * Returns {@link RedisCredentials} that can be used to authorize a Redis connection. Each implementation of
-         * {@code RedisCredentialsProvider} can choose its own strategy for loading credentials. For example, an implementation
-         * might load credentials from an existing key management system, or load new credentials when credentials are rotated.
-         * If an error occurs during the loading of credentials or credentials could not be found, a runtime exception will be
-         * raised.
+         * {@code CredentialsProvider} can choose its own strategy for loading credentials. For example, an implementation might
+         * load credentials from an existing key management system, or load new credentials when credentials are rotated. If an
+         * error occurs during the loading of credentials or credentials could not be found, a runtime exception will be raised.
          *
          * @return the resolved {@link RedisCredentials} that can be used to authorize a Redis connection.
          */

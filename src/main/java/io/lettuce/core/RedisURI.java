@@ -138,7 +138,7 @@ import io.lettuce.core.internal.LettuceStrings;
  *
  * <h3>Authentication</h3> Redis URIs may contain authentication details that effectively lead to usernames with passwords,
  * password-only, or no authentication. Connections are authenticated by using information provided through
- * {@link RedisCredentials}. Credentials are obtained at connection time from {@link RedisCredentialsProvider}. When configuring
+ * {@link RedisCredentials}. Credentials are obtained at connection time from {@link CredentialsProvider}. When configuring
  * username/password on the URI statically, then a {@link StaticCredentialsProvider} holds the configured information.
  *
  * <p>
@@ -243,7 +243,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     private String libraryVersion = LettuceVersion.getVersion();
 
-    private RedisCredentialsProvider credentialsProvider = new StaticCredentialsProvider(null, null);
+    private CredentialsProvider credentialsProvider = new StaticCredentialsProvider(null, null);
 
     private boolean ssl = false;
 
@@ -461,7 +461,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Apply authentication from another {@link RedisURI}. The authentication settings of the {@code source} URI will be applied
-     * to this URI. That is in particular the {@link RedisCredentialsProvider}.
+     * to this URI. That is in particular the {@link CredentialsProvider}.
      *
      * @param source must not be {@code null}.
      * @since 6.0
@@ -478,11 +478,11 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets the password to use to authenticate Redis connections.
      * <p>
-     * This method effectively overwrites any existing {@link RedisCredentialsProvider} with a new one, containing an empty
-     * username and the provided password.
+     * This method effectively overwrites any existing {@link CredentialsProvider} with a new one, containing an empty username
+     * and the provided password.
      *
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(CharSequence password) {
@@ -494,11 +494,11 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets the password to use to authenticate Redis connections.
      * <p>
-     * This method effectively overwrites any existing {@link RedisCredentialsProvider} with a new one, containing an empty
-     * username and the provided password.
+     * This method effectively overwrites any existing {@link CredentialsProvider} with a new one, containing an empty username
+     * and the provided password.
      *
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(char[] password) {
@@ -510,12 +510,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets the username and password to use to authenticate Redis connections.
      * <p>
-     * This method effectively overwrites any existing {@link RedisCredentialsProvider} with a new one, containing the provided
+     * This method effectively overwrites any existing {@link CredentialsProvider} with a new one, containing the provided
      * username and password.
      *
      * @param username the username to use to authenticate Redis connections.
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(String username, char[] password) {
@@ -527,12 +527,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets the username and password to use to authenticate Redis connections.
      * <p>
-     * This method effectively overwrites any existing {@link RedisCredentialsProvider} with a new one, containing the provided
+     * This method effectively overwrites any existing {@link CredentialsProvider} with a new one, containing the provided
      * username and password.
      *
      * @param username the username to use to authenticate Redis connections.
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(String username, CharSequence password) {
@@ -542,26 +542,25 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Returns the {@link RedisCredentialsProvider} to use to authenticate Redis connections. Returns a static credentials
-     * provider no explicit {@link RedisCredentialsProvider} was configured.
+     * Returns the {@link CredentialsProvider} to use to authenticate Redis connections. Returns a static credentials provider
+     * no explicit {@link CredentialsProvider} was configured.
      *
-     * @return the {@link RedisCredentialsProvider} to use to authenticate Redis connections
+     * @return the {@link CredentialsProvider} to use to authenticate Redis connections
      * @since 6.2
      */
-    public RedisCredentialsProvider getCredentialsProvider() {
+    public CredentialsProvider getCredentialsProvider() {
         return this.credentialsProvider;
     }
 
     /**
-     * Sets the {@link RedisCredentialsProvider}. Configuring a credentials provider resets the configured static
-     * username/password.
+     * Sets the {@link CredentialsProvider}. Configuring a credentials provider resets the configured static username/password.
      *
      * @param credentialsProvider the credentials provider to use when authenticating a Redis connection.
      * @since 6.2
      */
-    public void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
+    public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
 
-        LettuceAssert.notNull(credentialsProvider, "RedisCredentialsProvider must not be null");
+        LettuceAssert.notNull(credentialsProvider, "CredentialsProvider must not be null");
 
         this.credentialsProvider = credentialsProvider;
     }
@@ -1361,7 +1360,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         private DriverInfo driverInfo = DriverInfo.builder().build();
 
-        private RedisCredentialsProvider credentialsProvider;
+        private CredentialsProvider credentialsProvider;
 
         private boolean ssl = false;
 
@@ -1795,7 +1794,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @param credentialsProvider the credentials provider to use
          * @since 6.2
          */
-        public Builder withAuthentication(RedisCredentialsProvider credentialsProvider) {
+        public Builder withAuthentication(CredentialsProvider credentialsProvider) {
             this.credentialsProvider = credentialsProvider;
             return this;
         }

@@ -15,7 +15,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Ivo Gaydajiev
  * @since 6.6.0
  */
-public class MyStreamingRedisCredentialsProvider implements RedisCredentialsProvider {
+public class MyStreamingRedisCredentialsProvider implements CredentialsProvider {
 
     private final Object lock = new Object();
 
