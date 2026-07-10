@@ -39,6 +39,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  *
  * @param <K> Key type
  * @author Aleksandar Todorov
+ * @author apoorva-01
  * @since 7.5
  * @see Combiners
  * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
@@ -97,7 +98,8 @@ public abstract class Combiner<K> {
         args.add(name);
 
         List<Object> ownArgs = getOwnArgs();
-        args.add(ownArgs.size());
+        // The count must cover the YIELD_SCORE_AS alias pair appended below, otherwise Redis rejects it
+        args.add(ownArgs.size() + (scoreAlias != null ? 2 : 0));
         for (Object arg : ownArgs) {
             args.add(arg);
         }

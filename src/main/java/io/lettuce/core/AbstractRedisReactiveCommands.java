@@ -2228,6 +2228,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Boolean> vismember(K key, V element) {
+        return createMono(() -> vectorSetCommandBuilder.vismember(key, element));
+    }
+
+    @Override
     public Mono<Boolean> vClearAttributes(K key, V element) {
         return createMono(() -> vectorSetCommandBuilder.vsetattr(key, element, ""));
     }
