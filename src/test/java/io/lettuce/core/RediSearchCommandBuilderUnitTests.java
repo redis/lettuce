@@ -882,6 +882,40 @@ class RediSearchCommandBuilderUnitTests {
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("loadAll()");
     }
 
+    @Test
+    void combinerWithScoreAliasShouldCountYieldScoreAsTokens() {
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        Combiners.<String> rrf().window(20).constant(60).as("score").build(args);
+
+        // The count after RRF must cover the trailing YIELD_SCORE_AS pair, otherwise Redis rejects the alias
+        assertThat(args.toCommandString()).isEqualTo("RRF 6 WINDOW 20 CONSTANT 60.0 YIELD_SCORE_AS key<score>");
+    }
+
+    @Test
+    void linearCombinerWithScoreAliasShouldCountYieldScoreAsTokens() {
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        Combiners.<String> linear().alpha(0.7).beta(0.3).as("combined_score").build(args);
+
+        assertThat(args.toCommandString()).isEqualTo("LINEAR 6 ALPHA 0.7 BETA 0.3 YIELD_SCORE_AS key<combined_score>");
+    }
+
+    @Test
+    void defaultCombinerWithScoreAliasShouldCountYieldScoreAsTokens() {
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        Combiners.<String> rrf().as("score").build(args);
+
+        // No combiner parameters, so the count reflects only the YIELD_SCORE_AS pair
+        assertThat(args.toCommandString()).isEqualTo("RRF 2 YIELD_SCORE_AS key<score>");
+    }
+
+    @Test
+    void combinerWithoutScoreAliasShouldNotCountYieldScoreAs() {
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        Combiners.<String> rrf().window(20).constant(60).build(args);
+
+        assertThat(args.toCommandString()).isEqualTo("RRF 4 WINDOW 20 CONSTANT 60.0");
+    }
+
     private byte[] floatArrayToByteArray(float[] vector) {
         ByteBuffer buffer = ByteBuffer.allocate(vector.length * 4).order(ByteOrder.LITTLE_ENDIAN);
         for (float value : vector) {
