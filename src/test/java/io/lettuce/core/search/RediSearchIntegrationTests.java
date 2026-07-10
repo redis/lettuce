@@ -1575,8 +1575,7 @@ public class RediSearchIntegrationTests {
     @Test
     void testSearchOnTimeoutReturnPopulatesWarnings() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
-        assumeTrue(getOptions().getProtocolVersion() != ProtocolVersion.RESP2,
-                "warnings field is only available on RESP3");
+        assumeTrue(getOptions().getProtocolVersion() != ProtocolVersion.RESP2, "warnings field is only available on RESP3");
 
         populateTimeoutIndex();
 
@@ -1632,8 +1631,7 @@ public class RediSearchIntegrationTests {
     @Test
     void testAggregateOnTimeoutReturnPopulatesWarnings() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
-        assumeTrue(getOptions().getProtocolVersion() != ProtocolVersion.RESP2,
-                "warnings field is only available on RESP3");
+        assumeTrue(getOptions().getProtocolVersion() != ProtocolVersion.RESP2, "warnings field is only available on RESP3");
 
         populateTimeoutIndex();
 
