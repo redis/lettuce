@@ -877,7 +877,7 @@ class RediSearchCommandBuilderUnitTests {
         Combiners.<String> rrf().window(20).constant(60).as("score").build(args);
 
         // The count after RRF must cover the trailing YIELD_SCORE_AS pair, otherwise Redis rejects the alias
-        assertThat(args.toCommandString()).isEqualTo("RRF 6 WINDOW 20 CONSTANT 60.0 YIELD_SCORE_AS key<score>");
+        assertThat(args.toCommandString()).isEqualTo("RRF 6 WINDOW 20 CONSTANT 60.0 YIELD_SCORE_AS score");
     }
 
     @Test
@@ -885,7 +885,7 @@ class RediSearchCommandBuilderUnitTests {
         CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
         Combiners.<String> linear().alpha(0.7).beta(0.3).as("combined_score").build(args);
 
-        assertThat(args.toCommandString()).isEqualTo("LINEAR 6 ALPHA 0.7 BETA 0.3 YIELD_SCORE_AS key<combined_score>");
+        assertThat(args.toCommandString()).isEqualTo("LINEAR 6 ALPHA 0.7 BETA 0.3 YIELD_SCORE_AS combined_score");
     }
 
     @Test
@@ -894,7 +894,7 @@ class RediSearchCommandBuilderUnitTests {
         Combiners.<String> rrf().as("score").build(args);
 
         // No combiner parameters, so the count reflects only the YIELD_SCORE_AS pair
-        assertThat(args.toCommandString()).isEqualTo("RRF 2 YIELD_SCORE_AS key<score>");
+        assertThat(args.toCommandString()).isEqualTo("RRF 2 YIELD_SCORE_AS score");
     }
 
     @Test
