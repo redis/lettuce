@@ -31,12 +31,7 @@ public interface TraceContextProvider {
      * The emitted value may be {@code null} depending on the implementation and the application context it is called from.
      *
      * @return a {@link Mono} emitting the {@link TraceContext}.
-     * @deprecated since 7.7, override {@link #getTraceContextAsync(Map)} instead; scheduled for removal in Lettuce 8.0 as part
-     *             of making Reactor an optional dependency. See
-     *             <a href="https://github.com/redis/lettuce/issues/3614">lettuce#3614</a>. The default implementation delegates
-     *             to {@link #getTraceContextAsync(Map)}, exposing the subscriber {@link reactor.util.context.ContextView} as a
-     *             read-only {@link Map}, so implementations that override only {@code getTraceContextAsync(Map)} are honored on
-     *             the reactive path without reimplementing this method.
+     * @deprecated since 7.7, override {@link #getTraceContextAsync(Map)} instead; scheduled for removal in Lettuce 8.0.
      */
     @Deprecated
     default Mono<TraceContext> getTraceContextLater() {
