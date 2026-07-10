@@ -121,8 +121,8 @@ public class RedisAuthenticationHandlerUnitTests {
 
         when(connectionState.getNegotiatedProtocolVersion()).thenReturn(ProtocolVersion.RESP2);
 
-        RedisAuthenticationHandler<?, ?> handler = new RedisAuthenticationHandler<>(connection,
-                mock(RedisCredentialsProvider.class), true);
+        RedisAuthenticationHandler<?, ?> handler = new RedisAuthenticationHandler<>(connection, mock(CredentialsProvider.class),
+                true);
 
         assertFalse(handler.isSupportedConnection());
     }
@@ -132,8 +132,8 @@ public class RedisAuthenticationHandlerUnitTests {
 
         when(connectionState.getNegotiatedProtocolVersion()).thenReturn(ProtocolVersion.RESP2);
 
-        RedisAuthenticationHandler<?, ?> handler = new RedisAuthenticationHandler<>(connection,
-                mock(RedisCredentialsProvider.class), false);
+        RedisAuthenticationHandler<?, ?> handler = new RedisAuthenticationHandler<>(connection, mock(CredentialsProvider.class),
+                false);
 
         assertTrue(handler.isSupportedConnection());
     }
@@ -143,16 +143,16 @@ public class RedisAuthenticationHandlerUnitTests {
 
         when(connectionState.getNegotiatedProtocolVersion()).thenReturn(ProtocolVersion.RESP3);
 
-        RedisAuthenticationHandler<?, ?> handler = new RedisAuthenticationHandler<>(connection,
-                mock(RedisCredentialsProvider.class), true);
+        RedisAuthenticationHandler<?, ?> handler = new RedisAuthenticationHandler<>(connection, mock(CredentialsProvider.class),
+                true);
 
         assertTrue(handler.isSupportedConnection());
     }
 
     @Test
     public void testSetCredentialsWhenCredentialsAreNull() {
-        RedisAuthenticationHandler<?, ?> handler = new RedisAuthenticationHandler<>(connection,
-                mock(RedisCredentialsProvider.class), false);
+        RedisAuthenticationHandler<?, ?> handler = new RedisAuthenticationHandler<>(connection, mock(CredentialsProvider.class),
+                false);
 
         handler.setCredentials(null);
 

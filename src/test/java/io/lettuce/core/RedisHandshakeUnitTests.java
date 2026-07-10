@@ -132,7 +132,7 @@ class RedisHandshakeUnitTests {
     void handshakeDelayedCredentialProvider() {
 
         DelayedRedisCredentialsProvider cp = new DelayedRedisCredentialsProvider();
-        // RedisCredentialsProvider cp = () -> Mono.just(RedisCredentials.just("foo",
+        // CredentialsProvider cp = () -> Mono.just(RedisCredentials.just("foo",
         // "bar")).delayElement(Duration.ofMillis(3));
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
 
@@ -354,12 +354,12 @@ class RedisHandshakeUnitTests {
         output.set(ByteBuffer.wrap("1.2.3".getBytes()));
     }
 
-    static class DelayedRedisCredentialsProvider implements RedisCredentialsProvider {
+    static class DelayedRedisCredentialsProvider implements CredentialsProvider {
 
         private final Sinks.One<RedisCredentials> credentialsSink = Sinks.one();
 
         @Override
-        public CompletionStage<RedisCredentials> resolveCredentials() {
+        public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
             return credentialsSink.asMono().toFuture();
         }
 

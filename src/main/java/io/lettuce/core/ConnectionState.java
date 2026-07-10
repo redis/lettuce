@@ -35,7 +35,7 @@ public class ConnectionState {
 
     private volatile HandshakeResponse handshakeResponse;
 
-    private volatile RedisCredentialsProvider credentialsProvider;
+    private volatile CredentialsProvider credentialsProvider;
 
     private volatile int db;
 
@@ -129,11 +129,11 @@ public class ConnectionState {
         }
     }
 
-    protected void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
+    protected void setCredentialsProvider(CredentialsProvider credentialsProvider) {
         this.credentialsProvider = credentialsProvider;
     }
 
-    public RedisCredentialsProvider getCredentialsProvider() {
+    public CredentialsProvider getCredentialsProvider() {
         return credentialsProvider;
     }
 

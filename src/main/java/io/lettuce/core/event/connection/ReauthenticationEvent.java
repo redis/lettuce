@@ -11,7 +11,7 @@ package io.lettuce.core.event.connection;
  *
  * @author Ivo Gaydajiev
  * @since 6.6.0
- * @see io.lettuce.core.RedisCredentialsProvider
+ * @see io.lettuce.core.CredentialsProvider
  */
 public class ReauthenticationEvent implements AuthenticationEvent {
 

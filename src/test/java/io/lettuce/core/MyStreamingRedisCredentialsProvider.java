@@ -15,7 +15,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Ivo Gaydajiev
  * @since 6.6.0
  */
-public class MyStreamingRedisCredentialsProvider implements RedisCredentialsProvider {
+public class MyStreamingRedisCredentialsProvider implements CredentialsProvider {
 
     private final Object lock = new Object();
 
@@ -30,12 +30,12 @@ public class MyStreamingRedisCredentialsProvider implements RedisCredentialsProv
     }
 
     @Override
-    public CompletionStage<RedisCredentials> resolveCredentials() {
+    public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
         return credentialsFutureRef.get();
     }
 
     @Override
-    public CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+    public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
         LettuceAssert.notNull(onNext, "onNext consumer must not be null");
         LettuceAssert.notNull(onError, "onError consumer must not be null");
         Listener listener = new Listener(onNext, onError);

@@ -157,8 +157,8 @@ class ConnectionCommandIntegrationTests extends TestSupport {
 
             AtomicReference<CharSequence> passwd = new AtomicReference<>(TestSettings.aclPassword());
 
-            RedisCredentialsProvider.ImmediateRedisCredentialsProvider rcp = () -> RedisCredentials
-                    .just(TestSettings.aclUsername(), passwd.get());
+            CredentialsProvider.ImmediateRedisCredentialsProvider rcp = () -> RedisCredentials.just(TestSettings.aclUsername(),
+                    passwd.get());
 
             RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withAuthentication(rcp).build();
             try (StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {
@@ -285,8 +285,8 @@ class ConnectionCommandIntegrationTests extends TestSupport {
         } catch (RedisException e) {
             assertThat(e.getMessage()).startsWith("ERR").contains("AUTH");
             StatefulRedisConnectionImpl<String, String> connectionImpl = (StatefulRedisConnectionImpl<String, String>) connection;
-            assertThat(connectionImpl.getConnectionState().getCredentialsProvider().resolveCredentials().toCompletableFuture()
-                    .join().getPassword()).isNull();
+            assertThat(connectionImpl.getConnectionState().getCredentialsProvider().resolveCredentialsAsync()
+                    .toCompletableFuture().join().getPassword()).isNull();
         } finally {
             connection.close();
         }
