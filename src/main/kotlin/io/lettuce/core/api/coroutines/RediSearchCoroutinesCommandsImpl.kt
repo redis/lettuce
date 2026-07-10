@@ -34,13 +34,12 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * Coroutine executed commands (based on reactive commands) for RediSearch.
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  */
 @ExperimentalLettuceCoroutinesApi
-open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RediSearchReactiveCommands<K, V>) :
-    RediSearchCoroutinesCommands<K, V> {
+open class RediSearchCoroutinesCommandsImpl<K : Any>(internal val ops: RediSearchReactiveCommands<K>) :
+    RediSearchCoroutinesCommands<K> {
 
     override suspend fun ftCreate(index: String, arguments: CreateArgs<K>, fieldArgs: List<FieldArgs>): String? =
         ops.ftCreate(index, arguments, fieldArgs).awaitFirstOrNull()
