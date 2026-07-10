@@ -11,7 +11,6 @@ import reactor.core.publisher.Mono;
  * Interface to obtain a {@link TraceContext} allowing propagation of {@link Tracer.Span} {@link TraceContext}s across threads.
  *
  * @author Mark Paluch
- * @author Aleksandar Todorov
  * @since 5.1
  */
 @FunctionalInterface

@@ -120,7 +120,6 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author SeugnSu Kim
  * @author Yordan Tsintsov
  * @author dae won
- * @author Aleksandar Todorov
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V>

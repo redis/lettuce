@@ -27,7 +27,6 @@ import reactor.core.publisher.Mono;
  * be captured in traces including these that may contain sensitive details.
  *
  * @author Mark Paluch
- * @author Aleksandar Todorov
  * @since 6.3
  */
 public class MicrometerTracing implements Tracing {

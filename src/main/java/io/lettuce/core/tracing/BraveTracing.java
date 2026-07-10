@@ -55,7 +55,6 @@ import io.lettuce.core.protocol.RedisCommand;
  *
  * @author Mark Paluch
  * @author Daniel Albuquerque
- * @author Aleksandar Todorov
  * @see brave.Tracer
  * @see brave.Tracing#currentTracer()
  * @see BraveTraceContextProvider
