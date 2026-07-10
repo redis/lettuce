@@ -712,6 +712,7 @@ class RediSearchCommandBuilderUnitTests {
 
         String result = "*42\r\n" + "$12\r\n" + "FT.AGGREGATE\r\n" + "$3\r\n" + "idx\r\n" + "$1\r\n" + "*\r\n"//
                 + "$8\r\n" + "VERBATIM\r\n"//
+                + "$9\r\n" + "ADDSCORES\r\n"//
                 + "$4\r\n" + "LOAD\r\n" + "$1\r\n" + "1\r\n" + "$5\r\n" + "title\r\n"//
                 + "$7\r\n" + "GROUPBY\r\n" + "$1\r\n" + "1\r\n" + "$9\r\n" + "@category\r\n"//
                 + "$6\r\n" + "REDUCE\r\n" + "$5\r\n" + "COUNT\r\n" + "$1\r\n" + "0\r\n" + "$2\r\n" + "AS\r\n" + "$5\r\n"
@@ -724,7 +725,6 @@ class RediSearchCommandBuilderUnitTests {
                 + "$5\r\n" + "10000\r\n"//
                 + "$6\r\n" + "PARAMS\r\n" + "$1\r\n" + "2\r\n" + "$8\r\n" + "category\r\n" + "$11\r\n" + "electronics\r\n"//
                 + "$6\r\n" + "SCORER\r\n" + "$5\r\n" + "TFIDF\r\n"//
-                + "$9\r\n" + "ADDSCORES\r\n"//
                 + "$7\r\n" + "DIALECT\r\n" + "$1\r\n2\r\n";//
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
