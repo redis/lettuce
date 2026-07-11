@@ -121,6 +121,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author SeugnSu Kim
  * @author Yordan Tsintsov
  * @author dae won
+ * @author hutiefang76
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V>
@@ -2277,13 +2278,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> vlinks(K key, V element) {
+    public Flux<List<V>> vlinks(K key, V element) {
         return createDissolvingFlux(() -> vectorSetCommandBuilder.vlinks(key, element));
     }
 
     @Override
-    public Mono<Map<V, Double>> vlinksWithScores(K key, V element) {
-        return createMono(() -> vectorSetCommandBuilder.vlinksWithScores(key, element));
+    public Flux<Map<V, Double>> vlinksWithScores(K key, V element) {
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vlinksWithScores(key, element));
     }
 
     @Override

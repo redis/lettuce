@@ -115,6 +115,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author SeugnSu Kim
  * @author Yordan Tsintsov
  * @author dae won
+ * @author hutiefang76
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
@@ -2185,12 +2186,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> vlinks(K key, V element) {
+    public RedisFuture<List<List<V>>> vlinks(K key, V element) {
         return dispatch(vectorSetCommandBuilder.vlinks(key, element));
     }
 
     @Override
-    public RedisFuture<Map<V, Double>> vlinksWithScores(K key, V element) {
+    public RedisFuture<List<Map<V, Double>>> vlinksWithScores(K key, V element) {
         return dispatch(vectorSetCommandBuilder.vlinksWithScores(key, element));
     }
 

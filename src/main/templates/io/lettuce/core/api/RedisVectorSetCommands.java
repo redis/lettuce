@@ -28,6 +28,7 @@ import java.util.Map;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Tihomir Mateev
+ * @author hutiefang76
  * @see <a href="https://redis.io/docs/latest/develop/data-types/vector-sets/">Redis Vector Sets</a>
  * @since 6.7
  */
@@ -251,13 +252,13 @@ public interface RedisVectorSetCommands<K, V> {
      *
      * @param key the key of the vector set
      * @param element the name of the element in the vector set
-     * @return a list of elements that are linked to the specified element, or an empty list if the key or element does not
-     *         exist
+     * @return linked elements grouped by HNSW graph layer, preserving response layer boundaries; an empty list if the key or
+     *         element does not exist
      * @since 6.7
      * @see <a href="https://redis.io/docs/latest/commands/vlinks/">Redis Documentation: VLINKS</a>
      */
     @Experimental
-    List<V> vlinks(K key, V element);
+    List<List<V>> vlinks(K key, V element);
 
     /**
      * Returns the neighbors of the specified {@code element} in the HNSW graph along with their scores.
@@ -268,12 +269,13 @@ public interface RedisVectorSetCommands<K, V> {
      *
      * @param key the key of the vector set
      * @param element the name of the element in the vector set
-     * @return a list of elements with their similarity scores, or an empty list if the key or element does not exist
+     * @return linked elements and their scores grouped by HNSW graph layer, preserving response layer boundaries; an empty list
+     *         if the key or element does not exist
      * @since 6.7
      * @see <a href="https://redis.io/docs/latest/commands/vlinks/">Redis Documentation: VLINKS</a>
      */
     @Experimental
-    Map<V, Double> vlinksWithScores(K key, V element);
+    List<Map<V, Double>> vlinksWithScores(K key, V element);
 
     /**
      * Returns a random element from the vector set stored at {@code key}. This command is useful for sampling elements for
