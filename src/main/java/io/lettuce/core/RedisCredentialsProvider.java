@@ -1,6 +1,5 @@
 package io.lettuce.core;
 
-import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
@@ -23,25 +22,16 @@ import io.lettuce.core.internal.LettuceAssert;
 public interface RedisCredentialsProvider {
 
     /**
-     * Handle to a subscription created by {@link #subscribeToCredentials(Consumer, Consumer)}. Closing the subscription stops
-     * the provider from delivering further credential updates to the registered consumers.
-     */
-    interface CredentialsSubscription extends Closeable {
-
-        @Override
-        void close();
-
-    }
-
-    /**
      * Returns {@link RedisCredentials} that can be used to authorize a Redis connection. Each implementation of
      * {@code RedisCredentialsProvider} can choose its own strategy for loading credentials. For example, an implementation
      * might load credentials from an existing key management system, or load new credentials when credentials are rotated. If
-     * an error occurs during the loading of credentials or credentials could not be found, a runtime exception will be raised.
+     * an error occurs during the loading of credentials or credentials could not be found, the returned {@link CompletionStage}
+     * completes exceptionally.
      *
-     * @return a {@link CompletionStage} emitting {@link RedisCredentials} that can be used to authorize a Redis connection.
+     * @return a {@link CompletionStage} that completes with the {@link RedisCredentials} used to authorize a Redis connection.
+     * @since 7.7
      */
-    CompletionStage<RedisCredentials> resolveCredentials();
+    CompletionStage<RedisCredentials> resolveCredentialsAsync();
 
     /**
      * Creates a new {@link RedisCredentialsProvider} from a given {@link Supplier}.
@@ -101,10 +91,10 @@ public interface RedisCredentialsProvider {
      *
      * @param onNext consumer invoked with each new {@link RedisCredentials} value, must not be {@code null}.
      * @param onError consumer invoked with errors observed while producing credentials, must not be {@code null}.
-     * @return a {@link CredentialsSubscription} that can be used to stop receiving updates.
+     * @return a {@link Subscription} that can be used to stop receiving updates.
      * @throws UnsupportedOperationException if the provider does not support streaming credentials.
      */
-    default CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+    default Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
         throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
     }
 
@@ -116,7 +106,7 @@ public interface RedisCredentialsProvider {
     interface ImmediateRedisCredentialsProvider extends RedisCredentialsProvider {
 
         @Override
-        default CompletionStage<RedisCredentials> resolveCredentials() {
+        default CompletionStage<RedisCredentials> resolveCredentialsAsync() {
             try {
                 RedisCredentials credentials = resolveCredentialsNow();
                 if (credentials == null) {

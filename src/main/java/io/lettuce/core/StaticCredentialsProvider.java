@@ -44,7 +44,7 @@ public class StaticCredentialsProvider
     }
 
     @Override
-    public CompletionStage<RedisCredentials> resolveCredentials() {
+    public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
         return future;
     }
 
