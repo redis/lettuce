@@ -38,10 +38,10 @@ public class ExtendedKeepAliveSupport {
 
     static {
         // Extended keep-alive is supported if:
-        // 1. io_uring is available (Linux), OR
-        // 2. epoll is available (Linux), OR
+        // 1. epoll is available (Linux), OR
+        // 2. io_uring is available (Linux), OR
         // 3. NIO extended options are available AND kqueue is NOT available (not macOS)
-        EXTENDED_KEEPALIVE_SUPPORTED = IOUringProvider.isAvailable() || EpollProvider.isAvailable()
+        EXTENDED_KEEPALIVE_SUPPORTED = EpollProvider.isAvailable() || IOUringProvider.isAvailable()
                 || (ExtendedNioSocketOptions.isAvailable() && !KqueueProvider.isAvailable());
     }
 
@@ -66,13 +66,16 @@ public class ExtendedKeepAliveSupport {
      */
     public static boolean applyKeepAlive(Bootstrap bootstrap, int count, Duration idle, Duration interval) {
 
-        if (IOUringProvider.isAvailable()) {
-            IOUringProvider.applyKeepAlive(bootstrap, count, idle, interval);
+        // Order must match the native transport priority used to build the channel/event loop
+        // (see Transports.NativeTransports: Epoll > Kqueue > IOUring), otherwise keep-alive
+        // options for the wrong transport get applied to the bootstrap.
+        if (EpollProvider.isAvailable()) {
+            EpollProvider.applyKeepAlive(bootstrap, count, idle, interval);
             return true;
         }
 
-        if (EpollProvider.isAvailable()) {
-            EpollProvider.applyKeepAlive(bootstrap, count, idle, interval);
+        if (IOUringProvider.isAvailable()) {
+            IOUringProvider.applyKeepAlive(bootstrap, count, idle, interval);
             return true;
         }
 

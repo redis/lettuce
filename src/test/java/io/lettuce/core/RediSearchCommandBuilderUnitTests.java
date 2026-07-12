@@ -712,6 +712,7 @@ class RediSearchCommandBuilderUnitTests {
 
         String result = "*42\r\n" + "$12\r\n" + "FT.AGGREGATE\r\n" + "$3\r\n" + "idx\r\n" + "$1\r\n" + "*\r\n"//
                 + "$8\r\n" + "VERBATIM\r\n"//
+                + "$9\r\n" + "ADDSCORES\r\n"//
                 + "$4\r\n" + "LOAD\r\n" + "$1\r\n" + "1\r\n" + "$5\r\n" + "title\r\n"//
                 + "$7\r\n" + "GROUPBY\r\n" + "$1\r\n" + "1\r\n" + "$9\r\n" + "@category\r\n"//
                 + "$6\r\n" + "REDUCE\r\n" + "$5\r\n" + "COUNT\r\n" + "$1\r\n" + "0\r\n" + "$2\r\n" + "AS\r\n" + "$5\r\n"
@@ -724,7 +725,6 @@ class RediSearchCommandBuilderUnitTests {
                 + "$5\r\n" + "10000\r\n"//
                 + "$6\r\n" + "PARAMS\r\n" + "$1\r\n" + "2\r\n" + "$8\r\n" + "category\r\n" + "$11\r\n" + "electronics\r\n"//
                 + "$6\r\n" + "SCORER\r\n" + "$5\r\n" + "TFIDF\r\n"//
-                + "$9\r\n" + "ADDSCORES\r\n"//
                 + "$7\r\n" + "DIALECT\r\n" + "$1\r\n2\r\n";//
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
@@ -880,6 +880,40 @@ class RediSearchCommandBuilderUnitTests {
         // Passing "*" to load() should throw an exception directing users to use loadAll() instead
         assertThatThrownBy(() -> PostProcessingArgs.<String, String> builder().load("*"))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("loadAll()");
+    }
+
+    @Test
+    void combinerWithScoreAliasShouldCountYieldScoreAsTokens() {
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        Combiners.<String> rrf().window(20).constant(60).as("score").build(args);
+
+        // The count after RRF must cover the trailing YIELD_SCORE_AS pair, otherwise Redis rejects the alias
+        assertThat(args.toCommandString()).isEqualTo("RRF 6 WINDOW 20 CONSTANT 60.0 YIELD_SCORE_AS key<score>");
+    }
+
+    @Test
+    void linearCombinerWithScoreAliasShouldCountYieldScoreAsTokens() {
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        Combiners.<String> linear().alpha(0.7).beta(0.3).as("combined_score").build(args);
+
+        assertThat(args.toCommandString()).isEqualTo("LINEAR 6 ALPHA 0.7 BETA 0.3 YIELD_SCORE_AS key<combined_score>");
+    }
+
+    @Test
+    void defaultCombinerWithScoreAliasShouldCountYieldScoreAsTokens() {
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        Combiners.<String> rrf().as("score").build(args);
+
+        // No combiner parameters, so the count reflects only the YIELD_SCORE_AS pair
+        assertThat(args.toCommandString()).isEqualTo("RRF 2 YIELD_SCORE_AS key<score>");
+    }
+
+    @Test
+    void combinerWithoutScoreAliasShouldNotCountYieldScoreAs() {
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        Combiners.<String> rrf().window(20).constant(60).build(args);
+
+        assertThat(args.toCommandString()).isEqualTo("RRF 4 WINDOW 20 CONSTANT 60.0");
     }
 
     private byte[] floatArrayToByteArray(float[] vector) {

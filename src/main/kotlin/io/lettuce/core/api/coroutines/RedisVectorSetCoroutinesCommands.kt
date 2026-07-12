@@ -123,6 +123,20 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
     suspend fun vcard(key: K): Long?
 
     /**
+     * Checks whether `element` exists in the vector set stored at `key`.
+     * <p>
+     * Time complexity: O(1)
+     *
+     * @param key the key of the vector set
+     * @param element the name of the element in the vector set
+     * @return `true` if the element exists, `false` otherwise
+     * @since 7.7
+     * @see <a href="https://redis.io/docs/latest/commands/vismember/">Redis Documentation: VISMEMBER</a>
+     */
+    @Experimental
+    suspend fun vismember(key: K, element: V): Boolean?
+
+    /**
      * Clears all attributes for the specified `element` in the vector set stored at `key`.
      * <p>
      * Time complexity: O(1)
