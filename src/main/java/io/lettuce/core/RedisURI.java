@@ -547,12 +547,27 @@ public class RedisURI implements Serializable, ConnectionPoint {
      *
      * @return the {@link RedisCredentialsProvider} to use to authenticate Redis connections
      * @since 6.2
+     * @deprecated since 7.7, use {@link #getCredentialsProviderAsync()} instead; scheduled for removal in a future major
+     *             release.
      */
+    @Deprecated
     public RedisCredentialsProvider getCredentialsProvider() {
         if (this.credentialsProvider instanceof RedisCredentialsProvider) {
             return (RedisCredentialsProvider) this.credentialsProvider;
         }
         return new AsyncCredentialsProviderAdapter(this.credentialsProvider);
+    }
+
+    /**
+     * Returns the reactor-free {@link CredentialsProvider} configured on this URI. In contrast to
+     * {@link #getCredentialsProvider()}, the provider is returned as-is without adapting it to the deprecated reactive
+     * {@link RedisCredentialsProvider}; this is the accessor used on the driver's reactor-free authentication path.
+     *
+     * @return the {@link CredentialsProvider} to use to authenticate Redis connections.
+     * @since 7.7
+     */
+    public CredentialsProvider getCredentialsProviderAsync() {
+        return this.credentialsProvider;
     }
 
     /**

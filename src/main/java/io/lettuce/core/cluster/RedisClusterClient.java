@@ -559,7 +559,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 getFirstUri().getTimeout(), getClusterClientOptions().getJsonParser());
 
         connection.setAuthenticationHandler(
-                createHandler(connection, getFirstUri().getCredentialsProvider(), false, getOptions()));
+                createHandler(connection, getFirstUri().getCredentialsProviderAsync(), false, getOptions()));
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
@@ -644,7 +644,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
                 getFirstUri().getTimeout());
         connection.setAuthenticationHandler(
-                createHandler(connection, getFirstUri().getCredentialsProvider(), true, getOptions()));
+                createHandler(connection, getFirstUri().getCredentialsProviderAsync(), true, getOptions()));
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
@@ -817,7 +817,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
         connection.setPartitions(partitions);
         connection.setAuthenticationHandler(
-                createHandler(connection, getFirstUri().getCredentialsProvider(), true, getOptions()));
+                createHandler(connection, getFirstUri().getCredentialsProviderAsync(), true, getOptions()));
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(getClusterClientOptions(),
                 getResources(), codec, endpoint);

@@ -6,13 +6,12 @@
  */
 package io.lettuce.authx;
 
+import io.lettuce.core.CredentialsProvider;
 import io.lettuce.core.RedisCredentials;
-import io.lettuce.core.RedisCredentialsProvider;
 import io.lettuce.core.Subscription;
 import io.lettuce.core.internal.LettuceAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Mono;
 import redis.clients.authentication.core.Token;
 import redis.clients.authentication.core.TokenAuthConfig;
 import redis.clients.authentication.core.TokenListener;
@@ -27,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
- * A {@link RedisCredentialsProvider} implementation that supports token-based authentication for Redis.
+ * A {@link CredentialsProvider} implementation that supports token-based authentication for Redis.
  * <p>
  * This provider uses a {@link TokenManager} to manage and renew tokens, ensuring that the Redis client can authenticate with
  * Redis using a dynamically updated token. This is particularly useful in scenarios where Redis access is controlled via
@@ -50,7 +49,7 @@ import java.util.function.Consumer;
  *
  * @since 6.6
  */
-public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvider, AutoCloseable {
+public class TokenBasedRedisCredentialsProvider implements CredentialsProvider, AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(TokenBasedRedisCredentialsProvider.class);
 
@@ -217,17 +216,6 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
             }
         });
         return result;
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Reactive view over {@link #resolveCredentialsAsync()}, retained for the deprecated {@link RedisCredentialsProvider}
-     * contract. The reactor-free {@link #resolveCredentialsAsync()} is used on the driver's authentication path.
-     */
-    @Override
-    public Mono<RedisCredentials> resolveCredentials() {
-        return Mono.fromCompletionStage(resolveCredentialsAsync());
     }
 
     @Override
