@@ -15,17 +15,16 @@ import reactor.core.publisher.Flux;
 public interface EventBus {
 
     /**
-     * Subscribe to the event bus and {@link Event}s. The {@link Flux} drops events on backpressure to avoid contention.
+     * Subscribes to the event bus and its {@link Event}s. The {@link Flux} drops events on backpressure to avoid contention.
      *
      * @return the observable to obtain events.
      * @deprecated since 7.7, use {@link #subscribe(Consumer)} or {@link #subscribe(Class, Consumer)} instead; scheduled for
-     *             removal in Lettuce 8.0 (when {@code reactor-core} becomes optional). To obtain a {@link Flux} from the
-     *             callback API, bridge it yourself:
+     *             removal in Lettuce 8.0. To obtain a {@link Flux} from the callback API, bridge it yourself:
      *
      *             <pre class="code">
      *             Flux.create(sink -&gt; {
-     *             Subscription s = eventBus.subscribe(sink::next);
-     *             sink.onDispose(s::close);
+     *                 Subscription s = eventBus.subscribe(sink::next);
+     *                 sink.onDispose(s::close);
      *             }, FluxSink.OverflowStrategy.DROP);
      *             </pre>
      */
@@ -40,7 +39,7 @@ public interface EventBus {
     void publish(Event event);
 
     /**
-     * Subscribe to all {@link Event}s published to the bus. The {@code listener} is invoked for every event until the returned
+     * Subscribes to all {@link Event}s published to the bus. The {@code listener} is invoked for every event until the returned
      * {@link Subscription} is {@link Subscription#close() closed}. Events are dropped on backpressure to avoid contention.
      *
      * @param listener callback invoked with each published event, must not be {@code null}.
@@ -54,8 +53,8 @@ public interface EventBus {
     }
 
     /**
-     * Subscribe to {@link Event}s of a given {@code type} published to the bus. The {@code listener} is invoked for every event
-     * assignable to {@code type} until the returned {@link Subscription} is {@link Subscription#close() closed}.
+     * Subscribes to {@link Event}s of a given {@code type} published to the bus. The {@code listener} is invoked for every
+     * event assignable to {@code type} until the returned {@link Subscription} is {@link Subscription#close() closed}.
      *
      * @param type the event type to receive, must not be {@code null}.
      * @param listener callback invoked with each matching event, must not be {@code null}.

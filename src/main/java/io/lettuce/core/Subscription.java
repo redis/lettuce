@@ -19,7 +19,8 @@ import java.io.Closeable;
 public interface Subscription extends Closeable {
 
     /**
-     * Stop delivering to the registered callback. Idempotent; calling it more than once has no further effect and never throws.
+     * Stops delivering to the registered callback. Idempotent; calling it more than once has no further effect and never
+     * throws.
      */
     @Override
     void close();
