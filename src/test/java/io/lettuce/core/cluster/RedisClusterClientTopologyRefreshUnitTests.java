@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.AfterEach;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.Subscription;
 import io.lettuce.core.cluster.event.ClusterTopologyChangedEvent;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -25,7 +27,6 @@ import io.lettuce.core.event.Event;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.resource.FastShutdown;
-import reactor.core.publisher.Flux;
 
 /**
  * Unit tests for {@link RedisClusterClient} topology refresh.
@@ -75,8 +76,9 @@ class RedisClusterClientTopologyRefreshUnitTests {
         final AtomicReference<List<RedisClusterNode>> partitionsWhenPublished = new AtomicReference<>();
 
         @Override
-        public Flux<Event> get() {
-            return Flux.empty();
+        public Subscription subscribe(Consumer<Event> listener) {
+            return () -> {
+            };
         }
 
         @Override

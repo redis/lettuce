@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
@@ -179,6 +181,59 @@ class DefaultEventBusUnitTests {
 
         assertThat(received.poll(1, TimeUnit.SECONDS)).isSameAs(first);
         assertThat(received.poll(200, TimeUnit.MILLISECONDS)).isNull();
+    }
+
+    @Test
+    void concurrentPublishersDeliverWithoutError() throws Exception {
+
+        DefaultEventBus sut = new DefaultEventBus(group, 100_000); // generous bound so nothing is dropped
+        int threads = 8;
+        int perThread = 500;
+        int total = threads * perThread;
+        CountDownLatch delivered = new CountDownLatch(total);
+        List<Throwable> publishErrors = new CopyOnWriteArrayList<>();
+
+        sut.subscribe(event -> delivered.countDown());
+
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        try {
+            for (int t = 0; t < threads; t++) {
+                pool.submit(() -> {
+                    try {
+                        for (int i = 0; i < perThread; i++) {
+                            sut.publish(new TestEvent());
+                        }
+                    } catch (Throwable th) {
+                        publishErrors.add(th);
+                    }
+                });
+            }
+
+            assertThat(delivered.await(5, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            pool.shutdownNow();
+        }
+
+        assertThat(publishErrors).isEmpty();
+    }
+
+    @Test
+    void typedSubscriberNotStarvedByOtherEventTypes() throws Exception {
+
+        // Tiny bound: matching events would be dropped if non-matching events consumed in-flight capacity.
+        DefaultEventBus sut = new DefaultEventBus(group, 1);
+        ArrayBlockingQueue<EventA> received = new ArrayBlockingQueue<>(8);
+
+        sut.subscribe(EventA.class, received::add);
+
+        // A burst of non-matching events must be filtered before in-flight admission and never starve the typed subscriber.
+        for (int i = 0; i < 1000; i++) {
+            sut.publish(new EventB());
+        }
+        EventA expected = new EventA();
+        sut.publish(expected);
+
+        assertThat(received.poll(1, TimeUnit.SECONDS)).isSameAs(expected);
     }
 
     static class TestEvent implements Event {

@@ -15,9 +15,11 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Default implementation for an {@link EventBus}. Events are recorded through {@link EventRecorder#record(Event) EventRecorder}
- * and dispatched to subscribers on an {@link EventExecutorGroup}. Each subscription is pinned to a single {@link EventExecutor}
- * so its events are delivered in order; a subscriber that cannot keep up drops events (bounded by
- * {@code maxInFlightPerSubscription}) rather than applying back-pressure to the publishing thread.
+ * and dispatched to subscribers on an {@link EventExecutorGroup}. Each subscription is pinned to a single
+ * {@link EventExecutor}, so events published from a single thread are delivered to that subscriber in publication order;
+ * ordering across concurrent publishers, and relative to {@link EventRecorder}, is not guaranteed. A subscriber that cannot
+ * keep up drops events (bounded by {@code maxInFlightPerSubscription}) rather than applying back-pressure to the publishing
+ * thread.
  *
  * @author Mark Paluch
  * @since 3.4
@@ -62,7 +64,21 @@ public class DefaultEventBus implements EventBus {
 
         LettuceAssert.notNull(listener, "Listener must not be null");
 
-        EventSubscription subscription = new EventSubscription(listener, eventExecutorGroup.next());
+        return register(null, listener);
+    }
+
+    @Override
+    public <T extends Event> Subscription subscribe(Class<T> type, Consumer<T> listener) {
+
+        LettuceAssert.notNull(type, "Event type must not be null");
+        LettuceAssert.notNull(listener, "Listener must not be null");
+
+        return register(type, event -> listener.accept(type.cast(event)));
+    }
+
+    private Subscription register(Class<? extends Event> type, Consumer<Event> listener) {
+
+        EventSubscription subscription = new EventSubscription(type, listener, eventExecutorGroup.next());
         subscriptions.add(subscription);
         return subscription;
     }
@@ -72,6 +88,8 @@ public class DefaultEventBus implements EventBus {
      */
     private class EventSubscription implements Subscription {
 
+        private final Class<? extends Event> type;
+
         private final Consumer<Event> listener;
 
         private final EventExecutor executor;
@@ -80,7 +98,8 @@ public class DefaultEventBus implements EventBus {
 
         private volatile boolean closed;
 
-        EventSubscription(Consumer<Event> listener, EventExecutor executor) {
+        EventSubscription(Class<? extends Event> type, Consumer<Event> listener, EventExecutor executor) {
+            this.type = type;
             this.listener = listener;
             this.executor = executor;
         }
@@ -88,6 +107,10 @@ public class DefaultEventBus implements EventBus {
         void dispatch(Event event) {
 
             if (closed) {
+                return;
+            }
+
+            if (type != null && !type.isInstance(event)) {
                 return;
             }
 
