@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import io.lettuce.core.internal.LettuceAssert;
+import reactor.core.publisher.Mono;
 
 /**
  * A provider for streaming credentials that can be used to authorize a Redis connection
@@ -30,8 +31,8 @@ public class MyStreamingRedisCredentialsProvider implements RedisCredentialsProv
     }
 
     @Override
-    public CompletionStage<RedisCredentials> resolveCredentials() {
-        return credentialsFutureRef.get();
+    public Mono<RedisCredentials> resolveCredentials() {
+        return Mono.fromCompletionStage(credentialsFutureRef.get());
     }
 
     @Override

@@ -11,6 +11,7 @@ import io.lettuce.core.RedisCredentialsProvider;
 import io.lettuce.core.internal.LettuceAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
 import redis.clients.authentication.core.Token;
 import redis.clients.authentication.core.TokenAuthConfig;
 import redis.clients.authentication.core.TokenListener;
@@ -205,7 +206,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      * @return a {@link CompletionStage} that completes with the latest Redis credentials
      */
     @Override
-    public CompletionStage<RedisCredentials> resolveCredentials() {
+    public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
         CompletableFuture<RedisCredentials> result = new CompletableFuture<>();
         credentialsFutureRef.get().whenComplete((creds, throwable) -> {
             if (throwable != null) {
@@ -215,6 +216,17 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
             }
         });
         return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Reactive view over {@link #resolveCredentialsAsync()}, retained for the deprecated {@link RedisCredentialsProvider}
+     * contract. The reactor-free {@link #resolveCredentialsAsync()} is used on the driver's authentication path.
+     */
+    @Override
+    public Mono<RedisCredentials> resolveCredentials() {
+        return Mono.fromCompletionStage(resolveCredentialsAsync());
     }
 
     @Override
@@ -280,7 +292,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      * <ul>
      * <li>Subscriber {@code onNext}/{@code onError} callbacks for live token renewals run on the {@link TokenManager}'s renewal
      * thread. A slow or blocking subscriber can delay or miss subsequent renewals.</li>
-     * <li>Continuations chained off {@link #resolveCredentials()} run on the renewal thread when the initial future
+     * <li>Continuations chained off {@link #resolveCredentialsAsync()} run on the renewal thread when the initial future
      * completes.</li>
      * <li>Replay deliveries to a newly subscribing consumer run on the subscribing thread.</li>
      * </ul>
@@ -323,7 +335,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      * <ul>
      * <li>Subscriber {@code onNext}/{@code onError} callbacks for live token renewals run on the {@link TokenManager}'s renewal
      * thread. A slow or blocking subscriber can delay or miss subsequent renewals.</li>
-     * <li>Continuations chained off {@link #resolveCredentials()} run on the renewal thread when the initial future
+     * <li>Continuations chained off {@link #resolveCredentialsAsync()} run on the renewal thread when the initial future
      * completes.</li>
      * <li>Replay deliveries to a newly subscribing consumer run on the subscribing thread.</li>
      * </ul>

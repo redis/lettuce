@@ -6,7 +6,7 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.RedisCredentialsProvider.CredentialsSubscription;
+import io.lettuce.core.CredentialsProvider.CredentialsSubscription;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.event.connection.ReauthenticationEvent;

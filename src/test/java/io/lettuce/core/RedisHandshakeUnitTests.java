@@ -15,6 +15,7 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.AsyncCommand;
@@ -359,8 +360,8 @@ class RedisHandshakeUnitTests {
         private final Sinks.One<RedisCredentials> credentialsSink = Sinks.one();
 
         @Override
-        public CompletionStage<RedisCredentials> resolveCredentials() {
-            return credentialsSink.asMono().toFuture();
+        public Mono<RedisCredentials> resolveCredentials() {
+            return credentialsSink.asMono();
         }
 
         public void completeCredentials(RedisCredentials credentials) {

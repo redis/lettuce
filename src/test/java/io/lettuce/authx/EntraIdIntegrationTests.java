@@ -1,7 +1,7 @@
 package io.lettuce.authx;
 
 import io.lettuce.core.*;
-import io.lettuce.core.RedisCredentialsProvider.CredentialsSubscription;
+import io.lettuce.core.CredentialsProvider.CredentialsSubscription;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
