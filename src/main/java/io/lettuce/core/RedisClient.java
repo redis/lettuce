@@ -25,12 +25,11 @@ import static io.lettuce.core.internal.LettuceStrings.*;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -57,7 +56,6 @@ import io.lettuce.core.sentinel.StatefulRedisSentinelConnectionImpl;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.publisher.Mono;
 
 /**
  * A scalable and thread-safe <a href="https://redis.io/">Redis</a> client supporting synchronous, asynchronous and reactive
@@ -524,46 +522,44 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         List<RedisURI> sentinels = redisURI.getSentinels();
-        Queue<Throwable> exceptionCollector = new LinkedBlockingQueue<>();
         validateUrisAreOfSameConnectionType(sentinels);
 
-        Mono<StatefulRedisSentinelConnection<K, V>> connectionLoop = null;
+        if (sentinels.isEmpty()) {
+            return Futures
+                    .failed(new RedisConnectionException("Cannot connect to a Redis Sentinel: " + redisURI.getSentinels()));
+        }
 
+        List<Supplier<CompletionStage<StatefulRedisSentinelConnection<K, V>>>> attempts = new ArrayList<>(sentinels.size());
         for (RedisURI uri : sentinels) {
-
-            Mono<StatefulRedisSentinelConnection<K, V>> connectionMono = Mono
-                    .fromCompletionStage(() -> doConnectSentinelAsync(codec, uri, timeout, new ConnectionMetadata(redisURI)))
-                    .onErrorMap(CompletionException.class, Throwable::getCause)
-                    .onErrorMap(e -> new RedisConnectionException("Cannot connect Redis Sentinel at " + uri, e))
-                    .doOnError(exceptionCollector::add);
-
-            if (connectionLoop == null) {
-                connectionLoop = connectionMono;
-            } else {
-                connectionLoop = connectionLoop.onErrorResume(t -> connectionMono);
-            }
+            attempts.add(() -> {
+                CompletableFuture<StatefulRedisSentinelConnection<K, V>> attempt = new CompletableFuture<>();
+                doConnectSentinelAsync(codec, uri, timeout, new ConnectionMetadata(redisURI)).whenComplete((connection, e) -> {
+                    if (e != null) {
+                        Throwable cause = e instanceof CompletionException && e.getCause() != null ? e.getCause() : e;
+                        attempt.completeExceptionally(
+                                new RedisConnectionException("Cannot connect Redis Sentinel at " + uri, cause));
+                    } else {
+                        attempt.complete(connection);
+                    }
+                });
+                return attempt;
+            });
         }
 
-        if (connectionLoop == null) {
-            return Mono
-                    .<StatefulRedisSentinelConnection<K, V>> error(
-                            new RedisConnectionException("Cannot connect to a Redis Sentinel: " + redisURI.getSentinels()))
-                    .toFuture();
-        }
+        return Futures.firstSuccess(attempts, errors -> {
 
-        return connectionLoop.onErrorMap(e -> {
-
+            Throwable last = errors.get(errors.size() - 1);
             RedisConnectionException ex = new RedisConnectionException(
-                    "Cannot connect to a Redis Sentinel: " + redisURI.getSentinels(), e);
+                    "Cannot connect to a Redis Sentinel: " + redisURI.getSentinels(), last);
 
-            for (Throwable throwable : exceptionCollector) {
-                if (e != throwable) {
+            for (Throwable throwable : errors) {
+                if (throwable != last) {
                     ex.addSuppressed(throwable);
                 }
             }
 
             return ex;
-        }).toFuture();
+        });
     }
 
     private <K, V> ConnectionFuture<StatefulRedisSentinelConnection<K, V>> doConnectSentinelAsync(RedisCodec<K, V> codec,
