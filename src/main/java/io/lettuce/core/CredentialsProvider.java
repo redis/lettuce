@@ -4,7 +4,6 @@
  */
 package io.lettuce.core;
 
-import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
@@ -25,17 +24,6 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 @FunctionalInterface
 public interface CredentialsProvider {
-
-    /**
-     * Handle to a subscription created by {@link #subscribeToCredentials(Consumer, Consumer)}. Closing the subscription stops
-     * the provider from delivering further credential updates to the registered consumers.
-     */
-    interface CredentialsSubscription extends Closeable {
-
-        @Override
-        void close();
-
-    }
 
     /**
      * Returns {@link RedisCredentials} that can be used to authorize a Redis connection. Each implementation of
@@ -98,10 +86,10 @@ public interface CredentialsProvider {
      *
      * @param onNext consumer invoked with each new {@link RedisCredentials} value, must not be {@code null}.
      * @param onError consumer invoked with errors observed while producing credentials, must not be {@code null}.
-     * @return a {@link CredentialsSubscription} that can be used to stop receiving updates.
+     * @return a {@link Subscription} that can be used to stop receiving updates.
      * @throws UnsupportedOperationException if the provider does not support streaming credentials.
      */
-    default CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+    default Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
         throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
     }
 

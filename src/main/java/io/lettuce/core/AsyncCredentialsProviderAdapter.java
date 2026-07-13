@@ -42,7 +42,7 @@ class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
     }
 
     @Override
-    public CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+    public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
         return delegate.subscribeToCredentials(onNext, onError);
     }
 

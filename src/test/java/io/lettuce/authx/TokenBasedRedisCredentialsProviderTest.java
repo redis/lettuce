@@ -2,7 +2,7 @@ package io.lettuce.authx;
 
 import io.lettuce.TestTags;
 import io.lettuce.core.RedisCredentials;
-import io.lettuce.core.CredentialsProvider.CredentialsSubscription;
+import io.lettuce.core.Subscription;
 import io.lettuce.core.TestTokenManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -104,12 +104,12 @@ public class TokenBasedRedisCredentialsProviderTest {
         List<RedisCredentials> received2 = new CopyOnWriteArrayList<>();
         CountDownLatch firstTokenLatch = new CountDownLatch(2);
 
-        CredentialsSubscription sub1 = credentialsProvider.subscribeToCredentials(c -> {
+        Subscription sub1 = credentialsProvider.subscribeToCredentials(c -> {
             received1.add(c);
             firstTokenLatch.countDown();
         }, t -> {
         });
-        CredentialsSubscription sub2 = credentialsProvider.subscribeToCredentials(c -> {
+        Subscription sub2 = credentialsProvider.subscribeToCredentials(c -> {
             received2.add(c);
             firstTokenLatch.countDown();
         }, t -> {
@@ -140,7 +140,7 @@ public class TokenBasedRedisCredentialsProviderTest {
         List<RedisCredentials> received = new CopyOnWriteArrayList<>();
         CountDownLatch latch = new CountDownLatch(2);
 
-        CredentialsSubscription sub = credentialsProvider.subscribeToCredentials(c -> {
+        Subscription sub = credentialsProvider.subscribeToCredentials(c -> {
             received.add(c);
             latch.countDown();
         }, t -> {
@@ -166,7 +166,7 @@ public class TokenBasedRedisCredentialsProviderTest {
         AtomicReference<RedisCredentials> received = new AtomicReference<>();
         CountDownLatch latch = new CountDownLatch(1);
 
-        CredentialsSubscription sub = credentialsProvider.subscribeToCredentials(c -> {
+        Subscription sub = credentialsProvider.subscribeToCredentials(c -> {
             received.set(c);
             latch.countDown();
         }, t -> {
@@ -187,7 +187,7 @@ public class TokenBasedRedisCredentialsProviderTest {
         CountDownLatch tokensLatch = new CountDownLatch(2);
         CountDownLatch errorLatch = new CountDownLatch(1);
 
-        CredentialsSubscription sub = credentialsProvider.subscribeToCredentials(c -> {
+        Subscription sub = credentialsProvider.subscribeToCredentials(c -> {
             received.add(c);
             tokensLatch.countDown();
         }, t -> {

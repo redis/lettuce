@@ -6,7 +6,6 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.CredentialsProvider.CredentialsSubscription;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.event.connection.ReauthenticationEvent;
@@ -48,7 +47,7 @@ public class RedisAuthenticationHandler<K, V> {
 
     private final RedisCredentialsProvider credentialsProvider;
 
-    private final AtomicReference<CredentialsSubscription> credentialsSubscription = new AtomicReference<>();
+    private final AtomicReference<Subscription> credentialsSubscription = new AtomicReference<>();
 
     private final Boolean isPubSubConnection;
 
@@ -128,10 +127,9 @@ public class RedisAuthenticationHandler<K, V> {
             return;
         }
 
-        CredentialsSubscription credentialsSub = credentialsProvider.subscribeToCredentials(this::reauthenticate,
-                this::onError);
+        Subscription credentialsSub = credentialsProvider.subscribeToCredentials(this::reauthenticate, this::onError);
 
-        CredentialsSubscription oldSub = credentialsSubscription.getAndSet(credentialsSub);
+        Subscription oldSub = credentialsSubscription.getAndSet(credentialsSub);
         if (oldSub != null) {
             try {
                 oldSub.close();
@@ -145,7 +143,7 @@ public class RedisAuthenticationHandler<K, V> {
      * Unsubscribes from the current credentials stream.
      */
     public void unsubscribe() {
-        CredentialsSubscription sub = credentialsSubscription.getAndSet(null);
+        Subscription sub = credentialsSubscription.getAndSet(null);
         if (sub != null) {
             try {
                 sub.close();

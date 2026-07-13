@@ -97,7 +97,7 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
      * @since 7.7
      */
     @Override
-    default CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+    default Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
         Disposable disposable = credentials().subscribe(onNext, onError);
         return disposable::dispose;
     }

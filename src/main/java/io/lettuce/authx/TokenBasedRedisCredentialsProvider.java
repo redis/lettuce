@@ -8,6 +8,7 @@ package io.lettuce.authx;
 
 import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisCredentialsProvider;
+import io.lettuce.core.Subscription;
 import io.lettuce.core.internal.LettuceAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
 
     private static final Logger log = LoggerFactory.getLogger(TokenBasedRedisCredentialsProvider.class);
 
-    private static class SimpleSubscription implements CredentialsSubscription {
+    private static class SimpleSubscription implements Subscription {
 
         private final TokenBasedRedisCredentialsProvider provider;
 
@@ -230,7 +231,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
     }
 
     @Override
-    public CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+    public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
         if (isClosed) {
             throw new IllegalStateException("Credentials provider closed");
         }
