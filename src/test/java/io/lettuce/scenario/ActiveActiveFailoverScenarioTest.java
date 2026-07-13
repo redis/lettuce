@@ -47,7 +47,7 @@ import io.lettuce.core.failover.health.ProbingPolicy;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.env.Endpoints.Endpoint;
-import reactor.core.Disposable;
+import io.lettuce.core.Subscription;
 
 @Tag(SCENARIO_TEST)
 @DisplayName("Active-Active Failover Scenario Tests")
@@ -115,7 +115,7 @@ public class ActiveActiveFailoverScenarioTest {
 
     private StatefulRedisMultiDbConnection<String, String> connection;
 
-    private Disposable eventSubscription;
+    private Subscription eventSubscription;
 
     private RedisURI primaryUri;
 
@@ -145,7 +145,7 @@ public class ActiveActiveFailoverScenarioTest {
     @AfterEach
     public void tearDown() {
         if (eventSubscription != null) {
-            eventSubscription.dispose();
+            eventSubscription.close();
         }
         if (connection != null && connection.isOpen()) {
             connection.close();
@@ -446,7 +446,7 @@ public class ActiveActiveFailoverScenarioTest {
 
     private FailoverReporter setupFailoverReporter() {
         FailoverReporter reporter = new FailoverReporter();
-        eventSubscription = multiDbClient.getResources().eventBus().get().subscribe(event -> {
+        eventSubscription = multiDbClient.getResources().eventBus().subscribe(event -> {
             if (event instanceof DatabaseSwitchEvent) {
                 reporter.accept((DatabaseSwitchEvent) event);
             }
