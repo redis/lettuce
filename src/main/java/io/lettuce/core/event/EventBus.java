@@ -14,14 +14,14 @@ import io.lettuce.core.internal.LettuceAssert;
 public interface EventBus {
 
     /**
-     * Publish a {@link Event} to the bus.
+     * Publishes an {@link Event} to the bus.
      *
      * @param event the event to publish
      */
     void publish(Event event);
 
     /**
-     * Subscribe to all {@link Event}s published to the bus. The {@code listener} is invoked for every event until the returned
+     * Subscribes to all {@link Event}s published to the bus. The {@code listener} is invoked for every event until the returned
      * {@link Subscription} is {@link Subscription#close() closed}. Events are dropped for a subscriber that cannot keep up, to
      * avoid contention.
      *
@@ -32,8 +32,11 @@ public interface EventBus {
     Subscription subscribe(Consumer<Event> listener);
 
     /**
-     * Subscribe to {@link Event}s of a given {@code type} published to the bus. The {@code listener} is invoked for every event
-     * assignable to {@code type} until the returned {@link Subscription} is {@link Subscription#close() closed}.
+     * Subscribes to {@link Event}s of a given {@code type} published to the bus. The {@code listener} is invoked for every
+     * event assignable to {@code type} until the returned {@link Subscription} is {@link Subscription#close() closed}.
+     * <p>
+     * Implementations that bound or drop events per subscriber should override this method to filter by {@code type} before
+     * admission, so that non-matching events do not consume a subscriber's delivery capacity.
      *
      * @param type the event type to receive, must not be {@code null}.
      * @param listener callback invoked with each matching event, must not be {@code null}.

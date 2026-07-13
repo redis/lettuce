@@ -38,10 +38,24 @@ public class DefaultEventBus implements EventBus {
 
     private final CopyOnWriteArrayList<EventSubscription> subscriptions = new CopyOnWriteArrayList<>();
 
+    /**
+     * Creates a new {@link DefaultEventBus} that dispatches events on the given {@link EventExecutorGroup}, using the default
+     * per-subscription in-flight bound.
+     *
+     * @param eventExecutorGroup the executor group on which events are dispatched to subscribers, must not be {@code null}.
+     */
     public DefaultEventBus(EventExecutorGroup eventExecutorGroup) {
         this(eventExecutorGroup, DEFAULT_MAX_IN_FLIGHT);
     }
 
+    /**
+     * Creates a new {@link DefaultEventBus} that dispatches events on the given {@link EventExecutorGroup}, dropping events for
+     * a subscriber once more than {@code maxInFlightPerSubscription} of its events are awaiting delivery.
+     *
+     * @param eventExecutorGroup the executor group on which events are dispatched to subscribers, must not be {@code null}.
+     * @param maxInFlightPerSubscription the number of events that may await delivery per subscriber before further events are
+     *        dropped, must be greater than {@code 0}.
+     */
     public DefaultEventBus(EventExecutorGroup eventExecutorGroup, int maxInFlightPerSubscription) {
         LettuceAssert.notNull(eventExecutorGroup, "EventExecutorGroup must not be null");
         LettuceAssert.isTrue(maxInFlightPerSubscription > 0, "maxInFlightPerSubscription must be greater than 0");
