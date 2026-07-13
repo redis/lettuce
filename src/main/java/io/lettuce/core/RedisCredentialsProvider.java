@@ -1,5 +1,6 @@
 package io.lettuce.core;
 
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
 import reactor.core.publisher.Flux;
@@ -15,9 +16,11 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  * @since 6.2
+ * @deprecated since 7.7, use {@link CredentialsProvider} instead; scheduled for removal in a future major release.
  */
+@Deprecated
 @FunctionalInterface
-public interface RedisCredentialsProvider {
+public interface RedisCredentialsProvider extends CredentialsProvider {
 
     /**
      * Returns {@link RedisCredentials} that can be used to authorize a Redis connection. Each implementation of
@@ -28,6 +31,17 @@ public interface RedisCredentialsProvider {
      * @return a {@link Mono} emitting {@link RedisCredentials} that can be used to authorize a Redis connection.
      */
     Mono<RedisCredentials> resolveCredentials();
+
+    /**
+     * Resolves the latest available credentials as a {@link CompletionStage}, adapting {@link #resolveCredentials()}.
+     *
+     * @return a {@link CompletionStage} that completes with the {@link RedisCredentials} used to authorize a Redis connection.
+     * @since 7.7
+     */
+    @Override
+    default CompletionStage<RedisCredentials> resolveCredentialsAsync() {
+        return resolveCredentials().toFuture();
+    }
 
     /**
      * Creates a new {@link RedisCredentialsProvider} from a given {@link Supplier}.
