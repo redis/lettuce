@@ -5,8 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.CredentialsProvider;
 import io.lettuce.core.DriverInfo;
-import io.lettuce.core.RedisCredentialsProvider;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SslVerifyMode;
 import io.lettuce.core.annotations.Experimental;
@@ -72,7 +72,7 @@ public class ImmutableRedisURI extends RedisURI {
     }
 
     @Override
-    public void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
+    public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
         throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
     }
 
