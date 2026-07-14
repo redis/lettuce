@@ -245,6 +245,20 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     /**
+     * List all aliases associated with the given index.
+     *
+     * @param index the index name, as created with {@code FT.CREATE}. An alias name is not accepted as a substitute.
+     * @return the aliases associated with the index, as an unordered collection (the order is unspecified)
+     */
+    public Command<K, V, List<V>> ftAliaslist(String index) {
+        LettuceAssert.notNull(index, "Index must not be null");
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
+
+        return createCommand(FT_ALIASLIST, new ValueListOutput<>(codec), args);
+    }
+
+    /**
      * Add new attributes to an existing index.
      *
      * @param index the index name

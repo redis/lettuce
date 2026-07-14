@@ -235,6 +235,23 @@ public interface NodeSelectionSearchCommands<K, V> {
     Executions<String> ftAliasdel(String alias);
 
     /**
+     * List all aliases associated with the given index.
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the number of aliases on the index.
+     * </p>
+     *
+     * @param index the index name, as created with {@code FT.CREATE}. An alias name is not accepted as a substitute.
+     * @return the aliases associated with the index, as an unordered collection (the order is unspecified)
+     * @since 7.7
+     * @see <a href="https://redis.io/docs/latest/commands/ft.aliaslist/">FT.ALIASLIST</a>
+     * @see #ftAliasadd(String, String)
+     * @see #ftAliasdel(String)
+     */
+    @Experimental
+    Executions<List<V>> ftAliaslist(String index);
+
+    /**
      * Add new attributes to an existing search index.
      *
      * <p>
