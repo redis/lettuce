@@ -36,7 +36,7 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
      * Resolves the latest available credentials as a {@link CompletionStage}, adapting {@link #resolveCredentials()}.
      *
      * @return a {@link CompletionStage} that completes with the {@link RedisCredentials} used to authorize a Redis connection.
-     * @since 7.7
+     * @since 7.8
      */
     @Override
     default CompletionStage<RedisCredentials> resolveCredentialsAsync() {

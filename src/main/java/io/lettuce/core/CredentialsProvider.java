@@ -19,7 +19,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * complete within the connection creation timeout to avoid connection failures.
  *
  * @author Aleksandar Todorov
- * @since 7.7
+ * @since 7.8
  */
 @FunctionalInterface
 public interface CredentialsProvider {
