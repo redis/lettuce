@@ -155,7 +155,9 @@ interface BaseRedisCoroutinesCommands<K : Any, V : Any> {
      * release resources.
      *
      * @return String simple-string-reply always OK.
+     *
      */
+    @Deprecated("Use StatefulConnection.close() instead.")
     suspend fun quit(): String?
 
     /**
