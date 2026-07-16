@@ -688,6 +688,79 @@ class RediSearchCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructFtAggregateCollectReducerWithExplicitFields() {
+        AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
+                .groupBy(AggregateArgs.GroupBy.<String, String> of("color")
+                        .reduce(AggregateArgs.Reducer.<String, String> collect()//
+                                .fields("fruit", "sweetness")//
+                                .sortBy(new AggregateArgs.SortProperty<>("sweetness", AggregateArgs.SortDirection.DESC))//
+                                .limit(0, 2)//
+                                .as("top")))//
+                .build();
+
+        Command<String, String, AggregationReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY,
+                aggregateArgs);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        // REDUCE COLLECT 11 FIELDS 2 @fruit @sweetness SORTBY 2 @sweetness DESC LIMIT 0 2 AS top
+        String result = "*24\r\n" + "$12\r\n" + "FT.AGGREGATE\r\n" + "$3\r\n" + "idx\r\n" + "$1\r\n" + "*\r\n"//
+                + "$7\r\n" + "GROUPBY\r\n" + "$1\r\n" + "1\r\n" + "$6\r\n" + "@color\r\n"//
+                + "$6\r\n" + "REDUCE\r\n" + "$7\r\n" + "COLLECT\r\n" + "$2\r\n" + "11\r\n"//
+                + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "2\r\n" + "$6\r\n" + "@fruit\r\n" + "$10\r\n" + "@sweetness\r\n"//
+                + "$6\r\n" + "SORTBY\r\n" + "$1\r\n" + "2\r\n" + "$10\r\n" + "@sweetness\r\n" + "$4\r\n" + "DESC\r\n"//
+                + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "0\r\n" + "$1\r\n" + "2\r\n"//
+                + "$2\r\n" + "AS\r\n" + "$3\r\n" + "top\r\n"//
+                + "$7\r\n" + "DIALECT\r\n" + "$1\r\n2\r\n";//
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    @Test
+    void shouldCorrectlyConstructFtAggregateCollectReducerWithFieldsAll() {
+        AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
+                .loadAll()//
+                .groupBy(AggregateArgs.GroupBy.<String, String> of("color")
+                        .reduce(AggregateArgs.Reducer.<String, String> collect()//
+                                .fieldsAll()//
+                                .sortByDesc("sweetness")//
+                                .limit(2)))//
+                .build();
+
+        Command<String, String, AggregationReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY,
+                aggregateArgs);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        // LOAD * GROUPBY 1 @color REDUCE COLLECT 9 FIELDS * SORTBY 2 @sweetness DESC LIMIT 0 2
+        String result = "*22\r\n" + "$12\r\n" + "FT.AGGREGATE\r\n" + "$3\r\n" + "idx\r\n" + "$1\r\n" + "*\r\n"//
+                + "$4\r\n" + "LOAD\r\n" + "$1\r\n" + "*\r\n"//
+                + "$7\r\n" + "GROUPBY\r\n" + "$1\r\n" + "1\r\n" + "$6\r\n" + "@color\r\n"//
+                + "$6\r\n" + "REDUCE\r\n" + "$7\r\n" + "COLLECT\r\n" + "$1\r\n" + "9\r\n"//
+                + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "*\r\n"//
+                + "$6\r\n" + "SORTBY\r\n" + "$1\r\n" + "2\r\n" + "$10\r\n" + "@sweetness\r\n" + "$4\r\n" + "DESC\r\n"//
+                + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "0\r\n" + "$1\r\n" + "2\r\n"//
+                + "$7\r\n" + "DIALECT\r\n" + "$1\r\n2\r\n";//
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    @Test
+    void ftAggregateCollectReducerShouldValidateUsage() {
+        assertThatThrownBy(() -> AggregateArgs.Reducer.<String, String> collect().fields("a").fieldsAll())
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> AggregateArgs.Reducer.<String, String> collect().fieldsAll().fields("a"))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> AggregateArgs.Reducer.<String, String> collect().limit(-1, 5))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> {
+            AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().groupBy(AggregateArgs.GroupBy
+                    .<String, String> of("color").reduce(AggregateArgs.Reducer.<String, String> collect().as("top"))).build();
+            builder.ftAggregate(MY_KEY, MY_QUERY, args).encode(Unpooled.directBuffer());
+        }).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void shouldCorrectlyConstructFtAggregateCommandWithArgs() {
         AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
                 .verbatim()//
