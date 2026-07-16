@@ -56,7 +56,7 @@ public enum CommandType implements ProtocolKeyword {
     /**
      * @deprecated since 7.7, use {@link #REPLICAOF} instead.
      */
-    @Deprecated 
+    @Deprecated
     SLAVEOF,
 
     SLOWLOG, SYNC, MEMORY,
