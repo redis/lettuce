@@ -670,6 +670,8 @@ public class AggregateArgs<K, V> {
      * <li><strong>AVG</strong> - Calculate average of numeric values</li>
      * <li><strong>MIN/MAX</strong> - Find minimum/maximum values</li>
      * <li><strong>COUNT_DISTINCT</strong> - Count distinct values</li>
+     * <li><strong>COLLECT</strong> - Collect per-row field projections into an array of entries per group (experimental, see
+     * {@link Reducer#collect()})</li>
      * </ul>
      *
      * <p>
@@ -1124,6 +1126,13 @@ public class AggregateArgs<K, V> {
      * </p>
      *
      * <p>
+     * The number of collected entries per group is always bounded by the server: {@code SORTBY} without an explicit
+     * {@code LIMIT} returns at most 10 entries per group, and without either clause collection is capped by the
+     * {@code search-max-aggregate-results} configuration. Supply an explicit {@link #limit(long, long) limit(...)} to control
+     * the bound.
+     * </p>
+     *
+     * <p>
      * <strong>Experimental.</strong> Both the underlying Redis Search feature and this API may change. {@code COLLECT} is gated
      * behind {@code search-enable-unstable-features}; enable it on the server before issuing aggregations that use this
      * reducer.
@@ -1192,6 +1201,13 @@ public class AggregateArgs<K, V> {
 
         /**
          * In-group sort by one or more properties. May be called multiple times to append further sort keys.
+         *
+         * <p>
+         * <strong>Note:</strong> when {@code SORTBY} is supplied without an explicit {@link #limit(long, long) limit(...)}, the
+         * server applies a default limit of 10 entries per group. Supply an explicit limit to collect more sorted entries.
+         * Without {@code SORTBY}, entry order is unspecified and collection is capped by the server's
+         * {@code search-max-aggregate-results} configuration.
+         * </p>
          *
          * @param properties the sort properties
          * @return {@code this} for chaining
