@@ -190,6 +190,9 @@ Always emit tags in this order (skip any that don't apply):
 - Format matches releases: `@since 6.2`, `@since 7.7`. One version, no prose.
 - Add `@since` to **new** public elements when introduced. Do not backfill mechanically, but new
   additions in a release must carry it.
+- Derive the version from the current build: run
+  `mvn help:evaluate -Dexpression=project.version -q -DforceStdout` (or read the top-level
+  `<version>` in `pom.xml`) and drop the `-SNAPSHOT` suffix (a `7.7.0-SNAPSHOT` build → `@since 7.7`).
 
 ### `@author`
 - On **types only**, not methods or fields. Append your name as a new `@author` line; do not remove

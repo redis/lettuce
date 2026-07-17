@@ -5,6 +5,24 @@ Redis client for the JVM built on netty and Project Reactor. Detailed guidance
 for specific tasks lives in `.agents/skills/`; consult the relevant skill when
 performing that type of work.
 
+## How this guidance is organized
+
+This guidance is a small graph: **each topic has one owner file**, and everything
+else **links** to it rather than restating it. When a topic changes, edit the owner
+only.
+
+| Topic | Owner |
+|-------|-------|
+| Always-on facts, guardrails, index (this file) | `AGENTS.md` |
+| Command flow & code generation | `docs/architecture.md` |
+| Testing — environment, running, naming, layout, CI | `docs/integration-testing.md` |
+| Javadoc conventions (incl. `@since` derivation) | `docs/javadoc.md` |
+| Task procedures (add a command, write Javadoc, PR description) | `.agents/skills/*` |
+
+Rule: state a fact in its owner and link from elsewhere; don't copy it. This file
+keeps only a minimal always-on quick-reference. Skills own the *sequence* of a task
+and link out for the mechanics.
+
 ## General Principles
 
 - **Update documentation.** When changes affect user-facing behavior, config, or
@@ -85,8 +103,10 @@ TEST_WORK_FOLDER=./work/docker mvn -DskipITs=false -DskipUnitTests=true \
   -Dit.test=FooIntegrationTests verify -Pci
 ```
 
-Failsafe filters on `it.test`, **not** `test` — `-Dtest=` will not narrow it and
-runs the whole IT suite. `-DskipUnitTests=true` skips the Surefire (unit) phase.
+One caveat worth remembering: `-Dit.test=` filters Failsafe (a single integration
+test); `-DskipUnitTests=true` runs integration only. The full flag reference,
+Redis-version matrix, topologies, TLS/mTLS and CI mapping live in
+[`docs/integration-testing.md`](docs/integration-testing.md).
 
 **Apply formatting** (required before committing):
 
@@ -94,32 +114,22 @@ runs the whole IT suite. `-DskipUnitTests=true` skips the Surefire (unit) phase.
 mvn formatter:format                 # applies formatting.xml; do NOT submit formatting-only diffs
 ```
 
-| Flag | Purpose |
-|------|---------|
-| `-DskipITs=false` | Enable integration tests (`make test` sets this) |
-| `-DskipUnitTests=true` | Run integration tests only |
-| `-Dit.test=<Class>` | Run a single integration test (Failsafe; `-Dtest=` won't filter it) |
-| `-Pci` | CI profile used by `make test` |
-| `make start version=<v>` | Pick Redis version; supported list and default are defined in the `Makefile` (`SUPPORTED_TEST_ENV_VERSIONS` / `DEFAULT_TEST_ENV_VERSION`) |
-
 ## Testing Rules
 
-- **File name decides the runner, not the folder.** `*UnitTests` → Surefire (no
-  server). `*IntegrationTests` → Failsafe (needs Redis). Prefer those suffixes.
-- Integration tests obtain host/port/TLS coordinates from `TestSettings` /
-  `TlsSettings` (`src/test/java/io/lettuce/test/settings/`) — never hard-code them.
-- Full testing infrastructure (Docker image, topologies, TLS/mTLS, CI mapping) is
-  documented in **`docs/integration-testing.md`**.
+- **The file-name suffix picks the runner:** `*UnitTests` (Surefire, no server),
+  `*IntegrationTests` (Failsafe, needs Redis). Prefer those suffixes.
+- Integration tests read host/port/TLS from `TestSettings` / `TlsSettings` — never
+  hard-code them.
+- Everything else about testing (topologies, TLS/mTLS, layout, CI) lives in
+  [`docs/integration-testing.md`](docs/integration-testing.md).
 
 ## Coding Style Essentials
 
 - 4-space indentation, enforced by `formatter-maven-plugin` — run
   `mvn formatter:format`. Don't submit formatting-only changes (they create noise
   and get PRs rejected).
-- **Add `@since <version>` to all new public API.** Determine the version from the
-  current build — run `mvn help:evaluate -Dexpression=project.version -q -DforceStdout`
-  (or read the top-level `<version>` in `pom.xml`) and drop the `-SNAPSHOT` suffix
-  (e.g. a `7.7.0-SNAPSHOT` build → `@since 7.7`).
+- **Add `@since <version>` to all new public API** — see
+  [`docs/javadoc.md`](docs/javadoc.md) for the version-derivation recipe.
 - **Add yourself as `@author` to every file you touch.**
 - **Prefer imports over fully-qualified class names** in code; add an `import`
   rather than inlining a package-qualified name (except where needed to

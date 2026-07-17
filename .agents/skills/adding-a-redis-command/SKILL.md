@@ -176,17 +176,19 @@ single-key command flows through automatically. Only touch
 `RedisAdvancedClusterAsyncCommandsImpl` (and its reactive sibling) for special
 multi-node routing (fan-out/aggregation).
 
-### 6. Add unit + integration tests
+### 6. Add tests
 
-**Unit** (no server) — assert the built command and its encoded args in the
-per-group builder test `src/test/java/io/lettuce/core/Redis<Group>CommandBuilderUnitTests.java`
-(e.g. `RedisCommandBuilderUnitTests`). Cover the RESP-specific output/args shape.
+How tests are named, placed, and run is owned by
+[docs/integration-testing.md](../../../docs/integration-testing.md) — follow it.
+What is specific to a **command**:
 
-**Integration** (needs Redis) —
-`src/test/java/io/lettuce/core/commands/<Group>CommandIntegrationTests.java`, with
-parallel suites under `reactive/`, `transactional/`, and cluster
-`io/lettuce/core/cluster/commands/`. Gate version-specific commands with
-`@EnabledOnCommand`:
+- **Builder unit test** (no server): assert the constructed command and its encoded
+  args — including the RESP2/3 output shape from §1 — in
+  `src/test/java/io/lettuce/core/Redis<Group>CommandBuilderUnitTests.java`.
+- **Integration tests**: add to the command suites —
+  `core/commands/<Group>CommandIntegrationTests` and its `reactive/`,
+  `transactional/`, and cluster `cluster/commands/` siblings — and gate
+  version-specific commands with `@EnabledOnCommand("<NAME>")`:
 
 ```java
 @Test
@@ -197,15 +199,11 @@ void copy() {
 }
 ```
 
-### 7. Run tests to verify
+### 7. Verify
 
-```bash
-mvn clean test                         # unit tests (builder etc.), no server
-
-make start                             # boot Dockerized Redis
-TEST_WORK_FOLDER=./work/docker mvn -DskipITs=false -DskipUnitTests=true \
-  -Dit.test=StringCommandIntegrationTests verify -Pci
-```
+Run the unit and integration tests as documented in
+[docs/integration-testing.md](../../../docs/integration-testing.md) (`mvn clean test`
+for unit; `make start` + a single `*IntegrationTests` run for integration).
 
 ---
 

@@ -29,8 +29,8 @@ detail.
    nullability with the house phrases `must not be {@code null}.` / `can be {@code null}.`
 5. **`@return`** for non-void; describe the value and its meaningful states, not the
    type.
-6. **`@since`** is a bare version — `@since 7.7`. Derive it from the build:
-   `mvn help:evaluate -Dexpression=project.version -q -DforceStdout`, drop `-SNAPSHOT`.
+6. **`@since`** is a bare version — `@since 7.7` (see docs/javadoc.md for deriving
+   the version from the build).
 7. **`@deprecated`** — keep the `@Deprecated` annotation and the tag in sync; house
    form: `@deprecated since <version>, use {@link Replacement} instead; scheduled for
    removal in a future major release.`
