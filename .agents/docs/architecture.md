@@ -9,6 +9,20 @@ Lettuce is a thread-safe Redis client for the JVM built on **netty** (transport)
 and **Project Reactor** (reactive API). A single connection multiplexes many
 concurrent commands over one channel.
 
+## Contents
+
+- The three API shapes
+- The API is generated from templates
+- Sync is a proxy; reactive is a separate implementation
+- Command lifecycle (end to end)
+- The command model
+- The codec
+- Wire protocol (RESP2 / RESP3)
+- Netty pipeline
+- Cluster routing
+- Connections, threading, and the error model
+- Common misconceptions
+
 ## The three API shapes
 
 The public surface exists in three parallel flavors, all under

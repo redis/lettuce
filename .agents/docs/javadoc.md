@@ -12,6 +12,22 @@ Lettuce.
 
 ---
 
+## Contents
+
+1. When a doc comment is required
+2. Anatomy of a doc comment
+3. The first sentence (summary)
+4. Style
+5. Inline tags & HTML
+6. Common block tags — quick reference
+7. Block-tag ordering
+8. Tag rules in detail
+9. Element-specific conventions
+10. Nullability & contracts
+11. Anti-patterns (do not do these)
+12. Worked examples
+13. Checklist before committing
+
 ## 1. When a doc comment is required
 
 - **Required** on every `public` and `protected` type, method, constructor, and field — these are

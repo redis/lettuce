@@ -21,6 +21,19 @@ Two things are front-loaded on purpose: you write the **spec before code**, and 
 add **argument types + templates before running the generator** (the generated
 interfaces reference those types, so they must exist to compile).
 
+Copy this checklist into your working notes and tick items off as you go:
+
+```
+Add-a-command progress:
+- [ ] 1. Spec: syntax, args, RESP2 + RESP3 replies, errors, version
+- [ ] 2. API design: method(s), return type, target group, arg/response types
+- [ ] 3. Types + template: arg & response types first, then the template method + Javadoc
+- [ ] 4. Generate: run the api_generator tests; do NOT hand-edit generated interfaces
+- [ ] 5. Implementations: CommandType, RedisCommandBuilder, async, reactive, Kotlin impl
+- [ ] 6. Tests: builder unit test + integration base/overloads (@EnabledOnCommand)
+- [ ] 7. Verify: unit (mvn test) + a single integration test
+```
+
 ---
 
 ### 1. Start from a specification
