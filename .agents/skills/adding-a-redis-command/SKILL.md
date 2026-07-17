@@ -14,8 +14,8 @@ top-level aggregate interfaces (`RedisCommands`, …) are hand-written compositi
 ## The flow
 
 ```
-1. Specification   → 2. API design → 3. Types + template → 4. Generate
-                   → 5. Implementations → 6. Tests → 7. Verify
+1. Specification → 2. API design → 3. Types + template → ⛔ human review → 4. Generate
+                 → 5. Implementations → 6. Tests → 7. Verify
 ```
 
 Two things are front-loaded on purpose: you write the **spec before code**, and you
