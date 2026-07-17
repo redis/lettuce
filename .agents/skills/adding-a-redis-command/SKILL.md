@@ -1,44 +1,139 @@
 ---
 name: adding-a-redis-command
-description: Use when adding a new Redis command — or a new overload/variant of one — to the Lettuce client. Covers wiring it across the command builder, the async and reactive implementations, the API template that generates the sync/async/reactive/Kotlin interfaces, the Kotlin coroutine impl, cluster variants, and integration tests. Trigger on requests like "add support for the <X> command", "implement <REDIS COMMAND> in Lettuce", "wire up a new command", or adding a new argument/overload to an existing command.
+description: Use when adding a new Redis command — or a new overload/variant of one — to the Lettuce client. Covers the full flow: writing the command specification, designing the Lettuce API, adding argument types and the API template, running the interface generators, adding the builder/async/reactive/Kotlin implementations, and adding unit + integration tests. Trigger on requests like "add support for the <X> command", "implement <REDIS COMMAND> in Lettuce", "wire up a new command", or adding a new argument/overload to an existing command.
 ---
 
 # Adding a Redis command to Lettuce
 
-This skill is the step-by-step recipe. Read [docs/architecture.md](../../../docs/architecture.md)
-first for the model behind it — especially that the sync/async/reactive/Kotlin
-**interfaces are generated from templates** and must never be hand-edited.
+Read [docs/architecture.md](../../../docs/architecture.md) first for the model
+behind this flow — especially that the sync/async/reactive/Kotlin command
+**interfaces are generated from templates** and must never be hand-edited, while the
+top-level aggregate interfaces (`RedisCommands`, …) are hand-written compositions.
 
-## Mental model (why the steps are what they are)
+## The flow
 
-- You hand-edit **five** source-of-truth places: the keyword enum, the command
-  builder, the async impl, the reactive impl, and the API **template**.
-- The sync/async/reactive/Kotlin **interfaces are generated** from the template by
-  running JUnit tests — you regenerate them, you don't write them.
-- Sync has no impl (it's a dynamic proxy over async); reactive is a *separate*
-  hand-written impl. So async and reactive are two impls you must both update.
+```
+1. Specification   → 2. API design → 3. Types + template → 4. Generate
+                   → 5. Implementations → 6. Tests → 7. Verify
+```
 
-## Checklist
+Two things are front-loaded on purpose: you write the **spec before code**, and you
+add **argument types + templates before running the generator** (the generated
+interfaces reference those types, so they must exist to compile).
 
-### 1. Register the command keyword — hand-edit
-`src/main/java/io/lettuce/core/protocol/CommandType.java`. Add the command name to
-the enum; the wire bytes are derived from the enum name.
+---
+
+### 1. Start from a specification
+
+Before touching code, have a clear spec (HLD/PRD, usually attached to the
+feature-request issue). It must state:
+
+- **Syntax and arguments** — the full command grammar, mandatory vs optional args,
+  ordering, and any subcommands/flags.
+- **Response types in RESP2 *and* RESP3** — these can differ (e.g. a reply that is a
+  flat array in RESP2 but a map or set in RESP3). This directly determines the
+  `CommandOutput` you choose and the reactive `Mono`/`Flux` mapping.
+- **Error scenarios** — when the server returns an error, and any client-side
+  validation the command needs.
+- **Version availability** — the first server version that supports it (drives
+  `@EnabledOnCommand` gating and `@since`).
+
+Source of truth: the Redis command reference (`https://redis.io/commands/<name>`)
+plus the issue. Do not guess reply shapes — confirm them.
+
+### 2. Design the Lettuce API from the spec
+
+Decide, from the spec:
+
+- The method name(s) and any overloads.
+- Parameter types and the **Java return type** (which the generator maps to
+  `RedisFuture<T>` / `Mono<T>` / `Flux<T>`).
+- Which command group it belongs to (STRING → `RedisStringCommands`, HASH →
+  `RedisHashCommands`, generic-key → `RedisKeyCommands`, …).
+- What **argument/wrapper types** the signature needs for optional arguments.
+
+### 3. Add argument types + the template
+
+**Add the types the signature references first — both argument and response
+types.** The generated interfaces reference every type in the method signature, so
+any *new* type must exist and compile **before** you generate:
+
+- **Argument types.** If the signature takes an options object, create a
+  `*Args implements CompositeArgument` class (e.g. `io.lettuce.core.CopyArgs`) whose
+  `build(args)` appends its tokens, and register any argument modifiers in
+  `src/main/java/io/lettuce/core/protocol/CommandKeyword.java`.
+- **Response / return types.** If the command returns a shape with no existing
+  model, create the value/result type it returns. Reuse existing types where
+  possible — `Value`, `KeyValue`, `ScoredValue`, `GeoCoordinates`, `GeoWithin`,
+  `StreamMessage`, `KeyScanCursor` (all in `io.lettuce.core`) — and add a new one
+  only when the reply genuinely doesn't map to any of them.
+
+(This is the Java type that appears in the signature. The matching reply *parser* —
+the `CommandOutput` — is added later with the builder in §5.)
+
+**Then add the method + Javadoc to the template**
+`src/main/templates/io/lettuce/core/api/<Group>Commands.java`. Declare the **sync**
+return type; this one edit feeds every generated flavor. Follow the
+[writing-javadoc](../writing-javadoc/SKILL.md) skill — new public API needs
+`@since <version>` plus `@param`/`@return`.
+
+```java
+/**
+ * Returns the length of the string value stored at {@code key}.
+ *
+ * @param key the key, must not be {@code null}.
+ * @return the length of the string at {@code key}, or {@code 0} when {@code key} does
+ *         not exist.
+ * @since 7.7
+ */
+Long strlen(K key);
+```
+
+Do not write the class-level `${intent}` placeholder — the generators substitute it.
+
+**No suitable group?** Create a new one: add the template file under
+`src/main/templates/…`, register its name in
+`src/test/java/io/lettuce/apigenerator/Constants.java` (`TEMPLATE_NAMES`), and wire
+the new group interface into the hand-written aggregate interfaces (`RedisCommands`,
+`RedisAsyncCommands`, `RedisReactiveCommands`, and the cluster variants) so they
+`extend` it. Mirror an existing group end-to-end and verify the aggregate wiring.
+
+### 4. Run the generators
+
+Run the `api_generator`-tagged generators so the interfaces are (re)written —
+`CreateSyncApi`, `CreateAsyncApi`, `CreateReactiveApi`, `CreateKotlinCoroutinesApi`,
+and the cluster `Create*NodeSelectionClusterApi` classes. They overwrite these
+checked-in, never-hand-edited files:
+
+- `src/main/java/io/lettuce/core/api/{sync,async,reactive}/<Group>*Commands.java`
+- `src/main/kotlin/io/lettuce/core/api/coroutines/<Group>CoroutinesCommands.kt`
+- cluster NodeSelection interfaces
+
+```bash
+mvn -Dtest=CreateSyncApi -Dsurefire.failIfNoSpecifiedTests=false test
+```
+
+For an **unusual return type** (e.g. `Flux<Value<Long>>`, or `Mono<List<Double>>`
+because Redis returns nulls), register it in `RESULT_SPEC` / `FORCE_FLUX_RESULT` /
+`VALUE_WRAP` at the top of `CreateReactiveApi.java` before generating.
+
+### 5. Add the implementations
+
+After generation the interfaces declare the new method; now make it real:
+
+**Keyword** — `src/main/java/io/lettuce/core/protocol/CommandType.java`; add the
+command name (wire bytes derive from the enum name):
 
 ```java
 public enum CommandType implements ProtocolKeyword {
     ..., APPEND, GET, GETDEL, ..., STRLEN, LCS, ...
-    CommandType() { command = name(); }   // bytes come from the enum name
+    CommandType() { command = name(); }
 }
 ```
 
-Argument **modifiers/sub-keywords** (e.g. `REPLACE`, `MATCH`, `WITHVALUES`) go in
-`src/main/java/io/lettuce/core/protocol/CommandKeyword.java` instead — **not** in
-`CommandType`.
-
-### 2. Add the command builder method — hand-edit
-`src/main/java/io/lettuce/core/RedisCommandBuilder.java`. Build the `Command` with
-the right `CommandOutput` and, if needed, `CommandArgs`. **Argument order is the
-wire order.**
+**Builder** — `src/main/java/io/lettuce/core/RedisCommandBuilder.java`; build the
+`Command` with the `CommandOutput` chosen from the spec's RESP2/3 reply.
+**Argument order is the wire order.**
 
 ```java
 public Command<K, V, Long> strlen(K key) {
@@ -55,108 +150,45 @@ public Command<K, V, Boolean> copy(K source, K destination, CopyArgs copyArgs) {
 }
 ```
 
-- Choose the correct output: `ValueOutput`, `IntegerOutput`, `BooleanOutput`,
-  `StatusOutput`, `KeyListOutput`, `MapOutput`, `KeyValueStreamingOutput`, …
-- For optional flags, model them as a `*Args implements CompositeArgument` class
-  (e.g. `io.lettuce.core.CopyArgs`) whose `build(args)` appends its tokens; the
-  tokens are `CommandKeyword` values.
-
-### 3. Add the async dispatch — hand-edit
-`src/main/java/io/lettuce/core/AbstractRedisAsyncCommands.java`. Thin delegate:
+**Async dispatch** — `src/main/java/io/lettuce/core/AbstractRedisAsyncCommands.java`:
 
 ```java
 public RedisFuture<Long> strlen(K key) { return dispatch(commandBuilder.strlen(key)); }
 ```
 
-### 4. Add the reactive dispatch — hand-edit
-`src/main/java/io/lettuce/core/AbstractRedisReactiveCommands.java`. Use `createMono`
-for scalar results, `createDissolvingFlux` for `List`/`Set` results (must match the
-`Mono`/`Flux` the reactive generator will produce — see step 6):
+**Reactive dispatch** — `src/main/java/io/lettuce/core/AbstractRedisReactiveCommands.java`
+(`createMono` for scalars, `createDissolvingFlux` for `List`/`Set`, matching the
+generated `Mono`/`Flux`):
 
 ```java
 public Mono<Long> strlen(K key) { return createMono(() -> commandBuilder.strlen(key)); }
-public Flux<K> hrandfield(K key, long count) {
-    return createDissolvingFlux(() -> commandBuilder.hrandfield(key, count));
-}
 ```
 
-### 5. Add the method to the API template + Javadoc — hand-edit
-`src/main/templates/io/lettuce/core/api/<Group>Commands.java` (STRING →
-`RedisStringCommands`, HASH → `RedisHashCommands`, generic-key like COPY/DEL →
-`RedisKeyCommands`; full list in `apigenerator/Constants.TEMPLATE_NAMES`).
-
-Declare the **sync** return type and write complete Javadoc — this one edit feeds
-every generated flavor. Follow the [writing-javadoc](../writing-javadoc/SKILL.md)
-skill; new public API needs `@since <version>` plus `@param`/`@return`.
-
-```java
-/**
- * Returns the length of the string value stored at {@code key}.
- *
- * @param key the key, must not be {@code null}.
- * @return the length of the string at {@code key}, or {@code 0} when {@code key} does
- *         not exist.
- * @since 7.7
- */
-Long strlen(K key);
-```
-
-Do **not** write the class-level `${intent}` placeholder — the generators substitute it.
-
-### 6. Only for unusual return types — register reactive mapping
-Default reactive mapping is `T → Mono<T>`, `List<T>/Set<T> → Flux<T>`. For anything
-else (e.g. `Flux<Value<Long>>`, or `Mono<List<Double>>` because Redis returns
-nulls), register it in `RESULT_SPEC` / `FORCE_FLUX_RESULT` / `VALUE_WRAP` at the top
-of `src/test/java/io/lettuce/apigenerator/CreateReactiveApi.java`.
-
-### 7. Regenerate the interfaces — do NOT hand-edit the outputs
-Run the `api_generator`-tagged generators so the interfaces are rewritten:
-`CreateSyncApi`, `CreateAsyncApi`, `CreateReactiveApi`, `CreateKotlinCoroutinesApi`,
-and the cluster `Create*NodeSelectionClusterApi` classes. These regenerate and
-overwrite (all checked in, none hand-edited):
-
-- `src/main/java/io/lettuce/core/api/{sync,async,reactive}/<Group>*Commands.java`
-- `src/main/kotlin/io/lettuce/core/api/coroutines/<Group>CoroutinesCommands.kt`
-- cluster NodeSelection interfaces
-
-Run a single generator with (adjust class name):
-```bash
-mvn -Dtest=CreateSyncApi -Dsurefire.failIfNoSpecifiedTests=false test
-```
-
-### 8. Add the Kotlin coroutine impl — hand-edit (NOT generated)
-`src/main/kotlin/io/lettuce/core/api/coroutines/<Group>CoroutinesCommandsImpl.kt`.
-The `.kt` *interface* is generated, but the `*Impl.kt` is hand-written. Bridge from
-the reactive result:
+**Kotlin coroutine impl** (hand-written, NOT generated) —
+`src/main/kotlin/io/lettuce/core/api/coroutines/<Group>CoroutinesCommandsImpl.kt`:
 
 ```kotlin
 override suspend fun strlen(key: K): Long = ops.strlen(key).awaitSingle()
-override suspend fun hrandfield(key: K, count: Long): List<K> =
-    ops.hrandfield(key, count).asFlow().toList()
 ```
 
-Use `.awaitFirstOrNull()`/`.awaitSingle()` for `Mono`, `.asFlow().toList()` for `Flux`.
-
-### 9. Cluster variants — only if needed
-`RedisClusterAsyncCommands` simply `extends` the per-group async interfaces, so a new
+**Cluster** — `RedisClusterAsyncCommands` simply `extends` the group interfaces, so a
 single-key command flows through automatically. Only touch
-`RedisAdvancedClusterAsyncCommandsImpl` (and its reactive sibling) if the command
-needs special multi-node routing (fan-out / aggregation).
+`RedisAdvancedClusterAsyncCommandsImpl` (and its reactive sibling) for special
+multi-node routing (fan-out/aggregation).
 
-### 10. Integration tests — hand-write
+### 6. Add unit + integration tests
+
+**Unit** (no server) — assert the built command and its encoded args in the
+per-group builder test `src/test/java/io/lettuce/core/Redis<Group>CommandBuilderUnitTests.java`
+(e.g. `RedisCommandBuilderUnitTests`). Cover the RESP-specific output/args shape.
+
+**Integration** (needs Redis) —
 `src/test/java/io/lettuce/core/commands/<Group>CommandIntegrationTests.java`, with
 parallel suites under `reactive/`, `transactional/`, and cluster
-`io/lettuce/core/cluster/commands/`. Constructor-inject the connection; gate
-version-specific commands with `@EnabledOnCommand`:
+`io/lettuce/core/cluster/commands/`. Gate version-specific commands with
+`@EnabledOnCommand`:
 
 ```java
-@Test
-void strlen() {
-    assertThat((long) redis.strlen(key)).isEqualTo(0);
-    redis.set(key, value);
-    assertThat((long) redis.strlen(key)).isEqualTo(value.length());
-}
-
 @Test
 @EnabledOnCommand("COPY")
 void copy() {
@@ -165,22 +197,30 @@ void copy() {
 }
 ```
 
-Run one integration test (env already started via `make start`):
+### 7. Run tests to verify
+
 ```bash
+mvn clean test                         # unit tests (builder etc.), no server
+
+make start                             # boot Dockerized Redis
 TEST_WORK_FOLDER=./work/docker mvn -DskipITs=false -DskipUnitTests=true \
   -Dit.test=StringCommandIntegrationTests verify -Pci
 ```
 
+---
+
 ## Top pitfalls
 
-1. **Editing a generated interface instead of the template.** Anything with
-   `@generated` is overwritten on the next generator run. Edit the template
-   (`src/main/templates/…`) and regenerate.
-2. **Forgetting a dispatch layer.** You must update *both* `AbstractRedisAsyncCommands`
-   *and* `AbstractRedisReactiveCommands`, plus the Kotlin `*Impl.kt` (not generated).
-3. **Wrong `CommandArgs` order or wrong `CommandOutput`.** Builder order is the wire
-   order; a mismatched output type yields protocol/type errors.
-4. **Missing `@since` / incomplete Javadoc in the template** — it multiplies across
-   every generated flavor.
-5. **Missing tests / no version gate.** Add tests in the relevant suites and gate
-   commands not present on all supported servers with `@EnabledOnCommand`.
+1. **Skipping the spec / not checking RESP2 vs RESP3.** The reply shape can differ
+   between protocols; it determines the `CommandOutput` and reactive mapping. Confirm
+   it against `redis.io`, don't assume.
+2. **Adding Args/wrapper types after generation.** The generated interfaces reference
+   them; if they don't exist first, the project won't compile. Add them upfront.
+3. **Editing a generated interface instead of the template.** Anything with
+   `@generated` is overwritten. Edit the template and regenerate. (New group? also
+   wire it into the hand-written aggregate interfaces.)
+4. **Forgetting a dispatch layer.** Update *both* `AbstractRedisAsyncCommands` *and*
+   `AbstractRedisReactiveCommands`, plus the Kotlin `*Impl.kt` (not generated).
+5. **Wrong `CommandArgs` order / wrong `CommandOutput`**, missing `@since` in the
+   template, or missing tests / version gate (`@EnabledOnCommand`).
+```
