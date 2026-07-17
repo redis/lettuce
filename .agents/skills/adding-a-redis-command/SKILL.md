@@ -5,7 +5,7 @@ description: Use when adding a new Redis command — or a new overload/variant o
 
 # Adding a Redis command to Lettuce
 
-Read [docs/architecture.md](../../../docs/architecture.md) first for the model
+Read [.agents/docs/architecture.md](../../../.agents/docs/architecture.md) first for the model
 behind this flow — especially that the sync/async/reactive/Kotlin command
 **interfaces are generated from templates** and must never be hand-edited, while the
 top-level aggregate interfaces (`RedisCommands`, …) are hand-written compositions.
@@ -179,7 +179,7 @@ multi-node routing (fan-out/aggregation).
 ### 6. Add tests
 
 How tests are named, placed, and run is owned by
-[docs/integration-testing.md](../../../docs/integration-testing.md) — follow it.
+[.agents/docs/integration-testing.md](../../../.agents/docs/integration-testing.md) — follow it.
 What is specific to a **command**:
 
 - **Builder unit test** (no server): assert the constructed command and its encoded
@@ -188,7 +188,8 @@ What is specific to a **command**:
 - **Integration tests**: write the base test against the sync `RedisCommands` API,
   then add the overloads (RESP2 / cluster / reactive / Tx) that matter for the
   command. That base+overload structure is owned by
-  [docs/integration-testing.md §6](../../../docs/integration-testing.md). Gate
+  the "Command test scope" section of
+  [.agents/docs/integration-testing.md](../../../.agents/docs/integration-testing.md). Gate
   version-specific commands with `@EnabledOnCommand("<NAME>")`:
 
 ```java
@@ -203,7 +204,7 @@ void copy() {
 ### 7. Verify
 
 Run the unit and integration tests as documented in
-[docs/integration-testing.md](../../../docs/integration-testing.md) (`mvn clean test`
+[.agents/docs/integration-testing.md](../../../.agents/docs/integration-testing.md) (`mvn clean test`
 for unit; `make start` + a single `*IntegrationTests` run for integration).
 
 ---
