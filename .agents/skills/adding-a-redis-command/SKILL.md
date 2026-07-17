@@ -1,6 +1,7 @@
 ---
 name: adding-a-redis-command
 description: Use when adding a new Redis command — or a new overload/variant of one — to the Lettuce client. Covers the full flow: writing the command specification, designing the Lettuce API, adding argument types and the API template, running the interface generators, adding the builder/async/reactive/Kotlin implementations, and adding unit + integration tests. Trigger on requests like "add support for the <X> command", "implement <REDIS COMMAND> in Lettuce", "wire up a new command", or adding a new argument/overload to an existing command.
+allowed-tools: Bash(mvn *)
 ---
 
 # Adding a Redis command to Lettuce
