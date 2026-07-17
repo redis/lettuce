@@ -15,7 +15,8 @@ Maven `-D` properties.
 
 - **Run integration tests locally**: `make start version=8.6 && make test && make stop`.
 - **Run one test fast**: `make start version=8.6` then
-  `TEST_WORK_FOLDER=./work/docker mvn -DskipITs=false -Dtest=YourIntegrationTests verify -Pci`
+  `TEST_WORK_FOLDER=./work/docker mvn -DskipITs=false -Dit.test=YourIntegrationTests verify -Pci`
+  (integration tests run under Failsafe, which filters on `-Dit.test`, **not** `-Dtest`)
   (then `make stop`).
 - **Add a new server**: add a service to
   `src/test/resources/docker-env/docker-compose.yml` (set
@@ -29,6 +30,33 @@ Maven `-D` properties.
 - **Integration tests didn't run**: they default to skipped — pass
   `-DskipITs=false` (which `make test` already does).
 - **Reproducing CI**: the test build pins **Java 8**.
+
+### Local gotchas
+
+A few environment issues that stop the build before any test runs — especially in a
+**git worktree** or on a machine whose default JDK is newer than 8:
+
+- **Pin `JAVA_HOME` to Java 8.** With `JAVA_HOME` unset, the Kotlin compile step can
+  pick up a newer JDK via `/usr/libexec/java_home` and fail (its bundled tooling
+  can't parse newer version strings). Use the JDK CI pins:
+  `JAVA_HOME=$(/usr/libexec/java_home -v 1.8)`.
+- **Git worktree + `git-commit-id-plugin`.** In a worktree `.git` is a file, not a
+  directory, and the plugin fails with *"Could not get HEAD Ref"*. Skip it with
+  `-Dmaven.gitcommitid.skip=true` (it has no effect on tests).
+- **Corrupted Kotlin incremental cache** after an aborted build
+  (`PersistentEnumerator storage corrupted …/target/kotlin-ic/…`): delete it with
+  `rm -rf target/kotlin-ic`, or run `mvn clean`.
+- **`TEST_WORK_FOLDER` must match `make start`.** Point it at the directory
+  `make start` prints as its work dir (TLS certs and sockets are resolved from
+  there); a mismatch surfaces as TLS/socket test failures.
+
+A full single-test invocation from a worktree, combining the above:
+
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 1.8) TEST_WORK_FOLDER=$PWD/work \
+  mvn -DskipITs=false -DskipUnitTests=true -Dmaven.gitcommitid.skip=true \
+  -Dit.test=YourIntegrationTests verify -Pci
+```
 
 ---
 
