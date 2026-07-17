@@ -185,9 +185,10 @@ What is specific to a **command**:
 - **Builder unit test** (no server): assert the constructed command and its encoded
   args — including the RESP2/3 output shape from §1 — in
   `src/test/java/io/lettuce/core/Redis<Group>CommandBuilderUnitTests.java`.
-- **Integration tests**: add to the command suites —
-  `core/commands/<Group>CommandIntegrationTests` and its `reactive/`,
-  `transactional/`, and cluster `cluster/commands/` siblings — and gate
+- **Integration tests**: write the base test against the sync `RedisCommands` API,
+  then add the overloads (RESP2 / cluster / reactive / Tx) that matter for the
+  command. That base+overload structure is owned by
+  [docs/integration-testing.md §6](../../../docs/integration-testing.md). Gate
   version-specific commands with `@EnabledOnCommand("<NAME>")`:
 
 ```java
