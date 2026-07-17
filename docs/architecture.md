@@ -176,6 +176,67 @@ the writer: the connection's `channelWriter` is a `ClusterDistributionChannelWri
 key, computes the slot via `SlotHash.getSlot(...)`, and routes the command to the
 connection owning that slot *before* it reaches a `DefaultEndpoint`/`CommandHandler`.
 
+## Connections, threading, and the error model
+
+### Connection types and entry points
+
+A connection is a `Stateful*Connection` object; you get the command API from it via
+`sync()`, `async()`, or `reactive()`. Each topology has its own connection type and
+entry point:
+
+| Topology | Connection interface | Entry point |
+|----------|----------------------|-------------|
+| Standalone | `StatefulRedisConnection` (`api/`) | `RedisClient.connect()` |
+| Pub/Sub | `StatefulRedisPubSubConnection` (`pubsub/`) | `RedisClient.connectPubSub()` |
+| Sentinel (management) | `StatefulRedisSentinelConnection` (`sentinel/api/`) | `RedisClient.connectSentinel()` |
+| Master/Replica | `StatefulRedisMasterReplicaConnection` (`masterreplica/`) | `MasterReplica.connect(client, codec, uri)` |
+| Cluster | `StatefulRedisClusterConnection` (`cluster/api/`) | `RedisClusterClient.connect()` |
+| Cluster Pub/Sub | `StatefulRedisClusterPubSubConnection` (`cluster/pubsub/`) | `RedisClusterClient.connectPubSub()` |
+
+All share the `StatefulConnection` base (`api/StatefulConnection.java`). The
+`masterslave/` package is the **deprecated** predecessor of `masterreplica/`; a newer
+multi-database failover API lives under `failover/` (in active development).
+
+### Threading and multiplexing
+
+- A `Stateful*Connection` is **thread-safe** and **multiplexes** many concurrent
+  commands over a single channel (that is what `CommandHandler.stack` correlates).
+  For ordinary non-blocking commands you need **one shared connection**, not one per
+  thread.
+- **A dedicated connection is required** for operations that hold or change
+  connection state: **blocking** commands (`BLPOP`, `XREAD BLOCK`, …), **transactions**
+  (`MULTI`/`EXEC`), and connection-state changes (`SELECT`, entering pub/sub). Use a
+  pool for these.
+- **Batching:** `setAutoFlushCommands(false)` (`StatefulConnection`) lets you queue
+  many commands and then `flushCommands()` to write them in one batch for throughput.
+  Re-enable/flush carefully — the flag is connection-wide, so it is awkward to share
+  across threads.
+- **Pooling:** connection pools live in `core/support/` — `ConnectionPoolSupport`
+  (blocking) and `AsyncConnectionPoolSupport` + `BoundedAsyncPool` (async). Reach for
+  a pool when you need blocking/transactional isolation, not to speed up normal
+  commands.
+
+### Error and timeout model
+
+`RedisException` (`core/RedisException.java`) is the unchecked root. Key subtypes:
+
+| Exception | Means |
+|-----------|-------|
+| `RedisConnectionException` | connection could not be established/kept |
+| `RedisCommandExecutionException` | server returned an error reply (e.g. `WRONGTYPE`) |
+| `RedisCommandTimeoutException` | command did not complete within the timeout |
+| `RedisCommandInterruptedException` | thread interrupted while awaiting a result |
+
+- **Timeouts** are enforced by `CommandExpiryWriter` in the writer chain, configured
+  via `TimeoutOptions` (on `ClientOptions`) and/or the `RedisURI`/default timeout. A
+  blocking `sync()` call waits up to the timeout, then throws
+  `RedisCommandTimeoutException`.
+- **Reconnection** is handled by `ConnectionWatchdog` (last handler in the pipeline),
+  which transparently re-establishes dropped channels. Behavior on disconnect —
+  whether commands are buffered and replayed, cancelled, or rejected — is governed by
+  `ClientOptions` (`DisconnectedBehavior`, auto-reconnect, request-queue limits).
+  While disconnected, `DefaultEndpoint` buffers writes up to those limits.
+
 ## Common misconceptions (read this)
 
 1. **Sync commands do not have their own impl class.** `sync()` is a dynamic proxy
