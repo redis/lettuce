@@ -118,6 +118,22 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun hstrlen(key: K, field: K): Long? = ops.hstrlen(key, field).awaitFirstOrNull()
 
+    override suspend fun himportPrepare(fieldsetName: K, field: K): String? =
+        ops.himportPrepare(fieldsetName, field).awaitFirstOrNull()
+
+    override suspend fun himportPrepare(fieldsetName: K, vararg fields: K): String? =
+        ops.himportPrepare(fieldsetName, *fields).awaitFirstOrNull()
+
+    override suspend fun himportSet(key: K, fieldsetName: K, value: V): String? =
+        ops.himportSet(key, fieldsetName, value).awaitFirstOrNull()
+
+    override suspend fun himportSet(key: K, fieldsetName: K, vararg values: V): String? =
+        ops.himportSet(key, fieldsetName, *values).awaitFirstOrNull()
+
+    override suspend fun himportDiscard(fieldsetName: K): Boolean? = ops.himportDiscard(fieldsetName).awaitFirstOrNull()
+
+    override suspend fun himportDiscardAll(): Long? = ops.himportDiscardAll().awaitFirstOrNull()
+
     override fun hvals(key: K): Flow<V> = ops.hvals(key).asFlow()
 
     override suspend fun hexpire(key: K, seconds: Long, vararg fields: K): List<Long> =

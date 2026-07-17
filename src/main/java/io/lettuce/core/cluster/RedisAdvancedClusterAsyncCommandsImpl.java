@@ -47,6 +47,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.async.RedisHashAsyncCommands;
 import io.lettuce.core.api.async.RedisKeyAsyncCommands;
 import io.lettuce.core.api.async.RedisScriptingAsyncCommands;
 import io.lettuce.core.api.async.RedisServerAsyncCommands;
@@ -295,6 +296,26 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     public RedisFuture<String> flushdb(FlushMode flushMode) {
         return MultiNodeExecution
                 .firstOfAsync(executeOnUpstream(kvRedisClusterAsyncCommands -> kvRedisClusterAsyncCommands.flushdb(flushMode)));
+    }
+
+    @Override
+    public RedisFuture<String> himportPrepare(K fieldsetName, K field) {
+        return MultiNodeExecution.firstOfAsync(executeOnUpstream(commands -> commands.himportPrepare(fieldsetName, field)));
+    }
+
+    @Override
+    public RedisFuture<String> himportPrepare(K fieldsetName, K... fields) {
+        return MultiNodeExecution.firstOfAsync(executeOnUpstream(commands -> commands.himportPrepare(fieldsetName, fields)));
+    }
+
+    @Override
+    public RedisFuture<Boolean> himportDiscard(K fieldsetName) {
+        return MultiNodeExecution.andOfAsync(executeOnUpstream(commands -> commands.himportDiscard(fieldsetName)));
+    }
+
+    @Override
+    public RedisFuture<Long> himportDiscardAll() {
+        return MultiNodeExecution.maxOfAsync(executeOnUpstream(RedisHashAsyncCommands::himportDiscardAll));
     }
 
     @Override

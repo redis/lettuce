@@ -1685,6 +1685,36 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> himportPrepare(K fieldsetName, K field) {
+        return createMono(() -> commandBuilder.himportPrepare(fieldsetName, field));
+    }
+
+    @Override
+    public Mono<String> himportPrepare(K fieldsetName, K... fields) {
+        return createMono(() -> commandBuilder.himportPrepare(fieldsetName, fields));
+    }
+
+    @Override
+    public Mono<String> himportSet(K key, K fieldsetName, V value) {
+        return createMono(() -> commandBuilder.himportSet(key, fieldsetName, value));
+    }
+
+    @Override
+    public Mono<String> himportSet(K key, K fieldsetName, V... values) {
+        return createMono(() -> commandBuilder.himportSet(key, fieldsetName, values));
+    }
+
+    @Override
+    public Mono<Boolean> himportDiscard(K fieldsetName) {
+        return createMono(() -> commandBuilder.himportDiscard(fieldsetName));
+    }
+
+    @Override
+    public Mono<Long> himportDiscardAll() {
+        return createMono(() -> commandBuilder.himportDiscardAll());
+    }
+
+    @Override
     public Flux<KeyValue<K, V>> hgetex(K key, K... fields) {
         return createDissolvingFlux(() -> commandBuilder.hgetex(key, fields));
     }

@@ -857,4 +857,90 @@ public interface RedisHashCommands<K, V> {
      */
     List<Long> hpttl(K key, K... fields);
 
+    /**
+     * Register an ordered list of field names as a fieldset in the current connection session, for use by subsequent
+     * {@code HIMPORT SET} calls on the same connection.
+     * <p>
+     * The fieldset exists only in the session of the connection that issues this command and is neither persisted nor
+     * replicated. Preparing an already-registered {@code fieldsetName} silently replaces it. The connection scope is
+     * significant: {@link #himportSet(Object, Object, Object[]) himportSet} must run on the same connection, so this command
+     * should be issued on a dedicated or otherwise pinned connection.
+     *
+     * @param fieldsetName the fieldset name to register the fields under, must not be {@code null}.
+     * @param field the single hash field name to register under the fieldset, must not be {@code null}.
+     * @return simple-string-reply {@code OK} if the fieldset was registered.
+     * @since 7.7
+     */
+    String himportPrepare(K fieldsetName, K field);
+
+    /**
+     * Register an ordered list of field names as a fieldset in the current connection session, for use by subsequent
+     * {@code HIMPORT SET} calls on the same connection.
+     * <p>
+     * The fieldset exists only in the session of the connection that issues this command and is neither persisted nor
+     * replicated. Preparing an already-registered {@code fieldsetName} silently replaces it. The connection scope is
+     * significant: {@link #himportSet(Object, Object, Object[]) himportSet} must run on the same connection, so this command
+     * should be issued on a dedicated or otherwise pinned connection.
+     *
+     * @param fieldsetName the fieldset name to register the fields under, must not be {@code null}.
+     * @param fields one or more hash field names in the order values will be supplied to {@code HIMPORT SET}, must not be
+     *        {@code null} and must not be empty. Duplicate field names are rejected by the server.
+     * @return simple-string-reply {@code OK} if the fieldset was registered.
+     * @since 7.7
+     */
+    String himportPrepare(K fieldsetName, K... fields);
+
+    /**
+     * Create or overwrite {@code key} as a hash using the field list associated with {@code fieldsetName} on this connection,
+     * assigning the provided values positionally to the prepared fields.
+     * <p>
+     * The write is a full replace of any existing hash at {@code key}; a non-hash key results in a {@code WRONGTYPE} error. The
+     * number of values must equal the field count of the fieldset, and the values are sent in the given order without
+     * reordering. The referenced fieldset must have been prepared on the executing connection with
+     * {@link #himportPrepare(Object, Object[]) himportPrepare}, otherwise the server returns a {@code no such fieldset} error.
+     *
+     * @param key the hash key to create or overwrite, must not be {@code null}.
+     * @param fieldsetName the fieldset previously prepared on this connection, must not be {@code null}.
+     * @param value the single value paired positionally with the single prepared field, must not be {@code null}.
+     * @return simple-string-reply {@code OK} if the hash was created.
+     * @since 7.7
+     */
+    String himportSet(K key, K fieldsetName, V value);
+
+    /**
+     * Create or overwrite {@code key} as a hash using the field list associated with {@code fieldsetName} on this connection,
+     * assigning the provided values positionally to the prepared fields.
+     * <p>
+     * The write is a full replace of any existing hash at {@code key}; a non-hash key results in a {@code WRONGTYPE} error. The
+     * number of values must equal the field count of the fieldset, and the values are sent in the given order without
+     * reordering. The referenced fieldset must have been prepared on the executing connection with
+     * {@link #himportPrepare(Object, Object[]) himportPrepare}, otherwise the server returns a {@code no such fieldset} error.
+     *
+     * @param key the hash key to create or overwrite, must not be {@code null}.
+     * @param fieldsetName the fieldset previously prepared on this connection, must not be {@code null}.
+     * @param values the values paired positionally with the prepared fields, must not be {@code null} and must not be empty.
+     * @return simple-string-reply {@code OK} if the hash was created.
+     * @since 7.7
+     */
+    String himportSet(K key, K fieldsetName, V... values);
+
+    /**
+     * Remove {@code fieldsetName} from the current connection session. Hashes already created through the fieldset are not
+     * affected.
+     *
+     * @param fieldsetName the fieldset name to remove, must not be {@code null}.
+     * @return Boolean integer-reply {@code true} if the fieldset was removed, {@code false} if no fieldset with this name was
+     *         registered.
+     * @since 7.7
+     */
+    Boolean himportDiscard(K fieldsetName);
+
+    /**
+     * Remove all fieldsets from the current connection session. Hashes already created through the fieldsets are not affected.
+     *
+     * @return integer-reply the number of fieldsets removed, {@code 0} if none were registered.
+     * @since 7.7
+     */
+    Long himportDiscardAll();
+
 }

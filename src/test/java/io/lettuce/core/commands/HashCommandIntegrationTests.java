@@ -768,4 +768,59 @@ public class HashCommandIntegrationTests extends TestSupport {
         redis.hmset(key, expect);
     }
 
+    @Test
+    @EnabledOnCommand("HIMPORT")
+    void himport() {
+        assertThat(redis.himportPrepare("shared", "name", "email", "age")).isEqualTo("OK");
+
+        assertThat(redis.himportSet("shared:1", "shared", "alice", "alice@example.com", "25")).isEqualTo("OK");
+        assertThat(redis.himportSet("shared:2", "shared", "bob", "bob@example.com", "30")).isEqualTo("OK");
+
+        assertThat(redis.hget("shared:1", "name")).isEqualTo("alice");
+        assertThat(redis.hget("shared:2", "email")).isEqualTo("bob@example.com");
+        assertThat(redis.hgetall("shared:1")).containsEntry("name", "alice").containsEntry("email", "alice@example.com")
+                .containsEntry("age", "25");
+    }
+
+    @Test
+    @EnabledOnCommand("HIMPORT")
+    void himportSingleField() {
+        assertThat(redis.himportPrepare("single", "name")).isEqualTo("OK");
+        assertThat(redis.himportSet("single:1", "single", "alice")).isEqualTo("OK");
+
+        assertThat(redis.hget("single:1", "name")).isEqualTo("alice");
+    }
+
+    @Test
+    @EnabledOnCommand("HIMPORT")
+    void himportValuesFollowFieldsetOrder() {
+        redis.himportPrepare("order1", "a", "b", "c");
+        redis.himportPrepare("order2", "c", "b", "a");
+
+        redis.himportSet("order:key1", "order1", "va1", "vb1", "vc1");
+        redis.himportSet("order:key2", "order2", "vc2", "vb2", "va2");
+
+        assertThat(redis.hget("order:key1", "a")).isEqualTo("va1");
+        assertThat(redis.hget("order:key2", "a")).isEqualTo("va2");
+    }
+
+    @Test
+    @EnabledOnCommand("HIMPORT")
+    void himportDiscard() {
+        redis.himportPrepare("shared", "name");
+
+        assertThat(redis.himportDiscard("shared")).isTrue();
+        assertThat(redis.himportDiscard("shared")).isFalse();
+    }
+
+    @Test
+    @EnabledOnCommand("HIMPORT")
+    void himportDiscardAll() {
+        redis.himportPrepare("one", "a");
+        redis.himportPrepare("two", "b");
+
+        assertThat(redis.himportDiscardAll()).isEqualTo(2);
+        assertThat(redis.himportDiscardAll()).isEqualTo(0);
+    }
+
 }

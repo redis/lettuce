@@ -1599,6 +1599,36 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> himportPrepare(K fieldsetName, K field) {
+        return dispatch(commandBuilder.himportPrepare(fieldsetName, field));
+    }
+
+    @Override
+    public RedisFuture<String> himportPrepare(K fieldsetName, K... fields) {
+        return dispatch(commandBuilder.himportPrepare(fieldsetName, fields));
+    }
+
+    @Override
+    public RedisFuture<String> himportSet(K key, K fieldsetName, V value) {
+        return dispatch(commandBuilder.himportSet(key, fieldsetName, value));
+    }
+
+    @Override
+    public RedisFuture<String> himportSet(K key, K fieldsetName, V... values) {
+        return dispatch(commandBuilder.himportSet(key, fieldsetName, values));
+    }
+
+    @Override
+    public RedisFuture<Boolean> himportDiscard(K fieldsetName) {
+        return dispatch(commandBuilder.himportDiscard(fieldsetName));
+    }
+
+    @Override
+    public RedisFuture<Long> himportDiscardAll() {
+        return dispatch(commandBuilder.himportDiscardAll());
+    }
+
+    @Override
     public RedisFuture<List<KeyValue<K, V>>> hgetex(K key, K... fields) {
         return dispatch(commandBuilder.hgetex(key, fields));
     }

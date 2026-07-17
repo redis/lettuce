@@ -678,5 +678,68 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      */
     suspend fun hpttl(key: K, vararg fields: K): List<Long>
 
+    /**
+     * Register a single-field fieldset in the current connection session, for use by subsequent `HIMPORT SET` calls on the
+     * same connection.
+     *
+     * @param fieldsetName the fieldset name to register the field under.
+     * @param field the single hash field name to register under the fieldset.
+     * @return simple-string-reply `OK` if the fieldset was registered.
+     * @since 7.7
+     */
+    suspend fun himportPrepare(fieldsetName: K, field: K): String?
+
+    /**
+     * Register an ordered list of field names as a fieldset in the current connection session, for use by subsequent
+     * `HIMPORT SET` calls on the same connection.
+     *
+     * @param fieldsetName the fieldset name to register the fields under.
+     * @param fields one or more hash field names in the order values will be supplied to `HIMPORT SET`.
+     * @return simple-string-reply `OK` if the fieldset was registered.
+     * @since 7.7
+     */
+    suspend fun himportPrepare(fieldsetName: K, vararg fields: K): String?
+
+    /**
+     * Create or overwrite `key` as a hash using the field list associated with `fieldsetName` on this connection, assigning
+     * the single value to the single prepared field.
+     *
+     * @param key the hash key to create or overwrite.
+     * @param fieldsetName the fieldset previously prepared on this connection.
+     * @param value the single value paired positionally with the single prepared field.
+     * @return simple-string-reply `OK` if the hash was created.
+     * @since 7.7
+     */
+    suspend fun himportSet(key: K, fieldsetName: K, value: V): String?
+
+    /**
+     * Create or overwrite `key` as a hash using the field list associated with `fieldsetName` on this connection, assigning
+     * the provided values positionally to the prepared fields.
+     *
+     * @param key the hash key to create or overwrite.
+     * @param fieldsetName the fieldset previously prepared on this connection.
+     * @param values the values paired positionally with the prepared fields.
+     * @return simple-string-reply `OK` if the hash was created.
+     * @since 7.7
+     */
+    suspend fun himportSet(key: K, fieldsetName: K, vararg values: V): String?
+
+    /**
+     * Remove `fieldsetName` from the current connection session. Hashes already created through the fieldset are not affected.
+     *
+     * @param fieldsetName the fieldset name to remove.
+     * @return `true` if the fieldset was removed, `false` if no fieldset with this name was registered.
+     * @since 7.7
+     */
+    suspend fun himportDiscard(fieldsetName: K): Boolean?
+
+    /**
+     * Remove all fieldsets from the current connection session. Hashes already created through the fieldsets are not affected.
+     *
+     * @return the number of fieldsets removed, `0` if none were registered.
+     * @since 7.7
+     */
+    suspend fun himportDiscardAll(): Long?
+
 }
 

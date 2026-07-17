@@ -295,6 +295,35 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Mono<String> himportPrepare(K fieldsetName, K field) {
+
+        Map<String, Publisher<String>> publishers = executeOnUpstream(commands -> commands.himportPrepare(fieldsetName, field));
+        return Flux.merge(publishers.values()).last();
+    }
+
+    @Override
+    public Mono<String> himportPrepare(K fieldsetName, K... fields) {
+
+        Map<String, Publisher<String>> publishers = executeOnUpstream(
+                commands -> commands.himportPrepare(fieldsetName, fields));
+        return Flux.merge(publishers.values()).last();
+    }
+
+    @Override
+    public Mono<Boolean> himportDiscard(K fieldsetName) {
+
+        Map<String, Publisher<Boolean>> publishers = executeOnUpstream(commands -> commands.himportDiscard(fieldsetName));
+        return Flux.merge(publishers.values()).reduce(true, (a, b) -> a && b);
+    }
+
+    @Override
+    public Mono<Long> himportDiscardAll() {
+
+        Map<String, Publisher<Long>> publishers = executeOnUpstream(commands -> commands.himportDiscardAll());
+        return Flux.merge(publishers.values()).reduce(0L, (a, b) -> Math.max(a, b));
+    }
+
+    @Override
     public Flux<K> keys(String pattern) {
 
         Map<String, Publisher<K>> publishers = executeOnUpstream(commands -> commands.keys(pattern));

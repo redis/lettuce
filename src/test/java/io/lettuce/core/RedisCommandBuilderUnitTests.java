@@ -837,4 +837,69 @@ class RedisCommandBuilderUnitTests {
                 .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$3\r\n" + "OFF\r\n");
     }
 
+    @Test
+    void shouldCorrectlyConstructHimportPrepare() {
+
+        Command<String, String, ?> command = sut.himportPrepare("shared", MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*6\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$7\r\n" + "PREPARE\r\n" + "$6\r\n" + "shared\r\n" + "$7\r\n"
+                        + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportPrepareSingleField() {
+
+        Command<String, String, ?> command = sut.himportPrepare("shared", MY_FIELD1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$7\r\n"
+                + "PREPARE\r\n" + "$6\r\n" + "shared\r\n" + "$7\r\n" + "hField1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportSet() {
+
+        Command<String, String, ?> command = sut.himportSet(MY_KEY, "shared", "v1", "v2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$3\r\n" + "SET\r\n"
+                + "$4\r\n" + "hKey\r\n" + "$6\r\n" + "shared\r\n" + "$2\r\n" + "v1\r\n" + "$2\r\n" + "v2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportSetRoutesByKey() {
+
+        Command<String, String, ?> command = sut.himportSet(MY_KEY, "shared", "v1", "v2");
+
+        assertThat(Unpooled.wrappedBuffer(command.getArgs().getFirstEncodedKey()).toString(StandardCharsets.UTF_8))
+                .isEqualTo(MY_KEY);
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportDiscard() {
+
+        Command<String, String, ?> command = sut.himportDiscard("shared");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$7\r\n" + "DISCARD\r\n" + "$6\r\n" + "shared\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportDiscardAll() {
+
+        Command<String, String, ?> command = sut.himportDiscardAll();
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*2\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$10\r\n" + "DISCARDALL\r\n");
+    }
+
 }

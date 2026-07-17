@@ -66,6 +66,47 @@ public class MultiNodeExecution {
     }
 
     /**
+     * Logical {@code AND} of the {@link RedisFuture} results. The result is {@code true} only if every future produces
+     * {@code true}; a {@code null} result is treated as {@code false}.
+     *
+     * @param executions mapping of a key to the future
+     * @return future producing the conjunction of all results
+     */
+    public static RedisFuture<Boolean> andOfAsync(Map<?, ? extends CompletionStage<Boolean>> executions) {
+
+        return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
+            boolean result = true;
+            for (CompletionStage<Boolean> future : executions.values()) {
+                Boolean value = execute(() -> future.toCompletableFuture().get());
+                result = result && Boolean.TRUE.equals(value);
+            }
+
+            return result;
+        });
+    }
+
+    /**
+     * Returns the maximum of the {@link RedisFuture} results.
+     *
+     * @param executions mapping of a key to the future
+     * @return future producing the maximum result
+     */
+    public static RedisFuture<Long> maxOfAsync(Map<?, ? extends CompletionStage<Long>> executions) {
+
+        return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
+            long result = 0;
+            for (CompletionStage<Long> future : executions.values()) {
+                Long value = execute(() -> future.toCompletableFuture().get());
+                if (value != null) {
+                    result = Math.max(result, value);
+                }
+            }
+
+            return result;
+        });
+    }
+
+    /**
      * Returns the result of the first {@link RedisFuture} and guarantee that all futures are finished.
      *
      * @param executions mapping of a key to the future
