@@ -24,7 +24,7 @@ actions, not the agent.
 - **Never create or merge pull requests, and never reply to GitHub issues or PRs**
   (no `gh pr create`/`merge`/`comment`/`review`, no `gh issue create`/`comment`).
   Draft text for the maintainer to post if asked — for a PR description, use the
-  `creating-description-for-gh-pr` skill, which writes to `prDescription.md`.
+  `create-pr-description` skill, which writes to `prDescription.md`.
 
 > These rules are also enforced by a `PreToolUse` hook (`.claude/settings.json` →
 > `.claude/hooks/block-git-write-ops.sh`) that blocks the matching commands.
@@ -156,4 +156,4 @@ before doing that type of work.
 |-------|-------------|
 | `adding-a-redis-command` | Add a new Redis command (or overload) end-to-end: builder, async/reactive impls, API template + generated interfaces, Kotlin, tests |
 | `writing-javadoc` | Write or fix Javadoc for public API following Lettuce house conventions |
-| `creating-description-for-gh-pr` | Generate a GitHub PR title and description from the diff between two local branches |
+| `create-pr-description` | Generate a GitHub PR title and description from the diff between two local branches |

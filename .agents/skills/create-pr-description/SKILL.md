@@ -1,11 +1,16 @@
 ---
-name: creating-description-for-gh-pr
+name: create-pr-description
 description: Generate a clear, concise GitHub PR title and description from the diff between two local git branches, and save it to prDescription.md in the repo root. Use this whenever the user asks to write, generate, draft, or update a PR description or PR title from local branch changes — including phrasing like "summarize this diff into a PR description," "write a PR description for my current branch," "create a PR title and description," or any request to compare a base and target branch for PR purposes. Trigger even if the user doesn't name specific branches; this skill knows how to default them.
+argument-hint: [base-branch] [target-branch]
 ---
 
 # PR Description Generator
 
 Writes a GitHub PR title and description from the diff between two local git branches, focused on what reviewers need: purpose, key decisions/assumptions, behavioral or conceptual changes, and a brief testing note if relevant. Uses only standard git commands, so any agent can follow it.
+
+## Arguments
+
+Positional and both optional: the **first** argument is the base branch, the **second** is the target branch. A target cannot be given without a base. Feed whatever is provided into the branch resolution below (a missing argument is defaulted, not guessed).
 
 ## 1. Resolve branches
 
