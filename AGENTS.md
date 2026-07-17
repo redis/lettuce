@@ -11,8 +11,9 @@ Agent guidance is **self-contained under agent-owned locations** and never mixed
 the published documentation site:
 
 - **Agent-facing** (this material) lives at the repo root (`AGENTS.md`, `CLAUDE.md`),
-  under `.agents/` (tool-neutral: `.agents/docs/`, `.agents/skills/`), and `.claude/`
-  (Claude-specific tooling). None of it is published by MkDocs.
+  under `.agents/` (tool-neutral: `.agents/docs/`, `.agents/rules/`, `.agents/skills/`),
+  and `.claude/` (Claude-specific tooling that bridges to `.agents/`). None of it is
+  published by MkDocs.
 - **User-facing** contributor/user documentation lives under `docs/` and is published
   to the docs site. Agents read the agent-owned copies, not `docs/`.
 
@@ -26,6 +27,7 @@ the owner only.
 | Command flow & code generation | `.agents/docs/architecture.md` |
 | Testing — environment, running, naming, layout, CI | `.agents/docs/integration-testing.md` |
 | Javadoc conventions (incl. `@since` derivation) | `.agents/docs/javadoc.md` |
+| Coding rules (Java style, …) | `.agents/rules/*` |
 | Task procedures (add a command, write Javadoc, PR description) | `.agents/skills/*` |
 
 Rule: state a fact in its owner and link from elsewhere; don't copy it. This file
@@ -140,9 +142,9 @@ mvn formatter:format                 # applies formatting.xml; do NOT submit for
 - **Add `@since <version>` to all new public API** — see
   [`.agents/docs/javadoc.md`](.agents/docs/javadoc.md) for the version-derivation recipe.
 - **Add yourself as `@author` to every file you touch.**
-- **Prefer imports over fully-qualified class names** in code; add an `import`
-  rather than inlining a package-qualified name (except where needed to
-  disambiguate a genuine name clash). No wildcard imports.
+- **Java style** — imports over fully-qualified names, braces on every control
+  statement (no braceless one-liners), no wildcard imports. Full list in
+  `.agents/rules/java-rules.md` (see `.agents/rules/` before editing Java).
 - Javadoc for public API follows house conventions — see `.agents/docs/javadoc.md`, or use
   the `writing-javadoc` skill.
 
