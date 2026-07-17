@@ -53,8 +53,18 @@ feature-request issue). It must state:
 - **Version availability** — the first server version that supports it (drives
   `@EnabledOnCommand` gating and `@since`).
 
-Source of truth: the Redis command reference (`https://redis.io/commands/<name>`)
-plus the issue. Do not guess reply shapes — confirm them.
+Source of truth: the linked HLD/issue (Confluence, Jira, or a GitHub issue) and the
+Redis command reference (`https://redis.io/commands/<name>`). Read them with whatever
+tools are available (web fetch, an Atlassian/Jira connector, `gh`); only ask the
+maintainer if you genuinely cannot access the source. Do not guess reply shapes —
+confirm them.
+
+**The spec is your working context, not a deliverable.** Hold it in mind to drive the
+work — do **not** paste it back to the maintainer, write it to a review file, or pause
+for "spec approval." Work straight through §2 and §3 on your own judgement; the
+**only** place to stop for the maintainer is the ⛔ checkpoint before generation. If a
+design choice is genuinely ambiguous, make a reasonable call and surface it *there*,
+with the template, rather than interrupting earlier.
 
 ### 2. Design the Lettuce API from the spec
 
