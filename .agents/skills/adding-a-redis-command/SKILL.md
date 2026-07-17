@@ -29,6 +29,7 @@ Add-a-command progress:
 - [ ] 1. Spec: syntax, args, RESP2 + RESP3 replies, errors, version
 - [ ] 2. API design: method(s), return type, target group, arg/response types
 - [ ] 3. Types + template: arg & response types first, then the template method + Javadoc
+- [ ] ⛔ HUMAN REVIEW: maintainer approves the edited template(s) before generating
 - [ ] 4. Generate: run the api_generator tests; do NOT hand-edit generated interfaces
 - [ ] 5. Implementations: CommandType, RedisCommandBuilder, async, reactive, Kotlin impl
 - [ ] 6. Tests: builder unit test + integration base/overloads (@EnabledOnCommand)
@@ -111,6 +112,15 @@ Do not write the class-level `${intent}` placeholder — the generators substitu
 the new group interface into the hand-written aggregate interfaces (`RedisCommands`,
 `RedisAsyncCommands`, `RedisReactiveCommands`, and the cluster variants) so they
 `extend` it. Mirror an existing group end-to-end and verify the aggregate wiring.
+
+### ⛔ Checkpoint — human review before generating
+
+The edited template(s) are the human-authored **API contract**, and generation fans
+them out across every flavor (sync/async/reactive/Kotlin) — after which it's costly to
+change. Generation is also the messy, non-idempotent step (see §4). **Stop here.**
+Present the template change — the new method signature and its Javadoc — to the
+maintainer and get approval **before running the generators.** Do not proceed to §4
+until the maintainer approves.
 
 ### 4. Run the generators
 
