@@ -31,7 +31,7 @@ block() {
   echo "BLOCKED by .claude/hooks/block-git-write-ops.sh: $1" >&2
   echo "Per AGENTS.md 'Guardrails (agents)', agents must not commit/push or" >&2
   echo "create/merge/comment on PRs or issues. Leave this to the maintainer;" >&2
-  echo "to draft a PR description, use the create-pr-description skill." >&2
+  echo "to draft a PR description, use the draft-pr-description skill." >&2
   exit 2
 }
 
