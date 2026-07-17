@@ -65,6 +65,11 @@ actions, not the agent.
 - **The test build pins a specific JDK to match CI** — check `.github/workflows/`
   (or `.agents/docs/integration-testing.md`) and use that JDK to build and reproduce CI.
 - Build tool is **Maven** (`mvn`). Integration tests require **Docker**.
+- **Prefer semantic code tooling over text search for Java, when available.** If a
+  Java language server or IDE integration is present (e.g. an `jdtls`-based LSP, or
+  an IDE MCP), use it for definitions, references, symbol/type search, call
+  hierarchy, and diagnostics instead of grepping. Fall back to text search only when
+  no such tool is available.
 
 ## Project Structure
 
