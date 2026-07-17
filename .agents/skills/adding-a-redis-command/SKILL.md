@@ -114,18 +114,13 @@ the new group interface into the hand-written aggregate interfaces (`RedisComman
 
 ### 4. Run the generators
 
-Run the `api_generator`-tagged generators so the interfaces are (re)written —
-`CreateSyncApi`, `CreateAsyncApi`, `CreateReactiveApi`, `CreateKotlinCoroutinesApi`,
-and the cluster `Create*NodeSelectionClusterApi` classes. They overwrite these
-checked-in, never-hand-edited files:
-
-- `src/main/java/io/lettuce/core/api/{sync,async,reactive}/<Group>*Commands.java`
-- `src/main/kotlin/io/lettuce/core/api/coroutines/<Group>CoroutinesCommands.kt`
-- cluster NodeSelection interfaces
-
-```bash
-mvn -Dtest=CreateSyncApi -Dsurefire.failIfNoSpecifiedTests=false test
-```
+The generators rewrite **every** group in `Constants.TEMPLATE_NAMES` and generation
+is **not idempotent** — run naively and you get noisy diffs across unrelated
+interfaces plus mangled imports. Follow the runbook in
+[.agents/docs/code-generation.md](../../../.agents/docs/code-generation.md): scope
+`TEMPLATE_NAMES` to your group, run the generators, review the diff (fix import
+churn), then revert `Constants`. Never commit the `Constants` change or unrelated
+regenerated files.
 
 For an **unusual return type** (e.g. `Flux<Value<Long>>`, or `Mono<List<Double>>`
 because Redis returns nulls), register it in `RESULT_SPEC` / `FORCE_FLUX_RESULT` /

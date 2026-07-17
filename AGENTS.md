@@ -25,6 +25,7 @@ the owner only.
 |-------|-------|
 | Always-on facts, guardrails, index (this file) | `AGENTS.md` |
 | Command flow & code generation | `.agents/docs/architecture.md` |
+| Running the API generators (safe workflow) | `.agents/docs/code-generation.md` |
 | Testing — environment, running, naming, layout, CI | `.agents/docs/integration-testing.md` |
 | Javadoc conventions (incl. `@since` derivation) | `.agents/docs/javadoc.md` |
 | Coding rules (Java style, …) | `.agents/rules/*` |
@@ -167,6 +168,7 @@ mvn formatter:format                 # applies formatting.xml; do NOT submit for
 |----------|----------------|
 | `.github/CONTRIBUTING.md` | How to build, test, and contribute |
 | `.agents/docs/architecture.md` | How a command flows: API shapes, code generation, command model, codec, RESP/netty wire layer |
+| `.agents/docs/code-generation.md` | Running the API interface generators safely (non-idempotent; scope `Constants`, review, revert) |
 | `.agents/docs/integration-testing.md` | Test environment, topologies, unit vs. integration, CI |
 | `.agents/docs/javadoc.md` | Javadoc house conventions for public API |
 | `.github/PULL_REQUEST_TEMPLATE.md` | PR checklist |

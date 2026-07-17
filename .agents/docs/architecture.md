@@ -69,6 +69,10 @@ Return-type mapping: sync keeps the template's type; `CreateAsyncApi` wraps it i
 with unusual shapes registered in `RESULT_SPEC` / `FORCE_FLUX_RESULT` / `VALUE_WRAP`
 at the top of `CreateReactiveApi.java`.
 
+Running the generators has a sharp edge — they rewrite **every** group in
+`Constants.TEMPLATE_NAMES` and generation isn't idempotent. See
+[code-generation.md](code-generation.md) for the scope-run-review-revert runbook.
+
 ## Sync is a proxy; reactive is a separate implementation
 
 There are effectively **two real implementations**, not three:
