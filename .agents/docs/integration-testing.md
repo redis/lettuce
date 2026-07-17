@@ -151,3 +151,14 @@ follows the `*IntegrationTests` → Failsafe convention (see the published guide
 Not every command needs every overload — add the ones that carry real risk for that
 command (e.g. RESP2 when the reply shape differs between protocols, cluster when
 routing matters). Provide the base test at minimum.
+
+**Adding tests to a base only covers the overloads that already exist.** The overload
+classes `extend` the base, so new base tests run under them automatically — but only
+if the class exists. A command group can be *missing* an overload its peers have: the
+hash group, for example, has reactive/Tx/cluster overloads but **no RESP2 class**, so
+nothing in the hash suite runs under RESP2. So when adding a command, **check which
+overload classes the target group has** against peer groups (String/Stream/Array all
+ship `*Resp2IntegrationTests`); if one is missing and matters for your command,
+**create it** — a RESP2 overload is a tiny subclass that connects with
+`ProtocolVersion.RESP2` and inherits every base test, giving the whole group that
+coverage. Don't assume the base already exercises all protocols.

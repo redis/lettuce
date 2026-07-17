@@ -237,8 +237,9 @@ What is specific to a **command**:
   `src/test/java/io/lettuce/core/Redis<Group>CommandBuilderUnitTests.java`.
 - **Integration tests**: write the base test against the sync `RedisCommands` API,
   then add the overloads (RESP2 / cluster / reactive / Tx) that matter for the
-  command. That base+overload structure is owned by
-  the "Command test scope" section of
+  command. Base tests only run under overloads that **exist** — check the group isn't
+  missing one its peers have (e.g. the hash group has no RESP2 class) and **create it**
+  if so. That base+overload structure is owned by the "Command test scope" section of
   [.agents/docs/integration-testing.md](../../../.agents/docs/integration-testing.md). Gate
   version-specific commands with `@EnabledOnCommand("<NAME>")`:
 
