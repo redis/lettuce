@@ -1,12 +1,13 @@
 ---
 name: writing-javadoc
-description: Use when writing or editing Javadoc for Lettuce public API — new methods, classes, deprecations, or when a reviewer asks to fix or improve doc comments. Covers Lettuce's house conventions (imperative first sentence, tag order, @since/@param/@return/@throws/@deprecated forms, file header) and the rule that command-interface Javadoc is edited in the template, not the generated files. Trigger on "write javadoc for", "document this method", "add a deprecation notice", "fix the doc comment".
+description: Use when writing or editing Javadoc for Lettuce public API — new methods, classes, deprecations, or when a reviewer asks to fix or improve doc comments. Points to the full house ruleset in docs/javadoc.md (third-person summaries, fixed tag order, @param/@return/@throws/@since/@deprecated house forms) and the rule that command-interface Javadoc is edited in the template, not the generated files. Trigger on "write javadoc for", "document this method", "add a deprecation notice", "fix the doc comment".
 ---
 
 # Writing Javadoc for Lettuce
 
-The full conventions live in **[docs/javadoc.md](../../../docs/javadoc.md)** — read
-it before writing. This skill is the quick operating checklist.
+The complete, authoritative ruleset is **[docs/javadoc.md](../../../docs/javadoc.md)** —
+read it before writing. This skill is the operating checklist; the doc wins on any
+detail.
 
 ## Before you write
 
@@ -14,32 +15,31 @@ it before writing. This skill is the quick operating checklist.
   `src/main/java/io/lettuce/core/api/{sync,async,reactive}/` are **generated**
   (`@generated` marker). Edit the Javadoc in the **template** at
   `src/main/templates/io/lettuce/core/api/<Group>Commands.java`, not the generated
-  file. The template comment feeds every flavor. See [architecture.md](../../../docs/architecture.md).
+  file — the template comment feeds every flavor. See [architecture.md](../../../docs/architecture.md).
 
-## The rules that matter most
+## The rules most often gotten wrong
 
-1. **Document the caller-facing contract**, not implementation or refactor
-   rationale. Never write "as part of making X optional…" on the API surface — that
-   belongs in the commit message.
-2. **First sentence** = concise, standalone, adds info beyond the method name.
-   Command methods use the **imperative** mood ("Append a value to a key.").
-3. **Tag order:** `@param` → `@return` → `@throws` → `@since` → `@deprecated`.
-   `@author` is class-level only; add yourself when you touch a file.
-4. **`@param`** for every parameter (incl. `<K>`/`<V>`); null-contracts use
-   `must not be {@code null}`.
-5. **`@return`** encodes the Redis reply type and special cases
-   ("Long integer-reply …, or {@code 0} when …").
+1. **Golden rule:** document the caller-facing contract (inputs, outputs, effects,
+   errors, nullability) — never implementation details or refactor rationale.
+2. **First sentence:** third-person verb for methods ("Returns…", "Creates…"),
+   noun phrase for types. Not imperative, not "This method…". Ends in a clean period.
+3. **Tag order:** `@param` → `@return` → `@throws` → `@author` → `@since` → `@see`
+   → `@deprecated`.
+4. **`@param`** for every parameter (type params `<K>`/`<V>` first); state
+   nullability with the house phrases `must not be {@code null}.` / `can be {@code null}.`
+5. **`@return`** for non-void; describe the value and its meaningful states, not the
+   type.
 6. **`@since`** is a bare version — `@since 7.7`. Derive it from the build:
    `mvn help:evaluate -Dexpression=project.version -q -DforceStdout`, drop `-SNAPSHOT`.
-7. **`@deprecated`** — one tag, canonical form:
-   `@deprecated since <X.Y> in favor of {@link #replacement(...)}.`, and pair it with
-   the `@Deprecated` annotation.
-8. Use `{@code null}` for literals and `{@link}` economically (first occurrence,
-   worth-a-click references only).
+7. **`@deprecated`** — keep the `@Deprecated` annotation and the tag in sync; house
+   form: `@deprecated since <version>, use {@link Replacement} instead; scheduled for
+   removal in a future major release.`
+8. **`@author`** on types only; append your name, don't reorder existing authors.
+9. Use `{@code null}` for literals; `{@link}` only to types resolvable on the
+   compile classpath (else `{@code TypeName}`).
 
 ## Verify, don't guess
 
-Match the surrounding file's existing style. If a subtle case isn't covered here or
-in `docs/javadoc.md`, look at how a nearby public method does it rather than
-inventing a rule. Javadoc lint is off in the build, so review is the only check —
-get it right by hand.
+Match the surrounding file, and consult `docs/javadoc.md` for any subtle case
+rather than inventing a rule. Javadoc lint is off in the build (`<doclint>none</doclint>`),
+so review is the only check — get it right by hand.

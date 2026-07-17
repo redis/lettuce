@@ -91,11 +91,11 @@ skill; new public API needs `@since <version>` plus `@param`/`@return`.
 
 ```java
 /**
- * Get the length of the value stored in a key.
+ * Returns the length of the string value stored at {@code key}.
  *
- * @param key the key.
- * @return Long integer-reply the length of the string at {@code key}, or {@code 0}
- *         when {@code key} does not exist.
+ * @param key the key, must not be {@code null}.
+ * @return the length of the string at {@code key}, or {@code 0} when {@code key} does
+ *         not exist.
  * @since 7.7
  */
 Long strlen(K key);
