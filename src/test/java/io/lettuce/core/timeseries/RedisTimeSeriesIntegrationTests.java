@@ -288,11 +288,14 @@ public class RedisTimeSeriesIntegrationTests {
      * Unlike {@code TS.ADD}, {@code TS.MADD} does <b>not</b> auto-create missing series: the server rejects it with
      * {@code TSDB: the key is not a TSDB key} if any of the target keys does not already exist. This contradicts the
      * {@code tsMAdd} Javadoc's claim of implicit creation; see the discovered-bug notes in issues.md.
+     * <p>
+     * The keys are hash-tagged so both route to the same cluster slot: {@code TS.MADD} sends a single command carrying multiple
+     * keys, which Redis Cluster rejects with {@code CROSSSLOT} unless they all hash to the same slot.
      */
     @Test
     void tsMAddAndGetRoundTrip() {
-        String key1 = "series:k1";
-        String key2 = "series:k2";
+        String key1 = "{ts-madd}:k1";
+        String key2 = "{ts-madd}:k2";
         redis.tsCreate(key1);
         redis.tsCreate(key2);
 
