@@ -38,27 +38,11 @@ public enum CommandType implements ProtocolKeyword {
 
     // Connection
 
-    ECHO, HELLO, PING,
-
-    /**
-     * @deprecated since 7.7, use connection closing instead.
-     */
-    @Deprecated
-    QUIT,
-
-    READONLY, READWRITE, SELECT, SWAPDB,
+    ECHO, HELLO, PING, QUIT, READONLY, READWRITE, SELECT, SWAPDB,
 
     // Server
 
-    BGREWRITEAOF, BGSAVE, CLIENT, COMMAND, CONFIG, DBSIZE, DEBUG, FLUSHALL, FLUSHDB, HOTKEYS, INFO, MYID, MYSHARDID, LASTSAVE, REPLICAOF, ROLE, MONITOR, SAVE, SHUTDOWN,
-
-    /**
-     * @deprecated since 7.7, use {@link #REPLICAOF} instead.
-     */
-    @Deprecated
-    SLAVEOF,
-
-    SLOWLOG, SYNC, MEMORY,
+    BGREWRITEAOF, BGSAVE, CLIENT, COMMAND, CONFIG, DBSIZE, DEBUG, FLUSHALL, FLUSHDB, HOTKEYS, INFO, MYID, MYSHARDID, LASTSAVE, REPLICAOF, ROLE, MONITOR, SAVE, SHUTDOWN, SLAVEOF, SLOWLOG, SYNC, MEMORY,
 
     // Keys
 
