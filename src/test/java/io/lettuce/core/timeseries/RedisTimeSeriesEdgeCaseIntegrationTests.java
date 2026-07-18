@@ -19,6 +19,7 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Edge-case integration tests for Redis TimeSeries commands, split out from {@link RedisTimeSeriesIntegrationTests} because
@@ -88,6 +90,8 @@ class RedisTimeSeriesEdgeCaseIntegrationTests {
      */
     @Test
     void tsAddAcceptsNaNAndStoresIt() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.6"));
+
         Long timestamp = redis.tsAdd(MY_KEY, 1000, Double.NaN);
 
         assertThat(timestamp).isEqualTo(1000L);
@@ -105,6 +109,8 @@ class RedisTimeSeriesEdgeCaseIntegrationTests {
      */
     @Test
     void tsAddWithNaNUnderDuplicatePolicyLastPreservesExistingValue() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.6"));
+
         redis.tsCreate(MY_KEY, TsCreateArgs.Builder.duplicatePolicy(TsDuplicatePolicy.LAST));
         redis.tsAdd(MY_KEY, 1000, 5.0);
 
@@ -139,6 +145,8 @@ class RedisTimeSeriesEdgeCaseIntegrationTests {
      * because the server reports both conditions through the identical error message.
      */
     private void assertDuplicateNaNRejected(TsDuplicatePolicy policy) {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.6"));
+
         redis.tsCreate(MY_KEY, TsCreateArgs.Builder.duplicatePolicy(policy));
         redis.tsAdd(MY_KEY, 1000, 5.0);
 
