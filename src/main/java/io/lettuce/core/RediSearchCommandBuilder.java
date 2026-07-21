@@ -71,7 +71,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param fieldArgs the fieldArgs
      * @return the result of the create command
      */
-    public Command<K, V, String> ftCreate(String index, CreateArgs<K> createArgs, List<FieldArgs> fieldArgs) {
+    public Command<K, V, String> ftCreate(String index, CreateArgs createArgs, List<FieldArgs> fieldArgs) {
         LettuceAssert.notNull(index, "Index must not be null");
         notEmpty(fieldArgs.toArray());
 

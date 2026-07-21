@@ -80,7 +80,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
                 TextFieldArgs.builder().name("category").build());
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate("basic-test-idx", createArgs, fields)).isEqualTo("OK");
 
@@ -512,8 +512,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 NumericFieldArgs.builder().name("sales").sortable().build(),
                 NumericFieldArgs.builder().name("profit").sortable().build());
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("sales:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("sales:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate("sales-idx", createArgs, fields)).isEqualTo("OK");
 
@@ -587,8 +586,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 NumericFieldArgs.builder().name("score").sortable().build(),
                 NumericFieldArgs.builder().name("age").sortable().build());
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("task:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("task:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate("tasks-idx", createArgs, fields)).isEqualTo("OK");
 
@@ -656,8 +654,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 NumericFieldArgs.builder().name("humidity").sortable().build(),
                 NumericFieldArgs.builder().name("pressure").sortable().build());
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("weather:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("weather:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate("weather-idx", createArgs, fields)).isEqualTo("OK");
 
@@ -2317,7 +2314,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 TextFieldArgs.builder().name("$.city").as("city").build(),
                 TextFieldArgs.builder().name("$.office").as("office").build(),
                 TextFieldArgs.builder().name("$.code").as("code").build());
-        CreateArgs<String> args = CreateArgs.<String> builder().on(CreateArgs.TargetType.JSON).withPrefix("doc:").build();
+        CreateArgs args = CreateArgs.builder().on(CreateArgs.TargetType.JSON).withPrefix("doc:").build();
 
         assertThat(redis.ftCreate("args-test-idx", args, fields)).isEqualTo("OK");
 
@@ -2374,7 +2371,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 TextFieldArgs.builder().name("$.city").as("city").build(),
                 TextFieldArgs.builder().name("$.office").as("office").build(),
                 TextFieldArgs.builder().name("$.code").as("code").build());
-        CreateArgs<String> args = CreateArgs.<String> builder().on(CreateArgs.TargetType.JSON).withPrefix("doc:").build();
+        CreateArgs args = CreateArgs.builder().on(CreateArgs.TargetType.JSON).withPrefix("doc:").build();
 
         assertThat(redis.ftCreate("args-test-idx", args, fields)).isEqualTo("OK");
 

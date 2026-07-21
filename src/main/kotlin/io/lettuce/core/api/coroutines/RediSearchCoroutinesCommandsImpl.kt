@@ -41,7 +41,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 open class RediSearchCoroutinesCommandsImpl<K : Any>(internal val ops: RediSearchReactiveCommands<K>) :
     RediSearchCoroutinesCommands<K> {
 
-    override suspend fun ftCreate(index: String, arguments: CreateArgs<K>, fieldArgs: List<FieldArgs>): String? =
+    override suspend fun ftCreate(index: String, arguments: CreateArgs, fieldArgs: List<FieldArgs>): String? =
         ops.ftCreate(index, arguments, fieldArgs).awaitFirstOrNull()
 
     override suspend fun ftCreate(index: String, fieldArgs: List<FieldArgs>): String? =

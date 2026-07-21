@@ -105,7 +105,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         FieldArgs year = NumericFieldArgs.builder().name("year").sortable().build();
         FieldArgs rating = NumericFieldArgs.builder().name("rating").sortable().build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         assertThat(connection.sync().ftCreate(INDEX, createArgs, Arrays.asList(title, author, year, rating))).isEqualTo("OK");
 
         // Data spread across slots
@@ -217,7 +217,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
 
         String tmpIndex = INDEX + ":create:" + UUID.randomUUID();
         FieldArgs title = TextFieldArgs.builder().name("title").build();
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         assertThat(connection.sync().ftCreate(tmpIndex, createArgs, Arrays.asList(title))).isEqualTo("OK");
 
         Set<String> nodes = observedNodeIdsFor(CommandType.FT_CREATE);
@@ -367,8 +367,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         FieldArgs embedding = VectorFieldArgs.builder().name("embedding").hnsw().type(VectorFieldArgs.VectorType.FLOAT32)
                 .dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
 
-        CreateArgs<String> hybridCreateArgs = CreateArgs.<String> builder().withPrefix(HYBRID_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs hybridCreateArgs = CreateArgs.builder().withPrefix(HYBRID_PREFIX).on(CreateArgs.TargetType.HASH).build();
         assertThat(connection.sync().ftCreate(HYBRID_INDEX, hybridCreateArgs, Arrays.asList(category, price, embedding)))
                 .isEqualTo("OK");
 
