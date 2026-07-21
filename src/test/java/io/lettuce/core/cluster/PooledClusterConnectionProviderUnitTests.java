@@ -461,4 +461,16 @@ class PooledClusterConnectionProviderUnitTests {
         verify(clusterEventListener).onUncoveredSlot(anyInt());
     }
 
+    @Test
+    void shouldHaveVolatileFields() throws Exception {
+        java.lang.reflect.Field partitionsField = PooledClusterConnectionProvider.class.getDeclaredField("partitions");
+        java.lang.reflect.Field readFromField = PooledClusterConnectionProvider.class.getDeclaredField("readFrom");
+        java.lang.reflect.Field autoFlushCommandsField = PooledClusterConnectionProvider.class
+                .getDeclaredField("autoFlushCommands");
+
+        assertThat(java.lang.reflect.Modifier.isVolatile(partitionsField.getModifiers())).isTrue();
+        assertThat(java.lang.reflect.Modifier.isVolatile(readFromField.getModifiers())).isTrue();
+        assertThat(java.lang.reflect.Modifier.isVolatile(autoFlushCommandsField.getModifiers())).isTrue();
+    }
+
 }

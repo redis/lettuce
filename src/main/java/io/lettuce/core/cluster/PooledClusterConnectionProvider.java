@@ -98,11 +98,11 @@ class PooledClusterConnectionProvider<K, V>
 
     private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, ConnectionFuture<StatefulRedisConnection<K, V>>> connectionProvider;
 
-    private Partitions partitions;
+    private volatile Partitions partitions;
 
-    private boolean autoFlushCommands = true;
+    private volatile boolean autoFlushCommands = true;
 
-    private ReadFrom readFrom;
+    private volatile ReadFrom readFrom;
 
     public PooledClusterConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
             RedisCodec<K, V> redisCodec, ClusterEventListener clusterEventListener) {
