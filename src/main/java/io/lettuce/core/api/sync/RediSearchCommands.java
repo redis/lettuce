@@ -101,7 +101,7 @@ public interface RediSearchCommands<K> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    String ftCreate(String index, CreateArgs<K> arguments, List<FieldArgs> fieldArgs);
+    String ftCreate(String index, CreateArgs arguments, List<FieldArgs> fieldArgs);
 
     /**
      * Add an alias to a search index.

@@ -102,7 +102,7 @@ interface RediSearchCoroutinesCommands<K : Any> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    suspend fun ftCreate(index: String, arguments: CreateArgs<K>, fieldArgs: List<FieldArgs>): String?
+    suspend fun ftCreate(index: String, arguments: CreateArgs, fieldArgs: List<FieldArgs>): String?
 
     /**
      * Add an alias to a search index.

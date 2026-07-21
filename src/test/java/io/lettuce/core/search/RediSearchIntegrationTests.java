@@ -138,8 +138,7 @@ public class RediSearchIntegrationTests {
         FieldArgs createdDateField = NumericFieldArgs.builder().name("created_date").sortable().build();
         FieldArgs viewsField = NumericFieldArgs.builder().name("views").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         String result = redis.ftCreate(BLOG_INDEX, createArgs,
                 Arrays.asList(titleField, contentField, authorField, createdDateField, viewsField));
@@ -205,8 +204,7 @@ public class RediSearchIntegrationTests {
         FieldArgs titleField = TextFieldArgs.builder().name("title").sortable().build();
         FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(MOVIES_INDEX, createArgs, Arrays.asList(titleField, ratingField));
 
@@ -291,8 +289,7 @@ public class RediSearchIntegrationTests {
         FieldArgs titleField = TextFieldArgs.builder().name("title").build();
         FieldArgs categoriesField = TagFieldArgs.builder().name("categories").separator(";").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(BOOKS_INDEX, createArgs, Arrays.asList(titleField, categoriesField));
 
@@ -343,8 +340,7 @@ public class RediSearchIntegrationTests {
         FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
         FieldArgs stockField = NumericFieldArgs.builder().name("stock").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(PRODUCTS_INDEX, createArgs, Arrays.asList(nameField, priceField, stockField));
 
@@ -412,8 +408,7 @@ public class RediSearchIntegrationTests {
         FieldArgs contentField = TextFieldArgs.builder().name("content").build();
         FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(BLOG_INDEX, createArgs, Arrays.asList(titleField, contentField, categoryField));
 
@@ -471,8 +466,7 @@ public class RediSearchIntegrationTests {
         FieldArgs tagsField = TagFieldArgs.builder().name("tags").build();
         FieldArgs ratingField = NumericFieldArgs.builder().name("rating").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(MOVIES_INDEX, createArgs, Arrays.asList(titleField, descriptionField, tagsField, ratingField));
 
@@ -548,8 +542,7 @@ public class RediSearchIntegrationTests {
         // Create a simple index
         FieldArgs titleField = TextFieldArgs.builder().name("title").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(BLOG_INDEX, createArgs, Collections.singletonList(titleField));
 
@@ -902,7 +895,7 @@ public class RediSearchIntegrationTests {
         FieldArgs contentField = TextFieldArgs.builder().name("content").build();
 
         // Create an index with some documents
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
 
@@ -987,7 +980,7 @@ public class RediSearchIntegrationTests {
         FieldArgs contentField = TextFieldArgs.builder().name("content").build();
 
         // Create an index
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
 
@@ -1029,13 +1022,11 @@ public class RediSearchIntegrationTests {
         FieldArgs titleField = TextFieldArgs.builder().name("title").build();
 
         // Create first index
-        CreateArgs<String> createArgs1 = CreateArgs.<String> builder().withPrefix("doc1:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs1 = CreateArgs.builder().withPrefix("doc1:").on(CreateArgs.TargetType.HASH).build();
         assertThat(redis.ftCreate(testIndex1, createArgs1, Collections.singletonList(titleField))).isEqualTo("OK");
 
         // Create second index
-        CreateArgs<String> createArgs2 = CreateArgs.<String> builder().withPrefix("doc2:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs2 = CreateArgs.builder().withPrefix("doc2:").on(CreateArgs.TargetType.HASH).build();
         assertThat(redis.ftCreate(testIndex2, createArgs2, Collections.singletonList(titleField))).isEqualTo("OK");
 
         // Get updated list of indexes
@@ -1067,8 +1058,7 @@ public class RediSearchIntegrationTests {
         FieldArgs authorField = TextFieldArgs.builder().name("author").build();
         FieldArgs priceField = NumericFieldArgs.builder().name("price").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("book:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("book:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, authorField, priceField))).isEqualTo("OK");
 
@@ -1151,7 +1141,7 @@ public class RediSearchIntegrationTests {
         FieldArgs contentField = TextFieldArgs.builder().name("content").build();
 
         // Create an index
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
 
@@ -1219,8 +1209,7 @@ public class RediSearchIntegrationTests {
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(10).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("product:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("product:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(indexName, createArgs,
                 Arrays.asList(titleField, categoryField, brandField, priceField, ratingField, vectorField))).isEqualTo("OK");
@@ -1324,8 +1313,7 @@ public class RediSearchIntegrationTests {
         try (StatefulRedisConnection<String, String> connection = testClient.connect()) {
             RedisCommands<String, String> testRedis = connection.sync();
 
-            testRedis.ftCreate(testIndex,
-                    CreateArgs.<String> builder().on(CreateArgs.TargetType.JSON).withPrefix(prefix).build(),
+            testRedis.ftCreate(testIndex, CreateArgs.builder().on(CreateArgs.TargetType.JSON).withPrefix(prefix).build(),
                     Collections.singletonList(NumericFieldArgs.builder().name("$.pos").as("pos").build()));
 
             // Add sorting by pos to ensure deterministic order

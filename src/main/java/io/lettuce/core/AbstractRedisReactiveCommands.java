@@ -1770,7 +1770,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftCreate(String index, CreateArgs<K> options, List<FieldArgs> fieldArgs) {
+    public Mono<String> ftCreate(String index, CreateArgs options, List<FieldArgs> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftCreate(index, options, fieldArgs));
     }
 

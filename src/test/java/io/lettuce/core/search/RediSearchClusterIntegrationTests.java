@@ -91,8 +91,7 @@ public class RediSearchClusterIntegrationTests {
         FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
         FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         // Create index on all cluster nodes
         assertThat(redis.ftCreate(PRODUCTS_INDEX, createArgs, Arrays.asList(nameField, categoryField, priceField)))
@@ -188,8 +187,7 @@ public class RediSearchClusterIntegrationTests {
         FieldArgs yearField = NumericFieldArgs.builder().name("year").sortable().build();
         FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         // Create index on cluster
         String createResult = redis.ftCreate(BOOKS_INDEX, createArgs,

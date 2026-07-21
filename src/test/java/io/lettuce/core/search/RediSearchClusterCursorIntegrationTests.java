@@ -89,7 +89,7 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
         FieldArgs year = NumericFieldArgs.builder().name("year").sortable().build();
         FieldArgs rating = NumericFieldArgs.builder().name("rating").sortable().build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         assertThat(sync.ftCreate(INDEX, createArgs, Arrays.asList(title, author, year, rating))).isEqualTo("OK");
 

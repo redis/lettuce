@@ -20,13 +20,12 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
 /**
  * Argument list builder for {@code FT.CREATE}.
  *
- * @param <K> Key type.
  * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
  * @since 6.8
  * @author Tihomir Mateev
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class CreateArgs<K> {
+public class CreateArgs {
 
     /**
      * Possible target types for the index.
@@ -37,7 +36,7 @@ public class CreateArgs<K> {
 
     private Optional<TargetType> on = Optional.of(TargetType.HASH);
 
-    private final List<K> prefixes = new ArrayList<>();
+    private final List<String> prefixes = new ArrayList<>();
 
     private Optional<String> filter = Optional.empty();
 
@@ -71,10 +70,9 @@ public class CreateArgs<K> {
      * Used to build a new instance of the {@link CreateArgs}.
      *
      * @return a {@link Builder} that provides the option to build up a new instance of the {@link CreateArgs}
-     * @param <K> the key type
      */
-    public static <K> Builder<K> builder() {
-        return new Builder<>();
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
@@ -82,12 +80,11 @@ public class CreateArgs<K> {
      * <p>
      * As a final step the {@link Builder#build()} method needs to be executed to create the final {@link CreateArgs} instance.
      *
-     * @param <K> the key type
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      */
-    public static class Builder<K> {
+    public static class Builder {
 
-        private final CreateArgs<K> instance = new CreateArgs<>();
+        private final CreateArgs instance = new CreateArgs();
 
         /**
          * Set the {@link TargetType} type for the index. Defaults to {@link TargetType#HASH}.
@@ -95,7 +92,7 @@ public class CreateArgs<K> {
          * @param targetType the target type
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> on(TargetType targetType) {
+        public Builder on(TargetType targetType) {
             instance.on = Optional.of(targetType);
             return this;
         }
@@ -106,7 +103,7 @@ public class CreateArgs<K> {
          * @param prefix the prefix
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> withPrefix(K prefix) {
+        public Builder withPrefix(String prefix) {
             instance.prefixes.add(prefix);
             return this;
         }
@@ -117,7 +114,7 @@ public class CreateArgs<K> {
          * @param prefixes a {@link List} of prefixes
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> withPrefixes(List<K> prefixes) {
+        public Builder withPrefixes(List<String> prefixes) {
             instance.prefixes.addAll(prefixes);
             return this;
         }
@@ -132,7 +129,7 @@ public class CreateArgs<K> {
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/query/">RediSearch Query</a>
          */
-        public Builder<K> filter(String filter) {
+        public Builder filter(String filter) {
             instance.filter = Optional.of(filter);
             return this;
         }
@@ -143,7 +140,7 @@ public class CreateArgs<K> {
          * @param language the default language
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> defaultLanguage(DocumentLanguage language) {
+        public Builder defaultLanguage(DocumentLanguage language) {
             instance.defaultLanguage = Optional.of(language);
             return this;
         }
@@ -157,7 +154,7 @@ public class CreateArgs<K> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/stemming/">Stemming</a>
          */
-        public Builder<K> languageField(String field) {
+        public Builder languageField(String field) {
             instance.languageField = Optional.of(field);
             return this;
         }
@@ -169,7 +166,7 @@ public class CreateArgs<K> {
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/scoring/">Scoring</a>
          */
-        public Builder<K> defaultScore(double score) {
+        public Builder defaultScore(double score) {
             instance.defaultScore = OptionalDouble.of(score);
             return this;
         }
@@ -181,7 +178,7 @@ public class CreateArgs<K> {
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/scoring/">Scoring</a>
          */
-        public Builder<K> scoreField(String field) {
+        public Builder scoreField(String field) {
             instance.scoreField = Optional.of(field);
             return this;
         }
@@ -197,7 +194,7 @@ public class CreateArgs<K> {
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/scoring/">Scoring</a>
          */
-        public Builder<K> payloadField(String field) {
+        public Builder payloadField(String field) {
             instance.payloadField = Optional.of(field);
             return this;
         }
@@ -211,7 +208,7 @@ public class CreateArgs<K> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> maxTextFields() {
+        public Builder maxTextFields() {
             instance.maxTextFields = true;
             return this;
         }
@@ -233,7 +230,7 @@ public class CreateArgs<K> {
          * @param seconds the temporary index expiration time in seconds
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> temporary(long seconds) {
+        public Builder temporary(long seconds) {
             instance.temporary = OptionalLong.of(seconds);
             return this;
         }
@@ -246,7 +243,7 @@ public class CreateArgs<K> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> noOffsets() {
+        public Builder noOffsets() {
             instance.noOffsets = true;
             return this;
         }
@@ -259,7 +256,7 @@ public class CreateArgs<K> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> noHighlighting() {
+        public Builder noHighlighting() {
             instance.noHighlight = true;
             return this;
         }
@@ -271,7 +268,7 @@ public class CreateArgs<K> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> noFields() {
+        public Builder noFields() {
             instance.noFields = true;
             return this;
         }
@@ -284,7 +281,7 @@ public class CreateArgs<K> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> noFrequency() {
+        public Builder noFrequency() {
             instance.noFrequency = true;
             return this;
         }
@@ -294,7 +291,7 @@ public class CreateArgs<K> {
          *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> skipInitialScan() {
+        public Builder skipInitialScan() {
             instance.skipInitialScan = true;
             return this;
         }
@@ -309,12 +306,12 @@ public class CreateArgs<K> {
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/stopwords/">Stop
          *      words</a>
          */
-        public Builder<K> stopWords(List<String> stopWords) {
+        public Builder stopWords(List<String> stopWords) {
             instance.stopWords = Optional.of(stopWords);
             return this;
         }
 
-        public CreateArgs<K> build() {
+        public CreateArgs build() {
             return instance;
         }
 
@@ -335,10 +332,10 @@ public class CreateArgs<K> {
      * Get the prefixes for the index.
      *
      * @return the prefixes
-     * @see Builder#withPrefix(Object)
+     * @see Builder#withPrefix(String)
      * @see Builder#withPrefixes(List)
      */
-    public List<K> getPrefixes() {
+    public List<String> getPrefixes() {
         return prefixes;
     }
 
@@ -487,11 +484,11 @@ public class CreateArgs<K> {
      *
      * @param args the {@link CommandArgs} object
      */
-    public void build(CommandArgs<K, ?> args) {
+    public void build(CommandArgs<?, ?> args) {
         on.ifPresent(targetType -> args.add(ON).add(targetType.name()));
         if (!prefixes.isEmpty()) {
             args.add(PREFIX).add(prefixes.size());
-            prefixes.forEach(args::addKey);
+            prefixes.forEach(args::add);
         }
         filter.ifPresent(filter -> args.add(FILTER).add(filter));
         defaultLanguage.ifPresent(language -> args.add(LANGUAGE).add(language.toString()));

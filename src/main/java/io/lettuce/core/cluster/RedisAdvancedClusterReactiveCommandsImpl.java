@@ -691,7 +691,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<String> ftCreate(String index, CreateArgs<K> arguments, List<FieldArgs> fieldArgs) {
+    public Mono<String> ftCreate(String index, CreateArgs arguments, List<FieldArgs> fieldArgs) {
         return routeKeyless(() -> super.ftCreate(index, arguments, fieldArgs),
                 conn -> conn.ftCreate(index, arguments, fieldArgs), CommandType.FT_CREATE);
     }

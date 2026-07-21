@@ -101,7 +101,7 @@ public interface NodeSelectionSearchCommands<K> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    Executions<String> ftCreate(String index, CreateArgs<K> arguments, List<FieldArgs> fieldArgs);
+    Executions<String> ftCreate(String index, CreateArgs arguments, List<FieldArgs> fieldArgs);
 
     /**
      * Add an alias to a search index.

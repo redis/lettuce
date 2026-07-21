@@ -101,7 +101,7 @@ public interface RediSearchAsyncCommands<K> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    RedisFuture<String> ftCreate(String index, CreateArgs<K> arguments, List<FieldArgs> fieldArgs);
+    RedisFuture<String> ftCreate(String index, CreateArgs arguments, List<FieldArgs> fieldArgs);
 
     /**
      * Add an alias to a search index.

@@ -96,7 +96,7 @@ class RediSearchCommandBuilderUnitTests {
         FieldArgs fieldArgs2 = NumericFieldArgs.builder().name(FIELD2_NAME).sortable().build();
         FieldArgs fieldArgs3 = TagFieldArgs.builder().name(FIELD3_NAME).sortable().build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs,
                 Arrays.asList(fieldArgs1, fieldArgs2, fieldArgs3));
         ByteBuf buf = Unpooled.directBuffer();
@@ -130,7 +130,7 @@ class RediSearchCommandBuilderUnitTests {
         FieldArgs fieldArgs1 = TextFieldArgs.builder().name(FIELD4_NAME).as(FIELD4_ALIAS1).build();
         FieldArgs fieldArgs2 = TagFieldArgs.builder().name(FIELD4_NAME).as(FIELD4_ALIAS2).sortable().build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
         Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs, Arrays.asList(fieldArgs1, fieldArgs2));
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);

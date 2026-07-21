@@ -880,7 +880,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<String> ftCreate(String index, CreateArgs<K> arguments, List<FieldArgs> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, CreateArgs arguments, List<FieldArgs> fieldArgs) {
         return routeKeyless(() -> super.ftCreate(index, arguments, fieldArgs),
                 (conn) -> conn.ftCreate(index, arguments, fieldArgs), CommandType.FT_CREATE);
     }

@@ -144,20 +144,20 @@ VectorFieldArgs<String> embeddingField = VectorFieldArgs.<String>builder()
 ### Index with Custom Settings
 
 ```java
-CreateArgs<String, String> createArgs = CreateArgs.<String, String>builder()
+CreateArgs createArgs = CreateArgs.builder()
     .on(CreateArgs.TargetType.HASH)            // Index HASH documents
     .withPrefix("product:")                    // Only index keys with this prefix
-    .language("english")                       // Default language for text processing
+    .defaultLanguage(DocumentLanguage.ENGLISH) // Default language for text processing
     .languageField("lang")                     // Field containing document language
-    .score(0.5)                                // Default document score
+    .defaultScore(0.5)                         // Default document score
     .scoreField("popularity")                  // Field containing document score
     .maxTextFields()                           // Allow unlimited text fields
     .temporary(3600)                           // Auto-expire index after 1 hour
     .noOffsets()                               // Disable term offset storage
     .noHighlighting()                          // Disable highlighting
     .noFields()                                // Don't store field contents
-    .noFreqs()                                 // Don't store term frequencies
-    .stopwords("the", "a", "an")               // Custom stopwords
+    .noFrequency()                             // Don't store term frequencies
+    .stopWords(Arrays.asList("the", "a", "an")) // Custom stopwords
     .build();
 
 String result = search.ftCreate("advanced-idx", createArgs, fields);
@@ -166,9 +166,9 @@ String result = search.ftCreate("advanced-idx", createArgs, fields);
 ### JSON Document Indexing
 
 ```java
-CreateArgs<String, String> jsonArgs = CreateArgs.<String, String>builder()
+CreateArgs jsonArgs = CreateArgs.builder()
     .on(CreateArgs.TargetType.JSON)
-    .prefix("user:")
+    .withPrefix("user:")
     .build();
 
 List<FieldArgs<String>> jsonFields = Arrays.asList(
@@ -682,9 +682,9 @@ search.ftDropindex("products-idx-v1");
 
 ```java
 // Index only documents matching certain criteria
-CreateArgs<String, String> conditionalArgs = CreateArgs.<String, String>builder()
+CreateArgs conditionalArgs = CreateArgs.builder()
     .on(CreateArgs.TargetType.HASH)
-    .prefix("product:")
+    .withPrefix("product:")
     .filter("@status=='active'")  // Only index active products
     .build();
 

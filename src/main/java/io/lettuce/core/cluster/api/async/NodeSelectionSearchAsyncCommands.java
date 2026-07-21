@@ -101,7 +101,7 @@ public interface NodeSelectionSearchAsyncCommands<K> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    AsyncExecutions<String> ftCreate(String index, CreateArgs<K> arguments, List<FieldArgs> fieldArgs);
+    AsyncExecutions<String> ftCreate(String index, CreateArgs arguments, List<FieldArgs> fieldArgs);
 
     /**
      * Add an alias to a search index.

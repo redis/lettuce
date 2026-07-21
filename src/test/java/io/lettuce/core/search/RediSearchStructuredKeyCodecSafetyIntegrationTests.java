@@ -90,7 +90,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     void prepare() {
         redis.flushall();
 
-        CreateArgs<RedisKey> hashCreate = CreateArgs.<RedisKey> builder().on(CreateArgs.TargetType.HASH).build();
+        CreateArgs hashCreate = CreateArgs.builder().on(CreateArgs.TargetType.HASH).build();
         FieldArgs hashTitle = TextFieldArgs.builder().name("title").sortable().build();
         FieldArgs hashBody = TextFieldArgs.builder().name("body").build();
         FieldArgs hashCategory = TagFieldArgs.builder().name("category").build();
@@ -102,7 +102,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
         doc.put(field("category"), "tutorial");
         redis.hmset(new RedisKey(TENANT, ENTITY, HASH_DOC_ID), doc);
 
-        CreateArgs<RedisKey> jsonCreate = CreateArgs.<RedisKey> builder().on(CreateArgs.TargetType.JSON).build();
+        CreateArgs jsonCreate = CreateArgs.builder().on(CreateArgs.TargetType.JSON).build();
         FieldArgs jsonTitle = TextFieldArgs.builder().name("$.title").as("title").sortable().build();
         FieldArgs jsonBody = TextFieldArgs.builder().name("$.body").as("body").build();
         FieldArgs jsonCategory = TagFieldArgs.builder().name("$.category").as("category").build();

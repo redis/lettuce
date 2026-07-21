@@ -123,7 +123,7 @@ public class RediSearchVectorIntegrationTests {
 
         FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("svs:").on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("svs:").on(CreateArgs.TargetType.HASH).build();
 
         // Create index
         String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
@@ -184,8 +184,7 @@ public class RediSearchVectorIntegrationTests {
 
         FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("advanced:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("advanced:").on(CreateArgs.TargetType.HASH).build();
 
         // Create index
         String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, categoryField));
@@ -252,7 +251,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs categoryField = TagFieldArgs.builder().name("category").sortable().build();
         FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("agg:").on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("agg:").on(CreateArgs.TargetType.HASH).build();
 
         // Create index
         String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, categoryField, priceField));
@@ -322,8 +321,8 @@ public class RediSearchVectorIntegrationTests {
 
             FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-            CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(metric.toLowerCase() + ":")
-                    .on(CreateArgs.TargetType.HASH).build();
+            CreateArgs createArgs = CreateArgs.builder().withPrefix(metric.toLowerCase() + ":").on(CreateArgs.TargetType.HASH)
+                    .build();
 
             // Create index
             String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
@@ -415,8 +414,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs titleField = TextFieldArgs.builder().name("title").build();
         FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(DOCS_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(DOCS_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         String result = redis.ftCreate(DOCUMENTS_INDEX, createArgs, Arrays.asList(vectorField, titleField, categoryField));
         assertThat(result).isEqualTo("OK");
@@ -498,8 +496,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs yearField = NumericFieldArgs.builder().name("year").sortable().build();
         FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(MOVIES_INDEX, createArgs, Arrays.asList(vectorField, titleField, genreField, yearField, ratingField));
 
@@ -602,8 +599,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs typeField = TagFieldArgs.builder().name("type").build();
         FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(PRODUCTS_INDEX, createArgs, Arrays.asList(vectorField, nameField, typeField, priceField));
 
@@ -698,8 +694,7 @@ public class RediSearchVectorIntegrationTests {
 
             FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-            CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("test:").on(CreateArgs.TargetType.HASH)
-                    .build();
+            CreateArgs createArgs = CreateArgs.builder().withPrefix("test:").on(CreateArgs.TargetType.HASH).build();
 
             redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
 
@@ -750,8 +745,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs titleField = TextFieldArgs.builder().name("$.title").as("title").build();
         FieldArgs categoryField = TagFieldArgs.builder().name("$.category").as("category").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("json:").on(CreateArgs.TargetType.JSON)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("json:").on(CreateArgs.TargetType.JSON).build();
 
         redis.ftCreate("json-vector-idx", createArgs, Arrays.asList(vectorField, titleField, categoryField));
 
@@ -815,8 +809,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs statusField = TagFieldArgs.builder().name("status").build();
         FieldArgs priorityField = NumericFieldArgs.builder().name("priority").sortable().build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("task:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("task:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate("tasks-idx", createArgs, Arrays.asList(vectorField, titleField, statusField, priorityField));
 
@@ -908,8 +901,7 @@ public class RediSearchVectorIntegrationTests {
 
         FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("precision:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("precision:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate("precision-idx", createArgs, Arrays.asList(float64Field, nameField));
 
@@ -979,8 +971,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs vectorField = VectorFieldArgs.builder().name("test_vector").flat().type(VectorFieldArgs.VectorType.FLOAT32)
                 .dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("error:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("error:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate("error-test-idx", createArgs, Collections.singletonList(vectorField));
 
@@ -1035,8 +1026,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs nameField = TextFieldArgs.builder().name("name").build();
         FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").hnsw().type(VectorFieldArgs.VectorType.FLOAT32)
                 .dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(indexName + ":").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(indexName + ":").on(CreateArgs.TargetType.HASH).build();
         redis.ftCreate(indexName, createArgs, Arrays.asList(nameField, vectorField));
 
         // The application's single connection is the String one below. The binary write via redisBinary is only a fixture
@@ -1092,7 +1082,7 @@ public class RediSearchVectorIntegrationTests {
 
         FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix(prefix).on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(prefix).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
 
