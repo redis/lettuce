@@ -77,7 +77,7 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      * @param destination the destination key.
      * @param args command arguments to configure source and destination directions and the optional count block.
      * @param timeout the timeout in seconds.
-     * @return List<V> array-reply the elements being popped and pushed, or `null` when the timeout was reached.
+     * @return List<V> array-reply the elements being popped and pushed, or an empty list when the timeout was reached.
      * @since 7.8
      */
     suspend fun blmovem(source: K, destination: K, args: LMovemArgs, timeout: Long): List<V>
@@ -93,7 +93,7 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      * @param destination the destination key.
      * @param args command arguments to configure source and destination directions and the optional count block.
      * @param timeout the timeout in seconds.
-     * @return List<V> array-reply the elements being popped and pushed, or `null` when the timeout was reached.
+     * @return List<V> array-reply the elements being popped and pushed, or an empty list when the timeout was reached.
      * @since 7.8
      */
     suspend fun blmovem(source: K, destination: K, args: LMovemArgs, timeout: Double): List<V>
@@ -234,7 +234,7 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      * @param source the source key.
      * @param destination the destination key.
      * @param args command arguments to configure source and destination directions and the optional count block.
-     * @return List<V> array-reply the elements being popped and pushed, or `null` when `EXACTLY` cannot be
+     * @return List<V> array-reply the elements being popped and pushed, or an empty list when `EXACTLY` cannot be
      *         satisfied.
      * @since 7.8
      */

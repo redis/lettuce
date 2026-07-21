@@ -434,7 +434,8 @@ public class ListCommandIntegrationTests extends TestSupport {
 
         redis.rpush(list1, "1", "2");
 
-        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.leftLeft().exactly(3).bulk())).isNullOrEmpty();
+        // The source has fewer than the requested elements, so the nil reply surfaces as an empty list.
+        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.leftLeft().exactly(3).bulk())).isEmpty();
         assertThat(redis.lrange(list1, 0, -1)).containsExactly("1", "2");
         assertThat(redis.exists(list2)).isEqualTo(0L);
     }

@@ -80,7 +80,7 @@ public interface NodeSelectionListAsyncCommands<K, V> {
      * @param destination the destination key.
      * @param args command arguments to configure source and destination directions and the optional count block.
      * @param timeout the timeout in seconds.
-     * @return List&lt;V&gt; array-reply the elements being popped and pushed, or {@code null} when the timeout was reached.
+     * @return List&lt;V&gt; array-reply the elements being popped and pushed, or an empty list when the timeout was reached.
      * @since 7.8
      */
     AsyncExecutions<List<V>> blmovem(K source, K destination, LMovemArgs args, long timeout);
@@ -96,7 +96,7 @@ public interface NodeSelectionListAsyncCommands<K, V> {
      * @param destination the destination key.
      * @param args command arguments to configure source and destination directions and the optional count block.
      * @param timeout the timeout in seconds.
-     * @return List&lt;V&gt; array-reply the elements being popped and pushed, or {@code null} when the timeout was reached.
+     * @return List&lt;V&gt; array-reply the elements being popped and pushed, or an empty list when the timeout was reached.
      * @since 7.8
      */
     AsyncExecutions<List<V>> blmovem(K source, K destination, LMovemArgs args, double timeout);
@@ -260,7 +260,7 @@ public interface NodeSelectionListAsyncCommands<K, V> {
      * @param source the source key.
      * @param destination the destination key.
      * @param args command arguments to configure source and destination directions and the optional count block.
-     * @return List&lt;V&gt; array-reply the elements being popped and pushed, or {@code null} when {@code EXACTLY} cannot be
+     * @return List&lt;V&gt; array-reply the elements being popped and pushed, or an empty list when {@code EXACTLY} cannot be
      *         satisfied.
      * @since 7.8
      */

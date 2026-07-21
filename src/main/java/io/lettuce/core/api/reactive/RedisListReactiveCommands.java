@@ -82,7 +82,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param destination the destination key.
      * @param args command arguments to configure source and destination directions and the optional count block.
      * @param timeout the timeout in seconds.
-     * @return V array-reply the elements being popped and pushed, or {@code null} when the timeout was reached.
+     * @return V array-reply the elements being popped and pushed, or an empty list when the timeout was reached.
      * @since 7.8
      */
     Flux<V> blmovem(K source, K destination, LMovemArgs args, long timeout);
@@ -98,7 +98,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param destination the destination key.
      * @param args command arguments to configure source and destination directions and the optional count block.
      * @param timeout the timeout in seconds.
-     * @return V array-reply the elements being popped and pushed, or {@code null} when the timeout was reached.
+     * @return V array-reply the elements being popped and pushed, or an empty list when the timeout was reached.
      * @since 7.8
      */
     Flux<V> blmovem(K source, K destination, LMovemArgs args, double timeout);
@@ -262,7 +262,7 @@ public interface RedisListReactiveCommands<K, V> {
      * @param source the source key.
      * @param destination the destination key.
      * @param args command arguments to configure source and destination directions and the optional count block.
-     * @return V array-reply the elements being popped and pushed, or {@code null} when {@code EXACTLY} cannot be satisfied.
+     * @return V array-reply the elements being popped and pushed, or an empty list when {@code EXACTLY} cannot be satisfied.
      * @since 7.8
      */
     Flux<V> lmovem(K source, K destination, LMovemArgs args);
