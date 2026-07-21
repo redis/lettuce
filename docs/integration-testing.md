@@ -15,7 +15,7 @@ Maven `-D` properties.
 
 - **Run integration tests locally**: `make start version=8.6 && make test && make stop`.
 - **Run one test fast**: `make start version=8.6` then
-  `TEST_WORK_FOLDER=./work/docker mvn -DskipITs=false -Dtest=YourIntegrationTests verify -Pci`
+  `TEST_WORK_FOLDER=./work/docker mvn -DskipITs=false -Dit.test=YourIntegrationTests verify -Pci`
   (then `make stop`).
 - **Add a new server**: add a service to
   `src/test/resources/docker-env/docker-compose.yml` (set
