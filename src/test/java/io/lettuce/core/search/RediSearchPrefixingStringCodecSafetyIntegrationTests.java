@@ -46,7 +46,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * bypassing the value codec entirely. With a prefixing key codec the stored hash field names become {@code tenant1:<field>}.
  * Schema field names and the read-side field clauses ({@code INFIELDS}, {@code RETURN}, {@code SORTBY}, {@code SUMMARIZE},
  * {@code HIGHLIGHT}) are all sent raw, so each test reproduces the prefix on every field reference to match the codec-encoded
- * stored fields. {@code INKEYS} is the one legitimately {@code K}-typed surface and must route through {@code encodeKey}.
+ * stored fields. Index prefixes are also sent raw, so callers must supply the physical prefix when a codec transforms key
+ * bytes. {@code INKEYS} is the one legitimately {@code K}-typed surface and must route through {@code encodeKey}.
  *
  * @author Viktoriya Kutsarova
  */
@@ -85,7 +86,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     void prepare() {
         redis.flushall();
 
-        CreateArgs<String> hashCreate = CreateArgs.<String> builder().on(CreateArgs.TargetType.HASH).build();
+        CreateArgs hashCreate = CreateArgs.builder().on(CreateArgs.TargetType.HASH).build();
         // FieldArgs.name(String) is now sent raw (no codec). The hash field names in the document below are written
         // through hmset, which routes each map key via addKey and stores them codec-encoded as "tenant1:<field>". To make
         // the schema match the stored fields, the caller has to reproduce the codec's encodeKey transformation on the
@@ -103,7 +104,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         doc.put("price", "50");
         redis.hmset(HASH_DOC_KEY, doc);
 
-        CreateArgs<String> jsonCreate = CreateArgs.<String> builder().on(CreateArgs.TargetType.JSON).build();
+        CreateArgs jsonCreate = CreateArgs.builder().on(CreateArgs.TargetType.JSON).build();
         // For JSON the field name is a JSONPath sent raw (a codec prefix would corrupt the path, e.g. "tenant1:$.title").
         // JSON.SET sends its payload verbatim, so the document fields are NOT codec-encoded the way hmset field names are.
         // The schema identifier that queries resolve against is the alias (AS), sent raw. Read-side clauses are also raw and
@@ -255,7 +256,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         // Manual workaround: schema field "price" is codec-encoded to "tenant1:price"; ':' must be escaped inside the
         // @field reference so the FT.CREATE FILTER expression parser resolves the encoded schema name. Use a NUMERIC
         // predicate that excludes the seeded document (price=50) so the filter fires unambiguously.
-        CreateArgs<String> create = CreateArgs.<String> builder().on(CreateArgs.TargetType.HASH).withPrefix("filtered:")
+        CreateArgs create = CreateArgs.builder().on(CreateArgs.TargetType.HASH).withPrefix(CODEC_PREFIX + "filtered:")
                 .filter("@" + escapedFieldRef("price") + ">1000").build();
         FieldArgs titleField = TextFieldArgs.builder().name("title").build();
         FieldArgs priceField = NumericFieldArgs.builder().name("price").build();
@@ -488,17 +489,16 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     }
 
     /**
-     * {@code FT.CREATE ... PREFIX 1 doc:} restricts the index to keys whose Redis key starts with the given prefix. The prefix
-     * is a key and is routed through {@code encodeKey}, so with a prefixing codec {@code withPrefix("doc:")} becomes
-     * {@code "tenant1:doc:"} on the wire and matches the stored HASH key {@code "tenant1:doc:1"} (also encoded by
-     * {@code hmset}).
+     * {@code FT.CREATE ... PREFIX 1 tenant1:doc:} restricts the index to keys whose Redis key starts with the given prefix.
+     * Prefixes are sent as raw strings, so the caller supplies the physical prefix needed to match the stored HASH key
+     * {@code "tenant1:doc:1"}. If the prefix were routed through {@code encodeKey}, it would become
+     * {@code "tenant1:tenant1:doc:"} and the document would not be indexed.
      */
     @Test
-    void prefixInCreateArgsMustBeEncodedByCodecToMatchStoredHashKeys() {
+    void prefixInCreateArgsMustBeSentRawForHashKeys() {
         redis.flushall();
 
-        CreateArgs<String> prefixCreate = CreateArgs.<String> builder().on(CreateArgs.TargetType.HASH).withPrefix("doc:")
-                .build();
+        CreateArgs prefixCreate = CreateArgs.builder().on(CreateArgs.TargetType.HASH).withPrefix(CODEC_PREFIX + "doc:").build();
         FieldArgs titleField = TextFieldArgs.builder().name(encodedFieldRef("title")).build();
         redis.ftCreate("prefix-test-idx", prefixCreate, Arrays.asList(titleField));
 
@@ -515,21 +515,19 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
 
         SearchReply<String> result = redis.ftSearch("prefix-test-idx", "search");
 
-        assertThat(result.getCount()).as(
-                "PREFIX must be encoded through the codec to match the stored HASH keys ('tenant1:doc:' vs 'tenant1:doc:1')")
+        assertThat(result.getCount()).as("PREFIX must be sent raw to match the stored HASH key without double-prefixing")
                 .isEqualTo(1L);
     }
 
     /**
-     * JSON variant of {@link #prefixInCreateArgsMustBeEncodedByCodecToMatchStoredHashKeys}. {@code JSON.SET} stores the
-     * document under a codec-encoded key too, so the index {@code PREFIX} must be encoded the same way to match.
+     * JSON variant of {@link #prefixInCreateArgsMustBeSentRawForHashKeys}. {@code JSON.SET} stores the document under a
+     * codec-encoded key too, so the caller supplies the matching physical prefix.
      */
     @Test
-    void prefixInCreateArgsMustBeEncodedByCodecToMatchStoredJsonKeys() {
+    void prefixInCreateArgsMustBeSentRawForJsonKeys() {
         redis.flushall();
 
-        CreateArgs<String> prefixCreate = CreateArgs.<String> builder().on(CreateArgs.TargetType.JSON).withPrefix("doc:")
-                .build();
+        CreateArgs prefixCreate = CreateArgs.builder().on(CreateArgs.TargetType.JSON).withPrefix(CODEC_PREFIX + "doc:").build();
         FieldArgs titleField = TextFieldArgs.builder().name("$.title").as(encodedFieldRef("title")).build();
         redis.ftCreate("prefix-test-json-idx", prefixCreate, Arrays.asList(titleField));
 
@@ -544,8 +542,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
 
         SearchReply<String> result = redis.ftSearch("prefix-test-json-idx", "search");
 
-        assertThat(result.getCount()).as(
-                "PREFIX must be encoded through the codec to match the stored JSON keys ('tenant1:doc:' vs 'tenant1:doc:1')")
+        assertThat(result.getCount()).as("PREFIX must be sent raw to match the stored JSON key without double-prefixing")
                 .isEqualTo(1L);
     }
 

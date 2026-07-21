@@ -91,8 +91,7 @@ public class RediSearchGeospatialIntegrationTests {
         FieldArgs nameField = TextFieldArgs.builder().name("name").build();
         FieldArgs cityField = TextFieldArgs.builder().name("city").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("store:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("store:").on(CreateArgs.TargetType.HASH).build();
 
         String result = redis.ftCreate(GEO_INDEX, createArgs, Arrays.asList(locationField, nameField, cityField));
         assertThat(result).isEqualTo("OK");
@@ -149,8 +148,7 @@ public class RediSearchGeospatialIntegrationTests {
         FieldArgs locationField = GeoFieldArgs.builder().name("locations").build();
         FieldArgs productField = TextFieldArgs.builder().name("product").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("product:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("product:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(GEO_INDEX, createArgs, Arrays.asList(locationField, productField));
 
@@ -186,8 +184,7 @@ public class RediSearchGeospatialIntegrationTests {
         FieldArgs geomField = GeoshapeFieldArgs.builder().name("geom").spherical().build();
         FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("location:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("location:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(GEOSHAPE_INDEX, createArgs, Arrays.asList(geomField, nameField));
 
@@ -233,8 +230,7 @@ public class RediSearchGeospatialIntegrationTests {
         FieldArgs geomField = GeoshapeFieldArgs.builder().name("geom").flat().build();
         FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("shape:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("shape:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(CARTESIAN_INDEX, createArgs, Arrays.asList(geomField, nameField));
 
@@ -320,8 +316,7 @@ public class RediSearchGeospatialIntegrationTests {
         FieldArgs categoryField = TextFieldArgs.builder().name("category").build();
         FieldArgs ratingField = TextFieldArgs.builder().name("rating").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("business:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("business:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(GEO_INDEX, createArgs,
                 Arrays.asList(locationField, serviceAreaField, nameField, categoryField, ratingField));
@@ -380,7 +375,7 @@ public class RediSearchGeospatialIntegrationTests {
         FieldArgs locationField = GeoFieldArgs.builder().name("location").build();
         FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("poi:").on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("poi:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(GEO_INDEX, createArgs, Arrays.asList(locationField, nameField));
 
@@ -427,8 +422,7 @@ public class RediSearchGeospatialIntegrationTests {
         FieldArgs geomField = GeoshapeFieldArgs.builder().name("geom").build();
         FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String> createArgs = CreateArgs.<String> builder().withPrefix("test:").on(CreateArgs.TargetType.HASH)
-                .build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("test:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(GEO_INDEX, createArgs, Arrays.asList(locationField, geomField, nameField));
 

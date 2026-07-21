@@ -1725,7 +1725,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftCreate(String index, CreateArgs<K> options, List<FieldArgs> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, CreateArgs options, List<FieldArgs> fieldArgs) {
         return dispatch(searchCommandBuilder.ftCreate(index, options, fieldArgs));
     }
 
