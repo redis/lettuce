@@ -101,8 +101,8 @@ public interface RedisReactiveCommands<K, V>
      * {
      *     &#64;code
      *     ReactiveTransactionBuilder<String, String> txn = connection.reactive().transaction();
-     *     txn.commands().set("key1", "value1");
-     *     txn.commands().incr("counter");
+     *     txn.queue().set("key1", "value1");
+     *     txn.queue().incr("counter");
      *     Mono<TransactionResult> result = txn.executeReactive();
      * }
      * </pre>

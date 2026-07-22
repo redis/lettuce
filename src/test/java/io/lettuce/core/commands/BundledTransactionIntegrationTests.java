@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.TransactionCommands;
 import io.lettuce.core.api.reactive.ReactiveTransactionBuilder;
 import io.lettuce.test.LettuceExtension;
 import reactor.core.publisher.Mono;
@@ -59,8 +60,8 @@ public class BundledTransactionIntegrationTests extends TestSupport {
     @Test
     void basicSyncTransaction() {
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().set(key, value);
-        builder.commands().get(key);
+        builder.queue().set(key, value);
+        builder.queue().get(key);
 
         TransactionResult result = builder.execute();
 
@@ -73,9 +74,9 @@ public class BundledTransactionIntegrationTests extends TestSupport {
     @Test
     void basicAsyncTransaction() throws Exception {
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().set(key, value);
-        builder.commands().incr("counter");
-        builder.commands().get(key);
+        builder.queue().set(key, value);
+        builder.queue().incr("counter");
+        builder.queue().get(key);
 
         RedisFuture<TransactionResult> future = builder.executeAsync();
         TransactionResult result = future.get(5, TimeUnit.SECONDS);
@@ -90,8 +91,8 @@ public class BundledTransactionIntegrationTests extends TestSupport {
     @Test
     void reactiveTransaction() {
         ReactiveTransactionBuilder<String, String> builder = connection.reactive().transaction();
-        builder.commands().set(key, value);
-        builder.commands().get(key);
+        builder.queue().set(key, value);
+        builder.queue().get(key);
 
         StepVerifier.create(builder.executeReactive()).consumeNextWith(result -> {
             assertThat(result.wasDiscarded()).isFalse();
@@ -148,7 +149,7 @@ public class BundledTransactionIntegrationTests extends TestSupport {
 
         // Create transaction with WATCH - should succeed since no modification between WATCH and EXEC
         TransactionBuilder<String, String> builder = connection.transaction(key);
-        builder.commands().set(key, value);
+        builder.queue().set(key, value);
 
         TransactionResult result = builder.execute();
         assertThat(result.wasDiscarded()).isFalse();
@@ -162,17 +163,17 @@ public class BundledTransactionIntegrationTests extends TestSupport {
         TransactionBuilder<String, String> builder = connection.transaction();
 
         // String commands
-        builder.commands().set("str1", "value1");
-        builder.commands().set("str2", "value2");
-        builder.commands().mget("str1", "str2");
+        builder.queue().set("str1", "value1");
+        builder.queue().set("str2", "value2");
+        builder.queue().mget("str1", "str2");
 
         // Hash commands
-        builder.commands().hset("hash", "field1", "val1");
-        builder.commands().hget("hash", "field1");
+        builder.queue().hset("hash", "field1", "val1");
+        builder.queue().hget("hash", "field1");
 
         // List commands
-        builder.commands().lpush("list", "a", "b", "c");
-        builder.commands().lrange("list", 0, -1);
+        builder.queue().lpush("list", "a", "b", "c");
+        builder.queue().lrange("list", 0, -1);
 
         TransactionResult result = builder.execute();
 
@@ -202,11 +203,11 @@ public class BundledTransactionIntegrationTests extends TestSupport {
         connection.sync().set("counter", "10");
 
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().incr("counter");
-        builder.commands().incrby("counter", 5);
-        builder.commands().decr("counter");
-        builder.commands().decrby("counter", 3);
-        builder.commands().get("counter");
+        builder.queue().incr("counter");
+        builder.queue().incrby("counter", 5);
+        builder.queue().decr("counter");
+        builder.queue().decrby("counter", 3);
+        builder.queue().get("counter");
 
         TransactionResult result = builder.execute();
 
@@ -235,7 +236,7 @@ public class BundledTransactionIntegrationTests extends TestSupport {
                 try {
                     for (int i = 0; i < incrementsPerThread; i++) {
                         TransactionBuilder<String, String> builder = connection.transaction();
-                        builder.commands().incr("counter");
+                        builder.queue().incr("counter");
                         TransactionResult result = builder.execute();
                         if (!result.wasDiscarded()) {
                             successCount.incrementAndGet();
@@ -263,12 +264,12 @@ public class BundledTransactionIntegrationTests extends TestSupport {
     @Test
     void transactionWithSortedSets() {
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().zadd("zset", 1.0, "one");
-        builder.commands().zadd("zset", 2.0, "two");
-        builder.commands().zadd("zset", 3.0, "three");
-        builder.commands().zcard("zset");
-        builder.commands().zscore("zset", "two");
-        builder.commands().zrange("zset", 0, -1);
+        builder.queue().zadd("zset", 1.0, "one");
+        builder.queue().zadd("zset", 2.0, "two");
+        builder.queue().zadd("zset", 3.0, "three");
+        builder.queue().zcard("zset");
+        builder.queue().zscore("zset", "two");
+        builder.queue().zrange("zset", 0, -1);
 
         TransactionResult result = builder.execute();
 
@@ -281,11 +282,11 @@ public class BundledTransactionIntegrationTests extends TestSupport {
     @Test
     void transactionWithSets() {
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().sadd("set", "a", "b", "c");
-        builder.commands().scard("set");
-        builder.commands().sismember("set", "b");
-        builder.commands().smembers("set");
-        builder.commands().srem("set", "a");
+        builder.queue().sadd("set", "a", "b", "c");
+        builder.queue().scard("set");
+        builder.queue().sismember("set", "b");
+        builder.queue().smembers("set");
+        builder.queue().srem("set", "a");
 
         TransactionResult result = builder.execute();
 
@@ -301,11 +302,11 @@ public class BundledTransactionIntegrationTests extends TestSupport {
         connection.sync().set(key, value);
 
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().exists(key);
-        builder.commands().type(key);
-        builder.commands().ttl(key);
-        builder.commands().expire(key, 3600);
-        builder.commands().ttl(key);
+        builder.queue().exists(key);
+        builder.queue().type(key);
+        builder.queue().ttl(key);
+        builder.queue().expire(key, 3600);
+        builder.queue().ttl(key);
 
         TransactionResult result = builder.execute();
 
@@ -325,11 +326,11 @@ public class BundledTransactionIntegrationTests extends TestSupport {
         TransactionBuilder<String, String> txn = connection.transaction();
 
         // Use commands() for any Redis command, including those not directly on TransactionBuilder
-        txn.commands().set("full-coverage-key1", "value1");
-        txn.commands().hset("full-coverage-hash", "field1", "hashvalue");
-        txn.commands().lpush("full-coverage-list", "listvalue1", "listvalue2");
-        txn.commands().pfadd("full-coverage-hll", "elem1", "elem2"); // HyperLogLog - not on builder
-        txn.commands().setex("full-coverage-expiring", 60, "tempvalue"); // Not explicitly on builder
+        txn.queue().set("full-coverage-key1", "value1");
+        txn.queue().hset("full-coverage-hash", "field1", "hashvalue");
+        txn.queue().lpush("full-coverage-list", "listvalue1", "listvalue2");
+        txn.queue().pfadd("full-coverage-hll", "elem1", "elem2"); // HyperLogLog - not on builder
+        txn.queue().setex("full-coverage-expiring", 60, "tempvalue"); // Not explicitly on builder
 
         TransactionResult result = txn.execute();
 
@@ -369,12 +370,12 @@ public class BundledTransactionIntegrationTests extends TestSupport {
                         for (int k = 0; k < keysPerTransaction; k++) {
                             String key = prefix + "key" + k;
                             String val = prefix + "val" + k;
-                            builder.commands().set(key, val);
+                            builder.queue().set(key, val);
                         }
                         // GET the same keys - values must match what we just set
                         for (int k = 0; k < keysPerTransaction; k++) {
                             String key = prefix + "key" + k;
-                            builder.commands().get(key);
+                            builder.queue().get(key);
                         }
 
                         TransactionResult result = builder.execute();
@@ -421,6 +422,66 @@ public class BundledTransactionIntegrationTests extends TestSupport {
 
         assertThat(completed).as("All threads should complete within timeout").isTrue();
         assertThat(hasError.get()).as("No errors: " + errorMessages).isFalse();
+    }
+
+    @Test // WI-7/A5: functional transactional() on the sync command interface
+    void functionalTransactionalSync() {
+        TransactionResult result = connection.sync().transactional(txn -> {
+            txn.set(key, value);
+            txn.incr("counter");
+        });
+
+        assertThat(result.wasDiscarded()).isFalse();
+        assertThat(result).hasSize(2);
+        assertThat((String) result.get(0)).isEqualTo("OK");
+        assertThat((Long) result.get(1)).isEqualTo(1L);
+    }
+
+    @Test // WI-7/A5: functional transactional() on the async command interface
+    void functionalTransactionalAsync() throws Exception {
+        RedisFuture<TransactionResult> future = connection.async().transactional(txn -> {
+            txn.set(key, value);
+            txn.get(key);
+        });
+
+        TransactionResult result = future.get(5, TimeUnit.SECONDS);
+        assertThat(result.wasDiscarded()).isFalse();
+        assertThat((String) result.get(0)).isEqualTo("OK");
+        assertThat((String) result.get(1)).isEqualTo(value);
+    }
+
+    @Test // WI-7/A5/D4: functional transactional() on the reactive command interface - no cast required
+    void functionalTransactionalReactiveWithoutCast() {
+        Mono<TransactionResult> mono = connection.reactive().transactional(txn -> {
+            txn.set(key, value);
+            txn.get(key);
+        });
+
+        StepVerifier.create(mono).consumeNextWith(result -> {
+            assertThat(result.wasDiscarded()).isFalse();
+            assertThat((String) result.get(0)).isEqualTo("OK");
+            assertThat((String) result.get(1)).isEqualTo(value);
+        }).verifyComplete();
+    }
+
+    @Test // WI-7/A1: acquire the transaction entry point through commands(factory); it is cached per connection
+    void acquireViaCommandsFactory() {
+        TransactionCommands<String, String> tx = connection.commands(TransactionCommands.factory());
+
+        // commands(factory) caches one instance per connection
+        assertThat(connection.commands(TransactionCommands.factory())).isSameAs(tx);
+
+        TransactionResult result = tx.transactional(txn -> {
+            txn.set(key, value);
+            txn.incr("counter");
+        });
+
+        assertThat(result.wasDiscarded()).isFalse();
+        assertThat((String) result.get(0)).isEqualTo("OK");
+        assertThat((Long) result.get(1)).isEqualTo(1L);
+
+        // each create() still mints a fresh, single-use builder
+        assertThat(tx.create()).isNotSameAs(tx.create());
     }
 
 }

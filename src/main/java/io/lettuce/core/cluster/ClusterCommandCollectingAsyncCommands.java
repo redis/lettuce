@@ -49,9 +49,13 @@ class ClusterCommandCollectingAsyncCommands<K, V> extends AbstractRedisAsyncComm
 
     @Override
     public StatefulRedisConnection<K, V> getStatefulConnection() {
-        // Return the cluster connection cast to StatefulRedisConnection
-        // This is safe because StatefulRedisClusterConnection extends StatefulConnection
-        throw new UnsupportedOperationException("getStatefulConnection() is not supported for cluster command collecting");
+        // This facade only collects commands for a cluster transaction; it spans multiple nodes and therefore has no single
+        // StatefulRedisConnection to expose (the backing connection is a StatefulRedisClusterConnection, not type-compatible).
+        // No command builder invokes this during collection, so it is never reached on the normal path; we fail fast with a
+        // clear message rather than returning null (which would defer the failure to a later NPE) if it is called directly.
+        throw new UnsupportedOperationException(
+                "A cluster transaction collector spans multiple nodes and does not expose a single StatefulRedisConnection; "
+                        + "obtain the cluster connection via RedisClusterClient instead.");
     }
 
     /**
@@ -69,15 +73,12 @@ class ClusterCommandCollectingAsyncCommands<K, V> extends AbstractRedisAsyncComm
             }
         }
 
-        // Store the original command (unwrap if already wrapped)
-        RedisCommand<K, V, ?> commandToStore = cmd;
-        if (cmd instanceof AsyncCommand) {
-            commandToStore = ((AsyncCommand<K, V, T>) cmd).getDelegate();
-        }
-        collectedCommands.add(commandToStore);
-
-        // Return an async command (won't be used for actual execution)
-        return new AsyncCommand<>(cmd);
+        // Store and return the same AsyncCommand instance so the TransactionBundle can complete the exact future the caller
+        // holds once EXEC arrives (or fail/cancel it on discard/abort). See CommandCollectingAsyncCommands#dispatch.
+        AsyncCommand<K, V, T> asyncCommand = (cmd instanceof AsyncCommand) ? (AsyncCommand<K, V, T>) cmd
+                : new AsyncCommand<>(cmd);
+        collectedCommands.add(asyncCommand);
+        return asyncCommand;
     }
 
     /**

@@ -6,7 +6,6 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -77,11 +76,10 @@ public interface RawCommand<K, V> {
     /**
      * Convert this raw command to a {@link RedisCommand}.
      *
-     * @param codec the codec (unused, but may be needed for future extensions).
      * @return the Redis command.
      */
     @SuppressWarnings("unchecked")
-    default RedisCommand<K, V, ?> toCommand(RedisCodec<K, V> codec) {
+    default RedisCommand<K, V, ?> toCommand() {
         return new Command<>(getType(), (CommandOutput<K, V, Object>) getOutput(), getArgs());
     }
 

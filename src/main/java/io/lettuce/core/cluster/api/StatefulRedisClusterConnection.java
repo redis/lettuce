@@ -317,14 +317,19 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * <p>
      * The transaction will be routed to the node responsible for the slot of the first key added.
      * <p>
+     * Commands are added through {@link TransactionBuilder#queue()} and dispatched by {@link TransactionBuilder#execute()} /
+     * {@link TransactionBuilder#executeAsync()}.
+     * <p>
      * Usage example:
      *
      * <pre>
      *
      * {
      *     &#64;code
-     *     TransactionResult result = clusterConnection.transaction().set("{user:123}:name", "John").incr("{user:123}:visits")
-     *             .execute();
+     *     TransactionBuilder<String, String> tx = clusterConnection.transaction();
+     *     tx.queue().set("{user:123}:name", "John");
+     *     tx.queue().incr("{user:123}:visits");
+     *     TransactionResult result = tx.execute();
      * }
      * </pre>
      *
@@ -334,9 +339,11 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
     TransactionBuilder<K, V> transaction();
 
     /**
-     * Create a new transaction builder with WATCH support for optimistic locking in cluster mode.
+     * Create a new cluster-aware transaction builder with WATCH keys.
      * <p>
-     * All keys (including WATCH keys) must hash to the same slot.
+     * All keys (including WATCH keys) must hash to the same slot. As with the standalone API, a bundle is dispatched atomically
+     * and therefore supports only <em>watch-then-blind-write</em>, not read-then-decide optimistic locking; for the latter use
+     * the connection's classic {@code watch()/multi()/exec()}.
      *
      * @param watchKeys the keys to watch.
      * @return a new cluster-aware transaction builder with WATCH.

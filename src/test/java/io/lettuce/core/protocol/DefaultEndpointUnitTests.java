@@ -35,6 +35,7 @@ import org.mockito.quality.Strictness;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.output.StatusOutput;
@@ -244,6 +245,22 @@ class DefaultEndpointUnitTests {
 
         verify(channel).write(command);
         verify(channel).flush();
+    }
+
+    @Test // Bundled transactions are at-most-once: an already-dispatched MULTI/EXEC must not be replayed on reconnect
+    void notifyDrainQueuedCommandsDoesNotReplayTransactionBundle() {
+
+        AsyncCommand<String, String, TransactionResult> bundle = new AsyncCommand<>(
+                new TransactionBundle<>(StringCodec.UTF8, Collections.emptyList()));
+
+        Queue<RedisCommand<?, ?, ?>> q = LettuceFactories.newConcurrentQueue(100);
+        q.add(bundle);
+
+        sut.notifyDrainQueuedCommands(() -> q);
+
+        // Not buffered for replay, and failed fast instead.
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(sut)).doesNotContain(bundle);
+        assertThat(bundle.isCompletedExceptionally()).isTrue();
     }
 
     @Test

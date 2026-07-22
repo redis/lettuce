@@ -65,10 +65,10 @@ public class BundledTransactionClusterIntegrationTests {
         String key3 = "{user1}:age";
 
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().set(key1, "John");
-        builder.commands().set(key2, "john@example.com");
-        builder.commands().set(key3, "30");
-        builder.commands().mget(key1, key2, key3);
+        builder.queue().set(key1, "John");
+        builder.queue().set(key2, "john@example.com");
+        builder.queue().set(key3, "30");
+        builder.queue().mget(key1, key2, key3);
 
         TransactionResult result = builder.execute();
 
@@ -86,10 +86,10 @@ public class BundledTransactionClusterIntegrationTests {
         String key2 = "product:1:name";
 
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().set(key1, "John");
+        builder.queue().set(key1, "John");
 
         // Adding a key from different slot should throw
-        assertThatThrownBy(() -> builder.commands().set(key2, "Widget")).isInstanceOf(RedisException.class)
+        assertThatThrownBy(() -> builder.queue().set(key2, "Widget")).isInstanceOf(RedisException.class)
                 .hasMessageContaining("CROSSSLOT");
     }
 
@@ -103,8 +103,8 @@ public class BundledTransactionClusterIntegrationTests {
 
         // WATCH keys must be in same slot as transaction keys
         TransactionBuilder<String, String> builder = connection.transaction(key1);
-        builder.commands().incr(key1);
-        builder.commands().set(key2, "completed");
+        builder.queue().incr(key1);
+        builder.queue().set(key2, "completed");
 
         TransactionResult result = builder.execute();
 
@@ -118,8 +118,8 @@ public class BundledTransactionClusterIntegrationTests {
         String key = "{async}:test";
 
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().set(key, "value");
-        builder.commands().get(key);
+        builder.queue().set(key, "value");
+        builder.queue().get(key);
 
         RedisFuture<TransactionResult> future = builder.executeAsync();
         TransactionResult result = future.get(5, TimeUnit.SECONDS);
@@ -139,9 +139,9 @@ public class BundledTransactionClusterIntegrationTests {
         sync.set(key1, "initial");
 
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().set(key1, "updated");
-        builder.commands().set(key2, "new");
-        builder.commands().get(key1);
+        builder.queue().set(key1, "updated");
+        builder.queue().set(key2, "new");
+        builder.queue().get(key1);
 
         TransactionResult result = builder.execute();
 
@@ -162,7 +162,7 @@ public class BundledTransactionClusterIntegrationTests {
 
         // Create transaction with WATCH - should succeed since no modification between WATCH and EXEC
         TransactionBuilder<String, String> builder = connection.transaction(key);
-        builder.commands().set(key, "updated");
+        builder.queue().set(key, "updated");
 
         TransactionResult result = builder.execute();
 
@@ -186,7 +186,7 @@ public class BundledTransactionClusterIntegrationTests {
         builder.addCommand(setCommand);
 
         // Use commands() API for GET to verify mixing works
-        builder.commands().get(key);
+        builder.queue().get(key);
 
         TransactionResult result = builder.execute();
 
@@ -229,6 +229,24 @@ public class BundledTransactionClusterIntegrationTests {
         assertThat((Long) result.get(0)).isEqualTo(1L); // INCR result
         assertThat((String) result.get(1)).isEqualTo("OK"); // SET result
         assertThat((String) result.get(2)).isEqualTo("1"); // GET result (counter value)
+    }
+
+    @Test // WI-12/D7: raw commands carrying a key are slot-validated on the same fail-fast path as typed commands
+    void crossSlotRawCommandFailsFast() {
+        StringCodec codec = StringCodec.UTF8;
+        String key1 = "user:1:name"; // no hash tag -> likely a different slot than key2
+        String key2 = "product:1:name";
+
+        TransactionBuilder<String, String> builder = connection.transaction();
+
+        CommandArgs<String, String> args1 = new CommandArgs<>(codec).addKey(key1).addValue("John");
+        builder.addCommand(RawCommand.of(CommandType.SET, new StatusOutput<>(codec), args1));
+
+        // A raw command whose first key hashes to a different slot must fail fast, just like the typed path.
+        CommandArgs<String, String> args2 = new CommandArgs<>(codec).addKey(key2).addValue("Widget");
+        RawCommand<String, String> crossSlot = RawCommand.of(CommandType.SET, new StatusOutput<>(codec), args2);
+        assertThatThrownBy(() -> builder.addCommand(crossSlot)).isInstanceOf(RedisException.class)
+                .hasMessageContaining("CROSSSLOT");
     }
 
 }

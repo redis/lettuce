@@ -680,6 +680,20 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
             Collection<RedisCommand<?, ?, ?>> commands = queuedCommands.drainQueue();
 
+            // These commands were already written to the channel and are awaiting their response. A non-idempotent
+            // multi-response command (a MULTI/EXEC transaction bundle) may already have executed on the server, so it must
+            // not be replayed on reconnect. Fail it fast (at-most-once) instead of re-sending; the caller can retry
+            // explicitly. This mirrors how connection-bound MULTI/EXEC fails on a disconnect. Not-yet-sent commands held in
+            // the disconnectedBuffer (merged in below) are safe to flush once and are intentionally left untouched.
+            commands.removeIf(command -> {
+                if (CommandWrapper.unwrap(command) instanceof MultiResponseCommand) {
+                    command.completeExceptionally(new RedisException(
+                            "Transaction not retried after connection loss; bundled transactions are at-most-once"));
+                    return true;
+                }
+                return false;
+            });
+
             if (debugEnabled) {
                 logger.debug("{} notifyQueuedCommands adding {} command(s) to buffer", logPrefix(), commands.size());
             }

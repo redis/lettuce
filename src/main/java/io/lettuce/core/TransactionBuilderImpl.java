@@ -7,7 +7,8 @@
 package io.lettuce.core;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import reactor.core.publisher.Mono;
 
@@ -15,7 +16,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.reactive.ReactiveTransactionBuilder;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.internal.ExceptionFactory;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TransactionBundle;
@@ -44,6 +45,8 @@ class TransactionBuilderImpl<K, V> implements ReactiveTransactionBuilder<K, V> {
 
     private final K[] watchKeys;
 
+    private final AtomicBoolean executed = new AtomicBoolean();
+
     /**
      * Creates a new {@link TransactionBuilderImpl}.
      *
@@ -62,7 +65,7 @@ class TransactionBuilderImpl<K, V> implements ReactiveTransactionBuilder<K, V> {
     }
 
     @Override
-    public RedisAsyncCommands<K, V> commands() {
+    public RedisAsyncCommands<K, V> queue() {
         return collector;
     }
 
@@ -71,30 +74,25 @@ class TransactionBuilderImpl<K, V> implements ReactiveTransactionBuilder<K, V> {
         if (rawCommand == null) {
             throw new IllegalArgumentException("RawCommand must not be null");
         }
-        collector.dispatch(rawCommand.toCommand(codec));
+        collector.dispatch(rawCommand.toCommand());
         return this;
     }
 
     @Override
     public TransactionResult execute() {
-        try {
-            return executeAsync().get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RedisCommandInterruptedException(e);
-        } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof RuntimeException) {
-                throw (RuntimeException) cause;
-            }
-            throw ExceptionFactory.createExecutionException(cause != null ? cause.getMessage() : e.getMessage(), cause);
-        }
+        // Mirror the rest of the sync API (FutureSyncInvocationHandler): honor the connection command timeout and surface
+        // the standard RedisCommandTimeoutException / RedisCommandExecutionException instead of blocking unbounded on get().
+        return Futures.awaitOrCancel(executeAsync(), connection.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public RedisFuture<TransactionResult> executeAsync() {
+        if (!executed.compareAndSet(false, true)) {
+            throw new IllegalStateException("Transaction has already been executed; create a new transaction builder");
+        }
         List<RedisCommand<K, V, ?>> commandList = collector.drainCommands();
+        TransactionBundle.checkSize(commandList.size(), connection.getOptions().getMaxTransactionBundleSize());
         TransactionBundle<K, V> bundle = watchKeys != null ? new TransactionBundle<>(codec, commandList, watchKeys)
                 : new TransactionBundle<>(codec, commandList);
         if (connection instanceof StatefulRedisConnectionImpl) {
@@ -105,7 +103,9 @@ class TransactionBuilderImpl<K, V> implements ReactiveTransactionBuilder<K, V> {
 
     @Override
     public Mono<TransactionResult> executeReactive() {
-        return Mono.fromFuture(executeAsync()::toCompletableFuture);
+        // Cold publisher: defer so the commands are drained and the bundle is dispatched on subscribe, not at assembly.
+        // A second subscription re-invokes executeAsync(), which fails fast via the one-shot guard.
+        return Mono.defer(() -> Mono.fromFuture(executeAsync().toCompletableFuture()));
     }
 
     @Override

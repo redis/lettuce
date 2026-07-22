@@ -48,20 +48,19 @@ class CommandCollectingAsyncCommands<K, V> extends AbstractRedisAsyncCommands<K,
 
     /**
      * Overrides dispatch to collect commands instead of sending them. The commands are stored for later batch execution.
+     * <p>
+     * The {@link AsyncCommand} that is returned to the caller is the very instance that is stored and later handed to the
+     * {@link io.lettuce.core.protocol.TransactionBundle}. This is what allows the bundle to complete the exact future the
+     * caller holds once the transaction's {@code EXEC} response arrives (or to fail/cancel it if the transaction is discarded
+     * or aborted), instead of leaving it dangling.
      */
     @Override
     @SuppressWarnings("unchecked")
     public <T> AsyncCommand<K, V, T> dispatch(RedisCommand<K, V, T> cmd) {
-        // Store the original command (unwrap if already wrapped)
-        RedisCommand<K, V, ?> commandToStore = cmd;
-        if (cmd instanceof AsyncCommand) {
-            commandToStore = ((AsyncCommand<K, V, T>) cmd).getDelegate();
-        }
-        collectedCommands.add(commandToStore);
-
-        // Return a completed async command (won't be used for actual execution)
-        // Don't complete it - it will be completed when the transaction executes
-        return new AsyncCommand<>(cmd);
+        AsyncCommand<K, V, T> asyncCommand = (cmd instanceof AsyncCommand) ? (AsyncCommand<K, V, T>) cmd
+                : new AsyncCommand<>(cmd);
+        collectedCommands.add(asyncCommand);
+        return asyncCommand;
     }
 
     /**

@@ -72,7 +72,7 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
         return Mono.defer(() -> {
             ReactiveTransactionBuilder<K, V> builder = (watchKeys != null && watchKeys.length > 0) ? transaction(watchKeys)
                     : transaction();
-            transactionBody.accept(builder.commands());
+            transactionBody.accept(builder.queue());
             return builder.executeReactive();
         });
     }

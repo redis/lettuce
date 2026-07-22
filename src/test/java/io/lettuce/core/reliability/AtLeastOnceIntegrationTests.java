@@ -447,8 +447,9 @@ class AtLeastOnceIntegrationTests {
         return null;
     }
 
-    @Test
-    void transactionBundleRetriedAfterConnectionFailure() throws Exception {
+    @Test // A bundle dispatched while disconnected has NOT been sent yet, so it is buffered and sent once on reconnect
+          // (a deferred first send, not a replay). Already-sent bundles are at-most-once and are not replayed.
+    void transactionBundleDispatchedWhileDisconnectedIsSentOnReconnect() throws Exception {
 
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisCommands<String, String> sync = connection.sync();
@@ -471,9 +472,9 @@ class AtLeastOnceIntegrationTests {
 
         // Build and execute transaction while disconnected
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().incr(key);
-        builder.commands().incr(key);
-        builder.commands().get(key);
+        builder.queue().incr(key);
+        builder.queue().incr(key);
+        builder.queue().get(key);
 
         RedisFuture<TransactionResult> future = builder.executeAsync();
 

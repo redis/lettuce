@@ -28,8 +28,8 @@ import io.lettuce.core.TransactionResult;
  *     &#64;code
  *     // Via reactive commands (preferred)
  *     ReactiveTransactionBuilder<String, String> txn = connection.reactive().transaction();
- *     txn.commands().set("key1", "value1");
- *     txn.commands().incr("counter");
+ *     txn.queue().set("key1", "value1");
+ *     txn.queue().incr("counter");
  *     Mono<TransactionResult> result = txn.executeReactive();
  *
  *     // Or cast from connection.transaction() if needed

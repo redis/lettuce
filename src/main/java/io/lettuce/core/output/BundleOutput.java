@@ -168,16 +168,18 @@ public class BundleOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
                 super.setError(error);
                 break;
             case QUEUED:
-                // Error during QUEUED (syntax error in command)
-                // The command is still queued but will fail during EXEC
-                queuedCount++;
-                if (queuedCount >= commands.size()) {
-                    currentPhase = Phase.EXEC;
-                }
+                // Error during QUEUED (e.g. wrong arity): Redis aborts the transaction and EXEC returns an error.
+                // This is still exactly one response for this command; phase advancement is handled by complete(0)
+                // so that counting the response here would double-count it and desync the phase tracking.
                 break;
             case EXEC:
-                // Error for a specific command within EXEC results
-                if (execIndex < commands.size()) {
+                if (execArraySize == null) {
+                    // Top-level error in place of the EXEC array (e.g. EXECABORT, "EXEC without MULTI").
+                    // This is a transaction-level failure: record it on the bundle output so the command completes
+                    // exceptionally instead of returning a bogus TransactionResult.
+                    super.setError(error);
+                } else if (execIndex < commands.size()) {
+                    // Error for a specific command within the EXEC results array
                     RedisCommand<K, V, ?> cmd = commands.get(execIndex);
                     if (cmd.getOutput() != null) {
                         cmd.getOutput().setError(error);
@@ -336,25 +338,6 @@ public class BundleOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
      */
     public boolean isResponseComplete() {
         return responseCount >= expectedResponseCount;
-    }
-
-    /**
-     * Reset the output state to prepare for retry after a connection failure.
-     * <p>
-     * This clears all accumulated state from partial response processing, allowing the transaction to be re-sent and
-     * re-processed from scratch.
-     *
-     * @since 7.6
-     */
-    public void reset() {
-        this.currentPhase = hasWatch ? Phase.WATCH : Phase.MULTI;
-        this.queuedCount = 0;
-        this.execIndex = 0;
-        this.discarded = null;
-        this.execArraySize = null;
-        this.responseCount = 0;
-        this.responses.clear();
-        setError((String) null);
     }
 
 }

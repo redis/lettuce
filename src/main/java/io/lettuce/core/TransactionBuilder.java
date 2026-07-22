@@ -15,7 +15,7 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
  * collects all commands and dispatches them atomically when {@link #execute()} or {@link #executeAsync()} is called. This
  * ensures thread-safety when sharing connections across multiple threads.
  * <p>
- * Use {@link #commands()} to access the full Redis async commands API (400+ commands). Commands invoked on this interface are
+ * Use {@link #queue()} to access the full Redis async commands API (400+ commands). Commands invoked on this interface are
  * collected for batch execution rather than being dispatched immediately.
  * <p>
  * For reactive execution, use {@link io.lettuce.core.api.reactive.ReactiveTransactionBuilder} which extends this interface with
@@ -29,9 +29,9 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
  * {
  *     &#64;code
  *     TransactionBuilder<String, String> txn = connection.transaction();
- *     txn.commands().set("key1", "value1");
- *     txn.commands().set("key2", "value2");
- *     txn.commands().incr("counter");
+ *     txn.queue().set("key1", "value1");
+ *     txn.queue().set("key2", "value2");
+ *     txn.queue().incr("counter");
  *     TransactionResult result = txn.execute();
  *
  *     String setResult = result.get(0); // "OK"
@@ -61,17 +61,17 @@ public interface TransactionBuilder<K, V> {
      * {
      *     &#64;code
      *     TransactionBuilder<String, String> txn = connection.transaction();
-     *     txn.commands().set("key1", "value1");
-     *     txn.commands().hset("hash", "field", "value");
-     *     txn.commands().zadd("zset", 1.0, "member");
-     *     txn.commands().lpush("list", "item1", "item2");
+     *     txn.queue().set("key1", "value1");
+     *     txn.queue().hset("hash", "field", "value");
+     *     txn.queue().zadd("zset", 1.0, "member");
+     *     txn.queue().lpush("list", "item1", "item2");
      *     TransactionResult result = txn.execute();
      * }
      * </pre>
      *
      * @return async commands interface that collects commands for the transaction
      */
-    RedisAsyncCommands<K, V> commands();
+    RedisAsyncCommands<K, V> queue();
 
     /**
      * Add a raw command to the transaction.

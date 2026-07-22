@@ -8,15 +8,19 @@ package io.lettuce.core.cluster;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import reactor.core.publisher.Mono;
 
 import io.lettuce.core.*;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.ReactiveTransactionBuilder;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TransactionBundle;
@@ -41,14 +45,14 @@ import io.lettuce.core.protocol.TransactionBundle;
  *     &#64;code
  *     // Keys with same hash tag - will succeed
  *     TransactionBuilder<String, String> txn = connection.transaction();
- *     txn.commands().set("{user}:name", "John");
- *     txn.commands().set("{user}:email", "john@example.com");
+ *     txn.queue().set("{user}:name", "John");
+ *     txn.queue().set("{user}:email", "john@example.com");
  *     txn.execute();
  *
  *     // Keys without hash tags - will fail with CROSSSLOT error
  *     TransactionBuilder<String, String> txn2 = connection.transaction();
- *     txn2.commands().set("user:name", "John");
- *     txn2.commands().set("product:price", "100"); // Different slot!
+ *     txn2.queue().set("user:name", "John");
+ *     txn2.queue().set("product:price", "100"); // Different slot!
  *     // Throws CROSSSLOT error immediately when second command is added
  * }
  * </pre>
@@ -70,6 +74,8 @@ public class ClusterTransactionBuilder<K, V> implements ReactiveTransactionBuild
     private final K[] watchKeys;
 
     private final ClusterCommandCollectingAsyncCommands<K, V> collector;
+
+    private final AtomicBoolean executed = new AtomicBoolean();
 
     /**
      * Create a new ClusterTransactionBuilder.
@@ -116,23 +122,6 @@ public class ClusterTransactionBuilder<K, V> implements ReactiveTransactionBuild
     }
 
     /**
-     * Get the node connection for the target slot.
-     *
-     * @return the node connection.
-     */
-    private StatefulRedisConnection<K, V> getNodeConnection() {
-        Integer targetSlot = collector.getTargetSlot();
-        if (targetSlot == null) {
-            throw new RedisException("No keys have been added to the transaction yet");
-        }
-        RedisClusterNode masterNode = clusterConnection.getPartitions().getMasterBySlot(targetSlot);
-        if (masterNode == null) {
-            throw new RedisException("Cannot find master node for slot " + targetSlot);
-        }
-        return clusterConnection.getConnectionAsync(masterNode.getNodeId()).join();
-    }
-
-    /**
      * Returns an async commands interface for adding ANY Redis command to the transaction.
      * <p>
      * Commands added via this interface are validated for slot consistency. If a command uses a key that hashes to a different
@@ -141,15 +130,17 @@ public class ClusterTransactionBuilder<K, V> implements ReactiveTransactionBuild
      * @return async commands interface that collects commands for the transaction
      */
     @Override
-    public io.lettuce.core.api.async.RedisAsyncCommands<K, V> commands() {
+    public io.lettuce.core.api.async.RedisAsyncCommands<K, V> queue() {
         return collector;
     }
 
     @Override
     public TransactionBuilder<K, V> addCommand(RawCommand<K, V> command) {
-        // For raw commands, we cannot easily extract keys to validate slots
-        // The user is responsible for ensuring slot consistency
-        collector.dispatch(command.toCommand(codec));
+        // Raw commands are slot-validated on the same fail-fast path as typed commands: the collector inspects the
+        // command's first encoded key (CommandArgs#getFirstEncodedKey) and throws CROSSSLOT if it maps to a different slot.
+        // A raw command whose key is not marked via CommandArgs#addKey carries no detectable key and is therefore the
+        // caller's responsibility (it routes to the current target slot and may fail server-side with CROSSSLOT).
+        collector.dispatch(command.toCommand());
         return this;
     }
 
@@ -165,37 +156,55 @@ public class ClusterTransactionBuilder<K, V> implements ReactiveTransactionBuild
 
     @Override
     public TransactionResult execute() {
-        return executeAsync().toCompletableFuture().join();
+        // Honor the connection command timeout and surface the standard timeout/execution exceptions, matching the
+        // standalone path and the rest of the sync API instead of blocking unbounded via join().
+        return Futures.awaitOrCancel(executeAsync(), clusterConnection.getTimeout().toNanos(), TimeUnit.NANOSECONDS);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public RedisFuture<TransactionResult> executeAsync() {
+        if (!executed.compareAndSet(false, true)) {
+            throw new IllegalStateException("Transaction has already been executed; create a new transaction builder");
+        }
         Integer targetSlot = collector.getTargetSlot();
-        if (collector.isEmpty() && targetSlot == null) {
-            // Empty transaction with no target slot - need at least WATCH keys or a command with key
-            throw new RedisException("Cannot execute empty cluster transaction without target slot. "
-                    + "Use WATCH keys or add commands with keys to determine target node.");
+        if (targetSlot == null) {
+            // No key seen (empty transaction, or only key-less commands) - we cannot determine which node to route to.
+            throw new RedisException("Cannot execute cluster transaction without a target slot. "
+                    + "Use WATCH keys or add commands with keys to determine the target node.");
+        }
+        RedisClusterNode masterNode = clusterConnection.getPartitions().getMasterBySlot(targetSlot);
+        if (masterNode == null) {
+            throw new RedisException("Cannot find master node for slot " + targetSlot);
         }
 
-        // Get the node connection for the target slot
-        StatefulRedisConnection<K, V> nodeConnection = getNodeConnection();
-
-        // Create bundle with collected commands
+        // Build the bundle now (drains the collected commands), then resolve the node connection asynchronously so neither
+        // the calling thread nor a reactive subscriber thread is blocked on connection acquisition (previously .join()).
         List<RedisCommand<K, V, ?>> commands = collector.drainCommands();
+        TransactionBundle.checkSize(commands.size(), clusterConnection.getOptions().getMaxTransactionBundleSize());
         TransactionBundle<K, V> bundle = watchKeys != null ? new TransactionBundle<>(codec, commands, watchKeys)
                 : new TransactionBundle<>(codec, commands);
 
-        // Dispatch to the node connection
-        if (nodeConnection instanceof StatefulRedisConnectionImpl) {
-            return ((StatefulRedisConnectionImpl<K, V>) nodeConnection).dispatchTransactionBundle(bundle);
-        }
-        throw new UnsupportedOperationException("Node connection does not support transaction bundles");
+        CompletionStage<TransactionResult> result = clusterConnection.getConnectionAsync(masterNode.getNodeId())
+                .thenCompose(nodeConnection -> {
+                    if (nodeConnection instanceof StatefulRedisConnectionImpl) {
+                        return ((StatefulRedisConnectionImpl<K, V>) nodeConnection).dispatchTransactionBundle(bundle)
+                                .toCompletableFuture();
+                    }
+                    CompletableFuture<TransactionResult> failed = new CompletableFuture<>();
+                    failed.completeExceptionally(
+                            new UnsupportedOperationException("Node connection does not support transaction bundles"));
+                    return failed;
+                });
+
+        return new PipelinedRedisFuture<>(result);
     }
 
     @Override
     public Mono<TransactionResult> executeReactive() {
-        return Mono.fromFuture(executeAsync()::toCompletableFuture);
+        // Cold publisher: defer so the commands are drained and the bundle is dispatched on subscribe, not at assembly.
+        // A second subscription re-invokes executeAsync(), which fails fast via the one-shot guard.
+        return Mono.defer(() -> Mono.fromFuture(executeAsync().toCompletableFuture()));
     }
 
 }

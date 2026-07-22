@@ -172,4 +172,53 @@ class BundleOutputUnitTests {
         assertThat(output.get().wasDiscarded()).isTrue();
     }
 
+    @Test // C1: queue-time error must not double-count queued responses
+    void queueTimeErrorDoesNotDoubleCountQueuedResponses() {
+        commands.add(new Command<>(CommandType.SET, new StatusOutput<>(codec),
+                new CommandArgs<>(codec).addKey("k1").addValue("v1")));
+        commands.add(new Command<>(CommandType.SET, new StatusOutput<>(codec),
+                new CommandArgs<>(codec).addKey("k2").addValue("v2")));
+
+        output = new BundleOutput<>(codec, commands, false);
+
+        // MULTI +OK
+        output.set(ByteBuffer.wrap("OK".getBytes()));
+        output.complete(0);
+        assertThat(output.getCurrentPhase()).isEqualTo(BundleOutput.Phase.QUEUED);
+
+        // Command 1 is rejected at queue time (e.g. wrong arity). The state machine delivers setError THEN
+        // complete(0) for this single response.
+        output.setError(ByteBuffer.wrap("ERR wrong number of arguments".getBytes()));
+        output.complete(0);
+
+        // Only one of two queue responses has been consumed -> the phase must still be QUEUED.
+        assertThat(output.getCurrentPhase()).isEqualTo(BundleOutput.Phase.QUEUED);
+
+        // The second queue response then advances to EXEC.
+        output.complete(0);
+        assertThat(output.getCurrentPhase()).isEqualTo(BundleOutput.Phase.EXEC);
+    }
+
+    @Test // C2: a top-level error in place of the EXEC array is a transaction-level failure
+    void topLevelExecErrorIsRecordedAsTransactionFailure() {
+        commands.add(
+                new Command<>(CommandType.SET, new StatusOutput<>(codec), new CommandArgs<>(codec).addKey("k").addValue("v")));
+
+        output = new BundleOutput<>(codec, commands, false);
+
+        // MULTI +OK
+        output.set(ByteBuffer.wrap("OK".getBytes()));
+        output.complete(0);
+        // QUEUED
+        output.complete(0);
+        assertThat(output.getCurrentPhase()).isEqualTo(BundleOutput.Phase.EXEC);
+
+        // EXEC returns a top-level error (EXECABORT) instead of an array.
+        output.setError(ByteBuffer.wrap("EXECABORT Transaction discarded because of previous errors.".getBytes()));
+        output.complete(0);
+
+        assertThat(output.hasError()).isTrue();
+        assertThat(output.getError()).contains("EXECABORT");
+    }
+
 }

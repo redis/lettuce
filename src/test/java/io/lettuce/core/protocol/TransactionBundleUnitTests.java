@@ -17,7 +17,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
+
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.BundleOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.ValueOutput;
 import io.netty.buffer.ByteBuf;
@@ -148,55 +152,124 @@ class TransactionBundleUnitTests {
         assertThat(bundleWithWatch.getExpectedResponseCount()).isEqualTo(4);
     }
 
-    @Test
-    void shouldResetOutputStateOnReEncode() {
-        // Create a simple SET command
-        Command<String, String, String> setCmd = new Command<>(CommandType.SET, new StatusOutput<>(codec),
-                new CommandArgs<>(codec).addKey("mykey").addValue("myvalue"));
-        commands.add(setCmd);
+    @Test // C2: a top-level EXEC error must complete the bundle exceptionally, not with a bogus result
+    void shouldCompleteExceptionallyOnTopLevelExecError() {
+        commands.add(
+                new Command<>(CommandType.SET, new StatusOutput<>(codec), new CommandArgs<>(codec).addKey("k").addValue("v")));
 
         TransactionBundle<String, String> bundle = new TransactionBundle<>(codec, commands, null);
-        io.lettuce.core.output.BundleOutput<String, String> output = (io.lettuce.core.output.BundleOutput<String, String>) bundle
-                .getOutput();
+        BundleOutput<String, String> output = (BundleOutput<String, String>) bundle.getOutput();
 
-        // Before any encoding or response processing
-        assertThat(output.isResponseComplete()).isFalse();
+        // MULTI +OK
+        output.set(ByteBuffer.wrap("OK".getBytes(StandardCharsets.UTF_8)));
+        output.complete(0);
+        // QUEUED
+        output.complete(0);
+        // EXEC returns a top-level error instead of an array
+        output.setError(ByteBuffer
+                .wrap("EXECABORT Transaction discarded because of previous errors.".getBytes(StandardCharsets.UTF_8)));
+        output.complete(0);
 
-        // First encode - simulates initial send
-        ByteBuf buf1 = Unpooled.directBuffer();
-        bundle.encode(buf1);
-        String encoded1 = buf1.toString(StandardCharsets.UTF_8);
-        buf1.release();
+        bundle.complete();
 
-        // Simulate partial response processing that would happen before connection drop
-        // For 1 command: expect MULTI (1) + QUEUED (1) + EXEC (1) = 3 responses
-        output.complete(0); // Complete MULTI response - 1 of 3
-        output.complete(0); // Complete QUEUED response - 2 of 3
-        // Still not complete - missing EXEC
-        assertThat(output.isResponseComplete()).isFalse();
+        assertThat(bundle.getFuture().isCompletedExceptionally()).isTrue();
+    }
 
-        // Second encode - simulates retry after connection failure
-        // This MUST reset the output state so the bundle can process responses fresh
-        ByteBuf buf2 = Unpooled.directBuffer();
-        bundle.encode(buf2);
-        String encoded2 = buf2.toString(StandardCharsets.UTF_8);
-        buf2.release();
+    @Test // WI-4/D1: the per-command futures handed to the caller complete with the same values as the TransactionResult
+    void innerCommandFuturesCompleteOnExec() throws Exception {
+        AsyncCommand<String, String, String> set = new AsyncCommand<>(
+                new Command<>(CommandType.SET, new StatusOutput<>(codec), new CommandArgs<>(codec).addKey("k").addValue("v")));
+        AsyncCommand<String, String, String> get = new AsyncCommand<>(
+                new Command<>(CommandType.GET, new ValueOutput<>(codec), new CommandArgs<>(codec).addKey("k")));
+        commands.add(set);
+        commands.add(get);
 
-        // Both encodes should produce the same wire format
-        assertThat(encoded1).isEqualTo(encoded2);
+        TransactionBundle<String, String> bundle = new TransactionBundle<>(codec, commands, null);
+        BundleOutput<String, String> output = (BundleOutput<String, String>) bundle.getOutput();
 
-        // After reset, response count should be back to 0 and isResponseComplete() should be false
-        assertThat(output.isResponseComplete()).isFalse();
+        // MULTI +OK
+        output.set(ByteBuffer.wrap("OK".getBytes(StandardCharsets.UTF_8)));
+        output.complete(0);
+        // QUEUED x2
+        output.complete(0);
+        output.complete(0);
+        // EXEC array with two results
+        output.multi(2);
+        output.set(ByteBuffer.wrap("OK".getBytes(StandardCharsets.UTF_8))); // SET result
+        output.complete(1);
+        output.set(ByteBuffer.wrap("v".getBytes(StandardCharsets.UTF_8))); // GET result
+        output.complete(1);
+        output.complete(0);
 
-        // Now simulate processing all responses on the retry
-        output.complete(0); // MULTI - 1 of 3
-        output.complete(0); // QUEUED - 2 of 3
-        output.multi(1); // EXEC array start
-        output.complete(1); // EXEC array element
-        output.complete(0); // EXEC complete - 3 of 3
+        bundle.complete();
 
-        // Now should be complete
-        assertThat(output.isResponseComplete()).isTrue();
+        TransactionResult result = bundle.getFuture().get();
+        assertThat(set.isDone()).isTrue();
+        assertThat(get.isDone()).isTrue();
+        assertThat(set.get()).isEqualTo("OK");
+        assertThat(get.get()).isEqualTo("v");
+        assertThat((String) result.get(0)).isEqualTo(set.get());
+        assertThat((String) result.get(1)).isEqualTo(get.get());
+    }
+
+    @Test // WI-4/C4: a discarded transaction (null EXEC array) must not leave inner command futures dangling
+    void innerCommandFuturesCancelledOnDiscard() {
+        AsyncCommand<String, String, String> set = new AsyncCommand<>(
+                new Command<>(CommandType.SET, new StatusOutput<>(codec), new CommandArgs<>(codec).addKey("k").addValue("v")));
+        commands.add(set);
+
+        TransactionBundle<String, String> bundle = new TransactionBundle<>(codec, commands, new String[] { "watched" });
+        BundleOutput<String, String> output = (BundleOutput<String, String>) bundle.getOutput();
+
+        // WATCH +OK, MULTI +OK, QUEUED
+        output.set(ByteBuffer.wrap("OK".getBytes(StandardCharsets.UTF_8)));
+        output.complete(0);
+        output.set(ByteBuffer.wrap("OK".getBytes(StandardCharsets.UTF_8)));
+        output.complete(0);
+        output.complete(0);
+        // EXEC returns nil (WATCH failed) -> transaction discarded
+        output.multi(-1);
+        output.complete(0);
+
+        bundle.complete();
+
+        assertThat(bundle.getFuture().isDone()).isTrue();
+        assertThat(bundle.getFuture().isCompletedExceptionally()).isFalse();
+        assertThat(set.isCancelled()).isTrue();
+    }
+
+    @Test // WI-4/C4: a top-level EXEC error must also fail the inner command futures, not just the bundle future
+    void innerCommandFuturesFailOnTopLevelExecError() {
+        AsyncCommand<String, String, String> set = new AsyncCommand<>(
+                new Command<>(CommandType.SET, new StatusOutput<>(codec), new CommandArgs<>(codec).addKey("k").addValue("v")));
+        commands.add(set);
+
+        TransactionBundle<String, String> bundle = new TransactionBundle<>(codec, commands, null);
+        BundleOutput<String, String> output = (BundleOutput<String, String>) bundle.getOutput();
+
+        output.set(ByteBuffer.wrap("OK".getBytes(StandardCharsets.UTF_8)));
+        output.complete(0);
+        output.complete(0);
+        output.setError(ByteBuffer
+                .wrap("EXECABORT Transaction discarded because of previous errors.".getBytes(StandardCharsets.UTF_8)));
+        output.complete(0);
+
+        bundle.complete();
+
+        assertThat(bundle.getFuture().isCompletedExceptionally()).isTrue();
+        assertThat(set.isCompletedExceptionally()).isTrue();
+    }
+
+    @Test // WI-10/P2: the size guard throws only when enabled (max > 0) and exceeded
+    void checkSizeGuard() {
+        // disabled (0 or negative) -> never throws, regardless of size
+        io.lettuce.core.protocol.TransactionBundle.checkSize(1_000_000, 0);
+        io.lettuce.core.protocol.TransactionBundle.checkSize(1_000_000, -1);
+        // enabled and within limit -> ok
+        io.lettuce.core.protocol.TransactionBundle.checkSize(5, 5);
+        // enabled and exceeded -> throws
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> TransactionBundle.checkSize(6, 5))
+                .isInstanceOf(io.lettuce.core.RedisException.class).hasMessageContaining("exceeds the configured maximum");
     }
 
 }

@@ -74,6 +74,8 @@ public class ClientOptions implements Serializable {
 
     public static final int DEFAULT_REQUEST_QUEUE_SIZE = Integer.MAX_VALUE;
 
+    public static final int DEFAULT_MAX_TRANSACTION_BUNDLE_SIZE = 0;
+
     public static final Charset DEFAULT_SCRIPT_CHARSET = StandardCharsets.UTF_8;
 
     public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
@@ -118,6 +120,8 @@ public class ClientOptions implements Serializable {
 
     private final int requestQueueSize;
 
+    private final int maxTransactionBundleSize;
+
     private final Charset scriptCharset;
 
     private final Supplier<JsonParser> jsonParser;
@@ -144,6 +148,7 @@ public class ClientOptions implements Serializable {
         this.protocolVersion = builder.protocolVersion;
         this.readOnlyCommands = builder.readOnlyCommands;
         this.requestQueueSize = builder.requestQueueSize;
+        this.maxTransactionBundleSize = builder.maxTransactionBundleSize;
         this.scriptCharset = builder.scriptCharset;
         this.jsonParser = builder.jsonParser;
         this.socketOptions = builder.socketOptions;
@@ -165,6 +170,7 @@ public class ClientOptions implements Serializable {
         this.protocolVersion = original.getConfiguredProtocolVersion();
         this.readOnlyCommands = original.getReadOnlyCommands();
         this.requestQueueSize = original.getRequestQueueSize();
+        this.maxTransactionBundleSize = original.getMaxTransactionBundleSize();
         this.scriptCharset = original.getScriptCharset();
         this.jsonParser = original.getJsonParser();
         this.socketOptions = original.getSocketOptions();
@@ -226,6 +232,8 @@ public class ClientOptions implements Serializable {
         private ReadOnlyCommands.ReadOnlyPredicate readOnlyCommands = DEFAULT_READ_ONLY_COMMANDS;
 
         private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
+
+        private int maxTransactionBundleSize = DEFAULT_MAX_TRANSACTION_BUNDLE_SIZE;
 
         private Charset scriptCharset = DEFAULT_SCRIPT_CHARSET;
 
@@ -415,6 +423,22 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Set the maximum number of commands allowed in a single bundled transaction (see
+         * {@link io.lettuce.core.TransactionBuilder}). A transaction is dispatched as one atomic write; a pathological builder
+         * could otherwise produce an unbounded contiguous buffer. When the collected command count exceeds this limit,
+         * executing the transaction fails fast with a {@link RedisException}. Defaults to {@code 0}, which disables the guard
+         * (unlimited). See {@link #DEFAULT_MAX_TRANSACTION_BUNDLE_SIZE}.
+         *
+         * @param maxTransactionBundleSize the maximum command count, or {@code 0}/negative to disable the guard.
+         * @return {@code this}
+         * @since 7.6
+         */
+        public Builder maxTransactionBundleSize(int maxTransactionBundleSize) {
+            this.maxTransactionBundleSize = maxTransactionBundleSize;
+            return this;
+        }
+
+        /**
          * Sets the Lua script {@link Charset} to use to encode {@link String scripts} to {@code byte[]}. Defaults to
          * {@link StandardCharsets#UTF_8}. See {@link #DEFAULT_SCRIPT_CHARSET}.
          *
@@ -538,9 +562,10 @@ public class ClientOptions implements Serializable {
                 .disconnectedBehavior(getDisconnectedBehavior()).reauthenticateBehavior(getReauthenticateBehaviour())
                 .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
                 .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
-                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).jsonParser(getJsonParser())
-                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
-                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
+                .requestQueueSize(getRequestQueueSize()).maxTransactionBundleSize(getMaxTransactionBundleSize())
+                .scriptCharset(getScriptCharset()).jsonParser(getJsonParser()).socketOptions(getSocketOptions())
+                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
+                .timeoutOptions(getTimeoutOptions());
 
         return builder;
     }
@@ -628,6 +653,18 @@ public class ClientOptions implements Serializable {
      */
     public int getRequestQueueSize() {
         return requestQueueSize;
+    }
+
+    /**
+     * Maximum number of commands allowed in a single bundled transaction (see {@link io.lettuce.core.TransactionBuilder}).
+     * Executing a transaction with more commands than this fails fast with a {@link RedisException}. Defaults to {@code 0},
+     * which disables the guard (unlimited).
+     *
+     * @return the maximum bundled-transaction command count, or {@code 0} if the guard is disabled.
+     * @since 7.6
+     */
+    public int getMaxTransactionBundleSize() {
+        return maxTransactionBundleSize;
     }
 
     /**

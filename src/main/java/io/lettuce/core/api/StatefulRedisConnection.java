@@ -91,13 +91,21 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      * This method creates a {@link TransactionBuilder} that collects commands and dispatches them atomically as a single
      * MULTI/EXEC block. This approach is thread-safe and prevents command interleaving from other threads.
      * <p>
+     * Commands are added through {@link TransactionBuilder#queue()} (the full async command API) and the collected batch is
+     * dispatched by {@link TransactionBuilder#execute()} / {@link TransactionBuilder#executeAsync()}. For a more concise form,
+     * prefer the functional {@link io.lettuce.core.api.sync.RedisCommands#transactional(java.util.function.Consumer)
+     * transactional(...)} triad, or acquire an entry point via {@code connection.commands(TransactionCommands.factory())}.
+     * <p>
      * Usage example:
      *
      * <pre>
      *
      * {
      *     &#64;code
-     *     TransactionResult result = connection.transaction().set("key1", "value1").incr("counter").execute();
+     *     TransactionBuilder<String, String> tx = connection.transaction();
+     *     tx.queue().set("key1", "value1");
+     *     tx.queue().incr("counter");
+     *     TransactionResult result = tx.execute();
      * }
      * </pre>
      *
@@ -107,21 +115,27 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
     TransactionBuilder<K, V> transaction();
 
     /**
-     * Create a new transaction builder with WATCH support for optimistic locking.
+     * Create a new transaction builder with WATCH keys.
      * <p>
-     * The specified keys will be watched before the transaction is executed. If any of the watched keys are modified by another
-     * client before the transaction executes, the entire transaction will be aborted and the result will indicate the
-     * transaction was discarded.
+     * The specified keys are watched before the transaction executes; if any is modified by another client beforehand, the
+     * whole transaction is discarded ({@link io.lettuce.core.TransactionResult#wasDiscarded()}).
      * <p>
-     * Usage example:
+     * <b>Scope:</b> because a bundle is dispatched <em>atomically</em> as a single write batch, this supports only
+     * <em>watch-then-blind-write</em> — the client cannot observe a watched key and then decide what to queue. For classic
+     * read-then-decide optimistic locking ({@code WATCH k} &rarr; {@code GET k} &rarr; decide &rarr; {@code MULTI/EXEC}), use
+     * the connection's {@code watch()/multi()/exec()} instead.
+     * <p>
+     * Usage example (watch-then-blind-write):
      *
      * <pre>
      *
      * {
      *     &#64;code
-     *     TransactionResult result = connection.transaction("mykey").get("mykey").set("mykey", "newvalue").execute();
+     *     TransactionBuilder<String, String> tx = connection.transaction("mykey");
+     *     tx.queue().set("mykey", "newvalue");
+     *     TransactionResult result = tx.execute();
      *     if (result.wasDiscarded()) {
-     *         // Another client modified "mykey", retry logic here
+     *         // Another client modified "mykey" first - retry logic here
      *     }
      * }
      * </pre>

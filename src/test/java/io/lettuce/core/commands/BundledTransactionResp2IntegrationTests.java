@@ -65,8 +65,8 @@ public class BundledTransactionResp2IntegrationTests extends TestSupport {
     @Test
     void basicSyncTransactionResp2() {
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().set(key, value);
-        builder.commands().get(key);
+        builder.queue().set(key, value);
+        builder.queue().get(key);
 
         TransactionResult result = builder.execute();
 
@@ -79,9 +79,9 @@ public class BundledTransactionResp2IntegrationTests extends TestSupport {
     @Test
     void basicAsyncTransactionResp2() throws Exception {
         TransactionBuilder<String, String> builder = connection.transaction();
-        builder.commands().set(key, value);
-        builder.commands().incr("counter");
-        builder.commands().get(key);
+        builder.queue().set(key, value);
+        builder.queue().incr("counter");
+        builder.queue().get(key);
 
         RedisFuture<TransactionResult> future = builder.executeAsync();
         TransactionResult result = future.get(5, TimeUnit.SECONDS);
@@ -96,8 +96,8 @@ public class BundledTransactionResp2IntegrationTests extends TestSupport {
     @Test
     void reactiveTransactionResp2() {
         ReactiveTransactionBuilder<String, String> builder = connection.reactive().transaction();
-        builder.commands().set(key, value);
-        builder.commands().get(key);
+        builder.queue().set(key, value);
+        builder.queue().get(key);
 
         StepVerifier.create(builder.executeReactive()).consumeNextWith(result -> {
             assertThat(result.wasDiscarded()).isFalse();
@@ -117,7 +117,7 @@ public class BundledTransactionResp2IntegrationTests extends TestSupport {
 
         // Create transaction with WATCH - should succeed since no modification between WATCH and EXEC
         TransactionBuilder<String, String> builder = connection.transaction(key);
-        builder.commands().set(key, value);
+        builder.queue().set(key, value);
 
         TransactionResult result = builder.execute();
         assertThat(result.wasDiscarded()).isFalse();
@@ -130,11 +130,11 @@ public class BundledTransactionResp2IntegrationTests extends TestSupport {
     void multipleCommandsResp2() {
         TransactionBuilder<String, String> builder = connection.transaction();
 
-        builder.commands().set("key1", "val1");
-        builder.commands().set("key2", "val2");
-        builder.commands().incr("counter");
-        builder.commands().hset("hash", "field", "value");
-        builder.commands().lpush("list", "a", "b");
+        builder.queue().set("key1", "val1");
+        builder.queue().set("key2", "val2");
+        builder.queue().incr("counter");
+        builder.queue().hset("hash", "field", "value");
+        builder.queue().lpush("list", "a", "b");
 
         TransactionResult result = builder.execute();
 

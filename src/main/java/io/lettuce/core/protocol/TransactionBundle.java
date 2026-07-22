@@ -10,8 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import io.lettuce.core.RedisException;
 import io.lettuce.core.TransactionResult;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.BundleOutput;
 import io.lettuce.core.output.CommandOutput;
@@ -52,10 +54,6 @@ public class TransactionBundle<K, V> implements RedisCommand<K, V, TransactionRe
 
     private volatile byte status = ST_INITIAL;
 
-    private volatile boolean encodedOnce = false;
-
-    private Throwable exception;
-
     /**
      * Create a new transaction bundle.
      *
@@ -73,6 +71,22 @@ public class TransactionBundle<K, V> implements RedisCommand<K, V, TransactionRe
         this.watchKeys = (watchKeys != null && watchKeys.length > 0) ? watchKeys : null;
         this.output = new BundleOutput<>(codec, this.commands, hasWatch());
         this.future = new CompletableFuture<>();
+    }
+
+    /**
+     * Guard against pathological transaction sizes. A bundle is buffered and written as one atomic {@code ByteBuf}, so an
+     * unbounded command count would produce an unbounded contiguous write. Throws when {@code maxAllowed > 0} and {@code size}
+     * exceeds it; a non-positive {@code maxAllowed} disables the guard.
+     *
+     * @param size the number of commands collected for the transaction.
+     * @param maxAllowed the configured maximum (see {@link io.lettuce.core.ClientOptions#getMaxTransactionBundleSize()}).
+     * @throws RedisException if the guard is enabled and {@code size} exceeds {@code maxAllowed}.
+     */
+    public static void checkSize(int size, int maxAllowed) {
+        if (maxAllowed > 0 && size > maxAllowed) {
+            throw new RedisException("Transaction bundle size " + size + " exceeds the configured maximum of " + maxAllowed
+                    + " (ClientOptions.maxTransactionBundleSize)");
+        }
     }
 
     /**
@@ -128,8 +142,23 @@ public class TransactionBundle<K, V> implements RedisCommand<K, V, TransactionRe
     public void complete() {
         if (status == ST_INITIAL) {
             status = ST_COMPLETED;
-            TransactionResult result = output.get();
-            future.complete(result);
+            if (output.hasError()) {
+                // A transaction-level failure was recorded (e.g. WATCH/MULTI error or EXECABORT). Surface it
+                // exceptionally rather than returning a bogus TransactionResult. The queued commands never executed, so
+                // fail their per-command futures with the same cause instead of leaving them dangling.
+                Throwable cause = ExceptionFactory.createExecutionException(output.getError());
+                completePendingCommandsExceptionally(cause);
+                future.completeExceptionally(cause);
+            } else {
+                TransactionResult result = output.get();
+                if (result.wasDiscarded()) {
+                    // WATCH failure / null EXEC array: no per-element results arrive so BundleOutput never completed the
+                    // inner command futures. Cancel them so callers awaiting them do not hang. On a successful EXEC the
+                    // inner futures are already completed by BundleOutput and this sweep is a no-op.
+                    cancelPendingCommands();
+                }
+                future.complete(result);
+            }
         }
     }
 
@@ -137,8 +166,8 @@ public class TransactionBundle<K, V> implements RedisCommand<K, V, TransactionRe
     public boolean completeExceptionally(Throwable throwable) {
         if (status == ST_INITIAL) {
             status = ST_COMPLETED;
-            exception = throwable;
             output.setError(throwable.getMessage());
+            completePendingCommandsExceptionally(throwable);
             future.completeExceptionally(throwable);
             return true;
         }
@@ -149,7 +178,34 @@ public class TransactionBundle<K, V> implements RedisCommand<K, V, TransactionRe
     public void cancel() {
         if (status == ST_INITIAL) {
             status = ST_CANCELLED;
+            cancelPendingCommands();
             future.cancel(false);
+        }
+    }
+
+    /**
+     * Fail every not-yet-completed inner command future with the given cause. Commands already completed by
+     * {@link BundleOutput} (the successful-EXEC path) are skipped.
+     *
+     * @param cause the failure to propagate to the queued command futures.
+     */
+    private void completePendingCommandsExceptionally(Throwable cause) {
+        for (RedisCommand<K, V, ?> command : commands) {
+            if (!command.isDone()) {
+                command.completeExceptionally(cause);
+            }
+        }
+    }
+
+    /**
+     * Cancel every not-yet-completed inner command future. Used when the transaction was discarded or the bundle itself was
+     * cancelled, so the queued commands never executed.
+     */
+    private void cancelPendingCommands() {
+        for (RedisCommand<K, V, ?> command : commands) {
+            if (!command.isDone()) {
+                command.cancel();
+            }
         }
     }
 
@@ -157,11 +213,8 @@ public class TransactionBundle<K, V> implements RedisCommand<K, V, TransactionRe
     public void encode(ByteBuf buf) {
         buf.touch("TransactionBundle.encode(…)");
 
-        // Reset output state if this is a retry (re-encoding after connection failure)
-        if (encodedOnce) {
-            output.reset();
-        }
-        encodedOnce = true;
+        // Bundled transactions are at-most-once: a dispatched MULTI/EXEC is never replayed after a disconnect (see
+        // DefaultEndpoint#notifyDrainQueuedCommands), so encode() is only ever called once and no output reset is needed.
 
         // Encode WATCH if present
         if (hasWatch()) {

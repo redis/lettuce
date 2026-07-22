@@ -422,7 +422,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      */
     public RedisFuture<TransactionResult> dispatchTransactionBundle(TransactionBundle<K, V> bundle) {
         AsyncCommand<K, V, TransactionResult> async = new AsyncCommand<>(bundle);
-        RedisCommand<K, V, TransactionResult> dispatched = dispatch(async);
+        dispatch(async);
         return async;
     }
 

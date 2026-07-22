@@ -12,14 +12,21 @@ Bundled transactions provide a thread-safe way to execute Redis transactions. Un
 MULTI/EXEC, bundled transactions encode all commands atomically and dispatch them as a single unit,
 preventing command interleaving when sharing connections across threads.
 
+!!! note "Reliability: at-most-once"
+    Because `MULTI`/`EXEC` is non-idempotent, a bundled transaction is **not replayed** if the
+    connection drops after it was dispatched — replaying could execute the transaction twice on the
+    server. Such a transaction completes exceptionally (like connection-bound `multi()/exec()`), and
+    the caller may retry it explicitly. A transaction dispatched while the connection is *down* has not
+    been sent yet and is still delivered once on reconnect.
+
 ### Basic Usage
 
 ``` java
 // Create a transaction builder and add commands
 TransactionBuilder<String, String> txn = connection.transaction();
-txn.commands().set("key1", "value1");
-txn.commands().set("key2", "value2");
-txn.commands().incr("counter");
+txn.queue().set("key1", "value1");
+txn.queue().set("key2", "value2");
+txn.queue().incr("counter");
 TransactionResult result = txn.execute();
 
 // Access results by index
@@ -31,8 +38,8 @@ Long counterValue = result.get(2); // new counter value
 
 ``` java
 TransactionBuilder<String, String> txn = connection.transaction();
-txn.commands().set("key", "value");
-txn.commands().get("key");
+txn.queue().set("key", "value");
+txn.queue().get("key");
 RedisFuture<TransactionResult> future = txn.executeAsync();
 
 TransactionResult result = future.get();
@@ -42,8 +49,8 @@ TransactionResult result = future.get();
 
 ``` java
 TransactionBuilder<String, String> txn = connection.transaction();
-txn.commands().set("key", "value");
-txn.commands().get("key");
+txn.queue().set("key", "value");
+txn.queue().get("key");
 Mono<TransactionResult> mono = txn.executeReactive();
 
 mono.subscribe(result -> {
@@ -58,13 +65,21 @@ WATCH keys can be specified when creating the transaction builder:
 ``` java
 // Watch keys for optimistic locking
 TransactionBuilder<String, String> txn = connection.transaction("watched-key");
-txn.commands().set("watched-key", "new-value");
+txn.queue().set("watched-key", "new-value");
 TransactionResult result = txn.execute();
 
 if (result.wasDiscarded()) {
     // Another client modified the watched key - retry logic here
 }
 ```
+
+!!! note "WATCH scope: watch-then-blind-write only"
+    A bundle is dispatched **atomically** as a single write batch, so it cannot perform the classic
+    read-then-decide optimistic-locking flow (`WATCH k` → `GET k` → decide in the client → `MULTI/EXEC`).
+    Bundled `transaction(watchKeys...)` only supports *watch-then-blind-write*: the transaction is
+    discarded if a watched key changes first, but you cannot observe the watched value before choosing
+    what to queue. For read-then-decide optimistic locking, use the traditional
+    `watch()/multi()/exec()` API below.
 
 ### Cluster Transactions
 
@@ -74,8 +89,8 @@ Use hash tags to ensure keys map to the same slot:
 ``` java
 // Keys with same hash tag - will succeed
 TransactionBuilder<String, String> txn = connection.transaction();
-txn.commands().set("{user123}:name", "John");
-txn.commands().set("{user123}:email", "john@example.com");
+txn.queue().set("{user123}:name", "John");
+txn.queue().set("{user123}:email", "john@example.com");
 txn.execute();
 
 // Keys without hash tags may fail with cross-slot error
@@ -284,9 +299,9 @@ TransactionResult result = sync.exec();
 ``` java
 // Bundled - thread-safe by design
 TransactionBuilder<String, String> txn = connection.transaction();
-txn.commands().set("key1", "value1");
-txn.commands().set("key2", "value2");
-txn.commands().incr("counter");
+txn.queue().set("key1", "value1");
+txn.queue().set("key2", "value2");
+txn.queue().incr("counter");
 TransactionResult result = txn.execute();
 
 // Access results by index
@@ -311,8 +326,8 @@ TransactionResult result = exec.get();
 **After:**
 ``` java
 TransactionBuilder<String, String> txn = connection.transaction();
-txn.commands().set("key1", "value1");
-txn.commands().incr("counter");
+txn.queue().set("key1", "value1");
+txn.queue().incr("counter");
 RedisFuture<TransactionResult> future = txn.executeAsync();
 
 TransactionResult result = future.get();
@@ -335,8 +350,8 @@ reactive.multi().subscribe(multiResponse -> {
 **After:**
 ``` java
 TransactionBuilder<String, String> txn = connection.transaction();
-txn.commands().set("key", "value");
-txn.commands().incr("counter");
+txn.queue().set("key", "value");
+txn.queue().incr("counter");
 Mono<TransactionResult> mono = txn.executeReactive();
 
 mono.subscribe(result -> {
@@ -374,8 +389,8 @@ long balance = Long.parseLong(currentBalance);
 
 if (balance >= 100) {
     TransactionBuilder<String, String> txn = connection.transaction("balance");
-    txn.commands().decrby("balance", 100);
-    txn.commands().incrby("purchases", 1);
+    txn.queue().decrby("balance", 100);
+    txn.queue().incrby("purchases", 1);
     TransactionResult result = txn.execute();
 
     if (result.wasDiscarded()) {
@@ -410,37 +425,37 @@ public void performTransaction() {
 // No synchronization needed - transactions are inherently thread-safe
 public void performTransaction() {
     TransactionBuilder<String, String> txn = connection.transaction();
-    txn.commands().set("key", "value");
+    txn.queue().set("key", "value");
     txn.execute();
 }
 ```
 
 #### Scenario 6: Full Redis Command Access
 
-The `commands()` method provides access to all 400+ Redis commands:
+The `queue()` method provides access to all 400+ Redis commands:
 
 ``` java
 TransactionBuilder<String, String> txn = connection.transaction();
 
 // String commands
-txn.commands().set("str", "value");
-txn.commands().append("str", "-suffix");
+txn.queue().set("str", "value");
+txn.queue().append("str", "-suffix");
 
 // Hash commands
-txn.commands().hset("hash", "field", "value");
-txn.commands().hincrby("hash", "counter", 5);
+txn.queue().hset("hash", "field", "value");
+txn.queue().hincrby("hash", "counter", 5);
 
 // List commands
-txn.commands().lpush("list", "item1", "item2");
+txn.queue().lpush("list", "item1", "item2");
 
 // Set commands
-txn.commands().sadd("set", "member1", "member2");
+txn.queue().sadd("set", "member1", "member2");
 
 // Sorted set commands
-txn.commands().zadd("zset", 1.0, "one");
+txn.queue().zadd("zset", 1.0, "one");
 
 // HyperLogLog
-txn.commands().pfadd("hll", "elem1", "elem2");
+txn.queue().pfadd("hll", "elem1", "elem2");
 
 // Execute all commands atomically
 TransactionResult result = txn.execute();
@@ -464,7 +479,7 @@ TransactionResult result = txn.execute();
 2. **Move WATCH keys** to `transaction(watchKey1, watchKey2, ...)` parameter
 3. **Remove synchronization blocks** around transactions
 4. **Update result handling** to use `TransactionResult.get(index)`
-5. **Use `commands()`** for any Redis command in the transaction
+5. **Use `queue()`** for any Redis command in the transaction
 6. **Test thoroughly** - especially multi-threaded scenarios
 
 ### When to Keep Traditional MULTI/EXEC
@@ -477,6 +492,22 @@ In rare cases, you may need traditional MULTI/EXEC:
 - **Legacy code constraints**: When refactoring is not feasible
 
 For most use cases, bundled transactions are the recommended approach.
+
+## Transactions vs. Command Batching (Pipelining)
+
+Bundled transactions are **atomic**: the commands run as one `MULTI`/`EXEC` unit on the server, all-or-nothing.
+This is different from Lettuce's manual command batching, where you disable auto-flushing with
+`setAutoFlushCommands(false)`, issue commands, and then `flushCommands()` to write them in one batch (see
+[Pipelining](../advanced-usage/pipelining.md)). Manual flush batching reduces round-trips but provides **no
+atomicity or isolation** — the commands are simply written together and may interleave with other clients'
+commands on the server.
+
+Choose based on the guarantee you need:
+
+- **Atomicity / isolation** (all-or-nothing, no interleaving): use bundled transactions (`connection.transaction()`
+  or the `transactional(...)` functional form).
+- **Throughput only** (fewer round-trips, no atomicity): use `setAutoFlushCommands(false)` + `flushCommands()`
+  batching.
 
 ## Scripting and Functions
 

@@ -19,7 +19,12 @@
  */
 package io.lettuce.core.api.sync;
 
+import java.util.function.Consumer;
+
+import io.lettuce.core.TransactionBuilder;
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.json.JsonParser;
 
@@ -89,5 +94,56 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCo
      * @since 6.5
      */
     JsonParser getJsonParser();
+
+    /**
+     * Execute a transaction synchronously using a functional builder.
+     * <p>
+     * The commands added to the {@link RedisAsyncCommands} handed to {@code transactionBody} are collected and dispatched
+     * atomically as a single {@code MULTI}/{@code EXEC} block. This is the synchronous member of the symmetric
+     * {@code transactional(...)} triad (see {@link RedisAsyncCommands#transactional} and
+     * {@link io.lettuce.core.api.reactive.RedisReactiveCommands#transactional}).
+     * <p>
+     * Example usage:
+     *
+     * <pre>
+     *
+     * {
+     *     &#64;code
+     *     TransactionResult result = commands.transactional(txn -> {
+     *         txn.set("key1", "value1");
+     *         txn.incr("counter");
+     *     });
+     * }
+     * </pre>
+     *
+     * @param transactionBody consumer that receives a commands interface to add commands to the transaction
+     * @return the transaction result
+     * @since 7.6
+     */
+    default TransactionResult transactional(Consumer<RedisAsyncCommands<K, V>> transactionBody) {
+        return transactional(transactionBody, (K[]) null);
+    }
+
+    /**
+     * Execute a transaction synchronously with WATCH keys using a functional builder.
+     * <p>
+     * The watched keys enable <em>watch-then-blind-write</em>: if any is modified by another client before the transaction
+     * executes, the transaction is discarded ({@link TransactionResult#wasDiscarded()}). Because a bundle is dispatched
+     * atomically, this cannot observe a watched key before choosing what to queue; for read-then-decide optimistic locking use
+     * classic {@code watch()/multi()/exec()} on the connection.
+     *
+     * @param transactionBody consumer that receives a commands interface to add commands to the transaction
+     * @param watchKeys the keys to watch
+     * @return the transaction result
+     * @since 7.6
+     */
+    @SuppressWarnings("unchecked")
+    default TransactionResult transactional(Consumer<RedisAsyncCommands<K, V>> transactionBody, K... watchKeys) {
+        StatefulRedisConnection<K, V> connection = getStatefulConnection();
+        TransactionBuilder<K, V> tx = (watchKeys != null && watchKeys.length > 0) ? connection.transaction(watchKeys)
+                : connection.transaction();
+        transactionBody.accept(tx.queue());
+        return tx.execute();
+    }
 
 }
