@@ -52,6 +52,7 @@ import java.util.UUID;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.core.protocol.CommandType.XINFO;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -316,6 +317,114 @@ public class StreamCommandIntegrationTests extends TestSupport {
         assertThat(secondMessage.getBody()).hasSize(2).containsEntry("key4", "value4");
         assertThat(secondMessage.getMillisElapsedFromDelivery()).isNull();
         assertThat(secondMessage.getDeliveredCount()).isNull();
+    }
+
+    // XREAD / XREADGROUP MAXCOUNT and MAXSIZE - 8.10 OSS
+
+    private void assumeMaxCountMaxSize() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.9.240"),
+                "Redis 8.10+ required for XREAD/XREADGROUP MAXCOUNT and MAXSIZE");
+    }
+
+    @Test
+    void xreadMaxCountCapsCumulativeEntriesAcrossStreams() {
+        assumeMaxCountMaxSize();
+
+        for (int i = 0; i < 2; i++) {
+            redis.xadd("{s1}stream-1", Collections.singletonMap("key", "value" + i));
+            redis.xadd("{s1}stream-2", Collections.singletonMap("key", "value" + i));
+        }
+
+        List<StreamMessage<String, String>> messages = redis.xread(XReadArgs.Builder.count(2).maxCount(3),
+                StreamOffset.from("{s1}stream-1", "0-0"), StreamOffset.from("{s1}stream-2", "0-0"));
+
+        assertThat(messages).hasSize(3);
+
+        // Streams are served in caller order: COUNT 2 from stream-1, the remaining budget from stream-2
+        assertThat(messages.get(0).getStream()).isEqualTo("{s1}stream-1");
+        assertThat(messages.get(1).getStream()).isEqualTo("{s1}stream-1");
+        assertThat(messages.get(2).getStream()).isEqualTo("{s1}stream-2");
+    }
+
+    @Test
+    void xreadMaxSizeReturnsFirstEntryEvenWhenOversized() {
+        assumeMaxCountMaxSize();
+
+        redis.xadd("{s1}stream-1", Collections.singletonMap("key1", "value1"));
+        redis.xadd("{s1}stream-1", Collections.singletonMap("key2", "value2"));
+        redis.xadd("{s1}stream-2", Collections.singletonMap("key3", "value3"));
+
+        List<StreamMessage<String, String>> messages = redis.xread(XReadArgs.Builder.maxSize(1),
+                StreamOffset.from("{s1}stream-1", "0-0"), StreamOffset.from("{s1}stream-2", "0-0"));
+
+        // MAXSIZE is a soft cap: the first available entry is returned even though it exceeds one byte
+        assertThat(messages).hasSize(1);
+        assertThat(messages.get(0).getStream()).isEqualTo("{s1}stream-1");
+        assertThat(messages.get(0).getBody()).containsEntry("key1", "value1");
+    }
+
+    @Test
+    void xreadMaxSizeDoesNotForceNonEmptyReply() {
+        assumeMaxCountMaxSize();
+
+        List<StreamMessage<String, String>> messages = redis.xread(XReadArgs.Builder.maxSize(65536),
+                StreamOffset.from("{s1}stream-1", "0-0"));
+
+        assertThat(messages).isEmpty();
+    }
+
+    @Test
+    void xreadgroupMaxCountCapsCumulativeEntriesAcrossStreams() {
+        assumeMaxCountMaxSize();
+
+        for (int i = 0; i < 2; i++) {
+            redis.xadd("{s1}stream-1", Collections.singletonMap("key", "value" + i));
+            redis.xadd("{s1}stream-2", Collections.singletonMap("key", "value" + i));
+        }
+        redis.xgroupCreate(StreamOffset.from("{s1}stream-1", "0-0"), "group");
+        redis.xgroupCreate(StreamOffset.from("{s1}stream-2", "0-0"), "group");
+
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer"),
+                XReadArgs.Builder.maxCount(3), StreamOffset.lastConsumed("{s1}stream-1"),
+                StreamOffset.lastConsumed("{s1}stream-2"));
+
+        assertThat(messages).hasSize(3);
+
+        // Entries not emitted because of the cap must not be considered delivered
+        PendingMessages pending1 = redis.xpending("{s1}stream-1", "group");
+        PendingMessages pending2 = redis.xpending("{s1}stream-2", "group");
+        assertThat(pending1.getCount() + pending2.getCount()).isEqualTo(3);
+    }
+
+    @Test
+    void xreadgroupMaxSizeCapsReply() {
+        assumeMaxCountMaxSize();
+
+        redis.xadd("{s1}stream-1", Collections.singletonMap("key1", "value1"));
+        redis.xadd("{s1}stream-1", Collections.singletonMap("key2", "value2"));
+        redis.xgroupCreate(StreamOffset.from("{s1}stream-1", "0-0"), "group");
+
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("group", "consumer"),
+                XReadArgs.Builder.maxSize(1), StreamOffset.lastConsumed("{s1}stream-1"));
+
+        assertThat(messages).hasSize(1);
+        assertThat(messages.get(0).getBody()).containsEntry("key1", "value1");
+    }
+
+    @Test
+    void xreadMaxCountServerValidationErrorsPropagate() {
+        assumeMaxCountMaxSize();
+
+        redis.xadd("{s1}stream-1", Collections.singletonMap("key1", "value1"));
+
+        assertThatThrownBy(() -> redis.xread(XReadArgs.Builder.count(5).maxCount(2), StreamOffset.from("{s1}stream-1", "0-0")))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("MAXCOUNT");
+
+        assertThatThrownBy(() -> redis.xread(XReadArgs.Builder.maxCount(0), StreamOffset.from("{s1}stream-1", "0-0")))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("MAXCOUNT");
+
+        assertThatThrownBy(() -> redis.xread(XReadArgs.Builder.maxSize(-1), StreamOffset.from("{s1}stream-1", "0-0")))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("MAXSIZE");
     }
 
     @Test
