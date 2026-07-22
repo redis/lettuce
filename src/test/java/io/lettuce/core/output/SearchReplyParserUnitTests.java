@@ -77,9 +77,36 @@ class SearchReplyParserUnitTests {
         assertThat(reply.getCount()).isEqualTo(2);
         assertThat(reply.getResults()).hasSize(2);
         assertThat(reply.getResults().get(0).getId()).isEqualTo("doc:1");
-        assertThat(reply.getResults().get(0).getFields()).containsEntry("title", "Redis Search").containsEntry("views", "100");
+        assertThat(reply.getResults().get(0).getFields().get("title").asString()).isEqualTo("Redis Search");
+        assertThat(reply.getResults().get(0).getFields().get("views").asString()).isEqualTo("100");
         assertThat(reply.getResults().get(1).getId()).isEqualTo("doc:2");
-        assertThat(reply.getResults().get(1).getFields()).containsEntry("title", "Advanced Techniques");
+        assertThat(reply.getResults().get(1).getFields().get("title").asString()).isEqualTo("Advanced Techniques");
+    }
+
+    @Test
+    void shouldParseResp2NullFieldValueAsPresentNullField() {
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
+        ArrayComplexData data = new ArrayComplexData(3);
+        data.storeObject(1L);
+
+        data.storeObject(CODEC.encodeKey("doc:1"));
+        ArrayComplexData fields = new ArrayComplexData(4);
+        fields.storeObject(CODEC.encodeKey("country"));
+        fields.storeObject(CODEC.encodeValue("SE"));
+        fields.storeObject(CODEC.encodeKey("city"));
+        fields.storeObject(null); // the server returned a null value for this field
+        data.storeObject(fields);
+
+        SearchReply<String> reply = parser.parse(data);
+
+        assertThat(reply.getResults()).hasSize(1);
+        SearchReply.SearchResult<String> result = reply.getResults().get(0);
+        assertThat(result.getFields().get("country").asString()).isEqualTo("SE");
+        // a null value is kept as a present field, not dropped
+        assertThat(result.getFields().containsKey("city")).isTrue();
+        assertThat(result.getFields().get("city").isNull()).isTrue();
+        assertThat(result.getFields().get("city").asString()).isNull();
+        assertThat(result.getFields().get("city").asBytes()).isNull();
     }
 
     @Test
@@ -177,7 +204,43 @@ class SearchReplyParserUnitTests {
         SearchReply.SearchResult<String> result = reply.getResults().get(0);
         assertThat(result.getId()).isEqualTo("doc:1");
         assertThat(result.getScore()).isEqualTo(1.0);
-        assertThat(result.getFields()).containsEntry("title", "Redis Search");
+        assertThat(result.getFields().get("title").asString()).isEqualTo("Redis Search");
+    }
+
+    @Test
+    void shouldParseResp3NullFieldValueAsPresentNullField() {
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
+
+        MapComplexData extraAttributes = new MapComplexData(2);
+        extraAttributes.storeObject(CODEC.encodeKey("country"));
+        extraAttributes.storeObject(CODEC.encodeValue("SE"));
+        extraAttributes.storeObject(CODEC.encodeKey("city"));
+        extraAttributes.storeObject(null); // the server returned a null value for this field
+
+        MapComplexData resultEntry = new MapComplexData(2);
+        resultEntry.storeObject(CODEC.encodeKey("id"));
+        resultEntry.storeObject(CODEC.encodeValue("doc:1"));
+        resultEntry.storeObject(CODEC.encodeKey("extra_attributes"));
+        resultEntry.storeObject(extraAttributes);
+
+        ArrayComplexData resultsList = new ArrayComplexData(1);
+        resultsList.storeObject(resultEntry);
+
+        MapComplexData data = new MapComplexData(2);
+        data.storeObject(CODEC.encodeKey("total_results"));
+        data.storeObject(1L);
+        data.storeObject(CODEC.encodeKey("results"));
+        data.storeObject(resultsList);
+
+        SearchReply<String> reply = parser.parse(data);
+
+        assertThat(reply.getResults()).hasSize(1);
+        SearchReply.SearchResult<String> result = reply.getResults().get(0);
+        assertThat(result.getFields().get("country").asString()).isEqualTo("SE");
+        // a null value is kept as a present field, not dropped
+        assertThat(result.getFields().containsKey("city")).isTrue();
+        assertThat(result.getFields().get("city").isNull()).isTrue();
+        assertThat(result.getFields().get("city").asString()).isNull();
     }
 
     @Test

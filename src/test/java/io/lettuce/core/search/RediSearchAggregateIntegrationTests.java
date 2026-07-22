@@ -220,7 +220,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         for (SearchReply.SearchResult<String> aggregateResult : searchReply.getResults()) {
             assertThat(aggregateResult.getFields().containsKey("title")).isTrue();
             assertThat(aggregateResult.getFields().containsKey("category")).isTrue();
-            assertThat(aggregateResult.getFields().get("category")).isEqualTo("electronics");
+            assertThat(aggregateResult.getFields().get("category").asString()).isEqualTo("electronics");
         }
 
         assertThat(redis.ftDropindex("params-test-idx")).isEqualTo("OK");
@@ -351,10 +351,11 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(searchReply.getResults()).hasSize(4);
 
         // Verify data structure for future aggregation operations
-        Set<String> brands = searchReply.getResults().stream().map(r -> r.getFields().get("brand")).collect(Collectors.toSet());
+        Set<String> brands = searchReply.getResults().stream().map(r -> r.getFields().get("brand").asString())
+                .collect(Collectors.toSet());
         assertThat(brands).containsExactlyInAnyOrder("Apple", "Samsung", "Dell");
 
-        Set<String> categories = searchReply.getResults().stream().map(r -> r.getFields().get("category"))
+        Set<String> categories = searchReply.getResults().stream().map(r -> r.getFields().get("category").asString())
                 .collect(Collectors.toSet());
         assertThat(categories).containsExactlyInAnyOrder("smartphones", "laptops");
 
@@ -379,9 +380,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
             assertThat(group.getFields()).containsKeys("category", "count", "avg_price", "min_price", "max_price");
 
             // Verify the values make sense (e.g., min_price <= avg_price <= max_price)
-            double minPrice = Double.parseDouble(group.getFields().get("min_price"));
-            double avgPrice = Double.parseDouble(group.getFields().get("avg_price"));
-            double maxPrice = Double.parseDouble(group.getFields().get("max_price"));
+            double minPrice = Double.parseDouble(group.getFields().get("min_price").asString());
+            double avgPrice = Double.parseDouble(group.getFields().get("avg_price").asString());
+            double maxPrice = Double.parseDouble(group.getFields().get("max_price").asString());
 
             assertThat(minPrice).isLessThanOrEqualTo(avgPrice);
             assertThat(avgPrice).isLessThanOrEqualTo(maxPrice);
@@ -405,14 +406,14 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
             assertThat(item.getFields()).containsKeys("title", "price", "stock", "rating", "inventory_value", "rating_rounded");
 
             // Verify inventory_value = price * stock
-            double price = Double.parseDouble(item.getFields().get("price"));
-            double stock = Double.parseDouble(item.getFields().get("stock"));
-            double inventoryValue = Double.parseDouble(item.getFields().get("inventory_value"));
+            double price = Double.parseDouble(item.getFields().get("price").asString());
+            double stock = Double.parseDouble(item.getFields().get("stock").asString());
+            double inventoryValue = Double.parseDouble(item.getFields().get("inventory_value").asString());
             assertThat(inventoryValue).isEqualTo(price * stock);
 
             // Verify rating_rounded is ceiling of rating
-            double rating = Double.parseDouble(item.getFields().get("rating"));
-            double ratingRounded = Double.parseDouble(item.getFields().get("rating_rounded"));
+            double rating = Double.parseDouble(item.getFields().get("rating").asString());
+            double ratingRounded = Double.parseDouble(item.getFields().get("rating_rounded").asString());
             assertThat(ratingRounded).isEqualTo(Math.ceil(rating));
         }
 
@@ -429,7 +430,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Verify all returned items have price > 1000
         for (SearchReply.SearchResult<String> item : filterReply.getResults()) {
-            double price = Double.parseDouble(item.getFields().get("price"));
+            double price = Double.parseDouble(item.getFields().get("price").asString());
             assertThat(price).isGreaterThan(1000);
         }
 
@@ -437,8 +438,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         if (filterReply.getResults().size() >= 2) {
             List<SearchReply.SearchResult<String>> results = filterReply.getResults();
             for (int i = 0; i < results.size() - 1; i++) {
-                double rating1 = Double.parseDouble(results.get(i).getFields().get("rating"));
-                double rating2 = Double.parseDouble(results.get(i + 1).getFields().get("rating"));
+                double rating1 = Double.parseDouble(results.get(i).getFields().get("rating").asString());
+                double rating2 = Double.parseDouble(results.get(i + 1).getFields().get("rating").asString());
                 assertThat(rating1).isGreaterThanOrEqualTo(rating2);
             }
         }
@@ -466,8 +467,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         if (complexReply.getResults().size() >= 2) {
             List<SearchReply.SearchResult<String>> results = complexReply.getResults();
             for (int i = 0; i < results.size() - 1; i++) {
-                double rating1 = Double.parseDouble(results.get(i).getFields().get("avg_rating"));
-                double rating2 = Double.parseDouble(results.get(i + 1).getFields().get("avg_rating"));
+                double rating1 = Double.parseDouble(results.get(i).getFields().get("avg_rating").asString());
+                double rating2 = Double.parseDouble(results.get(i + 1).getFields().get("avg_rating").asString());
                 assertThat(rating1).isGreaterThanOrEqualTo(rating2);
             }
         }
@@ -491,13 +492,13 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
             assertThat(item.getFields()).containsKeys("title", "brand", "brand_upper", "title_short");
 
             // Verify brand_upper is uppercase of brand
-            String brand = item.getFields().get("brand");
-            String brandUpper = item.getFields().get("brand_upper");
+            String brand = item.getFields().get("brand").asString();
+            String brandUpper = item.getFields().get("brand_upper").asString();
             assertThat(brandUpper).isEqualTo(brand.toUpperCase());
 
             // Verify title_short is substring of title (first 10 chars or less)
-            String title = item.getFields().get("title");
-            String titleShort = item.getFields().get("title_short");
+            String title = item.getFields().get("title").asString();
+            String titleShort = item.getFields().get("title_short").asString();
             assertThat(titleShort).isEqualTo(title.substring(0, Math.min(10, title.length())));
         }
 
@@ -569,8 +570,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         if (nestedReply.getResults().size() >= 2) {
             List<SearchReply.SearchResult<String>> results = nestedReply.getResults();
             for (int i = 0; i < results.size() - 1; i++) {
-                double sales1 = Double.parseDouble(results.get(i).getFields().get("total_sales"));
-                double sales2 = Double.parseDouble(results.get(i + 1).getFields().get("total_sales"));
+                double sales1 = Double.parseDouble(results.get(i).getFields().get("total_sales").asString());
+                double sales2 = Double.parseDouble(results.get(i + 1).getFields().get("total_sales").asString());
                 assertThat(sales1).isGreaterThanOrEqualTo(sales2);
             }
         }
@@ -629,8 +630,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Verify all returned items meet the filter criteria
         for (SearchReply.SearchResult<String> item : filterReply.getResults()) {
-            double score = Double.parseDouble(item.getFields().get("score"));
-            double age = Double.parseDouble(item.getFields().get("age"));
+            double score = Double.parseDouble(item.getFields().get("score").asString());
+            double age = Double.parseDouble(item.getFields().get("age").asString());
 
             assertThat(score).isGreaterThan(80);
             assertThat(age).isLessThan(12);
@@ -638,7 +639,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
             // Verify computed fields
             assertThat(item.getFields()).containsKeys("normalized_score");
 
-            double normalizedScore = Double.parseDouble(item.getFields().get("normalized_score"));
+            double normalizedScore = Double.parseDouble(item.getFields().get("normalized_score").asString());
             assertThat(normalizedScore).isEqualTo(score * 0.1);
 
         }
@@ -688,16 +689,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
             assertThat(region.getFields()).containsKeys("region", "count", "avg_temp", "min_temp", "max_temp");
 
             // Verify statistical relationships
-            double minTemp = Double.parseDouble(region.getFields().get("min_temp"));
-            double avgTemp = Double.parseDouble(region.getFields().get("avg_temp"));
-            double maxTemp = Double.parseDouble(region.getFields().get("max_temp"));
+            double minTemp = Double.parseDouble(region.getFields().get("min_temp").asString());
+            double avgTemp = Double.parseDouble(region.getFields().get("avg_temp").asString());
+            double maxTemp = Double.parseDouble(region.getFields().get("max_temp").asString());
 
             // Statistical invariants that should hold
             assertThat(minTemp).isLessThanOrEqualTo(avgTemp);
             assertThat(avgTemp).isLessThanOrEqualTo(maxTemp);
 
             // Count should be positive
-            int count = Integer.parseInt(region.getFields().get("count"));
+            int count = Integer.parseInt(region.getFields().get("count").asString());
             assertThat(count).isGreaterThan(0);
         }
 
@@ -726,7 +727,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
         SearchReply<String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1);
-        assertThat(searchReply.getResults().get(0).getFields().get("title")).isEqualTo("Test Document");
+        assertThat(searchReply.getResults().get(0).getFields().get("title").asString()).isEqualTo("Test Document");
 
         assertThat(redis.ftDropindex("timeout-test-idx")).isEqualTo("OK");
     }
@@ -785,7 +786,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         for (SearchReply.SearchResult<String> group : searchReply.getResults()) {
             assertThat(group.getFields()).containsKey("category");
             assertThat(group.getFields()).containsKey("count");
-            assertThat(group.getFields().get("count")).isIn("1", "2"); // computers=2, electronics=2
+            assertThat(group.getFields().get("count").asString()).isIn("1", "2"); // computers=2, electronics=2
         }
 
         assertThat(redis.ftDropindex("groupby-agg-test-idx")).isEqualTo("OK");
@@ -892,9 +893,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Verify results are sorted by price in descending order
         List<SearchReply.SearchResult<String>> results = searchReply.getResults();
-        assertThat(results.get(0).getFields().get("price")).isEqualTo("300"); // Highest price first
-        assertThat(results.get(1).getFields().get("price")).isEqualTo("200");
-        assertThat(results.get(2).getFields().get("price")).isEqualTo("100"); // Lowest price last
+        assertThat(results.get(0).getFields().get("price").asString()).isEqualTo("300"); // Highest price first
+        assertThat(results.get(1).getFields().get("price").asString()).isEqualTo("200");
+        assertThat(results.get(2).getFields().get("price").asString()).isEqualTo("100"); // Lowest price last
 
         assertThat(redis.ftDropindex("sortby-test-idx")).isEqualTo("OK");
     }
@@ -977,9 +978,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // starting from offset 2
         // So we should get items with scores: 80, 70, 60 (3rd, 4th, 5th highest)
         // But let's verify what we actually get and adjust accordingly
-        assertThat(results.get(0).getFields().get("score")).isIn("80", "70"); // Could be 3rd or 4th highest
-        assertThat(results.get(1).getFields().get("score")).isIn("70", "60"); // Could be 4th or 5th highest
-        assertThat(results.get(2).getFields().get("score")).isIn("60", "50"); // Could be 5th or 6th highest
+        assertThat(results.get(0).getFields().get("score").asString()).isIn("80", "70"); // Could be 3rd or 4th highest
+        assertThat(results.get(1).getFields().get("score").asString()).isIn("70", "60"); // Could be 4th or 5th highest
+        assertThat(results.get(2).getFields().get("score").asString()).isIn("60", "50"); // Could be 5th or 6th highest
 
         assertThat(redis.ftDropindex("limit-test-idx")).isEqualTo("OK");
     }
@@ -1024,7 +1025,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Verify all returned items have rating >= 4.0
         for (SearchReply.SearchResult<String> item : searchReply.getResults()) {
-            double rating = Double.parseDouble(item.getFields().get("rating"));
+            double rating = Double.parseDouble(item.getFields().get("rating").asString());
             assertThat(rating).isGreaterThanOrEqualTo(4.0);
         }
 
@@ -1253,7 +1254,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Verify results are sorted by id
         for (int i = 0; i < allResults.size(); i++) {
             String expectedId = String.valueOf(i + 1);
-            assertThat(allResults.get(i).getFields().get("id")).isEqualTo(expectedId);
+            assertThat(allResults.get(i).getFields().get("id").asString()).isEqualTo(expectedId);
         }
 
         assertThat(redis.ftDropindex("cursor-pagination-test-idx")).isEqualTo("OK");
@@ -1452,15 +1453,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                     "min_salary", "max_salary", "avg_performance", "role_diversity");
 
             // Verify statistical relationships
-            double minSalary = Double.parseDouble(deptGroup.getFields().get("min_salary"));
-            double avgSalary = Double.parseDouble(deptGroup.getFields().get("avg_salary"));
-            double maxSalary = Double.parseDouble(deptGroup.getFields().get("max_salary"));
+            double minSalary = Double.parseDouble(deptGroup.getFields().get("min_salary").asString());
+            double avgSalary = Double.parseDouble(deptGroup.getFields().get("avg_salary").asString());
+            double maxSalary = Double.parseDouble(deptGroup.getFields().get("max_salary").asString());
 
             assertThat(minSalary).isLessThanOrEqualTo(avgSalary);
             assertThat(avgSalary).isLessThanOrEqualTo(maxSalary);
 
             // Verify count is positive
-            int empCount = Integer.parseInt(deptGroup.getFields().get("employee_count"));
+            int empCount = Integer.parseInt(deptGroup.getFields().get("employee_count").asString());
             assertThat(empCount).isGreaterThan(0);
         }
 
@@ -1487,8 +1488,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
             // Verify department and role combinations are valid (Redis may normalize to
             // lowercase)
-            String dept = group.getFields().get("department");
-            String role = group.getFields().get("role");
+            String dept = group.getFields().get("department").asString();
+            String role = group.getFields().get("role").asString();
             assertThat(dept.toLowerCase()).isIn("engineering", "marketing");
             assertThat(role.toLowerCase()).isIn("senior", "junior");
         }
@@ -1541,14 +1542,14 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Verify sorting: first result should have highest price, last should have
         // lowest
-        double firstPrice = Double.parseDouble(sortedResults.get(0).getFields().get("price"));
-        double lastPrice = Double.parseDouble(sortedResults.get(sortedResults.size() - 1).getFields().get("price"));
+        double firstPrice = Double.parseDouble(sortedResults.get(0).getFields().get("price").asString());
+        double lastPrice = Double.parseDouble(sortedResults.get(sortedResults.size() - 1).getFields().get("price").asString());
         assertThat(firstPrice).isLessThanOrEqualTo(lastPrice);
 
         // Verify each consecutive pair is in descending order
         for (int i = 0; i < sortedResults.size() - 1; i++) {
-            double price1 = Double.parseDouble(sortedResults.get(i).getFields().get("price"));
-            double price2 = Double.parseDouble(sortedResults.get(i + 1).getFields().get("price"));
+            double price1 = Double.parseDouble(sortedResults.get(i).getFields().get("price").asString());
+            double price2 = Double.parseDouble(sortedResults.get(i + 1).getFields().get("price").asString());
             assertThat(price1).isLessThanOrEqualTo(price2);
         }
 
@@ -1566,8 +1567,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Verify results are sorted by rating in descending order
         List<SearchReply.SearchResult<String>> maxSortedResults = maxSortReply.getResults();
         for (int i = 0; i < maxSortedResults.size() - 1; i++) {
-            double rating1 = Double.parseDouble(maxSortedResults.get(i).getFields().get("rating"));
-            double rating2 = Double.parseDouble(maxSortedResults.get(i + 1).getFields().get("rating"));
+            double rating1 = Double.parseDouble(maxSortedResults.get(i).getFields().get("rating").asString());
+            double rating2 = Double.parseDouble(maxSortedResults.get(i + 1).getFields().get("rating").asString());
             assertThat(rating1).isGreaterThanOrEqualTo(rating2);
         }
 
@@ -1630,19 +1631,19 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                     "min_revenue", "max_revenue", "total_units", "avg_profit_margin", "product_diversity");
 
             // Verify statistical relationships
-            double minRevenue = Double.parseDouble(regionGroup.getFields().get("min_revenue"));
-            double avgRevenue = Double.parseDouble(regionGroup.getFields().get("avg_revenue"));
-            double maxRevenue = Double.parseDouble(regionGroup.getFields().get("max_revenue"));
+            double minRevenue = Double.parseDouble(regionGroup.getFields().get("min_revenue").asString());
+            double avgRevenue = Double.parseDouble(regionGroup.getFields().get("avg_revenue").asString());
+            double maxRevenue = Double.parseDouble(regionGroup.getFields().get("max_revenue").asString());
 
             assertThat(minRevenue).isLessThanOrEqualTo(avgRevenue);
             assertThat(avgRevenue).isLessThanOrEqualTo(maxRevenue);
 
             // Each region should have 6 records (2 product types × 3 records each)
-            int totalRecords = Integer.parseInt(regionGroup.getFields().get("total_records"));
+            int totalRecords = Integer.parseInt(regionGroup.getFields().get("total_records").asString());
             assertThat(totalRecords).isEqualTo(6);
 
             // Verify region name is valid (Redis may normalize to lowercase)
-            String region = regionGroup.getFields().get("region");
+            String region = regionGroup.getFields().get("region").asString();
             assertThat(region.toLowerCase()).isIn("north", "south", "east", "west");
         }
 
@@ -1666,12 +1667,12 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                     "avg_units", "avg_margin");
 
             // Each combination should have exactly 3 records
-            int recordCount = Integer.parseInt(comboGroup.getFields().get("record_count"));
+            int recordCount = Integer.parseInt(comboGroup.getFields().get("record_count").asString());
             assertThat(recordCount).isEqualTo(3);
 
             // Verify valid combinations (Redis may normalize to lowercase)
-            String region = comboGroup.getFields().get("region");
-            String productType = comboGroup.getFields().get("product_type");
+            String region = comboGroup.getFields().get("region").asString();
+            String productType = comboGroup.getFields().get("product_type").asString();
             assertThat(region.toLowerCase()).isIn("north", "south", "east", "west");
             assertThat(productType.toLowerCase()).isIn("premium", "standard");
         }
@@ -1724,10 +1725,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Verify results are sorted correctly by score DESC, then assists DESC
         List<SearchReply.SearchResult<String>> sortedPlayers = multiSortReply.getResults();
         for (int i = 0; i < sortedPlayers.size() - 1; i++) {
-            int score1 = Integer.parseInt(sortedPlayers.get(i).getFields().get("score"));
-            int score2 = Integer.parseInt(sortedPlayers.get(i + 1).getFields().get("score"));
-            int assists1 = Integer.parseInt(sortedPlayers.get(i).getFields().get("assists"));
-            int assists2 = Integer.parseInt(sortedPlayers.get(i + 1).getFields().get("assists"));
+            int score1 = Integer.parseInt(sortedPlayers.get(i).getFields().get("score").asString());
+            int score2 = Integer.parseInt(sortedPlayers.get(i + 1).getFields().get("score").asString());
+            int assists1 = Integer.parseInt(sortedPlayers.get(i).getFields().get("assists").asString());
+            int assists2 = Integer.parseInt(sortedPlayers.get(i + 1).getFields().get("assists").asString());
 
             // Primary sort: score DESC
             if (score1 != score2) {
@@ -1741,7 +1742,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Verify all results have the expected fields
         for (SearchReply.SearchResult<String> player : sortedPlayers) {
             assertThat(player.getFields()).containsKeys("team", "player", "score", "assists", "rebounds");
-            String team = player.getFields().get("team");
+            String team = player.getFields().get("team").asString();
             assertThat(team.toLowerCase()).isIn("lakers", "warriors", "celtics");
         }
 
@@ -1807,9 +1808,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(searchReply.getResults()).hasSize(1);
 
         SearchReply.SearchResult<String> electronicsGroup = searchReply.getResults().get(0);
-        assertThat(electronicsGroup.getFields().get("category")).isEqualTo("electronics");
-        assertThat(electronicsGroup.getFields().get("product_count")).isEqualTo("1");
-        assertThat(electronicsGroup.getFields().get("category_total")).isEqualTo("600");
+        assertThat(electronicsGroup.getFields().get("category").asString()).isEqualTo("electronics");
+        assertThat(electronicsGroup.getFields().get("product_count").asString()).isEqualTo("1");
+        assertThat(electronicsGroup.getFields().get("category_total").asString()).isEqualTo("600");
     }
 
     @Test
@@ -1889,7 +1890,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(topCategory.getFields()).containsKey("price_tier");
 
         // Electronics should be the top performer
-        assertThat(topCategory.getFields().get("category")).isEqualTo("electronics");
+        assertThat(topCategory.getFields().get("category").asString()).isEqualTo("electronics");
     }
 
     @Test
@@ -1974,7 +1975,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
             assertThat(efficiencyGroup.getFields()).containsKey("class_avg_salary");
 
             // Verify efficiency ratio is a positive number
-            double efficiencyRatio = Double.parseDouble(efficiencyGroup.getFields().get("efficiency_ratio"));
+            double efficiencyRatio = Double.parseDouble(efficiencyGroup.getFields().get("efficiency_ratio").asString());
             assertThat(efficiencyRatio).isGreaterThan(0.0);
         }
     }
@@ -2064,7 +2065,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
             assertThat(valueGroup.getFields()).containsKey("revenue_efficiency");
 
             // Verify value score is a positive number
-            double valueScore = Double.parseDouble(valueGroup.getFields().get("value_score"));
+            double valueScore = Double.parseDouble(valueGroup.getFields().get("value_score").asString());
             assertThat(valueScore).isGreaterThan(0.0);
         }
     }
@@ -2163,11 +2164,11 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
             assertThat(categoryGroup.getFields()).containsKey("tier_avg_max_price");
 
             // Verify category score is a positive number
-            double categoryScore = Double.parseDouble(categoryGroup.getFields().get("category_score"));
+            double categoryScore = Double.parseDouble(categoryGroup.getFields().get("category_score").asString());
             assertThat(categoryScore).isGreaterThan(0.0);
 
             // Verify that filters were applied correctly (positive values)
-            int categoryCount = Integer.parseInt(categoryGroup.getFields().get("tier_category_count"));
+            int categoryCount = Integer.parseInt(categoryGroup.getFields().get("tier_category_count").asString());
             assertThat(categoryCount).isGreaterThan(0);
         }
     }
@@ -2291,18 +2292,18 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
             assertThat(impactGroup.getFields()).containsKey("strategic_score");
 
             // Verify business impact score is a positive number
-            double impactScore = Double.parseDouble(impactGroup.getFields().get("business_impact_score"));
+            double impactScore = Double.parseDouble(impactGroup.getFields().get("business_impact_score").asString());
             assertThat(impactScore).isGreaterThan(0.0);
 
             // Verify strategic score is a positive number
-            double strategicScore = Double.parseDouble(impactGroup.getFields().get("strategic_score"));
+            double strategicScore = Double.parseDouble(impactGroup.getFields().get("strategic_score").asString());
             assertThat(strategicScore).isGreaterThan(0.0);
 
             // Verify that all metrics are positive (filters worked correctly)
-            double compositeScore = Double.parseDouble(impactGroup.getFields().get("composite_score"));
+            double compositeScore = Double.parseDouble(impactGroup.getFields().get("composite_score").asString());
             assertThat(compositeScore).isGreaterThan(0.0);
 
-            int segmentCount = Integer.parseInt(impactGroup.getFields().get("impact_segment_count"));
+            int segmentCount = Integer.parseInt(impactGroup.getFields().get("impact_segment_count").asString());
             assertThat(segmentCount).isGreaterThan(0);
         }
     }
@@ -2405,10 +2406,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(aggregateResult.getFields().containsKey("city")).isTrue();
         assertThat(aggregateResult.getFields().containsKey("office")).isTrue();
         assertThat(aggregateResult.getFields().containsKey("code")).isTrue();
-        assertThat(aggregateResult.getFields().get("country")).isEqualTo("SE");
-        assertThat(aggregateResult.getFields().get("city")).isNull();
-        assertThat(aggregateResult.getFields().get("office")).isEqualTo("HQ");
-        assertThat(aggregateResult.getFields().get("code")).isEqualTo("S1");
+        assertThat(aggregateResult.getFields().get("country").asString()).isEqualTo("SE");
+        assertThat(aggregateResult.getFields().get("city").asString()).isNull();
+        assertThat(aggregateResult.getFields().get("office").asString()).isEqualTo("HQ");
+        assertThat(aggregateResult.getFields().get("code").asString()).isEqualTo("S1");
 
         assertThat(redis.ftDropindex("args-test-idx")).isEqualTo("OK");
     }

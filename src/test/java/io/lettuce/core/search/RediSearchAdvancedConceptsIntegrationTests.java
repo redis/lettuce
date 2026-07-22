@@ -248,8 +248,8 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
         // Due to normalization, "bob" comes before "alice" in descending order
-        assertThat(results.getResults().get(0).getFields().get("first_name")).isEqualTo("bob");
-        assertThat(results.getResults().get(1).getFields().get("first_name")).isEqualTo("alice");
+        assertThat(results.getResults().get(0).getFields().get("first_name").asString()).isEqualTo("bob");
+        assertThat(results.getResults().get(1).getFields().get("first_name").asString()).isEqualTo("alice");
 
         // Test 2: Sort by age ascending
         SortByArgs sortByAge = SortByArgs.builder().attribute("age").build();
@@ -259,9 +259,9 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
         // Verify age sorting: 28, 35, 36
-        assertThat(results.getResults().get(0).getFields().get("age")).isEqualTo("28");
-        assertThat(results.getResults().get(1).getFields().get("age")).isEqualTo("35");
-        assertThat(results.getResults().get(2).getFields().get("age")).isEqualTo("36");
+        assertThat(results.getResults().get(0).getFields().get("age").asString()).isEqualTo("28");
+        assertThat(results.getResults().get(1).getFields().get("age").asString()).isEqualTo("35");
+        assertThat(results.getResults().get(2).getFields().get("age").asString()).isEqualTo("36");
 
         // Cleanup
         redis.ftDropindex(SORTING_INDEX);
@@ -384,7 +384,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getCount()).isEqualTo(1);
 
         // Check that highlighting tags are present in the content
-        String highlightedContent = results.getResults().get(0).getFields().get("content");
+        String highlightedContent = results.getResults().get(0).getFields().get("content").asString();
         assertThat(highlightedContent).contains("<b>Redis</b>"); // Default highlighting tags
 
         // Test 2: Custom highlighting tags
@@ -396,7 +396,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
 
         // Check custom highlighting tags
         for (SearchReply.SearchResult<String> result : results.getResults()) {
-            String content = result.getFields().get("content");
+            String content = result.getFields().get("content").asString();
             if (content.contains("database")) {
                 assertThat(content).contains("<mark>database</mark>");
             }
@@ -410,7 +410,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getCount()).isEqualTo(1);
 
         // Check that content is summarized
-        String summarizedContent = results.getResults().get(0).getFields().get("content");
+        String summarizedContent = results.getResults().get(0).getFields().get("content").asString();
         assertThat(summarizedContent).contains(" ... "); // Custom separator
         assertThat(summarizedContent.length()).isLessThan(book2.get("content").length()); // Should be shorter
 
@@ -422,7 +422,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         results = redis.ftSearch(HIGHLIGHT_INDEX, "Redis data", combinedArgs);
         assertThat(results.getCount()).isEqualTo(1);
 
-        String combinedContent = results.getResults().get(0).getFields().get("content");
+        String combinedContent = results.getResults().get(0).getFields().get("content").asString();
         assertThat(combinedContent).contains("**"); // Highlighting markers
         assertThat(combinedContent).contains("..."); // Default summarization separator
 

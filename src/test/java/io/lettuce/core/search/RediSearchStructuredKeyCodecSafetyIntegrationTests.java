@@ -197,7 +197,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
         SearchReply<RedisKey> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
-        String body = result.getResults().get(0).getFields().get("body");
+        String body = result.getResults().get(0).getFields().get("body").asString();
         assertThat(body).as("SUMMARIZE must be applied to the 'body' field").contains("...");
     }
 
@@ -212,7 +212,7 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
         SearchReply<RedisKey> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
-        String body = result.getResults().get(0).getFields().get("body");
+        String body = result.getResults().get(0).getFields().get("body").asString();
         assertThat(body).as("HIGHLIGHT must wrap 'search' occurrences with the configured tags").contains("<b>search</b>");
     }
 

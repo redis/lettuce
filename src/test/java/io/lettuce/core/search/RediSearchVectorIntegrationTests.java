@@ -158,7 +158,7 @@ public class RediSearchVectorIntegrationTests {
         assertThat(searchResult.getResults()).hasSize(2);
 
         // First result should be doc1 (exact match)
-        String firstName = searchResult.getResults().get(0).getFields().get("name");
+        String firstName = searchResult.getResults().get(0).getFields().get("name").asString();
         assertThat(firstName).isEqualTo("Document 1");
 
         // Cleanup
@@ -223,7 +223,7 @@ public class RediSearchVectorIntegrationTests {
 
         // All results should be electronics
         for (SearchReply.SearchResult<ByteBuffer> searchResultItem : searchResult.getResults()) {
-            String category = searchResultItem.getFields().get("category");
+            String category = searchResultItem.getFields().get("category").asString();
             assertThat(category).isEqualTo("electronics");
         }
 
@@ -290,7 +290,7 @@ public class RediSearchVectorIntegrationTests {
         List<SearchResult<String>> aggregationResults = reply.getResults();
         Set<String> foundCategories = new HashSet<>();
         for (SearchResult<String> groupResult : aggregationResults) {
-            foundCategories.add(groupResult.getFields().get("category"));
+            foundCategories.add(groupResult.getFields().get("category").asString());
         }
         assertThat(foundCategories).containsExactlyInAnyOrder("electronics", "books");
 
@@ -465,16 +465,16 @@ public class RediSearchVectorIntegrationTests {
         SearchReply.SearchResult<ByteBuffer> firstResult = results.getResults().get(0);
         SearchReply.SearchResult<ByteBuffer> secondResult = results.getResults().get(1);
 
-        String firstTitle = firstResult.getFields().get("title");
-        String secondTitle = secondResult.getFields().get("title");
+        String firstTitle = firstResult.getFields().get("title").asString();
+        String secondTitle = secondResult.getFields().get("title").asString();
 
         assertThat(firstTitle).isIn("Redis Vector Search Tutorial", "Advanced Vector Techniques");
         assertThat(secondTitle).isIn("Redis Vector Search Tutorial", "Advanced Vector Techniques");
 
-        // the binary vector field comes back byte-exact via getFieldBytes; the two closest documents are vector1 and vector2
-        assertThat(firstResult.getFieldBytes("doc_embedding")).isIn(floatArrayToByteBuffer(vector1).array(),
+        // the binary vector field comes back byte-exact via FieldValue.asBytes(); the two closest documents are vector1/vector2
+        assertThat(firstResult.getFields().get("doc_embedding").asBytes()).isIn(floatArrayToByteBuffer(vector1).array(),
                 floatArrayToByteBuffer(vector2).array());
-        assertThat(secondResult.getFieldBytes("doc_embedding")).isIn(floatArrayToByteBuffer(vector1).array(),
+        assertThat(secondResult.getFields().get("doc_embedding").asBytes()).isIn(floatArrayToByteBuffer(vector1).array(),
                 floatArrayToByteBuffer(vector2).array());
 
         // Cleanup
@@ -556,7 +556,7 @@ public class RediSearchVectorIntegrationTests {
 
         assertThat(results.getCount()).isEqualTo(2); // The Matrix and Heat have action genre
         for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
-            String genre = result.getFields().get("genre");
+            String genre = result.getFields().get("genre").asString();
             assertThat(genre).contains("action");
         }
 
@@ -652,7 +652,7 @@ public class RediSearchVectorIntegrationTests {
         // Should find electronics products and smart watch (mixed vector)
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
         for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
-            String productType = result.getFields().get("type");
+            String productType = result.getFields().get("type").asString();
             assertThat(productType).isIn("electronics"); // Electronics should be within range
         }
 
@@ -869,8 +869,8 @@ public class RediSearchVectorIntegrationTests {
 
         // Verify all results match the filter criteria
         for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
-            String status = result.getFields().get("status");
-            String priorityStr = result.getFields().get("priority");
+            String status = result.getFields().get("status").asString();
+            String priorityStr = result.getFields().get("priority").asString();
             assertThat(status).isEqualTo("active");
             int priority = Integer.parseInt(priorityStr);
             assertThat(priority).isBetween(3, 5);
@@ -951,7 +951,7 @@ public class RediSearchVectorIntegrationTests {
 
         // Verify that the search worked with high precision vectors
         for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
-            String name = result.getFields().get("name");
+            String name = result.getFields().get("name").asString();
             assertThat(name).contains("High Precision Vector");
         }
 
@@ -1012,8 +1012,9 @@ public class RediSearchVectorIntegrationTests {
      * A mixed text+vector response on a single {@code String} connection. A typical Lettuce app uses one shared {@code String}
      * connection; its documents, however, often hold a mix of text and binary vector fields, where the vectors were written
      * binary-safe by an ingestion pipeline (another service, a Python job, etc.). {@link SearchReply} keeps the returned field
-     * values as raw bytes: the text field is read through {@code getFields()} (UTF-8 view) while the vector's exact bytes are
-     * read through {@link SearchReply.SearchResult#getFieldBytes(String)}, so both survive the round-trip.
+     * values as raw bytes, exposed per field as a {@link FieldValue}: the text field is read through
+     * {@link FieldValue#asString()} while the vector's exact bytes are read through {@link FieldValue#asBytes()}, so both
+     * survive the round-trip.
      */
     @Test
     void mixedTextAndVectorResponseRoundTripsBothOnSingleConnection() {
@@ -1043,10 +1044,10 @@ public class RediSearchVectorIntegrationTests {
             SearchReply.SearchResult<String> searchResult = result.getResults().get(0);
 
             // the text field is read through the UTF-8 view
-            assertThat(searchResult.getFields().get("name")).isEqualTo("Lettuce");
+            assertThat(searchResult.getFields().get("name").asString()).isEqualTo("Lettuce");
 
             // the vector field's raw bytes survive the round-trip via getFieldBytes
-            assertThat(searchResult.getFieldBytes("embedding"))
+            assertThat(searchResult.getFields().get("embedding").asBytes())
                     .as("vector bytes must be preserved in a mixed text+vector response").isEqualTo(vecBytes);
         } finally {
             redis.ftDropindex(indexName);
@@ -1132,7 +1133,7 @@ public class RediSearchVectorIntegrationTests {
 
         // Verify that the search worked with the quantized vectors
         for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
-            String name = result.getFields().get("name");
+            String name = result.getFields().get("name").asString();
             assertThat(name).contains(typeName + " Vector");
         }
 

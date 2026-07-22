@@ -57,8 +57,35 @@ class AggregateReplyParserUnitTests {
         assertThat(reply.getReplies()).hasSize(1);
         SearchReply<String> searchReply = reply.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1);
-        assertThat(searchReply.getResults().get(0).getFields()).containsEntry("category", "electronics").containsEntry("count",
-                "5");
+        assertThat(searchReply.getResults().get(0).getFields().get("category").asString()).isEqualTo("electronics");
+        assertThat(searchReply.getResults().get(0).getFields().get("count").asString()).isEqualTo("5");
+    }
+
+    @Test
+    void shouldPreserveFieldWithNullValue() {
+        // A field loaded from a JSON null (e.g. FT.AGGREGATE ... LOAD) comes back with a null value.
+        AggregateReplyParser<String> parser = new AggregateReplyParser<>(CODEC, false);
+
+        ArrayComplexData fields = new ArrayComplexData(4);
+        fields.storeObject(CODEC.encodeKey("country"));
+        fields.storeObject(CODEC.encodeValue("SE"));
+        fields.storeObject(CODEC.encodeKey("city"));
+        fields.storeObject(null); // JSON null loaded field
+
+        ArrayComplexData data = new ArrayComplexData(2);
+        data.storeObject(1L);
+        data.storeObject(fields);
+
+        AggregationReply<String> reply = parser.parse(data);
+
+        assertThat(reply.getReplies()).hasSize(1);
+        SearchReply<String> searchReply = reply.getReplies().get(0);
+        assertThat(searchReply.getResults()).hasSize(1);
+        SearchReply.SearchResult<String> result = searchReply.getResults().get(0);
+        assertThat(result.getFields().get("country").asString()).isEqualTo("SE");
+        assertThat(result.getFields().containsKey("city")).isTrue();
+        assertThat(result.getFields().get("city").isNull()).isTrue();
+        assertThat(result.getFields().get("city").asString()).isNull();
     }
 
     @Test
@@ -88,7 +115,7 @@ class AggregateReplyParserUnitTests {
         assertThat(reply.getCursor().get().getCursorId()).isEqualTo(77L);
         SearchReply<String> searchReply = reply.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1);
-        assertThat(searchReply.getResults().get(0).getFields()).containsEntry("brand", "apple");
+        assertThat(searchReply.getResults().get(0).getFields().get("brand").asString()).isEqualTo("apple");
     }
 
     @Test
@@ -129,7 +156,7 @@ class AggregateReplyParserUnitTests {
         assertThat(reply.getReplies()).hasSize(1);
         SearchReply<String> searchReply = reply.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1);
-        assertThat(searchReply.getResults().get(0).getFields()).containsEntry("category", "computers");
+        assertThat(searchReply.getResults().get(0).getFields().get("category").asString()).isEqualTo("computers");
     }
 
 }

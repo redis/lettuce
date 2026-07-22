@@ -173,10 +173,10 @@ public class RediSearchIntegrationTests {
         SearchReply<String> searchReply = redis.ftSearch(BLOG_INDEX, "@title:(Redis)");
         assertThat(searchReply.getCount()).isEqualTo(2);
         assertThat(searchReply.getResults()).hasSize(2);
-        assertThat(searchReply.getResults().get(1).getFields().get("title")).isEqualTo("Redis Search Tutorial");
-        assertThat(searchReply.getResults().get(0).getFields().get("title")).isEqualTo("Advanced Redis Techniques");
-        assertThat(searchReply.getResults().get(1).getFields().get("author")).isEqualTo("john_doe");
-        assertThat(searchReply.getResults().get(0).getFields().get("author")).isEqualTo("jane_smith");
+        assertThat(searchReply.getResults().get(1).getFields().get("title").asString()).isEqualTo("Redis Search Tutorial");
+        assertThat(searchReply.getResults().get(0).getFields().get("title").asString()).isEqualTo("Advanced Redis Techniques");
+        assertThat(searchReply.getResults().get(1).getFields().get("author").asString()).isEqualTo("john_doe");
+        assertThat(searchReply.getResults().get(0).getFields().get("author").asString()).isEqualTo("jane_smith");
 
         // Test 2: Search with field-specific query
         SearchArgs<String> titleSearchArgs = SearchArgs.<String> builder().build();
@@ -260,7 +260,7 @@ public class RediSearchIntegrationTests {
         // Verify sorting order (highest rating first)
         double previousRating = Double.MAX_VALUE;
         for (SearchReply.SearchResult<String> result : results.getResults()) {
-            double currentRating = Double.parseDouble(result.getFields().get("rating"));
+            double currentRating = Double.parseDouble(result.getFields().get("rating").asString());
             assertThat(currentRating).isLessThanOrEqualTo(previousRating);
             previousRating = currentRating;
         }
@@ -320,7 +320,7 @@ public class RediSearchIntegrationTests {
         // Test 3: Search for books with "programming" category
         results = redis.ftSearch(BOOKS_INDEX, "@categories:{programming}");
         assertThat(results.getCount()).isEqualTo(1);
-        assertThat(results.getResults().get(0).getFields().get("title")).isEqualTo("Redis in Action");
+        assertThat(results.getResults().get(0).getFields().get("title").asString()).isEqualTo("Redis in Action");
 
         // Test 4: Search for books with multiple categories (OR)
         results = redis.ftSearch(BOOKS_INDEX, "@categories:{programming|design}");
@@ -384,7 +384,7 @@ public class RediSearchIntegrationTests {
         // Test 4: Exact numeric value
         results = redis.ftSearch(PRODUCTS_INDEX, "@price:[29.99 29.99]");
         assertThat(results.getCount()).isEqualTo(1);
-        assertThat(results.getResults().get(0).getFields().get("name")).isEqualTo("Mouse");
+        assertThat(results.getResults().get(0).getFields().get("name").asString()).isEqualTo("Mouse");
 
         // Test 5: Stock range query
         results = redis.ftSearch(PRODUCTS_INDEX, "@stock:[20 60]");
@@ -502,7 +502,7 @@ public class RediSearchIntegrationTests {
         // Test 1: Boolean AND operation
         SearchReply<String> results = redis.ftSearch(MOVIES_INDEX, "((@tags:{thriller}) (@tags:{action}))");
         assertThat(results.getCount()).isEqualTo(1); // The Matrix
-        assertThat(results.getResults().get(0).getFields().get("title")).isEqualTo("The Matrix");
+        assertThat(results.getResults().get(0).getFields().get("title").asString()).isEqualTo("The Matrix");
 
         // Test 2: Boolean OR operation
         results = redis.ftSearch(MOVIES_INDEX, "((@tags:{thriller}) | (@tags:{crime}))");
@@ -516,7 +516,7 @@ public class RediSearchIntegrationTests {
 
         results = redis.ftSearch(MOVIES_INDEX, "@title:\"Inception\"");
         assertThat(results.getCount()).isEqualTo(1);
-        assertThat(results.getResults().get(0).getFields().get("title")).isEqualTo("Inception");
+        assertThat(results.getResults().get(0).getFields().get("title").asString()).isEqualTo("Inception");
 
         // Test 5: Wildcard search
         results = redis.ftSearch(MOVIES_INDEX, "Matrix*");
@@ -1086,7 +1086,7 @@ public class RediSearchIntegrationTests {
         for (SearchReply.SearchResult<String> result : results.getResults()) {
             assertThat(result.getFields()).containsKey("book_title");
             assertThat(result.getFields()).doesNotContainKey("title");
-            assertThat(result.getFields().get("book_title")).contains("Redis");
+            assertThat(result.getFields().get("book_title").asString()).contains("Redis");
         }
 
         // Test 2: Search with multiple field aliases
@@ -1274,25 +1274,25 @@ public class RediSearchIntegrationTests {
         assertThat(reply.getExecutionTime()).isGreaterThan(0L);
 
         // Verify first result (google)
-        Map<String, String> r1 = reply.getResults().get(0).getFields();
-        assertThat(r1.get("brand")).isEqualTo("google");
-        assertThat(r1.get("count")).isEqualTo("2");
-        assertThat(r1.get("sum")).isEqualTo("1398");
-        assertThat(r1.get("discounted_price")).isEqualTo("1258.2");
+        Map<String, FieldValue> r1 = reply.getResults().get(0).getFields();
+        assertThat(r1.get("brand").asString()).isEqualTo("google");
+        assertThat(r1.get("count").asString()).isEqualTo("2");
+        assertThat(r1.get("sum").asString()).isEqualTo("1398");
+        assertThat(r1.get("discounted_price").asString()).isEqualTo("1258.2");
 
         // Verify second result (samsung)
-        Map<String, String> r2 = reply.getResults().get(1).getFields();
-        assertThat(r2.get("brand")).isEqualTo("samsung");
-        assertThat(r2.get("count")).isEqualTo("2");
-        assertThat(r2.get("sum")).isEqualTo("1598");
-        assertThat(r2.get("discounted_price")).isEqualTo("1438.2");
+        Map<String, FieldValue> r2 = reply.getResults().get(1).getFields();
+        assertThat(r2.get("brand").asString()).isEqualTo("samsung");
+        assertThat(r2.get("count").asString()).isEqualTo("2");
+        assertThat(r2.get("sum").asString()).isEqualTo("1598");
+        assertThat(r2.get("discounted_price").asString()).isEqualTo("1438.2");
 
         // Verify third result (apple)
-        Map<String, String> r3 = reply.getResults().get(2).getFields();
-        assertThat(r3.get("brand")).isEqualTo("apple");
-        assertThat(r3.get("count")).isEqualTo("3");
-        assertThat(r3.get("sum")).isEqualTo("2997");
-        assertThat(r3.get("discounted_price")).isEqualTo("2697.3");
+        Map<String, FieldValue> r3 = reply.getResults().get(2).getFields();
+        assertThat(r3.get("brand").asString()).isEqualTo("apple");
+        assertThat(r3.get("count").asString()).isEqualTo("3");
+        assertThat(r3.get("sum").asString()).isEqualTo("2997");
+        assertThat(r3.get("discounted_price").asString()).isEqualTo("2697.3");
 
         redis.ftDropindex(indexName);
     }
@@ -1339,7 +1339,7 @@ public class RediSearchIntegrationTests {
 
                     // Exact value comparison at each position
                     for (int t = 0; t < expected.size(); t++) {
-                        String actualBody = reply.getResults().get(t).getFields().get("$");
+                        String actualBody = reply.getResults().get(t).getFields().get("$").asString();
                         assertThat(actualBody).as("Mismatch at position %d on loop %d", t, i).isEqualTo(expected.get(t));
                     }
                 }
