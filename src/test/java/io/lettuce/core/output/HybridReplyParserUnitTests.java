@@ -70,8 +70,8 @@ class HybridReplyParserUnitTests {
         assertThat(reply.getTotalResults()).isEqualTo(1);
         assertThat(reply.getExecutionTime()).isEqualTo(0.5);
         assertThat(reply.getResults()).hasSize(1);
-        assertThat(reply.getResults().get(0).getFields()).containsEntry("title", "Redis Search").containsEntry("__key",
-                "doc:1");
+        assertThat(reply.getResults().get(0).getFields().get("title").asString()).isEqualTo("Redis Search");
+        assertThat(reply.getResults().get(0).getFields().get("__key").asString()).isEqualTo("doc:1");
         assertThat(reply.getWarnings()).isEmpty();
     }
 
@@ -149,8 +149,8 @@ class HybridReplyParserUnitTests {
         assertThat(reply.getTotalResults()).isEqualTo(1);
         assertThat(reply.getExecutionTime()).isEqualTo(0.75);
         assertThat(reply.getResults()).hasSize(1);
-        assertThat(reply.getResults().get(0).getFields()).containsEntry("title", "Redis Search").containsEntry("__key",
-                "doc:1");
+        assertThat(reply.getResults().get(0).getFields().get("title").asString()).isEqualTo("Redis Search");
+        assertThat(reply.getResults().get(0).getFields().get("__key").asString()).isEqualTo("doc:1");
     }
 
     @Test

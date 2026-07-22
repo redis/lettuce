@@ -198,10 +198,10 @@ public class HybridReplyParser implements ComplexDataParser<HybridReply> {
 
         if (map != null && !map.isEmpty()) {
             map.forEach((k, v) -> {
-                if (!(k instanceof ByteBuffer) || !(v instanceof ByteBuffer)) {
+                if (!(k instanceof ByteBuffer) || (v != null && !(v instanceof ByteBuffer))) {
                     return;
                 }
-                result.addField(StringCodec.UTF8.decodeKey((ByteBuffer) k), toBytes((ByteBuffer) v));
+                result.addField(StringCodec.UTF8.decodeKey((ByteBuffer) k), v == null ? null : toBytes((ByteBuffer) v));
             });
             return;
         }
@@ -214,10 +214,10 @@ public class HybridReplyParser implements ComplexDataParser<HybridReply> {
         for (int i = 0; i + 1 < list.size(); i += 2) {
             Object k = list.get(i);
             Object v = list.get(i + 1);
-            if (!(k instanceof ByteBuffer) || !(v instanceof ByteBuffer)) {
+            if (!(k instanceof ByteBuffer) || (v != null && !(v instanceof ByteBuffer))) {
                 continue;
             }
-            result.addField(StringCodec.UTF8.decodeKey((ByteBuffer) k), toBytes((ByteBuffer) v));
+            result.addField(StringCodec.UTF8.decodeKey((ByteBuffer) k), v == null ? null : toBytes((ByteBuffer) v));
         }
     }
 

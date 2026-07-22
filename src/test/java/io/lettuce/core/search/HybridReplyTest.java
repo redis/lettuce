@@ -10,6 +10,7 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -67,13 +68,13 @@ class HybridReplyTest {
         assertThat(reply.size()).isEqualTo(2);
         assertThat(reply.isEmpty()).isFalse();
         assertThat(reply.getResults()).hasSize(2);
-        assertThat(reply.getResults().get(0).getFields()).containsEntry("title", "Redis Search").containsEntry("__key",
-                "doc:1");
-        assertThat(reply.getResults().get(1).getFields()).containsEntry("title", "Advanced Techniques");
+        assertThat(reply.getResults().get(0).getFields().get("title").asString()).isEqualTo("Redis Search");
+        assertThat(reply.getResults().get(0).getFields().get("__key").asString()).isEqualTo("doc:1");
+        assertThat(reply.getResults().get(1).getFields().get("title").asString()).isEqualTo("Advanced Techniques");
     }
 
     @Test
-    void testGetFieldBytesPreservesBinaryValues() {
+    void testFieldValuesExposeTextAndBinary() {
         HybridReply.HybridResult result = new HybridReply.HybridResult();
 
         // a binary value that is not valid UTF-8 (e.g. a little-endian float32 vector)
@@ -81,12 +82,12 @@ class HybridReplyTest {
         result.addField("embedding", vector);
         result.addField("title", "Lettuce".getBytes(StandardCharsets.UTF_8));
 
-        // getFieldBytes returns the exact bytes, untouched by UTF-8 decoding
-        assertThat(result.getFieldBytes("embedding")).isEqualTo(vector);
+        Map<String, FieldValue> fields = result.getFields();
 
-        // absent fields yield null; the UTF-8 view still serves the text field
-        assertThat(result.getFieldBytes("missing")).isNull();
-        assertThat(result.getFields().get("title")).isEqualTo("Lettuce");
+        assertThat(fields.get("title").asString()).isEqualTo("Lettuce");
+        assertThat(fields.get("embedding").asBytes()).isEqualTo(vector);
+        assertThat(fields.get("missing")).isNull();
+        assertThat(fields).containsOnlyKeys("embedding", "title");
     }
 
     @Test

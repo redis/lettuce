@@ -169,7 +169,7 @@ public class RediSearchClusterIntegrationTests {
 
         // Should find only the Gaming Laptop
         assertThat(textResults.getCount()).isEqualTo(1);
-        assertThat(textResults.getResults().get(0).getFields().get("name")).isEqualTo("Gaming Laptop");
+        assertThat(textResults.getResults().get(0).getFields().get("name").asString()).isEqualTo("Gaming Laptop");
 
         // Cleanup
         redis.ftDropindex(PRODUCTS_INDEX);

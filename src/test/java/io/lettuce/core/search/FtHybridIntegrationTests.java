@@ -177,8 +177,8 @@ public class FtHybridIntegrationTests {
         assertThat(reply.getTotalResults()).isGreaterThan(0);
 
         // Verify we get electronics products with "smartphone camera" in title
-        boolean hasSmartphone = reply.getResults().stream().anyMatch(
-                r -> r.getFields().get("title") != null && r.getFields().get("title").toLowerCase().contains("smartphone"));
+        boolean hasSmartphone = reply.getResults().stream().anyMatch(r -> r.getFields().get("title").asString() != null
+                && r.getFields().get("title").asString().toLowerCase().contains("smartphone"));
         assertThat(hasSmartphone).isTrue();
     }
 
@@ -219,7 +219,7 @@ public class FtHybridIntegrationTests {
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
         // Products with "smartphone camera" should rank higher with BM25
-        String firstTitle = reply.getResults().get(0).getFields().get("title");
+        String firstTitle = reply.getResults().get(0).getFields().get("title").asString();
         assertThat(firstTitle).isNotNull();
         assertThat(firstTitle.toLowerCase()).containsAnyOf("smartphone", "camera");
     }
@@ -250,7 +250,7 @@ public class FtHybridIntegrationTests {
         assertThat(reply.getResults()).isNotEmpty();
 
         // With LOAD *, all fields should be present
-        Map<String, String> firstResult = reply.getResults().get(0).getFields();
+        Map<String, FieldValue> firstResult = reply.getResults().get(0).getFields();
         assertThat(firstResult).containsKeys("title", "category", "brand", "price", "rating");
     }
 
@@ -320,16 +320,16 @@ public class FtHybridIntegrationTests {
         // Find Apple result and verify aggregations
         // Apple has products at $999 and $2499, so avg=1749, min=999, max=2499
         for (HybridReply.HybridResult hybridResult : reply.getResults()) {
-            Map<String, String> result = hybridResult.getFields();
+            Map<String, FieldValue> result = hybridResult.getFields();
             if ("apple".equals(result.get("brand"))) {
-                assertThat(result.get("avg_price")).isEqualTo("1749");
-                assertThat(result.get("min_price")).isEqualTo("999");
-                assertThat(result.get("max_price")).isEqualTo("2499");
+                assertThat(result.get("avg_price").asString()).isEqualTo("1749");
+                assertThat(result.get("min_price").asString()).isEqualTo("999");
+                assertThat(result.get("max_price").asString()).isEqualTo("2499");
             } else if ("samsung".equals(result.get("brand"))) {
                 // Samsung: $799 and $1299, avg=1049, min=799, max=1299
-                assertThat(result.get("avg_price")).isEqualTo("1049");
-                assertThat(result.get("min_price")).isEqualTo("799");
-                assertThat(result.get("max_price")).isEqualTo("1299");
+                assertThat(result.get("avg_price").asString()).isEqualTo("1049");
+                assertThat(result.get("min_price").asString()).isEqualTo("799");
+                assertThat(result.get("max_price").asString()).isEqualTo("1299");
             }
         }
     }
@@ -356,11 +356,11 @@ public class FtHybridIntegrationTests {
         // Find electronics category and verify quantile was computed
         boolean foundElectronics = false;
         for (HybridReply.HybridResult hybridResult : reply.getResults()) {
-            Map<String, String> result = hybridResult.getFields();
-            if ("electronics".equals(result.get("category"))) {
+            Map<String, FieldValue> result = hybridResult.getFields();
+            if ("electronics".equals(result.get("category").asString())) {
                 foundElectronics = true;
                 assertThat(result.get("median_price")).isNotNull();
-                assertThat(result.get("count")).isEqualTo("5"); // 5 electronics products
+                assertThat(result.get("count").asString()).isEqualTo("5"); // 5 electronics products
             }
         }
         assertThat(foundElectronics).isTrue();
@@ -457,11 +457,11 @@ public class FtHybridIntegrationTests {
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
-        Map<String, String> electronicsGroup = reply.getResults().get(0).getFields();
+        Map<String, FieldValue> electronicsGroup = reply.getResults().get(0).getFields();
         assertThat(electronicsGroup.get("price_stddev")).isNotNull();
         // STDDEV is a scalar string. KNN+RRF may return only one electronics item per group,
         // giving stddev=0. Just verify the value is a parseable non-negative double.
-        double stddev = Double.parseDouble(electronicsGroup.get("price_stddev"));
+        double stddev = Double.parseDouble(electronicsGroup.get("price_stddev").asString());
         assertThat(stddev).isGreaterThanOrEqualTo(0.0);
     }
 
@@ -487,7 +487,7 @@ public class FtHybridIntegrationTests {
         for (HybridReply.HybridResult result : reply.getResults()) {
             assertThat(result.getFields().get("approx_brand_count")).isNotNull();
             // HyperLogLog approx count should be a positive integer
-            long approxCount = Long.parseLong(result.getFields().get("approx_brand_count"));
+            long approxCount = Long.parseLong(result.getFields().get("approx_brand_count").asString());
             assertThat(approxCount).isGreaterThan(0);
         }
     }
@@ -513,7 +513,7 @@ public class FtHybridIntegrationTests {
 
         // With mid-distance vector and high text weight, products with "Pro" in title should rank high
         // Our dataset has: "iPhone 15 Pro", "MacBook Pro"
-        String firstTitle = reply.getResults().get(0).getFields().get("title");
+        String firstTitle = reply.getResults().get(0).getFields().get("title").asString();
         assertThat(firstTitle).containsIgnoringCase("Pro");
     }
 

@@ -7,7 +7,6 @@
 
 package io.lettuce.core.search;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -158,9 +157,10 @@ public class SearchReply<K> {
     /**
      * Represents a single search result document.
      * <p>
-     * Field values are stored as the raw bytes returned by the server. {@link #getFields()} exposes them decoded as UTF-8
-     * {@link String}s, which suits textual and numeric fields; binary fields (for example vector embeddings) should be read via
-     * {@link #getFieldBytes(String)}, which preserves the exact bytes.
+     * {@link #getFields()} maps each field name to a {@link FieldValue}, which retains the exact bytes returned by the server
+     * and can be read as either text ({@link FieldValue#asString()}) or binary ({@link FieldValue#asBytes()}). This lets a
+     * single document mix textual/numeric fields with binary fields such as vector embeddings, where UTF-8 decoding would
+     * corrupt the value.
      *
      * @param <K> Key type of the document id.
      */
@@ -170,9 +170,7 @@ public class SearchReply<K> {
 
         private Double score;
 
-        private final Map<String, byte[]> rawFields = new LinkedHashMap<>();
-
-        private Map<String, String> fields;
+        private final Map<String, FieldValue> fields = new LinkedHashMap<>();
 
         /**
          * Creates a new SearchResult with the specified document ID.
@@ -217,43 +215,23 @@ public class SearchReply<K> {
         }
 
         /**
-         * Gets the document fields decoded as UTF-8 text.
-         * <p>
-         * This contains the field names and values of the document. If NOCONTENT was used in the search, this will be empty.
-         * Binary field values (for example vector embeddings) are not valid UTF-8; read those via
-         * {@link #getFieldBytes(String)} instead.
+         * Gets the document fields, mapping each field name to its {@link FieldValue}, in the order returned by the server. If
+         * NOCONTENT was used in the search, this will be empty. Read each value as text via {@link FieldValue#asString()} or as
+         * raw bytes via {@link FieldValue#asBytes()}.
          *
-         * @return the document fields, or an empty map if not available
+         * @return an unmodifiable, ordered map of field name to {@link FieldValue}, or an empty map if not available
          */
-        public Map<String, String> getFields() {
-            if (fields == null) {
-                Map<String, String> decoded = new LinkedHashMap<>(rawFields.size());
-                rawFields.forEach(
-                        (key, value) -> decoded.put(key, value == null ? null : new String(value, StandardCharsets.UTF_8)));
-                fields = decoded;
-            }
-            return fields;
-        }
-
-        /**
-         * Gets the raw bytes of a single document field, exactly as returned by the server. Use this accessor for binary fields
-         * such as vector embeddings, where UTF-8 decoding would corrupt the value.
-         *
-         * @param name the field name
-         * @return the raw field value, or {@code null} if the field is not present
-         */
-        public byte[] getFieldBytes(String name) {
-            return rawFields.get(name);
+        public Map<String, FieldValue> getFields() {
+            return Collections.unmodifiableMap(fields);
         }
 
         /**
          * Adds all the provided fields
          *
-         * @param fields the document fields
+         * @param fields the document fields, keyed by name, with raw byte values
          */
         public void addFields(Map<String, byte[]> fields) {
-            this.rawFields.putAll(fields);
-            this.fields = null;
+            fields.forEach(this::addField);
         }
 
         /**
@@ -263,8 +241,7 @@ public class SearchReply<K> {
          * @param value the raw field value
          */
         public void addField(String key, byte[] value) {
-            this.rawFields.put(key, value);
-            this.fields = null;
+            this.fields.put(key, value == null ? FieldValue.NULL : FieldValue.of(value));
         }
 
     }

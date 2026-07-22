@@ -198,8 +198,7 @@ public class SearchReplyParser<K> implements ComplexDataParser<SearchReply<K>> {
                     for (int idx = 0; idx < resultEntries.size(); idx += 2) {
                         String fieldName = StringCodec.UTF8.decodeKey((ByteBuffer) resultEntries.get(idx));
                         Object value = resultEntries.get(idx + 1);
-                        byte[] fieldValue = value == null ? null : toBytes((ByteBuffer) value);
-                        searchResult.addField(fieldName, fieldValue);
+                        searchResult.addField(fieldName, value == null ? null : toBytes((ByteBuffer) value));
                     }
 
                     i++;
@@ -276,8 +275,7 @@ public class SearchReplyParser<K> implements ComplexDataParser<SearchReply<K>> {
                         ComplexData extraAttributes = (ComplexData) resultEntry.get(EXTRA_ATTRIBUTES_KEY);
                         extraAttributes.getDynamicMap().forEach((key, value) -> {
                             String fieldName = StringCodec.UTF8.decodeKey((ByteBuffer) key);
-                            byte[] fieldValue = value == null ? null : toBytes((ByteBuffer) value);
-                            searchResult.addField(fieldName, fieldValue);
+                            searchResult.addField(fieldName, value == null ? null : toBytes((ByteBuffer) value));
                         });
                     }
                     searchReply.addResult(searchResult);
