@@ -8,6 +8,7 @@
 package io.lettuce.core.search;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -71,18 +72,18 @@ class SearchResultsTest {
         SearchReply.SearchResult<String> firstResult = results.getResults().get(0);
         assertThat(firstResult.getId()).isEqualTo("doc1");
         assertThat(firstResult.getScore()).isEqualTo(0.95);
-        assertThat(firstResult.getFields()).containsEntry("title", "Test Document 1");
-        assertThat(firstResult.getFields()).containsEntry("content", "This is test content");
+        assertThat(firstResult.getFields().get("title").asString()).isEqualTo("Test Document 1");
+        assertThat(firstResult.getFields().get("content").asString()).isEqualTo("This is test content");
 
         SearchReply.SearchResult<String> secondResult = results.getResults().get(1);
         assertThat(secondResult.getId()).isEqualTo("doc2");
         assertThat(secondResult.getScore()).isEqualTo(0.87);
-        assertThat(secondResult.getFields()).containsEntry("title", "Test Document 2");
-        assertThat(secondResult.getFields()).containsEntry("content", "This is more test content");
+        assertThat(secondResult.getFields().get("title").asString()).isEqualTo("Test Document 2");
+        assertThat(secondResult.getFields().get("content").asString()).isEqualTo("This is more test content");
     }
 
     @Test
-    void testGetFieldBytesPreservesBinaryValues() {
+    void testFieldValuesExposeTextAndBinary() {
         SearchReply.SearchResult<String> result = new SearchReply.SearchResult<>("doc1");
 
         // a binary value that is not valid UTF-8 (e.g. a little-endian float32 vector)
@@ -90,20 +91,36 @@ class SearchResultsTest {
         result.addField("embedding", vector);
         result.addField("title", "Lettuce".getBytes(StandardCharsets.UTF_8));
 
-        // getFieldBytes returns the exact bytes, untouched by UTF-8 decoding
-        assertThat(result.getFieldBytes("embedding")).isEqualTo(vector);
-        assertThat(result.getFieldBytes("title")).isEqualTo("Lettuce".getBytes(StandardCharsets.UTF_8));
+        Map<String, FieldValue> fields = result.getFields();
 
-        // absent fields yield null
-        assertThat(result.getFieldBytes("missing")).isNull();
+        // a text field reads back as a String
+        assertThat(fields.get("title").asString()).isEqualTo("Lettuce");
 
-        // the UTF-8 view still serves the text field
-        assertThat(result.getFields().get("title")).isEqualTo("Lettuce");
+        // the binary field survives byte-exact, independent of the lossy String view
+        assertThat(fields.get("embedding").asBytes()).isEqualTo(vector);
 
-        // fields added after the decoded view was materialized are still visible through both accessors
+        // absent fields are simply not present in the map
+        assertThat(fields.get("missing")).isNull();
+        assertThat(fields).containsOnlyKeys("embedding", "title");
+
+        // fields added later are visible
         result.addField("category", "greens".getBytes(StandardCharsets.UTF_8));
-        assertThat(result.getFields().get("category")).isEqualTo("greens");
-        assertThat(result.getFieldBytes("category")).isEqualTo("greens".getBytes(StandardCharsets.UTF_8));
+        assertThat(result.getFields().get("category").asString()).isEqualTo("greens");
+    }
+
+    @Test
+    void testFieldValueDecodesWithGivenCharset() {
+        SearchReply.SearchResult<String> result = new SearchReply.SearchResult<>("doc1");
+        result.addField("title", "café".getBytes(StandardCharsets.ISO_8859_1));
+
+        FieldValue title = result.getFields().get("title");
+        assertThat(title.asString(StandardCharsets.ISO_8859_1)).isEqualTo("café");
+    }
+
+    @Test
+    void testFieldValueRejectsNull() {
+        // a FieldValue always wraps real bytes; a missing field is a missing map key, not a null/empty value
+        assertThatThrownBy(() -> FieldValue.of(null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

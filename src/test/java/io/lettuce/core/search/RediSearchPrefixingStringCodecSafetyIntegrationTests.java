@@ -371,7 +371,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         SearchReply<String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
-        String body = result.getResults().get(0).getFields().get(encodedFieldRef("body"));
+        String body = result.getResults().get(0).getFields().get(encodedFieldRef("body")).asString();
         assertThat(body).as("SUMMARIZE must be applied to the 'body' field").contains("...");
     }
 
@@ -389,7 +389,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         SearchReply<String> result = redis.ftSearch(HASH_INDEX, "search", args);
 
         assertThat(result.getCount()).isEqualTo(1L);
-        String body = result.getResults().get(0).getFields().get(encodedFieldRef("body"));
+        String body = result.getResults().get(0).getFields().get(encodedFieldRef("body")).asString();
         assertThat(body).as("HIGHLIGHT must wrap 'search' occurrences with the configured tags").contains("<b>search</b>");
     }
 

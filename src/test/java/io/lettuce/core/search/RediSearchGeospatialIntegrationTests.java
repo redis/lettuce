@@ -132,7 +132,7 @@ public class RediSearchGeospatialIntegrationTests {
 
         assertThat(results.getCount()).isEqualTo(1); // Only Denver store
         assertThat(results.getResults()).hasSize(1);
-        assertThat(results.getResults().get(0).getFields().get("name")).isEqualTo("Downtown Electronics");
+        assertThat(results.getResults().get(0).getFields().get("name").asString()).isEqualTo("Downtown Electronics");
 
         // Cleanup
         redis.ftDropindex(GEO_INDEX);
@@ -168,7 +168,7 @@ public class RediSearchGeospatialIntegrationTests {
         SearchReply<String> results = redis.ftSearch(GEO_INDEX, "@locations:[-104.991531 39.742043 10 mi]");
 
         assertThat(results.getCount()).isEqualTo(1);
-        assertThat(results.getResults().get(0).getFields().get("product")).isEqualTo("Laptop Pro");
+        assertThat(results.getResults().get(0).getFields().get("product").asString()).isEqualTo("Laptop Pro");
 
         // Cleanup
         redis.ftDropindex(GEO_INDEX);
@@ -343,7 +343,7 @@ public class RediSearchGeospatialIntegrationTests {
                 "(@category:restaurant) (@location:[-104.991531 39.742043 30 mi])");
 
         assertThat(results.getCount()).isEqualTo(1);
-        assertThat(results.getResults().get(0).getFields().get("name")).isEqualTo("Downtown Pizza");
+        assertThat(results.getResults().get(0).getFields().get("name").asString()).isEqualTo("Downtown Pizza");
 
         // Test 2: Find businesses whose service area contains a specific point
         String customerLocation = "POINT (-105.0 39.8)";
