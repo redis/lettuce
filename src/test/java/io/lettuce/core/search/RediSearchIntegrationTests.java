@@ -8,15 +8,24 @@
 package io.lettuce.core.search;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.LettuceFutures;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.protocol.DecodeBufferPolicies;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.search.aggregateutils.Apply;
+import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.hybrid.Combiners;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
@@ -51,6 +60,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.ByteOrder;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -1388,6 +1398,347 @@ public class RediSearchIntegrationTests {
             buffer.putFloat(value);
         }
         return buffer.array();
+    }
+
+    // Index name for the on-timeout policy tests
+    private static final String TIMEOUT_INDEX = "timeout-idx";
+
+    private static final String TIMEOUT_PREFIX = "tdoc:";
+
+    /**
+     * Number of documents indexed by the on-timeout tests. Large enough that scanning, scoring and sorting them cannot complete
+     * within the 1ms per-query timeout, so the query engine's on-timeout policy is guaranteed to kick in.
+     */
+    private static final int TIMEOUT_DOC_COUNT = 10_000;
+
+    private void populateTimeoutIndex() {
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> numField = NumericFieldArgs.<String> builder().name("n").sortable().build();
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(TIMEOUT_PREFIX)
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate(TIMEOUT_INDEX, createArgs, Arrays.asList(titleField, numField))).isEqualTo("OK");
+
+        // Bulk-load with pipelining so 1k documents load quickly.
+        StatefulRedisConnection<String, String> connection = redis.getStatefulConnection();
+        RedisAsyncCommands<String, String> async = connection.async();
+        connection.setAutoFlushCommands(false);
+        try {
+            List<RedisFuture<?>> futures = new ArrayList<>(TIMEOUT_DOC_COUNT);
+            for (int i = 0; i < TIMEOUT_DOC_COUNT; i++) {
+                Map<String, String> fields = new HashMap<>();
+                fields.put("title", "hello world " + i);
+                fields.put("n", Integer.toString(i));
+                futures.add(async.hmset(TIMEOUT_PREFIX + i, fields));
+            }
+            connection.flushCommands();
+            assertThat(LettuceFutures.awaitAll(Duration.ofSeconds(60), futures.toArray(new RedisFuture[0]))).isTrue();
+        } finally {
+            connection.setAutoFlushCommands(true);
+        }
+        assertIndexSize(TIMEOUT_INDEX, TIMEOUT_DOC_COUNT);
+    }
+
+    /**
+     * Asserts that {@code index} contains exactly {@code expected} documents. Indexing can lag behind the HSET writes, so we
+     * poll the document count a bounded number of times (breaking as soon as it matches) before asserting exact equality. This
+     * keeps the 1ms-timeout query from running against a partially built index (few enough documents that it completes within
+     * the timeout), which would make the test flaky.
+     */
+    private void assertIndexSize(String index, long expected) {
+        long indexed = -1;
+        // allow indexing to catch up (mirrors the other client libraries' AssertIndexSize)
+        for (int i = 0; i < 10; i++) {
+            indexed = ftInfoNumDocs(index);
+            if (indexed == expected) {
+                break;
+            }
+        }
+        assertThat(indexed).isEqualTo(expected);
+    }
+
+    /**
+     * FT.INFO is not exposed by Lettuce's {@code RediSearchCommands} API, so we issue it as a raw command via
+     * {@link io.lettuce.core.api.sync.BaseRedisCommands#dispatch dispatch()} and read the {@code num_docs} field. This mirrors
+     * how the Jedis and NRedisStack helpers assert the index size (via FT.INFO {@code num_docs}) instead of an FT.SEARCH count.
+     */
+    private long ftInfoNumDocs(String index) {
+        return redis.dispatch(FT_INFO, new NumDocsOutput(), new CommandArgs<>(StringCodec.UTF8).add(index));
+    }
+
+    private static final ProtocolKeyword FT_INFO = new ProtocolKeyword() {
+
+        private final byte[] bytes = "FT.INFO".getBytes(StandardCharsets.US_ASCII);
+
+        @Override
+        public byte[] getBytes() {
+            return bytes;
+        }
+
+        @Override
+        public String toString() {
+            return "FT.INFO";
+        }
+
+    };
+
+    /**
+     * Extracts only the {@code num_docs} value from the flat FT.INFO reply. Works on both RESP2 and RESP3: the field names and
+     * values arrive as a flat token stream, so when the {@code num_docs} key is seen, the next scalar (bulk string on RESP2 or
+     * integer on RESP3) is its value.
+     */
+    private static final class NumDocsOutput extends CommandOutput<String, String, Long> {
+
+        private boolean valueExpected;
+
+        NumDocsOutput() {
+            super(StringCodec.UTF8, -1L);
+        }
+
+        @Override
+        public void set(ByteBuffer bytes) {
+            if (bytes == null) {
+                return;
+            }
+            String token = StringCodec.UTF8.decodeValue(bytes);
+            if (valueExpected) {
+                output = Long.parseLong(token);
+                valueExpected = false;
+            } else if ("num_docs".equals(token)) {
+                valueExpected = true;
+            }
+        }
+
+        @Override
+        public void set(long integer) {
+            if (valueExpected) {
+                output = integer;
+                valueExpected = false;
+            }
+        }
+
+        // Other FT.INFO fields carry double/boolean values (e.g. percent_indexed); accept and skip them so decoding of the
+        // full reply doesn't fail before num_docs is read.
+        @Override
+        public void set(double number) {
+            if (valueExpected) {
+                output = (long) number;
+                valueExpected = false;
+            }
+        }
+
+        @Override
+        public void set(boolean value) {
+            valueExpected = false;
+        }
+
+    }
+
+    /**
+     * A query heavy enough that it cannot finish within a 1ms timeout: it matches every document and forces a full scan,
+     * scoring and sort over the whole index.
+     */
+    private SearchArgs<String, String> timingOutSearchArgs() {
+        SortByArgs<String> sortBy = SortByArgs.<String> builder().attribute("n").descending().build();
+        return SearchArgs.<String, String> builder().timeout(Duration.ofMillis(1)).withScores().sortBy(sortBy)
+                .limit(0, TIMEOUT_DOC_COUNT).build();
+    }
+
+    /**
+     * With the {@code FAIL} on-timeout policy the server returns an error on a timed-out search instead of partial results. The
+     * client must surface that error (as a {@link RedisCommandExecutionException}) rather than swallowing it into an
+     * empty/partial result, and it must not be automatically retried. See CAE-3003 (initiative RED-132340: "Timeout
+     * guardrails").
+     */
+    @Test
+    void testSearchOnTimeoutFailReturnsError() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+
+        populateTimeoutIndex();
+
+        // search-on-timeout is a global server config; set it via CONFIG SET (broadcast to all nodes on a cluster).
+        assertThat(redis.configSet("search-on-timeout", "fail")).isEqualTo("OK");
+        try {
+            RedisCommandExecutionException e = assertThrows(RedisCommandExecutionException.class,
+                    () -> redis.ftSearch(TIMEOUT_INDEX, "hello world", timingOutSearchArgs()));
+            assertThat(e.getMessage().toLowerCase()).contains("timeout");
+        } finally {
+            // Restore the default policy so we don't leak the FAIL setting into other tests.
+            assertThat(redis.configSet("search-on-timeout", "return")).isEqualTo("OK");
+        }
+    }
+
+    /**
+     * With the default {@code RETURN} on-timeout policy the server returns a (possibly partial) result together with a warning
+     * instead of failing. The client must not throw and must expose the warning via {@link SearchReply#getWarnings()}. Warnings
+     * are only carried on RESP3 for FT.SEARCH; the default connection here is RESP3. See CAE-3003.
+     */
+    @Test
+    void testSearchOnTimeoutReturnPopulatesWarnings() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+        assumeTrue(getOptions().getProtocolVersion() != ProtocolVersion.RESP2, "warnings field is only available on RESP3");
+
+        populateTimeoutIndex();
+
+        // RETURN is the default, but set it explicitly to keep the test independent of any policy left behind elsewhere.
+        assertThat(redis.configSet("search-on-timeout", "return")).isEqualTo("OK");
+        SearchReply<String, String> reply = redis.ftSearch(TIMEOUT_INDEX, "hello world", timingOutSearchArgs());
+
+        // RETURN must not fail the query, and the timeout must be reported as a warning.
+        assertThat(reply.getWarnings()).isNotEmpty();
+        assertThat(reply.getWarnings().toString().toLowerCase()).contains("timeout");
+    }
+
+    /**
+     * A heavy FT.AGGREGATE that cannot finish within a 1ms timeout. A plain sort over the numeric field is optimized away
+     * (partial-range/skip-sorter), so instead we force the "no optimization" path documented for FT.AGGREGATE: score every
+     * document (ADDSCORES) and sort by {@code @__score}, load the text field (an HMGET per document) and blow it up with
+     * repeated string formatting (each APPLY triples the string). This costs tens of ms over ~1k documents, well beyond the 1ms
+     * budget on any hardware.
+     */
+    private AggregateArgs<String, String> timingOutAggregateArgs() {
+        return AggregateArgs.<String, String> builder().addScores().load("@title")
+                .apply("format(\"%s%s%s\",@title,@title,@title)", "a").apply("format(\"%s%s%s\",@a,@a,@a)", "a")
+                .apply("format(\"%s%s%s\",@a,@a,@a)", "a").apply("format(\"%s%s%s\",@a,@a,@a)", "a")
+                .apply("format(\"%s%s%s\",@a,@a,@a)", "a").sortBy("@__score", AggregateArgs.SortDirection.DESC)
+                .timeout(Duration.ofMillis(1)).build();
+    }
+
+    /**
+     * FT.AGGREGATE counterpart of {@link #testSearchOnTimeoutFailReturnsError()}: the {@code FAIL} policy must surface a server
+     * error rather than partial results. See CAE-3003.
+     */
+    @Test
+    void testAggregateOnTimeoutFailReturnsError() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+
+        populateTimeoutIndex();
+
+        assertThat(redis.configSet("search-on-timeout", "fail")).isEqualTo("OK");
+        try {
+            RedisCommandExecutionException e = assertThrows(RedisCommandExecutionException.class,
+                    () -> redis.ftAggregate(TIMEOUT_INDEX, "hello world", timingOutAggregateArgs()));
+            assertThat(e.getMessage().toLowerCase()).contains("timeout");
+        } finally {
+            assertThat(redis.configSet("search-on-timeout", "return")).isEqualTo("OK");
+        }
+    }
+
+    /**
+     * FT.AGGREGATE counterpart of {@link #testSearchOnTimeoutReturnPopulatesWarnings()}: the {@code RETURN} policy must not
+     * throw and must expose the timeout as a warning. FT.AGGREGATE reports warnings on RESP3; the aggregate reply carries them
+     * on its inner {@link SearchReply}. See CAE-3003.
+     */
+    @Test
+    void testAggregateOnTimeoutReturnPopulatesWarnings() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+        assumeTrue(getOptions().getProtocolVersion() != ProtocolVersion.RESP2, "warnings field is only available on RESP3");
+
+        populateTimeoutIndex();
+
+        assertThat(redis.configSet("search-on-timeout", "return")).isEqualTo("OK");
+        AggregationReply<String, String> reply = redis.ftAggregate(TIMEOUT_INDEX, "hello world", timingOutAggregateArgs());
+
+        assertThat(reply.getReplies()).isNotEmpty();
+        List<String> warnings = reply.getReplies().get(0).getWarnings();
+        assertThat(warnings).isNotEmpty();
+        assertThat(warnings.toString().toLowerCase()).contains("timeout");
+    }
+
+    // Dedicated vector index for the FT.HYBRID on-timeout tests (the shared timeout index has no vector field).
+    private static final String TIMEOUT_VECTOR_INDEX = "timeout-vec-idx";
+
+    private static final String TIMEOUT_VECTOR_PREFIX = "tvec:";
+
+    private static final int TIMEOUT_VECTOR_DIM = 8;
+
+    private void populateTimeoutVectorIndex() {
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").hnsw()
+                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(TIMEOUT_VECTOR_DIM)
+                .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(TIMEOUT_VECTOR_PREFIX)
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate(TIMEOUT_VECTOR_INDEX, createArgs, Arrays.asList(titleField, vectorField))).isEqualTo("OK");
+
+        // Bulk-load over the binary connection so vector bytes are stored verbatim.
+        byte[] vector = floatArrayToByteArray(new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f });
+        StatefulRedisConnection<byte[], byte[]> connection = redisBinary.getStatefulConnection();
+        RedisAsyncCommands<byte[], byte[]> async = connection.async();
+        connection.setAutoFlushCommands(false);
+        try {
+            List<RedisFuture<?>> futures = new ArrayList<>(TIMEOUT_DOC_COUNT);
+            for (int i = 0; i < TIMEOUT_DOC_COUNT; i++) {
+                Map<byte[], byte[]> fields = new HashMap<>();
+                fields.put("title".getBytes(), ("hello world " + i).getBytes());
+                fields.put("embedding".getBytes(), vector);
+                futures.add(async.hmset((TIMEOUT_VECTOR_PREFIX + i).getBytes(), fields));
+            }
+            connection.flushCommands();
+            assertThat(LettuceFutures.awaitAll(Duration.ofSeconds(60), futures.toArray(new RedisFuture[0]))).isTrue();
+        } finally {
+            connection.setAutoFlushCommands(true);
+        }
+        assertIndexSize(TIMEOUT_VECTOR_INDEX, TIMEOUT_DOC_COUNT);
+    }
+
+    /**
+     * A hybrid query heavy enough that it cannot finish within a 1ms timeout. A plain KNN + combine is far too cheap, so we
+     * push many documents through the post-processing pipeline (high KNN K and a large COMBINE window) and then force real
+     * per-document work in it, exactly like the FT.AGGREGATE timeout query: load the text field (HMGET per document), blow it
+     * up with repeated string formatting, and sort by that non-numeric field (the "no optimization" path). This reliably
+     * exceeds the timeout on any hardware.
+     */
+    private HybridArgs<String, String> timingOutHybridArgs() {
+        return HybridArgs.<String, String> builder()
+                .search(HybridSearchArgs.<String, String> builder().query("hello world").build())
+                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
+                        .method(HybridVectorArgs.Knn.of(TIMEOUT_DOC_COUNT)).build())
+                .combine(Combiners.<String> linear().alpha(0.5).beta(0.5).window(TIMEOUT_DOC_COUNT))
+                .postProcessing(PostProcessingArgs.<String, String> builder().load("@title")
+                        .apply(Apply.of("format(\"%s%s%s\",@title,@title,@title)", "a"))
+                        .apply(Apply.of("format(\"%s%s%s\",@a,@a,@a)", "a")).apply(Apply.of("format(\"%s%s%s\",@a,@a,@a)", "a"))
+                        .apply(Apply.of("format(\"%s%s%s\",@a,@a,@a)", "a")).apply(Apply.of("format(\"%s%s%s\",@a,@a,@a)", "a"))
+                        .sortBy(SortBy.of("@a", SortDirection.DESC)).build())
+                .timeout(Duration.ofMillis(1))
+                .param("vec", floatArrayToByteArray(new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f })).build();
+    }
+
+    /**
+     * FT.HYBRID counterpart of {@link #testSearchOnTimeoutFailReturnsError()}: the {@code FAIL} policy must surface a server
+     * error rather than partial results. See CAE-3003.
+     */
+    @Test
+    void testHybridOnTimeoutFailReturnsError() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+
+        populateTimeoutVectorIndex();
+
+        assertThat(redis.configSet("search-on-timeout", "fail")).isEqualTo("OK");
+        try {
+            RedisCommandExecutionException e = assertThrows(RedisCommandExecutionException.class,
+                    () -> redis.ftHybrid(TIMEOUT_VECTOR_INDEX, timingOutHybridArgs()));
+            assertThat(e.getMessage().toLowerCase()).contains("timeout");
+        } finally {
+            assertThat(redis.configSet("search-on-timeout", "return")).isEqualTo("OK");
+        }
+    }
+
+    /**
+     * FT.HYBRID counterpart of {@link #testSearchOnTimeoutReturnPopulatesWarnings()}: the {@code RETURN} policy must not throw
+     * and must expose the timeout via {@link HybridReply#getWarnings()}. FT.HYBRID carries warnings on both RESP2 and RESP3.
+     * See CAE-3003.
+     */
+    @Test
+    void testHybridOnTimeoutReturnPopulatesWarnings() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+
+        populateTimeoutVectorIndex();
+
+        assertThat(redis.configSet("search-on-timeout", "return")).isEqualTo("OK");
+        HybridReply<String, String> reply = redis.ftHybrid(TIMEOUT_VECTOR_INDEX, timingOutHybridArgs());
+
+        assertThat(reply.getWarnings()).isNotEmpty();
+        assertThat(reply.getWarnings().toString().toLowerCase()).contains("timeout");
     }
 
 }
