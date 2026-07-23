@@ -50,6 +50,7 @@ import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
+import io.lettuce.test.condition.DisabledOnRedisEnterprise;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
@@ -116,6 +117,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("COPY")
+    @DisabledOnRedisEnterprise("COPY across DB indexes is not supported on a managed Redis Enterprise database (single logical DB)")
     void copyWithDestinationDb() {
         redis.set(key, value);
         redis.copy(key, key, CopyArgs.Builder.destinationDb(2));
@@ -228,6 +230,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @DisabledOnRedisEnterprise("MOVE across DB indexes is not supported on a managed Redis Enterprise database (single logical DB)")
     public void move() {
         redis.set(key, value);
         redis.move(key, 1);
@@ -245,6 +248,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @DisabledOnRedisEnterprise("Requires switching maxmemory-policy to an LFU policy via CONFIG SET, which is not permitted on a managed Redis Enterprise database")
     void objectFreq() {
         String maxmemoryPolicy = redis.configGet("maxmemory-policy").get("maxmemory-policy");
         try {

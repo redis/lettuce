@@ -28,6 +28,7 @@ import io.lettuce.core.dynamic.Commands;
 import io.lettuce.core.dynamic.RedisCommandFactory;
 import io.lettuce.core.dynamic.annotation.Command;
 import io.lettuce.core.dynamic.annotation.Param;
+import io.lettuce.test.condition.DisabledOnRedisEnterprise;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -46,6 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Tihomir Mateev
  */
 @Tag(INTEGRATION_TEST)
+@DisabledOnRedisEnterprise("Connects to a hardcoded localhost Redis Stack instance (127.0.0.1:16379), not the managed database")
 public class CommandInterfacesIntegrationTests {
 
     protected static RedisClient client;

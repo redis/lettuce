@@ -41,6 +41,7 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnRedisEnterprise;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
@@ -53,6 +54,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledOnCommand("ACL")
+@DisabledOnRedisEnterprise("ACL SETUSER / user management is not permitted for the default user on a managed Redis Enterprise database")
 public class AclCommandIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
