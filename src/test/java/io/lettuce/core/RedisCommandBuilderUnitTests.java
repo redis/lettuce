@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * @author Mark Paluch
  * @author dae won
+ * @author Sanghun Lee
  */
 @Tag(UNIT_TEST)
 class RedisCommandBuilderUnitTests {
@@ -835,6 +836,38 @@ class RedisCommandBuilderUnitTests {
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$3\r\n" + "OFF\r\n");
+    }
+
+    @Test
+    void scanShouldPropagateCursorSourceToResultCursor() {
+
+        RedisURI source = RedisURI.create("localhost", 6482);
+
+        ScanCursor scanCursor = ScanCursor.of("42");
+        scanCursor.setSource(source);
+
+        assertThat(sut.scan(scanCursor, null).getOutput().get().getSource()).isSameAs(source);
+        assertThat(sut.hscan(MY_KEY, scanCursor, null).getOutput().get().getSource()).isSameAs(source);
+        assertThat(sut.hscanNovalues(MY_KEY, scanCursor, null).getOutput().get().getSource()).isSameAs(source);
+        assertThat(sut.sscan(MY_KEY, scanCursor, null).getOutput().get().getSource()).isSameAs(source);
+        assertThat(sut.zscan(MY_KEY, scanCursor, null).getOutput().get().getSource()).isSameAs(source);
+        assertThat(sut.scanStreaming(k -> {
+        }, scanCursor, null).getOutput().get().getSource()).isSameAs(source);
+        assertThat(sut.hscanStreaming((k, v) -> {
+        }, MY_KEY, scanCursor, null).getOutput().get().getSource()).isSameAs(source);
+        assertThat(sut.hscanNoValuesStreaming(k -> {
+        }, MY_KEY, scanCursor, null).getOutput().get().getSource()).isSameAs(source);
+        assertThat(sut.sscanStreaming(v -> {
+        }, MY_KEY, scanCursor, null).getOutput().get().getSource()).isSameAs(source);
+        assertThat(sut.zscanStreaming(sv -> {
+        }, MY_KEY, scanCursor, null).getOutput().get().getSource()).isSameAs(source);
+    }
+
+    @Test
+    void scanWithoutCursorSourceShouldLeaveResultCursorSourceEmpty() {
+
+        assertThat(sut.scan(ScanCursor.of("42"), null).getOutput().get().getSource()).isNull();
+        assertThat(sut.scan(ScanCursor.INITIAL, null).getOutput().get().getSource()).isNull();
     }
 
 }

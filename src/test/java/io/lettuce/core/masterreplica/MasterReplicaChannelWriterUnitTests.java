@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -38,9 +39,16 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.ScanCursorAccessor;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.models.role.RedisNodeDescription;
+import io.lettuce.core.output.KeyScanOutput;
 import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionIntent;
@@ -50,6 +58,7 @@ import io.lettuce.core.resource.ClientResources;
 /**
  * @author Mark Paluch
  * @author Jim Brunner
+ * @author Sanghun Lee
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
@@ -193,6 +202,145 @@ class MasterReplicaChannelWriterUnitTests {
 
         verify(connectionProvider).getConnectionAsync(ConnectionIntent.WRITE);
         verify(connectionProvider).getConnectionAsync(ConnectionIntent.READ);
+    }
+
+    @Test
+    void shouldAssociateSourceWithInitialScanCommand() {
+
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+
+        RedisURI uri = RedisURI.create("localhost", 6482);
+        RedisNodeDescription node = mock(RedisNodeDescription.class);
+        when(node.getUri()).thenReturn(uri);
+
+        when(connectionProvider.getConnectionAsync(eq(ConnectionIntent.READ), any())).thenAnswer(invocation -> {
+            Consumer<RedisNodeDescription> listener = invocation.getArgument(1);
+            listener.accept(node);
+            return CompletableFuture.completedFuture(connection);
+        });
+
+        Command<String, String, KeyScanCursor<String>> scan = scanCommand();
+
+        writer.write(scan);
+
+        assertThat(ScanCursorAccessor.getSource(scan.getOutput().get())).isEqualTo(uri);
+        verify(connectionProvider).getConnectionAsync(eq(ConnectionIntent.READ), any());
+        verify(connectionProvider, never()).getPinnedConnectionAsync(any());
+    }
+
+    @Test
+    void shouldPinScanContinuationToSourceNode() {
+
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+
+        RedisURI uri = RedisURI.create("localhost", 6482);
+
+        when(connectionProvider.getPinnedConnectionAsync(uri)).thenReturn(CompletableFuture.completedFuture(connection));
+
+        Command<String, String, KeyScanCursor<String>> scan = scanCommand();
+        ScanCursorAccessor.setSource(scan.getOutput().get(), uri);
+
+        writer.write(scan);
+
+        verify(connectionProvider).getPinnedConnectionAsync(uri);
+        verify(connectionProvider, never()).getConnectionAsync(any(ConnectionIntent.class));
+        verify(connectionProvider, never()).getConnectionAsync(any(ConnectionIntent.class), any());
+    }
+
+    @Test
+    void shouldFailScanContinuationWhenSourceNodeIsGone() {
+
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+
+        RedisURI uri = RedisURI.create("localhost", 6482);
+
+        CompletableFuture<StatefulRedisConnection<String, String>> failed = new CompletableFuture<>();
+        failed.completeExceptionally(new RedisException("Cannot route scan continuation"));
+        when(connectionProvider.getPinnedConnectionAsync(uri)).thenReturn(failed);
+
+        Command<String, String, KeyScanCursor<String>> scan = scanCommand();
+        ScanCursorAccessor.setSource(scan.getOutput().get(), uri);
+        AsyncCommand<String, String, KeyScanCursor<String>> asyncCommand = new AsyncCommand<>(scan);
+
+        writer.write(asyncCommand);
+
+        assertThat(asyncCommand.isCompletedExceptionally()).isTrue();
+        assertThatThrownBy(asyncCommand::join).hasCauseInstanceOf(RedisException.class);
+    }
+
+    @Test
+    void shouldUseDefaultReadRouteForNonScanReadCommands() {
+
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+
+        when(connectionProvider.getConnectionAsync(any(ConnectionIntent.class)))
+                .thenReturn(CompletableFuture.completedFuture(connection));
+
+        writer.write(mockCommand(CommandType.GET));
+
+        verify(connectionProvider).getConnectionAsync(ConnectionIntent.READ);
+        verify(connectionProvider, never()).getConnectionAsync(any(ConnectionIntent.class), any());
+        verify(connectionProvider, never()).getPinnedConnectionAsync(any());
+    }
+
+    @Test
+    void shouldBindScansInTransactionToMaster() {
+
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+
+        when(connectionProvider.getConnectionAsync(any(ConnectionIntent.class)))
+                .thenReturn(CompletableFuture.completedFuture(connection));
+
+        writer.write(mockCommand(CommandType.MULTI));
+
+        Command<String, String, KeyScanCursor<String>> scan = scanCommand();
+        writer.write(scan);
+        writer.write(mockCommand(CommandType.EXEC));
+
+        verify(connectionProvider, times(3)).getConnectionAsync(ConnectionIntent.WRITE);
+        verify(connectionProvider, never()).getConnectionAsync(any(ConnectionIntent.class), any());
+        assertThat(ScanCursorAccessor.getSource(scan.getOutput().get())).isNull();
+    }
+
+    @Test
+    void shouldAssociateSourceWithScanCommandsInBatch() {
+
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+
+        RedisURI uri = RedisURI.create("localhost", 6482);
+        RedisNodeDescription node = mock(RedisNodeDescription.class);
+        when(node.getUri()).thenReturn(uri);
+
+        when(connectionProvider.getConnectionAsync(eq(ConnectionIntent.READ), any())).thenAnswer(invocation -> {
+            Consumer<RedisNodeDescription> listener = invocation.getArgument(1);
+            listener.accept(node);
+            return CompletableFuture.completedFuture(connection);
+        });
+
+        Command<String, String, KeyScanCursor<String>> scan = scanCommand();
+
+        writer.write(Arrays.asList(scan, mockCommand(CommandType.GET)));
+
+        assertThat(ScanCursorAccessor.getSource(scan.getOutput().get())).isEqualTo(uri);
+        verify(connectionProvider).getConnectionAsync(eq(ConnectionIntent.READ), any());
+    }
+
+    @Test
+    void shouldUseDefaultRouteForBatchWithoutScanCommands() {
+
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+
+        when(connectionProvider.getConnectionAsync(any(ConnectionIntent.class)))
+                .thenReturn(CompletableFuture.completedFuture(connection));
+
+        writer.write(Collections.singletonList(mockCommand(CommandType.GET)));
+
+        verify(connectionProvider).getConnectionAsync(ConnectionIntent.READ);
+        verify(connectionProvider, never()).getConnectionAsync(any(ConnectionIntent.class), any());
+    }
+
+    private static Command<String, String, KeyScanCursor<String>> scanCommand() {
+        return new Command<>(CommandType.SCAN, new KeyScanOutput<>(StringCodec.UTF8));
     }
 
     private static Command<String, String, String> mockCommand(CommandType multi) {
