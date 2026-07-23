@@ -15,6 +15,8 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -119,6 +121,56 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
         }
     }
 
+    /**
+     * Decodes a single field value from an aggregation/search result entry.
+     * <p>
+     * Scalar values are decoded through the value codec, exactly as before. Aggregation reducers such as {@code COLLECT} and
+     * {@code TOLIST} can produce nested values (arrays or, under RESP3, maps); these are decoded recursively into nested
+     * {@link List} / {@link Map} structures so they can be read from {@link SearchReply.SearchResult#getFields()} rather than
+     * failing with a {@link ClassCastException}.
+     *
+     * @param value the raw value as produced by the RESP parser
+     * @return the decoded value, possibly {@code null}
+     */
+    @SuppressWarnings("unchecked")
+    private V decodeFieldValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof ByteBuffer) {
+            return codec.decodeValue((ByteBuffer) value);
+        }
+        if (value instanceof ComplexData) {
+            return (V) decodeComplexValue((ComplexData) value);
+        }
+        // Numeric / boolean scalars already materialized by the RESP parser.
+        return (V) value;
+    }
+
+    /**
+     * Recursively converts a nested {@link ComplexData} value into plain Java collections: maps (RESP3) become
+     * {@code Map<K, V>} with decoded keys/values, everything else becomes a {@code List<Object>} of recursively decoded
+     * elements (this covers RESP2, where each collected entry is a flat key/value array).
+     */
+    private Object decodeComplexValue(ComplexData data) {
+        if (data.isMap()) {
+            Map<K, V> map = new LinkedHashMap<>();
+            data.getDynamicMap().forEach((key, value) -> map.put(decodeNestedKey(key), decodeFieldValue(value)));
+            return map;
+        }
+
+        List<Object> list = new ArrayList<>();
+        for (Object element : data.getDynamicList()) {
+            list.add(decodeFieldValue(element));
+        }
+        return list;
+    }
+
+    @SuppressWarnings("unchecked")
+    private K decodeNestedKey(Object key) {
+        return key instanceof ByteBuffer ? codec.decodeKey((ByteBuffer) key) : (K) key;
+    }
+
     class Resp2SearchResultsParser implements ComplexDataParser<SearchReply<K, V>> {
 
         @Override
@@ -188,8 +240,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
 
                     for (int idx = 0; idx < resultEntries.size(); idx += 2) {
                         K decodedKey = codec.decodeKey((ByteBuffer) resultEntries.get(idx));
-                        Object value = resultEntries.get(idx + 1);
-                        V decodedValue = value == null ? null : codec.decodeValue((ByteBuffer) value);
+                        V decodedValue = decodeFieldValue(resultEntries.get(idx + 1));
                         searchResult.addFields(decodedKey, decodedValue);
                     }
 
@@ -267,7 +318,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                         ComplexData extraAttributes = (ComplexData) resultEntry.get(EXTRA_ATTRIBUTES_KEY);
                         extraAttributes.getDynamicMap().forEach((key, value) -> {
                             K decodedKey = codec.decodeKey((ByteBuffer) key);
-                            V decodedValue = value == null ? null : codec.decodeValue((ByteBuffer) value);
+                            V decodedValue = decodeFieldValue(value);
                             searchResult.addFields(decodedKey, decodedValue);
                         });
                     }

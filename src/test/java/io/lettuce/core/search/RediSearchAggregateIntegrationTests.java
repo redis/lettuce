@@ -8,6 +8,7 @@
 package io.lettuce.core.search;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 import io.lettuce.TestTags;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
 import org.junit.jupiter.api.BeforeEach;
@@ -134,6 +136,66 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         assertThat(redis.ftDropindex("basic-test-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldPerformCollectAggregation() {
+        // COLLECT is gated behind search-enable-unstable-features; enable it and skip the test on builds where the
+        // reducer (or the config flag) is not available yet.
+        try {
+            redis.configSet("search-enable-unstable-features", "yes");
+        } catch (RedisCommandExecutionException e) {
+            assumeTrue(false, "search-enable-unstable-features is not configurable on this Redis build: " + e.getMessage());
+        }
+
+        List<FieldArgs<String>> fields = Arrays.asList(TagFieldArgs.<String> builder().name("fruit").build(),
+                TagFieldArgs.<String> builder().name("color").build(),
+                NumericFieldArgs.<String> builder().name("sweetness").sortable().build());
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("fruit:")
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate("collect-test-idx", createArgs, fields)).isEqualTo("OK");
+
+        redis.hmset("fruit:1", mapOf("fruit", "apple", "color", "yellow", "sweetness", "6"));
+        redis.hmset("fruit:2", mapOf("fruit", "banana", "color", "yellow", "sweetness", "5"));
+        redis.hmset("fruit:3", mapOf("fruit", "lemon", "color", "yellow", "sweetness", "2"));
+        redis.hmset("fruit:4", mapOf("fruit", "cherry", "color", "red", "sweetness", "7"));
+
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().groupBy(GroupBy
+                .<String, String> of("color")
+                .reduce(Reducer.<String, String> collect().fields("fruit", "sweetness")
+                        .sortBy(new AggregateArgs.SortProperty<>("sweetness", SortDirection.DESC)).limit(0, 2).as("top")))
+                .build();
+
+        AggregationReply<String, String> result;
+        try {
+            result = redis.ftAggregate("collect-test-idx", "*", args);
+        } catch (RedisCommandExecutionException e) {
+            assumeTrue(false, "FT.AGGREGATE REDUCE COLLECT not supported by this Redis Search build: " + e.getMessage());
+            return;
+        }
+
+        assertThat(result.getReplies()).hasSize(1);
+        SearchReply<String, String> reply = result.getReplies().get(0);
+
+        SearchReply.SearchResult<String, String> yellow = reply.getResults().stream()
+                .filter(r -> "yellow".equals(r.getFields().get("color"))).findFirst()
+                .orElseThrow(() -> new AssertionError("no yellow group in " + reply.getResults()));
+
+        Object collected = yellow.getFields().get("top");
+        assertThat(collected).isInstanceOf(List.class);
+        // LIMIT 0 2 caps the group at 2 entries, SORTBY @sweetness DESC keeps the two sweetest (apple=6, banana=5).
+        assertThat((List<Object>) collected).hasSize(2);
+
+        assertThat(redis.ftDropindex("collect-test-idx")).isEqualTo("OK");
+    }
+
+    private static Map<String, String> mapOf(String... kv) {
+        Map<String, String> map = new HashMap<>();
+        for (int i = 0; i < kv.length; i += 2) {
+            map.put(kv[i], kv[i + 1]);
+        }
+        return map;
     }
 
     @Test
