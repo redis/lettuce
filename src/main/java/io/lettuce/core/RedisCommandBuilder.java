@@ -412,6 +412,32 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BLMOVE, new ValueOutput<>(codec), args);
     }
 
+    Command<K, V, List<V>> blmovem(K source, K destination, LMovemArgs lMovemArgs, long timeout) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lMovemArgs, "LMovemArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(source).addKey(destination);
+        lMovemArgs.buildDirections(args);
+        args.add(timeout);
+        lMovemArgs.buildCount(args);
+        return createCommand(BLMOVEM, new ValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<V>> blmovem(K source, K destination, LMovemArgs lMovemArgs, double timeout) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lMovemArgs, "LMovemArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(source).addKey(destination);
+        lMovemArgs.buildDirections(args);
+        args.add(timeout);
+        lMovemArgs.buildCount(args);
+        return createCommand(BLMOVEM, new ValueListOutput<>(codec), args);
+    }
+
     Command<K, V, KeyValue<K, List<V>>> blmpop(long timeout, LMPopArgs lmPopArgs, K... keys) {
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(lmPopArgs, "LMPopArgs " + MUST_NOT_BE_NULL);
@@ -2083,6 +2109,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.addKey(source).addKey(destination);
         lMoveArgs.build(args);
         return createCommand(LMOVE, new ValueOutput<>(codec), args);
+    }
+
+    Command<K, V, List<V>> lmovem(K source, K destination, LMovemArgs lMovemArgs) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lMovemArgs, "LMovemArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(source).addKey(destination);
+        lMovemArgs.build(args);
+        return createCommand(LMOVEM, new ValueListOutput<>(codec), args);
     }
 
     Command<K, V, KeyValue<K, List<V>>> lmpop(LMPopArgs lmPopArgs, K... keys) {

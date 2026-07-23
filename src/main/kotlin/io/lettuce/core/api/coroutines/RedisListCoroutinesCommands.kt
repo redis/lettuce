@@ -67,6 +67,38 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
     suspend fun blmove(source: K, destination: K, args: LMoveArgs, timeout: Double): V?
 
     /**
+     * Atomically returns and removes one or more elements from the head/tail of the list stored at `source`, and pushes
+     * them to the head/tail of the list stored at `destination`. This is the blocking variant of
+     * [lmovem(Any, Any, LMovemArgs)]. When `args` carry a `COUNT` the connection blocks only while
+     * `source` is empty; with `EXACTLY` it blocks until `source` holds enough elements or the `timeout`
+     * is reached. Without a count block this is equivalent to [blmove(Any, Any, LMoveArgs, long)].
+     *
+     * @param source the source key.
+     * @param destination the destination key.
+     * @param args command arguments to configure source and destination directions and the optional count block.
+     * @param timeout the timeout in seconds.
+     * @return List<V> array-reply the elements being popped and pushed, or an empty list when the timeout was reached.
+     * @since 7.8
+     */
+    suspend fun blmovem(source: K, destination: K, args: LMovemArgs, timeout: Long): List<V>
+
+    /**
+     * Atomically returns and removes one or more elements from the head/tail of the list stored at `source`, and pushes
+     * them to the head/tail of the list stored at `destination`. This is the blocking variant of
+     * [lmovem(Any, Any, LMovemArgs)]. When `args` carry a `COUNT` the connection blocks only while
+     * `source` is empty; with `EXACTLY` it blocks until `source` holds enough elements or the `timeout`
+     * is reached. Without a count block this is equivalent to [blmove(Any, Any, LMoveArgs, Double)].
+     *
+     * @param source the source key.
+     * @param destination the destination key.
+     * @param args command arguments to configure source and destination directions and the optional count block.
+     * @param timeout the timeout in seconds.
+     * @return List<V> array-reply the elements being popped and pushed, or an empty list when the timeout was reached.
+     * @since 7.8
+     */
+    suspend fun blmovem(source: K, destination: K, args: LMovemArgs, timeout: Double): List<V>
+
+    /**
      * Remove and get the first/last elements in a list, or block until one is available.
      *
      * @param timeout the timeout in seconds.
@@ -191,6 +223,22 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      * @since 6.1
      */
     suspend fun lmove(source: K, destination: K, args: LMoveArgs): V?
+
+    /**
+     * Atomically returns and removes one or more elements from the head/tail of the list stored at `source`, and pushes
+     * them to the head/tail of the list stored at `destination`. The number of elements and their ordering are configured
+     * through `args`: `COUNT` moves up-to `count` elements, `EXACTLY` moves exactly `count`
+     * elements or returns `null` when `source` does not hold enough elements. Without a count block this is
+     * equivalent to [lmove(Any, Any, LMoveArgs)].
+     *
+     * @param source the source key.
+     * @param destination the destination key.
+     * @param args command arguments to configure source and destination directions and the optional count block.
+     * @return List<V> array-reply the elements being popped and pushed, or an empty list when `EXACTLY` cannot be
+     *         satisfied.
+     * @since 7.8
+     */
+    suspend fun lmovem(source: K, destination: K, args: LMovemArgs): List<V>
 
     /**
      * Remove and get the first/last elements in a list.

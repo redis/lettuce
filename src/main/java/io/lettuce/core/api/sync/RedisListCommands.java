@@ -24,6 +24,7 @@ import java.util.List;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.LMPopArgs;
 import io.lettuce.core.LMoveArgs;
+import io.lettuce.core.LMovemArgs;
 import io.lettuce.core.LPosArgs;
 import io.lettuce.core.output.ValueStreamingChannel;
 
@@ -67,6 +68,38 @@ public interface RedisListCommands<K, V> {
      * @since 6.1.3
      */
     V blmove(K source, K destination, LMoveArgs args, double timeout);
+
+    /**
+     * Atomically returns and removes one or more elements from the head/tail of the list stored at {@code source}, and pushes
+     * them to the head/tail of the list stored at {@code destination}. This is the blocking variant of
+     * {@link #lmovem(Object, Object, LMovemArgs)}. When {@code args} carry a {@code COUNT} the connection blocks only while
+     * {@code source} is empty; with {@code EXACTLY} it blocks until {@code source} holds enough elements or the {@code timeout}
+     * is reached. Without a count block this is equivalent to {@link #blmove(Object, Object, LMoveArgs, long)}.
+     *
+     * @param source the source key.
+     * @param destination the destination key.
+     * @param args command arguments to configure source and destination directions and the optional count block.
+     * @param timeout the timeout in seconds.
+     * @return List&lt;V&gt; array-reply the elements being popped and pushed, or an empty list when the timeout was reached.
+     * @since 7.8
+     */
+    List<V> blmovem(K source, K destination, LMovemArgs args, long timeout);
+
+    /**
+     * Atomically returns and removes one or more elements from the head/tail of the list stored at {@code source}, and pushes
+     * them to the head/tail of the list stored at {@code destination}. This is the blocking variant of
+     * {@link #lmovem(Object, Object, LMovemArgs)}. When {@code args} carry a {@code COUNT} the connection blocks only while
+     * {@code source} is empty; with {@code EXACTLY} it blocks until {@code source} holds enough elements or the {@code timeout}
+     * is reached. Without a count block this is equivalent to {@link #blmove(Object, Object, LMoveArgs, double)}.
+     *
+     * @param source the source key.
+     * @param destination the destination key.
+     * @param args command arguments to configure source and destination directions and the optional count block.
+     * @param timeout the timeout in seconds.
+     * @return List&lt;V&gt; array-reply the elements being popped and pushed, or an empty list when the timeout was reached.
+     * @since 7.8
+     */
+    List<V> blmovem(K source, K destination, LMovemArgs args, double timeout);
 
     /**
      * Remove and get the first/last elements in a list, or block until one is available.
@@ -216,6 +249,22 @@ public interface RedisListCommands<K, V> {
      * @since 6.1
      */
     V lmove(K source, K destination, LMoveArgs args);
+
+    /**
+     * Atomically returns and removes one or more elements from the head/tail of the list stored at {@code source}, and pushes
+     * them to the head/tail of the list stored at {@code destination}. The number of elements and their ordering are configured
+     * through {@code args}: {@code COUNT} moves up-to {@code count} elements, {@code EXACTLY} moves exactly {@code count}
+     * elements or returns {@code null} when {@code source} does not hold enough elements. Without a count block this is
+     * equivalent to {@link #lmove(Object, Object, LMoveArgs)}.
+     *
+     * @param source the source key.
+     * @param destination the destination key.
+     * @param args command arguments to configure source and destination directions and the optional count block.
+     * @return List&lt;V&gt; array-reply the elements being popped and pushed, or an empty list when {@code EXACTLY} cannot be
+     *         satisfied.
+     * @since 7.8
+     */
+    List<V> lmovem(K source, K destination, LMovemArgs args);
 
     /**
      * Remove and get the first/last elements in a list.

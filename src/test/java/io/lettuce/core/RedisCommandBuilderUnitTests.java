@@ -837,4 +837,54 @@ class RedisCommandBuilderUnitTests {
                 .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$3\r\n" + "OFF\r\n");
     }
 
+    @Test
+    void shouldCorrectlyConstructLmovem() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination", LMovemArgs.Builder.leftRight());
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovemWithCount() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination", LMovemArgs.Builder.leftLeft().count(2).obo());
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT COUNT 2 OBO");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovemWithExactly() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination",
+                LMovemArgs.Builder.rightLeft().exactly(3).bulk());
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> RIGHT LEFT EXACTLY 3 BULK");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovemWithCountDefaultingToBulk() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination", LMovemArgs.Builder.leftLeft().count(2));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT COUNT 2 BULK");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovem() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination",
+                LMovemArgs.Builder.leftLeft().exactly(3).bulk(), 10L);
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT 10 EXACTLY 3 BULK");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovemWithDoubleTimeout() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination", LMovemArgs.Builder.leftRight(), 0.5);
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0.5");
+    }
+
 }
