@@ -135,6 +135,25 @@ class TopologyRefreshIntegrationTests extends TestSupport {
     }
 
     @Test
+    void limitedDynamicSourcesPreserveDiscovery() {
+
+        ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
+                .dynamicRefreshSources(true).maxTopologyRefreshSources(1).build();
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
+        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
+
+        Partitions partitions = clusterClient.getPartitions();
+
+        RedisClusterNodeSnapshot node1 = (RedisClusterNodeSnapshot) partitions.getPartitionBySlot(0);
+        assertThat(node1.getConnectedClients()).isGreaterThanOrEqualTo(1);
+
+        RedisClusterNodeSnapshot node2 = (RedisClusterNodeSnapshot) partitions.getPartitionBySlot(15000);
+        assertThat(node2.getConnectedClients()).isNull();
+
+        clusterConnection.getStatefulConnection().close();
+    }
+
+    @Test
     void adaptiveTopologyUpdateOnDisconnectNodeIdConnection() {
 
         runReconnectTest((clusterConnection, node) -> {
