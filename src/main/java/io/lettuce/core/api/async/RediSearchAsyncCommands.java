@@ -1259,6 +1259,6 @@ public interface RediSearchAsyncCommands<K> {
      * @since 7.2
      */
     @Experimental
-    RedisFuture<HybridReply> ftHybrid(String index, HybridArgs args);
+    RedisFuture<HybridReply<K>> ftHybrid(String index, HybridArgs args);
 
 }

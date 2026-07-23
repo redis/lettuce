@@ -1301,7 +1301,7 @@ public class RediSearchIntegrationTests {
                         .limit(Limit.of(0, 20)).build())
                 .param("vec", queryVector).param("discount_rate", "0.9").build();
 
-        HybridReply reply = redis.ftHybrid(indexName, hybridArgs);
+        HybridReply<String> reply = redis.ftHybrid(indexName, hybridArgs);
 
         // Verify results
         assertThat(reply).isNotNull();

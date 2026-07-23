@@ -9,12 +9,17 @@ package io.lettuce.core.output;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.search.FieldValue;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SearchReplyParser;
 import io.lettuce.core.search.arguments.SearchArgs;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * Unit tests for {@link SearchReplyParser}.
@@ -26,51 +31,12 @@ class SearchReplyParserUnitTests {
 
     private static final StringCodec CODEC = StringCodec.UTF8;
 
-    // ===== RESP2 Tests =====
-
     @Test
-    void shouldReturnEmptyReplyForEmptyResp2List() {
+    void shouldParseListReply() {
         SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
-        ArrayComplexData data = new ArrayComplexData(0);
-
-        SearchReply<String> reply = parser.parse(data);
-
-        assertThat(reply).isNotNull();
-        assertThat(reply.getCount()).isEqualTo(0);
-        assertThat(reply.getResults()).isEmpty();
-    }
-
-    @Test
-    void shouldParseResp2WithCountAndNoResults() {
-        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
-        ArrayComplexData data = new ArrayComplexData(1);
-        data.storeObject(0L);
-
-        SearchReply<String> reply = parser.parse(data);
-
-        assertThat(reply.getCount()).isEqualTo(0);
-        assertThat(reply.getResults()).isEmpty();
-    }
-
-    @Test
-    void shouldParseResp2WithMultipleDocuments() {
-        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
-        ArrayComplexData data = new ArrayComplexData(5);
-        data.storeObject(2L);
-
-        data.storeObject(CODEC.encodeKey("doc:1"));
-        ArrayComplexData fields1 = new ArrayComplexData(4);
-        fields1.storeObject(CODEC.encodeKey("title"));
-        fields1.storeObject(CODEC.encodeValue("Redis Search"));
-        fields1.storeObject(CODEC.encodeKey("views"));
-        fields1.storeObject(CODEC.encodeValue("100"));
-        data.storeObject(fields1);
-
-        data.storeObject(CODEC.encodeKey("doc:2"));
-        ArrayComplexData fields2 = new ArrayComplexData(2);
-        fields2.storeObject(CODEC.encodeKey("title"));
-        fields2.storeObject(CODEC.encodeValue("Advanced Techniques"));
-        data.storeObject(fields2);
+        ArrayComplexData data = array(2L, buffer("doc:1"),
+                array(buffer("title"), buffer("Redis Search"), buffer("views"), buffer("100")), buffer("doc:2"),
+                array(buffer("title"), buffer("Advanced Techniques")));
 
         SearchReply<String> reply = parser.parse(data);
 
@@ -84,198 +50,230 @@ class SearchReplyParserUnitTests {
     }
 
     @Test
-    void shouldParseResp2NullFieldValueAsPresentNullField() {
+    void shouldPreserveListFieldValues() {
+        byte[] vector = new byte[] { 0, -1, 1, 2 };
         SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
-        ArrayComplexData data = new ArrayComplexData(3);
-        data.storeObject(1L);
-
-        data.storeObject(CODEC.encodeKey("doc:1"));
-        ArrayComplexData fields = new ArrayComplexData(4);
-        fields.storeObject(CODEC.encodeKey("country"));
-        fields.storeObject(CODEC.encodeValue("SE"));
-        fields.storeObject(CODEC.encodeKey("city"));
-        fields.storeObject(null); // the server returned a null value for this field
-        data.storeObject(fields);
+        ArrayComplexData fieldsData = array(buffer("title"), buffer("Redis Search"), buffer("embedding"),
+                ByteBuffer.wrap(vector), buffer("city"), null);
+        ArrayComplexData data = array(1L, buffer("doc:1"), fieldsData);
 
         SearchReply<String> reply = parser.parse(data);
 
-        assertThat(reply.getResults()).hasSize(1);
-        SearchReply.SearchResult<String> result = reply.getResults().get(0);
-        assertThat(result.getFields().get("country").asString()).isEqualTo("SE");
-        // a null value is kept as a present field, not dropped
-        assertThat(result.getFields().containsKey("city")).isTrue();
-        assertThat(result.getFields().get("city").isNull()).isTrue();
-        assertThat(result.getFields().get("city").asString()).isNull();
-        assertThat(result.getFields().get("city").asBytes()).isNull();
+        Map<String, FieldValue> fields = reply.getResults().get(0).getFields();
+        assertThat(fields).containsOnlyKeys("title", "embedding", "city");
+        assertThat(fields.get("title").asString()).isEqualTo("Redis Search");
+        assertThat(fields.get("embedding").asBytes()).isEqualTo(vector);
+        assertThat(fields.get("city").isNull()).isTrue();
     }
 
     @Test
-    void shouldParseResp2WithScores() {
+    void shouldParseScoresWhenRequested() {
         SearchArgs<String> args = SearchArgs.<String> builder().withScores().build();
         SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, args);
-        ArrayComplexData data = new ArrayComplexData(4);
-        data.storeObject(1L);
-        data.storeObject(CODEC.encodeKey("doc:1"));
-        data.storeObject(CODEC.encodeKey("0.95")); // score encoded as string
-        ArrayComplexData fields = new ArrayComplexData(2);
-        fields.storeObject(CODEC.encodeKey("title"));
-        fields.storeObject(CODEC.encodeValue("Test"));
-        data.storeObject(fields);
+        ArrayComplexData data = array(1L, buffer("doc:1"), buffer("0.95"), array(buffer("title"), buffer("Redis Search")));
 
         SearchReply<String> reply = parser.parse(data);
 
-        assertThat(reply.getResults()).hasSize(1);
-        assertThat(reply.getResults().get(0).getScore()).isEqualTo(0.95);
-        assertThat(reply.getResults().get(0).getId()).isEqualTo("doc:1");
+        assertThat(reply.getResults()).singleElement().satisfies(result -> {
+            assertThat(result.getId()).isEqualTo("doc:1");
+            assertThat(result.getScore()).isEqualTo(0.95);
+            assertThat(result.getFields().get("title").asString()).isEqualTo("Redis Search");
+        });
     }
 
     @Test
-    void shouldParseResp2WithNoContent() {
+    void shouldOmitContentWhenRequested() {
         SearchArgs<String> args = SearchArgs.<String> builder().noContent().build();
         SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, args);
-        ArrayComplexData data = new ArrayComplexData(3);
-        data.storeObject(2L);
-        data.storeObject(CODEC.encodeKey("doc:1"));
-        data.storeObject(CODEC.encodeKey("doc:2"));
+        ArrayComplexData data = array(2L, buffer("doc:1"), buffer("doc:2"));
 
         SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply.getCount()).isEqualTo(2);
-        assertThat(reply.getResults()).hasSize(2);
-        assertThat(reply.getResults().get(0).getId()).isEqualTo("doc:1");
-        assertThat(reply.getResults().get(1).getId()).isEqualTo("doc:2");
-        assertThat(reply.getResults().get(0).getFields()).isEmpty();
+        assertThat(reply.getResults()).extracting(SearchReply.SearchResult::getId).containsExactly("doc:1", "doc:2");
+        assertThat(reply.getResults()).allSatisfy(result -> assertThat(result.getFields()).isEmpty());
     }
 
     @Test
-    void shouldParseResp2CursorResponse() {
+    void shouldParseListCursorReply() {
         SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
-        ArrayComplexData innerResults = new ArrayComplexData(3);
-        innerResults.storeObject(1L);
-        innerResults.storeObject(CODEC.encodeKey("doc:1"));
-        ArrayComplexData fields = new ArrayComplexData(2);
-        fields.storeObject(CODEC.encodeKey("title"));
-        fields.storeObject(CODEC.encodeValue("Hello"));
-        innerResults.storeObject(fields);
-
-        ArrayComplexData data = new ArrayComplexData(2);
-        data.storeObject(innerResults);
-        data.storeObject(42L);
+        ArrayComplexData results = array(1L, buffer("doc:1"), array(buffer("title"), buffer("Redis Search")));
+        ArrayComplexData data = array(results, 42L);
 
         SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply.getCursorId()).isEqualTo(42L);
         assertThat(reply.getCount()).isEqualTo(1);
-        assertThat(reply.getResults()).hasSize(1);
-        assertThat(reply.getResults().get(0).getId()).isEqualTo("doc:1");
+        assertThat(reply.getResults()).singleElement().satisfies(result -> assertThat(result.getId()).isEqualTo("doc:1"));
     }
 
-    // ===== RESP3 Tests =====
+    @Test
+    void shouldParseRowsWithoutDocumentIds() {
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC);
+        ArrayComplexData data = array(2L, array(buffer("category"), buffer("books")),
+                array(buffer("category"), buffer("electronics")));
+
+        SearchReply<String> reply = parser.parse(data);
+
+        assertThat(reply.getResults()).hasSize(2);
+        assertThat(reply.getResults().get(0).getFields().get("category").asString()).isEqualTo("books");
+        assertThat(reply.getResults().get(1).getFields().get("category").asString()).isEqualTo("electronics");
+    }
 
     @Test
-    void shouldParseResp3SearchResult() {
+    void shouldDecodeListDocumentIdWithKeyCodec() {
+        PrefixingStringCodec codec = new PrefixingStringCodec("tenant:");
+        SearchReplyParser<String> parser = new SearchReplyParser<>(codec, null);
+        ArrayComplexData data = array(1L, codec.encodeKey("doc:1"), array(buffer("tenant:title"), buffer("tenant:guide")));
+
+        SearchReply<String> reply = parser.parse(data);
+
+        SearchReply.SearchResult<String> result = reply.getResults().get(0);
+        assertThat(result.getId()).isEqualTo("doc:1");
+        assertThat(result.getFields()).containsKey("tenant:title");
+        assertThat(result.getFields().get("tenant:title").asString()).isEqualTo("tenant:guide");
+    }
+
+    @Test
+    void shouldParseMapReply() {
+        byte[] vector = new byte[] { 0, -1, 1, 2 };
         SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
-
-        MapComplexData extraAttributes = new MapComplexData(1);
-        extraAttributes.storeObject(CODEC.encodeKey("title"));
-        extraAttributes.storeObject(CODEC.encodeValue("Redis Search"));
-
-        MapComplexData resultEntry = new MapComplexData(3);
-        resultEntry.storeObject(CODEC.encodeKey("id"));
-        resultEntry.storeObject(CODEC.encodeValue("doc:1"));
-        resultEntry.storeObject(CODEC.encodeKey("score"));
-        resultEntry.storeObject(1.0);
-        resultEntry.storeObject(CODEC.encodeKey("extra_attributes"));
-        resultEntry.storeObject(extraAttributes);
-
-        ArrayComplexData resultsList = new ArrayComplexData(1);
-        resultsList.storeObject(resultEntry);
-
-        MapComplexData data = new MapComplexData(2);
-        data.storeObject(CODEC.encodeKey("total_results"));
-        data.storeObject(1L);
-        data.storeObject(CODEC.encodeKey("results"));
-        data.storeObject(resultsList);
+        MapComplexData fieldsData = map(buffer("title"), buffer("Redis Search"), buffer("embedding"), ByteBuffer.wrap(vector),
+                buffer("city"), null);
+        MapComplexData resultData = map(buffer("id"), buffer("doc:1"), buffer("score"), 1.0, buffer("extra_attributes"),
+                fieldsData);
+        MapComplexData data = map(buffer("total_results"), 1L, buffer("results"), array(resultData));
 
         SearchReply<String> reply = parser.parse(data);
 
         assertThat(reply.getCount()).isEqualTo(1);
-        assertThat(reply.getResults()).hasSize(1);
-        SearchReply.SearchResult<String> result = reply.getResults().get(0);
-        assertThat(result.getId()).isEqualTo("doc:1");
-        assertThat(result.getScore()).isEqualTo(1.0);
-        assertThat(result.getFields().get("title").asString()).isEqualTo("Redis Search");
+        assertThat(reply.getResults()).singleElement().satisfies(result -> {
+            assertThat(result.getId()).isEqualTo("doc:1");
+            assertThat(result.getScore()).isEqualTo(1.0);
+            assertThat(result.getFields()).containsOnlyKeys("title", "embedding", "city");
+            assertThat(result.getFields().get("title").asString()).isEqualTo("Redis Search");
+            assertThat(result.getFields().get("embedding").asBytes()).isEqualTo(vector);
+            assertThat(result.getFields().get("city").isNull()).isTrue();
+        });
     }
 
     @Test
-    void shouldParseResp3NullFieldValueAsPresentNullField() {
+    void shouldParseScoreArrayFromMapReply() {
         SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
-
-        MapComplexData extraAttributes = new MapComplexData(2);
-        extraAttributes.storeObject(CODEC.encodeKey("country"));
-        extraAttributes.storeObject(CODEC.encodeValue("SE"));
-        extraAttributes.storeObject(CODEC.encodeKey("city"));
-        extraAttributes.storeObject(null); // the server returned a null value for this field
-
-        MapComplexData resultEntry = new MapComplexData(2);
-        resultEntry.storeObject(CODEC.encodeKey("id"));
-        resultEntry.storeObject(CODEC.encodeValue("doc:1"));
-        resultEntry.storeObject(CODEC.encodeKey("extra_attributes"));
-        resultEntry.storeObject(extraAttributes);
-
-        ArrayComplexData resultsList = new ArrayComplexData(1);
-        resultsList.storeObject(resultEntry);
-
-        MapComplexData data = new MapComplexData(2);
-        data.storeObject(CODEC.encodeKey("total_results"));
-        data.storeObject(1L);
-        data.storeObject(CODEC.encodeKey("results"));
-        data.storeObject(resultsList);
+        MapComplexData resultData = map(buffer("id"), buffer("doc:1"), buffer("score"), array(0.75));
+        MapComplexData data = map(buffer("total_results"), 1L, buffer("results"), array(resultData));
 
         SearchReply<String> reply = parser.parse(data);
 
-        assertThat(reply.getResults()).hasSize(1);
-        SearchReply.SearchResult<String> result = reply.getResults().get(0);
-        assertThat(result.getFields().get("country").asString()).isEqualTo("SE");
-        // a null value is kept as a present field, not dropped
-        assertThat(result.getFields().containsKey("city")).isTrue();
-        assertThat(result.getFields().get("city").isNull()).isTrue();
-        assertThat(result.getFields().get("city").asString()).isNull();
+        assertThat(reply.getResults()).singleElement().satisfies(result -> assertThat(result.getScore()).isEqualTo(0.75));
     }
 
     @Test
-    void shouldParseResp3WithWarningsAndCursor() {
-        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
-
-        ArrayComplexData warningList = new ArrayComplexData(1);
-        warningList.storeObject(CODEC.encodeValue("Timeout limit was reached"));
-
-        MapComplexData data = new MapComplexData(4);
-        data.storeObject(CODEC.encodeKey("total_results"));
-        data.storeObject(0L);
-        data.storeObject(CODEC.encodeKey("results"));
-        data.storeObject(new ArrayComplexData(0));
-        data.storeObject(CODEC.encodeKey("warning"));
-        data.storeObject(warningList);
-        data.storeObject(CODEC.encodeKey("cursor"));
-        data.storeObject(99L);
+    void shouldKeepMapResultWithoutDocumentId() {
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC);
+        MapComplexData fieldsData = map(buffer("category"), buffer("books"));
+        MapComplexData resultData = map(buffer("extra_attributes"), fieldsData);
+        MapComplexData data = map(buffer("total_results"), 1L, buffer("results"), array(resultData));
 
         SearchReply<String> reply = parser.parse(data);
 
-        assertThat(reply.getCount()).isEqualTo(0);
+        assertThat(reply.getResults()).singleElement().satisfies(result -> {
+            assertThat(result.getId()).isNull();
+            assertThat(result.getFields().get("category").asString()).isEqualTo("books");
+        });
+    }
+
+    @Test
+    void shouldParseWarningsAndCursorFromMapReply() {
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
+        MapComplexData data = map(buffer("total_results"), 0L, buffer("results"), array(), buffer("warning"),
+                array(buffer("Timeout limit was reached")), buffer("cursor"), 99L);
+
+        SearchReply<String> reply = parser.parse(data);
+
+        assertThat(reply.getCount()).isZero();
+        assertThat(reply.getResults()).isEmpty();
         assertThat(reply.getWarnings()).containsExactly("Timeout limit was reached");
         assertThat(reply.getCursorId()).isEqualTo(99L);
     }
 
     @Test
-    void shouldReturnEmptyReplyOnMalformedInput() {
-        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
-        MapComplexData data = new MapComplexData(0);
+    void shouldDecodeMapDocumentIdWithKeyCodec() {
+        PrefixingStringCodec codec = new PrefixingStringCodec("tenant:");
+        SearchReplyParser<String> parser = new SearchReplyParser<>(codec, null);
+        MapComplexData fieldsData = map(buffer("tenant:title"), buffer("tenant:guide"));
+        MapComplexData resultData = map(buffer("id"), codec.encodeKey("doc:1"), buffer("extra_attributes"), fieldsData);
+        MapComplexData data = map(buffer("total_results"), 1L, buffer("results"), array(resultData));
 
         SearchReply<String> reply = parser.parse(data);
 
-        assertThat(reply).isNotNull();
+        SearchReply.SearchResult<String> result = reply.getResults().get(0);
+        assertThat(result.getId()).isEqualTo("doc:1");
+        assertThat(result.getFields()).containsKey("tenant:title");
+        assertThat(result.getFields().get("tenant:title").asString()).isEqualTo("tenant:guide");
+    }
+
+    @Test
+    void shouldReturnEmptyReplyWhenInputCannotBeParsed() {
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, null);
+
+        SearchReply<String> reply = parser.parse(array("not-a-count"));
+
+        assertThat(reply.getCount()).isZero();
         assertThat(reply.getResults()).isEmpty();
+        assertThat(reply.getCursorId()).isNull();
+        assertThat(reply.getWarnings()).isEmpty();
+    }
+
+    private static ByteBuffer buffer(String value) {
+        return CODEC.encodeValue(value);
+    }
+
+    private static ArrayComplexData array(Object... values) {
+        ArrayComplexData data = new ArrayComplexData(values.length);
+        for (Object value : values) {
+            data.storeObject(value);
+        }
+        return data;
+    }
+
+    private static MapComplexData map(Object... entries) {
+        MapComplexData data = new MapComplexData(entries.length / 2);
+        for (Object entry : entries) {
+            data.storeObject(entry);
+        }
+        return data;
+    }
+
+    private static final class PrefixingStringCodec implements RedisCodec<String, String> {
+
+        private final String prefix;
+
+        private PrefixingStringCodec(String prefix) {
+            this.prefix = prefix;
+        }
+
+        @Override
+        public String decodeKey(ByteBuffer bytes) {
+            String key = StringCodec.UTF8.decodeKey(bytes);
+            return key.startsWith(prefix) ? key.substring(prefix.length()) : key;
+        }
+
+        @Override
+        public String decodeValue(ByteBuffer bytes) {
+            return StringCodec.UTF8.decodeValue(bytes);
+        }
+
+        @Override
+        public ByteBuffer encodeKey(String key) {
+            return StringCodec.UTF8.encodeKey(prefix + key);
+        }
+
+        @Override
+        public ByteBuffer encodeValue(String value) {
+            return StringCodec.UTF8.encodeValue(value);
+        }
+
     }
 
 }
