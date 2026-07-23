@@ -19,7 +19,6 @@
  */
 package io.lettuce.core.api.sync
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.TransactionResult
 
 /**
@@ -28,7 +27,6 @@ import io.lettuce.core.TransactionResult
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 inline fun <K, V> RedisCommands<K, V>.multi(action: RedisCommands<K, V>.() -> Unit): TransactionResult = try {
     multi()
     action.invoke(this)

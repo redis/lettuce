@@ -21,7 +21,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisReactiveCommands
 import io.lettuce.core.cluster.api.coroutines.RedisClusterCoroutinesCommands
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -35,7 +34,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Yordan Tsintsov
  * @since 6.5
  */
-@ExperimentalLettuceCoroutinesApi
 open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
     internal val ops: RedisReactiveCommands<K, V>
 ) : RedisCoroutinesCommands<K, V>, RedisClusterCoroutinesCommands<K, V>,

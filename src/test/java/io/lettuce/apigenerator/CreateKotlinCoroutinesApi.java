@@ -25,6 +25,7 @@ import static io.lettuce.apigenerator.Constants.TEMPLATES;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -46,7 +47,7 @@ public class CreateKotlinCoroutinesApi {
      * @return
      */
     Supplier<List<String>> importSupplier() {
-        return () -> Arrays.asList("io.lettuce.core.ExperimentalLettuceCoroutinesApi", "kotlinx.coroutines.flow.Flow");
+        return () -> Collections.singletonList("kotlinx.coroutines.flow.Flow");
     }
 
     /**
