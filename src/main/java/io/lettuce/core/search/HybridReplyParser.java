@@ -7,7 +7,9 @@
 package io.lettuce.core.search;
 
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
 import io.netty.util.internal.logging.InternalLogger;
@@ -23,13 +25,16 @@ import java.util.Map;
  * Field names are schema identifiers and are decoded as raw UTF-8; field values are kept as raw bytes so that binary content
  * (for example vector embeddings) survives the round-trip.
  *
+ * @param <K> document key type
  * @author Aleksandar Todorov
  * @since 7.2
  */
 @Experimental
-public class HybridReplyParser implements ComplexDataParser<HybridReply> {
+public class HybridReplyParser<K> implements ComplexDataParser<HybridReply<K>> {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(HybridReplyParser.class);
+
+    private final RedisCodec<K, ?> codec;
 
     private final ByteBuffer TOTAL_RESULTS_KEY = StringCodec.UTF8.encodeKey("total_results");
 
@@ -39,10 +44,23 @@ public class HybridReplyParser implements ComplexDataParser<HybridReply> {
 
     private final ByteBuffer RESULTS_KEY = StringCodec.UTF8.encodeKey("results");
 
+    private final ByteBuffer DOCUMENT_KEY = StringCodec.UTF8.encodeKey("__key");
+
+    /**
+     * Create a parser that decodes document keys through {@code codec}.
+     *
+     * @param codec connection codec, must not be {@code null}.
+     * @since 7.7
+     */
+    public HybridReplyParser(RedisCodec<K, ?> codec) {
+        LettuceAssert.notNull(codec, "RedisCodec must not be null");
+        this.codec = codec;
+    }
+
     @Override
-    public HybridReply parse(ComplexData data) {
+    public HybridReply<K> parse(ComplexData data) {
         try {
-            HybridReply hybridReply = new HybridReply();
+            HybridReply<K> hybridReply = new HybridReply<>();
 
             if (data.isList()) {
                 parseResp2(data, hybridReply);
@@ -53,7 +71,7 @@ public class HybridReplyParser implements ComplexDataParser<HybridReply> {
             return hybridReply;
         } catch (Exception e) {
             LOG.warn("Unable to parse FT.HYBRID result from Redis", e);
-            return new HybridReply();
+            return new HybridReply<>();
         }
     }
 
@@ -63,7 +81,7 @@ public class HybridReplyParser implements ComplexDataParser<HybridReply> {
         return bytes;
     }
 
-    private void parseResp2(ComplexData data, HybridReply reply) {
+    private void parseResp2(ComplexData data, HybridReply<K> reply) {
         List<Object> list = data.getDynamicList();
         if (list == null || list.isEmpty()) {
             return;
@@ -71,7 +89,7 @@ public class HybridReplyParser implements ComplexDataParser<HybridReply> {
         parseResp2(list, reply);
     }
 
-    private void parseResp2(List<Object> list, HybridReply reply) {
+    private void parseResp2(List<Object> list, HybridReply<K> reply) {
         // RESP2 format: ["key1", value1, "key2", value2, ...]
         // Parse as key-value pairs
         for (int i = 0; i + 1 < list.size(); i += 2) {
@@ -118,7 +136,7 @@ public class HybridReplyParser implements ComplexDataParser<HybridReply> {
                     if (resultsList != null) {
                         for (Object resultObj : resultsList) {
                             if (resultObj instanceof ComplexData) {
-                                HybridReply.HybridResult result = new HybridReply.HybridResult();
+                                HybridReply.HybridResult<K> result = new HybridReply.HybridResult<>();
                                 addFieldsFromComplexData((ComplexData) resultObj, result);
                                 reply.addResult(result);
                             }
@@ -129,7 +147,7 @@ public class HybridReplyParser implements ComplexDataParser<HybridReply> {
         }
     }
 
-    private void parseResp3(ComplexData data, HybridReply reply) {
+    private void parseResp3(ComplexData data, HybridReply<K> reply) {
         Map<Object, Object> resultsMap = data.getDynamicMap();
         if (resultsMap == null || resultsMap.isEmpty()) {
             return;
@@ -182,13 +200,13 @@ public class HybridReplyParser implements ComplexDataParser<HybridReply> {
             }
 
             ComplexData resultData = (ComplexData) raw;
-            HybridReply.HybridResult result = new HybridReply.HybridResult();
+            HybridReply.HybridResult<K> result = new HybridReply.HybridResult<>();
             addFieldsFromComplexData(resultData, result);
             reply.addResult(result);
         }
     }
 
-    private void addFieldsFromComplexData(ComplexData data, HybridReply.HybridResult result) {
+    private void addFieldsFromComplexData(ComplexData data, HybridReply.HybridResult<K> result) {
         Map<Object, Object> map;
         try {
             map = data.getDynamicMap();
@@ -199,6 +217,12 @@ public class HybridReplyParser implements ComplexDataParser<HybridReply> {
         if (map != null && !map.isEmpty()) {
             map.forEach((k, v) -> {
                 if (!(k instanceof ByteBuffer) || (v != null && !(v instanceof ByteBuffer))) {
+                    return;
+                }
+                if (k.equals(DOCUMENT_KEY)) {
+                    if (v != null) {
+                        result.setId(codec.decodeKey((ByteBuffer) v));
+                    }
                     return;
                 }
                 result.addField(StringCodec.UTF8.decodeKey((ByteBuffer) k), v == null ? null : toBytes((ByteBuffer) v));
@@ -215,6 +239,12 @@ public class HybridReplyParser implements ComplexDataParser<HybridReply> {
             Object k = list.get(i);
             Object v = list.get(i + 1);
             if (!(k instanceof ByteBuffer) || (v != null && !(v instanceof ByteBuffer))) {
+                continue;
+            }
+            if (k.equals(DOCUMENT_KEY)) {
+                if (v != null) {
+                    result.setId(codec.decodeKey((ByteBuffer) v));
+                }
                 continue;
             }
             result.addField(StringCodec.UTF8.decodeKey((ByteBuffer) k), v == null ? null : toBytes((ByteBuffer) v));

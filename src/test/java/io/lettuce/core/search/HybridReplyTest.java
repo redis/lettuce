@@ -25,7 +25,7 @@ class HybridReplyTest {
 
     @Test
     void testEmptyHybridReply() {
-        HybridReply reply = new HybridReply();
+        HybridReply<String> reply = new HybridReply<>();
 
         assertThat(reply.getTotalResults()).isEqualTo(0);
         assertThat(reply.getExecutionTime()).isEqualTo(0.0);
@@ -37,7 +37,7 @@ class HybridReplyTest {
 
     @Test
     void testSetAndGetTotalResults() {
-        HybridReply reply = new HybridReply();
+        HybridReply<String> reply = new HybridReply<>();
         reply.setTotalResults(42L);
 
         assertThat(reply.getTotalResults()).isEqualTo(42L);
@@ -45,7 +45,7 @@ class HybridReplyTest {
 
     @Test
     void testSetAndGetExecutionTime() {
-        HybridReply reply = new HybridReply();
+        HybridReply<String> reply = new HybridReply<>();
         reply.setExecutionTime(1.23);
 
         assertThat(reply.getExecutionTime()).isEqualTo(1.23);
@@ -53,13 +53,13 @@ class HybridReplyTest {
 
     @Test
     void testAddAndGetResults() {
-        HybridReply reply = new HybridReply();
+        HybridReply<String> reply = new HybridReply<>();
 
-        HybridReply.HybridResult result1 = new HybridReply.HybridResult();
+        HybridReply.HybridResult<String> result1 = new HybridReply.HybridResult<>();
+        result1.setId("doc:1");
         result1.addField("title", "Redis Search".getBytes(StandardCharsets.UTF_8));
-        result1.addField("__key", "doc:1".getBytes(StandardCharsets.UTF_8));
 
-        HybridReply.HybridResult result2 = new HybridReply.HybridResult();
+        HybridReply.HybridResult<String> result2 = new HybridReply.HybridResult<>();
         result2.addField("title", "Advanced Techniques".getBytes(StandardCharsets.UTF_8));
 
         reply.addResult(result1);
@@ -68,14 +68,14 @@ class HybridReplyTest {
         assertThat(reply.size()).isEqualTo(2);
         assertThat(reply.isEmpty()).isFalse();
         assertThat(reply.getResults()).hasSize(2);
+        assertThat(reply.getResults().get(0).getId()).isEqualTo("doc:1");
         assertThat(reply.getResults().get(0).getFields().get("title").asString()).isEqualTo("Redis Search");
-        assertThat(reply.getResults().get(0).getFields().get("__key").asString()).isEqualTo("doc:1");
         assertThat(reply.getResults().get(1).getFields().get("title").asString()).isEqualTo("Advanced Techniques");
     }
 
     @Test
     void testFieldValuesExposeTextAndBinary() {
-        HybridReply.HybridResult result = new HybridReply.HybridResult();
+        HybridReply.HybridResult<String> result = new HybridReply.HybridResult<>();
 
         // a binary value that is not valid UTF-8 (e.g. a little-endian float32 vector)
         byte[] vector = new byte[] { -51, -52, -52, 61, -51, -52, 76, 62 };
@@ -92,7 +92,7 @@ class HybridReplyTest {
 
     @Test
     void testAddAndGetWarnings() {
-        HybridReply reply = new HybridReply();
+        HybridReply<String> reply = new HybridReply<>();
         reply.addWarning("Timeout limit was reached");
         reply.addWarning("Partial results returned");
 
@@ -101,8 +101,8 @@ class HybridReplyTest {
 
     @Test
     void testGetResultsIsUnmodifiable() {
-        HybridReply reply = new HybridReply();
-        reply.addResult(new HybridReply.HybridResult());
+        HybridReply<String> reply = new HybridReply<>();
+        reply.addResult(new HybridReply.HybridResult<>());
 
         assertThat(reply.getResults()).hasSize(1);
         try {
@@ -115,7 +115,7 @@ class HybridReplyTest {
 
     @Test
     void testGetWarningsIsUnmodifiable() {
-        HybridReply reply = new HybridReply();
+        HybridReply<String> reply = new HybridReply<>();
         reply.addWarning("warn");
 
         assertThat(reply.getWarnings()).hasSize(1);

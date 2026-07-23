@@ -619,7 +619,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<HybridReply> ftHybrid(String index, HybridArgs args) {
+    public Mono<HybridReply<K>> ftHybrid(String index, HybridArgs args) {
         return routeKeyless(() -> super.ftHybrid(index, args), conn -> conn.ftHybrid(index, args), CommandType.FT_HYBRID);
     }
 

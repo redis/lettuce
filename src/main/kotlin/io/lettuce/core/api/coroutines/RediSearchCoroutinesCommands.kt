@@ -1244,7 +1244,7 @@ interface RediSearchCoroutinesCommands<K : Any> {
      * @since 7.2
      */
     @Experimental
-    suspend fun ftHybrid(index: String, args: HybridArgs): HybridReply?
+    suspend fun ftHybrid(index: String, args: HybridArgs): HybridReply<K>?
 
 }
 

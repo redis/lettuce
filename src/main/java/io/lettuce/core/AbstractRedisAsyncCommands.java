@@ -1829,7 +1829,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<HybridReply> ftHybrid(String index, HybridArgs args) {
+    public RedisFuture<HybridReply<K>> ftHybrid(String index, HybridArgs args) {
         return dispatch(searchCommandBuilder.ftHybrid(index, args));
     }
 

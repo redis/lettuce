@@ -126,14 +126,14 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param hybridArgs the hybrid query arguments containing SEARCH and/or VSIM clauses
      * @return the command
      */
-    public Command<K, V, HybridReply> ftHybrid(String index, HybridArgs hybridArgs) {
+    public Command<K, V, HybridReply<K>> ftHybrid(String index, HybridArgs hybridArgs) {
         LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(hybridArgs, "HybridArgs must not be null");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
         hybridArgs.build(args);
 
-        return createCommand(FT_HYBRID, new EncodedComplexOutput<>(codec, new HybridReplyParser()), args);
+        return createCommand(FT_HYBRID, new EncodedComplexOutput<>(codec, new HybridReplyParser<>(codec)), args);
     }
 
     /**

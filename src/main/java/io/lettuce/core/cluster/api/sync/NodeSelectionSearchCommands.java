@@ -1243,6 +1243,6 @@ public interface NodeSelectionSearchCommands<K> {
      * @since 7.2
      */
     @Experimental
-    Executions<HybridReply> ftHybrid(String index, HybridArgs args);
+    Executions<HybridReply<K>> ftHybrid(String index, HybridArgs args);
 
 }

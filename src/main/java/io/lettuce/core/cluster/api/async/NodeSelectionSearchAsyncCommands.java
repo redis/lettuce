@@ -1243,6 +1243,6 @@ public interface NodeSelectionSearchAsyncCommands<K> {
      * @since 7.2
      */
     @Experimental
-    AsyncExecutions<HybridReply> ftHybrid(String index, HybridArgs args);
+    AsyncExecutions<HybridReply<K>> ftHybrid(String index, HybridArgs args);
 
 }
