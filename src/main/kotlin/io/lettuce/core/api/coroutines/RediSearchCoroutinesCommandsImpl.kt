@@ -95,7 +95,7 @@ open class RediSearchCoroutinesCommandsImpl<K : Any>(internal val ops: RediSearc
     override suspend fun ftCursordel(index: String, cursor: Cursor): String? =
         ops.ftCursordel(index, cursor).awaitFirstOrNull()
 
-    override suspend fun ftHybrid(index: String, args: HybridArgs): HybridReply? =
+    override suspend fun ftHybrid(index: String, args: HybridArgs): HybridReply<K>? =
         ops.ftHybrid(index, args).awaitFirstOrNull()
 
     override suspend fun ftDictadd(dict: String, vararg terms: String): Long? =

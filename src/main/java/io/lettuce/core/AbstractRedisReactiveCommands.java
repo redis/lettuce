@@ -1923,7 +1923,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<HybridReply> ftHybrid(String index, HybridArgs args) {
+    public Mono<HybridReply<K>> ftHybrid(String index, HybridArgs args) {
         return createMono(() -> searchCommandBuilder.ftHybrid(index, args));
     }
 

@@ -814,7 +814,7 @@ class RediSearchCommandBuilderUnitTests {
                         .limit(Limit.of(0, 20)).build())
                 .param("vec", queryVector).param("discount_rate", "0.9").build();
 
-        Command<String, String, HybridReply> command = builder.ftHybrid("idx:ecommerce", hybridArgs);
+        Command<String, String, HybridReply<String>> command = builder.ftHybrid("idx:ecommerce", hybridArgs);
 
         String args = command.getArgs().toCommandString();
 

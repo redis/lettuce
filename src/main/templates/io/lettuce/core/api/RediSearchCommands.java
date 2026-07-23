@@ -1239,6 +1239,6 @@ public interface RediSearchCommands<K> {
      * @since 7.2
      */
     @Experimental
-    HybridReply ftHybrid(String index, HybridArgs args);
+    HybridReply<K> ftHybrid(String index, HybridArgs args);
 
 }
