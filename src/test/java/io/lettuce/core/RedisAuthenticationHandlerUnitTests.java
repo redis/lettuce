@@ -1,7 +1,9 @@
 package io.lettuce.core;
 
+import io.lettuce.core.Subscription;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.DefaultEventBus;
+import io.lettuce.core.event.Event;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.connection.ReauthenticationFailedEvent;
 import io.lettuce.core.protocol.AsyncCommand;
@@ -14,10 +16,10 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import reactor.core.scheduler.Schedulers;
-import reactor.test.StepVerifier;
+import io.netty.util.concurrent.ImmediateEventExecutor;
 
-import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.protocol.CommandType.AUTH;
@@ -48,7 +50,7 @@ public class RedisAuthenticationHandlerUnitTests {
 
     @BeforeEach
     void setUp() {
-        eventBus = new DefaultEventBus(Schedulers.immediate());
+        eventBus = new DefaultEventBus(ImmediateEventExecutor.INSTANCE);
         writer = mock(RedisChannelWriter.class);
         connection = mock(StatefulRedisConnectionImpl.class);
         resources = mock(ClientResources.class);
@@ -92,12 +94,17 @@ public class RedisAuthenticationHandlerUnitTests {
 
         verify(connection, times(0)).dispatch(any(RedisCommand.class)); // No command should be sent
 
-        // Verify the event was published
-        StepVerifier.create(eventBus.get()).then(() -> {
-            handler.subscribe();
-            credentialsProvider.tryEmitError(new RuntimeException("Test error"));
-        }).expectNextMatches(event -> event instanceof ReauthenticationFailedEvent).thenCancel().verify(Duration.ofSeconds(1));
+        // Verify the event was published. ImmediateEventExecutor delivers synchronously, so the event is present once
+        // the error has been emitted.
+        List<Event> events = new CopyOnWriteArrayList<>();
+        Subscription subscription = eventBus.subscribe(events::add);
 
+        handler.subscribe();
+        credentialsProvider.tryEmitError(new RuntimeException("Test error"));
+
+        assertThat(events).anyMatch(event -> event instanceof ReauthenticationFailedEvent);
+
+        subscription.close();
         credentialsProvider.shutdown();
     }
 

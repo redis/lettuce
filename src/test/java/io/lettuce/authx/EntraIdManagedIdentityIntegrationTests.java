@@ -4,6 +4,7 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.test.env.Endpoints;
@@ -67,7 +68,7 @@ public class EntraIdManagedIdentityIntegrationTests {
                 sync.set(key, "value");
                 assertThat(connection.sync().get(key)).isEqualTo("value");
                 assertThat(connection.async().get(key).get()).isEqualTo("value");
-                assertThat(connection.reactive().get(key).block()).isEqualTo("value");
+                assertThat(connection.commands(RedisReactiveCommands.factory()).get(key).block()).isEqualTo("value");
                 sync.del(key);
             }
         }
@@ -96,7 +97,7 @@ public class EntraIdManagedIdentityIntegrationTests {
                 sync.set(key, "value");
                 assertThat(connection.sync().get(key)).isEqualTo("value");
                 assertThat(connection.async().get(key).get()).isEqualTo("value");
-                assertThat(connection.reactive().get(key).block()).isEqualTo("value");
+                assertThat(connection.commands(RedisReactiveCommands.factory()).get(key).block()).isEqualTo("value");
                 sync.del(key);
             }
         }

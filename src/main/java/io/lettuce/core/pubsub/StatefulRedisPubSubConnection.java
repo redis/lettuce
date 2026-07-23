@@ -3,7 +3,6 @@ package io.lettuce.core.pubsub;
 import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
-import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 
 /**
@@ -44,16 +43,6 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
     RedisPubSubAsyncCommands<K, V> async();
 
     /**
-     * Returns the {@link RedisPubSubReactiveCommands} API for the current connection. Does not create a new connection.
-     *
-     * @return the reactive API for the underlying connection.
-     * @deprecated since 7.7, use {@link #commands(PubSubCommandsFactory)} with {@link RedisPubSubReactiveCommands#factory()}
-     *             instead; scheduled for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    RedisPubSubReactiveCommands<K, V> reactive();
-
-    /**
      * Add a new {@link RedisPubSubListener listener}.
      *
      * @param listener the listener, must not be {@code null}.
@@ -76,12 +65,8 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
      * @param factory the command API factory, must not be {@code null}
      * @param <T> the command API type
      * @return the command API bound to this connection
-     * @throws UnsupportedOperationException if the connection implementation does not override this method. The default is
-     *         provided only for source compatibility in Lettuce 7.x and becomes an abstract method in Lettuce 8.0.
      * @since 7.7
      */
-    default <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory) {
-        throw new UnsupportedOperationException("commands(PubSubCommandsFactory) is not implemented by this connection");
-    }
+    <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory);
 
 }

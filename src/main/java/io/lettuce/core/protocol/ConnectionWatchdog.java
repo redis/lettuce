@@ -22,14 +22,15 @@ package io.lettuce.core.protocol;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.ConnectionEvents;
+import io.lettuce.core.Pair;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.connection.ReconnectAttemptEvent;
 import io.lettuce.core.event.connection.ReconnectFailedEvent;
@@ -112,14 +113,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      * @param reconnectWorkers executor group for reconnect tasks, must not be {@code null}
      * @param socketAddressSupplier the socket address supplier to obtain an address for reconnection, may be {@code null}
      * @param reconnectionListener the reconnection listener, must not be {@code null}
-     * @param connectionFacade the connection facade, must not be {@code null}
      * @param eventBus Event bus to emit reconnect events.
      * @param endpoint must not be {@code null}
      */
     public ConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
-            EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
-            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
-            Endpoint endpoint) {
+            EventExecutorGroup reconnectWorkers, Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
+            ReconnectionListener reconnectionListener, EventBus eventBus, Endpoint endpoint) {
 
         LettuceAssert.notNull(reconnectDelay, "Delay must not be null");
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
@@ -128,7 +127,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         LettuceAssert.notNull(reconnectWorkers, "ReconnectWorkers must not be null");
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
         LettuceAssert.notNull(reconnectionListener, "ReconnectionListener must not be null");
-        LettuceAssert.notNull(connectionFacade, "ConnectionFacade must not be null");
         LettuceAssert.notNull(eventBus, "EventBus must not be null");
         LettuceAssert.notNull(endpoint, "Endpoint must not be null");
 
@@ -142,26 +140,40 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
         this.epid = endpoint.getId();
 
-        Mono<SocketAddress> wrappedSocketAddressSupplier = wrapSocketAddressSupplier(socketAddressSupplier);
-        this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier, timer,
-                reconnectWorkers, connectionFacade);
+        Supplier<CompletionStage<SocketAddress>> wrappedSocketAddressSupplier = wrapSocketAddressSupplier(
+                socketAddressSupplier);
+        this.reconnectionHandler = new ReconnectionHandler(clientOptions, bootstrap, wrappedSocketAddressSupplier);
 
         resetReconnectDelay();
     }
 
-    protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> source) {
-        return source.doOnNext(addr -> remoteAddress = addr).onErrorResume(t -> {
-
-            if (logger.isDebugEnabled()) {
-                logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
-                        + ", reusing cached address " + remoteAddress, t);
-            } else {
-                logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
-                        + ", reusing cached address " + remoteAddress);
+    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplier(
+            Supplier<CompletionStage<SocketAddress>> source) {
+        return () -> {
+            try {
+                return source.get().handle((addr, t) -> {
+                    if (t != null) {
+                        log(remoteAddress, t);
+                        return remoteAddress;
+                    }
+                    remoteAddress = addr;
+                    return addr;
+                });
+            } catch (Exception e) {
+                log(remoteAddress, e);
+                return CompletableFuture.completedFuture(remoteAddress);
             }
+        };
+    }
 
-            return Mono.just(remoteAddress);
-        });
+    private void log(SocketAddress cached, Throwable t) {
+        if (logger.isDebugEnabled()) {
+            logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
+                    + ", reusing cached address " + cached, t);
+        } else {
+            logger.warn("Cannot retrieve current address from socketAddressSupplier: " + t.toString()
+                    + ", reusing cached address " + cached);
+        }
     }
 
     void prepareClose() {
@@ -332,7 +344,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             eventBus.publish(new ReconnectAttemptEvent(redisUri, epid, LocalAddress.ANY, remoteAddress, attempt, delay));
             logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
 
-            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = reconnectionHandler.reconnect();
+            Pair<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = reconnectionHandler.reconnect();
             CompletableFuture<Channel> future = tuple.getT1();
 
             future.whenComplete((c, t) -> {

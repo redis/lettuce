@@ -166,7 +166,8 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
 
-        RedisAdvancedClusterReactiveCommands<String, String> rx = clusterConnection.reactive();
+        RedisAdvancedClusterReactiveCommands<String, String> rx = clusterConnection
+                .commands(RedisAdvancedClusterReactiveCommands.factory());
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
 
             RedisClusterReactiveCommands<String, String> nodeId = rx.getConnection(redisClusterNode.getNodeId());

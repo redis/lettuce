@@ -80,16 +80,6 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
     RedisClusterPubSubAsyncCommands<K, V> async();
 
     /**
-     * Returns the {@link RedisClusterPubSubReactiveCommands} API for the current connection. Does not create a new connection.
-     *
-     * @return the reactive API for the underlying connection.
-     * @deprecated since 7.7, use {@link #commands(ClusterPubSubCommandsFactory)} with
-     *             {@link RedisClusterPubSubReactiveCommands#factory()} instead; scheduled for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    RedisClusterPubSubReactiveCommands<K, V> reactive();
-
-    /**
      * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list. This
      * connection is bound to the node id. Once the cluster topology view is updated, the connection will try to reconnect the
      * to the node with the specified {@code nodeId}, that behavior can also lead to a closed connection once the node with the
@@ -208,12 +198,8 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * @param factory the command API factory, must not be {@code null}
      * @param <T> the command API type
      * @return the command API bound to this connection
-     * @throws UnsupportedOperationException if the connection implementation does not override this method. The default is
-     *         provided only for source compatibility in Lettuce 7.x and becomes an abstract method in Lettuce 8.0.
      * @since 7.7
      */
-    default <T> T commands(ClusterPubSubCommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, T> factory) {
-        throw new UnsupportedOperationException("commands(ClusterPubSubCommandsFactory) is not implemented by this connection");
-    }
+    <T> T commands(ClusterPubSubCommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, T> factory);
 
 }
