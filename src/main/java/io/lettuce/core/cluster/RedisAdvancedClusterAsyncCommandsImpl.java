@@ -869,6 +869,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
+    public RedisFuture<List<V>> ftAliaslist(String index) {
+        return routeKeyless(() -> super.ftAliaslist(index), (conn) -> conn.ftAliaslist(index), CommandType.FT_ALIASLIST);
+    }
+
+    @Override
     public RedisFuture<List<V>> ftList() {
         return routeKeyless(super::ftList, (conn) -> conn.ftList(), CommandType.FT_LIST);
     }

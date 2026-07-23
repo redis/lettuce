@@ -57,6 +57,9 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftAliasdel(alias: String): String? =
         ops.ftAliasdel(alias).awaitFirstOrNull()
 
+    override suspend fun ftAliaslist(index: String): List<V> =
+        ops.ftAliaslist(index).asFlow().toList()
+
     override suspend fun ftAlter(index: String, skipInitialScan: Boolean, fieldArgs: List<FieldArgs<K>>): String? =
         ops.ftAlter(index, skipInitialScan, fieldArgs).awaitFirstOrNull()
 

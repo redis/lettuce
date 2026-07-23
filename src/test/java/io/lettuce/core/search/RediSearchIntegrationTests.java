@@ -730,6 +730,38 @@ public class RediSearchIntegrationTests {
     }
 
     /**
+     * Test FT.ALIASLIST command to list the aliases associated with an index.
+     */
+    @Test
+    void testFtAliaslistCommand() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+
+        String testIndex = "aliaslist-test-idx";
+        String alias1 = "aliaslist-alias1";
+        String alias2 = "aliaslist-alias2";
+
+        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+        assertThat(redis.ftCreate(testIndex, fields)).isEqualTo("OK");
+
+        // An existing index with no aliases returns an empty collection, not an error.
+        assertThat(redis.ftAliaslist(testIndex)).isEmpty();
+
+        assertThat(redis.ftAliasadd(alias1, testIndex)).isEqualTo("OK");
+        assertThat(redis.ftAliaslist(testIndex)).containsExactlyInAnyOrder(alias1);
+
+        assertThat(redis.ftAliasadd(alias2, testIndex)).isEqualTo("OK");
+        // Ordering is not part of the contract, so compare regardless of order.
+        assertThat(redis.ftAliaslist(testIndex)).containsExactlyInAnyOrder(alias1, alias2);
+
+        assertThat(redis.ftAliasdel(alias1)).isEqualTo("OK");
+        assertThat(redis.ftAliaslist(testIndex)).containsExactlyInAnyOrder(alias2);
+
+        // Cleanup
+        assertThat(redis.ftAliasdel(alias2)).isEqualTo("OK");
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
      * Test FT.TAGVALS command to retrieve distinct values from a tag field.
      */
     @Test
