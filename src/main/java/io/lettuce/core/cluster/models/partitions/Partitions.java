@@ -326,6 +326,18 @@ public class Partitions implements Collection<RedisClusterNode> {
         }
     }
 
+    // just used in topology refresh, no race condition and lock is removed
+    public void addAllWithoutCache(Collection<? extends RedisClusterNode> c) {
+
+        LettuceAssert.noNullElements(c, "Partitions must not contain null elements");
+        partitions.addAll(c);
+        this.nodeReadView = Collections.unmodifiableCollection(c);
+    }
+
+    public void updateReadView() {
+        this.nodeReadView = Collections.unmodifiableCollection(partitions);
+    }
+
     /**
      * Remove all {@link RedisClusterNode nodes} from the {@link Partitions} using elements from the given collection and update
      * the read-view/caches.

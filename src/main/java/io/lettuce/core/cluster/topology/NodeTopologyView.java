@@ -73,7 +73,7 @@ class NodeTopologyView {
         this.available = true;
         this.redisURI = redisURI;
 
-        this.partitions = ClusterPartitionParser.parse(clusterNodes);
+        this.partitions = ClusterPartitionParser.parseByCache(clusterNodes, false);
         this.connectedClients = getClientCount(info);
         this.replicationOffset = getReplicationOffset(info);
         this.clusterNodes = clusterNodes;
@@ -174,7 +174,7 @@ class NodeTopologyView {
         TopologyComparators.SortAction sortAction = TopologyComparators.SortAction.getSortAction();
 
         sortAction.sort(getPartitions());
-        getPartitions().updateCache();
+        getPartitions().updateReadView();
     }
 
     public boolean canContribute() {
