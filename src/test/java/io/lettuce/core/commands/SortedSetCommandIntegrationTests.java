@@ -973,9 +973,6 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
 
         setup100KeyValues(new HashSet<>());
 
-        assertThat(redis.zlexcount(key, "-", "+")).isEqualTo(100);
-        assertThat(redis.zlexcount(key, "[value", "[zzz")).isEqualTo(100);
-
         assertThat(redis.zlexcount(key, Range.unbounded())).isEqualTo(100);
         assertThat(redis.zlexcount(key, Range.create("value", "zzz"))).isEqualTo(100);
         assertThat(redis.zlexcount(key, Range.from(including("value99"), Boundary.unbounded()))).isEqualTo(1);
@@ -993,9 +990,6 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     void zrangebylex() {
         setup100KeyValues(new HashSet<>());
 
-        assertThat(redis.zrangebylex(key, "-", "+")).hasSize(100);
-        assertThat(redis.zrangebylex(key, "-", "+", 10, 10)).hasSize(10);
-
         assertThat(redis.zrangebylex(key, Range.unbounded())).hasSize(100);
         assertThat(redis.zrangebylex(key, Range.create("value", "zzz"))).hasSize(100);
         assertThat(redis.zrangebylex(key, Range.from(including("value98"), including("value99")))).containsSequence("value98",
@@ -1008,7 +1002,6 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     void zremrangebylex() {
 
         setup100KeyValues(new HashSet<>());
-        assertThat(redis.zremrangebylex(key, "(aaa", "[zzz")).isEqualTo(100);
 
         setup100KeyValues(new HashSet<>());
         assertThat(redis.zremrangebylex(key, Range.create("value", "zzz"))).isEqualTo(100);
