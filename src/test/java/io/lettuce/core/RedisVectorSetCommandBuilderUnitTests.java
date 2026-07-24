@@ -329,6 +329,39 @@ class RedisVectorSetCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructVsimWithOneVector() {
+        Command<String, String, List<String>> command = builder.vsim(KEY, new Double[] { 0.1d });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$4\r\n" + "VSIM\r\n" + "$10\r\n"
+                + "vector:set\r\n" + "$6\r\n" + "VALUES\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "0.1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructVsimWithScoresWithOneVector() {
+        Command<String, String, Map<String, Double>> command = builder.vsimWithScore(KEY, new Double[] { 0.1d });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*6\r\n" + "$4\r\n" + "VSIM\r\n" + "$10\r\n" + "vector:set\r\n" + "$6\r\n" + "VALUES\r\n" + "$1\r\n"
+                        + "1\r\n" + "$3\r\n" + "0.1\r\n" + "$10\r\n" + "WITHSCORES\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructVsimWithScoreWithAttribsWithOneVector() {
+        Command<String, String, Map<String, VSimScoreAttribs>> command = builder.vsimWithScoreWithAttribs(KEY,
+                new Double[] { 0.1d });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$4\r\n" + "VSIM\r\n" + "$10\r\n" + "vector:set\r\n" + "$6\r\n" + "VALUES\r\n" + "$1\r\n"
+                        + "1\r\n" + "$3\r\n" + "0.1\r\n" + "$10\r\n" + "WITHSCORES\r\n" + "$11\r\n" + "WITHATTRIBS\r\n");
+    }
+
+    @Test
     void epsilonBelowZero_throws() {
         VSimArgs args = new VSimArgs();
         assertThatThrownBy(() -> args.epsilon(-0.1)).isInstanceOf(IllegalArgumentException.class)
