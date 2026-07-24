@@ -13,7 +13,6 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.socket.nio.NioChannelOption;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import jdk.net.ExtendedSocketOptions;
 
 /**
  * Utility class to determine if extended TCP keep-alive options are supported on the current platform and to apply them.
@@ -92,10 +91,12 @@ public class ExtendedKeepAliveSupport {
     }
 
     /**
-     * Utility to support Java 11 {@link ExtendedSocketOptions extended keepalive options}.
+     * Utility to support Java 11 {@link jdk.net.ExtendedSocketOptions extended keepalive options}.
      */
     @SuppressWarnings("unchecked")
     static class ExtendedNioSocketOptions {
+
+        private static final String EXTENDED_SOCKET_OPTIONS_CLASS = "jdk.net.ExtendedSocketOptions";
 
         private static final SocketOption<Integer> TCP_KEEPCOUNT;
 
@@ -110,12 +111,15 @@ public class ExtendedKeepAliveSupport {
             SocketOption<Integer> keepInterval = null;
             try {
 
-                keepCount = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPCOUNT").get(null);
-                keepIdle = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPIDLE").get(null);
-                keepInterval = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPINTERVAL")
-                        .get(null);
-            } catch (ReflectiveOperationException e) {
-                logger.trace("Cannot extract ExtendedSocketOptions for KeepAlive", e);
+                // Resolve via Class.forName instead of a class literal so that runtimes without the jdk.net module
+                // (e.g. custom jlink images) degrade gracefully instead of failing with NoClassDefFoundError.
+                Class<?> extendedSocketOptions = Class.forName(EXTENDED_SOCKET_OPTIONS_CLASS);
+                keepCount = (SocketOption<Integer>) extendedSocketOptions.getDeclaredField("TCP_KEEPCOUNT").get(null);
+                keepIdle = (SocketOption<Integer>) extendedSocketOptions.getDeclaredField("TCP_KEEPIDLE").get(null);
+                keepInterval = (SocketOption<Integer>) extendedSocketOptions.getDeclaredField("TCP_KEEPINTERVAL").get(null);
+            } catch (ReflectiveOperationException | LinkageError e) {
+                logger.debug("jdk.net.ExtendedSocketOptions is not available, extended keep-alive options will not be applied",
+                        e);
             }
 
             TCP_KEEPCOUNT = keepCount;
