@@ -40,7 +40,9 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ClientOptions.DisconnectedBehavior;
 import io.lettuce.core.CommandListenerWriter;
+import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.TimeoutOptions;
@@ -67,6 +69,7 @@ import io.lettuce.core.resource.ClientResources;
  * @author Mark Paluch
  * @author koisyu
  * @author Jim Brunner
+ * @author Vaibhav Vashisht
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
@@ -276,6 +279,151 @@ class ClusterDistributionChannelWriterUnitTests {
             verify(clusterNodeEndpoint, times(1)).write(anyList());
             verify(clusterNodeEndpoint, never()).write(ArgumentMatchers.<RedisCommand<String, String, String>> any());
         }
+    }
+
+    @Test
+    void shouldRejectCommandWhenSlotConnectionPendingAndRejectCommands() {
+
+        AsyncCommand<String, String, String> asyncCommand = newKeyedGet();
+        ClusterDistributionChannelWriter writer = newWriterWithSlotConnectFuture(
+                ClientOptions.builder().disconnectedBehavior(DisconnectedBehavior.REJECT_COMMANDS).build(),
+                new CompletableFuture<>());
+
+        writer.write(asyncCommand);
+
+        assertThatRejectedAsDisconnected(asyncCommand);
+        verifyNoInteractions(clusterNodeEndpoint);
+    }
+
+    @Test
+    void shouldNotRejectCommandWhenSlotConnectionPendingAndDefaultWithAutoReconnect() {
+
+        AsyncCommand<String, String, String> asyncCommand = newKeyedGet();
+        CompletableFuture<StatefulRedisConnection<String, String>> pending = new CompletableFuture<>();
+        ClusterDistributionChannelWriter writer = newWriterWithSlotConnectFuture(
+                ClientOptions.builder().autoReconnect(true).disconnectedBehavior(DisconnectedBehavior.DEFAULT).build(),
+                pending);
+
+        writer.write(asyncCommand);
+
+        assertThat(asyncCommand.isDone()).isFalse();
+
+        when(connection.getChannelWriter()).thenReturn(clusterNodeEndpoint);
+        pending.complete(connection);
+
+        verify(clusterNodeEndpoint, times(1)).write(ArgumentMatchers.<RedisCommand<String, String, String>> any());
+    }
+
+    @Test
+    void shouldRejectCommandWhenSlotConnectionPendingAndDefaultWithoutAutoReconnect() {
+
+        AsyncCommand<String, String, String> asyncCommand = newKeyedGet();
+        ClusterDistributionChannelWriter writer = newWriterWithSlotConnectFuture(
+                ClientOptions.builder().autoReconnect(false).disconnectedBehavior(DisconnectedBehavior.DEFAULT).build(),
+                new CompletableFuture<>());
+
+        writer.write(asyncCommand);
+
+        assertThatRejectedAsDisconnected(asyncCommand);
+        verifyNoInteractions(clusterNodeEndpoint);
+    }
+
+    @Test
+    void shouldNotRejectCommandWhenSlotConnectionPendingAndAcceptCommands() {
+
+        AsyncCommand<String, String, String> asyncCommand = newKeyedGet();
+        CompletableFuture<StatefulRedisConnection<String, String>> pending = new CompletableFuture<>();
+        ClusterDistributionChannelWriter writer = newWriterWithSlotConnectFuture(
+                ClientOptions.builder().disconnectedBehavior(DisconnectedBehavior.ACCEPT_COMMANDS).build(), pending);
+
+        writer.write(asyncCommand);
+
+        assertThat(asyncCommand.isDone()).isFalse();
+
+        when(connection.getChannelWriter()).thenReturn(clusterNodeEndpoint);
+        pending.complete(connection);
+
+        verify(clusterNodeEndpoint, times(1)).write(ArgumentMatchers.<RedisCommand<String, String, String>> any());
+    }
+
+    @Test
+    void shouldWriteNormallyWhenSlotConnectionAlreadyCompletedAndRejectCommands() {
+
+        AsyncCommand<String, String, String> asyncCommand = newKeyedGet();
+        when(connection.getChannelWriter()).thenReturn(clusterNodeEndpoint);
+        ClusterDistributionChannelWriter writer = newWriterWithSlotConnectFuture(
+                ClientOptions.builder().disconnectedBehavior(DisconnectedBehavior.REJECT_COMMANDS).build(),
+                CompletableFuture.completedFuture(connection));
+
+        writer.write(asyncCommand);
+
+        assertThat(asyncCommand.isDone()).isFalse();
+        verify(clusterNodeEndpoint, times(1)).write(ArgumentMatchers.<RedisCommand<String, String, String>> any());
+    }
+
+    @Test
+    void shouldPropagateOriginalFailureWhenSlotConnectionAlreadyFailedAndRejectCommands() {
+
+        AsyncCommand<String, String, String> asyncCommand = newKeyedGet();
+        RedisException originalCause = new RedisException("connect refused at 127.0.0.1:6379");
+        CompletableFuture<StatefulRedisConnection<String, String>> failed = new CompletableFuture<>();
+        failed.completeExceptionally(originalCause);
+        ClusterDistributionChannelWriter writer = newWriterWithSlotConnectFuture(
+                ClientOptions.builder().disconnectedBehavior(DisconnectedBehavior.REJECT_COMMANDS).build(), failed);
+
+        writer.write(asyncCommand);
+
+        assertThat(asyncCommand).isCompletedExceptionally();
+        assertThatThrownBy(asyncCommand::get).extracting(Throwable::getCause).isSameAs(originalCause);
+        verifyNoInteractions(clusterNodeEndpoint);
+    }
+
+    @Test
+    void shouldRejectCommandWhenMovedConnectionPendingAndRejectCommands() {
+
+        clientOptions = ClientOptions.builder().disconnectedBehavior(DisconnectedBehavior.REJECT_COMMANDS).build();
+        clusterDistributionChannelWriter = new ClusterDistributionChannelWriter(defaultWriter, clientOptions,
+                clusterEventListener);
+        clusterDistributionChannelWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
+
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8).addKey("KEY");
+        ValueOutput<String, String> valueOutput = new ValueOutput<>(StringCodec.UTF8);
+        Command<String, String, String> command = new Command<>(CommandType.GET, valueOutput, commandArgs);
+        AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
+        ClusterCommand<String, String, String> clusterCommand = new ClusterCommand<>(asyncCommand, defaultWriter, 2);
+        clusterCommand.getOutput().setError("MOVED 1234 127.0.0.1:6379");
+
+        when(pooledClusterConnectionProvider.getConnectionAsync(any(ConnectionIntent.class), anyString(), anyInt()))
+                .thenReturn(new CompletableFuture<>());
+
+        clusterDistributionChannelWriter.write(clusterCommand);
+
+        assertThatRejectedAsDisconnected(asyncCommand);
+        verifyNoInteractions(clusterNodeEndpoint);
+    }
+
+    private AsyncCommand<String, String, String> newKeyedGet() {
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8).addKey("KEY");
+        ValueOutput<String, String> valueOutput = new ValueOutput<>(StringCodec.UTF8);
+        Command<String, String, String> command = new Command<>(CommandType.GET, valueOutput, commandArgs);
+        return new AsyncCommand<>(command);
+    }
+
+    private ClusterDistributionChannelWriter newWriterWithSlotConnectFuture(ClientOptions options,
+            CompletableFuture<StatefulRedisConnection<String, String>> connectFuture) {
+
+        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(defaultWriter, options,
+                clusterEventListener);
+        writer.setClusterConnectionProvider(pooledClusterConnectionProvider);
+        when(pooledClusterConnectionProvider.getConnectionAsync(any(ConnectionIntent.class), anyInt()))
+                .thenReturn(connectFuture);
+        return writer;
+    }
+
+    private static void assertThatRejectedAsDisconnected(AsyncCommand<?, ?, ?> asyncCommand) {
+        assertThat(asyncCommand).isCompletedExceptionally();
+        assertThatThrownBy(asyncCommand::get).hasCauseInstanceOf(RedisException.class)
+                .hasMessageContaining("Currently not connected. Commands are rejected.");
     }
 
 }
