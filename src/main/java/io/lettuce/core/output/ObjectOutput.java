@@ -42,11 +42,6 @@ public class ObjectOutput<K, V> extends CommandOutput<K, V, Object> {
 
     @Override
     public void set(long integer) {
-
-        if (!initialized) {
-            output = new ArrayList<>();
-        }
-
         setValue(integer);
     }
 
@@ -77,6 +72,11 @@ public class ObjectOutput<K, V> extends CommandOutput<K, V, Object> {
 
     @SuppressWarnings("unchecked")
     private void setValue(Object value) {
+
+        if (!initialized) {
+            output = new ArrayList<>();
+            initialized = true;
+        }
 
         if (output != null) {
 
