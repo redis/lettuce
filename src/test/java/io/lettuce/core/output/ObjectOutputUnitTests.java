@@ -32,8 +32,7 @@ class ObjectOutputUnitTests {
         rsm.decode(Unpooled.wrappedBuffer(in.getBytes(StandardCharsets.UTF_8)), output, exception -> {
             throw (RuntimeException) exception;
         });
-        assertThat(output.get()).isInstanceOf(List.class);
-        assertThat((List) output.get()).containsExactly("true");
+        assertThat(output.get()).isEqualTo("true");
     }
 
     @Test
@@ -44,11 +43,7 @@ class ObjectOutputUnitTests {
         rsm.decode(Unpooled.wrappedBuffer("#t\r\n".getBytes(StandardCharsets.UTF_8)), output, exception -> {
             throw (RuntimeException) exception;
         });
-        rsm.decode(Unpooled.wrappedBuffer("#f\r\n".getBytes(StandardCharsets.UTF_8)), output, exception -> {
-            throw (RuntimeException) exception;
-        });
-        assertThat(output.get()).isInstanceOf(List.class);
-        assertThat((List) output.get()).containsExactly(true, false);
+        assertThat(output.get()).isEqualTo(true);
     }
 
     @Test
@@ -60,8 +55,19 @@ class ObjectOutputUnitTests {
         rsm.decode(Unpooled.wrappedBuffer(in.getBytes(StandardCharsets.UTF_8)), output, exception -> {
             throw (RuntimeException) exception;
         });
-        assertThat(output.get()).isInstanceOf(List.class);
-        assertThat((List) output.get()).containsExactly(1.5d);
+        assertThat(output.get()).isEqualTo(1.5d);
+    }
+
+    @Test
+    void shouldParseTopLevelIntegerAsScalar() {
+
+        String in = ":3\r\n";
+        RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
+        ObjectOutput<String, String> output = new ObjectOutput<>(StringCodec.UTF8);
+        rsm.decode(Unpooled.wrappedBuffer(in.getBytes(StandardCharsets.UTF_8)), output, exception -> {
+            throw (RuntimeException) exception;
+        });
+        assertThat(output.get()).isEqualTo(3L);
     }
 
     @Test
