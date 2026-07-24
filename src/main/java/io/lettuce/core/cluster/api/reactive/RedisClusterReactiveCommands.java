@@ -359,7 +359,9 @@ public interface RedisClusterReactiveCommands<K, V>
      * Get array of cluster slots to node mappings.
      *
      * @return List&lt;Object&gt; array-reply nested list of slot ranges with IP/Port mappings.
+     * @deprecated since 7.7, use {@link #clusterShards()} instead.
      */
+    @Deprecated
     Flux<Object> clusterSlots();
 
     /**

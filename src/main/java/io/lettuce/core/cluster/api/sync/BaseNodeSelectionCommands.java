@@ -136,7 +136,9 @@ public interface BaseNodeSelectionCommands<K, V> {
      * release resources.
      *
      * @return String simple-string-reply always OK.
+     * @deprecated since 7.7, use {@link io.lettuce.core.api.StatefulConnection#close()} instead.
      */
+    @Deprecated
     Executions<String> quit();
 
     /**

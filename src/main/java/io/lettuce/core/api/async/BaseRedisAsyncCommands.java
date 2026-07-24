@@ -155,7 +155,9 @@ public interface BaseRedisAsyncCommands<K, V> {
      * release resources.
      *
      * @return String simple-string-reply always OK.
+     * @deprecated since 7.7, use {@link StatefulConnection#close()} instead.
      */
+    @Deprecated
     RedisFuture<String> quit();
 
     /**
