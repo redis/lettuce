@@ -19,3 +19,4 @@ dependency-reduced-pom.xml
 *.DS_Store
 prDescription.md
 .vscode*
+.augment

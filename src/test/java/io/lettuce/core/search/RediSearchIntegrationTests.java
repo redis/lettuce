@@ -44,7 +44,6 @@ import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.lettuce.core.search.arguments.VectorFieldArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
-import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -63,7 +62,6 @@ import java.util.Map;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for Redis Search functionality using FT.SEARCH command.
@@ -134,14 +132,13 @@ public class RediSearchIntegrationTests {
         // Create index based on Redis documentation example:
         // FT.CREATE idx ON HASH PREFIX 1 blog:post: SCHEMA title TEXT WEIGHT 5.0 content TEXT author TAG created_date NUMERIC
         // SORTABLE views NUMERIC
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").weight(5).build();
-        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
-        FieldArgs<String> authorField = TagFieldArgs.<String> builder().name("author").build();
-        FieldArgs<String> createdDateField = NumericFieldArgs.<String> builder().name("created_date").sortable().build();
-        FieldArgs<String> viewsField = NumericFieldArgs.<String> builder().name("views").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").weight(5).build();
+        FieldArgs contentField = TextFieldArgs.builder().name("content").build();
+        FieldArgs authorField = TagFieldArgs.builder().name("author").build();
+        FieldArgs createdDateField = NumericFieldArgs.builder().name("created_date").sortable().build();
+        FieldArgs viewsField = NumericFieldArgs.builder().name("views").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(BLOG_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         String result = redis.ftCreate(BLOG_INDEX, createArgs,
                 Arrays.asList(titleField, contentField, authorField, createdDateField, viewsField));
@@ -173,16 +170,16 @@ public class RediSearchIntegrationTests {
         assertThat(redis.hmset("blog:post:3", post3)).isEqualTo("OK");
 
         // Test 1: Basic text search
-        SearchReply<String, String> searchReply = redis.ftSearch(BLOG_INDEX, "@title:(Redis)");
+        SearchReply<String> searchReply = redis.ftSearch(BLOG_INDEX, "@title:(Redis)");
         assertThat(searchReply.getCount()).isEqualTo(2);
         assertThat(searchReply.getResults()).hasSize(2);
-        assertThat(searchReply.getResults().get(1).getFields().get("title")).isEqualTo("Redis Search Tutorial");
-        assertThat(searchReply.getResults().get(0).getFields().get("title")).isEqualTo("Advanced Redis Techniques");
-        assertThat(searchReply.getResults().get(1).getFields().get("author")).isEqualTo("john_doe");
-        assertThat(searchReply.getResults().get(0).getFields().get("author")).isEqualTo("jane_smith");
+        assertThat(searchReply.getResults().get(1).getFields().get("title").asString()).isEqualTo("Redis Search Tutorial");
+        assertThat(searchReply.getResults().get(0).getFields().get("title").asString()).isEqualTo("Advanced Redis Techniques");
+        assertThat(searchReply.getResults().get(1).getFields().get("author").asString()).isEqualTo("john_doe");
+        assertThat(searchReply.getResults().get(0).getFields().get("author").asString()).isEqualTo("jane_smith");
 
         // Test 2: Search with field-specific query
-        SearchArgs<String, String> titleSearchArgs = SearchArgs.<String, String> builder().build();
+        SearchArgs<String> titleSearchArgs = SearchArgs.<String> builder().build();
         searchReply = redis.ftSearch(BLOG_INDEX, "@title:Redis", titleSearchArgs);
         assertThat(searchReply.getCount()).isEqualTo(2);
 
@@ -204,11 +201,10 @@ public class RediSearchIntegrationTests {
     @Test
     void testSearchOptionsAndModifiers() {
         // Create a simple index for testing search options
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").sortable().build();
-        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").sortable().build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").sortable().build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(MOVIE_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(MOVIES_INDEX, createArgs, Arrays.asList(titleField, ratingField));
 
@@ -229,51 +225,51 @@ public class RediSearchIntegrationTests {
         redis.hmset("movie:3", movie3);
 
         // Test 1: Search with WITHSCORES
-        SearchArgs<String, String> withScoresArgs = SearchArgs.<String, String> builder().withScores().build();
-        SearchReply<String, String> results = redis.ftSearch(MOVIES_INDEX, "Matrix", withScoresArgs);
+        SearchArgs<String> withScoresArgs = SearchArgs.<String> builder().withScores().build();
+        SearchReply<String> results = redis.ftSearch(MOVIES_INDEX, "Matrix", withScoresArgs);
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
         // Verify that scores are present
-        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String> result : results.getResults()) {
             assertThat(result.getScore()).isNotNull();
             assertThat(result.getScore()).isGreaterThan(0.0);
         }
 
         // Test 2: Search with NOCONTENT
-        SearchArgs<String, String> noContentArgs = SearchArgs.<String, String> builder().noContent().build();
+        SearchArgs<String> noContentArgs = SearchArgs.<String> builder().noContent().build();
         results = redis.ftSearch(MOVIES_INDEX, "Matrix", noContentArgs);
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
         // Verify that fields are not present
-        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String> result : results.getResults()) {
             assertThat(result.getFields()).isEmpty();
         }
 
         // Test 3: Search with LIMIT
-        SearchArgs<String, String> limitArgs = SearchArgs.<String, String> builder().limit(0, 2).build();
+        SearchArgs<String> limitArgs = SearchArgs.<String> builder().limit(0, 2).build();
         results = redis.ftSearch(MOVIES_INDEX, "Matrix", limitArgs);
         assertThat(results.getCount()).isEqualTo(3); // Total count should still be 3
         assertThat(results.getResults()).hasSize(2); // But only 2 results returned
 
         // Test 4: Search with SORTBY
-        SortByArgs<String> sortByArgs = SortByArgs.<String> builder().attribute("rating").descending().build();
-        SearchArgs<String, String> sortArgs = SearchArgs.<String, String> builder().sortBy(sortByArgs).build();
+        SortByArgs sortByArgs = SortByArgs.builder().attribute("rating").descending().build();
+        SearchArgs<String> sortArgs = SearchArgs.<String> builder().sortBy(sortByArgs).build();
         results = redis.ftSearch(MOVIES_INDEX, "Matrix", sortArgs);
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
         // Verify sorting order (highest rating first)
         double previousRating = Double.MAX_VALUE;
-        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
-            double currentRating = Double.parseDouble(result.getFields().get("rating"));
+        for (SearchReply.SearchResult<String> result : results.getResults()) {
+            double currentRating = Double.parseDouble(result.getFields().get("rating").asString());
             assertThat(currentRating).isLessThanOrEqualTo(previousRating);
             previousRating = currentRating;
         }
 
         // Test 5: Search with RETURN fields
-        SearchArgs<String, String> returnArgs = SearchArgs.<String, String> builder().returnField("title").build();
+        SearchArgs<String> returnArgs = SearchArgs.<String> builder().returnField("title").build();
         results = redis.ftSearch(MOVIES_INDEX, "Matrix", returnArgs);
         assertThat(results.getCount()).isEqualTo(3);
-        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String> result : results.getResults()) {
             assertThat(result.getFields()).containsKey("title");
             assertThat(result.getFields()).doesNotContainKey("rating");
         }
@@ -290,11 +286,10 @@ public class RediSearchIntegrationTests {
     void testTagFieldsWithCustomSeparator() {
         // Create index with TAG field using custom separator
         // FT.CREATE books-idx ON HASH PREFIX 1 book:details SCHEMA title TEXT categories TAG SEPARATOR ";"
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> categoriesField = TagFieldArgs.<String> builder().name("categories").separator(";").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs categoriesField = TagFieldArgs.builder().name("categories").separator(";").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(BOOK_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(BOOKS_INDEX, createArgs, Arrays.asList(titleField, categoriesField));
 
@@ -315,7 +310,7 @@ public class RediSearchIntegrationTests {
         redis.hmset("book:details:3", book3);
 
         // Test 1: Search for books with "databases" category
-        SearchReply<String, String> results = redis.ftSearch(BOOKS_INDEX, "@categories:{databases}");
+        SearchReply<String> results = redis.ftSearch(BOOKS_INDEX, "@categories:{databases}");
         assertThat(results.getCount()).isEqualTo(3);
 
         // Test 2: Search for books with "nosql" category
@@ -325,7 +320,7 @@ public class RediSearchIntegrationTests {
         // Test 3: Search for books with "programming" category
         results = redis.ftSearch(BOOKS_INDEX, "@categories:{programming}");
         assertThat(results.getCount()).isEqualTo(1);
-        assertThat(results.getResults().get(0).getFields().get("title")).isEqualTo("Redis in Action");
+        assertThat(results.getResults().get(0).getFields().get("title").asString()).isEqualTo("Redis in Action");
 
         // Test 4: Search for books with multiple categories (OR)
         results = redis.ftSearch(BOOKS_INDEX, "@categories:{programming|design}");
@@ -341,12 +336,11 @@ public class RediSearchIntegrationTests {
     @Test
     void testNumericFieldOperations() {
         // Create index with numeric fields for testing range queries
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
-        FieldArgs<String> stockField = NumericFieldArgs.<String> builder().name("stock").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
+        FieldArgs stockField = NumericFieldArgs.builder().name("stock").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PRODUCT_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(PRODUCTS_INDEX, createArgs, Arrays.asList(nameField, priceField, stockField));
 
@@ -376,7 +370,7 @@ public class RediSearchIntegrationTests {
         redis.hmset("product:4", product4);
 
         // Test 1: Range query - products between $50 and $500
-        SearchReply<String, String> results = redis.ftSearch(PRODUCTS_INDEX, "@price:[50 500]");
+        SearchReply<String> results = redis.ftSearch(PRODUCTS_INDEX, "@price:[50 500]");
         assertThat(results.getCount()).isEqualTo(2); // Keyboard and Monitor
 
         // Test 2: Open range query - products over $100
@@ -390,7 +384,7 @@ public class RediSearchIntegrationTests {
         // Test 4: Exact numeric value
         results = redis.ftSearch(PRODUCTS_INDEX, "@price:[29.99 29.99]");
         assertThat(results.getCount()).isEqualTo(1);
-        assertThat(results.getResults().get(0).getFields().get("name")).isEqualTo("Mouse");
+        assertThat(results.getResults().get(0).getFields().get("name").asString()).isEqualTo("Mouse");
 
         // Test 5: Stock range query
         results = redis.ftSearch(PRODUCTS_INDEX, "@stock:[20 60]");
@@ -410,12 +404,11 @@ public class RediSearchIntegrationTests {
     @Test
     void testAdvancedSearchFeatures() {
         // Create a simple index for testing advanced features
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs contentField = TextFieldArgs.builder().name("content").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(BLOG_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(BLOG_INDEX, createArgs, Arrays.asList(titleField, contentField, categoryField));
 
@@ -439,24 +432,22 @@ public class RediSearchIntegrationTests {
         redis.hmset("blog:post:3", post3);
 
         // Test 1: Search with INKEYS (limit search to specific keys)
-        SearchArgs<String, String> inKeysArgs = SearchArgs.<String, String> builder().inKey("blog:post:1").inKey("blog:post:2")
-                .build();
-        SearchReply<String, String> results = redis.ftSearch(BLOG_INDEX, "Redis", inKeysArgs);
+        SearchArgs<String> inKeysArgs = SearchArgs.<String> builder().inKey("blog:post:1").inKey("blog:post:2").build();
+        SearchReply<String> results = redis.ftSearch(BLOG_INDEX, "Redis", inKeysArgs);
         assertThat(results.getCount()).isEqualTo(2); // Only posts 1 and 2
 
         // Test 2: Search with INFIELDS (limit search to specific fields)
-        SearchArgs<String, String> inFieldsArgs = SearchArgs.<String, String> builder().inField("title").build();
+        SearchArgs<String> inFieldsArgs = SearchArgs.<String> builder().inField("title").build();
         results = redis.ftSearch(BLOG_INDEX, "Redis", inFieldsArgs);
         assertThat(results.getCount()).isEqualTo(2); // Only matches in title field
 
         // Test 3: Search with TIMEOUT
-        SearchArgs<String, String> timeoutArgs = SearchArgs.<String, String> builder().timeout(Duration.ofSeconds(5)).build();
+        SearchArgs<String> timeoutArgs = SearchArgs.<String> builder().timeout(Duration.ofSeconds(5)).build();
         results = redis.ftSearch(BLOG_INDEX, "Redis", timeoutArgs);
         assertThat(results.getCount()).isEqualTo(2);
 
         // Test 4: Search with PARAMS (parameterized query)
-        SearchArgs<String, String> paramsArgs = SearchArgs.<String, String> builder().param("category_param", "tutorial")
-                .build();
+        SearchArgs<String> paramsArgs = SearchArgs.<String> builder().param("category_param", "tutorial").build();
         results = redis.ftSearch(BLOG_INDEX, "@category:{$category_param}", paramsArgs);
         assertThat(results.getCount()).isEqualTo(2); // Posts with tutorial category
 
@@ -470,13 +461,12 @@ public class RediSearchIntegrationTests {
     @Test
     void testComplexQueriesAndBooleanOperations() {
         // Create index for testing complex queries
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("description").build();
-        FieldArgs<String> tagsField = TagFieldArgs.<String> builder().name("tags").build();
-        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs descriptionField = TextFieldArgs.builder().name("description").build();
+        FieldArgs tagsField = TagFieldArgs.builder().name("tags").build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(MOVIE_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(MOVIES_INDEX, createArgs, Arrays.asList(titleField, descriptionField, tagsField, ratingField));
 
@@ -510,9 +500,9 @@ public class RediSearchIntegrationTests {
         redis.hmset("movie:4", movie4);
 
         // Test 1: Boolean AND operation
-        SearchReply<String, String> results = redis.ftSearch(MOVIES_INDEX, "((@tags:{thriller}) (@tags:{action}))");
+        SearchReply<String> results = redis.ftSearch(MOVIES_INDEX, "((@tags:{thriller}) (@tags:{action}))");
         assertThat(results.getCount()).isEqualTo(1); // The Matrix
-        assertThat(results.getResults().get(0).getFields().get("title")).isEqualTo("The Matrix");
+        assertThat(results.getResults().get(0).getFields().get("title").asString()).isEqualTo("The Matrix");
 
         // Test 2: Boolean OR operation
         results = redis.ftSearch(MOVIES_INDEX, "((@tags:{thriller}) | (@tags:{crime}))");
@@ -526,7 +516,7 @@ public class RediSearchIntegrationTests {
 
         results = redis.ftSearch(MOVIES_INDEX, "@title:\"Inception\"");
         assertThat(results.getCount()).isEqualTo(1);
-        assertThat(results.getResults().get(0).getFields().get("title")).isEqualTo("Inception");
+        assertThat(results.getResults().get(0).getFields().get("title").asString()).isEqualTo("Inception");
 
         // Test 5: Wildcard search
         results = redis.ftSearch(MOVIES_INDEX, "Matrix*");
@@ -550,10 +540,9 @@ public class RediSearchIntegrationTests {
     @Test
     void testEmptyResultsAndEdgeCases() {
         // Create a simple index
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(BLOG_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(BLOG_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(BLOG_INDEX, createArgs, Collections.singletonList(titleField));
 
@@ -563,18 +552,18 @@ public class RediSearchIntegrationTests {
         redis.hmset("blog:post:1", post1);
 
         // Test 1: Search for non-existent term
-        SearchReply<String, String> results = redis.ftSearch(BLOG_INDEX, "nonexistent");
+        SearchReply<String> results = redis.ftSearch(BLOG_INDEX, "nonexistent");
         assertThat(results.getCount()).isEqualTo(0);
         assertThat(results.getResults()).isEmpty();
 
         // Test 2: Search with LIMIT beyond available results
-        SearchArgs<String, String> limitArgs = SearchArgs.<String, String> builder().limit(10, 20).build();
+        SearchArgs<String> limitArgs = SearchArgs.<String> builder().limit(10, 20).build();
         results = redis.ftSearch(BLOG_INDEX, "Redis", limitArgs);
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults()).isEmpty(); // No results in range 10-20
 
         // Test 3: Search with NOCONTENT and WITHSCORES
-        SearchArgs<String, String> combinedArgs = SearchArgs.<String, String> builder().noContent().withScores().build();
+        SearchArgs<String> combinedArgs = SearchArgs.<String> builder().noContent().withScores().build();
         results = redis.ftSearch(BLOG_INDEX, "Redis", combinedArgs);
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults()).hasSize(1);
@@ -593,8 +582,7 @@ public class RediSearchIntegrationTests {
         String testIndex = "alter-test-idx";
 
         // Create initial index with one field
-        List<FieldArgs<String>> initialFields = Collections
-                .singletonList(TextFieldArgs.<String> builder().name("title").build());
+        List<FieldArgs> initialFields = Collections.singletonList(TextFieldArgs.builder().name("title").build());
 
         assertThat(redis.ftCreate(testIndex, initialFields)).isEqualTo("OK");
 
@@ -604,13 +592,12 @@ public class RediSearchIntegrationTests {
         redis.hset("doc:1", doc1);
 
         // Verify initial search works
-        SearchReply<String, String> initialSearch = redis.ftSearch(testIndex, "Test");
+        SearchReply<String> initialSearch = redis.ftSearch(testIndex, "Test");
         assertThat(initialSearch.getCount()).isEqualTo(1);
 
         // Add new fields to the index
-        List<FieldArgs<String>> newFields = Arrays.asList(
-                NumericFieldArgs.<String> builder().name("published_at").sortable().build(),
-                TextFieldArgs.<String> builder().name("author").build());
+        List<FieldArgs> newFields = Arrays.asList(NumericFieldArgs.builder().name("published_at").sortable().build(),
+                TextFieldArgs.builder().name("author").build());
 
         assertThat(redis.ftAlter(testIndex, false, newFields)).isEqualTo("OK");
 
@@ -628,11 +615,11 @@ public class RediSearchIntegrationTests {
         redis.hset("doc:2", doc2);
 
         // Verify search still works and new fields are indexed
-        SearchReply<String, String> searchAfterAlter = redis.ftSearch(testIndex, "Document");
+        SearchReply<String> searchAfterAlter = redis.ftSearch(testIndex, "Document");
         assertThat(searchAfterAlter.getCount()).isEqualTo(2);
 
         // Search by new field
-        SearchReply<String, String> authorSearch = redis.ftSearch(testIndex, "@author:John");
+        SearchReply<String> authorSearch = redis.ftSearch(testIndex, "@author:John");
         assertThat(authorSearch.getCount()).isEqualTo(1);
         assertThat(authorSearch.getResults().get(0).getId()).isEqualTo("doc:1");
 
@@ -647,8 +634,7 @@ public class RediSearchIntegrationTests {
         String testIndex = "alter-skip-test-idx";
 
         // Create initial index
-        List<FieldArgs<String>> initialFields = Collections
-                .singletonList(TextFieldArgs.<String> builder().name("title").build());
+        List<FieldArgs> initialFields = Collections.singletonList(TextFieldArgs.builder().name("title").build());
 
         assertThat(redis.ftCreate(testIndex, initialFields)).isEqualTo("OK");
 
@@ -659,13 +645,12 @@ public class RediSearchIntegrationTests {
         redis.hset("doc:1", doc1);
 
         // Add new field with SKIPINITIALSCAN
-        List<FieldArgs<String>> newFields = Collections
-                .singletonList(TextFieldArgs.<String> builder().name("category").build());
+        List<FieldArgs> newFields = Collections.singletonList(TextFieldArgs.builder().name("category").build());
 
         assertThat(redis.ftAlter(testIndex, true, newFields)).isEqualTo("OK");
 
         // The existing document should not be indexed for the new field due to SKIPINITIALSCAN
-        SearchReply<String, String> categorySearch = redis.ftSearch(testIndex, "@category:Technology");
+        SearchReply<String> categorySearch = redis.ftSearch(testIndex, "@category:Technology");
         assertThat(categorySearch.getCount()).isEqualTo(0);
 
         // But new documents should be indexed for the new field
@@ -674,7 +659,7 @@ public class RediSearchIntegrationTests {
         doc2.put("category", "Science");
         redis.hset("doc:2", doc2);
 
-        SearchReply<String, String> newCategorySearch = redis.ftSearch(testIndex, "@category:Science");
+        SearchReply<String> newCategorySearch = redis.ftSearch(testIndex, "@category:Science");
         assertThat(newCategorySearch.getCount()).isEqualTo(1);
         assertThat(newCategorySearch.getResults().get(0).getId()).isEqualTo("doc:2");
 
@@ -691,7 +676,7 @@ public class RediSearchIntegrationTests {
         String alias = "test-alias";
 
         // Create test indexes
-        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+        List<FieldArgs> fields = Collections.singletonList(TextFieldArgs.builder().name("title").build());
 
         assertThat(redis.ftCreate(testIndex, fields)).isEqualTo("OK");
         assertThat(redis.ftCreate(testIndex2, fields)).isEqualTo("OK");
@@ -705,7 +690,7 @@ public class RediSearchIntegrationTests {
         redis.hset("doc:1", doc);
 
         // Search using alias should work
-        SearchReply<String, String> aliasSearch = redis.ftSearch(alias, "Test");
+        SearchReply<String> aliasSearch = redis.ftSearch(alias, "Test");
         assertThat(aliasSearch.getCount()).isEqualTo(1);
 
         // Test FT.ALIASUPDATE - switch alias to different index
@@ -717,7 +702,7 @@ public class RediSearchIntegrationTests {
         redis.hset("doc:2", doc2);
 
         // Search using alias should now return results from second index
-        SearchReply<String, String> updatedAliasSearch = redis.ftSearch(alias, "Different");
+        SearchReply<String> updatedAliasSearch = redis.ftSearch(alias, "Different");
         assertThat(updatedAliasSearch.getCount()).isEqualTo(1);
         assertThat(updatedAliasSearch.getResults().get(0).getId()).isEqualTo("doc:2");
 
@@ -737,8 +722,8 @@ public class RediSearchIntegrationTests {
         String testIndex = "tagvals-test-idx";
 
         // Create index with a tag field
-        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
-                TagFieldArgs.<String> builder().name("category").build());
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TagFieldArgs.builder().name("category").build());
 
         assertThat(redis.ftCreate(testIndex, fields)).isEqualTo("OK");
 
@@ -795,19 +780,19 @@ public class RediSearchIntegrationTests {
         assertThat(redis.ftSuglen(suggestionKey)).isEqualTo(5L);
 
         // Test FT.SUGGET - Get suggestions for prefix
-        List<Suggestion<String>> suggestions = redis.ftSugget(suggestionKey, "New");
+        List<Suggestion> suggestions = redis.ftSugget(suggestionKey, "New");
         assertThat(suggestions).hasSize(3);
         assertThat(suggestions.stream().map(Suggestion::getValue)).containsExactlyInAnyOrder("New York", "New Orleans",
                 "Newark");
 
         // Test FT.SUGGET with MAX limit
-        SugGetArgs<String, String> maxArgs = SugGetArgs.Builder.max(2);
-        List<Suggestion<String>> limitedSuggestions = redis.ftSugget(suggestionKey, "New", maxArgs);
+        SugGetArgs maxArgs = SugGetArgs.Builder.max(2);
+        List<Suggestion> limitedSuggestions = redis.ftSugget(suggestionKey, "New", maxArgs);
         assertThat(limitedSuggestions).hasSize(2);
 
         // Test FT.SUGGET with FUZZY matching
-        SugGetArgs<String, String> fuzzyArgs = SugGetArgs.Builder.fuzzy();
-        List<Suggestion<String>> fuzzySuggestions = redis.ftSugget(suggestionKey, "Bost", fuzzyArgs);
+        SugGetArgs fuzzyArgs = SugGetArgs.Builder.fuzzy();
+        List<Suggestion> fuzzySuggestions = redis.ftSugget(suggestionKey, "Bost", fuzzyArgs);
         assertThat(fuzzySuggestions.stream().map(Suggestion::getValue)).contains("Boston");
 
         // Test FT.SUGDEL - Delete a suggestion
@@ -815,7 +800,7 @@ public class RediSearchIntegrationTests {
         assertThat(redis.ftSuglen(suggestionKey)).isEqualTo(4L);
 
         // Verify deletion
-        List<Suggestion<String>> afterDeletion = redis.ftSugget(suggestionKey, "New");
+        List<Suggestion> afterDeletion = redis.ftSugget(suggestionKey, "New");
         assertThat(afterDeletion).hasSize(2);
         assertThat(afterDeletion.stream().map(Suggestion::getValue)).containsExactlyInAnyOrder("New York", "New Orleans");
 
@@ -823,19 +808,21 @@ public class RediSearchIntegrationTests {
         assertThat(redis.ftSugdel(suggestionKey, "NonExistent")).isFalse();
 
         // Test FT.SUGADD with INCR and PAYLOAD
-        SugAddArgs<String, String> incrArgs = SugAddArgs.Builder.<String, String> incr().payload("US-East");
+        SugAddArgs incrArgs = SugAddArgs.Builder.incr().payload("US-East");
         assertThat(redis.ftSugadd(suggestionKey, "New York", 0.5, incrArgs)).isEqualTo(4L);
 
         // Test FT.SUGGET with WITHSCORES and WITHPAYLOADS
-        SugGetArgs<String, String> withExtrasArgs = SugGetArgs.Builder.<String, String> withScores().withPayloads();
-        List<Suggestion<String>> detailedSuggestions = redis.ftSugget(suggestionKey, "New", withExtrasArgs);
+        SugGetArgs withExtrasArgs = SugGetArgs.Builder.withScores().withPayloads();
+        List<Suggestion> detailedSuggestions = redis.ftSugget(suggestionKey, "New", withExtrasArgs);
         assertThat(detailedSuggestions).isNotEmpty();
 
         // Verify that suggestions with scores and payloads are properly parsed
-        for (Suggestion<String> suggestion : detailedSuggestions) {
+        for (Suggestion suggestion : detailedSuggestions) {
             assertThat(suggestion.getValue()).isNotNull();
             if ("New York".equals(suggestion.getValue())) {
                 assertThat(suggestion.hasScore()).isTrue();
+                // the score is returned as a string on the wire and must be parsed to its numeric value, not 0.0
+                assertThat(suggestion.getScore()).isGreaterThan(0.0);
                 assertThat(suggestion.hasPayload()).isTrue();
                 assertThat(suggestion.getPayload()).isEqualTo("US-East");
             }
@@ -904,12 +891,11 @@ public class RediSearchIntegrationTests {
         String testIndex = "spellcheck-idx";
 
         // Create field definitions
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs contentField = TextFieldArgs.builder().name("content").build();
 
         // Create an index with some documents
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("doc:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
 
@@ -935,17 +921,17 @@ public class RediSearchIntegrationTests {
         redis.hmset("doc:4", doc4);
 
         // Test basic spellcheck with misspelled words
-        SpellCheckResult<String> result = redis.ftSpellcheck(testIndex, "reids serch");
+        SpellCheckResult result = redis.ftSpellcheck(testIndex, "reids serch");
         assertThat(result.hasMisspelledTerms()).isTrue();
         assertThat(result.getMisspelledTermCount()).isEqualTo(2);
 
         // Check first misspelled term "reids"
-        SpellCheckResult.MisspelledTerm<String> firstTerm = result.getMisspelledTerms().get(0);
+        SpellCheckResult.MisspelledTerm firstTerm = result.getMisspelledTerms().get(0);
         assertThat(firstTerm.getTerm()).isEqualTo("reids");
         assertThat(firstTerm.hasSuggestions()).isFalse();
 
         // Check second misspelled term "serch"
-        SpellCheckResult.MisspelledTerm<String> secondTerm = result.getMisspelledTerms().get(1);
+        SpellCheckResult.MisspelledTerm secondTerm = result.getMisspelledTerms().get(1);
         assertThat(secondTerm.getTerm()).isEqualTo("serch");
         assertThat(secondTerm.hasSuggestions()).isTrue();
 
@@ -955,25 +941,25 @@ public class RediSearchIntegrationTests {
         assertThat(hasSearchSuggestion).isTrue();
 
         // Test spellcheck with distance parameter
-        SpellCheckArgs<String, String> distanceArgs = SpellCheckArgs.Builder.distance(2);
-        SpellCheckResult<String> distanceResult = redis.ftSpellcheck(testIndex, "databse", distanceArgs);
+        SpellCheckArgs distanceArgs = SpellCheckArgs.Builder.distance(2);
+        SpellCheckResult distanceResult = redis.ftSpellcheck(testIndex, "databse", distanceArgs);
         assertThat(distanceResult.hasMisspelledTerms()).isTrue();
 
         // Test spellcheck with custom dictionary
         String dictKey = "custom-dict";
         redis.ftDictadd(dictKey, "elasticsearch", "solr", "lucene");
 
-        SpellCheckArgs<String, String> includeArgs = SpellCheckArgs.Builder.termsInclude(dictKey);
-        SpellCheckResult<String> includeResult = redis.ftSpellcheck(testIndex, "elasticsearh", includeArgs);
+        SpellCheckArgs includeArgs = SpellCheckArgs.Builder.termsInclude(dictKey);
+        SpellCheckResult includeResult = redis.ftSpellcheck(testIndex, "elasticsearh", includeArgs);
         assertThat(includeResult.hasMisspelledTerms()).isTrue();
 
         // Test spellcheck with exclude dictionary
-        SpellCheckArgs<String, String> excludeArgs = SpellCheckArgs.Builder.termsExclude(dictKey);
-        SpellCheckResult<String> excludeResult = redis.ftSpellcheck(testIndex, "elasticsearh", excludeArgs);
+        SpellCheckArgs excludeArgs = SpellCheckArgs.Builder.termsExclude(dictKey);
+        SpellCheckResult excludeResult = redis.ftSpellcheck(testIndex, "elasticsearh", excludeArgs);
         assertThat(excludeResult.hasMisspelledTerms()).isTrue();
 
         // Test spellcheck with correct words (should return no misspelled terms)
-        SpellCheckResult<String> correctResult = redis.ftSpellcheck(testIndex, "redis search");
+        SpellCheckResult correctResult = redis.ftSpellcheck(testIndex, "redis search");
         assertThat(correctResult.hasMisspelledTerms()).isFalse();
         assertThat(correctResult.getMisspelledTermCount()).isEqualTo(0);
 
@@ -990,12 +976,11 @@ public class RediSearchIntegrationTests {
         String testIndex = "explain-idx";
 
         // Create field definitions
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs contentField = TextFieldArgs.builder().name("content").build();
 
         // Create an index
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("doc:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
 
@@ -1006,7 +991,7 @@ public class RediSearchIntegrationTests {
         assertThat(basicExplain).contains("INTERSECT", "UNION", "hello", "world");
 
         // Test explain with dialect
-        ExplainArgs<String, String> dialectArgs = ExplainArgs.Builder.dialect(QueryDialects.DIALECT1);
+        ExplainArgs dialectArgs = ExplainArgs.Builder.dialect(QueryDialects.DIALECT1);
         String dialectExplain = redis.ftExplain(testIndex, "hello world", dialectArgs);
         assertThat(dialectExplain).isNotNull();
         assertThat(dialectExplain).isNotEmpty();
@@ -1034,16 +1019,14 @@ public class RediSearchIntegrationTests {
         List<String> initialIndexes = redis.ftList();
 
         // Create field definitions
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
 
         // Create first index
-        CreateArgs<String, String> createArgs1 = CreateArgs.<String, String> builder().withPrefix("doc1:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs1 = CreateArgs.builder().withPrefix("doc1:").on(CreateArgs.TargetType.HASH).build();
         assertThat(redis.ftCreate(testIndex1, createArgs1, Collections.singletonList(titleField))).isEqualTo("OK");
 
         // Create second index
-        CreateArgs<String, String> createArgs2 = CreateArgs.<String, String> builder().withPrefix("doc2:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs2 = CreateArgs.builder().withPrefix("doc2:").on(CreateArgs.TargetType.HASH).build();
         assertThat(redis.ftCreate(testIndex2, createArgs2, Collections.singletonList(titleField))).isEqualTo("OK");
 
         // Get updated list of indexes
@@ -1071,12 +1054,11 @@ public class RediSearchIntegrationTests {
         String testIndex = "alias-field-idx";
 
         // Create index with multiple fields
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> authorField = TextFieldArgs.<String> builder().name("author").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs authorField = TextFieldArgs.builder().name("author").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("book:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("book:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, authorField, priceField))).isEqualTo("OK");
 
@@ -1094,26 +1076,26 @@ public class RediSearchIntegrationTests {
         redis.hmset("book:2", book2);
 
         // Test 1: Search with field alias - rename single field
-        SearchArgs<String, String> aliasArgs = SearchArgs.<String, String> builder().returnField("title", "book_title").build();
-        SearchReply<String, String> results = redis.ftSearch(testIndex, "Redis", aliasArgs);
+        SearchArgs<String> aliasArgs = SearchArgs.<String> builder().returnField("title", "book_title").build();
+        SearchReply<String> results = redis.ftSearch(testIndex, "Redis", aliasArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
 
         // Verify that the field is returned with the alias name
-        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String> result : results.getResults()) {
             assertThat(result.getFields()).containsKey("book_title");
             assertThat(result.getFields()).doesNotContainKey("title");
-            assertThat(result.getFields().get("book_title")).contains("Redis");
+            assertThat(result.getFields().get("book_title").asString()).contains("Redis");
         }
 
         // Test 2: Search with multiple field aliases
-        SearchArgs<String, String> multiAliasArgs = SearchArgs.<String, String> builder().returnField("title", "book_title")
+        SearchArgs<String> multiAliasArgs = SearchArgs.<String> builder().returnField("title", "book_title")
                 .returnField("author", "writer").returnField("price", "cost").build();
         results = redis.ftSearch(testIndex, "Redis", multiAliasArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
-        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String> result : results.getResults()) {
             // Verify aliased fields are present
             assertThat(result.getFields()).containsKey("book_title");
             assertThat(result.getFields()).containsKey("writer");
@@ -1126,12 +1108,12 @@ public class RediSearchIntegrationTests {
         }
 
         // Test 3: Mix of aliased and non-aliased fields
-        SearchArgs<String, String> mixedArgs = SearchArgs.<String, String> builder().returnField("title", "book_title")
-                .returnField("author").build();
+        SearchArgs<String> mixedArgs = SearchArgs.<String> builder().returnField("title", "book_title").returnField("author")
+                .build();
         results = redis.ftSearch(testIndex, "Redis", mixedArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
-        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String> result : results.getResults()) {
             // Verify aliased field
             assertThat(result.getFields()).containsKey("book_title");
             assertThat(result.getFields()).doesNotContainKey("title");
@@ -1155,12 +1137,11 @@ public class RediSearchIntegrationTests {
         String testIndex = "synonym-idx";
 
         // Create field definitions
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs contentField = TextFieldArgs.builder().name("content").build();
 
         // Create an index
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("doc:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
 
@@ -1185,7 +1166,7 @@ public class RediSearchIntegrationTests {
         assertThat(synonymsAfterUpdate.get("vehicle")).containsExactly("group1");
 
         // Test synonym update with SKIPINITIALSCAN
-        SynUpdateArgs<String, String> skipArgs = SynUpdateArgs.Builder.skipInitialScan();
+        SynUpdateArgs skipArgs = SynUpdateArgs.Builder.skipInitialScan();
         String result2 = redis.ftSynupdate(testIndex, "group2", skipArgs, "fast", "quick", "rapid");
         assertThat(result2).isEqualTo("OK");
 
@@ -1218,18 +1199,17 @@ public class RediSearchIntegrationTests {
     void ftHybridAdvancedMultiQueryWithPostProcessing() {
         String indexName = "idx:ecommerce";
 
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
-        FieldArgs<String> brandField = TagFieldArgs.<String> builder().name("brand").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").build();
-        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
+        FieldArgs brandField = TagFieldArgs.builder().name("brand").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").build();
 
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("image_embedding").hnsw()
+        FieldArgs vectorField = VectorFieldArgs.<String> builder().name("image_embedding").hnsw()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(10).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("product:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("product:").on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(indexName, createArgs,
                 Arrays.asList(titleField, categoryField, brandField, priceField, ratingField, vectorField))).isEqualTo("OK");
@@ -1267,23 +1247,23 @@ public class RediSearchIntegrationTests {
 
         byte[] queryVector = floatArrayToByteArray(new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
 
-        HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
-                        .scoreAlias("text_score").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
-                        .scoreAlias("vector_score").build())
-                .combine(Combiners.<String> linear().alpha(0.7).beta(0.3).window(26))
-                .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
-                        .groupBy(GroupBy.<String, String> of("@brand").reduce(Reducers.sum("@price").as("sum"))
-                                .reduce(Reducers.<String> count().as("count")))
-                        .sortBy(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC),
-                                new SortProperty<>("@count", SortDirection.DESC)))
+        HybridArgs hybridArgs = HybridArgs.builder()
+                .search(HybridSearchArgs.builder().query("@category:{electronics} smartphone camera").scoreAlias("text_score")
+                        .build())
+                .vectorSearch(HybridVectorArgs
+                        .builder().field("@image_embedding").vector("$vec").method(HybridVectorArgs.Knn.of(20).efRuntime(150))
+                        .filter("@brand:{apple|samsung|google}").scoreAlias("vector_score").build())
+                .combine(Combiners.linear().alpha(0.7).beta(0.3).window(26))
+                .postProcessing(PostProcessingArgs.builder().load("@price", "@brand", "@category")
+                        .groupBy(GroupBy.of("@brand").reduce(Reducers.sum("@price").as("sum"))
+                                .reduce(Reducers.count().as("count")))
+                        .sortBy(SortBy.of(new SortProperty("@sum", SortDirection.ASC),
+                                new SortProperty("@count", SortDirection.DESC)))
                         .apply(Apply.of("@sum * 0.9", "discounted_price")).filter(Filter.of("@sum > 700"))
                         .limit(Limit.of(0, 20)).build())
                 .param("vec", queryVector).param("discount_rate", "0.9").build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(indexName, hybridArgs);
+        HybridReply reply = redis.ftHybrid(indexName, hybridArgs);
 
         // Verify results
         assertThat(reply).isNotNull();
@@ -1294,25 +1274,25 @@ public class RediSearchIntegrationTests {
         assertThat(reply.getExecutionTime()).isGreaterThan(0L);
 
         // Verify first result (google)
-        Map<String, String> r1 = reply.getResults().get(0);
-        assertThat(r1.get("brand")).isEqualTo("google");
-        assertThat(r1.get("count")).isEqualTo("2");
-        assertThat(r1.get("sum")).isEqualTo("1398");
-        assertThat(r1.get("discounted_price")).isEqualTo("1258.2");
+        Map<String, FieldValue> r1 = reply.getResults().get(0).getFields();
+        assertThat(r1.get("brand").asString()).isEqualTo("google");
+        assertThat(r1.get("count").asString()).isEqualTo("2");
+        assertThat(r1.get("sum").asString()).isEqualTo("1398");
+        assertThat(r1.get("discounted_price").asString()).isEqualTo("1258.2");
 
         // Verify second result (samsung)
-        Map<String, String> r2 = reply.getResults().get(1);
-        assertThat(r2.get("brand")).isEqualTo("samsung");
-        assertThat(r2.get("count")).isEqualTo("2");
-        assertThat(r2.get("sum")).isEqualTo("1598");
-        assertThat(r2.get("discounted_price")).isEqualTo("1438.2");
+        Map<String, FieldValue> r2 = reply.getResults().get(1).getFields();
+        assertThat(r2.get("brand").asString()).isEqualTo("samsung");
+        assertThat(r2.get("count").asString()).isEqualTo("2");
+        assertThat(r2.get("sum").asString()).isEqualTo("1598");
+        assertThat(r2.get("discounted_price").asString()).isEqualTo("1438.2");
 
         // Verify third result (apple)
-        Map<String, String> r3 = reply.getResults().get(2);
-        assertThat(r3.get("brand")).isEqualTo("apple");
-        assertThat(r3.get("count")).isEqualTo("3");
-        assertThat(r3.get("sum")).isEqualTo("2997");
-        assertThat(r3.get("discounted_price")).isEqualTo("2697.3");
+        Map<String, FieldValue> r3 = reply.getResults().get(2).getFields();
+        assertThat(r3.get("brand").asString()).isEqualTo("apple");
+        assertThat(r3.get("count").asString()).isEqualTo("3");
+        assertThat(r3.get("sum").asString()).isEqualTo("2997");
+        assertThat(r3.get("discounted_price").asString()).isEqualTo("2697.3");
 
         redis.ftDropindex(indexName);
     }
@@ -1333,13 +1313,12 @@ public class RediSearchIntegrationTests {
         try (StatefulRedisConnection<String, String> connection = testClient.connect()) {
             RedisCommands<String, String> testRedis = connection.sync();
 
-            testRedis.ftCreate(testIndex,
-                    CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON).withPrefix(prefix).build(),
-                    Collections.singletonList(NumericFieldArgs.<String> builder().name("$.pos").as("pos").build()));
+            testRedis.ftCreate(testIndex, CreateArgs.builder().on(CreateArgs.TargetType.JSON).withPrefix(prefix).build(),
+                    Collections.singletonList(NumericFieldArgs.builder().name("$.pos").as("pos").build()));
 
             // Add sorting by pos to ensure deterministic order
-            SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder()
-                    .sortBy(SortByArgs.<String> builder().attribute("pos").build()).limit(0, 10_000).build();
+            SearchArgs<String> searchArgs = SearchArgs.<String> builder().sortBy(SortByArgs.builder().attribute("pos").build())
+                    .limit(0, 10_000).build();
 
             // Store expected values for exact comparison
             ArrayList<String> expected = new ArrayList<>();
@@ -1355,12 +1334,12 @@ public class RediSearchIntegrationTests {
 
                 // Start checking at iteration 924 like the reproducer - this is where ~200KB threshold is reached
                 if (i >= 924) {
-                    SearchReply<String, String> reply = testRedis.ftSearch(testIndex, "*", searchArgs);
+                    SearchReply<String> reply = testRedis.ftSearch(testIndex, "*", searchArgs);
                     assertThat(reply.getCount()).isEqualTo(i);
 
                     // Exact value comparison at each position
                     for (int t = 0; t < expected.size(); t++) {
-                        String actualBody = reply.getResults().get(t).getFields().get("$");
+                        String actualBody = reply.getResults().get(t).getFields().get("$").asString();
                         assertThat(actualBody).as("Mismatch at position %d on loop %d", t, i).isEqualTo(expected.get(t));
                     }
                 }

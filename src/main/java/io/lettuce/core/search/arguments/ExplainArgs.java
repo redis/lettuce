@@ -14,12 +14,10 @@ import io.lettuce.core.protocol.CommandArgs;
  * <p>
  * {@link ExplainArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
- * @param <K> Key type.
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  */
-public class ExplainArgs<K, V> {
+public class ExplainArgs {
 
     private QueryDialects dialect = QueryDialects.DIALECT2;
 
@@ -40,8 +38,8 @@ public class ExplainArgs<K, V> {
          * @return new {@link ExplainArgs} with {@literal DIALECT} set.
          * @see ExplainArgs#dialect(QueryDialects)
          */
-        public static <K, V> ExplainArgs<K, V> dialect(QueryDialects dialect) {
-            return new ExplainArgs<K, V>().dialect(dialect);
+        public static ExplainArgs dialect(QueryDialects dialect) {
+            return new ExplainArgs().dialect(dialect);
         }
 
     }
@@ -53,7 +51,7 @@ public class ExplainArgs<K, V> {
      * @param dialect the dialect version.
      * @return {@code this} {@link ExplainArgs}.
      */
-    public ExplainArgs<K, V> dialect(QueryDialects dialect) {
+    public ExplainArgs dialect(QueryDialects dialect) {
         this.dialect = dialect;
         return this;
     }
@@ -63,7 +61,7 @@ public class ExplainArgs<K, V> {
      *
      * @param args the command arguments to append to.
      */
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<?, ?> args) {
         if (dialect != null) {
             args.add("DIALECT").add(dialect.toString());
         }

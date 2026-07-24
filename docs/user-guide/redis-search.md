@@ -26,18 +26,19 @@ Redis Search operates on **indexes** that define how your data should be searcha
 RedisURI redisURI = RedisURI.Builder.redis("localhost").withPort(6379).build();
 RedisClient redisClient = RedisClient.create(redisURI);
 StatefulRedisConnection<String, String> connection = redisClient.connect();
-RediSearchCommands<String, String> search = connection.sync();
+RedisCommands<String, String> redis = connection.sync();
+RediSearchCommands<String> search = redis;
 ```
 
 ### Creating Your First Index
 
 ```java
 // Define searchable fields
-List<FieldArgs<String>> fields = Arrays.asList(
-    TextFieldArgs.<String>builder().name("title").build(),
-    TextFieldArgs.<String>builder().name("content").build(),
-    NumericFieldArgs.<String>builder().name("price").sortable().build(),
-    TagFieldArgs.<String>builder().name("category").sortable().build()
+List<FieldArgs> fields = Arrays.asList(
+    TextFieldArgs.builder().name("title").build(),
+    TextFieldArgs.builder().name("content").build(),
+    NumericFieldArgs.builder().name("price").sortable().build(),
+    TagFieldArgs.builder().name("category").sortable().build()
 );
 
 // Create the index
@@ -49,20 +50,18 @@ String result = search.ftCreate("products-idx", fields);
 
 ```java
 // Add documents as Redis hashes
-Map<String, String> product1 = Map.of(
-    "title", "Wireless Headphones",
-    "content", "High-quality wireless headphones with noise cancellation",
-    "price", "199.99",
-    "category", "electronics"
-);
+Map<String, String> product1 = new HashMap<>();
+product1.put("title", "Wireless Headphones");
+product1.put("content", "High-quality wireless headphones with noise cancellation");
+product1.put("price", "199.99");
+product1.put("category", "electronics");
 redis.hmset("product:1", product1);
 
-Map<String, String> product2 = Map.of(
-    "title", "Running Shoes",
-    "content", "Comfortable running shoes for daily exercise",
-    "price", "89.99", 
-    "category", "sports"
-);
+Map<String, String> product2 = new HashMap<>();
+product2.put("title", "Running Shoes");
+product2.put("content", "Comfortable running shoes for daily exercise");
+product2.put("price", "89.99");
+product2.put("category", "sports");
 redis.hmset("product:2", product2);
 ```
 
@@ -70,12 +69,12 @@ redis.hmset("product:2", product2);
 
 ```java
 // Simple text search
-SearchReply<String, String> results = search.ftSearch("products-idx", "wireless");
+SearchReply<String> results = search.ftSearch("products-idx", "wireless");
 
 // Access results
 System.out.println("Found " + results.getCount() + " documents");
-for (SearchReply.SearchResult<String, String> result : results.getResults()) {
-    System.out.println("Key: " + result.getKey());
+for (SearchReply.SearchResult<String> result : results.getResults()) {
+    System.out.println("Key: " + result.getId());
     System.out.println("Title: " + result.getFields().get("title"));
 }
 ```
@@ -86,9 +85,9 @@ for (SearchReply.SearchResult<String, String> result : results.getResults()) {
 Full-text searchable fields with stemming, phonetic matching, and scoring.
 
 ```java
-TextFieldArgs<String> titleField = TextFieldArgs.<String>builder()
+TextFieldArgs titleField = TextFieldArgs.builder()
     .name("title")
-    .weight(2.0)                                      // Boost importance in scoring
+    .weight(2)                                        // Boost importance in scoring
     .sortable()                                       // Enable sorting
     .noStem()                                         // Disable stemming
     .phonetic(TextFieldArgs.PhoneticMatcher.ENGLISH)  // Enable phonetic matching
@@ -99,7 +98,7 @@ TextFieldArgs<String> titleField = TextFieldArgs.<String>builder()
 For range queries and sorting on numeric values.
 
 ```java
-NumericFieldArgs<String> priceField = NumericFieldArgs.<String>builder()
+NumericFieldArgs priceField = NumericFieldArgs.builder()
     .name("price")
     .sortable()         // Enable sorting
     .noIndex()          // Don't index for search, only for sorting
@@ -110,7 +109,7 @@ NumericFieldArgs<String> priceField = NumericFieldArgs.<String>builder()
 For exact matching and faceted search.
 
 ```java
-TagFieldArgs<String> categoryField = TagFieldArgs.<String>builder()
+TagFieldArgs categoryField = TagFieldArgs.builder()
     .name("category")
     .separator(",")     // Custom separator for multiple tags
     .sortable()
@@ -121,7 +120,7 @@ TagFieldArgs<String> categoryField = TagFieldArgs.<String>builder()
 For location-based queries.
 
 ```java
-GeoFieldArgs<String> locationField = GeoFieldArgs.<String>builder()
+GeoFieldArgs locationField = GeoFieldArgs.builder()
     .name("location")
     .build();
 ```
@@ -130,12 +129,12 @@ GeoFieldArgs<String> locationField = GeoFieldArgs.<String>builder()
 For semantic search and similarity matching.
 
 ```java
-VectorFieldArgs<String> embeddingField = VectorFieldArgs.<String>builder()
+VectorFieldArgs embeddingField = VectorFieldArgs.builder()
     .name("embedding")
-    .algorithm(VectorAlgorithm.FLAT)
-    .type(VectorType.FLOAT32)
-    .dimension(768)
-    .distanceMetric(DistanceMetric.COSINE)
+    .algorithm(VectorFieldArgs.Algorithm.FLAT)
+    .type(VectorFieldArgs.VectorType.FLOAT32)
+    .dimensions(768)
+    .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
     .build();
 ```
 
@@ -144,20 +143,20 @@ VectorFieldArgs<String> embeddingField = VectorFieldArgs.<String>builder()
 ### Index with Custom Settings
 
 ```java
-CreateArgs<String, String> createArgs = CreateArgs.<String, String>builder()
+CreateArgs createArgs = CreateArgs.builder()
     .on(CreateArgs.TargetType.HASH)            // Index HASH documents
     .withPrefix("product:")                    // Only index keys with this prefix
-    .language("english")                       // Default language for text processing
+    .defaultLanguage(DocumentLanguage.ENGLISH) // Default language for text processing
     .languageField("lang")                     // Field containing document language
-    .score(0.5)                                // Default document score
+    .defaultScore(0.5)                         // Default document score
     .scoreField("popularity")                  // Field containing document score
     .maxTextFields()                           // Allow unlimited text fields
     .temporary(3600)                           // Auto-expire index after 1 hour
     .noOffsets()                               // Disable term offset storage
     .noHighlighting()                          // Disable highlighting
     .noFields()                                // Don't store field contents
-    .noFreqs()                                 // Don't store term frequencies
-    .stopwords("the", "a", "an")               // Custom stopwords
+    .noFrequency()                             // Don't store term frequencies
+    .stopWords(Arrays.asList("the", "a", "an")) // Custom stopwords
     .build();
 
 String result = search.ftCreate("advanced-idx", createArgs, fields);
@@ -166,15 +165,15 @@ String result = search.ftCreate("advanced-idx", createArgs, fields);
 ### JSON Document Indexing
 
 ```java
-CreateArgs<String, String> jsonArgs = CreateArgs.<String, String>builder()
+CreateArgs jsonArgs = CreateArgs.builder()
     .on(CreateArgs.TargetType.JSON)
-    .prefix("user:")
+    .withPrefix("user:")
     .build();
 
-List<FieldArgs<String>> jsonFields = Arrays.asList(
-    TextFieldArgs.<String>builder().name("$.name").as("name").build(),
-    NumericFieldArgs.<String>builder().name("$.age").as("age").build(),
-    TagFieldArgs.<String>builder().name("$.tags[*]").as("tags").build()
+List<FieldArgs> jsonFields = Arrays.asList(
+    TextFieldArgs.builder().name("$.name").as("name").build(),
+    NumericFieldArgs.builder().name("$.age").as("age").build(),
+    TagFieldArgs.builder().name("$.tags[*]").as("tags").build()
 );
 
 search.ftCreate("users-idx", jsonArgs, jsonFields);
@@ -217,31 +216,29 @@ search.ftSearch("products-idx", "@price:[100 +inf]");     // Open range
 ### Advanced Search Options
 
 ```java
-SearchArgs<String, String> searchArgs = SearchArgs.<String, String>builder()
+SearchArgs<String> searchArgs = SearchArgs.<String>builder()
     .limit(0, 10)                                              // Pagination: offset 0, limit 10
-    .sortBy("price", SortDirection.ASC)                        // Sort by price ascending
-    .returnFields("title", "price")                            // Only return specific fields
-    .highlightFields("title", "content")                       // Highlight specific fields
+    .sortBy(SortByArgs.builder().attribute("price").build())   // Sort by price ascending
+    .returnField("title").returnField("price")                 // Only return specific fields
+    .highlightField("title").highlightField("content")         // Highlight specific fields
     .highlightTags("<b>", "</b>")                              // Custom highlight tags
-    .summarizeFields("content")                                // Summarize specific fields
-    .summarizeFrags(3)                                         // Number of summary fragments
+    .summarizeField("content")                                 // Summarize specific fields
+    .summarizeFragments(3)                                     // Number of summary fragments
     .summarizeLen(50)                                          // Summary length
     .scorer(ScoringFunction.TF_IDF)                            // Scoring algorithm
-    .explainScore()                                            // Include score explanation
     .withScores()                                              // Include document scores
     .noContent()                                               // Don't return document content
     .verbatim()                                                // Don't use stemming
-    .noStopwords()                                             // Don't filter stopwords
     .withSortKeys()                                            // Include sort key values
-    .inKeys("product:1", "product:2")                          // Search only specific keys
-    .inFields("title", "content")                              // Search only specific fields
+    .inKey("product:1").inKey("product:2")                    // Search only specific keys
+    .inField("title").inField("content")                      // Search only specific fields
     .slop(2)                                                   // Allow term reordering
-    .timeout(5000)                                             // Query timeout in milliseconds
-    .params("category", "electronics")                         // Query parameters
+    .timeout(Duration.ofSeconds(5))                             // Query timeout
+    .param("category", "electronics")                          // Query parameter
     .dialect(QueryDialects.DIALECT2)                           // Query dialect version
     .build();
 
-SearchReply<String, String> results = search.ftSearch("products-idx", "@title:$category", searchArgs);
+SearchReply<String> results = search.ftSearch("products-idx", "@title:$category", searchArgs);
 ```
 
 ## Vector Search
@@ -251,15 +248,15 @@ Vector search enables semantic similarity matching using machine learning embedd
 ### Creating a Vector Index
 
 ```java
-List<FieldArgs<String>> vectorFields = Arrays.asList(
-    TextFieldArgs.<String>builder().name("title").build(),
-    VectorFieldArgs.<String>builder()
+List<FieldArgs> vectorFields = Arrays.asList(
+    TextFieldArgs.builder().name("title").build(),
+    VectorFieldArgs.builder()
         .name("embedding")
-        .algorithm(VectorAlgorithm.FLAT)      // or VectorAlgorithm.HNSW
-        .type(VectorType.FLOAT32)
-        .dimension(768)                       // Vector dimension
-        .distanceMetric(DistanceMetric.COSINE) // COSINE, L2, or IP
-        .initialCapacity(1000)                // Initial vector capacity
+        .algorithm(VectorFieldArgs.Algorithm.FLAT) // or VectorFieldArgs.Algorithm.HNSW
+        .type(VectorFieldArgs.VectorType.FLOAT32)
+        .dimensions(768)                           // Vector dimension
+        .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE) // COSINE, L2, or IP
+        .attribute("INITIAL_CAP", 1000)            // Initial vector capacity
         .build()
 );
 
@@ -273,10 +270,9 @@ search.ftCreate("semantic-idx", vectorFields);
 float[] embedding = textToEmbedding("wireless headphones");
 String embeddingStr = Arrays.toString(embedding);
 
-Map<String, String> doc = Map.of(
-    "title", "Wireless Headphones",
-    "embedding", embeddingStr
-);
+Map<String, String> doc = new HashMap<>();
+doc.put("title", "Wireless Headphones");
+doc.put("embedding", embeddingStr);
 redis.hmset("doc:1", doc);
 ```
 
@@ -286,15 +282,20 @@ redis.hmset("doc:1", doc);
 // Find similar documents using vector search
 float[] queryVector = textToEmbedding("bluetooth audio device");
 String vectorQuery = "*=>[KNN 10 @embedding $query_vec AS score]";
+ByteBuffer queryVectorBuffer = ByteBuffer.allocate(queryVector.length * Float.BYTES)
+    .order(ByteOrder.LITTLE_ENDIAN);
+for (float value : queryVector) {
+    queryVectorBuffer.putFloat(value);
+}
 
-SearchArgs<String, String> vectorArgs = SearchArgs.<String, String>builder()
-    .params("query_vec", Arrays.toString(queryVector))
-    .sortBy("score", SortDirection.ASC)
-    .returnFields("title", "score")
+SearchArgs<String> vectorArgs = SearchArgs.<String>builder()
+    .param("query_vec", queryVectorBuffer.array())
+    .sortBy(SortByArgs.builder().attribute("score").build())
+    .returnField("title").returnField("score")
     .dialect(QueryDialects.DIALECT2)
     .build();
 
-SearchReply<String, String> results = search.ftSearch("semantic-idx", vectorQuery, vectorArgs);
+SearchReply<String> results = search.ftSearch("semantic-idx", vectorQuery, vectorArgs);
 ```
 
 ## Geospatial Search
@@ -304,9 +305,9 @@ Search for documents based on geographic location.
 ### Creating a Geo Index
 
 ```java
-List<FieldArgs<String>> geoFields = Arrays.asList(
-    TextFieldArgs.<String>builder().name("name").build(),
-    GeoFieldArgs.<String>builder().name("location").build()
+List<FieldArgs> geoFields = Arrays.asList(
+    TextFieldArgs.builder().name("name").build(),
+    GeoFieldArgs.builder().name("location").build()
 );
 
 search.ftCreate("places-idx", geoFields);
@@ -315,25 +316,17 @@ search.ftCreate("places-idx", geoFields);
 ### Adding Geo Data
 
 ```java
-Map<String, String> place = Map.of(
-    "name", "Central Park",
-    "location", "40.7829,-73.9654"  // lat,lon format
-);
+Map<String, String> place = new HashMap<>();
+place.put("name", "Central Park");
+place.put("location", "40.7829,-73.9654"); // lat,lon format
 redis.hmset("place:1", place);
 ```
 
 ### Geo Queries
 
 ```java
-// Find places within radius
-SearchArgs<String, String> geoArgs = SearchArgs.<String, String>builder()
-    .geoFilter("location", 40.7829, -73.9654, 5, GeoUnit.KM)
-    .build();
-
-SearchReply<String, String> nearbyPlaces = search.ftSearch("places-idx", "*", geoArgs);
-
-// Geo query in search string
-SearchReply<String, String> results = search.ftSearch("places-idx",
+// Find places within a 5 km radius
+SearchReply<String> results = search.ftSearch("places-idx",
     "@location:[40.7829 -73.9654 5 km]");
 ```
 
@@ -345,13 +338,13 @@ Aggregations provide powerful analytics capabilities for processing search resul
 
 ```java
 // Simple aggregation without pipeline operations
-AggregationReply<String, String> results = search.ftAggregate("products-idx", "*");
+AggregationReply<String> results = search.ftAggregate("products-idx", "*");
 ```
 
 ### Advanced Aggregation Pipeline
 
 ```java
-AggregateArgs<String, String> aggArgs = AggregateArgs.<String, String>builder()
+AggregateArgs aggArgs = AggregateArgs.builder()
     // Load specific fields
     .load("title").load("price").load("category")
 
@@ -362,15 +355,15 @@ AggregateArgs<String, String> aggArgs = AggregateArgs.<String, String>builder()
     .filter("@price > 50")
 
     // Group by category with reducers
-    .groupBy(GroupBy.<String, String>of("category")
-        .reduce(Reducer.<String, String>count().as("product_count"))
-        .reduce(Reducer.<String, String>avg("@price").as("avg_price"))
-        .reduce(Reducer.<String, String>sum("@price").as("total_value"))
-        .reduce(Reducer.<String, String>min("@price").as("min_price"))
-        .reduce(Reducer.<String, String>max("@price").as("max_price")))
+    .groupBy(AggregateArgs.GroupBy.of("category")
+        .reduce(AggregateArgs.Reducer.count().as("product_count"))
+        .reduce(AggregateArgs.Reducer.avg("@price").as("avg_price"))
+        .reduce(AggregateArgs.Reducer.sum("@price").as("total_value"))
+        .reduce(AggregateArgs.Reducer.min("@price").as("min_price"))
+        .reduce(AggregateArgs.Reducer.max("@price").as("max_price")))
 
     // Sort results
-    .sortBy("avg_price", SortDirection.DESC)
+    .sortBy("avg_price", AggregateArgs.SortDirection.DESC)
 
     // Limit results
     .limit(0, 10)
@@ -380,16 +373,16 @@ AggregateArgs<String, String> aggArgs = AggregateArgs.<String, String>builder()
 
     // Set query parameters
     .verbatim()
-    .timeout(5000)
-    .params("min_price", "50")
+    .timeout(Duration.ofSeconds(5))
+    .param("min_price", "50")
     .dialect(QueryDialects.DIALECT2)
     .build();
 
-AggregationReply<String, String> aggResults = search.ftAggregate("products-idx", "*", aggArgs);
+AggregationReply<String> aggResults = search.ftAggregate("products-idx", "*", aggArgs);
 
 // Process aggregation results
-for (SearchReply<String, String> reply : aggResults.getReplies()) {
-    for (SearchReply.SearchResult<String, String> result : reply.getResults()) {
+for (SearchReply<String> reply : aggResults.getReplies()) {
+    for (SearchReply.SearchResult<String> result : reply.getResults()) {
         System.out.println("Category: " + result.getFields().get("category"));
         System.out.println("Count: " + result.getFields().get("product_count"));
         System.out.println("Avg Price: " + result.getFields().get("avg_price"));
@@ -402,7 +395,7 @@ for (SearchReply<String, String> reply : aggResults.getReplies()) {
 Redis aggregations support dynamic pipelines where operations can be repeated and applied in any order:
 
 ```java
-AggregateArgs<String, String> complexPipeline = AggregateArgs.<String, String>builder()
+AggregateArgs complexPipeline = AggregateArgs.builder()
     // First transformation
     .apply("@price * @quantity", "total_value")
 
@@ -410,11 +403,11 @@ AggregateArgs<String, String> complexPipeline = AggregateArgs.<String, String>bu
     .filter("@total_value > 100")
 
     // First grouping
-    .groupBy(GroupBy.<String, String>of("category")
-        .reduce(Reducer.<String, String>sum("@total_value").as("category_revenue")))
+    .groupBy(AggregateArgs.GroupBy.of("category")
+        .reduce(AggregateArgs.Reducer.sum("@total_value").as("category_revenue")))
 
     // First sort
-    .sortBy("category_revenue", SortDirection.DESC)
+    .sortBy("category_revenue", AggregateArgs.SortDirection.DESC)
 
     // Second transformation
     .apply("@category_revenue / 1000", "revenue_k")
@@ -423,11 +416,11 @@ AggregateArgs<String, String> complexPipeline = AggregateArgs.<String, String>bu
     .filter("@revenue_k > 5")
 
     // Second grouping (re-entrant)
-    .groupBy(GroupBy.<String, String>of("revenue_k")
-        .reduce(Reducer.<String, String>count().as("high_revenue_categories")))
+    .groupBy(AggregateArgs.GroupBy.of("revenue_k")
+        .reduce(AggregateArgs.Reducer.count().as("high_revenue_categories")))
 
     // Second sort (re-entrant)
-    .sortBy("high_revenue_categories", SortDirection.DESC)
+    .sortBy("high_revenue_categories", AggregateArgs.SortDirection.DESC)
 
     .build();
 ```
@@ -437,28 +430,24 @@ AggregateArgs<String, String> complexPipeline = AggregateArgs.<String, String>bu
 For large result sets, use cursors to process data in batches:
 
 ```java
-AggregateArgs<String, String> cursorArgs = AggregateArgs.<String, String>builder()
-    .groupBy(GroupBy.<String, String>of("category")
-        .reduce(Reducer.<String, String>count().as("count")))
-    .withCursor()
-    .withCursor(1000, 300000)  // batch size: 1000, timeout: 5 minutes
+AggregateArgs cursorArgs = AggregateArgs.builder()
+    .groupBy(AggregateArgs.GroupBy.of("category")
+        .reduce(AggregateArgs.Reducer.count().as("count")))
+    .withCursor(AggregateArgs.WithCursor.of(1000L, Duration.ofMinutes(5)))
     .build();
 
 // Initial aggregation with cursor
-AggregationReply<String, String> firstBatch = search.ftAggregate("products-idx", "*", cursorArgs);
-long cursorId = firstBatch.getCursorId();
+AggregationReply<String> firstBatch = search.ftAggregate("products-idx", "*", cursorArgs);
+AggregationReply.Cursor cursor = firstBatch.getCursor().orElse(null);
 
 // Read subsequent batches
-while (cursorId != 0) {
-    AggregationReply<String, String> nextBatch = search.ftCursorread("products-idx", cursorId, 500);
-    cursorId = nextBatch.getCursorId();
+while (cursor != null && cursor.getCursorId() != 0) {
+    AggregationReply<String> nextBatch = search.ftCursorread("products-idx", cursor, 500);
+    cursor = nextBatch.getCursor().orElse(null);
 
     // Process batch
     processResults(nextBatch);
 }
-
-// Clean up cursor when done
-search.ftCursordel("products-idx", cursorId);
 ```
 
 ## Index Management
@@ -492,9 +481,9 @@ search.ftAliasdel("products");
 
 ```java
 // Add new fields to existing index
-List<FieldArgs<String>> newFields = Arrays.asList(
-    TagFieldArgs.<String>builder().name("brand").build(),
-    NumericFieldArgs.<String>builder().name("rating").build()
+List<FieldArgs> newFields = Arrays.asList(
+    TagFieldArgs.builder().name("brand").build(),
+    NumericFieldArgs.builder().name("rating").build()
 );
 
 search.ftAlter("products-idx", false, newFields);  // false = scan existing docs
@@ -524,10 +513,8 @@ search.ftSugadd("autocomplete", "bluetooth speakers", 0.8);
 search.ftSugadd("autocomplete", "noise cancelling earbuds", 0.9);
 
 // Add with additional options
-SugAddArgs sugArgs = SugAddArgs.builder()
-    .increment()    // Increment score if suggestion exists
-    .payload("category:electronics")  // Additional metadata
-    .build();
+SugAddArgs sugArgs = SugAddArgs.Builder.incr() // Increment score if suggestion exists
+    .payload("category:electronics");           // Additional metadata
 
 search.ftSugadd("autocomplete", "gaming headset", 0.7, sugArgs);
 ```
@@ -536,19 +523,17 @@ search.ftSugadd("autocomplete", "gaming headset", 0.7, sugArgs);
 
 ```java
 // Basic suggestion retrieval
-List<Suggestion<String>> suggestions = search.ftSugget("autocomplete", "head");
+List<Suggestion> suggestions = search.ftSugget("autocomplete", "head");
 
 // Advanced suggestion options
-SugGetArgs getArgs = SugGetArgs.builder()
-    .fuzzy()        // Enable fuzzy matching
+SugGetArgs getArgs = SugGetArgs.Builder.fuzzy() // Enable fuzzy matching
     .max(5)         // Limit to 5 suggestions
     .withScores()   // Include scores
-    .withPayloads() // Include payloads
-    .build();
+    .withPayloads(); // Include payloads
 
-List<Suggestion<String>> results = search.ftSugget("autocomplete", "head", getArgs);
+List<Suggestion> results = search.ftSugget("autocomplete", "head", getArgs);
 
-for (Suggestion<String> suggestion : results) {
+for (Suggestion suggestion : results) {
     System.out.println("Suggestion: " + suggestion.getValue());
     System.out.println("Score: " + suggestion.getScore());
     System.out.println("Payload: " + suggestion.getPayload());
@@ -571,22 +556,20 @@ Redis Search can suggest corrections for misspelled queries.
 
 ```java
 // Basic spell check
-List<SpellCheckResult<String>> corrections = search.ftSpellcheck("products-idx", "wireles hedphones");
+SpellCheckResult corrections = search.ftSpellcheck("products-idx", "wireles hedphones");
 
 // Advanced spell check with options
-SpellCheckArgs<String, String> spellArgs = SpellCheckArgs.<String, String>builder()
-    .distance(2)                    // Maximum Levenshtein distance
-    .terms("include", "dictionary") // Include terms from dictionary
-    .terms("exclude", "stopwords")  // Exclude stopwords
-    .dialect(QueryDialects.DIALECT2)
-    .build();
+SpellCheckArgs spellArgs = SpellCheckArgs.Builder.distance(2) // Maximum Levenshtein distance
+    .termsInclude("dictionary")                               // Include custom dictionary terms
+    .termsExclude("stopwords")                                // Exclude stopword dictionary terms
+    .dialect(2);
 
-List<SpellCheckResult<String>> results = search.ftSpellcheck("products-idx", "wireles hedphones", spellArgs);
+SpellCheckResult results = search.ftSpellcheck("products-idx", "wireles hedphones", spellArgs);
 
-for (SpellCheckResult<String> result : results) {
-    System.out.println("Original: " + result.getTerm());
-    for (SpellCheckResult.Suggestion<String> suggestion : result.getSuggestions()) {
-        System.out.println("  Suggestion: " + suggestion.getValue() + " (score: " + suggestion.getScore() + ")");
+for (SpellCheckResult.MisspelledTerm term : results.getMisspelledTerms()) {
+    System.out.println("Original: " + term.getTerm());
+    for (SpellCheckResult.Suggestion suggestion : term.getSuggestions()) {
+        System.out.println("  Suggestion: " + suggestion.getSuggestion() + " (score: " + suggestion.getScore() + ")");
     }
 }
 ```
@@ -615,9 +598,7 @@ Create synonym groups for query expansion.
 search.ftSynupdate("products-idx", "group1", "phone", "smartphone", "mobile");
 
 // Update synonym group (replaces existing)
-SynUpdateArgs synArgs = SynUpdateArgs.builder()
-    .skipInitialScan()  // Don't reindex existing documents
-    .build();
+SynUpdateArgs synArgs = SynUpdateArgs.Builder.skipInitialScan(); // Don't reindex existing documents
 
 search.ftSynupdate("products-idx", "group1", synArgs, "phone", "smartphone", "mobile", "cellphone");
 
@@ -636,9 +617,7 @@ Understand how Redis Search executes your queries:
 String plan = search.ftExplain("products-idx", "@title:wireless");
 
 // Detailed explanation with dialect
-ExplainArgs<String, String> explainArgs = ExplainArgs.<String, String>builder()
-    .dialect(QueryDialects.DIALECT2)
-    .build();
+ExplainArgs explainArgs = ExplainArgs.Builder.dialect(QueryDialects.DIALECT2);
 
 String detailedPlan = search.ftExplain("products-idx", "@title:wireless", explainArgs);
 System.out.println("Execution plan: " + detailedPlan);
@@ -656,8 +635,8 @@ search.ftCreate("products-idx", productFields);
 search.ftCreate("reviews-idx", reviewFields);
 
 // Search each index separately and combine results
-SearchReply<String, String> productResults = search.ftSearch("products-idx", "wireless");
-SearchReply<String, String> reviewResults = search.ftSearch("reviews-idx", "wireless");
+SearchReply<String> productResults = search.ftSearch("products-idx", "wireless");
+SearchReply<String> reviewResults = search.ftSearch("reviews-idx", "wireless");
 
 // Combine and process results as needed
 ```
@@ -682,9 +661,9 @@ search.ftDropindex("products-idx-v1");
 
 ```java
 // Index only documents matching certain criteria
-CreateArgs<String, String> conditionalArgs = CreateArgs.<String, String>builder()
+CreateArgs conditionalArgs = CreateArgs.builder()
     .on(CreateArgs.TargetType.HASH)
-    .prefix("product:")
+    .withPrefix("product:")
     .filter("@status=='active'")  // Only index active products
     .build();
 
@@ -701,20 +680,26 @@ search.ftCreate("active-products-idx", conditionalArgs, fields);
 4. **Vector Fields**: Choose appropriate algorithm (FLAT vs HNSW) based on use case
 
 ```java
-// Memory-optimized text field
-TextFieldArgs<String> optimizedField = TextFieldArgs.<String>builder()
+// Memory-optimized index options
+CreateArgs memoryOptimizedArgs = CreateArgs.builder()
+    .noOffsets()       // Disable position tracking
+    .noHighlighting()  // Disable highlighting
+    .noFrequency()     // Disable frequency tracking
+    .build();
+
+TextFieldArgs optimizedField = TextFieldArgs.builder()
     .name("description")
-    .noOffsets()    // Disable position tracking
-    .noHL()         // Disable highlighting
-    .noFreqs()      // Disable frequency tracking
     .build();
 
 // Sort-only numeric field
-NumericFieldArgs<String> sortField = NumericFieldArgs.<String>builder()
+NumericFieldArgs sortField = NumericFieldArgs.builder()
     .name("timestamp")
     .sortable()
     .noIndex()      // Don't index for search
     .build();
+
+search.ftCreate("memory-optimized-idx", memoryOptimizedArgs,
+    Arrays.asList(optimizedField, sortField));
 ```
 
 ### Query Optimization
@@ -727,7 +712,7 @@ search.ftSearch("idx", "@title:wireless");  // Better than "wireless"
 search.ftSearch("idx", "@price:[100 200]"); // Better than "@price:>=100 @price:<=200"
 
 // Limit result sets appropriately
-SearchArgs<String, String> limitedArgs = SearchArgs.<String, String>builder()
+SearchArgs<String> limitedArgs = SearchArgs.<String>builder()
     .limit(0, 20)   // Don't fetch more than needed
     .noContent()    // Skip content if only metadata needed
     .build();
@@ -750,7 +735,7 @@ try {
 }
 
 try {
-    SearchReply<String, String> results = search.ftSearch("idx", "invalid:query[");
+    SearchReply<String> results = search.ftSearch("idx", "invalid:query[");
 } catch (RedisCommandExecutionException e) {
     if (e.getMessage().contains("Syntax error")) {
         // Handle query syntax error
@@ -792,7 +777,7 @@ public class RedisSearchConfig {
     }
 
     @Bean
-    public RediSearchCommands<String, String> rediSearchCommands(RedisClient client) {
+    public RediSearchCommands<String> rediSearchCommands(RedisClient client) {
         return client.connect().sync();
     }
 }
@@ -801,14 +786,14 @@ public class RedisSearchConfig {
 public class ProductSearchService {
 
     @Autowired
-    private RediSearchCommands<String, String> search;
+    private RediSearchCommands<String> search;
 
     public List<Product> searchProducts(String query, int page, int size) {
-        SearchArgs<String, String> args = SearchArgs.<String, String>builder()
+        SearchArgs<String> args = SearchArgs.<String>builder()
             .limit(page * size, size)
             .build();
 
-        SearchReply<String, String> results = search.ftSearch("products-idx", query, args);
+        SearchReply<String> results = search.ftSearch("products-idx", query, args);
         return convertToProducts(results);
     }
 }
@@ -819,9 +804,9 @@ public class ProductSearchService {
 ```java
 // Using reactive commands
 StatefulRedisConnection<String, String> connection = redisClient.connect();
-RediSearchReactiveCommands<String, String> reactiveSearch = connection.reactive();
+RediSearchReactiveCommands<String> reactiveSearch = connection.reactive();
 
-Mono<SearchReply<String, String>> searchMono = reactiveSearch.ftSearch("products-idx", "wireless");
+Mono<SearchReply<String>> searchMono = reactiveSearch.ftSearch("products-idx", "wireless");
 
 searchMono.subscribe(results -> {
     System.out.println("Found " + results.getCount() + " results");
@@ -844,7 +829,7 @@ When migrating from older RediSearch versions:
 
 ```java
 // Ensure compatibility with modern features
-SearchArgs<String, String> modernArgs = SearchArgs.<String, String>builder()
+SearchArgs<String> modernArgs = SearchArgs.<String>builder()
     .dialect(QueryDialects.DIALECT2)  // Use latest dialect
     .build();
 ```

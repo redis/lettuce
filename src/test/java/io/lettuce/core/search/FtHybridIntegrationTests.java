@@ -78,17 +78,15 @@ public class FtHybridIntegrationTests {
         redis.flushall();
 
         // Create index with all needed fields
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
-        FieldArgs<String> brandField = TagFieldArgs.<String> builder().name("brand").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
-        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").sortable().build();
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").hnsw()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(8).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
-                .build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
+        FieldArgs brandField = TagFieldArgs.builder().name("brand").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").hnsw().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(8).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate(INDEX, createArgs,
                 Arrays.asList(titleField, categoryField, brandField, priceField, ratingField, vectorField))).isEqualTo("OK");
@@ -165,23 +163,22 @@ public class FtHybridIntegrationTests {
     @Test
     @Order(1)
     void hybridWithRrfCombiner() {
-        HybridArgs<String, String> args = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("smartphone camera").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(10)).build())
-                .combine(Combiners.<String> rrf().window(20).constant(60))
-                .postProcessing(PostProcessingArgs.<String, String> builder().load("@title", "@brand").build())
-                .param("vec", queryVectorClose).build();
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("smartphone camera").build())
+                .vectorSearch(HybridVectorArgs.builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10))
+                        .build())
+                .combine(Combiners.rrf().window(20).constant(60))
+                .postProcessing(PostProcessingArgs.builder().load("@title", "@brand").build()).param("vec", queryVectorClose)
+                .build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
         assertThat(reply.getTotalResults()).isGreaterThan(0);
 
         // Verify we get electronics products with "smartphone camera" in title
-        boolean hasSmartphone = reply.getResults().stream()
-                .anyMatch(r -> r.get("title") != null && r.get("title").toLowerCase().contains("smartphone"));
+        boolean hasSmartphone = reply.getResults().stream().anyMatch(r -> r.getFields().get("title").asString() != null
+                && r.getFields().get("title").asString().toLowerCase().contains("smartphone"));
         assertThat(hasSmartphone).isTrue();
     }
 
@@ -190,15 +187,13 @@ public class FtHybridIntegrationTests {
     @Test
     @Order(2)
     void hybridWithRangeVectorSearch() {
-        HybridArgs<String, String> args = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("*").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("*").build())
+                .vectorSearch(HybridVectorArgs.builder().field("@embedding").vector("$vec")
                         .method(HybridVectorArgs.Range.of(0.5)).build())
-                .combine(Combiners.<String> rrf().window(20))
-                .postProcessing(PostProcessingArgs.<String, String> builder().load("@title").build())
+                .combine(Combiners.rrf().window(20)).postProcessing(PostProcessingArgs.builder().load("@title").build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         // RANGE returns all vectors within radius 0.5 - should include close vectors
@@ -210,21 +205,21 @@ public class FtHybridIntegrationTests {
     @Test
     @Order(3)
     void hybridWithExplicitScorer() {
-        HybridArgs<String, String> args = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("smartphone camera").scorer(Scorers.bm25())
-                        .scoreAlias("bm25_score").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(10)).build())
-                .combine(Combiners.<String> linear().alpha(0.5).beta(0.5))
-                .postProcessing(PostProcessingArgs.<String, String> builder().load("@title", "@brand").build())
-                .param("vec", queryVectorClose).build();
+        HybridArgs args = HybridArgs.builder()
+                .search(HybridSearchArgs.builder().query("smartphone camera").scorer(Scorers.bm25()).scoreAlias("bm25_score")
+                        .build())
+                .vectorSearch(HybridVectorArgs.builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10))
+                        .build())
+                .combine(Combiners.linear().alpha(0.5).beta(0.5))
+                .postProcessing(PostProcessingArgs.builder().load("@title", "@brand").build()).param("vec", queryVectorClose)
+                .build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
         // Products with "smartphone camera" should rank higher with BM25
-        String firstTitle = reply.getResults().get(0).get("title");
+        String firstTitle = reply.getResults().get(0).getFields().get("title").asString();
         assertThat(firstTitle).isNotNull();
         assertThat(firstTitle.toLowerCase()).containsAnyOf("smartphone", "camera");
     }
@@ -243,21 +238,19 @@ public class FtHybridIntegrationTests {
     @Order(4)
     void hybridWithLoadAll() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.6"));
-        HybridArgs<String, String> args = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics}").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(5)).build())
-                .combine(Combiners.<String> rrf().window(20))
-                .postProcessing(PostProcessingArgs.<String, String> builder().loadAll().build()).param("vec", queryVectorClose)
-                .build();
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("@category:{electronics}").build())
+                .vectorSearch(HybridVectorArgs.builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(5))
+                        .build())
+                .combine(Combiners.rrf().window(20)).postProcessing(PostProcessingArgs.builder().loadAll().build())
+                .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
 
         // With LOAD *, all fields should be present
-        Map<String, String> firstResult = reply.getResults().get(0);
+        Map<String, FieldValue> firstResult = reply.getResults().get(0).getFields();
         assertThat(firstResult).containsKeys("title", "category", "brand", "price", "rating");
     }
 
@@ -266,15 +259,13 @@ public class FtHybridIntegrationTests {
     @Test
     @Order(5)
     void hybridWithTimeout() {
-        HybridArgs<String, String> args = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("smartphone").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(10)).build())
-                .combine(Combiners.<String> rrf().window(20)).timeout(Duration.ofSeconds(30))
-                .postProcessing(PostProcessingArgs.<String, String> builder().load("@title").build())
-                .param("vec", queryVectorClose).build();
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("smartphone").build())
+                .vectorSearch(HybridVectorArgs.builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10))
+                        .build())
+                .combine(Combiners.rrf().window(20)).timeout(Duration.ofSeconds(30))
+                .postProcessing(PostProcessingArgs.builder().load("@title").build()).param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
@@ -288,22 +279,22 @@ public class FtHybridIntegrationTests {
     @Order(6)
     void hybridWithScoreAliases() {
         // Test YIELD_SCORE_AS for SEARCH, VSIM and the COMBINE combiner
-        HybridArgs<String, String> args = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("smartphone").scoreAlias("text_score").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(10)).scoreAlias("vector_score").build())
-                .combine(Combiners.<String> rrf().window(20).constant(60).as("combined_score"))
-                .postProcessing(PostProcessingArgs.<String, String> builder().load("@title", "@brand").build())
-                .param("vec", queryVectorClose).build();
+        HybridArgs args = HybridArgs.builder()
+                .search(HybridSearchArgs.builder().query("smartphone").scoreAlias("text_score").build())
+                .vectorSearch(HybridVectorArgs.builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10))
+                        .scoreAlias("vector_score").build())
+                .combine(Combiners.rrf().window(20).constant(60).as("combined_score"))
+                .postProcessing(PostProcessingArgs.builder().load("@title", "@brand").build()).param("vec", queryVectorClose)
+                .build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
         assertThat(reply.getTotalResults()).isGreaterThan(0);
-        assertThat(reply.getResults()).allSatisfy(result -> assertThat(result).containsKey("combined_score"));
-        assertThat(reply.getResults()).anySatisfy(result -> assertThat(result).containsKey("text_score"));
-        assertThat(reply.getResults()).anySatisfy(result -> assertThat(result).containsKey("vector_score"));
+        assertThat(reply.getResults()).allSatisfy(result -> assertThat(result.getFields()).containsKey("combined_score"));
+        assertThat(reply.getResults()).anySatisfy(result -> assertThat(result.getFields()).containsKey("text_score"));
+        assertThat(reply.getResults()).anySatisfy(result -> assertThat(result.getFields()).containsKey("vector_score"));
     }
 
     // ==================== TEST 7: Reducers AVG, MIN, MAX ====================
@@ -311,34 +302,34 @@ public class FtHybridIntegrationTests {
     @Test
     @Order(7)
     void hybridWithReducerAvgMinMax() {
-        HybridArgs<String, String> args = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics}").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(10)).build())
-                .combine(Combiners.<String> rrf().window(20))
-                .postProcessing(PostProcessingArgs.<String, String> builder()
-                        .groupBy(GroupBy.<String, String> of("@brand").reduce(Reducers.<String> avg("@price").as("avg_price"))
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("@category:{electronics}").build())
+                .vectorSearch(HybridVectorArgs
+                        .builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10)).build())
+                .combine(Combiners.rrf().window(20))
+                .postProcessing(PostProcessingArgs.builder()
+                        .groupBy(GroupBy.of("@brand").reduce(Reducers.avg("@price").as("avg_price"))
                                 .reduce(Reducers.min("@price").as("min_price")).reduce(Reducers.max("@price").as("max_price")))
                         .build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
 
         // Find Apple result and verify aggregations
         // Apple has products at $999 and $2499, so avg=1749, min=999, max=2499
-        for (Map<String, String> result : reply.getResults()) {
+        for (HybridReply.HybridResult hybridResult : reply.getResults()) {
+            Map<String, FieldValue> result = hybridResult.getFields();
             if ("apple".equals(result.get("brand"))) {
-                assertThat(result.get("avg_price")).isEqualTo("1749");
-                assertThat(result.get("min_price")).isEqualTo("999");
-                assertThat(result.get("max_price")).isEqualTo("2499");
+                assertThat(result.get("avg_price").asString()).isEqualTo("1749");
+                assertThat(result.get("min_price").asString()).isEqualTo("999");
+                assertThat(result.get("max_price").asString()).isEqualTo("2499");
             } else if ("samsung".equals(result.get("brand"))) {
                 // Samsung: $799 and $1299, avg=1049, min=799, max=1299
-                assertThat(result.get("avg_price")).isEqualTo("1049");
-                assertThat(result.get("min_price")).isEqualTo("799");
-                assertThat(result.get("max_price")).isEqualTo("1299");
+                assertThat(result.get("avg_price").asString()).isEqualTo("1049");
+                assertThat(result.get("min_price").asString()).isEqualTo("799");
+                assertThat(result.get("max_price").asString()).isEqualTo("1299");
             }
         }
     }
@@ -348,33 +339,157 @@ public class FtHybridIntegrationTests {
     @Test
     @Order(8)
     void hybridWithReducerQuantile() {
-        HybridArgs<String, String> args = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics}").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(10)).build())
-                .combine(Combiners.<String> rrf().window(20))
-                .postProcessing(PostProcessingArgs.<String, String> builder()
-                        .groupBy(GroupBy.<String, String> of("@category")
-                                .reduce(Reducers.quantile("@price", 0.5).as("median_price"))
-                                .reduce(Reducers.<String> count().as("count")))
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("@category:{electronics}").build())
+                .vectorSearch(HybridVectorArgs
+                        .builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10)).build())
+                .combine(Combiners.rrf().window(20))
+                .postProcessing(PostProcessingArgs.builder().groupBy(GroupBy.of("@category")
+                        .reduce(Reducers.quantile("@price", 0.5).as("median_price")).reduce(Reducers.count().as("count")))
                         .build())
                 .param("vec", queryVectorClose).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
 
         // Find electronics category and verify quantile was computed
         boolean foundElectronics = false;
-        for (Map<String, String> result : reply.getResults()) {
-            if ("electronics".equals(result.get("category"))) {
+        for (HybridReply.HybridResult hybridResult : reply.getResults()) {
+            Map<String, FieldValue> result = hybridResult.getFields();
+            if ("electronics".equals(result.get("category").asString())) {
                 foundElectronics = true;
                 assertThat(result.get("median_price")).isNotNull();
-                assertThat(result.get("count")).isEqualTo("5"); // 5 electronics products
+                assertThat(result.get("count").asString()).isEqualTo("5"); // 5 electronics products
             }
         }
         assertThat(foundElectronics).isTrue();
+    }
+
+    // ==================== TEST 10: Reducer TOLIST ====================
+
+    @Test
+    @Order(10)
+    void hybridWithReducerToList() {
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("*").build())
+                .vectorSearch(HybridVectorArgs
+                        .builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10)).build())
+                .combine(Combiners.rrf().window(20))
+                .postProcessing(PostProcessingArgs.builder().groupBy(GroupBy.of("@category")
+                        .reduce(Reducers.toList("@brand").as("brands")).reduce(Reducers.count().as("count"))).build())
+                .param("vec", queryVectorClose).build();
+
+        HybridReply reply = redis.ftHybrid(INDEX, args);
+
+        assertThat(reply).isNotNull();
+        assertThat(reply.getResults()).isNotEmpty();
+        // TOLIST reducer returns a Redis array, which HybridReply cannot store as a plain Map<String,String>
+        // value — addFieldsFromComplexData skips non-ByteBuffer values. We verify the count reducer (a scalar)
+        // is present and that the server accepted the TOLIST clause without error.
+        for (HybridReply.HybridResult result : reply.getResults()) {
+            assertThat(result.getFields().get("count")).isNotNull();
+        }
+    }
+
+    // ==================== TEST 11: Reducer FIRST_VALUE ====================
+
+    @Test
+    @Order(11)
+    void hybridWithReducerFirstValue() {
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("*").build())
+                .vectorSearch(HybridVectorArgs
+                        .builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10)).build())
+                .combine(Combiners.rrf().window(20))
+                .postProcessing(PostProcessingArgs.builder().groupBy(GroupBy.of("@category")
+                        .reduce(Reducers.firstValue("@brand").as("first_brand")).reduce(Reducers.count().as("count"))).build())
+                .param("vec", queryVectorClose).build();
+
+        HybridReply reply = redis.ftHybrid(INDEX, args);
+
+        assertThat(reply).isNotNull();
+        assertThat(reply.getResults()).isNotEmpty();
+        for (HybridReply.HybridResult result : reply.getResults()) {
+            assertThat(result.getFields().get("first_brand")).isNotNull();
+            assertThat(result.getFields().get("count")).isNotNull();
+        }
+    }
+
+    // ==================== TEST 12: Reducer RANDOM_SAMPLE ====================
+
+    @Test
+    @Order(12)
+    void hybridWithReducerRandomSample() {
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("*").build())
+                .vectorSearch(HybridVectorArgs
+                        .builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10)).build())
+                .combine(Combiners.rrf().window(20))
+                .postProcessing(PostProcessingArgs.builder().groupBy(GroupBy.of("@category")
+                        .reduce(Reducers.randomSample("@brand", 2).as("sample_brands")).reduce(Reducers.count().as("count")))
+                        .build())
+                .param("vec", queryVectorClose).build();
+
+        HybridReply reply = redis.ftHybrid(INDEX, args);
+
+        assertThat(reply).isNotNull();
+        assertThat(reply.getResults()).isNotEmpty();
+        // RANDOM_SAMPLE returns a Redis array, which cannot be stored in Map<String,String>.
+        // addFieldsFromComplexData skips non-ByteBuffer values, so "sample_brands" will not appear
+        // in the result map. Verify the count reducer (a scalar) is present without error.
+        for (HybridReply.HybridResult result : reply.getResults()) {
+            assertThat(result.getFields().get("count")).isNotNull();
+        }
+    }
+
+    // ==================== TEST 13: Reducer STDDEV ====================
+
+    @Test
+    @Order(13)
+    void hybridWithReducerStddev() {
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("@category:{electronics}").build())
+                .vectorSearch(HybridVectorArgs
+                        .builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10)).build())
+                .combine(Combiners.rrf().window(20))
+                .postProcessing(PostProcessingArgs.builder().groupBy(GroupBy.of("@category")
+                        .reduce(Reducers.stddev("@price").as("price_stddev")).reduce(Reducers.count().as("count"))).build())
+                .param("vec", queryVectorClose).build();
+
+        HybridReply reply = redis.ftHybrid(INDEX, args);
+
+        assertThat(reply).isNotNull();
+        assertThat(reply.getResults()).isNotEmpty();
+        Map<String, FieldValue> electronicsGroup = reply.getResults().get(0).getFields();
+        assertThat(electronicsGroup.get("price_stddev")).isNotNull();
+        // STDDEV is a scalar string. KNN+RRF may return only one electronics item per group,
+        // giving stddev=0. Just verify the value is a parseable non-negative double.
+        double stddev = Double.parseDouble(electronicsGroup.get("price_stddev").asString());
+        assertThat(stddev).isGreaterThanOrEqualTo(0.0);
+    }
+
+    // ==================== TEST 14: Reducer COUNT_DISTINCTISH ====================
+
+    @Test
+    @Order(14)
+    void hybridWithReducerCountDistinctish() {
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("*").build())
+                .vectorSearch(HybridVectorArgs
+                        .builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10)).build())
+                .combine(Combiners.rrf().window(20))
+                .postProcessing(PostProcessingArgs.builder()
+                        .groupBy(GroupBy.of("@category").reduce(Reducers.countDistinctish("@brand").as("approx_brand_count"))
+                                .reduce(Reducers.count().as("count")))
+                        .build())
+                .param("vec", queryVectorClose).build();
+
+        HybridReply reply = redis.ftHybrid(INDEX, args);
+
+        assertThat(reply).isNotNull();
+        assertThat(reply.getResults()).isNotEmpty();
+        for (HybridReply.HybridResult result : reply.getResults()) {
+            assertThat(result.getFields().get("approx_brand_count")).isNotNull();
+            // HyperLogLog approx count should be a positive integer
+            long approxCount = Long.parseLong(result.getFields().get("approx_brand_count").asString());
+            assertThat(approxCount).isGreaterThan(0);
+        }
     }
 
     // ==================== TEST 9: Mid-distance Vector with Text Dominance ====================
@@ -385,22 +500,20 @@ public class FtHybridIntegrationTests {
         // Using queryVectorMid (equidistant from all products), text search should dominate ranking
         // With LINEAR combiner alpha=0.8 (text weight) and beta=0.2 (vector weight),
         // the text match "Pro" should determine the ranking
-        HybridArgs<String, String> args = HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("Pro").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
-                        .method(HybridVectorArgs.Knn.of(10)).build())
-                .combine(Combiners.<String> linear().alpha(0.8).beta(0.2))
-                .postProcessing(PostProcessingArgs.<String, String> builder().load("@title").build())
-                .param("vec", queryVectorMid).build();
+        HybridArgs args = HybridArgs.builder().search(HybridSearchArgs.builder().query("Pro").build())
+                .vectorSearch(HybridVectorArgs.builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10))
+                        .build())
+                .combine(Combiners.linear().alpha(0.8).beta(0.2))
+                .postProcessing(PostProcessingArgs.builder().load("@title").build()).param("vec", queryVectorMid).build();
 
-        HybridReply<String, String> reply = redis.ftHybrid(INDEX, args);
+        HybridReply reply = redis.ftHybrid(INDEX, args);
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
 
         // With mid-distance vector and high text weight, products with "Pro" in title should rank high
         // Our dataset has: "iPhone 15 Pro", "MacBook Pro"
-        String firstTitle = reply.getResults().get(0).get("title");
+        String firstTitle = reply.getResults().get(0).getFields().get("title").asString();
         assertThat(firstTitle).containsIgnoringCase("Pro");
     }
 

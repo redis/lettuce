@@ -92,12 +92,11 @@ public class RedisJsonIndexingIntegrationTests {
         // Create index based on Redis documentation example:
         // FT.CREATE itemIdx ON JSON PREFIX 1 item: SCHEMA $.name AS name TEXT $.description as description TEXT $.price AS
         // price NUMERIC
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("$.name").as("name").build();
-        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("$.price").as("price").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("$.name").as("name").build();
+        FieldArgs descriptionField = TextFieldArgs.builder().name("$.description").as("description").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("$.price").as("price").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON).build();
 
         String result = redis.ftCreate(ITEM_INDEX, createArgs, Arrays.asList(nameField, descriptionField, priceField));
         assertThat(result).isEqualTo("OK");
@@ -118,7 +117,7 @@ public class RedisJsonIndexingIntegrationTests {
         assertThat(redis.jsonSet("item:2", JsonPath.ROOT_PATH, item2)).isEqualTo("OK");
 
         // Test 1: Search for items with "earbuds" in the name
-        SearchReply<String, String> searchReply = redis.ftSearch(ITEM_INDEX, "@name:(earbuds)", null);
+        SearchReply<String> searchReply = redis.ftSearch(ITEM_INDEX, "@name:(earbuds)", null);
         assertThat(searchReply.getCount()).isEqualTo(1);
         assertThat(searchReply.getResults()).hasSize(1);
         assertThat(searchReply.getResults().get(0).getId()).isEqualTo("item:2");
@@ -145,12 +144,11 @@ public class RedisJsonIndexingIntegrationTests {
     void testJsonArraysAsTagFields() {
         // Create index with TAG field for colors using wildcard JSONPath
         // FT.CREATE itemIdx2 ON JSON PREFIX 1 item: SCHEMA $.colors.* AS colors TAG $.name AS name TEXT
-        FieldArgs<String> colorsField = TagFieldArgs.<String> builder().name("$.colors.*").as("colors").build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("$.name").as("name").build();
-        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
+        FieldArgs colorsField = TagFieldArgs.builder().name("$.colors.*").as("colors").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("$.name").as("name").build();
+        FieldArgs descriptionField = TextFieldArgs.builder().name("$.description").as("description").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON).build();
 
         redis.ftCreate(ITEM_INDEX_2, createArgs, Arrays.asList(colorsField, nameField, descriptionField));
 
@@ -171,7 +169,7 @@ public class RedisJsonIndexingIntegrationTests {
         redis.jsonSet("item:3", JsonPath.ROOT_PATH, item3);
 
         // Test 1: Search for silver headphones
-        SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX_2,
+        SearchReply<String> results = redis.ftSearch(ITEM_INDEX_2,
                 "@colors:{silver} (@name:(headphones)|@description:(headphones))", null);
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults().get(0).getId()).isEqualTo("item:1");
@@ -197,12 +195,11 @@ public class RedisJsonIndexingIntegrationTests {
     void testJsonArraysAsTextFields() {
         // Create index with TEXT field for colors array
         // FT.CREATE itemIdx3 ON JSON PREFIX 1 item: SCHEMA $.colors AS colors TEXT $.name AS name TEXT
-        FieldArgs<String> colorsField = TextFieldArgs.<String> builder().name("$.colors").as("colors").build();
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("$.name").as("name").build();
-        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
+        FieldArgs colorsField = TextFieldArgs.builder().name("$.colors").as("colors").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("$.name").as("name").build();
+        FieldArgs descriptionField = TextFieldArgs.builder().name("$.description").as("description").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON).build();
 
         redis.ftCreate(ITEM_INDEX_3, createArgs, Arrays.asList(colorsField, nameField, descriptionField));
 
@@ -217,9 +214,9 @@ public class RedisJsonIndexingIntegrationTests {
         redis.jsonSet("item:3", JsonPath.ROOT_PATH, item3);
 
         // Test full text search for light colored headphones
-        SearchArgs<String, String> returnArgs = SearchArgs.<String, String> builder().returnField("$.colors").build();
-        SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX_3,
-                "@colors:(white|light) (@name|description:(headphones))", returnArgs);
+        SearchArgs<String> returnArgs = SearchArgs.<String> builder().returnField("$.colors").build();
+        SearchReply<String> results = redis.ftSearch(ITEM_INDEX_3, "@colors:(white|light) (@name|description:(headphones))",
+                returnArgs);
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
 
@@ -235,10 +232,9 @@ public class RedisJsonIndexingIntegrationTests {
     void testJsonArraysAsNumericFields() {
         // Create index with NUMERIC field for max_level array
         // FT.CREATE itemIdx4 ON JSON PREFIX 1 item: SCHEMA $.max_level AS dB NUMERIC
-        FieldArgs<String> dbField = NumericFieldArgs.<String> builder().name("$.max_level").as("dB").build();
+        FieldArgs dbField = NumericFieldArgs.builder().name("$.max_level").as("dB").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON).build();
 
         redis.ftCreate(ITEM_INDEX_4, createArgs, Collections.singletonList(dbField));
 
@@ -257,7 +253,7 @@ public class RedisJsonIndexingIntegrationTests {
         redis.jsonSet("item:3", JsonPath.ROOT_PATH, item3);
 
         // Test 1: Search for headphones with max volume between 70 and 80 (inclusive)
-        SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX_4, "@dB:[70 80]", null);
+        SearchReply<String> results = redis.ftSearch(ITEM_INDEX_4, "@dB:[70 80]", null);
         assertThat(results.getCount()).isEqualTo(2); // item:1 and item:2
 
         // Test 2: Search for items with all values in range [90, 120]
@@ -275,12 +271,11 @@ public class RedisJsonIndexingIntegrationTests {
     @Test
     void testFieldProjectionWithJsonPath() {
         // Create basic index
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("$.name").as("name").build();
-        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("$.price").as("price").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("$.name").as("name").build();
+        FieldArgs descriptionField = TextFieldArgs.builder().name("$.description").as("description").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("$.price").as("price").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON).build();
 
         redis.ftCreate(ITEM_INDEX, createArgs, Arrays.asList(nameField, descriptionField, priceField));
 
@@ -297,23 +292,22 @@ public class RedisJsonIndexingIntegrationTests {
         redis.jsonSet("item:2", JsonPath.ROOT_PATH, item2);
 
         // Test 1: Return specific attributes (name and price)
-        SearchArgs<String, String> returnArgs = SearchArgs.<String, String> builder().returnField("name").returnField("price")
-                .build();
-        SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX, "@description:(headphones)", returnArgs);
+        SearchArgs<String> returnArgs = SearchArgs.<String> builder().returnField("name").returnField("price").build();
+        SearchReply<String> results = redis.ftSearch(ITEM_INDEX, "@description:(headphones)", returnArgs);
         assertThat(results.getCount()).isEqualTo(2);
-        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String> result : results.getResults()) {
             assertThat(result.getFields()).containsKey("name");
             assertThat(result.getFields()).containsKey("price");
             assertThat(result.getFields()).doesNotContainKey("description");
         }
 
         // Test 2: Project with JSONPath expression (including non-indexed field)
-        SearchArgs<String, String> jsonPathArgs = SearchArgs.<String, String> builder().returnField("name").returnField("price")
+        SearchArgs<String> jsonPathArgs = SearchArgs.<String> builder().returnField("name").returnField("price")
                 .returnField("$.stock") // JSONPath without alias
                 .build();
         results = redis.ftSearch(ITEM_INDEX, "@description:(headphones)", jsonPathArgs);
         assertThat(results.getCount()).isEqualTo(2);
-        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String> result : results.getResults()) {
             assertThat(result.getFields()).containsKey("name");
             assertThat(result.getFields()).containsKey("price");
             assertThat(result.getFields()).containsKey("$.stock");
@@ -330,12 +324,10 @@ public class RedisJsonIndexingIntegrationTests {
     void testJsonObjectIndexing() {
         // Create index for individual object elements
         // FT.CREATE itemIdx ON JSON SCHEMA $.connection.wireless AS wireless TAG $.connection.type AS connectionType TEXT
-        FieldArgs<String> wirelessField = TagFieldArgs.<String> builder().name("$.connection.wireless").as("wireless").build();
-        FieldArgs<String> connectionTypeField = TextFieldArgs.<String> builder().name("$.connection.type").as("connectionType")
-                .build();
+        FieldArgs wirelessField = TagFieldArgs.builder().name("$.connection.wireless").as("wireless").build();
+        FieldArgs connectionTypeField = TextFieldArgs.builder().name("$.connection.type").as("connectionType").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(ITEM_PREFIX)
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(ITEM_PREFIX).on(CreateArgs.TargetType.JSON).build();
 
         redis.ftCreate(ITEM_INDEX, createArgs, Arrays.asList(wirelessField, connectionTypeField));
 
@@ -350,7 +342,7 @@ public class RedisJsonIndexingIntegrationTests {
         redis.jsonSet("item:2", JsonPath.ROOT_PATH, item2);
 
         // Test 1: Search for wireless items
-        SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX, "@wireless:{true}", null);
+        SearchReply<String> results = redis.ftSearch(ITEM_INDEX, "@wireless:{true}", null);
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults().get(0).getId()).isEqualTo("item:1");
 

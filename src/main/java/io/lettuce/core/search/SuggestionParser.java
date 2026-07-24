@@ -27,11 +27,10 @@ import java.util.List;
  * <li><strong>With both WITHSCORES and WITHPAYLOADS:</strong> Suggestion strings, scores, and payloads in sequence</li>
  * </ul>
  *
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  */
-public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>>> {
+public class SuggestionParser implements ComplexDataParser<List<Suggestion>> {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SuggestionParser.class);
 
@@ -66,9 +65,8 @@ public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>
      * @return a list of {@link Suggestion} objects
      */
     @Override
-    @SuppressWarnings("unchecked")
-    public List<Suggestion<V>> parse(ComplexData data) {
-        List<Suggestion<V>> suggestions = new ArrayList<>();
+    public List<Suggestion> parse(ComplexData data) {
+        List<Suggestion> suggestions = new ArrayList<>();
 
         if (data == null) {
             return suggestions;
@@ -89,8 +87,8 @@ public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>
 
         for (int i = 0; i < elements.size();) {
 
-            V value = (V) elements.get(i++);
-            Suggestion<V> suggestion = new Suggestion<>(value);
+            String value = (String) elements.get(i++);
+            Suggestion suggestion = new Suggestion(value);
 
             if (withScores && i + 1 <= elements.size()) {
                 Double score = parseScore(elements.get(i++));
@@ -98,7 +96,7 @@ public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>
             }
 
             if (withPayloads && i + 1 <= elements.size()) {
-                V payload = (V) elements.get(i++);
+                String payload = (String) elements.get(i++);
                 suggestion.setPayload(payload);
             }
 
@@ -123,7 +121,12 @@ public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>
             return (Double) scoreObj;
         }
 
-        return 0.0;
+        try {
+            return Double.parseDouble(scoreObj.toString());
+        } catch (NumberFormatException e) {
+            LOG.warn("Failed while parsing FT.SUGGET score: {}", scoreObj);
+            return null;
+        }
     }
 
 }

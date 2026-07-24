@@ -9,6 +9,7 @@ package io.lettuce.core.search.arguments;
 
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.search.AggregationReply;
 
 import java.time.Duration;
 import java.util.*;
@@ -29,9 +30,9 @@ import java.util.Arrays;
  * {
  *     &#64;code
  *     // Simple aggregation with grouping and counting
- *     AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().groupBy("category")
- *             .reduce(Reducer.count().as("count")).sortBy("count", SortDirection.DESC).build();
- *     SearchReply<String, String> result = redis.ftAggregate("myindex", "*", args);
+ *     AggregateArgs args = AggregateArgs.builder().groupBy("category").reduce(Reducer.count().as("count"))
+ *             .sortBy("count", SortDirection.DESC).build();
+ *     SearchReply<String> result = redis.ftAggregate("myindex", "*", args);
  * }
  * </pre>
  *
@@ -43,7 +44,7 @@ import java.util.Arrays;
  * {
  *     &#64;code
  *     // Complex aggregation pipeline
- *     AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().load("price", "quantity", "category")
+ *     AggregateArgs args = AggregateArgs.builder().load("price", "quantity", "category")
  *             .apply("@price * @quantity", "total_value").filter("@total_value > 100").groupBy("category")
  *             .reduce(Reducer.sum("@total_value").as("category_total")).reduce(Reducer.avg("@price").as("avg_price"))
  *             .sortBy("category_total", SortDirection.DESC).limit(0, 10).dialect(QueryDialects.DIALECT2).build();
@@ -69,8 +70,6 @@ import java.util.Arrays;
  * <li>Consider using WITHCURSOR for large result sets to avoid memory issues</li>
  * </ul>
  *
- * @param <K> Key type.
- * @param <V> Value type.
  * @since 6.8
  * @author Tihomir Mateev
  * @see <a href="https://redis.io/docs/latest/commands/ft.aggregate/">FT.AGGREGATE</a>
@@ -78,11 +77,11 @@ import java.util.Arrays;
  *      Aggregations Guide</a>
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class AggregateArgs<K, V> {
+public class AggregateArgs {
 
     private Optional<Boolean> verbatim = Optional.empty();
 
-    private final List<LoadField<K>> loadFields = new ArrayList<>();
+    private final List<LoadField> loadFields = new ArrayList<>();
 
     private Optional<Duration> timeout = Optional.empty();
 
@@ -90,13 +89,13 @@ public class AggregateArgs<K, V> {
      * Ordered list of pipeline operations (GROUPBY, SORTBY, APPLY, FILTER). These operations must be applied in the order
      * specified by the user.
      */
-    private final List<PipelineOperation<K, ?>> pipelineOperations = new ArrayList<>();
+    private final List<PipelineOperation> pipelineOperations = new ArrayList<>();
 
     private Optional<WithCursor> withCursor = Optional.empty();
 
-    private final Map<K, V> params = new HashMap<>();
+    private final Map<String, Object> params = new HashMap<>();
 
-    private Optional<V> scorer = Optional.empty();
+    private Optional<String> scorer = Optional.empty();
 
     private Optional<Boolean> addScores = Optional.empty();
 
@@ -105,23 +104,19 @@ public class AggregateArgs<K, V> {
     /**
      * Creates a new {@link AggregateArgs} instance.
      *
-     * @param <K> Key type.
-     * @param <V> Value type.
      * @return new instance of {@link AggregateArgs}.
      */
-    public static <K, V> Builder<K, V> builder() {
-        return new Builder<>();
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
      * Builder for {@link AggregateArgs}.
      *
-     * @param <K> Key type.
-     * @param <V> Value type.
      */
-    public static class Builder<K, V> {
+    public static class Builder {
 
-        private final AggregateArgs<K, V> args = new AggregateArgs<>();
+        private final AggregateArgs args = new AggregateArgs();
 
         /**
          * Set VERBATIM flag - do not try to use stemming for query expansion.
@@ -133,7 +128,7 @@ public class AggregateArgs<K, V> {
          *
          * @return the builder.
          */
-        public Builder<K, V> verbatim() {
+        public Builder verbatim() {
             args.verbatim = Optional.of(true);
             return this;
         }
@@ -155,8 +150,8 @@ public class AggregateArgs<K, V> {
          * @param field the field identifier (field name for hashes, JSONPath for JSON)
          * @return the builder.
          */
-        public Builder<K, V> load(K field) {
-            args.loadFields.add(new LoadField<>(field, null));
+        public Builder load(String field) {
+            args.loadFields.add(new LoadField(field, null));
             return this;
         }
 
@@ -172,8 +167,8 @@ public class AggregateArgs<K, V> {
          * @param alias the alias name to use in the result
          * @return the builder.
          */
-        public Builder<K, V> load(K field, K alias) {
-            args.loadFields.add(new LoadField<>(field, alias));
+        public Builder load(String field, String alias) {
+            args.loadFields.add(new LoadField(field, alias));
             return this;
         }
 
@@ -187,8 +182,8 @@ public class AggregateArgs<K, V> {
          *
          * @return the builder.
          */
-        public Builder<K, V> loadAll() {
-            args.loadFields.add(new LoadField<>(null, null)); // Special case for *
+        public Builder loadAll() {
+            args.loadFields.add(new LoadField(null, null)); // Special case for *
             return this;
         }
 
@@ -198,7 +193,7 @@ public class AggregateArgs<K, V> {
          * @param timeout the timeout duration
          * @return the builder.
          */
-        public Builder<K, V> timeout(Duration timeout) {
+        public Builder timeout(Duration timeout) {
             args.timeout = Optional.of(timeout);
             return this;
         }
@@ -209,7 +204,7 @@ public class AggregateArgs<K, V> {
          * @param groupBy the group by specification
          * @return the builder.
          */
-        public Builder<K, V> groupBy(GroupBy<K, V> groupBy) {
+        public Builder groupBy(GroupBy groupBy) {
             args.pipelineOperations.add(groupBy);
             return this;
         }
@@ -220,7 +215,7 @@ public class AggregateArgs<K, V> {
          * @param sortBy the sort by specification
          * @return the builder.
          */
-        public Builder<K, V> sortBy(SortBy<K> sortBy) {
+        public Builder sortBy(SortBy sortBy) {
             args.pipelineOperations.add(sortBy);
             return this;
         }
@@ -231,7 +226,7 @@ public class AggregateArgs<K, V> {
          * @param apply the apply specification
          * @return the builder.
          */
-        public Builder<K, V> apply(Apply<K, V> apply) {
+        public Builder apply(Apply apply) {
             args.pipelineOperations.add(apply);
             return this;
         }
@@ -263,8 +258,8 @@ public class AggregateArgs<K, V> {
          * @param num the maximum number of results to return
          * @return the builder.
          */
-        public Builder<K, V> limit(long offset, long num) {
-            args.pipelineOperations.add(new Limit<>(offset, num));
+        public Builder limit(long offset, long num) {
+            args.pipelineOperations.add(new Limit(offset, num));
             return this;
         }
 
@@ -297,8 +292,8 @@ public class AggregateArgs<K, V> {
          * @param filter the filter expression (e.g., "@price > 100", "@category == 'electronics'")
          * @return the builder.
          */
-        public Builder<K, V> filter(V filter) {
-            args.pipelineOperations.add(new Filter<>(filter));
+        public Builder filter(String filter) {
+            args.pipelineOperations.add(new Filter(filter));
             return this;
         }
 
@@ -323,14 +318,15 @@ public class AggregateArgs<K, V> {
          * </pre>
          *
          * <p>
-         * Use {@link io.lettuce.core.api.RediSearchCommands#ftCursorread(Object, long)} and
-         * {@link io.lettuce.core.api.RediSearchCommands#ftCursordel(Object, long)} to iterate through and manage the cursor.
+         * Use {@link io.lettuce.core.api.sync.RediSearchCommands#ftCursorread(String, AggregationReply.Cursor, int)} and
+         * {@link io.lettuce.core.api.sync.RediSearchCommands#ftCursordel(String, AggregationReply.Cursor)} to iterate through
+         * and manage the cursor.
          * </p>
          *
          * @param withCursor the cursor specification with count and optional idle timeout
          * @return the builder.
          */
-        public Builder<K, V> withCursor(WithCursor withCursor) {
+        public Builder withCursor(WithCursor withCursor) {
             args.withCursor = Optional.of(withCursor);
             return this;
         }
@@ -367,7 +363,29 @@ public class AggregateArgs<K, V> {
          * @param value the parameter value
          * @return the builder.
          */
-        public Builder<K, V> param(K name, V value) {
+        public Builder param(String name, String value) {
+            args.params.put(name, value);
+            return this;
+        }
+
+        /**
+         * Add a binary parameter for parameterized queries.
+         *
+         * <p>
+         * Defines a binary value parameter that can be referenced in the query using {@code $name}. The value bypasses the
+         * connection's value codec, which is useful for passing vector blobs (e.g. KNN {@code $BLOB}) over a non-binary
+         * connection.
+         * </p>
+         *
+         * <p>
+         * <strong>Note:</strong> To use PARAMS, set DIALECT to 2 or greater.
+         * </p>
+         *
+         * @param name the parameter name (referenced as $name in query)
+         * @param value the binary parameter value (e.g., vector data)
+         * @return the builder.
+         */
+        public Builder param(String name, byte[] value) {
             args.params.put(name, value);
             return this;
         }
@@ -378,7 +396,7 @@ public class AggregateArgs<K, V> {
          * @param scorer the scorer function
          * @return the builder.
          */
-        public Builder<K, V> scorer(V scorer) {
+        public Builder scorer(String scorer) {
             args.scorer = Optional.of(scorer);
             return this;
         }
@@ -411,7 +429,7 @@ public class AggregateArgs<K, V> {
          *
          * @return the builder.
          */
-        public Builder<K, V> addScores() {
+        public Builder addScores() {
             args.addScores = Optional.of(true);
             return this;
         }
@@ -422,7 +440,7 @@ public class AggregateArgs<K, V> {
          * @param dialect the query dialect
          * @return the builder.
          */
-        public Builder<K, V> dialect(QueryDialects dialect) {
+        public Builder dialect(QueryDialects dialect) {
             args.dialect = dialect;
             return this;
         }
@@ -434,8 +452,8 @@ public class AggregateArgs<K, V> {
          * @return the builder.
          */
         @SafeVarargs
-        public final Builder<K, V> groupBy(K... properties) {
-            return groupBy(new GroupBy<>(Arrays.asList(properties)));
+        public final Builder groupBy(String... properties) {
+            return groupBy(new GroupBy(Arrays.asList(properties)));
         }
 
         /**
@@ -445,8 +463,8 @@ public class AggregateArgs<K, V> {
          * @param direction the sort direction
          * @return the builder.
          */
-        public Builder<K, V> sortBy(K property, SortDirection direction) {
-            return sortBy(new SortBy<>(Collections.singletonList(new SortProperty<>(property, direction))));
+        public Builder sortBy(String property, SortDirection direction) {
+            return sortBy(new SortBy(Collections.singletonList(new SortProperty(property, direction))));
         }
 
         /**
@@ -456,8 +474,8 @@ public class AggregateArgs<K, V> {
          * @param name the result field name
          * @return the builder.
          */
-        public Builder<K, V> apply(V expression, K name) {
-            return apply(new Apply<>(expression, name));
+        public Builder apply(String expression, String name) {
+            return apply(new Apply(expression, name));
         }
 
         /**
@@ -465,7 +483,7 @@ public class AggregateArgs<K, V> {
          *
          * @return the built {@link AggregateArgs}.
          */
-        public AggregateArgs<K, V> build() {
+        public AggregateArgs build() {
             return args;
         }
 
@@ -476,7 +494,7 @@ public class AggregateArgs<K, V> {
      *
      * @param args the {@link CommandArgs} object
      */
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<?, ?> args) {
         verbatim.ifPresent(v -> args.add(CommandKeyword.VERBATIM));
 
         // ADDSCORES is a query-level option and must be emitted before the result-processing pipeline
@@ -491,18 +509,18 @@ public class AggregateArgs<K, V> {
             } else {
                 // Count the total number of arguments (field + optional AS + alias)
                 int argCount = 0;
-                for (LoadField<K> loadField : loadFields) {
+                for (LoadField loadField : loadFields) {
                     argCount++; // field
                     if (loadField.alias != null) {
                         argCount += 2; // AS + alias
                     }
                 }
                 args.add(argCount);
-                for (LoadField<K> loadField : loadFields) {
-                    args.add(loadField.field.toString());
+                for (LoadField loadField : loadFields) {
+                    args.add(loadField.field);
                     if (loadField.alias != null) {
                         args.add(CommandKeyword.AS);
-                        args.add(loadField.alias.toString());
+                        args.add(loadField.alias);
                     }
                 }
             }
@@ -514,11 +532,8 @@ public class AggregateArgs<K, V> {
         });
 
         // Add pipeline operations in user-specified order
-        for (PipelineOperation<K, ?> operation : pipelineOperations) {
-            // Cast is safe because all operations can build with CommandArgs<K, V>
-            @SuppressWarnings("unchecked")
-            PipelineOperation<K, V> typedOperation = (PipelineOperation<K, V>) operation;
-            typedOperation.build(args);
+        for (PipelineOperation operation : pipelineOperations) {
+            operation.build(args);
         }
 
         // Add WITHCURSOR clause
@@ -538,14 +553,18 @@ public class AggregateArgs<K, V> {
             args.add(CommandKeyword.PARAMS);
             args.add(params.size() * 2L);
             params.forEach((key, value) -> {
-                args.add(key.toString());
-                args.addValue(value);
+                args.add(key);
+                if (value instanceof byte[]) {
+                    args.add((byte[]) value);
+                } else {
+                    args.add((String) value);
+                }
             });
         }
 
         scorer.ifPresent(s -> {
             args.add(CommandKeyword.SCORER);
-            args.addValue(s);
+            args.add(s);
         });
 
         args.add(CommandKeyword.DIALECT);
@@ -560,32 +579,32 @@ public class AggregateArgs<K, V> {
      * Interface for pipeline operations that need to be applied in user-specified order. This includes GROUPBY, SORTBY, APPLY,
      * and FILTER operations.
      */
-    public interface PipelineOperation<K, V> {
+    public interface PipelineOperation {
 
         /**
          * Build the operation arguments into the command args.
-         * 
+         *
          * @param args the command args to build into
          */
-        void build(CommandArgs<K, V> args);
+        void build(CommandArgs<?, ?> args);
 
     }
 
     // Helper classes
-    public static class LoadField<K> {
+    public static class LoadField {
 
-        final K field;
+        final String field;
 
-        final K alias;
+        final String alias;
 
-        LoadField(K field, K alias) {
+        LoadField(String field, String alias) {
             this.field = field;
             this.alias = alias;
         }
 
     }
 
-    public static class Limit<K, V> implements PipelineOperation<K, V> {
+    public static class Limit implements PipelineOperation {
 
         final long offset;
 
@@ -597,7 +616,7 @@ public class AggregateArgs<K, V> {
         }
 
         @Override
-        public void build(CommandArgs<K, V> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.LIMIT);
             args.add(offset);
             args.add(num);
@@ -654,10 +673,10 @@ public class AggregateArgs<K, V> {
      * {
      *     &#64;code
      *     // Group by category and count items
-     *     GroupBy<String, String> groupBy = GroupBy.of("category").reduce(Reducer.count().as("item_count"));
+     *     GroupBy groupBy = GroupBy.of("category").reduce(Reducer.count().as("item_count"));
      *
      *     // Group by multiple fields with multiple reducers
-     *     GroupBy<String, String> complexGroup = GroupBy.of("category", "brand").reduce(Reducer.count().as("count"))
+     *     GroupBy complexGroup = GroupBy.of("category", "brand").reduce(Reducer.count().as("count"))
      *             .reduce(Reducer.avg("@price").as("avg_price")).reduce(Reducer.sum("@quantity").as("total_quantity"));
      * }
      * </pre>
@@ -676,18 +695,18 @@ public class AggregateArgs<K, V> {
      * performance.
      * </p>
      */
-    public static class GroupBy<K, V> implements PipelineOperation<K, V> {
+    public static class GroupBy implements PipelineOperation {
 
-        private final List<K> properties;
+        private final List<String> properties;
 
-        private final List<Reducer<K, V>> reducers;
+        private final List<Reducer> reducers;
 
-        public GroupBy(List<K> properties) {
+        public GroupBy(List<String> properties) {
             this.properties = new ArrayList<>(properties);
             this.reducers = new ArrayList<>();
         }
 
-        public GroupBy<K, V> reduce(Reducer<K, V> reducer) {
+        public GroupBy reduce(Reducer reducer) {
             this.reducers.add(reducer);
             return this;
         }
@@ -696,20 +715,18 @@ public class AggregateArgs<K, V> {
          * Static factory method to create a GroupBy instance.
          *
          * @param properties the properties to group by
-         * @param <K> Key type
-         * @param <V> Value type
          * @return new GroupBy instance
          */
         @SafeVarargs
-        public static <K, V> GroupBy<K, V> of(K... properties) {
-            return new GroupBy<>(Arrays.asList(properties));
+        public static GroupBy of(String... properties) {
+            return new GroupBy(Arrays.asList(properties));
         }
 
         @Override
-        public void build(CommandArgs<K, V> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.GROUPBY);
             args.add(properties.size());
-            for (K property : properties) {
+            for (String property : properties) {
                 // Add @ prefix if not already present
                 String propertyStr = property.toString();
                 if (!propertyStr.startsWith("@")) {
@@ -719,7 +736,7 @@ public class AggregateArgs<K, V> {
                 }
             }
 
-            for (Reducer<K, V> reducer : reducers) {
+            for (Reducer reducer : reducers) {
                 reducer.build(args);
             }
         }
@@ -741,15 +758,15 @@ public class AggregateArgs<K, V> {
      * {
      *     &#64;code
      *     // Simple sort by single field
-     *     SortBy<String> sortBy = SortBy.of("price", SortDirection.DESC);
+     *     SortBy sortBy = SortBy.of("price", SortDirection.DESC);
      *
      *     // Sort with MAX optimization for top-N queries
-     *     SortBy<String> topN = SortBy.of("score", SortDirection.DESC).max(100) // Only sort top 100 results
+     *     SortBy topN = SortBy.of("score", SortDirection.DESC).max(100) // Only sort top 100 results
      *             .withCount(); // Include accurate count
      *
      *     // Multiple sort criteria
-     *     SortBy<String> multiSort = SortBy.of(new SortProperty<>("category", SortDirection.ASC),
-     *             new SortProperty<>("price", SortDirection.DESC));
+     *     SortBy multiSort = SortBy.of(new SortProperty("category", SortDirection.ASC),
+     *             new SortProperty("price", SortDirection.DESC));
      * }
      * </pre>
      *
@@ -765,24 +782,24 @@ public class AggregateArgs<K, V> {
      * using LIMIT.
      * </p>
      */
-    public static class SortBy<K> implements PipelineOperation<K, Object> {
+    public static class SortBy implements PipelineOperation {
 
-        private final List<SortProperty<K>> properties;
+        private final List<SortProperty> properties;
 
         private Optional<Long> max = Optional.empty();
 
         private boolean withCount = false;
 
-        public SortBy(List<SortProperty<K>> properties) {
+        public SortBy(List<SortProperty> properties) {
             this.properties = new ArrayList<>(properties);
         }
 
-        public SortBy<K> max(long max) {
+        public SortBy max(long max) {
             this.max = Optional.of(max);
             return this;
         }
 
-        public SortBy<K> withCount() {
+        public SortBy withCount() {
             this.withCount = true;
             return this;
         }
@@ -792,31 +809,29 @@ public class AggregateArgs<K, V> {
          *
          * @param property the property to sort by
          * @param direction the sort direction
-         * @param <K> Key type
          * @return new SortBy instance
          */
-        public static <K> SortBy<K> of(K property, SortDirection direction) {
-            return new SortBy<>(Collections.singletonList(new SortProperty<>(property, direction)));
+        public static SortBy of(String property, SortDirection direction) {
+            return new SortBy(Collections.singletonList(new SortProperty(property, direction)));
         }
 
         /**
          * Static factory method to create a SortBy instance with multiple properties.
          *
          * @param properties the properties to sort by
-         * @param <K> Key type
          * @return new SortBy instance
          */
         @SafeVarargs
-        public static <K> SortBy<K> of(SortProperty<K>... properties) {
-            return new SortBy<>(Arrays.asList(properties));
+        public static SortBy of(SortProperty... properties) {
+            return new SortBy(Arrays.asList(properties));
         }
 
         @Override
-        public void build(CommandArgs<K, Object> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.SORTBY);
             // Count includes property + direction pairs
             args.add(properties.size() * 2L);
-            for (SortProperty<K> property : properties) {
+            for (SortProperty property : properties) {
                 // Add @ prefix if not already present
                 String propertyStr = property.property.toString();
                 if (!propertyStr.startsWith("@")) {
@@ -855,16 +870,16 @@ public class AggregateArgs<K, V> {
      * {
      *     &#64;code
      *     // Calculate total value from price and quantity
-     *     Apply<String, String> totalValue = new Apply<>("@price * @quantity", "total_value");
+     *     Apply totalValue = new Apply("@price * @quantity", "total_value");
      *
      *     // Mathematical operations
-     *     Apply<String, String> discount = new Apply<>("@price * 0.9", "discounted_price");
+     *     Apply discount = new Apply("@price * 0.9", "discounted_price");
      *
      *     // String operations
-     *     Apply<String, String> fullName = new Apply<>("@first_name + ' ' + @last_name", "full_name");
+     *     Apply fullName = new Apply("@first_name + ' ' + @last_name", "full_name");
      *
      *     // Date operations
-     *     Apply<String, String> dayOfWeek = new Apply<>("day(@timestamp)", "day");
+     *     Apply dayOfWeek = new Apply("day(@timestamp)", "day");
      * }
      * </pre>
      *
@@ -882,23 +897,23 @@ public class AggregateArgs<K, V> {
      * can be referenced by further operations.
      * </p>
      */
-    public static class Apply<K, V> implements PipelineOperation<K, V> {
+    public static class Apply implements PipelineOperation {
 
-        private final V expression;
+        private final String expression;
 
-        private final K name;
+        private final String name;
 
-        public Apply(V expression, K name) {
+        public Apply(String expression, String name) {
             this.expression = expression;
             this.name = name;
         }
 
         @Override
-        public void build(CommandArgs<K, V> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.APPLY);
-            args.addValue(expression);
+            args.add(expression);
             args.add(CommandKeyword.AS);
-            args.add(name.toString());
+            args.add(name);
         }
 
         /**
@@ -906,12 +921,10 @@ public class AggregateArgs<K, V> {
          *
          * @param name the name of the expression
          * @param expression the expression to apply
-         * @param <K> Key type
-         * @param <V> Value type
          * @return new Apply instance
          */
-        public static <K, V> Apply<K, V> of(V expression, K name) {
-            return new Apply<>(expression, name);
+        public static Apply of(String expression, String name) {
+            return new Apply(expression, name);
         }
 
     }
@@ -931,20 +944,20 @@ public class AggregateArgs<K, V> {
      * {
      *     &#64;code
      *     // Count items in each group
-     *     Reducer<String, String> count = Reducer.count().as("item_count");
+     *     Reducer count = Reducer.count().as("item_count");
      *
      *     // Sum numeric values
-     *     Reducer<String, String> totalSales = Reducer.sum("@sales").as("total_sales");
+     *     Reducer totalSales = Reducer.sum("@sales").as("total_sales");
      *
      *     // Calculate average
-     *     Reducer<String, String> avgPrice = Reducer.avg("@price").as("average_price");
+     *     Reducer avgPrice = Reducer.avg("@price").as("average_price");
      *
      *     // Find extremes
-     *     Reducer<String, String> maxScore = Reducer.max("@score").as("highest_score");
-     *     Reducer<String, String> minPrice = Reducer.min("@price").as("lowest_price");
+     *     Reducer maxScore = Reducer.max("@score").as("highest_score");
+     *     Reducer minPrice = Reducer.min("@price").as("lowest_price");
      *
      *     // Count distinct values
-     *     Reducer<String, String> uniqueUsers = Reducer.countDistinct("@user_id").as("unique_users");
+     *     Reducer uniqueUsers = Reducer.countDistinct("@user_id").as("unique_users");
      * }
      * </pre>
      *
@@ -963,20 +976,20 @@ public class AggregateArgs<K, V> {
      * name (e.g., "count_distinct(@user_id)").
      * </p>
      */
-    public static class Reducer<K, V> {
+    public static class Reducer {
 
         private final String function;
 
-        private final List<V> args;
+        private final List<String> args;
 
-        private Optional<K> alias = Optional.empty();
+        private Optional<String> alias = Optional.empty();
 
-        public Reducer(String function, List<V> args) {
+        public Reducer(String function, List<String> args) {
             this.function = function;
             this.args = new ArrayList<>(args);
         }
 
-        public Reducer<K, V> as(K alias) {
+        public Reducer as(String alias) {
             this.alias = Optional.of(alias);
             return this;
         }
@@ -984,85 +997,73 @@ public class AggregateArgs<K, V> {
         /**
          * Static factory method to create a COUNT reducer.
          *
-         * @param <K> Key type
-         * @param <V> Value type
          * @return new COUNT Reducer instance
          */
-        public static <K, V> Reducer<K, V> count() {
-            return new Reducer<>("COUNT", Collections.emptyList());
+        public static Reducer count() {
+            return new Reducer("COUNT", Collections.emptyList());
         }
 
         /**
          * Static factory method to create a SUM reducer.
          *
          * @param field the field to sum
-         * @param <K> Key type
-         * @param <V> Value type
          * @return new SUM Reducer instance
          */
-        public static <K, V> Reducer<K, V> sum(V field) {
-            return new Reducer<>("SUM", Collections.singletonList(field));
+        public static Reducer sum(String field) {
+            return new Reducer("SUM", Collections.singletonList(field));
         }
 
         /**
          * Static factory method to create an AVG reducer.
          *
          * @param field the field to average
-         * @param <K> Key type
-         * @param <V> Value type
          * @return new AVG Reducer instance
          */
-        public static <K, V> Reducer<K, V> avg(V field) {
-            return new Reducer<>("AVG", Collections.singletonList(field));
+        public static Reducer avg(String field) {
+            return new Reducer("AVG", Collections.singletonList(field));
         }
 
         /**
          * Static factory method to create a MIN reducer.
          *
          * @param field the field to find minimum
-         * @param <K> Key type
-         * @param <V> Value type
          * @return new MIN Reducer instance
          */
-        public static <K, V> Reducer<K, V> min(V field) {
-            return new Reducer<>("MIN", Collections.singletonList(field));
+        public static Reducer min(String field) {
+            return new Reducer("MIN", Collections.singletonList(field));
         }
 
         /**
          * Static factory method to create a MAX reducer.
          *
          * @param field the field to find maximum
-         * @param <K> Key type
-         * @param <V> Value type
          * @return new MAX Reducer instance
          */
-        public static <K, V> Reducer<K, V> max(V field) {
-            return new Reducer<>("MAX", Collections.singletonList(field));
+        public static Reducer max(String field) {
+            return new Reducer("MAX", Collections.singletonList(field));
         }
 
         /**
          * Static factory method to create a COUNT_DISTINCT reducer.
          *
          * @param field the field to count distinct values
-         * @param <K> Key type
-         * @param <V> Value type
          * @return new COUNT_DISTINCT Reducer instance
          */
-        public static <K, V> Reducer<K, V> countDistinct(V field) {
-            return new Reducer<>("COUNT_DISTINCT", Collections.singletonList(field));
+        public static Reducer countDistinct(String field) {
+            return new Reducer("COUNT_DISTINCT", Collections.singletonList(field));
         }
 
-        public void build(CommandArgs<K, V> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.REDUCE);
             args.add(function);
             args.add(this.args.size());
-            for (V arg : this.args) {
-                args.addValue(arg);
+            for (String arg : this.args) {
+                args.add(arg.toString());
             }
 
             alias.ifPresent(a -> {
                 args.add(CommandKeyword.AS);
-                args.add(a.toString());
+                args.add(a);
             });
         }
 
@@ -1077,18 +1078,18 @@ public class AggregateArgs<K, V> {
      * reducer results.
      * </p>
      */
-    public static class Filter<K, V> implements PipelineOperation<K, V> {
+    public static class Filter implements PipelineOperation {
 
-        private final V expression;
+        private final String expression;
 
-        public Filter(V expression) {
+        public Filter(String expression) {
             this.expression = expression;
         }
 
         @Override
-        public void build(CommandArgs<K, V> args) {
+        public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.FILTER);
-            args.addValue(expression);
+            args.add(expression);
         }
 
     }
@@ -1096,13 +1097,13 @@ public class AggregateArgs<K, V> {
     /**
      * Represents a sort property with direction.
      */
-    public static class SortProperty<K> {
+    public static class SortProperty {
 
-        final K property;
+        final String property;
 
         final SortDirection direction;
 
-        public SortProperty(K property, SortDirection direction) {
+        public SortProperty(String property, SortDirection direction) {
             this.property = property;
             this.direction = direction;
         }

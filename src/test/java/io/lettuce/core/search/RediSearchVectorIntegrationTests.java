@@ -13,13 +13,11 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
-import io.lettuce.core.search.arguments.SortByArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.SearchReply.SearchResult;
 import io.lettuce.core.search.arguments.TextFieldArgs;
@@ -30,7 +28,6 @@ import io.lettuce.core.json.JsonValue;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -121,14 +118,12 @@ public class RediSearchVectorIntegrationTests {
         String indexName = "svs-vamana-basic-idx";
 
         // Create SVS-VAMANA vector field
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
-                .build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").svsVamana().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
 
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("svs:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("svs:").on(CreateArgs.TargetType.HASH).build();
 
         // Create index
         String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
@@ -152,20 +147,18 @@ public class RediSearchVectorIntegrationTests {
 
         // Perform vector search using binary query vector
         ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 1.0f, 0.0f, 0.0f, 0.0f });
-        ByteBuffer blobKey = ByteBuffer.wrap("query_vec".getBytes());
-        SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVector).build();
+        String blobKey = "query_vec";
+        SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVector.array()).build();
 
-        ByteBuffer queryString = ByteBuffer.wrap("*=>[KNN 2 @embedding $query_vec]".getBytes());
-        SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
+        String queryString = "*=>[KNN 2 @embedding $query_vec]";
+        SearchReply<ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
 
         // Verify results
         assertThat(searchResult.getCount()).isEqualTo(2);
         assertThat(searchResult.getResults()).hasSize(2);
 
         // First result should be doc1 (exact match)
-        ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes());
-        String firstName = new String(searchResult.getResults().get(0).getFields().get(nameKey).array());
+        String firstName = searchResult.getResults().get(0).getFields().get("name").asString();
         assertThat(firstName).isEqualTo("Document 1");
 
         // Cleanup
@@ -185,15 +178,13 @@ public class RediSearchVectorIntegrationTests {
         String indexName = "svs-vamana-advanced-idx";
 
         // Create SVS-VAMANA vector field with advanced parameters (no compression)
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(8).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
-                .attribute("CONSTRUCTION_WINDOW_SIZE", 128).attribute("GRAPH_MAX_DEGREE", 32)
-                .attribute("SEARCH_WINDOW_SIZE", 64).build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").svsVamana().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(8).distanceMetric(VectorFieldArgs.DistanceMetric.L2).attribute("CONSTRUCTION_WINDOW_SIZE", 128)
+                .attribute("GRAPH_MAX_DEGREE", 32).attribute("SEARCH_WINDOW_SIZE", 64).build();
 
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("advanced:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("advanced:").on(CreateArgs.TargetType.HASH).build();
 
         // Create index
         String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, categoryField));
@@ -220,21 +211,19 @@ public class RediSearchVectorIntegrationTests {
 
         // Perform vector search with category filter
         ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 1.0f, 0.5f, 0.2f, 0.8f, 0.3f, 0.9f, 0.1f, 0.6f });
-        ByteBuffer blobKey = ByteBuffer.wrap("query_vec".getBytes());
-        SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVector).build();
+        String blobKey = "query_vec";
+        SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVector.array()).build();
 
-        ByteBuffer queryString = ByteBuffer.wrap("(@category:{electronics})=>[KNN 2 @embedding $query_vec]".getBytes());
-        SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
+        String queryString = "(@category:{electronics})=>[KNN 2 @embedding $query_vec]";
+        SearchReply<ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
 
         // Verify results - should find electronics products only
         assertThat(searchResult.getCount()).isEqualTo(2);
         assertThat(searchResult.getResults()).hasSize(2);
 
         // All results should be electronics
-        ByteBuffer categoryKey = ByteBuffer.wrap("category".getBytes());
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> searchResultItem : searchResult.getResults()) {
-            String category = new String(searchResultItem.getFields().get(categoryKey).array());
+        for (SearchReply.SearchResult<ByteBuffer> searchResultItem : searchResult.getResults()) {
+            String category = searchResultItem.getFields().get("category").asString();
             assertThat(category).isEqualTo("electronics");
         }
 
@@ -255,15 +244,14 @@ public class RediSearchVectorIntegrationTests {
         String indexName = "svs-vamana-agg-idx";
 
         // Create SVS-VAMANA vector field optimized for aggregation (no compression)
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
-                .attribute("SEARCH_WINDOW_SIZE", 64).build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").svsVamana().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).attribute("SEARCH_WINDOW_SIZE", 64)
+                .build();
 
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").sortable().build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").sortable().build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("agg:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("agg:").on(CreateArgs.TargetType.HASH).build();
 
         // Create index
         String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, categoryField, priceField));
@@ -284,11 +272,10 @@ public class RediSearchVectorIntegrationTests {
         }
 
         // Perform aggregation: group by category and calculate average price
-        AggregationReply<String, String> aggregationResult = redis.ftAggregate(indexName, "*",
-                AggregateArgs.<String, String> builder()
-                        .groupBy(AggregateArgs.GroupBy.<String, String> of("category")
-                                .reduce(AggregateArgs.Reducer.<String, String> count().as("count"))
-                                .reduce(AggregateArgs.Reducer.<String, String> avg("@price").as("avg_price")))
+        AggregationReply<String> aggregationResult = redis.ftAggregate(indexName, "*",
+                AggregateArgs.builder()
+                        .groupBy(AggregateArgs.GroupBy.of("category").reduce(AggregateArgs.Reducer.count().as("count"))
+                                .reduce(AggregateArgs.Reducer.avg("@price").as("avg_price")))
                         .sortBy(AggregateArgs.SortBy.of("avg_price", AggregateArgs.SortDirection.DESC)).build());
 
         // Verify aggregation results
@@ -296,14 +283,14 @@ public class RediSearchVectorIntegrationTests {
         assertThat(aggregationResult.getAggregationGroups()).isEqualTo(1); // 1 aggregation operation
         assertThat(aggregationResult.getReplies()).hasSize(1); // One reply containing all groups
 
-        SearchReply<String, String> reply = aggregationResult.getReplies().get(0);
+        SearchReply<String> reply = aggregationResult.getReplies().get(0);
         assertThat(reply.getResults()).hasSize(2); // 2 category groups
 
         // Verify we have both categories represented
-        List<SearchResult<String, String>> aggregationResults = reply.getResults();
+        List<SearchResult<String>> aggregationResults = reply.getResults();
         Set<String> foundCategories = new HashSet<>();
-        for (SearchResult<String, String> groupResult : aggregationResults) {
-            foundCategories.add(groupResult.getFields().get("category"));
+        for (SearchResult<String> groupResult : aggregationResults) {
+            foundCategories.add(groupResult.getFields().get("category").asString());
         }
         assertThat(foundCategories).containsExactlyInAnyOrder("electronics", "books");
 
@@ -327,15 +314,15 @@ public class RediSearchVectorIntegrationTests {
         for (String metric : metrics) {
             String indexName = "svs-vamana-" + metric.toLowerCase() + "-idx";
 
-            FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
+            FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").svsVamana()
                     .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3)
                     .distanceMetric(VectorFieldArgs.DistanceMetric.valueOf(metric)).attribute("CONSTRUCTION_WINDOW_SIZE", 64)
                     .build();
 
-            FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+            FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-            CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(metric.toLowerCase() + ":")
-                    .on(CreateArgs.TargetType.HASH).build();
+            CreateArgs createArgs = CreateArgs.builder().withPrefix(metric.toLowerCase() + ":").on(CreateArgs.TargetType.HASH)
+                    .build();
 
             // Create index
             String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
@@ -359,12 +346,11 @@ public class RediSearchVectorIntegrationTests {
 
             // Query with vector similar to vec1
             ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 0.9f, 0.1f, 0.0f });
-            ByteBuffer blobKey = ByteBuffer.wrap("query_vec".getBytes());
-            SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                    .param(blobKey, queryVector).build();
+            String blobKey = "query_vec";
+            SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVector.array()).build();
 
-            ByteBuffer queryString = ByteBuffer.wrap("*=>[KNN 3 @embedding $query_vec]".getBytes());
-            SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
+            String queryString = "*=>[KNN 3 @embedding $query_vec]";
+            SearchReply<ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
 
             // Verify we get results
             assertThat(searchResult.getCount()).isEqualTo(3);
@@ -372,11 +358,10 @@ public class RediSearchVectorIntegrationTests {
 
             // For all metrics, the most similar should be found
             // The exact ranking may vary by metric, but we should get valid results
-            List<SearchReply.SearchResult<ByteBuffer, ByteBuffer>> results = searchResult.getResults();
-            ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes());
-            assertThat(results.get(0).getFields().get(nameKey)).isNotNull();
-            assertThat(results.get(1).getFields().get(nameKey)).isNotNull();
-            assertThat(results.get(2).getFields().get(nameKey)).isNotNull();
+            List<SearchReply.SearchResult<ByteBuffer>> results = searchResult.getResults();
+            assertThat(results.get(0).getFields().get("name")).isNotNull();
+            assertThat(results.get(1).getFields().get("name")).isNotNull();
+            assertThat(results.get(2).getFields().get("name")).isNotNull();
 
             // Cleanup
             redis.ftDropindex(indexName);
@@ -423,14 +408,13 @@ public class RediSearchVectorIntegrationTests {
         // Create FLAT vector index based on Redis documentation:
         // FT.CREATE documents ON HASH PREFIX 1 docs: SCHEMA doc_embedding VECTOR FLAT 6 TYPE FLOAT32 DIM 1536 DISTANCE_METRIC
         // COSINE
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("doc_embedding").flat()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4) // Using smaller dimensions for testing
+        FieldArgs vectorField = VectorFieldArgs.builder().name("doc_embedding").flat().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(4) // Using smaller dimensions for testing
                 .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(DOCS_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(DOCS_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         String result = redis.ftCreate(DOCUMENTS_INDEX, createArgs, Arrays.asList(vectorField, titleField, categoryField));
         assertThat(result).isEqualTo("OK");
@@ -465,30 +449,33 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
         // Use binary connection for search to handle binary vector data properly
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> knnArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 2).build();
+        String blobKey = "BLOB";
+        SearchArgs<ByteBuffer> knnArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array()).limit(0, 2)
+                .build();
 
-        ByteBuffer queryString = ByteBuffer
-                .wrap("*=>[KNN 2 @doc_embedding $BLOB AS vector_score]".getBytes(StandardCharsets.UTF_8));
+        String queryString = "*=>[KNN 2 @doc_embedding $BLOB AS vector_score]";
 
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(DOCUMENTS_INDEX, queryString, knnArgs);
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch(DOCUMENTS_INDEX, queryString, knnArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
 
         // The results should be sorted by vector similarity (closest first)
         // vector1 and vector2 should be more similar to queryVector than vector3
-        SearchReply.SearchResult<ByteBuffer, ByteBuffer> firstResult = results.getResults().get(0);
-        SearchReply.SearchResult<ByteBuffer, ByteBuffer> secondResult = results.getResults().get(1);
+        SearchReply.SearchResult<ByteBuffer> firstResult = results.getResults().get(0);
+        SearchReply.SearchResult<ByteBuffer> secondResult = results.getResults().get(1);
 
-        // Convert ByteBuffer results back to strings for assertions
-        ByteBuffer titleFieldKey = ByteBuffer.wrap("title".getBytes(StandardCharsets.UTF_8));
-        String firstTitle = new String(firstResult.getFields().get(titleFieldKey).array(), StandardCharsets.UTF_8);
-        String secondTitle = new String(secondResult.getFields().get(titleFieldKey).array(), StandardCharsets.UTF_8);
+        String firstTitle = firstResult.getFields().get("title").asString();
+        String secondTitle = secondResult.getFields().get("title").asString();
 
         assertThat(firstTitle).isIn("Redis Vector Search Tutorial", "Advanced Vector Techniques");
         assertThat(secondTitle).isIn("Redis Vector Search Tutorial", "Advanced Vector Techniques");
+
+        // the binary vector field comes back byte-exact via FieldValue.asBytes(); the two closest documents are vector1/vector2
+        assertThat(firstResult.getFields().get("doc_embedding").asBytes()).isIn(floatArrayToByteBuffer(vector1).array(),
+                floatArrayToByteBuffer(vector2).array());
+        assertThat(secondResult.getFields().get("doc_embedding").asBytes()).isIn(floatArrayToByteBuffer(vector1).array(),
+                floatArrayToByteBuffer(vector2).array());
 
         // Cleanup
         redis.ftDropindex(DOCUMENTS_INDEX);
@@ -500,17 +487,16 @@ public class RediSearchVectorIntegrationTests {
     @Test
     void testHnswVectorIndexWithFiltering() {
         // Create HNSW vector index with custom parameters
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("movie_embedding").hnsw()
+        FieldArgs vectorField = VectorFieldArgs.builder().name("movie_embedding").hnsw()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
                 .attribute("M", 40).attribute("EF_CONSTRUCTION", 250).build();
 
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> genreField = TagFieldArgs.<String> builder().name("genre").build();
-        FieldArgs<String> yearField = NumericFieldArgs.<String> builder().name("year").sortable().build();
-        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").sortable().build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs genreField = TagFieldArgs.builder().name("genre").build();
+        FieldArgs yearField = NumericFieldArgs.builder().name("year").sortable().build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(MOVIE_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(MOVIES_INDEX, createArgs, Arrays.asList(vectorField, titleField, genreField, yearField, ratingField));
 
@@ -559,41 +545,37 @@ public class RediSearchVectorIntegrationTests {
         float[] queryVector = { 0.8f, 0.6f, 0.2f }; // Similar to action-drama
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> filterArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 10).build();
+        String blobKey = "BLOB";
+        SearchArgs<ByteBuffer> filterArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 10).build();
 
-        ByteBuffer queryString = ByteBuffer
-                .wrap("(@genre:{action})=>[KNN 3 @movie_embedding $BLOB AS movie_distance]".getBytes(StandardCharsets.UTF_8));
+        String queryString = "(@genre:{action})=>[KNN 3 @movie_embedding $BLOB AS movie_distance]";
 
         // Search for action movies with vector similarity
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(MOVIES_INDEX, queryString, filterArgs);
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch(MOVIES_INDEX, queryString, filterArgs);
 
         assertThat(results.getCount()).isEqualTo(2); // The Matrix and Heat have action genre
-        ByteBuffer genreFieldKey = ByteBuffer.wrap("genre".getBytes(StandardCharsets.UTF_8));
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
-            String genre = new String(result.getFields().get(genreFieldKey).array(), StandardCharsets.UTF_8);
+        for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
+            String genre = result.getFields().get("genre").asString();
             assertThat(genre).contains("action");
         }
 
         // Test 2: KNN search with year range filter
-        SearchArgs<ByteBuffer, ByteBuffer> yearFilterArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 10).build();
+        SearchArgs<ByteBuffer> yearFilterArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 10).build();
 
-        ByteBuffer yearQueryString = ByteBuffer
-                .wrap("(@year:[1990 2000])=>[KNN 2 @movie_embedding $BLOB AS movie_distance]".getBytes(StandardCharsets.UTF_8));
+        String yearQueryString = "(@year:[1990 2000])=>[KNN 2 @movie_embedding $BLOB AS movie_distance]";
         results = redisBinary.ftSearch(MOVIES_INDEX, yearQueryString, yearFilterArgs);
 
         assertThat(results.getCount()).isEqualTo(2); // The Matrix (1999) and Heat (1995)
 
         // Test 3: KNN search with runtime EF parameter
-        ByteBuffer efKey = ByteBuffer.wrap("EF".getBytes(StandardCharsets.UTF_8));
+        String efKey = "EF";
         ByteBuffer efValue = ByteBuffer.wrap("150".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> efArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).param(efKey, efValue).limit(0, 10).build();
+        SearchArgs<ByteBuffer> efArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .param(efKey, efValue.array()).limit(0, 10).build();
 
-        ByteBuffer efQueryString = ByteBuffer
-                .wrap("*=>[KNN 3 @movie_embedding $BLOB EF_RUNTIME $EF AS movie_distance]".getBytes(StandardCharsets.UTF_8));
+        String efQueryString = "*=>[KNN 3 @movie_embedding $BLOB EF_RUNTIME $EF AS movie_distance]";
         results = redisBinary.ftSearch(MOVIES_INDEX, efQueryString, efArgs);
 
         assertThat(results.getCount()).isEqualTo(3);
@@ -609,16 +591,15 @@ public class RediSearchVectorIntegrationTests {
     @Test
     void testVectorRangeQueries() {
         // Create vector index for range query testing
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("description_vector").flat()
+        FieldArgs vectorField = VectorFieldArgs.builder().name("description_vector").flat()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .build();
 
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
-        FieldArgs<String> typeField = TagFieldArgs.<String> builder().name("type").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs typeField = TagFieldArgs.builder().name("type").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PRODUCT_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(PRODUCTS_INDEX, createArgs, Arrays.asList(vectorField, nameField, typeField, priceField));
 
@@ -661,39 +642,34 @@ public class RediSearchVectorIntegrationTests {
         float[] queryVector = { 0.9f, 0.1f, 0.0f }; // Close to electronics
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> rangeArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 100).build();
+        String blobKey = "BLOB";
+        SearchArgs<ByteBuffer> rangeArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 100).build();
 
-        ByteBuffer queryString = ByteBuffer
-                .wrap("@description_vector:[VECTOR_RANGE 0.5 $BLOB]".getBytes(StandardCharsets.UTF_8));
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(PRODUCTS_INDEX, queryString, rangeArgs);
+        String queryString = "@description_vector:[VECTOR_RANGE 0.5 $BLOB]";
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch(PRODUCTS_INDEX, queryString, rangeArgs);
 
         // Should find electronics products and smart watch (mixed vector)
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
-        ByteBuffer typeKey = ByteBuffer.wrap("type".getBytes(StandardCharsets.UTF_8));
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
-            String productType = new String(result.getFields().get(typeKey).array(), StandardCharsets.UTF_8);
+        for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
+            String productType = result.getFields().get("type").asString();
             assertThat(productType).isIn("electronics"); // Electronics should be within range
         }
 
         // Test 2: Vector range query with distance field and sorting
-        SearchArgs<ByteBuffer, ByteBuffer> sortedRangeArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 100).build();
+        SearchArgs<ByteBuffer> sortedRangeArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 100).build();
 
-        ByteBuffer sortedQueryString = ByteBuffer
-                .wrap("@description_vector:[VECTOR_RANGE 1.0 $BLOB]=>{$YIELD_DISTANCE_AS: vector_distance}"
-                        .getBytes(StandardCharsets.UTF_8));
+        String sortedQueryString = "@description_vector:[VECTOR_RANGE 1.0 $BLOB]=>{$YIELD_DISTANCE_AS: vector_distance}";
         results = redisBinary.ftSearch(PRODUCTS_INDEX, sortedQueryString, sortedRangeArgs);
 
         assertThat(results.getCount()).isGreaterThanOrEqualTo(2);
 
         // Test 3: Combined filter - vector range + price filter
-        SearchArgs<ByteBuffer, ByteBuffer> combinedArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 100).build();
+        SearchArgs<ByteBuffer> combinedArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 100).build();
 
-        ByteBuffer combinedQueryString = ByteBuffer
-                .wrap("(@price:[200 1000]) | @description_vector:[VECTOR_RANGE 0.8 $BLOB]".getBytes(StandardCharsets.UTF_8));
+        String combinedQueryString = "(@price:[200 1000]) | @description_vector:[VECTOR_RANGE 0.8 $BLOB]";
         results = redisBinary.ftSearch(PRODUCTS_INDEX, combinedQueryString, combinedArgs);
 
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
@@ -713,14 +689,12 @@ public class RediSearchVectorIntegrationTests {
         for (String metric : metrics) {
             String indexName = "test-" + metric.toLowerCase() + "-idx";
 
-            FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").flat()
-                    .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(2)
-                    .distanceMetric(VectorFieldArgs.DistanceMetric.valueOf(metric)).build();
+            FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").flat().type(VectorFieldArgs.VectorType.FLOAT32)
+                    .dimensions(2).distanceMetric(VectorFieldArgs.DistanceMetric.valueOf(metric)).build();
 
-            FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+            FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-            CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("test:")
-                    .on(CreateArgs.TargetType.HASH).build();
+            CreateArgs createArgs = CreateArgs.builder().withPrefix("test:").on(CreateArgs.TargetType.HASH).build();
 
             redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
 
@@ -742,13 +716,12 @@ public class RediSearchVectorIntegrationTests {
             float[] queryVector = { 0.7f, 0.3f };
             ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
-            ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
-            SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                    .param(blobKey, queryVectorBuffer).limit(0, 2).build();
+            String blobKey = "BLOB";
+            SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                    .limit(0, 2).build();
 
-            ByteBuffer queryString = ByteBuffer
-                    .wrap("*=>[KNN 2 @embedding $BLOB AS distance]".getBytes(StandardCharsets.UTF_8));
-            SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);
+            String queryString = "*=>[KNN 2 @embedding $BLOB AS distance]";
+            SearchReply<ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);
 
             assertThat(results.getCount()).isEqualTo(2);
             assertThat(results.getResults()).hasSize(2);
@@ -765,15 +738,14 @@ public class RediSearchVectorIntegrationTests {
     @Test
     void testJsonVectorStorage() {
         // Create vector index for JSON documents with field aliases (key for proper search syntax)
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("$.vector").as("vector").flat()
+        FieldArgs vectorField = VectorFieldArgs.builder().name("$.vector").as("vector").flat()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .build();
 
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("$.title").as("title").build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("$.category").as("category").build();
+        FieldArgs titleField = TextFieldArgs.builder().name("$.title").as("title").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("$.category").as("category").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("json:")
-                .on(CreateArgs.TargetType.JSON).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("json:").on(CreateArgs.TargetType.JSON).build();
 
         redis.ftCreate("json-vector-idx", createArgs, Arrays.asList(vectorField, titleField, categoryField));
 
@@ -798,22 +770,21 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
         // Test 1: KNN search with ADHOC_BF hybrid policy using binary codec
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> adhocArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 3).build();
+        String blobKey = "BLOB";
+        SearchArgs<ByteBuffer> adhocArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 3).build();
 
-        ByteBuffer queryString = ByteBuffer.wrap("*=>[KNN 3 @vector $BLOB]".getBytes(StandardCharsets.UTF_8));
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("json-vector-idx", queryString, adhocArgs);
+        String queryString = "*=>[KNN 3 @vector $BLOB]";
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch("json-vector-idx", queryString, adhocArgs);
 
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
 
         // Test filtering with JSON vectors
-        SearchArgs<ByteBuffer, ByteBuffer> filterArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 10).build();
+        SearchArgs<ByteBuffer> filterArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 10).build();
 
-        ByteBuffer filterQueryString = ByteBuffer
-                .wrap("(@category:{tech})=>[KNN 2 @vector $BLOB]".getBytes(StandardCharsets.UTF_8));
+        String filterQueryString = "(@category:{tech})=>[KNN 2 @vector $BLOB]";
         results = redisBinary.ftSearch("json-vector-idx", filterQueryString, filterArgs);
 
         assertThat(results.getCount()).isEqualTo(2); // Only tech category documents
@@ -830,16 +801,15 @@ public class RediSearchVectorIntegrationTests {
     @Test
     void testAdvancedVectorSearchFeatures() {
         // Create HNSW index for advanced testing
-        VectorFieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("content_vector").hnsw()
+        VectorFieldArgs vectorField = VectorFieldArgs.builder().name("content_vector").hnsw()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .attribute("M", 16).attribute("EF_CONSTRUCTION", 200).build();
 
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> statusField = TagFieldArgs.<String> builder().name("status").build();
-        FieldArgs<String> priorityField = NumericFieldArgs.<String> builder().name("priority").sortable().build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs statusField = TagFieldArgs.builder().name("status").build();
+        FieldArgs priorityField = NumericFieldArgs.builder().name("priority").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("task:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("task:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate("tasks-idx", createArgs, Arrays.asList(vectorField, titleField, statusField, priorityField));
 
@@ -859,68 +829,58 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
         // Test 1: KNN search with ADHOC_BF hybrid policy using binary codec
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> adhocArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 5).build();
+        String blobKey = "BLOB";
+        SearchArgs<ByteBuffer> adhocArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 5).build();
 
-        ByteBuffer queryString = ByteBuffer
-                .wrap("(@status:{active})=>[KNN 5 @content_vector $BLOB HYBRID_POLICY ADHOC_BF AS task_score]"
-                        .getBytes(StandardCharsets.UTF_8));
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("tasks-idx", queryString, adhocArgs);
+        String queryString = "(@status:{active})=>[KNN 5 @content_vector $BLOB HYBRID_POLICY ADHOC_BF AS task_score]";
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch("tasks-idx", queryString, adhocArgs);
 
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         // Test 2: KNN search with BATCHES hybrid policy and custom batch size
-        ByteBuffer batchSizeKey = ByteBuffer.wrap("BATCH_SIZE".getBytes(StandardCharsets.UTF_8));
+        String batchSizeKey = "BATCH_SIZE";
         ByteBuffer batchSizeValue = ByteBuffer.wrap("3".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> batchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).param(batchSizeKey, batchSizeValue).limit(0, 5).build();
+        SearchArgs<ByteBuffer> batchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .param(batchSizeKey, batchSizeValue.array()).limit(0, 5).build();
 
-        ByteBuffer batchQueryString = ByteBuffer.wrap(
-                "(@status:{active})=>[KNN 5 @content_vector $BLOB HYBRID_POLICY BATCHES BATCH_SIZE $BATCH_SIZE AS task_score]"
-                        .getBytes(StandardCharsets.UTF_8));
+        String batchQueryString = "(@status:{active})=>[KNN 5 @content_vector $BLOB HYBRID_POLICY BATCHES BATCH_SIZE $BATCH_SIZE AS task_score]";
         results = redisBinary.ftSearch("tasks-idx", batchQueryString, batchArgs);
 
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         // Test 3: Vector search with custom EF_RUNTIME parameter
-        ByteBuffer efKey = ByteBuffer.wrap("EF".getBytes(StandardCharsets.UTF_8));
+        String efKey = "EF";
         ByteBuffer efValue = ByteBuffer.wrap("50".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> efArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).param(efKey, efValue).limit(0, 3).build();
+        SearchArgs<ByteBuffer> efArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .param(efKey, efValue.array()).limit(0, 3).build();
 
-        ByteBuffer efQueryString = ByteBuffer
-                .wrap("*=>[KNN 3 @content_vector $BLOB EF_RUNTIME $EF AS task_score]".getBytes(StandardCharsets.UTF_8));
+        String efQueryString = "*=>[KNN 3 @content_vector $BLOB EF_RUNTIME $EF AS task_score]";
         results = redisBinary.ftSearch("tasks-idx", efQueryString, efArgs);
 
         assertThat(results.getCount()).isEqualTo(3);
 
         // Test 4: Complex query with multiple filters and vector search
-        SearchArgs<ByteBuffer, ByteBuffer> complexArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 10).build();
+        SearchArgs<ByteBuffer> complexArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 10).build();
 
-        ByteBuffer complexQueryString = ByteBuffer
-                .wrap("((@status:{active}) (@priority:[3 5]))=>[KNN 5 @content_vector $BLOB AS task_score]"
-                        .getBytes(StandardCharsets.UTF_8));
+        String complexQueryString = "((@status:{active}) (@priority:[3 5]))=>[KNN 5 @content_vector $BLOB AS task_score]";
         results = redisBinary.ftSearch("tasks-idx", complexQueryString, complexArgs);
 
         // Verify all results match the filter criteria
-        ByteBuffer statusKey = ByteBuffer.wrap("status".getBytes(StandardCharsets.UTF_8));
-        ByteBuffer priorityKey = ByteBuffer.wrap("priority".getBytes(StandardCharsets.UTF_8));
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
-            String status = new String(result.getFields().get(statusKey).array(), StandardCharsets.UTF_8);
-            String priorityStr = new String(result.getFields().get(priorityKey).array(), StandardCharsets.UTF_8);
+        for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
+            String status = result.getFields().get("status").asString();
+            String priorityStr = result.getFields().get("priority").asString();
             assertThat(status).isEqualTo("active");
             int priority = Integer.parseInt(priorityStr);
             assertThat(priority).isBetween(3, 5);
         }
 
         // Test 5: Vector search with timeout
-        SearchArgs<ByteBuffer, ByteBuffer> timeoutArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).timeout(Duration.ofSeconds(5)).limit(0, 5).build();
+        SearchArgs<ByteBuffer> timeoutArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .timeout(Duration.ofSeconds(5)).limit(0, 5).build();
 
-        ByteBuffer timeoutQueryString = ByteBuffer
-                .wrap("*=>[KNN 5 @content_vector $BLOB AS task_score]".getBytes(StandardCharsets.UTF_8));
+        String timeoutQueryString = "*=>[KNN 5 @content_vector $BLOB AS task_score]";
         results = redisBinary.ftSearch("tasks-idx", timeoutQueryString, timeoutArgs);
 
         assertThat(results.getCount()).isEqualTo(5);
@@ -936,14 +896,12 @@ public class RediSearchVectorIntegrationTests {
     @Test
     void testVectorTypesAndPrecision() {
         // Test FLOAT64 vectors
-        FieldArgs<String> float64Field = VectorFieldArgs.<String> builder().name("embedding_f64").flat()
-                .type(VectorFieldArgs.VectorType.FLOAT64).dimensions(2).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
-                .build();
+        FieldArgs float64Field = VectorFieldArgs.builder().name("embedding_f64").flat().type(VectorFieldArgs.VectorType.FLOAT64)
+                .dimensions(2).distanceMetric(VectorFieldArgs.DistanceMetric.L2).build();
 
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("precision:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("precision:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate("precision-idx", createArgs, Arrays.asList(float64Field, nameField));
 
@@ -981,21 +939,19 @@ public class RediSearchVectorIntegrationTests {
         }
         queryBuffer.flip();
 
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> precisionArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryBuffer).limit(0, 2).build();
+        String blobKey = "BLOB";
+        SearchArgs<ByteBuffer> precisionArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryBuffer.array()).limit(0, 2)
+                .build();
 
-        ByteBuffer queryString = ByteBuffer
-                .wrap("*=>[KNN 2 @embedding_f64 $BLOB AS distance]".getBytes(StandardCharsets.UTF_8));
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("precision-idx", queryString, precisionArgs);
+        String queryString = "*=>[KNN 2 @embedding_f64 $BLOB AS distance]";
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch("precision-idx", queryString, precisionArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
 
         // Verify that the search worked with high precision vectors
-        ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes(StandardCharsets.UTF_8));
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
-            String name = new String(result.getFields().get(nameKey).array(), StandardCharsets.UTF_8);
+        for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
+            String name = result.getFields().get("name").asString();
             assertThat(name).contains("High Precision Vector");
         }
 
@@ -1012,12 +968,10 @@ public class RediSearchVectorIntegrationTests {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
 
         // Create a simple vector index
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("test_vector").flat()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
-                .build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("test_vector").flat().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("error:")
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("error:").on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate("error-test-idx", createArgs, Collections.singletonList(vectorField));
 
@@ -1031,21 +985,20 @@ public class RediSearchVectorIntegrationTests {
         float[] queryVector = { 0.9f, 0.1f, 0.0f };
         ByteBuffer queryVectorBuffer = floatArrayToByteBuffer(queryVector);
 
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> validArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 1).build();
+        String blobKey = "BLOB";
+        SearchArgs<ByteBuffer> validArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 1).build();
 
-        ByteBuffer queryString = ByteBuffer.wrap("*=>[KNN 1 @test_vector $BLOB]".getBytes(StandardCharsets.UTF_8));
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch("error-test-idx", queryString, validArgs);
+        String queryString = "*=>[KNN 1 @test_vector $BLOB]";
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch("error-test-idx", queryString, validArgs);
 
         assertThat(results.getCount()).isEqualTo(1);
 
         // Test 2: Search with invalid field should throw exception
-        SearchArgs<ByteBuffer, ByteBuffer> noResultsArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryVectorBuffer).limit(0, 10).build();
+        SearchArgs<ByteBuffer> noResultsArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVectorBuffer.array())
+                .limit(0, 10).build();
 
-        ByteBuffer noResultsQueryString = ByteBuffer
-                .wrap("(@nonexistent_field:value)=>[KNN 5 @test_vector $BLOB]".getBytes(StandardCharsets.UTF_8));
+        String noResultsQueryString = "(@nonexistent_field:value)=>[KNN 5 @test_vector $BLOB]";
 
         // This should throw an exception because the field doesn't exist
         assertThatThrownBy(() -> redisBinary.ftSearch("error-test-idx", noResultsQueryString, noResultsArgs))
@@ -1056,136 +1009,48 @@ public class RediSearchVectorIntegrationTests {
     }
 
     /**
-     * Test vector search with mixed binary and text fields, following the Python example. This test demonstrates handling both
-     * binary vector data and text data in the same hash, with proper decoding of each field type.
+     * A mixed text+vector response on a single {@code String} connection. A typical Lettuce app uses one shared {@code String}
+     * connection; its documents, however, often hold a mix of text and binary vector fields, where the vectors were written
+     * binary-safe by an ingestion pipeline (another service, a Python job, etc.). {@link SearchReply} keeps the returned field
+     * values as raw bytes, exposed per field as a {@link FieldValue}: the text field is read through
+     * {@link FieldValue#asString()} while the vector's exact bytes are read through {@link FieldValue#asBytes()}, so both
+     * survive the round-trip.
      */
     @Test
-    @Disabled("Test is being very flaky on the pipeline")
-    void testVectorSearchBinaryAndTextFields() {
-        // Create a custom codec that can handle both strings and byte arrays
-        RedisCodec<String, Object> mixedCodec = new RedisCodec<String, Object>() {
+    void mixedTextAndVectorResponseRoundTripsBothOnSingleConnection() {
+        String indexName = "mixed-response-idx";
+        String key = indexName + ":1";
 
-            @Override
-            public String decodeKey(ByteBuffer bytes) {
-                return StandardCharsets.UTF_8.decode(bytes).toString();
-            }
+        float[] vec = { 0.1f, 0.2f, 0.3f, 0.4f };
+        byte[] vecBytes = floatArrayToByteBuffer(vec).array();
 
-            @Override
-            public Object decodeValue(ByteBuffer bytes) {
-                // Try to decode as UTF-8 string first
-                try {
-                    String str = StandardCharsets.UTF_8.decode(bytes.duplicate()).toString();
-                    // Check if it's a valid UTF-8 string (no replacement characters)
-                    if (!str.contains("\uFFFD")) {
-                        return str;
-                    }
-                } catch (Exception e) {
-                    // Fall through to return raw bytes
-                }
-                // Return raw bytes for binary data
-                byte[] result = new byte[bytes.remaining()];
-                bytes.get(result);
-                return result;
-            }
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").hnsw().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(indexName + ":").on(CreateArgs.TargetType.HASH).build();
+        redis.ftCreate(indexName, createArgs, Arrays.asList(nameField, vectorField));
 
-            @Override
-            public ByteBuffer encodeKey(String key) {
-                return ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8));
-            }
-
-            @Override
-            public ByteBuffer encodeValue(Object value) {
-                if (value instanceof String) {
-                    return ByteBuffer.wrap(((String) value).getBytes(StandardCharsets.UTF_8));
-                } else if (value instanceof byte[]) {
-                    return ByteBuffer.wrap((byte[]) value);
-                } else if (value instanceof float[]) {
-                    float[] floats = (float[]) value;
-                    ByteBuffer buffer = ByteBuffer.allocate(floats.length * 4).order(ByteOrder.LITTLE_ENDIAN);
-                    for (float f : floats) {
-                        buffer.putFloat(f);
-                    }
-                    return (ByteBuffer) buffer.flip();
-                } else {
-                    return ByteBuffer.wrap(value.toString().getBytes(StandardCharsets.UTF_8));
-                }
-            }
-
-        };
-
-        // Create connection with mixed codec
-        RedisCommands<String, Object> redisMixed = client.connect(mixedCodec).sync();
+        // The application's single connection is the String one below. The binary write via redisBinary is only a fixture
+        // standing in for the ingestion pipeline that stored the vector binary-safe (same key/field bytes on the wire).
+        redis.hset(key, "name", "Lettuce");
+        redisBinary.hset(ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8)),
+                ByteBuffer.wrap("embedding".getBytes(StandardCharsets.UTF_8)), ByteBuffer.wrap(vecBytes));
 
         try {
-            // Create fake vector similar to Python example
-            float[] fakeVec = { 0.1f, 0.2f, 0.3f, 0.4f };
-            byte[] fakeVecBytes = floatArrayToByteBuffer(fakeVec).array();
+            SearchReply<String> result = redis.ftSearch(indexName, "*",
+                    SearchArgs.<String> builder().returnField("name").returnField("embedding").build());
 
-            String indexName = "mixed_index";
-            String keyName = indexName + ":1";
+            assertThat(result.getCount()).isEqualTo(1L);
+            SearchReply.SearchResult<String> searchResult = result.getResults().get(0);
 
-            // Store mixed data: text field and binary vector field
-            redisMixed.hset(keyName, "first_name", "🥬 Lettuce");
-            redisMixed.hset(keyName, "vector_emb", fakeVecBytes);
+            // the text field is read through the UTF-8 view
+            assertThat(searchResult.getFields().get("name").asString()).isEqualTo("Lettuce");
 
-            // Create index with both text and vector fields
-            FieldArgs<String> textField = TagFieldArgs.<String> builder().name("first_name").build();
-
-            FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embeddings_bio").hnsw()
-                    .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4)
-                    .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
-
-            CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(indexName + ":")
-                    .on(CreateArgs.TargetType.HASH).build();
-
-            redis.ftCreate(indexName, createArgs, Arrays.asList(textField, vectorField));
-
-            // Search with specific field returns - equivalent to Python's return_field with decode_field=False
-            SearchArgs<String, Object> searchArgs = SearchArgs.<String, Object> builder().returnField("vector_emb") // This
-                                                                                                                    // should
-                                                                                                                    // return
-                                                                                                                    // raw
-                                                                                                                    // binary
-                                                                                                                    // data
-                    .returnField("first_name") // This should return decoded text
-                    .build();
-
-            SearchReply<String, Object> results = redisMixed.ftSearch(indexName, "*", searchArgs);
-
-            assertThat(results.getCount()).isEqualTo(1);
-            assertThat(results.getResults()).hasSize(1);
-
-            SearchReply.SearchResult<String, Object> result = results.getResults().get(0);
-            Map<String, Object> fields = result.getFields();
-
-            // Verify text field is properly decoded
-            Object firstNameValue = fields.get("first_name");
-            assertThat(firstNameValue).isInstanceOf(String.class);
-            assertThat((String) firstNameValue).isEqualTo("🥬 Lettuce");
-
-            // Verify vector field returns binary data
-            Object vectorValue = fields.get("vector_emb");
-            assertThat(vectorValue).isInstanceOf(byte[].class);
-
-            // Convert retrieved binary data back to float array and compare
-            byte[] retrievedVecBytes = (byte[]) vectorValue;
-            ByteBuffer buffer = ByteBuffer.wrap(retrievedVecBytes).order(ByteOrder.LITTLE_ENDIAN);
-            float[] retrievedVec = new float[4];
-            for (int i = 0; i < 4; i++) {
-                retrievedVec[i] = buffer.getFloat();
-            }
-
-            // Assert that the vectors are equal (equivalent to Python's np.array_equal)
-            assertThat(retrievedVec).containsExactly(fakeVec);
-
-            // Cleanup
-            redis.ftDropindex(indexName);
-
+            // the vector field's raw bytes survive the round-trip via getFieldBytes
+            assertThat(searchResult.getFields().get("embedding").asBytes())
+                    .as("vector bytes must be preserved in a mixed text+vector response").isEqualTo(vecBytes);
         } finally {
-            // Close the mixed codec connection
-            if (redisMixed != null) {
-                redisMixed.getStatefulConnection().close();
-            }
+            redis.ftDropindex(indexName);
         }
     }
 
@@ -1204,22 +1069,21 @@ public class RediSearchVectorIntegrationTests {
         String fieldName = "embedding_" + typeName.toLowerCase();
 
         // Create vector field with appropriate algorithm based on type
-        FieldArgs<String> vectorField;
+        FieldArgs vectorField;
         if (vectorType == VectorFieldArgs.VectorType.INT8) {
             // INT8 with FLAT algorithm and L2 distance
-            vectorField = VectorFieldArgs.<String> builder().name(fieldName).flat().type(vectorType).dimensions(4)
+            vectorField = VectorFieldArgs.builder().name(fieldName).flat().type(vectorType).dimensions(4)
                     .distanceMetric(VectorFieldArgs.DistanceMetric.L2).build();
         } else {
             // UINT8 with HNSW algorithm and COSINE distance
-            vectorField = VectorFieldArgs.<String> builder().name(fieldName).hnsw().type(vectorType).dimensions(4)
+            vectorField = VectorFieldArgs.builder().name(fieldName).hnsw().type(vectorType).dimensions(4)
                     .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).attribute("M", 16).attribute("EF_CONSTRUCTION", 200)
                     .build();
         }
 
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(prefix)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(prefix).on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
 
@@ -1257,21 +1121,19 @@ public class RediSearchVectorIntegrationTests {
 
         // Test KNN search
         ByteBuffer queryBuffer = ByteBuffer.wrap(queryVector);
-        ByteBuffer blobKey = ByteBuffer.wrap("BLOB".getBytes(StandardCharsets.UTF_8));
-        SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
-                .param(blobKey, queryBuffer).limit(0, 2).build();
+        String blobKey = "BLOB";
+        SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryBuffer.array()).limit(0, 2)
+                .build();
 
-        ByteBuffer queryString = ByteBuffer
-                .wrap(("*=>[KNN 2 @" + fieldName + " $BLOB AS distance]").getBytes(StandardCharsets.UTF_8));
-        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);
+        String queryString = "*=>[KNN 2 @" + fieldName + " $BLOB AS distance]";
+        SearchReply<ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
 
         // Verify that the search worked with the quantized vectors
-        ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes(StandardCharsets.UTF_8));
-        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
-            String name = new String(result.getFields().get(nameKey).array(), StandardCharsets.UTF_8);
+        for (SearchReply.SearchResult<ByteBuffer> result : results.getResults()) {
+            String name = result.getFields().get("name").asString();
             assertThat(name).contains(typeName + " Vector");
         }
 
