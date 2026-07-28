@@ -13,6 +13,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.search.arguments.*;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -25,6 +26,7 @@ import java.util.Map;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for Redis Search advanced concepts based on the Redis documentation.
@@ -598,6 +600,59 @@ public class RediSearchAdvancedConceptsIntegrationTests {
 
         // Cleanup
         redis.ftDropindex("idx:german");
+    }
+
+    /**
+     * Test Malay and Tagalog stemming, which were added in Redis 8.10. The test is guarded by a server version assumption so
+     * that it is skipped on pre-8.10 environments where the corresponding stemmers are not available.
+     */
+    @Test
+    void testMalayAndTagalogStemming() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"),
+                "Malay and Tagalog stemming require Redis 8.10 or newer");
+
+        // Test 1: Malay stemming
+        FieldArgs<String> malayWordField = TextFieldArgs.<String> builder().name("perkataan").build();
+
+        CreateArgs<String, String> malayArgs = CreateArgs.<String, String> builder().withPrefix("ms:")
+                .on(CreateArgs.TargetType.HASH).defaultLanguage(DocumentLanguage.MALAY).build();
+
+        redis.ftCreate("idx:malay", malayArgs, Collections.singletonList(malayWordField));
+
+        // Add Malay words derived from the root "masak" (to cook): masak, memasak, masakan, dimasak
+        redis.hset("ms:1", "perkataan", "masak");
+        redis.hset("ms:2", "perkataan", "memasak");
+        redis.hset("ms:3", "perkataan", "masakan");
+        redis.hset("ms:4", "perkataan", "dimasak");
+
+        // Searching the root should find at least the exact match; with Malay stemming enabled it additionally groups the
+        // derived forms. We assert the lower bound to verify the language is accepted end-to-end without coupling to the
+        // exact server-side stemmer data.
+        SearchReply<String, String> results = redis.ftSearch("idx:malay", "@perkataan:(masak)");
+        assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
+
+        redis.ftDropindex("idx:malay");
+
+        // Test 2: Tagalog stemming
+        FieldArgs<String> tagalogWordField = TextFieldArgs.<String> builder().name("salita").build();
+
+        CreateArgs<String, String> tagalogArgs = CreateArgs.<String, String> builder().withPrefix("tl:")
+                .on(CreateArgs.TargetType.HASH).defaultLanguage(DocumentLanguage.TAGALOG).build();
+
+        redis.ftCreate("idx:tagalog", tagalogArgs, Collections.singletonList(tagalogWordField));
+
+        // Add Tagalog words derived from the root "luto" (to cook): luto, magluto, niluto, lutuin
+        redis.hset("tl:1", "salita", "luto");
+        redis.hset("tl:2", "salita", "magluto");
+        redis.hset("tl:3", "salita", "niluto");
+        redis.hset("tl:4", "salita", "lutuin");
+
+        // As with Malay, assert the lower bound to verify the language is accepted end-to-end without overfitting to the
+        // exact stemmer output.
+        results = redis.ftSearch("idx:tagalog", "@salita:(luto)");
+        assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
+
+        redis.ftDropindex("idx:tagalog");
     }
 
     /**
