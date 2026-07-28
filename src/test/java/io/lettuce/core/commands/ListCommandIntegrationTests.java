@@ -407,7 +407,8 @@ public class ListCommandIntegrationTests extends TestSupport {
 
         redis.rpush(list1, "1", "2", "3", "4");
 
-        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.leftLeft().count(2).bulk())).containsExactly("1", "2");
+        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.leftLeft().count(2, LMovemArgs.Ordering.BULK)))
+                .containsExactly("1", "2");
         assertThat(redis.lrange(list1, 0, -1)).containsExactly("3", "4");
         assertThat(redis.lrange(list2, 0, -1)).containsExactly("1", "2");
     }
@@ -421,7 +422,8 @@ public class ListCommandIntegrationTests extends TestSupport {
         redis.rpush(list1, "1", "2", "3", "4");
 
         // OBO pops and pushes one element at a time, so the two leftmost elements are reversed on the destination.
-        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.leftLeft().count(2).obo())).containsExactly("2", "1");
+        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.leftLeft().count(2, LMovemArgs.Ordering.OBO)))
+                .containsExactly("2", "1");
         assertThat(redis.lrange(list1, 0, -1)).containsExactly("3", "4");
         assertThat(redis.lrange(list2, 0, -1)).containsExactly("2", "1");
     }
@@ -435,7 +437,7 @@ public class ListCommandIntegrationTests extends TestSupport {
         redis.rpush(list1, "1", "2");
 
         // The source has fewer than the requested elements, so the nil reply surfaces as an empty list.
-        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.leftLeft().exactly(3).bulk())).isEmpty();
+        assertThat(redis.lmovem(list1, list2, LMovemArgs.Builder.leftLeft().exactly(3, LMovemArgs.Ordering.BULK))).isEmpty();
         assertThat(redis.lrange(list1, 0, -1)).containsExactly("1", "2");
         assertThat(redis.exists(list2)).isEqualTo(0L);
     }
@@ -448,8 +450,8 @@ public class ListCommandIntegrationTests extends TestSupport {
 
         redis.rpush(list1, "one", "two", "three");
 
-        assertThat(redis.blmovem(list1, list2, LMovemArgs.Builder.leftLeft().count(2).bulk(), 1000)).containsExactly("one",
-                "two");
+        assertThat(redis.blmovem(list1, list2, LMovemArgs.Builder.leftLeft().count(2, LMovemArgs.Ordering.BULK), 1000))
+                .containsExactly("one", "two");
         assertThat(redis.lrange(list1, 0, -1)).containsExactly("three");
         assertThat(redis.lrange(list2, 0, -1)).containsExactly("one", "two");
     }

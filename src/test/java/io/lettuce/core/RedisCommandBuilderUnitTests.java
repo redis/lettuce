@@ -848,7 +848,8 @@ class RedisCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructLmovemWithCount() {
 
-        Command<String, String, ?> command = sut.lmovem("source", "destination", LMovemArgs.Builder.leftLeft().count(2).obo());
+        Command<String, String, ?> command = sut.lmovem("source", "destination",
+                LMovemArgs.Builder.leftLeft().count(2, LMovemArgs.Ordering.OBO));
         String s = command.getArgs().toCommandString();
         assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT COUNT 2 OBO");
     }
@@ -857,24 +858,16 @@ class RedisCommandBuilderUnitTests {
     void shouldCorrectlyConstructLmovemWithExactly() {
 
         Command<String, String, ?> command = sut.lmovem("source", "destination",
-                LMovemArgs.Builder.rightLeft().exactly(3).bulk());
+                LMovemArgs.Builder.rightLeft().exactly(3, LMovemArgs.Ordering.BULK));
         String s = command.getArgs().toCommandString();
         assertThat(s).isEqualTo("key<source> key<destination> RIGHT LEFT EXACTLY 3 BULK");
-    }
-
-    @Test
-    void shouldCorrectlyConstructLmovemWithCountDefaultingToBulk() {
-
-        Command<String, String, ?> command = sut.lmovem("source", "destination", LMovemArgs.Builder.leftLeft().count(2));
-        String s = command.getArgs().toCommandString();
-        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT COUNT 2 BULK");
     }
 
     @Test
     void shouldCorrectlyConstructBlmovem() {
 
         Command<String, String, ?> command = sut.blmovem("source", "destination",
-                LMovemArgs.Builder.leftLeft().exactly(3).bulk(), 10L);
+                LMovemArgs.Builder.leftLeft().exactly(3, LMovemArgs.Ordering.BULK), 10L);
         String s = command.getArgs().toCommandString();
         assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT 10 EXACTLY 3 BULK");
     }
