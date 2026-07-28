@@ -157,15 +157,6 @@ public final class KnownApiDeviations {
     public static final Set<String> NODE_SELECTION_EXTRA_DEPRECATED = setOf("dispatch");
 
     /**
-     * Command groups whose node-selection aggregate wiring is known to be incomplete: {@code NodeSelectionCommands} and
-     * {@code NodeSelectionAsyncCommands} do not extend the ACL and Array groups, and {@code NodeSelectionAsyncCommands} extends
-     * the <em>sync</em> {@code NodeSelectionStreamCommands} instead of the async flavor. Correcting the Stream wiring changes
-     * the return types of stream commands on {@code AsyncNodeSelection} from {@code Executions} to {@code AsyncExecutions} — a
-     * breaking change scheduled for the 8.0 release.
-     */
-    public static final Set<String> NODE_SELECTION_AGGREGATE_PENDING = setOf("ACL", "ARRAY", "STREAM");
-
-    /**
      * Interface methods that do not correspond to any command-builder method: connection control, locally computed values
      * ({@code digest}), generic dispatch and transaction plumbing ({@code exec} builds its command in the transaction
      * machinery, not in the builder).
