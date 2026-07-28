@@ -70,12 +70,12 @@ class KotlinCompilationUnitFactory {
             "getStatefulConnection");
 
     private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("aclList", "aclLog", "dispatch", "geohash",
-            "georadius", "georadiusbymember", "geosearch", "hgetall", "hkeys", "hmget", "hvals", "keys", "mget", "sdiff",
-            "sinter", "smembers", "smismember", "sort", "sortReadOnly", "srandmember", "sunion", "xclaim", "xpending", "xrange",
-            "xread", "xreadgroup", "xrevrange", "zdiff", "zdiffWithScores", "zinter", "zinterWithScores", "zpopmax", "zpopmin",
-            "zrange", "zrangeWithScores", "zrangebylex", "zrangebyscore", "zrangebyscoreWithScores", "zrevrange",
-            "zrevrangeWithScores", "zrevrangebylex", "zrevrangebyscore", "zrevrangebyscore", "zrevrangebyscoreWithScores",
-            "zunion", "zunionWithScores");
+            "georadius", "georadiusbymember", "geosearch", "hgetall", "hgetdel", "hgetex", "hkeys", "hmget", "hvals", "keys",
+            "mget", "sdiff", "sinter", "smembers", "smismember", "sort", "sortReadOnly", "srandmember", "sunion", "xackdel",
+            "xclaim", "xdelex", "xpending", "xrange", "xread", "xreadgroup", "xrevrange", "zdiff", "zdiffWithScores", "zinter",
+            "zinterWithScores", "zpopmax", "zpopmin", "zrange", "zrangeWithScores", "zrangebylex", "zrangebyscore",
+            "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex", "zrevrangebyscore",
+            "zrevrangebyscore", "zrevrangebyscoreWithScores", "zunion", "zunionWithScores");
 
     private static final Set<String> NON_NULLABLE_RESULT_METHODS = LettuceSets.unmodifiableSet("discard", "multi", "exec",
             "watch", "unwatch", "getMasterAddrByName", "master", "reset", "failover", "monitor",

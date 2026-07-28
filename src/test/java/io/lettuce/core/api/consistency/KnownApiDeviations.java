@@ -47,14 +47,29 @@ public final class KnownApiDeviations {
      * {@code CreateAsyncApi#KEEP_METHOD_RESULT_TYPE}.
      */
     public static final Set<String> KEEP_SYNC_RESULT_TYPE_ASYNC = setOf("shutdown", "debugOom", "debugSegfault", "digest",
-            "close", "isOpen", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
+            "close", "isOpen", "getStatefulConnection", "setAutoFlushCommands", "flushCommands", "setTimeout", "getJsonParser");
 
     /**
      * Reactive methods that keep the sync return type instead of wrapping it in {@code Mono}/{@code Flux}. From
      * {@code CreateReactiveApi#KEEP_METHOD_RESULT_TYPE}.
      */
     public static final Set<String> KEEP_SYNC_RESULT_TYPE_REACTIVE = setOf("digest", "close", "isOpen", "getStatefulConnection",
-            "setAutoFlushCommands", "flushCommands");
+            "setAutoFlushCommands", "flushCommands", "setTimeout", "getJsonParser");
+
+    /**
+     * Aggregate-declared methods whose return type is flavor-specific by design (connection and node-selection accessors, e.g.
+     * {@code getConnection} returns {@code RedisClusterCommands} on the sync aggregate and {@code RedisClusterAsyncCommands} on
+     * the async one). Presence is still verified; the return-type check is skipped.
+     */
+    public static final Set<String> AGGREGATE_FLAVOR_SPECIFIC_RETURN = setOf("getConnection", "getStatefulConnection",
+            "masters", "upstream", "slaves", "replicas", "all", "readonly", "nodes");
+
+    /**
+     * Aggregate-declared methods without a reactive counterpart: the node-selection API exists for the sync and async flavors
+     * only.
+     */
+    public static final Set<String> NOT_ON_REACTIVE_AGGREGATE = setOf("masters", "upstream", "slaves", "replicas", "all",
+            "readonly", "nodes");
 
     /**
      * Methods that exist only on the reactive API (reactive-specific accessors used by the coroutine implementations).
@@ -182,6 +197,9 @@ public final class KnownApiDeviations {
         // Redis returns null for elements that were not found, so the result is a Mono of a nullable-element list
         reactive.put("zmscore", "Mono<List<Double>>");
         reactive.put("hgetall(KeyValueStreamingChannel, K)", "Mono<Long>");
+        // calibration 2026-07: entrenched aggregate-declared shapes; changing them to Flux would break the API
+        reactive.put("clusterLinks", "Mono<List<Map<String, Object>>>");
+        reactive.put("clusterShards", "Mono<List<Object>>");
         REACTIVE_RESULT_OVERRIDES = Collections.unmodifiableMap(reactive);
 
         Map<String, String> coroutines = new HashMap<>();
