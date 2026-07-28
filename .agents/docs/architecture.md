@@ -281,8 +281,8 @@ multi-database failover API lives under `failover/` (in active development).
 ## Common misconceptions (read this)
 
 1. **Sync commands do not have their own impl class.** `sync()` is a dynamic proxy
-   over the async impl. Only the sync *interface* is generated. Do not invent a
-   `RedisCommandsImpl`.
+   over the async impl. The sync interface is only a declaration — its
+   implementation is the async-backed proxy. Do not invent a `RedisCommandsImpl`.
 2. **The interfaces are not generated.** All API flavors under `api/**` are
    hand-edited source files; when adding a command you edit every flavor and the
    consistency tests (`src/test/java/io/lettuce/core/api/consistency/`) verify you

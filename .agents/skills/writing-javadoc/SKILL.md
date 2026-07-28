@@ -11,13 +11,20 @@ detail.
 
 ## Before you write
 
-- **Is it a command interface?** The interfaces under
-  `src/main/java/io/lettuce/core/api/{sync,async,reactive}/` (and the Kotlin
-  coroutine interfaces) are hand-edited, with the **sync** interface's Javadoc as
-  the reference text. Write or fix the comment on the sync method first, then
-  mirror it to the other flavors with the flavor-appropriate `@return` phrasing
-  (`RedisFuture`, `Mono`/`Flux`, …). Javadoc parity is **not** test-enforced — keep
-  the flavors in sync by hand. See [api-consistency.md](../../../.agents/docs/api-consistency.md).
+- **Is it a command interface?** The command interfaces are hand-edited, with the
+  **sync** interface's Javadoc as the reference text. Write or fix the comment on
+  the sync method first, then mirror it to **every** flavor that declares the
+  method, with the flavor-appropriate `@return` phrasing (`RedisFuture`,
+  `Mono`/`Flux`, …):
+  - `src/main/java/io/lettuce/core/api/{sync,async,reactive}/`
+  - the Kotlin coroutine interfaces (`src/main/kotlin/…/api/coroutines/`)
+  - the cluster node-selection interfaces
+    (`src/main/java/io/lettuce/core/cluster/api/{sync,async}/NodeSelection…`)
+  - the Sentinel interfaces (`src/main/java/io/lettuce/core/sentinel/api/…` and
+    their Kotlin flavor)
+
+  Javadoc parity is **not** test-enforced — keep the flavors in sync by hand. See
+  [api-consistency.md](../../../.agents/docs/api-consistency.md).
 
 ## The rules most often gotten wrong
 
