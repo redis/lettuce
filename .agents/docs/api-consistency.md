@@ -40,7 +40,9 @@ intentionally not on sync.)
   (`geopos`, `bitfield`, …); streaming-channel variants are `@Deprecated`.
 - **coroutines** = `suspend fun` returning the sync type; collection-streaming
   methods return `Flow<E>` (not suspend); deprecated and streaming-channel
-  methods are omitted.
+  methods are omitted. The suite verifies presence and the suspend/`Flow` shape
+  only — scalar return types and nullability are **not** checked; review them by
+  hand.
 - **node-selection** = sync method with return wrapped in `Executions<T>` /
   `AsyncExecutions<T>`; connection-control methods (`shutdown`, `close`,
   `readOnly`, …) are omitted.
@@ -48,12 +50,24 @@ intentionally not on sync.)
   `RedisCoroutinesCommands`, `RedisClusterCommands` (+async/reactive) and
   `NodeSelection(Async)Commands` must extend the per-group interface of every
   group they cover.
-- **builder coverage** — every sync command has a same-named method on
-  `RedisCommandBuilder` (`SentinelCommandBuilder` for SENTINEL), and every
-  command-producing builder method is reachable from an interface.
+- **builder coverage** — every sync command has a same-named method on its
+  group's command builder, and every command-producing builder method is
+  reachable from an interface. Core groups map to `RedisCommandBuilder`; the
+  module groups have dedicated builders (`RedisJsonCommandBuilder`,
+  `RediSearchCommandBuilder`, `RedisArrayCommandBuilder`, …) and SENTINEL maps
+  to `SentinelCommandBuilder` — the mapping is
+  `CommandInterfaces#commandBuilderClassName()`.
+- across the Java flavors (async, reactive, node-selection, aggregates) the
+  suite also verifies **generic parameter signatures** (not just erased types)
+  and **`@Deprecated` parity** with the sync method.
 
-All exceptions to these rules live in **one registry**:
-`src/test/java/io/lettuce/core/api/consistency/KnownApiDeviations.java`.
+All exceptions to these rules live in **two registries, split by flavor
+ownership**: the Java flavors in
+`src/test/java/io/lettuce/core/api/consistency/KnownApiDeviations.java`, the
+Kotlin coroutine flavor in
+`src/test/kotlin/io/lettuce/core/api/consistency/KnownKotlinApiDeviations.kt`
+(same key forms and matching helpers; the Java test sources carry no reference
+to the Kotlin flavor).
 
 ## The test suite
 
@@ -62,14 +76,15 @@ All exceptions to these rules live in **one registry**:
 
 | Class | Checks |
 |-------|--------|
-| `CommandInterfaces` | the catalog: one enum entry per command group → its six flavor classes |
-| `KnownApiDeviations` | the exceptions registry (ported from the former generators) |
+| `CommandInterfaces` | the catalog: one enum entry per command group → its five Java flavor classes (the coroutine flavor is derived by naming convention via the Kotlin `coroutines()` extension) |
+| `KnownApiDeviations` | the exceptions registry for the Java flavors (ported from the former generators) |
+| `KnownKotlinApiDeviations` (Kotlin) | the exceptions registry for the coroutine flavor + the `CommandInterfaces.coroutines()` extension |
 | `TypeSignatures` | shared reflection/normalization helpers |
 | `SyncAsyncConsistencyUnitTests` | presence both directions + `RedisFuture` wrapping |
 | `SyncReactiveConsistencyUnitTests` | presence both directions + `Mono`/`Flux` mapping + streaming deprecation |
 | `NodeSelectionConsistencyUnitTests` | presence both directions + `Executions` wrapping + exclusion-list freshness |
 | `AggregateInterfaceConsistencyUnitTests` | umbrella interfaces extend every group |
-| `CommandBuilderCoverageUnitTests` | interface ↔ `RedisCommandBuilder` coverage, both directions |
+| `CommandBuilderCoverageUnitTests` | interface ↔ per-group command builder coverage, both directions |
 | `KotlinCoroutinesConsistencyUnitTests` | presence both directions + suspend/`Flow` shape (nullability is not checked) |
 
 Run them (they are plain `*UnitTests`, included in `mvn test`):

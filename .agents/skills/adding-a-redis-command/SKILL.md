@@ -64,7 +64,7 @@ confirm them.
 **The spec is your working context, not a deliverable.** Hold it in mind to drive the
 work — do **not** paste it back to the maintainer, write it to a review file, or pause
 for "spec approval." Work straight through §2 and §3 on your own judgement; the
-**only** place to stop for the maintainer is the ⛔ checkpoint before generation. If a
+**only** place to stop for the maintainer is the ⛔ checkpoint before mirroring. If a
 design choice is genuinely ambiguous, make a reasonable call and surface it *there*,
 with the sync interface change, rather than interrupting earlier.
 
@@ -138,15 +138,11 @@ to §4 until the maintainer approves.
 
 ### 4. Mirror the method to every flavor
 
-Add the method by hand to each flavor of the group, applying the return-type mapping
-from [.agents/docs/api-consistency.md](../../../.agents/docs/api-consistency.md):
-
-- `api/async/…AsyncCommands` — `RedisFuture<T>`
-- `api/reactive/…ReactiveCommands` — `Mono<T>`, or `Flux<E>` for `List`/`Set` results
-- `src/main/kotlin/…/coroutines/…CoroutinesCommands.kt` — `suspend fun …: T?`, or
-  `Flow<E>` for streaming results
-- `cluster/api/sync|async/NodeSelection…Commands` — `Executions<T>` /
-  `AsyncExecutions<T>` (unless the group has no node-selection flavor)
+Add the method by hand to each flavor of the group — async, reactive, Kotlin
+coroutines, and the two cluster node-selection interfaces (unless the group has no
+node-selection flavor). The per-flavor return-type mapping rules are owned by
+[.agents/docs/api-consistency.md](../../../.agents/docs/api-consistency.md) — apply
+them from there; they are deliberately not restated here.
 
 Mirror the Javadoc with the flavor-appropriate `@return` phrasing. Then run the
 consistency suite — it names exactly the flavor/signature you missed:
