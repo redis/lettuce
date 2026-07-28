@@ -80,7 +80,7 @@ class AggregateInterfaceConsistencyUnitTests {
         SoftAssertions softly = new SoftAssertions();
 
         for (CommandInterfaces group : CLUSTER_GROUPS) {
-            if (!group.hasNodeSelection() || KnownApiDeviations.NODE_SELECTION_AGGREGATE_PENDING.contains(group.name())) {
+            if (!group.hasNodeSelection()) {
                 continue;
             }
             assertExtends(softly, NodeSelectionCommands.class, group.nodeSelectionSync());
