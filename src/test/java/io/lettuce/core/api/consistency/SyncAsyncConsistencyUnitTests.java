@@ -46,6 +46,14 @@ class SyncAsyncConsistencyUnitTests {
             softly.assertThat(TypeSignatures.normalize(asyncMethod.getGenericReturnType()))
                     .as("return type of %s", TypeSignatures.describe(group.async(), asyncMethod))
                     .isEqualTo(TypeSignatures.expectedAsyncReturnType(syncMethod, group.sync()));
+
+            softly.assertThat(TypeSignatures.parameterSignature(asyncMethod))
+                    .as("parameter types of %s", TypeSignatures.describe(group.async(), asyncMethod))
+                    .isEqualTo(TypeSignatures.parameterSignature(syncMethod));
+
+            softly.assertThat(asyncMethod.isAnnotationPresent(Deprecated.class))
+                    .as("@Deprecated parity of %s", TypeSignatures.describe(group.async(), asyncMethod))
+                    .isEqualTo(syncMethod.isAnnotationPresent(Deprecated.class));
         }
 
         softly.assertAll();

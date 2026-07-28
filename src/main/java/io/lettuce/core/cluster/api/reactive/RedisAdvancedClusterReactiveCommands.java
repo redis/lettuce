@@ -206,6 +206,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return K array-reply list of keys matching {@code pattern}.
      * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
      */
+    @Deprecated
     Flux<K> keysLegacy(K pattern);
 
     /**

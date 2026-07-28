@@ -77,6 +77,13 @@ public final class KnownApiDeviations {
     public static final Set<String> REACTIVE_ONLY = setOf("getJsonParser");
 
     /**
+     * Methods whose reactive parameter generics intentionally differ from the sync flavor: {@code dispatch} declares
+     * {@code CommandOutput<K, V, ?>} instead of {@code CommandOutput<K, V, T>} (the reactive result is emitted by the
+     * publisher, not by the output's type argument). From {@code CreateReactiveApi#methodMutator()}.
+     */
+    public static final Set<String> REACTIVE_PARAMETER_FLAVOR_SPECIFIC = setOf("dispatch");
+
+    /**
      * Reactive methods returning {@code Flux} although the sync return type is not a {@code List}/{@code Set}. From
      * {@code CreateReactiveApi#FORCE_FLUX_RESULT}.
      */
@@ -111,6 +118,13 @@ public final class KnownApiDeviations {
      * the sync node-selection API.
      */
     public static final Set<String> NOT_ON_NODE_SELECTION_SYNC = setOf("dispatch");
+
+    /**
+     * Methods deprecated on the async node-selection API although their sync counterpart is not: the {@code CommandOutput}-
+     * based {@code dispatch} overloads are deprecated since 6.2 in favor of the {@code Supplier}-based overloads because a
+     * single output instance cannot be reused across the responses of multiple nodes.
+     */
+    public static final Set<String> NODE_SELECTION_EXTRA_DEPRECATED = setOf("dispatch");
 
     /**
      * Command groups whose node-selection aggregate wiring is known to be incomplete: {@code NodeSelectionCommands} and

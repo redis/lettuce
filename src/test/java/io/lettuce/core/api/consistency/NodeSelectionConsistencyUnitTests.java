@@ -74,6 +74,16 @@ class NodeSelectionConsistencyUnitTests {
         softly.assertThat(TypeSignatures.normalize(counterpart.getGenericReturnType()))
                 .as("return type of %s", TypeSignatures.describe(nodeSelection, counterpart))
                 .isEqualTo(TypeSignatures.expectedNodeSelectionReturnType(syncMethod, wrapper));
+
+        softly.assertThat(TypeSignatures.parameterSignature(counterpart))
+                .as("parameter types of %s", TypeSignatures.describe(nodeSelection, counterpart))
+                .isEqualTo(TypeSignatures.parameterSignature(syncMethod));
+
+        boolean expectDeprecated = syncMethod.isAnnotationPresent(Deprecated.class)
+                || KnownApiDeviations.contains(KnownApiDeviations.NODE_SELECTION_EXTRA_DEPRECATED, syncMethod, group.sync());
+        softly.assertThat(counterpart.isAnnotationPresent(Deprecated.class))
+                .as("@Deprecated parity of %s", TypeSignatures.describe(nodeSelection, counterpart))
+                .isEqualTo(expectDeprecated);
     }
 
     @ParameterizedTest

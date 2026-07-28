@@ -86,6 +86,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return API with asynchronous executed commands on a selection of upstream cluster nodes.
      * @deprecated since 6.0 in favor of {@link #upstream()}.
      */
+    @Deprecated
     default AsyncNodeSelection<K, V> masters() {
         return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
     }
