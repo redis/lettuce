@@ -46,12 +46,18 @@ class SyncReactiveConsistencyUnitTests {
                     .as("return type of %s", TypeSignatures.describe(group.reactive(), reactiveMethod))
                     .isEqualTo(TypeSignatures.expectedReactiveReturnType(syncMethod, group.sync()));
 
-            if (TypeSignatures.isStreamingChannelMethod(syncMethod)) {
-                softly.assertThat(reactiveMethod.isAnnotationPresent(Deprecated.class))
-                        .as("%s must be @Deprecated (streaming-channel variant)",
-                                TypeSignatures.describe(group.reactive(), reactiveMethod))
-                        .isTrue();
+            if (!KnownApiDeviations.contains(KnownApiDeviations.REACTIVE_PARAMETER_FLAVOR_SPECIFIC, syncMethod, group.sync())) {
+                softly.assertThat(TypeSignatures.parameterSignature(reactiveMethod))
+                        .as("parameter types of %s", TypeSignatures.describe(group.reactive(), reactiveMethod))
+                        .isEqualTo(TypeSignatures.parameterSignature(syncMethod));
             }
+
+            // streaming-channel variants are deprecated on the reactive API in favor of consuming the Publisher
+            boolean expectDeprecated = syncMethod.isAnnotationPresent(Deprecated.class)
+                    || TypeSignatures.isStreamingChannelMethod(syncMethod);
+            softly.assertThat(reactiveMethod.isAnnotationPresent(Deprecated.class))
+                    .as("@Deprecated parity of %s", TypeSignatures.describe(group.reactive(), reactiveMethod))
+                    .isEqualTo(expectDeprecated);
         }
 
         softly.assertAll();

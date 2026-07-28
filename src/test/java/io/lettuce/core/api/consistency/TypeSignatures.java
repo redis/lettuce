@@ -141,6 +141,16 @@ public final class TypeSignatures {
     }
 
     /**
+     * The normalized generic parameter list of a method, e.g. {@code K, Map<K, V>, ScoredValue<V>[]}. Unlike the erased
+     * matching of {@link #findCounterpart(Class, Method)}, this retains type arguments so that flavors cannot diverge in their
+     * generic signatures (e.g. {@code Map<K, V>} vs {@code Map<V, K>}).
+     */
+    public static String parameterSignature(Method method) {
+        return Arrays.stream(method.getGenericParameterTypes()).map(TypeSignatures::normalize)
+                .collect(Collectors.joining(", "));
+    }
+
+    /**
      * The names of the type parameters declared by an interface, e.g. {@code [K, V]}.
      */
     public static List<String> typeParameterNames(Class<?> type) {

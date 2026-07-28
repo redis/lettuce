@@ -160,6 +160,14 @@ class AggregateInterfaceConsistencyUnitTests {
             return;
         }
 
+        softly.assertThat(TypeSignatures.parameterSignature(counterpart))
+                .as("parameter types of %s", TypeSignatures.describe(target, counterpart))
+                .isEqualTo(TypeSignatures.parameterSignature(syncMethod));
+
+        softly.assertThat(counterpart.isAnnotationPresent(Deprecated.class))
+                .as("@Deprecated parity of %s", TypeSignatures.describe(target, counterpart))
+                .isEqualTo(syncMethod.isAnnotationPresent(Deprecated.class));
+
         if (KnownApiDeviations.contains(KnownApiDeviations.AGGREGATE_FLAVOR_SPECIFIC_RETURN, syncMethod, sync)) {
             return;
         }
