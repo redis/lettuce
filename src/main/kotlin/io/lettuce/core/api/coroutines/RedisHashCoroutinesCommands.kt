@@ -281,6 +281,26 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
     suspend fun hsetex(key: K, hSetExArgs: HSetExArgs, map: Map<K, V>): Long?
 
     /**
+     * Set the value of one or more fields of a given hash key.
+     *
+     * @param key the key of the hash.
+     * @param map the field/value pairs to update.
+     * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
+     * @since 7.7
+     */
+    suspend fun hsetex(key: K, map: Map<K, V>): Long?
+
+    /**
+     * Get the value of one or more fields of a given hash key.
+     *
+     * @param key the key of the hash.
+     * @param fields fields to retrieve.
+     * @return List<KeyValue<K, V>> array-reply list of fields and their values.
+     * @since 7.7
+     */
+    fun hgetex(key: K, vararg fields: K): Flow<KeyValue<K, V>>
+
+    /**
      * Get the value of one or more fields of a given hash key, and optionally set their expiration
      *
      * @param key the key of the hash.

@@ -478,7 +478,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param hGetExArgs hgetex arguments.
      * @param fields fields to retrieve.
      * @return Long the number of fields that were removed from the hash.
+     * @deprecated since 7.7 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #hgetex}.
      */
+    @Deprecated
     Mono<Long> hgetex(KeyValueStreamingChannel<K, V> channel, K key, HGetExArgs hGetExArgs, K... fields);
 
     /**
@@ -497,7 +500,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key.
      * @param fields fields to retrieve and delete.
      * @return Long the number of fields that were removed from the hash.
+     * @deprecated since 7.7 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #hgetdel}.
      */
+    @Deprecated
     Mono<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
 
     /**

@@ -25,6 +25,7 @@ import io.lettuce.core.XReadArgs.StreamOffset
 import io.lettuce.core.models.stream.ClaimedMessages
 import io.lettuce.core.models.stream.PendingMessage
 import io.lettuce.core.models.stream.PendingMessages
+import io.lettuce.core.models.stream.StreamEntryDeletionResult
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -172,6 +173,50 @@ interface RedisStreamCoroutinesCommands<K : Any, V : Any> {
      * @return simple-reply number of removed entries.
      */
     suspend fun xdel(key: K, vararg messageIds: String): Long?
+
+    /**
+     * Acknowledge and delete one or multiple messages for a consumer group.
+     *
+     * @param key the stream key.
+     * @param group name of the consumer group.
+     * @param messageIds message Ids to acknowledge and delete.
+     * @return simple-reply an array of deletion results, one per message id.
+     * @since 7.7
+     */
+    fun xackdel(key: K, group: K, vararg messageIds: String): Flow<StreamEntryDeletionResult>
+
+    /**
+     * Acknowledge and delete one or multiple messages for a consumer group applying the given deletion policy.
+     *
+     * @param key the stream key.
+     * @param group name of the consumer group.
+     * @param policy the deletion policy to apply.
+     * @param messageIds message Ids to acknowledge and delete.
+     * @return simple-reply an array of deletion results, one per message id.
+     * @since 7.7
+     */
+    fun xackdel(key: K, group: K, policy: StreamDeletionPolicy, vararg messageIds: String): Flow<StreamEntryDeletionResult>
+
+    /**
+     * Removes the specified entries from the stream.
+     *
+     * @param key the stream key.
+     * @param messageIds stream entry IDs to delete.
+     * @return simple-reply an array of deletion results, one per message id.
+     * @since 7.7
+     */
+    fun xdelex(key: K, vararg messageIds: String): Flow<StreamEntryDeletionResult>
+
+    /**
+     * Removes the specified entries from the stream applying the given deletion policy.
+     *
+     * @param key the stream key.
+     * @param policy the deletion policy to apply.
+     * @param messageIds stream entry IDs to delete.
+     * @return simple-reply an array of deletion results, one per message id.
+     * @since 7.7
+     */
+    fun xdelex(key: K, policy: StreamDeletionPolicy, vararg messageIds: String): Flow<StreamEntryDeletionResult>
 
     /**
      * Create a consumer group.
