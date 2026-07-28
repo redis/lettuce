@@ -1,6 +1,6 @@
 ---
 name: adding-a-redis-command
-description: Use when adding a new Redis command — or a new overload/variant of one — to the Lettuce client. Covers the full flow: writing the command specification, designing the Lettuce API, adding argument types and the API template, running the interface generators, adding the builder/async/reactive/Kotlin implementations, and adding unit + integration tests. Trigger on requests like "add support for the <X> command", "implement <REDIS COMMAND> in Lettuce", "wire up a new command", or adding a new argument/overload to an existing command.
+description: Use when adding a new Redis command — or a new overload/variant of one — to the Lettuce client. Covers the full flow: writing the command specification, designing the Lettuce API, adding argument types, editing all API interface flavors (sync/async/reactive/Kotlin/node-selection), adding the builder/async/reactive/Kotlin implementations, and adding unit + integration tests with the API consistency suite as the safety net. Trigger on requests like "add support for the <X> command", "implement <REDIS COMMAND> in Lettuce", "wire up a new command", or adding a new argument/overload to an existing command.
 allowed-tools: Bash(mvn *)
 ---
 
@@ -8,19 +8,21 @@ allowed-tools: Bash(mvn *)
 
 Read [.agents/docs/architecture.md](../../../.agents/docs/architecture.md) first for the model
 behind this flow — especially that the sync/async/reactive/Kotlin command
-**interfaces are generated from templates** and must never be hand-edited, while the
-top-level aggregate interfaces (`RedisCommands`, …) are hand-written compositions.
+**interfaces are hand-edited source files kept in lockstep by the API consistency
+test suite** (see [.agents/docs/api-consistency.md](../../../.agents/docs/api-consistency.md)),
+while the top-level aggregate interfaces (`RedisCommands`, …) are hand-written
+compositions.
 
 ## The flow
 
 ```
-1. Specification → 2. API design → 3. Types + template → ⛔ human review → 4. Generate
-                 → 5. Implementations → 6. Tests → 7. Verify
+1. Specification → 2. API design → 3. Types + sync interface → ⛔ human review
+                 → 4. Mirror to all flavors → 5. Implementations → 6. Tests → 7. Verify
 ```
 
 Two things are front-loaded on purpose: you write the **spec before code**, and you
-add **argument types + templates before running the generator** (the generated
-interfaces reference those types, so they must exist to compile).
+add **argument/response types before editing the interfaces** (every flavor
+references those types, so they must exist to compile).
 
 Copy this checklist into your working notes and tick items off as you go:
 
@@ -28,9 +30,9 @@ Copy this checklist into your working notes and tick items off as you go:
 Add-a-command progress:
 - [ ] 1. Spec: syntax, args, RESP2 + RESP3 replies, errors, version
 - [ ] 2. API design: method(s), return type, target group, arg/response types
-- [ ] 3. Types + template: arg & response types first, then the template method + Javadoc
-- [ ] ⛔ HUMAN REVIEW: maintainer approves the edited template(s) before generating
-- [ ] 4. Generate: run the api_generator tests; do NOT hand-edit generated interfaces
+- [ ] 3. Types + sync interface: arg & response types first, then the sync method + Javadoc
+- [ ] ⛔ HUMAN REVIEW: maintainer approves the sync interface change (the API contract)
+- [ ] 4. Mirror: async, reactive, Kotlin, NodeSelection×2 — consistency tests must pass
 - [ ] 5. Implementations: CommandType, RedisCommandBuilder, async, reactive, Kotlin impl
 - [ ] 6. Tests: builder unit test + integration base/overloads (@EnabledOnCommand)
 - [ ] 7. Verify: unit (mvn test) + a single integration test
@@ -64,7 +66,7 @@ work — do **not** paste it back to the maintainer, write it to a review file, 
 for "spec approval." Work straight through §2 and §3 on your own judgement; the
 **only** place to stop for the maintainer is the ⛔ checkpoint before generation. If a
 design choice is genuinely ambiguous, make a reasonable call and surface it *there*,
-with the template, rather than interrupting earlier.
+with the sync interface change, rather than interrupting earlier.
 
 ### 2. Design the Lettuce API from the spec
 
@@ -76,17 +78,17 @@ Decide, from the spec:
   varargs-only; the single-arg overload is the convention for **new** commands.)
 - The **Java return type**, mapping the reply to an idiomatic type: a **`1/0` integer
   reply → `Boolean`** (established repo convention — cf. `copy`, `expire`, `hsetnx`);
-  a count/number → `Long`; a status → `String`; a bulk value → `V`. The generator
-  then wraps it (`RedisFuture<T>` / `Mono<T>` / `Flux<T>`).
+  a count/number → `Long`; a status → `String`; a bulk value → `V`. The other flavors
+  wrap it (`RedisFuture<T>` / `Mono<T>` / `Flux<T>` / `suspend`/`Flow`).
 - Which command group it belongs to (STRING → `RedisStringCommands`, HASH →
   `RedisHashCommands`, generic-key → `RedisKeyCommands`, …).
 - What **argument/wrapper types** the signature needs for optional arguments.
 
-### 3. Add argument types + the template
+### 3. Add argument types + the sync interface method
 
 **Add the types the signature references first — both argument and response
-types.** The generated interfaces reference every type in the method signature, so
-any *new* type must exist and compile **before** you generate:
+types.** Every interface flavor references the types in the method signature, so
+any *new* type must exist to compile:
 
 - **Argument types.** If the signature takes an options object, create a
   `*Args implements CompositeArgument` class (e.g. `io.lettuce.core.CopyArgs`) whose
@@ -101,11 +103,11 @@ any *new* type must exist and compile **before** you generate:
 (This is the Java type that appears in the signature. The matching reply *parser* —
 the `CommandOutput` — is added later with the builder in §5.)
 
-**Then add the method + Javadoc to the template**
-`src/main/templates/io/lettuce/core/api/<Group>Commands.java`. Declare the **sync**
-return type; this one edit feeds every generated flavor. Follow the
-[writing-javadoc](../writing-javadoc/SKILL.md) skill — new public API needs
-`@since <version>` plus `@param`/`@return`.
+**Then add the method + Javadoc to the sync interface**
+`src/main/java/io/lettuce/core/api/sync/<Group>Commands.java`. The sync signature is
+the reference the other flavors are derived from and its Javadoc is the reference
+text they mirror. Follow the [writing-javadoc](../writing-javadoc/SKILL.md) skill —
+new public API needs `@since <version>` plus `@param`/`@return`.
 
 ```java
 /**
@@ -119,44 +121,50 @@ return type; this one edit feeds every generated flavor. Follow the
 Long strlen(K key);
 ```
 
-Do not write the class-level `${intent}` placeholder — the generators substitute it.
+**No suitable group?** Create a new one: add the flavor interfaces (mirror an
+existing group end-to-end), register the group in the `CommandInterfaces` enum
+(`src/test/java/io/lettuce/core/api/consistency/`), and wire the new group interface
+into the hand-written aggregate interfaces (`RedisCommands`, `RedisAsyncCommands`,
+`RedisReactiveCommands`, and the cluster variants) so they `extend` it — the
+consistency tests enforce the aggregate wiring.
 
-**No suitable group?** Create a new one: add the template file under
-`src/main/templates/…`, register its name in
-`src/test/java/io/lettuce/apigenerator/Constants.java` (`TEMPLATE_NAMES`), and wire
-the new group interface into the hand-written aggregate interfaces (`RedisCommands`,
-`RedisAsyncCommands`, `RedisReactiveCommands`, and the cluster variants) so they
-`extend` it. Mirror an existing group end-to-end and verify the aggregate wiring.
+### ⛔ Checkpoint — human review of the API contract
 
-### ⛔ Checkpoint — human review before generating
+The sync interface change is the human-authored **API contract**; every other flavor
+is derived from it and it's costly to change once mirrored. **Stop here.** Present
+the sync interface change — the new method signature and its Javadoc — to the
+maintainer and get approval **before mirroring it across flavors.** Do not proceed
+to §4 until the maintainer approves.
 
-The edited template(s) are the human-authored **API contract**, and generation fans
-them out across every flavor (sync/async/reactive/Kotlin) — after which it's costly to
-change. Generation is also the messy, non-idempotent step (see §4). **Stop here.**
-Present the template change — the new method signature and its Javadoc — to the
-maintainer and get approval **before running the generators.** Do not proceed to §4
-until the maintainer approves.
+### 4. Mirror the method to every flavor
 
-### 4. Run the generators
+Add the method by hand to each flavor of the group, applying the return-type mapping
+from [.agents/docs/api-consistency.md](../../../.agents/docs/api-consistency.md):
 
-The generators rewrite **every** group in `Constants.TEMPLATE_NAMES` and generation
-is **not idempotent** — run naively and you get noisy diffs across unrelated
-interfaces plus mangled imports. Follow the runbook in
-[.agents/docs/code-generation.md](../../../.agents/docs/code-generation.md): scope
-`TEMPLATE_NAMES` to your group, run the generators (the runbook has the JDK-8 +
-`gitcommitid.skip` invocation), then — for each regenerated file — **revert it to
-`HEAD` and re-apply only your new method.** The diff carries more than imports
-(resurfaced deprecations, signature drift; reactive/Kotlin are especially prone), so a
-wholesale regenerate silently changes the public API. Finally revert `Constants`.
-Never commit the `Constants` change or unrelated regenerated churn.
+- `api/async/…AsyncCommands` — `RedisFuture<T>`
+- `api/reactive/…ReactiveCommands` — `Mono<T>`, or `Flux<E>` for `List`/`Set` results
+- `src/main/kotlin/…/coroutines/…CoroutinesCommands.kt` — `suspend fun …: T?`, or
+  `Flow<E>` for streaming results
+- `cluster/api/sync|async/NodeSelection…Commands` — `Executions<T>` /
+  `AsyncExecutions<T>` (unless the group has no node-selection flavor)
+
+Mirror the Javadoc with the flavor-appropriate `@return` phrasing. Then run the
+consistency suite — it names exactly the flavor/signature you missed:
+
+```bash
+mvn -Dtest='*ConsistencyUnitTests,CommandBuilderCoverageUnitTests' \
+    -Dsurefire.failIfNoSpecifiedTests=false test
+```
 
 For an **unusual return type** (e.g. `Flux<Value<Long>>`, or `Mono<List<Double>>`
-because Redis returns nulls), register it in `RESULT_SPEC` / `FORCE_FLUX_RESULT` /
-`VALUE_WRAP` at the top of `CreateReactiveApi.java` before generating.
+because Redis returns nulls), register it in
+`src/test/java/io/lettuce/core/api/consistency/KnownApiDeviations.java` **with a
+comment justifying it**. Never use a deviation entry to paper over a sync/async
+signature mismatch — that breaks the sync-over-async runtime proxy.
 
 ### 5. Add the implementations
 
-After generation the interfaces declare the new method; now make it real:
+The interfaces declare the new method; now make it real:
 
 **Keyword** — `src/main/java/io/lettuce/core/protocol/CommandType.java`; add the
 command name (wire bytes derive from the enum name):
@@ -207,7 +215,7 @@ generated `Mono`/`Flux`):
 public Mono<Long> strlen(K key) { return createMono(() -> commandBuilder.strlen(key)); }
 ```
 
-**Kotlin coroutine impl** (hand-written, NOT generated) —
+**Kotlin coroutine impl** —
 `src/main/kotlin/io/lettuce/core/api/coroutines/<Group>CoroutinesCommandsImpl.kt`:
 
 ```kotlin
@@ -265,13 +273,14 @@ for unit; `make start` + a single `*IntegrationTests` run for integration).
 1. **Skipping the spec / not checking RESP2 vs RESP3.** The reply shape can differ
    between protocols; it determines the `CommandOutput` and reactive mapping. Confirm
    it against `redis.io`, don't assume.
-2. **Adding Args/wrapper types after generation.** The generated interfaces reference
+2. **Adding Args/wrapper types after the interface edits.** Every flavor references
    them; if they don't exist first, the project won't compile. Add them upfront.
-3. **Editing a generated interface instead of the template.** Anything with
-   `@generated` is overwritten. Edit the template and regenerate. (New group? also
-   wire it into the hand-written aggregate interfaces.)
+3. **Editing only one flavor, or silencing the consistency suite.** Mirror the method
+   to *every* flavor; if a test fails, fix the signature rather than adding a
+   `KnownApiDeviations` entry — deviations are for genuinely unusual reply shapes,
+   with a justifying comment, never for sync/async mismatches.
 4. **Forgetting a dispatch layer.** Update *both* `AbstractRedisAsyncCommands` *and*
-   `AbstractRedisReactiveCommands`, plus the Kotlin `*Impl.kt` (not generated).
-5. **Wrong `CommandArgs` order / wrong `CommandOutput`**, missing `@since` in the
-   template, or missing tests / version gate (`@EnabledOnCommand`).
+   `AbstractRedisReactiveCommands`, plus the Kotlin `*Impl.kt`.
+5. **Wrong `CommandArgs` order / wrong `CommandOutput`**, missing `@since`, or
+   missing tests / version gate (`@EnabledOnCommand`).
 ```

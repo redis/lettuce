@@ -1,6 +1,6 @@
 ---
 name: writing-javadoc
-description: Use when writing or editing Javadoc for Lettuce public API — new methods, classes, deprecations, or when a reviewer asks to fix or improve doc comments. Points to the full house ruleset in .agents/docs/javadoc.md (imperative method summaries, fixed tag order, @param/@return/@throws/@since/@deprecated house forms) and the rule that command-interface Javadoc is edited in the template, not the generated files. Trigger on "write javadoc for", "document this method", "add a deprecation notice", "fix the doc comment".
+description: Use when writing or editing Javadoc for Lettuce public API — new methods, classes, deprecations, or when a reviewer asks to fix or improve doc comments. Points to the full house ruleset in .agents/docs/javadoc.md (imperative method summaries, fixed tag order, @param/@return/@throws/@since/@deprecated house forms) and the rule that command-interface Javadoc is written on the sync interface first and mirrored to the other flavors. Trigger on "write javadoc for", "document this method", "add a deprecation notice", "fix the doc comment".
 ---
 
 # Writing Javadoc for Lettuce
@@ -12,10 +12,12 @@ detail.
 ## Before you write
 
 - **Is it a command interface?** The interfaces under
-  `src/main/java/io/lettuce/core/api/{sync,async,reactive}/` are **generated**
-  (`@generated` marker). Edit the Javadoc in the **template** at
-  `src/main/templates/io/lettuce/core/api/<Group>Commands.java`, not the generated
-  file — the template comment feeds every flavor. See [architecture.md](../../../.agents/docs/architecture.md).
+  `src/main/java/io/lettuce/core/api/{sync,async,reactive}/` (and the Kotlin
+  coroutine interfaces) are hand-edited, with the **sync** interface's Javadoc as
+  the reference text. Write or fix the comment on the sync method first, then
+  mirror it to the other flavors with the flavor-appropriate `@return` phrasing
+  (`RedisFuture`, `Mono`/`Flux`, …). Javadoc parity is **not** test-enforced — keep
+  the flavors in sync by hand. See [api-consistency.md](../../../.agents/docs/api-consistency.md).
 
 ## The rules most often gotten wrong
 
