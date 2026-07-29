@@ -47,6 +47,7 @@ interface RedisClusterCoroutinesCommands<K : Any, V : Any> :
     RedisStringCoroutinesCommands<K, V>,
     RedisBloomFilterCoroutinesCommands<K, V>,
     RedisCuckooFilterCoroutinesCommands<K, V>,
+    RedisTimeSeriesCoroutinesCommands<K, V>,
     RedisTopKCoroutinesCommands<K, V> {
 
     /**
