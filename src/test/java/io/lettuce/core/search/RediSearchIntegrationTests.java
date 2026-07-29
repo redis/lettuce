@@ -1447,10 +1447,15 @@ public class RediSearchIntegrationTests {
     private void assertIndexSize(String index, long expected) {
         long indexed = -1;
         // allow indexing to catch up (mirrors the other client libraries' AssertIndexSize)
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 20; i++) {
             indexed = ftInfoNumDocs(index);
             if (indexed == expected) {
                 break;
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
         assertThat(indexed).isEqualTo(expected);
