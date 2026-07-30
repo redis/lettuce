@@ -1805,6 +1805,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Flux<String> ftAliaslist(String index) {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftAliaslist(index));
+    }
+
+    @Override
     public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
     }

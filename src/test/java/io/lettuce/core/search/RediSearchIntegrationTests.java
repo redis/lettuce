@@ -17,10 +17,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
-import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.output.CommandOutput;
-import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.protocol.DecodeBufferPolicies;
 import io.lettuce.core.protocol.ProtocolVersion;
@@ -60,7 +56,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.ByteOrder;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -737,6 +732,38 @@ public class RediSearchIntegrationTests {
         // Cleanup
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
         assertThat(redis.ftDropindex(testIndex2)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT.ALIASLIST command to list the aliases associated with an index.
+     */
+    @Test
+    void testFtAliaslistCommand() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
+
+        String testIndex = "aliaslist-test-idx";
+        String alias1 = "aliaslist-alias1";
+        String alias2 = "aliaslist-alias2";
+
+        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+        assertThat(redis.ftCreate(testIndex, fields)).isEqualTo("OK");
+
+        // An existing index with no aliases returns an empty collection, not an error.
+        assertThat(redis.ftAliaslist(testIndex)).isEmpty();
+
+        assertThat(redis.ftAliasadd(alias1, testIndex)).isEqualTo("OK");
+        assertThat(redis.ftAliaslist(testIndex)).containsExactlyInAnyOrder(alias1);
+
+        assertThat(redis.ftAliasadd(alias2, testIndex)).isEqualTo("OK");
+        // Ordering is not part of the contract, so compare regardless of order.
+        assertThat(redis.ftAliaslist(testIndex)).containsExactlyInAnyOrder(alias1, alias2);
+
+        assertThat(redis.ftAliasdel(alias1)).isEqualTo("OK");
+        assertThat(redis.ftAliaslist(testIndex)).containsExactlyInAnyOrder(alias2);
+
+        // Cleanup
+        assertThat(redis.ftAliasdel(alias2)).isEqualTo("OK");
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
     }
 
     /**
@@ -1435,107 +1462,7 @@ public class RediSearchIntegrationTests {
         } finally {
             connection.setAutoFlushCommands(true);
         }
-        assertIndexSize(TIMEOUT_INDEX, TIMEOUT_DOC_COUNT);
-    }
-
-    /**
-     * Asserts that {@code index} contains exactly {@code expected} documents. Indexing can lag behind the HSET writes, so we
-     * poll the document count a bounded number of times (breaking as soon as it matches) before asserting exact equality. This
-     * keeps the 1ms-timeout query from running against a partially built index (few enough documents that it completes within
-     * the timeout), which would make the test flaky.
-     */
-    private void assertIndexSize(String index, long expected) {
-        long indexed = -1;
-        // allow indexing to catch up (mirrors the other client libraries' AssertIndexSize)
-        for (int i = 0; i < 20; i++) {
-            indexed = ftInfoNumDocs(index);
-            if (indexed == expected) {
-                break;
-            }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        assertThat(indexed).isEqualTo(expected);
-    }
-
-    /**
-     * FT.INFO is not exposed by Lettuce's {@code RediSearchCommands} API, so we issue it as a raw command via
-     * {@link io.lettuce.core.api.sync.BaseRedisCommands#dispatch dispatch()} and read the {@code num_docs} field. This mirrors
-     * how the Jedis and NRedisStack helpers assert the index size (via FT.INFO {@code num_docs}) instead of an FT.SEARCH count.
-     */
-    private long ftInfoNumDocs(String index) {
-        return redis.dispatch(FT_INFO, new NumDocsOutput(), new CommandArgs<>(StringCodec.UTF8).add(index));
-    }
-
-    private static final ProtocolKeyword FT_INFO = new ProtocolKeyword() {
-
-        private final byte[] bytes = "FT.INFO".getBytes(StandardCharsets.US_ASCII);
-
-        @Override
-        public byte[] getBytes() {
-            return bytes;
-        }
-
-        @Override
-        public String toString() {
-            return "FT.INFO";
-        }
-
-    };
-
-    /**
-     * Extracts only the {@code num_docs} value from the flat FT.INFO reply. Works on both RESP2 and RESP3: the field names and
-     * values arrive as a flat token stream, so when the {@code num_docs} key is seen, the next scalar (bulk string on RESP2 or
-     * integer on RESP3) is its value.
-     */
-    private static final class NumDocsOutput extends CommandOutput<String, String, Long> {
-
-        private boolean valueExpected;
-
-        NumDocsOutput() {
-            super(StringCodec.UTF8, -1L);
-        }
-
-        @Override
-        public void set(ByteBuffer bytes) {
-            if (bytes == null) {
-                return;
-            }
-            String token = StringCodec.UTF8.decodeValue(bytes);
-            if (valueExpected) {
-                output = Long.parseLong(token);
-                valueExpected = false;
-            } else if ("num_docs".equals(token)) {
-                valueExpected = true;
-            }
-        }
-
-        @Override
-        public void set(long integer) {
-            if (valueExpected) {
-                output = integer;
-                valueExpected = false;
-            }
-        }
-
-        // Other FT.INFO fields carry double/boolean values (e.g. percent_indexed); accept and skip them so decoding of the
-        // full reply doesn't fail before num_docs is read.
-        @Override
-        public void set(double number) {
-            if (valueExpected) {
-                output = (long) number;
-                valueExpected = false;
-            }
-        }
-
-        @Override
-        public void set(boolean value) {
-            valueExpected = false;
-        }
-
+        SearchTestSupport.awaitIndexReady(redis, TIMEOUT_INDEX, TIMEOUT_DOC_COUNT);
     }
 
     /**
@@ -1683,7 +1610,7 @@ public class RediSearchIntegrationTests {
         } finally {
             connection.setAutoFlushCommands(true);
         }
-        assertIndexSize(TIMEOUT_VECTOR_INDEX, TIMEOUT_DOC_COUNT);
+        SearchTestSupport.awaitIndexReady(redis, TIMEOUT_VECTOR_INDEX, TIMEOUT_DOC_COUNT);
     }
 
     /**
