@@ -2445,6 +2445,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Flux<V> lmovem(K source, K destination, LMovemArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.lmovem(source, destination, args));
+    }
+
+    @Override
     public Mono<KeyValue<K, List<V>>> lmpop(LMPopArgs args, K... keys) {
         return createMono(() -> commandBuilder.lmpop(args, keys));
     }
@@ -2457,11 +2462,6 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<V> lpop(K key, long count) {
         return createDissolvingFlux(() -> commandBuilder.lpop(key, count));
-    }
-
-    @Override
-    public Flux<V> lmovem(K source, K destination, LMovemArgs args) {
-        return createDissolvingFlux(() -> commandBuilder.lmovem(source, destination, args));
     }
 
     @Override

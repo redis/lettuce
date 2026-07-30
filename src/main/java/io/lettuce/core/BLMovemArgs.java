@@ -6,29 +6,32 @@
  */
 package io.lettuce.core;
 
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.CommandKeyword;
-import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
- * Argument list builder for the blocking Redis <a href="https://redis.io/commands/blmovem">BLMOVEM</a> command. Extends
- * {@link LMovemArgs} with the mandatory {@code timeout} that {@code BLMOVEM} places between the directions and the optional
- * count block. Static import the methods from {@link Builder} and chain the method calls:
+ * Argument list builder for the blocking Redis <a href="https://redis.io/commands/blmovem">BLMOVEM</a> command. Wraps the
+ * directions and optional count block of an {@link LMovemArgs} and adds the mandatory {@code timeout} that {@code BLMOVEM}
+ * places between them. Static import the methods from {@link Builder} and chain the method calls:
  * {@code leftRight().count(2, Ordering.BULK).timeout(1.5)}.
  * <p>
- * The {@code timeout} defaults to {@code 0} (block indefinitely) when not set explicitly.
+ * The {@code timeout} defaults to {@code 0} (block indefinitely) when not set explicitly. This type intentionally does not
+ * extend {@link LMovemArgs} so that it cannot be passed to the non-blocking {@code lmovem} command, which would emit an invalid
+ * {@code LMOVEM} carrying a timeout.
  *
  * @author Aleksandar Todorov
  * @since 7.7
  */
-public class BLMovemArgs extends LMovemArgs {
+public class BLMovemArgs implements CompositeArgument {
+
+    private final LMovemArgs lMovemArgs;
 
     private Long longTimeout;
 
     private Double doubleTimeout;
 
-    private BLMovemArgs(ProtocolKeyword source, ProtocolKeyword destination) {
-        super(source, destination);
+    private BLMovemArgs(LMovemArgs lMovemArgs) {
+        this.lMovemArgs = lMovemArgs;
     }
 
     /**
@@ -48,7 +51,7 @@ public class BLMovemArgs extends LMovemArgs {
          * @return new {@link BLMovemArgs} with directions set.
          */
         public static BLMovemArgs leftLeft() {
-            return new BLMovemArgs(CommandKeyword.LEFT, CommandKeyword.LEFT);
+            return new BLMovemArgs(LMovemArgs.Builder.leftLeft());
         }
 
         /**
@@ -57,7 +60,7 @@ public class BLMovemArgs extends LMovemArgs {
          * @return new {@link BLMovemArgs} with directions set.
          */
         public static BLMovemArgs leftRight() {
-            return new BLMovemArgs(CommandKeyword.LEFT, CommandKeyword.RIGHT);
+            return new BLMovemArgs(LMovemArgs.Builder.leftRight());
         }
 
         /**
@@ -66,7 +69,7 @@ public class BLMovemArgs extends LMovemArgs {
          * @return new {@link BLMovemArgs} with directions set.
          */
         public static BLMovemArgs rightLeft() {
-            return new BLMovemArgs(CommandKeyword.RIGHT, CommandKeyword.LEFT);
+            return new BLMovemArgs(LMovemArgs.Builder.rightLeft());
         }
 
         /**
@@ -75,7 +78,7 @@ public class BLMovemArgs extends LMovemArgs {
          * @return new {@link BLMovemArgs} with directions set.
          */
         public static BLMovemArgs rightRight() {
-            return new BLMovemArgs(CommandKeyword.RIGHT, CommandKeyword.RIGHT);
+            return new BLMovemArgs(LMovemArgs.Builder.rightRight());
         }
 
     }
@@ -104,27 +107,40 @@ public class BLMovemArgs extends LMovemArgs {
         return this;
     }
 
-    @Override
-    public BLMovemArgs count(long count, Ordering ordering) {
-        super.count(count, ordering);
+    /**
+     * Move up-to {@code count} elements. Follows the same semantics as the {@code count} parameter of {@code LPOP}.
+     *
+     * @param count the maximum number of elements to move.
+     * @param ordering the {@link LMovemArgs.Ordering} in which the elements are moved, must not be {@code null}.
+     * @return {@code this} {@link BLMovemArgs}.
+     */
+    public BLMovemArgs count(long count, LMovemArgs.Ordering ordering) {
+        this.lMovemArgs.count(count, ordering);
         return this;
     }
 
-    @Override
-    public BLMovemArgs exactly(long count, Ordering ordering) {
-        super.exactly(count, ordering);
+    /**
+     * Move exactly {@code count} elements or return an empty list if the source list does not have enough elements.
+     *
+     * @param count the exact number of elements to move.
+     * @param ordering the {@link LMovemArgs.Ordering} in which the elements are moved, must not be {@code null}.
+     * @return {@code this} {@link BLMovemArgs}.
+     */
+    public BLMovemArgs exactly(long count, LMovemArgs.Ordering ordering) {
+        this.lMovemArgs.exactly(count, ordering);
         return this;
     }
 
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
-        buildDirections(args);
+        LettuceAssert.notNull(lMovemArgs, "LMovemArgs must not be null");
+        lMovemArgs.buildDirections(args);
         if (doubleTimeout != null) {
             args.add(doubleTimeout);
         } else {
             args.add(longTimeout != null ? longTimeout : 0L);
         }
-        buildCount(args);
+        lMovemArgs.buildCount(args);
     }
 
 }

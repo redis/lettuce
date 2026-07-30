@@ -58,7 +58,7 @@ public class LMovemArgs implements CompositeArgument {
 
     private ProtocolKeyword ordering;
 
-    protected LMovemArgs(ProtocolKeyword source, ProtocolKeyword destination) {
+    private LMovemArgs(ProtocolKeyword source, ProtocolKeyword destination) {
         this.source = source;
         this.destination = destination;
     }
