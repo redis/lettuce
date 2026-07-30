@@ -39,24 +39,26 @@ import java.util.StringJoiner;
 public final class KnownApiDeviations {
 
     /**
-     * Methods that exist on the async, reactive and coroutine APIs but intentionally not on the sync API (flushing makes no
-     * sense for synchronously dispatched commands). From {@code CreateSyncApi#FILTER_METHODS}.
+     * Methods that exist on the async or reactive API but intentionally not on the sync API. The generator's counterpart
+     * ({@code CreateSyncApi#FILTER_METHODS}) filtered {@code setAutoFlushCommands}/{@code flushCommands}, but those live on
+     * {@code StatefulConnection} rather than on a command interface, so no such method remains. Kept as the documented hook for
+     * the next async-only method.
      */
-    public static final Set<String> NOT_ON_SYNC_API = setOf("setAutoFlushCommands", "flushCommands");
+    public static final Set<String> NOT_ON_SYNC_API = Collections.emptySet();
 
     /**
      * Async methods that keep the sync return type instead of wrapping it in {@code RedisFuture}. From
      * {@code CreateAsyncApi#KEEP_METHOD_RESULT_TYPE}.
      */
     public static final Set<String> KEEP_SYNC_RESULT_TYPE_ASYNC = setOf("shutdown", "debugOom", "debugSegfault", "digest",
-            "close", "isOpen", "getStatefulConnection", "setAutoFlushCommands", "flushCommands", "setTimeout", "getJsonParser");
+            "getStatefulConnection", "setTimeout", "getJsonParser");
 
     /**
      * Reactive methods that keep the sync return type instead of wrapping it in {@code Mono}/{@code Flux}. From
      * {@code CreateReactiveApi#KEEP_METHOD_RESULT_TYPE}.
      */
-    public static final Set<String> KEEP_SYNC_RESULT_TYPE_REACTIVE = setOf("digest", "close", "isOpen", "getStatefulConnection",
-            "setAutoFlushCommands", "flushCommands", "setTimeout", "getJsonParser");
+    public static final Set<String> KEEP_SYNC_RESULT_TYPE_REACTIVE = setOf("digest", "getStatefulConnection", "setTimeout",
+            "getJsonParser");
 
     /**
      * Aggregate-declared methods whose return type is flavor-specific by design (connection and node-selection accessors, e.g.
@@ -74,9 +76,11 @@ public final class KnownApiDeviations {
             "readonly", "nodes");
 
     /**
-     * Methods that exist only on the reactive API (reactive-specific accessors used by the coroutine implementations).
+     * Methods that exist only on the reactive API: reactive-specific accessors used by the coroutine implementations
+     * ({@code getJsonParser}) and the PubSub message streams, which have no sync or async equivalent because they hand out a
+     * {@code Publisher} of inbound messages rather than issuing a command.
      */
-    public static final Set<String> REACTIVE_ONLY = setOf("getJsonParser");
+    public static final Set<String> REACTIVE_ONLY = setOf("getJsonParser", "observeChannels", "observePatterns");
 
     /**
      * Methods whose reactive parameter generics intentionally differ from the sync flavor: {@code dispatch} declares
@@ -112,7 +116,16 @@ public final class KnownApiDeviations {
      * From {@code Create(Sync|Async)NodeSelectionClusterApi#FILTER_METHODS}.
      */
     public static final Set<String> NODE_SELECTION_EXCLUDED = setOf("shutdown", "debugOom", "debugSegfault", "digest",
-            "readOnly", "readWrite", "setAutoFlushCommands", "flushCommands");
+            "readOnly", "readWrite");
+
+    /**
+     * Aggregate methods deprecated on the reactive flavor although neither the sync nor the async counterpart is:
+     * {@code RedisPubSubReactiveCommands#getStatefulConnection()} was deprecated in 6.2 ("will be removed with Lettuce 7 to
+     * avoid exposing the underlying connection") while the sync and async PubSub interfaces were left untouched. The standalone
+     * aggregate deprecates the same accessor on every flavor, so this is an asymmetry to resolve rather than a design choice —
+     * recorded here because closing it means deprecating public API.
+     */
+    public static final Set<String> REACTIVE_EXTRA_DEPRECATED = setOf("RedisPubSubCommands.getStatefulConnection");
 
     /**
      * Methods absent from the node-selection <em>sync</em> flavor only: {@code dispatch} exists on
@@ -142,8 +155,7 @@ public final class KnownApiDeviations {
      * ({@code digest}), generic dispatch and transaction plumbing ({@code exec} builds its command in the transaction
      * machinery, not in the builder).
      */
-    public static final Set<String> BUILDER_EXCLUDED = setOf("close", "isOpen", "getStatefulConnection", "setAutoFlushCommands",
-            "flushCommands", "digest", "dispatch", "exec");
+    public static final Set<String> BUILDER_EXCLUDED = setOf("getStatefulConnection", "digest", "dispatch", "exec");
 
     /**
      * Interface methods whose builder method has a different name (the builder variant takes a flag or a different argument

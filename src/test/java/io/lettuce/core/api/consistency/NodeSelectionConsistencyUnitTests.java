@@ -9,12 +9,9 @@ package io.lettuce.core.api.consistency;
 import static io.lettuce.TestTags.UNIT_TEST;
 
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -23,6 +20,8 @@ import org.junit.jupiter.params.provider.EnumSource;
  * method (except the {@link KnownApiDeviations#NODE_SELECTION_EXCLUDED excluded} connection-control methods) must exist with
  * its return type wrapped in {@code Executions} (sync flavor) or {@code AsyncExecutions} (async flavor), and node-selection
  * interfaces must not declare methods unknown to the sync API.
+ * <p>
+ * The exclusion tables themselves are kept honest by {@link DeviationTableStalenessUnitTests}.
  */
 @Tag(UNIT_TEST)
 class NodeSelectionConsistencyUnitTests {
@@ -110,39 +109,6 @@ class NodeSelectionConsistencyUnitTests {
             }
         }
 
-        softly.assertAll();
-    }
-
-    /**
-     * Every entry of the exclusion list must still match at least one sync method — otherwise the entry is stale and should be
-     * removed.
-     */
-    @Test
-    void nodeSelectionExclusionsAreNotStale() {
-
-        Set<String> matched = new HashSet<>();
-
-        for (CommandInterfaces group : CommandInterfaces.values()) {
-            if (!group.hasNodeSelection()) {
-                continue;
-            }
-            for (Method syncMethod : TypeSignatures.apiMethods(group.sync())) {
-                for (String key : KnownApiDeviations.NODE_SELECTION_EXCLUDED) {
-                    if (KnownApiDeviations.contains(java.util.Collections.singleton(key), syncMethod, group.sync())) {
-                        matched.add(key);
-                    }
-                }
-            }
-        }
-
-        SoftAssertions softly = new SoftAssertions();
-        for (String key : KnownApiDeviations.NODE_SELECTION_EXCLUDED) {
-            // setAutoFlushCommands/flushCommands are excluded defensively although never present on the sync API
-            if (KnownApiDeviations.NOT_ON_SYNC_API.contains(key)) {
-                continue;
-            }
-            softly.assertThat(matched).as("stale NODE_SELECTION_EXCLUDED entry '%s'", key).contains(key);
-        }
         softly.assertAll();
     }
 

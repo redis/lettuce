@@ -20,22 +20,21 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.async.NodeSelectionAsyncCommands;
-import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
-import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelectionCommands;
-import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 
 /**
  * Verify that the aggregate command interfaces extend the per-group interface of every command group they are supposed to
  * cover, so that a newly registered command group cannot be forgotten on the umbrella interfaces — and that the methods
- * declared directly on the aggregates ({@code auth}, {@code select}, the {@code CLUSTER} commands, …) stay in lockstep across
- * the sync, async and reactive flavors.
+ * declared directly on the aggregates ({@code auth}, {@code select}, the {@code CLUSTER} commands, the PubSub subscriptions, …)
+ * stay in lockstep across the sync, async and reactive flavors.
  * <p>
  * The Kotlin coroutine aggregates are covered by {@code KotlinCoroutinesConsistencyUnitTests} so that these Java test sources
  * stay free of compile-time references to Kotlin types.
+ *
+ * @see AggregateInterfaces
  */
 @Tag(UNIT_TEST)
 class AggregateInterfaceConsistencyUnitTests {
@@ -95,31 +94,28 @@ class AggregateInterfaceConsistencyUnitTests {
                 .as("%s must extend %s", aggregate.getSimpleName(), groupInterface.getSimpleName()).isTrue();
     }
 
-    /**
-     * The sync/async/reactive triples of the aggregate interfaces that declare command methods of their own.
-     */
-    private static final Class<?>[][] AGGREGATE_FLAVORS = {
-            { RedisCommands.class, RedisAsyncCommands.class, RedisReactiveCommands.class },
-            { RedisClusterCommands.class, RedisClusterAsyncCommands.class, RedisClusterReactiveCommands.class },
-            { RedisAdvancedClusterCommands.class, RedisAdvancedClusterAsyncCommands.class,
-                    RedisAdvancedClusterReactiveCommands.class } };
-
     @Test
     void aggregateDeclaredMethodsExistOnAsyncAndReactiveAggregates() {
 
         SoftAssertions softly = new SoftAssertions();
 
-        for (Class<?>[] flavors : AGGREGATE_FLAVORS) {
-            Class<?> sync = flavors[0];
+        for (AggregateInterfaces aggregate : AggregateInterfaces.values()) {
+            Class<?> sync = aggregate.sync();
 
             for (Method syncMethod : TypeSignatures.apiMethods(sync)) {
 
-                assertCounterpart(softly, sync, syncMethod, flavors[1],
-                        TypeSignatures.expectedAsyncReturnType(syncMethod, sync));
+                boolean syncDeprecated = syncMethod.isAnnotationPresent(Deprecated.class);
+
+                assertCounterpart(softly, sync, syncMethod, aggregate.async(),
+                        TypeSignatures.expectedAsyncReturnType(syncMethod, sync), syncDeprecated);
 
                 if (!KnownApiDeviations.contains(KnownApiDeviations.NOT_ON_REACTIVE_AGGREGATE, syncMethod, sync)) {
-                    assertCounterpart(softly, sync, syncMethod, flavors[2],
-                            TypeSignatures.expectedReactiveReturnType(syncMethod, sync));
+                    // as on the per-group interfaces, streaming-channel variants are deprecated on the reactive API in
+                    // favor of consuming the Publisher
+                    boolean reactiveDeprecated = syncDeprecated || TypeSignatures.isStreamingChannelMethod(syncMethod)
+                            || KnownApiDeviations.contains(KnownApiDeviations.REACTIVE_EXTRA_DEPRECATED, syncMethod, sync);
+                    assertCounterpart(softly, sync, syncMethod, aggregate.reactive(),
+                            TypeSignatures.expectedReactiveReturnType(syncMethod, sync), reactiveDeprecated);
                 }
             }
         }
@@ -132,10 +128,10 @@ class AggregateInterfaceConsistencyUnitTests {
 
         SoftAssertions softly = new SoftAssertions();
 
-        for (Class<?>[] flavors : AGGREGATE_FLAVORS) {
-            Class<?> sync = flavors[0];
+        for (AggregateInterfaces aggregate : AggregateInterfaces.values()) {
+            Class<?> sync = aggregate.sync();
 
-            for (Class<?> flavor : new Class<?>[] { flavors[1], flavors[2] }) {
+            for (Class<?> flavor : new Class<?>[] { aggregate.async(), aggregate.reactive() }) {
                 for (Method method : TypeSignatures.apiMethods(flavor)) {
                     if (KnownApiDeviations.contains(KnownApiDeviations.NOT_ON_SYNC_API, method, sync)
                             || KnownApiDeviations.contains(KnownApiDeviations.REACTIVE_ONLY, method, sync)) {
@@ -152,7 +148,7 @@ class AggregateInterfaceConsistencyUnitTests {
     }
 
     private void assertCounterpart(SoftAssertions softly, Class<?> sync, Method syncMethod, Class<?> target,
-            String expectedReturnType) {
+            String expectedReturnType, boolean expectDeprecated) {
 
         Method counterpart = TypeSignatures.findCounterpart(target, syncMethod);
         if (counterpart == null) {
@@ -165,8 +161,7 @@ class AggregateInterfaceConsistencyUnitTests {
                 .isEqualTo(TypeSignatures.parameterSignature(syncMethod));
 
         softly.assertThat(counterpart.isAnnotationPresent(Deprecated.class))
-                .as("@Deprecated parity of %s", TypeSignatures.describe(target, counterpart))
-                .isEqualTo(syncMethod.isAnnotationPresent(Deprecated.class));
+                .as("@Deprecated parity of %s", TypeSignatures.describe(target, counterpart)).isEqualTo(expectDeprecated);
 
         if (KnownApiDeviations.contains(KnownApiDeviations.AGGREGATE_FLAVOR_SPECIFIC_RETURN, syncMethod, sync)) {
             return;

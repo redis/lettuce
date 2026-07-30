@@ -40,6 +40,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
      *
      * @param timeout the timeout in seconds.
+     * @param args the command args.
      * @param keys the keys.
      * @return ScoredValue&lt;V&gt; the removed element or {@link KeyValue#empty()}.
      * @since 6.3
@@ -62,6 +63,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
      *
      * @param timeout the timeout in seconds.
+     * @param args the command args.
      * @param keys the keys.
      * @return ScoredValue&lt;V&gt; the removed element or {@link KeyValue#empty()}.
      * @since 6.3
@@ -421,6 +423,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
     /**
      * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
      *
+     * @param args the command args.
      * @param keys the keys.
      * @return ScoredValue&lt;V&gt; the removed element or {@link KeyValue#empty()}.
      * @since 6.3

@@ -191,6 +191,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
     /**
      * Get the list of client connections which are filtered by {@code clientListArgs}.
      *
+     * @param clientListArgs the args to filter the client list.
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
      *         each line is composed of a succession of property=value fields separated by a space character.
      * @since 6.3

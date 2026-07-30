@@ -319,6 +319,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every key.
      * @param key the key.
      * @return StreamScanCursor scan cursor.
+     * @since 6.4
      * @deprecated since 6.4 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #hscanNovalues}.
      */
@@ -345,6 +346,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @since 6.4
      * @deprecated since 6.4 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #hscanNovalues}.
      */
@@ -373,6 +375,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
+     * @since 6.4
      * @deprecated since 6.4 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #hscanNovalues}.
      */
@@ -399,6 +402,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return StreamScanCursor scan cursor.
+     * @since 6.4
      * @deprecated since 6.4 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #hscanNovalues}.
      */

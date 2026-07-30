@@ -121,6 +121,7 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Get the list of client connections which are filtered by {@code clientListArgs}.
      *
+     * @param clientListArgs the args to filter the client list.
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
      *         each line is composed of a succession of property=value fields separated by a space character.
      * @since 6.3
@@ -468,6 +469,7 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Reports the number of bytes that a key and its value require to be stored in RAM.
      *
+     * @param key the key.
      * @return memory usage in bytes.
      * @since 5.2
      */
@@ -502,6 +504,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * Synchronously save the dataset to disk and then shut down the server.
      *
      * @param save {@code true} force save operation.
+     * @return Mono&lt;Void&gt; the server does not reply before shutting down.
      */
     Mono<Void> shutdown(boolean save);
 
@@ -509,6 +512,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * Synchronously save the dataset to disk and then shutdown the server.
      *
      * @param args
+     * @return Mono&lt;Void&gt; the server does not reply before shutting down.
      * @since 6.2
      */
     Mono<Void> shutdown(ShutdownArgs args);

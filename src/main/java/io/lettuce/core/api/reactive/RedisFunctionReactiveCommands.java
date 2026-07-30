@@ -93,6 +93,7 @@ public interface RedisFunctionReactiveCommands<K, V> {
     /**
      * You can restore the dumped payload of loaded libraries.
      *
+     * @param dump the serialized payload.
      * @return Simple string reply
      */
     Mono<String> functionRestore(byte[] dump);
@@ -100,6 +101,8 @@ public interface RedisFunctionReactiveCommands<K, V> {
     /**
      * You can restore the dumped payload of loaded libraries.
      *
+     * @param dump the serialized payload.
+     * @param mode the restore mode.
      * @return Simple string reply
      */
     Mono<String> functionRestore(byte[] dump, FunctionRestoreMode mode);
