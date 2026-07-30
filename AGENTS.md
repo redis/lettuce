@@ -181,6 +181,6 @@ before doing that type of work.
 
 | Skill | When to use |
 |-------|-------------|
-| `adding-a-redis-command` | Add a new Redis command (or overload) end-to-end: all API interface flavors, builder, async/reactive impls, Kotlin, tests |
+| `extend-commands-api` | Add or extend a Redis command (or overload) end-to-end, evidence-first: HLD + server PR + live redis-cli verification, plan-mode approval, then all API interface flavors, builder, async/reactive/Kotlin impls, and tests |
 | `writing-javadoc` | Write or fix Javadoc for public API following Lettuce house conventions |
 | `draft-pr-description` | Generate a GitHub PR title and description from the diff between two local branches |
