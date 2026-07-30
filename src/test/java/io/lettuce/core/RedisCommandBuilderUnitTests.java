@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -283,6 +284,83 @@ class RedisCommandBuilderUnitTests {
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
                 "*8\r\n" + "$6\r\n" + "HGETEX\r\n" + "$4\r\n" + "hKey\r\n" + "$2\r\n" + "EX\r\n" + "$2\r\n" + "10\r\n"
                         + "$7\r\n" + "PERSIST\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "one\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSunioncardTwoKeys() {
+
+        Command<String, String, ?> command = sut.sunioncard(MY_KEY, "hKey2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$10\r\n" + "SUNIONCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSunioncardList() {
+
+        Command<String, String, ?> command = sut.sunioncard(Arrays.asList(MY_KEY, "hKey2", "hKey3"));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$10\r\n" + "SUNIONCARD\r\n" + "$1\r\n" + "3\r\n"
+                + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n" + "$5\r\n" + "hKey3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSunioncardWithArgs() {
+
+        Command<String, String, ?> command = sut.sunioncard(MY_KEY, "hKey2", SUnionCardArgs.Builder.approx().limit(1000));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$10\r\n" + "SUNIONCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "hKey\r\n" + "$5\r\n"
+                        + "hKey2\r\n" + "$6\r\n" + "APPROX\r\n" + "$5\r\n" + "LIMIT\r\n" + "$4\r\n" + "1000\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSdiffcardTwoKeys() {
+
+        Command<String, String, ?> command = sut.sdiffcard(MY_KEY, "hKey2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$9\r\n" + "SDIFFCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSdiffcardList() {
+
+        Command<String, String, ?> command = sut.sdiffcard(Arrays.asList(MY_KEY, "hKey2", "hKey3"));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$9\r\n" + "SDIFFCARD\r\n" + "$1\r\n" + "3\r\n"
+                + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n" + "$5\r\n" + "hKey3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSdiffcardWithArgs() {
+
+        Command<String, String, ?> command = sut.sdiffcard(MY_KEY, "hKey2", SDiffCardArgs.Builder.limit(100));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$9\r\n" + "SDIFFCARD\r\n" + "$1\r\n" + "2\r\n"
+                + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n" + "$5\r\n" + "LIMIT\r\n" + "$3\r\n" + "100\r\n");
+    }
+
+    @Test
+    void shouldRejectSunioncardWithoutKeys() {
+        assertThatThrownBy(() -> sut.sunioncard(Collections.emptyList())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sdiffcard(Collections.emptyList())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sunioncard(Collections.emptyList(), SUnionCardArgs.Builder.approx()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sdiffcard(Collections.emptyList(), SDiffCardArgs.Builder.limit(1)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

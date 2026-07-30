@@ -2821,6 +2821,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> sdiffcard(K key1, K key2) {
+        return dispatch(commandBuilder.sdiffcard(key1, key2));
+    }
+
+    @Override
+    public RedisFuture<Long> sdiffcard(List<K> keys) {
+        return dispatch(commandBuilder.sdiffcard(keys));
+    }
+
+    @Override
+    public RedisFuture<Long> sdiffcard(K key1, K key2, SDiffCardArgs sdiffCardArgs) {
+        return dispatch(commandBuilder.sdiffcard(key1, key2, sdiffCardArgs));
+    }
+
+    @Override
+    public RedisFuture<Long> sdiffcard(List<K> keys, SDiffCardArgs sdiffCardArgs) {
+        return dispatch(commandBuilder.sdiffcard(keys, sdiffCardArgs));
+    }
+
+    @Override
     public RedisFuture<Long> sdiffstore(K destination, K... keys) {
         return dispatch(commandBuilder.sdiffstore(destination, keys));
     }
@@ -3110,6 +3130,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Long> sunion(ValueStreamingChannel<V> channel, K... keys) {
         return dispatch(commandBuilder.sunion(channel, keys));
+    }
+
+    @Override
+    public RedisFuture<Long> sunioncard(K key1, K key2) {
+        return dispatch(commandBuilder.sunioncard(key1, key2));
+    }
+
+    @Override
+    public RedisFuture<Long> sunioncard(List<K> keys) {
+        return dispatch(commandBuilder.sunioncard(keys));
+    }
+
+    @Override
+    public RedisFuture<Long> sunioncard(K key1, K key2, SUnionCardArgs sunionCardArgs) {
+        return dispatch(commandBuilder.sunioncard(key1, key2, sunionCardArgs));
+    }
+
+    @Override
+    public RedisFuture<Long> sunioncard(List<K> keys, SUnionCardArgs sunionCardArgs) {
+        return dispatch(commandBuilder.sunioncard(keys, sunionCardArgs));
     }
 
     @Override
