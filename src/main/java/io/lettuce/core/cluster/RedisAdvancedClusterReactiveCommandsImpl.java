@@ -685,7 +685,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Flux<V> ftAliaslist(String index) {
+    public Flux<String> ftAliaslist(String index) {
         return routeKeylessMany(() -> super.ftAliaslist(index), conn -> conn.ftAliaslist(index), CommandType.FT_ALIASLIST);
     }
 

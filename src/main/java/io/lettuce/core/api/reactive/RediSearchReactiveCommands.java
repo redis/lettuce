@@ -251,7 +251,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftAliasdel(String)
      */
     @Experimental
-    Flux<V> ftAliaslist(String index);
+    Flux<String> ftAliaslist(String index);
 
     /**
      * Add new attributes to an existing search index.

@@ -249,7 +249,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftAliasdel(String)
      */
     @Experimental
-    List<V> ftAliaslist(String index);
+    List<String> ftAliaslist(String index);
 
     /**
      * Add new attributes to an existing search index.

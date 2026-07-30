@@ -249,7 +249,7 @@ public interface NodeSelectionSearchCommands<K, V> {
      * @see #ftAliasdel(String)
      */
     @Experimental
-    Executions<List<V>> ftAliaslist(String index);
+    Executions<List<String>> ftAliaslist(String index);
 
     /**
      * Add new attributes to an existing search index.

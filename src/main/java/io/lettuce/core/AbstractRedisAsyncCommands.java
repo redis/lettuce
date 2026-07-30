@@ -1709,7 +1709,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> ftAliaslist(String index) {
+    public RedisFuture<List<String>> ftAliaslist(String index) {
         return dispatch(searchCommandBuilder.ftAliaslist(index));
     }
 

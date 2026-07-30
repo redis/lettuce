@@ -249,7 +249,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftAliasdel(String)
      */
     @Experimental
-    RedisFuture<List<V>> ftAliaslist(String index);
+    RedisFuture<List<String>> ftAliaslist(String index);
 
     /**
      * Add new attributes to an existing search index.

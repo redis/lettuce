@@ -249,7 +249,7 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * @see #ftAliasdel(String)
      */
     @Experimental
-    AsyncExecutions<List<V>> ftAliaslist(String index);
+    AsyncExecutions<List<String>> ftAliaslist(String index);
 
     /**
      * Add new attributes to an existing search index.

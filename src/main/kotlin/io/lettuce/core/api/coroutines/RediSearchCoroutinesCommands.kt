@@ -250,7 +250,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftAliasdel(String)
      */
     @Experimental
-    suspend fun ftAliaslist(index: String): List<V>
+    suspend fun ftAliaslist(index: String): List<String>
 
     /**
      * Add new attributes to an existing search index.
@@ -1265,4 +1265,3 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
     suspend fun ftHybrid(index: String, args: HybridArgs<K, V>): HybridReply<K, V>?
 
 }
-

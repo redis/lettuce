@@ -1795,7 +1795,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> ftAliaslist(String index) {
+    public Flux<String> ftAliaslist(String index) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftAliaslist(index));
     }
 
