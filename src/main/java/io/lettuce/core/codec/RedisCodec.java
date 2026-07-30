@@ -7,6 +7,18 @@ import java.nio.ByteBuffer;
  *
  * The methods are called by multiple threads and must be thread-safe.
  *
+ * <h3>Type semantics</h3>
+ * <p>
+ * {@code K} represents a Redis key (or a hash field of such a key) routed through {@link #encodeKey(Object)} /
+ * {@link #decodeKey(ByteBuffer)}.
+ * </p>
+ * <p>
+ * {@code V} represents a value that is stored under a Redis key (or under a hash field of such a key) and that the server
+ * returns as opaque bytes; values round-trip through {@link #encodeValue(Object)} / {@link #decodeValue(ByteBuffer)}. Protocol
+ * literals (command keywords, DSL expressions, index/dictionary/synonym names, module/expander identifiers, and other metadata
+ * interpreted by the server) are not values in this sense and should not be routed through {@code V}.
+ * </p>
+ *
  * @param <K> Key type.
  * @param <V> Value type.
  *

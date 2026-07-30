@@ -25,9 +25,7 @@ import io.lettuce.core.search.SynonymMapParser;
 @Tag(UNIT_TEST)
 class SynonymMapParserUnitTests {
 
-    private final StringCodec codec = StringCodec.UTF8;
-
-    private final SynonymMapParser<String, String> parser = new SynonymMapParser<>(codec);
+    private final SynonymMapParser parser = new SynonymMapParser();
 
     @Test
     void shouldParseResp2Format() {
