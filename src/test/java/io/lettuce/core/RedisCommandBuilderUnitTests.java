@@ -885,4 +885,55 @@ class RedisCommandBuilderUnitTests {
                 .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$3\r\n" + "OFF\r\n");
     }
 
+    @Test
+    void shouldCorrectlyConstructLmovem() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination", LMovemArgs.Builder.leftRight());
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovemWithCount() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination",
+                LMovemArgs.Builder.leftLeft().count(2, LMovemArgs.Ordering.OBO));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT COUNT 2 OBO");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovemWithExactly() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination",
+                LMovemArgs.Builder.rightLeft().exactly(3, LMovemArgs.Ordering.BULK));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> RIGHT LEFT EXACTLY 3 BULK");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovem() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination",
+                BLMovemArgs.Builder.leftLeft().timeout(10L).exactly(3, LMovemArgs.Ordering.BULK));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT 10 EXACTLY 3 BULK");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovemWithDoubleTimeout() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight().timeout(0.5));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0.5");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovemWithoutTimeoutDefaultingToZero() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight());
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0");
+    }
+
 }

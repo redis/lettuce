@@ -55,6 +55,9 @@ internal class RedisListCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
         timeout: Double
     ): V? = ops.blmove(source, destination, args, timeout).awaitFirstOrNull()
 
+    override suspend fun blmovem(source: K, destination: K, args: BLMovemArgs): List<V> =
+        ops.blmovem(source, destination, args).asFlow().toList()
+
     override suspend fun blmpop(
         timeout: Long,
         args: LMPopArgs,
@@ -91,6 +94,9 @@ internal class RedisListCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun lmove(source: K, destination: K, args: LMoveArgs): V? =
         ops.lmove(source, destination, args).awaitFirstOrNull()
+
+    override suspend fun lmovem(source: K, destination: K, args: LMovemArgs): List<V> =
+        ops.lmovem(source, destination, args).asFlow().toList()
 
     override suspend fun lmpop(args: LMPopArgs, vararg keys: K): KeyValue<K, List<V>>? =
         ops.lmpop(args, *keys).awaitFirstOrNull()
