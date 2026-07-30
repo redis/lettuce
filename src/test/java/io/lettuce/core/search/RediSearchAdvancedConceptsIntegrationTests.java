@@ -857,6 +857,9 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("normal:3", "title", "Python Scripting");
         redis.hset("normal:4", "title", "Programming Languages");
 
+        // Let the notification-driven indexer catch up before querying
+        SearchTestSupport.awaitIndexReady(redis, "normal-idx", 4);
+
         // Basic search should work
         SearchReply<String, String> results = redis.ftSearch("normal-idx", "@title:Java*");
         assertThat(results.getCount()).isEqualTo(2); // JavaScript and Java
@@ -878,6 +881,9 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("suffix:4", "title", "Programming Languages");
         redis.hset("suffix:5", "title", "Advanced JavaScript");
         redis.hset("suffix:6", "title", "Script Writing");
+
+        // Let the notification-driven indexer catch up before querying
+        SearchTestSupport.awaitIndexReady(redis, "suffix-idx", 6);
 
         // Test prefix matching with suffix trie
         results = redis.ftSearch("suffix-idx", "@title:Java*");
@@ -912,6 +918,9 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("product:4", "product_name", "iPad Air");
         redis.hset("product:5", "product_name", "MacBook Pro");
         redis.hset("product:6", "product_name", "MacBook Air");
+
+        // Let the notification-driven indexer catch up before querying
+        SearchTestSupport.awaitIndexReady(redis, "autocomplete-idx", 6);
 
         // Autocomplete for "iP" should find iPhone and iPad products
         results = redis.ftSearch("autocomplete-idx", "@product_name:iP*");
@@ -949,6 +958,9 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("perf:3", "description", "Database performance tuning and monitoring");
         redis.hset("perf:4", "description", "Web application performance best practices");
         redis.hset("perf:5", "description", "Network performance analysis and troubleshooting");
+
+        // Let the notification-driven indexer catch up before querying
+        SearchTestSupport.awaitIndexReady(redis, "performance-idx", 5);
 
         // Complex wildcard queries that benefit from suffix trie
         results = redis.ftSearch("performance-idx", "@description:*perform*");
