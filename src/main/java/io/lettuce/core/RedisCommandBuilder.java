@@ -2747,6 +2747,20 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SDIFF, new ValueStreamingOutput<>(codec, channel), args);
     }
 
+    Command<K, V, Long> sdiffcard(K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sdiffcard(long limit, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys).add(LIMIT).add(limit);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, Long> sdiffstore(K destination, K... keys) {
         notEmpty(keys);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
@@ -3161,6 +3175,22 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys);
         return createCommand(SUNION, new ValueStreamingOutput<>(codec, channel), args);
+    }
+
+    Command<K, V, Long> sunioncard(K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sunioncard(SUnionCardArgs sunionCardArgs, K... keys) {
+        notEmpty(keys);
+        LettuceAssert.notNull(sunionCardArgs, "SUnionCardArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys);
+        sunionCardArgs.build(args);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, Long> sunionstore(K destination, K... keys) {

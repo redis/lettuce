@@ -21,6 +21,7 @@ package io.lettuce.core.api.reactive;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.SUnionCardArgs;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ScanCursor;
 import io.lettuce.core.StreamScanCursor;
@@ -75,6 +76,29 @@ public interface RedisSetReactiveCommands<K, V> {
      */
     @Deprecated
     Mono<Long> sdiff(ValueStreamingChannel<V> channel, K... keys);
+
+    /**
+     * This command works exactly like {@link #sdiff(java.lang.Object[])} but instead of returning the result set, it returns
+     * just the cardinality of the result.
+     *
+     * @param keys the keys; the first key is the minuend set, the remaining keys are subtrahend sets.
+     * @return The cardinality of the set which would result from the difference between the first set and all successive sets.
+     * @since 7.7
+     */
+    Mono<Long> sdiffcard(K... keys);
+
+    /**
+     * This command works exactly like {@link #sdiff(java.lang.Object[])} but instead of returning the result set, it returns
+     * just the cardinality of the result.
+     *
+     * @param limit if the difference cardinality reaches limit partway through the computation, the algorithm will exit and
+     *        yield limit as the cardinality; {@code 0} means no limit.
+     * @param keys the keys; the first key is the minuend set, the remaining keys are subtrahend sets.
+     * @return The cardinality of the set which would result from the difference between the first set and all successive sets,
+     *         capped at {@code limit}.
+     * @since 7.7
+     */
+    Mono<Long> sdiffcard(long limit, K... keys);
 
     /**
      * Subtract multiple sets and store the resulting set in a key.
@@ -269,6 +293,27 @@ public interface RedisSetReactiveCommands<K, V> {
      */
     @Deprecated
     Mono<Long> sunion(ValueStreamingChannel<V> channel, K... keys);
+
+    /**
+     * This command works exactly like {@link #sunion(java.lang.Object[])} but instead of returning the result set, it returns
+     * just the cardinality of the result.
+     *
+     * @param keys the keys.
+     * @return The cardinality of the set which would result from the union of all the given sets.
+     * @since 7.7
+     */
+    Mono<Long> sunioncard(K... keys);
+
+    /**
+     * This command works exactly like {@link #sunion(java.lang.Object[])} but instead of returning the result set, it returns
+     * just the cardinality of the result, optionally approximated ({@code APPROX}) or capped ({@code LIMIT}).
+     *
+     * @param args the {@link SUnionCardArgs}, must not be {@code null}.
+     * @param keys the keys.
+     * @return The cardinality of the set which would result from the union of all the given sets, subject to {@code args}.
+     * @since 7.7
+     */
+    Mono<Long> sunioncard(SUnionCardArgs args, K... keys);
 
     /**
      * Add multiple sets and store the resulting set in a key.

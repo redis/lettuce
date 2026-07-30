@@ -21,6 +21,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.SUnionCardArgs
 import io.lettuce.core.ScanArgs
 import io.lettuce.core.ScanCursor
 import io.lettuce.core.ValueScanCursor
@@ -48,6 +49,11 @@ internal class RedisSetCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override suspend fun scard(key: K): Long? = ops.scard(key).awaitFirstOrNull()
 
     override fun sdiff(vararg keys: K): Flow<V> = ops.sdiff(*keys).asFlow()
+
+    override suspend fun sdiffcard(vararg keys: K): Long? = ops.sdiffcard(*keys).awaitFirstOrNull()
+
+    override suspend fun sdiffcard(limit: Long, vararg keys: K): Long? =
+        ops.sdiffcard(limit, *keys).awaitFirstOrNull()
 
     override suspend fun sdiffstore(destination: K, vararg keys: K): Long? = ops.sdiffstore(destination, *keys).awaitFirstOrNull()
 
@@ -79,6 +85,11 @@ internal class RedisSetCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override suspend fun srem(key: K, vararg members: V): Long? = ops.srem(key, *members).awaitFirstOrNull()
 
     override fun sunion(vararg keys: K): Flow<V> = ops.sunion(*keys).asFlow()
+
+    override suspend fun sunioncard(vararg keys: K): Long? = ops.sunioncard(*keys).awaitFirstOrNull()
+
+    override suspend fun sunioncard(args: SUnionCardArgs, vararg keys: K): Long? =
+        ops.sunioncard(args, *keys).awaitFirstOrNull()
 
     override suspend fun sunionstore(destination: K, vararg keys: K): Long? = ops.sunionstore(destination, *keys).awaitFirstOrNull()
 

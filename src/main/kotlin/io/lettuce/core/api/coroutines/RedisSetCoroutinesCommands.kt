@@ -21,6 +21,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.SUnionCardArgs
 import io.lettuce.core.ScanArgs
 import io.lettuce.core.ScanCursor
 import io.lettuce.core.ValueScanCursor
@@ -63,6 +64,30 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @return Set<V> array-reply list with members of the resulting set.
      */
     fun sdiff(vararg keys: K): Flow<V>
+
+    /**
+     * This command works exactly like {@link #sdiff(Any[])} but instead of returning the result set, it returns
+     * just the cardinality of the result.
+     *
+     * @param keys the keys; the first key is the minuend set, the remaining keys are subtrahend sets.
+     * @return The cardinality of the set which would result from the difference between the first set and all successive
+     *         sets.
+     * @since 7.7
+     */
+    suspend fun sdiffcard(vararg keys: K): Long?
+
+    /**
+     * This command works exactly like {@link #sdiff(Any[])} but instead of returning the result set, it returns
+     * just the cardinality of the result.
+     *
+     * @param limit if the difference cardinality reaches limit partway through the computation, the algorithm will exit and
+     *        yield limit as the cardinality; `0` means no limit.
+     * @param keys the keys; the first key is the minuend set, the remaining keys are subtrahend sets.
+     * @return The cardinality of the set which would result from the difference between the first set and all successive
+     *         sets, capped at `limit`.
+     * @since 7.7
+     */
+    suspend fun sdiffcard(limit: Long, vararg keys: K): Long?
 
     /**
      * Subtract multiple sets and store the resulting set in a key.
@@ -208,6 +233,27 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @return Set<V> array-reply list with members of the resulting set.
      */
     fun sunion(vararg keys: K): Flow<V>
+
+    /**
+     * This command works exactly like {@link #sunion(Any[])} but instead of returning the result set, it returns
+     * just the cardinality of the result.
+     *
+     * @param keys the keys.
+     * @return The cardinality of the set which would result from the union of all the given sets.
+     * @since 7.7
+     */
+    suspend fun sunioncard(vararg keys: K): Long?
+
+    /**
+     * This command works exactly like {@link #sunion(Any[])} but instead of returning the result set, it returns
+     * just the cardinality of the result, optionally approximated (`APPROX`) or capped (`LIMIT`).
+     *
+     * @param args the [SUnionCardArgs], must not be `null`.
+     * @param keys the keys.
+     * @return The cardinality of the set which would result from the union of all the given sets, subject to `args`.
+     * @since 7.7
+     */
+    suspend fun sunioncard(args: SUnionCardArgs, vararg keys: K): Long?
 
     /**
      * Add multiple sets and store the resulting set in a key.

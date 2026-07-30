@@ -100,6 +100,27 @@ public class SetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("SDIFFCARD") // Redis 8.10
+    void sdiffcard() {
+        setupSet();
+        assertThat(redis.sdiffcard("key1", "key2", "key3")).isEqualTo(2);
+        assertThat(redis.sdiffcard(1, "key1", "key2", "key3")).isEqualTo(1);
+        assertThat(redis.sdiffcard(0, "key1", "key2", "key3")).isEqualTo(2);
+        assertThat(redis.sdiffcard("key1")).isEqualTo(redis.scard("key1"));
+        assertThat(redis.sdiffcard("key1", "missing")).isEqualTo(4);
+        assertThat(redis.sdiffcard("missing", "key1")).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("SDIFFCARD") // Redis 8.10
+    void sdiffcardWrongType() {
+        setupSet();
+        redis.set("stringKey", "value");
+        assertThatThrownBy(() -> redis.sdiffcard("key1", "stringKey")).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("WRONGTYPE");
+    }
+
+    @Test
     void sdiffstore() {
         setupSet();
         assertThat(redis.sdiffstore("newset", "key1", "key2", "key3")).isEqualTo(2);
@@ -269,6 +290,30 @@ public class SetCommandIntegrationTests extends TestSupport {
         assertThat(count.longValue()).isEqualTo(5);
 
         assertThat(new TreeSet<>(adapter.getList())).isEqualTo(new TreeSet<>(list("c", "a", "b", "e", "d")));
+    }
+
+    @Test
+    @EnabledOnCommand("SUNIONCARD") // Redis 8.10
+    void sunioncard() {
+        setupSet();
+        assertThat(redis.sunioncard("key1", "key2", "key3")).isEqualTo(5);
+        assertThat(redis.sunioncard("key1", "missing")).isEqualTo(4);
+    }
+
+    @Test
+    @EnabledOnCommand("SUNIONCARD") // Redis 8.10
+    void sunioncardWithArgs() {
+        setupSet();
+        assertThat(redis.sunioncard(SUnionCardArgs.Builder.limit(3), "key1", "key2", "key3")).isEqualTo(3);
+        assertThat(redis.sunioncard(SUnionCardArgs.Builder.limit(0), "key1", "key2", "key3")).isEqualTo(5);
+        assertThat(redis.sunioncard(SUnionCardArgs.Builder.approx(), "key1", "key2", "key3")).isEqualTo(5);
+        assertThat(redis.sunioncard(SUnionCardArgs.Builder.approx().limit(3), "key1", "key2", "key3")).isLessThanOrEqualTo(3);
+    }
+
+    @Test
+    @EnabledOnCommand("SUNIONCARD") // Redis 8.10
+    void sunioncardEmpty() {
+        assertThatThrownBy(() -> redis.sunioncard()).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

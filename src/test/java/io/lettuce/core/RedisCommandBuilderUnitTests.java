@@ -837,4 +837,64 @@ class RedisCommandBuilderUnitTests {
                 .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$3\r\n" + "OFF\r\n");
     }
 
+    @Test
+    void shouldCorrectlyConstructSdiffcard() {
+
+        Command<String, String, ?> command = sut.sdiffcard("key1", "key2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$9\r\n" + "SDIFFCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSdiffcardWithLimit() {
+
+        Command<String, String, ?> command = sut.sdiffcard(1, "key1", "key2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$9\r\n" + "SDIFFCARD\r\n" + "$1\r\n" + "2\r\n"
+                + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n" + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "1\r\n");
+    }
+
+    @Test
+    void shouldFailConstructingSdiffcardWithoutKeys() {
+        assertThatThrownBy(() -> sut.sdiffcard()).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructSunioncard() {
+
+        Command<String, String, ?> command = sut.sunioncard("key1", "key2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$10\r\n" + "SUNIONCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSunioncardWithArgs() {
+
+        Command<String, String, ?> command = sut.sunioncard(SUnionCardArgs.Builder.approx().limit(3), "key1", "key2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$10\r\n" + "SUNIONCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n"
+                        + "key2\r\n" + "$6\r\n" + "APPROX\r\n" + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "3\r\n");
+    }
+
+    @Test
+    void shouldFailConstructingSunioncardWithNullArgs() {
+        assertThatThrownBy(() -> sut.sunioncard((SUnionCardArgs) null, "key1")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldFailConstructingSunioncardWithoutKeys() {
+        assertThatThrownBy(() -> sut.sunioncard()).isInstanceOf(IllegalArgumentException.class);
+    }
+
 }

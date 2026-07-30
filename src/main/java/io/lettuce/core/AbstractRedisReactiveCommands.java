@@ -2914,6 +2914,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Long> sdiffcard(K... keys) {
+        return createMono(() -> commandBuilder.sdiffcard(keys));
+    }
+
+    @Override
+    public Mono<Long> sdiffcard(long limit, K... keys) {
+        return createMono(() -> commandBuilder.sdiffcard(limit, keys));
+    }
+
+    @Override
     public Mono<Long> sdiffstore(K destination, K... keys) {
         return createMono(() -> commandBuilder.sdiffstore(destination, keys));
     }
@@ -3202,6 +3212,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Long> sunion(ValueStreamingChannel<V> channel, K... keys) {
         return createMono(() -> commandBuilder.sunion(channel, keys));
+    }
+
+    @Override
+    public Mono<Long> sunioncard(K... keys) {
+        return createMono(() -> commandBuilder.sunioncard(keys));
+    }
+
+    @Override
+    public Mono<Long> sunioncard(SUnionCardArgs args, K... keys) {
+        return createMono(() -> commandBuilder.sunioncard(args, keys));
     }
 
     @Override

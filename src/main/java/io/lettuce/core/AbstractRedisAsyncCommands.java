@@ -2806,6 +2806,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> sdiffcard(K... keys) {
+        return dispatch(commandBuilder.sdiffcard(keys));
+    }
+
+    @Override
+    public RedisFuture<Long> sdiffcard(long limit, K... keys) {
+        return dispatch(commandBuilder.sdiffcard(limit, keys));
+    }
+
+    @Override
     public RedisFuture<Long> sdiffstore(K destination, K... keys) {
         return dispatch(commandBuilder.sdiffstore(destination, keys));
     }
@@ -3095,6 +3105,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Long> sunion(ValueStreamingChannel<V> channel, K... keys) {
         return dispatch(commandBuilder.sunion(channel, keys));
+    }
+
+    @Override
+    public RedisFuture<Long> sunioncard(K... keys) {
+        return dispatch(commandBuilder.sunioncard(keys));
+    }
+
+    @Override
+    public RedisFuture<Long> sunioncard(SUnionCardArgs args, K... keys) {
+        return dispatch(commandBuilder.sunioncard(args, keys));
     }
 
     @Override
