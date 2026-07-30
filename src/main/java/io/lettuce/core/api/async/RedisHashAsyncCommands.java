@@ -19,9 +19,12 @@
  */
 package io.lettuce.core.api.async;
 
+import io.lettuce.core.annotations.Experimental;
+
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.HGetExArgs;
 import io.lettuce.core.HSetExArgs;
+import io.lettuce.core.HashImport;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MapScanCursor;
@@ -859,5 +862,23 @@ public interface RedisHashAsyncCommands<K, V> {
      * @since 6.4
      */
     RedisFuture<List<Long>> hpttl(K key, K... fields);
+
+    /**
+     * Create the hash stored at {@code key} from {@code fieldset}, supplying only the values positionally paired to the
+     * fieldset's field names. The resulting key is an ordinary hash. The number of {@code values} must equal
+     * {@link HashImport#size() fieldset.size()}.
+     * <p>
+     * The fieldset's shared field names are declared to the server automatically on first use per physical connection (and
+     * re-declared transparently across reconnects, new cluster nodes, and pooled connections), so only values travel on the
+     * wire for each import. {@link HashImport#close() Close} the fieldset when done to release the server-side state.
+     *
+     * @param key the key of the hash to create.
+     * @param fieldset the fieldset describing the field names, must not be {@code null} and must not be closed.
+     * @param values the field values in fieldset order, exactly {@link HashImport#size()} of them.
+     * @return simple-string-reply {@code OK} if the hash was created.
+     * @since 7.7
+     */
+    @Experimental
+    RedisFuture<String> himportSet(K key, HashImport<K> fieldset, V... values);
 
 }

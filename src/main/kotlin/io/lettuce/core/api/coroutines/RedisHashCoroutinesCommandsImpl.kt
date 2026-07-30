@@ -242,5 +242,8 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun hpttl(key: K, vararg fields: K): List<Long> =
         ops.hpttl(key, *fields).asFlow().toList()
+
+    override suspend fun himportSet(key: K, fieldset: HashImport<K>, vararg values: V): String? =
+        ops.himportSet(key, fieldset, *values).awaitFirstOrNull()
 }
 
