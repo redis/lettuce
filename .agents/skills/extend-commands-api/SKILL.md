@@ -143,6 +143,13 @@ Do all of the following before writing any plan or code:
    | `838a4d39a` (HOTKEYS #3638) | Map-shaped reply via `ComplexOutput` + a `*ReplyParser`, cluster interface additions, full integration overload set, `.env` image bump |
    | `6567f2d5e` (RediSearch #3375) | Whole new command area: own `Redis<Area>CommandBuilder`, `arguments`/reply-parser packages |
 
+   **Conventions beat precedent.** Traced reference commands can predate the
+   current conventions; when the reference code conflicts with a written rule in
+   this skill or the linked docs, the rule wins. Example: `sintercard(K...)`
+   ships without a single-key overload because it predates the
+   one-overload-per-varargs rule — a new command mirroring it must still add the
+   single-argument overload.
+
 7. **Determine the `@since` version** — recipe owned by
    [.agents/docs/javadoc.md](../../../.agents/docs/javadoc.md):
    ```bash
@@ -169,6 +176,11 @@ gating annotations. The plan must contain:
   from it and it is costly to change once mirrored. Plan approval is the
   maintainer's sign-off on that contract — if the signatures must deviate later
   during implementation, stop and re-confirm before mirroring.
+- **The complete overload set, enumerated.** For every varargs parameter, list
+  the matching single-argument overload (the house rule — see "Types & args
+  conventions") or explicitly justify its absence so the maintainer signs off on
+  the exception. An overload discovered missing in review means reworking all
+  six flavors.
 
 Present the plan and **explicitly ask permission to execute** before implementing.
 Do not start editing files until the user approves.
@@ -180,11 +192,13 @@ Extend-commands progress:
 - [ ] 0. Evidence: HLD, server PR, live probe + showcase, RESP2/RESP3 replies, @since
 - [ ] 1. Plan approved — incl. the sync signature(s), the API contract
 - [ ] 2. Types: argument & response types (they must exist before any interface edit)
-- [ ] 3. Sync interface method + Javadoc
+- [ ] 3. Sync interface: full overload set (varargs → single-arg too) + Javadoc
+       (@param constraints + @throws for builder-validated preconditions)
 - [ ] 4. Mirror: async, reactive, Kotlin, NodeSelection×2 — consistency tests pass
 - [ ] 5. Implementations: CommandType/Keyword, builder, async, reactive, Kotlin impl
 - [ ] 6. Tests: args/builder/output unit tests + integration base/overloads
-- [ ] 7. Verify: mvn clean test + a single integration test run; then make stop
+- [ ] 7. Docs: entry in the current-release section of docs/new-features.md
+- [ ] 8. Verify: mvn clean test + a single integration test run; then make stop
 ```
 
 ## Decision tree — what kind of change is this?
@@ -226,6 +240,18 @@ node). The dispatch layers are the same `AbstractRedisAsyncCommands` /
     */
    Long strlen(K key);
    ```
+   Two contract rules to apply while designing the signatures and their Javadoc:
+   - **Every varargs parameter gets a single-argument overload** —
+     `foo(K key, V value)` alongside `foo(K key, V... values)`. This is a hard
+     convention for new commands and overrides any traced precedent that lacks
+     it (older commands predate the rule).
+   - **Validated preconditions are contract.** Any constraint the builder will
+     enforce (null checks, non-empty varargs) must be stated in the `@param`
+     text with the house phrases (`must not be {@code null}.`,
+     `must not be empty.`) *and* documented with a matching
+     `@throws IllegalArgumentException if …` tag — forms owned by
+     [.agents/docs/javadoc.md](../../../.agents/docs/javadoc.md). Both are then
+     mirrored to every flavor.
 3. **Mirror to every flavor**: async, reactive, Kotlin coroutines, and the two
    cluster node-selection interfaces (`NodeSelection<Group>Commands` /
    `NodeSelection<Group>AsyncCommands`), applying the per-flavor return-type
@@ -254,6 +280,9 @@ node). The dispatch layers are the same `AbstractRedisAsyncCommands` /
        return createCommand(COPY, new BooleanOutput<>(codec), args);
    }
    ```
+   Every `LettuceAssert` precondition written here is public contract: if the
+   interface Javadoc (step 2) does not already state the constraint and its
+   `@throws IllegalArgumentException`, go back and add it — on every flavor.
 6. **Dispatch layers** — one-liners in *both* `AbstractRedisAsyncCommands` *and*
    `AbstractRedisReactiveCommands` (`createMono` for scalars,
    `createDissolvingFlux` for `List`/`Set` replies, matching the interface's
@@ -321,6 +350,11 @@ scan-family commands).
   in a typed field (long vs double), use a self-typed abstract base
   (`BaseFooArgs<T extends BaseFooArgs<T>>`) with concrete subclasses — cf.
   `BaseIncrexArgs`/`IncrexArgs`/`IncrexFloatArgs`.
+- **`@since` goes on every new public element, not just the class.** A
+  class-level `@since` is **not inherited**: the nested `Builder` type, each of
+  its static factory methods, and each public fluent setter needs its own
+  `@since` tag, or the generated API docs lose the release provenance for those
+  members.
 - Token-valued argument enums are plain enums whose values the builder/args class
   appends (cf. `XNackMode`).
 - **Response types**: reuse existing models where possible — `Value`, `KeyValue`,
@@ -331,9 +365,8 @@ scan-family commands).
   `HotkeysReplyParser`).
 - **Return-type idioms** (established conventions): `1/0` integer reply →
   `Boolean` (cf. `copy`, `expire`, `hsetnx`); count → `Long`; status → `String`;
-  bulk value → `V`. **For every varargs parameter also declare a single-argument
-  overload** for new commands — `foo(K key, V value)` alongside
-  `foo(K key, V... values)`.
+  bulk value → `V`. And the overload rule from step B.2: every varargs
+  parameter also gets a single-argument overload.
 - The `CommandOutput` (the reply *parser*) is chosen at the builder step from the
   **observed** RESP2/RESP3 replies of Phase 0 — if none fits, add one under
   `io.lettuce.core.output` with a unit test (cf. `IncrexLongOutput`).
@@ -426,15 +459,24 @@ make stop
 
 - [ ] Every layer of the chosen matrix updated consistently; the consistency suite
       and `CommandBuilderCoverageUnitTests` pass.
-- [ ] `@since` on all new public API (see
-      [.agents/docs/javadoc.md](../../../.agents/docs/javadoc.md)); Javadoc written on
+- [ ] Every varargs parameter has its single-argument overload, mirrored across
+      all flavors (or a maintainer-approved justification from the plan).
+- [ ] `@since` on **every** new public element — including the nested `Builder`,
+      static factories, and fluent setters of new `*Args` classes; class-level
+      tags are not inherited (see
+      [.agents/docs/javadoc.md](../../../.agents/docs/javadoc.md)). Javadoc written on
       the sync interface and mirrored with flavor-appropriate `@return` phrasing.
+- [ ] Builder-validated preconditions documented on all flavors: `@param`
+      constraint phrases + `@throws IllegalArgumentException if …`.
 - [ ] No dead `CommandKeyword` constants; no keyword duplicating a `CommandType`.
 - [ ] Read-only commands registered in `ReadOnlyCommands` (+ count test bumped).
 - [ ] `mvn formatter:format` run; no formatting-only noise in the diff.
 - [ ] Tests at every applicable layer, gated with `@EnabledOnCommand`; missing
       integration overload classes created where the command needs them.
-- [ ] `docs/` (MkDocs) updated if user-facing behavior changed.
+- [ ] `docs/` (MkDocs) updated — a new command or option **is** user-facing: add
+      a one-line entry to the current-release section of `docs/new-features.md`
+      (follow its existing "Support for [`X`](redis.io link) …" pattern), plus
+      any feature page the change affects.
 - [ ] `.env.vX.XX` image pin bumped if the feature needed a newer server build.
 - [ ] PR description states: server PR link, HLD link, gating choice and why,
       behavior against older servers, and includes a showcase transcript. (Draft
@@ -458,3 +500,7 @@ make stop
    `src/test/java/io/lettuce/core/api/` because an old reference PR touched them.
 6. **Wrong `CommandArgs` order or `CommandOutput`**, missing `@since`, missing
    `@EnabledOnCommand` gating, or missing the read-only registry entry.
+7. **Letting a traced precedent override a written convention** — e.g. skipping
+   the single-argument overload because `sintercard(K...)` doesn't have one, or
+   stopping at a class-level `@since` because an old `*Args` class did. Older
+   code predates the rules; the conventions win.
