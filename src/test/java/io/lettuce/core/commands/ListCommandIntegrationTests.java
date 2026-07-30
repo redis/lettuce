@@ -37,6 +37,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.LMPopArgs;
+import io.lettuce.core.BLMovemArgs;
 import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.LMovemArgs;
 import io.lettuce.core.LPosArgs;
@@ -450,7 +451,7 @@ public class ListCommandIntegrationTests extends TestSupport {
 
         redis.rpush(list1, "one", "two", "three");
 
-        assertThat(redis.blmovem(list1, list2, LMovemArgs.Builder.leftLeft().count(2, LMovemArgs.Ordering.BULK), 1000))
+        assertThat(redis.blmovem(list1, list2, BLMovemArgs.Builder.leftLeft().timeout(1000).count(2, LMovemArgs.Ordering.BULK)))
                 .containsExactly("one", "two");
         assertThat(redis.lrange(list1, 0, -1)).containsExactly("three");
         assertThat(redis.lrange(list2, 0, -1)).containsExactly("one", "two");
@@ -464,7 +465,7 @@ public class ListCommandIntegrationTests extends TestSupport {
 
         redis.rpush(list1, "one", "two", "three");
 
-        assertThat(redis.blmovem(list1, list2, LMovemArgs.Builder.rightLeft(), 1.5)).containsExactly("three");
+        assertThat(redis.blmovem(list1, list2, BLMovemArgs.Builder.rightLeft().timeout(1.5))).containsExactly("three");
         assertThat(redis.lrange(list1, 0, -1)).containsExactly("one", "two");
         assertThat(redis.lrange(list2, 0, -1)).containsExactly("three");
     }

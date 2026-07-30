@@ -412,29 +412,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BLMOVE, new ValueOutput<>(codec), args);
     }
 
-    Command<K, V, List<V>> blmovem(K source, K destination, LMovemArgs lMovemArgs, long timeout) {
+    Command<K, V, List<V>> blmovem(K source, K destination, BLMovemArgs blMovemArgs) {
         LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(lMovemArgs, "LMovemArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(blMovemArgs, "BLMovemArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.addKey(source).addKey(destination);
-        lMovemArgs.buildDirections(args);
-        args.add(timeout);
-        lMovemArgs.buildCount(args);
-        return createCommand(BLMOVEM, new ValueListOutput<>(codec), args);
-    }
-
-    Command<K, V, List<V>> blmovem(K source, K destination, LMovemArgs lMovemArgs, double timeout) {
-        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(lMovemArgs, "LMovemArgs " + MUST_NOT_BE_NULL);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.addKey(source).addKey(destination);
-        lMovemArgs.buildDirections(args);
-        args.add(timeout);
-        lMovemArgs.buildCount(args);
+        blMovemArgs.build(args);
         return createCommand(BLMOVEM, new ValueListOutput<>(codec), args);
     }
 

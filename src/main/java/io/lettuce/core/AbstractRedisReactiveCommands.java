@@ -408,13 +408,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> blmovem(K source, K destination, LMovemArgs args, long timeout) {
-        return createDissolvingFlux(() -> commandBuilder.blmovem(source, destination, args, timeout));
-    }
-
-    @Override
-    public Flux<V> blmovem(K source, K destination, LMovemArgs args, double timeout) {
-        return createDissolvingFlux(() -> commandBuilder.blmovem(source, destination, args, timeout));
+    public Flux<V> blmovem(K source, K destination, BLMovemArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.blmovem(source, destination, args));
     }
 
     @Override

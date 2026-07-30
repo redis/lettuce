@@ -388,13 +388,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> blmovem(K source, K destination, LMovemArgs args, long timeout) {
-        return dispatch(commandBuilder.blmovem(source, destination, args, timeout));
-    }
-
-    @Override
-    public RedisFuture<List<V>> blmovem(K source, K destination, LMovemArgs args, double timeout) {
-        return dispatch(commandBuilder.blmovem(source, destination, args, timeout));
+    public RedisFuture<List<V>> blmovem(K source, K destination, BLMovemArgs args) {
+        return dispatch(commandBuilder.blmovem(source, destination, args));
     }
 
     @Override

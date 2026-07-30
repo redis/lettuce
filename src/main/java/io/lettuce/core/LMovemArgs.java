@@ -21,7 +21,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * equivalent to {@code LMOVE} and {@code BLMOVE}.
  *
  * @author Aleksandar Todorov
- * @since 7.8
+ * @since 7.7
  */
 public class LMovemArgs implements CompositeArgument {
 
@@ -58,7 +58,7 @@ public class LMovemArgs implements CompositeArgument {
 
     private ProtocolKeyword ordering;
 
-    private LMovemArgs(ProtocolKeyword source, ProtocolKeyword destination) {
+    protected LMovemArgs(ProtocolKeyword source, ProtocolKeyword destination) {
         this.source = source;
         this.destination = destination;
     }
