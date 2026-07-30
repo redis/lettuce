@@ -30,7 +30,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * reused for further imports.
  *
  * @param <K> Key type, matching the field-name type of the connection's codec.
- * @author Redis Ltd.
+ * @author Aleksandar Todorov
  * @since 7.7
  */
 @Experimental
@@ -98,6 +98,7 @@ public class HashImport<K> implements AutoCloseable {
 
     /**
      * @return the generated fieldset name sent to the server.
+     * @since 7.7
      */
     public K name() {
         return name;
@@ -105,6 +106,7 @@ public class HashImport<K> implements AutoCloseable {
 
     /**
      * @return a copy of the ordered field names.
+     * @since 7.7
      */
     public K[] fields() {
         return fields.clone();
@@ -112,6 +114,7 @@ public class HashImport<K> implements AutoCloseable {
 
     /**
      * @return the number of fields, matching the required number of values per {@code himportSet}.
+     * @since 7.7
      */
     public int size() {
         return fields.length;
@@ -119,6 +122,7 @@ public class HashImport<K> implements AutoCloseable {
 
     /**
      * @return {@code true} if this fieldset has been {@link #close() closed} and must no longer be used.
+     * @since 7.7
      */
     public boolean isDiscarded() {
         return discarded;
@@ -127,6 +131,8 @@ public class HashImport<K> implements AutoCloseable {
     /**
      * Mark this fieldset as discarded so it is no longer replayed on reconnect and can no longer be used for imports. This does
      * not itself issue a server-side {@code HIMPORT DISCARD}; use the corresponding command for that.
+     *
+     * @since 7.7
      */
     @Override
     public void close() {

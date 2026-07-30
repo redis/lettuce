@@ -234,11 +234,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<Long> himportDiscardAll() {
-        return MultiNodeExecution.aggregateAsync(executeOnUpstream(commands -> commands.himportDiscardAll()));
-    }
-
-    @Override
     public RedisFuture<Long> del(K... keys) {
         return del(Arrays.asList(keys));
     }

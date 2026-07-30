@@ -715,15 +715,5 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      */
     @Experimental
     suspend fun himportDiscard(fieldset: HashImport<K>): Boolean?
-
-    /**
-     * Discard all prepared fieldsets from the session.
-     *
-     * @return the number of fieldsets that were discarded.
-     * @since 7.7
-     */
-    @Experimental
-    suspend fun himportDiscardAll(): Long?
-
 }
 

@@ -898,13 +898,4 @@ public interface NodeSelectionHashCommands<K, V> {
     @Experimental
     Executions<Boolean> himportDiscard(HashImport<K> fieldset);
 
-    /**
-     * Discard all prepared fieldsets from the session.
-     *
-     * @return Long integer-reply the number of fieldsets that were discarded.
-     * @since 7.7
-     */
-    @Experimental
-    Executions<Long> himportDiscardAll();
-
 }

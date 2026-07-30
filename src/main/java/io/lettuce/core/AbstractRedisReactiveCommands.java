@@ -1683,6 +1683,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> himportPrepare(HashImport<K> fieldset) {
         LettuceAssert.notNull(fieldset, "HashImport must not be null");
+        if (fieldset.isDiscarded()) {
+            throw new IllegalStateException("HashImport has been discarded and must not be reused");
+        }
 
         return createMono(() -> {
             getHashImportRegistry().add(fieldset);
@@ -1718,18 +1721,10 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     public Mono<Boolean> himportDiscard(HashImport<K> fieldset) {
         LettuceAssert.notNull(fieldset, "HashImport must not be null");
 
-        return createMono(() -> {
+        // Apply local state only after the server acknowledges the discard (see the async implementation).
+        return createMono(() -> commandBuilder.himportDiscard(fieldset)).doOnSuccess(result -> {
             getHashImportRegistry().remove(fieldset);
             fieldset.close();
-            return commandBuilder.himportDiscard(fieldset);
-        });
-    }
-
-    @Override
-    public Mono<Long> himportDiscardAll() {
-        return createMono(() -> {
-            getHashImportRegistry().clear();
-            return commandBuilder.himportDiscardAll();
         });
     }
 

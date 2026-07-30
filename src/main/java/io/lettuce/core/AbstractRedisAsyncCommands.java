@@ -1599,6 +1599,9 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> himportPrepare(HashImport<K> fieldset) {
         LettuceAssert.notNull(fieldset, "HashImport must not be null");
+        if (fieldset.isDiscarded()) {
+            throw new IllegalStateException("HashImport has been discarded and must not be reused");
+        }
 
         getHashImportRegistry().add(fieldset);
         return dispatch(commandBuilder.himportPrepare(fieldset));
@@ -1622,8 +1625,15 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
                 return CompletableFuture.completedFuture(value);
             }
             if (isNoSuchFieldset(ex)) {
-                return himportPrepare(fieldset)
-                        .thenCompose(ignored -> dispatch(commandBuilder.himportSet(key, fieldset, values)));
+                // Re-prepare and re-dispatch once. Flush explicitly so the retry completes even under
+                // setAutoFlushCommands(false), where the caller's original flush has already happened.
+                RedisFuture<String> prepare = himportPrepare(fieldset);
+                getConnection().flushCommands();
+                return prepare.thenCompose(ignored -> {
+                    RedisFuture<String> retry = dispatch(commandBuilder.himportSet(key, fieldset, values));
+                    getConnection().flushCommands();
+                    return retry;
+                });
             }
             CompletableFuture<String> failed = new CompletableFuture<>();
             failed.completeExceptionally(ex);
@@ -1637,15 +1647,14 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     public RedisFuture<Boolean> himportDiscard(HashImport<K> fieldset) {
         LettuceAssert.notNull(fieldset, "HashImport must not be null");
 
-        getHashImportRegistry().remove(fieldset);
-        fieldset.close();
-        return dispatch(commandBuilder.himportDiscard(fieldset));
-    }
-
-    @Override
-    public RedisFuture<Long> himportDiscardAll() {
-        getHashImportRegistry().clear();
-        return dispatch(commandBuilder.himportDiscardAll());
+        // Apply local state (registry removal and close) only after the server acknowledges the discard, so a failed
+        // or transaction-aborted command does not leave the client rejecting a fieldset the server still holds.
+        RedisFuture<Boolean> future = dispatch(commandBuilder.himportDiscard(fieldset));
+        return new PipelinedRedisFuture<>(future.toCompletableFuture().thenApply(result -> {
+            getHashImportRegistry().remove(fieldset);
+            fieldset.close();
+            return result;
+        }));
     }
 
     private HashImportRegistry getHashImportRegistry() {

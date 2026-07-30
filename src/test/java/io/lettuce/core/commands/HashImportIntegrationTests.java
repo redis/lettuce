@@ -73,15 +73,6 @@ public class HashImportIntegrationTests {
         assertThat(redis.himportDiscard(fieldset)).isFalse();
     }
 
-    @Test
-    void himportDiscardAll() {
-
-        redis.himportPrepare(HashImport.of("a", "b"));
-        redis.himportPrepare(HashImport.of("c", "d"));
-
-        assertThat(redis.himportDiscardAll()).isGreaterThanOrEqualTo(2L);
-    }
-
     /**
      * The retry-once backstop transparently establishes a fieldset the executing connection has not prepared: a
      * {@code HIMPORT SET} for a never-prepared fieldset first draws {@code no such fieldset} server-side, then succeeds after

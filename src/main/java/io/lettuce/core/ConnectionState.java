@@ -168,6 +168,7 @@ public class ConnectionState {
      * deployments the same registry instance is shared across the cluster connection and all node connections.
      *
      * @return the {@link HashImportRegistry}, never {@code null}.
+     * @since 7.7
      */
     public HashImportRegistry getHashImportRegistry() {
         return hashImportRegistry;
@@ -178,6 +179,7 @@ public class ConnectionState {
      * connections.
      *
      * @param hashImportRegistry the registry to use, must not be {@code null}.
+     * @since 7.7
      */
     public void setHashImportRegistry(HashImportRegistry hashImportRegistry) {
         this.hashImportRegistry = hashImportRegistry;

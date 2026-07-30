@@ -23,7 +23,7 @@ import io.lettuce.core.annotations.Experimental;
  * <p>
  * This class is part of the internal API.
  *
- * @author Redis Ltd.
+ * @author Aleksandar Todorov
  * @since 7.7
  * @see HashImport
  * @see ConnectionState#getHashImportRegistry()
@@ -37,6 +37,7 @@ public class HashImportRegistry {
      * Record a declared fieldset.
      *
      * @param fieldset the fieldset to register, must not be {@code null}.
+     * @since 7.7
      */
     public void add(HashImport<?> fieldset) {
         fieldSets.add(fieldset);
@@ -47,6 +48,7 @@ public class HashImportRegistry {
      *
      * @param fieldset the fieldset to remove, must not be {@code null}.
      * @return {@code true} if the fieldset was registered and has been removed.
+     * @since 7.7
      */
     public boolean remove(HashImport<?> fieldset) {
         return fieldSets.remove(fieldset);
@@ -54,6 +56,8 @@ public class HashImportRegistry {
 
     /**
      * Remove all declared fieldsets.
+     *
+     * @since 7.7
      */
     public void clear() {
         fieldSets.clear();
@@ -61,6 +65,7 @@ public class HashImportRegistry {
 
     /**
      * @return the currently declared fieldsets. The returned view reflects concurrent modifications.
+     * @since 7.7
      */
     public Collection<HashImport<?>> fieldSets() {
         return fieldSets;
