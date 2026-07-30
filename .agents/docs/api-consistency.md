@@ -105,8 +105,9 @@ mvn -Dtest='*ConsistencyUnitTests,CommandBuilderCoverageUnitTests' \
 3. **Run the consistency tests** — they tell you exactly which flavor/signature
    you missed. Iterate until green.
 4. For a genuinely unusual shape (e.g. `Mono<List<Double>>` because Redis
-   returns null elements), add an entry to `KnownApiDeviations` **with a comment
-   justifying it**. Never add an entry to paper over a sync/async signature
+   returns null elements), add an entry to the registry that owns the flavor —
+   `KnownApiDeviations` for the Java flavors, `KnownKotlinApiDeviations` for the
+   coroutine flavor — **with a comment justifying it**. Never add an entry to paper over a sync/async signature
    mismatch — the sync API is a runtime proxy over async
    (`FutureSyncInvocationHandler`), so that mismatch throws at runtime.
 

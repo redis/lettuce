@@ -56,9 +56,11 @@ or maps a return type incorrectly.
   by mechanical return-type mapping: async wraps in `RedisFuture<…>`; reactive
   maps `T → Mono<T>` and `List<T>/Set<T> → Flux<T>`; Kotlin uses
   `suspend fun`/`Flow`; node-selection wraps in `Executions`/`AsyncExecutions`.
-- **Known deviations** (forced `Flux`, `Value<…>`-wrapped elements, kept sync
-  types, Kotlin `Flow` methods, …) live in one registry:
-  `src/test/java/io/lettuce/core/api/consistency/KnownApiDeviations.java`.
+- **Known deviations** live in two registries, split by flavor ownership: the
+  Java flavors (forced `Flux`, `Value<…>`-wrapped elements, kept sync types, …)
+  in `src/test/java/io/lettuce/core/api/consistency/KnownApiDeviations.java`;
+  the Kotlin coroutine flavor (`Flow` methods, non-suspendable methods, …) in
+  `src/test/kotlin/io/lettuce/core/api/consistency/KnownKotlinApiDeviations.kt`.
 - **The group catalog** is the `CommandInterfaces` enum in the same package —
   register a new command group there and the suite covers it.
 

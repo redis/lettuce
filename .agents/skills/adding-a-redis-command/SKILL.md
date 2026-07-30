@@ -153,9 +153,10 @@ mvn -Dtest='*ConsistencyUnitTests,CommandBuilderCoverageUnitTests' \
 ```
 
 For an **unusual return type** (e.g. `Flux<Value<Long>>`, or `Mono<List<Double>>`
-because Redis returns nulls), register it in
-`src/test/java/io/lettuce/core/api/consistency/KnownApiDeviations.java` **with a
-comment justifying it**. Never use a deviation entry to paper over a sync/async
+because Redis returns nulls), register it in the registry that owns the flavor —
+`src/test/java/io/lettuce/core/api/consistency/KnownApiDeviations.java` for the
+Java flavors, `src/test/kotlin/io/lettuce/core/api/consistency/KnownKotlinApiDeviations.kt`
+for the coroutine flavor — **with a comment justifying it**. Never use a deviation entry to paper over a sync/async
 signature mismatch — that breaks the sync-over-async runtime proxy.
 
 ### 5. Add the implementations
@@ -273,7 +274,7 @@ for unit; `make start` + a single `*IntegrationTests` run for integration).
    them; if they don't exist first, the project won't compile. Add them upfront.
 3. **Editing only one flavor, or silencing the consistency suite.** Mirror the method
    to *every* flavor; if a test fails, fix the signature rather than adding a
-   `KnownApiDeviations` entry — deviations are for genuinely unusual reply shapes,
+   deviations-registry entry — deviations are for genuinely unusual reply shapes,
    with a justifying comment, never for sync/async mismatches.
 4. **Forgetting a dispatch layer.** Update *both* `AbstractRedisAsyncCommands` *and*
    `AbstractRedisReactiveCommands`, plus the Kotlin `*Impl.kt`.
