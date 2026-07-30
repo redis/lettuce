@@ -19,15 +19,23 @@
  */
 package io.lettuce.core.masterreplica;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.ScanCursorAccessor;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.models.role.RedisNodeDescription;
+import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.ProtocolKeyword;
@@ -39,6 +47,7 @@ import io.lettuce.core.resource.ClientResources;
  *
  * @author Mark Paluch
  * @author Jim Brunner
+ * @author Sanghun Lee
  */
 class MasterReplicaChannelWriter implements RedisChannelWriter {
 
@@ -78,8 +87,8 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
 
         ConnectionIntent connectionIntent = inTransaction ? ConnectionIntent.WRITE
                 : (readOnlyCommands.isReadOnly(command) ? ConnectionIntent.READ : ConnectionIntent.WRITE);
-        CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) masterReplicaConnectionProvider
-                .getConnectionAsync(connectionIntent);
+        CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) getConnectionAsync(command,
+                connectionIntent);
 
         if (isEndTransaction(command.getType())) {
             inTransaction = false;
@@ -92,6 +101,90 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
         }
 
         return command;
+    }
+
+    /**
+     * Obtain a connection to run {@code command} on. Scan commands ({@code SCAN}, {@code HSCAN}, {@code SSCAN}, {@code ZSCAN})
+     * receive node-affine routing: scan cursors are node-local state, so continuation requests are pinned to the node that
+     * issued the cursor, and the node selected for the initial request is associated with the cursor that is returned to the
+     * caller, see {@link ScanCursor#getSource()}.
+     */
+    private CompletableFuture<? extends StatefulRedisConnection<?, ?>> getConnectionAsync(RedisCommand<?, ?, ?> command,
+            ConnectionIntent connectionIntent) {
+
+        if (connectionIntent == ConnectionIntent.READ) {
+
+            ScanCursor cursor = getScanCursor(command);
+
+            if (cursor != null) {
+
+                if (ScanCursorAccessor.getSource(cursor) != null) {
+                    return masterReplicaConnectionProvider.getPinnedConnectionAsync(ScanCursorAccessor.getSource(cursor));
+                }
+
+                // Node selection happens-before the command is dispatched, so the association is visible to the caller
+                // by the time the response (carrying this cursor) completes.
+                return masterReplicaConnectionProvider.getConnectionAsync(ConnectionIntent.READ,
+                        node -> ScanCursorAccessor.setSource(cursor, node.getUri()));
+            }
+        }
+
+        return masterReplicaConnectionProvider.getConnectionAsync(connectionIntent);
+    }
+
+    /**
+     * Batched commands are dispatched over a single connection: associate the selected node with each scan cursor in the batch
+     * that does not carry a source yet, so individual continuations of these scans are pinned correctly. Pinning of batched
+     * scan <em>continuations</em> is not supported (the standard sync/async/reactive APIs dispatch scans as single commands); a
+     * batched continuation is routed like any other read command.
+     *
+     * @return a stamper for the batch, or {@code null} if the batch contains no scan command to associate.
+     */
+    private static <K, V> Consumer<RedisNodeDescription> scanCursorStamper(
+            Collection<? extends RedisCommand<K, V, ?>> commands) {
+
+        List<ScanCursor> cursors = null;
+
+        for (RedisCommand<K, V, ?> command : commands) {
+
+            ScanCursor cursor = getScanCursor(command);
+
+            if (cursor != null && ScanCursorAccessor.getSource(cursor) == null) {
+
+                if (cursors == null) {
+                    cursors = new ArrayList<>(2);
+                }
+
+                cursors.add(cursor);
+            }
+        }
+
+        if (cursors == null) {
+            return null;
+        }
+
+        List<ScanCursor> cursorsToStamp = cursors;
+        return node -> cursorsToStamp.forEach(cursor -> ScanCursorAccessor.setSource(cursor, node.getUri()));
+    }
+
+    /**
+     * @return the {@link ScanCursor} that will carry the response of a scan command, or {@code null} if {@code command} is not
+     *         a scan command.
+     */
+    private static ScanCursor getScanCursor(RedisCommand<?, ?, ?> command) {
+
+        ProtocolKeyword type = command.getType();
+
+        if (type != CommandType.SCAN && type != CommandType.HSCAN && type != CommandType.SSCAN && type != CommandType.ZSCAN) {
+            return null;
+        }
+
+        CommandOutput<?, ?, ?> output = command.getOutput();
+        // The cursor is created eagerly in the ScanOutput constructor, so get() returns it before the response arrives;
+        // it is the same object that later receives the response cursor and is handed back to the caller.
+        Object value = output != null ? output.get() : null;
+
+        return value instanceof ScanCursor ? (ScanCursor) value : null;
     }
 
     @SuppressWarnings("unchecked")
@@ -131,8 +224,13 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
         // Currently: Retain order
         ConnectionIntent connectionIntent = inTransaction ? ConnectionIntent.WRITE : getIntent(commands);
 
-        CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) masterReplicaConnectionProvider
-                .getConnectionAsync(connectionIntent);
+        Consumer<RedisNodeDescription> scanCursorStamper = connectionIntent == ConnectionIntent.READ
+                ? scanCursorStamper(commands)
+                : null;
+
+        CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) (scanCursorStamper != null
+                ? masterReplicaConnectionProvider.getConnectionAsync(connectionIntent, scanCursorStamper)
+                : masterReplicaConnectionProvider.getConnectionAsync(connectionIntent));
 
         for (RedisCommand<K, V, ?> command : commands) {
             if (isEndTransaction(command.getType())) {

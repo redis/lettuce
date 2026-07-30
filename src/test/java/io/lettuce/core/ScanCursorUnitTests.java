@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * @author Mark Paluch
+ * @author Sanghun Lee
  */
 @Tag(UNIT_TEST)
 class ScanCursorUnitTests {
@@ -28,6 +29,12 @@ class ScanCursorUnitTests {
     @Test
     void setFinishedOnImmutableInstance() {
         assertThatThrownBy(() -> ScanCursor.INITIAL.setFinished(false)).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void setSourceOnImmutableInstance() {
+        assertThatThrownBy(() -> ScanCursor.INITIAL.setSource(RedisURI.create("localhost", 6379)))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
 }

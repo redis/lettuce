@@ -6,6 +6,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * Generic Cursor data structure.
  *
  * @author Mark Paluch
+ * @author Sanghun Lee
  * @since 3.0
  */
 public class ScanCursor {
@@ -23,6 +24,8 @@ public class ScanCursor {
     private String cursor;
 
     private boolean finished;
+
+    private RedisURI source;
 
     /**
      * Creates a new {@link ScanCursor}.
@@ -73,6 +76,27 @@ public class ScanCursor {
     }
 
     /**
+     * Returns the {@link RedisURI} of the node that issued this cursor, if known, or {@code null}. Scan cursors are node-local
+     * state: continuation requests must be routed to the node that served the initial request. This hint is maintained by the
+     * driver (e.g. Master/Replica connections) and is not sent to Redis. Internal API, accessed across packages via
+     * {@link ScanCursorAccessor}.
+     *
+     * @return the node that issued this cursor or {@code null} if unknown.
+     */
+    RedisURI getSource() {
+        return source;
+    }
+
+    /**
+     * Associate this cursor with the node that issued it. Internal API, set by the driver via {@link ScanCursorAccessor}.
+     *
+     * @param source the node that issued this cursor, may be {@code null}.
+     */
+    void setSource(RedisURI source) {
+        this.source = source;
+    }
+
+    /**
      * Creates a Scan-Cursor reference.
      *
      * @param cursor the cursor id
@@ -98,6 +122,11 @@ public class ScanCursor {
         @Override
         public void setFinished(boolean finished) {
             throw new UnsupportedOperationException("setFinished not supported on " + getClass().getSimpleName());
+        }
+
+        @Override
+        void setSource(RedisURI source) {
+            throw new UnsupportedOperationException("setSource not supported on " + getClass().getSimpleName());
         }
 
     }

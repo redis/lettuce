@@ -63,6 +63,7 @@ import static io.lettuce.core.protocol.CommandType.SAVE;
  * @author Ali Takavci
  * @author Seonghwan Lee
  * @author dae won
+ * @author Sanghun Lee
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -1739,6 +1740,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         scanArgs(scanCursor, scanArgs, args);
 
         MapScanOutput<K, V> output = new MapScanOutput<>(codec);
+        associateSourceHint(output, scanCursor);
         return createCommand(HSCAN, output, args);
     }
 
@@ -1753,6 +1755,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.add(NOVALUES);
 
         KeyScanOutput<K, V> output = new KeyScanOutput<>(codec);
+        associateSourceHint(output, scanCursor);
         return createCommand(HSCAN, output, args);
     }
 
@@ -1809,6 +1812,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         scanArgs(scanCursor, scanArgs, args);
 
         KeyValueScanStreamingOutput<K, V> output = new KeyValueScanStreamingOutput<>(codec, channel);
+        associateSourceHint(output, scanCursor);
         return createCommand(HSCAN, output, args);
     }
 
@@ -1825,6 +1829,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.add(NOVALUES);
 
         KeyScanStreamingOutput<K, V> output = new KeyScanStreamingOutput<>(codec, channel);
+        associateSourceHint(output, scanCursor);
         return createCommand(HSCAN, output, args);
     }
 
@@ -2644,6 +2649,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         scanArgs(scanCursor, scanArgs, args);
 
         KeyScanOutput<K, V> output = new KeyScanOutput<>(codec);
+        associateSourceHint(output, scanCursor);
         return createCommand(SCAN, output, args);
     }
 
@@ -2655,6 +2661,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         if (scanArgs != null) {
             scanArgs.build(args);
+        }
+    }
+
+    /**
+     * Propagate the source-node association from the input {@link ScanCursor} to the cursor carrying the response, so that
+     * drivers routing by cursor source (see {@link ScanCursor#getSource()}) can pin continuation requests to the node that
+     * issued the cursor.
+     */
+    private static void associateSourceHint(ScanOutput<?, ?, ?> output, ScanCursor scanCursor) {
+
+        if (scanCursor.getSource() != null) {
+            output.get().setSource(scanCursor.getSource());
         }
     }
 
@@ -2687,6 +2705,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         scanArgs(scanCursor, scanArgs, args);
 
         KeyScanStreamingOutput<K, V> output = new KeyScanStreamingOutput<>(codec, channel);
+        associateSourceHint(output, scanCursor);
         return createCommand(SCAN, output, args);
     }
 
@@ -3088,6 +3107,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         scanArgs(scanCursor, scanArgs, args);
 
         ValueScanOutput<K, V> output = new ValueScanOutput<>(codec);
+        associateSourceHint(output, scanCursor);
         return createCommand(SSCAN, output, args);
     }
 
@@ -3123,6 +3143,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         scanArgs(scanCursor, scanArgs, args);
 
         ValueScanStreamingOutput<K, V> output = new ValueScanStreamingOutput<>(codec, channel);
+        associateSourceHint(output, scanCursor);
         return createCommand(SSCAN, output, args);
     }
 
@@ -4658,6 +4679,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         scanArgs(scanCursor, scanArgs, args);
 
         ScoredValueScanOutput<K, V> output = new ScoredValueScanOutput<>(codec);
+        associateSourceHint(output, scanCursor);
         return createCommand(ZSCAN, output, args);
     }
 
@@ -4693,6 +4715,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         scanArgs(scanCursor, scanArgs, args);
 
         ScoredValueScanStreamingOutput<K, V> output = new ScoredValueScanStreamingOutput<>(codec, channel);
+        associateSourceHint(output, scanCursor);
         return createCommand(ZSCAN, output, args);
     }
 
