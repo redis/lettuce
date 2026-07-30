@@ -1067,6 +1067,11 @@ public class AggregateArgs<K, V> {
          * </p>
          *
          * <p>
+         * Read the resulting column through {@link io.lettuce.core.search.SearchReply.SearchResult#getCollectedEntries(Object)
+         * getCollectedEntries(...)}, which returns one map per collected entry regardless of the protocol version in use.
+         * </p>
+         *
+         * <p>
          * <strong>Experimental.</strong> Both the underlying Redis Search feature and this API may change. {@code COLLECT} is
          * gated behind {@code search-enable-unstable-features}; enable it on the server (for example via
          * {@code CONFIG SET search-enable-unstable-features yes}) before issuing aggregations that use this reducer, otherwise
@@ -1077,6 +1082,7 @@ public class AggregateArgs<K, V> {
          * @param <V> Value type
          * @return new {@link CollectReducer} instance
          * @see CollectReducer
+         * @see io.lettuce.core.search.SearchReply.SearchResult#getCollectedEntries(Object)
          */
         @Experimental
         public static <K, V> CollectReducer<K, V> collect() {
@@ -1126,6 +1132,13 @@ public class AggregateArgs<K, V> {
      * </p>
      *
      * <p>
+     * The raw shape of the collected column in {@code SearchResult#getFields()} depends on the protocol version (RESP3 decodes
+     * each entry as a map, RESP2 as a flat key/value list); read it through
+     * {@link io.lettuce.core.search.SearchReply.SearchResult#getCollectedEntries(Object) getCollectedEntries(...)} for a
+     * protocol-independent list of per-entry maps.
+     * </p>
+     *
+     * <p>
      * The number of collected entries per group is always bounded by the server: {@code SORTBY} without an explicit
      * {@code LIMIT} returns at most 10 entries per group, and without either clause collection is capped by the
      * {@code search-max-aggregate-results} configuration. Supply an explicit {@link #limit(long, long) limit(...)} to control
@@ -1139,6 +1152,7 @@ public class AggregateArgs<K, V> {
      * </p>
      *
      * @see Reducer#collect()
+     * @see io.lettuce.core.search.SearchReply.SearchResult#getCollectedEntries(Object)
      */
     @Experimental
     public static class CollectReducer<K, V> extends Reducer<K, V> {

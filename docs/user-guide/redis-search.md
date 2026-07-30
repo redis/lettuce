@@ -397,6 +397,48 @@ for (SearchReply<String, String> reply : aggResults.getReplies()) {
 }
 ```
 
+### Collecting Group Entries (COLLECT)
+
+!!! WARNING
+    `COLLECT` is an experimental Redis Query Engine feature gated behind the
+    `search-enable-unstable-features` server configuration. Both the server feature
+    and the Lettuce API may change.
+
+The `COLLECT` reducer gathers per-row field projections within each `GROUPBY` group and
+returns them as an array of entries under the reducer alias:
+
+```java
+AggregateArgs<String, String> collectArgs = AggregateArgs.<String, String>builder()
+    .groupBy(GroupBy.<String, String>of("category")
+        .reduce(Reducer.<String, String>collect()
+            .fields("title", "price")
+            .sortBy(new AggregateArgs.SortProperty<>("price", SortDirection.DESC))
+            .limit(0, 3)
+            .as("top_products")))
+    .build();
+
+AggregationReply<String, String> collectResults = search.ftAggregate("products-idx", "*", collectArgs);
+```
+
+Unlike other reducers, a `COLLECT` column is not a scalar: its value in
+`SearchResult#getFields()` is a nested structure whose raw shape depends on the protocol
+version (RESP3 decodes each collected entry as a map, RESP2 as a flat key/value list).
+Reading it through a typed reference such as `String top = fields.get("top_products")`
+throws a `ClassCastException`. Use `getCollectedEntries(...)`, which normalizes both
+protocols to one map per collected entry:
+
+```java
+for (SearchReply.SearchResult<String, String> group : collectResults.getReplies().get(0).getResults()) {
+    List<Map<String, String>> entries = group.getCollectedEntries("top_products");
+    for (Map<String, String> product : entries) {
+        System.out.println(product.get("title") + ": " + product.get("price"));
+    }
+}
+```
+
+If you read the column from `getFields()` directly, declare it as `Object` and handle
+both nested shapes yourself.
+
 ### Dynamic and Re-entrant Pipelines
 
 Redis aggregations support dynamic pipelines where operations can be repeated and applied in any order:

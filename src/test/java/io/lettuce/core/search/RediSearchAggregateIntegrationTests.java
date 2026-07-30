@@ -139,7 +139,6 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void shouldPerformCollectAggregation() {
         // COLLECT is gated behind search-enable-unstable-features; enable it and skip the test on builds where the
         // reducer (or the config flag) is not available yet.
@@ -182,10 +181,13 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 .filter(r -> "yellow".equals(r.getFields().get("color"))).findFirst()
                 .orElseThrow(() -> new AssertionError("no yellow group in " + reply.getResults()));
 
-        Object collected = yellow.getFields().get("top");
-        assertThat(collected).isInstanceOf(List.class);
+        // The raw shape of the collected column differs between RESP2 and RESP3; getCollectedEntries normalizes both
+        // to one map per collected entry.
+        List<Map<String, String>> collected = yellow.getCollectedEntries("top");
         // LIMIT 0 2 caps the group at 2 entries, SORTBY @sweetness DESC keeps the two sweetest (apple=6, banana=5).
-        assertThat((List<Object>) collected).hasSize(2);
+        assertThat(collected).hasSize(2);
+        assertThat(collected.get(0)).containsEntry("fruit", "apple").containsEntry("sweetness", "6");
+        assertThat(collected.get(1)).containsEntry("fruit", "banana").containsEntry("sweetness", "5");
 
         assertThat(redis.ftDropindex("collect-test-idx")).isEqualTo("OK");
     }

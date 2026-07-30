@@ -10,8 +10,11 @@ package io.lettuce.core.search;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.lettuce.core.annotations.Experimental;
 
 /**
  * Represents the results of a Redis FT.SEARCH command.
@@ -261,11 +264,66 @@ public class SearchReply<K, V> {
          * <p>
          * This contains the field names and values of the document. If NOCONTENT was used in the search, this will be null or
          * empty.
+         * <p>
+         * Values are typically scalars of the codec's value type. Aggregation reducers that produce non-scalar columns (for
+         * example {@code FT.AGGREGATE REDUCE COLLECT}) store nested {@link List}/{@link Map} structures in the value position
+         * of this map; reading such a field through a typed reference (for example {@code String v = fields.get("top")}, or
+         * iterating {@code fields.values()} with a typed loop variable) throws {@link ClassCastException}. Read those columns
+         * as {@code Object}, or use {@link #getCollectedEntries(Object)} which also normalizes the protocol-specific shape of
+         * collected entries.
          *
          * @return the document fields, or null if not available
          */
         public Map<K, V> getFields() {
             return fields;
+        }
+
+        /**
+         * Gets the entries of a collected aggregation column in a protocol-independent shape.
+         * <p>
+         * The {@code FT.AGGREGATE REDUCE COLLECT} reducer produces a nested column value — an array with one element per
+         * collected row — whose raw shape in {@link #getFields()} differs by protocol: RESP3 decodes each entry as a
+         * {@link Map} while RESP2 decodes it as a flat key/value {@link List}. This accessor normalizes both shapes to a list
+         * of maps, one map per collected entry, preserving the entry and field order returned by the server.
+         * <p>
+         * <strong>Experimental.</strong> The underlying {@code COLLECT} reducer is an experimental Redis feature; this method
+         * may change together with it.
+         *
+         * @param field name of the collected column (the reducer alias), must not be {@code null}.
+         * @return one map per collected entry, in server order; an empty list if the field is absent.
+         * @throws IllegalArgumentException if the field does not hold a collected structure (for example a scalar column).
+         * @since 7.7
+         * @see io.lettuce.core.search.arguments.AggregateArgs.Reducer#collect()
+         */
+        @Experimental
+        @SuppressWarnings("unchecked")
+        public List<Map<K, V>> getCollectedEntries(K field) {
+            Object value = fields.get(field);
+            if (value == null) {
+                return Collections.emptyList();
+            }
+            if (!(value instanceof List)) {
+                throw new IllegalArgumentException(
+                        "Field '" + field + "' does not hold a collected structure but " + value.getClass().getName());
+            }
+
+            List<Map<K, V>> entries = new ArrayList<>();
+            for (Object entry : (List<Object>) value) {
+                if (entry instanceof Map) {
+                    entries.add((Map<K, V>) entry);
+                } else if (entry instanceof List) {
+                    List<Object> flat = (List<Object>) entry;
+                    Map<K, V> entryMap = new LinkedHashMap<>();
+                    for (int i = 0; i + 1 < flat.size(); i += 2) {
+                        entryMap.put((K) flat.get(i), (V) flat.get(i + 1));
+                    }
+                    entries.add(entryMap);
+                } else {
+                    throw new IllegalArgumentException("Field '" + field + "' does not hold a collected structure, entry is "
+                            + entry.getClass().getName());
+                }
+            }
+            return entries;
         }
 
         /**
