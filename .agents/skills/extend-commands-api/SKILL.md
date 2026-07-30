@@ -1,6 +1,6 @@
 ---
 name: extend-commands-api
-description: Add or extend Redis commands in the Lettuce client API end-to-end — a new core command, a family of new commands, an extension to an existing command's options, or a module/area command (Search/JSON/Bloom/VectorSet). Gathers evidence first (HLD document, redis/redis server PR, live verification against the Dockerized test environment with redis-cli), plans the full implementation matrix in plan mode, then implements across all API flavors with unit and integration tests. Trigger on "add support for the <X> command", "implement <REDIS COMMAND> in Lettuce", "extend <command> with <option>", or adding a new argument/overload to an existing command.
+description: Add or extend Redis commands in the Lettuce client API end-to-end — a new core command, a family of new commands, an extension to an existing command's options, or a module/area command (Search/JSON/Bloom/VectorSet). Gathers evidence first (HLD document, the server-side PR in the repo owning the command family, live verification against the Dockerized test environment with redis-cli), plans the full implementation matrix in plan mode, then implements across all API flavors with unit and integration tests. Trigger on "add support for the <X> command", "implement <REDIS COMMAND> in Lettuce", "extend <command> with <option>", or adding a new argument/overload to an existing command.
 allowed-tools: Bash(mvn *), Bash(make *), Bash(redis-cli *), Bash(gh *)
 ---
 
@@ -29,8 +29,22 @@ Do all of the following before writing any plan or code:
    a path is given, read it fully — it is the primary source for syntax, semantics,
    reply shape per RESP2/RESP3, and edge cases.
 
-2. **Find the server-side PR in the `redis/redis` GitHub repo.** First verify that
-   `gh` works in the current (sandboxed) environment:
+2. **Find the server-side PR in the repo that owns the command.** Route the
+   search by command family — module command families are developed in their
+   owning repositories, not in `redis/redis`:
+
+   | Command family | Repository | Syntax source |
+   |----------------|------------|---------------|
+   | Core commands, vector sets (`VADD`, …) | `redis/redis` | `src/commands/*.json` |
+   | Search (`FT.*`) | `RediSearch/RediSearch` | PR diff + command docs (no `src/commands/*.json`) |
+   | JSON (`JSON.*`) | `RedisJSON/RedisJSON` | PR diff + command docs |
+   | Probabilistic (`BF.*`, `CF.*`, `CMS.*`, `TOPK.*`, `TDIGEST.*`) | `RedisBloom/RedisBloom` | PR diff + command docs |
+   | Time series (`TS.*`) | `RedisTimeSeries/RedisTimeSeries` | PR diff + command docs |
+
+   If the search comes up empty in the routed repo, fall back to `redis/redis`
+   (and vice versa) before concluding there is no server PR.
+
+   First verify that `gh` works in the current (sandboxed) environment:
    ```bash
    gh auth status
    ```
@@ -41,9 +55,9 @@ Do all of the following before writing any plan or code:
 
    Then search for the PR that adds/extends the command on the server:
    ```bash
-   gh search prs --repo redis/redis "<COMMAND NAME>" --limit 10
-   gh pr view <num> --repo redis/redis
-   gh pr diff <num> --repo redis/redis   # look at src/commands/*.json for exact syntax
+   gh search prs --repo <owning-repo> "<COMMAND NAME>" --limit 10
+   gh pr view <num> --repo <owning-repo>
+   gh pr diff <num> --repo <owning-repo>  # in redis/redis: src/commands/*.json has exact syntax
    ```
    Extract: exact wire syntax (argument order and optionality), reply type per
    **RESP2 and RESP3** (they can differ — this determines the `CommandOutput` and
@@ -170,7 +184,7 @@ Extend-commands progress:
 - [ ] 4. Mirror: async, reactive, Kotlin, NodeSelection×2 — consistency tests pass
 - [ ] 5. Implementations: CommandType/Keyword, builder, async, reactive, Kotlin impl
 - [ ] 6. Tests: args/builder/output unit tests + integration base/overloads
-- [ ] 7. Verify: mvn clean test + a single integration test run
+- [ ] 7. Verify: mvn clean test + a single integration test run; then make stop
 ```
 
 ## Decision tree — what kind of change is this?
@@ -185,8 +199,16 @@ Extend-commands progress:
   `src/main/java/io/lettuce/core/protocol/CommandKeyword.java`.
 - If the reply shape grows, extend the response model/output backward-compatibly.
 
-**B. New core command(s)** — the FULL matrix, in this order (types first — every
-flavor references them, so they must exist to compile):
+**B. New command(s) in an existing group — core or module area** — the FULL
+matrix, in this order (types first — every flavor references them, so they must
+exist to compile). For a command joining an **existing module area** (a new
+`FT.*` method in the Search group, a new `JSON.*` method, …) the same matrix
+applies with the area substitutions: the group is the area's flavor interfaces,
+the builder is the area's `Redis<Area>CommandBuilder` (+ its
+`Redis<Area>CommandBuilderUnitTests`), argument/reply types go in the area
+package, and gating/tests follow the module rules in D (capability probe, stack
+node). The dispatch layers are the same `AbstractRedisAsyncCommands` /
+`AbstractRedisReactiveCommands` and Kotlin `*Impl.kt` as for core commands.
 1. **Argument/response types** — see "Types & args conventions" below.
 2. **Sync interface** `src/main/java/io/lettuce/core/api/sync/<Group>Commands.java`
    — pick the group by command family (STRING → `RedisStringCommands`, HASH →
@@ -247,11 +269,21 @@ flavor references them, so they must exist to compile):
    ```kotlin
    override suspend fun strlen(key: K): Long = ops.strlen(key).awaitSingle()
    ```
-8. **Cluster** — a single-key command flows through automatically. A
-   **broadcast/all-shards** command needs hand-coded fan-out overrides in
-   `RedisAdvancedClusterAsyncCommandsImpl` *and* its reactive sibling
-   (`executeOnUpstream` + a `MultiNodeExecution` aggregator), and may need methods
-   on the cluster aggregate interfaces (cf. the HOTKEYS PR). See "Cluster routing" in
+8. **Cluster** — pick the routing shape deliberately; there are three cases:
+   - A **single-key** command flows through automatically (routed by slot).
+   - A **broadcast/all-shards** command (its answer is the aggregate over the
+     whole cluster — cf. `dbsize`, `flushall`) needs hand-coded fan-out
+     overrides in `RedisAdvancedClusterAsyncCommandsImpl` *and* its reactive
+     sibling (`executeOnUpstream` + a `MultiNodeExecution` aggregator), and may
+     need methods on the cluster aggregate interfaces.
+   - A **node-specific** command (keyless, but its result is only meaningful per
+     node — cf. HOTKEYS) must **not** be fanned out: add `default` overrides on
+     the cluster aggregate interfaces that throw `UnsupportedOperationException`
+     and direct callers to the node-selection API or `getConnection(nodeId)`
+     (cf. `RedisClusterCommands.hotkeysReset()`); only the node-selection
+     flavors execute it.
+
+   See "Cluster routing" in
    [.agents/docs/architecture.md](../../../.agents/docs/architecture.md).
 9. **Read-only command?** Register it in
    `src/main/java/io/lettuce/core/protocol/ReadOnlyCommands.java` (`CommandName`
@@ -382,6 +414,14 @@ local-gotchas section of
   so: the integration tests will be skipped by `@EnabledOnCommand` (expected and
   acceptable), but they must still be written and compile.
 
+**Tear the environment down when you are done.** The Docker topology started in
+Phase 0 keeps running (and holds the test ports) until stopped. After the final
+verification run — and equally when the task is aborted or fails partway — run:
+
+```bash
+make stop
+```
+
 ## PR hygiene checklist (verify before finishing)
 
 - [ ] Every layer of the chosen matrix updated consistently; the consistency suite
@@ -400,6 +440,8 @@ local-gotchas section of
       behavior against older servers, and includes a showcase transcript. (Draft
       with the [draft-pr-description](../draft-pr-description/SKILL.md) skill;
       remember the guardrail — the agent never creates the PR itself.)
+- [ ] Docker test environment stopped (`make stop`) after the final verification
+      run.
 
 ## Top pitfalls
 
