@@ -20,9 +20,12 @@
 
 package io.lettuce.core.api.coroutines
 
+import io.lettuce.core.annotations.Experimental
+
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.ExpireArgs
 import kotlinx.coroutines.flow.Flow
+import io.lettuce.core.HashImport
 import io.lettuce.core.KeyScanCursor
 import io.lettuce.core.KeyValue
 import io.lettuce.core.MapScanCursor
@@ -677,6 +680,50 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @since 6.4
      */
     suspend fun hpttl(key: K, vararg fields: K): List<Long>
+
+    /**
+     * Prepare a hash import fieldset on the current session by declaring its shared field names once. Subsequent
+     * [himportSet] calls for `fieldset` then send only values. The fieldset is per-connection session state; Lettuce
+     * re-establishes it transparently across reconnects, new cluster nodes, and pooled connections.
+     *
+     * @param fieldset the fieldset to declare, must not be `null`.
+     * @return simple-string-reply `OK` if the fieldset was prepared.
+     * @since 7.7
+     */
+    @Experimental
+    suspend fun himportPrepare(fieldset: HashImport<K>): String?
+
+    /**
+     * Create the hash stored at `key` from a prepared `fieldset`, supplying only the values positionally paired to the
+     * fieldset's fields. The resulting key is an ordinary hash. The number of `values` must equal `fieldset.size()`.
+     *
+     * @param key the key of the hash to create.
+     * @param fieldset the prepared fieldset describing the field names, must not be `null` and must not be discarded.
+     * @param values the field values in fieldset order, exactly `fieldset.size()` of them.
+     * @return simple-string-reply `OK` if the hash was created.
+     * @since 7.7
+     */
+    @Experimental
+    suspend fun himportSet(key: K, fieldset: HashImport<K>, vararg values: V): String?
+
+    /**
+     * Discard a previously prepared `fieldset` from the session, freeing its server-side state.
+     *
+     * @param fieldset the fieldset to discard, must not be `null`.
+     * @return `true` if the fieldset existed and was discarded, `false` otherwise.
+     * @since 7.7
+     */
+    @Experimental
+    suspend fun himportDiscard(fieldset: HashImport<K>): Boolean?
+
+    /**
+     * Discard all prepared fieldsets from the session.
+     *
+     * @return the number of fieldsets that were discarded.
+     * @since 7.7
+     */
+    @Experimental
+    suspend fun himportDiscardAll(): Long?
 
 }
 

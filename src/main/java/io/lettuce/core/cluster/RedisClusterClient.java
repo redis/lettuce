@@ -537,6 +537,26 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec, String nodeId,
             RedisChannelWriter clusterWriter, Mono<SocketAddress> socketAddressSupplier) {
+        return connectToNodeAsync(codec, nodeId, clusterWriter, socketAddressSupplier, null);
+    }
+
+    /**
+     * Create a connection to a redis socket address.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
+     * @param nodeId the nodeId
+     * @param clusterWriter global cluster writer
+     * @param socketAddressSupplier supplier for the socket address
+     * @param hashImportRegistry the cluster-wide {@link HashImportRegistry} to share with this node connection so it can
+     *        re-establish {@code HIMPORT} fieldsets on activation, or {@code null} for connections that must not participate in
+     *        the cluster's {@code HIMPORT} session state (e.g. topology-refresh probes).
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new connection
+     */
+    <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectToNodeAsync(RedisCodec<K, V> codec, String nodeId,
+            RedisChannelWriter clusterWriter, Mono<SocketAddress> socketAddressSupplier,
+            HashImportRegistry hashImportRegistry) {
 
         assertNotNull(codec);
         assertNotEmpty(initialUris);
@@ -559,6 +579,10 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         connection.setAuthenticationHandler(
                 createHandler(connection, getFirstUri().getCredentialsProvider(), false, getOptions()));
+
+        if (hashImportRegistry != null) {
+            connection.getConnectionState().setHashImportRegistry(hashImportRegistry);
+        }
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,

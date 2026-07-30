@@ -74,7 +74,10 @@ public enum CommandKeyword implements ProtocolKeyword {
     CAPACITY, SIZE, FILTERS, ITEMS, EXPANSION, NONSCALING, ERROR, NOCREATE, BUCKETSIZE, MAXITERATIONS,
 
     // LMOVEM/BLMOVEM keywords
-    EXACTLY, OBO, BULK;
+    EXACTLY, OBO, BULK,
+
+    // HIMPORT keywords
+    PREPARE, DISCARDALL;
 
     public final byte[] bytes;
 

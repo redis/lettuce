@@ -1856,6 +1856,34 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HSET, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, String> himportPrepare(HashImport<K> fieldset) {
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(PREPARE).addKey(fieldset.name()).addKeys(fieldset.fields());
+        return createCommand(HIMPORT, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> himportSet(K key, HashImport<K> fieldset, V... values) {
+        notNullKey(key);
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.SET).addKey(key).addKey(fieldset.name())
+                .addValues(values);
+        return createCommand(HIMPORT, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, Boolean> himportDiscard(HashImport<K> fieldset) {
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.DISCARD).addKey(fieldset.name());
+        return createCommand(HIMPORT, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> himportDiscardAll() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(DISCARDALL);
+        return createCommand(HIMPORT, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, Long> hsetex(K key, Map<K, V> map) {
         notNullKey(key);
         LettuceAssert.notNull(map, "Map " + MUST_NOT_BE_NULL);

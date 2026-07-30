@@ -365,6 +365,28 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     public void activated() {
         super.activated();
         authHandler.subscribe();
+        replayHashImports();
+    }
+
+    /**
+     * Re-establish the {@code HIMPORT} fieldsets declared on this connection. Dispatched during the activation window so the
+     * replayed {@code HIMPORT PREPARE} commands are written to the wire ahead of the flushed disconnected buffer, keeping every
+     * buffered {@code HIMPORT SET} preceded by its {@code PREPARE}.
+     */
+    @SuppressWarnings("unchecked")
+    private void replayHashImports() {
+
+        Collection<HashImport<?>> fieldSets = state.getHashImportRegistry().fieldSets();
+        if (fieldSets.isEmpty()) {
+            return;
+        }
+
+        RedisCommandBuilder<K, V> commandBuilder = new RedisCommandBuilder<>(codec);
+        for (HashImport<?> fieldset : fieldSets) {
+            if (!fieldset.isDiscarded()) {
+                dispatch(new AsyncCommand<>(commandBuilder.himportPrepare((HashImport<K>) fieldset)));
+            }
+        }
     }
 
     @Override

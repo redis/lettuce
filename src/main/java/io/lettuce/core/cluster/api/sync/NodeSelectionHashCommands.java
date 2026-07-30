@@ -19,9 +19,12 @@
  */
 package io.lettuce.core.cluster.api.sync;
 
+import io.lettuce.core.annotations.Experimental;
+
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.HGetExArgs;
 import io.lettuce.core.HSetExArgs;
+import io.lettuce.core.HashImport;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MapScanCursor;
@@ -857,5 +860,51 @@ public interface NodeSelectionHashCommands<K, V> {
      * @since 6.4
      */
     Executions<List<Long>> hpttl(K key, K... fields);
+
+    /**
+     * Prepare a hash import fieldset on the current session by declaring its shared field names once. Subsequent
+     * {@link #himportSet(Object, HashImport, Object...) himportSet} calls for {@code fieldset} then send only values. The
+     * fieldset is per-connection session state; Lettuce re-establishes it transparently across reconnects, new cluster nodes,
+     * and pooled connections.
+     *
+     * @param fieldset the fieldset to declare, must not be {@code null}.
+     * @return simple-string-reply {@code OK} if the fieldset was prepared.
+     * @since 7.7
+     */
+    @Experimental
+    Executions<String> himportPrepare(HashImport<K> fieldset);
+
+    /**
+     * Create the hash stored at {@code key} from a prepared {@code fieldset}, supplying only the values positionally paired to
+     * the fieldset's fields. The resulting key is an ordinary hash. The number of {@code values} must equal
+     * {@link HashImport#size() fieldset.size()}.
+     *
+     * @param key the key of the hash to create.
+     * @param fieldset the prepared fieldset describing the field names, must not be {@code null} and must not be discarded.
+     * @param values the field values in fieldset order, exactly {@link HashImport#size()} of them.
+     * @return simple-string-reply {@code OK} if the hash was created.
+     * @since 7.7
+     */
+    @Experimental
+    Executions<String> himportSet(K key, HashImport<K> fieldset, V... values);
+
+    /**
+     * Discard a previously prepared {@code fieldset} from the session, freeing its server-side state.
+     *
+     * @param fieldset the fieldset to discard, must not be {@code null}.
+     * @return {@code true} if the fieldset existed and was discarded, {@code false} otherwise.
+     * @since 7.7
+     */
+    @Experimental
+    Executions<Boolean> himportDiscard(HashImport<K> fieldset);
+
+    /**
+     * Discard all prepared fieldsets from the session.
+     *
+     * @return Long integer-reply the number of fieldsets that were discarded.
+     * @since 7.7
+     */
+    @Experimental
+    Executions<Long> himportDiscardAll();
 
 }

@@ -37,6 +37,7 @@ import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonType;
@@ -93,6 +94,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -1591,6 +1594,78 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Long> hset(K key, Map<K, V> map) {
         return dispatch(commandBuilder.hset(key, map));
+    }
+
+    @Override
+    public RedisFuture<String> himportPrepare(HashImport<K> fieldset) {
+        LettuceAssert.notNull(fieldset, "HashImport must not be null");
+
+        getHashImportRegistry().add(fieldset);
+        return dispatch(commandBuilder.himportPrepare(fieldset));
+    }
+
+    @Override
+    public RedisFuture<String> himportSet(K key, HashImport<K> fieldset, V... values) {
+        LettuceAssert.notNull(fieldset, "HashImport must not be null");
+        if (fieldset.isDiscarded()) {
+            throw new IllegalStateException("HashImport has been discarded and must not be reused");
+        }
+        LettuceAssert.isTrue(values.length == fieldset.size(), "Number of values (" + values.length
+                + ") must match the number of fields in the fieldset (" + fieldset.size() + ")");
+        if (isMulti()) {
+            throw new UnsupportedOperationException("HIMPORT SET is not supported within a MULTI transaction");
+        }
+
+        RedisFuture<String> attempt = dispatch(commandBuilder.himportSet(key, fieldset, values));
+        CompletionStage<String> withRetry = attempt.handle((value, ex) -> {
+            if (ex == null) {
+                return CompletableFuture.completedFuture(value);
+            }
+            if (isNoSuchFieldset(ex)) {
+                return himportPrepare(fieldset)
+                        .thenCompose(ignored -> dispatch(commandBuilder.himportSet(key, fieldset, values)));
+            }
+            CompletableFuture<String> failed = new CompletableFuture<>();
+            failed.completeExceptionally(ex);
+            return failed;
+        }).thenCompose(stage -> stage);
+
+        return new PipelinedRedisFuture<>(withRetry);
+    }
+
+    @Override
+    public RedisFuture<Boolean> himportDiscard(HashImport<K> fieldset) {
+        LettuceAssert.notNull(fieldset, "HashImport must not be null");
+
+        getHashImportRegistry().remove(fieldset);
+        fieldset.close();
+        return dispatch(commandBuilder.himportDiscard(fieldset));
+    }
+
+    @Override
+    public RedisFuture<Long> himportDiscardAll() {
+        getHashImportRegistry().clear();
+        return dispatch(commandBuilder.himportDiscardAll());
+    }
+
+    private HashImportRegistry getHashImportRegistry() {
+        return ((StatefulRedisConnectionImpl<K, V>) getConnection()).getConnectionState().getHashImportRegistry();
+    }
+
+    private boolean isMulti() {
+        return getConnection() instanceof StatefulRedisConnection
+                && ((StatefulRedisConnection<K, V>) getConnection()).isMulti();
+    }
+
+    private static boolean isNoSuchFieldset(Throwable ex) {
+
+        Throwable cause = ex;
+        while ((cause instanceof CompletionException || cause instanceof ExecutionException) && cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+
+        return cause instanceof RedisCommandExecutionException && cause.getMessage() != null
+                && cause.getMessage().toLowerCase().contains("no such fieldset");
     }
 
     @Override

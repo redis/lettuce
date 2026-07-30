@@ -43,6 +43,8 @@ public class ConnectionState {
 
     private volatile ConnectionMetadata connectionMetadata = new ConnectionMetadata();
 
+    private volatile HashImportRegistry hashImportRegistry = new HashImportRegistry();
+
     /**
      * Applies settings from {@link RedisURI}.
      *
@@ -159,6 +161,26 @@ public class ConnectionState {
 
     String getClientName() {
         return connectionMetadata.getClientName();
+    }
+
+    /**
+     * Returns the {@link HashImportRegistry} holding the {@code HIMPORT} fieldsets declared on this connection. In cluster
+     * deployments the same registry instance is shared across the cluster connection and all node connections.
+     *
+     * @return the {@link HashImportRegistry}, never {@code null}.
+     */
+    public HashImportRegistry getHashImportRegistry() {
+        return hashImportRegistry;
+    }
+
+    /**
+     * Replaces the {@link HashImportRegistry}, used by the cluster wiring to share a single registry instance across all node
+     * connections.
+     *
+     * @param hashImportRegistry the registry to use, must not be {@code null}.
+     */
+    public void setHashImportRegistry(HashImportRegistry hashImportRegistry) {
+        this.hashImportRegistry = hashImportRegistry;
     }
 
     /**

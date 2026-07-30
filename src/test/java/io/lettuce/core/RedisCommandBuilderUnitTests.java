@@ -62,6 +62,57 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructHimportPrepare() {
+
+        HashImport<String> fieldset = HashImport.of(seq -> "fs", "name", "email");
+        Command<String, String, ?> command = sut.himportPrepare(fieldset);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$7\r\n"
+                + "PREPARE\r\n" + "$2\r\n" + "fs\r\n" + "$4\r\n" + "name\r\n" + "$5\r\n" + "email\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportSet() {
+
+        HashImport<String> fieldset = HashImport.of(seq -> "fs", "name", "email");
+        Command<String, String, ?> command = sut.himportSet("u:1", fieldset, "alice", "a@x.com");
+
+        assertThat(Unpooled.wrappedBuffer(command.getArgs().getFirstEncodedKey()).toString(StandardCharsets.UTF_8))
+                .isEqualTo("u:1");
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$3\r\n" + "SET\r\n"
+                + "$3\r\n" + "u:1\r\n" + "$2\r\n" + "fs\r\n" + "$5\r\n" + "alice\r\n" + "$7\r\n" + "a@x.com\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportDiscard() {
+
+        HashImport<String> fieldset = HashImport.of(seq -> "fs", "name", "email");
+        Command<String, String, ?> command = sut.himportDiscard(fieldset);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$7\r\n" + "DISCARD\r\n" + "$2\r\n" + "fs\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportDiscardAll() {
+
+        Command<String, String, ?> command = sut.himportDiscardAll();
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*2\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$10\r\n" + "DISCARDALL\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructXreadgroup() {
 
         Command<String, String, ?> command = sut.xreadgroup(Consumer.from("a", "b"), new XReadArgs(),

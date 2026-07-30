@@ -34,6 +34,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.HashImportRegistry;
 import io.lettuce.core.OrderingReadFromAccessor;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelWriter;
@@ -95,6 +96,13 @@ class PooledClusterConnectionProvider<K, V>
     private final ClusterEventListener clusterEventListener;
 
     private final RedisCodec<K, V> redisCodec;
+
+    /**
+     * Cluster-wide {@link HashImportRegistry} shared by object identity with every data-path node connection created by this
+     * provider, so that a node connection re-establishes the whole cluster's declared {@code HIMPORT} fieldsets on activation.
+     * Scoped to this provider, hence to a single cluster connection.
+     */
+    private final HashImportRegistry hashImportRegistry = new HashImportRegistry();
 
     private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, ConnectionFuture<StatefulRedisConnection<K, V>>> connectionProvider;
 
@@ -702,7 +710,7 @@ class PooledClusterConnectionProvider<K, V>
      * @return a factory {@link Function}
      */
     protected ClusterNodeConnectionFactory<K, V> getConnectionFactory(RedisClusterClient redisClusterClient) {
-        return new DefaultClusterNodeConnectionFactory<>(redisClusterClient, redisCodec, clusterWriter);
+        return new DefaultClusterNodeConnectionFactory<>(redisClusterClient, redisCodec, clusterWriter, hashImportRegistry);
     }
 
     protected void onPushMessage(RedisClusterNode node, PushMessage message) {
@@ -780,13 +788,16 @@ class PooledClusterConnectionProvider<K, V>
 
         private final RedisChannelWriter clusterWriter;
 
+        private final HashImportRegistry hashImportRegistry;
+
         DefaultClusterNodeConnectionFactory(RedisClusterClient redisClusterClient, RedisCodec<K, V> redisCodec,
-                RedisChannelWriter clusterWriter) {
+                RedisChannelWriter clusterWriter, HashImportRegistry hashImportRegistry) {
 
             super(redisClusterClient.getResources());
             this.redisClusterClient = redisClusterClient;
             this.redisCodec = redisCodec;
             this.clusterWriter = clusterWriter;
+            this.hashImportRegistry = hashImportRegistry;
         }
 
         @Override
@@ -794,12 +805,13 @@ class PooledClusterConnectionProvider<K, V>
 
             if (key.nodeId != null) {
                 // NodeId connections do not provide command recovery due to cluster reconfiguration
-                return redisClusterClient.connectToNodeAsync(redisCodec, key.nodeId, null, getSocketAddressSupplier(key));
+                return redisClusterClient.connectToNodeAsync(redisCodec, key.nodeId, null, getSocketAddressSupplier(key),
+                        hashImportRegistry);
             }
 
             // Host and port connections do provide command recovery due to cluster reconfiguration
             return redisClusterClient.connectToNodeAsync(redisCodec, key.host + ":" + key.port, clusterWriter,
-                    getSocketAddressSupplier(key));
+                    getSocketAddressSupplier(key), hashImportRegistry);
         }
 
     }
