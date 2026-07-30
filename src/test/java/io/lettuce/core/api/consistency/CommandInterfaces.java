@@ -28,28 +28,6 @@ import io.lettuce.core.api.async.RedisStringAsyncCommands;
 import io.lettuce.core.api.async.RedisTopKAsyncCommands;
 import io.lettuce.core.api.async.RedisTransactionalAsyncCommands;
 import io.lettuce.core.api.async.RedisVectorSetAsyncCommands;
-import io.lettuce.core.api.coroutines.BaseRedisCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisAclCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisArrayCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisBloomFilterCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisCuckooFilterCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RediSearchCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisFunctionCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisGeoCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisHLLCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisHashCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisJsonCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisKeyCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisListCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisScriptingCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisServerCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisSetCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisSortedSetCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisStreamCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisStringCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisTopKCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisTransactionalCoroutinesCommands;
-import io.lettuce.core.api.coroutines.RedisVectorSetCoroutinesCommands;
 import io.lettuce.core.api.reactive.BaseRedisReactiveCommands;
 import io.lettuce.core.api.reactive.RedisAclReactiveCommands;
 import io.lettuce.core.api.reactive.RedisArrayReactiveCommands;
@@ -137,7 +115,6 @@ import io.lettuce.core.cluster.api.sync.NodeSelectionStringCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelectionTopKCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelectionVectorSetCommands;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
-import io.lettuce.core.sentinel.api.coroutines.RedisSentinelCoroutinesCommands;
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
 
@@ -148,83 +125,81 @@ import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
  * <p>
  * This catalog is the single place where a new command group must be registered so that the API consistency test suite covers
  * it.
+ * <p>
+ * The Kotlin coroutine flavor is owned entirely by the Kotlin side of the suite so that the Java test sources carry no
+ * reference to it: the {@code CommandInterfaces.coroutines()} extension function (see {@code KnownKotlinApiDeviations.kt})
+ * derives the coroutine interface from the sync interface by naming convention.
  */
 public enum CommandInterfaces {
 
     BASE(BaseRedisCommands.class, BaseRedisAsyncCommands.class, BaseRedisReactiveCommands.class,
-            BaseRedisCoroutinesCommands.class, BaseNodeSelectionCommands.class, BaseNodeSelectionAsyncCommands.class),
+            BaseNodeSelectionCommands.class, BaseNodeSelectionAsyncCommands.class),
 
-    ACL(RedisAclCommands.class, RedisAclAsyncCommands.class, RedisAclReactiveCommands.class, RedisAclCoroutinesCommands.class,
-            NodeSelectionAclCommands.class, NodeSelectionAclAsyncCommands.class),
+    ACL(RedisAclCommands.class, RedisAclAsyncCommands.class, RedisAclReactiveCommands.class, NodeSelectionAclCommands.class,
+            NodeSelectionAclAsyncCommands.class),
 
     ARRAY(RedisArrayCommands.class, RedisArrayAsyncCommands.class, RedisArrayReactiveCommands.class,
-            RedisArrayCoroutinesCommands.class, NodeSelectionArrayCommands.class, NodeSelectionArrayAsyncCommands.class),
+            NodeSelectionArrayCommands.class, NodeSelectionArrayAsyncCommands.class),
 
     BLOOM_FILTER(RedisBloomFilterCommands.class, RedisBloomFilterAsyncCommands.class, RedisBloomFilterReactiveCommands.class,
-            RedisBloomFilterCoroutinesCommands.class, NodeSelectionBloomFilterCommands.class,
-            NodeSelectionBloomFilterAsyncCommands.class),
+            NodeSelectionBloomFilterCommands.class, NodeSelectionBloomFilterAsyncCommands.class),
 
     CUCKOO_FILTER(RedisCuckooFilterCommands.class, RedisCuckooFilterAsyncCommands.class,
-            RedisCuckooFilterReactiveCommands.class, RedisCuckooFilterCoroutinesCommands.class,
-            NodeSelectionCuckooFilterCommands.class, NodeSelectionCuckooFilterAsyncCommands.class),
+            RedisCuckooFilterReactiveCommands.class, NodeSelectionCuckooFilterCommands.class,
+            NodeSelectionCuckooFilterAsyncCommands.class),
 
     FUNCTION(RedisFunctionCommands.class, RedisFunctionAsyncCommands.class, RedisFunctionReactiveCommands.class,
-            RedisFunctionCoroutinesCommands.class, NodeSelectionFunctionCommands.class,
-            NodeSelectionFunctionAsyncCommands.class),
+            NodeSelectionFunctionCommands.class, NodeSelectionFunctionAsyncCommands.class),
 
-    GEO(RedisGeoCommands.class, RedisGeoAsyncCommands.class, RedisGeoReactiveCommands.class, RedisGeoCoroutinesCommands.class,
-            NodeSelectionGeoCommands.class, NodeSelectionGeoAsyncCommands.class),
+    GEO(RedisGeoCommands.class, RedisGeoAsyncCommands.class, RedisGeoReactiveCommands.class, NodeSelectionGeoCommands.class,
+            NodeSelectionGeoAsyncCommands.class),
 
     HASH(RedisHashCommands.class, RedisHashAsyncCommands.class, RedisHashReactiveCommands.class,
-            RedisHashCoroutinesCommands.class, NodeSelectionHashCommands.class, NodeSelectionHashAsyncCommands.class),
+            NodeSelectionHashCommands.class, NodeSelectionHashAsyncCommands.class),
 
-    HLL(RedisHLLCommands.class, RedisHLLAsyncCommands.class, RedisHLLReactiveCommands.class, RedisHLLCoroutinesCommands.class,
-            NodeSelectionHLLCommands.class, NodeSelectionHLLAsyncCommands.class),
+    HLL(RedisHLLCommands.class, RedisHLLAsyncCommands.class, RedisHLLReactiveCommands.class, NodeSelectionHLLCommands.class,
+            NodeSelectionHLLAsyncCommands.class),
 
     JSON(RedisJsonCommands.class, RedisJsonAsyncCommands.class, RedisJsonReactiveCommands.class,
-            RedisJsonCoroutinesCommands.class, NodeSelectionJsonCommands.class, NodeSelectionJsonAsyncCommands.class),
+            NodeSelectionJsonCommands.class, NodeSelectionJsonAsyncCommands.class),
 
-    KEY(RedisKeyCommands.class, RedisKeyAsyncCommands.class, RedisKeyReactiveCommands.class, RedisKeyCoroutinesCommands.class,
-            NodeSelectionKeyCommands.class, NodeSelectionKeyAsyncCommands.class),
+    KEY(RedisKeyCommands.class, RedisKeyAsyncCommands.class, RedisKeyReactiveCommands.class, NodeSelectionKeyCommands.class,
+            NodeSelectionKeyAsyncCommands.class),
 
     LIST(RedisListCommands.class, RedisListAsyncCommands.class, RedisListReactiveCommands.class,
-            RedisListCoroutinesCommands.class, NodeSelectionListCommands.class, NodeSelectionListAsyncCommands.class),
+            NodeSelectionListCommands.class, NodeSelectionListAsyncCommands.class),
 
     SCRIPTING(RedisScriptingCommands.class, RedisScriptingAsyncCommands.class, RedisScriptingReactiveCommands.class,
-            RedisScriptingCoroutinesCommands.class, NodeSelectionScriptingCommands.class,
-            NodeSelectionScriptingAsyncCommands.class),
+            NodeSelectionScriptingCommands.class, NodeSelectionScriptingAsyncCommands.class),
 
     SEARCH(RediSearchCommands.class, RediSearchAsyncCommands.class, RediSearchReactiveCommands.class,
-            RediSearchCoroutinesCommands.class, NodeSelectionSearchCommands.class, NodeSelectionSearchAsyncCommands.class),
+            NodeSelectionSearchCommands.class, NodeSelectionSearchAsyncCommands.class),
 
-    SENTINEL(RedisSentinelCommands.class, RedisSentinelAsyncCommands.class, RedisSentinelReactiveCommands.class,
-            RedisSentinelCoroutinesCommands.class, null, null),
+    SENTINEL(RedisSentinelCommands.class, RedisSentinelAsyncCommands.class, RedisSentinelReactiveCommands.class, null, null),
 
     SERVER(RedisServerCommands.class, RedisServerAsyncCommands.class, RedisServerReactiveCommands.class,
-            RedisServerCoroutinesCommands.class, NodeSelectionServerCommands.class, NodeSelectionServerAsyncCommands.class),
+            NodeSelectionServerCommands.class, NodeSelectionServerAsyncCommands.class),
 
-    SET(RedisSetCommands.class, RedisSetAsyncCommands.class, RedisSetReactiveCommands.class, RedisSetCoroutinesCommands.class,
-            NodeSelectionSetCommands.class, NodeSelectionSetAsyncCommands.class),
+    SET(RedisSetCommands.class, RedisSetAsyncCommands.class, RedisSetReactiveCommands.class, NodeSelectionSetCommands.class,
+            NodeSelectionSetAsyncCommands.class),
 
     SORTED_SET(RedisSortedSetCommands.class, RedisSortedSetAsyncCommands.class, RedisSortedSetReactiveCommands.class,
-            RedisSortedSetCoroutinesCommands.class, NodeSelectionSortedSetCommands.class,
-            NodeSelectionSortedSetAsyncCommands.class),
+            NodeSelectionSortedSetCommands.class, NodeSelectionSortedSetAsyncCommands.class),
 
     STREAM(RedisStreamCommands.class, RedisStreamAsyncCommands.class, RedisStreamReactiveCommands.class,
-            RedisStreamCoroutinesCommands.class, NodeSelectionStreamCommands.class, NodeSelectionStreamAsyncCommands.class),
+            NodeSelectionStreamCommands.class, NodeSelectionStreamAsyncCommands.class),
 
     STRING(RedisStringCommands.class, RedisStringAsyncCommands.class, RedisStringReactiveCommands.class,
-            RedisStringCoroutinesCommands.class, NodeSelectionStringCommands.class, NodeSelectionStringAsyncCommands.class),
+            NodeSelectionStringCommands.class, NodeSelectionStringAsyncCommands.class),
 
     TOP_K(RedisTopKCommands.class, RedisTopKAsyncCommands.class, RedisTopKReactiveCommands.class,
-            RedisTopKCoroutinesCommands.class, NodeSelectionTopKCommands.class, NodeSelectionTopKAsyncCommands.class),
+            NodeSelectionTopKCommands.class, NodeSelectionTopKAsyncCommands.class),
 
     TRANSACTIONAL(RedisTransactionalCommands.class, RedisTransactionalAsyncCommands.class,
-            RedisTransactionalReactiveCommands.class, RedisTransactionalCoroutinesCommands.class, null, null),
+            RedisTransactionalReactiveCommands.class, null, null),
 
     VECTOR_SET(RedisVectorSetCommands.class, RedisVectorSetAsyncCommands.class, RedisVectorSetReactiveCommands.class,
-            RedisVectorSetCoroutinesCommands.class, NodeSelectionVectorSetCommands.class,
-            NodeSelectionVectorSetAsyncCommands.class);
+            NodeSelectionVectorSetCommands.class, NodeSelectionVectorSetAsyncCommands.class);
 
     private final Class<?> sync;
 
@@ -232,18 +207,15 @@ public enum CommandInterfaces {
 
     private final Class<?> reactive;
 
-    private final Class<?> coroutines;
-
     private final Class<?> nodeSelectionSync;
 
     private final Class<?> nodeSelectionAsync;
 
-    CommandInterfaces(Class<?> sync, Class<?> async, Class<?> reactive, Class<?> coroutines, Class<?> nodeSelectionSync,
+    CommandInterfaces(Class<?> sync, Class<?> async, Class<?> reactive, Class<?> nodeSelectionSync,
             Class<?> nodeSelectionAsync) {
         this.sync = sync;
         this.async = async;
         this.reactive = reactive;
-        this.coroutines = coroutines;
         this.nodeSelectionSync = nodeSelectionSync;
         this.nodeSelectionAsync = nodeSelectionAsync;
     }
@@ -258,10 +230,6 @@ public enum CommandInterfaces {
 
     public Class<?> reactive() {
         return reactive;
-    }
-
-    public Class<?> coroutines() {
-        return coroutines;
     }
 
     /**

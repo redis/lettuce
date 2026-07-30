@@ -22,7 +22,6 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.async.NodeSelectionAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
-import io.lettuce.core.cluster.api.coroutines.RedisClusterCoroutinesCommands;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelectionCommands;
@@ -34,6 +33,9 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
  * cover, so that a newly registered command group cannot be forgotten on the umbrella interfaces — and that the methods
  * declared directly on the aggregates ({@code auth}, {@code select}, the {@code CLUSTER} commands, …) stay in lockstep across
  * the sync, async and reactive flavors.
+ * <p>
+ * The Kotlin coroutine aggregates are covered by {@code KotlinCoroutinesConsistencyUnitTests} so that these Java test sources
+ * stay free of compile-time references to Kotlin types.
  */
 @Tag(UNIT_TEST)
 class AggregateInterfaceConsistencyUnitTests {
@@ -53,7 +55,6 @@ class AggregateInterfaceConsistencyUnitTests {
             assertExtends(softly, RedisCommands.class, group.sync());
             assertExtends(softly, RedisAsyncCommands.class, group.async());
             assertExtends(softly, RedisReactiveCommands.class, group.reactive());
-            assertExtends(softly, io.lettuce.core.api.coroutines.RedisCoroutinesCommands.class, group.coroutines());
         }
 
         softly.assertAll();
@@ -68,7 +69,6 @@ class AggregateInterfaceConsistencyUnitTests {
             assertExtends(softly, RedisClusterCommands.class, group.sync());
             assertExtends(softly, RedisClusterAsyncCommands.class, group.async());
             assertExtends(softly, RedisClusterReactiveCommands.class, group.reactive());
-            assertExtends(softly, RedisClusterCoroutinesCommands.class, group.coroutines());
         }
 
         softly.assertAll();

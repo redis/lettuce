@@ -7,7 +7,10 @@
 package io.lettuce.core.api.consistency
 
 import io.lettuce.TestTags.UNIT_TEST
+import io.lettuce.core.api.coroutines.RedisCoroutinesCommands
+import io.lettuce.core.cluster.api.coroutines.RedisClusterCoroutinesCommands
 import java.lang.reflect.Method
+import java.util.EnumSet
 import kotlin.reflect.KFunction
 import kotlin.reflect.KType
 import kotlin.reflect.full.declaredMemberFunctions
@@ -15,6 +18,7 @@ import kotlin.reflect.jvm.javaMethod
 import kotlinx.coroutines.flow.Flow
 import org.assertj.core.api.SoftAssertions
 import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 
@@ -23,7 +27,12 @@ import org.junit.jupiter.params.provider.EnumSource
  * streaming-channel and explicitly skipped methods) must exist as a `suspend fun`, or as a plain function when it is
  * non-suspendable or returns a [Flow]. Return-type details beyond the Flow/suspend shape (element nullability) are not
  * verified.
+ *
+ * Also verifies that the coroutine aggregate interfaces extend the coroutine interface of every command group they are
+ * supposed to cover — the coroutine counterpart of `AggregateInterfaceConsistencyUnitTests`, kept here so the Java test
+ * sources stay free of compile-time references to Kotlin types.
  */
+@OptIn(io.lettuce.core.ExperimentalLettuceCoroutinesApi::class)
 @Tag(UNIT_TEST)
 class KotlinCoroutinesConsistencyUnitTests {
 
@@ -55,6 +64,35 @@ class KotlinCoroutinesConsistencyUnitTests {
         softly.assertAll()
     }
 
+    @Test
+    fun standaloneAggregateCoversAllGroups() {
+
+        val softly = SoftAssertions()
+
+        for (group in EnumSet.complementOf(EnumSet.of(CommandInterfaces.SENTINEL))) {
+            assertExtends(softly, RedisCoroutinesCommands::class.java, group.coroutines())
+        }
+
+        softly.assertAll()
+    }
+
+    @Test
+    fun clusterAggregateCoversAllClusterGroups() {
+
+        val softly = SoftAssertions()
+
+        for (group in EnumSet.complementOf(EnumSet.of(CommandInterfaces.SENTINEL, CommandInterfaces.TRANSACTIONAL))) {
+            assertExtends(softly, RedisClusterCoroutinesCommands::class.java, group.coroutines())
+        }
+
+        softly.assertAll()
+    }
+
+    private fun assertExtends(softly: SoftAssertions, aggregate: Class<*>, groupInterface: Class<*>) {
+        softly.assertThat(groupInterface.isAssignableFrom(aggregate))
+            .describedAs("%s must extend %s", aggregate.simpleName, groupInterface.simpleName).isTrue
+    }
+
     @ParameterizedTest
     @EnumSource(CommandInterfaces::class)
     fun coroutinesMethodsExistOnSyncOrAsyncApi(group: CommandInterfaces) {
@@ -79,12 +117,12 @@ class KotlinCoroutinesConsistencyUnitTests {
 
     private fun verifyShape(softly: SoftAssertions, group: CommandInterfaces, syncMethod: Method, function: KFunction<*>) {
 
-        val override = KnownApiDeviations.lookup(KnownApiDeviations.COROUTINES_RESULT_OVERRIDES, syncMethod, group.sync())
+        val override = KnownApiDeviations.lookup(KnownKotlinApiDeviations.RESULT_OVERRIDES, syncMethod, group.sync())
         val expectFlow = override?.startsWith("Flow<") ?: KnownApiDeviations.contains(
-            KnownApiDeviations.COROUTINES_FLOW, syncMethod, group.sync()
+            KnownKotlinApiDeviations.FLOW, syncMethod, group.sync()
         )
         val expectSuspend = !expectFlow &&
-            !KnownApiDeviations.contains(KnownApiDeviations.COROUTINES_NON_SUSPENDABLE, syncMethod, group.sync())
+            !KnownApiDeviations.contains(KnownKotlinApiDeviations.NON_SUSPENDABLE, syncMethod, group.sync())
 
         val description = "${group.coroutines().simpleName}.${KnownApiDeviations.signatureKey(syncMethod)}"
 
@@ -125,14 +163,14 @@ class KotlinCoroutinesConsistencyUnitTests {
 
     private fun isSkippedOnCoroutinesApi(syncMethod: Method, group: CommandInterfaces): Boolean {
 
-        if (KnownApiDeviations.contains(KnownApiDeviations.COROUTINES_SKIP, syncMethod, group.sync())) {
+        if (KnownApiDeviations.contains(KnownKotlinApiDeviations.SKIP, syncMethod, group.sync())) {
             return true
         }
         if (TypeSignatures.isStreamingChannelMethod(syncMethod)) {
             return true
         }
         return syncMethod.isAnnotationPresent(java.lang.Deprecated::class.java) &&
-            !KnownApiDeviations.contains(KnownApiDeviations.COROUTINES_KEEP_DEPRECATED, syncMethod, group.sync())
+            !KnownApiDeviations.contains(KnownKotlinApiDeviations.KEEP_DEPRECATED, syncMethod, group.sync())
     }
 
     /**
