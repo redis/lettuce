@@ -230,6 +230,20 @@ class RediSearchCommandBuilderUnitTests {
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }
 
+    // FT.ALIASLIST index
+    @Test
+    void shouldCorrectlyConstructFtAliaslistCommand() {
+        Command<String, String, List<String>> command = builder.ftAliaslist("index");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*2\r\n" //
+                + "$12\r\n" + "FT.ALIASLIST\r\n" //
+                + "$5\r\n" + "index\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
     // FT.TAGVALS idx field
     @Test
     void shouldCorrectlyConstructFtTagvalsCommand() {
