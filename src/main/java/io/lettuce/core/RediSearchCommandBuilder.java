@@ -17,6 +17,7 @@ import io.lettuce.core.output.EncodedComplexOutput;
 import io.lettuce.core.output.IntegerOutput;
 
 import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.output.StringListOutput;
 import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
@@ -242,6 +243,20 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(alias);
 
         return createCommand(FT_ALIASDEL, new StatusOutput<>(codec), args);
+    }
+
+    /**
+     * List all aliases associated with the given index.
+     *
+     * @param index the index name, as created with {@code FT.CREATE}. An alias name is not accepted as a substitute.
+     * @return the aliases associated with the index, as an unordered collection (the order is unspecified)
+     */
+    public Command<K, V, List<String>> ftAliaslist(String index) {
+        LettuceAssert.notNull(index, "Index must not be null");
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
+
+        return createCommand(FT_ALIASLIST, new StringListOutput<>(codec), args);
     }
 
     /**
