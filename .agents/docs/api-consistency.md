@@ -61,8 +61,13 @@ intentionally not on sync.)
   suite also verifies **generic parameter signatures** (not just erased types)
   and **`@Deprecated` parity** with the sync method.
 
-All exceptions to these rules live in **one registry**:
-`src/test/java/io/lettuce/core/api/consistency/KnownApiDeviations.java`.
+All exceptions to these rules live in **two registries, split by flavor
+ownership**: the Java flavors in
+`src/test/java/io/lettuce/core/api/consistency/KnownApiDeviations.java`, the
+Kotlin coroutine flavor in
+`src/test/kotlin/io/lettuce/core/api/consistency/KnownKotlinApiDeviations.kt`
+(same key forms and matching helpers; the Java test sources carry no reference
+to the Kotlin flavor).
 
 ## The test suite
 
@@ -71,8 +76,9 @@ All exceptions to these rules live in **one registry**:
 
 | Class | Checks |
 |-------|--------|
-| `CommandInterfaces` | the catalog: one enum entry per command group → its six flavor classes |
-| `KnownApiDeviations` | the exceptions registry (ported from the former generators) |
+| `CommandInterfaces` | the catalog: one enum entry per command group → its five Java flavor classes (the coroutine flavor is derived by naming convention via the Kotlin `coroutines()` extension) |
+| `KnownApiDeviations` | the exceptions registry for the Java flavors (ported from the former generators) |
+| `KnownKotlinApiDeviations` (Kotlin) | the exceptions registry for the coroutine flavor + the `CommandInterfaces.coroutines()` extension |
 | `TypeSignatures` | shared reflection/normalization helpers |
 | `SyncAsyncConsistencyUnitTests` | presence both directions + `RedisFuture` wrapping |
 | `SyncReactiveConsistencyUnitTests` | presence both directions + `Mono`/`Flux` mapping + streaming deprecation |

@@ -22,8 +22,10 @@ import java.util.StringJoiner;
  * <p>
  * The tables were ported verbatim from the former {@code io.lettuce.apigenerator} generators
  * ({@code CreateSyncApi#FILTER_METHODS}, {@code CreateAsyncApi#KEEP_METHOD_RESULT_TYPE},
- * {@code CreateReactiveApi#KEEP_METHOD_RESULT_TYPE/FORCE_FLUX_RESULT/VALUE_WRAP/RESULT_SPEC},
- * {@code Create*NodeSelectionClusterApi#FILTER_METHODS} and {@code KotlinCompilationUnitFactory}).
+ * {@code CreateReactiveApi#KEEP_METHOD_RESULT_TYPE/FORCE_FLUX_RESULT/VALUE_WRAP/RESULT_SPEC} and
+ * {@code Create*NodeSelectionClusterApi#FILTER_METHODS}). The deviations of the Kotlin coroutine flavor live on the Kotlin side
+ * of the suite, in {@code KnownKotlinApiDeviations} (Kotlin test sources); the key forms and matching helpers below are shared
+ * by both registries.
  * <p>
  * Keys may take three forms, checked from most to least specific:
  * <ul>
@@ -136,46 +138,6 @@ public final class KnownApiDeviations {
     public static final Set<String> NODE_SELECTION_AGGREGATE_PENDING = setOf("ACL", "ARRAY", "STREAM");
 
     /**
-     * Sync methods with no coroutine counterpart. From {@code KotlinCompilationUnitFactory#SKIP_METHODS}.
-     */
-    public static final Set<String> COROUTINES_SKIP = setOf("getStatefulConnection");
-
-    /**
-     * Coroutine methods that are plain functions instead of {@code suspend} functions. From
-     * {@code KotlinCompilationUnitFactory#NON_SUSPENDABLE_METHODS}.
-     */
-    public static final Set<String> COROUTINES_NON_SUSPENDABLE = setOf("isOpen", "flushCommands", "setAutoFlushCommands");
-
-    /**
-     * Coroutine methods returning {@code Flow} instead of a suspended scalar/collection. From
-     * {@code KotlinCompilationUnitFactory#FLOW_METHODS}.
-     */
-    public static final Set<String> COROUTINES_FLOW = setOf("aclList", "aclLog", "dispatch", "geohash", "georadius",
-            "georadiusbymember", "geosearch", "hgetall", "hkeys", "hmget", "hvals", "keys", "mget", "sdiff", "sinter",
-            "smembers", "smismember", "sort", "sortReadOnly", "sunion", "xclaim", "xrange", "xread", "xreadgroup", "xrevrange",
-            "zdiff", "zdiffWithScores", "zinter", "zinterWithScores", "zrange", "zrangeWithScores", "zrangebylex",
-            "zrangebyscore", "zrangebyscoreWithScores", "zrevrange", "zrevrangeWithScores", "zrevrangebylex",
-            "zrevrangebyscore", "zrevrangebyscoreWithScores", "zunion", "zunionWithScores",
-            // calibration 2026-07: only the multi-element overloads stream; the single-element overloads suspend
-            "srandmember(K, long)", "zpopmax(K, long)", "zpopmin(K, long)", "xpending(K, K, Range, Limit)",
-            "xpending(K, Consumer, Range, Limit)", "xpending(K, XPendingArgs)",
-            // calibration 2026-07: multi-element commands added after the generators stopped being used
-            "hgetdel", "hgetex", "xackdel", "xdelex");
-
-    /**
-     * Deprecated sync methods that are still exposed on the coroutine API. From
-     * {@code KotlinCompilationUnitFactory#KEEP_DEPRECATED_METHODS}.
-     */
-    public static final Set<String> COROUTINES_KEEP_DEPRECATED = setOf("flushallAsync", "flushdbAsync", "slaveof",
-            "slaveofNoOne", "slaves");
-
-    /**
-     * Coroutine methods with a fully overridden return type (normalized, package-less Kotlin rendering). From
-     * {@code KotlinCompilationUnitFactory#RESULT_SPEC}.
-     */
-    public static final Map<String, String> COROUTINES_RESULT_OVERRIDES;
-
-    /**
      * Interface methods that do not correspond to any command-builder method: connection control, locally computed values
      * ({@code digest}), generic dispatch and transaction plumbing ({@code exec} builds its command in the transaction
      * machinery, not in the builder).
@@ -215,11 +177,6 @@ public final class KnownApiDeviations {
         reactive.put("clusterLinks", "Mono<List<Map<String, Object>>>");
         reactive.put("clusterShards", "Mono<List<Object>>");
         REACTIVE_RESULT_OVERRIDES = Collections.unmodifiableMap(reactive);
-
-        Map<String, String> coroutines = new HashMap<>();
-        coroutines.put("hgetall", "Flow<KeyValue<K, V>>");
-        coroutines.put("zmscore", "List<Double?>");
-        COROUTINES_RESULT_OVERRIDES = Collections.unmodifiableMap(coroutines);
 
         Map<String, String> builderAliases = new HashMap<>();
         builderAliases.put("waitForReplication", "wait");
