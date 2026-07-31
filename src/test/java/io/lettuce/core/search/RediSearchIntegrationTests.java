@@ -52,6 +52,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -1640,6 +1641,7 @@ public class RediSearchIntegrationTests {
      * error rather than partial results. See CAE-3003.
      */
     @Test
+    @Disabled("re-enable once MOD-17316 is fixed")
     void testHybridOnTimeoutFailReturnsError() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
 
@@ -1661,6 +1663,7 @@ public class RediSearchIntegrationTests {
      * See CAE-3003.
      */
     @Test
+    @Disabled("re-enable once MOD-17316 is fixed")
     void testHybridOnTimeoutReturnPopulatesWarnings() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"));
 
