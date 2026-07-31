@@ -23,7 +23,7 @@ import io.lettuce.core.protocol.AsyncCommand;
 import io.netty.channel.Channel;
 
 /**
- * Immutable template describing the shared field names of a hash import fieldset used by the {@code HIMPORT} command family.
+ * Template describing the shared field names of a hash import fieldset used by the {@code HIMPORT} command family.
  * <p>
  * A {@link HashImport} bundles a generated fieldset {@code name} with the ordered field names shared by many hashes. It is
  * created once and reused across many {@code himportSet} calls, each of which sends only the values, positionally paired to
@@ -73,6 +73,8 @@ public class HashImport<K> implements AutoCloseable {
      * @param fields the ordered field names shared by the imported hashes, must not be {@code null}, empty, or contain
      *        duplicates.
      * @return a new {@link HashImport}.
+     * @throws IllegalArgumentException if {@code fields} is {@code null}, empty, or contains {@code null} or duplicate
+     *         elements.
      * @since 7.7
      */
     public static HashImport<String> of(String... fields) {
@@ -83,12 +85,14 @@ public class HashImport<K> implements AutoCloseable {
      * Create a {@link HashImport} for arbitrary key types, deriving the fieldset name from {@code idCodec} applied to a
      * generated sequence number.
      *
+     * @param <K> Key type.
      * @param idCodec function mapping a generated sequence number to a fieldset name of key type {@code K}, must not be
      *        {@code null}.
      * @param fields the ordered field names shared by the imported hashes, must not be {@code null}, empty, or contain
      *        duplicates.
-     * @param <K> Key type.
      * @return a new {@link HashImport}.
+     * @throws IllegalArgumentException if {@code idCodec} is {@code null}, or {@code fields} is {@code null}, empty, or
+     *         contains {@code null} or duplicate elements.
      * @since 7.7
      */
     @SafeVarargs
@@ -160,11 +164,13 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * Discard this fieldset: send a best-effort {@code HIMPORT DISCARD} to every still-active connection it was prepared on and
-     * mark it discarded so it can no longer be used for imports. Cleanup is fire-and-forget — failures are ignored and a
-     * {@code DISCARD} that lands on a rotated connection is a harmless no-op, since the fieldset name is globally unique. It is
-     * not required for correctness (server-side state also dies with the connection) but releases {@code maxmemory-clients}
-     * pressure promptly on long-lived and pooled connections. Idempotent: a second call does nothing.
+     * Discard this fieldset, releasing its server-side state.
+     * <p>
+     * Sends a best-effort {@code HIMPORT DISCARD} to every still-active connection the fieldset was prepared on and marks it
+     * discarded so it can no longer be used for imports. Cleanup is fire-and-forget: failures are ignored, and a
+     * {@code DISCARD} that lands on a rotated connection is a harmless no-op because the generated fieldset name is unique per
+     * instance. Disposal is not required for correctness — the state is also released when a connection closes — but frees it
+     * promptly on long-lived and pooled connections. Calling this more than once has no additional effect.
      *
      * @since 7.7
      */

@@ -24,13 +24,12 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
- * Integration tests for the {@code HIMPORT} command family. The command-flow coverage lives here once, against the synchronous
- * {@link RedisCommands} API, and is re-run through the cluster / reactive / transactional / RESP2 execution paths by the
- * subclasses in this hierarchy. Connection-session-state scenarios that require raw connection control (lazy prepare across
- * reconnects, cluster node bouncing) live in dedicated classes instead, as they do not fit the shared facade.
+ * Integration tests for the {@code HIMPORT} command family. The full flow — import, lazy prepare on first use, reconnect,
+ * cleanup on close, and validation — is written once here against the synchronous {@link RedisCommands} API and re-run through
+ * the cluster / reactive / transactional / RESP2 execution paths by the subclasses in this hierarchy. Subclasses override
+ * {@link #keyFor(int)} where needed so the shared flow spans nodes on Redis Cluster.
  *
  * @see io.lettuce.core.cluster.commands.HashImportClusterCommandIntegrationTests
- * @see io.lettuce.core.commands.HashImportConnectionStateIntegrationTests
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
