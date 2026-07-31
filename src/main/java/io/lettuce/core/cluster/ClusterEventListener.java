@@ -26,6 +26,14 @@ interface ClusterEventListener {
     }
 
     /**
+     * Event callback if a {@literal SMIGRATED} maintenance push notification signals a completed slot migration.
+     *
+     * @since 7.7
+     */
+    default void onSlotMigrationCompleted() {
+    }
+
+    /**
      * Event callback if a command should be routed to a slot that is not covered.
      *
      * @since 5.2

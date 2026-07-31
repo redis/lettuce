@@ -56,20 +56,4 @@ public interface MaintenanceAwareComponent {
      */
     void onRebindCompleted();
 
-    /**
-     * Called whenever a slots start migrating
-     *
-     * @param slots the slots that are migrating
-     */
-    default void onSlotMigrateStarted(String slots) {
-    }
-
-    /**
-     * Called whenever a slot migration is completed
-     *
-     * @param slots the slots that were migrated
-     */
-    default void onSlotMigrateCompleted(String slots) {
-    }
-
 }

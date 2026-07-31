@@ -57,6 +57,7 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.MaintenanceAwareClusterComponent;
 import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
@@ -68,7 +69,7 @@ import io.lettuce.core.resource.ClientResources;
  * @author Jim Brunner
  * @since 3.0
  */
-class ClusterDistributionChannelWriter implements RedisChannelWriter {
+class ClusterDistributionChannelWriter implements RedisChannelWriter, MaintenanceAwareClusterComponent {
 
     private final RedisChannelWriter defaultWriter;
 
@@ -500,6 +501,26 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     public void setClusterConnectionProvider(ClusterConnectionProvider clusterConnectionProvider) {
         this.clusterConnectionProvider = clusterConnectionProvider;
         this.asyncClusterConnectionProvider = (AsyncClusterConnectionProvider) clusterConnectionProvider;
+    }
+
+    /**
+     * Request a topology refresh after a {@literal SMIGRATED} maintenance push notification announced that a slot migration
+     * completed. The migrated slot ranges carried by the notification are not applied directly - the refresh re-reads the
+     * authoritative topology from the cluster instead.
+     *
+     * → CommandHandler decodes the push, notifyPushListeners → MaintenanceAwareConnectionWatchdog.onPushMessage (registered as
+     * PushListener in channelActive) → case SMIGRATED: → notifySlotMigrateCompleted(...getShards()) →
+     * componentListeners.forEach(c -> c.onSlotMigrateCompleted(slots)) →
+     * ClusterDistributionChannelWriter.onSlotMigrateCompleted(slots) <-- → clusterEventListener.onSlotMigrationCompleted() →
+     * ClusterTopologyRefreshScheduler → debounce → CLUSTER NODES fan-out
+     *
+     * @param slots the migrated slots, unused - the refresh reads the topology from the cluster
+     */
+    @Override
+    public void onSlotMigrateCompleted(String slots) {
+        // TODO: Check if there is an easy way to actually use the topology from the slots. For now it seems easier to just wire
+        // the current refresh mechanism
+        clusterEventListener.onSlotMigrationCompleted();
     }
 
     public void setPartitions(Partitions partitions) {

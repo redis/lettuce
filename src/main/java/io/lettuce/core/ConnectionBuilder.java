@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import io.lettuce.core.protocol.MaintenanceAwareClusterComponent;
 import io.lettuce.core.protocol.MaintenanceAwareComponent;
 import io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog;
 import reactor.core.publisher.Mono;
@@ -160,6 +161,14 @@ public class ConnectionBuilder {
                     clientResources.eventBus(), endpoint);
             if (connection.getChannelWriter() instanceof MaintenanceAwareComponent) {
                 maintenanceAwareWatchdog.setMaintenanceEventListener((MaintenanceAwareComponent) connection.getChannelWriter());
+            }
+            if (connection.getChannelWriter() instanceof MaintenanceAwareClusterComponent) {
+                maintenanceAwareWatchdog
+                        .setMaintenanceClusterEventListener((MaintenanceAwareClusterComponent) connection.getChannelWriter());
+            }
+            // Cluster node connections carry the notification on the endpoint, below the writer chain
+            if (endpoint instanceof MaintenanceAwareClusterComponent) {
+                maintenanceAwareWatchdog.setMaintenanceClusterEventListener((MaintenanceAwareClusterComponent) endpoint);
             }
             watchdog = maintenanceAwareWatchdog;
         } else {

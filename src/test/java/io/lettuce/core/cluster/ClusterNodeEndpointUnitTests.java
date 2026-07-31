@@ -1,6 +1,7 @@
 package io.lettuce.core.cluster;
 
 import static io.lettuce.TestTags.UNIT_TEST;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -67,6 +68,34 @@ class ClusterNodeEndpointUnitTests {
     void closeWithoutCommands() {
 
         sut.closeAsync();
+        verifyNoInteractions(clusterChannelWriter);
+    }
+
+    @Test
+    void shouldForwardSlotMigrateCompletedToClusterChannelWriter() {
+
+        ClusterDistributionChannelWriter maintenanceAwareWriter = mock(ClusterDistributionChannelWriter.class);
+        ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(clientOptions, clientResources, maintenanceAwareWriter);
+
+        endpoint.onSlotMigrateCompleted("0-16383");
+
+        verify(maintenanceAwareWriter).onSlotMigrateCompleted("0-16383");
+    }
+
+    @Test
+    void shouldIgnoreSlotMigrateCompletedWithoutClusterChannelWriter() {
+
+        // nodeId-keyed connections are created without a cluster channel writer
+        ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(clientOptions, clientResources, null);
+
+        assertThatNoException().isThrownBy(() -> endpoint.onSlotMigrateCompleted("0-16383"));
+    }
+
+    @Test
+    void shouldIgnoreSlotMigrateCompletedForNonMaintenanceAwareWriter() {
+
+        sut.onSlotMigrateCompleted("0-16383");
+
         verifyNoInteractions(clusterChannelWriter);
     }
 

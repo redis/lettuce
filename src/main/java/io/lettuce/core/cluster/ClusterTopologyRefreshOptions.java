@@ -521,7 +521,15 @@ public class ClusterTopologyRefreshOptions {
          *
          * @since 5.1
          */
-        UNKNOWN_NODE
+        UNKNOWN_NODE,
+
+        /**
+         * Redis Enterprise in OSS cluster mode sent an {@code SMIGRATED} maintenance push notification, announcing that a slot
+         * migration completed.
+         *
+         * @since 7.7
+         */
+        SMIGRATED_NOTIFICATION
     }
 
 }

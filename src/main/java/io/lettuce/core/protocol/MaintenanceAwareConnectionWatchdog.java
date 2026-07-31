@@ -49,9 +49,19 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     public static final AttributeKey<RebindState> REBIND_ATTRIBUTE = AttributeKey.newInstance("rebindAddress");
 
+    /**
+     * How long reconnects stay redirected to the slot-migration target. {@code SMIGRATED} carries no time-to-live on the wire,
+     * unlike {@code MOVING}, so a fixed window is applied. It must outlast the reconnect (including reconnect backoff),
+     * otherwise a later attempt falls back to the endpoint the slots migrated away from. Matches the default other Redis
+     * clients apply to this notification.
+     */
+    static final Duration SLOT_HANDOFF_REDIRECT_WINDOW = Duration.ofSeconds(120);
+
     private Channel channel;
 
     private final Set<MaintenanceAwareComponent> componentListeners = new HashSet<>();
+
+    private final Set<MaintenanceAwareClusterComponent> clusterComponentListeners = new HashSet<>();
 
     private RebindAwareAddressSupplier rebindAwareAddressSupplier;
 
@@ -209,7 +219,7 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
                     if (!isRebound) {
                         InetSocketAddress destSocketAddr = MaintenanceNotification.getEndpoint(s.getDestination());
-                        rebind(Duration.ZERO, destSocketAddr);
+                        rebind(SLOT_HANDOFF_REDIRECT_WINDOW, destSocketAddr);
                         isRebound = true;
                     }
                 }
@@ -225,6 +235,17 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
      */
     public void setMaintenanceEventListener(MaintenanceAwareComponent component) {
         this.componentListeners.add(component);
+    }
+
+    /**
+     * Register a component that is aware of slot migration events. Such a component is going to be notified of slot migrations
+     * by calling their {@code onSlotMigrateStarted} and {@code onSlotMigrateCompleted} methods.
+     *
+     * @param component the component to register
+     * @since 7.7
+     */
+    public void setMaintenanceClusterEventListener(MaintenanceAwareClusterComponent component) {
+        this.clusterComponentListeners.add(component);
     }
 
     private void notifyRebindCompleted() {
@@ -261,11 +282,11 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     }
 
     private void notifySlotMigrateStarted(String slots) {
-        this.componentListeners.forEach(component -> component.onSlotMigrateStarted(slots));
+        this.clusterComponentListeners.forEach(component -> component.onSlotMigrateStarted(slots));
     }
 
     private void notifySlotMigrateCompleted(String slots) {
-        this.componentListeners.forEach(component -> component.onSlotMigrateCompleted(slots));
+        this.clusterComponentListeners.forEach(component -> component.onSlotMigrateCompleted(slots));
     }
 
     /**

@@ -7,6 +7,7 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.MaintenanceAwareClusterComponent;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLogger;
@@ -19,7 +20,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  */
-class ClusterNodeEndpoint extends DefaultEndpoint {
+class ClusterNodeEndpoint extends DefaultEndpoint implements MaintenanceAwareClusterComponent {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterNodeEndpoint.class);
 
@@ -56,6 +57,23 @@ class ClusterNodeEndpoint extends DefaultEndpoint {
         }
 
         return super.closeAsync();
+    }
+
+    /**
+     * Forward a completed slot migration to the top-most cluster channel writer, which turns it into a topology refresh
+     * request. A {@literal SMIGRATED} notification arrives on the connection to the node the slots migrated away from, but the
+     * slot-to-node mapping is owned a layer above this connection.
+     *
+     * @param slots the slots that were migrated
+     * @since 7.7
+     */
+    @Override
+    public void onSlotMigrateCompleted(String slots) {
+
+        // Null for nodeId-keyed connections, which do not take part in cluster reconfiguration
+        if (clusterChannelWriter instanceof MaintenanceAwareClusterComponent) {
+            ((MaintenanceAwareClusterComponent) clusterChannelWriter).onSlotMigrateCompleted(slots);
+        }
     }
 
     protected void retriggerCommands(Collection<RedisCommand<?, ?, ?>> commands) {

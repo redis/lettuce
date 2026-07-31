@@ -41,7 +41,8 @@ import static io.lettuce.core.TimeoutOptions.TimeoutSource;
  * @see MaintenanceAwareConnectionWatchdog
  * @see ClientOptions#getMaintNotificationsConfig()
  */
-public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements MaintenanceAwareComponent {
+public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter
+        implements MaintenanceAwareComponent, MaintenanceAwareClusterComponent {
 
     private static final Logger log = LoggerFactory.getLogger(MaintenanceAwareExpiryWriter.class);
 
@@ -173,6 +174,16 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
     @Override
     public void onFailoverCompleted(String shards) {
         disableRelaxedTimeoutDelayed("Failover completed: " + shards, relaxedTimeout);
+    }
+
+    @Override
+    public void onSlotMigrateStarted(String slots) {
+        enableRelaxedTimeout("Slot migration started for slots: " + slots);
+    }
+
+    @Override
+    public void onSlotMigrateCompleted(String slots) {
+        disableRelaxedTimeoutDelayed("Slot migration completed: " + slots, relaxedTimeout);
     }
 
     private void enableRelaxedTimeout(String reason) {

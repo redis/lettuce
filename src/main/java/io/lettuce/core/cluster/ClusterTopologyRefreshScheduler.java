@@ -163,6 +163,16 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     }
 
     @Override
+    public void onSlotMigrationCompleted() {
+
+        if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.SMIGRATED_NOTIFICATION)) {
+            if (indicateTopologyRefreshSignal()) {
+                emitAdaptiveRefreshScheduledEvent(ClusterTopologyRefreshOptions.RefreshTrigger.SMIGRATED_NOTIFICATION);
+            }
+        }
+    }
+
+    @Override
     public void onUncoveredSlot(int slot) {
 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.UNCOVERED_SLOT)) {

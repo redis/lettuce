@@ -111,6 +111,22 @@ class ClusterDistributionChannelWriterUnitTests {
     }
 
     @Test
+    void shouldRequestTopologyRefreshOnSlotMigrateCompleted() {
+
+        clusterDistributionChannelWriter.onSlotMigrateCompleted("0-16383");
+
+        verify(clusterEventListener).onSlotMigrationCompleted();
+    }
+
+    @Test
+    void shouldNotRequestTopologyRefreshOnSlotMigrateStarted() {
+
+        clusterDistributionChannelWriter.onSlotMigrateStarted("0-16383");
+
+        verify(clusterEventListener, never()).onSlotMigrationCompleted();
+    }
+
+    @Test
     void shouldParseAskTargetCorrectly() {
 
         HostAndPort askTarget = ClusterDistributionChannelWriter.getAskTarget("ASK 1234-2020 127.0.0.1:6381");

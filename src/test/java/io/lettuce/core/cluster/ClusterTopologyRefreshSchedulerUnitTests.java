@@ -173,6 +173,47 @@ class ClusterTopologyRefreshSchedulerUnitTests {
     }
 
     @Test
+    void shouldTriggerRefreshOnSlotMigrationCompleted() {
+
+        ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder().topologyRefreshOptions(immediateRefresh)
+                .build();
+
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
+
+        sut.onSlotMigrationCompleted();
+        verify(eventExecutors).submit(any(Runnable.class));
+    }
+
+    @Test
+    void shouldTriggerRefreshOnSlotMigrationCompletedUsingDefaults() {
+
+        ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = ClusterTopologyRefreshOptions.create();
+
+        ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder()
+                .topologyRefreshOptions(clusterTopologyRefreshOptions).build();
+
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
+
+        sut.onSlotMigrationCompleted();
+        verify(eventExecutors).submit(any(Runnable.class));
+    }
+
+    @Test
+    void shouldNotTriggerRefreshOnSlotMigrationCompletedWhenDisabled() {
+
+        ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
+                .disableAllAdaptiveRefreshTriggers().build();
+
+        ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder()
+                .topologyRefreshOptions(clusterTopologyRefreshOptions).build();
+
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
+
+        sut.onSlotMigrationCompleted();
+        verify(eventExecutors, never()).submit(any(Runnable.class));
+    }
+
+    @Test
     void shouldTriggerRefreshOnReconnect() {
 
         ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder().topologyRefreshOptions(immediateRefresh)
