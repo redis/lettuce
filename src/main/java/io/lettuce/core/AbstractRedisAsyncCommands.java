@@ -1658,7 +1658,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     private HashImportRegistry getHashImportRegistry() {
-        return ((StatefulRedisConnectionImpl<K, V>) getConnection()).getConnectionState().getHashImportRegistry();
+        StatefulConnection<K, V> connection = getConnection();
+        if (connection instanceof StatefulRedisConnectionImpl) {
+            return ((StatefulRedisConnectionImpl<K, V>) connection).getConnectionState().getHashImportRegistry();
+        }
+        throw new UnsupportedOperationException(
+                "HIMPORT is not supported on connections of type " + connection.getClass().getSimpleName());
     }
 
     private boolean isMulti() {

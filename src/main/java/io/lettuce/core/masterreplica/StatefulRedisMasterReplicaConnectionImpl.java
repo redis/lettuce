@@ -25,6 +25,7 @@ class StatefulRedisMasterReplicaConnectionImpl<K, V> extends StatefulRedisConnec
      */
     StatefulRedisMasterReplicaConnectionImpl(MasterReplicaChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
         super(writer, NoOpPushHandler.INSTANCE, codec, timeout, DEFAULT_JSON_PARSER);
+        shareHashImportRegistry(writer);
     }
 
     /**
@@ -38,6 +39,15 @@ class StatefulRedisMasterReplicaConnectionImpl<K, V> extends StatefulRedisConnec
     StatefulRedisMasterReplicaConnectionImpl(MasterReplicaChannelWriter writer, RedisCodec<K, V> codec, Duration timeout,
             Supplier<JsonParser> parser) {
         super(writer, NoOpPushHandler.INSTANCE, codec, timeout, parser);
+        shareHashImportRegistry(writer);
+    }
+
+    /**
+     * Share this facade's {@link io.lettuce.core.HashImportRegistry} with the physical connections created by the provider so
+     * that {@code HIMPORT} fieldsets are re-established on their activation (reconnect).
+     */
+    private void shareHashImportRegistry(MasterReplicaChannelWriter writer) {
+        writer.getUpstreamReplicaConnectionProvider().setHashImportRegistry(getConnectionState().getHashImportRegistry());
     }
 
     @Override

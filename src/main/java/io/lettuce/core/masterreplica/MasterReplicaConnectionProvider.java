@@ -20,11 +20,13 @@ import java.util.function.Function;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.HashImportRegistry;
 import io.lettuce.core.OrderingReadFromAccessor;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -60,6 +62,8 @@ class MasterReplicaConnectionProvider<K, V> {
 
     private ReadFrom readFrom;
 
+    private volatile HashImportRegistry hashImportRegistry;
+
     MasterReplicaConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
             Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections) {
 
@@ -73,6 +77,16 @@ class MasterReplicaConnectionProvider<K, V> {
         for (Map.Entry<RedisURI, StatefulRedisConnection<K, V>> entry : initialConnections.entrySet()) {
             connectionProvider.register(toConnectionKey(entry.getKey()), entry.getValue());
         }
+    }
+
+    /**
+     * Share a {@link HashImportRegistry} across the physical connections so that they re-establish the connection's declared
+     * {@code HIMPORT} fieldsets on activation (reconnect). The registry is the one owned by the master/replica facade.
+     *
+     * @param hashImportRegistry the registry to share, must not be {@code null}.
+     */
+    void setHashImportRegistry(HashImportRegistry hashImportRegistry) {
+        this.hashImportRegistry = hashImportRegistry;
     }
 
     /**
@@ -337,6 +351,10 @@ class MasterReplicaConnectionProvider<K, V> {
                 stateLock.lock();
                 try {
                     connection.setAutoFlushCommands(autoFlushCommands);
+                    HashImportRegistry registry = hashImportRegistry;
+                    if (registry != null && connection instanceof StatefulRedisConnectionImpl) {
+                        ((StatefulRedisConnectionImpl<K, V>) connection).getConnectionState().setHashImportRegistry(registry);
+                    }
                 } finally {
                     stateLock.unlock();
                 }
