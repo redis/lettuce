@@ -111,7 +111,7 @@ Everything lives under **`src/test/resources/docker-env/`**.
 src/test/resources/docker-env/
 ├── docker-compose.yml         # all Redis services
 ├── .env                       # base vars (REDIS_VERSION, REDIS_STACK_VERSION, REDIS_ENV_WORK_DIR)
-├── .env.v7.2 … .env.v8.8      # per-version overrides (pin REDIS_VERSION)
+├── .env.v7.2 … .env.v8.10     # per-version overrides (pin REDIS_VERSION)
 └── <env>/config/node-<port>/redis.conf   # pre-baked per-node configs (mounted :r)
 ```
 
@@ -173,7 +173,7 @@ the matching `TestSettings`/`-D` value so they stay in sync.
 
 | Command                  | Effect                                                                                                                                                        |
 |--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `make start version=8.6` | runs the `cleanup` container, then `docker compose … up -d --wait` with `.env` + `.env.v8.6`. Supported: 7.2, 7.4, 8.0, 8.2, 8.4, 8.6, 8.8 (default **8.8**). |
+| `make start version=8.6` | runs the `cleanup` container, then `docker compose … up -d --wait` with `.env` + `.env.v8.6`. Supported: 7.2, 7.4, 8.0, 8.2, 8.4, 8.6, 8.8, 8.10 (default **8.10**). |
 | `make stop`              | `docker compose … down`.                                                                                                                                      |
 | `make test`              | `TEST_WORK_FOLDER=$WORK mvn -DskipITs=false <socket args> clean compile verify -P$(PROFILE)` (`PROFILE` default `ci`). Assumes the env is already started.    |
 | `make test-coverage`     | as `make test` plus `jacoco:report`.                                                                                                                          |
@@ -258,7 +258,7 @@ Guidance for new tests:
 
 | Workflow                   | What it does                                                                                                                                                                                                                             |
 |----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `integration.yml`          | Matrix over Redis 7.2 → 8.8. Calls the reusable `run-tests.yml`. A separate "custom image" job passes `client_libs_test_image_tag` with `skip_unit_tests: true`, `upload_coverage: false`.                                               |
+| `integration.yml`          | Matrix over Redis 7.2 → 8.10. Calls the reusable `run-tests.yml`. A separate "custom image" job passes `client_libs_test_image_tag` with `skip_unit_tests: true`, `upload_coverage: false`.                                               |
 | `run-tests.yml` (reusable) | Java 8 (Temurin); `make start version=<v>`; then `TEST_WORK_FOLDER=$REDIS_ENV_WORK_DIR` and either `make test-coverage` (default) or `make test MVN_EXTRA_ARGS="-DskipUnitTests=true"` when `skip_unit_tests=true`; finally `make stop`. |
 
 The test build pins **Java 8** — use it when reproducing CI locally.
