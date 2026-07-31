@@ -46,11 +46,11 @@ class HashImportTxCommandIntegrationTests extends HashImportIntegrationTests {
     @Test
     @Override
     @EnabledOnCommand("HIMPORT")
-    public void himportSetAutoPreparesFreshFieldset() {
+    public void reconnectPreservesMultipleFieldsets() {
 
         HashImport<String> fieldset = HashImport.of("name", "email");
 
-        assertThatThrownBy(() -> redis.himportSet("u:1", fieldset, "alice", "a@x.com"))
+        assertThatThrownBy(() -> redis.himportSet("person:1", fieldset, "alice", "a@x.com"))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
