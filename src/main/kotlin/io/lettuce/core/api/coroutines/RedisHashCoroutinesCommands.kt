@@ -708,10 +708,13 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * re-declared transparently across reconnects, new cluster nodes, and pooled connections), so only values travel on the
      * wire for each import. [HashImport.close] the fieldset when done to release the server-side state.
      *
-     * @param key the key of the hash to create.
+     * @param key the key of the hash to create, must not be `null`.
      * @param fieldset the fieldset describing the field names, must not be `null` and must not be closed.
      * @param values the field values in fieldset order, exactly `fieldset.size()` of them.
      * @return simple-string-reply `OK` if the hash was created.
+     * @throws IllegalStateException if `fieldset` has been closed.
+     * @throws IllegalArgumentException if `key` is `null` or the number of `values` does not match `fieldset.size()`.
+     * @throws UnsupportedOperationException if invoked within a `MULTI` transaction.
      * @since 7.7
      */
     @Experimental

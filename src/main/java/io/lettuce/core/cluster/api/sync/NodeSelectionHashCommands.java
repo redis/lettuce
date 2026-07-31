@@ -869,10 +869,14 @@ public interface NodeSelectionHashCommands<K, V> {
      * re-declared transparently across reconnects, new cluster nodes, and pooled connections), so only values travel on the
      * wire for each import. {@link HashImport#close() Close} the fieldset when done to release the server-side state.
      *
-     * @param key the key of the hash to create.
+     * @param key the key of the hash to create, must not be {@code null}.
      * @param fieldset the fieldset describing the field names, must not be {@code null} and must not be closed.
      * @param values the field values in fieldset order, exactly {@link HashImport#size()} of them.
      * @return simple-string-reply {@code OK} if the hash was created.
+     * @throws IllegalStateException if {@code fieldset} has been closed.
+     * @throws IllegalArgumentException if {@code key} is {@code null} or the number of {@code values} does not match
+     *         {@code fieldset.size()}.
+     * @throws UnsupportedOperationException if invoked within a {@code MULTI} transaction.
      * @since 7.7
      */
     @Experimental
