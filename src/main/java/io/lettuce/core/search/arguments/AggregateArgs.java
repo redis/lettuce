@@ -7,6 +7,7 @@
 
 package io.lettuce.core.search.arguments;
 
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.search.AggregationReply;
@@ -688,6 +689,8 @@ public class AggregateArgs {
      * <li><strong>AVG</strong> - Calculate average of numeric values</li>
      * <li><strong>MIN/MAX</strong> - Find minimum/maximum values</li>
      * <li><strong>COUNT_DISTINCT</strong> - Count distinct values</li>
+     * <li><strong>COLLECT</strong> - Collect per-row field projections into an array of entries per group (experimental, see
+     * {@link Reducer#collect()})</li>
      * </ul>
      *
      * <p>
@@ -1053,6 +1056,39 @@ public class AggregateArgs {
             return new Reducer("COUNT_DISTINCT", Collections.singletonList(field));
         }
 
+        /**
+         * Static factory method to create a {@code COLLECT} reducer.
+         *
+         * <p>
+         * {@code COLLECT} gathers per-document projections within a {@code GROUPBY} group and returns them as an array of
+         * per-entry maps under the reducer alias, optionally sorted and bounded. Configure the projected fields via
+         * {@link CollectReducer#fields(String[]) fields(...)} or {@link CollectReducer#fieldsAll() fieldsAll()}, then
+         * optionally chain {@link CollectReducer#sortBy(SortProperty[]) sortBy(...)} and
+         * {@link CollectReducer#limit(long, long) limit(...)} before calling {@link Reducer#as(String) as(...)}.
+         * </p>
+         *
+         * <p>
+         * The collected column is a {@link io.lettuce.core.search.FieldValue} of kind
+         * {@link io.lettuce.core.search.FieldValue.Kind#ARRAY} with one element per collected entry; read the entries via
+         * {@link io.lettuce.core.search.FieldValue#asList() asList()} and each entry via
+         * {@link io.lettuce.core.search.FieldValue#asMap() asMap()}, which normalizes the protocol-specific entry shape.
+         * </p>
+         *
+         * <p>
+         * <strong>Experimental.</strong> Both the underlying Redis Search feature and this API may change. {@code COLLECT} is
+         * gated behind {@code search-enable-unstable-features}; enable it on the server (for example via
+         * {@code CONFIG SET search-enable-unstable-features yes}) before issuing aggregations that use this reducer, otherwise
+         * the server replies with an error.
+         * </p>
+         *
+         * @return new {@link CollectReducer} instance
+         * @see CollectReducer
+         */
+        @Experimental
+        public static CollectReducer collect() {
+            return new CollectReducer();
+        }
+
         public void build(CommandArgs<?, ?> args) {
             args.add(CommandKeyword.REDUCE);
             args.add(function);
@@ -1065,6 +1101,248 @@ public class AggregateArgs {
                 args.add(CommandKeyword.AS);
                 args.add(a);
             });
+        }
+
+    }
+
+    /**
+     * Represents a {@code REDUCE COLLECT} clause in an aggregation pipeline.
+     *
+     * <p>
+     * Within each {@code GROUPBY} group, {@code COLLECT} projects a chosen set of fields from every row and returns them as an
+     * array of per-entry maps under the reducer alias, optionally sorted and bounded. It targets grouped-reporting workflows
+     * where the caller needs the representative rows of each group in a single aggregation query. The grammar produced by this
+     * builder is:
+     * </p>
+     *
+     * <pre>
+     * {@code
+     * REDUCE COLLECT <narg>
+     *     FIELDS ( * | <num_fields> <@field> [<@field> ...] )
+     *     [SORTBY <narg> <@field> [ASC|DESC] [<@field> [ASC|DESC] ...]]
+     *     [LIMIT <offset> <count>]
+     *   [AS <alias>]
+     * }
+     * </pre>
+     *
+     * <p>
+     * Field and sort-key names are referenced with an {@code @} prefix on the wire (the builder adds it automatically when it
+     * is missing). The output map keys are the bare names. {@code FIELDS *} projects whatever the pipeline has materialized at
+     * the {@code COLLECT} stage; it does not implicitly fetch the full document.
+     * </p>
+     *
+     * <p>
+     * The collected column is a {@link io.lettuce.core.search.FieldValue} of kind
+     * {@link io.lettuce.core.search.FieldValue.Kind#ARRAY} with one element per collected entry; read the entries via
+     * {@link io.lettuce.core.search.FieldValue#asList() asList()} and each entry via
+     * {@link io.lettuce.core.search.FieldValue#asMap() asMap()}, which normalizes the protocol-specific entry shape (RESP3
+     * returns each entry as a map, RESP2 as a flat key/value array).
+     * </p>
+     *
+     * <p>
+     * The number of collected entries per group is always bounded by the server: {@code SORTBY} without an explicit
+     * {@code LIMIT} returns at most 10 entries per group, and without either clause collection is capped by the
+     * {@code search-max-aggregate-results} configuration. Supply an explicit {@link #limit(long, long) limit(...)} to control
+     * the bound.
+     * </p>
+     *
+     * <p>
+     * <strong>Experimental.</strong> Both the underlying Redis Search feature and this API may change. {@code COLLECT} is gated
+     * behind {@code search-enable-unstable-features}; enable it on the server before issuing aggregations that use this
+     * reducer.
+     * </p>
+     *
+     * @see Reducer#collect()
+     * @since 7.7
+     */
+    @Experimental
+    public static class CollectReducer extends Reducer {
+
+        private boolean allFields = false;
+
+        private final List<String> fields = new ArrayList<>();
+
+        private final List<SortProperty> sortProperties = new ArrayList<>();
+
+        private Optional<Long> limitOffset = Optional.empty();
+
+        private Optional<Long> limitCount = Optional.empty();
+
+        private Optional<String> alias = Optional.empty();
+
+        CollectReducer() {
+            super("COLLECT", Collections.emptyList());
+        }
+
+        /**
+         * Project the named fields for every document in the group. Names may be supplied with or without a leading {@code @};
+         * the builder normalizes each to a single {@code @<name>} on the wire. Use {@code @__key} or ordinary document field
+         * names.
+         *
+         * <p>
+         * Mutually exclusive with {@link #fieldsAll()}. May be called multiple times to append further fields.
+         * </p>
+         *
+         * @param fields the fields to project
+         * @return {@code this} for chaining
+         */
+        public CollectReducer fields(String... fields) {
+            if (this.allFields) {
+                throw new IllegalStateException("REDUCE COLLECT cannot mix FIELDS * with explicit field names");
+            }
+            Collections.addAll(this.fields, fields);
+            return this;
+        }
+
+        /**
+         * Project every field present in the pipeline at the {@code COLLECT} stage ({@code FIELDS *}).
+         *
+         * <p>
+         * Per the COLLECT specification, {@code *} does not trigger an implicit load — fields must already be in the pipeline
+         * (typically via {@code LOAD *} or because they are grouping keys / reducer aliases). Mutually exclusive with
+         * {@link #fields(String[])}.
+         * </p>
+         *
+         * @return {@code this} for chaining
+         */
+        public CollectReducer fieldsAll() {
+            if (!this.fields.isEmpty()) {
+                throw new IllegalStateException("REDUCE COLLECT cannot mix FIELDS * with explicit field names");
+            }
+            this.allFields = true;
+            return this;
+        }
+
+        /**
+         * In-group sort by one or more properties. May be called multiple times to append further sort keys.
+         *
+         * <p>
+         * <strong>Note:</strong> when {@code SORTBY} is supplied without an explicit {@link #limit(long, long) limit(...)}, the
+         * server applies a default limit of 10 entries per group. Supply an explicit limit to collect more sorted entries.
+         * Without {@code SORTBY}, entry order is unspecified and collection is capped by the server's
+         * {@code search-max-aggregate-results} configuration.
+         * </p>
+         *
+         * @param properties the sort properties
+         * @return {@code this} for chaining
+         */
+        public CollectReducer sortBy(SortProperty... properties) {
+            Collections.addAll(this.sortProperties, properties);
+            return this;
+        }
+
+        /**
+         * Convenience for {@code sortBy(new SortProperty(field, SortDirection.ASC))}.
+         *
+         * @param field the field to sort by ascending
+         * @return {@code this} for chaining
+         */
+        public CollectReducer sortByAsc(String field) {
+            this.sortProperties.add(new SortProperty(field, SortDirection.ASC));
+            return this;
+        }
+
+        /**
+         * Convenience for {@code sortBy(new SortProperty(field, SortDirection.DESC))}.
+         *
+         * @param field the field to sort by descending
+         * @return {@code this} for chaining
+         */
+        public CollectReducer sortByDesc(String field) {
+            this.sortProperties.add(new SortProperty(field, SortDirection.DESC));
+            return this;
+        }
+
+        /**
+         * Bound the output per group to the first {@code count} entries (offset 0).
+         *
+         * @param count the maximum number of entries per group
+         * @return {@code this} for chaining
+         */
+        public CollectReducer limit(long count) {
+            return limit(0, count);
+        }
+
+        /**
+         * Bound the output per group to {@code count} entries starting at {@code offset}.
+         *
+         * @param offset the number of entries to skip
+         * @param count the maximum number of entries to return
+         * @return {@code this} for chaining
+         */
+        public CollectReducer limit(long offset, long count) {
+            if (offset < 0 || count < 0) {
+                throw new IllegalArgumentException("LIMIT offset and count must be non-negative");
+            }
+            this.limitOffset = Optional.of(offset);
+            this.limitCount = Optional.of(count);
+            return this;
+        }
+
+        @Override
+        public CollectReducer as(String alias) {
+            this.alias = Optional.of(alias);
+            return this;
+        }
+
+        @Override
+        public void build(CommandArgs<?, ?> args) {
+            if (!allFields && fields.isEmpty()) {
+                throw new IllegalStateException("REDUCE COLLECT requires either fields(...) or fieldsAll() to be configured");
+            }
+
+            args.add(CommandKeyword.REDUCE);
+            args.add("COLLECT");
+            args.add(argCount());
+
+            args.add(CommandKeyword.FIELDS);
+            if (allFields) {
+                args.add("*");
+            } else {
+                args.add(fields.size());
+                for (String field : fields) {
+                    args.add(withAtPrefix(field));
+                }
+            }
+
+            if (!sortProperties.isEmpty()) {
+                args.add(CommandKeyword.SORTBY);
+                args.add(sortProperties.size() * 2L);
+                for (SortProperty property : sortProperties) {
+                    args.add(withAtPrefix(property.property));
+                    args.add(property.direction.name());
+                }
+            }
+
+            if (limitOffset.isPresent()) {
+                args.add(CommandKeyword.LIMIT);
+                args.add(limitOffset.get());
+                args.add(limitCount.get());
+            }
+
+            alias.ifPresent(a -> {
+                args.add(CommandKeyword.AS);
+                args.add(a);
+            });
+        }
+
+        /**
+         * Computes {@code <narg>} as the number of reducer argument tokens (the {@code FIELDS}, {@code SORTBY}, and
+         * {@code LIMIT} clauses), excluding the trailing {@code AS <alias>}.
+         */
+        private long argCount() {
+            long count = allFields ? 2 : 2 + fields.size();
+            if (!sortProperties.isEmpty()) {
+                count += 2 + sortProperties.size() * 2L;
+            }
+            if (limitOffset.isPresent()) {
+                count += 3;
+            }
+            return count;
+        }
+
+        private static String withAtPrefix(String name) {
+            return name.startsWith("@") ? name : "@" + name;
         }
 
     }

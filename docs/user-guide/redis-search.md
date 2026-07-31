@@ -390,6 +390,44 @@ for (SearchReply<String> reply : aggResults.getReplies()) {
 }
 ```
 
+### Collecting Group Entries (COLLECT)
+
+!!! WARNING
+    `COLLECT` is an experimental Redis Query Engine feature gated behind the
+    `search-enable-unstable-features` server configuration. Both the server feature
+    and the Lettuce API may change.
+
+The `COLLECT` reducer gathers per-row field projections within each `GROUPBY` group and
+returns them as an array of entries under the reducer alias:
+
+```java
+AggregateArgs collectArgs = AggregateArgs.builder()
+    .groupBy(AggregateArgs.GroupBy.of("category")
+        .reduce(AggregateArgs.Reducer.collect()
+            .fields("title", "price")
+            .sortBy(new AggregateArgs.SortProperty("price", AggregateArgs.SortDirection.DESC))
+            .limit(0, 3)
+            .as("top_products")))
+    .build();
+
+AggregationReply<String> collectResults = search.ftAggregate("products-idx", "*", collectArgs);
+```
+
+Unlike other reducers, a `COLLECT` column is not a scalar: its `FieldValue` in
+`SearchResult#getFields()` is an array (`FieldValue.Kind.ARRAY`) with one element per
+collected entry. Read the entries with `FieldValue#asList()` and each entry with
+`FieldValue#asMap()`, which normalizes the protocol-specific entry shape (RESP3 returns
+each entry as a map, RESP2 as a flat key/value array) to one map per collected entry:
+
+```java
+for (SearchReply.SearchResult<String> group : collectResults.getReplies().get(0).getResults()) {
+    for (FieldValue entry : group.getFields().get("top_products").asList()) {
+        Map<String, FieldValue> product = entry.asMap();
+        System.out.println(product.get("title").asString() + ": " + product.get("price").asString());
+    }
+}
+```
+
 ### Dynamic and Re-entrant Pipelines
 
 Redis aggregations support dynamic pipelines where operations can be repeated and applied in any order:

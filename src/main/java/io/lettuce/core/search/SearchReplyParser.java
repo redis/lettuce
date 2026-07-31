@@ -15,6 +15,9 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +41,8 @@ import java.util.Map;
  * <p>
  * Document ids are decoded through the connection's key codec. Field names are schema identifiers (hash field names, JSONPath
  * expressions or aliases) and are decoded as raw UTF-8; field values are kept as raw bytes so that binary content (for example
- * vector embeddings) survives the round-trip.
+ * vector embeddings) survives the round-trip. Nested field values produced by aggregation reducers (for example
+ * {@code REDUCE COLLECT}) are converted recursively into {@link FieldValue} arrays and maps.
  * </p>
  *
  * @param <K> the type of the document id in the search results
@@ -128,6 +132,40 @@ public class SearchReplyParser<K> implements ComplexDataParser<SearchReply<K>> {
         return bytes;
     }
 
+    /**
+     * Converts a raw field value as produced by the RESP parser into a {@link FieldValue}. Scalar values keep their exact
+     * bytes. Aggregation reducers such as {@code COLLECT} and {@code TOLIST} produce nested values (arrays or, under RESP3,
+     * maps); these are converted recursively so the raw protocol shape stays readable through
+     * {@link FieldValue#asList()}/{@link FieldValue#asMap()} instead of failing to parse.
+     */
+    private static FieldValue toFieldValue(Object value) {
+        if (value == null) {
+            return FieldValue.NULL;
+        }
+        if (value instanceof ByteBuffer) {
+            return FieldValue.of(toBytes((ByteBuffer) value));
+        }
+        if (value instanceof ComplexData) {
+            ComplexData data = (ComplexData) value;
+            if (data.isMap()) {
+                Map<String, FieldValue> map = new LinkedHashMap<>();
+                data.getDynamicMap().forEach((key, nested) -> map.put(decodeNestedKey(key), toFieldValue(nested)));
+                return FieldValue.map(map);
+            }
+            List<FieldValue> list = new ArrayList<>();
+            for (Object element : data.getDynamicList()) {
+                list.add(toFieldValue(element));
+            }
+            return FieldValue.array(list);
+        }
+        // Scalars the RESP parser has already materialized (Long, Double, Boolean): keep their textual form.
+        return FieldValue.of(String.valueOf(value).getBytes(StandardCharsets.US_ASCII));
+    }
+
+    private static String decodeNestedKey(Object key) {
+        return key instanceof ByteBuffer ? StringCodec.UTF8.decodeKey((ByteBuffer) key) : String.valueOf(key);
+    }
+
     class Resp2SearchResultsParser implements ComplexDataParser<SearchReply<K>> {
 
         @Override
@@ -197,8 +235,7 @@ public class SearchReplyParser<K> implements ComplexDataParser<SearchReply<K>> {
 
                     for (int idx = 0; idx < resultEntries.size(); idx += 2) {
                         String fieldName = StringCodec.UTF8.decodeKey((ByteBuffer) resultEntries.get(idx));
-                        Object value = resultEntries.get(idx + 1);
-                        searchResult.addField(fieldName, value == null ? null : toBytes((ByteBuffer) value));
+                        searchResult.addField(fieldName, toFieldValue(resultEntries.get(idx + 1)));
                     }
 
                     i++;
@@ -275,7 +312,7 @@ public class SearchReplyParser<K> implements ComplexDataParser<SearchReply<K>> {
                         ComplexData extraAttributes = (ComplexData) resultEntry.get(EXTRA_ATTRIBUTES_KEY);
                         extraAttributes.getDynamicMap().forEach((key, value) -> {
                             String fieldName = StringCodec.UTF8.decodeKey((ByteBuffer) key);
-                            searchResult.addField(fieldName, value == null ? null : toBytes((ByteBuffer) value));
+                            searchResult.addField(fieldName, toFieldValue(value));
                         });
                     }
                     searchReply.addResult(searchResult);

@@ -8,6 +8,7 @@
 package io.lettuce.core.search;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 import io.lettuce.TestTags;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
 import org.junit.jupiter.api.BeforeEach;
@@ -133,6 +135,69 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         assertThat(redis.ftDropindex("basic-test-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldPerformCollectAggregation() {
+        // COLLECT is gated behind search-enable-unstable-features; enable it and skip the test on builds where the
+        // reducer (or the config flag) is not available yet.
+        try {
+            redis.configSet("search-enable-unstable-features", "yes");
+        } catch (RedisCommandExecutionException e) {
+            assumeTrue(false, "search-enable-unstable-features is not configurable on this Redis build: " + e.getMessage());
+        }
+
+        List<FieldArgs> fields = Arrays.asList(TagFieldArgs.builder().name("fruit").build(),
+                TagFieldArgs.builder().name("color").build(), NumericFieldArgs.builder().name("sweetness").sortable().build());
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("fruit:").on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate("collect-test-idx", createArgs, fields)).isEqualTo("OK");
+
+        redis.hmset("fruit:1", mapOf("fruit", "apple", "color", "yellow", "sweetness", "6"));
+        redis.hmset("fruit:2", mapOf("fruit", "banana", "color", "yellow", "sweetness", "5"));
+        redis.hmset("fruit:3", mapOf("fruit", "lemon", "color", "yellow", "sweetness", "2"));
+        redis.hmset("fruit:4", mapOf("fruit", "cherry", "color", "red", "sweetness", "7"));
+
+        AggregateArgs args = AggregateArgs.builder()
+                .groupBy(GroupBy.of("color")
+                        .reduce(Reducer.collect().fields("fruit", "sweetness")
+                                .sortBy(new AggregateArgs.SortProperty("sweetness", SortDirection.DESC)).limit(0, 2).as("top")))
+                .build();
+
+        AggregationReply<String> result;
+        try {
+            result = redis.ftAggregate("collect-test-idx", "*", args);
+        } catch (RedisCommandExecutionException e) {
+            assumeTrue(false, "FT.AGGREGATE REDUCE COLLECT not supported by this Redis Search build: " + e.getMessage());
+            return;
+        }
+
+        assertThat(result.getReplies()).hasSize(1);
+        SearchReply<String> reply = result.getReplies().get(0);
+
+        SearchReply.SearchResult<String> yellow = reply.getResults().stream()
+                .filter(r -> "yellow".equals(r.getFields().get("color").asString())).findFirst()
+                .orElseThrow(() -> new AssertionError("no yellow group in " + reply.getResults()));
+
+        // The raw shape of a collected entry differs between RESP2 and RESP3; FieldValue#asMap() normalizes both
+        // to one map per collected entry.
+        List<Map<String, FieldValue>> collected = yellow.getFields().get("top").asList().stream().map(FieldValue::asMap)
+                .collect(Collectors.toList());
+        // LIMIT 0 2 caps the group at 2 entries, SORTBY @sweetness DESC keeps the two sweetest (apple=6, banana=5).
+        assertThat(collected).hasSize(2);
+        assertThat(collected.get(0).get("fruit").asString()).isEqualTo("apple");
+        assertThat(collected.get(0).get("sweetness").asString()).isEqualTo("6");
+        assertThat(collected.get(1).get("fruit").asString()).isEqualTo("banana");
+        assertThat(collected.get(1).get("sweetness").asString()).isEqualTo("5");
+
+        assertThat(redis.ftDropindex("collect-test-idx")).isEqualTo("OK");
+    }
+
+    private static Map<String, String> mapOf(String... kv) {
+        Map<String, String> map = new HashMap<>();
+        for (int i = 0; i < kv.length; i += 2) {
+            map.put(kv[i], kv[i + 1]);
+        }
+        return map;
     }
 
     @Test
