@@ -51,43 +51,96 @@ public class HashImportIntegrationTests {
     }
 
     /**
-     * Full managed flow: create several hashes from a fieldset sending only values (the field names are declared transparently
-     * on first use), then close the fieldset. Reuse after close is rejected client-side.
+     * Key for the given index. Distinct indexes yield distinct keys. The cluster suite overrides this to route each index to a
+     * different master, so the shared flow spans slots and nodes on Redis Cluster without any cluster-specific test code.
+     */
+    protected String keyFor(int index) {
+        return "himport:" + index;
+    }
+
+    /**
+     * Full managed lifecycle: create several hashes from a fieldset sending only values (the field names are declared
+     * transparently on first use), then close it. After close the fieldset is rejected for reuse, but the connection stays
+     * usable for a fresh fieldset — closing releases the fieldset without disturbing the connection.
      */
     @Test
     public void himport() {
 
         HashImport<String> fieldset = HashImport.of("name", "email", "age");
 
-        assertThat(redis.himportSet("u:1", fieldset, "alice", "a@x.com", "25")).isEqualTo("OK");
-        assertThat(redis.himportSet("u:2", fieldset, "bob", "b@x.com", "30")).isEqualTo("OK");
+        // Keys span nodes on cluster (see keyFor), so this flow imports to several masters, each self-preparing the fieldset.
+        String k1 = keyFor(0);
+        String k2 = keyFor(1);
+        String k3 = keyFor(2);
 
-        assertThat(redis.hget("u:1", "name")).isEqualTo("alice");
-        assertThat(redis.hget("u:1", "email")).isEqualTo("a@x.com");
-        assertThat(redis.hget("u:1", "age")).isEqualTo("25");
-        assertThat(redis.hget("u:2", "name")).isEqualTo("bob");
+        assertThat(redis.himportSet(k1, fieldset, "alice", "a@x.com", "25")).isEqualTo("OK");
+        assertThat(redis.himportSet(k2, fieldset, "bob", "b@x.com", "30")).isEqualTo("OK");
+
+        assertThat(redis.hget(k1, "name")).isEqualTo("alice");
+        assertThat(redis.hget(k1, "email")).isEqualTo("a@x.com");
+        assertThat(redis.hget(k1, "age")).isEqualTo("25");
+        assertThat(redis.hget(k2, "name")).isEqualTo("bob");
 
         // The created key is an ordinary hash.
-        assertThat(redis.hlen("u:1")).isEqualTo(3);
+        assertThat(redis.hlen(k1)).isEqualTo(3);
 
+        // Cleanup: closing discards the fieldset. Reuse is rejected client-side...
         fieldset.close();
-        assertThatThrownBy(() -> redis.himportSet("u:3", fieldset, "carol", "c@x.com", "40"))
+        assertThat(fieldset.isDiscarded()).isTrue();
+        assertThatThrownBy(() -> redis.himportSet(k3, fieldset, "carol", "c@x.com", "40"))
                 .isInstanceOf(IllegalStateException.class);
+
+        // ...and the connection remains fully usable for a new fieldset afterwards.
+        HashImport<String> other = HashImport.of("sku", "price");
+        assertThat(redis.himportSet(k3, other, "sku-1", "9.99")).isEqualTo("OK");
+        assertThat(redis.hget(k3, "sku")).isEqualTo("sku-1");
+        other.close();
     }
 
     /**
-     * The fieldset's field names are declared transparently on first use per connection: the very first {@code HIMPORT SET} for
-     * a brand-new, never-prepared fieldset succeeds with no explicit prepare step. This holds uniformly across execution models
-     * (the transactional path overrides it, as {@code HIMPORT SET} is not supported within {@code MULTI}).
+     * Multiple fieldsets keep working across a reconnect. Both are used, the connection is bounced with {@code QUIT}, and
+     * further imports on both fieldsets succeed with no explicit prepare — the reconnected connection re-injects each
+     * fieldset's {@code PREPARE} lazily ahead of the {@code SET}. The distinct keys land on different slots, so over Redis
+     * Cluster this also exercises per-node re-prepare across nodes. In v2 there is no retry backstop, so a broken re-prepare
+     * would make the post-reconnect {@code himportSet} fail rather than silently recover — the {@code OK} assertions are the
+     * discriminator. (The transactional path overrides this, as {@code HIMPORT SET} is not supported within {@code MULTI}.)
      */
     @Test
-    public void himportSetAutoPreparesFreshFieldset() {
+    public void reconnectPreservesMultipleFieldsets() {
+
+        HashImport<String> people = HashImport.of("name", "email");
+        HashImport<String> products = HashImport.of("sku", "price");
+
+        // Two fieldsets on keys that live on different nodes (see keyFor), so on cluster the reconnect exercises re-prepare
+        // across nodes.
+        String peopleKey = keyFor(0);
+        String productKey = keyFor(1);
+
+        // Prime both fieldsets on the current connection(s).
+        assertThat(redis.himportSet(peopleKey, people, "alice", "a@x.com")).isEqualTo("OK");
+        assertThat(redis.himportSet(productKey, products, "sku-1", "9.99")).isEqualTo("OK");
+
+        // Bounce the connection; auto-reconnect buffers and replays the following imports.
+        redis.quit();
+
+        // No re-prepare: the reconnected connection re-injects each fieldset's PREPARE lazily ahead of these imports.
+        assertThat(redis.himportSet(peopleKey, people, "bob", "b@x.com")).isEqualTo("OK");
+        assertThat(redis.himportSet(productKey, products, "sku-2", "19.99")).isEqualTo("OK");
+        assertThat(redis.hget(peopleKey, "name")).isEqualTo("bob");
+        assertThat(redis.hget(productKey, "sku")).isEqualTo("sku-2");
+    }
+
+    /**
+     * The number of values must match the fieldset size; a mismatch is rejected client-side before dispatch. This validation is
+     * eager across execution models (it runs before the {@code MULTI} check), so it holds on the transactional path too.
+     */
+    @Test
+    public void himportSetRejectsWrongValueCount() {
 
         HashImport<String> fieldset = HashImport.of("name", "email");
 
-        assertThat(redis.himportSet("u:1", fieldset, "alice", "a@x.com")).isEqualTo("OK");
-        assertThat(redis.hget("u:1", "name")).isEqualTo("alice");
-        assertThat(redis.hget("u:1", "email")).isEqualTo("a@x.com");
+        assertThatThrownBy(() -> redis.himportSet("u:1", fieldset, "only-one-value"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
 }
