@@ -96,6 +96,24 @@ class ClusterTopologyRefreshOptionsUnitTests {
     }
 
     @Test
+    void shouldEnableSmigratedNotificationTriggerByDefault() {
+
+        // DEFAULT_ADAPTIVE_REFRESH_TRIGGERS is EnumSet.allOf(...), so this documents the on-by-default decision as intentional
+        assertThat(ClusterTopologyRefreshOptions.create().getAdaptiveRefreshTriggers())
+                .contains(RefreshTrigger.SMIGRATED_NOTIFICATION);
+    }
+
+    @Test
+    void shouldAllowDisablingSmigratedNotificationTrigger() {
+
+        ClusterTopologyRefreshOptions options = ClusterTopologyRefreshOptions.builder()
+                .disableAdaptiveRefreshTrigger(RefreshTrigger.SMIGRATED_NOTIFICATION).build();
+
+        assertThat(options.getAdaptiveRefreshTriggers()).doesNotContain(RefreshTrigger.SMIGRATED_NOTIFICATION)
+                .contains(RefreshTrigger.MOVED_REDIRECT, RefreshTrigger.ASK_REDIRECT);
+    }
+
+    @Test
     void emptyTriggersShouldFail() {
 
         ClusterTopologyRefreshOptions.Builder builder = ClusterTopologyRefreshOptions.builder();
