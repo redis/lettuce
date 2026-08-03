@@ -439,6 +439,13 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.6.3</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- CDI -->
 
         <dependency>
@@ -931,6 +938,7 @@
                     <directories>
                         <directory>${project.build.sourceDirectory}</directory>
                         <directory>${project.build.testSourceDirectory}</directory>
+                        <directory>${project.basedir}/src/main/templates</directory>
                     </directories>
                     <configFile>formatting.xml</configFile>
                 </configuration>
