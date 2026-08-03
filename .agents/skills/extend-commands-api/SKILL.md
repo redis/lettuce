@@ -177,10 +177,12 @@ gating annotations. The plan must contain:
   maintainer's sign-off on that contract — if the signatures must deviate later
   during implementation, stop and re-confirm before mirroring.
 - **The complete overload set, enumerated.** For every varargs parameter, list
-  the matching single-argument overload (the house rule — see "Types & args
-  conventions") or explicitly justify its absence so the maintainer signs off on
-  the exception. An overload discovered missing in review means reworking all
-  six flavors.
+  the matching single-argument overload; for a multi-key command with an `*Args`
+  object, use the `List<K>` shape (no varargs) and list the fixed-arity
+  convenience overloads instead — both house rules live in "Types & args
+  conventions". Justify any overload you omit so the maintainer signs off on the
+  exception. An overload discovered missing in review means reworking all six
+  flavors.
 
 Present the plan and **explicitly ask permission to execute** before implementing.
 Do not start editing files until the user approves.
@@ -240,11 +242,23 @@ node). The dispatch layers are the same `AbstractRedisAsyncCommands` /
     */
    Long strlen(K key);
    ```
-   Two contract rules to apply while designing the signatures and their Javadoc:
+   Three contract rules to apply while designing the signatures and their Javadoc:
+   - **Multi-key commands that also take an `*Args` object take the keys as
+     `List<K>`, not varargs.** A varargs parameter must come last, so a trailing
+     options object can only follow it via an awkward leading placement (cf. the
+     older `sintercard(long limit, K... keys)`). For new commands, take the keys
+     as `List<K>` so the `*Args` argument comes last —
+     `sunioncard(List<K> keys, SUnionCardArgs args)` — and add fixed-arity
+     convenience overloads (`(K key1, K key2)` and their `*Args` variants)
+     instead of a varargs form. Since there is no varargs parameter here, the
+     single-argument-overload rule below does not apply; add only the overloads
+     that are meaningful — e.g. **no single-key `sunioncard`/`sdiffcard`**, whose
+     one-key union/difference is just `SCARD`.
    - **Every varargs parameter gets a single-argument overload** —
      `foo(K key, V value)` alongside `foo(K key, V... values)`. This is a hard
      convention for new commands and overrides any traced precedent that lacks
-     it (older commands predate the rule).
+     it (older commands predate the rule). Does not apply to the `List<K>`-shaped
+     multi-key-with-`*Args` commands above, which take no varargs.
    - **Validated preconditions are contract.** Any constraint the builder will
      enforce (null checks, non-empty varargs) must be stated in the `@param`
      text with the house phrases (`must not be {@code null}.`,
@@ -365,8 +379,9 @@ scan-family commands).
   `HotkeysReplyParser`).
 - **Return-type idioms** (established conventions): `1/0` integer reply →
   `Boolean` (cf. `copy`, `expire`, `hsetnx`); count → `Long`; status → `String`;
-  bulk value → `V`. And the overload rule from step B.2: every varargs
-  parameter also gets a single-argument overload.
+  bulk value → `V`. And the overload rules from step B.2: every varargs
+  parameter also gets a single-argument overload, while a multi-key command with
+  an `*Args` object takes `List<K>` (not varargs) plus fixed-arity overloads.
 - The `CommandOutput` (the reply *parser*) is chosen at the builder step from the
   **observed** RESP2/RESP3 replies of Phase 0 — if none fits, add one under
   `io.lettuce.core.output` with a unit test (cf. `IncrexLongOutput`).
@@ -459,8 +474,10 @@ make stop
 
 - [ ] Every layer of the chosen matrix updated consistently; the consistency suite
       and `CommandBuilderCoverageUnitTests` pass.
-- [ ] Every varargs parameter has its single-argument overload, mirrored across
-      all flavors (or a maintainer-approved justification from the plan).
+- [ ] Every varargs parameter has its single-argument overload, and every
+      multi-key command with an `*Args` object uses `List<K>` (not varargs) with
+      fixed-arity overloads — mirrored across all flavors (or a
+      maintainer-approved justification from the plan).
 - [ ] `@since` on **every** new public element — including the nested `Builder`,
       static factories, and fluent setters of new `*Args` classes; class-level
       tags are not inherited (see
