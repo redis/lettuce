@@ -37,7 +37,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Mark Paluch
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisStringReactiveCommands<K, V>) : RedisStringCoroutinesCommands<K, V> {
 
     override suspend fun append(key: K, value: V): Long? = ops.append(key, value).awaitFirstOrNull()

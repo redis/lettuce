@@ -35,7 +35,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Mark Paluch
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisGeoCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisGeoReactiveCommands<K, V>) : RedisGeoCoroutinesCommands<K, V> {
 
     override suspend fun geoadd(

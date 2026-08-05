@@ -20,7 +20,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.TransactionResult
 import io.lettuce.core.api.reactive.RedisTransactionalReactiveCommands
 import kotlinx.coroutines.reactive.awaitLast
@@ -34,7 +33,6 @@ import kotlinx.coroutines.reactive.awaitLast
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisTransactionalCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisTransactionalReactiveCommands<K, V>) : RedisTransactionalCoroutinesCommands<K, V> {
 
     override suspend fun discard(): String = ops.discard().awaitLast()

@@ -20,7 +20,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisHLLReactiveCommands
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 
@@ -33,7 +32,6 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisHLLCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisHLLReactiveCommands<K, V>) : RedisHLLCoroutinesCommands<K, V> {
 
     override suspend fun pfadd(key: K, vararg values: V): Long? = ops.pfadd(key, *values).awaitFirstOrNull()

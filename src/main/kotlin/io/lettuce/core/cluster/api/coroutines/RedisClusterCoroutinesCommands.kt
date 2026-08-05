@@ -19,7 +19,6 @@
  */
 package io.lettuce.core.cluster.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.coroutines.*
 
 /**
@@ -30,7 +29,6 @@ import io.lettuce.core.api.coroutines.*
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 interface RedisClusterCoroutinesCommands<K : Any, V : Any> :
     BaseRedisCoroutinesCommands<K, V>,
     RedisAclCoroutinesCommands<K, V>,

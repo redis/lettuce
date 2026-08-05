@@ -22,7 +22,6 @@ import javax.inject.Inject
 @Tag(TestTags.INTEGRATION_TEST)
 @ExtendWith(LettuceExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@OptIn(ExperimentalLettuceCoroutinesApi::class)
 internal class CoroutinesIntegrationTests @Inject constructor(private val connection: StatefulRedisConnection<String, String>) :
     TestSupport() {
 

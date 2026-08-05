@@ -20,7 +20,6 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.BaseRedisReactiveCommands
 import io.lettuce.core.output.CommandOutput
 import io.lettuce.core.protocol.CommandArgs
@@ -41,7 +40,6 @@ import kotlinx.coroutines.reactive.awaitSingle
  * @author Ali Takavci
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 internal class BaseRedisCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: BaseRedisReactiveCommands<K, V>) : BaseRedisCoroutinesCommands<K, V> {
 
     override suspend fun publish(channel: K, message: V): Long? = ops.publish(channel, message).awaitFirstOrNull()

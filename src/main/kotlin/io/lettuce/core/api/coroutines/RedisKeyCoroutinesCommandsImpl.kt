@@ -37,7 +37,6 @@ import java.util.*
  * @author Mikhael Sokolov
  * @since 6.0
  */
-@ExperimentalLettuceCoroutinesApi
 internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisKeyReactiveCommands<K, V>) :
     RedisKeyCoroutinesCommands<K, V> {
 
