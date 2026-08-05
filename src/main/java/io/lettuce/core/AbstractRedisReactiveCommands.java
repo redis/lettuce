@@ -408,6 +408,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Flux<V> blmovem(K source, K destination, BLMovemArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.blmovem(source, destination, args));
+    }
+
+    @Override
     public Mono<KeyValue<K, List<V>>> blmpop(long timeout, LMPopArgs args, K... keys) {
         return createMono(() -> commandBuilder.blmpop(timeout, args, keys));
     }
@@ -1795,6 +1800,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Flux<String> ftAliaslist(String index) {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftAliaslist(index));
+    }
+
+    @Override
     public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
     }
@@ -2432,6 +2442,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<V> lmove(K source, K destination, LMoveArgs args) {
         return createMono(() -> commandBuilder.lmove(source, destination, args));
+    }
+
+    @Override
+    public Flux<V> lmovem(K source, K destination, LMovemArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.lmovem(source, destination, args));
     }
 
     @Override

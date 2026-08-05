@@ -72,6 +72,54 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructXreadWithMaxCountAndMaxSize() {
+
+        Command<String, String, ?> command = sut.xread(XReadArgs.Builder.count(50).maxCount(80).maxSize(65536).block(1000),
+                toStreamOffsets(XReadArgs.StreamOffset.from("s1", "0"), XReadArgs.StreamOffset.from("s2", "0")));
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*14\r\n" + "$5\r\n" + "XREAD\r\n" + "$5\r\n" + "BLOCK\r\n"
+                + "$4\r\n" + "1000\r\n" + "$5\r\n" + "COUNT\r\n" + "$2\r\n" + "50\r\n" + "$8\r\n" + "MAXCOUNT\r\n" + "$2\r\n"
+                + "80\r\n" + "$7\r\n" + "MAXSIZE\r\n" + "$5\r\n" + "65536\r\n" + "$7\r\n" + "STREAMS\r\n" + "$2\r\n" + "s1\r\n"
+                + "$2\r\n" + "s2\r\n" + "$1\r\n" + "0\r\n" + "$1\r\n" + "0\r\n");
+    }
+
+    @Test
+    void shouldOmitMaxCountAndMaxSizeWhenUnset() {
+
+        Command<String, String, ?> command = sut.xread(XReadArgs.Builder.count(50),
+                toStreamOffsets(XReadArgs.StreamOffset.from("s1", "0")));
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$5\r\n" + "XREAD\r\n" + "$5\r\n" + "COUNT\r\n"
+                + "$2\r\n" + "50\r\n" + "$7\r\n" + "STREAMS\r\n" + "$2\r\n" + "s1\r\n" + "$1\r\n" + "0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXreadgroupWithMaxCountAndMaxSize() {
+
+        Command<String, String, ?> command = sut.xreadgroup(Consumer.from("group", "consumer"),
+                XReadArgs.Builder.maxCount(80).maxSize(65536), XReadArgs.StreamOffset.lastConsumed("s1"));
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*11\r\n" + "$10\r\n" + "XREADGROUP\r\n" + "$5\r\n" + "GROUP\r\n" + "$5\r\n" + "group\r\n" + "$8\r\n"
+                        + "consumer\r\n" + "$8\r\n" + "MAXCOUNT\r\n" + "$2\r\n" + "80\r\n" + "$7\r\n" + "MAXSIZE\r\n" + "$5\r\n"
+                        + "65536\r\n" + "$7\r\n" + "STREAMS\r\n" + "$2\r\n" + "s1\r\n" + "$1\r\n" + ">\r\n");
+    }
+
+    @SafeVarargs
+    private static XReadArgs.StreamOffset<String>[] toStreamOffsets(XReadArgs.StreamOffset<String>... streams) {
+        return streams;
+    }
+
+    @Test
     void shouldCorrectlyConstructHexpire() {
 
         Command<String, String, ?> command = sut.hexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), MY_FIELD1, MY_FIELD2, MY_FIELD3);
@@ -835,6 +883,57 @@ class RedisCommandBuilderUnitTests {
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$3\r\n" + "OFF\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovem() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination", LMovemArgs.Builder.leftRight());
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovemWithCount() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination",
+                LMovemArgs.Builder.leftLeft().count(2, LMovemArgs.Ordering.OBO));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT COUNT 2 OBO");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovemWithExactly() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination",
+                LMovemArgs.Builder.rightLeft().exactly(3, LMovemArgs.Ordering.BULK));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> RIGHT LEFT EXACTLY 3 BULK");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovem() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination",
+                BLMovemArgs.Builder.leftLeft().timeout(10L).exactly(3, LMovemArgs.Ordering.BULK));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT 10 EXACTLY 3 BULK");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovemWithDoubleTimeout() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight().timeout(0.5));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0.5");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovemWithoutTimeoutDefaultingToZero() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight());
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0");
     }
 
 }
