@@ -13,7 +13,6 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.socket.nio.NioChannelOption;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import jdk.net.ExtendedSocketOptions;
 
 /**
  * Utility class to determine if extended TCP keep-alive options are supported on the current platform and to apply them.
@@ -26,6 +25,10 @@ import jdk.net.ExtendedSocketOptions;
  * </ul>
  * <p>
  * macOS (kqueue) does not support per-socket extended keep-alive options.
+ * <p>
+ * When {@code jdk.net.ExtendedSocketOptions} is not present (for example a jlink runtime image without the {@code jdk.net}
+ * module), NIO extended keep-alive is treated as unavailable and callers fall back to plain {@code SO_KEEPALIVE} instead of
+ * failing class initialization.
  *
  * @author Aleksandar Todorov
  * @since 7.5
@@ -41,8 +44,16 @@ public class ExtendedKeepAliveSupport {
         // 1. epoll is available (Linux), OR
         // 2. io_uring is available (Linux), OR
         // 3. NIO extended options are available AND kqueue is NOT available (not macOS)
-        EXTENDED_KEEPALIVE_SUPPORTED = EpollProvider.isAvailable() || IOUringProvider.isAvailable()
-                || (ExtendedNioSocketOptions.isAvailable() && !KqueueProvider.isAvailable());
+        //
+        // Probe must never throw: restricted/custom runtimes may lack jdk.net (see #3862).
+        boolean supported = false;
+        try {
+            supported = EpollProvider.isAvailable() || IOUringProvider.isAvailable()
+                    || (ExtendedNioSocketOptions.isAvailable() && !KqueueProvider.isAvailable());
+        } catch (Throwable e) {
+            logger.debug("Extended keep-alive support detection failed; falling back to plain SO_KEEPALIVE", e);
+        }
+        EXTENDED_KEEPALIVE_SUPPORTED = supported;
     }
 
     /**
@@ -92,7 +103,7 @@ public class ExtendedKeepAliveSupport {
     }
 
     /**
-     * Utility to support Java 11 {@link ExtendedSocketOptions extended keepalive options}.
+     * Utility to support Java 11 {@code jdk.net.ExtendedSocketOptions} extended keepalive options.
      */
     @SuppressWarnings("unchecked")
     static class ExtendedNioSocketOptions {
@@ -105,22 +116,39 @@ public class ExtendedKeepAliveSupport {
 
         static {
 
+            SocketOption<Integer>[] resolved = resolveOptions(ExtendedNioSocketOptions.class.getClassLoader());
+            TCP_KEEPCOUNT = resolved[0];
+            TCP_KEEPIDLE = resolved[1];
+            TCP_KEEPINTERVAL = resolved[2];
+        }
+
+        /**
+         * Resolve TCP keep-alive {@link SocketOption} constants from {@code jdk.net.ExtendedSocketOptions}.
+         * <p>
+         * Uses reflective lookup (no hard dependency on the {@code jdk.net} module) so restricted runtimes without that module
+         * degrade gracefully.
+         *
+         * @param classLoader class loader used to load {@code jdk.net.ExtendedSocketOptions}
+         * @return array of {@code [TCP_KEEPCOUNT, TCP_KEEPIDLE, TCP_KEEPINTERVAL]}, elements may be {@code null}
+         */
+        static SocketOption<Integer>[] resolveOptions(ClassLoader classLoader) {
+
             SocketOption<Integer> keepCount = null;
             SocketOption<Integer> keepIdle = null;
             SocketOption<Integer> keepInterval = null;
             try {
 
-                keepCount = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPCOUNT").get(null);
-                keepIdle = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPIDLE").get(null);
-                keepInterval = (SocketOption<Integer>) ExtendedSocketOptions.class.getDeclaredField("TCP_KEEPINTERVAL")
-                        .get(null);
-            } catch (ReflectiveOperationException e) {
+                Class<?> extendedSocketOptions = Class.forName("jdk.net.ExtendedSocketOptions", true, classLoader);
+                keepCount = (SocketOption<Integer>) extendedSocketOptions.getDeclaredField("TCP_KEEPCOUNT").get(null);
+                keepIdle = (SocketOption<Integer>) extendedSocketOptions.getDeclaredField("TCP_KEEPIDLE").get(null);
+                keepInterval = (SocketOption<Integer>) extendedSocketOptions.getDeclaredField("TCP_KEEPINTERVAL").get(null);
+            } catch (ReflectiveOperationException | NoClassDefFoundError | UnsupportedOperationException e) {
+                // ReflectiveOperationException covers ClassNotFoundException / NoSuchFieldException / etc.
+                // NoClassDefFoundError covers restricted runtimes that lack the jdk.net module (#3862).
                 logger.trace("Cannot extract ExtendedSocketOptions for KeepAlive", e);
             }
 
-            TCP_KEEPCOUNT = keepCount;
-            TCP_KEEPIDLE = keepIdle;
-            TCP_KEEPINTERVAL = keepInterval;
+            return new SocketOption[] { keepCount, keepIdle, keepInterval };
         }
 
         static boolean isAvailable() {
