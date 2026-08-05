@@ -20,6 +20,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * Executable command that uses a {@link Batcher} for command execution.
  *
  * @author Mark Paluch
+ * @author Yunseop Eom
  * @since 5.0
  */
 class BatchExecutableCommand implements ExecutableCommand {

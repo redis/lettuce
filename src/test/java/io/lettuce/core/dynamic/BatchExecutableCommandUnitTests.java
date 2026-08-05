@@ -31,6 +31,8 @@ import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * Unit tests for {@link BatchExecutableCommand}.
+ *
+ * @author Yunseop Eom
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
