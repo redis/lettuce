@@ -149,17 +149,23 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * Record that this fieldset was prepared on {@code channel}, so {@link #close()} can target it with a {@code DISCARD}.
-     * Called on the connection's event loop from the outbound write path. No-op once discarded.
+     * Record that this fieldset is being prepared on {@code channel}, so {@link #close()} can later target it with a
+     * {@code DISCARD}. Called on the connection's event loop from the outbound write path, before the {@code PREPARE} is
+     * written, and atomically with {@link #close()} on {@code preparedOn}: if the fieldset is already discarded the caller must
+     * not send the {@code PREPARE} at all, so no server-side state is ever left without a matching {@code DISCARD}.
      *
-     * @param channel the connection the {@code HIMPORT PREPARE} was injected on.
+     * @param channel the connection the {@code HIMPORT PREPARE} is about to be injected on.
      * @param codec the connection's codec, used to encode the eventual {@code DISCARD}.
+     * @return {@code true} if the connection was recorded and the {@code PREPARE} may be sent; {@code false} if the fieldset
+     *         has already been closed and preparation must be skipped.
      */
-    void registerConnection(Channel channel, RedisCodec<K, ?> codec) {
+    boolean registerConnection(Channel channel, RedisCodec<K, ?> codec) {
         synchronized (preparedOn) {
-            if (!discarded) {
-                preparedOn.put(channel, codec);
+            if (discarded) {
+                return false;
             }
+            preparedOn.put(channel, codec);
+            return true;
         }
     }
 
