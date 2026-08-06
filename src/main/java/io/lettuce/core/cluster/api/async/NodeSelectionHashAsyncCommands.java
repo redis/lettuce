@@ -870,6 +870,8 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * The fieldset's shared field names are declared to the server automatically on first use per physical connection (and
      * re-declared transparently across reconnects, new cluster nodes, and pooled connections), so only values travel on the
      * wire for each import. {@link HashImport#close() Close} the fieldset when done to release the server-side state.
+     * <p>
+     * Transactions ({@code MULTI}/{@code EXEC}) are not supported.
      *
      * @param key the key of the hash to create, must not be {@code null}.
      * @param fieldset the fieldset describing the field names, must not be {@code null} and must not be closed.
