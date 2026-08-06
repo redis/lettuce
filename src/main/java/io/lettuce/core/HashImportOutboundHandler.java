@@ -15,6 +15,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.CommandWrapper;
+import io.lettuce.core.protocol.HashImportPrepareCommand;
 import io.lettuce.core.protocol.RedisCommand;
 
 import io.netty.channel.ChannelDuplexHandler;
@@ -88,7 +89,7 @@ class HashImportOutboundHandler extends ChannelDuplexHandler {
             return;
         }
 
-        ctx.write(new AsyncCommand<>(commandBuilder(codec).himportPrepare(fieldset)));
+        ctx.write(new HashImportPrepareCommand<>(new AsyncCommand<>(commandBuilder(codec).himportPrepare(fieldset))));
         prepared.add(fieldset);
     }
 
