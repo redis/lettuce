@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -36,6 +37,9 @@ import static org.assertj.core.api.Assertions.within;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+/**
+ * @author hutiefang76
+ */
 @Tag(INTEGRATION_TEST)
 public class RedisVectorSetIntegrationTests {
 
@@ -273,13 +277,13 @@ public class RedisVectorSetIntegrationTests {
         redis.vadd(VECTOR_SET_KEY, "item4", 0.11, 0.21, 0.31);
         redis.vadd(VECTOR_SET_KEY, "item5", 0.12, 0.22, 0.32);
 
-        List<String> links = redis.vlinks(VECTOR_SET_KEY, ELEMENT1);
+        List<List<String>> links = redis.vlinks(VECTOR_SET_KEY, ELEMENT1);
         assertThat(links).isNotEmpty();
     }
 
     @Test
     void vlinksMissingOrWrong() {
-        List<String> links = redis.vlinks(VECTOR_SET_KEY, MISSING_KEY);
+        List<List<String>> links = redis.vlinks(VECTOR_SET_KEY, MISSING_KEY);
         assertThat(links).isEmpty();
         links = redis.vlinks(MISSING_KEY, MISSING_KEY);
         assertThat(links).isEmpty();
@@ -292,12 +296,14 @@ public class RedisVectorSetIntegrationTests {
         redis.vadd(VECTOR_SET_KEY, "item4", 0.11, 0.21, 0.31);
         redis.vadd(VECTOR_SET_KEY, "item5", 0.12, 0.22, 0.32);
 
-        Map<String, Double> linksWithScores = redis.vlinksWithScores(VECTOR_SET_KEY, ELEMENT1);
+        List<Map<String, Double>> linksWithScores = redis.vlinksWithScores(VECTOR_SET_KEY, ELEMENT1);
         assertThat(linksWithScores).isNotEmpty();
-        assertThat(linksWithScores.get(ELEMENT2)).isCloseTo(0.9964823722839355D, within(0.001));
-        assertThat(linksWithScores.get(ELEMENT3)).isCloseTo(0.9919525384902954D, within(0.001));
-        assertThat(linksWithScores.get("item4")).isCloseTo(1.0, within(0.001));
-        assertThat(linksWithScores.get("item5")).isCloseTo(0.9997878074645996D, within(0.001));
+        Map<String, Double> allLinks = new LinkedHashMap<>();
+        linksWithScores.forEach(allLinks::putAll);
+        assertThat(allLinks.get(ELEMENT2)).isCloseTo(0.9964823722839355D, within(0.001));
+        assertThat(allLinks.get(ELEMENT3)).isCloseTo(0.9919525384902954D, within(0.001));
+        assertThat(allLinks.get("item4")).isCloseTo(1.0, within(0.001));
+        assertThat(allLinks.get("item5")).isCloseTo(0.9997878074645996D, within(0.001));
     }
 
     @Test
@@ -412,6 +418,20 @@ public class RedisVectorSetIntegrationTests {
     }
 
     @Test
+    void asyncVlinks() throws ExecutionException, InterruptedException {
+        List<List<String>> links = asyncRedis.vlinks(VECTOR_SET_KEY, ELEMENT1).get();
+        assertThat(links).isNotEmpty();
+        assertThat(links).allSatisfy(level -> assertThat(level).isNotNull());
+
+        List<Map<String, Double>> linksWithScores = asyncRedis.vlinksWithScores(VECTOR_SET_KEY, ELEMENT1).get();
+        assertThat(linksWithScores).isNotEmpty();
+        assertThat(linksWithScores).allSatisfy(level -> assertThat(level).isNotNull());
+
+        assertThat(asyncRedis.vlinks(MISSING_KEY, MISSING_KEY).get()).isEmpty();
+        assertThat(asyncRedis.vlinksWithScores(MISSING_KEY, MISSING_KEY).get()).isEmpty();
+    }
+
+    @Test
     void reactiveVadd() {
         StepVerifier.create(reactiveRedis.vadd(VECTOR_SET_KEY + ":reactive", "reactive1", 0.1, 0.2, 0.3)).expectNext(true)
                 .verifyComplete();
@@ -420,6 +440,30 @@ public class RedisVectorSetIntegrationTests {
     @Test
     void reactiveVismember() {
         StepVerifier.create(reactiveRedis.vismember(VECTOR_SET_KEY, ELEMENT1)).expectNext(true).verifyComplete();
+    }
+
+    @Test
+    void reactiveVlinks() {
+        StepVerifier.create(reactiveRedis.vlinks(VECTOR_SET_KEY, ELEMENT1).collectList()).assertNext(levels -> {
+            assertThat(levels).isNotEmpty();
+            assertThat(levels).allSatisfy(level -> assertThat(level).isNotNull());
+        }).verifyComplete();
+
+        StepVerifier.create(reactiveRedis.vlinks(MISSING_KEY, MISSING_KEY)).verifyComplete();
+        StepVerifier.create(reactiveRedis.vlinks(WRONG_KEY, MISSING_KEY)).expectError(RedisCommandExecutionException.class)
+                .verify();
+    }
+
+    @Test
+    void reactiveVlinksWithScores() {
+        StepVerifier.create(reactiveRedis.vlinksWithScores(VECTOR_SET_KEY, ELEMENT1).collectList()).assertNext(levels -> {
+            assertThat(levels).isNotEmpty();
+            assertThat(levels).allSatisfy(level -> assertThat(level).isNotNull());
+        }).verifyComplete();
+
+        StepVerifier.create(reactiveRedis.vlinksWithScores(MISSING_KEY, MISSING_KEY)).verifyComplete();
+        StepVerifier.create(reactiveRedis.vlinksWithScores(WRONG_KEY, MISSING_KEY))
+                .expectError(RedisCommandExecutionException.class).verify();
     }
 
     @Test

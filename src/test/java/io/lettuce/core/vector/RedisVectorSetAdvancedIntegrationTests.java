@@ -43,6 +43,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 /**
  * Integration tests for Redis Vector Sets based on the examples from the Redis documentation.
  *
+ * @author hutiefang76
  * @see <a href="https://redis.io/docs/latest/develop/data-types/vector-sets/">Redis Vector Sets Documentation</a>
  */
 @Tag(INTEGRATION_TEST)
@@ -534,11 +535,11 @@ public class RedisVectorSetAdvancedIntegrationTests {
     @Test
     void testHnswGraphLinks() {
         // Get links for point A
-        List<String> links = redis.vlinks(POINTS_KEY, "pt:A");
+        List<List<String>> links = redis.vlinks(POINTS_KEY, "pt:A");
         assertThat(links).isNotEmpty();
 
         // Get links with scores
-        Map<String, Double> linksWithScores = redis.vlinksWithScores(POINTS_KEY, "pt:A");
+        List<Map<String, Double>> linksWithScores = redis.vlinksWithScores(POINTS_KEY, "pt:A");
         assertThat(linksWithScores).isNotEmpty();
     }
 
