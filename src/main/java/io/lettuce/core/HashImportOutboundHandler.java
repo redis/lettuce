@@ -86,6 +86,7 @@ class HashImportOutboundHandler extends ChannelDuplexHandler {
 
         RedisCodec<K, V> codec = set.codec();
         if (!fieldset.registerConnection(ctx.channel(), codec)) {
+            command.completeExceptionally(new IllegalStateException("HashImport has been discarded and must not be reused"));
             return;
         }
 
