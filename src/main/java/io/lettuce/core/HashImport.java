@@ -6,6 +6,7 @@
  */
 package io.lettuce.core;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -101,10 +102,11 @@ public class HashImport<K> implements AutoCloseable {
         LettuceAssert.notNull(fields, "Fields must not be null");
         LettuceAssert.isTrue(fields.length > 0, "Fields must not be empty");
 
-        Set<K> seen = new HashSet<>(fields.length);
+        Set<Object> seen = new HashSet<>(fields.length);
         for (K field : fields) {
             LettuceAssert.notNull(field, "Field must not be null");
-            if (!seen.add(field)) {
+            Object key = (field instanceof byte[]) ? ByteBuffer.wrap((byte[]) field) : field;
+            if (!seen.add(key)) {
                 throw new IllegalArgumentException("Fields must not contain duplicates: " + field);
             }
         }
