@@ -708,6 +708,8 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * re-declared transparently across reconnects, new cluster nodes, and pooled connections), so only values travel on the
      * wire for each import. [HashImport.close] the fieldset when done to release the server-side state.
      *
+     * Transactions (`MULTI`/`EXEC`) are not supported.
+     *
      * @param key the key of the hash to create, must not be `null`.
      * @param fieldset the fieldset describing the field names, must not be `null` and must not be closed.
      * @param values the field values in fieldset order, exactly `fieldset.size()` of them.
