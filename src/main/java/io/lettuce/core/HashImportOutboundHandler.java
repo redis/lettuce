@@ -79,13 +79,17 @@ class HashImportOutboundHandler extends ChannelDuplexHandler {
         }
 
         HashImport<K> fieldset = set.fieldset();
-        if (prepared.add(fieldset)) {
-            // Inject PREPARE ahead of the SET. It flows head-ward to CommandHandler, which stacks it for reply accounting
-            // and forwards it to the encoder, so its +OK is consumed and it lands on the wire before the SET.
-            RedisCodec<K, V> codec = set.codec();
-            ctx.write(new AsyncCommand<>(commandBuilder(codec).himportPrepare(fieldset)));
-            fieldset.registerConnection(ctx.channel(), codec);
+        if (prepared.contains(fieldset)) {
+            return;
         }
+
+        RedisCodec<K, V> codec = set.codec();
+        if (!fieldset.registerConnection(ctx.channel(), codec)) {
+            return;
+        }
+
+        ctx.write(new AsyncCommand<>(commandBuilder(codec).himportPrepare(fieldset)));
+        prepared.add(fieldset);
     }
 
     @SuppressWarnings("unchecked")
