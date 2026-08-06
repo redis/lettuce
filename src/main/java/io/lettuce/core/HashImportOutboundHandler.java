@@ -7,8 +7,9 @@
 package io.lettuce.core;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.protocol.AsyncCommand;
@@ -41,8 +42,7 @@ import io.netty.channel.ChannelPromise;
  */
 class HashImportOutboundHandler extends ChannelDuplexHandler {
 
-    // event-loop-confined: only touched from write()/channelInactive() on the channel's event loop
-    private final Set<HashImport<?>> prepared = new HashSet<>();
+    private final Set<HashImport<?>> prepared = Collections.newSetFromMap(new WeakHashMap<>());
 
     // lazily built from the first HIMPORT SET's codec and reused; a channel has one codec for its lifetime, and write() is
     // single-threaded on the event loop, so no synchronization is needed
