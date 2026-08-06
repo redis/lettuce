@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.CommandType;
@@ -36,6 +37,12 @@ import io.netty.channel.ChannelPromise;
  * The handler is codec-agnostic: the {@link HashImportSetCommand} carries its connection's codec, so a fresh {@code PREPARE} is
  * built per injection (required for reconnect/redirect, where a prebuilt command could not be reused).
  * <p>
+ * The handler holds the physical connection facade for its channel and records it (rather than the bare
+ * {@link io.netty.channel.Channel}) on the fieldset, so {@link HashImport#close()} can dispatch the cleanup {@code DISCARD}
+ * through the connection's normal command path — keeping transaction bookkeeping consistent — instead of writing raw to the
+ * channel. A fresh handler is created per channel init, so it always references the facade for its own channel (including after
+ * reconnect).
+ * <p>
  * This class is part of the internal API.
  *
  * @author Aleksandar Todorov
@@ -43,11 +50,17 @@ import io.netty.channel.ChannelPromise;
  */
 class HashImportOutboundHandler extends ChannelDuplexHandler {
 
+    private final RedisChannelHandler<?, ?> connection;
+
     private final Set<HashImport<?>> prepared = Collections.newSetFromMap(new WeakHashMap<>());
 
     // lazily built from the first HIMPORT SET's codec and reused; a channel has one codec for its lifetime, and write() is
     // single-threaded on the event loop, so no synchronization is needed
     private RedisCommandBuilder<?, ?> commandBuilder;
+
+    HashImportOutboundHandler(RedisChannelHandler<?, ?> connection) {
+        this.connection = connection;
+    }
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -85,7 +98,12 @@ class HashImportOutboundHandler extends ChannelDuplexHandler {
         }
 
         RedisCodec<K, V> codec = set.codec();
-        if (!fieldset.registerConnection(ctx.channel(), codec)) {
+        if (!(connection instanceof StatefulRedisConnection)) {
+            command.completeExceptionally(
+                    new IllegalStateException("HashImport is not supported on " + connection.getClass().getSimpleName()));
+            return;
+        }
+        if (!fieldset.registerConnection((StatefulRedisConnection<K, ?>) connection, codec)) {
             command.completeExceptionally(new IllegalStateException("HashImport has been discarded and must not be reused"));
             return;
         }
