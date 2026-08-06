@@ -3,7 +3,7 @@
 This page explains how a Redis command travels from a public API call down to the
 wire and back. Read it before adding commands, touching the protocol layer, or
 changing the connection stack. For the step-by-step recipe to add a command, see
-the `adding-a-redis-command` skill in `.agents/skills/`.
+the `extend-commands-api` skill in `.agents/skills/`.
 
 Lettuce is a thread-safe Redis client for the JVM built on **netty** (transport)
 and **Project Reactor** (reactive API). A single connection multiplexes many
