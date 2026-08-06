@@ -121,6 +121,7 @@ public interface RedisServerAsyncCommands<K, V> {
     /**
      * Get the list of client connections which are filtered by {@code clientListArgs}.
      *
+     * @param clientListArgs the args to filter the client list.
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
      *         each line is composed of a succession of property=value fields separated by a space character.
      * @since 6.3
@@ -320,9 +321,7 @@ public interface RedisServerAsyncCommands<K, V> {
     RedisFuture<String> debugObject(K key);
 
     /**
-     * Make the server crash: Out of memory.
-     *
-     * @return nothing, because the server crashes before returning.
+     * Make the server crash: Out of memory. The server crashes before returning, so there is no reply.
      */
     void debugOom();
 
@@ -350,9 +349,7 @@ public interface RedisServerAsyncCommands<K, V> {
     RedisFuture<String> debugSdslen(K key);
 
     /**
-     * Make the server crash: Invalid pointer access.
-     *
-     * @return nothing, because the server crashes before returning.
+     * Make the server crash: Invalid pointer access. The server crashes before returning, so there is no reply.
      */
     void debugSegfault();
 
@@ -468,6 +465,7 @@ public interface RedisServerAsyncCommands<K, V> {
     /**
      * Reports the number of bytes that a key and its value require to be stored in RAM.
      *
+     * @param key the key.
      * @return memory usage in bytes.
      * @since 5.2
      */
