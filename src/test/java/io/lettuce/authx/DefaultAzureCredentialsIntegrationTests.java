@@ -9,6 +9,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.env.Endpoints.Endpoint;
@@ -23,6 +24,8 @@ import redis.clients.authentication.entraid.AzureTokenAuthConfigBuilder;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static io.lettuce.TestTags.ENTRA_ID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,9 +77,9 @@ public class DefaultAzureCredentialsIntegrationTests {
     }
 
     @Test
-    public void azureTokenAuthWithDefaultAzureCredentials() throws ExecutionException, InterruptedException {
+    public void azureTokenAuthWithDefaultAzureCredentials() throws ExecutionException, InterruptedException, TimeoutException {
 
-        RedisCredentials credentials = credentialsProvider.resolveCredentials().block(Duration.ofSeconds(5));
+        RedisCredentials credentials = credentialsProvider.resolveCredentials().toCompletableFuture().get(5, TimeUnit.SECONDS);
         assertThat(credentials).isNotNull();
 
         String key = UUID.randomUUID().toString();
@@ -86,7 +89,7 @@ public class DefaultAzureCredentialsIntegrationTests {
             sync.set(key, "value");
             assertThat(sync.get(key)).isEqualTo("value");
             assertThat(connection.async().get(key).get()).isEqualTo("value");
-            assertThat(connection.reactive().get(key).block()).isEqualTo("value");
+            assertThat(connection.commands(RedisReactiveCommands.factory()).get(key).block()).isEqualTo("value");
             sync.del(key);
         }
     }

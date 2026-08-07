@@ -106,27 +106,6 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisPubSubReactiveCommands#factory()} instead; scheduled
-     *             for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    @Override
-    @SuppressWarnings("unchecked")
-    public RedisPubSubReactiveCommands<K, V> reactive() {
-        return (RedisPubSubReactiveCommands<K, V>) reactive;
-    }
-
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisPubSubReactiveCommands#factory()} instead; scheduled
-     *             for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    @Override
-    protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
-        return new RedisPubSubReactiveCommandsImpl<>(this, codec);
-    }
-
-    /**
      * In addition to the standard database switch behavior from the parent class, this method also:
      * <ul>
      * <li>Migrates all PubSub listeners from the old database connection to the new one</li>

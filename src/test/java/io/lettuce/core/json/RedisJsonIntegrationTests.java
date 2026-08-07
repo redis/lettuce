@@ -168,7 +168,7 @@ public class RedisJsonIntegrationTests {
     @Test
     void jsonArrLenAsyncAndReactive() throws ExecutionException, InterruptedException {
         RedisAsyncCommands<String, String> asyncCommands = client.connect().async();
-        RedisReactiveCommands<String, String> reactiveCommands = client.connect().reactive();
+        RedisReactiveCommands<String, String> reactiveCommands = client.connect().commands(RedisReactiveCommands.factory());
 
         JsonPath myPath = JsonPath.of(MOUNTAIN_BIKES_V1);
 

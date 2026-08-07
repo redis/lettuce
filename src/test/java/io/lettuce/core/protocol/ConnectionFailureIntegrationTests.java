@@ -187,7 +187,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
 
             redisUri.setPort(TestSettings.nonexistentPort());
 
-            client.getResources().eventBus().get().subscribe(queue::add);
+            client.getResources().eventBus().subscribe(queue::add);
 
             commands.quit();
             Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();

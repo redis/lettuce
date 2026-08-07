@@ -397,7 +397,7 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
             triggerCircuitBreakerAndWaitForState(CircuitBreaker.State.OPEN, redis1ProxyUri, redis2ProxyUri);
 
             // When/Then: Reactive commands should emit error
-            RedisReactiveCommands<String, String> reactive = connection.reactive();
+            RedisReactiveCommands<String, String> reactive = connection.commands(RedisReactiveCommands.factory());
 
             StepVerifier.create(reactive.set("key", "value")).expectError(RedisNoHealthyDatabaseException.class).verify();
 
@@ -419,7 +419,7 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
             });
 
             // When/Then: Reactive commands should emit timeout error
-            RedisReactiveCommands<String, String> reactive = connection.reactive();
+            RedisReactiveCommands<String, String> reactive = connection.commands(RedisReactiveCommands.factory());
 
             StepVerifier.create(reactive.set("key", "value")).expectError(RedisNoHealthyDatabaseException.class).verify();
 
@@ -433,7 +433,7 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
             triggerCircuitBreakerAndWaitForState(CircuitBreaker.State.OPEN, redis1ProxyUri, redis2ProxyUri);
 
             // When/Then: Reactive command stream should emit errors
-            RedisReactiveCommands<String, String> reactive = connection.reactive();
+            RedisReactiveCommands<String, String> reactive = connection.commands(RedisReactiveCommands.factory());
 
             Mono<String> command1 = reactive.set("key1", "value1");
             Mono<String> command2 = reactive.set("key2", "value2");
@@ -453,7 +453,7 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
             triggerCircuitBreakerAndWaitForState(CircuitBreaker.State.OPEN, redis1ProxyUri, redis2ProxyUri);
 
             // When: Use onErrorResume to handle errors
-            RedisReactiveCommands<String, String> reactive = connection.reactive();
+            RedisReactiveCommands<String, String> reactive = connection.commands(RedisReactiveCommands.factory());
 
             Mono<String> commandWithFallback = reactive.set("key", "value").onErrorResume(RedisNoHealthyDatabaseException.class,
                     e -> Mono.just("FALLBACK"));
@@ -486,7 +486,7 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
                     .hasCauseInstanceOf(RedisNoHealthyDatabaseException.class);
 
             // Reactive API
-            StepVerifier.create(connection.reactive().set("reactiveKey", "reactiveValue"))
+            StepVerifier.create(connection.commands(RedisReactiveCommands.factory()).set("reactiveKey", "reactiveValue"))
                     .expectError(RedisNoHealthyDatabaseException.class).verify();
         }
 
@@ -509,8 +509,8 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
                         .hasCauseInstanceOf(RedisNoHealthyDatabaseException.class);
 
                 // Try reactive
-                StepVerifier.create(connection.reactive().get("key" + index)).expectError(RedisNoHealthyDatabaseException.class)
-                        .verify();
+                StepVerifier.create(connection.commands(RedisReactiveCommands.factory()).get("key" + index))
+                        .expectError(RedisNoHealthyDatabaseException.class).verify();
             }
         }
 
@@ -579,8 +579,8 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
             triggerCircuitBreakerAndWaitForState(CircuitBreaker.State.OPEN, redis1ProxyUri, redis2ProxyUri);
 
             // Verify commands fail
-            StepVerifier.create(connection.reactive().set("key", "value")).expectError(RedisNoHealthyDatabaseException.class)
-                    .verify();
+            StepVerifier.create(connection.commands(RedisReactiveCommands.factory()).set("key", "value"))
+                    .expectError(RedisNoHealthyDatabaseException.class).verify();
 
             // When: Re-enable proxies
             enableAllToxiproxy();
@@ -591,9 +591,11 @@ class NoHealthyDatabaseBehaviorIntegrationTests extends AbstractRedisClientTest 
             });
 
             // Then: Commands should succeed
-            StepVerifier.create(connection.reactive().set("recoveryKey", "recoveryValue")).expectNext("OK").verifyComplete();
+            StepVerifier.create(connection.commands(RedisReactiveCommands.factory()).set("recoveryKey", "recoveryValue"))
+                    .expectNext("OK").verifyComplete();
 
-            StepVerifier.create(connection.reactive().get("recoveryKey")).expectNext("recoveryValue").verifyComplete();
+            StepVerifier.create(connection.commands(RedisReactiveCommands.factory()).get("recoveryKey"))
+                    .expectNext("recoveryValue").verifyComplete();
         }
 
     }

@@ -7,6 +7,7 @@ import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.test.settings.TestSettings;
 
@@ -94,7 +95,7 @@ public class RedisClusterClientBenchmark {
 
     @Benchmark
     public void reactiveSet() {
-        connection.reactive().set(KEY, KEY).block();
+        connection.commands(RedisAdvancedClusterReactiveCommands.factory()).set(KEY, KEY).block();
     }
 
     @Benchmark
@@ -102,7 +103,7 @@ public class RedisClusterClientBenchmark {
     public void reactiveSetBatch() {
 
         for (int i = 0; i < BATCH_SIZE; i++) {
-            monos[i] = connection.reactive().set(KEY, KEY);
+            monos[i] = connection.commands(RedisAdvancedClusterReactiveCommands.factory()).set(KEY, KEY);
         }
 
         Flux.merge(monos).blockLast();
@@ -115,7 +116,7 @@ public class RedisClusterClientBenchmark {
         connection.setAutoFlushCommands(false);
 
         for (int i = 0; i < BATCH_SIZE; i++) {
-            monos[i] = connection.reactive().set(KEY, KEY);
+            monos[i] = connection.commands(RedisAdvancedClusterReactiveCommands.factory()).set(KEY, KEY);
         }
 
         Flux.merge(monos).doOnSubscribe(subscription -> {
