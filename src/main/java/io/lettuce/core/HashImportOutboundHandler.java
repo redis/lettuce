@@ -22,6 +22,8 @@ import io.lettuce.core.protocol.RedisCommand;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Outbound pipeline handler that lazily prepares {@code HIMPORT} fieldsets per physical connection.
@@ -49,6 +51,8 @@ import io.netty.channel.ChannelPromise;
  * @since 7.7
  */
 class HashImportOutboundHandler extends ChannelDuplexHandler {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(HashImportOutboundHandler.class);
 
     private final RedisChannelHandler<?, ?> connection;
 
@@ -108,7 +112,16 @@ class HashImportOutboundHandler extends ChannelDuplexHandler {
             return;
         }
 
-        ctx.write(new HashImportPrepareCommand<>(new AsyncCommand<>(commandBuilder(codec).himportPrepare(fieldset))));
+        AsyncCommand<K, V, String> prepare = new AsyncCommand<>(commandBuilder(codec).himportPrepare(fieldset));
+        prepare.onComplete((status, error) -> {
+            if (error != null) {
+                prepared.remove(fieldset);
+                logger.warn("HIMPORT PREPARE for fieldset {} failed; it will be re-prepared on the next himportSet", fieldset,
+                        error);
+            }
+        });
+
+        ctx.write(new HashImportPrepareCommand<>(prepare));
         prepared.add(fieldset);
     }
 
