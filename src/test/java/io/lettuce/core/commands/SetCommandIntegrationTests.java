@@ -100,6 +100,25 @@ public class SetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("SDIFFCARD") // Redis 8.10
+    void sdiffcard() {
+        setupSet();
+        assertThat(redis.sdiffcard("key1", "key3")).isEqualTo(2);
+        assertThat(redis.sdiffcard(list("key1", "key2", "key3"))).isEqualTo(2);
+        assertThat(redis.sdiffcard("missing", "key1")).isEqualTo(0);
+        assertThat(redis.sdiffcard("key1", "missing")).isEqualTo(4);
+    }
+
+    @Test
+    @EnabledOnCommand("SDIFFCARD") // Redis 8.10
+    void sdiffcardWithLimit() {
+        setupSet();
+        assertThat(redis.sdiffcard("key1", "key3", SDiffCardArgs.Builder.limit(1))).isEqualTo(1);
+        assertThat(redis.sdiffcard("key1", "key3", SDiffCardArgs.Builder.limit(100))).isEqualTo(2);
+        assertThat(redis.sdiffcard("key1", "key3", SDiffCardArgs.Builder.limit(0))).isEqualTo(2);
+    }
+
+    @Test
     void sdiffstore() {
         setupSet();
         assertThat(redis.sdiffstore("newset", "key1", "key2", "key3")).isEqualTo(2);
@@ -269,6 +288,32 @@ public class SetCommandIntegrationTests extends TestSupport {
         assertThat(count.longValue()).isEqualTo(5);
 
         assertThat(new TreeSet<>(adapter.getList())).isEqualTo(new TreeSet<>(list("c", "a", "b", "e", "d")));
+    }
+
+    @Test
+    @EnabledOnCommand("SUNIONCARD") // Redis 8.10
+    void sunioncard() {
+        setupSet();
+        assertThat(redis.sunioncard("key1", "key3")).isEqualTo(5);
+        assertThat(redis.sunioncard(list("key1", "key2", "key3"))).isEqualTo(5);
+        assertThat(redis.sunioncard("key1", "missing")).isEqualTo(4);
+    }
+
+    @Test
+    @EnabledOnCommand("SUNIONCARD") // Redis 8.10
+    void sunioncardApprox() {
+        setupSet();
+        assertThat(redis.sunioncard("key1", "key3", SUnionCardArgs.Builder.approx())).isEqualTo(5);
+        assertThat(redis.sunioncard("key1", "key3", SUnionCardArgs.Builder.approx().limit(3))).isLessThanOrEqualTo(3);
+    }
+
+    @Test
+    @EnabledOnCommand("SUNIONCARD") // Redis 8.10
+    void sunioncardWithLimit() {
+        setupSet();
+        assertThat(redis.sunioncard("key1", "key3", SUnionCardArgs.Builder.limit(3))).isEqualTo(3);
+        assertThat(redis.sunioncard("key1", "key3", SUnionCardArgs.Builder.limit(100))).isEqualTo(5);
+        assertThat(redis.sunioncard("key1", "key3", SUnionCardArgs.Builder.limit(0))).isEqualTo(5);
     }
 
     @Test

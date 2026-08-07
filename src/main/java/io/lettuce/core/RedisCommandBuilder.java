@@ -2769,6 +2769,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SDIFF, new ValueStreamingOutput<>(codec, channel), args);
     }
 
+    Command<K, V, Long> sdiffcard(K key1, K key2) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sdiffcard(List<K> keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sdiffcard(K key1, K key2, SDiffCardArgs sdiffCardArgs) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(sdiffCardArgs, "SDiffCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        sdiffCardArgs.build(args);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sdiffcard(List<K> keys, SDiffCardArgs sdiffCardArgs) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(sdiffCardArgs, "SDiffCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        sdiffCardArgs.build(args);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, Long> sdiffstore(K destination, K... keys) {
         notEmpty(keys);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
@@ -3183,6 +3215,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys);
         return createCommand(SUNION, new ValueStreamingOutput<>(codec, channel), args);
+    }
+
+    Command<K, V, Long> sunioncard(K key1, K key2) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sunioncard(List<K> keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sunioncard(K key1, K key2, SUnionCardArgs sunionCardArgs) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(sunionCardArgs, "SUnionCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        sunionCardArgs.build(args);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sunioncard(List<K> keys, SUnionCardArgs sunionCardArgs) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(sunionCardArgs, "SUnionCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        sunionCardArgs.build(args);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, Long> sunionstore(K destination, K... keys) {
