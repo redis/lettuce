@@ -305,6 +305,22 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
     }
 
     /**
+     * Return the number of slots assigned to this node. Unlike {@link #getSlots()}, this method does not allocate a
+     * {@link List}.
+     *
+     * @return the number of assigned slots, {@code 0} if no slots are assigned.
+     * @since 7.7
+     */
+    public int getSlotCount() {
+
+        if (slots == null) {
+            return 0;
+        }
+
+        return slots.cardinality();
+    }
+
+    /**
      * Performs the given action for each slot of this {@link RedisClusterNode} until all elements have been processed or the
      * action throws an exception. Unless otherwise specified by the implementing class, actions are performed in the order of
      * iteration (if an iteration order is specified). Exceptions thrown by the action are relayed to the caller.
