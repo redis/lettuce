@@ -98,6 +98,10 @@ class HashImportOutboundHandler extends ChannelDuplexHandler {
 
         HashImport<K> fieldset = set.fieldset();
         if (prepared.contains(fieldset)) {
+            if (fieldset.isDiscarded()) {
+                command.completeExceptionally(
+                        new IllegalStateException("HashImport has been discarded and must not be reused"));
+            }
             return;
         }
 
