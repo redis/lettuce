@@ -63,6 +63,18 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun bitopXor(destination: K, vararg keys: K): Long? =
         ops.bitopXor(destination, *keys).awaitFirstOrNull()
 
+    override suspend fun bitopDiff(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopDiff(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopDiff1(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopDiff1(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopAndor(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopAndor(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopOne(destination: K, vararg keys: K): Long? =
+        ops.bitopOne(destination, *keys).awaitFirstOrNull()
+
     override suspend fun decr(key: K): Long? = ops.decr(key).awaitFirstOrNull()
 
     override suspend fun decrby(key: K, amount: Long): Long? =

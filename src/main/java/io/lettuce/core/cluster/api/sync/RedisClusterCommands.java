@@ -405,6 +405,7 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
      * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
      * {@code getConnection(nodeId)}.
      *
+     * @param args the command args.
      * @throws UnsupportedOperationException HOTKEYS is a node-specific command
      */
     @Override
