@@ -8,6 +8,7 @@ package io.lettuce.core;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.CommandType;
@@ -97,6 +99,27 @@ class HashImportOutboundHandlerUnitTests {
 
         assertThat(drain(channel)).filteredOn(HashImportPrepareCommand.class::isInstance)
                 .as("fieldset should be re-prepared after a failed PREPARE").hasSize(1);
+    }
+
+    @Test
+    void rejectsSetForFieldsetClosedAfterPrepare() {
+
+        EmbeddedChannel channel = channel();
+        HashImport<String> fieldset = HashImport.of("f1", "f2", "f3");
+
+        // first SET prepares the fieldset on this channel
+        channel.writeOutbound(set(fieldset));
+        drain(channel);
+
+        fieldset.close();
+
+        // a SET racing close() takes the prepared fast path; it must be rejected client-side with the documented
+        // IllegalStateException instead of trailing the DISCARD onto the wire and failing server-side
+        AsyncCommand<String, String, String> late = new AsyncCommand<>(set(fieldset));
+        channel.writeOutbound(late);
+
+        assertThat(late.isCompletedExceptionally()).isTrue();
+        assertThatThrownBy(late::join).hasCauseInstanceOf(IllegalStateException.class).hasMessageContaining("discarded");
     }
 
     @Test
