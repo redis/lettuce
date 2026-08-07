@@ -6,7 +6,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.time.Duration;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -143,6 +145,34 @@ class ClusterNodeEndpointUnitTests {
         sut.closeAsync();
 
         assertThatThrownBy(() -> TestFutures.awaitOrTimeout(command)).isInstanceOf(RedisException.class);
+    }
+
+    @Test
+    void closeAsyncClosesSuperWhenSharedLockTimesOut() throws Exception {
+
+        Class<?> sharedLockClass = Class.forName("io.lettuce.core.protocol.SharedLock");
+        java.lang.reflect.Constructor<?> ctor = sharedLockClass.getDeclaredConstructor(Duration.class);
+        ctor.setAccessible(true);
+        Object sharedLock = ctor.newInstance(Duration.ofMillis(50));
+        ReflectionTestUtils.setField(sut, "sharedLock", sharedLock);
+
+        java.lang.reflect.Method incrementWriters = sharedLockClass.getDeclaredMethod("incrementWriters");
+        incrementWriters.setAccessible(true);
+
+        Thread leaker = new Thread(() -> {
+            try {
+                incrementWriters.invoke(sharedLock);
+            } catch (Exception ignored) {
+            }
+        });
+        leaker.start();
+        leaker.join(1000);
+
+        CompletableFuture<Void> closeFuture = sut.closeAsync();
+        assertThat(closeFuture).isNotNull();
+        assertThat(sut.isClosed()).isTrue();
+        assertThat(closeFuture.isCompletedExceptionally()).isTrue();
+        assertThatThrownBy(closeFuture::join).hasCauseInstanceOf(RedisException.class);
     }
 
     private void prepareNewEndpoint() {
