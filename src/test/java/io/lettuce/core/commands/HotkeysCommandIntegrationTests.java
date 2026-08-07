@@ -26,6 +26,7 @@ import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnRedisEnterprise;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
@@ -37,6 +38,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledOnCommand("HOTKEYS")
+@DisabledOnRedisEnterprise("HOTKEYS requires the maxmemory-policy to be configured via CONFIG, which is not permitted on a managed Redis Enterprise database")
 public class HotkeysCommandIntegrationTests extends TestSupport {
 
     protected RedisCommands<String, String> redis;
