@@ -64,11 +64,22 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
 
         if (consumers != COMPLETE && ONCOMPLETE.compareAndSet(this, consumers, COMPLETE)) {
 
+            doBeforeComplete();
+
             command.complete();
 
             doOnComplete();
             notifyConsumers(consumers);
         }
+    }
+
+    /**
+     * Callback method called after successful completion and before notifying downstream consumers.
+     *
+     * @since 7.4
+     */
+    protected void doBeforeComplete() {
+
     }
 
     /**
@@ -111,9 +122,11 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
         Object[] consumers = ONCOMPLETE.get(this);
 
         if (consumers != COMPLETE && ONCOMPLETE.compareAndSet(this, consumers, COMPLETE)) {
+            CancellationException exception = new CancellationException();
+
+            doBeforeError(exception);
 
             command.cancel();
-            CancellationException exception = new CancellationException();
             doOnError(exception);
             notifyBiConsumer(consumers, exception);
         }
@@ -128,12 +141,23 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
         boolean result = false;
         if (consumers != COMPLETE && ONCOMPLETE.compareAndSet(this, consumers, COMPLETE)) {
 
+            doBeforeError(throwable);
             result = command.completeExceptionally(throwable);
             doOnError(throwable);
             notifyBiConsumer(consumers, throwable);
         }
 
         return result;
+    }
+
+    /**
+     * Callback method called after error completion and before notifying downstream consumers.
+     *
+     * @param throwable
+     * @since 7.4
+     */
+    protected void doBeforeError(Throwable throwable) {
+
     }
 
     /**
