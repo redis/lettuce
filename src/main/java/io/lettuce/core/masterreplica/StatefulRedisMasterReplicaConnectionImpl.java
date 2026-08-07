@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.function.Supplier;
 
 import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisAsyncCommandsImpl;
+import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.json.JsonParser;
@@ -12,6 +14,7 @@ import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
 
 /**
  * @author Mark Paluch
+ * @author Sanghun Lee
  */
 class StatefulRedisMasterReplicaConnectionImpl<K, V> extends StatefulRedisConnectionImpl<K, V>
         implements StatefulRedisMasterReplicaConnection<K, V> {
@@ -53,6 +56,24 @@ class StatefulRedisMasterReplicaConnectionImpl<K, V> extends StatefulRedisConnec
     @Override
     public MasterReplicaChannelWriter getChannelWriter() {
         return (MasterReplicaChannelWriter) super.getChannelWriter();
+    }
+
+    /**
+     * Build the async command set. Overridden so scan commands receive node-affine routing (see
+     * {@link MasterReplicaAsyncCommandsImpl}); sync commands derive from this instance.
+     */
+    @Override
+    protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
+        return new MasterReplicaAsyncCommandsImpl<>(this, getCodec(), getJsonParser());
+    }
+
+    /**
+     * Build the reactive command set. Overridden so scan commands receive node-affine routing (see
+     * {@link MasterReplicaReactiveCommandsImpl}).
+     */
+    @Override
+    protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
+        return new MasterReplicaReactiveCommandsImpl<>(this, getCodec(), getJsonParser());
     }
 
 }
