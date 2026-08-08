@@ -25,6 +25,7 @@ import io.lettuce.core.api.async.RedisSetAsyncCommands;
 import io.lettuce.core.api.async.RedisSortedSetAsyncCommands;
 import io.lettuce.core.api.async.RedisStreamAsyncCommands;
 import io.lettuce.core.api.async.RedisStringAsyncCommands;
+import io.lettuce.core.api.async.RedisTDigestAsyncCommands;
 import io.lettuce.core.api.async.RedisTopKAsyncCommands;
 import io.lettuce.core.api.async.RedisTransactionalAsyncCommands;
 import io.lettuce.core.api.async.RedisVectorSetAsyncCommands;
@@ -47,6 +48,7 @@ import io.lettuce.core.api.reactive.RedisSetReactiveCommands;
 import io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands;
 import io.lettuce.core.api.reactive.RedisStreamReactiveCommands;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
+import io.lettuce.core.api.reactive.RedisTDigestReactiveCommands;
 import io.lettuce.core.api.reactive.RedisTopKReactiveCommands;
 import io.lettuce.core.api.reactive.RedisTransactionalReactiveCommands;
 import io.lettuce.core.api.reactive.RedisVectorSetReactiveCommands;
@@ -69,6 +71,7 @@ import io.lettuce.core.api.sync.RedisSetCommands;
 import io.lettuce.core.api.sync.RedisSortedSetCommands;
 import io.lettuce.core.api.sync.RedisStreamCommands;
 import io.lettuce.core.api.sync.RedisStringCommands;
+import io.lettuce.core.api.sync.RedisTDigestCommands;
 import io.lettuce.core.api.sync.RedisTopKCommands;
 import io.lettuce.core.api.sync.RedisTransactionalCommands;
 import io.lettuce.core.api.sync.RedisVectorSetCommands;
@@ -91,6 +94,7 @@ import io.lettuce.core.cluster.api.async.NodeSelectionSetAsyncCommands;
 import io.lettuce.core.cluster.api.async.NodeSelectionSortedSetAsyncCommands;
 import io.lettuce.core.cluster.api.async.NodeSelectionStreamAsyncCommands;
 import io.lettuce.core.cluster.api.async.NodeSelectionStringAsyncCommands;
+import io.lettuce.core.cluster.api.async.NodeSelectionTDigestAsyncCommands;
 import io.lettuce.core.cluster.api.async.NodeSelectionTopKAsyncCommands;
 import io.lettuce.core.cluster.api.async.NodeSelectionVectorSetAsyncCommands;
 import io.lettuce.core.cluster.api.sync.BaseNodeSelectionCommands;
@@ -112,6 +116,7 @@ import io.lettuce.core.cluster.api.sync.NodeSelectionSetCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelectionSortedSetCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelectionStreamCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelectionStringCommands;
+import io.lettuce.core.cluster.api.sync.NodeSelectionTDigestCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelectionTopKCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelectionVectorSetCommands;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
@@ -192,6 +197,9 @@ public enum CommandInterfaces {
     STRING(RedisStringCommands.class, RedisStringAsyncCommands.class, RedisStringReactiveCommands.class,
             NodeSelectionStringCommands.class, NodeSelectionStringAsyncCommands.class),
 
+    T_DIGEST(RedisTDigestCommands.class, RedisTDigestAsyncCommands.class, RedisTDigestReactiveCommands.class,
+            NodeSelectionTDigestCommands.class, NodeSelectionTDigestAsyncCommands.class),
+
     TOP_K(RedisTopKCommands.class, RedisTopKAsyncCommands.class, RedisTopKReactiveCommands.class,
             NodeSelectionTopKCommands.class, NodeSelectionTopKAsyncCommands.class),
 
@@ -266,6 +274,8 @@ public enum CommandInterfaces {
                 return "io.lettuce.core.RedisJsonCommandBuilder";
             case SEARCH:
                 return "io.lettuce.core.RediSearchCommandBuilder";
+            case T_DIGEST:
+                return "io.lettuce.core.RedisTDigestCommandBuilder";
             case TOP_K:
                 return "io.lettuce.core.RedisTopKCommandBuilder";
             case VECTOR_SET:

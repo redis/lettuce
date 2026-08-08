@@ -60,7 +60,8 @@ internal class RedisClusterCoroutinesCommandsImpl<K : Any, V : Any>(
     RediSearchCoroutinesCommands<K, V> by RediSearchCoroutinesCommandsImpl(ops),
     RedisBloomFilterCoroutinesCommands<K, V> by RedisBloomFilterCoroutinesCommandsImpl(ops),
     RedisCuckooFilterCoroutinesCommands<K, V> by RedisCuckooFilterCoroutinesCommandsImpl(ops),
-    RedisTopKCoroutinesCommands<K, V> by RedisTopKCoroutinesCommandsImpl(ops) {
+    RedisTopKCoroutinesCommands<K, V> by RedisTopKCoroutinesCommandsImpl(ops),
+    RedisTDigestCoroutinesCommands<K, V> by RedisTDigestCoroutinesCommandsImpl(ops) {
 
     /**
      * Authenticate to the server.

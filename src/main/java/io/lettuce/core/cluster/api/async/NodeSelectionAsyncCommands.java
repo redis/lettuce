@@ -17,5 +17,5 @@ public interface NodeSelectionAsyncCommands<K, V> extends BaseNodeSelectionAsync
         NodeSelectionSortedSetAsyncCommands<K, V>, NodeSelectionStreamCommands<K, V>, NodeSelectionStringAsyncCommands<K, V>,
         NodeSelectionJsonAsyncCommands<K, V>, NodeSelectionVectorSetAsyncCommands<K, V>, NodeSelectionSearchAsyncCommands<K, V>,
         NodeSelectionBloomFilterAsyncCommands<K, V>, NodeSelectionCuckooFilterAsyncCommands<K, V>,
-        NodeSelectionTopKAsyncCommands<K, V> {
+        NodeSelectionTopKAsyncCommands<K, V>, NodeSelectionTDigestAsyncCommands<K, V> {
 }
