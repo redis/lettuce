@@ -3,11 +3,16 @@ package io.lettuce.core.protocol;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.lang.reflect.Field;
+import java.time.Duration;
 import java.util.WeakHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+
+import io.lettuce.core.RedisException;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -217,6 +222,109 @@ public class SharedLockUnitTests {
         lock1.decrementWriters();
         lock2.decrementWriters();
         lock3.decrementWriters();
+    }
+
+    /**
+     * #3804 — a {@code ReentrantLock} leaked by a thread that died inside the guarded region must not park the next exclusive
+     * caller forever. {@code doExclusive} should fail fast with a {@link RedisException} once the bounded acquire elapses.
+     */
+    @Test
+    @Timeout(5)
+    public void doExclusiveFailsFastWhenGuardLockIsLeaked() throws Exception {
+        final SharedLock sharedLock = new SharedLock(Duration.ofMillis(200));
+
+        Lock internalLock = extractInternalLock(sharedLock);
+        CountDownLatch held = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+
+        // Hold the internal lock without ever releasing it during the test window — simulates the leaked lock.
+        Thread holder = new Thread(() -> {
+            internalLock.lock();
+            held.countDown();
+            try {
+                release.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                internalLock.unlock();
+            }
+        });
+        holder.setDaemon(true);
+        holder.start();
+
+        Assertions.assertTrue(held.await(1, TimeUnit.SECONDS), "holder thread failed to acquire the internal lock");
+
+        try {
+            RedisException ex = Assertions.assertThrows(RedisException.class,
+                    () -> sharedLock.doExclusive(() -> "unreachable"));
+            Assertions.assertTrue(ex.getMessage().contains("Timed out"), "unexpected message: " + ex.getMessage());
+        } finally {
+            release.countDown();
+            holder.join(TimeUnit.SECONDS.toMillis(1));
+        }
+    }
+
+    /**
+     * #3880 — a shared writer leaked by another thread (incremented, never decremented) keeps the writer count above the
+     * exclusive caller's own count, so the CAS in {@code lockWritersExclusive} can never succeed. Instead of spinning RUNNABLE
+     * at 100% CPU forever, {@code doExclusive} should bound the spin and fail fast with a {@link RedisException}.
+     */
+    @Test
+    @Timeout(5)
+    public void doExclusiveFailsFastWhenSharedWriterIsLeaked() throws Exception {
+        final SharedLock sharedLock = new SharedLock(Duration.ofMillis(200));
+
+        // Leak a shared writer from another thread: increment on a thread that finishes without decrementing.
+        Thread leaker = new Thread(sharedLock::incrementWriters);
+        leaker.start();
+        leaker.join(TimeUnit.SECONDS.toMillis(1));
+
+        RedisException ex = Assertions.assertThrows(RedisException.class, () -> sharedLock.doExclusive(() -> "unreachable"));
+        Assertions.assertTrue(ex.getMessage().contains("shared writer"), "unexpected message: " + ex.getMessage());
+    }
+
+    /**
+     * When exclusive mode was abandoned (for example, writers is left at -1 because a previous exclusive holder died),
+     * {@code lockWritersExclusive} must fail fast and report an abandoned exclusive lock rather than claiming a negative shared
+     * writer count or attributing the failure to a leaked shared writer (#3880).
+     */
+    @Test
+    @Timeout(5)
+    public void doExclusiveFailsFastWhenExclusiveModeIsAbandoned() throws Exception {
+        final SharedLock sharedLock = new SharedLock(Duration.ofMillis(200));
+
+        Field writersField = SharedLock.class.getDeclaredField("writers");
+        writersField.setAccessible(true);
+        writersField.set(sharedLock, -1L);
+
+        RedisException ex = Assertions.assertThrows(RedisException.class, () -> sharedLock.doExclusive(() -> "unreachable"));
+        Assertions.assertTrue(ex.getMessage().contains("abandoned"), "unexpected message: " + ex.getMessage());
+        Assertions.assertFalse(ex.getMessage().contains("shared writer"),
+                "message should not claim a shared writer was leaked: " + ex.getMessage());
+    }
+
+    /**
+     * When the calling thread's interrupt flag is already set, an uncontended {@code doExclusive} must still succeed without
+     * throwing {@link RedisException}, and must preserve the interrupted status on the thread.
+     */
+    @Test
+    public void doExclusiveSucceedsWhenThreadIsInterruptedAndLockIsUncontended() {
+        final SharedLock sharedLock = new SharedLock();
+
+        Thread.currentThread().interrupt();
+        try {
+            String result = sharedLock.doExclusive(() -> "ok");
+            Assertions.assertEquals("ok", result);
+            Assertions.assertTrue(Thread.currentThread().isInterrupted(), "interrupt flag should be preserved");
+        } finally {
+            Thread.interrupted(); // clear interrupted status
+        }
+    }
+
+    private static Lock extractInternalLock(SharedLock sharedLock) throws Exception {
+        Field field = SharedLock.class.getDeclaredField("lock");
+        field.setAccessible(true);
+        return (Lock) field.get(sharedLock);
     }
 
 }

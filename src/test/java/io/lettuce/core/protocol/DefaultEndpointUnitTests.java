@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.lang.reflect.Field;
 import java.nio.channels.ClosedChannelException;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Queue;
@@ -376,6 +378,77 @@ class DefaultEndpointUnitTests {
         listener.operationComplete(promise);
 
         verify(channel, never()).writeAndFlush(command);
+    }
+
+    @Test
+    void closeAsyncSucceedsWhenThreadIsInterrupted() {
+
+        when(channel.close()).thenReturn(mock(ChannelFuture.class));
+        sut.notifyChannelActive(channel);
+
+        Thread.currentThread().interrupt();
+        try {
+            CompletableFuture<Void> closeFuture = sut.closeAsync();
+            assertThat(closeFuture).isNotNull();
+            assertThat(sut.isClosed()).isTrue();
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void closeAsyncCompletesExceptionallyWhenSharedLockTimesOut() throws Exception {
+
+        SharedLock sharedLock = new SharedLock(Duration.ofMillis(50));
+        Field sharedLockField = DefaultEndpoint.class.getDeclaredField("sharedLock");
+        sharedLockField.setAccessible(true);
+        sharedLockField.set(sut, sharedLock);
+
+        ChannelFuture channelCloseFuture = mock(ChannelFuture.class);
+        when(channel.close()).thenReturn(channelCloseFuture);
+        sut.notifyChannelActive(channel);
+
+        Thread leaker = new Thread(sharedLock::incrementWriters);
+        leaker.start();
+        leaker.join(1000);
+
+        CompletableFuture<Void> closeFuture = sut.closeAsync();
+        assertThat(closeFuture).isNotNull();
+        assertThat(sut.isClosed()).isTrue();
+
+        verify(channel).close();
+
+        ArgumentCaptor<io.netty.util.concurrent.GenericFutureListener> captor = ArgumentCaptor
+                .forClass(io.netty.util.concurrent.GenericFutureListener.class);
+        verify(channelCloseFuture).addListener(captor.capture());
+        when(channelCloseFuture.isSuccess()).thenReturn(true);
+        captor.getValue().operationComplete(channelCloseFuture);
+
+        assertThat(closeFuture).isCompletedExceptionally();
+        assertThatThrownBy(closeFuture::join).hasCauseInstanceOf(RedisException.class).hasMessageContaining("shared writer");
+
+        assertThat(sut.closeAsync()).isSameAs(closeFuture);
+    }
+
+    @Test
+    void closeAsyncCompletesExceptionallyWhenSharedLockTimesOutAndChannelIsNull() throws Exception {
+
+        SharedLock sharedLock = new SharedLock(Duration.ofMillis(50));
+        Field sharedLockField = DefaultEndpoint.class.getDeclaredField("sharedLock");
+        sharedLockField.setAccessible(true);
+        sharedLockField.set(sut, sharedLock);
+
+        Thread leaker = new Thread(sharedLock::incrementWriters);
+        leaker.start();
+        leaker.join(1000);
+
+        CompletableFuture<Void> closeFuture = sut.closeAsync();
+        assertThat(closeFuture).isNotNull();
+        assertThat(sut.isClosed()).isTrue();
+        assertThat(closeFuture).isCompletedExceptionally();
+        assertThatThrownBy(closeFuture::join).hasCauseInstanceOf(RedisException.class).hasMessageContaining("shared writer");
     }
 
     @Test
