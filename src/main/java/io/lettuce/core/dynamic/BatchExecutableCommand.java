@@ -143,12 +143,23 @@ class BatchExecutableCommand implements ExecutableCommand {
             long remainingNs = remainingNs();
 
             if (remainingNs <= 0) {
-                throwTimeoutException();
+                awaitCompletedOrThrowTimeout(future);
+                return;
             }
 
             if (!Futures.await(remainingNs, TimeUnit.NANOSECONDS, future)) {
-                throwTimeoutException();
+                awaitCompletedOrThrowTimeout(future);
             }
+        }
+
+        private void awaitCompletedOrThrowTimeout(RedisFuture<?> future) {
+
+            if (future.isDone()) {
+                Futures.await(0, TimeUnit.NANOSECONDS, future);
+                return;
+            }
+
+            throwTimeoutException();
         }
 
         private boolean isEnabled() {

@@ -97,6 +97,70 @@ class BatchExecutableCommandUnitTests {
     }
 
     @Test
+    void synchronizeShouldObserveSuccessCompletedAsTimedWaitExpires() {
+
+        when(connection.getTimeout()).thenReturn(Duration.ofSeconds(1));
+
+        CompletesAsTimedWaitExpiresCommand command = new CompletesAsTimedWaitExpiresCommand();
+
+        assertThat(BatchExecutableCommand.synchronize(batchTasks(command), connection)).isNull();
+
+        assertThat(command.timedGetCalls()).isEqualTo(1);
+        assertThat(command.unboundedGetCalls()).isEqualTo(1);
+    }
+
+    @Test
+    void synchronizeShouldCollectFailureCompletedAsTimedWaitExpires() {
+
+        when(connection.getTimeout()).thenReturn(Duration.ofSeconds(1));
+
+        RedisCommandExecutionException failure = new RedisCommandExecutionException("failed at timeout boundary");
+        CompletesAsTimedWaitExpiresCommand command = new CompletesAsTimedWaitExpiresCommand(failure);
+
+        BatchException exception = catchThrowableOfType(
+                () -> BatchExecutableCommand.synchronize(batchTasks(command), connection), BatchException.class);
+
+        assertThat(exception.getFailedCommands()).containsExactly(command);
+        assertThat(exception.getSuppressed()).hasSize(1);
+        assertThat(exception.getSuppressed()[0]).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("failed at timeout boundary");
+        assertThat(command.timedGetCalls()).isEqualTo(1);
+        assertThat(command.unboundedGetCalls()).isEqualTo(1);
+    }
+
+    @Test
+    void synchronizeShouldObserveSuccessCompletedAsDeadlineExpiresBeforeWait() {
+
+        when(connection.getTimeout()).thenReturn(Duration.ofMillis(1));
+
+        CompletesAsDeadlineExpiresCommand command = new CompletesAsDeadlineExpiresCommand(Duration.ofMillis(5));
+
+        assertThat(BatchExecutableCommand.synchronize(batchTasks(command), connection)).isNull();
+
+        assertThat(command.timedGetCalls()).isZero();
+        assertThat(command.unboundedGetCalls()).isEqualTo(1);
+    }
+
+    @Test
+    void synchronizeShouldCollectFailureCompletedAsDeadlineExpiresBeforeWait() {
+
+        when(connection.getTimeout()).thenReturn(Duration.ofMillis(1));
+
+        RedisCommandExecutionException failure = new RedisCommandExecutionException("failed as deadline expired");
+        CompletesAsDeadlineExpiresCommand command = new CompletesAsDeadlineExpiresCommand(Duration.ofMillis(5), failure);
+
+        BatchException exception = catchThrowableOfType(
+                () -> BatchExecutableCommand.synchronize(batchTasks(command), connection), BatchException.class);
+
+        assertThat(exception.getFailedCommands()).containsExactly(command);
+        assertThat(exception.getSuppressed()).hasSize(1);
+        assertThat(exception.getSuppressed()[0]).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("failed as deadline expired");
+        assertThat(command.timedGetCalls()).isZero();
+        assertThat(command.unboundedGetCalls()).isEqualTo(1);
+    }
+
+    @Test
     void synchronizeShouldApplyTimeoutAcrossWholeBatch() {
 
         Duration timeout = Duration.ofMillis(500);
@@ -346,6 +410,104 @@ class BatchExecutableCommandUnitTests {
 
         long timeoutNs() {
             return timeoutNs;
+        }
+
+    }
+
+    private abstract static class CompletingAtTimeoutBoundaryCommand extends AsyncCommand<Object, Object, Object> {
+
+        private final Throwable failure;
+
+        private final AtomicInteger unboundedGetCalls = new AtomicInteger();
+
+        private final AtomicInteger timedGetCalls = new AtomicInteger();
+
+        CompletingAtTimeoutBoundaryCommand(Throwable failure) {
+            super(new Command<>(CommandType.COMMAND, null, null));
+            this.failure = failure;
+        }
+
+        @Override
+        public Object get() throws InterruptedException, ExecutionException {
+
+            unboundedGetCalls.incrementAndGet();
+            return super.get();
+        }
+
+        void recordTimedGet() {
+            timedGetCalls.incrementAndGet();
+        }
+
+        void completeAtTimeoutBoundary() {
+
+            if (failure == null) {
+                complete();
+            } else {
+                completeExceptionally(failure);
+            }
+        }
+
+        int unboundedGetCalls() {
+            return unboundedGetCalls.get();
+        }
+
+        int timedGetCalls() {
+            return timedGetCalls.get();
+        }
+
+    }
+
+    private static class CompletesAsTimedWaitExpiresCommand extends CompletingAtTimeoutBoundaryCommand {
+
+        CompletesAsTimedWaitExpiresCommand() {
+            this(null);
+        }
+
+        CompletesAsTimedWaitExpiresCommand(Throwable failure) {
+            super(failure);
+        }
+
+        @Override
+        public Object get(long timeout, TimeUnit unit) throws TimeoutException {
+
+            recordTimedGet();
+            completeAtTimeoutBoundary();
+            throw new TimeoutException();
+        }
+
+    }
+
+    private static class CompletesAsDeadlineExpiresCommand extends CompletingAtTimeoutBoundaryCommand {
+
+        private final long completionDelayNs;
+
+        private final AtomicInteger doneChecks = new AtomicInteger();
+
+        CompletesAsDeadlineExpiresCommand(Duration completionDelay) {
+            this(completionDelay, null);
+        }
+
+        CompletesAsDeadlineExpiresCommand(Duration completionDelay, Throwable failure) {
+            super(failure);
+            this.completionDelayNs = completionDelay.toNanos();
+        }
+
+        @Override
+        public boolean isDone() {
+
+            if (doneChecks.incrementAndGet() == 1) {
+                parkAtLeast(completionDelayNs);
+                completeAtTimeoutBoundary();
+                return false;
+            }
+
+            return super.isDone();
+        }
+
+        @Override
+        public Object get(long timeout, TimeUnit unit) {
+
+            throw new AssertionError("Expired deadline must not use Future.get(long, TimeUnit)");
         }
 
     }
