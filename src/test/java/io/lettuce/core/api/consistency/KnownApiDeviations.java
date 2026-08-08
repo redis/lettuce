@@ -172,7 +172,10 @@ public final class KnownApiDeviations {
             "cfInsertNxValues", "topKAddValues", "topKIncrByValues", "hscanStreaming", "hscanNoValuesStreaming",
             "scanStreaming", "sscanStreaming", "zscanStreaming", "hello", "sync", "clusterAddslots", "clusterDelslots",
             // connection-level commands exposed via StatefulRedisConnection, not via the command interfaces
-            "select", "swapdb");
+            "select", "swapdb",
+            // HIMPORT PREPARE/DISCARD are injected internally (by HashImportOutboundHandler / HashImport.close()); only
+            // himportSet is a public command entry point
+            "himportPrepare", "himportDiscard");
 
     static {
         Map<String, String> reactive = new HashMap<>();

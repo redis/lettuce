@@ -938,7 +938,6 @@
                     <directories>
                         <directory>${project.build.sourceDirectory}</directory>
                         <directory>${project.build.testSourceDirectory}</directory>
-                        <directory>${project.basedir}/src/main/templates</directory>
                     </directories>
                     <configFile>formatting.xml</configFile>
                 </configuration>
