@@ -17,4 +17,5 @@ dependency-reduced-pom.xml
 .flattened-pom.xml
 *.java-version
 *.DS_Store
+prDescription.md
 .vscode*

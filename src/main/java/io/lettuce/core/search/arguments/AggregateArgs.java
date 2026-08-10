@@ -479,6 +479,10 @@ public class AggregateArgs<K, V> {
     public void build(CommandArgs<K, V> args) {
         verbatim.ifPresent(v -> args.add(CommandKeyword.VERBATIM));
 
+        // ADDSCORES is a query-level option and must be emitted before the result-processing pipeline
+        // (GROUPBY/SORTBY/APPLY/...); the server rejects it if it appears after those clauses.
+        addScores.ifPresent(v -> args.add(CommandKeyword.ADDSCORES));
+
         if (!loadFields.isEmpty()) {
             args.add(CommandKeyword.LOAD);
             if (loadFields.size() == 1 && loadFields.get(0).field == null) {
@@ -543,8 +547,6 @@ public class AggregateArgs<K, V> {
             args.add(CommandKeyword.SCORER);
             args.addValue(s);
         });
-
-        addScores.ifPresent(v -> args.add(CommandKeyword.ADDSCORES));
 
         args.add(CommandKeyword.DIALECT);
         args.add(dialect.toString());
