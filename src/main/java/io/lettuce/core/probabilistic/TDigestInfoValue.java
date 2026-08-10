@@ -45,13 +45,13 @@ public class TDigestInfoValue {
         this.rawInfo = rawInfo;
         this.compression = (Long) rawInfo.get("Compression");
         this.capacity = (Long) rawInfo.get("Capacity");
-        this.mergedNodes = (Long) rawInfo.get("Merged Nodes");
-        this.unmergedNodes = (Long) rawInfo.get("Unmerged Nodes");
-        this.mergedWeight = (Long) rawInfo.get("Merged Weight");
-        this.unmergedWeight = (Long) rawInfo.get("Unmerged Weight");
+        this.mergedNodes = (Long) rawInfo.get("Merged nodes");
+        this.unmergedNodes = (Long) rawInfo.get("Unmerged nodes");
+        this.mergedWeight = (Long) rawInfo.get("Merged weight");
+        this.unmergedWeight = (Long) rawInfo.get("Unmerged weight");
         this.observations = (Long) rawInfo.get("Observations");
-        this.totalCompressions = (Long) rawInfo.get("Total Compressions");
-        this.memoryUsage = (Long) rawInfo.get("Memory Usage");
+        this.totalCompressions = (Long) rawInfo.get("Total compressions");
+        this.memoryUsage = (Long) rawInfo.get("Memory usage");
     }
 
     /**

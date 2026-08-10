@@ -10,6 +10,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import javax.inject.Inject;
 
@@ -63,6 +64,28 @@ public class RedisTDigestIntegrationTests {
     void createWithCompression() {
         assertThat(redis.tdigestCreate(KEY, 200)).isEqualTo("OK");
         assertThat(redis.tdigestInfo(KEY).getCompression()).isEqualTo(200L);
+    }
+
+    @Test
+    void infoReportsAllFields() {
+        redis.tdigestCreate(KEY, 100);
+
+        String[] values = IntStream.rangeClosed(1, 1000).mapToObj(Integer::toString).toArray(String[]::new);
+        redis.tdigestAdd(KEY, values);
+
+        TDigestInfoValue info = redis.tdigestInfo(KEY);
+
+        assertThat(info.getCompression()).isEqualTo(100L);
+        assertThat(info.getCapacity()).isGreaterThan(100L);
+        assertThat(info.getObservations()).isEqualTo(1000L);
+        assertThat(info.getTotalCompressions()).isGreaterThanOrEqualTo(1L);
+        assertThat(info.getMergedNodes()).isPositive();
+        assertThat(info.getMergedWeight()).isPositive();
+        assertThat(info.getUnmergedNodes()).isNotNegative();
+        assertThat(info.getUnmergedWeight()).isNotNegative();
+
+        assertThat(info.getRawInfo()).containsKeys("Compression", "Capacity", "Merged nodes", "Unmerged nodes", "Merged weight",
+                "Unmerged weight", "Observations", "Total compressions", "Memory usage");
     }
 
     @Test

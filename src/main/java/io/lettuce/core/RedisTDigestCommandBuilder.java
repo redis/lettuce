@@ -161,6 +161,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, String> tdigestMerge(K destination, K... sourceKeys) {
         notNullKey(destination);
+        notEmpty(sourceKeys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(sourceKeys.length).addKeys(sourceKeys);
 
@@ -170,6 +171,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, String> tdigestMerge(K destination, long compression, K... sourceKeys) {
         notNullKey(destination);
+        notEmpty(sourceKeys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(sourceKeys.length).addKeys(sourceKeys)
                 .add(CommandKeyword.COMPRESSION).add(compression);
@@ -180,6 +182,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, String> tdigestMerge(K destination, long compression, boolean override, K... sourceKeys) {
         notNullKey(destination);
+        notEmpty(sourceKeys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(sourceKeys.length).addKeys(sourceKeys)
                 .add(CommandKeyword.COMPRESSION).add(compression);
