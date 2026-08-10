@@ -65,6 +65,9 @@ internal class RedisTDigestCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tdigestMerge(destination: K, sourceKey: K): String? =
         ops.tdigestMerge(destination, sourceKey).awaitFirstOrNull()
 
+    override suspend fun tdigestMerge(destination: K, sourceKey: K, override: Boolean): String? =
+        ops.tdigestMerge(destination, sourceKey, override).awaitFirstOrNull()
+
     override suspend fun tdigestMerge(destination: K, sourceKey: K, compression: Long): String? =
         ops.tdigestMerge(destination, sourceKey, compression).awaitFirstOrNull()
 
@@ -73,6 +76,9 @@ internal class RedisTDigestCoroutinesCommandsImpl<K : Any, V : Any>(
 
     override suspend fun tdigestMerge(destination: K, vararg sourceKeys: K): String? =
         ops.tdigestMerge(destination, *sourceKeys).awaitFirstOrNull()
+
+    override suspend fun tdigestMerge(destination: K, override: Boolean, vararg sourceKeys: K): String? =
+        ops.tdigestMerge(destination, override, *sourceKeys).awaitFirstOrNull()
 
     override suspend fun tdigestMerge(destination: K, compression: Long, vararg sourceKeys: K): String? =
         ops.tdigestMerge(destination, compression, *sourceKeys).awaitFirstOrNull()

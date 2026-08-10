@@ -8,6 +8,7 @@ package io.lettuce.core;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.StandardCharsets;
 
@@ -116,6 +117,44 @@ class RedisTDigestCommandBuilderUnitTests {
 
         assertThat(encode(command))
                 .isEqualTo("*4\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n1\r\n" + "$3\r\nsrc\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructTdigestMergeWithOverrideCommand() {
+        Command<String, String, String> command = builder.tdigestMerge("dest", "src", true);
+
+        assertThat(encode(command)).isEqualTo("*5\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n1\r\n"
+                + "$3\r\nsrc\r\n" + "$8\r\nOVERRIDE\r\n");
+    }
+
+    @Test
+    void shouldOmitOverrideTokenWhenOverrideIsFalse() {
+        Command<String, String, String> command = builder.tdigestMerge("dest", "src", false);
+
+        assertThat(encode(command))
+                .isEqualTo("*4\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n1\r\n" + "$3\r\nsrc\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructTdigestMergeWithOverrideAndMultipleSourcesCommand() {
+        Command<String, String, String> command = builder.tdigestMerge("dest", true, "s1", "s2");
+
+        assertThat(encode(command)).isEqualTo("*6\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n2\r\n"
+                + "$2\r\ns1\r\n" + "$2\r\ns2\r\n" + "$8\r\nOVERRIDE\r\n");
+    }
+
+    @Test
+    void shouldOmitOverrideTokenWhenOverrideIsFalseWithMultipleSources() {
+        Command<String, String, String> command = builder.tdigestMerge("dest", false, "s1", "s2");
+
+        assertThat(encode(command)).isEqualTo(
+                "*5\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n2\r\n" + "$2\r\ns1\r\n" + "$2\r\ns2\r\n");
+    }
+
+    @Test
+    void shouldRejectEmptySourceKeysForTdigestMergeWithOverride() {
+        assertThatThrownBy(() -> builder.tdigestMerge("dest", true, new String[0]))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

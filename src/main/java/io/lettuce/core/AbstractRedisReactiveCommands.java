@@ -4702,6 +4702,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<String> tdigestMerge(K destination, K sourceKey, boolean override) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey, override));
+    }
+
+    @Override
     public Mono<String> tdigestMerge(K destination, K sourceKey, long compression) {
         return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey, compression));
     }
@@ -4714,6 +4719,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Mono<String> tdigestMerge(K destination, K... sourceKeys) {
         return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKeys));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, boolean override, K... sourceKeys) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, override, sourceKeys));
     }
 
     @Override

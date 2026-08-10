@@ -4611,6 +4611,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> tdigestMerge(K destination, K sourceKey, boolean override) {
+        return dispatch(tDigestCommandBuilder.tdigestMerge(destination, sourceKey, override));
+    }
+
+    @Override
     public RedisFuture<String> tdigestMerge(K destination, K sourceKey, long compression) {
         return dispatch(tDigestCommandBuilder.tdigestMerge(destination, sourceKey, compression));
     }
@@ -4623,6 +4628,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> tdigestMerge(K destination, K... sourceKeys) {
         return dispatch(tDigestCommandBuilder.tdigestMerge(destination, sourceKeys));
+    }
+
+    @Override
+    public RedisFuture<String> tdigestMerge(K destination, boolean override, K... sourceKeys) {
+        return dispatch(tDigestCommandBuilder.tdigestMerge(destination, override, sourceKeys));
     }
 
     @Override

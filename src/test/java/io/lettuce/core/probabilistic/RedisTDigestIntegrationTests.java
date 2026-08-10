@@ -83,6 +83,7 @@ public class RedisTDigestIntegrationTests {
         assertThat(info.getMergedWeight()).isPositive();
         assertThat(info.getUnmergedNodes()).isNotNegative();
         assertThat(info.getUnmergedWeight()).isNotNegative();
+        assertThat(info.getMemoryUsage()).isGreaterThan(info.getCapacity());
 
         assertThat(info.getRawInfo()).containsKeys("Compression", "Capacity", "Merged nodes", "Unmerged nodes", "Merged weight",
                 "Unmerged weight", "Observations", "Total compressions", "Memory usage");
@@ -183,6 +184,64 @@ public class RedisTDigestIntegrationTests {
 
         assertThat(redis.tdigestMerge("{td}dest", "{td}src1", "{td}src2")).isEqualTo("OK");
         assertThat(redis.tdigestInfo("{td}dest").getObservations()).isEqualTo(6L);
+    }
+
+    @Test
+    void mergeWithOverrideWithoutCompression() {
+        redis.tdigestCreate("{td}src", 100);
+        redis.tdigestAdd("{td}src", "1", "2", "3");
+        redis.tdigestCreate("{td}dest", 500);
+        redis.tdigestAdd("{td}dest", "9", "9", "9", "9");
+
+        assertThat(redis.tdigestMerge("{td}dest", true, "{td}src")).isEqualTo("OK");
+
+        TDigestInfoValue info = redis.tdigestInfo("{td}dest");
+        assertThat(info.getObservations()).isEqualTo(3L);
+        assertThat(info.getCompression()).isEqualTo(100L);
+    }
+
+    @Test
+    void mergeWithoutOverrideAccumulatesAndKeepsCompression() {
+        redis.tdigestCreate("{td}src", 100);
+        redis.tdigestAdd("{td}src", "1", "2", "3");
+        redis.tdigestCreate("{td}dest", 500);
+        redis.tdigestAdd("{td}dest", "9", "9", "9", "9");
+
+        assertThat(redis.tdigestMerge("{td}dest", false, "{td}src")).isEqualTo("OK");
+
+        TDigestInfoValue info = redis.tdigestInfo("{td}dest");
+        assertThat(info.getObservations()).isEqualTo(7L);
+        assertThat(info.getCompression()).isEqualTo(500L);
+    }
+
+    @Test
+    void mergeWithOverrideWithoutCompressionSingleSourceOverload() {
+        redis.tdigestCreate("{td}src", 100);
+        redis.tdigestAdd("{td}src", "1", "2", "3");
+        redis.tdigestCreate("{td}dest", 500);
+        redis.tdigestAdd("{td}dest", "9");
+
+        assertThat(redis.tdigestMerge("{td}dest", "{td}src", true)).isEqualTo("OK");
+
+        TDigestInfoValue info = redis.tdigestInfo("{td}dest");
+        assertThat(info.getObservations()).isEqualTo(3L);
+        assertThat(info.getCompression()).isEqualTo(100L);
+    }
+
+    @Test
+    void mergeWithOverrideAdoptsLargestSourceCompression() {
+        redis.tdigestCreate("{td}srcA", 100);
+        redis.tdigestAdd("{td}srcA", "1", "2");
+        redis.tdigestCreate("{td}srcB", 300);
+        redis.tdigestAdd("{td}srcB", "3", "4");
+        redis.tdigestCreate("{td}dest", 500);
+        redis.tdigestAdd("{td}dest", "9");
+
+        assertThat(redis.tdigestMerge("{td}dest", true, "{td}srcA", "{td}srcB")).isEqualTo("OK");
+
+        TDigestInfoValue info = redis.tdigestInfo("{td}dest");
+        assertThat(info.getObservations()).isEqualTo(4L);
+        assertThat(info.getCompression()).isEqualTo(300L);
     }
 
     @Test

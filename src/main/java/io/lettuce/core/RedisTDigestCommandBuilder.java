@@ -8,6 +8,7 @@ package io.lettuce.core;
 
 import java.util.List;
 
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.probabilistic.TDigestInfoValue;
 import io.lettuce.core.probabilistic.TDigestInfoValueParser;
 import io.lettuce.core.codec.RedisCodec;
@@ -137,6 +138,17 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(TDIGEST_MERGE, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, String> tdigestMerge(K destination, K sourceKey, boolean override) {
+        notNullKey(destination);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(1).addKey(sourceKey);
+        if (override) {
+            args.add(CommandKeyword.OVERRIDE);
+        }
+
+        return createCommand(TDIGEST_MERGE, new StatusOutput<>(codec), args);
+    }
+
     Command<K, V, String> tdigestMerge(K destination, K sourceKey, long compression) {
         notNullKey(destination);
 
@@ -161,7 +173,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, String> tdigestMerge(K destination, K... sourceKeys) {
         notNullKey(destination);
-        notEmpty(sourceKeys);
+        LettuceAssert.notEmpty(sourceKeys, "Source keys " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(sourceKeys.length).addKeys(sourceKeys);
 
@@ -169,9 +181,22 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SafeVarargs
+    final Command<K, V, String> tdigestMerge(K destination, boolean override, K... sourceKeys) {
+        notNullKey(destination);
+        LettuceAssert.notEmpty(sourceKeys, "Source keys " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(sourceKeys.length).addKeys(sourceKeys);
+        if (override) {
+            args.add(CommandKeyword.OVERRIDE);
+        }
+
+        return createCommand(TDIGEST_MERGE, new StatusOutput<>(codec), args);
+    }
+
+    @SafeVarargs
     final Command<K, V, String> tdigestMerge(K destination, long compression, K... sourceKeys) {
         notNullKey(destination);
-        notEmpty(sourceKeys);
+        LettuceAssert.notEmpty(sourceKeys, "Source keys " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(sourceKeys.length).addKeys(sourceKeys)
                 .add(CommandKeyword.COMPRESSION).add(compression);
@@ -182,7 +207,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, String> tdigestMerge(K destination, long compression, boolean override, K... sourceKeys) {
         notNullKey(destination);
-        notEmpty(sourceKeys);
+        LettuceAssert.notEmpty(sourceKeys, "Source keys " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(sourceKeys.length).addKeys(sourceKeys)
                 .add(CommandKeyword.COMPRESSION).add(compression);
