@@ -9,11 +9,14 @@ package io.lettuce.core.output;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.SuggestionParser;
 
@@ -148,6 +151,25 @@ class SuggestionParserUnitTests {
     }
 
     @Test
+    void shouldParseUtf8EncodedSuggestionsWithScoresAndPayloads() {
+        SuggestionParser parser = new SuggestionParser(true, true);
+        EncodedComplexOutput<byte[], byte[], List<Suggestion>> output = new EncodedComplexOutput<>(ByteArrayCodec.INSTANCE,
+                parser);
+        output.multiArray(3);
+        output.set(utf8("hello"));
+        output.set(utf8("1.5"));
+        output.set(utf8("payload"));
+        output.complete(0);
+
+        List<Suggestion> suggestions = output.get();
+
+        assertThat(suggestions).hasSize(1);
+        assertThat(suggestions.get(0).getValue()).isEqualTo("hello");
+        assertThat(suggestions.get(0).getScore()).isEqualTo(1.5);
+        assertThat(suggestions.get(0).getPayload()).isEqualTo("payload");
+    }
+
+    @Test
     void shouldHandleEmptyList() {
         SuggestionParser parser = new SuggestionParser(false, false);
         ArrayComplexData data = new ArrayComplexData(0);
@@ -200,6 +222,10 @@ class SuggestionParserUnitTests {
 
         List<Suggestion> suggestions = parser.parse(data);
         assertThat(suggestions).hasSize(0);
+    }
+
+    private static ByteBuffer utf8(String value) {
+        return StringCodec.UTF8.encodeValue(value);
     }
 
 }
