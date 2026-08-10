@@ -49,8 +49,8 @@ internal class RedisCMSCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun cmsMerge(destination: K, vararg sources: K): String? =
         ops.cmsMerge(destination, *sources).awaitFirstOrNull()
 
-    override suspend fun cmsMerge(destination: K, source: K, weight: Long): String? =
-        ops.cmsMerge(destination, source, weight).awaitFirstOrNull()
+    override suspend fun cmsMerge(destination: K, pair: MergePair<K>): String? =
+        ops.cmsMerge(destination, pair).awaitFirstOrNull()
 
     override suspend fun cmsMerge(destination: K, vararg sources: MergePair<K>): String? =
         ops.cmsMerge(destination, *sources).awaitFirstOrNull()

@@ -131,7 +131,7 @@ public class RedisCMSIntegrationTests {
         redis.cmsInitByDim("{cms}src", 2000, 5);
         redis.cmsIncrBy("{cms}src", IncrementPair.of(MY_ITEM, 5));
 
-        assertThat(redis.cmsMerge("{cms}dest", "{cms}src", 2)).isEqualTo("OK");
+        assertThat(redis.cmsMerge("{cms}dest", MergePair.of("{cms}src", 2))).isEqualTo("OK");
         assertThat(redis.cmsQuery("{cms}dest", MY_ITEM)).containsExactly(10L);
     }
 

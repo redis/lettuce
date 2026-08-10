@@ -99,12 +99,12 @@ class RedisCMSCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CMS_MERGE, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, String> cmsMerge(K destination, K source, long weight) {
+    Command<K, V, String> cmsMerge(K destination, MergePair<K> pair) {
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(pair, "Pair " + MUST_NOT_BE_NULL);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(1).addKey(source).add(CommandKeyword.WEIGHTS)
-                .add(weight);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(1).addKey(pair.getKey())
+                .add(CommandKeyword.WEIGHTS).add(pair.getWeight());
 
         return createCommand(CMS_MERGE, new StatusOutput<>(codec), args);
     }
@@ -129,7 +129,7 @@ class RedisCMSCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, List<Long>> cmsQuery(K key, V... values) {
         notNullKey(key);
-        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
+        notEmpty(values);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValues(values);
 

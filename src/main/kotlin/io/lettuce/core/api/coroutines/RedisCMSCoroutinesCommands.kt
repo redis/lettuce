@@ -92,15 +92,15 @@ interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
     suspend fun cmsMerge(destination: K, vararg sources: K): String?
 
     /**
-     * Merges a single source sketch into a destination sketch, scaling its contribution by the given weight. All sketches must
-     * have identical width and depth, and the destination must already exist.
+     * Merges a single source sketch into a destination sketch, scaling its contribution by the weight paired with it. All
+     * sketches must have identical width and depth, and the destination must already exist.
      *
      * @param destination the name of destination sketch. Must be initialized.
-     * @param source the name of the source sketch to merge into `destination`.
-     * @param weight the multiplication factor applied to the source sketch before merging.
+     * @param pair the source sketch to merge into `destination`, paired with the multiplication factor applied to it
+     *        before merging.
      * @return String simple-string-reply `OK` if `CMS.MERGE` was executed correctly.
      */
-    suspend fun cmsMerge(destination: K, source: K, weight: Long): String?
+    suspend fun cmsMerge(destination: K, pair: MergePair<K>): String?
 
     /**
      * Merges several source sketches into a single destination sketch, scaling each source's contribution by the weight paired

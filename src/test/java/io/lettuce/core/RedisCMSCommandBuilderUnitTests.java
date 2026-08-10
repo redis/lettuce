@@ -121,7 +121,7 @@ class RedisCMSCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructCmsMergeCommandWithWeight() {
-        Command<String, String, String> command = builder.cmsMerge(MY_DEST, MY_SRC, 3);
+        Command<String, String, String> command = builder.cmsMerge(MY_DEST, MergePair.of(MY_SRC, 3));
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 

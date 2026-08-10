@@ -4671,8 +4671,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<String> cmsMerge(K destination, K source, long weight) {
-        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, source, weight));
+    public Mono<String> cmsMerge(K destination, MergePair<K> pair) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, pair));
     }
 
     @Override

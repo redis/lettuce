@@ -4580,8 +4580,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> cmsMerge(K destination, K source, long weight) {
-        return dispatch(cmsCommandBuilder.cmsMerge(destination, source, weight));
+    public RedisFuture<String> cmsMerge(K destination, MergePair<K> pair) {
+        return dispatch(cmsCommandBuilder.cmsMerge(destination, pair));
     }
 
     @Override
