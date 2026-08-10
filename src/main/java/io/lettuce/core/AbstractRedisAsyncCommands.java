@@ -58,6 +58,7 @@ import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.probabilistic.TopKInfoValue;
 import io.lettuce.core.probabilistic.TopKListValue;
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs;
 import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
@@ -4611,18 +4612,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> tdigestMerge(K destination, K sourceKey, boolean override) {
-        return dispatch(tDigestCommandBuilder.tdigestMerge(destination, sourceKey, override));
-    }
-
-    @Override
-    public RedisFuture<String> tdigestMerge(K destination, K sourceKey, long compression) {
-        return dispatch(tDigestCommandBuilder.tdigestMerge(destination, sourceKey, compression));
-    }
-
-    @Override
-    public RedisFuture<String> tdigestMerge(K destination, K sourceKey, long compression, boolean override) {
-        return dispatch(tDigestCommandBuilder.tdigestMerge(destination, sourceKey, compression, override));
+    public RedisFuture<String> tdigestMerge(K destination, K sourceKey, TDigestMergeArgs mergeArgs) {
+        return dispatch(tDigestCommandBuilder.tdigestMerge(destination, sourceKey, mergeArgs));
     }
 
     @Override
@@ -4631,18 +4622,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> tdigestMerge(K destination, boolean override, K... sourceKeys) {
-        return dispatch(tDigestCommandBuilder.tdigestMerge(destination, override, sourceKeys));
-    }
-
-    @Override
-    public RedisFuture<String> tdigestMerge(K destination, long compression, K... sourceKeys) {
-        return dispatch(tDigestCommandBuilder.tdigestMerge(destination, compression, sourceKeys));
-    }
-
-    @Override
-    public RedisFuture<String> tdigestMerge(K destination, long compression, boolean override, K... sourceKeys) {
-        return dispatch(tDigestCommandBuilder.tdigestMerge(destination, compression, override, sourceKeys));
+    public RedisFuture<String> tdigestMerge(K destination, TDigestMergeArgs mergeArgs, K... sourceKeys) {
+        return dispatch(tDigestCommandBuilder.tdigestMerge(destination, mergeArgs, sourceKeys));
     }
 
     @Override

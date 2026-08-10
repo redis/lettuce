@@ -11,6 +11,7 @@ import java.util.List;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.probabilistic.TDigestInfoValue;
 import io.lettuce.core.probabilistic.TDigestInfoValueParser;
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
@@ -43,6 +44,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, String> tdigestAdd(K key, V... values) {
         notNullKey(key);
+        notEmptyValues(values);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValues(values);
 
@@ -59,6 +61,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, List<Double>> tdigestByRank(K key, long... ranks) {
         notNullKey(key);
+        LettuceAssert.notEmpty(ranks, "Ranks " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         for (long rank : ranks) {
@@ -78,6 +81,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, List<Double>> tdigestByRevRank(K key, long... reverseRanks) {
         notNullKey(key);
+        LettuceAssert.notEmpty(reverseRanks, "Reverse ranks " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         for (long reverseRank : reverseRanks) {
@@ -98,6 +102,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, List<Double>> tdigestCDF(K key, V... values) {
         notNullKey(key);
+        notEmptyValues(values);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValues(values);
 
@@ -132,40 +137,20 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, String> tdigestMerge(K destination, K sourceKey) {
         notNullKey(destination);
+        LettuceAssert.notNull(sourceKey, "Source key " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(1).addKey(sourceKey);
 
         return createCommand(TDIGEST_MERGE, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, String> tdigestMerge(K destination, K sourceKey, boolean override) {
+    Command<K, V, String> tdigestMerge(K destination, K sourceKey, TDigestMergeArgs mergeArgs) {
         notNullKey(destination);
+        LettuceAssert.notNull(sourceKey, "Source key " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(mergeArgs, "TDigestMergeArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(1).addKey(sourceKey);
-        if (override) {
-            args.add(CommandKeyword.OVERRIDE);
-        }
-
-        return createCommand(TDIGEST_MERGE, new StatusOutput<>(codec), args);
-    }
-
-    Command<K, V, String> tdigestMerge(K destination, K sourceKey, long compression) {
-        notNullKey(destination);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(1).addKey(sourceKey)
-                .add(CommandKeyword.COMPRESSION).add(compression);
-
-        return createCommand(TDIGEST_MERGE, new StatusOutput<>(codec), args);
-    }
-
-    Command<K, V, String> tdigestMerge(K destination, K sourceKey, long compression, boolean override) {
-        notNullKey(destination);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(1).addKey(sourceKey)
-                .add(CommandKeyword.COMPRESSION).add(compression);
-        if (override) {
-            args.add(CommandKeyword.OVERRIDE);
-        }
+        mergeArgs.build(args);
 
         return createCommand(TDIGEST_MERGE, new StatusOutput<>(codec), args);
     }
@@ -181,39 +166,13 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SafeVarargs
-    final Command<K, V, String> tdigestMerge(K destination, boolean override, K... sourceKeys) {
+    final Command<K, V, String> tdigestMerge(K destination, TDigestMergeArgs mergeArgs, K... sourceKeys) {
         notNullKey(destination);
+        LettuceAssert.notNull(mergeArgs, "TDigestMergeArgs " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(sourceKeys, "Source keys " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(sourceKeys.length).addKeys(sourceKeys);
-        if (override) {
-            args.add(CommandKeyword.OVERRIDE);
-        }
-
-        return createCommand(TDIGEST_MERGE, new StatusOutput<>(codec), args);
-    }
-
-    @SafeVarargs
-    final Command<K, V, String> tdigestMerge(K destination, long compression, K... sourceKeys) {
-        notNullKey(destination);
-        LettuceAssert.notEmpty(sourceKeys, "Source keys " + MUST_NOT_BE_EMPTY);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(sourceKeys.length).addKeys(sourceKeys)
-                .add(CommandKeyword.COMPRESSION).add(compression);
-
-        return createCommand(TDIGEST_MERGE, new StatusOutput<>(codec), args);
-    }
-
-    @SafeVarargs
-    final Command<K, V, String> tdigestMerge(K destination, long compression, boolean override, K... sourceKeys) {
-        notNullKey(destination);
-        LettuceAssert.notEmpty(sourceKeys, "Source keys " + MUST_NOT_BE_EMPTY);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(destination).add(sourceKeys.length).addKeys(sourceKeys)
-                .add(CommandKeyword.COMPRESSION).add(compression);
-        if (override) {
-            args.add(CommandKeyword.OVERRIDE);
-        }
+        mergeArgs.build(args);
 
         return createCommand(TDIGEST_MERGE, new StatusOutput<>(codec), args);
     }
@@ -234,6 +193,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, List<Double>> tdigestQuantile(K key, double... quantiles) {
         notNullKey(key);
+        LettuceAssert.notEmpty(quantiles, "Quantiles " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         for (double quantile : quantiles) {
@@ -254,6 +214,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, List<Long>> tdigestRank(K key, V... values) {
         notNullKey(key);
+        notEmptyValues(values);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValues(values);
 
@@ -277,6 +238,7 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, List<Long>> tdigestRevRank(K key, V... values) {
         notNullKey(key);
+        notEmptyValues(values);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValues(values);
 

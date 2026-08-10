@@ -8,6 +8,7 @@ package io.lettuce.core.api.sync;
 
 import java.util.List;
 import io.lettuce.core.probabilistic.TDigestInfoValue;
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs;
 
 /**
  * Synchronous executed commands for T-Digest sketch.
@@ -149,44 +150,20 @@ public interface RedisTDigestCommands<K, V> {
     String tdigestMerge(K destination, K sourceKey);
 
     /**
-     * Merges a source sketch into the destination sketch, optionally resetting the destination beforehand. The destination
-     * sketch is created if it does not exist.
-     *
-     * @param destination the key of the destination sketch that receives the merged data.
-     * @param sourceKey the key of the source sketch to merge.
-     * @param override if {@code true}, the destination sketch is reset before the merge so that only the source data is
-     *        retained and the compression of the source sketch is adopted; if {@code false}, the source data is merged into the
-     *        existing destination data and the compression of the destination sketch is retained.
-     * @return String simple-string-reply {@code OK} if the command was executed correctly.
-     */
-    String tdigestMerge(K destination, K sourceKey, boolean override);
-
-    /**
-     * Merges a source sketch into the destination sketch using the given compression. The destination sketch is created if it
+     * Merges a source sketch into the destination sketch applying the given arguments. The destination sketch is created if it
      * does not exist.
      *
      * @param destination the key of the destination sketch that receives the merged data.
      * @param sourceKey the key of the source sketch to merge.
-     * @param compression the compression parameter of the destination sketch.
+     * @param mergeArgs the arguments controlling the compression of the destination sketch and whether the destination sketch
+     *        is reset before the merge, must not be {@code null}.
      * @return String simple-string-reply {@code OK} if the command was executed correctly.
      */
-    String tdigestMerge(K destination, K sourceKey, long compression);
-
-    /**
-     * Merges a source sketch into the destination sketch using the given compression. The destination sketch is created if it
-     * does not exist.
-     *
-     * @param destination the key of the destination sketch that receives the merged data.
-     * @param sourceKey the key of the source sketch to merge.
-     * @param compression the compression parameter of the destination sketch.
-     * @param override if {@code true}, the destination sketch is reset before the merge so that only the source data is
-     *        retained; if {@code false}, the source data is merged into the existing destination data.
-     * @return String simple-string-reply {@code OK} if the command was executed correctly.
-     */
-    String tdigestMerge(K destination, K sourceKey, long compression, boolean override);
+    String tdigestMerge(K destination, K sourceKey, TDigestMergeArgs mergeArgs);
 
     /**
      * Merges one or more source sketches into the destination sketch. The destination sketch is created if it does not exist.
+     * The source data is merged into the existing destination data and the compression of the destination sketch is retained.
      *
      * @param destination the key of the destination sketch that receives the merged data.
      * @param sourceKeys the keys of the source sketches to merge, must not be empty.
@@ -195,41 +172,16 @@ public interface RedisTDigestCommands<K, V> {
     String tdigestMerge(K destination, K... sourceKeys);
 
     /**
-     * Merges one or more source sketches into the destination sketch, optionally resetting the destination beforehand. The
-     * destination sketch is created if it does not exist.
-     *
-     * @param destination the key of the destination sketch that receives the merged data.
-     * @param override if {@code true}, the destination sketch is reset before the merge so that only the source data is
-     *        retained and the largest compression among the source sketches is adopted; if {@code false}, the source data is
-     *        merged into the existing destination data and the compression of the destination sketch is retained.
-     * @param sourceKeys the keys of the source sketches to merge, must not be empty.
-     * @return String simple-string-reply {@code OK} if the command was executed correctly.
-     */
-    String tdigestMerge(K destination, boolean override, K... sourceKeys);
-
-    /**
-     * Merges one or more source sketches into the destination sketch using the given compression. The destination sketch is
+     * Merges one or more source sketches into the destination sketch applying the given arguments. The destination sketch is
      * created if it does not exist.
      *
      * @param destination the key of the destination sketch that receives the merged data.
-     * @param compression the compression parameter of the destination sketch.
+     * @param mergeArgs the arguments controlling the compression of the destination sketch and whether the destination sketch
+     *        is reset before the merge, must not be {@code null}.
      * @param sourceKeys the keys of the source sketches to merge, must not be empty.
      * @return String simple-string-reply {@code OK} if the command was executed correctly.
      */
-    String tdigestMerge(K destination, long compression, K... sourceKeys);
-
-    /**
-     * Merges one or more source sketches into the destination sketch using the given compression. The destination sketch is
-     * created if it does not exist.
-     *
-     * @param destination the key of the destination sketch that receives the merged data.
-     * @param compression the compression parameter of the destination sketch.
-     * @param override if {@code true}, the destination sketch is reset before the merge so that only the source data is
-     *        retained; if {@code false}, the source data is merged into the existing destination data.
-     * @param sourceKeys the keys of the source sketches to merge, must not be empty.
-     * @return String simple-string-reply {@code OK} if the command was executed correctly.
-     */
-    String tdigestMerge(K destination, long compression, boolean override, K... sourceKeys);
+    String tdigestMerge(K destination, TDigestMergeArgs mergeArgs, K... sourceKeys);
 
     /**
      * Returns the minimum observation value from a t-digest sketch.

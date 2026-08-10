@@ -10,6 +10,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.probabilistic.TDigestInfoValue
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs
 
 /**
  * Coroutine executed commands for T-Digest sketch.
@@ -152,44 +153,20 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
     suspend fun tdigestMerge(destination: K, sourceKey: K): String?
 
     /**
-     * Merges a source sketch into the destination sketch, optionally resetting the destination beforehand. The destination
-     * sketch is created if it does not exist.
-     *
-     * @param destination the key of the destination sketch that receives the merged data.
-     * @param sourceKey the key of the source sketch to merge.
-     * @param override if `true`, the destination sketch is reset before the merge so that only the source data is retained and
-     *        the compression of the source sketch is adopted; if `false`, the source data is merged into the existing
-     *        destination data and the compression of the destination sketch is retained.
-     * @return String simple-string-reply `OK` if the command was executed correctly.
-     */
-    suspend fun tdigestMerge(destination: K, sourceKey: K, override: Boolean): String?
-
-    /**
-     * Merges a source sketch into the destination sketch using the given compression. The destination sketch is created if it
+     * Merges a source sketch into the destination sketch applying the given arguments. The destination sketch is created if it
      * does not exist.
      *
      * @param destination the key of the destination sketch that receives the merged data.
      * @param sourceKey the key of the source sketch to merge.
-     * @param compression the compression parameter of the destination sketch.
+     * @param mergeArgs the arguments controlling the compression of the destination sketch and whether the destination sketch is
+     *        reset before the merge, must not be `null`.
      * @return String simple-string-reply `OK` if the command was executed correctly.
      */
-    suspend fun tdigestMerge(destination: K, sourceKey: K, compression: Long): String?
-
-    /**
-     * Merges a source sketch into the destination sketch using the given compression. The destination sketch is created if it
-     * does not exist.
-     *
-     * @param destination the key of the destination sketch that receives the merged data.
-     * @param sourceKey the key of the source sketch to merge.
-     * @param compression the compression parameter of the destination sketch.
-     * @param override if `true`, the destination sketch is reset before the merge so that only the source data is
-     *        retained; if `false`, the source data is merged into the existing destination data.
-     * @return String simple-string-reply `OK` if the command was executed correctly.
-     */
-    suspend fun tdigestMerge(destination: K, sourceKey: K, compression: Long, override: Boolean): String?
+    suspend fun tdigestMerge(destination: K, sourceKey: K, mergeArgs: TDigestMergeArgs): String?
 
     /**
      * Merges one or more source sketches into the destination sketch. The destination sketch is created if it does not exist.
+     * The source data is merged into the existing destination data and the compression of the destination sketch is retained.
      *
      * @param destination the key of the destination sketch that receives the merged data.
      * @param sourceKeys the keys of the source sketches to merge, must not be empty.
@@ -198,41 +175,16 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
     suspend fun tdigestMerge(destination: K, vararg sourceKeys: K): String?
 
     /**
-     * Merges one or more source sketches into the destination sketch, optionally resetting the destination beforehand. The
-     * destination sketch is created if it does not exist.
-     *
-     * @param destination the key of the destination sketch that receives the merged data.
-     * @param override if `true`, the destination sketch is reset before the merge so that only the source data is retained and
-     *        the largest compression among the source sketches is adopted; if `false`, the source data is merged into the
-     *        existing destination data and the compression of the destination sketch is retained.
-     * @param sourceKeys the keys of the source sketches to merge, must not be empty.
-     * @return String simple-string-reply `OK` if the command was executed correctly.
-     */
-    suspend fun tdigestMerge(destination: K, override: Boolean, vararg sourceKeys: K): String?
-
-    /**
-     * Merges one or more source sketches into the destination sketch using the given compression. The destination sketch is
+     * Merges one or more source sketches into the destination sketch applying the given arguments. The destination sketch is
      * created if it does not exist.
      *
      * @param destination the key of the destination sketch that receives the merged data.
-     * @param compression the compression parameter of the destination sketch.
+     * @param mergeArgs the arguments controlling the compression of the destination sketch and whether the destination sketch is
+     *        reset before the merge, must not be `null`.
      * @param sourceKeys the keys of the source sketches to merge, must not be empty.
      * @return String simple-string-reply `OK` if the command was executed correctly.
      */
-    suspend fun tdigestMerge(destination: K, compression: Long, vararg sourceKeys: K): String?
-
-    /**
-     * Merges one or more source sketches into the destination sketch using the given compression. The destination sketch is
-     * created if it does not exist.
-     *
-     * @param destination the key of the destination sketch that receives the merged data.
-     * @param compression the compression parameter of the destination sketch.
-     * @param override if `true`, the destination sketch is reset before the merge so that only the source data is
-     *        retained; if `false`, the source data is merged into the existing destination data.
-     * @param sourceKeys the keys of the source sketches to merge, must not be empty.
-     * @return String simple-string-reply `OK` if the command was executed correctly.
-     */
-    suspend fun tdigestMerge(destination: K, compression: Long, override: Boolean, vararg sourceKeys: K): String?
+    suspend fun tdigestMerge(destination: K, mergeArgs: TDigestMergeArgs, vararg sourceKeys: K): String?
 
     /**
      * Returns the minimum observation value from a t-digest sketch.

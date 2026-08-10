@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs;
 import io.lettuce.core.protocol.Command;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -120,46 +121,70 @@ class RedisTDigestCommandBuilderUnitTests {
     }
 
     @Test
-    void shouldCorrectlyConstructTdigestMergeWithOverrideCommand() {
-        Command<String, String, String> command = builder.tdigestMerge("dest", "src", true);
+    void shouldCorrectlyConstructTdigestMergeSingleSourceWithArgsCommand() {
+        Command<String, String, String> command = builder.tdigestMerge("dest", "src",
+                TDigestMergeArgs.Builder.compression(100).override());
 
-        assertThat(encode(command)).isEqualTo("*5\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n1\r\n"
-                + "$3\r\nsrc\r\n" + "$8\r\nOVERRIDE\r\n");
+        assertThat(encode(command)).isEqualTo("*7\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n1\r\n"
+                + "$3\r\nsrc\r\n" + "$11\r\nCOMPRESSION\r\n" + "$3\r\n100\r\n" + "$8\r\nOVERRIDE\r\n");
     }
 
     @Test
-    void shouldOmitOverrideTokenWhenOverrideIsFalse() {
-        Command<String, String, String> command = builder.tdigestMerge("dest", "src", false);
+    void shouldEncodeSingleSourceMergeIdenticallyToTheVarargsForm() {
+        assertThat(encode(builder.tdigestMerge("dest", "src")))
+                .isEqualTo(encode(builder.tdigestMerge("dest", new String[] { "src" })));
 
-        assertThat(encode(command))
-                .isEqualTo("*4\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n1\r\n" + "$3\r\nsrc\r\n");
+        assertThat(encode(builder.tdigestMerge("dest", "src", TDigestMergeArgs.Builder.compression(100).override())))
+                .isEqualTo(encode(builder.tdigestMerge("dest", TDigestMergeArgs.Builder.compression(100).override(), "src")));
     }
 
     @Test
-    void shouldCorrectlyConstructTdigestMergeWithOverrideAndMultipleSourcesCommand() {
-        Command<String, String, String> command = builder.tdigestMerge("dest", true, "s1", "s2");
-
-        assertThat(encode(command)).isEqualTo("*6\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n2\r\n"
-                + "$2\r\ns1\r\n" + "$2\r\ns2\r\n" + "$8\r\nOVERRIDE\r\n");
+    void shouldRejectNullSourceKeyForTdigestMerge() {
+        assertThatThrownBy(() -> builder.tdigestMerge("dest", (String) null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void shouldOmitOverrideTokenWhenOverrideIsFalseWithMultipleSources() {
-        Command<String, String, String> command = builder.tdigestMerge("dest", false, "s1", "s2");
+    void shouldRejectNullMergeArgsForSingleSourceTdigestMerge() {
+        assertThatThrownBy(() -> builder.tdigestMerge("dest", "src", (TDigestMergeArgs) null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructTdigestMergeMultipleSourcesCommand() {
+        Command<String, String, String> command = builder.tdigestMerge("dest", "s1", "s2");
 
         assertThat(encode(command)).isEqualTo(
                 "*5\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n2\r\n" + "$2\r\ns1\r\n" + "$2\r\ns2\r\n");
     }
 
     @Test
-    void shouldRejectEmptySourceKeysForTdigestMergeWithOverride() {
-        assertThatThrownBy(() -> builder.tdigestMerge("dest", true, new String[0]))
-                .isInstanceOf(IllegalArgumentException.class);
+    void shouldCorrectlyConstructTdigestMergeWithOverrideCommand() {
+        Command<String, String, String> command = builder.tdigestMerge("dest", TDigestMergeArgs.Builder.override(), "src");
+
+        assertThat(encode(command)).isEqualTo("*5\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n1\r\n"
+                + "$3\r\nsrc\r\n" + "$8\r\nOVERRIDE\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructTdigestMergeWithOverrideAndMultipleSourcesCommand() {
+        Command<String, String, String> command = builder.tdigestMerge("dest", TDigestMergeArgs.Builder.override(), "s1", "s2");
+
+        assertThat(encode(command)).isEqualTo("*6\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n2\r\n"
+                + "$2\r\ns1\r\n" + "$2\r\ns2\r\n" + "$8\r\nOVERRIDE\r\n");
+    }
+
+    @Test
+    void shouldOmitOptionalTokensForDefaultMergeArgs() {
+        Command<String, String, String> command = builder.tdigestMerge("dest", TDigestMergeArgs.Builder.defaults(), "s1", "s2");
+
+        assertThat(encode(command)).isEqualTo(
+                "*5\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n2\r\n" + "$2\r\ns1\r\n" + "$2\r\ns2\r\n");
     }
 
     @Test
     void shouldCorrectlyConstructTdigestMergeWithCompressionCommand() {
-        Command<String, String, String> command = builder.tdigestMerge("dest", "src", 100);
+        Command<String, String, String> command = builder.tdigestMerge("dest", TDigestMergeArgs.Builder.compression(100),
+                "src");
 
         assertThat(encode(command)).isEqualTo("*6\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n1\r\n"
                 + "$3\r\nsrc\r\n" + "$11\r\nCOMPRESSION\r\n" + "$3\r\n100\r\n");
@@ -167,10 +192,28 @@ class RedisTDigestCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTdigestMergeWithCompressionAndOverrideCommand() {
-        Command<String, String, String> command = builder.tdigestMerge("dest", 100, true, "s1", "s2");
+        Command<String, String, String> command = builder.tdigestMerge("dest",
+                TDigestMergeArgs.Builder.compression(100).override(), "s1", "s2");
 
         assertThat(encode(command)).isEqualTo("*8\r\n" + "$13\r\nTDIGEST.MERGE\r\n" + "$4\r\ndest\r\n" + "$1\r\n2\r\n"
                 + "$2\r\ns1\r\n" + "$2\r\ns2\r\n" + "$11\r\nCOMPRESSION\r\n" + "$3\r\n100\r\n" + "$8\r\nOVERRIDE\r\n");
+    }
+
+    @Test
+    void shouldRejectEmptySourceKeysForTdigestMerge() {
+        assertThatThrownBy(() -> builder.tdigestMerge("dest", new String[0])).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldRejectEmptySourceKeysForTdigestMergeWithArgs() {
+        assertThatThrownBy(() -> builder.tdigestMerge("dest", TDigestMergeArgs.Builder.override(), new String[0]))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldRejectNullMergeArgsForTdigestMerge() {
+        assertThatThrownBy(() -> builder.tdigestMerge("dest", (TDigestMergeArgs) null, "src"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

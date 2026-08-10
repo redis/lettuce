@@ -9,6 +9,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisTDigestReactiveCommands
 import io.lettuce.core.probabilistic.TDigestInfoValue
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -65,31 +66,14 @@ internal class RedisTDigestCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tdigestMerge(destination: K, sourceKey: K): String? =
         ops.tdigestMerge(destination, sourceKey).awaitFirstOrNull()
 
-    override suspend fun tdigestMerge(destination: K, sourceKey: K, override: Boolean): String? =
-        ops.tdigestMerge(destination, sourceKey, override).awaitFirstOrNull()
-
-    override suspend fun tdigestMerge(destination: K, sourceKey: K, compression: Long): String? =
-        ops.tdigestMerge(destination, sourceKey, compression).awaitFirstOrNull()
-
-    override suspend fun tdigestMerge(destination: K, sourceKey: K, compression: Long, override: Boolean): String? =
-        ops.tdigestMerge(destination, sourceKey, compression, override).awaitFirstOrNull()
+    override suspend fun tdigestMerge(destination: K, sourceKey: K, mergeArgs: TDigestMergeArgs): String? =
+        ops.tdigestMerge(destination, sourceKey, mergeArgs).awaitFirstOrNull()
 
     override suspend fun tdigestMerge(destination: K, vararg sourceKeys: K): String? =
         ops.tdigestMerge(destination, *sourceKeys).awaitFirstOrNull()
 
-    override suspend fun tdigestMerge(destination: K, override: Boolean, vararg sourceKeys: K): String? =
-        ops.tdigestMerge(destination, override, *sourceKeys).awaitFirstOrNull()
-
-    override suspend fun tdigestMerge(destination: K, compression: Long, vararg sourceKeys: K): String? =
-        ops.tdigestMerge(destination, compression, *sourceKeys).awaitFirstOrNull()
-
-    override suspend fun tdigestMerge(
-        destination: K,
-        compression: Long,
-        override: Boolean,
-        vararg sourceKeys: K
-    ): String? =
-        ops.tdigestMerge(destination, compression, override, *sourceKeys).awaitFirstOrNull()
+    override suspend fun tdigestMerge(destination: K, mergeArgs: TDigestMergeArgs, vararg sourceKeys: K): String? =
+        ops.tdigestMerge(destination, mergeArgs, *sourceKeys).awaitFirstOrNull()
 
     override suspend fun tdigestMin(key: K): Double? =
         ops.tdigestMin(key).awaitFirstOrNull()

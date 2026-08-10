@@ -21,6 +21,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 
@@ -187,13 +188,36 @@ public class RedisTDigestIntegrationTests {
     }
 
     @Test
+    void mergeSingleSource() {
+        redis.tdigestCreate("{td}src");
+        redis.tdigestAdd("{td}src", "1", "2", "3");
+
+        assertThat(redis.tdigestMerge("{td}dest", "{td}src")).isEqualTo("OK");
+        assertThat(redis.tdigestInfo("{td}dest").getObservations()).isEqualTo(3L);
+    }
+
+    @Test
+    void mergeSingleSourceWithOverride() {
+        redis.tdigestCreate("{td}src", 100);
+        redis.tdigestAdd("{td}src", "1", "2", "3");
+        redis.tdigestCreate("{td}dest", 500);
+        redis.tdigestAdd("{td}dest", "9");
+
+        assertThat(redis.tdigestMerge("{td}dest", "{td}src", TDigestMergeArgs.Builder.override())).isEqualTo("OK");
+
+        TDigestInfoValue info = redis.tdigestInfo("{td}dest");
+        assertThat(info.getObservations()).isEqualTo(3L);
+        assertThat(info.getCompression()).isEqualTo(100L);
+    }
+
+    @Test
     void mergeWithOverrideWithoutCompression() {
         redis.tdigestCreate("{td}src", 100);
         redis.tdigestAdd("{td}src", "1", "2", "3");
         redis.tdigestCreate("{td}dest", 500);
         redis.tdigestAdd("{td}dest", "9", "9", "9", "9");
 
-        assertThat(redis.tdigestMerge("{td}dest", true, "{td}src")).isEqualTo("OK");
+        assertThat(redis.tdigestMerge("{td}dest", TDigestMergeArgs.Builder.override(), "{td}src")).isEqualTo("OK");
 
         TDigestInfoValue info = redis.tdigestInfo("{td}dest");
         assertThat(info.getObservations()).isEqualTo(3L);
@@ -207,25 +231,11 @@ public class RedisTDigestIntegrationTests {
         redis.tdigestCreate("{td}dest", 500);
         redis.tdigestAdd("{td}dest", "9", "9", "9", "9");
 
-        assertThat(redis.tdigestMerge("{td}dest", false, "{td}src")).isEqualTo("OK");
+        assertThat(redis.tdigestMerge("{td}dest", TDigestMergeArgs.Builder.defaults(), "{td}src")).isEqualTo("OK");
 
         TDigestInfoValue info = redis.tdigestInfo("{td}dest");
         assertThat(info.getObservations()).isEqualTo(7L);
         assertThat(info.getCompression()).isEqualTo(500L);
-    }
-
-    @Test
-    void mergeWithOverrideWithoutCompressionSingleSourceOverload() {
-        redis.tdigestCreate("{td}src", 100);
-        redis.tdigestAdd("{td}src", "1", "2", "3");
-        redis.tdigestCreate("{td}dest", 500);
-        redis.tdigestAdd("{td}dest", "9");
-
-        assertThat(redis.tdigestMerge("{td}dest", "{td}src", true)).isEqualTo("OK");
-
-        TDigestInfoValue info = redis.tdigestInfo("{td}dest");
-        assertThat(info.getObservations()).isEqualTo(3L);
-        assertThat(info.getCompression()).isEqualTo(100L);
     }
 
     @Test
@@ -237,7 +247,7 @@ public class RedisTDigestIntegrationTests {
         redis.tdigestCreate("{td}dest", 500);
         redis.tdigestAdd("{td}dest", "9");
 
-        assertThat(redis.tdigestMerge("{td}dest", true, "{td}srcA", "{td}srcB")).isEqualTo("OK");
+        assertThat(redis.tdigestMerge("{td}dest", TDigestMergeArgs.Builder.override(), "{td}srcA", "{td}srcB")).isEqualTo("OK");
 
         TDigestInfoValue info = redis.tdigestInfo("{td}dest");
         assertThat(info.getObservations()).isEqualTo(4L);
@@ -250,7 +260,8 @@ public class RedisTDigestIntegrationTests {
         redis.tdigestCreate("{td}src");
         redis.tdigestAdd("{td}src", "1", "2", "3");
 
-        assertThat(redis.tdigestMerge("{td}dest", 100, true, "{td}src")).isEqualTo("OK");
+        assertThat(redis.tdigestMerge("{td}dest", TDigestMergeArgs.Builder.compression(100).override(), "{td}src"))
+                .isEqualTo("OK");
         assertThat(redis.tdigestInfo("{td}dest").getObservations()).isEqualTo(3L);
     }
 

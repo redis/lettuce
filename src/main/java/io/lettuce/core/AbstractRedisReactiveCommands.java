@@ -57,6 +57,7 @@ import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.probabilistic.TopKInfoValue;
 import io.lettuce.core.probabilistic.TopKListValue;
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs;
 import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -4702,18 +4703,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<String> tdigestMerge(K destination, K sourceKey, boolean override) {
-        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey, override));
-    }
-
-    @Override
-    public Mono<String> tdigestMerge(K destination, K sourceKey, long compression) {
-        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey, compression));
-    }
-
-    @Override
-    public Mono<String> tdigestMerge(K destination, K sourceKey, long compression, boolean override) {
-        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey, compression, override));
+    public Mono<String> tdigestMerge(K destination, K sourceKey, TDigestMergeArgs mergeArgs) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey, mergeArgs));
     }
 
     @Override
@@ -4722,18 +4713,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<String> tdigestMerge(K destination, boolean override, K... sourceKeys) {
-        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, override, sourceKeys));
-    }
-
-    @Override
-    public Mono<String> tdigestMerge(K destination, long compression, K... sourceKeys) {
-        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, compression, sourceKeys));
-    }
-
-    @Override
-    public Mono<String> tdigestMerge(K destination, long compression, boolean override, K... sourceKeys) {
-        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, compression, override, sourceKeys));
+    public Mono<String> tdigestMerge(K destination, TDigestMergeArgs mergeArgs, K... sourceKeys) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, mergeArgs, sourceKeys));
     }
 
     @Override
