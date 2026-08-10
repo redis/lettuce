@@ -10,11 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.BooleanOutput;
-import io.lettuce.core.output.CommandOutput;
-import io.lettuce.core.output.ComplexOutput;
 import io.lettuce.core.output.EncodedComplexOutput;
 import io.lettuce.core.output.IntegerOutput;
 
@@ -575,7 +572,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         SuggestionParser parser = new SuggestionParser(withScores, withPayloads);
-        return createCommand(FT_SUGGET, (CommandOutput) new ComplexOutput<>(StringCodec.UTF8, parser), commandArgs);
+        return createCommand(FT_SUGGET, new EncodedComplexOutput<>(codec, parser), commandArgs);
     }
 
     /**

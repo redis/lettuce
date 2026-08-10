@@ -602,10 +602,10 @@ public class RediSearchAdvancedConceptsIntegrationTests {
                 "Malay and Tagalog stemming require Redis 8.10 or newer");
 
         // Test 1: Malay stemming
-        FieldArgs<String> malayWordField = TextFieldArgs.<String> builder().name("perkataan").build();
+        FieldArgs malayWordField = TextFieldArgs.builder().name("perkataan").build();
 
-        CreateArgs<String, String> malayArgs = CreateArgs.<String, String> builder().withPrefix("ms:")
-                .on(CreateArgs.TargetType.HASH).defaultLanguage(DocumentLanguage.MALAY).build();
+        CreateArgs malayArgs = CreateArgs.builder().withPrefix("ms:").on(CreateArgs.TargetType.HASH)
+                .defaultLanguage(DocumentLanguage.MALAY).build();
 
         redis.ftCreate("idx:malay", malayArgs, Collections.singletonList(malayWordField));
 
@@ -618,16 +618,16 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Searching the root should find at least the exact match; with Malay stemming enabled it additionally groups the
         // derived forms. We assert the lower bound to verify the language is accepted end-to-end without coupling to the
         // exact server-side stemmer data.
-        SearchReply<String, String> results = redis.ftSearch("idx:malay", "@perkataan:(masak)");
+        SearchReply<String> results = redis.ftSearch("idx:malay", "@perkataan:(masak)");
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         redis.ftDropindex("idx:malay");
 
         // Test 2: Tagalog stemming
-        FieldArgs<String> tagalogWordField = TextFieldArgs.<String> builder().name("salita").build();
+        FieldArgs tagalogWordField = TextFieldArgs.builder().name("salita").build();
 
-        CreateArgs<String, String> tagalogArgs = CreateArgs.<String, String> builder().withPrefix("tl:")
-                .on(CreateArgs.TargetType.HASH).defaultLanguage(DocumentLanguage.TAGALOG).build();
+        CreateArgs tagalogArgs = CreateArgs.builder().withPrefix("tl:").on(CreateArgs.TargetType.HASH)
+                .defaultLanguage(DocumentLanguage.TAGALOG).build();
 
         redis.ftCreate("idx:tagalog", tagalogArgs, Collections.singletonList(tagalogWordField));
 

@@ -6,11 +6,13 @@
  */
 package io.lettuce.core.search;
 
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +28,8 @@ import java.util.List;
  * <li><strong>With WITHPAYLOADS:</strong> Alternating suggestion strings and payloads</li>
  * <li><strong>With both WITHSCORES and WITHPAYLOADS:</strong> Suggestion strings, scores, and payloads in sequence</li>
  * </ul>
+ * <p>
+ * Suggestion text and payloads are decoded as UTF-8. Scores are read as RESP3 numbers or RESP2 UTF-8 strings.
  *
  * @author Tihomir Mateev
  * @since 6.8
@@ -87,7 +91,7 @@ public class SuggestionParser implements ComplexDataParser<List<Suggestion>> {
 
         for (int i = 0; i < elements.size();) {
 
-            String value = (String) elements.get(i++);
+            String value = decodeString(elements.get(i++));
             Suggestion suggestion = new Suggestion(value);
 
             if (withScores && i + 1 <= elements.size()) {
@@ -96,7 +100,7 @@ public class SuggestionParser implements ComplexDataParser<List<Suggestion>> {
             }
 
             if (withPayloads && i + 1 <= elements.size()) {
-                String payload = (String) elements.get(i++);
+                String payload = decodeString(elements.get(i++));
                 suggestion.setPayload(payload);
             }
 
@@ -107,10 +111,10 @@ public class SuggestionParser implements ComplexDataParser<List<Suggestion>> {
     }
 
     /**
-     * Parse a score value from the response.
+     * Parse a score returned as a RESP3 number or RESP2 UTF-8 string.
      *
      * @param scoreObj the score object from the response
-     * @return the parsed score as a Double
+     * @return the parsed score, or {@code null} if the score is absent or invalid
      */
     private Double parseScore(Object scoreObj) {
         if (scoreObj == null) {
@@ -121,12 +125,32 @@ public class SuggestionParser implements ComplexDataParser<List<Suggestion>> {
             return (Double) scoreObj;
         }
 
+        if (scoreObj instanceof ByteBuffer) {
+            scoreObj = decodeString(scoreObj);
+        }
+
         try {
             return Double.parseDouble(scoreObj.toString());
         } catch (NumberFormatException e) {
             LOG.warn("Failed while parsing FT.SUGGET score: {}", scoreObj);
             return null;
         }
+    }
+
+    /**
+     * Decode response text represented as raw bytes or a decoded string.
+     *
+     * @param value the response value
+     * @return the UTF-8 decoded text, or {@code null} if {@code value} is {@code null}
+     */
+    private String decodeString(Object value) {
+        if (value instanceof ByteBuffer) {
+            return StringCodec.UTF8.decodeValue((ByteBuffer) value);
+        }
+        if (value instanceof String) {
+            return (String) value;
+        }
+        return value == null ? null : value.toString();
     }
 
 }

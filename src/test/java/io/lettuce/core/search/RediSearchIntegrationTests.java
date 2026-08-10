@@ -49,6 +49,7 @@ import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.lettuce.core.search.arguments.VectorFieldArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -68,6 +69,7 @@ import java.util.Map;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for Redis Search functionality using FT.SEARCH command.
@@ -731,7 +733,7 @@ public class RediSearchIntegrationTests {
         String alias1 = "aliaslist-alias1";
         String alias2 = "aliaslist-alias2";
 
-        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+        List<FieldArgs> fields = Collections.singletonList(TextFieldArgs.builder().name("title").build());
         assertThat(redis.ftCreate(testIndex, fields)).isEqualTo("OK");
 
         // An existing index with no aliases returns an empty collection, not an error.
@@ -1419,10 +1421,9 @@ public class RediSearchIntegrationTests {
     private static final int TIMEOUT_DOC_COUNT = 10_000;
 
     private void populateTimeoutIndex() {
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> numField = NumericFieldArgs.<String> builder().name("n").sortable().build();
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(TIMEOUT_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs numField = NumericFieldArgs.builder().name("n").sortable().build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(TIMEOUT_PREFIX).on(CreateArgs.TargetType.HASH).build();
         assertThat(redis.ftCreate(TIMEOUT_INDEX, createArgs, Arrays.asList(titleField, numField))).isEqualTo("OK");
 
         // Bulk-load with pipelining so 1k documents load quickly.
@@ -1449,9 +1450,9 @@ public class RediSearchIntegrationTests {
      * A query heavy enough that it cannot finish within a 1ms timeout: it matches every document and forces a full scan,
      * scoring and sort over the whole index.
      */
-    private SearchArgs<String, String> timingOutSearchArgs() {
-        SortByArgs<String> sortBy = SortByArgs.<String> builder().attribute("n").descending().build();
-        return SearchArgs.<String, String> builder().timeout(Duration.ofMillis(1)).withScores().sortBy(sortBy)
+    private SearchArgs<String> timingOutSearchArgs() {
+        SortByArgs sortBy = SortByArgs.builder().attribute("n").descending().build();
+        return SearchArgs.<String> builder().timeout(Duration.ofMillis(1)).withScores().sortBy(sortBy)
                 .limit(0, TIMEOUT_DOC_COUNT).build();
     }
 
@@ -1493,7 +1494,7 @@ public class RediSearchIntegrationTests {
 
         // RETURN is the default, but set it explicitly to keep the test independent of any policy left behind elsewhere.
         assertThat(redis.configSet("search-on-timeout", "return")).isEqualTo("OK");
-        SearchReply<String, String> reply = redis.ftSearch(TIMEOUT_INDEX, "hello world", timingOutSearchArgs());
+        SearchReply<String> reply = redis.ftSearch(TIMEOUT_INDEX, "hello world", timingOutSearchArgs());
 
         // RETURN must not fail the query, and the timeout must be reported as a warning.
         assertThat(reply.getWarnings()).isNotEmpty();
@@ -1507,12 +1508,11 @@ public class RediSearchIntegrationTests {
      * repeated string formatting (each APPLY triples the string). This costs tens of ms over ~1k documents, well beyond the 1ms
      * budget on any hardware.
      */
-    private AggregateArgs<String, String> timingOutAggregateArgs() {
-        return AggregateArgs.<String, String> builder().addScores().load("@title")
-                .apply("format(\"%s%s%s\",@title,@title,@title)", "a").apply("format(\"%s%s%s\",@a,@a,@a)", "a")
+    private AggregateArgs timingOutAggregateArgs() {
+        return AggregateArgs.builder().addScores().load("@title").apply("format(\"%s%s%s\",@title,@title,@title)", "a")
                 .apply("format(\"%s%s%s\",@a,@a,@a)", "a").apply("format(\"%s%s%s\",@a,@a,@a)", "a")
-                .apply("format(\"%s%s%s\",@a,@a,@a)", "a").sortBy("@__score", AggregateArgs.SortDirection.DESC)
-                .timeout(Duration.ofMillis(1)).build();
+                .apply("format(\"%s%s%s\",@a,@a,@a)", "a").apply("format(\"%s%s%s\",@a,@a,@a)", "a")
+                .sortBy("@__score", AggregateArgs.SortDirection.DESC).timeout(Duration.ofMillis(1)).build();
     }
 
     /**
@@ -1548,7 +1548,7 @@ public class RediSearchIntegrationTests {
         populateTimeoutIndex();
 
         assertThat(redis.configSet("search-on-timeout", "return")).isEqualTo("OK");
-        AggregationReply<String, String> reply = redis.ftAggregate(TIMEOUT_INDEX, "hello world", timingOutAggregateArgs());
+        AggregationReply<String> reply = redis.ftAggregate(TIMEOUT_INDEX, "hello world", timingOutAggregateArgs());
 
         assertThat(reply.getReplies()).isNotEmpty();
         List<String> warnings = reply.getReplies().get(0).getWarnings();
@@ -1564,12 +1564,10 @@ public class RediSearchIntegrationTests {
     private static final int TIMEOUT_VECTOR_DIM = 8;
 
     private void populateTimeoutVectorIndex() {
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").hnsw()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(TIMEOUT_VECTOR_DIM)
-                .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(TIMEOUT_VECTOR_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs vectorField = VectorFieldArgs.builder().name("embedding").hnsw().type(VectorFieldArgs.VectorType.FLOAT32)
+                .dimensions(TIMEOUT_VECTOR_DIM).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(TIMEOUT_VECTOR_PREFIX).on(CreateArgs.TargetType.HASH).build();
         assertThat(redis.ftCreate(TIMEOUT_VECTOR_INDEX, createArgs, Arrays.asList(titleField, vectorField))).isEqualTo("OK");
 
         // Bulk-load over the binary connection so vector bytes are stored verbatim.
@@ -1600,13 +1598,12 @@ public class RediSearchIntegrationTests {
      * up with repeated string formatting, and sort by that non-numeric field (the "no optimization" path). This reliably
      * exceeds the timeout on any hardware.
      */
-    private HybridArgs<String, String> timingOutHybridArgs() {
-        return HybridArgs.<String, String> builder()
-                .search(HybridSearchArgs.<String, String> builder().query("hello world").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
+    private HybridArgs timingOutHybridArgs() {
+        return HybridArgs.builder().search(HybridSearchArgs.builder().query("hello world").build())
+                .vectorSearch(HybridVectorArgs.builder().field("@embedding").vector("$vec")
                         .method(HybridVectorArgs.Knn.of(TIMEOUT_DOC_COUNT)).build())
-                .combine(Combiners.<String> linear().alpha(0.5).beta(0.5).window(TIMEOUT_DOC_COUNT))
-                .postProcessing(PostProcessingArgs.<String, String> builder().load("@title")
+                .combine(Combiners.linear().alpha(0.5).beta(0.5).window(TIMEOUT_DOC_COUNT))
+                .postProcessing(PostProcessingArgs.builder().load("@title")
                         .apply(Apply.of("format(\"%s%s%s\",@title,@title,@title)", "a"))
                         .apply(Apply.of("format(\"%s%s%s\",@a,@a,@a)", "a")).apply(Apply.of("format(\"%s%s%s\",@a,@a,@a)", "a"))
                         .apply(Apply.of("format(\"%s%s%s\",@a,@a,@a)", "a")).apply(Apply.of("format(\"%s%s%s\",@a,@a,@a)", "a"))
@@ -1649,7 +1646,7 @@ public class RediSearchIntegrationTests {
         populateTimeoutVectorIndex();
 
         assertThat(redis.configSet("search-on-timeout", "return")).isEqualTo("OK");
-        HybridReply<String, String> reply = redis.ftHybrid(TIMEOUT_VECTOR_INDEX, timingOutHybridArgs());
+        HybridReply<String> reply = redis.ftHybrid(TIMEOUT_VECTOR_INDEX, timingOutHybridArgs());
 
         assertThat(reply.getWarnings()).isNotEmpty();
         assertThat(reply.getWarnings().toString().toLowerCase()).contains("timeout");
