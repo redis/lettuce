@@ -1,6 +1,9 @@
 package io.lettuce.core.support.caching;
 
+import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
@@ -16,6 +19,8 @@ class DefaultRedisCache<K, V> implements RedisCache<K, V> {
     private final StatefulRedisConnection<K, V> connection;
 
     private final RedisCodec<K, V> codec;
+
+    private final List<Runnable> clearListeners = new CopyOnWriteArrayList<>();
 
     public DefaultRedisCache(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
@@ -33,16 +38,35 @@ class DefaultRedisCache<K, V> implements RedisCache<K, V> {
     }
 
     @Override
-    public void addInvalidationListener(java.util.function.Consumer<? super K> listener) {
+    public void addInvalidationListener(Consumer<? super K> listener) {
 
         connection.addListener(message -> {
             if (message.getType().equals("invalidate")) {
 
-                List<Object> content = message.getContent(codec::decodeKey);
-                List<K> keys = (List<K>) content.get(1);
-                keys.forEach(listener);
+                // decode only the key payload, the frame type element is not a key
+                List<Object> content = message.getContent();
+                List<Object> keys = (List<Object>) content.get(1);
+
+                if (keys == null) {
+                    // null payload indicates a full invalidation, e.g. after FLUSHALL/FLUSHDB
+                    clearListeners.forEach(Runnable::run);
+                } else {
+                    for (Object key : keys) {
+                        if (key == null) {
+                            clearListeners.forEach(Runnable::run);
+                        } else {
+                            // decode from a duplicate so shared buffers are not consumed for other listeners
+                            listener.accept(codec.decodeKey(((ByteBuffer) key).duplicate()));
+                        }
+                    }
+                }
             }
         });
+    }
+
+    @Override
+    public void addClearListener(Runnable listener) {
+        clearListeners.add(listener);
     }
 
     @Override
