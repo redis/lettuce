@@ -1,10 +1,14 @@
 package io.lettuce.core.support.caching;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.TrackingArgs;
@@ -14,6 +18,7 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.ProtocolVersion;
 
@@ -106,10 +111,11 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
      * <p>
      * {@code CLIENT TRACKING} is enabled on each cluster node connection: invalidation messages for a key are emitted by the
      * node that serves the key's slot (or, for replica reads, by the replica the value was read from), so tracking must be
-     * active there. Upstream (master) nodes are tracked through their write-intent connections and replicas through their
-     * read-intent connections so that reads routed by {@link io.lettuce.core.ReadFrom} settings are registered for tracking as
-     * well. Note that a keyless {@code CLIENT TRACKING} command issued through the cluster command API would be routed to the
-     * default connection only, whose push messages are not associated with cluster node connections.
+     * active there. Upstream (master) nodes are tracked through their write-intent connections. Replicas are tracked through
+     * their read-intent connections only when the connection's {@link ReadFrom} setting can select them for reads, so no
+     * replica connections are opened when reads are routed to upstream nodes only (the default). Note that a keyless
+     * {@code CLIENT TRACKING} command issued through the cluster command API would be routed to the default connection only,
+     * whose push messages are not associated with cluster node connections.
      * <p>
      * Client-side caching for Redis Cluster requires RESP3. {@code TrackingArgs} redirection is not supported as invalidation
      * messages can originate from any node; this method throws {@link IllegalArgumentException} for redirected tracking
@@ -140,19 +146,49 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
             // use host/port connections: slot-routed commands are served by connections keyed
             // by intent, host and port, not by the nodeId-keyed connections
             if (node.is(RedisClusterNode.NodeFlag.UPSTREAM)) {
-                enableTracking(connection, node, ConnectionIntent.WRITE, tracking);
-            } else if (node.is(RedisClusterNode.NodeFlag.REPLICA)) {
-                enableTracking(connection, node, ConnectionIntent.READ, tracking);
+                enableTracking(connection, node.getUri(), ConnectionIntent.WRITE, tracking);
+            }
+        }
+
+        for (RedisNodeDescription node : readCandidates(connection)) {
+            // reads from upstream nodes are served by the write-intent connections tracked above
+            if (node.getRole().isReplica()) {
+                enableTracking(connection, node.getUri(), ConnectionIntent.READ, tracking);
             }
         }
 
         return create(cacheAccessor, connection);
     }
 
-    private static <K, V> void enableTracking(StatefulRedisClusterConnection<K, V> connection, RedisClusterNode node,
+    private static List<RedisNodeDescription> readCandidates(StatefulRedisClusterConnection<?, ?> connection) {
+
+        ReadFrom readFrom = connection.getReadFrom();
+
+        if (readFrom == null) {
+            // without a ReadFrom setting, all reads are routed to upstream nodes
+            return Collections.emptyList();
+        }
+
+        List<RedisNodeDescription> nodes = new ArrayList<>(connection.getPartitions().getPartitions());
+
+        return readFrom.select(new ReadFrom.Nodes() {
+
+            @Override
+            public List<RedisNodeDescription> getNodes() {
+                return nodes;
+            }
+
+            @Override
+            public Iterator<RedisNodeDescription> iterator() {
+                return nodes.iterator();
+            }
+
+        });
+    }
+
+    private static <K, V> void enableTracking(StatefulRedisClusterConnection<K, V> connection, RedisURI uri,
             ConnectionIntent intent, TrackingArgs tracking) {
 
-        RedisURI uri = node.getUri();
         StatefulRedisConnection<K, V> nodeConnection = connection.getConnection(uri.getHost(), uri.getPort(), intent);
 
         ProtocolVersion protocolVersion = ((StatefulRedisConnectionImpl<K, V>) nodeConnection).getConnectionState()
