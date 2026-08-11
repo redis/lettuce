@@ -26,8 +26,8 @@ import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.CommandWrapper;
 import io.lettuce.core.protocol.Endpoint;
-import io.lettuce.core.protocol.HashImportPrepareCommand;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
@@ -67,7 +67,7 @@ class HashImportOutboundHandlerUnitTests {
 
         List<Object> out = drain(channel);
         assertThat(out).hasSize(2);
-        assertThat(out.get(0)).isInstanceOf(HashImportPrepareCommand.class);
+        assertThat(isPrepare(out.get(0))).isTrue();
         assertThat(out.get(1)).isSameAs(set);
     }
 
@@ -80,7 +80,7 @@ class HashImportOutboundHandlerUnitTests {
         channel.writeOutbound(set(fieldset));
         channel.writeOutbound(set(fieldset));
 
-        assertThat(drain(channel)).filteredOn(HashImportPrepareCommand.class::isInstance).hasSize(1);
+        assertThat(drain(channel)).filteredOn(HashImportOutboundHandlerUnitTests::isPrepare).hasSize(1);
     }
 
     @Test
@@ -90,14 +90,14 @@ class HashImportOutboundHandlerUnitTests {
         HashImport<String> fieldset = HashImport.of("f1", "f2", "f3");
 
         channel.writeOutbound(set(fieldset));
-        HashImportPrepareCommand<?, ?, ?> prepare = (HashImportPrepareCommand<?, ?, ?>) drain(channel).get(0);
+        RedisCommand<?, ?, ?> prepare = (RedisCommand<?, ?, ?>) drain(channel).get(0);
 
         // server rejects the PREPARE (e.g. ACL/OOM): the fieldset must be evicted so the next SET re-prepares
         prepare.completeExceptionally(new RedisException("ERR PREPARE rejected"));
 
         channel.writeOutbound(set(fieldset));
 
-        assertThat(drain(channel)).filteredOn(HashImportPrepareCommand.class::isInstance)
+        assertThat(drain(channel)).filteredOn(HashImportOutboundHandlerUnitTests::isPrepare)
                 .as("fieldset should be re-prepared after a failed PREPARE").hasSize(1);
     }
 
@@ -147,10 +147,19 @@ class HashImportOutboundHandlerUnitTests {
         // (tail-side) injects via ctx.write, reaching CommandHandler before it forwards super.write(batch).
         List<RedisCommand<?, ?, ?>> stack = new ArrayList<>(commandHandler.getStack());
         assertThat(stack).hasSize(4);
-        assertThat(stack.get(0)).isInstanceOf(HashImportPrepareCommand.class);
+        assertThat(isPrepare(stack.get(0))).isTrue();
         assertThat(stack.get(1)).isSameAs(ping1);
         assertThat(stack.get(2)).isSameAs(himportSet);
         assertThat(stack.get(3)).isSameAs(ping2);
+    }
+
+    // The injected PREPARE is an ordinary HIMPORT command that is not a HashImportSetCommand (unlike the user's SET).
+    private static boolean isPrepare(Object msg) {
+        if (!(msg instanceof RedisCommand)) {
+            return false;
+        }
+        RedisCommand<?, ?, ?> command = (RedisCommand<?, ?, ?>) msg;
+        return command.getType() == CommandType.HIMPORT && CommandWrapper.unwrap(command, HashImportSetCommand.class) == null;
     }
 
     private static List<Object> drain(EmbeddedChannel channel) {
