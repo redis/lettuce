@@ -130,7 +130,7 @@ public class ConnectionBuilder {
         handlers.add(getHandshakeHandler());
         handlers.add(commandHandlerSupplier.get());
         // Outbound of CommandHandler: lazily injects HIMPORT PREPARE ahead of the first SET per fieldset per connection.
-        handlers.add(new HashImportOutboundHandler(connection));
+        handlers.add(new HashImportOutboundHandler());
 
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
 

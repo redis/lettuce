@@ -8,19 +8,15 @@ package io.lettuce.core;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import io.lettuce.core.annotations.Experimental;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.AsyncCommand;
 
 /**
  * Template describing the shared field names of a hash import fieldset used by the {@code HIMPORT} command family.
@@ -54,11 +50,12 @@ public class HashImport<K> implements AutoCloseable {
     private final K[] fields;
 
     /**
-     * The connections this fieldset has been prepared on, tracked weakly so idle/closed connections are collectible. Populated
-     * on the write path when {@code HIMPORT PREPARE} is injected; consulted only by {@link #close()} to target cleanup. The
-     * value is the codec of the connection, used to encode the {@code DISCARD}.
+     * The per-connection {@link HashImportContext} components this fieldset has been prepared on, tracked weakly so idle/closed
+     * connections are collectible. Populated on the write path when {@code HIMPORT PREPARE} is injected; consulted only by
+     * {@link #close()} to target cleanup. Each context builds and sends the transaction-safe {@code DISCARD} for its
+     * connection.
      */
-    private final Map<StatefulRedisConnection<K, ?>, RedisCodec<K, ?>> preparedOn = new WeakHashMap<>();
+    private final Set<HashImportContext> preparedOn = Collections.newSetFromMap(new WeakHashMap<>());
 
     private volatile boolean discarded;
 
@@ -150,22 +147,21 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * Record that this fieldset is being prepared on {@code connection}, so {@link #close()} can later target it with a
+     * Record that this fieldset is being prepared on {@code context}, so {@link #close()} can later target it with a
      * {@code DISCARD}. Called on the connection's event loop from the outbound write path, before the {@code PREPARE} is
      * written, and atomically with {@link #close()} on {@code preparedOn}: if the fieldset is already discarded the caller must
      * not send the {@code PREPARE} at all, so no server-side state is ever left without a matching {@code DISCARD}.
      *
-     * @param connection the connection the {@code HIMPORT PREPARE} is about to be injected on.
-     * @param codec the connection's codec, used to encode the eventual {@code DISCARD}.
+     * @param context the per-connection component the {@code HIMPORT PREPARE} is about to be injected on.
      * @return {@code true} if the connection was recorded and the {@code PREPARE} may be sent; {@code false} if the fieldset
      *         has already been closed and preparation must be skipped.
      */
-    boolean registerConnection(StatefulRedisConnection<K, ?> connection, RedisCodec<K, ?> codec) {
+    boolean registerConnection(HashImportContext context) {
         synchronized (preparedOn) {
             if (discarded) {
                 return false;
             }
-            preparedOn.put(connection, codec);
+            preparedOn.add(context);
             return true;
         }
     }
@@ -173,47 +169,31 @@ public class HashImport<K> implements AutoCloseable {
     /**
      * Discard this fieldset, releasing its server-side state.
      * <p>
-     * Sends a best-effort {@code HIMPORT DISCARD} to every still-open connection the fieldset was prepared on and marks it
-     * discarded so it can no longer be used for imports. The {@code DISCARD} is dispatched through the connection's normal
-     * command path (not written raw to the channel), so it participates in the connection's bookkeeping and never corrupts an
-     * in-flight transaction. A connection that is currently inside a {@code MULTI} is skipped rather than have the
-     * {@code DISCARD} folded into the caller's transaction; its state is released when the connection is recycled. Cleanup is
-     * fire-and-forget: failures are ignored, and a {@code DISCARD} that lands on a rotated connection is a harmless no-op
-     * because the generated fieldset name is unique per instance. Disposal is not required for correctness — the state is also
-     * released when a connection closes — but frees it promptly on long-lived and pooled connections. Calling this more than
-     * once has no additional effect.
+     * Sends a best-effort {@code HIMPORT DISCARD} to every connection the fieldset was prepared on and marks it discarded so it
+     * can no longer be used for imports. Each {@code DISCARD} is handed to that connection's {@link HashImportContext}, which
+     * writes it on the channel event loop — deferring it until the current transaction ends if a {@code MULTI} is open — so a
+     * cleanup {@code DISCARD} never falls inside the caller's transaction. Cleanup is fire-and-forget: a {@code DISCARD} that
+     * lands on a rotated connection is a harmless no-op because the generated fieldset name is unique per instance. Disposal is
+     * not required for correctness — the state is also released when a connection closes — but frees it promptly on long-lived
+     * and pooled connections. Calling this more than once has no additional effect.
      *
      * @since 7.7
      */
     @Override
     public void close() {
 
-        Map<StatefulRedisConnection<K, ?>, RedisCodec<K, ?>> targets;
+        Set<HashImportContext> targets;
         synchronized (preparedOn) {
             if (discarded) {
                 return;
             }
             discarded = true;
-            targets = new IdentityHashMap<>(preparedOn);
+            targets = new HashSet<>(preparedOn);
             preparedOn.clear();
         }
 
-        for (Map.Entry<StatefulRedisConnection<K, ?>, RedisCodec<K, ?>> target : targets.entrySet()) {
-            StatefulRedisConnection<K, ?> connection = target.getKey();
-            if (connection != null && connection.isOpen() && !connection.isMulti()) {
-                safeDiscard(connection, target.getValue());
-            }
-        }
-    }
-
-    private <V> void safeDiscard(StatefulRedisConnection<K, ?> connection, RedisCodec<K, V> codec) {
-        try {
-            RedisCommandBuilder<K, V> commandBuilder = new RedisCommandBuilder<>(codec);
-            @SuppressWarnings("unchecked")
-            StatefulRedisConnection<K, V> typed = (StatefulRedisConnection<K, V>) connection;
-            typed.dispatch(new AsyncCommand<>(commandBuilder.himportDiscard(this)));
-        } catch (RuntimeException ignore) {
-            // best-effort cleanup: the fieldset dies with the connection regardless
+        for (HashImportContext context : targets) {
+            context.discard(this);
         }
     }
 
