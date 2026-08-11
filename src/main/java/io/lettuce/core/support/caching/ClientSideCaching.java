@@ -1,5 +1,6 @@
 package io.lettuce.core.support.caching;
 
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,6 +13,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.TrackingArgs;
@@ -24,6 +28,8 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.ProtocolVersion;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Utility to provide server-side assistance for client-side caches. This is a {@link CacheFrontend} that represents a two-level
@@ -50,6 +56,8 @@ import io.lettuce.core.protocol.ProtocolVersion;
  * @since 6.0
  */
 public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
+
+    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(ClientSideCaching.class);
 
     private final CacheAccessor<K, V> cacheAccessor;
 
@@ -160,7 +168,14 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         for (RedisNodeDescription node : readCandidates(connection)) {
             // reads from upstream nodes are served by the write-intent connections tracked above
             if (node.getRole().isReplica()) {
-                enableTracking(connection, node.getUri(), ConnectionIntent.READ, tracking);
+                try {
+                    enableTracking(connection, node.getUri(), ConnectionIntent.READ, tracking);
+                } catch (RedisConnectionException e) {
+                    // the read path tolerates unavailable replicas as long as another candidate connects,
+                    // so an unreachable replica must not fail cache setup
+                    LOG.warn("Cannot enable key tracking on replica {}, reads from this replica are not tracked", node.getUri(),
+                            e);
+                }
             }
         }
 
@@ -194,15 +209,23 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         return node.is(RedisClusterNode.NodeFlag.UPSTREAM) && !node.hasNoSlots();
     }
 
+    private static boolean isReadCandidate(RedisClusterNode upstream, RedisClusterNode node) {
+
+        if (upstream.getNodeId().equals(node.getNodeId())) {
+            return true;
+        }
+
+        // consider only replicas that contain data from replication, mirroring the connection provider
+        return upstream.getNodeId().equals(node.getSlaveOf()) && node.getReplOffset() != 0;
+    }
+
     private static ReadFrom.Nodes slotGroup(StatefulRedisClusterConnection<?, ?> connection, RedisClusterNode upstream) {
 
+        // preserve the partition order, mirroring PooledClusterConnectionProvider#getReadCandidates
         List<RedisNodeDescription> nodes = new ArrayList<>();
-        nodes.add(upstream);
 
         for (RedisClusterNode node : connection.getPartitions()) {
-            // consider only replicas that contain data from replication, mirroring the connection provider
-            if (node.is(RedisClusterNode.NodeFlag.REPLICA) && upstream.getNodeId().equals(node.getSlaveOf())
-                    && node.getReplOffset() != 0) {
+            if (isReadCandidate(upstream, node)) {
                 nodes.add(node);
             }
         }
@@ -226,13 +249,23 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
             ConnectionIntent intent, TrackingArgs tracking) {
 
         StatefulRedisConnection<K, V> nodeConnection = connection.getConnection(uri.getHost(), uri.getPort(), intent);
+        StatefulRedisConnectionImpl<K, V> nodeConnectionImpl = (StatefulRedisConnectionImpl<K, V>) nodeConnection;
 
-        ProtocolVersion protocolVersion = ((StatefulRedisConnectionImpl<K, V>) nodeConnection).getConnectionState()
-                .getNegotiatedProtocolVersion();
+        ProtocolVersion protocolVersion = nodeConnectionImpl.getConnectionState().getNegotiatedProtocolVersion();
         LettuceAssert.assertState(protocolVersion == ProtocolVersion.RESP3,
                 "Client-side caching for Redis Cluster requires RESP3");
 
         nodeConnection.sync().clientTracking(tracking);
+
+        // CLIENT TRACKING is connection state that the reconnect handshake does not restore, re-apply it
+        nodeConnectionImpl.addListener(new RedisConnectionStateListener() {
+
+            @Override
+            public void onRedisConnected(RedisChannelHandler<?, ?> connectionHandler, SocketAddress socketAddress) {
+                nodeConnection.async().clientTracking(tracking);
+            }
+
+        });
     }
 
     /**
