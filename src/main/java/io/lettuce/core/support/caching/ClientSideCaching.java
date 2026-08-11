@@ -5,9 +5,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.cluster.StatefulRedisClusterConnectionImpl;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
 
 /**
@@ -31,6 +35,7 @@ import io.lettuce.core.codec.RedisCodec;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Julien Ruaux
  * @since 6.0
  */
 public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
@@ -88,6 +93,74 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         StatefulRedisConnectionImpl<K, V> connectionImpl = (StatefulRedisConnectionImpl) connection;
         RedisCodec<K, V> codec = connectionImpl.getCodec();
         RedisCache<K, V> redisCache = new DefaultRedisCache<>(connection, codec);
+
+        return create(cacheAccessor, redisCache);
+    }
+
+    /**
+     * Enable server-assisted Client side caching for the given {@link CacheAccessor} and
+     * {@link StatefulRedisClusterConnection}.
+     * <p>
+     * {@code CLIENT TRACKING} is enabled on each upstream (master) node connection: invalidation messages for a key are emitted
+     * by the node that serves the key's slot, so tracking must be active there. Note that a keyless {@code CLIENT TRACKING}
+     * command issued through the cluster command API would be routed to the default connection only, whose push messages are
+     * not associated with cluster node connections.
+     * <p>
+     * Client-side caching for Redis Cluster requires RESP3 ({@code TrackingArgs} redirection is not supported as invalidation
+     * messages can originate from any node).
+     * <p>
+     * Nodes added to the cluster after this call do not have tracking enabled. Applications that must observe topology changes
+     * should re-enable tracking after a topology refresh.
+     * <p>
+     * Note that the {@link CacheFrontend} is associated with a Redis connection. Make sure to {@link CacheFrontend#close()
+     * close} the frontend object to release the Redis connection after use.
+     *
+     * @param cacheAccessor the accessor used to interact with the client-side cache.
+     * @param connection the Redis Cluster connection to use. The connection will be associated with {@link CacheFrontend} and
+     *        must be closed through {@link CacheFrontend#close()}.
+     * @param tracking the tracking parameters.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the {@link CacheFrontend} for value retrieval.
+     * @since 7.7
+     */
+    public static <K, V> CacheFrontend<K, V> enable(CacheAccessor<K, V> cacheAccessor,
+            StatefulRedisClusterConnection<K, V> connection, TrackingArgs tracking) {
+
+        for (RedisClusterNode node : connection.getPartitions()) {
+            if (node.is(RedisClusterNode.NodeFlag.UPSTREAM)) {
+                // use the host/port connection: slot-routed commands are served by connections keyed
+                // by host and port, not by the nodeId-keyed connections
+                RedisURI uri = node.getUri();
+                connection.getConnection(uri.getHost(), uri.getPort()).sync().clientTracking(tracking);
+            }
+        }
+
+        return create(cacheAccessor, connection);
+    }
+
+    /**
+     * Create a server-assisted Client side caching for the given {@link CacheAccessor} and
+     * {@link StatefulRedisClusterConnection}. This method expects that client key tracking is already configured on the cluster
+     * node connections.
+     * <p>
+     * Note that the {@link CacheFrontend} is associated with a Redis connection. Make sure to {@link CacheFrontend#close()
+     * close} the frontend object to release the Redis connection after use.
+     *
+     * @param cacheAccessor the accessor used to interact with the client-side cache.
+     * @param connection the Redis Cluster connection to use. The connection will be associated with {@link CacheFrontend} and
+     *        must be closed through {@link CacheFrontend#close()}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the {@link CacheFrontend} for value retrieval.
+     * @since 7.7
+     */
+    public static <K, V> CacheFrontend<K, V> create(CacheAccessor<K, V> cacheAccessor,
+            StatefulRedisClusterConnection<K, V> connection) {
+
+        StatefulRedisClusterConnectionImpl<K, V> connectionImpl = (StatefulRedisClusterConnectionImpl) connection;
+        RedisCodec<K, V> codec = connectionImpl.getCodec();
+        RedisCache<K, V> redisCache = new ClusterRedisCache<>(connection, codec);
 
         return create(cacheAccessor, redisCache);
     }
