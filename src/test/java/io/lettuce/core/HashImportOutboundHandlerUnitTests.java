@@ -89,6 +89,36 @@ class HashImportOutboundHandlerUnitTests {
     }
 
     @Test
+    void doesNotInjectPrepareForFirstSetInsideTransaction() {
+
+        EmbeddedChannel channel = channel();
+        HashImport<String> fieldset = HashImport.of("f1", "f2", "f3");
+
+        // a MULTI is open; the first use of the fieldset lands inside the transaction
+        channel.writeOutbound(command(CommandType.MULTI));
+        drain(channel);
+
+        // injecting a PREPARE here would bypass the connection's MultiOutput yet be queued server-side, desyncing EXEC; the
+        // SET must ride alone (it will fail server-side as a clean "no such fieldset" instead of corrupting the connection)
+        HashImportSetCommand<String, String> set = set(fieldset);
+        channel.writeOutbound(set);
+
+        List<Object> out = drain(channel);
+        assertThat(out).as("no PREPARE may be injected inside a transaction")
+                .noneMatch(HashImportOutboundHandlerUnitTests::isPrepare);
+        assertThat(out).hasSize(1);
+        assertThat(out.get(0)).isSameAs(set);
+
+        // the fieldset was not recorded as prepared, so once the transaction ends the next SET re-prepares normally
+        channel.writeOutbound(command(CommandType.EXEC));
+        drain(channel);
+
+        channel.writeOutbound(set(fieldset));
+        assertThat(drain(channel)).filteredOn(HashImportOutboundHandlerUnitTests::isPrepare)
+                .as("first SET outside the transaction prepares the fieldset").hasSize(1);
+    }
+
+    @Test
     void repreparesAfterFailedPrepare() {
 
         EmbeddedChannel channel = channel();

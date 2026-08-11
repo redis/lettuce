@@ -68,7 +68,10 @@ class HashImportOutboundHandler extends ChannelDuplexHandler {
 
     private void observeAndPrepare(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
         transactionState.observe(command);
-        context.prepareFor(command, ctx);
+
+        if (!transactionState.isOpen()) {
+            context.prepareFor(command, ctx);
+        }
     }
 
     @Override
