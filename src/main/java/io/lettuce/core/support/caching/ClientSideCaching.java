@@ -148,7 +148,7 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
      * @param <K> Key type.
      * @param <V> Value type.
      * @return the {@link CacheFrontend} for value retrieval.
-     * @throws IllegalArgumentException if {@code tracking} is {@code null}, disabled, redirected or opt-in.
+     * @throws IllegalArgumentException if {@code tracking} is {@code null}, disabled, redirected, opt-in or prefix-limited.
      * @throws IllegalStateException if a node connection did not negotiate RESP3.
      * @since 7.7
      */
@@ -160,6 +160,9 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         LettuceAssert.isTrue(!tracking.isRedirect(),
                 "TrackingArgs REDIRECT is not supported for Redis Cluster client-side caching");
         LettuceAssert.isTrue(!tracking.isOptin(), "TrackingArgs OPTIN is not supported for Redis Cluster client-side caching");
+        LettuceAssert.isTrue(!tracking.hasPrefixes(),
+                "TrackingArgs PREFIX is not supported for Redis Cluster client-side caching as the cache frontend caches "
+                        + "all keys regardless of prefix");
 
         // snapshot the mutable args so reconnect replay does not observe later modifications
         TrackingArgs trackingSnapshot = tracking.copy();
@@ -304,10 +307,15 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
                 // longer receive invalidations and must be evicted
                 clearAction.run();
 
-                nodeConnection.async().clientTracking(tracking).exceptionally(e -> {
-                    LOG.warn("Cannot re-enable key tracking on {} after reconnect, reads from this node are not tracked", uri,
-                            e);
-                    return null;
+                nodeConnection.async().clientTracking(tracking).whenComplete((result, e) -> {
+                    if (e != null) {
+                        LOG.warn("Cannot re-enable key tracking on {} after reconnect, reads from this node are not tracked",
+                                uri, e);
+                    } else {
+                        // commands buffered during the outage replay before this listener runs, so reads may
+                        // have populated the cache untracked; evict them now that tracking is restored
+                        clearAction.run();
+                    }
                 });
             }
 

@@ -69,6 +69,10 @@ The following constraints apply to Redis Cluster:
 - **`OPTIN` is not supported** as the cache frontend does not issue
   `CLIENT CACHING yes` before reads. Opt-in `TrackingArgs` are rejected with an
   `IllegalArgumentException`.
+- **Prefix-limited `BCAST` is not supported** as the cache frontend caches all
+  keys regardless of prefix, so keys outside the configured prefixes would
+  never be invalidated. Prefixed `TrackingArgs` are rejected with an
+  `IllegalArgumentException`.
 - **Topology and read-policy changes are not tracked.** Tracking is configured
   for the topology and `ReadFrom` setting present when the cache is enabled.
   Nodes added to the cluster afterwards do not have tracking enabled, and

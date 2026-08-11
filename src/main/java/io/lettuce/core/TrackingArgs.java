@@ -114,6 +114,16 @@ public class TrackingArgs implements CompositeArgument {
     }
 
     /**
+     * Return whether broadcasting invalidation messages are limited to key prefixes through {@code PREFIX}.
+     *
+     * @return {@code true} if {@link #prefixes(String...)} was configured with at least one prefix.
+     * @since 7.7
+     */
+    public boolean hasPrefixes() {
+        return prefixes != null && prefixes.length > 0;
+    }
+
+    /**
      * Create a copy of {@code this} {@link TrackingArgs} to guard against later modifications of a shared, mutable instance.
      *
      * @return a new {@link TrackingArgs} with the same configuration.
