@@ -54,7 +54,14 @@ class ClusterRedisCache<K, V> implements RedisCache<K, V> {
                     // null payload indicates a full invalidation, e.g. after FLUSHALL/FLUSHDB
                     clearListeners.forEach(Runnable::run);
                 } else {
-                    keys.forEach(key -> listener.accept(codec.decodeKey((ByteBuffer) key)));
+                    for (Object key : keys) {
+                        if (key == null) {
+                            clearListeners.forEach(Runnable::run);
+                        } else {
+                            // decode from a duplicate so shared buffers are not consumed for other listeners
+                            listener.accept(codec.decodeKey(((ByteBuffer) key).duplicate()));
+                        }
+                    }
                 }
             }
         });

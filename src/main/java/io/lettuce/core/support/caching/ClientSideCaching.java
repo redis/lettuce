@@ -125,8 +125,10 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
      * {@code CLIENT CACHING yes} before reads; this method throws {@link IllegalArgumentException} for redirected or opt-in
      * tracking parameters and {@link IllegalStateException} if a node connection did not negotiate RESP3.
      * <p>
-     * Nodes added to the cluster after this call do not have tracking enabled. Applications that must observe topology changes
-     * should re-enable tracking after a topology refresh.
+     * Tracking is configured for the topology and {@link ReadFrom} setting present at the time of this call. Nodes added to the
+     * cluster afterwards do not have tracking enabled, and changing the read policy through
+     * {@link StatefulRedisClusterConnection#setReadFrom} does not track newly selectable replicas. Applications that must
+     * observe such changes should re-enable tracking afterwards.
      * <p>
      * Note that the {@link CacheFrontend} is associated with a Redis connection. Make sure to {@link CacheFrontend#close()
      * close} the frontend object to release the Redis connection after use.
@@ -150,7 +152,7 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         for (RedisClusterNode node : connection.getPartitions()) {
             // use host/port connections: slot-routed commands are served by connections keyed
             // by intent, host and port, not by the nodeId-keyed connections
-            if (node.is(RedisClusterNode.NodeFlag.UPSTREAM)) {
+            if (isServingUpstream(node)) {
                 enableTracking(connection, node.getUri(), ConnectionIntent.WRITE, tracking);
             }
         }
@@ -179,12 +181,17 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         Set<RedisNodeDescription> candidates = new LinkedHashSet<>();
 
         for (RedisClusterNode upstream : connection.getPartitions()) {
-            if (upstream.is(RedisClusterNode.NodeFlag.UPSTREAM)) {
+            if (isServingUpstream(upstream)) {
                 candidates.addAll(readFrom.select(slotGroup(connection, upstream)));
             }
         }
 
         return candidates;
+    }
+
+    private static boolean isServingUpstream(RedisClusterNode node) {
+        // upstream nodes without slots cannot serve slot-routed reads or writes
+        return node.is(RedisClusterNode.NodeFlag.UPSTREAM) && !node.hasNoSlots();
     }
 
     private static ReadFrom.Nodes slotGroup(StatefulRedisClusterConnection<?, ?> connection, RedisClusterNode upstream) {
@@ -193,7 +200,9 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         nodes.add(upstream);
 
         for (RedisClusterNode node : connection.getPartitions()) {
-            if (node.is(RedisClusterNode.NodeFlag.REPLICA) && upstream.getNodeId().equals(node.getSlaveOf())) {
+            // consider only replicas that contain data from replication, mirroring the connection provider
+            if (node.is(RedisClusterNode.NodeFlag.REPLICA) && upstream.getNodeId().equals(node.getSlaveOf())
+                    && node.getReplOffset() != 0) {
                 nodes.add(node);
             }
         }

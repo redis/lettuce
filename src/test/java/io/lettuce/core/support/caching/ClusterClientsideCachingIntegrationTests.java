@@ -104,6 +104,32 @@ public class ClusterClientsideCachingIntegrationTests {
         frontend.close();
     }
 
+    @Test
+    void serverAssistedCachingShouldClearOnFlush() {
+
+        Map<String, String> clientCache = new ConcurrentHashMap<>();
+
+        StatefulRedisClusterConnection<String, String> otherParty = clusterClient.connect();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+
+        CacheFrontend<String, String> frontend = ClientSideCaching.enable(CacheAccessor.forMap(clientCache), connection,
+                TrackingArgs.Builder.enabled());
+
+        String key = "key";
+        otherParty.sync().set(key, "value");
+
+        assertThat(frontend.get(key)).isEqualTo("value");
+        assertThat(clientCache).hasSize(1);
+
+        otherParty.sync().flushall();
+
+        Wait.untilTrue(clientCache::isEmpty).waitOrTimeout();
+        assertThat(frontend.get(key)).isNull();
+
+        otherParty.close();
+        frontend.close();
+    }
+
     private static String keyOwnedBy(StatefulRedisClusterConnection<String, String> connection, RedisClusterNode node) {
 
         return IntStream.range(0, SlotHash.SLOT_COUNT).mapToObj(i -> "key-" + i)

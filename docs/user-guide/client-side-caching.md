@@ -24,10 +24,14 @@ String value = frontend.get(key);
 The `CacheFrontend` is associated with the Redis connection. Close the
 frontend through `CacheFrontend.close()` to release the connection after use.
 
-With RESP3, invalidation messages are delivered as push messages on the
-connection itself. With RESP2, use `TrackingArgs` redirection
-(`TrackingArgs.Builder.enabled().redirect(clientId)`) to deliver invalidations
-to a Pub/Sub connection.
+The example above requires RESP3: invalidation messages are delivered as push
+messages on the connection itself, and the frontend evicts local entries
+automatically. With RESP2, Redis delivers invalidations only to a redirected
+client (`TrackingArgs.Builder.enabled().redirect(clientId)`), so the
+frontend's built-in invalidation listener never receives them. In that case
+subscribe to the `__redis__:invalidate` Pub/Sub channel on the redirect target
+connection and evict entries from the client-side cache
+(`CacheAccessor.evict(...)`) in the Pub/Sub listener yourself.
 
 ## Redis Cluster connections
 
@@ -62,9 +66,12 @@ The following constraints apply to Redis Cluster:
 - **`OPTIN` is not supported** as the cache frontend does not issue
   `CLIENT CACHING yes` before reads. Opt-in `TrackingArgs` are rejected with an
   `IllegalArgumentException`.
-- **Topology changes are not tracked.** Nodes added to the cluster after
-  enabling the cache do not have tracking enabled. Applications that must
-  observe topology changes should re-enable tracking after a topology refresh.
+- **Topology and read-policy changes are not tracked.** Tracking is configured
+  for the topology and `ReadFrom` setting present when the cache is enabled.
+  Nodes added to the cluster afterwards do not have tracking enabled, and
+  changing the read policy through `setReadFrom(...)` does not track newly
+  selectable replicas. Applications that must observe such changes should
+  re-enable tracking afterwards.
 
 `FLUSHALL` and `FLUSHDB` emit a full invalidation, which clears the entire
 client-side cache.
