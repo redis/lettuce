@@ -31,7 +31,10 @@ client (`TrackingArgs.Builder.enabled().redirect(clientId)`), so the
 frontend's built-in invalidation listener never receives them. In that case
 subscribe to the `__redis__:invalidate` Pub/Sub channel on the redirect target
 connection and evict entries from the client-side cache
-(`CacheAccessor.evict(...)`) in the Pub/Sub listener yourself.
+(`CacheAccessor.evict(...)`) in the Pub/Sub listener yourself. Full
+invalidations such as `FLUSHALL`/`FLUSHDB` deliver a `null` message without
+keys — clear the entire client-side cache (`CacheAccessor.clear()`) when the
+invalidation message is `null`.
 
 ## Redis Cluster connections
 

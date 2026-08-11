@@ -148,20 +148,27 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
      * @param <K> Key type.
      * @param <V> Value type.
      * @return the {@link CacheFrontend} for value retrieval.
+     * @throws IllegalArgumentException if {@code tracking} is {@code null}, disabled, redirected or opt-in.
+     * @throws IllegalStateException if a node connection did not negotiate RESP3.
      * @since 7.7
      */
     public static <K, V> CacheFrontend<K, V> enable(CacheAccessor<K, V> cacheAccessor,
             StatefulRedisClusterConnection<K, V> connection, TrackingArgs tracking) {
 
+        LettuceAssert.notNull(tracking, "TrackingArgs must not be null");
+        LettuceAssert.isTrue(tracking.isEnabled(), "TrackingArgs must be enabled for Redis Cluster client-side caching");
         LettuceAssert.isTrue(!tracking.isRedirect(),
                 "TrackingArgs REDIRECT is not supported for Redis Cluster client-side caching");
         LettuceAssert.isTrue(!tracking.isOptin(), "TrackingArgs OPTIN is not supported for Redis Cluster client-side caching");
+
+        // snapshot the mutable args so reconnect replay does not observe later modifications
+        TrackingArgs trackingSnapshot = tracking.copy();
 
         for (RedisClusterNode node : connection.getPartitions()) {
             // use host/port connections: slot-routed commands are served by connections keyed
             // by intent, host and port, not by the nodeId-keyed connections
             if (isServingUpstream(node)) {
-                enableTracking(connection, node.getUri(), ConnectionIntent.WRITE, tracking);
+                enableTracking(connection, node.getUri(), ConnectionIntent.WRITE, trackingSnapshot);
             }
         }
 
@@ -169,7 +176,7 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
             // reads from upstream nodes are served by the write-intent connections tracked above
             if (node.getRole().isReplica()) {
                 try {
-                    enableTracking(connection, node.getUri(), ConnectionIntent.READ, tracking);
+                    enableTracking(connection, node.getUri(), ConnectionIntent.READ, trackingSnapshot);
                 } catch (RedisConnectionException e) {
                     // the read path tolerates unavailable replicas as long as another candidate connects,
                     // so an unreachable replica must not fail cache setup

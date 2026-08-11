@@ -94,6 +94,16 @@ public class TrackingArgs implements CompositeArgument {
     }
 
     /**
+     * Return whether key tracking is enabled.
+     *
+     * @return {@code true} if {@link #enabled(boolean)} was configured with {@code true}.
+     * @since 7.7
+     */
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
      * Return whether invalidation messages are redirected to another client connection through {@code REDIRECT}.
      *
      * @return {@code true} if {@link #redirect(long)} was configured.
@@ -101,6 +111,26 @@ public class TrackingArgs implements CompositeArgument {
      */
     public boolean isRedirect() {
         return redirect != null;
+    }
+
+    /**
+     * Create a copy of {@code this} {@link TrackingArgs} to guard against later modifications of a shared, mutable instance.
+     *
+     * @return a new {@link TrackingArgs} with the same configuration.
+     * @since 7.7
+     */
+    public TrackingArgs copy() {
+
+        TrackingArgs copy = new TrackingArgs();
+        copy.enabled = this.enabled;
+        copy.redirect = this.redirect;
+        copy.bcast = this.bcast;
+        copy.prefixes = this.prefixes == null ? null : this.prefixes.clone();
+        copy.prefixCharset = this.prefixCharset;
+        copy.optin = this.optin;
+        copy.optout = this.optout;
+        copy.noloop = this.noloop;
+        return copy;
     }
 
     /**
