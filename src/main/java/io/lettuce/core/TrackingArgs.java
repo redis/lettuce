@@ -156,6 +156,16 @@ public class TrackingArgs implements CompositeArgument {
     }
 
     /**
+     * Return whether tracking requires a preceding {@code CLIENT CACHING yes} opt-in per read.
+     *
+     * @return {@code true} if {@link #optin()} was configured.
+     * @since 7.7
+     */
+    public boolean isOptin() {
+        return optin;
+    }
+
+    /**
      * When broadcasting is NOT active, normally track keys in read only commands, unless they are called immediately after a
      * CLIENT CACHING no command.
      *

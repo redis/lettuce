@@ -1,9 +1,12 @@
 package io.lettuce.core.support.caching;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -118,8 +121,9 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
      * whose push messages are not associated with cluster node connections.
      * <p>
      * Client-side caching for Redis Cluster requires RESP3. {@code TrackingArgs} redirection is not supported as invalidation
-     * messages can originate from any node; this method throws {@link IllegalArgumentException} for redirected tracking
-     * parameters and {@link IllegalStateException} if a node connection did not negotiate RESP3.
+     * messages can originate from any node, and {@code OPTIN} tracking is not supported as the cache frontend does not issue
+     * {@code CLIENT CACHING yes} before reads; this method throws {@link IllegalArgumentException} for redirected or opt-in
+     * tracking parameters and {@link IllegalStateException} if a node connection did not negotiate RESP3.
      * <p>
      * Nodes added to the cluster after this call do not have tracking enabled. Applications that must observe topology changes
      * should re-enable tracking after a topology refresh.
@@ -141,6 +145,7 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
 
         LettuceAssert.isTrue(!tracking.isRedirect(),
                 "TrackingArgs REDIRECT is not supported for Redis Cluster client-side caching");
+        LettuceAssert.isTrue(!tracking.isOptin(), "TrackingArgs OPTIN is not supported for Redis Cluster client-side caching");
 
         for (RedisClusterNode node : connection.getPartitions()) {
             // use host/port connections: slot-routed commands are served by connections keyed
@@ -160,7 +165,7 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         return create(cacheAccessor, connection);
     }
 
-    private static List<RedisNodeDescription> readCandidates(StatefulRedisClusterConnection<?, ?> connection) {
+    private static Collection<RedisNodeDescription> readCandidates(StatefulRedisClusterConnection<?, ?> connection) {
 
         ReadFrom readFrom = connection.getReadFrom();
 
@@ -169,9 +174,31 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
             return Collections.emptyList();
         }
 
-        List<RedisNodeDescription> nodes = new ArrayList<>(connection.getPartitions().getPartitions());
+        // mirror the per-slot selection of the cluster connection provider: ReadFrom sees an
+        // upstream node and its replicas, not the whole cluster
+        Set<RedisNodeDescription> candidates = new LinkedHashSet<>();
 
-        return readFrom.select(new ReadFrom.Nodes() {
+        for (RedisClusterNode upstream : connection.getPartitions()) {
+            if (upstream.is(RedisClusterNode.NodeFlag.UPSTREAM)) {
+                candidates.addAll(readFrom.select(slotGroup(connection, upstream)));
+            }
+        }
+
+        return candidates;
+    }
+
+    private static ReadFrom.Nodes slotGroup(StatefulRedisClusterConnection<?, ?> connection, RedisClusterNode upstream) {
+
+        List<RedisNodeDescription> nodes = new ArrayList<>();
+        nodes.add(upstream);
+
+        for (RedisClusterNode node : connection.getPartitions()) {
+            if (node.is(RedisClusterNode.NodeFlag.REPLICA) && upstream.getNodeId().equals(node.getSlaveOf())) {
+                nodes.add(node);
+            }
+        }
+
+        return new ReadFrom.Nodes() {
 
             @Override
             public List<RedisNodeDescription> getNodes() {
@@ -183,7 +210,7 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
                 return nodes.iterator();
             }
 
-        });
+        };
     }
 
     private static <K, V> void enableTracking(StatefulRedisClusterConnection<K, V> connection, RedisURI uri,

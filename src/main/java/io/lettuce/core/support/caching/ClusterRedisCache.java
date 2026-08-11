@@ -1,7 +1,9 @@
 package io.lettuce.core.support.caching;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.codec.RedisCodec;
@@ -39,19 +41,20 @@ class ClusterRedisCache<K, V> implements RedisCache<K, V> {
     }
 
     @Override
-    public void addInvalidationListener(java.util.function.Consumer<? super K> listener) {
+    public void addInvalidationListener(Consumer<? super K> listener) {
 
         connection.addListener((node, message) -> {
             if (message.getType().equals("invalidate")) {
 
-                List<Object> content = message.getContent(codec::decodeKey);
-                List<K> keys = (List<K>) content.get(1);
+                // decode only the key payload, the frame type element is not a key
+                List<Object> content = message.getContent();
+                List<Object> keys = (List<Object>) content.get(1);
 
                 if (keys == null) {
                     // null payload indicates a full invalidation, e.g. after FLUSHALL/FLUSHDB
                     clearListeners.forEach(Runnable::run);
                 } else {
-                    keys.forEach(listener);
+                    keys.forEach(key -> listener.accept(codec.decodeKey((ByteBuffer) key)));
                 }
             }
         });
