@@ -164,11 +164,31 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         // snapshot the mutable args so reconnect replay does not observe later modifications
         TrackingArgs trackingSnapshot = tracking.copy();
 
+        // clear cached entries when a tracked node connection reconnects: Redis dropped the tracking
+        // state with the old connection, so existing entries would no longer receive invalidations
+        Runnable clearAction = cacheAccessor::clear;
+
+        List<Runnable> rollbackActions = new ArrayList<>();
+
+        try {
+            enableClusterTracking(connection, trackingSnapshot, clearAction, rollbackActions);
+        } catch (RuntimeException e) {
+            // do not leave earlier nodes half-configured with tracking and reconnect listeners
+            rollback(rollbackActions);
+            throw e;
+        }
+
+        return create(cacheAccessor, connection);
+    }
+
+    private static <K, V> void enableClusterTracking(StatefulRedisClusterConnection<K, V> connection, TrackingArgs tracking,
+            Runnable clearAction, List<Runnable> rollbackActions) {
+
         for (RedisClusterNode node : connection.getPartitions()) {
             // use host/port connections: slot-routed commands are served by connections keyed
             // by intent, host and port, not by the nodeId-keyed connections
             if (isServingUpstream(node)) {
-                enableTracking(connection, node.getUri(), ConnectionIntent.WRITE, trackingSnapshot);
+                rollbackActions.add(enableTracking(connection, node.getUri(), ConnectionIntent.WRITE, tracking, clearAction));
             }
         }
 
@@ -176,7 +196,8 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
             // reads from upstream nodes are served by the write-intent connections tracked above
             if (node.getRole().isReplica()) {
                 try {
-                    enableTracking(connection, node.getUri(), ConnectionIntent.READ, trackingSnapshot);
+                    rollbackActions
+                            .add(enableTracking(connection, node.getUri(), ConnectionIntent.READ, tracking, clearAction));
                 } catch (RedisConnectionException e) {
                     // the read path tolerates unavailable replicas as long as another candidate connects,
                     // so an unreachable replica must not fail cache setup
@@ -185,8 +206,17 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
                 }
             }
         }
+    }
 
-        return create(cacheAccessor, connection);
+    private static void rollback(List<Runnable> rollbackActions) {
+
+        for (Runnable rollbackAction : rollbackActions) {
+            try {
+                rollbackAction.run();
+            } catch (RuntimeException e) {
+                LOG.warn("Cannot roll back key tracking", e);
+            }
+        }
     }
 
     private static Collection<RedisNodeDescription> readCandidates(StatefulRedisClusterConnection<?, ?> connection) {
@@ -252,8 +282,8 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         };
     }
 
-    private static <K, V> void enableTracking(StatefulRedisClusterConnection<K, V> connection, RedisURI uri,
-            ConnectionIntent intent, TrackingArgs tracking) {
+    private static <K, V> Runnable enableTracking(StatefulRedisClusterConnection<K, V> connection, RedisURI uri,
+            ConnectionIntent intent, TrackingArgs tracking, Runnable clearAction) {
 
         StatefulRedisConnection<K, V> nodeConnection = connection.getConnection(uri.getHost(), uri.getPort(), intent);
         StatefulRedisConnectionImpl<K, V> nodeConnectionImpl = (StatefulRedisConnectionImpl<K, V>) nodeConnection;
@@ -265,14 +295,29 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         nodeConnection.sync().clientTracking(tracking);
 
         // CLIENT TRACKING is connection state that the reconnect handshake does not restore, re-apply it
-        nodeConnectionImpl.addListener(new RedisConnectionStateListener() {
+        RedisConnectionStateListener trackingRestorer = new RedisConnectionStateListener() {
 
             @Override
             public void onRedisConnected(RedisChannelHandler<?, ?> connectionHandler, SocketAddress socketAddress) {
-                nodeConnection.async().clientTracking(tracking);
+
+                // Redis dropped the tracking state with the old connection: entries cached so far no
+                // longer receive invalidations and must be evicted
+                clearAction.run();
+
+                nodeConnection.async().clientTracking(tracking).exceptionally(e -> {
+                    LOG.warn("Cannot re-enable key tracking on {} after reconnect, reads from this node are not tracked", uri,
+                            e);
+                    return null;
+                });
             }
 
-        });
+        };
+        nodeConnectionImpl.addListener(trackingRestorer);
+
+        return () -> {
+            nodeConnectionImpl.removeListener(trackingRestorer);
+            nodeConnection.async().clientTracking(TrackingArgs.Builder.enabled(false));
+        };
     }
 
     /**
