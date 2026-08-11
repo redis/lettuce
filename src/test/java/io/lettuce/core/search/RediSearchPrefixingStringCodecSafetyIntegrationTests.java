@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -164,8 +165,10 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
 
     /**
      * Reproduces what the codec applies to a key, then escapes RediSearch-reserved characters introduced by the prefix so the
-     * result is safe to splice into a query/filter expression as {@code @<ref>}. Every call site that references a schema field
-     * inside a raw expression has to pay this cost.
+     * result is safe to splice into a query expression as {@code @<ref>}. Every call site that references a schema field inside
+     * a raw query has to pay this cost. Only the query language unescapes {@code \:} — {@code FILTER}/aggregation expressions
+     * keep the backslash in the attribute name and never resolve, so schema aliases are the workaround there (see
+     * {@link #createArgsFilterExpressionMustResolveAgainstSchemaThroughCodec()}).
      */
     private static String escapedFieldRef(String field) {
         String encoded = StandardCharsets.UTF_8.decode(new PrefixingStringCodec(CODEC_PREFIX).encodeKey(field)).toString();
@@ -239,28 +242,46 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
     }
 
     /**
-     * {@code FT.CREATE ... FILTER <expression>} is sent raw via {@code args.add(filter)} and evaluated at indexing time, so the
-     * filter must reference the schema field by its encoded name ({@code tenant1:price}, {@code ':'} escaped). The predicate
-     * ({@code @price>1000}) must drop the seeded {@code price=50} document, yielding count {@code 0}.
+     * {@code FT.CREATE ... FILTER <expression>} is sent raw via {@code args.add(filter)} and evaluated at indexing time against
+     * the stored hash fields, deciding whether a prefix-matching document is admitted to the index; the stored hash itself is
+     * never touched. The expression language cannot reference a codec-prefixed field directly: an unescaped {@code ':'}
+     * ({@code @tenant1:price}) is rejected as a syntax error at {@code FT.CREATE} time, and an escaped one
+     * ({@code @tenant1\:price}) keeps the backslash as part of the attribute name and never resolves — unlike the query
+     * language, which unescapes {@code \:}. A filter whose attribute does not resolve silently excludes every document from the
+     * index, so a count-0 assertion alone proves nothing. The workaround is a schema alias: declare the codec-encoded field
+     * name with a colon-free {@code AS} alias and reference the alias in the filter. The alias resolves by looking up the
+     * schema field name among the stored hash fields, so the caller still has to reproduce the codec's transformation on the
+     * schema name for the filter to see the value — the positive control below detects a mismatch on that channel.
      */
     @Test
     void createArgsFilterExpressionMustResolveAgainstSchemaThroughCodec() {
-        String filteredIndex = "filter-expr-idx";
+        String keepingIndex = "filter-expr-keep-idx";
+        String excludingIndex = "filter-expr-excl-idx";
 
-        // Seed the hash BEFORE creating the index so the FILTER predicate is exercised during the initial scan.
+        // Seed the hash BEFORE creating the indexes so the FILTER predicate is exercised during the initial scan. hmset
+        // routes field names through the key codec, so the stored fields are "tenant1:title" / "tenant1:price".
         Map<String, String> doc = new HashMap<>();
         doc.put("title", "Filtered Redis search guide");
         doc.put("price", "50");
         redis.hmset("filtered:1", doc);
 
-        // Manual workaround: schema field "price" is codec-encoded to "tenant1:price"; ':' must be escaped inside the
-        // @field reference so the FT.CREATE FILTER expression parser resolves the encoded schema name. Use a NUMERIC
-        // predicate that excludes the seeded document (price=50) so the filter fires unambiguously.
-        CreateArgs create = CreateArgs.builder().on(CreateArgs.TargetType.HASH).withPrefix(CODEC_PREFIX + "filtered:")
-                .filter("@" + escapedFieldRef("price") + ">1000").build();
-        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
-        FieldArgs priceField = NumericFieldArgs.builder().name("price").build();
-        redis.ftCreate(filteredIndex, create, Arrays.asList(titleField, priceField));
+        // Manual workaround: the schema declares the codec-encoded field name with a colon-free alias; the filter references
+        // the alias. escapedFieldRef must NOT be used here — the FILTER expression parser keeps '\' in the attribute name.
+        FieldArgs titleField = TextFieldArgs.builder().name(encodedFieldRef("title")).as("title").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name(encodedFieldRef("price")).as("price").build();
+
+        // Positive control: a predicate the seeded document (price=50) satisfies. This assertion is what detects a codec
+        // regression — if the schema field name stops matching the codec-encoded hash field, the alias resolves to a missing
+        // attribute, the filter excludes the document from the index, and the count falls to 0.
+        CreateArgs keeping = CreateArgs.builder().on(CreateArgs.TargetType.HASH).withPrefix(CODEC_PREFIX + "filtered:")
+                .filter("@price>10").build();
+        redis.ftCreate(keepingIndex, keeping, Arrays.asList(titleField, priceField));
+
+        // Negative: a predicate that keeps the document out of the index. Only meaningful next to the positive control — an
+        // unresolved attribute also yields 0.
+        CreateArgs excluding = CreateArgs.builder().on(CreateArgs.TargetType.HASH).withPrefix(CODEC_PREFIX + "filtered:")
+                .filter("@price>1000").build();
+        redis.ftCreate(excludingIndex, excluding, Arrays.asList(titleField, priceField));
 
         try {
             Thread.sleep(500);
@@ -268,12 +289,14 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
             Thread.currentThread().interrupt();
         }
 
-        SearchReply<String> result = redis.ftSearch(filteredIndex, "*");
+        SearchReply<String> kept = redis.ftSearch(keepingIndex, "*");
+        assertThat(kept.getCount())
+                .as("FILTER @price>10 must keep the price=50 document in the index; 0 means the aliased schema field did not "
+                        + "resolve against the codec-encoded hash field and the filter excluded everything from the index")
+                .isEqualTo(1L);
 
-        assertThat(result.getCount())
-                .as("FILTER @price>1000 must resolve against the schema field; if this fails with 1, the filter expression "
-                        + "references the field raw while the schema codec-encoded it, and the predicate is silently treated "
-                        + "as match-all")
+        SearchReply<String> excluded = redis.ftSearch(excludingIndex, "*");
+        assertThat(excluded.getCount()).as("FILTER @price>1000 must exclude the price=50 document from the index")
                 .isEqualTo(0L);
     }
 
@@ -500,7 +523,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
 
         CreateArgs prefixCreate = CreateArgs.builder().on(CreateArgs.TargetType.HASH).withPrefix(CODEC_PREFIX + "doc:").build();
         FieldArgs titleField = TextFieldArgs.builder().name(encodedFieldRef("title")).build();
-        redis.ftCreate("prefix-test-idx", prefixCreate, Arrays.asList(titleField));
+        redis.ftCreate("prefix-test-idx", prefixCreate, Collections.singletonList(titleField));
 
         Map<String, String> doc = new HashMap<>();
         doc.put("title", "Redis search guide");
@@ -529,7 +552,7 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
 
         CreateArgs prefixCreate = CreateArgs.builder().on(CreateArgs.TargetType.JSON).withPrefix(CODEC_PREFIX + "doc:").build();
         FieldArgs titleField = TextFieldArgs.builder().name("$.title").as(encodedFieldRef("title")).build();
-        redis.ftCreate("prefix-test-json-idx", prefixCreate, Arrays.asList(titleField));
+        redis.ftCreate("prefix-test-json-idx", prefixCreate, Collections.singletonList(titleField));
 
         redis.jsonSet("doc:1", JsonPath.ROOT_PATH, redis.getJsonParser().createJsonValue("{\"title\":\"Redis search guide\"}"));
 
