@@ -129,7 +129,7 @@ class RedisCMSCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, List<Long>> cmsQuery(K key, V... values) {
         notNullKey(key);
-        notEmpty(values);
+        notEmptyValues(values);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValues(values);
 
