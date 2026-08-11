@@ -94,6 +94,16 @@ public class TrackingArgs implements CompositeArgument {
     }
 
     /**
+     * Return whether invalidation messages are redirected to another client connection through {@code REDIRECT}.
+     *
+     * @return {@code true} if {@link #redirect(long)} was configured.
+     * @since 7.7
+     */
+    public boolean isRedirect() {
+        return redirect != null;
+    }
+
+    /**
      * Enable tracking in broadcasting mode. In this mode invalidation messages are reported for all the prefixes specified,
      * regardless of the keys requested by the connection. Instead when the broadcasting mode is not enabled, Redis will track
      * which keys are fetched using read-only commands, and will report invalidation messages only for such keys.

@@ -35,6 +35,16 @@ public interface RedisCache<K, V> {
     void addInvalidationListener(java.util.function.Consumer<? super K> listener);
 
     /**
+     * Register a {@code listener} that is notified if Redis reports a full invalidation of the cache, for example after
+     * {@code FLUSHALL} or {@code FLUSHDB}. The default implementation does not notify the listener.
+     *
+     * @param listener the listener to notify.
+     * @since 7.7
+     */
+    default void addClearListener(Runnable listener) {
+    }
+
+    /**
      * Closes this Redis cache and releases any connections associated with it. If the cache is already closed then invoking
      * this method has no effect.
      */

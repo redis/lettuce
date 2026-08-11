@@ -13,6 +13,9 @@ import io.lettuce.core.cluster.StatefulRedisClusterConnectionImpl;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.ConnectionIntent;
+import io.lettuce.core.protocol.ProtocolVersion;
 
 /**
  * Utility to provide server-side assistance for client-side caches. This is a {@link CacheFrontend} that represents a two-level
@@ -101,13 +104,16 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
      * Enable server-assisted Client side caching for the given {@link CacheAccessor} and
      * {@link StatefulRedisClusterConnection}.
      * <p>
-     * {@code CLIENT TRACKING} is enabled on each upstream (master) node connection: invalidation messages for a key are emitted
-     * by the node that serves the key's slot, so tracking must be active there. Note that a keyless {@code CLIENT TRACKING}
-     * command issued through the cluster command API would be routed to the default connection only, whose push messages are
-     * not associated with cluster node connections.
+     * {@code CLIENT TRACKING} is enabled on each cluster node connection: invalidation messages for a key are emitted by the
+     * node that serves the key's slot (or, for replica reads, by the replica the value was read from), so tracking must be
+     * active there. Upstream (master) nodes are tracked through their write-intent connections and replicas through their
+     * read-intent connections so that reads routed by {@link io.lettuce.core.ReadFrom} settings are registered for tracking as
+     * well. Note that a keyless {@code CLIENT TRACKING} command issued through the cluster command API would be routed to the
+     * default connection only, whose push messages are not associated with cluster node connections.
      * <p>
-     * Client-side caching for Redis Cluster requires RESP3 ({@code TrackingArgs} redirection is not supported as invalidation
-     * messages can originate from any node).
+     * Client-side caching for Redis Cluster requires RESP3. {@code TrackingArgs} redirection is not supported as invalidation
+     * messages can originate from any node; this method throws {@link IllegalArgumentException} for redirected tracking
+     * parameters and {@link IllegalStateException} if a node connection did not negotiate RESP3.
      * <p>
      * Nodes added to the cluster after this call do not have tracking enabled. Applications that must observe topology changes
      * should re-enable tracking after a topology refresh.
@@ -127,16 +133,34 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
     public static <K, V> CacheFrontend<K, V> enable(CacheAccessor<K, V> cacheAccessor,
             StatefulRedisClusterConnection<K, V> connection, TrackingArgs tracking) {
 
+        LettuceAssert.isTrue(!tracking.isRedirect(),
+                "TrackingArgs REDIRECT is not supported for Redis Cluster client-side caching");
+
         for (RedisClusterNode node : connection.getPartitions()) {
+            // use host/port connections: slot-routed commands are served by connections keyed
+            // by intent, host and port, not by the nodeId-keyed connections
             if (node.is(RedisClusterNode.NodeFlag.UPSTREAM)) {
-                // use the host/port connection: slot-routed commands are served by connections keyed
-                // by host and port, not by the nodeId-keyed connections
-                RedisURI uri = node.getUri();
-                connection.getConnection(uri.getHost(), uri.getPort()).sync().clientTracking(tracking);
+                enableTracking(connection, node, ConnectionIntent.WRITE, tracking);
+            } else if (node.is(RedisClusterNode.NodeFlag.REPLICA)) {
+                enableTracking(connection, node, ConnectionIntent.READ, tracking);
             }
         }
 
         return create(cacheAccessor, connection);
+    }
+
+    private static <K, V> void enableTracking(StatefulRedisClusterConnection<K, V> connection, RedisClusterNode node,
+            ConnectionIntent intent, TrackingArgs tracking) {
+
+        RedisURI uri = node.getUri();
+        StatefulRedisConnection<K, V> nodeConnection = connection.getConnection(uri.getHost(), uri.getPort(), intent);
+
+        ProtocolVersion protocolVersion = ((StatefulRedisConnectionImpl<K, V>) nodeConnection).getConnectionState()
+                .getNegotiatedProtocolVersion();
+        LettuceAssert.assertState(protocolVersion == ProtocolVersion.RESP3,
+                "Client-side caching for Redis Cluster requires RESP3");
+
+        nodeConnection.sync().clientTracking(tracking);
     }
 
     /**
@@ -170,6 +194,7 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         ClientSideCaching<K, V> caching = new ClientSideCaching<>(cacheAccessor, redisCache);
 
         redisCache.addInvalidationListener(caching::notifyInvalidate);
+        redisCache.addClearListener(cacheAccessor::clear);
         caching.addInvalidationListener(cacheAccessor::evict);
 
         return caching;

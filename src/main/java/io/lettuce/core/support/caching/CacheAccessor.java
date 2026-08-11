@@ -59,4 +59,16 @@ public interface CacheAccessor<K, V> {
      */
     void evict(K key);
 
+    /**
+     * Evict all mappings from this cache. Invoked when Redis reports a full invalidation, for example after {@code FLUSHALL} or
+     * {@code FLUSHDB}.
+     * <p>
+     * The default implementation is a no-op; implementations should override this method to avoid serving stale entries after a
+     * flush.
+     *
+     * @since 7.7
+     */
+    default void clear() {
+    }
+
 }

@@ -1,6 +1,7 @@
 package io.lettuce.core.support.caching;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.codec.RedisCodec;
@@ -19,6 +20,8 @@ class ClusterRedisCache<K, V> implements RedisCache<K, V> {
     private final StatefulRedisClusterConnection<K, V> connection;
 
     private final RedisCodec<K, V> codec;
+
+    private final List<Runnable> clearListeners = new CopyOnWriteArrayList<>();
 
     public ClusterRedisCache(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
@@ -43,9 +46,20 @@ class ClusterRedisCache<K, V> implements RedisCache<K, V> {
 
                 List<Object> content = message.getContent(codec::decodeKey);
                 List<K> keys = (List<K>) content.get(1);
-                keys.forEach(listener);
+
+                if (keys == null) {
+                    // null payload indicates a full invalidation, e.g. after FLUSHALL/FLUSHDB
+                    clearListeners.forEach(Runnable::run);
+                } else {
+                    keys.forEach(listener);
+                }
             }
         });
+    }
+
+    @Override
+    public void addClearListener(Runnable listener) {
+        clearListeners.add(listener);
     }
 
     @Override
