@@ -119,6 +119,29 @@ class HashImportOutboundHandlerUnitTests {
     }
 
     @Test
+    void ignoresAlreadyCompletedTransactionMarker() {
+
+        EmbeddedChannel channel = channel();
+        HashImport<String> fieldset = HashImport.of("f1", "f2", "f3");
+
+        channel.writeOutbound(command(CommandType.MULTI));
+        drain(channel);
+
+        // an EXEC that was cancelled/timed-out before its write: CommandHandler drops it (isWriteable == !isDone), so it never
+        // reaches Redis and the server stays inside MULTI. Observing it would wrongly close our transaction view.
+        AsyncCommand<String, String, String> doneExec = new AsyncCommand<>(command(CommandType.EXEC));
+        doneExec.cancel(true);
+        channel.writeOutbound(doneExec);
+        drain(channel);
+
+        // transaction must still be considered open: a first-use SET must NOT be prepared (injecting PREPARE would land in
+        // the still-open server transaction)
+        channel.writeOutbound(set(fieldset));
+        assertThat(drain(channel)).as("a dropped EXEC must not close the transaction view")
+                .noneMatch(HashImportOutboundHandlerUnitTests::isPrepare);
+    }
+
+    @Test
     void repreparesAfterFailedPrepare() {
 
         EmbeddedChannel channel = channel();
