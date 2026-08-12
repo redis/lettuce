@@ -19,7 +19,12 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.HashImport;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 
@@ -89,11 +94,32 @@ public class HashImportIntegrationTests {
         assertThatThrownBy(() -> redis.himportSet(k3, fieldset, "carol", "c@x.com", "40"))
                 .isInstanceOf(IllegalStateException.class);
 
+        for (String importedKey : new String[] { k1, k2 }) {
+            redis.exists(importedKey);
+            assertThatThrownBy(() -> rawHimportSet(importedKey, fieldset.name(), "carol", "c@x.com", "40"))
+                    .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("no such fieldset");
+        }
+
         // ...and the connection remains fully usable for a new fieldset afterwards.
         HashImport<String> other = HashImport.of("sku", "price");
         assertThat(redis.himportSet(k3, other, "sku-1", "9.99")).isEqualTo("OK");
         assertThat(redis.hget(k3, "sku")).isEqualTo("sku-1");
         other.close();
+    }
+
+    /**
+     * Dispatch a raw {@code HIMPORT SET} that carries the fieldset name directly. Unlike {@code himportSet}, this is not a
+     * {@link io.lettuce.core.HashImportSetCommand}, so the outbound handler does not auto-inject a {@code PREPARE} for it —
+     * letting a test observe whether the fieldset is still prepared on the server.
+     */
+    private String rawHimportSet(String key, String fieldsetName, String... values) {
+
+        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(CommandType.SET).addKey(key)
+                .addKey(fieldsetName);
+        for (String value : values) {
+            args.addValue(value);
+        }
+        return redis.dispatch(CommandType.HIMPORT, new StatusOutput<>(StringCodec.UTF8), args);
     }
 
     /**
