@@ -7,7 +7,9 @@
 package io.lettuce.core;
 
 import java.util.Collection;
+import java.util.List;
 
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 
 import io.netty.channel.ChannelDuplexHandler;
@@ -19,16 +21,16 @@ import io.netty.channel.ChannelPromise;
  * outbound write into its individual commands (a single command or a batched {@link Collection}) and, on the channel event
  * loop:
  * <ol>
- * <li>feeds each command to the {@link TransactionState} so the wire-order {@code MULTI} state stays current, and lets the
- * context inject a {@code HIMPORT PREPARE} ahead of the first {@code SET} for a fieldset
- * ({@link HashImportContext#prepareFor}),</li>
+ * <li>feeds each command to the {@link TransactionState} so the wire-order {@code MULTI} state stays current, and asks the
+ * context whether a {@code HIMPORT PREPARE} must be injected ahead of the first {@code SET} for a fieldset
+ * ({@link HashImportContext#prepareFor}) — writing the returned command itself,</li>
  * <li>after forwarding, if a cleanup {@code DISCARD} is pending ({@link HashImportContext#isDiscardsPending()}) and no
- * transaction is open, flushes it ({@link HashImportContext#flushDeferredDiscards}) so it lands right after the
+ * transaction is open, drains it ({@link HashImportContext#drainDiscards()}) and writes it so it lands right after the
  * {@code EXEC}/{@code DISCARD} that ended the transaction — and never inside one.</li>
  * </ol>
- * The handler owns transaction tracking (it holds and drives {@link TransactionState}); the context owns the pending
- * {@code DISCARD}s and performs the flush when told to. A fresh handler, context, and transaction state are created per channel
- * init, so re-preparation after a reconnect happens automatically.
+ * The handler owns transaction tracking (it holds and drives {@link TransactionState}) and performs every write; the context is
+ * netty-unaware and only produces the commands to send and holds the channel-scoped state. A fresh handler, context, and
+ * transaction state are created per channel init, so re-preparation after a reconnect happens automatically.
  * <p>
  * This class is part of the internal API.
  *
@@ -62,15 +64,21 @@ class HashImportOutboundHandler extends ChannelDuplexHandler {
         super.write(ctx, msg, promise);
 
         if (context.isDiscardsPending() && !transactionState.isOpen()) {
-            context.flushDeferredDiscards(ctx);
+            List<RedisCommand<?, ?, ?>> discards = context.drainDiscards();
+            if (!discards.isEmpty()) {
+                ctx.writeAndFlush(discards);
+            }
         }
     }
 
     private void observeAndPrepare(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
         transactionState.observe(command);
 
-        if (!transactionState.isOpen()) {
-            context.prepareFor(command, ctx);
+        if (!transactionState.isOpen() && command.getType() == CommandType.HIMPORT) {
+            RedisCommand<?, ?, ?> prepare = context.prepareFor(command);
+            if (prepare != null) {
+                ctx.write(prepare);
+            }
         }
     }
 
