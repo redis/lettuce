@@ -9,10 +9,10 @@ package io.lettuce.core;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.protocol.AsyncCommand;
@@ -55,7 +55,7 @@ class HashImportContext {
 
     private final Set<HashImport<?>> prepared = Collections.newSetFromMap(new WeakHashMap<>());
 
-    private final BlockingQueue<RedisCommand<?, ?, ?>> pendingDiscards = new LinkedBlockingQueue<>();
+    private final Queue<RedisCommand<?, ?, ?>> pendingDiscards = new ConcurrentLinkedQueue<>();
 
     private volatile boolean discardsPending;
 
@@ -72,7 +72,9 @@ class HashImportContext {
 
         discardsPending = false;
         List<RedisCommand<?, ?, ?>> batch = new ArrayList<>();
-        pendingDiscards.drainTo(batch);
+        for (RedisCommand<?, ?, ?> command; (command = pendingDiscards.poll()) != null;) {
+            batch.add(command);
+        }
         return batch;
     }
 
