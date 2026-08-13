@@ -213,25 +213,26 @@ public interface RedisTDigestAsyncCommands<K, V> {
     RedisFuture<List<Double>> tdigestQuantile(K key, double... quantiles);
 
     /**
-     * Returns, for the given value, the estimated rank, that is the number of observations that are smaller than the value.
-     * Ranks are zero-based.
+     * Returns, for the given value, the estimated rank, that is the number of observations that are smaller than the value plus
+     * half the number of observations that are equal to the value. Ranks are zero-based.
      *
      * @param key the key.
      * @param value the value for which the rank should be estimated.
      * @return List&lt;Long&gt; a single-element list holding the estimated rank of the value. The rank is {@code -1} if the
-     *         value is smaller than the minimum observation and equal to the number of observations if it is larger than the
-     *         maximum.
+     *         value is smaller than the minimum observation, equal to the number of observations if it is larger than the
+     *         maximum, and {@code -2} if the sketch is empty.
      */
     RedisFuture<List<Long>> tdigestRank(K key, V value);
 
     /**
-     * Returns, for each given value, the estimated rank, that is the number of observations that are smaller than the value.
-     * Ranks are zero-based.
+     * Returns, for each given value, the estimated rank, that is the number of observations that are smaller than the value
+     * plus half the number of observations that are equal to the value. Ranks are zero-based.
      *
      * @param key the key.
      * @param values the values for which the ranks should be estimated.
      * @return List&lt;Long&gt; one entry per input value holding its estimated rank. An entry is {@code -1} if the value is
      *         smaller than the minimum observation and equal to the number of observations if it is larger than the maximum.
+     *         All entries are {@code -2} if the sketch is empty.
      */
     RedisFuture<List<Long>> tdigestRank(K key, V... values);
 
@@ -245,25 +246,25 @@ public interface RedisTDigestAsyncCommands<K, V> {
 
     /**
      * Returns, for the given value, the estimated reverse rank, that is the number of observations that are larger than the
-     * value. Reverse ranks are zero-based.
+     * value plus half the number of observations that are equal to the value. Reverse ranks are zero-based.
      *
      * @param key the key.
      * @param value the value for which the reverse rank should be estimated.
      * @return List&lt;Long&gt; a single-element list holding the estimated reverse rank of the value. The reverse rank is
-     *         {@code -1} if the value is larger than the maximum observation and equal to the number of observations if it is
-     *         smaller than the minimum.
+     *         {@code -1} if the value is larger than the maximum observation, equal to the number of observations if it is
+     *         smaller than the minimum, and {@code -2} if the sketch is empty.
      */
     RedisFuture<List<Long>> tdigestRevRank(K key, V value);
 
     /**
      * Returns, for each given value, the estimated reverse rank, that is the number of observations that are larger than the
-     * value. Reverse ranks are zero-based.
+     * value plus half the number of observations that are equal to the value. Reverse ranks are zero-based.
      *
      * @param key the key.
      * @param values the values for which the reverse ranks should be estimated.
      * @return List&lt;Long&gt; one entry per input value holding its estimated reverse rank. An entry is {@code -1} if the
      *         value is larger than the maximum observation and equal to the number of observations if it is smaller than the
-     *         minimum.
+     *         minimum. All entries are {@code -2} if the sketch is empty.
      */
     RedisFuture<List<Long>> tdigestRevRank(K key, V... values);
 

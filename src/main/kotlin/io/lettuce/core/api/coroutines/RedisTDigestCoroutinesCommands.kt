@@ -215,25 +215,26 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
     suspend fun tdigestQuantile(key: K, vararg quantiles: Double): List<Double>
 
     /**
-     * Returns, for the given value, the estimated rank, that is the number of observations that are smaller than the value.
-     * Ranks are zero-based.
+     * Returns, for the given value, the estimated rank, that is the number of observations that are smaller than the value
+     * plus half the number of observations that are equal to the value. Ranks are zero-based.
      *
      * @param key the key.
      * @param value the value for which the rank should be estimated.
      * @return List<Long> a single-element list holding the estimated rank of the value. The rank is `-1` if the
-     *         value is smaller than the minimum observation and equal to the number of observations if it is larger than the
-     *         maximum.
+     *         value is smaller than the minimum observation, equal to the number of observations if it is larger than the
+     *         maximum, and `-2` if the sketch is empty.
      */
     suspend fun tdigestRank(key: K, value: V): List<Long>
 
     /**
-     * Returns, for each given value, the estimated rank, that is the number of observations that are smaller than the value.
-     * Ranks are zero-based.
+     * Returns, for each given value, the estimated rank, that is the number of observations that are smaller than the value
+     * plus half the number of observations that are equal to the value. Ranks are zero-based.
      *
      * @param key the key.
      * @param values the values for which the ranks should be estimated.
      * @return List<Long> one entry per input value holding its estimated rank. An entry is `-1` if the value is
      *         smaller than the minimum observation and equal to the number of observations if it is larger than the maximum.
+     *         All entries are `-2` if the sketch is empty.
      */
     suspend fun tdigestRank(key: K, vararg values: V): List<Long>
 
@@ -247,25 +248,25 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Returns, for the given value, the estimated reverse rank, that is the number of observations that are larger than the
-     * value. Reverse ranks are zero-based.
+     * value plus half the number of observations that are equal to the value. Reverse ranks are zero-based.
      *
      * @param key the key.
      * @param value the value for which the reverse rank should be estimated.
      * @return List<Long> a single-element list holding the estimated reverse rank of the value. The reverse rank is
-     *         `-1` if the value is larger than the maximum observation and equal to the number of observations if it is
-     *         smaller than the minimum.
+     *         `-1` if the value is larger than the maximum observation, equal to the number of observations if it is
+     *         smaller than the minimum, and `-2` if the sketch is empty.
      */
     suspend fun tdigestRevRank(key: K, value: V): List<Long>
 
     /**
      * Returns, for each given value, the estimated reverse rank, that is the number of observations that are larger than the
-     * value. Reverse ranks are zero-based.
+     * value plus half the number of observations that are equal to the value. Reverse ranks are zero-based.
      *
      * @param key the key.
      * @param values the values for which the reverse ranks should be estimated.
      * @return List<Long> one entry per input value holding its estimated reverse rank. An entry is `-1` if the
      *         value is larger than the maximum observation and equal to the number of observations if it is smaller than the
-     *         minimum.
+     *         minimum. All entries are `-2` if the sketch is empty.
      */
     suspend fun tdigestRevRank(key: K, vararg values: V): List<Long>
 
