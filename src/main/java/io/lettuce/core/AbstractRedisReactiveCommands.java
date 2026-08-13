@@ -30,6 +30,7 @@ import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.probabilistic.CfInfoValue;
 import io.lettuce.core.probabilistic.CMSInfoValue;
 import io.lettuce.core.probabilistic.MergePair;
+import io.lettuce.core.probabilistic.TDigestInfoValue;
 import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
@@ -58,6 +59,7 @@ import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.probabilistic.TopKInfoValue;
 import io.lettuce.core.probabilistic.TopKListValue;
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs;
 import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -125,14 +127,15 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author dae won
  * @since 4.0
  */
-public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclReactiveCommands<K, V>,
-        RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
-        RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
-        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
-        BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
-        RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>,
-        RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V>,
-        RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>, RedisCMSReactiveCommands<K, V> {
+public abstract class AbstractRedisReactiveCommands<K, V>
+        implements RedisAclReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
+        RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
+        RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
+        RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
+        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
+        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>,
+        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>,
+        RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -153,6 +156,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     private final RedisTopKCommandBuilder<K, V> topKCommandBuilder;
 
     private final RedisCMSCommandBuilder<K, V> cmsCommandBuilder;
+
+    private final RedisTDigestCommandBuilder<K, V> tDigestCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -182,6 +187,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
         this.cuckooFilterCommandBuilder = new RedisCuckooFilterCommandBuilder<>(codec);
         this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
         this.cmsCommandBuilder = new RedisCMSCommandBuilder<>(codec);
+        this.tDigestCommandBuilder = new RedisTDigestCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -4635,6 +4641,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
         return createMono(() -> topKCommandBuilder.topKReserve(key, k, args));
     }
 
+    // --- Redis CMS Commands ---
+
     @Override
     public Flux<Long> cmsIncrBy(K key, IncrementPair<V> pair) {
         return createDissolvingFlux(() -> cmsCommandBuilder.cmsIncrBy(key, pair));
@@ -4688,6 +4696,133 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Flux<Long> cmsQuery(K key, V... values) {
         return createDissolvingFlux(() -> cmsCommandBuilder.cmsQuery(key, values));
+    }
+
+    // --- Redis T-Digest Commands ---
+
+    @Override
+    public Mono<String> tdigestAdd(K key, double value) {
+        return createMono(() -> tDigestCommandBuilder.tdigestAdd(key, value));
+    }
+
+    @Override
+    public Mono<String> tdigestAdd(K key, double... values) {
+        return createMono(() -> tDigestCommandBuilder.tdigestAdd(key, values));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRank(K key, long rank) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRank(key, rank));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRank(K key, long... ranks) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRank(key, ranks));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRevRank(K key, long reverseRank) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRevRank(key, reverseRank));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRevRank(K key, long... reverseRanks) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRevRank(key, reverseRanks));
+    }
+
+    @Override
+    public Flux<Double> tdigestCDF(K key, double value) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestCDF(key, value));
+    }
+
+    @Override
+    public Flux<Double> tdigestCDF(K key, double... values) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestCDF(key, values));
+    }
+
+    @Override
+    public Mono<String> tdigestCreate(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestCreate(key));
+    }
+
+    @Override
+    public Mono<String> tdigestCreate(K key, long compression) {
+        return createMono(() -> tDigestCommandBuilder.tdigestCreate(key, compression));
+    }
+
+    @Override
+    public Mono<TDigestInfoValue> tdigestInfo(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestInfo(key));
+    }
+
+    @Override
+    public Mono<Double> tdigestMax(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMax(key));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, K sourceKey) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, K sourceKey, TDigestMergeArgs mergeArgs) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey, mergeArgs));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, K... sourceKeys) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKeys));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, TDigestMergeArgs mergeArgs, K... sourceKeys) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, mergeArgs, sourceKeys));
+    }
+
+    @Override
+    public Mono<Double> tdigestMin(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMin(key));
+    }
+
+    @Override
+    public Flux<Double> tdigestQuantile(K key, double quantile) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestQuantile(key, quantile));
+    }
+
+    @Override
+    public Flux<Double> tdigestQuantile(K key, double... quantiles) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestQuantile(key, quantiles));
+    }
+
+    @Override
+    public Flux<Long> tdigestRank(K key, double value) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRank(key, value));
+    }
+
+    @Override
+    public Flux<Long> tdigestRank(K key, double... values) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRank(key, values));
+    }
+
+    @Override
+    public Mono<String> tdigestReset(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestReset(key));
+    }
+
+    @Override
+    public Flux<Long> tdigestRevRank(K key, double value) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRevRank(key, value));
+    }
+
+    @Override
+    public Flux<Long> tdigestRevRank(K key, double... values) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRevRank(key, values));
+    }
+
+    @Override
+    public Mono<Double> tdigestTrimmedMean(K key, double lowCutQuantile, double highCutQuantile) {
+        return createMono(() -> tDigestCommandBuilder.tdigestTrimmedMean(key, lowCutQuantile, highCutQuantile));
     }
 
 }

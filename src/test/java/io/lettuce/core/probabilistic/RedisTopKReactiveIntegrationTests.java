@@ -4,9 +4,8 @@
  *
  * SPDX-License-Identifier: MIT
  */
-package io.lettuce.core.probabilistic.topk;
+package io.lettuce.core.probabilistic;
 
-import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;

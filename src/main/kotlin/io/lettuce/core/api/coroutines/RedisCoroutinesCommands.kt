@@ -56,6 +56,7 @@ interface RedisCoroutinesCommands<K : Any, V : Any> :
     RedisCuckooFilterCoroutinesCommands<K, V>,
     RedisTopKCoroutinesCommands<K, V>,
     RedisCMSCoroutinesCommands<K, V>,
+    RedisTDigestCoroutinesCommands<K, V>,
     RediSearchCoroutinesCommands<K, V> {
 
     /**

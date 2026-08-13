@@ -92,7 +92,9 @@ public class ReadOnlyCommands {
         // Top-K read-only commands
         TOPK_INFO, TOPK_LIST, TOPK_QUERY,
         // CMS read-only commands
-        CMS_INFO, CMS_QUERY
+        CMS_INFO, CMS_QUERY,
+        // T-Digest read-only commands
+        TDIGEST_BYRANK, TDIGEST_BYREVRANK, TDIGEST_CDF, TDIGEST_INFO, TDIGEST_MAX, TDIGEST_MIN, TDIGEST_QUANTILE, TDIGEST_RANK, TDIGEST_REVRANK, TDIGEST_TRIMMED_MEAN,
     }
 
     /**
