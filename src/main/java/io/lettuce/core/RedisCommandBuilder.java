@@ -1866,6 +1866,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     HashImportSetCommand<K, V> himportSet(K key, HashImport<K> fieldset, V... values) {
         notNullKey(key);
         LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(values, "Values " + MUST_NOT_BE_NULL);
+
+        if (values.length != fieldset.size()) {
+            throw new IllegalArgumentException("Number of values (" + values.length
+                    + ") must match the number of fields in the fieldset (" + fieldset.size() + ")");
+        }
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.SET).addKey(key).addKey(fieldset.name())
                 .addValues(values);

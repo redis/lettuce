@@ -40,7 +40,6 @@ import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonType;
@@ -1607,14 +1606,9 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<String> himportSet(K key, HashImport<K> fieldset, V... values) {
-        LettuceAssert.notNull(fieldset, "HashImport must not be null");
-        if (values.length != fieldset.size()) {
-            throw new IllegalArgumentException("Number of values (" + values.length
-                    + ") must match the number of fields in the fieldset (" + fieldset.size() + ")");
-        }
-        if (isMulti()) {
-            throw new UnsupportedOperationException("HIMPORT SET is not supported within a MULTI transaction");
-        }
+
+        HashImportSetCommand<K, V> set = commandBuilder.himportSet(key, fieldset, values);
+
         if (!fieldset.retain()) {
             throw new IllegalStateException("HashImport has been discarded and must not be reused");
         }
@@ -1625,7 +1619,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         // write that netty has not drained yet.
         AsyncCommand<K, V, String> command;
         try {
-            command = dispatch(commandBuilder.himportSet(key, fieldset, values));
+            command = dispatch(set);
         } catch (RuntimeException e) {
             fieldset.release();
             throw e;
@@ -1633,11 +1627,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
         command.onComplete((status, error) -> fieldset.release());
         return command;
-    }
-
-    private boolean isMulti() {
-        return getConnection() instanceof StatefulRedisConnection
-                && ((StatefulRedisConnection<K, V>) getConnection()).isMulti();
     }
 
     @Override

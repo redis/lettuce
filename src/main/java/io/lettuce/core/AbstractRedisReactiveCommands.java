@@ -39,7 +39,6 @@ import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonPath;
@@ -1693,27 +1692,22 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     @Override
     public Mono<String> himportSet(K key, HashImport<K> fieldset, V... values) {
-        LettuceAssert.notNull(fieldset, "HashImport must not be null");
-        if (values.length != fieldset.size()) {
-            throw new IllegalArgumentException("Number of values (" + values.length
-                    + ") must match the number of fields in the fieldset (" + fieldset.size() + ")");
-        }
 
         return Mono.defer(() -> {
-            if (isMulti()) {
-                return Mono.error(new UnsupportedOperationException("HIMPORT SET is not supported within a MULTI transaction"));
+
+            HashImportSetCommand<K, V> set;
+            try {
+                set = commandBuilder.himportSet(key, fieldset, values);
+            } catch (RuntimeException e) {
+                return Mono.error(e);
             }
 
             if (!fieldset.retain()) {
                 return Mono.error(new IllegalStateException("HashImport has been discarded and must not be reused"));
             }
-            return createMono(() -> commandBuilder.himportSet(key, fieldset, values)).doFinally(signal -> fieldset.release());
-        });
-    }
 
-    private boolean isMulti() {
-        return getConnection() instanceof StatefulRedisConnection
-                && ((StatefulRedisConnection<K, V>) getConnection()).isMulti();
+            return createMono(() -> set).doFinally(signal -> fieldset.release());
+        });
     }
 
     @Override
