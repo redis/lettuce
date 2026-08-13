@@ -1694,17 +1694,20 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> himportSet(K key, HashImport<K> fieldset, V... values) {
         LettuceAssert.notNull(fieldset, "HashImport must not be null");
-        LettuceAssert.isTrue(values.length == fieldset.size(), "Number of values (" + values.length
-                + ") must match the number of fields in the fieldset (" + fieldset.size() + ")");
+        if (values.length != fieldset.size()) {
+            throw new IllegalArgumentException("Number of values (" + values.length
+                    + ") must match the number of fields in the fieldset (" + fieldset.size() + ")");
+        }
 
         return Mono.defer(() -> {
-            if (fieldset.isDiscarded()) {
-                return Mono.error(new IllegalStateException("HashImport has been discarded and must not be reused"));
-            }
             if (isMulti()) {
                 return Mono.error(new UnsupportedOperationException("HIMPORT SET is not supported within a MULTI transaction"));
             }
-            return createMono(() -> commandBuilder.himportSet(key, fieldset, values));
+
+            if (!fieldset.retain()) {
+                return Mono.error(new IllegalStateException("HashImport has been discarded and must not be reused"));
+            }
+            return createMono(() -> commandBuilder.himportSet(key, fieldset, values)).doFinally(signal -> fieldset.release());
         });
     }
 

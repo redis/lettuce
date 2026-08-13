@@ -27,7 +27,9 @@ class HashImportUnitTests {
         assertThat(fieldset.name()).startsWith("himport:");
         assertThat(fieldset.size()).isEqualTo(3);
         assertThat(fieldset.fields()).containsExactly("name", "email", "age");
-        assertThat(fieldset.isDiscarded()).isFalse();
+
+        assertThat(fieldset.retain()).as("a fresh fieldset admits imports").isTrue();
+        fieldset.release();
     }
 
     @Test
@@ -73,12 +75,63 @@ class HashImportUnitTests {
     }
 
     @Test
-    void shouldMarkDiscardedOnClose() {
+    void shouldRunCleanupOnCloseWithNothingInFlight() {
 
         HashImport<String> fieldset = HashImport.of("name");
         fieldset.close();
 
-        assertThat(fieldset.isDiscarded()).isTrue();
+        assertThat(fieldset.registerConnection(new HashImportContext()))
+                .as("nothing was in flight, so cleanup ran straight away and no PREPARE may follow").isFalse();
+    }
+
+    /**
+     * The try-with-resources idiom over the asynchronous API: the imports are admitted on the caller's thread, but their write
+     * (and therefore the {@code PREPARE} injection) happens later on the event loop, after {@code close()} has already run.
+     * Cleanup must wait for them instead of pre-empting them.
+     */
+    @Test
+    void shouldDeferCleanupUntilInFlightImportsComplete() {
+
+        HashImport<String> fieldset = HashImport.of("name", "email");
+
+        assertThat(fieldset.retain()).isTrue();
+
+        fieldset.close();
+
+        assertThat(fieldset.retain()).as("close() rejects new imports from the moment it returns").isFalse();
+        assertThat(fieldset.registerConnection(new HashImportContext()))
+                .as("cleanup must not pre-empt the in-flight import, which still has to declare its fieldset").isTrue();
+
+        fieldset.release();
+
+        assertThat(fieldset.registerConnection(new HashImportContext())).as("no PREPARE may be sent once cleanup has run")
+                .isFalse();
+    }
+
+    @Test
+    void shouldRejectNewImportsAfterClose() {
+
+        HashImport<String> fieldset = HashImport.of("name");
+        fieldset.close();
+
+        assertThat(fieldset.retain()).isFalse();
+    }
+
+    @Test
+    void shouldTolerateRepeatedClose() {
+
+        HashImport<String> fieldset = HashImport.of("name");
+
+        assertThat(fieldset.retain()).isTrue();
+        fieldset.close();
+        fieldset.close();
+
+        assertThat(fieldset.registerConnection(new HashImportContext()))
+                .as("a second close() must not pre-empt the in-flight import either").isTrue();
+
+        fieldset.release();
+
+        assertThat(fieldset.registerConnection(new HashImportContext())).isFalse();
     }
 
 }

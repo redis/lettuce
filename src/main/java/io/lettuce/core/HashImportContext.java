@@ -100,10 +100,8 @@ class HashImportContext {
 
         HashImport<?> fieldset = set.fieldset();
         if (prepared.contains(fieldset)) {
-            if (fieldset.isDiscarded()) {
-                command.completeExceptionally(
-                        new IllegalStateException("HashImport has been discarded and must not be reused"));
-            }
+            // Steady state: nothing to do. A cleaned-up fieldset cannot reach here — the SET holds a HashImport reservation
+            // until it completes, so cleanup cannot have run, and a cancelled SET is skipped as done before this point.
             return null;
         }
 

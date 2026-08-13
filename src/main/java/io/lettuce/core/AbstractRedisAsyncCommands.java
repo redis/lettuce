@@ -1608,18 +1608,31 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> himportSet(K key, HashImport<K> fieldset, V... values) {
         LettuceAssert.notNull(fieldset, "HashImport must not be null");
-        if (fieldset.isDiscarded()) {
-            throw new IllegalStateException("HashImport has been discarded and must not be reused");
+        if (values.length != fieldset.size()) {
+            throw new IllegalArgumentException("Number of values (" + values.length
+                    + ") must match the number of fields in the fieldset (" + fieldset.size() + ")");
         }
-        LettuceAssert.isTrue(values.length == fieldset.size(), "Number of values (" + values.length
-                + ") must match the number of fields in the fieldset (" + fieldset.size() + ")");
         if (isMulti()) {
             throw new UnsupportedOperationException("HIMPORT SET is not supported within a MULTI transaction");
         }
+        if (!fieldset.retain()) {
+            throw new IllegalStateException("HashImport has been discarded and must not be reused");
+        }
 
         // The required HIMPORT PREPARE is injected lazily on the write path per physical connection by
-        // HashImportOutboundHandler, so this SET carries its fieldset and is dispatched directly.
-        return dispatch(commandBuilder.himportSet(key, fieldset, values));
+        // HashImportOutboundHandler, so this SET carries its fieldset and is dispatched directly. The retain/release pair holds
+        // back HashImport.close() cleanup until this command completes, so a close() on the caller's thread cannot overtake a
+        // write that netty has not drained yet.
+        AsyncCommand<K, V, String> command;
+        try {
+            command = dispatch(commandBuilder.himportSet(key, fieldset, values));
+        } catch (RuntimeException e) {
+            fieldset.release();
+            throw e;
+        }
+
+        command.onComplete((status, error) -> fieldset.release());
+        return command;
     }
 
     private boolean isMulti() {

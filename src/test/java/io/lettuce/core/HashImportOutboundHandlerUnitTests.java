@@ -160,24 +160,58 @@ class HashImportOutboundHandlerUnitTests {
     }
 
     @Test
-    void rejectsSetForFieldsetClosedAfterPrepare() {
+    void rejectsSetForFieldsetAlreadyCleanedUp() {
 
         EmbeddedChannel channel = channel();
         HashImport<String> fieldset = HashImport.of("f1", "f2", "f3");
 
-        // first SET prepares the fieldset on this channel
-        channel.writeOutbound(set(fieldset));
-        drain(channel);
-
+        // nothing was in flight, so close() runs cleanup straight away
         fieldset.close();
 
-        // a SET racing close() takes the prepared fast path; it must be rejected client-side with the documented
-        // IllegalStateException instead of being sent against a fieldset that is being discarded
+        // himportSet() would refuse this at the API level; the registerConnection gate is the last-resort net for a SET that
+        // reaches the write path anyway. It must never be prepared, because nothing would discard it.
         AsyncCommand<String, String, String> late = new AsyncCommand<>(set(fieldset));
         channel.writeOutbound(late);
 
         assertThat(late.isCompletedExceptionally()).isTrue();
         assertThatThrownBy(late::join).hasCauseInstanceOf(IllegalStateException.class).hasMessageContaining("discarded");
+        assertThat(drain(channel)).noneMatch(HashImportOutboundHandlerUnitTests::isPrepare);
+    }
+
+    /**
+     * The asynchronous try-with-resources idiom: the import is admitted on the caller's thread, {@code close()} runs when the
+     * block exits, and only then does the event loop drain the write. The {@code PREPARE} must still be injected — the import
+     * was issued before the close — and the cleanup {@code DISCARD} must follow the {@code SET} rather than cancel it.
+     */
+    @Test
+    void preparesSetAdmittedBeforeCloseAndOrdersDiscardBehindIt() {
+
+        EmbeddedChannel channel = channel();
+        HashImport<String> fieldset = HashImport.of("f1", "f2", "f3");
+
+        // himportSet() admits the import on the caller's thread and dispatches; netty has not drained the write yet
+        assertThat(fieldset.retain()).isTrue();
+        HashImportSetCommand<String, String> set = set(fieldset);
+
+        // the try-with-resources block exits
+        fieldset.close();
+
+        // ... and only now does the event loop run the write
+        channel.writeOutbound(set);
+
+        List<Object> out = drain(channel);
+        assertThat(out).hasSize(2);
+        assertThat(isPrepare(out.get(0))).as("a SET admitted before close() must still be prepared").isTrue();
+        assertThat(out.get(1)).isSameAs(set);
+        assertThat(set.isDone()).as("the SET must not be rejected client-side").isFalse();
+        assertThat(out).as("cleanup must not overtake the SET").noneMatch(HashImportOutboundHandlerUnitTests::isDiscard);
+
+        // the SET completes, which releases the last reservation and triggers cleanup
+        fieldset.release();
+
+        channel.writeOutbound(command(CommandType.PING));
+        assertThat(drain(channel)).as("the DISCARD rides out once the import completed")
+                .anyMatch(HashImportOutboundHandlerUnitTests::isDiscard);
     }
 
     @Test

@@ -57,7 +57,25 @@ public class HashImport<K> implements AutoCloseable {
      */
     private final Set<HashImportContext> preparedOn = Collections.newSetFromMap(new WeakHashMap<>());
 
-    private volatile boolean discarded;
+    /**
+     * Number of {@code himportSet} commands that have been admitted through {@link #retain()} and not yet {@link #release()
+     * released}. Cleanup is withheld while this is positive, so imports issued before {@link #close()} still declare their
+     * fieldset and complete against it.
+     */
+    private final AtomicLong inFlight = new AtomicLong();
+
+    /**
+     * Set synchronously by {@link #close()} so that {@link #retain()} rejects <em>new</em> imports from the moment it returns.
+     * Deliberately not exposed: any accessor would only support a check-then-import that {@link #retain()} already performs
+     * atomically.
+     */
+    private volatile boolean closed;
+
+    /**
+     * Set once {@link #cleanup()} has handed the {@code DISCARD}s to the connections and cleared {@link #preparedOn}. From that
+     * point a {@code PREPARE} must no longer be sent, because nothing would discard it. Guarded by {@code preparedOn}.
+     */
+    private boolean cleanedUp;
 
     private HashImport(K name, K[] fields) {
         this.name = name;
@@ -139,26 +157,61 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * @return {@code true} if this fieldset has been {@link #close() closed} and must no longer be used.
-     * @since 7.7
+     * Admit one {@code himportSet} for this fieldset, withholding cleanup until it completes.
+     * <p>
+     * Called on the caller's thread before the command is dispatched, and paired with exactly one {@link #release()} on command
+     * completion. This is what makes {@code close()} order itself behind imports that were already issued: a command only
+     * reaches the write path — where the {@code PREPARE} is injected — some time after {@code dispatch} returns, so a
+     * {@code close()} on the calling thread would otherwise overtake it.
+     *
+     * @return {@code true} if the import may proceed; {@code false} if this fieldset is already closed, in which case no
+     *         matching {@link #release()} must be issued.
      */
-    public boolean isDiscarded() {
-        return discarded;
+    boolean retain() {
+
+        if (closed) {
+            return false;
+        }
+
+        inFlight.incrementAndGet();
+
+        if (closed) {
+            // close() may have raced in between the check and the increment; hand the reservation straight back so a
+            // close() that observed a non-zero count still gets its cleanup from this release.
+            release();
+            return false;
+        }
+
+        return true;
     }
 
     /**
-     * Record that this fieldset is being prepared on {@code context}, so {@link #close()} can later target it with a
-     * {@code DISCARD}. Called on the connection's event loop from the outbound write path, before the {@code PREPARE} is
-     * written, and atomically with {@link #close()} on {@code preparedOn}: if the fieldset is already discarded the caller must
-     * not send the {@code PREPARE} at all, so no server-side state is ever left without a matching {@code DISCARD}.
+     * Complete one admitted {@code himportSet}, running cleanup if this was the last one outstanding on a closed fieldset.
+     * Called from the command's completion callback, hence on the connection's event loop for a command that reached the
+     * server.
+     */
+    void release() {
+        if (inFlight.decrementAndGet() == 0 && closed) {
+            cleanup();
+        }
+    }
+
+    /**
+     * Record that this fieldset is being prepared on {@code context}, so cleanup can later target it with a {@code DISCARD}.
+     * Called on the connection's event loop from the outbound write path, before the {@code PREPARE} is written, and atomically
+     * with {@link #cleanup()} on {@code preparedOn}: once cleanup has run the caller must not send the {@code PREPARE} at all,
+     * so no server-side state is ever left without a matching {@code DISCARD}.
+     * <p>
+     * Note this gates on cleanup having run, not on the fieldset being closed: an import admitted by {@link #retain()} before
+     * {@link #close()} still declares its fieldset here, and the {@code DISCARD} that follows is ordered behind it.
      *
      * @param context the per-connection component the {@code HIMPORT PREPARE} is about to be injected on.
-     * @return {@code true} if the connection was recorded and the {@code PREPARE} may be sent; {@code false} if the fieldset
-     *         has already been closed and preparation must be skipped.
+     * @return {@code true} if the connection was recorded and the {@code PREPARE} may be sent; {@code false} if cleanup has
+     *         already run and preparation must be skipped.
      */
     boolean registerConnection(HashImportContext context) {
         synchronized (preparedOn) {
-            if (discarded) {
+            if (cleanedUp) {
                 return false;
             }
             preparedOn.add(context);
@@ -169,25 +222,47 @@ public class HashImport<K> implements AutoCloseable {
     /**
      * Discard this fieldset, releasing its server-side state.
      * <p>
-     * Sends a best-effort {@code HIMPORT DISCARD} to every connection the fieldset was prepared on and marks it discarded so it
-     * can no longer be used for imports. Each {@code DISCARD} is handed to that connection's {@link HashImportContext}, which
-     * writes it on the channel event loop — deferring it until the current transaction ends if a {@code MULTI} is open — so a
-     * cleanup {@code DISCARD} never falls inside the caller's transaction. Cleanup is fire-and-forget: a {@code DISCARD} that
-     * lands on a rotated connection is a harmless no-op because the generated fieldset name is unique per instance. Disposal is
-     * not required for correctness — the state is also released when a connection closes — but frees it promptly on long-lived
-     * and pooled connections. Calling this more than once has no additional effect.
+     * Rejects further imports from the moment this returns — a subsequent {@code himportSet} fails with an
+     * {@link IllegalStateException} — and sends a best-effort {@code HIMPORT DISCARD} to every connection the fieldset was
+     * prepared on. Each {@code DISCARD} is handed to that connection's {@link HashImportContext}, which writes it on the
+     * channel event loop — deferring it until the current transaction ends if a {@code MULTI} is open — so a cleanup
+     * {@code DISCARD} never falls inside the caller's transaction.
+     * <p>
+     * Imports already issued when this is called are <em>not</em> cancelled: cleanup is withheld until every outstanding
+     * {@code himportSet} has completed, so the {@code DISCARD} is ordered behind them on the wire. Closing therefore does not
+     * race the asynchronous APIs, and the try-with-resources idiom is safe with all execution models. The consequence is that
+     * this method may return before the {@code DISCARD}s have been handed out.
+     * <p>
+     * Cleanup is fire-and-forget: a {@code DISCARD} that lands on a rotated connection is a harmless no-op because the
+     * generated fieldset name is unique per instance. Disposal is not required for correctness — the state is also released
+     * when a connection closes — but on long-lived and pooled connections a fieldset that is never closed keeps its server-side
+     * state for the life of the connection. Calling this more than once has no additional effect.
      *
      * @since 7.7
      */
     @Override
     public void close() {
 
+        closed = true;
+
+        if (inFlight.get() == 0) {
+            cleanup();
+        }
+    }
+
+    /**
+     * Hand a {@code DISCARD} to every connection this fieldset was prepared on and stop further preparation. Runs once, either
+     * directly from {@link #close()} when nothing was outstanding or from the {@link #release()} of the last outstanding
+     * import.
+     */
+    private void cleanup() {
+
         Set<HashImportContext> targets;
         synchronized (preparedOn) {
-            if (discarded) {
+            if (cleanedUp) {
                 return;
             }
-            discarded = true;
+            cleanedUp = true;
             targets = new HashSet<>(preparedOn);
             preparedOn.clear();
         }
@@ -199,8 +274,8 @@ public class HashImport<K> implements AutoCloseable {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + " [name=" + name + ", fields=" + Arrays.toString(fields) + ", discarded="
-                + discarded + "]";
+        return getClass().getSimpleName() + " [name=" + name + ", fields=" + Arrays.toString(fields) + ", discarded=" + closed
+                + "]";
     }
 
 }
