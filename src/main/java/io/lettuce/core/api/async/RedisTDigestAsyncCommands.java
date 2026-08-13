@@ -46,9 +46,9 @@ public interface RedisTDigestAsyncCommands<K, V> {
      * corresponds to the smallest observation (the minimum).
      *
      * @param key the key.
-     * @param rank the rank for which the value should be estimated.
+     * @param rank the rank for which the value should be estimated, must not be negative.
      * @return List&lt;Double&gt; a single-element list holding the estimated value with the given rank. The value is
-     *         {@code -inf} if the rank is negative and {@code inf} if the rank exceeds the number of observations.
+     *         {@code inf} if the rank is equal to or exceeds the number of observations and {@code nan} if the sketch is empty.
      */
     RedisFuture<List<Double>> tdigestByRank(K key, long rank);
 
@@ -57,9 +57,10 @@ public interface RedisTDigestAsyncCommands<K, V> {
      * corresponds to the smallest observation (the minimum).
      *
      * @param key the key.
-     * @param ranks the ranks for which the values should be estimated.
-     * @return List&lt;Double&gt; one entry per input rank holding the estimated value with that rank. An entry is {@code -inf}
-     *         if the rank is negative and {@code inf} if the rank exceeds the number of observations.
+     * @param ranks the ranks for which the values should be estimated, must not be negative.
+     * @return List&lt;Double&gt; one entry per input rank holding the estimated value with that rank. An entry is {@code inf}
+     *         if the rank is equal to or exceeds the number of observations. All entries are {@code nan} if the sketch is
+     *         empty.
      */
     RedisFuture<List<Double>> tdigestByRank(K key, long... ranks);
 
@@ -68,9 +69,10 @@ public interface RedisTDigestAsyncCommands<K, V> {
      * where reverse rank {@code 0} corresponds to the largest observation (the maximum).
      *
      * @param key the key.
-     * @param reverseRank the reverse rank for which the value should be estimated.
+     * @param reverseRank the reverse rank for which the value should be estimated, must not be negative.
      * @return List&lt;Double&gt; a single-element list holding the estimated value with the given reverse rank. The value is
-     *         {@code inf} if the reverse rank is negative and {@code -inf} if it exceeds the number of observations.
+     *         {@code -inf} if the reverse rank is equal to or exceeds the number of observations and {@code nan} if the sketch
+     *         is empty.
      */
     RedisFuture<List<Double>> tdigestByRevRank(K key, long reverseRank);
 
@@ -79,9 +81,10 @@ public interface RedisTDigestAsyncCommands<K, V> {
      * where reverse rank {@code 0} corresponds to the largest observation (the maximum).
      *
      * @param key the key.
-     * @param reverseRanks the reverse ranks for which the values should be estimated.
+     * @param reverseRanks the reverse ranks for which the values should be estimated, must not be negative.
      * @return List&lt;Double&gt; one entry per input reverse rank holding the estimated value with that reverse rank. An entry
-     *         is {@code inf} if the reverse rank is negative and {@code -inf} if it exceeds the number of observations.
+     *         is {@code -inf} if the reverse rank is equal to or exceeds the number of observations. All entries are
+     *         {@code nan} if the sketch is empty.
      */
     RedisFuture<List<Double>> tdigestByRevRank(K key, long... reverseRanks);
 

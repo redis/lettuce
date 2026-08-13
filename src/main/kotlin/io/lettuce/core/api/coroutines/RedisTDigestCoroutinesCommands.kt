@@ -48,9 +48,9 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      * corresponds to the smallest observation (the minimum).
      *
      * @param key the key.
-     * @param rank the rank for which the value should be estimated.
+     * @param rank the rank for which the value should be estimated, must not be negative.
      * @return List<Double> a single-element list holding the estimated value with the given rank. The value is
-     *         `-inf` if the rank is negative and `inf` if the rank exceeds the number of observations.
+     *         `inf` if the rank is equal to or exceeds the number of observations and `nan` if the sketch is empty.
      */
     suspend fun tdigestByRank(key: K, rank: Long): List<Double>
 
@@ -59,9 +59,9 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      * corresponds to the smallest observation (the minimum).
      *
      * @param key the key.
-     * @param ranks the ranks for which the values should be estimated.
-     * @return List<Double> one entry per input rank holding the estimated value with that rank. An entry is `-inf`
-     *         if the rank is negative and `inf` if the rank exceeds the number of observations.
+     * @param ranks the ranks for which the values should be estimated, must not be negative.
+     * @return List<Double> one entry per input rank holding the estimated value with that rank. An entry is `inf`
+     *         if the rank is equal to or exceeds the number of observations. All entries are `nan` if the sketch is empty.
      */
     suspend fun tdigestByRank(key: K, vararg ranks: Long): List<Double>
 
@@ -70,9 +70,9 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      * where reverse rank `0` corresponds to the largest observation (the maximum).
      *
      * @param key the key.
-     * @param reverseRank the reverse rank for which the value should be estimated.
+     * @param reverseRank the reverse rank for which the value should be estimated, must not be negative.
      * @return List<Double> a single-element list holding the estimated value with the given reverse rank. The value is
-     *         `inf` if the reverse rank is negative and `-inf` if it exceeds the number of observations.
+     *         `-inf` if the reverse rank is equal to or exceeds the number of observations and `nan` if the sketch is empty.
      */
     suspend fun tdigestByRevRank(key: K, reverseRank: Long): List<Double>
 
@@ -81,9 +81,10 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      * where reverse rank `0` corresponds to the largest observation (the maximum).
      *
      * @param key the key.
-     * @param reverseRanks the reverse ranks for which the values should be estimated.
+     * @param reverseRanks the reverse ranks for which the values should be estimated, must not be negative.
      * @return List<Double> one entry per input reverse rank holding the estimated value with that reverse rank. An entry
-     *         is `inf` if the reverse rank is negative and `-inf` if it exceeds the number of observations.
+     *         is `-inf` if the reverse rank is equal to or exceeds the number of observations. All entries are `nan` if the
+     *         sketch is empty.
      */
     suspend fun tdigestByRevRank(key: K, vararg reverseRanks: Long): List<Double>
 
