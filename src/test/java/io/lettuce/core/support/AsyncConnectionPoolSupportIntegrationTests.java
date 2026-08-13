@@ -175,7 +175,7 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
 
         assertThat(sync).isInstanceOf(RedisCommands.class);
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isNotInstanceOf(RedisAsyncCommandsImpl.class);
-        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class)
+        assertThat(connection.commands(RedisReactiveCommands.factory())).isInstanceOf(RedisReactiveCommands.class)
                 .isNotInstanceOf(RedisReactiveCommandsImpl.class);
         assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
                 .isNotInstanceOf(StatefulRedisConnectionImpl.class).isSameAs(connection);

@@ -33,10 +33,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
 import io.lettuce.core.api.BaseRedisClient;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
 import io.lettuce.core.event.connection.ConnectionCreatedEvent;
@@ -233,8 +233,8 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @param connectionBuilder connection builder to configure the connection
      * @param redisURI URI of the Redis instance
      */
-    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
-            RedisURI redisURI) {
+    protected void connectionBuilder(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
+            ConnectionBuilder connectionBuilder, RedisURI redisURI) {
         connectionBuilder(socketAddressSupplier, connectionBuilder, connectionEvents, redisURI);
     }
 
@@ -247,8 +247,8 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @param redisURI URI of the Redis instance
      * @since 6.2
      */
-    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
-            ConnectionEvents connectionEvents, RedisURI redisURI) {
+    protected void connectionBuilder(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
+            ConnectionBuilder connectionBuilder, ConnectionEvents connectionEvents, RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap();
         redisBootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT);
@@ -349,7 +349,7 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
     protected <K, V, T extends RedisChannelHandler<K, V>> ConnectionFuture<T> initializeChannelAsync(
             ConnectionBuilder connectionBuilder) {
 
-        Mono<SocketAddress> socketAddressSupplier = connectionBuilder.socketAddress();
+        Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = connectionBuilder.socketAddress();
 
         if (clientResources.eventExecutorGroup().isShuttingDown()) {
             throw new IllegalStateException("Cannot connect, Event executor group is terminated.");
@@ -367,15 +367,22 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
         channelReadyFuture.whenComplete((channel, throwable) -> {
             event.record();
         });
-
-        socketAddressSupplier.doOnError(socketAddressFuture::completeExceptionally).doOnNext(socketAddressFuture::complete)
-                .subscribe(redisAddress -> {
-
-                    if (channelReadyFuture.isCancelled()) {
-                        return;
-                    }
+        // handle synchronous exceptions during get(), before obtaining the CompletionStage
+        try {
+            socketAddressSupplier.get().thenAccept(redisAddress -> {
+                socketAddressFuture.complete(redisAddress);
+                if (!channelReadyFuture.isCancelled()) {
                     initializeChannelAsync0(connectionBuilder, channelReadyFuture, redisAddress);
-                }, channelReadyFuture::completeExceptionally);
+                }
+            }).exceptionally(error -> {
+                socketAddressFuture.completeExceptionally(error);
+                channelReadyFuture.completeExceptionally(error);
+                return null;
+            });
+        } catch (Exception e) {
+            socketAddressFuture.completeExceptionally(e);
+            channelReadyFuture.completeExceptionally(e);
+        }
 
         return new DefaultConnectionFuture<>(socketAddressFuture,
                 channelReadyFuture.thenApply(channel -> (T) connectionBuilder.connection()));

@@ -30,6 +30,7 @@ import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -262,7 +263,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots()).hasSize(0);
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node2.getNodeId()).getSlots()).hasSize(16384);
 
-        connection.reactive().set("b", value).toFuture();// slot 3300
+        connection.commands(RedisAdvancedClusterReactiveCommands.factory()).set("b", value).toFuture();// slot 3300
 
         Wait.untilEquals(12000, () -> clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots().size())
                 .waitOrTimeout();

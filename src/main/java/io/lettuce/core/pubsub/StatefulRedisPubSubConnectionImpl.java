@@ -112,26 +112,6 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     }
 
     /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisPubSubReactiveCommands#factory()} instead; scheduled
-     *             for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    @Override
-    public RedisPubSubReactiveCommands<K, V> reactive() {
-        return (RedisPubSubReactiveCommands<K, V>) reactive;
-    }
-
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisPubSubReactiveCommands#factory()} instead; scheduled
-     *             for removal in Lettuce 8.0.
-     */
-    @Deprecated
-    @Override
-    protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
-        return new RedisPubSubReactiveCommandsImpl<>(this, codec);
-    }
-
-    /**
      * Re-subscribe to all previously subscribed channels and patterns.
      *
      * @return list of the futures of the {@literal subscribe} and {@literal psubscribe} commands.

@@ -23,15 +23,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
-import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.event.jfr.EventRecorder;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
@@ -69,19 +68,19 @@ class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V>
         MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<>(redisClient, codec,
                 seedNode, initialConnections);
 
-        return refresh.getNodes(seedNode).flatMap(nodes -> {
+        return Futures.unwrapExceptions(refresh.getNodesAsync(seedNode).thenApply(nodes -> {
 
             EventRecorder.getInstance().record(new MasterReplicaTopologyChangedEvent(seedNode, nodes));
 
             if (nodes.isEmpty()) {
-                return Mono.error(new RedisException(String.format("Cannot determine topology from %s", redisURIs)));
+                throw new RedisException(String.format("Cannot determine topology from %s", redisURIs));
             }
 
             return initializeConnection(codec, seedNode, connectionProvider, nodes);
-        }).onErrorMap(ExecutionException.class, Throwable::getCause).toFuture();
+        }));
     }
 
-    private Mono<StatefulRedisMasterReplicaConnection<K, V>> initializeConnection(RedisCodec<K, V> codec, RedisURI seedNode,
+    private StatefulRedisMasterReplicaConnection<K, V> initializeConnection(RedisCodec<K, V> codec, RedisURI seedNode,
             MasterReplicaConnectionProvider<K, V> connectionProvider, List<RedisNodeDescription> nodes) {
 
         connectionProvider.setKnownNodes(nodes);
@@ -93,7 +92,7 @@ class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V>
                 channelWriter, codec, seedNode.getTimeout(), redisClient.getOptions().getJsonParser());
         connection.setOptions(redisClient.getOptions());
 
-        return Mono.just(connection);
+        return connection;
     }
 
 }

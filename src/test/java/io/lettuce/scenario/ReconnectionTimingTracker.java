@@ -19,7 +19,7 @@ import io.lettuce.core.event.connection.ConnectionActivatedEvent;
 import io.lettuce.core.event.connection.ConnectionDeactivatedEvent;
 import io.lettuce.core.event.connection.ReconnectAttemptEvent;
 import io.lettuce.core.event.connection.ReconnectFailedEvent;
-import reactor.core.Disposable;
+import io.lettuce.core.Subscription;
 
 /**
  * Utility class for tracking Redis connection reconnection timing. Provides comprehensive monitoring of connection lifecycle
@@ -38,7 +38,7 @@ public class ReconnectionTimingTracker {
     private final AtomicReference<Instant> lastDisconnectTime = new AtomicReference<>();
 
     // Event bus tracking
-    private Disposable eventSubscription;
+    private Subscription eventSubscription;
 
     // Connection state tracking
     private final AtomicReference<Instant> stateDisconnectTime = new AtomicReference<>();
@@ -61,7 +61,7 @@ public class ReconnectionTimingTracker {
      * @return this tracker for method chaining
      */
     public ReconnectionTimingTracker trackWithEventBus(RedisClient client) {
-        eventSubscription = client.getResources().eventBus().get().subscribe(event -> {
+        eventSubscription = client.getResources().eventBus().subscribe(event -> {
             Instant now = Instant.now();
 
             if (event instanceof ConnectionDeactivatedEvent) {
@@ -175,8 +175,8 @@ public class ReconnectionTimingTracker {
      * Clean up resources and stop tracking.
      */
     public void dispose() {
-        if (eventSubscription != null && !eventSubscription.isDisposed()) {
-            eventSubscription.dispose();
+        if (eventSubscription != null) {
+            eventSubscription.close();
         }
     }
 
