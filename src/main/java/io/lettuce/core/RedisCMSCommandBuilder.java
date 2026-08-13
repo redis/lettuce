@@ -126,6 +126,14 @@ class RedisCMSCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CMS_MERGE, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, List<Long>> cmsQuery(K key, V value) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
+
+        return createCommand(CMS_QUERY, new IntegerListOutput<>(codec), args);
+    }
+
     @SafeVarargs
     final Command<K, V, List<Long>> cmsQuery(K key, V... values) {
         notNullKey(key);

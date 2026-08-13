@@ -114,6 +114,15 @@ interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
     suspend fun cmsMerge(destination: K, vararg sources: MergePair<K>): String?
 
     /**
+     * Returns the count for one item in a sketch.
+     *
+     * @param key the key.
+     * @param value the item to query.
+     * @return List<Long> array-reply of the count of the item.
+     */
+    suspend fun cmsQuery(key: K, value: V): List<Long>
+
+    /**
      * Returns the count for one or more items in a sketch.
      *
      * @param key the key.

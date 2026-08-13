@@ -4681,6 +4681,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Flux<Long> cmsQuery(K key, V value) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsQuery(key, value));
+    }
+
+    @Override
     public Flux<Long> cmsQuery(K key, V... values) {
         return createDissolvingFlux(() -> cmsCommandBuilder.cmsQuery(key, values));
     }

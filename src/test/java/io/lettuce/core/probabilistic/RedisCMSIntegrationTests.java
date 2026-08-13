@@ -83,6 +83,16 @@ public class RedisCMSIntegrationTests {
     @Test
     void cmsQuery() {
         redis.cmsInitByDim(MY_KEY, 2000, 5);
+        redis.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, 5));
+
+        List<Long> result = redis.cmsQuery(MY_KEY, MY_ITEM);
+
+        assertThat(result).containsExactly(5L);
+    }
+
+    @Test
+    void cmsQueryMultiple() {
+        redis.cmsInitByDim(MY_KEY, 2000, 5);
         redis.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, 5), IncrementPair.of(MY_ITEM_2, 3));
 
         List<Long> result = redis.cmsQuery(MY_KEY, MY_ITEM, MY_ITEM_2);

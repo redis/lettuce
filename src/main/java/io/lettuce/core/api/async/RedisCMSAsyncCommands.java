@@ -112,6 +112,15 @@ public interface RedisCMSAsyncCommands<K, V> {
     RedisFuture<String> cmsMerge(K destination, MergePair<K>... sources);
 
     /**
+     * Returns the count for one item in a sketch.
+     *
+     * @param key the key.
+     * @param value the item to query.
+     * @return List&lt;Long&gt; array-reply of the count of the item.
+     */
+    RedisFuture<List<Long>> cmsQuery(K key, V value);
+
+    /**
      * Returns the count for one or more items in a sketch.
      *
      * @param key the key.

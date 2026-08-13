@@ -55,6 +55,9 @@ internal class RedisCMSCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun cmsMerge(destination: K, vararg sources: MergePair<K>): String? =
         ops.cmsMerge(destination, *sources).awaitFirstOrNull()
 
+    override suspend fun cmsQuery(key: K, value: V): List<Long> =
+        ops.cmsQuery(key, value).asFlow().toList()
+
     override suspend fun cmsQuery(key: K, vararg values: V): List<Long> =
         ops.cmsQuery(key, *values).asFlow().toList()
 

@@ -4590,6 +4590,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<Long>> cmsQuery(K key, V value) {
+        return dispatch(cmsCommandBuilder.cmsQuery(key, value));
+    }
+
+    @Override
     public RedisFuture<List<Long>> cmsQuery(K key, V... values) {
         return dispatch(cmsCommandBuilder.cmsQuery(key, values));
     }

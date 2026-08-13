@@ -142,6 +142,17 @@ class RedisCMSCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructCmsQueryCommand() {
+        Command<String, String, List<Long>> command = builder.cmsQuery(MY_KEY, MY_ITEM);
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$9\r\nCMS.QUERY\r\n" + "$3\r\n" + MY_KEY + "\r\n" + "$5\r\n" + MY_ITEM + "\r\n");
+        assertThat(command.getOutput()).isInstanceOf(IntegerListOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructCmsQueryCommandWithVarargs() {
         Command<String, String, List<Long>> command = builder.cmsQuery(MY_KEY, MY_ITEM, MY_ITEM_2);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
