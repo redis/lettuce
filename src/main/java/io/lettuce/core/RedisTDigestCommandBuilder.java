@@ -35,18 +35,22 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         super(codec);
     }
 
-    Command<K, V, String> tdigestAdd(K key, V value) {
+    Command<K, V, String> tdigestAdd(K key, double value) {
         notNullKey(key);
 
-        return createCommand(TDIGEST_ADD, new StatusOutput<>(codec), key, value);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(value);
+
+        return createCommand(TDIGEST_ADD, new StatusOutput<>(codec), args);
     }
 
-    @SafeVarargs
-    final Command<K, V, String> tdigestAdd(K key, V... values) {
+    Command<K, V, String> tdigestAdd(K key, double... values) {
         notNullKey(key);
-        notEmptyValues(values);
+        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValues(values);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        for (double value : values) {
+            args.add(value);
+        }
 
         return createCommand(TDIGEST_ADD, new StatusOutput<>(codec), args);
     }
@@ -91,20 +95,22 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(TDIGEST_BYREVRANK, new DoubleListOutput<>(codec), args);
     }
 
-    Command<K, V, List<Double>> tdigestCDF(K key, V value) {
+    Command<K, V, List<Double>> tdigestCDF(K key, double value) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(value);
 
         return createCommand(TDIGEST_CDF, new DoubleListOutput<>(codec), args);
     }
 
-    @SafeVarargs
-    final Command<K, V, List<Double>> tdigestCDF(K key, V... values) {
+    Command<K, V, List<Double>> tdigestCDF(K key, double... values) {
         notNullKey(key);
-        notEmptyValues(values);
+        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValues(values);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        for (double value : values) {
+            args.add(value);
+        }
 
         return createCommand(TDIGEST_CDF, new DoubleListOutput<>(codec), args);
     }
@@ -203,20 +209,22 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(TDIGEST_QUANTILE, new DoubleListOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> tdigestRank(K key, V value) {
+    Command<K, V, List<Long>> tdigestRank(K key, double value) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(value);
 
         return createCommand(TDIGEST_RANK, new IntegerListOutput<>(codec), args);
     }
 
-    @SafeVarargs
-    final Command<K, V, List<Long>> tdigestRank(K key, V... values) {
+    Command<K, V, List<Long>> tdigestRank(K key, double... values) {
         notNullKey(key);
-        notEmptyValues(values);
+        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValues(values);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        for (double value : values) {
+            args.add(value);
+        }
 
         return createCommand(TDIGEST_RANK, new IntegerListOutput<>(codec), args);
     }
@@ -227,20 +235,22 @@ class RedisTDigestCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(TDIGEST_RESET, new StatusOutput<>(codec), key);
     }
 
-    Command<K, V, List<Long>> tdigestRevRank(K key, V value) {
+    Command<K, V, List<Long>> tdigestRevRank(K key, double value) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(value);
 
         return createCommand(TDIGEST_REVRANK, new IntegerListOutput<>(codec), args);
     }
 
-    @SafeVarargs
-    final Command<K, V, List<Long>> tdigestRevRank(K key, V... values) {
+    Command<K, V, List<Long>> tdigestRevRank(K key, double... values) {
         notNullKey(key);
-        notEmptyValues(values);
+        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValues(values);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        for (double value : values) {
+            args.add(value);
+        }
 
         return createCommand(TDIGEST_REVRANK, new IntegerListOutput<>(codec), args);
     }

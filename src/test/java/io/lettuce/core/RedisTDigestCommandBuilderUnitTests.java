@@ -41,14 +41,14 @@ class RedisTDigestCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTdigestAddCommand() {
-        Command<String, String, String> command = builder.tdigestAdd(MY_KEY, "1.0");
+        Command<String, String, String> command = builder.tdigestAdd(MY_KEY, 1.0);
 
         assertThat(encode(command)).isEqualTo("*3\r\n" + "$11\r\nTDIGEST.ADD\r\n" + "$6\r\nsketch\r\n" + "$3\r\n1.0\r\n");
     }
 
     @Test
     void shouldCorrectlyConstructTdigestAddMultipleCommand() {
-        Command<String, String, String> command = builder.tdigestAdd(MY_KEY, "1.0", "2.0");
+        Command<String, String, String> command = builder.tdigestAdd(MY_KEY, 1.0, 2.0);
 
         assertThat(encode(command))
                 .isEqualTo("*4\r\n" + "$11\r\nTDIGEST.ADD\r\n" + "$6\r\nsketch\r\n" + "$3\r\n1.0\r\n" + "$3\r\n2.0\r\n");
@@ -86,9 +86,9 @@ class RedisTDigestCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTdigestCdfCommand() {
-        Command<String, String, ?> command = builder.tdigestCDF(MY_KEY, "10");
+        Command<String, String, ?> command = builder.tdigestCDF(MY_KEY, 10.0);
 
-        assertThat(encode(command)).isEqualTo("*3\r\n" + "$11\r\nTDIGEST.CDF\r\n" + "$6\r\nsketch\r\n" + "$2\r\n10\r\n");
+        assertThat(encode(command)).isEqualTo("*3\r\n" + "$11\r\nTDIGEST.CDF\r\n" + "$6\r\nsketch\r\n" + "$4\r\n10.0\r\n");
     }
 
     @Test
@@ -225,9 +225,9 @@ class RedisTDigestCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTdigestRankCommand() {
-        Command<String, String, ?> command = builder.tdigestRank(MY_KEY, "10");
+        Command<String, String, ?> command = builder.tdigestRank(MY_KEY, 10.0);
 
-        assertThat(encode(command)).isEqualTo("*3\r\n" + "$12\r\nTDIGEST.RANK\r\n" + "$6\r\nsketch\r\n" + "$2\r\n10\r\n");
+        assertThat(encode(command)).isEqualTo("*3\r\n" + "$12\r\nTDIGEST.RANK\r\n" + "$6\r\nsketch\r\n" + "$4\r\n10.0\r\n");
     }
 
     @Test
@@ -239,9 +239,9 @@ class RedisTDigestCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTdigestRevRankCommand() {
-        Command<String, String, ?> command = builder.tdigestRevRank(MY_KEY, "10");
+        Command<String, String, ?> command = builder.tdigestRevRank(MY_KEY, 10.0);
 
-        assertThat(encode(command)).isEqualTo("*3\r\n" + "$15\r\nTDIGEST.REVRANK\r\n" + "$6\r\nsketch\r\n" + "$2\r\n10\r\n");
+        assertThat(encode(command)).isEqualTo("*3\r\n" + "$15\r\nTDIGEST.REVRANK\r\n" + "$6\r\nsketch\r\n" + "$4\r\n10.0\r\n");
     }
 
     @Test

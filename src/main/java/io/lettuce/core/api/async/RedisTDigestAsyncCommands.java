@@ -29,7 +29,7 @@ public interface RedisTDigestAsyncCommands<K, V> {
      * @param value the value of the observation.
      * @return String simple-string-reply {@code OK} if the command was executed correctly.
      */
-    RedisFuture<String> tdigestAdd(K key, V value);
+    RedisFuture<String> tdigestAdd(K key, double value);
 
     /**
      * Adds one or more observations to a t-digest sketch. The sketch must have been created beforehand with
@@ -39,7 +39,7 @@ public interface RedisTDigestAsyncCommands<K, V> {
      * @param values the values of the observations.
      * @return String simple-string-reply {@code OK} if the command was executed correctly.
      */
-    RedisFuture<String> tdigestAdd(K key, V... values);
+    RedisFuture<String> tdigestAdd(K key, double... values);
 
     /**
      * Returns, for the given rank, an estimation of the value with that rank. Ranks are zero-based, where rank {@code 0}
@@ -94,7 +94,7 @@ public interface RedisTDigestAsyncCommands<K, V> {
      * @return List&lt;Double&gt; a single-element list holding the estimated fraction, in the range {@code [0, 1]}, of
      *         observations smaller than or equal to the given value.
      */
-    RedisFuture<List<Double>> tdigestCDF(K key, V value);
+    RedisFuture<List<Double>> tdigestCDF(K key, double value);
 
     /**
      * Returns, for each given value, an estimation of the fraction (cumulative distribution) of observations that are smaller
@@ -105,7 +105,7 @@ public interface RedisTDigestAsyncCommands<K, V> {
      * @return List&lt;Double&gt; one entry per input value holding the estimated fraction, in the range {@code [0, 1]}, of
      *         observations smaller than or equal to that value.
      */
-    RedisFuture<List<Double>> tdigestCDF(K key, V... values);
+    RedisFuture<List<Double>> tdigestCDF(K key, double... values);
 
     /**
      * Creates a new t-digest sketch with the default compression. The default compression is {@code 100}.
@@ -222,7 +222,7 @@ public interface RedisTDigestAsyncCommands<K, V> {
      *         value is smaller than the minimum observation, equal to the number of observations if it is larger than the
      *         maximum, and {@code -2} if the sketch is empty.
      */
-    RedisFuture<List<Long>> tdigestRank(K key, V value);
+    RedisFuture<List<Long>> tdigestRank(K key, double value);
 
     /**
      * Returns, for each given value, the estimated rank, that is the number of observations that are smaller than the value
@@ -234,7 +234,7 @@ public interface RedisTDigestAsyncCommands<K, V> {
      *         smaller than the minimum observation and equal to the number of observations if it is larger than the maximum.
      *         All entries are {@code -2} if the sketch is empty.
      */
-    RedisFuture<List<Long>> tdigestRank(K key, V... values);
+    RedisFuture<List<Long>> tdigestRank(K key, double... values);
 
     /**
      * Resets a t-digest sketch, removing all its observations while keeping the sketch and its configuration in place.
@@ -254,7 +254,7 @@ public interface RedisTDigestAsyncCommands<K, V> {
      *         {@code -1} if the value is larger than the maximum observation, equal to the number of observations if it is
      *         smaller than the minimum, and {@code -2} if the sketch is empty.
      */
-    RedisFuture<List<Long>> tdigestRevRank(K key, V value);
+    RedisFuture<List<Long>> tdigestRevRank(K key, double value);
 
     /**
      * Returns, for each given value, the estimated reverse rank, that is the number of observations that are larger than the
@@ -266,7 +266,7 @@ public interface RedisTDigestAsyncCommands<K, V> {
      *         value is larger than the maximum observation and equal to the number of observations if it is smaller than the
      *         minimum. All entries are {@code -2} if the sketch is empty.
      */
-    RedisFuture<List<Long>> tdigestRevRank(K key, V... values);
+    RedisFuture<List<Long>> tdigestRevRank(K key, double... values);
 
     /**
      * Returns an estimation of the mean value from the sketch, excluding observation values outside the low and high cutoff

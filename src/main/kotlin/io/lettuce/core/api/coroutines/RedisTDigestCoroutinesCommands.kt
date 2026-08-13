@@ -31,7 +31,7 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      * @param value the value of the observation.
      * @return String simple-string-reply `OK` if the command was executed correctly.
      */
-    suspend fun tdigestAdd(key: K, value: V): String?
+    suspend fun tdigestAdd(key: K, value: Double): String?
 
     /**
      * Adds one or more observations to a t-digest sketch. The sketch must have been created beforehand with
@@ -41,7 +41,7 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      * @param values the values of the observations.
      * @return String simple-string-reply `OK` if the command was executed correctly.
      */
-    suspend fun tdigestAdd(key: K, vararg values: V): String?
+    suspend fun tdigestAdd(key: K, vararg values: Double): String?
 
     /**
      * Returns, for the given rank, an estimation of the value with that rank. Ranks are zero-based, where rank `0`
@@ -96,7 +96,7 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      * @return List<Double> a single-element list holding the estimated fraction, in the range {@code [0, 1]}, of
      *         observations smaller than or equal to the given value.
      */
-    suspend fun tdigestCDF(key: K, value: V): List<Double>
+    suspend fun tdigestCDF(key: K, value: Double): List<Double>
 
     /**
      * Returns, for each given value, an estimation of the fraction (cumulative distribution) of observations that are smaller
@@ -107,7 +107,7 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      * @return List<Double> one entry per input value holding the estimated fraction, in the range {@code [0, 1]}, of
      *         observations smaller than or equal to that value.
      */
-    suspend fun tdigestCDF(key: K, vararg values: V): List<Double>
+    suspend fun tdigestCDF(key: K, vararg values: Double): List<Double>
 
     /**
      * Creates a new t-digest sketch with the default compression. The default compression is `100`.
@@ -224,7 +224,7 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      *         value is smaller than the minimum observation, equal to the number of observations if it is larger than the
      *         maximum, and `-2` if the sketch is empty.
      */
-    suspend fun tdigestRank(key: K, value: V): List<Long>
+    suspend fun tdigestRank(key: K, value: Double): List<Long>
 
     /**
      * Returns, for each given value, the estimated rank, that is the number of observations that are smaller than the value
@@ -236,7 +236,7 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      *         smaller than the minimum observation and equal to the number of observations if it is larger than the maximum.
      *         All entries are `-2` if the sketch is empty.
      */
-    suspend fun tdigestRank(key: K, vararg values: V): List<Long>
+    suspend fun tdigestRank(key: K, vararg values: Double): List<Long>
 
     /**
      * Resets a t-digest sketch, removing all its observations while keeping the sketch and its configuration in place.
@@ -256,7 +256,7 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      *         `-1` if the value is larger than the maximum observation, equal to the number of observations if it is
      *         smaller than the minimum, and `-2` if the sketch is empty.
      */
-    suspend fun tdigestRevRank(key: K, value: V): List<Long>
+    suspend fun tdigestRevRank(key: K, value: Double): List<Long>
 
     /**
      * Returns, for each given value, the estimated reverse rank, that is the number of observations that are larger than the
@@ -268,7 +268,7 @@ interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
      *         value is larger than the maximum observation and equal to the number of observations if it is smaller than the
      *         minimum. All entries are `-2` if the sketch is empty.
      */
-    suspend fun tdigestRevRank(key: K, vararg values: V): List<Long>
+    suspend fun tdigestRevRank(key: K, vararg values: Double): List<Long>
 
     /**
      * Returns an estimation of the mean value from the sketch, excluding observation values outside the low and high cutoff

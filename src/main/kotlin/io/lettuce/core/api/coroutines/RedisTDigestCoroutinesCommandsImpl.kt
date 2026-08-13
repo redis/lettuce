@@ -27,10 +27,10 @@ internal class RedisTDigestCoroutinesCommandsImpl<K : Any, V : Any>(
     internal val ops: RedisTDigestReactiveCommands<K, V>
 ) : RedisTDigestCoroutinesCommands<K, V> {
 
-    override suspend fun tdigestAdd(key: K, value: V): String? =
+    override suspend fun tdigestAdd(key: K, value: Double): String? =
         ops.tdigestAdd(key, value).awaitFirstOrNull()
 
-    override suspend fun tdigestAdd(key: K, vararg values: V): String? =
+    override suspend fun tdigestAdd(key: K, vararg values: Double): String? =
         ops.tdigestAdd(key, *values).awaitFirstOrNull()
 
     override suspend fun tdigestByRank(key: K, rank: Long): List<Double> =
@@ -45,10 +45,10 @@ internal class RedisTDigestCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tdigestByRevRank(key: K, vararg reverseRanks: Long): List<Double> =
         ops.tdigestByRevRank(key, *reverseRanks).asFlow().toList()
 
-    override suspend fun tdigestCDF(key: K, value: V): List<Double> =
+    override suspend fun tdigestCDF(key: K, value: Double): List<Double> =
         ops.tdigestCDF(key, value).asFlow().toList()
 
-    override suspend fun tdigestCDF(key: K, vararg values: V): List<Double> =
+    override suspend fun tdigestCDF(key: K, vararg values: Double): List<Double> =
         ops.tdigestCDF(key, *values).asFlow().toList()
 
     override suspend fun tdigestCreate(key: K): String? =
@@ -84,19 +84,19 @@ internal class RedisTDigestCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tdigestQuantile(key: K, vararg quantiles: Double): List<Double> =
         ops.tdigestQuantile(key, *quantiles).asFlow().toList()
 
-    override suspend fun tdigestRank(key: K, value: V): List<Long> =
+    override suspend fun tdigestRank(key: K, value: Double): List<Long> =
         ops.tdigestRank(key, value).asFlow().toList()
 
-    override suspend fun tdigestRank(key: K, vararg values: V): List<Long> =
+    override suspend fun tdigestRank(key: K, vararg values: Double): List<Long> =
         ops.tdigestRank(key, *values).asFlow().toList()
 
     override suspend fun tdigestReset(key: K): String? =
         ops.tdigestReset(key).awaitFirstOrNull()
 
-    override suspend fun tdigestRevRank(key: K, value: V): List<Long> =
+    override suspend fun tdigestRevRank(key: K, value: Double): List<Long> =
         ops.tdigestRevRank(key, value).asFlow().toList()
 
-    override suspend fun tdigestRevRank(key: K, vararg values: V): List<Long> =
+    override suspend fun tdigestRevRank(key: K, vararg values: Double): List<Long> =
         ops.tdigestRevRank(key, *values).asFlow().toList()
 
     override suspend fun tdigestTrimmedMean(key: K, lowCutQuantile: Double, highCutQuantile: Double): Double? =

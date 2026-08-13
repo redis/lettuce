@@ -4547,12 +4547,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     // --- Redis T-Digest Commands ---
 
     @Override
-    public RedisFuture<String> tdigestAdd(K key, V value) {
+    public RedisFuture<String> tdigestAdd(K key, double value) {
         return dispatch(tDigestCommandBuilder.tdigestAdd(key, value));
     }
 
     @Override
-    public RedisFuture<String> tdigestAdd(K key, V... values) {
+    public RedisFuture<String> tdigestAdd(K key, double... values) {
         return dispatch(tDigestCommandBuilder.tdigestAdd(key, values));
     }
 
@@ -4577,12 +4577,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Double>> tdigestCDF(K key, V value) {
+    public RedisFuture<List<Double>> tdigestCDF(K key, double value) {
         return dispatch(tDigestCommandBuilder.tdigestCDF(key, value));
     }
 
     @Override
-    public RedisFuture<List<Double>> tdigestCDF(K key, V... values) {
+    public RedisFuture<List<Double>> tdigestCDF(K key, double... values) {
         return dispatch(tDigestCommandBuilder.tdigestCDF(key, values));
     }
 
@@ -4642,12 +4642,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> tdigestRank(K key, V value) {
+    public RedisFuture<List<Long>> tdigestRank(K key, double value) {
         return dispatch(tDigestCommandBuilder.tdigestRank(key, value));
     }
 
     @Override
-    public RedisFuture<List<Long>> tdigestRank(K key, V... values) {
+    public RedisFuture<List<Long>> tdigestRank(K key, double... values) {
         return dispatch(tDigestCommandBuilder.tdigestRank(key, values));
     }
 
@@ -4657,12 +4657,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> tdigestRevRank(K key, V value) {
+    public RedisFuture<List<Long>> tdigestRevRank(K key, double value) {
         return dispatch(tDigestCommandBuilder.tdigestRevRank(key, value));
     }
 
     @Override
-    public RedisFuture<List<Long>> tdigestRevRank(K key, V... values) {
+    public RedisFuture<List<Long>> tdigestRevRank(K key, double... values) {
         return dispatch(tDigestCommandBuilder.tdigestRevRank(key, values));
     }
 

@@ -4638,12 +4638,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     // --- Redis T-Digest Commands ---
 
     @Override
-    public Mono<String> tdigestAdd(K key, V value) {
+    public Mono<String> tdigestAdd(K key, double value) {
         return createMono(() -> tDigestCommandBuilder.tdigestAdd(key, value));
     }
 
     @Override
-    public Mono<String> tdigestAdd(K key, V... values) {
+    public Mono<String> tdigestAdd(K key, double... values) {
         return createMono(() -> tDigestCommandBuilder.tdigestAdd(key, values));
     }
 
@@ -4668,12 +4668,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Flux<Double> tdigestCDF(K key, V value) {
+    public Flux<Double> tdigestCDF(K key, double value) {
         return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestCDF(key, value));
     }
 
     @Override
-    public Flux<Double> tdigestCDF(K key, V... values) {
+    public Flux<Double> tdigestCDF(K key, double... values) {
         return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestCDF(key, values));
     }
 
@@ -4733,12 +4733,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Flux<Long> tdigestRank(K key, V value) {
+    public Flux<Long> tdigestRank(K key, double value) {
         return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRank(key, value));
     }
 
     @Override
-    public Flux<Long> tdigestRank(K key, V... values) {
+    public Flux<Long> tdigestRank(K key, double... values) {
         return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRank(key, values));
     }
 
@@ -4748,12 +4748,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Flux<Long> tdigestRevRank(K key, V value) {
+    public Flux<Long> tdigestRevRank(K key, double value) {
         return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRevRank(key, value));
     }
 
     @Override
-    public Flux<Long> tdigestRevRank(K key, V... values) {
+    public Flux<Long> tdigestRevRank(K key, double... values) {
         return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRevRank(key, values));
     }
 
