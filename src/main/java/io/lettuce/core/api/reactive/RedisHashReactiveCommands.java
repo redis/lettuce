@@ -904,24 +904,21 @@ public interface RedisHashReactiveCommands<K, V> {
     Flux<Long> hpttl(K key, K... fields);
 
     /**
-     * Create the hash stored at {@code key} from {@code fieldset}, supplying only the values positionally paired to the
-     * fieldset's field names. The resulting key is an ordinary hash. The number of {@code values} must equal
-     * {@link HashImport#size() fieldset.size()}.
+     * Create the hash stored at {@code key} from {@code fieldset}, sending only the values, positionally paired to the
+     * fieldset's field names. The created key is an ordinary hash.
      * <p>
-     * The fieldset's shared field names are declared to the server automatically on first use per physical connection (and
-     * re-declared transparently across reconnects, new cluster nodes, and pooled connections), so only values travel on the
-     * wire for each import. {@link HashImport#close() Close} the fieldset when done to release the server-side state.
+     * The field names are declared to the server once per connection on first use, and re-declared transparently across
+     * reconnects, pooled connections, and new cluster nodes, so each import carries values only. {@link HashImport#close()
+     * Close} the fieldset when the import is finished to release its server-side state.
      * <p>
-     * Transactions ({@code MULTI}/{@code EXEC}) are not supported.
+     * Not supported inside a {@code MULTI} transaction. Invalid arguments, a closed fieldset, and use inside a transaction are
+     * signalled to the subscriber when the returned {@link Mono} is subscribed, not thrown by this method.
      *
      * @param key the key of the hash to create, must not be {@code null}.
-     * @param fieldset the fieldset describing the field names, must not be {@code null} and must not be closed.
-     * @param values the field values in fieldset order, exactly {@link HashImport#size()} of them.
-     * @return simple-string-reply {@code OK} if the hash was created.
-     * @throws IllegalStateException if {@code fieldset} has been closed.
-     * @throws IllegalArgumentException if {@code key} is {@code null} or the number of {@code values} does not match
-     *         {@code fieldset.size()}.
-     * @throws UnsupportedOperationException if invoked within a {@code MULTI} transaction.
+     * @param fieldset the field names to import into, must not be {@code null} and must not be closed.
+     * @param values the values in fieldset order, must not be {@code null} and must contain exactly {@link HashImport#size()}
+     *        elements.
+     * @return String simple-string-reply {@code OK}.
      * @since 7.7
      */
     @Experimental

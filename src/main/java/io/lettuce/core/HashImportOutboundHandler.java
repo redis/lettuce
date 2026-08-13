@@ -17,20 +17,13 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
 /**
- * Outbound pipeline adapter that drives a per-connection {@link HashImportContext} from the netty write path. It splits each
- * outbound write into its individual commands (a single command or a batched {@link Collection}) and, on the channel event
- * loop:
- * <ol>
- * <li>feeds each command to the {@link TransactionState} so the wire-order {@code MULTI} state stays current, and asks the
- * context whether a {@code HIMPORT PREPARE} must be injected ahead of the first {@code SET} for a fieldset
- * ({@link HashImportContext#prepareFor}) — writing the returned command itself,</li>
- * <li>after forwarding, if a cleanup {@code DISCARD} is pending ({@link HashImportContext#isDiscardsPending()}) and no
- * transaction is open, drains it ({@link HashImportContext#drainDiscards()}) and writes it so it lands right after the
- * {@code EXEC}/{@code DISCARD} that ended the transaction — and never inside one.</li>
- * </ol>
- * The handler owns transaction tracking (it holds and drives {@link TransactionState}) and performs every write; the context is
- * netty-unaware and only produces the commands to send and holds the channel-scoped state. A fresh handler, context, and
- * transaction state are created per channel init, so re-preparation after a reconnect happens automatically.
+ * Outbound pipeline adapter that injects the {@code HIMPORT PREPARE} declaring a fieldset ahead of the first {@code SET} that
+ * uses it on this connection, and writes the cleanup {@code DISCARD}s a closed fieldset leaves behind.
+ * <p>
+ * Owns the wire-order {@link TransactionState} and performs every write for its {@link HashImportContext}. A cleanup
+ * {@code DISCARD} is held back while a transaction is open, so it never lands inside one.
+ * <p>
+ * Created fresh per channel init, so a reconnected connection re-declares its fieldsets.
  * <p>
  * This class is part of the internal API.
  *

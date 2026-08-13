@@ -24,25 +24,13 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * Per-physical-connection component shared between {@link HashImportOutboundHandler} and the {@link HashImport} templates
- * prepared on that connection. It owns the connection-scoped {@code HIMPORT} state: which fieldsets have already been prepared
- * (so {@code PREPARE} is injected once), the lazily-built {@link #commandBuilder}, and the queue of cleanup {@code DISCARD}s
- * awaiting a quiet moment. Transaction tracking is <em>not</em> owned here — the {@link HashImportOutboundHandler} owns the
- * wire-order {@link TransactionState} and uses it to decide when to drive this component's flush.
+ * Connection-scoped {@code HIMPORT} state: the fieldsets already declared on this connection, and the cleanup {@code DISCARD}s
+ * waiting to be written.
  * <p>
- * This component is netty-unaware: it never writes to the channel itself. The {@link HashImportOutboundHandler} drives it from
- * the outbound write path on the channel event loop and performs all writes: {@link #prepareFor} <em>returns</em> the
- * {@code HIMPORT PREPARE} to inject ahead of a first {@code SET} (or {@code null}), and {@link #drainDiscards} <em>returns</em>
- * the pending cleanup {@code DISCARD}s, which the handler flushes once no transaction is open and a cleanup {@code DISCARD} is
- * pending ({@link #isDiscardsPending()}). Both touch the event-loop-confined state ({@link #prepared},
- * {@link #commandBuilder}).
+ * Never writes to the channel. {@link HashImportOutboundHandler} drives this from the outbound path and performs every write.
  * <p>
- * {@link HashImport#close()} calls {@link #discard} from an arbitrary thread; it builds the {@code DISCARD} command there (as
- * every Lettuce command is encoded on its caller's thread) and enqueues it onto a concurrent queue without writing. The queued
- * commands are handed back by {@link #drainDiscards} on the event loop on the next write to this connection — as one batch,
- * immediately if no transaction is open, otherwise once {@code EXEC}/{@code DISCARD} ends it. A cleanup {@code DISCARD}
- * therefore never lands inside a transaction, and cleanup is best-effort: if the connection never sees another write, the
- * server-side state is released when the connection closes.
+ * Confined to the channel event loop, except {@link #discard} and {@link #isDiscardsPending()}, which are callable from any
+ * thread.
  * <p>
  * This class is part of the internal API.
  *
@@ -81,8 +69,8 @@ class HashImportContext {
     /**
      * Inspect an outbound command <em>before</em> it is forwarded and decide whether a {@code HIMPORT PREPARE} must be injected
      * ahead of it. If it is the first {@code HIMPORT SET} for a fieldset on this connection, the {@code PREPARE} is built and
-     * returned (and the fieldset recorded for cleanup) for the caller to write; a {@code SET} for an already-closed fieldset is
-     * failed client-side with an {@link IllegalStateException}. Everything else returns {@code null}. Event loop only.
+     * returned (and the fieldset recorded for cleanup) for the caller to write. A {@code SET} whose fieldset can no longer be
+     * prepared is failed with an {@link IllegalStateException}. Everything else returns {@code null}. Event loop only.
      *
      * @param command the outbound command about to be forwarded.
      * @return the {@code HIMPORT PREPARE} to inject ahead of {@code command}, or {@code null} if none is needed.

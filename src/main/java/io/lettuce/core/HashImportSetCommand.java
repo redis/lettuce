@@ -13,12 +13,8 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
- * A {@code HIMPORT SET} command that carries the {@link HashImport} fieldset it imports into.
- * <p>
- * The attached fieldset lets the outbound {@code HashImportOutboundHandler} lazily inject the required {@code HIMPORT PREPARE}
- * ahead of this {@code SET} the first time the fieldset is seen on a physical connection, and record that connection on the
- * fieldset for best-effort cleanup on {@link HashImport#close()}. It is discovered on the write path via
- * {@link io.lettuce.core.protocol.CommandWrapper#unwrap(io.lettuce.core.protocol.RedisCommand, Class)}.
+ * A {@code HIMPORT SET} command carrying the {@link HashImport} fieldset it imports into, so the outbound path can declare that
+ * fieldset before sending the command.
  * <p>
  * This class is part of the internal API.
  *

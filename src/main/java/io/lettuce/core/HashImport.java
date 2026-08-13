@@ -19,20 +19,26 @@ import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Template describing the shared field names of a hash import fieldset used by the {@code HIMPORT} command family.
+ * Reusable set of field names shared by many hashes, imported with the {@code HIMPORT} command family.
  * <p>
- * A {@link HashImport} bundles a generated fieldset {@code name} with the ordered field names shared by many hashes. It is
- * created once and reused across many {@code himportSet} calls, each of which sends only the values, positionally paired to
- * these fields. The field names are declared to the server transparently on first use per physical connection, so callers never
- * issue a prepare step themselves.
+ * Create a fieldset once and pass it to every {@code himportSet} call that writes those fields, supplying only the values. The
+ * field names themselves are declared to the server on first use and re-declared transparently across reconnects, pooled
+ * connections, and new cluster nodes, so no prepare step is ever issued by the caller.
  * <p>
- * Instances are created through {@link #of(String...)} (which auto-generates a {@code himport:<seq>} name for
- * {@link String}-keyed connections) or {@link #of(Function, Object...)} (which derives the name from a caller-supplied
- * function, for arbitrary key types). Field names are validated at creation time to be non-empty and free of duplicates.
+ * Use {@link #of(String...)} for {@link String}-keyed connections, or {@link #of(Function, Object...)} to derive the fieldset
+ * name for another key type. Field names must be non-empty and free of duplicates.
  * <p>
- * A {@link HashImport} is safe to share across threads. Closing it (via {@link #close()} or try-with-resources) sends a
- * best-effort {@code HIMPORT DISCARD} to every connection it was prepared on and marks it discarded so it can no longer be used
- * for further imports.
+ * A fieldset is safe to share across threads and connections. {@link #close() Close} it when the import is finished to release
+ * its server-side state; a fieldset that is never closed holds that state until the connections it was used on are closed.
+ * Imports already issued when {@link #close()} is called still complete, so try-with-resources is safe with the synchronous,
+ * asynchronous, and reactive APIs alike.
+ *
+ * <pre class="code">
+ * try (HashImport&lt;String&gt; fieldset = HashImport.of("name", "email")) {
+ *     redis.himportSet("user:1", fieldset, "alice", "alice@example.com");
+ *     redis.himportSet("user:2", fieldset, "bob", "bob@example.com");
+ * }
+ * </pre>
  *
  * @param <K> Key type, matching the field-name type of the connection's codec.
  * @author Aleksandar Todorov
@@ -49,31 +55,21 @@ public class HashImport<K> implements AutoCloseable {
 
     private final K[] fields;
 
-    /**
-     * The per-connection {@link HashImportContext} components this fieldset has been prepared on, tracked weakly so idle/closed
-     * connections are collectible. Populated on the write path when {@code HIMPORT PREPARE} is injected; consulted only by
-     * {@link #close()} to target cleanup. Each context builds and sends the transaction-safe {@code DISCARD} for its
-     * connection.
-     */
+    /** Connections this fieldset was declared on, held weakly so closed connections stay collectible. */
     private final Set<HashImportContext> preparedOn = Collections.newSetFromMap(new WeakHashMap<>());
 
-    /**
-     * Number of {@code himportSet} commands that have been admitted through {@link #retain()} and not yet {@link #release()
-     * released}. Cleanup is withheld while this is positive, so imports issued before {@link #close()} still declare their
-     * fieldset and complete against it.
-     */
+    /** Imports admitted by {@link #retain()} and not yet released; cleanup waits for this to reach zero. */
     private final AtomicLong inFlight = new AtomicLong();
 
     /**
-     * Set synchronously by {@link #close()} so that {@link #retain()} rejects <em>new</em> imports from the moment it returns.
-     * Deliberately not exposed: any accessor would only support a check-then-import that {@link #retain()} already performs
+     * Set by {@link #close()}. Not exposed: an accessor would only invite a check-then-import that {@link #retain()} does
      * atomically.
      */
     private volatile boolean closed;
 
     /**
-     * Set once {@link #cleanup()} has handed the {@code DISCARD}s to the connections and cleared {@link #preparedOn}. From that
-     * point a {@code PREPARE} must no longer be sent, because nothing would discard it. Guarded by {@code preparedOn}.
+     * Set once cleanup has run; from then on no {@code PREPARE} may be sent, as nothing would discard it. Guarded by
+     * {@code preparedOn}.
      */
     private boolean cleanedUp;
 
@@ -83,11 +79,11 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * Create a {@link HashImport} for {@link String}-keyed connections with an auto-generated {@code himport:<seq>} name.
+     * Create a fieldset for {@link String}-keyed connections. The fieldset name is generated and unique per instance.
      *
-     * @param fields the ordered field names shared by the imported hashes, must not be {@code null}, empty, or contain
-     *        duplicates.
-     * @return a new {@link HashImport}.
+     * @param fields the field names, in the order values are supplied to {@code himportSet}; must not be {@code null}, empty,
+     *        or contain {@code null} or duplicate elements.
+     * @return a new fieldset over {@code fields}.
      * @throws IllegalArgumentException if {@code fields} is {@code null}, empty, or contains {@code null} or duplicate
      *         elements.
      * @since 7.7
@@ -97,17 +93,20 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * Create a {@link HashImport} for arbitrary key types, deriving the fieldset name from {@code idCodec} applied to a
-     * generated sequence number.
+     * Create a fieldset for a key type other than {@link String}, naming it by applying {@code idCodec} to a generated sequence
+     * number.
+     * <p>
+     * {@code idCodec} must map distinct sequence numbers to distinct names: two live fieldsets sharing a name also share their
+     * server-side state, and closing either releases it for both.
      *
      * @param <K> Key type.
-     * @param idCodec function mapping a generated sequence number to a fieldset name of key type {@code K}, must not be
-     *        {@code null}.
-     * @param fields the ordered field names shared by the imported hashes, must not be {@code null}, empty, or contain
-     *        duplicates.
-     * @return a new {@link HashImport}.
-     * @throws IllegalArgumentException if {@code idCodec} is {@code null}, or {@code fields} is {@code null}, empty, or
-     *         contains {@code null} or duplicate elements.
+     * @param idCodec maps a generated sequence number to a fieldset name, must not be {@code null} and must produce a distinct
+     *        name per invocation.
+     * @param fields the field names, in the order values are supplied to {@code himportSet}; must not be {@code null}, empty,
+     *        or contain {@code null} or duplicate elements.
+     * @return a new fieldset over {@code fields}.
+     * @throws IllegalArgumentException if {@code idCodec} is {@code null} or returns {@code null}, or if {@code fields} is
+     *         {@code null}, empty, or contains {@code null} or duplicate elements.
      * @since 7.7
      */
     @SafeVarargs
@@ -133,7 +132,9 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * @return the generated fieldset name sent to the server.
+     * Return the generated name identifying this fieldset on the server.
+     *
+     * @return the fieldset name, never {@code null}.
      * @since 7.7
      */
     public K name() {
@@ -141,7 +142,9 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * @return a copy of the ordered field names.
+     * Return the field names, in the order values are supplied to {@code himportSet}.
+     *
+     * @return a copy of the field names; modifying it does not affect this fieldset.
      * @since 7.7
      */
     public K[] fields() {
@@ -149,7 +152,9 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * @return the number of fields, matching the required number of values per {@code himportSet}.
+     * Return the number of fields, which is the number of values every {@code himportSet} call must supply.
+     *
+     * @return the number of fields, always greater than zero.
      * @since 7.7
      */
     public int size() {
@@ -157,15 +162,10 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * Admit one {@code himportSet} for this fieldset, withholding cleanup until it completes.
-     * <p>
-     * Called on the caller's thread before the command is dispatched, and paired with exactly one {@link #release()} on command
-     * completion. This is what makes {@code close()} order itself behind imports that were already issued: a command only
-     * reaches the write path — where the {@code PREPARE} is injected — some time after {@code dispatch} returns, so a
-     * {@code close()} on the calling thread would otherwise overtake it.
+     * Admit one {@code himportSet}, withholding cleanup until it completes. Pair with exactly one {@link #release()}.
      *
-     * @return {@code true} if the import may proceed; {@code false} if this fieldset is already closed, in which case no
-     *         matching {@link #release()} must be issued.
+     * @return {@code true} if the import may proceed; {@code false} if this fieldset is closed, in which case no matching
+     *         {@link #release()} must be issued.
      */
     boolean retain() {
 
@@ -186,9 +186,7 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * Complete one admitted {@code himportSet}, running cleanup if this was the last one outstanding on a closed fieldset.
-     * Called from the command's completion callback, hence on the connection's event loop for a command that reached the
-     * server.
+     * Complete one admitted {@code himportSet}, running cleanup if it was the last one outstanding on a closed fieldset.
      */
     void release() {
         if (inFlight.decrementAndGet() == 0 && closed) {
@@ -197,17 +195,13 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * Record that this fieldset is being prepared on {@code context}, so cleanup can later target it with a {@code DISCARD}.
-     * Called on the connection's event loop from the outbound write path, before the {@code PREPARE} is written, and atomically
-     * with {@link #cleanup()} on {@code preparedOn}: once cleanup has run the caller must not send the {@code PREPARE} at all,
-     * so no server-side state is ever left without a matching {@code DISCARD}.
+     * Record that this fieldset is being declared on {@code context}, so cleanup can later target it.
      * <p>
-     * Note this gates on cleanup having run, not on the fieldset being closed: an import admitted by {@link #retain()} before
-     * {@link #close()} still declares its fieldset here, and the {@code DISCARD} that follows is ordered behind it.
+     * Gates on cleanup having run rather than on the fieldset being closed, so an import admitted before {@link #close()} still
+     * declares its fieldset and the {@code DISCARD} is ordered behind it.
      *
-     * @param context the per-connection component the {@code HIMPORT PREPARE} is about to be injected on.
-     * @return {@code true} if the connection was recorded and the {@code PREPARE} may be sent; {@code false} if cleanup has
-     *         already run and preparation must be skipped.
+     * @param context the connection the {@code PREPARE} is about to be written on.
+     * @return {@code true} if the {@code PREPARE} may be sent; {@code false} if cleanup has already run.
      */
     boolean registerConnection(HashImportContext context) {
         synchronized (preparedOn) {
@@ -220,23 +214,15 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * Discard this fieldset, releasing its server-side state.
+     * Discard this fieldset, releasing its server-side state on every connection it was used on.
      * <p>
-     * Rejects further imports from the moment this returns — a subsequent {@code himportSet} fails with an
-     * {@link IllegalStateException} — and sends a best-effort {@code HIMPORT DISCARD} to every connection the fieldset was
-     * prepared on. Each {@code DISCARD} is handed to that connection's {@link HashImportContext}, which writes it on the
-     * channel event loop — deferring it until the current transaction ends if a {@code MULTI} is open — so a cleanup
-     * {@code DISCARD} never falls inside the caller's transaction.
+     * Further imports are rejected from the moment this returns: a subsequent {@code himportSet} fails with an
+     * {@link IllegalStateException}. Imports already issued are not cancelled and still complete, so this may return before the
+     * state has actually been released.
      * <p>
-     * Imports already issued when this is called are <em>not</em> cancelled: cleanup is withheld until every outstanding
-     * {@code himportSet} has completed, so the {@code DISCARD} is ordered behind them on the wire. Closing therefore does not
-     * race the asynchronous APIs, and the try-with-resources idiom is safe with all execution models. The consequence is that
-     * this method may return before the {@code DISCARD}s have been handed out.
-     * <p>
-     * Cleanup is fire-and-forget: a {@code DISCARD} that lands on a rotated connection is a harmless no-op because the
-     * generated fieldset name is unique per instance. Disposal is not required for correctness — the state is also released
-     * when a connection closes — but on long-lived and pooled connections a fieldset that is never closed keeps its server-side
-     * state for the life of the connection. Calling this more than once has no additional effect.
+     * Release is best-effort and does not report failures. The state is released in any case when a connection closes, so
+     * closing a fieldset is not required for correctness — but on long-lived and pooled connections an unclosed fieldset holds
+     * its state for the life of those connections. Calling this more than once has no further effect.
      *
      * @since 7.7
      */
@@ -251,9 +237,7 @@ public class HashImport<K> implements AutoCloseable {
     }
 
     /**
-     * Hand a {@code DISCARD} to every connection this fieldset was prepared on and stop further preparation. Runs once, either
-     * directly from {@link #close()} when nothing was outstanding or from the {@link #release()} of the last outstanding
-     * import.
+     * Hand a {@code DISCARD} to every connection this fieldset was declared on and stop further declaration. Runs once.
      */
     private void cleanup() {
 

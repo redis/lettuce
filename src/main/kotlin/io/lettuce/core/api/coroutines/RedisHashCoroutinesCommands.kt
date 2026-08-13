@@ -701,21 +701,22 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
     suspend fun hpttl(key: K, vararg fields: K): List<Long>
 
     /**
-     * Create the hash stored at `key` from `fieldset`, supplying only the values positionally paired to the fieldset's field
-     * names. The resulting key is an ordinary hash. The number of `values` must equal `fieldset.size()`.
+     * Create the hash stored at `key` from `fieldset`, sending only the values, positionally paired to the fieldset's field
+     * names. The created key is an ordinary hash.
      *
-     * The fieldset's shared field names are declared to the server automatically on first use per physical connection (and
-     * re-declared transparently across reconnects, new cluster nodes, and pooled connections), so only values travel on the
-     * wire for each import. [HashImport.close] the fieldset when done to release the server-side state.
+     * The field names are declared to the server once per connection on first use, and re-declared transparently across
+     * reconnects, pooled connections, and new cluster nodes, so each import carries values only. [HashImport.close] the
+     * fieldset when the import is finished to release its server-side state.
      *
-     * Transactions (`MULTI`/`EXEC`) are not supported.
+     * Not supported inside a `MULTI` transaction.
      *
      * @param key the key of the hash to create, must not be `null`.
-     * @param fieldset the fieldset describing the field names, must not be `null` and must not be closed.
-     * @param values the field values in fieldset order, exactly `fieldset.size()` of them.
-     * @return simple-string-reply `OK` if the hash was created.
+     * @param fieldset the field names to import into, must not be `null` and must not be closed.
+     * @param values the values in fieldset order, must not be `null` and must contain exactly [HashImport.size] elements.
+     * @return String simple-string-reply `OK`.
+     * @throws IllegalArgumentException if `key`, `fieldset`, or `values` is `null`, or if the number of `values` does not match
+     *         [HashImport.size].
      * @throws IllegalStateException if `fieldset` has been closed.
-     * @throws IllegalArgumentException if `key` is `null` or the number of `values` does not match `fieldset.size()`.
      * @throws UnsupportedOperationException if invoked within a `MULTI` transaction.
      * @since 7.7
      */
