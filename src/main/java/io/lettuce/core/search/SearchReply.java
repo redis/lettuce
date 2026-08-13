@@ -9,7 +9,7 @@ package io.lettuce.core.search;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,24 +17,23 @@ import java.util.Map;
  * Represents the results of a Redis FT.SEARCH command.
  * <p>
  * This class encapsulates the search results including the total count of matching documents and a list of individual search
- * result documents. Each document contains the document ID and optionally the document fields, score, payload, and sort keys
- * depending on the search arguments used.
+ * result documents. Each document contains the document ID and optionally the document fields and score depending on the search
+ * arguments used.
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  * @see <a href="https://redis.io/docs/latest/commands/ft.search/">FT.SEARCH</a>
  */
-public class SearchReply<K, V> {
+public class SearchReply<K> {
 
     private long count;
 
-    private final List<SearchResult<K, V>> results;
+    private final List<SearchResult<K>> results;
 
     private Long cursorId;
 
-    private final List<V> warnings = new ArrayList<>();
+    private final List<String> warnings = new ArrayList<>();
 
     /**
      * Creates a new empty SearchReply instance.
@@ -51,7 +50,7 @@ public class SearchReply<K, V> {
      * @param count the total number of matching documents
      * @param results the list of search result documents
      */
-    SearchReply(long count, List<SearchResult<K, V>> results) {
+    SearchReply(long count, List<SearchResult<K>> results) {
         this.count = count;
         this.results = new ArrayList<>(results);
         this.cursorId = null;
@@ -81,12 +80,11 @@ public class SearchReply<K, V> {
     /**
      * Gets the list of search result documents.
      * <p>
-     * Each result contains the document ID and optionally the document fields, score, payload, and sort keys depending on the
-     * search arguments used.
+     * Each result contains the document ID and optionally the document fields and score depending on the search arguments used.
      *
      * @return an unmodifiable list of search result documents
      */
-    public List<SearchResult<K, V>> getResults() {
+    public List<SearchResult<K>> getResults() {
         return Collections.unmodifiableList(results);
     }
 
@@ -95,7 +93,7 @@ public class SearchReply<K, V> {
      *
      * @param result the search result document to add
      */
-    public void addResult(SearchResult<K, V> result) {
+    public void addResult(SearchResult<K> result) {
         this.results.add(result);
     }
 
@@ -134,7 +132,7 @@ public class SearchReply<K, V> {
     /**
      * @return a {@link List} of all the warnings generated during the execution of this search
      */
-    public List<V> getWarnings() {
+    public List<String> getWarnings() {
         return this.warnings;
     }
 
@@ -152,27 +150,27 @@ public class SearchReply<K, V> {
      *
      * @param v the warning to add
      */
-    void addWarning(V v) {
+    void addWarning(String v) {
         this.warnings.add(v);
     }
 
     /**
      * Represents a single search result document.
+     * <p>
+     * {@link #getFields()} maps each field name to a {@link FieldValue}, which retains the exact bytes returned by the server
+     * and can be read as either text ({@link FieldValue#asString()}) or binary ({@link FieldValue#asBytes()}). This lets a
+     * single document mix textual/numeric fields with binary fields such as vector embeddings, where UTF-8 decoding would
+     * corrupt the value.
      *
-     * @param <K> Key type.
-     * @param <V> Value type.
+     * @param <K> Key type of the document id.
      */
-    public static class SearchResult<K, V> {
+    public static class SearchResult<K> {
 
         private final K id;
 
         private Double score;
 
-        private V payload;
-
-        private V sortKey;
-
-        private final Map<K, V> fields = new HashMap<>();
+        private final Map<String, FieldValue> fields = new LinkedHashMap<>();
 
         /**
          * Creates a new SearchResult with the specified document ID.
@@ -217,74 +215,33 @@ public class SearchReply<K, V> {
         }
 
         /**
-         * Gets the document payload.
-         * <p>
-         * This is only available if WITHPAYLOADS was used in the search.
+         * Gets the document fields, mapping each field name to its {@link FieldValue}, in the order returned by the server. If
+         * NOCONTENT was used in the search, this will be empty. Read each value as text via {@link FieldValue#asString()} or as
+         * raw bytes via {@link FieldValue#asBytes()}.
          *
-         * @return the document payload, or null if not available
+         * @return an unmodifiable, ordered map of field name to {@link FieldValue}, or an empty map if not available
          */
-        public V getPayload() {
-            return payload;
-        }
-
-        /**
-         * Sets the document payload.
-         *
-         * @param payload the document payload
-         */
-        void setPayload(V payload) {
-            this.payload = payload;
-        }
-
-        /**
-         * Gets the sort key.
-         * <p>
-         * This is only available if WITHSORTKEYS was used in the search.
-         *
-         * @return the sort key, or null if not available
-         */
-        public V getSortKey() {
-            return sortKey;
-        }
-
-        /**
-         * Sets the sort key.
-         *
-         * @param sortKey the sort key
-         */
-        void setSortKey(V sortKey) {
-            this.sortKey = sortKey;
-        }
-
-        /**
-         * Gets the document fields.
-         * <p>
-         * This contains the field names and values of the document. If NOCONTENT was used in the search, this will be null or
-         * empty.
-         *
-         * @return the document fields, or null if not available
-         */
-        public Map<K, V> getFields() {
-            return fields;
+        public Map<String, FieldValue> getFields() {
+            return Collections.unmodifiableMap(fields);
         }
 
         /**
          * Adds all the provided fields
          *
-         * @param fields the document fields
+         * @param fields the document fields, keyed by name, with raw byte values
          */
-        public void addFields(Map<K, V> fields) {
-            this.fields.putAll(fields);
+        public void addFields(Map<String, byte[]> fields) {
+            fields.forEach(this::addField);
         }
 
         /**
          * Adds a single document field
          *
          * @param key the field name
-         * @param value the field value
+         * @param value the raw field value
          */
-        public void addFields(K key, V value) {
-            this.fields.put(key, value);
+        public void addField(String key, byte[] value) {
+            this.fields.put(key, value == null ? FieldValue.NULL : FieldValue.of(value));
         }
 
     }

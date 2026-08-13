@@ -35,7 +35,7 @@ package io.lettuce.core.search.arguments;
  * 
  * {
  *     &#64;code
- *     SearchArgs<String, String> args = SearchArgs.<String, String> builder().dialect(QueryDialects.DIALECT2).build();
+ *     SearchArgs<String> args = SearchArgs.<String> builder().dialect(QueryDialects.DIALECT2).build();
  * }
  * </pre>
  *
