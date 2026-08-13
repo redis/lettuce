@@ -42,7 +42,8 @@ public interface RedisReactiveCommands<K, V>
         RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
         RedisTransactionalReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>,
         RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V>,
-        RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
+        RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>, RedisCMSReactiveCommands<K, V>,
+        RedisTDigestReactiveCommands<K, V> {
 
     /**
      * Authenticate to the server.

@@ -61,6 +61,7 @@ internal class RedisClusterCoroutinesCommandsImpl<K : Any, V : Any>(
     RedisBloomFilterCoroutinesCommands<K, V> by RedisBloomFilterCoroutinesCommandsImpl(ops),
     RedisCuckooFilterCoroutinesCommands<K, V> by RedisCuckooFilterCoroutinesCommandsImpl(ops),
     RedisTopKCoroutinesCommands<K, V> by RedisTopKCoroutinesCommandsImpl(ops),
+    RedisCMSCoroutinesCommands<K, V> by RedisCMSCoroutinesCommandsImpl(ops),
     RedisTDigestCoroutinesCommands<K, V> by RedisTDigestCoroutinesCommandsImpl(ops) {
 
     /**

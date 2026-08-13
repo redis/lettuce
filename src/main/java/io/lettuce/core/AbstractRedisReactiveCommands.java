@@ -28,6 +28,8 @@ import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.probabilistic.CfInfoValue;
+import io.lettuce.core.probabilistic.CMSInfoValue;
+import io.lettuce.core.probabilistic.MergePair;
 import io.lettuce.core.probabilistic.TDigestInfoValue;
 import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
@@ -132,7 +134,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
         BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
         RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>,
         RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V>,
-        RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
+        RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>, RedisCMSReactiveCommands<K, V>,
+        RedisTDigestReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -151,6 +154,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     private final RedisCuckooFilterCommandBuilder<K, V> cuckooFilterCommandBuilder;
 
     private final RedisTopKCommandBuilder<K, V> topKCommandBuilder;
+
+    private final RedisCMSCommandBuilder<K, V> cmsCommandBuilder;
 
     private final RedisTDigestCommandBuilder<K, V> tDigestCommandBuilder;
 
@@ -181,6 +186,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
         this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
         this.cuckooFilterCommandBuilder = new RedisCuckooFilterCommandBuilder<>(codec);
         this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
+        this.cmsCommandBuilder = new RedisCMSCommandBuilder<>(codec);
         this.tDigestCommandBuilder = new RedisTDigestCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
@@ -4633,6 +4639,63 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Mono<String> topKReserve(K key, long k, TopKReserveArgs args) {
         return createMono(() -> topKCommandBuilder.topKReserve(key, k, args));
+    }
+
+    // --- Redis CMS Commands ---
+
+    @Override
+    public Flux<Long> cmsIncrBy(K key, IncrementPair<V> pair) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsIncrBy(key, pair));
+    }
+
+    @Override
+    public Flux<Long> cmsIncrBy(K key, IncrementPair<V>... pairs) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsIncrBy(key, pairs));
+    }
+
+    @Override
+    public Mono<CMSInfoValue> cmsInfo(K key) {
+        return createMono(() -> cmsCommandBuilder.cmsInfo(key));
+    }
+
+    @Override
+    public Mono<String> cmsInitByDim(K key, long width, long depth) {
+        return createMono(() -> cmsCommandBuilder.cmsInitByDim(key, width, depth));
+    }
+
+    @Override
+    public Mono<String> cmsInitByProb(K key, double error, double probability) {
+        return createMono(() -> cmsCommandBuilder.cmsInitByProb(key, error, probability));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, K source) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, source));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, K... sources) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, sources));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, MergePair<K> pair) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, pair));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, MergePair<K>... sources) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, sources));
+    }
+
+    @Override
+    public Flux<Long> cmsQuery(K key, V value) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsQuery(key, value));
+    }
+
+    @Override
+    public Flux<Long> cmsQuery(K key, V... values) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsQuery(key, values));
     }
 
     // --- Redis T-Digest Commands ---
