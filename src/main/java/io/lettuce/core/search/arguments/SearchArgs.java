@@ -21,13 +21,12 @@ import java.util.Optional;
  * Argument list builder for {@code FT.SEARCH}.
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @since 6.8
  * @author Tihomir Mateev
  * @see <a href="https://redis.io/docs/latest/commands/ft.search/">FT.SEARCH</a>
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class SearchArgs<K, V> {
+public class SearchArgs<K> {
 
     private boolean noContent = false;
 
@@ -39,13 +38,13 @@ public class SearchArgs<K, V> {
 
     private final List<K> inKeys = new ArrayList<>();
 
-    private final List<K> inFields = new ArrayList<>();
+    private final List<String> inFields = new ArrayList<>();
 
-    private final Map<K, Optional<K>> returnFields = new HashMap<>();
+    private final Map<String, Optional<String>> returnFields = new HashMap<>();
 
-    private Optional<SummarizeArgs<K, V>> summarize = Optional.empty();
+    private Optional<SummarizeArgs> summarize = Optional.empty();
 
-    private Optional<HighlightArgs<K, V>> highlight = Optional.empty();
+    private Optional<HighlightArgs> highlight = Optional.empty();
 
     private Long slop;
 
@@ -53,17 +52,17 @@ public class SearchArgs<K, V> {
 
     private Optional<DocumentLanguage> language = Optional.empty();
 
-    private Optional<V> expander = Optional.empty();
+    private Optional<String> expander = Optional.empty();
 
     private Optional<ScoringFunction> scorer = Optional.empty();
 
-    private Optional<SortByArgs<K>> sortBy = Optional.empty();
+    private Optional<SortByArgs> sortBy = Optional.empty();
 
     private Optional<Limit> limit = Optional.empty();
 
     private Optional<Duration> timeout = Optional.empty();
 
-    private final Map<K, V> params = new HashMap<>();
+    private final Map<String, Object> params = new HashMap<>();
 
     private QueryDialects dialect = QueryDialects.DIALECT2;
 
@@ -72,9 +71,8 @@ public class SearchArgs<K, V> {
      *
      * @return a {@link SearchArgs.Builder} that provides the option to build up a new instance of the {@link SearchArgs}
      * @param <K> the key type
-     * @param <V> the value type
      */
-    public static <K, V> SearchArgs.Builder<K, V> builder() {
+    public static <K> SearchArgs.Builder<K> builder() {
         return new SearchArgs.Builder<>();
     }
 
@@ -85,23 +83,22 @@ public class SearchArgs<K, V> {
      * instance.
      *
      * @param <K> the key type
-     * @param <V> the value type
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      */
-    public static class Builder<K, V> {
+    public static class Builder<K> {
 
-        private final SearchArgs<K, V> instance = new SearchArgs<>();
+        private final SearchArgs<K> instance = new SearchArgs<>();
 
-        private SummarizeArgs.Builder<K, V> summarizeArgs;
+        private SummarizeArgs.Builder summarizeArgs;
 
-        private HighlightArgs.Builder<K, V> highlightArgs;
+        private HighlightArgs.Builder highlightArgs;
 
         /**
          * Build a new instance of the {@link SearchArgs}.
          *
          * @return a new instance of the {@link SearchArgs}
          */
-        public SearchArgs<K, V> build() {
+        public SearchArgs<K> build() {
             if (!instance.summarize.isPresent() && summarizeArgs != null) {
                 instance.summarize = Optional.of(summarizeArgs.build());
             }
@@ -119,7 +116,7 @@ public class SearchArgs<K, V> {
          *
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> noContent() {
+        public SearchArgs.Builder<K> noContent() {
             instance.noContent = true;
             return this;
         }
@@ -129,7 +126,7 @@ public class SearchArgs<K, V> {
          *
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> verbatim() {
+        public SearchArgs.Builder<K> verbatim() {
             instance.verbatim = true;
             return this;
         }
@@ -140,7 +137,7 @@ public class SearchArgs<K, V> {
          *
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> withScores() {
+        public SearchArgs.Builder<K> withScores() {
             instance.withScores = true;
             return this;
         }
@@ -152,7 +149,7 @@ public class SearchArgs<K, V> {
          *
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> withSortKeys() {
+        public SearchArgs.Builder<K> withSortKeys() {
             instance.withSortKeys = true;
             return this;
         }
@@ -164,7 +161,7 @@ public class SearchArgs<K, V> {
          * @param key the key to search in
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> inKey(K key) {
+        public SearchArgs.Builder<K> inKey(K key) {
             instance.inKeys.add(key);
             return this;
         }
@@ -175,7 +172,7 @@ public class SearchArgs<K, V> {
          * @param field the field to search in
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> inField(K field) {
+        public SearchArgs.Builder<K> inField(String field) {
             instance.inFields.add(field);
             return this;
         }
@@ -188,7 +185,7 @@ public class SearchArgs<K, V> {
          * @param as the alias to use for this field in the result
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> returnField(K field, K as) {
+        public SearchArgs.Builder<K> returnField(String field, String as) {
             instance.returnFields.put(field, Optional.ofNullable(as));
             return this;
         }
@@ -200,7 +197,7 @@ public class SearchArgs<K, V> {
          * @param field the field to return
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> returnField(K field) {
+        public SearchArgs.Builder<K> returnField(String field) {
             instance.returnFields.put(field, Optional.empty());
             return this;
         }
@@ -213,7 +210,7 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
          */
-        public SearchArgs.Builder<K, V> summarizeArgs(SummarizeArgs<K, V> summarizeFilter) {
+        public SearchArgs.Builder<K> summarizeArgs(SummarizeArgs summarizeFilter) {
             instance.summarize = Optional.ofNullable(summarizeFilter);
             return this;
         }
@@ -229,9 +226,9 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
          */
-        public SearchArgs.Builder<K, V> summarizeField(K field) {
+        public SearchArgs.Builder<K> summarizeField(String field) {
             if (summarizeArgs == null) {
-                summarizeArgs = new SummarizeArgs.Builder<>();
+                summarizeArgs = new SummarizeArgs.Builder();
             }
 
             summarizeArgs.field(field);
@@ -250,9 +247,9 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
          */
-        public SearchArgs.Builder<K, V> summarizeLen(long len) {
+        public SearchArgs.Builder<K> summarizeLen(long len) {
             if (summarizeArgs == null) {
-                summarizeArgs = new SummarizeArgs.Builder<>();
+                summarizeArgs = new SummarizeArgs.Builder();
             }
 
             summarizeArgs.len(len);
@@ -272,9 +269,9 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
          */
-        public SearchArgs.Builder<K, V> summarizeSeparator(V separator) {
+        public SearchArgs.Builder<K> summarizeSeparator(String separator) {
             if (summarizeArgs == null) {
-                summarizeArgs = new SummarizeArgs.Builder<>();
+                summarizeArgs = new SummarizeArgs.Builder();
             }
 
             summarizeArgs.separator(separator);
@@ -292,9 +289,9 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
          */
-        public SearchArgs.Builder<K, V> summarizeFragments(long fragments) {
+        public SearchArgs.Builder<K> summarizeFragments(long fragments) {
             if (summarizeArgs == null) {
-                summarizeArgs = new SummarizeArgs.Builder<>();
+                summarizeArgs = new SummarizeArgs.Builder();
             }
 
             summarizeArgs.fragments(fragments);
@@ -310,7 +307,7 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
          */
-        public SearchArgs.Builder<K, V> highlightArgs(HighlightArgs<K, V> highlightFilter) {
+        public SearchArgs.Builder<K> highlightArgs(HighlightArgs highlightFilter) {
             instance.highlight = Optional.ofNullable(highlightFilter);
             return this;
         }
@@ -325,9 +322,9 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
          */
-        public SearchArgs.Builder<K, V> highlightField(K field) {
+        public SearchArgs.Builder<K> highlightField(String field) {
             if (highlightArgs == null) {
-                highlightArgs = new HighlightArgs.Builder<>();
+                highlightArgs = new HighlightArgs.Builder();
             }
 
             highlightArgs.field(field);
@@ -347,9 +344,9 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
          */
-        public SearchArgs.Builder<K, V> highlightTags(V startTag, V endTag) {
+        public SearchArgs.Builder<K> highlightTags(String startTag, String endTag) {
             if (highlightArgs == null) {
-                highlightArgs = new HighlightArgs.Builder<>();
+                highlightArgs = new HighlightArgs.Builder();
             }
 
             highlightArgs.tags(startTag, endTag);
@@ -366,7 +363,7 @@ public class SearchArgs<K, V> {
          * @param slop the slop value how many intermediate terms are allowed
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> slop(long slop) {
+        public SearchArgs.Builder<K> slop(long slop) {
             instance.slop = slop;
             return this;
         }
@@ -377,7 +374,7 @@ public class SearchArgs<K, V> {
          *
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> inOrder() {
+        public SearchArgs.Builder<K> inOrder() {
             instance.inOrder = true;
             return this;
         }
@@ -391,7 +388,7 @@ public class SearchArgs<K, V> {
          * @param language the language of the query
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> language(DocumentLanguage language) {
+        public SearchArgs.Builder<K> language(DocumentLanguage language) {
             instance.language = Optional.ofNullable(language);
             return this;
         }
@@ -404,7 +401,7 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/administration/extensions/">Extensions</a>
          */
-        public SearchArgs.Builder<K, V> expander(V expander) {
+        public SearchArgs.Builder<K> expander(String expander) {
             instance.expander = Optional.ofNullable(expander);
             return this;
         }
@@ -418,7 +415,7 @@ public class SearchArgs<K, V> {
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/administration/extensions/">Extensions</a>
          * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/scoring/">Scoring</a>
          */
-        public SearchArgs.Builder<K, V> scorer(ScoringFunction scorer) {
+        public SearchArgs.Builder<K> scorer(ScoringFunction scorer) {
             instance.scorer = Optional.ofNullable(scorer);
             return this;
         }
@@ -432,7 +429,7 @@ public class SearchArgs<K, V> {
          * @param sortBy the {@link SortByArgs} to use
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> sortBy(SortByArgs<K> sortBy) {
+        public SearchArgs.Builder<K> sortBy(SortByArgs sortBy) {
             instance.sortBy = Optional.ofNullable(sortBy);
             return this;
         }
@@ -450,7 +447,7 @@ public class SearchArgs<K, V> {
          * @param number the limit to use
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> limit(long offset, long number) {
+        public SearchArgs.Builder<K> limit(long offset, long number) {
             instance.limit = Optional.of(new Limit(offset, number));
             return this;
         }
@@ -461,7 +458,7 @@ public class SearchArgs<K, V> {
          * @param timeout the timeout to use (with millisecond resolution)
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> timeout(Duration timeout) {
+        public SearchArgs.Builder<K> timeout(Duration timeout) {
             instance.timeout = Optional.ofNullable(timeout);
             return this;
         }
@@ -475,7 +472,21 @@ public class SearchArgs<K, V> {
          * @param value the value of the parameter
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
-        public SearchArgs.Builder<K, V> param(K name, V value) {
+        public SearchArgs.Builder<K> param(String name, String value) {
+            instance.params.put(name, value);
+            return this;
+        }
+
+        /**
+         * Add a binary value parameter, for example a vector blob for a KNN query ({@code $BLOB}).
+         * <p/>
+         * Requires {@link QueryDialects#DIALECT2} or higher.
+         *
+         * @param name the name of the parameter
+         * @param value the binary value of the parameter
+         * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
+         */
+        public SearchArgs.Builder<K> param(String name, byte[] value) {
             instance.params.put(name, value);
             return this;
         }
@@ -487,7 +498,7 @@ public class SearchArgs<K, V> {
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          * @see QueryDialects
          */
-        public SearchArgs.Builder<K, V> dialect(QueryDialects dialect) {
+        public SearchArgs.Builder<K> dialect(QueryDialects dialect) {
             instance.dialect = dialect;
             return this;
         }
@@ -526,7 +537,7 @@ public class SearchArgs<K, V> {
      *
      * @param args the {@link CommandArgs} object
      */
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<K, ?> args) {
 
         if (noContent) {
             args.add(CommandKeyword.NOCONTENT);
@@ -553,7 +564,7 @@ public class SearchArgs<K, V> {
         if (!inFields.isEmpty()) {
             args.add(CommandKeyword.INFIELDS);
             args.add(inFields.size());
-            args.addKeys(inFields);
+            inFields.forEach(args::add);
         }
 
         if (!returnFields.isEmpty()) {
@@ -566,10 +577,10 @@ public class SearchArgs<K, V> {
 
             args.add(count);
             returnFields.forEach((field, as) -> {
-                args.addKey(field);
+                args.add(field);
                 if (as.isPresent()) {
                     args.add(CommandKeyword.AS);
-                    args.addKey(as.get());
+                    args.add(as.get());
                 }
             });
         }
@@ -598,7 +609,7 @@ public class SearchArgs<K, V> {
 
         expander.ifPresent(v -> {
             args.add(CommandKeyword.EXPANDER);
-            args.addValue(v);
+            args.add(v);
         });
 
         scorer.ifPresent(scoringFunction -> {
@@ -618,8 +629,12 @@ public class SearchArgs<K, V> {
             args.add(CommandKeyword.PARAMS);
             args.add(params.size() * 2L);
             params.forEach((name, value) -> {
-                args.addKey(name);
-                args.addValue(value);
+                args.add(name);
+                if (value instanceof byte[]) {
+                    args.add((byte[]) value);
+                } else {
+                    args.add((String) value);
+                }
             });
         }
 

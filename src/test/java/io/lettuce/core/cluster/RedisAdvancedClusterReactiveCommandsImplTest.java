@@ -102,16 +102,15 @@ class RedisAdvancedClusterReactiveCommandsImplTest {
 
     @Test
     void ftAggregate_stampsNodeId_whenCursorCreated() {
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
-                .withCursor(AggregateArgs.WithCursor.of(1L)).build();
+        AggregateArgs args = AggregateArgs.builder().withCursor(AggregateArgs.WithCursor.of(1L)).build();
 
-        AggregationReply<String, String> replyWithCursor = new AggregationReply<>();
+        AggregationReply<String> replyWithCursor = new AggregationReply<>();
         replyWithCursor.setCursor(AggregationReply.Cursor.of(42L, null));
 
         when(nodeReactive.ftAggregate(anyString(), anyString(), any())).thenReturn(Mono.just(replyWithCursor));
         when(nodeReactive.clusterMyId()).thenReturn(Mono.just("node-1"));
 
-        AggregationReply<String, String> out = reactive.ftAggregate("idx", "*", args).block();
+        AggregationReply<String> out = reactive.ftAggregate("idx", "*", args).block();
 
         assertThat(out).isNotNull();
         assertThat(out.getCursor()).isPresent();
@@ -121,12 +120,11 @@ class RedisAdvancedClusterReactiveCommandsImplTest {
 
     @Test
     void ftAggregate_withoutCursor_returnsReplyWithoutNodeId() {
-        AggregationReply<String, String> replyNoCursor = new AggregationReply<>();
+        AggregationReply<String> replyNoCursor = new AggregationReply<>();
         when(nodeReactive.ftAggregate(anyString(), anyString(), any())).thenReturn(Mono.just(replyNoCursor));
         when(nodeReactive.clusterMyId()).thenReturn(Mono.just("node-1"));
 
-        AggregationReply<String, String> out = reactive
-                .ftAggregate("idx", "*", AggregateArgs.<String, String> builder().build()).block();
+        AggregationReply<String> out = reactive.ftAggregate("idx", "*", AggregateArgs.builder().build()).block();
 
         assertThat(out).isNotNull();
         assertThat(out.getCursor()).isEmpty();
@@ -136,12 +134,12 @@ class RedisAdvancedClusterReactiveCommandsImplTest {
     void ftCursorread_routesToNodeId_andStampsNodeId() {
         AggregationReply.Cursor cursor = AggregationReply.Cursor.of(7L, "node-1");
 
-        AggregationReply<String, String> reply = new AggregationReply<>();
+        AggregationReply<String> reply = new AggregationReply<>();
         reply.setCursor(AggregationReply.Cursor.of(7L, null));
 
         when(nodeReactive.ftCursorread(anyString(), any(), anyInt())).thenReturn(Mono.just(reply));
 
-        AggregationReply<String, String> out = reactive.ftCursorread("idx", cursor, 100).block();
+        AggregationReply<String> out = reactive.ftCursorread("idx", cursor, 100).block();
 
         assertThat(out).isNotNull();
         assertThat(out.getCursor()).isPresent();

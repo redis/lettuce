@@ -15,16 +15,14 @@ import io.lettuce.core.protocol.CommandArgs;
  * FT.SUGADD command adds a suggestion string to an auto-complete suggestion dictionary with a specified score.
  * </p>
  *
- * @param <K> Key type.
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  */
-public class SugAddArgs<K, V> {
+public class SugAddArgs {
 
     private boolean incr;
 
-    private V payload;
+    private String payload;
 
     /**
      * Builder entry points for {@link SugAddArgs}.
@@ -43,8 +41,8 @@ public class SugAddArgs<K, V> {
          * @return new {@link SugAddArgs} with {@literal INCR} set.
          * @see SugAddArgs#incr()
          */
-        public static <K, V> SugAddArgs<K, V> incr() {
-            return new SugAddArgs<K, V>().incr();
+        public static SugAddArgs incr() {
+            return new SugAddArgs().incr();
         }
 
         /**
@@ -52,10 +50,10 @@ public class SugAddArgs<K, V> {
          *
          * @param payload the payload to save with the suggestion.
          * @return new {@link SugAddArgs} with {@literal PAYLOAD} set.
-         * @see SugAddArgs#payload(Object)
+         * @see SugAddArgs#payload(String)
          */
-        public static <K, V> SugAddArgs<K, V> payload(V payload) {
-            return new SugAddArgs<K, V>().payload(payload);
+        public static SugAddArgs payload(String payload) {
+            return new SugAddArgs().payload(payload);
         }
 
     }
@@ -66,7 +64,7 @@ public class SugAddArgs<K, V> {
      *
      * @return {@code this} {@link SugAddArgs}.
      */
-    public SugAddArgs<K, V> incr() {
+    public SugAddArgs incr() {
         this.incr = true;
         return this;
     }
@@ -77,7 +75,7 @@ public class SugAddArgs<K, V> {
      * @param payload the payload to save with the suggestion.
      * @return {@code this} {@link SugAddArgs}.
      */
-    public SugAddArgs<K, V> payload(V payload) {
+    public SugAddArgs payload(String payload) {
         this.payload = payload;
         return this;
     }
@@ -87,13 +85,13 @@ public class SugAddArgs<K, V> {
      *
      * @param args the command arguments to append to.
      */
-    public void build(CommandArgs<K, V> args) {
+    public void build(CommandArgs<?, ?> args) {
         if (incr) {
             args.add("INCR");
         }
 
         if (payload != null) {
-            args.add("PAYLOAD").addValue(payload);
+            args.add("PAYLOAD").add(payload);
         }
     }
 

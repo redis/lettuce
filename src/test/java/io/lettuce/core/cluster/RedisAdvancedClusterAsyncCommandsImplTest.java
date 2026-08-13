@@ -105,20 +105,19 @@ class RedisAdvancedClusterAsyncCommandsImplTest {
 
     @Test
     void ftAggregate_stampsNodeId_whenCursorCreated() {
-        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
-                .withCursor(AggregateArgs.WithCursor.of(1L)).build();
+        AggregateArgs args = AggregateArgs.builder().withCursor(AggregateArgs.WithCursor.of(1L)).build();
 
-        AggregationReply<String, String> replyWithCursor = new AggregationReply<>();
+        AggregationReply<String> replyWithCursor = new AggregationReply<>();
         replyWithCursor.setCursor(AggregationReply.Cursor.of(42L, null));
 
-        CompletableFuture<AggregationReply<String, String>> cf = new CompletableFuture<>();
+        CompletableFuture<AggregationReply<String>> cf = new CompletableFuture<>();
         cf.complete(replyWithCursor);
-        RedisFuture<AggregationReply<String, String>> nodeFuture = new PipelinedRedisFuture<>(cf);
+        RedisFuture<AggregationReply<String>> nodeFuture = new PipelinedRedisFuture<>(cf);
 
         when(nodeAsync.ftAggregate(anyString(), anyString(), any())).thenReturn(nodeFuture);
         when(nodeAsync.clusterMyId()).thenReturn(new PipelinedRedisFuture<>(CompletableFuture.completedFuture("node-1")));
 
-        AggregationReply<String, String> out = async.ftAggregate("idx", "*", args).toCompletableFuture().join();
+        AggregationReply<String> out = async.ftAggregate("idx", "*", args).toCompletableFuture().join();
 
         assertThat(out.getCursor()).isPresent();
         assertThat(out.getCursor().get().getCursorId()).isEqualTo(42L);
@@ -136,13 +135,13 @@ class RedisAdvancedClusterAsyncCommandsImplTest {
     void ftCursorread_routesToNodeIdWithREAD_andStampsNodeId() {
         AggregationReply.Cursor cursor = AggregationReply.Cursor.of(7L, "node-1");
 
-        AggregationReply<String, String> reply = new AggregationReply<>();
+        AggregationReply<String> reply = new AggregationReply<>();
         reply.setCursor(AggregationReply.Cursor.of(7L, null));
 
-        CompletableFuture<AggregationReply<String, String>> cf = CompletableFuture.completedFuture(reply);
+        CompletableFuture<AggregationReply<String>> cf = CompletableFuture.completedFuture(reply);
         when(nodeAsync.ftCursorread(anyString(), any(), anyInt())).thenReturn(new PipelinedRedisFuture<>(cf));
 
-        AggregationReply<String, String> out = async.ftCursorread("idx", cursor, 100).toCompletableFuture().join();
+        AggregationReply<String> out = async.ftCursorread("idx", cursor, 100).toCompletableFuture().join();
 
         assertThat(out.getCursor()).isPresent();
         assertThat(out.getCursor().get().getNodeId()).contains("node-1");
@@ -163,13 +162,13 @@ class RedisAdvancedClusterAsyncCommandsImplTest {
 
     @Test
     void ftAggregate_withoutCursor_returnsReplyWithoutNodeId() {
-        AggregationReply<String, String> replyNoCursor = new AggregationReply<>();
-        CompletableFuture<AggregationReply<String, String>> cf = CompletableFuture.completedFuture(replyNoCursor);
+        AggregationReply<String> replyNoCursor = new AggregationReply<>();
+        CompletableFuture<AggregationReply<String>> cf = CompletableFuture.completedFuture(replyNoCursor);
         when(nodeAsync.ftAggregate(anyString(), anyString(), any())).thenReturn(new PipelinedRedisFuture<>(cf));
         when(nodeAsync.clusterMyId()).thenReturn(new PipelinedRedisFuture<>(CompletableFuture.completedFuture("node-1")));
 
-        AggregationReply<String, String> out = async.ftAggregate("idx", "*", AggregateArgs.<String, String> builder().build())
-                .toCompletableFuture().join();
+        AggregationReply<String> out = async.ftAggregate("idx", "*", AggregateArgs.builder().build()).toCompletableFuture()
+                .join();
 
         assertThat(out.getCursor()).isEmpty();
     }
