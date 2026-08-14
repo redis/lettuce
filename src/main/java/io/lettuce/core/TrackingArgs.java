@@ -94,6 +94,56 @@ public class TrackingArgs implements CompositeArgument {
     }
 
     /**
+     * Return whether key tracking is enabled.
+     *
+     * @return {@code true} if {@link #enabled(boolean)} was configured with {@code true}.
+     * @since 7.7
+     */
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
+     * Return whether invalidation messages are redirected to another client connection through {@code REDIRECT}.
+     *
+     * @return {@code true} if {@link #redirect(long)} was configured.
+     * @since 7.7
+     */
+    public boolean isRedirect() {
+        return redirect != null;
+    }
+
+    /**
+     * Return whether broadcasting invalidation messages are limited to key prefixes through {@code PREFIX}.
+     *
+     * @return {@code true} if {@link #prefixes(String...)} was configured with at least one prefix.
+     * @since 7.7
+     */
+    public boolean hasPrefixes() {
+        return prefixes != null && prefixes.length > 0;
+    }
+
+    /**
+     * Create a copy of {@code this} {@link TrackingArgs} to guard against later modifications of a shared, mutable instance.
+     *
+     * @return a new {@link TrackingArgs} with the same configuration.
+     * @since 7.7
+     */
+    public TrackingArgs copy() {
+
+        TrackingArgs copy = new TrackingArgs();
+        copy.enabled = this.enabled;
+        copy.redirect = this.redirect;
+        copy.bcast = this.bcast;
+        copy.prefixes = this.prefixes == null ? null : this.prefixes.clone();
+        copy.prefixCharset = this.prefixCharset;
+        copy.optin = this.optin;
+        copy.optout = this.optout;
+        copy.noloop = this.noloop;
+        return copy;
+    }
+
+    /**
      * Enable tracking in broadcasting mode. In this mode invalidation messages are reported for all the prefixes specified,
      * regardless of the keys requested by the connection. Instead when the broadcasting mode is not enabled, Redis will track
      * which keys are fetched using read-only commands, and will report invalidation messages only for such keys.
@@ -143,6 +193,16 @@ public class TrackingArgs implements CompositeArgument {
     public TrackingArgs optin() {
         this.optin = true;
         return this;
+    }
+
+    /**
+     * Return whether tracking requires a preceding {@code CLIENT CACHING yes} opt-in per read.
+     *
+     * @return {@code true} if {@link #optin()} was configured.
+     * @since 7.7
+     */
+    public boolean isOptin() {
+        return optin;
     }
 
     /**

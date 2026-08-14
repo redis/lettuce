@@ -165,6 +165,32 @@ public class ClientsideCachingIntegrationTests extends TestSupport {
     }
 
     @Test
+    void serverAssistedCachingShouldClearOnFlush() {
+
+        Map<String, String> clientCache = new ConcurrentHashMap<>();
+
+        StatefulRedisConnection<String, String> otherParty = redisClient.connect();
+        RedisCommands<String, String> commands = otherParty.sync();
+
+        commands.set(key, value);
+
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        CacheFrontend<String, String> frontend = ClientSideCaching.enable(CacheAccessor.forMap(clientCache), connection,
+                TrackingArgs.Builder.enabled());
+
+        assertThat(frontend.get(key)).isEqualTo(value);
+        assertThat(clientCache).hasSize(1);
+
+        commands.flushall();
+
+        Wait.untilTrue(clientCache::isEmpty).waitOrTimeout();
+        assertThat(frontend.get(key)).isNull();
+
+        otherParty.close();
+        frontend.close();
+    }
+
+    @Test
     void serverAssistedCachingShouldExpireValueFromRedis() throws InterruptedException {
 
         Map<String, String> clientCache = new ConcurrentHashMap<>();

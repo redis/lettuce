@@ -33,4 +33,9 @@ class MapCacheAccessor<K, V> implements CacheAccessor<K, V> {
         map.remove(key);
     }
 
+    @Override
+    public void clear() {
+        map.clear();
+    }
+
 }

@@ -5,24 +5,27 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.codec.RedisCodec;
 
 /**
- * Default {@link RedisCache} implementation using {@code GET} and {@code SET} operations to map cache values to top-level keys.
+ * {@link RedisCache} implementation for Redis Cluster using {@code GET} and {@code SET} operations to map cache values to
+ * top-level keys. Invalidation messages are consumed from all cluster node connections through the cluster push listener.
  *
  * @param <K> Key type.
  * @param <V> Value type.
+ * @author Julien Ruaux
+ * @since 7.7
  */
-class DefaultRedisCache<K, V> implements RedisCache<K, V> {
+class ClusterRedisCache<K, V> implements RedisCache<K, V> {
 
-    private final StatefulRedisConnection<K, V> connection;
+    private final StatefulRedisClusterConnection<K, V> connection;
 
     private final RedisCodec<K, V> codec;
 
     private final List<Runnable> clearListeners = new CopyOnWriteArrayList<>();
 
-    public DefaultRedisCache(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec) {
+    public ClusterRedisCache(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
         this.codec = codec;
     }
@@ -40,7 +43,7 @@ class DefaultRedisCache<K, V> implements RedisCache<K, V> {
     @Override
     public void addInvalidationListener(Consumer<? super K> listener) {
 
-        connection.addListener(message -> {
+        connection.addListener((node, message) -> {
             if (message.getType().equals("invalidate")) {
 
                 // decode only the key payload, the frame type element is not a key
