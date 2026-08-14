@@ -1,6 +1,10 @@
 # New & Noteworthy
 
 
+## What's new in Lettuce 7.7
+
+- Support for the `HIMPORT` command family for bulk-loading hashes that share the same field names, declaring the field names once per connection and sending only values per hash — see [Hash Import](user-guide/hash-import.md)
+
 ## What's new in Lettuce 7.2
 
 - Support for [`FT.HYBRID`](https://redis.io/docs/latest/commands/ft.hybrid/) command enabling hybrid vector and full-text search queries

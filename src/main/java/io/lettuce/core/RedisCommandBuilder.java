@@ -1856,6 +1856,35 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HSET, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, String> himportPrepare(HashImport<K> fieldset) {
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(PREPARE).addKey(fieldset.name()).addKeys(fieldset.fields());
+        return createCommand(HIMPORT, new StatusOutput<>(codec), args);
+    }
+
+    HashImportSetCommand<K, V> himportSet(K key, HashImport<K> fieldset, V... values) {
+        notNullKey(key);
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(values, "Values " + MUST_NOT_BE_NULL);
+
+        if (values.length != fieldset.size()) {
+            throw new IllegalArgumentException("Number of values (" + values.length
+                    + ") must match the number of fields in the fieldset (" + fieldset.size() + ")");
+        }
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.SET).addKey(key).addKey(fieldset.name())
+                .addValues(values);
+        return new HashImportSetCommand<>(HIMPORT, new StatusOutput<>(codec), args, fieldset, codec);
+    }
+
+    Command<K, V, Boolean> himportDiscard(HashImport<K> fieldset) {
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.DISCARD).addKey(fieldset.name());
+        return createCommand(HIMPORT, new BooleanOutput<>(codec), args);
+    }
+
     Command<K, V, Long> hsetex(K key, Map<K, V> map) {
         notNullKey(key);
         LettuceAssert.notNull(map, "Map " + MUST_NOT_BE_NULL);

@@ -1605,6 +1605,31 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> himportSet(K key, HashImport<K> fieldset, V... values) {
+
+        HashImportSetCommand<K, V> set = commandBuilder.himportSet(key, fieldset, values);
+
+        if (!fieldset.retain()) {
+            throw new IllegalStateException("HashImport has been discarded and must not be reused");
+        }
+
+        // The required HIMPORT PREPARE is injected lazily on the write path per physical connection by
+        // HashImportOutboundHandler, so this SET carries its fieldset and is dispatched directly. The retain/release pair holds
+        // back HashImport.close() cleanup until this command completes, so a close() on the caller's thread cannot overtake a
+        // write that netty has not drained yet.
+        AsyncCommand<K, V, String> command;
+        try {
+            command = dispatch(set);
+        } catch (RuntimeException e) {
+            fieldset.release();
+            throw e;
+        }
+
+        command.onComplete((status, error) -> fieldset.release());
+        return command;
+    }
+
+    @Override
     public RedisFuture<Long> hsetex(K key, Map<K, V> map) {
         return dispatch(commandBuilder.hsetex(key, map));
     }

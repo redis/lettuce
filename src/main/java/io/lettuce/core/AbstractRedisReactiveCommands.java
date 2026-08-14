@@ -1691,6 +1691,26 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> himportSet(K key, HashImport<K> fieldset, V... values) {
+
+        return Mono.defer(() -> {
+
+            HashImportSetCommand<K, V> set;
+            try {
+                set = commandBuilder.himportSet(key, fieldset, values);
+            } catch (RuntimeException e) {
+                return Mono.error(e);
+            }
+
+            if (!fieldset.retain()) {
+                return Mono.error(new IllegalStateException("HashImport has been discarded and must not be reused"));
+            }
+
+            return createMono(() -> set).doFinally(signal -> fieldset.release());
+        });
+    }
+
+    @Override
     public Mono<Long> hsetex(K key, Map<K, V> map) {
         return createMono(() -> commandBuilder.hsetex(key, map));
     }
