@@ -97,6 +97,8 @@ public class RedisClient extends AbstractRedisClient {
 
     private static final RedisURI EMPTY_URI = new RedisURI();
 
+    private final ThreadLocal<ClientOptions> clientOptionsThreadLocal = new ThreadLocal<>();
+
     private final RedisURI redisURI;
 
     protected RedisClient(ClientResources clientResources, RedisURI redisURI) {
@@ -276,36 +278,42 @@ public class RedisClient extends AbstractRedisClient {
 
         logger.debug("Trying to get a Redis connection for: {}", redisURI);
 
-        DefaultEndpoint endpoint = createEndpoint();
-        RedisChannelWriter writer = endpoint;
-
-        if (CommandExpiryWriter.isSupported(getOptions())) {
-            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getOptions(), getResources());
-        }
-
-        if (CommandListenerWriter.isSupported(getCommandListeners())) {
-            writer = new CommandListenerWriter(writer, getCommandListeners());
-        }
-
-        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, timeout);
-
         ClientOptions clientOptions = getOptions();
-        ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
-                () -> new CommandHandler(clientOptions, getResources(), endpoint), false);
+        clientOptionsThreadLocal.set(clientOptions);
+        try {
+            DefaultEndpoint endpoint = createEndpoint();
+            RedisChannelWriter writer = endpoint;
 
-        future.whenComplete((channelHandler, throwable) -> {
-
-            if (throwable != null) {
-                connection.closeAsync();
+            if (CommandExpiryWriter.isSupported(clientOptions)) {
+                writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, clientOptions, getResources());
             }
-        });
 
-        return future;
+            if (CommandListenerWriter.isSupported(getCommandListeners())) {
+                writer = new CommandListenerWriter(writer, getCommandListeners());
+            }
+
+            StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, timeout,
+                    clientOptions);
+
+            ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
+                    () -> new CommandHandler(clientOptions, getResources(), endpoint), false, clientOptions);
+
+            future.whenComplete((channelHandler, throwable) -> {
+
+                if (throwable != null) {
+                    connection.closeAsync();
+                }
+            });
+
+            return future;
+        } finally {
+            clientOptionsThreadLocal.remove();
+        }
     }
 
     @SuppressWarnings("unchecked")
     private <K, V, S> ConnectionFuture<S> connectStatefulAsync(StatefulRedisConnectionImpl<K, V> connection, Endpoint endpoint,
-            RedisURI redisURI, Supplier<CommandHandler> commandHandlerSupplier, Boolean isPubSub) {
+            RedisURI redisURI, Supplier<CommandHandler> commandHandlerSupplier, Boolean isPubSub, ClientOptions clientOptions) {
 
         ConnectionBuilder connectionBuilder;
         if (redisURI.isSsl()) {
@@ -319,15 +327,15 @@ public class RedisClient extends AbstractRedisClient {
         ConnectionState state = connection.getConnectionState();
         state.apply(redisURI);
         state.setDb(redisURI.getDatabase());
-        connection
-                .setAuthenticationHandler(createHandler(connection, redisURI.getCredentialsProvider(), isPubSub, getOptions()));
+        connection.setAuthenticationHandler(
+                createHandler(connection, redisURI.getCredentialsProvider(), isPubSub, clientOptions));
         connectionBuilder.connection(connection);
-        connectionBuilder.clientOptions(getOptions());
+        connectionBuilder.clientOptions(clientOptions);
         connectionBuilder.clientResources(getResources());
         connectionBuilder.commandHandler(commandHandlerSupplier).endpoint(endpoint);
 
         connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(), redisURI);
-        connectionBuilder.connectionInitializer(createHandshake(state));
+        connectionBuilder.connectionInitializer(createHandshake(state, clientOptions));
 
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
@@ -410,29 +418,35 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        PubSubEndpoint<K, V> endpoint = createPubSubEndpoint();
-        RedisChannelWriter writer = endpoint;
-
-        if (CommandExpiryWriter.isSupported(getOptions())) {
-            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getOptions(), getResources());
-        }
-
-        if (CommandListenerWriter.isSupported(getCommandListeners())) {
-            writer = new CommandListenerWriter(writer, getCommandListeners());
-        }
-
-        StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, writer, codec, timeout);
-
         ClientOptions clientOptions = getOptions();
-        ConnectionFuture<StatefulRedisPubSubConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
-                () -> new PubSubCommandHandler<>(clientOptions, getResources(), codec, endpoint), true);
+        clientOptionsThreadLocal.set(clientOptions);
+        try {
+            PubSubEndpoint<K, V> endpoint = createPubSubEndpoint();
+            RedisChannelWriter writer = endpoint;
 
-        return future.whenComplete((conn, throwable) -> {
-
-            if (throwable != null) {
-                conn.close();
+            if (CommandExpiryWriter.isSupported(clientOptions)) {
+                writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, clientOptions, getResources());
             }
-        });
+
+            if (CommandListenerWriter.isSupported(getCommandListeners())) {
+                writer = new CommandListenerWriter(writer, getCommandListeners());
+            }
+
+            StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, writer, codec,
+                    timeout, clientOptions);
+
+            ConnectionFuture<StatefulRedisPubSubConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
+                    () -> new PubSubCommandHandler<>(clientOptions, getResources(), codec, endpoint), true, clientOptions);
+
+            return future.whenComplete((conn, throwable) -> {
+
+                if (throwable != null) {
+                    conn.close();
+                }
+            });
+        } finally {
+            clientOptionsThreadLocal.remove();
+        }
     }
 
     /**
@@ -567,52 +581,59 @@ public class RedisClient extends AbstractRedisClient {
     private <K, V> ConnectionFuture<StatefulRedisSentinelConnection<K, V>> doConnectSentinelAsync(RedisCodec<K, V> codec,
             RedisURI redisURI, Duration timeout, ConnectionMetadata metadata) {
 
-        ConnectionBuilder connectionBuilder;
-        if (redisURI.isSsl()) {
-            SslConnectionBuilder sslConnectionBuilder = SslConnectionBuilder.sslConnectionBuilder();
-            sslConnectionBuilder.ssl(redisURI);
-            connectionBuilder = sslConnectionBuilder;
-        } else {
-            connectionBuilder = ConnectionBuilder.connectionBuilder();
-        }
-        connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
-        connectionBuilder.clientResources(getResources());
-
-        DefaultEndpoint endpoint = createEndpoint();
-        RedisChannelWriter writer = endpoint;
-
-        if (CommandExpiryWriter.isSupported(getOptions())) {
-            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getOptions(), getResources());
-        }
-
-        if (CommandListenerWriter.isSupported(getCommandListeners())) {
-            writer = new CommandListenerWriter(writer, getCommandListeners());
-        }
-
-        StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(writer, codec, timeout);
-        ConnectionState state = connection.getConnectionState();
-
-        state.apply(redisURI);
-        state.apply(metadata);
-
-        connectionBuilder.connectionInitializer(createHandshake(state));
-
-        logger.debug("Connecting to Redis Sentinel, address: " + redisURI);
-
         ClientOptions clientOptions = getOptions();
-        connectionBuilder.endpoint(endpoint).commandHandler(() -> new CommandHandler(clientOptions, getResources(), endpoint))
-                .connection(connection);
-        connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(), redisURI);
-
-        ConnectionFuture<?> sync = initializeChannelAsync(connectionBuilder);
-
-        return sync.thenApply(ignore -> (StatefulRedisSentinelConnection<K, V>) connection).whenComplete((ignore, e) -> {
-
-            if (e != null) {
-                logger.warn("Cannot connect Redis Sentinel at " + redisURI + ": " + e);
-                connection.closeAsync();
+        clientOptionsThreadLocal.set(clientOptions);
+        try {
+            ConnectionBuilder connectionBuilder;
+            if (redisURI.isSsl()) {
+                SslConnectionBuilder sslConnectionBuilder = SslConnectionBuilder.sslConnectionBuilder();
+                sslConnectionBuilder.ssl(redisURI);
+                connectionBuilder = sslConnectionBuilder;
+            } else {
+                connectionBuilder = ConnectionBuilder.connectionBuilder();
             }
-        });
+            connectionBuilder.clientOptions(ClientOptions.copyOf(clientOptions));
+            connectionBuilder.clientResources(getResources());
+
+            DefaultEndpoint endpoint = createEndpoint();
+            RedisChannelWriter writer = endpoint;
+
+            if (CommandExpiryWriter.isSupported(clientOptions)) {
+                writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, clientOptions, getResources());
+            }
+
+            if (CommandListenerWriter.isSupported(getCommandListeners())) {
+                writer = new CommandListenerWriter(writer, getCommandListeners());
+            }
+
+            StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(writer, codec, timeout,
+                    clientOptions);
+            ConnectionState state = connection.getConnectionState();
+
+            state.apply(redisURI);
+            state.apply(metadata);
+
+            connectionBuilder.connectionInitializer(createHandshake(state, clientOptions));
+
+            logger.debug("Connecting to Redis Sentinel, address: " + redisURI);
+
+            connectionBuilder.endpoint(endpoint)
+                    .commandHandler(() -> new CommandHandler(clientOptions, getResources(), endpoint)).connection(connection);
+            connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(),
+                    redisURI);
+
+            ConnectionFuture<?> sync = initializeChannelAsync(connectionBuilder);
+
+            return sync.thenApply(ignore -> (StatefulRedisSentinelConnection<K, V>) connection).whenComplete((ignore, e) -> {
+
+                if (e != null) {
+                    logger.warn("Cannot connect Redis Sentinel at " + redisURI + ": " + e);
+                    connection.closeAsync();
+                }
+            });
+        } finally {
+            clientOptionsThreadLocal.remove();
+        }
     }
 
     /**
@@ -645,6 +666,25 @@ public class RedisClient extends AbstractRedisClient {
      */
     protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(PubSubEndpoint<K, V> endpoint,
             RedisChannelWriter channelWriter, RedisCodec<K, V> codec, Duration timeout) {
+        return newStatefulRedisPubSubConnection(endpoint, channelWriter, codec, timeout, getOptions());
+    }
+
+    /**
+     * Create a new instance of {@link StatefulRedisPubSubConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClient} may override that method.
+     *
+     * @param endpoint the endpoint
+     * @param channelWriter the channel writer
+     * @param codec codec
+     * @param timeout default timeout
+     * @param clientOptions the client options
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisPubSubConnectionImpl
+     */
+    protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(PubSubEndpoint<K, V> endpoint,
+            RedisChannelWriter channelWriter, RedisCodec<K, V> codec, Duration timeout, ClientOptions clientOptions) {
         return new StatefulRedisPubSubConnectionImpl<>(endpoint, channelWriter, codec, timeout);
     }
 
@@ -662,7 +702,29 @@ public class RedisClient extends AbstractRedisClient {
      */
     protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(
             RedisChannelWriter channelWriter, RedisCodec<K, V> codec, Duration timeout) {
-        return new StatefulRedisSentinelConnectionImpl<>(channelWriter, codec, timeout, getOptions().getJsonParser());
+        ClientOptions clientOptions = clientOptionsThreadLocal.get();
+        if (clientOptions == null) {
+            clientOptions = getOptions();
+        }
+        return newStatefulRedisSentinelConnection(channelWriter, codec, timeout, clientOptions);
+    }
+
+    /**
+     * Create a new instance of {@link StatefulRedisSentinelConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClient} may override that method.
+     *
+     * @param channelWriter the channel writer
+     * @param codec codec
+     * @param timeout default timeout
+     * @param clientOptions the client options
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisSentinelConnectionImpl
+     */
+    protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(
+            RedisChannelWriter channelWriter, RedisCodec<K, V> codec, Duration timeout, ClientOptions clientOptions) {
+        return new StatefulRedisSentinelConnectionImpl<>(channelWriter, codec, timeout, clientOptions.getJsonParser());
     }
 
     /**
@@ -680,7 +742,30 @@ public class RedisClient extends AbstractRedisClient {
      */
     protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
             PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
-        return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout, getOptions().getJsonParser());
+        ClientOptions clientOptions = clientOptionsThreadLocal.get();
+        if (clientOptions == null) {
+            clientOptions = getOptions();
+        }
+        return newStatefulRedisConnection(channelWriter, pushHandler, codec, timeout, clientOptions);
+    }
+
+    /**
+     * Create a new instance of {@link StatefulRedisConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClient} may override that method.
+     *
+     * @param channelWriter the channel writer
+     * @param pushHandler the handler for push notifications
+     * @param codec codec
+     * @param timeout default timeout
+     * @param clientOptions the client options
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisConnectionImpl
+     */
+    protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
+            PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout, ClientOptions clientOptions) {
+        return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout, clientOptions.getJsonParser());
     }
 
     /**
