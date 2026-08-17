@@ -81,7 +81,7 @@ public class XReadArgs implements CompositeArgument {
          * @param maxCount cumulative cap on the number of returned entries across all streams, must be positive.
          * @return new {@link XReadArgs} with {@literal MAXCOUNT} set.
          * @see XReadArgs#maxCount(long)
-         * @since 7.8
+         * @since 7.7
          */
         public static XReadArgs maxCount(long maxCount) {
             return new XReadArgs().maxCount(maxCount);
@@ -93,7 +93,7 @@ public class XReadArgs implements CompositeArgument {
          * @param maxSize soft cumulative cap on the reply size in bytes across all streams, must be positive.
          * @return new {@link XReadArgs} with {@literal MAXSIZE} set.
          * @see XReadArgs#maxSize(long)
-         * @since 7.8
+         * @since 7.7
          */
         public static XReadArgs maxSize(long maxSize) {
             return new XReadArgs().maxSize(maxSize);
@@ -192,7 +192,7 @@ public class XReadArgs implements CompositeArgument {
      *
      * @param maxCount cumulative cap on the number of returned entries across all streams, must be positive.
      * @return {@code this}.
-     * @since 7.8
+     * @since 7.7
      */
     public XReadArgs maxCount(long maxCount) {
 
@@ -208,7 +208,7 @@ public class XReadArgs implements CompositeArgument {
      *
      * @param maxSize soft cumulative cap on the reply size in bytes across all streams, must be positive.
      * @return {@code this}.
-     * @since 7.8
+     * @since 7.7
      */
     public XReadArgs maxSize(long maxSize) {
 
