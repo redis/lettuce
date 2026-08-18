@@ -42,7 +42,8 @@ public interface RedisAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, 
         RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
         RedisTransactionalAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>, RedisVectorSetAsyncCommands<K, V>,
         RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V>, RedisBloomFilterAsyncCommands<K, V>,
-        RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V> {
+        RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V>, RedisCMSAsyncCommands<K, V>,
+        RedisTDigestAsyncCommands<K, V> {
 
     /**
      * Authenticate to the server.
@@ -82,7 +83,8 @@ public interface RedisAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, 
 
     /**
      * @return the underlying connection.
-     * @since 6.2, will be removed with Lettuce 7 to avoid exposing the underlying connection.
+     * @deprecated since 6.2, there is no replacement — the underlying connection is not meant to be reached through the command
+     *             interfaces; scheduled for removal in a future major release.
      */
     @Deprecated
     StatefulRedisConnection<K, V> getStatefulConnection();

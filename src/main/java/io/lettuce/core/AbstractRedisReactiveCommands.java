@@ -28,6 +28,9 @@ import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.probabilistic.CfInfoValue;
+import io.lettuce.core.probabilistic.CMSInfoValue;
+import io.lettuce.core.probabilistic.MergePair;
+import io.lettuce.core.probabilistic.TDigestInfoValue;
 import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
@@ -56,6 +59,7 @@ import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.probabilistic.TopKInfoValue;
 import io.lettuce.core.probabilistic.TopKListValue;
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs;
 import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -130,7 +134,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
         RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
         RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>,
-        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V> {
+        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>,
+        RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -149,6 +154,10 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private final RedisCuckooFilterCommandBuilder<K, V> cuckooFilterCommandBuilder;
 
     private final RedisTopKCommandBuilder<K, V> topKCommandBuilder;
+
+    private final RedisCMSCommandBuilder<K, V> cmsCommandBuilder;
+
+    private final RedisTDigestCommandBuilder<K, V> tDigestCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -177,6 +186,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
         this.cuckooFilterCommandBuilder = new RedisCuckooFilterCommandBuilder<>(codec);
         this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
+        this.cmsCommandBuilder = new RedisCMSCommandBuilder<>(codec);
+        this.tDigestCommandBuilder = new RedisTDigestCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -405,6 +416,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<V> blmove(K source, K destination, LMoveArgs args, double timeout) {
         return createMono(() -> commandBuilder.blmove(source, destination, args, timeout));
+    }
+
+    @Override
+    public Flux<V> blmovem(K source, K destination, BLMovemArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.blmovem(source, destination, args));
     }
 
     @Override
@@ -1675,6 +1691,26 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> himportSet(K key, HashImport<K> fieldset, V... values) {
+
+        return Mono.defer(() -> {
+
+            HashImportSetCommand<K, V> set;
+            try {
+                set = commandBuilder.himportSet(key, fieldset, values);
+            } catch (RuntimeException e) {
+                return Mono.error(e);
+            }
+
+            if (!fieldset.retain()) {
+                return Mono.error(new IllegalStateException("HashImport has been discarded and must not be reused"));
+            }
+
+            return createMono(() -> set).doFinally(signal -> fieldset.release());
+        });
+    }
+
+    @Override
     public Mono<Long> hsetex(K key, Map<K, V> map) {
         return createMono(() -> commandBuilder.hsetex(key, map));
     }
@@ -1792,6 +1828,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> ftAliasdel(String alias) {
         return createMono(() -> searchCommandBuilder.ftAliasdel(alias));
+    }
+
+    @Override
+    public Flux<String> ftAliaslist(String index) {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftAliaslist(index));
     }
 
     @Override
@@ -2435,6 +2476,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Flux<V> lmovem(K source, K destination, LMovemArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.lmovem(source, destination, args));
+    }
+
+    @Override
     public Mono<KeyValue<K, List<V>>> lmpop(LMPopArgs args, K... keys) {
         return createMono(() -> commandBuilder.lmpop(args, keys));
     }
@@ -2914,6 +2960,26 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Long> sdiffcard(K key1, K key2) {
+        return createMono(() -> commandBuilder.sdiffcard(key1, key2));
+    }
+
+    @Override
+    public Mono<Long> sdiffcard(List<K> keys) {
+        return createMono(() -> commandBuilder.sdiffcard(keys));
+    }
+
+    @Override
+    public Mono<Long> sdiffcard(K key1, K key2, SDiffCardArgs sdiffCardArgs) {
+        return createMono(() -> commandBuilder.sdiffcard(key1, key2, sdiffCardArgs));
+    }
+
+    @Override
+    public Mono<Long> sdiffcard(List<K> keys, SDiffCardArgs sdiffCardArgs) {
+        return createMono(() -> commandBuilder.sdiffcard(keys, sdiffCardArgs));
+    }
+
+    @Override
     public Mono<Long> sdiffstore(K destination, K... keys) {
         return createMono(() -> commandBuilder.sdiffstore(destination, keys));
     }
@@ -3202,6 +3268,26 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Long> sunion(ValueStreamingChannel<V> channel, K... keys) {
         return createMono(() -> commandBuilder.sunion(channel, keys));
+    }
+
+    @Override
+    public Mono<Long> sunioncard(K key1, K key2) {
+        return createMono(() -> commandBuilder.sunioncard(key1, key2));
+    }
+
+    @Override
+    public Mono<Long> sunioncard(List<K> keys) {
+        return createMono(() -> commandBuilder.sunioncard(keys));
+    }
+
+    @Override
+    public Mono<Long> sunioncard(K key1, K key2, SUnionCardArgs sunionCardArgs) {
+        return createMono(() -> commandBuilder.sunioncard(key1, key2, sunionCardArgs));
+    }
+
+    @Override
+    public Mono<Long> sunioncard(List<K> keys, SUnionCardArgs sunionCardArgs) {
+        return createMono(() -> commandBuilder.sunioncard(keys, sunionCardArgs));
     }
 
     @Override
@@ -4573,6 +4659,190 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> topKReserve(K key, long k, TopKReserveArgs args) {
         return createMono(() -> topKCommandBuilder.topKReserve(key, k, args));
+    }
+
+    // --- Redis CMS Commands ---
+
+    @Override
+    public Flux<Long> cmsIncrBy(K key, IncrementPair<V> pair) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsIncrBy(key, pair));
+    }
+
+    @Override
+    public Flux<Long> cmsIncrBy(K key, IncrementPair<V>... pairs) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsIncrBy(key, pairs));
+    }
+
+    @Override
+    public Mono<CMSInfoValue> cmsInfo(K key) {
+        return createMono(() -> cmsCommandBuilder.cmsInfo(key));
+    }
+
+    @Override
+    public Mono<String> cmsInitByDim(K key, long width, long depth) {
+        return createMono(() -> cmsCommandBuilder.cmsInitByDim(key, width, depth));
+    }
+
+    @Override
+    public Mono<String> cmsInitByProb(K key, double error, double probability) {
+        return createMono(() -> cmsCommandBuilder.cmsInitByProb(key, error, probability));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, K source) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, source));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, K... sources) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, sources));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, MergePair<K> pair) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, pair));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, MergePair<K>... sources) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, sources));
+    }
+
+    @Override
+    public Flux<Long> cmsQuery(K key, V value) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsQuery(key, value));
+    }
+
+    @Override
+    public Flux<Long> cmsQuery(K key, V... values) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsQuery(key, values));
+    }
+
+    // --- Redis T-Digest Commands ---
+
+    @Override
+    public Mono<String> tdigestAdd(K key, double value) {
+        return createMono(() -> tDigestCommandBuilder.tdigestAdd(key, value));
+    }
+
+    @Override
+    public Mono<String> tdigestAdd(K key, double... values) {
+        return createMono(() -> tDigestCommandBuilder.tdigestAdd(key, values));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRank(K key, long rank) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRank(key, rank));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRank(K key, long... ranks) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRank(key, ranks));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRevRank(K key, long reverseRank) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRevRank(key, reverseRank));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRevRank(K key, long... reverseRanks) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRevRank(key, reverseRanks));
+    }
+
+    @Override
+    public Flux<Double> tdigestCDF(K key, double value) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestCDF(key, value));
+    }
+
+    @Override
+    public Flux<Double> tdigestCDF(K key, double... values) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestCDF(key, values));
+    }
+
+    @Override
+    public Mono<String> tdigestCreate(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestCreate(key));
+    }
+
+    @Override
+    public Mono<String> tdigestCreate(K key, long compression) {
+        return createMono(() -> tDigestCommandBuilder.tdigestCreate(key, compression));
+    }
+
+    @Override
+    public Mono<TDigestInfoValue> tdigestInfo(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestInfo(key));
+    }
+
+    @Override
+    public Mono<Double> tdigestMax(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMax(key));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, K sourceKey) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, K sourceKey, TDigestMergeArgs mergeArgs) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey, mergeArgs));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, K... sourceKeys) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKeys));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, TDigestMergeArgs mergeArgs, K... sourceKeys) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, mergeArgs, sourceKeys));
+    }
+
+    @Override
+    public Mono<Double> tdigestMin(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMin(key));
+    }
+
+    @Override
+    public Flux<Double> tdigestQuantile(K key, double quantile) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestQuantile(key, quantile));
+    }
+
+    @Override
+    public Flux<Double> tdigestQuantile(K key, double... quantiles) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestQuantile(key, quantiles));
+    }
+
+    @Override
+    public Flux<Long> tdigestRank(K key, double value) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRank(key, value));
+    }
+
+    @Override
+    public Flux<Long> tdigestRank(K key, double... values) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRank(key, values));
+    }
+
+    @Override
+    public Mono<String> tdigestReset(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestReset(key));
+    }
+
+    @Override
+    public Flux<Long> tdigestRevRank(K key, double value) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRevRank(key, value));
+    }
+
+    @Override
+    public Flux<Long> tdigestRevRank(K key, double... values) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRevRank(key, values));
+    }
+
+    @Override
+    public Mono<Double> tdigestTrimmedMean(K key, double lowCutQuantile, double highCutQuantile) {
+        return createMono(() -> tDigestCommandBuilder.tdigestTrimmedMean(key, lowCutQuantile, highCutQuantile));
     }
 
 }

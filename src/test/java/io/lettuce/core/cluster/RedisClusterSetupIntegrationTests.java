@@ -126,6 +126,15 @@ public class RedisClusterSetupIntegrationTests extends TestSupport {
 
     @AfterEach
     public void closeConnection() {
+
+        // Restore a clean cluster state so a test that failed mid-reshard cannot leak broken
+        // slot coverage on these nodes into subsequent test classes.
+        try {
+            clusterHelper.clusterReset();
+        } catch (RuntimeException e) {
+            // best-effort cleanup; do not mask the original test failure
+        }
+
         redisConnection1.close();
         redisConnection2.close();
     }
@@ -245,7 +254,7 @@ public class RedisClusterSetupIntegrationTests extends TestSupport {
         ClusterSetup.setup2Masters(clusterHelper);
 
         ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
-                .enableAllAdaptiveRefreshTriggers().build();
+                .enableAllAdaptiveRefreshTriggers().adaptiveRefreshTriggersTimeout(Duration.ofSeconds(1)).build();
 
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(clusterTopologyRefreshOptions).build());
         try (StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
@@ -265,6 +274,15 @@ public class RedisClusterSetupIntegrationTests extends TestSupport {
             assertRoutedExecution(async);
 
             Wait.untilTrue(() -> {
+
+                // Adaptive refresh only fires on MOVED/ASK/uncovered-slot events; keep issuing a read for a key
+                // that moved during the reshard (slot 15891) so a stale topology view keeps generating triggers.
+                try {
+                    sync.get("t");
+                } catch (RuntimeException e) {
+                    // an uncovered slot mid-refresh also fires an adaptive refresh trigger
+                }
+
                 if (clusterClient.getPartitions().size() == 2) {
                     for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
                         if (redisClusterNode.getSlots().size() > 16380) {
