@@ -23,6 +23,7 @@ import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
 
 import io.lettuce.test.condition.RedisConditions;
+import io.lettuce.test.resource.ModulesTestUri;
 import org.junit.jupiter.api.*;
 
 import java.util.Arrays;
@@ -45,7 +46,7 @@ public class ConsolidatedAclCommandIntegrationTests {
 
     @BeforeAll
     public static void setup() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         client = RedisClient.create(redisURI);
         redis = client.connect().sync();

@@ -15,7 +15,15 @@ public class DefaultRedisClient {
     private final RedisClient redisClient;
 
     private DefaultRedisClient() {
-        redisClient = RedisClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
+        RedisURI.Builder builder = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port());
+        if (TestSettings.tls()) {
+            builder.withSsl(true).withVerifyPeer(false);
+        }
+        CharSequence password = TestSettings.password();
+        if (TestSettings.isProviderActive() && password != null && password.length() > 0) {
+            builder.withAuthentication(TestSettings.username(), password);
+        }
+        redisClient = RedisClient.create(builder.build());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> FastShutdown.shutdown(redisClient)));
     }
 
