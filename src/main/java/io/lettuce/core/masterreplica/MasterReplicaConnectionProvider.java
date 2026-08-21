@@ -15,10 +15,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.OrderingReadFromAccessor;
 import io.lettuce.core.ReadFrom;
@@ -31,6 +34,7 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
 import io.lettuce.core.internal.Exceptions;
+import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.netty.util.internal.logging.InternalLogger;
@@ -106,6 +110,21 @@ class MasterReplicaConnectionProvider<K, V> {
      * @throws RedisException if the host is not part of the cluster
      */
     public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent intent) {
+        return getConnectionAsync(intent, null);
+    }
+
+    /**
+     * Variant of {@link #getConnectionAsync(ConnectionIntent)} that reports the selected node to {@code selectedNodeListener}
+     * so callers can associate node-local state (such as scan cursors) with the node serving the command. The listener runs
+     * before the returned future completes.
+     *
+     * @param intent command intent.
+     * @param selectedNodeListener callback notified with the selected node, may be {@code null}.
+     * @return the connection.
+     * @throws RedisException if no node is available for the intent.
+     */
+    CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent intent,
+            Consumer<RedisNodeDescription> selectedNodeListener) {
 
         if (debugEnabled) {
             logger.debug("getConnectionAsync(" + intent + ")");
@@ -132,31 +151,89 @@ class MasterReplicaConnectionProvider<K, V> {
             }
 
             if (selection.size() == 1) {
-                return getConnection(selection.get(0));
+                RedisNodeDescription node = selection.get(0);
+                notifySelectedNode(selectedNodeListener, node);
+                return getConnection(node);
             }
 
             try {
 
-                Flux<StatefulRedisConnection<K, V>> connections = Flux.empty();
+                Flux<Tuple2<RedisNodeDescription, StatefulRedisConnection<K, V>>> connections = Flux.empty();
 
                 for (RedisNodeDescription node : selection) {
-                    connections = connections.concatWith(Mono.fromFuture(getConnection(node)));
+                    connections = connections
+                            .concatWith(Mono.fromFuture(getConnection(node)).map(connection -> Tuples.of(node, connection)));
                 }
+
+                Mono<Tuple2<RedisNodeDescription, StatefulRedisConnection<K, V>>> selected;
 
                 if (OrderingReadFromAccessor.isOrderSensitive(readFrom)) {
-                    return connections.filter(StatefulConnection::isOpen).next().switchIfEmpty(connections.next()).toFuture();
+                    selected = connections.filter(it -> it.getT2().isOpen()).next().switchIfEmpty(connections.next());
+                } else {
+                    selected = connections.filter(it -> it.getT2().isOpen()).collectList().filter(it -> !it.isEmpty())
+                            .map(it -> it.get(ThreadLocalRandom.current().nextInt(it.size())))
+                            .switchIfEmpty(connections.next());
                 }
 
-                return connections.filter(StatefulConnection::isOpen).collectList().filter(it -> !it.isEmpty()).map(it -> {
-                    int index = ThreadLocalRandom.current().nextInt(it.size());
-                    return it.get(index);
-                }).switchIfEmpty(connections.next()).toFuture();
+                // doOnNext runs before the returned future completes, so the selected node (possibly the switchIfEmpty
+                // fallback, which is still part of the known topology) is reported before the command is dispatched.
+                return selected.doOnNext(it -> notifySelectedNode(selectedNodeListener, it.getT1())).map(Tuple2::getT2)
+                        .toFuture();
             } catch (RuntimeException e) {
                 throw Exceptions.bubble(e);
             }
         }
 
-        return getConnection(getMaster());
+        RedisNodeDescription master = getMaster();
+        notifySelectedNode(selectedNodeListener, master);
+        return getConnection(master);
+    }
+
+    /**
+     * Retrieve a {@link StatefulRedisConnection} to the node identified by {@code source} and {@code sourceRole}, used to pin
+     * scan cursor continuations to the node that issued the cursor. Scan cursors are node-local state: applying them to another
+     * node yields undefined results. If no node with the same address <em>and</em> role is part of the known topology (for
+     * example after a failover reassigned the address to a different role), this method fails with a descriptive
+     * {@link RedisException} instead of silently routing elsewhere; callers are expected to restart the scan.
+     *
+     * @param source the address of the node that issued the scan cursor.
+     * @param sourceRole the role the issuing node held, may be {@code null} to match on address alone.
+     * @return the connection.
+     */
+    CompletableFuture<StatefulRedisConnection<K, V>> getPinnedConnectionAsync(RedisURI source, RedisInstance.Role sourceRole) {
+
+        if (debugEnabled) {
+            logger.debug("getPinnedConnectionAsync(" + source + ", " + sourceRole + ")");
+        }
+
+        // Snapshot under the lock: a topology refresh mutates knownNodes in place and a torn read here would surface as a
+        // spurious scan abort.
+        List<RedisNodeDescription> nodes;
+
+        stateLock.lock();
+        try {
+            nodes = new ArrayList<>(knownNodes);
+        } finally {
+            stateLock.unlock();
+        }
+
+        RedisNodeDescription node = findNodeByUri(nodes, source);
+
+        if (node == null || (sourceRole != null && node.getRole() != sourceRole)) {
+            CompletableFuture<StatefulRedisConnection<K, V>> failed = new CompletableFuture<>();
+            failed.completeExceptionally(new RedisException(String.format(
+                    "Cannot route scan continuation to %s (role %s): the node that issued the scan cursor is no longer available (Known nodes: %s). Restart the scan iteration",
+                    source, sourceRole, nodes)));
+            return failed;
+        }
+
+        return getConnection(node);
+    }
+
+    private static void notifySelectedNode(Consumer<RedisNodeDescription> listener, RedisNodeDescription node) {
+        if (listener != null) {
+            listener.accept(node);
+        }
     }
 
     protected CompletableFuture<StatefulRedisConnection<K, V>> getConnection(RedisNodeDescription redisNodeDescription) {
