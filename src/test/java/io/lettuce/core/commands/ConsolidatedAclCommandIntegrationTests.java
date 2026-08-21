@@ -22,6 +22,7 @@ package io.lettuce.core.commands;
 import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
 
+import io.lettuce.test.condition.DisabledOnProvider;
 import io.lettuce.test.condition.RedisConditions;
 import io.lettuce.test.resource.ModulesTestUri;
 import org.junit.jupiter.api.*;
@@ -38,6 +39,8 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * @author M Sazzadul Hoque
  */
 @Tag(INTEGRATION_TEST)
+// Redis Enterprise does not support ACL LOG and other ACL management subcommands
+@DisabledOnProvider("re")
 public class ConsolidatedAclCommandIntegrationTests {
 
     private static RedisClient client;

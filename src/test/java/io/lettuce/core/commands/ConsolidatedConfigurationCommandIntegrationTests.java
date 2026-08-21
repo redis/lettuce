@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.test.condition.DisabledOnProvider;
 import io.lettuce.test.condition.RedisConditions;
 import io.lettuce.test.resource.ModulesTestUri;
 
@@ -88,6 +89,8 @@ public class ConsolidatedConfigurationCommandIntegrationTests {
     }
 
     @Test
+    // Redis Enterprise CONFIG GET supports only a subset of settings and does not expose module parameters
+    @DisabledOnProvider("re")
     public void getSearchConfigSettingTest() {
         assertThat(redis.configGet("search-timeout")).hasSize(1);
     }
@@ -108,6 +111,8 @@ public class ConsolidatedConfigurationCommandIntegrationTests {
     }
 
     @Test
+    // Redis Enterprise CONFIG GET supports only a subset of settings and does not expose module parameters
+    @DisabledOnProvider("re")
     public void getAllConfigSettings() {
         assertThat(redis.configGet("*").keySet()).contains("search-default-dialect", "search-timeout", "ts-retention-policy",
                 "bf-error-rate", "cf-initial-size");
