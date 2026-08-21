@@ -42,8 +42,8 @@ A Bloom filter is a space-efficient set that answers membership queries. A negat
 commands.bfReserve("visitors", 0.01, 10_000);
 
 Boolean added = commands.bfAdd("visitors", "alice");      // true — newly added
-Boolean exists = commands.bfExists("visitors", "alice");  // true
-Boolean missing = commands.bfExists("visitors", "bob");   // false (guaranteed correct)
+Boolean exists = commands.bfExists("visitors", "alice");  // true — an added item always tests positive
+Boolean missing = commands.bfExists("visitors", "bob");   // usually false; a positive here would be a false positive
 
 // Add and test many items at once
 List<Boolean> addedMany = commands.bfMAdd("visitors", "carol", "dave");
