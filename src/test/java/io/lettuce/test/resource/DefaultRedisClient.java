@@ -2,6 +2,7 @@ package io.lettuce.test.resource;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.settings.TestSettings;
 
 /**
@@ -19,9 +20,9 @@ public class DefaultRedisClient {
         if (TestSettings.tls()) {
             builder.withSsl(true).withVerifyPeer(false);
         }
-        CharSequence password = TestSettings.password();
-        if (TestSettings.isProviderActive() && password != null && password.length() > 0) {
-            builder.withAuthentication(TestSettings.username(), password);
+        Endpoints.Endpoint endpoint = TestSettings.endpoint();
+        if (endpoint != null && endpoint.getPassword() != null && !endpoint.getPassword().isEmpty()) {
+            builder.withAuthentication(TestSettings.username(), endpoint.getPassword());
         }
         redisClient = RedisClient.create(builder.build());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> FastShutdown.shutdown(redisClient)));

@@ -30,31 +30,43 @@ import io.lettuce.test.env.Endpoints;
 /**
  * This class provides settings used while testing. You can override these using system properties.
  * <p>
- * Alternatively, tests can run against externally provisioned databases (e.g. Redis Enterprise) by setting the
- * {@code TEST_ENV_PROVIDER=re} environment variable. In that mode, host, port, credentials and TLS mode are resolved from the
- * endpoint configuration file referenced by {@code REDIS_ENDPOINTS_CONFIG_PATH} (see {@link Endpoints}), using the database
- * named by {@code RE_DB_NAME} (defaults to {@literal standalone}). Explicit system properties always take precedence over the
- * provider.
+ * Endpoint coordinates are resolved from the {@link Endpoints} configuration: the file referenced by the
+ * {@code REDIS_ENDPOINTS_CONFIG_PATH} environment variable, or the bundled {@code endpoints.json} test resource describing the
+ * local Docker environment when the variable is not set. The database name is selected by the {@code RE_DB_NAME} environment
+ * variable (defaults to {@literal standalone}). Explicit system properties always take precedence over the endpoint
+ * configuration. When {@code TEST_ENV_PROVIDER=re} is set (externally provisioned Redis Enterprise databases), resolution fails
+ * fast instead of falling back to the local defaults.
  *
  * @author Mark Paluch
  * @author Tugdual Grall
  */
 public class TestSettings {
 
+    private static final String DEFAULT_DB_NAME = "standalone";
+
+    private static final String MODULES_DB_NAME = "standalone-modules";
+
+    private static final String CLUSTER_DB_NAME = "cluster";
+
     private TestSettings() {
     }
 
     /**
      *
-     * @return hostname of your redis instance. Defaults to {@literal localhost}. Can be overriden with
-     *         {@code -Dhost=YourHostName}
+     * @return hostname of your redis instance. Resolved from the endpoint configuration, defaults to {@literal localhost}. Can
+     *         be overriden with {@code -Dhost=YourHostName}
      */
     public static String host() {
         String host = System.getProperty("host");
         if (host != null) {
             return host;
         }
-        return TestEnvProvider.isActive() ? TestEnvProvider.host() : "localhost";
+        Endpoints.Endpoint endpoint = endpoint();
+        if (endpoint != null) {
+            return EndpointResolver.host(endpoint);
+        }
+        failFastIfExternallyProvisioned(dbName());
+        return "localhost";
     }
 
     /**
@@ -96,26 +108,36 @@ public class TestSettings {
 
     /**
      *
-     * @return default username of your redis instance.
+     * @return default username of your redis instance. Resolved from the endpoint configuration, defaults to
+     *         {@literal default}. Can be overridden with {@code -Dusername=SampleUsername}
      */
     public static String username() {
-        if (TestEnvProvider.isActive() && TestEnvProvider.username() != null) {
-            return TestEnvProvider.username();
+        String username = System.getProperty("username");
+        if (username != null) {
+            return username;
+        }
+        Endpoints.Endpoint endpoint = endpoint();
+        if (endpoint != null && endpoint.getUsername() != null && !endpoint.getUsername().isEmpty()) {
+            return endpoint.getUsername();
         }
         return "default";
     }
 
     /**
      *
-     * @return password of your redis instance. Defaults to {@literal passwd}. Can be overridden with
-     *         {@code -Dpassword=YourPassword}
+     * @return password of your redis instance. Resolved from the endpoint configuration, defaults to {@literal foobared}. Can
+     *         be overridden with {@code -Dpassword=YourPassword}
      */
     public static CharSequence password() {
         String password = System.getProperty("password");
         if (password != null) {
             return password;
         }
-        return TestEnvProvider.isActive() ? TestEnvProvider.password() : "foobared";
+        Endpoints.Endpoint endpoint = endpoint();
+        if (endpoint != null && endpoint.getPassword() != null && !endpoint.getPassword().isEmpty()) {
+            return endpoint.getPassword();
+        }
+        return "foobared";
     }
 
     /**
@@ -138,14 +160,20 @@ public class TestSettings {
 
     /**
      *
-     * @return port of your redis instance. Defaults to {@literal 6479}. Can be overriden with {@code -Dport=1234}
+     * @return port of your redis instance. Resolved from the endpoint configuration, defaults to {@literal 6479}. Can be
+     *         overriden with {@code -Dport=1234}
      */
     public static int port() {
         String port = System.getProperty("port");
         if (port != null) {
             return Integer.parseInt(port);
         }
-        return TestEnvProvider.isActive() ? TestEnvProvider.port() : 6479;
+        Endpoints.Endpoint endpoint = endpoint();
+        if (endpoint != null) {
+            return EndpointResolver.port(endpoint);
+        }
+        failFastIfExternallyProvisioned(dbName());
+        return 6479;
     }
 
     /**
@@ -158,19 +186,24 @@ public class TestSettings {
 
     /**
      *
-     * @return {@link #port()} with added {@literal 500}
+     * @return {@link #localBasePort()} with added {@literal 500}
      */
     public static int nonexistentPort() {
-        return port() + 500;
+        return localBasePort() + 500;
     }
 
     /**
+     * Port offsets address the local Docker test topology only and are never derived from an endpoint configuration.
      *
      * @param offset
-     * @return {@link #port()} with added {@literal offset}
+     * @return the local base port (6479, can be overridden with {@code -Dport=1234}) with added {@literal offset}
      */
     public static int port(int offset) {
-        return port() + offset;
+        return localBasePort() + offset;
+    }
+
+    private static int localBasePort() {
+        return Integer.parseInt(System.getProperty("port", "6479"));
     }
 
     /**
@@ -231,76 +264,127 @@ public class TestSettings {
 
     /**
      *
-     * @return hostname of the modules-enabled (JSON, Search, TimeSeries, Bloom) standalone Redis instance. Defaults to
-     *         {@literal 127.0.0.1}. Can be overridden with {@code -Dmodule.host=YourHostName}
+     * @return hostname of the modules-enabled (JSON, Search, TimeSeries, Bloom) standalone Redis instance. Resolved from the
+     *         {@literal standalone-modules} endpoint (falling back to the default endpoint), defaults to {@literal 127.0.0.1}.
+     *         Can be overridden with {@code -Dmodule.host=YourHostName}
      */
     public static String moduleHost() {
         String host = System.getProperty("module.host");
         if (host != null) {
             return host;
         }
-        return TestEnvProvider.isActive() ? TestEnvProvider.host() : "127.0.0.1";
+        Endpoints.Endpoint endpoint = moduleEndpoint();
+        if (endpoint != null) {
+            return EndpointResolver.host(endpoint);
+        }
+        failFastIfExternallyProvisioned(MODULES_DB_NAME);
+        return "127.0.0.1";
     }
 
     /**
      *
-     * @return port of the modules-enabled (JSON, Search, TimeSeries, Bloom) standalone Redis instance. Defaults to
-     *         {@literal 16379}. Can be overridden with {@code -Dmodule.port=1234}
+     * @return port of the modules-enabled (JSON, Search, TimeSeries, Bloom) standalone Redis instance. Resolved from the
+     *         {@literal standalone-modules} endpoint (falling back to the default endpoint), defaults to {@literal 16379}. Can
+     *         be overridden with {@code -Dmodule.port=1234}
      */
     public static int modulePort() {
         String port = System.getProperty("module.port");
         if (port != null) {
             return Integer.parseInt(port);
         }
-        return TestEnvProvider.isActive() ? TestEnvProvider.port() : 16379;
+        Endpoints.Endpoint endpoint = moduleEndpoint();
+        if (endpoint != null) {
+            return EndpointResolver.port(endpoint);
+        }
+        failFastIfExternallyProvisioned(MODULES_DB_NAME);
+        return 16379;
     }
 
     /**
      *
-     * @return {@code true} if connections to the default test database require TLS. Always {@code false} unless an external
-     *         test environment provider is active and its endpoint is configured for TLS.
+     * @return {@code true} if connections to the default test database require TLS. Resolved from the endpoint configuration,
+     *         defaults to {@code false}. Can be overridden with {@code -Dtls=true}
      */
     public static boolean tls() {
-        return TestEnvProvider.isActive() && TestEnvProvider.tls();
+        String tls = System.getProperty("tls");
+        if (tls != null) {
+            return Boolean.parseBoolean(tls);
+        }
+        Endpoints.Endpoint endpoint = endpoint();
+        return endpoint != null && endpoint.isTls();
     }
 
     /**
      *
-     * @return {@code true} if an external test environment provider ({@code TEST_ENV_PROVIDER=re}) is active.
+     * @return the endpoint of the default test database ({@code RE_DB_NAME}, defaults to {@literal standalone}) or {@code null}
+     *         if the endpoint configuration does not define it.
      */
-    public static boolean isProviderActive() {
-        return TestEnvProvider.isActive();
+    public static Endpoints.Endpoint endpoint() {
+        return EndpointResolver.endpoint(dbName());
     }
 
     /**
-     * Resolves test endpoint coordinates from an externally provisioned test environment (Redis Enterprise) when
-     * {@code TEST_ENV_PROVIDER=re} is set. The endpoint is looked up in {@link Endpoints#DEFAULT} (loaded from
-     * {@code REDIS_ENDPOINTS_CONFIG_PATH}) under the name given by {@code RE_DB_NAME} (default {@literal standalone}). Fails
-     * fast when the provider is active but the endpoint cannot be resolved.
+     *
+     * @return the endpoint of the modules-enabled test database ({@literal standalone-modules}, falling back to the default
+     *         endpoint) or {@code null} if the endpoint configuration defines neither.
      */
-    private static class TestEnvProvider {
+    public static Endpoints.Endpoint moduleEndpoint() {
+        Endpoints.Endpoint endpoint = EndpointResolver.endpoint(MODULES_DB_NAME);
+        return endpoint != null ? endpoint : endpoint();
+    }
 
-        private static final String PROVIDER_RE = "re";
+    /**
+     *
+     * @return the endpoint of the Redis Cluster test database ({@literal cluster}) or {@code null} if the endpoint
+     *         configuration does not define it. Fails fast when an external test environment provider is active.
+     */
+    public static Endpoints.Endpoint clusterEndpoint() {
+        Endpoints.Endpoint endpoint = EndpointResolver.endpoint(CLUSTER_DB_NAME);
+        if (endpoint == null) {
+            failFastIfExternallyProvisioned(CLUSTER_DB_NAME);
+        }
+        return endpoint;
+    }
 
-        private static final String PROVIDER = System.getenv("TEST_ENV_PROVIDER");
+    private static String dbName() {
+        String dbName = System.getenv("RE_DB_NAME");
+        return dbName == null || dbName.isEmpty() ? DEFAULT_DB_NAME : dbName;
+    }
 
-        private static volatile Endpoints.Endpoint resolvedEndpoint;
+    private static void failFastIfExternallyProvisioned(String name) {
+        String provider = System.getenv("TEST_ENV_PROVIDER");
+        if ("re".equalsIgnoreCase(provider)) {
+            throw new IllegalStateException("TEST_ENV_PROVIDER=" + provider + " is set but the endpoint '" + name
+                    + "' cannot be resolved. Verify that REDIS_ENDPOINTS_CONFIG_PATH points to an endpoint "
+                    + "configuration file containing a database named '" + name + "'");
+        }
+    }
 
-        static boolean isActive() {
-            return PROVIDER_RE.equalsIgnoreCase(PROVIDER);
+    /**
+     * Resolves host and port coordinates from an {@link Endpoints.Endpoint}, preferring raw endpoint metadata over the URI
+     * list.
+     */
+    private static class EndpointResolver {
+
+        static Endpoints.Endpoint endpoint(String name) {
+            return Endpoints.DEFAULT.getEndpoint(name);
         }
 
-        static String host() {
-            Endpoints.Endpoint endpoint = endpoint();
+        static String host(Endpoints.Endpoint endpoint) {
             List<Endpoints.RawEndpoint> rawEndpoints = endpoint.getRawEndpoints();
-            if (rawEndpoints != null && !rawEndpoints.isEmpty() && rawEndpoints.get(0).getDnsName() != null) {
-                return rawEndpoints.get(0).getDnsName();
+            if (rawEndpoints != null && !rawEndpoints.isEmpty()) {
+                Endpoints.RawEndpoint rawEndpoint = rawEndpoints.get(0);
+                if (rawEndpoint.getDnsName() != null && !rawEndpoint.getDnsName().isEmpty()) {
+                    return rawEndpoint.getDnsName();
+                }
+                if (rawEndpoint.getAddr() != null && !rawEndpoint.getAddr().isEmpty()) {
+                    return rawEndpoint.getAddr().get(0);
+                }
             }
             return URI.create(firstUri(endpoint)).getHost();
         }
 
-        static int port() {
-            Endpoints.Endpoint endpoint = endpoint();
+        static int port(Endpoints.Endpoint endpoint) {
             List<Endpoints.RawEndpoint> rawEndpoints = endpoint.getRawEndpoints();
             if (rawEndpoints != null && !rawEndpoints.isEmpty() && rawEndpoints.get(0).getPort() != 0) {
                 return rawEndpoints.get(0).getPort();
@@ -308,44 +392,12 @@ public class TestSettings {
             return URI.create(firstUri(endpoint)).getPort();
         }
 
-        static String username() {
-            return endpoint().getUsername();
-        }
-
-        static String password() {
-            return endpoint().getPassword();
-        }
-
-        static boolean tls() {
-            return endpoint().isTls();
-        }
-
         private static String firstUri(Endpoints.Endpoint endpoint) {
             List<String> uris = endpoint.getEndpoints();
             if (uris == null || uris.isEmpty()) {
-                throw new IllegalStateException(
-                        "Endpoint '" + dbName() + "' defines neither raw_endpoints nor endpoints entries");
+                throw new IllegalStateException("Endpoint defines neither raw_endpoints nor endpoints entries");
             }
             return uris.get(0);
-        }
-
-        private static String dbName() {
-            String dbName = System.getenv("RE_DB_NAME");
-            return dbName == null || dbName.isEmpty() ? "standalone" : dbName;
-        }
-
-        private static Endpoints.Endpoint endpoint() {
-            Endpoints.Endpoint endpoint = resolvedEndpoint;
-            if (endpoint == null) {
-                endpoint = Endpoints.DEFAULT.getEndpoint(dbName());
-                if (endpoint == null) {
-                    throw new IllegalStateException("TEST_ENV_PROVIDER=" + PROVIDER + " is set but the endpoint '" + dbName()
-                            + "' cannot be resolved. Verify that REDIS_ENDPOINTS_CONFIG_PATH points to an endpoint "
-                            + "configuration file containing a database named '" + dbName() + "'");
-                }
-                resolvedEndpoint = endpoint;
-            }
-            return endpoint;
         }
 
     }

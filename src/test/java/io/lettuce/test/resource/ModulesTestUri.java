@@ -1,6 +1,7 @@
 package io.lettuce.test.resource;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.settings.TestSettings;
 
 /**
@@ -20,13 +21,16 @@ public class ModulesTestUri {
 
         RedisURI.Builder builder = RedisURI.Builder.redis(TestSettings.moduleHost()).withPort(TestSettings.modulePort());
 
-        if (TestSettings.tls()) {
+        Endpoints.Endpoint endpoint = TestSettings.moduleEndpoint();
+
+        if (endpoint != null && endpoint.isTls()) {
             builder.withSsl(true).withVerifyPeer(false);
         }
 
-        CharSequence password = TestSettings.password();
-        if (TestSettings.isProviderActive() && password != null && password.length() > 0) {
-            builder.withAuthentication(TestSettings.username(), password);
+        if (endpoint != null && endpoint.getPassword() != null && !endpoint.getPassword().isEmpty()) {
+            String username = endpoint.getUsername() != null && !endpoint.getUsername().isEmpty() ? endpoint.getUsername()
+                    : "default";
+            builder.withAuthentication(username, endpoint.getPassword());
         }
 
         return builder.build();

@@ -70,6 +70,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 /**
  * Integration tests for Redis Search functionality using FT.SEARCH command.
@@ -108,7 +109,7 @@ public class RediSearchIntegrationTests {
     protected static RedisCommands<byte[], byte[]> redisBinary;
 
     public RediSearchIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
         client = RedisClient.create(redisURI);
         client.setOptions(getOptions());
         redis = client.connect().sync();
@@ -1362,7 +1363,8 @@ public class RediSearchIntegrationTests {
 
         // Create a dedicated client with settings that trigger the memory corruption bug
         // These settings match the reproducer from the bug report
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).withTimeout(Duration.ofSeconds(30)).build();
+        RedisURI redisURI = ModulesTestUri.create();
+        redisURI.setTimeout(Duration.ofSeconds(30));
         RedisClient testClient = RedisClient.create(redisURI);
         testClient.setOptions(ClientOptions.builder()
                 // Large buffer policy prevents early buffer recycling, exposing the bug
