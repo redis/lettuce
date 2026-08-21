@@ -10,7 +10,7 @@ import java.util.Map;
  * @param <V> Value type.
  * @author Mark Paluch
  * @since 6.0
- * @deprecated since 7.8. Part of the legacy and incomplete client-side caching implementation; no replacement type is available
+ * @deprecated since 7.8, part of the legacy and incomplete client-side caching implementation; no replacement type is available
  *             yet, a redesigned client-side caching API is planned. Scheduled for removal in a future major release.
  */
 @Deprecated
