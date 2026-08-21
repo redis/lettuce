@@ -335,6 +335,18 @@ addresses reported by Redis <code>CLUSTER NODES</code> output which
 typically contains IP addresses.</p></td>
 </tr>
 <tr>
+<td>Maximum topology refresh sources</td>
+<td><code>maxTopologyRefreshSources</code></td>
+<td><code>Integer.MAX_VALUE</code></td>
+</tr>
+<tr>
+<td colspan="3"><p>Since: 7.6</p>
+<p>Limit the number of nodes queried during topology refresh. This
+option can be combined with dynamic topology refresh sources to retain
+node discovery while reducing the number of nodes contacted during a
+refresh.</p></td>
+</tr>
+<tr>
 <td>Close stale connections</td>
 <td><code>closeStaleConnections</code></td>
 <td><code>true</code></td>
