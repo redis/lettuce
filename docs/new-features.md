@@ -1,6 +1,10 @@
 # New & Noteworthy
 
 
+## What's new in Lettuce 7.8
+
+- Deprecated the server-assisted client-side caching support (`ClientSideCaching`, `CacheFrontend`, `CacheAccessor`, `RedisCache` in `io.lettuce.core.support.caching`). This implementation is legacy and incomplete and is scheduled for removal in a future major release. There is no replacement yet — a redesigned client-side caching API is planned.
+
 ## What's new in Lettuce 7.7
 
 - [Probabilistic data structures (RedisBloom)](user-guide/probabilistic.md) support through `RedisBloomFilterCommands`, `RedisCuckooFilterCommands`, `RedisTopKCommands`, `RedisCMSCommands` and `RedisTDigestCommands`, with the respective async, reactive and Kotlin APIs — covering Bloom Filter (`BF.*`), Cuckoo Filter (`CF.*`), Top-K, Count-Min Sketch and T-Digest
