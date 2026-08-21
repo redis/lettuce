@@ -32,7 +32,10 @@ import io.lettuce.core.codec.RedisCodec;
  * @param <V> Value type.
  * @author Mark Paluch
  * @since 6.0
+ * @deprecated since 7.8. This client-side caching implementation is legacy and incomplete; no replacement type is available
+ *             yet, a redesigned client-side caching API is planned. Scheduled for removal in a future major release.
  */
+@Deprecated
 public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
 
     private final CacheAccessor<K, V> cacheAccessor;
