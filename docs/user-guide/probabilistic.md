@@ -56,9 +56,9 @@ BfInfoValue info = commands.bfInfo("visitors");           // capacity, size, fil
 `bfReserve` can be tuned further with `BfReserveArgs`, and `bfInsert` combines reserve-and-add in a single call:
 
 ```java
-commands.bfReserve("events", 0.001, 1_000_000, BfReserveArgs.expansion(4).nonScaling());
+commands.bfReserve("events", 0.001, 1_000_000, BfReserveArgs.Builder.expansion(4).nonScaling());
 
-commands.bfInsert("events", BfInsertArgs.capacity(1_000_000).error(0.001).noCreate(), "e1", "e2");
+commands.bfInsert("events", BfInsertArgs.Builder.capacity(1_000_000).error(0.001).noCreate(), "e1", "e2");
 ```
 
 ## Cuckoo Filter
@@ -81,7 +81,7 @@ CfInfoValue info = commands.cfInfo("seen");
 Sizing can be tuned with `CfReserveArgs`:
 
 ```java
-commands.cfReserve("seen", 100_000, CfReserveArgs.bucketSize(4).maxIterations(20).expansion(2));
+commands.cfReserve("seen", 100_000, CfReserveArgs.Builder.bucketSize(4).maxIterations(20).expansion(2));
 ```
 
 ## Top-K
@@ -103,7 +103,7 @@ TopKInfoValue info = commands.topKInfo("trending");
 `topKReserve` accepts `TopKReserveArgs` to tune the underlying sketch:
 
 ```java
-commands.topKReserve("trending", 10, TopKReserveArgs.width(2000).depth(7).decay(0.9));
+commands.topKReserve("trending", 10, TopKReserveArgs.Builder.width(2000).depth(7).decay(0.9));
 ```
 
 ## Count-Min Sketch
@@ -117,10 +117,17 @@ commands.cmsInitByProb("hits", 0.001, 0.0001);
 // commands.cmsInitByDim("hits", 2000, 5);
 
 CMSInfoValue info = commands.cmsInfo("hits");
+```
 
-// Merge several source sketches into a destination (all created with the same dimensions)
-commands.cmsInitByDim("merged", 2000, 5);
-commands.cmsMerge("merged", "hits");
+`CMS.MERGE` requires every sketch — sources and destination — to share the same width
+and depth, so initialize them with matching dimensions:
+
+```java
+commands.cmsInitByDim("day-1", 2000, 5);
+commands.cmsInitByDim("day-2", 2000, 5);
+commands.cmsInitByDim("total", 2000, 5);
+
+commands.cmsMerge("total", "day-1", "day-2");
 ```
 
 ## T-Digest
@@ -145,7 +152,7 @@ Digests can be merged, optionally overriding the destination and setting a compr
 
 ```java
 commands.tdigestCreate("combined");
-commands.tdigestMerge("combined", TDigestMergeArgs.compression(200).override(), "latencies");
+commands.tdigestMerge("combined", TDigestMergeArgs.Builder.compression(200).override(), "latencies");
 ```
 
 ## Asynchronous, Reactive and Kotlin usage
