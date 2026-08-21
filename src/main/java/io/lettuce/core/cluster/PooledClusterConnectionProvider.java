@@ -614,9 +614,15 @@ class PooledClusterConnectionProvider<K, V>
         if (connectionKey.nodeId != null && partitions.getPartitionByNodeId(connectionKey.nodeId) != null) {
             return false;
         }
+        if (connectionKey.host != null) {
+            RedisClusterNode node = partitions.getPartition(connectionKey.host, connectionKey.port);
 
-        if (connectionKey.host != null && partitions.getPartition(connectionKey.host, connectionKey.port) != null) {
-            return false;
+            if (node != null) {
+                if (connectionKey.connectionIntent == ConnectionIntent.READ && node.getRole().isUpstream()) {
+                    return true;
+                }
+                return connectionKey.connectionIntent == ConnectionIntent.WRITE && node.getRole().isReplica();
+            }
         }
 
         return true;
