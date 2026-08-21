@@ -22,6 +22,7 @@ package io.lettuce.core.commands;
 import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
 
+import io.lettuce.test.condition.DisabledOnRedisEnterprise;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.*;
 
@@ -37,6 +38,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * @author M Sazzadul Hoque
  */
 @Tag(INTEGRATION_TEST)
+@DisabledOnRedisEnterprise("ACL SETUSER / user management is not permitted for the default user on a managed Redis Enterprise database")
 public class ConsolidatedAclCommandIntegrationTests {
 
     private static RedisClient client;

@@ -49,6 +49,7 @@ import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnRedisEnterprise;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
@@ -534,6 +535,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxBasic() {
         IncrexValue<Long> res = redis.increx(key);
         assertThat(res.getValue()).isEqualTo(1L);
@@ -542,6 +544,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxByIntWithBoundsAndExpiry() {
         redis.set(key, "10");
         IncrexArgs args = IncrexArgs.Builder.lbound(0).ubound(20).ex(60);
@@ -553,6 +556,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxByFloatWithBoundsAndExpiry() {
         redis.set(key, "3.25");
         IncrexFloatArgs args = IncrexFloatArgs.Builder.lbound(-1.5).ubound(9.5).ex(60);
@@ -563,6 +567,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxNegativeIncrement() {
         redis.set(key, "10");
         IncrexArgs args = new IncrexArgs();
@@ -573,6 +578,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxDefaultRejectSilent() {
         redis.set(key, "0");
         IncrexArgs args = IncrexArgs.Builder.ubound(5);
@@ -583,6 +589,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxSaturateUbound() {
         redis.set(key, "0");
         IncrexArgs args = IncrexArgs.Builder.ubound(5).saturate();
@@ -593,6 +600,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxSaturateLbound() {
         redis.set(key, "5");
         IncrexArgs args = IncrexArgs.Builder.lbound(0).saturate();
@@ -603,6 +611,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxSaturateStillAppliesExpiry() {
         redis.set(key, "5");
         IncrexArgs args = IncrexArgs.Builder.ubound(5).saturate().ex(60);
@@ -614,6 +623,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxPersist() {
         redis.set(key, "5");
         redis.expire(key, 300);
@@ -626,6 +636,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxEnxNoExistingTtl() {
         redis.set(key, "5");
         IncrexArgs args = IncrexArgs.Builder.ex(60).enx();
@@ -636,6 +647,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxEnxWithExistingTtl() {
         redis.set(key, "5");
         redis.expire(key, 300);
@@ -648,6 +660,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxNonExistentKey() {
         IncrexArgs args = new IncrexArgs();
         IncrexValue<Long> res = redis.increx(key, 5, args);
@@ -657,6 +670,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxNonNumericKey() {
         redis.set(key, "hello");
         IncrexArgs args = new IncrexArgs();
@@ -665,6 +679,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxSaturateFloat() {
         redis.set(key, "0.0");
         IncrexFloatArgs args = IncrexFloatArgs.Builder.ubound(5.0).saturate();
@@ -675,6 +690,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("INCREX")
+    @DisabledOnRedisEnterprise("INCREX is an OSS preview command not implemented on a managed Redis Enterprise database")
     void increxFloatThenIntFails() {
         redis.set(key, "1.5");
         IncrexArgs args = new IncrexArgs();

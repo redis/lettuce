@@ -40,6 +40,9 @@ public class TestSettings {
      *         {@code -Dhost=YourHostName}
      */
     public static String host() {
+        if (RedisEnterpriseSettings.isEnabled()) {
+            return RedisEnterpriseSettings.host();
+        }
         return System.getProperty("host", "localhost");
     }
 
@@ -85,6 +88,9 @@ public class TestSettings {
      * @return default username of your redis instance.
      */
     public static String username() {
+        if (RedisEnterpriseSettings.isEnabled()) {
+            return RedisEnterpriseSettings.username();
+        }
         return "default";
     }
 
@@ -94,6 +100,9 @@ public class TestSettings {
      *         {@code -Dpassword=YourPassword}
      */
     public static CharSequence password() {
+        if (RedisEnterpriseSettings.isEnabled()) {
+            return RedisEnterpriseSettings.password();
+        }
         return System.getProperty("password", "foobared");
     }
 
@@ -120,6 +129,9 @@ public class TestSettings {
      * @return port of your redis instance. Defaults to {@literal 6479}. Can be overriden with {@code -Dport=1234}
      */
     public static int port() {
+        if (RedisEnterpriseSettings.isEnabled()) {
+            return RedisEnterpriseSettings.port();
+        }
         return Integer.parseInt(System.getProperty("port", "6479"));
     }
 

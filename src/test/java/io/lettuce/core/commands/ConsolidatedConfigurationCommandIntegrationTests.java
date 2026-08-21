@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.test.condition.DisabledOnRedisEnterprise;
 import io.lettuce.test.condition.RedisConditions;
 
 import org.junit.jupiter.api.*;
@@ -38,6 +39,7 @@ import java.util.Collections;
  * @author M Sazzadul Hoque
  */
 @Tag(INTEGRATION_TEST)
+@DisabledOnRedisEnterprise("CONFIG GET/SET of server parameters is not exposed the same way on a managed Redis Enterprise database")
 public class ConsolidatedConfigurationCommandIntegrationTests {
 
     private static RedisClient client;
