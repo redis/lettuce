@@ -597,6 +597,10 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
     }
 
     protected RedisHandshake createHandshake(ConnectionState state) {
+        return createHandshake(state, clientOptions);
+    }
+
+    protected RedisHandshake createHandshake(ConnectionState state, ClientOptions clientOptions) {
         EndpointTypeSource source = null;
         if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
             LettuceAssert.notNull(clientOptions.getMaintNotificationsConfig().getEndpointTypeSource(),
