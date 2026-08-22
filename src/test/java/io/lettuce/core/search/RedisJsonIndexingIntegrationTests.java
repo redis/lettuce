@@ -29,6 +29,7 @@ import java.util.Collections;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import io.lettuce.test.resource.ModulesTestUri;
 
 /**
  * Integration tests for Redis JSON indexing functionality based on the Redis documentation tutorial.
@@ -61,7 +62,7 @@ public class RedisJsonIndexingIntegrationTests {
     protected static RedisCommands<String, String> redis;
 
     public RedisJsonIndexingIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
         client = RedisClient.create(redisURI);
         client.setOptions(getOptions());
         redis = client.connect().sync();

@@ -53,6 +53,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 /**
  * Integration tests for Redis Vector Search functionality using FT.SEARCH command with vector fields.
@@ -86,7 +87,7 @@ public class RediSearchVectorIntegrationTests {
     protected static RedisCommands<String, String> redis;
 
     public RediSearchVectorIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
         client = RedisClient.create(redisURI);
         client.setOptions(getOptions());
         redis = client.connect().sync();

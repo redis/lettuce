@@ -68,6 +68,7 @@ import io.lettuce.test.resource.DefaultRedisClient;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Test for mutable cluster setup scenarios.
@@ -81,6 +82,7 @@ import io.lettuce.test.settings.TestSettings;
 @Tag(INTEGRATION_TEST)
 @SuppressWarnings({ "unchecked" })
 @SlowTests
+@DisabledOnProvider("re")
 public class RedisClusterSetupIntegrationTests extends TestSupport {
 
     private static final String host = TestSettings.hostAddr();

@@ -1,0 +1,20 @@
+{
+  "standalone": {
+    "tls": false,
+    "endpoints": [
+      "redis://localhost:6479"
+    ]
+  },
+  "standalone-modules": {
+    "tls": false,
+    "endpoints": [
+      "redis://127.0.0.1:16379"
+    ]
+  },
+  "cluster": {
+    "tls": false,
+    "endpoints": [
+      "redis://127.0.0.1:7379"
+    ]
+  }
+}

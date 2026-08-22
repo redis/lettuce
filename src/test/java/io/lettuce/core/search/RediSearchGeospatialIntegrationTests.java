@@ -30,6 +30,7 @@ import io.lettuce.core.search.arguments.GeoFieldArgs;
 import io.lettuce.core.search.arguments.GeoshapeFieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
+import io.lettuce.test.resource.ModulesTestUri;
 
 /**
  * Integration tests for Redis Search geospatial functionality using GEO and GEOSHAPE fields.
@@ -64,7 +65,7 @@ public class RediSearchGeospatialIntegrationTests {
     protected static RedisCommands<String, String> redis;
 
     public RediSearchGeospatialIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
         client = RedisClient.create(redisURI);
         client.setOptions(getOptions());
         redis = client.connect().sync();
