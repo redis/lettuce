@@ -4,6 +4,7 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -68,6 +69,19 @@ class ObjectOutputUnitTests {
             throw (RuntimeException) exception;
         });
         assertThat(output.get()).isEqualTo(3L);
+    }
+
+    @Test
+    void shouldParseTopLevelArrayContainingInteger() {
+
+        String in = "*1\r\n:3\r\n";
+        RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
+        ObjectOutput<String, String> output = new ObjectOutput<>(StringCodec.UTF8);
+        rsm.decode(Unpooled.wrappedBuffer(in.getBytes(StandardCharsets.UTF_8)), output, exception -> {
+            throw (RuntimeException) exception;
+        });
+        assertThat(output.get()).isInstanceOf(List.class);
+        assertThat(output.get()).isEqualTo(Collections.singletonList(3L));
     }
 
     @Test
