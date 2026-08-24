@@ -66,6 +66,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @param <V> Value type.
  * @author Mark Paluch
  * @author Tihomir Mateev
+ * @author PreAgile
  * @since 3.0
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -183,7 +184,23 @@ class PooledClusterConnectionProvider<K, V>
 
         CompletableFuture<StatefulRedisConnection<K, V>> writer = writers[slot];
         if (writer != null) {
-            return writer;
+
+            // In-flight future: trust the in-progress connection attempt instead of preempting it.
+            if (!writer.isDone()) {
+                return writer;
+            }
+
+            // writers[slot] is only populated with CompletableFuture.completedFuture(connection) below,
+            // so a completed slot always carries a non-failed future. Skip getNow if it ever failed
+            // exceptionally to keep this defensive.
+            if (!writer.isCompletedExceptionally()) {
+                StatefulRedisConnection<K, V> cached = writer.getNow(null);
+                if (cached != null && cached.isOpen()) {
+                    return writer;
+                }
+
+                evictInactiveWriter(slot, writer, cached);
+            }
         }
 
         RedisClusterNode master = partitions.getMasterBySlot(slot);
@@ -213,6 +230,54 @@ class PooledClusterConnectionProvider<K, V>
 
             return connection;
         }).toCompletableFuture();
+    }
+
+    /**
+     * Evict an inactive cached writer from both the {@code writers[slot]} fast cache and the underlying
+     * {@link AsyncConnectionProvider} cache so the next call materializes a fresh physical connection.
+     * <p>
+     * The {@code writers[slot] == expected} reference check serializes concurrent stale detections: only the thread that
+     * observed the same future evicts the slot. The provider cache entry holding the inactive connection is located by identity
+     * match against the {@link AsyncConnectionProvider} iteration, so a topology change (failover) that has already replaced
+     * the {@link ConnectionKey} mapping cannot lead to closing the wrong connection.
+     *
+     * @param slot the slot whose cached writer turned out to be inactive.
+     * @param expected the writer future captured before the inactivity check.
+     * @param staleConnection the inactive connection retrieved from the writer, may be {@code null}.
+     */
+    private void evictInactiveWriter(int slot, CompletableFuture<StatefulRedisConnection<K, V>> expected,
+            StatefulRedisConnection<K, V> staleConnection) {
+
+        boolean evicted;
+        stateLock.lock();
+        try {
+            evicted = writers[slot] == expected;
+            if (evicted) {
+                writers[slot] = null;
+            }
+        } finally {
+            stateLock.unlock();
+        }
+
+        if (!evicted || staleConnection == null) {
+            return;
+        }
+
+        // Locate the provider cache entry by identity match. The forEach lambda runs synchronously for completed Sync
+        // entries (Sync.doWithConnection inlines the consumer when PHASE_COMPLETE), and an inactive connection is always
+        // already-completed - so the holder is populated by the time forEach returns. In-progress entries cannot match
+        // by identity because no connection instance is bound to them yet.
+        final ConnectionKey[] staleKeyHolder = new ConnectionKey[1];
+        connectionProvider.forEach((cacheKey, connection) -> {
+            if (connection == staleConnection && staleKeyHolder[0] == null) {
+                staleKeyHolder[0] = cacheKey;
+            }
+        });
+
+        ConnectionKey staleKey = staleKeyHolder[0];
+        if (staleKey != null) {
+            connectionProvider.close(staleKey);
+        }
     }
 
     private CompletableFuture<StatefulRedisConnection<K, V>> getReadConnection(int slot) {
