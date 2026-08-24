@@ -2,6 +2,7 @@ package io.lettuce.test.env;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,12 +27,19 @@ public class Endpoints {
 
     static {
         String filePath = System.getenv("REDIS_ENDPOINTS_CONFIG_PATH");
-        if (filePath == null || filePath.isEmpty()) {
+        if (filePath != null && !filePath.isEmpty()) {
+            DEFAULT = fromFile(filePath);
+        } else if (System.getenv("TEST_ENV_PROVIDER") != null && !System.getenv("TEST_ENV_PROVIDER").isEmpty()) {
+            // An external test environment provider requires an explicit endpoint configuration. Do not fall back to the
+            // bundled local configuration; an empty configuration makes endpoint resolution fail fast instead of silently
+            // targeting the local test environment.
+            log.error("TEST_ENV_PROVIDER is set but the REDIS_ENDPOINTS_CONFIG_PATH environment variable is not. "
+                    + "No Endpoints configuration will be loaded.");
+            DEFAULT = new Endpoints(Collections.emptyMap());
+        } else {
             log.info("REDIS_ENDPOINTS_CONFIG_PATH environment variable is not set. Using the bundled " + LOCAL_RESOURCE
                     + " endpoint configuration for the local test environment.");
             DEFAULT = fromResource(LOCAL_RESOURCE);
-        } else {
-            DEFAULT = fromFile(filePath);
         }
     }
 
