@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -62,6 +63,46 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructHimportPrepare() {
+
+        HashImport<String> fieldset = HashImport.of(seq -> "fs", "name", "email");
+        Command<String, String, ?> command = sut.himportPrepare(fieldset);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$7\r\n"
+                + "PREPARE\r\n" + "$2\r\n" + "fs\r\n" + "$4\r\n" + "name\r\n" + "$5\r\n" + "email\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportSet() {
+
+        HashImport<String> fieldset = HashImport.of(seq -> "fs", "name", "email");
+        Command<String, String, ?> command = sut.himportSet("u:1", fieldset, "alice", "a@x.com");
+
+        assertThat(Unpooled.wrappedBuffer(command.getArgs().getFirstEncodedKey()).toString(StandardCharsets.UTF_8))
+                .isEqualTo("u:1");
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$3\r\n" + "SET\r\n"
+                + "$3\r\n" + "u:1\r\n" + "$2\r\n" + "fs\r\n" + "$5\r\n" + "alice\r\n" + "$7\r\n" + "a@x.com\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHimportDiscard() {
+
+        HashImport<String> fieldset = HashImport.of(seq -> "fs", "name", "email");
+        Command<String, String, ?> command = sut.himportDiscard(fieldset);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$7\r\n" + "DISCARD\r\n" + "$2\r\n" + "fs\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructXreadgroup() {
 
         Command<String, String, ?> command = sut.xreadgroup(Consumer.from("a", "b"), new XReadArgs(),
@@ -69,6 +110,54 @@ class RedisCommandBuilderUnitTests {
 
         assertThat(Unpooled.wrappedBuffer(command.getArgs().getFirstEncodedKey()).toString(StandardCharsets.UTF_8))
                 .isEqualTo("stream");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXreadWithMaxCountAndMaxSize() {
+
+        Command<String, String, ?> command = sut.xread(XReadArgs.Builder.count(50).maxCount(80).maxSize(65536).block(1000),
+                toStreamOffsets(XReadArgs.StreamOffset.from("s1", "0"), XReadArgs.StreamOffset.from("s2", "0")));
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*14\r\n" + "$5\r\n" + "XREAD\r\n" + "$5\r\n" + "BLOCK\r\n"
+                + "$4\r\n" + "1000\r\n" + "$5\r\n" + "COUNT\r\n" + "$2\r\n" + "50\r\n" + "$8\r\n" + "MAXCOUNT\r\n" + "$2\r\n"
+                + "80\r\n" + "$7\r\n" + "MAXSIZE\r\n" + "$5\r\n" + "65536\r\n" + "$7\r\n" + "STREAMS\r\n" + "$2\r\n" + "s1\r\n"
+                + "$2\r\n" + "s2\r\n" + "$1\r\n" + "0\r\n" + "$1\r\n" + "0\r\n");
+    }
+
+    @Test
+    void shouldOmitMaxCountAndMaxSizeWhenUnset() {
+
+        Command<String, String, ?> command = sut.xread(XReadArgs.Builder.count(50),
+                toStreamOffsets(XReadArgs.StreamOffset.from("s1", "0")));
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$5\r\n" + "XREAD\r\n" + "$5\r\n" + "COUNT\r\n"
+                + "$2\r\n" + "50\r\n" + "$7\r\n" + "STREAMS\r\n" + "$2\r\n" + "s1\r\n" + "$1\r\n" + "0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXreadgroupWithMaxCountAndMaxSize() {
+
+        Command<String, String, ?> command = sut.xreadgroup(Consumer.from("group", "consumer"),
+                XReadArgs.Builder.maxCount(80).maxSize(65536), XReadArgs.StreamOffset.lastConsumed("s1"));
+
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*11\r\n" + "$10\r\n" + "XREADGROUP\r\n" + "$5\r\n" + "GROUP\r\n" + "$5\r\n" + "group\r\n" + "$8\r\n"
+                        + "consumer\r\n" + "$8\r\n" + "MAXCOUNT\r\n" + "$2\r\n" + "80\r\n" + "$7\r\n" + "MAXSIZE\r\n" + "$5\r\n"
+                        + "65536\r\n" + "$7\r\n" + "STREAMS\r\n" + "$2\r\n" + "s1\r\n" + "$1\r\n" + ">\r\n");
+    }
+
+    @SafeVarargs
+    private static XReadArgs.StreamOffset<String>[] toStreamOffsets(XReadArgs.StreamOffset<String>... streams) {
+        return streams;
     }
 
     @Test
@@ -235,6 +324,83 @@ class RedisCommandBuilderUnitTests {
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
                 "*8\r\n" + "$6\r\n" + "HGETEX\r\n" + "$4\r\n" + "hKey\r\n" + "$2\r\n" + "EX\r\n" + "$2\r\n" + "10\r\n"
                         + "$7\r\n" + "PERSIST\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "one\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSunioncardTwoKeys() {
+
+        Command<String, String, ?> command = sut.sunioncard(MY_KEY, "hKey2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$10\r\n" + "SUNIONCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSunioncardList() {
+
+        Command<String, String, ?> command = sut.sunioncard(Arrays.asList(MY_KEY, "hKey2", "hKey3"));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$10\r\n" + "SUNIONCARD\r\n" + "$1\r\n" + "3\r\n"
+                + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n" + "$5\r\n" + "hKey3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSunioncardWithArgs() {
+
+        Command<String, String, ?> command = sut.sunioncard(MY_KEY, "hKey2", SUnionCardArgs.Builder.approx().limit(1000));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$10\r\n" + "SUNIONCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "hKey\r\n" + "$5\r\n"
+                        + "hKey2\r\n" + "$6\r\n" + "APPROX\r\n" + "$5\r\n" + "LIMIT\r\n" + "$4\r\n" + "1000\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSdiffcardTwoKeys() {
+
+        Command<String, String, ?> command = sut.sdiffcard(MY_KEY, "hKey2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$9\r\n" + "SDIFFCARD\r\n" + "$1\r\n" + "2\r\n" + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSdiffcardList() {
+
+        Command<String, String, ?> command = sut.sdiffcard(Arrays.asList(MY_KEY, "hKey2", "hKey3"));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$9\r\n" + "SDIFFCARD\r\n" + "$1\r\n" + "3\r\n"
+                + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n" + "$5\r\n" + "hKey3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSdiffcardWithArgs() {
+
+        Command<String, String, ?> command = sut.sdiffcard(MY_KEY, "hKey2", SDiffCardArgs.Builder.limit(100));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$9\r\n" + "SDIFFCARD\r\n" + "$1\r\n" + "2\r\n"
+                + "$4\r\n" + "hKey\r\n" + "$5\r\n" + "hKey2\r\n" + "$5\r\n" + "LIMIT\r\n" + "$3\r\n" + "100\r\n");
+    }
+
+    @Test
+    void shouldRejectSunioncardWithoutKeys() {
+        assertThatThrownBy(() -> sut.sunioncard(Collections.emptyList())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sdiffcard(Collections.emptyList())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sunioncard(Collections.emptyList(), SUnionCardArgs.Builder.approx()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sdiffcard(Collections.emptyList(), SDiffCardArgs.Builder.limit(1)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -835,6 +1001,57 @@ class RedisCommandBuilderUnitTests {
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*3\r\n" + "$6\r\n" + "CLIENT\r\n" + "$8\r\n" + "NO-TOUCH\r\n" + "$3\r\n" + "OFF\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovem() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination", LMovemArgs.Builder.leftRight());
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovemWithCount() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination",
+                LMovemArgs.Builder.leftLeft().count(2, LMovemArgs.Ordering.OBO));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT COUNT 2 OBO");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLmovemWithExactly() {
+
+        Command<String, String, ?> command = sut.lmovem("source", "destination",
+                LMovemArgs.Builder.rightLeft().exactly(3, LMovemArgs.Ordering.BULK));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> RIGHT LEFT EXACTLY 3 BULK");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovem() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination",
+                BLMovemArgs.Builder.leftLeft().timeout(10L).exactly(3, LMovemArgs.Ordering.BULK));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT LEFT 10 EXACTLY 3 BULK");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovemWithDoubleTimeout() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight().timeout(0.5));
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0.5");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlmovemWithoutTimeoutDefaultingToZero() {
+
+        Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight());
+        String s = command.getArgs().toCommandString();
+        assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0");
     }
 
 }

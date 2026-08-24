@@ -94,6 +94,10 @@ public enum DocumentLanguage {
      */
     LITHUANIAN("lithuanian", new Locale("lt")),
     /**
+     * Malay
+     */
+    MALAY("malay", new Locale("ms")),
+    /**
      * Nepali
      */
     NEPALI("nepali", new Locale("ne")),
@@ -125,6 +129,10 @@ public enum DocumentLanguage {
      * Swedish
      */
     SWEDISH("swedish", new Locale("sv")),
+    /**
+     * Tagalog
+     */
+    TAGALOG("tagalog", new Locale("tl")),
     /**
      * Tamil
      */
