@@ -1,6 +1,21 @@
 # New & Noteworthy
 
 
+## What's new in Lettuce 7.8
+
+- Deprecated the server-assisted client-side caching support (`ClientSideCaching`, `CacheFrontend`, `CacheAccessor`, `RedisCache` in `io.lettuce.core.support.caching`). This implementation is legacy and incomplete and is scheduled for removal in a future major release. There is no replacement yet — a redesigned client-side caching API is planned.
+
+## What's new in Lettuce 7.7
+
+- [Probabilistic data structures (RedisBloom)](user-guide/probabilistic.md) support through `RedisBloomFilterCommands`, `RedisCuckooFilterCommands`, `RedisTopKCommands`, `RedisCMSCommands` and `RedisTDigestCommands`, with the respective async, reactive and Kotlin APIs — covering Bloom Filter (`BF.*`), Cuckoo Filter (`CF.*`), Top-K, Count-Min Sketch and T-Digest
+- Support for the `HIMPORT` command family for bulk-loading hashes that share the same field names, declaring the field names once per connection and sending only values per hash — see [Hash Import](user-guide/hash-import.md)
+- Support for the [`SUNIONCARD`](https://redis.io/docs/latest/commands/sunioncard/) and [`SDIFFCARD`](https://redis.io/docs/latest/commands/sdiffcard/) set cardinality commands
+- Support for the [`LMOVEM`](https://redis.io/docs/latest/commands/lmovem/) and [`BLMOVEM`](https://redis.io/docs/latest/commands/blmovem/) multi-element list move commands
+- Support for the `MAXCOUNT` and `MAXSIZE` options on [`XREAD`](https://redis.io/docs/latest/commands/xread/) and [`XREADGROUP`](https://redis.io/docs/latest/commands/xreadgroup/)
+- Support for [`FT.ALIASLIST`](https://redis.io/docs/latest/commands/ft.aliaslist/) to list search index aliases
+- Support for the `VISMEMBER` Vector Set command — see [Redis Vector Sets](user-guide/vector-sets.md)
+- Support for [`CLIENT NO-TOUCH`](https://redis.io/docs/latest/commands/client-no-touch/) to control key access-time updates per connection
+
 ## What's new in Lettuce 7.2
 
 - Support for [`FT.HYBRID`](https://redis.io/docs/latest/commands/ft.hybrid/) command enabling hybrid vector and full-text search queries

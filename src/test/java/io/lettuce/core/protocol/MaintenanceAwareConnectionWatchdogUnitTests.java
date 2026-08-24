@@ -247,7 +247,11 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         verify(rebindAwareAddressSupplier).rebind(eq(Duration.ofSeconds(15)), eq(new InetSocketAddress("127.0.0.1", 6380)));
         verify(channel).close();
         verify(rebindAttribute).set(RebindState.COMPLETED);
-        verify(component1, never()).onRebindStarted(any(), any()); // Not called when stack is empty
+        // Commands issued after the MOVING notification are buffered until the new connection is up, so the timeouts
+        // have to be relaxed for the re-bind window even when nothing was in flight when the notification arrived.
+        verify(component1).onRebindStarted(eq(Duration.ofSeconds(15)), eq(new InetSocketAddress("127.0.0.1", 6380)));
+        // The channel is closed here, so this is the only place that can report the completion of the re-bind.
+        verify(component1).onRebindCompleted();
     }
 
     @Test
@@ -275,6 +279,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         verify(rebindAttribute).set(RebindState.STARTED);
         verify(channel, never()).close();
         verify(component1).onRebindStarted(any(), any()); // Called when stack is not empty
+        // The stack still has to be drained, channelReadComplete() reports the completion later on.
+        verify(component1, never()).onRebindCompleted();
     }
 
     @Test
@@ -643,6 +649,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         verify(rebindAttribute).set(RebindState.STARTED);
         verify(channel, never()).close();
         verify(component1).onRebindStarted(any(), any()); // Called when stack is not empty
+        // The stack still has to be drained, channelReadComplete() reports the completion later on.
+        verify(component1, never()).onRebindCompleted();
     }
 
     /**
