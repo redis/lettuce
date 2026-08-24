@@ -27,6 +27,7 @@ import java.util.Map;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 /**
  * Integration tests for Redis Search advanced concepts based on the Redis documentation.
@@ -79,7 +80,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
     protected static RedisCommands<String, String> redis;
 
     public RediSearchAdvancedConceptsIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
         client = RedisClient.create(redisURI);
         client.setOptions(getOptions());
         redis = client.connect().sync();
