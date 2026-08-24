@@ -52,6 +52,7 @@ import io.lettuce.core.models.role.RoleParser;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.DisabledOnRedisEnterprise;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 
@@ -73,6 +74,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DisabledOnRedisEnterprise("Server administration commands (CONFIG, SLAVEOF/REPLICAOF, BGSAVE, LASTSAVE, SLOWLOG, CLIENT NO-EVICT, FLUSHDB ASYNC, ...) are not available to the default user on a managed Redis Enterprise database")
 public class ServerCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;

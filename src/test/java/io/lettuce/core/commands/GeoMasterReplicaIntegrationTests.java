@@ -8,6 +8,7 @@ import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RoleParser;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnRedisEnterprise;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 import org.junit.jupiter.api.*;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 @ExtendWith(LettuceExtension.class)
 @EnabledOnCommand("GEOADD")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DisabledOnRedisEnterprise("Requires a local master-replica topology with fixed ports that a single managed Redis Enterprise database does not provide")
 public class GeoMasterReplicaIntegrationTests extends AbstractRedisClientTest {
 
     private StatefulRedisMasterReplicaConnection<String, String> masterReplica;
