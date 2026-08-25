@@ -826,9 +826,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
         // Delete both entries from the stream; they remain pending in the PEL.
         redis.xdel(key, id1, id2);
 
-        ClaimedMessages<String, String> claimedMessages = redis.xautoclaim(key,
-                XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), Duration.ZERO, "0-0").justid()
-                        .count(20));
+        ClaimedMessages<String, String> claimedMessages = redis.xautoclaim(key, XAutoClaimArgs.Builder
+                .xautoclaim(Consumer.from("group", "consumer2"), Duration.ZERO, "0-0").justid().count(20));
 
         // Deleted entries must NOT appear as claimed messages.
         assertThat(claimedMessages.getMessages()).isEmpty();
