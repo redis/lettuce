@@ -36,13 +36,28 @@ import io.lettuce.core.models.stream.ClaimedMessages;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author dengliming
+ * @author big-cir
  * @since 6.1
  */
 public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMessages<K, V>> {
 
+    /**
+     * Top-level reply elements of {@code XAUTOCLAIM}: the cursor, the claimed entries and, since Redis 7.0, the ids that were
+     * removed from the Pending Entries List because they no longer exist in the stream. Each element completes at depth one, so
+     * the index tells apart values that share a nesting depth: claimed entry ids reported through {@code JUSTID} and deleted
+     * ids both arrive as strings completing at depth two.
+     */
+    private static final int CURSOR = 0;
+
+    private static final int CLAIMED_ENTRIES = 1;
+
+    private static final int DELETED_IDS = 2;
+
     private final boolean justId;
 
     private final K stream;
+
+    private int topLevelElement = CURSOR;
 
     private String startId;
 
@@ -69,8 +84,13 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
 
     @Override
     public void set(ByteBuffer bytes) {
-        if (startId == null) {
+
+        if (topLevelElement == CURSOR) {
             startId = decodeString(bytes);
+            return;
+        }
+
+        if (topLevelElement == DELETED_IDS) {
             return;
         }
 
@@ -107,23 +127,30 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
     @Override
     public void complete(int depth) {
 
-        if (depth == 3 && bodyReceived) {
-            messages.add(new StreamMessage<>(stream, id, body == null ? Collections.emptyMap() : body));
-            bodyReceived = false;
-            key = null;
-            hasKey = false;
-            body = null;
-            id = null;
-            hasId = false;
+        if (topLevelElement == CLAIMED_ENTRIES) {
+
+            if (depth == 3 && bodyReceived) {
+                messages.add(new StreamMessage<>(stream, id, body == null ? Collections.emptyMap() : body));
+                bodyReceived = false;
+                key = null;
+                hasKey = false;
+                body = null;
+                id = null;
+                hasId = false;
+            }
+
+            if (depth == 2 && justId) {
+                messages.add(new StreamMessage<>(stream, id, null));
+                key = null;
+                hasKey = false;
+                body = null;
+                id = null;
+                hasId = false;
+            }
         }
 
-        if (depth == 2 && justId) {
-            messages.add(new StreamMessage<>(stream, id, null));
-            key = null;
-            hasKey = false;
-            body = null;
-            id = null;
-            hasId = false;
+        if (depth == 1) {
+            topLevelElement++;
         }
 
         if (depth == 0) {

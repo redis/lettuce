@@ -60,6 +60,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  *
  * @author Mark Paluch
  * @author dengliming
+ * @author big-cir
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -808,6 +809,50 @@ public class StreamCommandIntegrationTests extends TestSupport {
         assertThat(message.getBody()).isNull();
         assertThat(message.getStream()).isEqualTo(key);
         assertThat(message.getId()).isEqualTo(id1);
+    }
+
+    // XAUTOCLAIM reports ids that no longer exist in the stream in a third reply element - Redis 7.0
+
+    private void assumeDeletedIdsReply() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.0"),
+                "Redis 7.0+ required for the XAUTOCLAIM deleted ids reply element");
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xautoclaimWithDeletedEntries() {
+        assumeDeletedIdsReply();
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id1 = redis.xadd(key, Collections.singletonMap("key1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("key2", "value2"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+        redis.xdel(key, id1);
+
+        ClaimedMessages<String, String> claimedMessages = redis.xautoclaim(key,
+                XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), Duration.ZERO, "0"));
+
+        assertThat(claimedMessages.getMessages()).hasSize(1);
+        assertThat(claimedMessages.getMessages().get(0).getId()).isEqualTo(id2);
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xautoclaimJustIdWithDeletedEntries() {
+        assumeDeletedIdsReply();
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id1 = redis.xadd(key, Collections.singletonMap("key1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("key2", "value2"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+        redis.xdel(key, id1, id2);
+
+        ClaimedMessages<String, String> claimedMessages = redis.xautoclaim(key,
+                XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), Duration.ZERO, "0").justid());
+
+        assertThat(claimedMessages.getMessages()).isEmpty();
     }
 
     @Test
