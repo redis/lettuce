@@ -21,6 +21,7 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.CanConnect;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnProvider;
 import io.lettuce.test.Wait;
 import io.lettuce.test.settings.TestSettings;
 
@@ -31,6 +32,7 @@ import io.lettuce.test.settings.TestSettings;
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
 

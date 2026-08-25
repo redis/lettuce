@@ -68,6 +68,7 @@ import io.lettuce.test.resource.DefaultRedisClient;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Test for mutable cluster setup scenarios.
@@ -75,11 +76,13 @@ import io.lettuce.test.settings.TestSettings;
  * @author Mark Paluch
  * @author dengliming
  * @author Hari Mani
+ * @author Vaibhav Vashisht
  * @since 3.0
  */
 @Tag(INTEGRATION_TEST)
 @SuppressWarnings({ "unchecked" })
 @SlowTests
+@DisabledOnProvider("re")
 public class RedisClusterSetupIntegrationTests extends TestSupport {
 
     private static final String host = TestSettings.hostAddr();
@@ -333,11 +336,16 @@ public class RedisClusterSetupIntegrationTests extends TestSupport {
                             .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
             ClusterSetup.setup2Masters(clusterHelper);
 
-            assertRoutedExecution(clusterAsyncCommands);
-
             RedisClusterNode partition1 = getOwnPartition(redis1);
+            RedisClusterNode partition2 = getOwnPartition(redis2);
+
+            // Eagerly establish per-node connections so REJECT_COMMANDS is exercised against an
+            // established-then-disconnected connection rather than a pending first-connect.
             StatefulRedisConnection<String, String> node1Connection = clusterConnection
                     .getConnection(partition1.getUri().getHost(), partition1.getUri().getPort());
+            clusterConnection.getConnection(partition2.getUri().getHost(), partition2.getUri().getPort());
+
+            assertRoutedExecution(clusterAsyncCommands);
 
             shiftAllSlotsToNode1();
 
