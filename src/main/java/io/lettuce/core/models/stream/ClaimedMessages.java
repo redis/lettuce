@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.models.stream;
 
+import java.util.Collections;
 import java.util.List;
 
 import io.lettuce.core.StreamMessage;
@@ -27,6 +28,7 @@ import io.lettuce.core.StreamMessage;
  * Value object representing the claimed messages reported through {@code XAUTOCLAIM}.
  *
  * @author dengliming
+ * @author big-cir
  * @since 6.1
  */
 public class ClaimedMessages<K, V> {
@@ -35,16 +37,32 @@ public class ClaimedMessages<K, V> {
 
     private final List<StreamMessage<K, V>> messages;
 
+    private final List<String> deletedIds;
+
     /**
-     * Create a new {@link ClaimedMessages}.
+     * Create a new {@link ClaimedMessages} without deleted message ids.
      *
      * @param id
      * @param messages
      */
     public ClaimedMessages(String id, List<StreamMessage<K, V>> messages) {
+        this(id, messages, Collections.emptyList());
+    }
+
+    /**
+     * Create a new {@link ClaimedMessages}.
+     *
+     * @param id
+     * @param messages
+     * @param deletedIds message ids that no longer exist in the stream and were removed from the Pending Entries List. May be
+     *        {@code null} in which case an empty list is used.
+     * @since 7.8
+     */
+    public ClaimedMessages(String id, List<StreamMessage<K, V>> messages, List<String> deletedIds) {
 
         this.id = id;
         this.messages = messages;
+        this.deletedIds = deletedIds == null ? Collections.emptyList() : deletedIds;
     }
 
     public String getId() {
@@ -53,6 +71,18 @@ public class ClaimedMessages<K, V> {
 
     public List<StreamMessage<K, V>> getMessages() {
         return messages;
+    }
+
+    /**
+     * Message ids that were reported by the server as no longer existing in the stream. Redis removes these from the Pending
+     * Entries List instead of claiming them. Empty when running against Redis versions before 7.0 as these do not report the
+     * deleted ids.
+     *
+     * @return the deleted message ids, never {@code null}.
+     * @since 7.8
+     */
+    public List<String> getDeletedIds() {
+        return deletedIds;
     }
 
 }

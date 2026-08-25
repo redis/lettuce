@@ -5,6 +5,7 @@
 
 - Deprecated the server-assisted client-side caching support (`ClientSideCaching`, `CacheFrontend`, `CacheAccessor`, `RedisCache` in `io.lettuce.core.support.caching`). This implementation is legacy and incomplete and is scheduled for removal in a future major release. There is no replacement yet — a redesigned client-side caching API is planned.
 - Fixed `ScriptOutputType.OBJECT` decoding so top-level scalar responses are returned directly instead of being treated as collections. Top-level integer responses now return `Long` instead of a one-element `List<Long>`; RESP arrays remain lists.
+- Fixed [`XAUTOCLAIM`](https://redis.io/docs/latest/commands/xautoclaim/) decoding so the ids that Redis 7.0 and later report as removed from the Pending Entries List are no longer returned as claimed messages when `JUSTID` is used. These ids are now available through `ClaimedMessages.getDeletedIds()`.
 
 ## What's new in Lettuce 7.7
 

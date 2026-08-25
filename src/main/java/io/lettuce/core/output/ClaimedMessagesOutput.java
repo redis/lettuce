@@ -75,10 +75,13 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
 
     private final List<StreamMessage<K, V>> messages;
 
+    private final List<String> deletedIds;
+
     public ClaimedMessagesOutput(RedisCodec<K, V> codec, K stream, boolean justId) {
         super(codec, null);
         this.stream = stream;
         this.messages = new ArrayList<>();
+        this.deletedIds = new ArrayList<>();
         this.justId = justId;
     }
 
@@ -91,6 +94,7 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
         }
 
         if (topLevelElement == DELETED_IDS) {
+            deletedIds.add(decodeString(bytes));
             return;
         }
 
@@ -154,7 +158,8 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
         }
 
         if (depth == 0) {
-            output = new ClaimedMessages<>(startId, Collections.unmodifiableList(messages));
+            output = new ClaimedMessages<>(startId, Collections.unmodifiableList(messages),
+                    Collections.unmodifiableList(deletedIds));
         }
     }
 

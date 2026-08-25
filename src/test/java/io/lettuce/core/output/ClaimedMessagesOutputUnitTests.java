@@ -60,6 +60,7 @@ class ClaimedMessagesOutputUnitTests {
         ClaimedMessages<String, String> claimed = sut.get();
 
         assertThat(claimed.getId()).isEqualTo("0-0");
+        assertThat(claimed.getDeletedIds()).containsExactly("1234-2", "1234-3");
         assertThat(claimed.getMessages()).hasSize(1);
 
         StreamMessage<String, String> message = claimed.getMessages().get(0);
@@ -91,6 +92,7 @@ class ClaimedMessagesOutputUnitTests {
         ClaimedMessages<String, String> claimed = sut.get();
 
         assertThat(claimed.getId()).isEqualTo("0-0");
+        assertThat(claimed.getDeletedIds()).containsExactly("1234-2", "1234-3");
         assertThat(claimed.getMessages()).hasSize(1);
         assertThat(claimed.getMessages().get(0).getId()).isEqualTo("1234-1");
         assertThat(claimed.getMessages().get(0).getBody()).isNull();
@@ -118,6 +120,7 @@ class ClaimedMessagesOutputUnitTests {
 
         assertThat(claimed.getId()).isEqualTo("0-0");
         assertThat(claimed.getMessages()).isEmpty();
+        assertThat(claimed.getDeletedIds()).containsExactly("1234-1", "1234-2");
     }
 
     @Test
@@ -145,6 +148,7 @@ class ClaimedMessagesOutputUnitTests {
         ClaimedMessages<String, String> claimed = sut.get();
 
         assertThat(claimed.getId()).isEqualTo("0-0");
+        assertThat(claimed.getDeletedIds()).isEmpty();
         assertThat(claimed.getMessages()).hasSize(1);
         assertThat(claimed.getMessages().get(0).getBody()).containsEntry("key", "value");
     }

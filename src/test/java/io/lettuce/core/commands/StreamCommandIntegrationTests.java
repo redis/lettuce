@@ -833,6 +833,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
         ClaimedMessages<String, String> claimedMessages = redis.xautoclaim(key,
                 XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), Duration.ZERO, "0"));
 
+        assertThat(claimedMessages.getDeletedIds()).containsExactly(id1);
         assertThat(claimedMessages.getMessages()).hasSize(1);
         assertThat(claimedMessages.getMessages().get(0).getId()).isEqualTo(id2);
     }
@@ -853,6 +854,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
                 XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), Duration.ZERO, "0").justid());
 
         assertThat(claimedMessages.getMessages()).isEmpty();
+        assertThat(claimedMessages.getDeletedIds()).containsExactly(id1, id2);
     }
 
     @Test
