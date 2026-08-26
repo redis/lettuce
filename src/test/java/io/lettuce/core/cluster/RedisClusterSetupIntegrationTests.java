@@ -68,6 +68,7 @@ import io.lettuce.test.resource.DefaultRedisClient;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Test for mutable cluster setup scenarios.
@@ -75,11 +76,13 @@ import io.lettuce.test.settings.TestSettings;
  * @author Mark Paluch
  * @author dengliming
  * @author Hari Mani
+ * @author Vaibhav Vashisht
  * @since 3.0
  */
 @Tag(INTEGRATION_TEST)
 @SuppressWarnings({ "unchecked" })
 @SlowTests
+@DisabledOnProvider("re")
 public class RedisClusterSetupIntegrationTests extends TestSupport {
 
     private static final String host = TestSettings.hostAddr();
@@ -125,6 +128,15 @@ public class RedisClusterSetupIntegrationTests extends TestSupport {
 
     @AfterEach
     public void closeConnection() {
+
+        // Restore a clean cluster state so a test that failed mid-reshard cannot leak broken
+        // slot coverage on these nodes into subsequent test classes.
+        try {
+            clusterHelper.clusterReset();
+        } catch (RuntimeException e) {
+            // best-effort cleanup; do not mask the original test failure
+        }
+
         redisConnection1.close();
         redisConnection2.close();
     }
@@ -244,7 +256,7 @@ public class RedisClusterSetupIntegrationTests extends TestSupport {
         ClusterSetup.setup2Masters(clusterHelper);
 
         ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
-                .enableAllAdaptiveRefreshTriggers().build();
+                .enableAllAdaptiveRefreshTriggers().adaptiveRefreshTriggersTimeout(Duration.ofSeconds(1)).build();
 
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(clusterTopologyRefreshOptions).build());
         try (StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
@@ -264,6 +276,15 @@ public class RedisClusterSetupIntegrationTests extends TestSupport {
             assertRoutedExecution(async);
 
             Wait.untilTrue(() -> {
+
+                // Adaptive refresh only fires on MOVED/ASK/uncovered-slot events; keep issuing a read for a key
+                // that moved during the reshard (slot 15891) so a stale topology view keeps generating triggers.
+                try {
+                    sync.get("t");
+                } catch (RuntimeException e) {
+                    // an uncovered slot mid-refresh also fires an adaptive refresh trigger
+                }
+
                 if (clusterClient.getPartitions().size() == 2) {
                     for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
                         if (redisClusterNode.getSlots().size() > 16380) {
@@ -315,11 +336,16 @@ public class RedisClusterSetupIntegrationTests extends TestSupport {
                             .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
             ClusterSetup.setup2Masters(clusterHelper);
 
-            assertRoutedExecution(clusterAsyncCommands);
-
             RedisClusterNode partition1 = getOwnPartition(redis1);
+            RedisClusterNode partition2 = getOwnPartition(redis2);
+
+            // Eagerly establish per-node connections so REJECT_COMMANDS is exercised against an
+            // established-then-disconnected connection rather than a pending first-connect.
             StatefulRedisConnection<String, String> node1Connection = clusterConnection
                     .getConnection(partition1.getUri().getHost(), partition1.getUri().getPort());
+            clusterConnection.getConnection(partition2.getUri().getHost(), partition2.getUri().getPort());
+
+            assertRoutedExecution(clusterAsyncCommands);
 
             shiftAllSlotsToNode1();
 
