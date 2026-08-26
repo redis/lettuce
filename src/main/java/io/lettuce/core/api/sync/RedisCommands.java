@@ -39,7 +39,8 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCo
         RedisKeyCommands<K, V>, RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
         RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V>,
         RedisTransactionalCommands<K, V>, RedisJsonCommands<K, V>, RedisVectorSetCommands<K, V>, RediSearchCommands<K, V>,
-        RedisArrayCommands<K, V>, RedisBloomFilterCommands<K, V> {
+        RedisArrayCommands<K, V>, RedisBloomFilterCommands<K, V>, RedisCuckooFilterCommands<K, V>, RedisTopKCommands<K, V>,
+        RedisCMSCommands<K, V>, RedisTDigestCommands<K, V> {
 
     /**
      * Authenticate to the server.
@@ -79,7 +80,8 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCo
 
     /**
      * @return the underlying connection.
-     * @since 6.2, will be removed with Lettuce 7 to avoid exposing the underlying connection.
+     * @deprecated since 6.2, there is no replacement — the underlying connection is not meant to be reached through the command
+     *             interfaces; scheduled for removal in a future major release.
      */
     @Deprecated
     StatefulRedisConnection<K, V> getStatefulConnection();

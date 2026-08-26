@@ -56,7 +56,7 @@ public class ErrorTolerantBooleanListOutput<K, V> extends CommandOutput<K, V, Li
     @Override
     public void set(ByteBuffer bytes) {
 
-        if (initialized && bytes == null) {
+        if (initialized) {
             subscriber.onNext(output, null);
             return;
         }

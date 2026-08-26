@@ -290,6 +290,10 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             local.setOutput((MultiOutput) multiOutput);
         }
 
+        if (multi != null && commandType.equals(HIMPORT.name())) {
+            throw new UnsupportedOperationException("HIMPORT is not supported within a MULTI transaction");
+        }
+
         if (multi != null && !commandType.equals(MULTI.name()) && !commandType.equals(WATCH.name())) {
             // ignore MULTI and WATCH commands nested in another MULTI
             local = new TransactionalCommand<>(local);

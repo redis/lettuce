@@ -71,7 +71,8 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
 
     /**
      * @return the underlying connection.
-     * @since 6.2, will be removed with Lettuce 7 to avoid exposing the underlying connection.
+     * @deprecated since 6.2, there is no replacement — the underlying connection is not meant to be reached through the command
+     *             interfaces; scheduled for removal in a future major release.
      */
     @Deprecated
     StatefulRedisClusterConnection<K, V> getStatefulConnection();
@@ -204,6 +205,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return K array-reply list of keys matching {@code pattern}.
      * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
      */
+    @Deprecated
     Flux<K> keysLegacy(K pattern);
 
     /**
@@ -215,6 +217,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #keys(String)}.
      */
+    @Deprecated
     Mono<Long> keys(KeyStreamingChannel<K> channel, String pattern);
 
     /**
@@ -276,6 +279,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      *
      * @param save {@code true} force save operation
      * @see RedisServerReactiveCommands#shutdown(boolean)
+     * @return Mono&lt;Void&gt; the server does not reply before shutting down.
      */
     Mono<Void> shutdown(boolean save);
 
@@ -323,7 +327,10 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param channel streaming channel that receives a call for every key
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(KeyStreamingChannel)
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
@@ -333,7 +340,10 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(KeyStreamingChannel, ScanArgs)
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
@@ -345,7 +355,10 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
@@ -356,7 +369,10 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      *        {@link #scan()} call.
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(ScanCursor, ScanArgs)
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 
     /**

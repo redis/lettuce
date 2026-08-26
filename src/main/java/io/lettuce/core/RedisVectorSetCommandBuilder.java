@@ -116,13 +116,9 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
             args.add(dimensionality);
         }
 
-        if (vectors.length > 1) {
-            args.add(CommandKeyword.VALUES);
-            args.add(vectors.length);
-            Arrays.stream(vectors).map(Object::toString).forEach(args::add);
-        } else {
-            args.add(vectors[0]);
-        }
+        args.add(CommandKeyword.VALUES);
+        args.add(vectors.length);
+        Arrays.stream(vectors).map(Object::toString).forEach(args::add);
 
         args.addValue(element);
 
@@ -143,6 +139,21 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
     public Command<K, V, Long> vcard(K key) {
         notNullKey(key);
         return createCommand(VCARD, new IntegerOutput<>(codec), new CommandArgs<>(codec).addKey(key));
+    }
+
+    /**
+     * Create a new {@code VISMEMBER} command to check whether an element exists in a vector set.
+     *
+     * @param key the key of the vector set, must not be {@code null}
+     * @param element the name of the element in the vector set, must not be {@code null}
+     * @return a new {@link Command} that returns whether the element exists
+     * @see <a href="https://redis.io/docs/latest/commands/vismember/">Redis Documentation: VISMEMBER</a>
+     */
+    public Command<K, V, Boolean> vismember(K key, V element) {
+        notNullKey(key);
+        notNullKey(element);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(element);
+        return createCommand(VISMEMBER, new BooleanOutput<>(codec), args);
     }
 
     /**

@@ -41,13 +41,14 @@ import io.lettuce.core.json.JsonParser;
  * @author Yordan Tsintsov
  * @since 4.0
  */
-public interface RedisClusterAsyncCommands<K, V>
-        extends BaseRedisAsyncCommands<K, V>, RedisAclAsyncCommands<K, V>, RedisFunctionAsyncCommands<K, V>,
-        RedisGeoAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>,
-        RedisListAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
-        RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>,
-        RedisStringAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>, RedisVectorSetAsyncCommands<K, V>,
-        RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V>, RedisBloomFilterAsyncCommands<K, V> {
+public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, RedisAclAsyncCommands<K, V>,
+        RedisFunctionAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
+        RedisHLLAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
+        RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
+        RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
+        RedisJsonAsyncCommands<K, V>, RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V>,
+        RedisArrayAsyncCommands<K, V>, RedisBloomFilterAsyncCommands<K, V>, RedisCuckooFilterAsyncCommands<K, V>,
+        RedisTopKAsyncCommands<K, V>, RedisCMSAsyncCommands<K, V>, RedisTDigestAsyncCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.
@@ -415,6 +416,7 @@ public interface RedisClusterAsyncCommands<K, V>
      * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
      * {@code getConnection(nodeId)}.
      *
+     * @param args the command args.
      * @throws UnsupportedOperationException HOTKEYS is a node-specific command
      */
     @Override

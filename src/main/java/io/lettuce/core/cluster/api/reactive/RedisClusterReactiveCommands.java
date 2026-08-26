@@ -48,7 +48,8 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
         RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
         RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
         RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>,
-        RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V> {
+        RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>,
+        RedisTopKReactiveCommands<K, V>, RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.
@@ -398,6 +399,7 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
      * HOTKEYS commands are not supported on the cluster client. Use node selection API or target specific nodes via
      * {@code getConnection(nodeId)}.
      *
+     * @param args the command args.
      * @throws UnsupportedOperationException HOTKEYS is a node-specific command
      */
     @Override

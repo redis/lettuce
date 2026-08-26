@@ -116,8 +116,6 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override fun keys(pattern: String): Flow<K> = ops.keys(pattern).asFlow()
 
-    override fun keysLegacy(pattern: K): Flow<K> = ops.keysLegacy(pattern).asFlow()
-
     override suspend fun migrate(
         host: String,
         port: Int,

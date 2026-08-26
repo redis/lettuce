@@ -45,6 +45,7 @@ import java.util.Map;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 @Tag(INTEGRATION_TEST)
 @EnabledOnCommand("FT.HYBRID")
@@ -68,7 +69,7 @@ public class FtHybridIntegrationTests {
 
     @BeforeAll
     static void setupOnce() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
         client = RedisClient.create(redisURI);
         client.setOptions(ClientOptions.builder().build());
         redis = client.connect().sync();
@@ -287,12 +288,12 @@ public class FtHybridIntegrationTests {
     @Test
     @Order(6)
     void hybridWithScoreAliases() {
-        // Test YIELD_SCORE_AS for SEARCH and VSIM
+        // Test YIELD_SCORE_AS for SEARCH, VSIM and the COMBINE combiner
         HybridArgs<String, String> args = HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("smartphone").scoreAlias("text_score").build())
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vec")
                         .method(HybridVectorArgs.Knn.of(10)).scoreAlias("vector_score").build())
-                .combine(Combiners.<String> rrf().window(20).constant(60))
+                .combine(Combiners.<String> rrf().window(20).constant(60).as("combined_score"))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@title", "@brand").build())
                 .param("vec", queryVectorClose).build();
 
@@ -300,8 +301,10 @@ public class FtHybridIntegrationTests {
 
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
-        // Results should be returned with the aliased scores available
         assertThat(reply.getTotalResults()).isGreaterThan(0);
+        assertThat(reply.getResults()).allSatisfy(result -> assertThat(result).containsKey("combined_score"));
+        assertThat(reply.getResults()).anySatisfy(result -> assertThat(result).containsKey("text_score"));
+        assertThat(reply.getResults()).anySatisfy(result -> assertThat(result).containsKey("vector_score"));
     }
 
     // ==================== TEST 7: Reducers AVG, MIN, MAX ====================

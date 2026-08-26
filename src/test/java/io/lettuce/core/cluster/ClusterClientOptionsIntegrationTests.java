@@ -24,6 +24,7 @@ import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Mark Paluch
@@ -45,6 +46,8 @@ class ClusterClientOptionsIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Uses CLIENT PAUSE, which is not supported on Redis Enterprise
+    @DisabledOnProvider("re")
     void shouldApplyTimeoutOptionsToClusterConnection() throws InterruptedException {
 
         clusterClient.setOptions(
@@ -65,6 +68,8 @@ class ClusterClientOptionsIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Uses CLIENT PAUSE, which is not supported on Redis Enterprise
+    @DisabledOnProvider("re")
     void shouldApplyTimeoutOptionsToPubSubClusterConnection() throws InterruptedException {
 
         clusterClient.setOptions(

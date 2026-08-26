@@ -349,6 +349,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
                 });
             } catch (Exception e) {
                 logger.warn("Cannot refresh Redis Cluster topology", e);
+                set(false);
             }
         }
 

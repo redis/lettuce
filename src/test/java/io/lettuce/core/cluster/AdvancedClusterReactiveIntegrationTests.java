@@ -69,12 +69,14 @@ import io.lettuce.test.ListStreamingAdapter;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.netty.util.internal.ConcurrentSet;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Mark Paluch
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
     private static final String KEY_ON_NODE_1 = "a";
@@ -151,6 +153,26 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
         assertThat(result).hasSize(KeysAndValues.COUNT);
         assertThat(result.stream().map(Value::getValue).collect(Collectors.toList())).isEqualTo(KeysAndValues.VALUES);
+    }
+
+    @Test
+    void mgetCrossSlotWithDuplicateKeys() {
+
+        msetCrossSlot();
+
+        List<String> keysWithDuplicates = new ArrayList<>(KeysAndValues.KEYS);
+        keysWithDuplicates.add(KeysAndValues.KEYS.get(0));
+        keysWithDuplicates.add(KeysAndValues.KEYS.get(1));
+
+        List<String> expectedValues = new ArrayList<>(KeysAndValues.VALUES);
+        expectedValues.add(KeysAndValues.VALUES.get(0));
+        expectedValues.add(KeysAndValues.VALUES.get(1));
+
+        Flux<KeyValue<String, String>> flux = commands.mget(keysWithDuplicates.toArray(new String[0]));
+        List<KeyValue<String, String>> result = flux.collectList().block();
+
+        assertThat(result).hasSize(keysWithDuplicates.size());
+        assertThat(result.stream().map(Value::getValue).collect(Collectors.toList())).isEqualTo(expectedValues);
     }
 
     @Test

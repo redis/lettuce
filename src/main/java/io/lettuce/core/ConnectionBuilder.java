@@ -129,6 +129,8 @@ public class ConnectionBuilder {
         handlers.add(new CommandEncoder());
         handlers.add(getHandshakeHandler());
         handlers.add(commandHandlerSupplier.get());
+        // Outbound of CommandHandler: lazily injects HIMPORT PREPARE ahead of the first SET per fieldset per connection.
+        handlers.add(new HashImportOutboundHandler());
 
         handlers.add(new ConnectionEventTrigger(connectionEvents, connection, clientResources.eventBus()));
 
@@ -287,12 +289,15 @@ public class ConnectionBuilder {
 
                 SocketOptions.TcpUserTimeoutOptions tcpUserTimeoutOptions = options.getTcpUserTimeout();
 
+                // Order must match the native transport priority used to build the channel/event loop
+                // (see Transports.NativeTransports: Epoll > Kqueue > IOUring), otherwise options for
+                // the wrong transport get applied to the bootstrap.
                 boolean applied = false;
-                if (IOUringProvider.isAvailable()) {
-                    IOUringProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
-                    applied = true;
-                } else if (io.lettuce.core.resource.EpollProvider.isAvailable()) {
+                if (io.lettuce.core.resource.EpollProvider.isAvailable()) {
                     EpollProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
+                    applied = true;
+                } else if (IOUringProvider.isAvailable()) {
+                    IOUringProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
                     applied = true;
                 }
 

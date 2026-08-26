@@ -63,6 +63,18 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun bitopXor(destination: K, vararg keys: K): Long? =
         ops.bitopXor(destination, *keys).awaitFirstOrNull()
 
+    override suspend fun bitopDiff(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopDiff(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopDiff1(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopDiff1(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopAndor(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopAndor(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopOne(destination: K, vararg keys: K): Long? =
+        ops.bitopOne(destination, *keys).awaitFirstOrNull()
+
     override suspend fun decr(key: K): Long? = ops.decr(key).awaitFirstOrNull()
 
     override suspend fun decrby(key: K, amount: Long): Long? =
@@ -80,9 +92,6 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun getrange(key: K, start: Long, end: Long): V? =
         ops.getrange(key, start, end).awaitFirstOrNull()
-
-    override suspend fun getset(key: K, value: V): V? =
-        ops.getset(key, value).awaitFirstOrNull()
 
     override suspend fun incr(key: K): Long? = ops.incr(key).awaitFirstOrNull()
 
@@ -118,12 +127,6 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun setGet(key: K, value: V, setArgs: SetArgs): V? = ops.setGet(key, value, setArgs).awaitFirstOrNull()
 
     override suspend fun setbit(key: K, offset: Long, value: Int): Long? = ops.setbit(key, offset, value).awaitFirstOrNull()
-
-    override suspend fun setex(key: K, seconds: Long, value: V): String? = ops.setex(key, seconds, value).awaitFirstOrNull()
-
-    override suspend fun psetex(key: K, milliseconds: Long, value: V): String? = ops.psetex(key, milliseconds, value).awaitFirstOrNull()
-
-    override suspend fun setnx(key: K, value: V): Boolean? = ops.setnx(key, value).awaitFirstOrNull()
 
     override suspend fun setrange(key: K, offset: Long, value: V): Long? = ops.setrange(key, offset, value).awaitFirstOrNull()
 

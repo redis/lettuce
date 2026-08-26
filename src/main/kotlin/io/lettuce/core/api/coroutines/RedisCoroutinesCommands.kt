@@ -52,7 +52,12 @@ interface RedisCoroutinesCommands<K : Any, V : Any> :
     RedisJsonCoroutinesCommands<K, V>,
     RedisVectorSetCoroutinesCommands<K, V>,
     RedisArrayCoroutinesCommands<K, V>,
-    RedisBloomFilterCoroutinesCommands<K, V> {
+    RedisBloomFilterCoroutinesCommands<K, V>,
+    RedisCuckooFilterCoroutinesCommands<K, V>,
+    RedisTopKCoroutinesCommands<K, V>,
+    RedisCMSCoroutinesCommands<K, V>,
+    RedisTDigestCoroutinesCommands<K, V>,
+    RediSearchCoroutinesCommands<K, V> {
 
     /**
      * Authenticate to the server.
