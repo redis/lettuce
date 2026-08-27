@@ -30,7 +30,7 @@ permissions:
 
 jobs:
   build:
-    name: Build and Test (Redis ${{ matrix.redis_version }})
+    name: Build and Test (Redis ${{ matrix.redis_version }}, Reactor ${{ matrix.reactor_version || 'default' }})
     if: github.event.inputs.client_libs_test_image_tag == ''
     strategy:
       fail-fast: false
@@ -40,9 +40,15 @@ jobs:
         redis_version: ${{ fromJSON(github.event_name == 'schedule'
           && '["8.10", "8.8", "8.6", "8.4", "8.2", "7.4", "7.2"]'
           || '["8.10", "8.8", "8.2", "7.4", "7.2"]') }}
+        reactor_version: ['']
+        include:
+          - redis_version: '8.10'
+            reactor_version: '3.6.6'
     uses: ./.github/workflows/run-tests.yml
     with:
       redis_version: ${{ matrix.redis_version }}
+      reactor_version: ${{ matrix.reactor_version }}
+      upload_coverage: ${{ matrix.reactor_version == '' }}
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
