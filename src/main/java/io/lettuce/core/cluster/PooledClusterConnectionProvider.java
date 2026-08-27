@@ -66,6 +66,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @param <V> Value type.
  * @author Mark Paluch
  * @author Tihomir Mateev
+ * @author dae won
  * @since 3.0
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -98,11 +99,11 @@ class PooledClusterConnectionProvider<K, V>
 
     private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, ConnectionFuture<StatefulRedisConnection<K, V>>> connectionProvider;
 
-    private Partitions partitions;
+    private volatile Partitions partitions;
 
     private boolean autoFlushCommands = true;
 
-    private ReadFrom readFrom;
+    private volatile ReadFrom readFrom;
 
     public PooledClusterConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
             RedisCodec<K, V> redisCodec, ClusterEventListener clusterEventListener) {
