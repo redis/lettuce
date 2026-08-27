@@ -29,11 +29,6 @@ on:
         required: false
         type: string
         default: 'temurin'
-      reactor_version:
-        description: 'Reactor version override; uses the pom.xml default when empty'
-        required: false
-        type: string
-        default: ''
       # repository and ref are required for correct checkout when using workflow
       # externally (e.g.: in redis-developer/redis-oss-release-automation)
       repository:
@@ -138,21 +133,14 @@ jobs:
       - name: Run tests
         run: |
           export TEST_WORK_FOLDER=$REDIS_ENV_WORK_DIR
-          maven_args=()
-          if [ -n "$REACTOR_VERSION" ]; then
-            maven_args+=("-Dreactor.version=$REACTOR_VERSION")
-          fi
-
           if [ "${{ inputs.skip_unit_tests }}" = "true" ]; then
             echo "Skipping unit tests, running integration tests only"
-            maven_args+=("-DskipUnitTests=true")
-            make test MVN_EXTRA_ARGS="${maven_args[*]}"
+            make test MVN_EXTRA_ARGS="-DskipUnitTests=true"
           else
-            make test-coverage MVN_EXTRA_ARGS="${maven_args[*]}"
+            make test-coverage
           fi
         env:
           REDIS_ENV_WORK_DIR: ${{ steps.args.outputs.redis_env_work_dir }}
-          REACTOR_VERSION: ${{ inputs.reactor_version }}
           JVM_OPTS: -Xmx3200m
           TERM: dumb
 
