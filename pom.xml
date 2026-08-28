@@ -185,12 +185,12 @@
         <dependency>
             <groupId>redis.clients.authentication</groupId>
             <artifactId>redis-authx-core</artifactId>
-            <version>0.1.1-beta2</version>
+            <version>0.2.0</version>
         </dependency>
         <dependency>
             <groupId>redis.clients.authentication</groupId>
             <artifactId>redis-authx-entraid</artifactId>
-            <version>0.1.1-beta2</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <!-- Start of core dependencies -->
