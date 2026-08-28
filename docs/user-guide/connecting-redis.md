@@ -331,7 +331,7 @@ If using Maven, add the following dependency to your `pom.xml`:
         <dependency>
             <groupId>redis.clients.authentication</groupId>
             <artifactId>redis-authx-entraid</artifactId>
-            <version>0.1.1-beta1</version>
+            <version>0.2.0</version>
         </dependency>
 ```
 
