@@ -586,6 +586,28 @@ public class RelaxedTimeoutConfigurationTest {
         log.info("test timeoutUnrelaxedOnMovingTest started");
         TimeoutTestContext context = setupTimeoutTestForMovingUnrelaxed();
 
+        // Keep commands in flight for the duration of the maintenance operation. Timeout
+        // relaxation protects in-flight commands: on a MOVING/re-bind with an empty command
+        // stack the client reconnects immediately without relaxing (see
+        // MaintenanceAwareConnectionWatchdog#rebind), so a test that only issues a single
+        // reactive command sees the normal timeout. Real workloads have traffic in flight
+        // across the re-bind; drive continuous traffic so relaxation is exercised as designed.
+        final AtomicBoolean keepBackgroundTraffic = new AtomicBoolean(true);
+        Thread backgroundTraffic = new Thread(() -> {
+            long i = 0;
+            while (keepBackgroundTraffic.get()) {
+                try {
+                    context.connection.async().set("moving-inflight-key-" + (i % 50), "v" + i);
+                    i++;
+                    Thread.sleep(1);
+                } catch (Exception ignored) {
+                    // Errors during the re-bind window are expected; keep the stack busy.
+                }
+            }
+        }, "moving-inflight-traffic");
+        backgroundTraffic.setDaemon(true);
+        backgroundTraffic.start();
+
         try {
             log.info("=== MOVING Un-relaxed Timeout Test: Starting maintenance operation ===");
 
@@ -626,6 +648,8 @@ public class RelaxedTimeoutConfigurationTest {
             context.capture.throwIfAssertionFailed();
 
         } finally {
+            keepBackgroundTraffic.set(false);
+            backgroundTraffic.join(Duration.ofSeconds(5).toMillis());
             context.capture.endTestPhase();
             cleanupTimeoutTest(context);
         }
