@@ -265,18 +265,35 @@ search.ftCreate("semantic-idx", vectorFields);
 
 ### Adding Vector Data
 
+A `FLOAT32` vector field stores the raw binary form of the vector: exactly `dimensions × 4` bytes, four little-endian bytes per dimension. The default `String` codec is UTF-8 and cannot carry such arbitrary bytes, so write the embedding through a binary-valued codec:
+
 ```java
 // Convert text to embeddings (using your ML model)
 float[] embedding = textToEmbedding("wireless headphones");
-String embeddingStr = Arrays.toString(embedding);
 
-Map<String, String> doc = new HashMap<>();
-doc.put("title", "Wireless Headphones");
-doc.put("embedding", embeddingStr);
-redis.hmset("doc:1", doc);
+// Pack the embedding as the blob the index expects: 4 little-endian bytes per FLOAT32 dimension
+ByteBuffer embeddingBytes = ByteBuffer.allocate(embedding.length * Float.BYTES)
+    .order(ByteOrder.LITTLE_ENDIAN);
+for (float value : embedding) {
+    embeddingBytes.putFloat(value);
+}
+
+// String keys and hash field names, binary values
+RedisCommands<String, byte[]> binary = redisClient
+    .connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE)).sync();
+
+Map<String, byte[]> doc = new HashMap<>();
+doc.put("title", "Wireless Headphones".getBytes(StandardCharsets.UTF_8));
+doc.put("embedding", embeddingBytes.array());
+binary.hmset("doc:1", doc);
 ```
 
+!!! WARNING
+    Do not store the embedding as text (for example `Arrays.toString(embedding)`). The hash write succeeds, but the value is not a valid vector blob, so the indexer silently rejects the whole document — it never appears in any search result, and the only visible signal is the `hash_indexing_failures` counter in `FT.INFO`.
+
 ### Vector Similarity Search
+
+The query vector must be packed exactly like the stored vectors — same element type (`FLOAT32`) and little-endian byte order. The search itself can run on the regular `String` connection: `param(String, byte[])` sends the vector bytes verbatim.
 
 ```java
 // Find similar documents using vector search
