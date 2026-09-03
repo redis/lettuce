@@ -13,6 +13,7 @@ import io.lettuce.core.protocol.CommandKeyword;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,7 +41,7 @@ public class SearchArgs<K> {
 
     private final List<String> inFields = new ArrayList<>();
 
-    private final Map<String, Optional<String>> returnFields = new HashMap<>();
+    private final Map<String, Optional<String>> returnFields = new LinkedHashMap<>();
 
     private Optional<SummarizeArgs> summarize = Optional.empty();
 
@@ -143,9 +144,11 @@ public class SearchArgs<K> {
         }
 
         /**
-         * Return the value of the sorting key, right after the id and score and/or payload, if requested. This is usually not
-         * needed, and exists for distributed search coordination purposes. This option is relevant only if used in conjunction
-         * with {@link SearchArgs.Builder#sortBy(SortByArgs)}. Disabled by default.
+         * Return the value of the sorting key of each document, exposed through
+         * {@link io.lettuce.core.search.SearchReply.SearchResult#getSortKey()}. This is usually not needed, and exists for
+         * distributed search coordination purposes (merging sorted results from several indexes or shards). This option is
+         * relevant only if used in conjunction with {@link SearchArgs.Builder#sortBy(SortByArgs)}: without SORTBY every result
+         * has a {@code null} sort key. Disabled by default.
          *
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
@@ -180,6 +183,9 @@ public class SearchArgs<K> {
         /**
          * Limit the attributes returned from the document. The field is either an attribute name (for hashes and JSON) or a
          * JSON Path expression (for JSON). <code>as</code> is the name of the field used in the result as an alias.
+         * <p>
+         * Fields are requested in the order in which they are added. Adding a field that was already added replaces its alias
+         * but keeps its position.
          *
          * @param field the field to return
          * @param as the alias to use for this field in the result
@@ -193,6 +199,8 @@ public class SearchArgs<K> {
         /**
          * Limit the attributes returned from the document. The field is either an attribute name (for hashes and JSON) or a
          * JSON Path expression (for JSON).
+         * <p>
+         * Fields are requested in the order in which they are added.
          *
          * @param field the field to return
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
@@ -485,6 +493,7 @@ public class SearchArgs<K> {
          * @param name the name of the parameter
          * @param value the binary value of the parameter
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
+         * @since 7.8
          */
         public SearchArgs.Builder<K> param(String name, byte[] value) {
             instance.params.put(name, value);

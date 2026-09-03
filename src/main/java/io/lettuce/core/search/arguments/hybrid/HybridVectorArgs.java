@@ -99,7 +99,7 @@ public class HybridVectorArgs {
          * Set the query vector parameter reference.
          * <p>
          * This should be a parameter name (e.g., "$vec") that references a vector passed via
-         * {@link HybridArgs.Builder#param(Object, byte[])}. The actual binary vector data must be provided in PARAMS.
+         * {@link HybridArgs.Builder#param(String, byte[])}. The actual binary vector data must be provided in PARAMS.
          * </p>
          *
          * @param vectorData the parameter reference (e.g., "$vec")

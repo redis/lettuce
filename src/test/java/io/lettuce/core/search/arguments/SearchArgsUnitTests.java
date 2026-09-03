@@ -24,7 +24,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * @author Tihomir Mateev
  */
 @Tag(TestTags.UNIT_TEST)
-class SearchArgsTest {
+class SearchArgsUnitTests {
 
     @Test
     void testDefaultSearchArgs() {
@@ -58,6 +58,24 @@ class SearchArgsTest {
         assertThat(argsString).contains("INKEYS");
         assertThat(argsString).contains("INFIELDS");
         assertThat(argsString).contains("RETURN");
+    }
+
+    @Test
+    void testReturnFieldsKeepInsertionOrder() {
+        SearchArgs<String> args = SearchArgs.<String> builder().returnField("price").returnField("title")
+                .returnField("category", "cat").build();
+
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        args.build(commandArgs);
+
+        assertThat(commandArgs.toCommandString()).contains("RETURN 5 price title category AS cat");
+
+        SearchArgs<String> reversed = SearchArgs.<String> builder().returnField("title").returnField("price").build();
+
+        commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        reversed.build(commandArgs);
+
+        assertThat(commandArgs.toCommandString()).contains("RETURN 2 title price");
     }
 
     @Test

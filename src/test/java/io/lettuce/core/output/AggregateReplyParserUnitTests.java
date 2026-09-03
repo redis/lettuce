@@ -16,6 +16,8 @@ import io.lettuce.core.search.SearchReply;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 /**
  * Unit tests for {@link AggregateReplyParser}.
  *
@@ -157,6 +159,68 @@ class AggregateReplyParserUnitTests {
         SearchReply<String> searchReply = reply.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1);
         assertThat(searchReply.getResults().get(0).getFields().get("category").asString()).isEqualTo("computers");
+    }
+
+    @Test
+    void shouldReturnNullIdForResp2RowsWithoutId() {
+        AggregateReplyParser<String> parser = new AggregateReplyParser<>(CODEC, false);
+
+        ArrayComplexData row1 = new ArrayComplexData(2);
+        row1.storeObject(CODEC.encodeKey("title"));
+        row1.storeObject(CODEC.encodeValue("Hello World"));
+
+        ArrayComplexData row2 = new ArrayComplexData(2);
+        row2.storeObject(CODEC.encodeKey("title"));
+        row2.storeObject(CODEC.encodeValue("another doc"));
+
+        ArrayComplexData data = new ArrayComplexData(3);
+        data.storeObject(2L);
+        data.storeObject(row1);
+        data.storeObject(row2);
+
+        AggregationReply<String> reply = parser.parse(data);
+
+        List<SearchReply.SearchResult<String>> rows = reply.getReplies().get(0).getResults();
+        assertThat(rows).extracting(SearchReply.SearchResult::getId).containsOnlyNulls();
+        assertThat(rows).extracting(row -> row.getFields().get("title").asString()).containsExactly("Hello World",
+                "another doc");
+    }
+
+    @Test
+    void shouldReturnNullIdForResp3RowsWithoutId() {
+        AggregateReplyParser<String> parser = new AggregateReplyParser<>(CODEC, false);
+
+        MapComplexData row1 = new MapComplexData(1);
+        row1.storeObject(CODEC.encodeKey("extra_attributes"));
+        row1.storeObject(fields("title", "Hello World"));
+
+        MapComplexData row2 = new MapComplexData(1);
+        row2.storeObject(CODEC.encodeKey("extra_attributes"));
+        row2.storeObject(fields("title", "another doc"));
+
+        ArrayComplexData resultsList = new ArrayComplexData(2);
+        resultsList.storeObject(row1);
+        resultsList.storeObject(row2);
+
+        MapComplexData data = new MapComplexData(2);
+        data.storeObject(CODEC.encodeKey("total_results"));
+        data.storeObject(2L);
+        data.storeObject(CODEC.encodeKey("results"));
+        data.storeObject(resultsList);
+
+        AggregationReply<String> reply = parser.parse(data);
+
+        List<SearchReply.SearchResult<String>> rows = reply.getReplies().get(0).getResults();
+        assertThat(rows).extracting(SearchReply.SearchResult::getId).containsOnlyNulls();
+        assertThat(rows).extracting(row -> row.getFields().get("title").asString()).containsExactly("Hello World",
+                "another doc");
+    }
+
+    private static MapComplexData fields(String name, String value) {
+        MapComplexData fields = new MapComplexData(1);
+        fields.storeObject(CODEC.encodeKey(name));
+        fields.storeObject(CODEC.encodeValue(value));
+        return fields;
     }
 
 }

@@ -88,7 +88,7 @@ public final class Reducers {
         return new Quantile(field, quantile);
     }
 
-    public static ToList<String> toList(String field) {
+    public static ToList toList(String field) {
         return new ToList(field);
     }
 
@@ -258,7 +258,7 @@ public final class Reducers {
 
     }
 
-    public static class ToList<String> extends Reducer {
+    public static class ToList extends Reducer {
 
         private final String field;
 

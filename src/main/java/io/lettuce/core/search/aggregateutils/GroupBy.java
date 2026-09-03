@@ -36,7 +36,6 @@ import io.lettuce.core.protocol.CommandKeyword;
  * }
  * </pre>
  *
- * @param Key type.
  * @author Aleksandar Todorov
  * @since 7.5
  * @see Reducer
@@ -65,7 +64,6 @@ public class GroupBy implements PostProcessingOperation {
      * Static factory method to create a GroupBy instance.
      *
      * @param properties the properties to group by
-     * @param Key type
      * @return new GroupBy instance
      */
     @SafeVarargs

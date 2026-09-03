@@ -384,7 +384,10 @@ interface RediSearchCoroutinesCommands<K : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>
      * @see #ftCreate(String, List)
      * @see #ftCreate(String, CreateArgs, List)
+     * @deprecated since 7.8, use [ftAggregate] with a `GROUPBY` on the tag field instead: it also supports sorting and paging,
+     *             and its reply values are not UTF-8 decoded; scheduled for removal in a future major release.
      */
+    @Deprecated("Use ftAggregate(index, query, args) with a GROUPBY on the tag field instead.")
     @Experimental
     suspend fun ftTagvals(index: String, fieldName: String): List<String>
 

@@ -288,6 +288,73 @@ public class RediSearchIntegrationTests {
     }
 
     /**
+     * WITHSORTKEYS exposes the sort key of each document via {@link SearchReply.SearchResult#getSortKey()}. The server
+     * serializes text keys as {@code $} + normalized (lower-cased) value and numeric keys as {@code #} + number, and returns no
+     * sort key for a document without a value for the sorting attribute or when no SORTBY was given. Runs on RESP2 and RESP3
+     * (see {@link RediSearchResp2IntegrationTests}).
+     */
+    @Test
+    void testSearchWithSortKeys() {
+        FieldArgs titleField = TextFieldArgs.builder().name("title").sortable().build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(MOVIE_PREFIX).on(CreateArgs.TargetType.HASH).build();
+        redis.ftCreate(MOVIES_INDEX, createArgs, Arrays.asList(titleField, ratingField));
+
+        Map<String, String> movie1 = new HashMap<>();
+        movie1.put("title", "The Matrix");
+        movie1.put("rating", "9");
+        redis.hmset("movie:1", movie1);
+
+        Map<String, String> movie2 = new HashMap<>();
+        movie2.put("title", "Matrix Reloaded");
+        movie2.put("rating", "7");
+        redis.hmset("movie:2", movie2);
+
+        Map<String, String> movie3 = new HashMap<>();
+        movie3.put("title", "Matrix Revolutions"); // no rating
+        redis.hmset("movie:3", movie3);
+
+        // Text sort key: "$" + lower-cased value; the content that follows the sort key is still parsed
+        SearchArgs<String> byTitle = SearchArgs.<String> builder().withSortKeys()
+                .sortBy(SortByArgs.builder().attribute("title").build()).build();
+        SearchReply<String> results = redis.ftSearch(MOVIES_INDEX, "Matrix", byTitle);
+        assertThat(results.getCount()).isEqualTo(3);
+        assertThat(results.getResults()).extracting(SearchReply.SearchResult::getId).containsExactly("movie:2", "movie:3",
+                "movie:1");
+        assertThat(results.getResults()).extracting(SearchReply.SearchResult::getSortKey).containsExactly("$matrix reloaded",
+                "$matrix revolutions", "$the matrix");
+        assertThat(results.getResults().get(0).getFields().get("title").asString()).isEqualTo("Matrix Reloaded");
+
+        // Numeric sort key: "#" + number, combined with WITHSCORES and NOCONTENT
+        SearchArgs<String> byRating = SearchArgs.<String> builder().withScores().withSortKeys().noContent()
+                .sortBy(SortByArgs.builder().attribute("rating").descending().build()).build();
+        results = redis.ftSearch(MOVIES_INDEX, "Matrix @rating:[0 10]", byRating);
+        assertThat(results.getResults()).extracting(SearchReply.SearchResult::getId).containsExactly("movie:1", "movie:2");
+        assertThat(results.getResults()).extracting(SearchReply.SearchResult::getSortKey).containsExactly("#9", "#7");
+        assertThat(results.getResults()).allSatisfy(result -> {
+            assertThat(result.getScore()).isNotNull();
+            assertThat(result.getFields()).isEmpty();
+        });
+
+        // A document without a value for the sorting attribute has no sort key
+        results = redis.ftSearch(MOVIES_INDEX, "Revolutions", byRating);
+        assertThat(results.getResults()).singleElement().satisfies(result -> {
+            assertThat(result.getId()).isEqualTo("movie:3");
+            assertThat(result.getSortKey()).isNull();
+        });
+
+        // Without SORTBY there is nothing to report
+        SearchArgs<String> noSortBy = SearchArgs.<String> builder().withSortKeys().build();
+        results = redis.ftSearch(MOVIES_INDEX, "Matrix", noSortBy);
+        assertThat(results.getResults()).hasSize(3);
+        assertThat(results.getResults()).extracting(SearchReply.SearchResult::getSortKey).containsOnlyNulls();
+        assertThat(results.getResults()).allSatisfy(result -> assertThat(result.getFields()).containsKey("title"));
+
+        // Cleanup
+        redis.ftDropindex(MOVIES_INDEX);
+    }
+
+    /**
      * Test TAG fields with custom separators based on Redis documentation example. Example: Index books that have a categories
      * attribute, where each category is separated by a ';' character.
      */

@@ -50,7 +50,6 @@ public class HybridReplyParser<K> implements ComplexDataParser<HybridReply<K>> {
      * Create a parser that decodes document keys through {@code codec}.
      *
      * @param codec connection codec, must not be {@code null}.
-     * @since 7.7
      */
     public HybridReplyParser(RedisCodec<K, ?> codec) {
         LettuceAssert.notNull(codec, "RedisCodec must not be null");

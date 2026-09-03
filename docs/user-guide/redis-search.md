@@ -75,7 +75,7 @@ SearchReply<String> results = search.ftSearch("products-idx", "wireless");
 System.out.println("Found " + results.getCount() + " documents");
 for (SearchReply.SearchResult<String> result : results.getResults()) {
     System.out.println("Key: " + result.getId());
-    System.out.println("Title: " + result.getFields().get("title"));
+    System.out.println("Title: " + result.getFields().get("title").asString());
 }
 ```
 
@@ -241,6 +241,22 @@ SearchArgs<String> searchArgs = SearchArgs.<String>builder()
 SearchReply<String> results = search.ftSearch("products-idx", "@title:$category", searchArgs);
 ```
 
+### Sort Keys
+
+`WITHSORTKEYS` returns the value each document was sorted by, next to its id. This is mostly useful when merging sorted results from several indexes or shards. The server serializes the sort key as text: a `$` prefix for textual attributes (normalized to lower case unless the attribute was declared `UNF`) and a `#` prefix for numeric attributes. A document without a value for the sorting attribute has no sort key, and without `SORTBY` every sort key is `null`.
+
+```java
+SearchArgs<String> sortKeyArgs = SearchArgs.<String>builder()
+    .sortBy(SortByArgs.builder().attribute("title").build())
+    .withSortKeys()
+    .build();
+
+SearchReply<String> results = search.ftSearch("products-idx", "*", sortKeyArgs);
+for (SearchReply.SearchResult<String> result : results.getResults()) {
+    System.out.println(result.getId() + " sorted by " + result.getSortKey()); // product:2 sorted by $running shoes
+}
+```
+
 ## Vector Search
 
 Vector search enables semantic similarity matching using machine learning embeddings.
@@ -400,10 +416,20 @@ AggregationReply<String> aggResults = search.ftAggregate("products-idx", "*", ag
 // Process aggregation results
 for (SearchReply<String> reply : aggResults.getReplies()) {
     for (SearchReply.SearchResult<String> result : reply.getResults()) {
-        System.out.println("Category: " + result.getFields().get("category"));
-        System.out.println("Count: " + result.getFields().get("product_count"));
-        System.out.println("Avg Price: " + result.getFields().get("avg_price"));
+        System.out.println("Category: " + result.getFields().get("category").asString());
+        System.out.println("Count: " + result.getFields().get("product_count").asString());
+        System.out.println("Avg Price: " + result.getFields().get("avg_price").asString());
     }
+}
+```
+
+Aggregation rows are not documents: `SearchResult.getId()` is `null` for every row of an `AggregationReply`, including rows read through a cursor. If you need the key of the underlying document, load it explicitly and read it from the fields:
+
+```java
+AggregateArgs withKey = AggregateArgs.builder().load("__key").load("title").build();
+AggregationReply<String> keyed = search.ftAggregate("products-idx", "*", withKey);
+for (SearchReply.SearchResult<String> row : keyed.getReplies().get(0).getResults()) {
+    System.out.println(row.getFields().get("__key").asString() + ": " + row.getFields().get("title").asString());
 }
 ```
 
@@ -828,7 +854,7 @@ Mono<SearchReply<String>> searchMono = reactiveSearch.ftSearch("products-idx", "
 searchMono.subscribe(results -> {
     System.out.println("Found " + results.getCount() + " results");
     results.getResults().forEach(result ->
-        System.out.println("Product: " + result.getFields().get("title"))
+        System.out.println("Product: " + result.getFields().get("title").asString())
     );
 });
 ```

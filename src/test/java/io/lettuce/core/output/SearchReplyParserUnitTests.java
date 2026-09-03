@@ -225,6 +225,72 @@ class SearchReplyParserUnitTests {
         assertThat(reply.getWarnings()).isEmpty();
     }
 
+    @Test
+    void shouldReturnNullIdForListRowsWithoutId() {
+        // FT.AGGREGATE rows carry no id
+        PrefixingStringCodec codec = new PrefixingStringCodec("tenant:");
+        SearchReplyParser<String> parser = new SearchReplyParser<>(codec);
+        ArrayComplexData data = array(2L, array(buffer("category"), buffer("books")),
+                array(buffer("category"), buffer("electronics")));
+
+        SearchReply<String> reply = parser.parse(data);
+
+        assertThat(reply.getResults()).hasSize(2);
+        assertThat(reply.getResults()).extracting(SearchReply.SearchResult::getId).containsOnlyNulls();
+    }
+
+    @Test
+    void shouldParseSortKeysFromListReply() {
+        SearchArgs<String> args = SearchArgs.<String> builder().withSortKeys().build();
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, args);
+        // [count, id, sortkey, fields, ...]; the sort key is nil for a document without the sorting attribute
+        ArrayComplexData data = array(3L, buffer("doc:2"), buffer("$another doc"),
+                array(buffer("title"), buffer("another doc")), buffer("doc:1"), buffer("$hello world"),
+                array(buffer("title"), buffer("Hello World")), buffer("doc:3"), null, array(buffer("price"), buffer("7")));
+
+        SearchReply<String> reply = parser.parse(data);
+
+        assertThat(reply.getCount()).isEqualTo(3);
+        assertThat(reply.getResults()).extracting(SearchReply.SearchResult::getId).containsExactly("doc:2", "doc:1", "doc:3");
+        assertThat(reply.getResults()).extracting(SearchReply.SearchResult::getSortKey).containsExactly("$another doc",
+                "$hello world", null);
+        assertThat(reply.getResults().get(0).getFields().get("title").asString()).isEqualTo("another doc");
+        assertThat(reply.getResults().get(2).getFields().get("price").asString()).isEqualTo("7");
+    }
+
+    @Test
+    void shouldParseSortKeysWithScoresAndWithoutContentFromListReply() {
+        SearchArgs<String> args = SearchArgs.<String> builder().withScores().withSortKeys().noContent().build();
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, args);
+        // [count, id, score, sortkey, ...]
+        ArrayComplexData data = array(2L, buffer("doc:1"), buffer("0.83"), buffer("#10"), buffer("doc:3"), buffer("1.69"),
+                buffer("#7"));
+
+        SearchReply<String> reply = parser.parse(data);
+
+        assertThat(reply.getResults()).extracting(SearchReply.SearchResult::getId).containsExactly("doc:1", "doc:3");
+        assertThat(reply.getResults()).extracting(SearchReply.SearchResult::getScore).containsExactly(0.83, 1.69);
+        assertThat(reply.getResults()).extracting(SearchReply.SearchResult::getSortKey).containsExactly("#10", "#7");
+        assertThat(reply.getResults()).allSatisfy(result -> assertThat(result.getFields()).isEmpty());
+    }
+
+    @Test
+    void shouldParseSortKeysFromMapReply() {
+        SearchArgs<String> args = SearchArgs.<String> builder().withSortKeys().build();
+        SearchReplyParser<String> parser = new SearchReplyParser<>(CODEC, args);
+        MapComplexData sorted = map(buffer("id"), buffer("doc:1"), buffer("sortkey"), buffer("$hello world"),
+                buffer("extra_attributes"), map(buffer("title"), buffer("Hello World")));
+        MapComplexData unsorted = map(buffer("id"), buffer("doc:3"), buffer("sortkey"), null, buffer("extra_attributes"),
+                map(buffer("price"), buffer("7")));
+        MapComplexData data = map(buffer("total_results"), 2L, buffer("results"), array(sorted, unsorted));
+
+        SearchReply<String> reply = parser.parse(data);
+
+        assertThat(reply.getResults()).extracting(SearchReply.SearchResult::getId).containsExactly("doc:1", "doc:3");
+        assertThat(reply.getResults()).extracting(SearchReply.SearchResult::getSortKey).containsExactly("$hello world", null);
+        assertThat(reply.getResults().get(0).getFields().get("title").asString()).isEqualTo("Hello World");
+    }
+
     private static ByteBuffer buffer(String value) {
         return CODEC.encodeValue(value);
     }

@@ -37,7 +37,6 @@ import io.lettuce.core.protocol.CommandKeyword;
  * }
  * </pre>
  *
- * @param Key type.
  * @author Aleksandar Todorov
  * @since 7.5
  * @see SortProperty
@@ -63,7 +62,6 @@ public class SortBy implements PostProcessingOperation {
      *
      * @param property the property to sort by
      * @param direction the sort direction
-     * @param Key type
      * @return new SortBy instance
      */
     public static SortBy of(String property, SortDirection direction) {
@@ -74,7 +72,6 @@ public class SortBy implements PostProcessingOperation {
      * Static factory method to create a SortBy instance with multiple properties.
      *
      * @param properties the properties to sort by
-     * @param Key type
      * @return new SortBy instance
      */
     @SafeVarargs

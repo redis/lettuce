@@ -25,7 +25,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * @author Tihomir Mateev
  */
 @Tag(UNIT_TEST)
-class CreateArgsTest {
+class CreateArgsUnitTests {
 
     @Test
     void testDefaultCreateArgs() {

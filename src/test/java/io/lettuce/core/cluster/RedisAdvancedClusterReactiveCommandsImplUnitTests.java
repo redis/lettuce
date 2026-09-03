@@ -3,31 +3,28 @@
  */
 package io.lettuce.core.cluster;
 
-import io.lettuce.core.RedisFuture;
+import io.lettuce.TestTags;
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.async.RedisAsyncCommands;
-import io.lettuce.core.ClientOptions;
+import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.arguments.AggregateArgs;
+import io.lettuce.test.LoggingTestUtils;
+import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import io.lettuce.test.LoggingTestUtils;
-
-import org.apache.logging.log4j.Level;
-
-import org.mockito.Spy;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -35,17 +32,14 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@Tag(UNIT_TEST)
-class RedisAdvancedClusterAsyncCommandsImplTest {
+@Tag(TestTags.UNIT_TEST)
+class RedisAdvancedClusterReactiveCommandsImplUnitTests {
 
-    @Spy
-    @InjectMocks
-    private RedisAdvancedClusterAsyncCommandsImpl<String, String> async;
+    private RedisAdvancedClusterReactiveCommandsImpl<String, String> reactive;
 
     @Mock
     private StatefulRedisClusterConnection<String, String> clusterConn;
@@ -54,7 +48,7 @@ class RedisAdvancedClusterAsyncCommandsImplTest {
     private StatefulRedisConnection<String, String> nodeConn;
 
     @Mock
-    private RedisAsyncCommands<String, String> nodeAsync;
+    private RedisReactiveCommands<String, String> nodeReactive;
 
     @Mock
     private ClusterDistributionChannelWriter writer;
@@ -79,28 +73,31 @@ class RedisAdvancedClusterAsyncCommandsImplTest {
         for (int i = 0; i < SlotHash.SLOT_COUNT; i++) {
             allSlots.add(i);
         }
-
         node.setSlots(allSlots);
         node.setFlags(EnumSet.of(RedisClusterNode.NodeFlag.UPSTREAM));
 
         partitions.addPartition(node);
         partitions.updateCache();
 
-        when(nodeConn.async()).thenReturn(nodeAsync);
-        when(nodeAsync.clusterMyId()).thenReturn(new PipelinedRedisFuture<>(CompletableFuture.completedFuture("node-1")));
+        when(nodeConn.reactive()).thenReturn(nodeReactive);
+        when(nodeReactive.clusterMyId()).thenReturn(Mono.just("node-1"));
+
         when(clusterConn.getChannelWriter()).thenReturn(writer);
         when(writer.getClusterConnectionProvider()).thenReturn(provider);
+
         when(asyncProvider.getConnectionAsync(eq(ConnectionIntent.WRITE), eq("node-1")))
                 .thenReturn((CompletableFuture) CompletableFuture.completedFuture(nodeConn));
         when(asyncProvider.getRandomConnectionAsync(eq(ConnectionIntent.WRITE)))
                 .thenReturn((CompletableFuture) CompletableFuture.completedFuture(nodeConn));
         when(asyncProvider.getRandomConnectionAsync(eq(ConnectionIntent.READ)))
                 .thenReturn((CompletableFuture) CompletableFuture.completedFuture(nodeConn));
-        when(clusterConn.getConnection(eq("node-1"), eq(ConnectionIntent.READ))).thenReturn(nodeConn);
-        when(clusterConn.getPartitions()).thenReturn(partitions);
+
         when(clusterConn.getConnection(eq("node-1"), eq(ConnectionIntent.WRITE))).thenReturn(nodeConn);
+        when(clusterConn.getPartitions()).thenReturn(partitions);
         when(clusterConn.getOptions()).thenReturn(ClientOptions.builder().build());
-        when(async.getStatefulConnection()).thenReturn(clusterConn);
+
+        reactive = mock(RedisAdvancedClusterReactiveCommandsImpl.class, withSettings().defaultAnswer(CALLS_REAL_METHODS));
+        when(reactive.getStatefulConnection()).thenReturn(clusterConn);
     }
 
     @Test
@@ -110,86 +107,75 @@ class RedisAdvancedClusterAsyncCommandsImplTest {
         AggregationReply<String> replyWithCursor = new AggregationReply<>();
         replyWithCursor.setCursor(AggregationReply.Cursor.of(42L, null));
 
-        CompletableFuture<AggregationReply<String>> cf = new CompletableFuture<>();
-        cf.complete(replyWithCursor);
-        RedisFuture<AggregationReply<String>> nodeFuture = new PipelinedRedisFuture<>(cf);
+        when(nodeReactive.ftAggregate(anyString(), anyString(), any())).thenReturn(Mono.just(replyWithCursor));
+        when(nodeReactive.clusterMyId()).thenReturn(Mono.just("node-1"));
 
-        when(nodeAsync.ftAggregate(anyString(), anyString(), any())).thenReturn(nodeFuture);
-        when(nodeAsync.clusterMyId()).thenReturn(new PipelinedRedisFuture<>(CompletableFuture.completedFuture("node-1")));
+        AggregationReply<String> out = reactive.ftAggregate("idx", "*", args).block();
 
-        AggregationReply<String> out = async.ftAggregate("idx", "*", args).toCompletableFuture().join();
-
+        assertThat(out).isNotNull();
         assertThat(out.getCursor()).isPresent();
         assertThat(out.getCursor().get().getCursorId()).isEqualTo(42L);
         assertThat(out.getCursor().get().getNodeId()).contains("node-1");
     }
 
     @Test
-    void ftCursordel_throwsWhenMissingNodeId() {
-        AggregationReply.Cursor cursor = AggregationReply.Cursor.of(5L, null);
-        CompletableFuture<String> cf = async.ftCursordel("idx", cursor).toCompletableFuture();
-        assertThatThrownBy(cf::join).hasCauseInstanceOf(IllegalArgumentException.class).hasMessageContaining("missing nodeId");
+    void ftAggregate_withoutCursor_returnsReplyWithoutNodeId() {
+        AggregationReply<String> replyNoCursor = new AggregationReply<>();
+        when(nodeReactive.ftAggregate(anyString(), anyString(), any())).thenReturn(Mono.just(replyNoCursor));
+        when(nodeReactive.clusterMyId()).thenReturn(Mono.just("node-1"));
+
+        AggregationReply<String> out = reactive.ftAggregate("idx", "*", AggregateArgs.builder().build()).block();
+
+        assertThat(out).isNotNull();
+        assertThat(out.getCursor()).isEmpty();
     }
 
     @Test
-    void ftCursorread_routesToNodeIdWithREAD_andStampsNodeId() {
+    void ftCursorread_routesToNodeId_andStampsNodeId() {
         AggregationReply.Cursor cursor = AggregationReply.Cursor.of(7L, "node-1");
 
         AggregationReply<String> reply = new AggregationReply<>();
         reply.setCursor(AggregationReply.Cursor.of(7L, null));
 
-        CompletableFuture<AggregationReply<String>> cf = CompletableFuture.completedFuture(reply);
-        when(nodeAsync.ftCursorread(anyString(), any(), anyInt())).thenReturn(new PipelinedRedisFuture<>(cf));
+        when(nodeReactive.ftCursorread(anyString(), any(), anyInt())).thenReturn(Mono.just(reply));
 
-        AggregationReply<String> out = async.ftCursorread("idx", cursor, 100).toCompletableFuture().join();
+        AggregationReply<String> out = reactive.ftCursorread("idx", cursor, 100).block();
 
+        assertThat(out).isNotNull();
         assertThat(out.getCursor()).isPresent();
         assertThat(out.getCursor().get().getNodeId()).contains("node-1");
-        verify(clusterConn).getConnection(eq("node-1"), eq(ConnectionIntent.READ));
+        verify(clusterConn).getConnection(eq("node-1"), eq(ConnectionIntent.WRITE));
     }
 
     @Test
     void ftCursordel_routesToNodeIdWithWRITE() {
         AggregationReply.Cursor cursor = AggregationReply.Cursor.of(9L, "node-1");
-        when(nodeAsync.ftCursordel(anyString(), any()))
-                .thenReturn(new PipelinedRedisFuture<>(CompletableFuture.completedFuture("OK")));
+        when(nodeReactive.ftCursordel(anyString(), any())).thenReturn(Mono.just("OK"));
 
-        String out = async.ftCursordel("idx", cursor).toCompletableFuture().join();
+        String out = reactive.ftCursordel("idx", cursor).block();
 
         assertThat(out).isEqualTo("OK");
         verify(clusterConn).getConnection(eq("node-1"), eq(ConnectionIntent.WRITE));
     }
 
     @Test
-    void ftAggregate_withoutCursor_returnsReplyWithoutNodeId() {
-        AggregationReply<String> replyNoCursor = new AggregationReply<>();
-        CompletableFuture<AggregationReply<String>> cf = CompletableFuture.completedFuture(replyNoCursor);
-        when(nodeAsync.ftAggregate(anyString(), anyString(), any())).thenReturn(new PipelinedRedisFuture<>(cf));
-        when(nodeAsync.clusterMyId()).thenReturn(new PipelinedRedisFuture<>(CompletableFuture.completedFuture("node-1")));
-
-        AggregationReply<String> out = async.ftAggregate("idx", "*", AggregateArgs.builder().build()).toCompletableFuture()
-                .join();
-
-        assertThat(out.getCursor()).isEmpty();
-    }
-
-    @Test
     void routeKeyless_function_useRoutedCall_returnsResult() {
-        Supplier<RedisFuture<String>> superCall = () -> new PipelinedRedisFuture<>(CompletableFuture.completedFuture("SUPER"));
-        RedisFuture<String> f = async.routeKeyless(superCall,
-                (RedisAsyncCommands<String, String> c) -> CompletableFuture.completedFuture("ROUTED"), CommandType.FT_EXPLAIN);
-        assertThat(f.toCompletableFuture().join()).isEqualTo("ROUTED");
+        Supplier<Mono<String>> superCall = () -> Mono.just("SUPER");
+        Mono<String> m = reactive.routeKeyless(superCall,
+                (RedisClusterReactiveCommands<String, String> c) -> Mono.just("ROUTED"), CommandType.FT_EXPLAIN);
+        assertThat(m.block()).isEqualTo("ROUTED");
     }
 
     @Test
     void routeKeyless_function_exception_logsError_andFallsBack() {
         try (LoggingTestUtils.CapturingAppender logs = LoggingTestUtils
-                .attachAppenderFor(RedisAdvancedClusterAsyncCommandsImpl.class, Level.ERROR)) {
-            when(asyncProvider.getRandomConnectionAsync(any())).thenReturn(failedFututre(new RuntimeException("provider")));
+                .attachAppenderFor(RedisAdvancedClusterReactiveCommandsImpl.class, Level.ERROR)) {
+            when(asyncProvider.getRandomConnectionAsync(any())).thenReturn(failedFuture(new RuntimeException("provider")));
 
-            String out = async.routeKeyless(() -> new PipelinedRedisFuture<>(CompletableFuture.completedFuture("SUPER")),
-                    (RedisAsyncCommands<String, String> c) -> CompletableFuture.completedFuture("IGNORED"),
-                    CommandType.FT_EXPLAIN).toCompletableFuture().join();
+            String out = reactive
+                    .routeKeyless(() -> Mono.just("SUPER"),
+                            (RedisClusterReactiveCommands<String, String> c) -> Mono.just("IGNORED"), CommandType.FT_EXPLAIN)
+                    .block();
 
             assertThat(out).isEqualTo("SUPER");
             boolean logged = logs.messages().stream()
@@ -200,23 +186,21 @@ class RedisAdvancedClusterAsyncCommandsImplTest {
 
     @Test
     void routeKeyless_biFunction_useRoutedCall_returnsResult() {
-        Supplier<RedisFuture<String>> superCall = () -> new PipelinedRedisFuture<>(CompletableFuture.completedFuture("SUPER"));
-        RedisFuture<String> f = async.routeKeyless(superCall,
-                (String nodeId, RedisClusterAsyncCommands<String, String> c) -> CompletableFuture.completedFuture("ROUTED"),
-                CommandType.FT_EXPLAIN);
-        assertThat(f.toCompletableFuture().join()).isEqualTo("ROUTED");
+        Supplier<Mono<String>> superCall = () -> Mono.just("SUPER");
+        Mono<String> m = reactive.routeKeyless(superCall,
+                (String nodeId, RedisClusterReactiveCommands<String, String> c) -> Mono.just("ROUTED"), CommandType.FT_EXPLAIN);
+        assertThat(m.block()).isEqualTo("ROUTED");
     }
 
     @Test
     void routeKeyless_biFunction_exception_logsError_andFallsBack() {
         try (LoggingTestUtils.CapturingAppender logs = LoggingTestUtils
-                .attachAppenderFor(RedisAdvancedClusterAsyncCommandsImpl.class, Level.ERROR)) {
-            when(asyncProvider.getRandomConnectionAsync(any())).thenReturn(failedFututre(new RuntimeException("provider")));
+                .attachAppenderFor(RedisAdvancedClusterReactiveCommandsImpl.class, Level.ERROR)) {
+            when(asyncProvider.getRandomConnectionAsync(any())).thenReturn(failedFuture(new RuntimeException("provider")));
 
-            String out = async.routeKeyless(
-                    () -> new PipelinedRedisFuture<>(CompletableFuture.completedFuture("SUPER")), (String nodeId,
-                            RedisClusterAsyncCommands<String, String> c) -> CompletableFuture.completedFuture("IGNORED"),
-                    CommandType.FT_EXPLAIN).toCompletableFuture().join();
+            String out = reactive.routeKeyless(() -> Mono.just("SUPER"),
+                    (String nodeId, RedisClusterReactiveCommands<String, String> c) -> Mono.just("IGNORED"),
+                    CommandType.FT_EXPLAIN).block();
 
             assertThat(out).isEqualTo("SUPER");
             boolean logged = logs.messages().stream()
@@ -225,7 +209,32 @@ class RedisAdvancedClusterAsyncCommandsImplTest {
         }
     }
 
-    private static <T> CompletableFuture<T> failedFututre(Throwable t) {
+    @Test
+    void routeKeylessMany_useRoutedFlux_returnsResults() {
+        Flux<String> f = reactive.routeKeylessMany(() -> Flux.just("S"),
+                (RedisClusterReactiveCommands<String, String> c) -> Flux.just("R1", "R2"), CommandType.FT_LIST);
+        assertThat(f.collectList().block()).containsExactly("R1", "R2");
+    }
+
+    @Test
+    void routeKeylessMany_exception_logsError_andFallsBack() {
+        try (LoggingTestUtils.CapturingAppender logs = LoggingTestUtils
+                .attachAppenderFor(RedisAdvancedClusterReactiveCommandsImpl.class, Level.ERROR)) {
+            when(asyncProvider.getRandomConnectionAsync(any())).thenReturn(failedFuture(new RuntimeException("provider")));
+
+            List<String> out = reactive
+                    .routeKeylessMany(() -> Flux.just("S"),
+                            (RedisClusterReactiveCommands<String, String> c) -> Flux.just("IGNORED"), CommandType.FT_LIST)
+                    .collectList().block();
+
+            assertThat(out).containsExactly("S");
+            boolean logged = logs.messages().stream()
+                    .anyMatch(m -> m.contains("Cluster routing failed for FT._LIST - falling back to superCall"));
+            assertThat(logged).isTrue();
+        }
+    }
+
+    private static <T> CompletableFuture<T> failedFuture(Throwable t) {
         CompletableFuture<T> cf = new CompletableFuture<>();
         cf.completeExceptionally(t);
         return cf;

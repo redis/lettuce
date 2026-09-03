@@ -21,7 +21,9 @@ import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortByArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
+import io.lettuce.test.resource.ModulesTestUri;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -76,8 +78,9 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
 
     private static RedisCommands<String, String> redis;
 
-    public RediSearchPrefixingStringCodecSafetyIntegrationTests() {
-        RedisURI uri = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+    @BeforeAll
+    static void setup() {
+        RedisURI uri = ModulesTestUri.create();
         client = RedisClient.create(uri);
         connection = client.connect(new PrefixingStringCodec(CODEC_PREFIX));
         redis = connection.sync();

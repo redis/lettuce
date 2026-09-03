@@ -25,7 +25,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * {@link SearchReply.SearchResult#getFields()}; a field that was not returned at all is represented by the absence of its key.
  *
  * @author Viktoriya Kutsarova
- * @since 7.7
+ * @since 7.8
  */
 public final class FieldValue {
 

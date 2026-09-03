@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
  * @author Viktoriya Kutsarova
  */
 @Tag(UNIT_TEST)
-class HybridReplyTest {
+class HybridReplyUnitTests {
 
     @Test
     void testEmptyHybridReply() {

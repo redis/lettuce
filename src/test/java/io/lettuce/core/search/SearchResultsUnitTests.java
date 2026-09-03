@@ -25,7 +25,7 @@ import io.lettuce.TestTags;
  * @author Tihomir Mateev
  */
 @Tag(TestTags.UNIT_TEST)
-class SearchResultsTest {
+class SearchResultsUnitTests {
 
     @Test
     void testEmptySearchResults() {

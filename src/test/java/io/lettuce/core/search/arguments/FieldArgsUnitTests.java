@@ -22,7 +22,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * @author Tihomir Mateev
  */
 @Tag(UNIT_TEST)
-class FieldArgsTest {
+class FieldArgsUnitTests {
 
     /**
      * Concrete implementation of FieldArgs for testing purposes.

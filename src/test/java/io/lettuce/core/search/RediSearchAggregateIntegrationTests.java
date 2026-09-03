@@ -2415,4 +2415,52 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(redis.ftDropindex("args-test-idx")).isEqualTo("OK");
     }
 
+    /**
+     * FT.AGGREGATE rows carry no document id: {@link SearchReply.SearchResult#getId()} is {@code null} on the plain and on the
+     * cursor-based path. Runs on RESP2 and RESP3 (see {@link RediSearchAggregateResp2IntegrationTests}). The key is only
+     * available when loaded explicitly via {@code __key}.
+     */
+    @Test
+    void shouldReturnNullIdsForAggregationRows() {
+        List<FieldArgs> fields = Arrays.asList(TextFieldArgs.builder().name("title").build(),
+                TagFieldArgs.builder().name("category").build());
+        CreateArgs createArgs = CreateArgs.builder().withPrefix("doc:").on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate("no-id-idx", createArgs, fields)).isEqualTo("OK");
+
+        Map<String, String> doc1 = new HashMap<>();
+        doc1.put("title", "iPhone 13");
+        doc1.put("category", "electronics");
+        assertThat(redis.hmset("doc:1", doc1)).isEqualTo("OK");
+
+        Map<String, String> doc2 = new HashMap<>();
+        doc2.put("title", "MacBook Pro");
+        doc2.put("category", "computers");
+        assertThat(redis.hmset("doc:2", doc2)).isEqualTo("OK");
+
+        // Plain aggregation: rows have the loaded fields but no id
+        AggregationReply<String> reply = redis.ftAggregate("no-id-idx", "*", AggregateArgs.builder().load("title").build());
+        assertThat(reply.getReplies()).hasSize(1);
+        List<SearchReply.SearchResult<String>> rows = reply.getReplies().get(0).getResults();
+        assertThat(rows).hasSize(2);
+        assertThat(rows).extracting(SearchReply.SearchResult::getId).containsOnlyNulls();
+        assertThat(rows).allSatisfy(row -> assertThat(row.getFields()).containsKey("title"));
+
+        // Cursor-based aggregation goes through the same row parser
+        AggregateArgs cursorArgs = AggregateArgs.builder().load("title").withCursor(AggregateArgs.WithCursor.of(1L)).build();
+        AggregationReply<String> firstPage = redis.ftAggregate("no-id-idx", "*", cursorArgs);
+        assertThat(firstPage.getReplies().get(0).getResults()).hasSize(1);
+        assertThat(firstPage.getReplies().get(0).getResults()).extracting(SearchReply.SearchResult::getId).containsOnlyNulls();
+        assertThat(firstPage.getCursor()).isPresent();
+
+        AggregationReply<String> secondPage = redis.ftCursorread("no-id-idx", firstPage.getCursor().get());
+        assertThat(secondPage.getReplies().get(0).getResults()).hasSize(1);
+        assertThat(secondPage.getReplies().get(0).getResults()).extracting(SearchReply.SearchResult::getId).containsOnlyNulls();
+
+        // The document key is only available when loaded explicitly
+        reply = redis.ftAggregate("no-id-idx", "*", AggregateArgs.builder().load("__key").build());
+        rows = reply.getReplies().get(0).getResults();
+        assertThat(rows).extracting(SearchReply.SearchResult::getId).containsOnlyNulls();
+        assertThat(rows).extracting(row -> row.getFields().get("__key").asString()).containsExactlyInAnyOrder("doc:1", "doc:2");
+    }
+
 }

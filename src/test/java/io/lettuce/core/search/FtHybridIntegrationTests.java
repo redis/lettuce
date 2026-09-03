@@ -320,19 +320,25 @@ public class FtHybridIntegrationTests {
 
         // Find Apple result and verify aggregations
         // Apple has products at $999 and $2499, so avg=1749, min=999, max=2499
+        boolean foundApple = false;
+        boolean foundSamsung = false;
         for (HybridReply.HybridResult<String> hybridResult : reply.getResults()) {
             Map<String, FieldValue> result = hybridResult.getFields();
-            if ("apple".equals(result.get("brand"))) {
+            if ("apple".equals(result.get("brand").asString())) {
+                foundApple = true;
                 assertThat(result.get("avg_price").asString()).isEqualTo("1749");
                 assertThat(result.get("min_price").asString()).isEqualTo("999");
                 assertThat(result.get("max_price").asString()).isEqualTo("2499");
-            } else if ("samsung".equals(result.get("brand"))) {
+            } else if ("samsung".equals(result.get("brand").asString())) {
+                foundSamsung = true;
                 // Samsung: $799 and $1299, avg=1049, min=799, max=1299
                 assertThat(result.get("avg_price").asString()).isEqualTo("1049");
                 assertThat(result.get("min_price").asString()).isEqualTo("799");
                 assertThat(result.get("max_price").asString()).isEqualTo("1299");
             }
         }
+        assertThat(foundApple).isTrue();
+        assertThat(foundSamsung).isTrue();
     }
 
     // ==================== TEST 8: Reducer QUANTILE ====================

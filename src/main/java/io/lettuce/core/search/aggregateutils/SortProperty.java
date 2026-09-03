@@ -11,7 +11,6 @@ import io.lettuce.core.annotations.Experimental;
 /**
  * Represents a sort property with direction for SORTBY operations in FT.HYBRID and FT.AGGREGATE commands.
  *
- * @param Key type.
  * @author Aleksandar Todorov
  * @since 7.5
  * @see SortBy
@@ -40,7 +39,6 @@ public class SortProperty {
      *
      * @param property the property to sort by
      * @param direction the sort direction
-     * @param Key type
      * @return new SortProperty instance
      */
     public static SortProperty of(String property, SortDirection direction) {

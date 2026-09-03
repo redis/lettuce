@@ -133,6 +133,7 @@ public class HybridReply<K> {
      * UTF-8 decoding would corrupt the value.
      *
      * @param <K> document key type
+     * @since 7.8
      */
     public static class HybridResult<K> {
 
@@ -144,7 +145,7 @@ public class HybridReply<K> {
          * Get the decoded document key.
          *
          * @return the document key, or {@code null} when the result does not represent an individual document
-         * @since 7.7
+         * @since 7.8
          */
         public K getId() {
             return id;

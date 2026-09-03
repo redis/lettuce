@@ -30,8 +30,8 @@ import java.util.Optional;
  *     &#64;code
  *     HybridArgs args = HybridArgs
  *             .builder().search(HybridSearchArgs.builder().query("comfortable shoes").build()).vectorSearch(HybridVectorArgs
- *                     .builder().field("@embedding").vector(vectorBlob).method(HybridVectorArgs.Knn.of(10)).build())
- *             .combine(Combiners.rrf().window(20).constant(60)).build();
+ *                     .builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10)).build())
+ *             .combine(Combiners.rrf().window(20).constant(60)).param("vec", vectorBlob).build();
  * }
  * </pre>
  *
@@ -161,6 +161,7 @@ public class HybridArgs {
          * @param name the parameter name
          * @param value the binary parameter value (e.g., vector data)
          * @return this builder
+         * @since 7.8
          */
         public Builder param(String name, byte[] value) {
             LettuceAssert.notNull(name, "Parameter name must not be null");

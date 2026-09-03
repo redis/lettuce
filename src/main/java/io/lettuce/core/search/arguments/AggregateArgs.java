@@ -384,6 +384,7 @@ public class AggregateArgs {
          * @param name the parameter name (referenced as $name in query)
          * @param value the binary parameter value (e.g., vector data)
          * @return the builder.
+         * @since 7.8
          */
         public Builder param(String name, byte[] value) {
             args.params.put(name, value);

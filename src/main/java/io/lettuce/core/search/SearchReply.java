@@ -17,8 +17,8 @@ import java.util.Map;
  * Represents the results of a Redis FT.SEARCH command.
  * <p>
  * This class encapsulates the search results including the total count of matching documents and a list of individual search
- * result documents. Each document contains the document ID and optionally the document fields and score depending on the search
- * arguments used.
+ * result documents. Each document contains the document ID and optionally the document fields, score and sort key depending on
+ * the search arguments used.
  *
  * @param <K> Key type.
  * @author Tihomir Mateev
@@ -170,6 +170,8 @@ public class SearchReply<K> {
 
         private Double score;
 
+        private String sortKey;
+
         private final Map<String, FieldValue> fields = new LinkedHashMap<>();
 
         /**
@@ -181,14 +183,20 @@ public class SearchReply<K> {
             this.id = id;
         }
 
+        /**
+         * Creates a new SearchResult without a document ID, for rows that carry none (aggregation results).
+         */
         public SearchResult() {
             this.id = null;
         }
 
         /**
          * Gets the document ID.
+         * <p>
+         * Rows of {@code FT.AGGREGATE} and {@code FT.CURSOR READ} replies carry no document ID, so this is {@code null} for
+         * every result of an {@link AggregationReply}. Load the key explicitly ({@code LOAD 1 __key}) if it is needed there.
          *
-         * @return the document ID
+         * @return the document ID, or {@code null} if the reply carries no document IDs (aggregation results)
          */
         public K getId() {
             return id;
@@ -212,6 +220,31 @@ public class SearchReply<K> {
          */
         void setScore(Double score) {
             this.score = score;
+        }
+
+        /**
+         * Gets the sort key of the document, as serialized by the server.
+         * <p>
+         * This is only available if WITHSORTKEYS was used together with SORTBY. The server prefixes a textual sort key with
+         * {@code $} (normalized to lower case unless the attribute was declared {@code UNF}, for example {@code $hello world})
+         * and a numeric sort key with {@code #} (for example {@code #10}), so the type of the sorting attribute can be told
+         * apart. It is mostly useful for merging sorted results coming from several indexes or shards.
+         *
+         * @return the sort key, or {@code null} if WITHSORTKEYS was not used, no SORTBY was given, or the document has no value
+         *         for the sorting attribute
+         * @since 7.8
+         */
+        public String getSortKey() {
+            return sortKey;
+        }
+
+        /**
+         * Sets the sort key of the document.
+         *
+         * @param sortKey the sort key as returned by the server
+         */
+        void setSortKey(String sortKey) {
+            this.sortKey = sortKey;
         }
 
         /**

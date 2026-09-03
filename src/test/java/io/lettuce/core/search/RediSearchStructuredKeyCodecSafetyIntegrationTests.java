@@ -20,7 +20,9 @@ import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortByArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
+import io.lettuce.test.resource.ModulesTestUri;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -39,17 +41,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Mirror of {@link RediSearchPrefixingStringCodecSafetyIntegrationTests} using a connection codec whose key type is a
- * structured POJO instead of {@link String}. {@link FieldArgs} sends schema field names raw at {@code FT.CREATE}; the read-side
- * identifiers ({@code INFIELDS}, {@code RETURN}, {@code SORTBY}, {@code LOAD}) are {@code K}-typed and routed through
- * {@code codec.encodeKey} at {@code FT.SEARCH}/{@code FT.AGGREGATE} time. They are passed as "bare" {@link RedisKey} instances
- * built via {@link #field(String)}; {@link RedisKeyCodec} encodes a bare key as its {@code id} bytes only (no tenant/entity
- * prefix), so the read-side bytes match the raw create-side field name. If a read clause skips the codec (or mangles a bare
- * key), the bytes diverge, the schema lookup fails and the assertions below break. Covers both {@code ON HASH} and
- * {@code ON JSON} indexes: {@code HSET}/{@code HMSET} route hash field names and values through the connection's
- * {@link RedisCodec}; {@code JSON.SET} sends its payload verbatim via {@link io.lettuce.core.protocol.CommandArgs#add(String)}
- * (or {@code add(byte[])} for {@link io.lettuce.core.json.JsonValue}), bypassing the value codec entirely. The JSON schema uses
- * raw JSONPath names (e.g. {@code $.title}) aliased back to plain field names so the same read-side identifiers exercise both
- * indexes.
+ * structured POJO instead of {@link String}. {@link FieldArgs} sends schema field names raw at {@code FT.CREATE}, and the
+ * read-side identifiers ({@code INFIELDS}, {@code RETURN}, {@code SORTBY}, {@code LOAD}) are plain {@link String}s sent raw at
+ * {@code FT.SEARCH}/{@code FT.AGGREGATE} time — none of them route through the connection codec, so they resolve against the
+ * schema regardless of the connection's key type ({@code INKEYS} is the one legitimately {@code K}-typed read-side surface).
+ * The hash document fields, however, are written through the codec: the tests pass them as "bare" {@link RedisKey} instances
+ * built via {@link #field(String)}, and {@link RedisKeyCodec} encodes a bare key as its {@code id} bytes only (no tenant/entity
+ * prefix), keeping the stored hash field names byte-identical to the raw schema names. If the write-side key routing changes
+ * (or a bare key is mangled), the stored fields diverge from the schema, the lookup fails and the assertions below break.
+ * Covers both {@code ON HASH} and {@code ON JSON} indexes: {@code HSET}/{@code HMSET} route hash field names and values through
+ * the connection's {@link RedisCodec}; {@code JSON.SET} sends its payload verbatim via
+ * {@link io.lettuce.core.protocol.CommandArgs#add(String)} (or {@code add(byte[])} for {@link io.lettuce.core.json.JsonValue}),
+ * bypassing the value codec entirely. The JSON schema uses raw JSONPath names (e.g. {@code $.title}) aliased back to plain
+ * field names so the same read-side identifiers exercise both indexes.
  *
  * @author Viktoriya Kutsarova
  */
@@ -79,8 +83,9 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
 
     private static RedisCommands<RedisKey, String> redis;
 
-    public RediSearchStructuredKeyCodecSafetyIntegrationTests() {
-        RedisURI uri = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+    @BeforeAll
+    static void setup() {
+        RedisURI uri = ModulesTestUri.create();
         client = RedisClient.create(uri);
         connection = client.connect(new RedisKeyCodec());
         redis = connection.sync();
@@ -234,8 +239,8 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
     }
 
     /**
-     * {@code SORTBY} names a {@code SORTABLE} schema field. {@link SortByArgs} routes the attribute through {@code addKey}; a
-     * bare {@link RedisKey} round-trips as plain {@code "title"} bytes and matches the schema attribute on both target types.
+     * {@code SORTBY} names a {@code SORTABLE} schema field. {@link SortByArgs} sends the attribute raw as a plain
+     * {@link String}, so it matches the schema attribute on both target types regardless of the connection's key type.
      */
     @ParameterizedTest
     @ValueSource(strings = { HASH_INDEX, JSON_INDEX })

@@ -9,8 +9,10 @@ package io.lettuce.core.search.arguments;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.TestTags;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.search.arguments.AggregateArgs.GroupBy;
@@ -24,7 +26,8 @@ import io.lettuce.core.search.arguments.AggregateArgs.SortDirection;
  *
  * @author Viktoriya Kutsarova
  */
-class AggregateArgsTest {
+@Tag(TestTags.UNIT_TEST)
+class AggregateArgsUnitTests {
 
     // -------------------------------------------------------------------------
     // GroupBy
