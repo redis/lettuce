@@ -6,7 +6,8 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.protocol.CommandKeyword.*;
+import static io.lettuce.core.protocol.CommandKeyword.LIMIT;
+import static io.lettuce.core.protocol.CommandKeyword.REV;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
