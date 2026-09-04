@@ -568,7 +568,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      *        {@link ZRange#byLex(Range)}), must not be {@code null}.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @throws IllegalArgumentException if {@code key} or {@code range} is {@code null}.
-     * @since 7.7
+     * @since 7.8
      */
     AsyncExecutions<List<V>> zrange(K key, ZRange<? extends V> range);
 
@@ -583,7 +583,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @throws IllegalArgumentException if {@code key}, {@code range} or {@code args} is {@code null}, or if a limit is applied
      *         to a {@link ZRange#byIndex(long, long)} range.
-     * @since 7.7
+     * @since 7.8
      */
     AsyncExecutions<List<V>> zrange(K key, ZRange<? extends V> range, ZRangeArgs args);
 
@@ -597,7 +597,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements with their scores in the specified range.
      * @throws IllegalArgumentException if {@code key} or {@code range} is {@code null}, or if {@code range} is a
      *         {@link ZRange#byLex(Range)} range.
-     * @since 7.7
+     * @since 7.8
      */
     AsyncExecutions<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange<? extends V> range);
 
@@ -612,7 +612,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements with their scores in the specified range.
      * @throws IllegalArgumentException if {@code key}, {@code range} or {@code args} is {@code null}, if {@code range} is a
      *         {@link ZRange#byLex(Range)} range, or if a limit is applied to a {@link ZRange#byIndex(long, long)} range.
-     * @since 7.7
+     * @since 7.8
      */
     AsyncExecutions<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange<? extends V> range, ZRangeArgs args);
 
