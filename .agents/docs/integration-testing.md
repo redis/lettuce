@@ -146,7 +146,9 @@ Placement varies by area. Newer command areas keep the overloads together in the
 area package (e.g. all of `RedisArray*IntegrationTests` under `core/array/`); the
 classic layout splits them out (`core/commands/` for base + RESP2, `core/commands/reactive/`,
 `core/commands/transactional/`, and `core/cluster/commands/` for cluster). Naming
-follows the `*IntegrationTests` → Failsafe convention (see the published guide).
+follows the `*IntegrationTests` → Failsafe convention (see the published guide). A
+singular `*Test` suffix also lands in Failsafe, because Surefire excludes it, so a unit
+test named that way silently needs the Docker environment — name unit tests `*UnitTests`.
 
 Not every command needs every overload — add the ones that carry real risk for that
 command (e.g. RESP2 when the reply shape differs between protocols, cluster when

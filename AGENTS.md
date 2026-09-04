@@ -131,7 +131,10 @@ mvn formatter:format                 # applies formatting.xml; do NOT submit for
 ## Testing Rules
 
 - **The file-name suffix picks the runner:** `*UnitTests` (Surefire, no server),
-  `*IntegrationTests` (Failsafe, needs Redis). Prefer those suffixes.
+  `*IntegrationTests` (Failsafe, needs Redis). Prefer those suffixes. A singular
+  `*Test` suffix is excluded by Surefire and picked up by Failsafe instead, so such a
+  class never runs in `mvn test`; it only runs with the integration tests (Docker
+  required) or when named explicitly via `-Dtest=`. Name pure unit tests `*UnitTests`.
 - Integration tests read host/port/TLS from `TestSettings` / `TlsSettings` — never
   hard-code them.
 - Everything else about testing (topologies, TLS/mTLS, layout, CI) lives in
