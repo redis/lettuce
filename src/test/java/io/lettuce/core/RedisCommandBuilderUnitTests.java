@@ -103,6 +103,119 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructZrangeByIndex() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byIndex(0, 2));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "0\r\n" + "$1\r\n" + "2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByIndexRev() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byIndex(0, 2), ZRangeArgs.Builder.rev());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        // index boundaries are not swapped with REV
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "0\r\n" + "$1\r\n" + "2\r\n" + "$3\r\n" + "REV\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScore() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byScore(Range.create(200, 400)));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$3\r\n" + "200\r\n" + "$3\r\n" + "400\r\n" + "$7\r\n" + "BYSCORE\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScoreRev() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byScore(Range.create(200, 400)),
+                ZRangeArgs.Builder.rev());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        // score boundaries are emitted max-first with REV
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$3\r\n" + "400\r\n" + "$3\r\n" + "200\r\n" + "$7\r\n" + "BYSCORE\r\n" + "$3\r\n" + "REV\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScoreWithBoundaries() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY,
+                ZRange.byScore(Range.from(Range.Boundary.excluding(100), Range.Boundary.unbounded())));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$4\r\n" + "(100\r\n" + "$4\r\n" + "+inf\r\n" + "$7\r\n" + "BYSCORE\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByLexWithLimit() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byLex(Range.create("banana", "date")),
+                ZRangeArgs.Builder.limit(1, 2));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "[banana\r\n" + "$5\r\n" + "[date\r\n"
+                        + "$5\r\n" + "BYLEX\r\n" + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "1\r\n" + "$1\r\n" + "2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeWithScoresByScore() {
+
+        Command<String, String, ?> command = sut.zrangeWithScores(MY_KEY, ZRange.byScore(Range.create(200, 300)));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$3\r\n" + "200\r\n" + "$3\r\n" + "300\r\n" + "$7\r\n" + "BYSCORE\r\n" + "$10\r\n" + "WITHSCORES\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeWithScoresByIndexRev() {
+
+        Command<String, String, ?> command = sut.zrangeWithScores(MY_KEY, ZRange.byIndex(0, 1), ZRangeArgs.Builder.rev());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "0\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "REV\r\n" + "$10\r\n" + "WITHSCORES\r\n");
+    }
+
+    @Test
+    void zrangeShouldRejectLimitWithIndexRange() {
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, ZRange.byIndex(0, 2), ZRangeArgs.Builder.limit(0, 1)))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("LIMIT requires a BYSCORE or BYLEX range");
+    }
+
+    @Test
+    void zrangeWithScoresShouldRejectLexRange() {
+        assertThatThrownBy(() -> sut.zrangeWithScores(MY_KEY, ZRange.byLex(Range.create("a", "b"))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("WITHSCORES is not supported with a BYLEX range");
+    }
+
+    @Test
+    void zrangeShouldRejectNullRangeAndArgs() {
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, ZRange.byIndex(0, 2), null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void shouldCorrectlyConstructXreadgroup() {
 
         Command<String, String, ?> command = sut.xreadgroup(Consumer.from("a", "b"), new XReadArgs(),
