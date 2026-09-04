@@ -18,7 +18,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * {@link ZRangeArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Yordan Tsintsov
- * @since 7.7
+ * @since 7.8
  */
 public class ZRangeArgs implements CompositeArgument {
 
@@ -29,7 +29,7 @@ public class ZRangeArgs implements CompositeArgument {
     /**
      * Builder entry points for {@link ZRangeArgs}.
      *
-     * @since 7.7
+     * @since 7.8
      */
     public static class Builder {
 
@@ -43,7 +43,7 @@ public class ZRangeArgs implements CompositeArgument {
          * Creates new {@link ZRangeArgs} and enabling {@literal REV}.
          *
          * @return new {@link ZRangeArgs} with {@literal REV} enabled.
-         * @since 7.7
+         * @since 7.8
          */
         public static ZRangeArgs rev() {
             return new ZRangeArgs().rev();
@@ -55,7 +55,7 @@ public class ZRangeArgs implements CompositeArgument {
          * @param offset the offset within the range.
          * @param count the number of members to return, {@code -1} to return all members starting at {@code offset}.
          * @return new {@link ZRangeArgs} with the {@literal LIMIT} applied.
-         * @since 7.7
+         * @since 7.8
          */
         public static ZRangeArgs limit(long offset, long count) {
             return new ZRangeArgs().limit(offset, count);
@@ -66,7 +66,7 @@ public class ZRangeArgs implements CompositeArgument {
          *
          * @param limit the limit, must not be {@code null}.
          * @return new {@link ZRangeArgs} with the {@link Limit} applied.
-         * @since 7.7
+         * @since 7.8
          */
         public static ZRangeArgs limit(Limit limit) {
             return new ZRangeArgs().limit(limit);
@@ -79,7 +79,7 @@ public class ZRangeArgs implements CompositeArgument {
      * order). The range boundaries keep their lower-to-upper meaning.
      *
      * @return {@code this} {@link ZRangeArgs}.
-     * @since 7.7
+     * @since 7.8
      */
     public ZRangeArgs rev() {
 
@@ -94,7 +94,7 @@ public class ZRangeArgs implements CompositeArgument {
      * @param offset the offset within the range.
      * @param count the number of members to return, {@code -1} to return all members starting at {@code offset}.
      * @return {@code this} {@link ZRangeArgs}.
-     * @since 7.7
+     * @since 7.8
      */
     public ZRangeArgs limit(long offset, long count) {
         return limit(Limit.create(offset, count));
@@ -106,7 +106,7 @@ public class ZRangeArgs implements CompositeArgument {
      *
      * @param limit the limit, must not be {@code null}.
      * @return {@code this} {@link ZRangeArgs}.
-     * @since 7.7
+     * @since 7.8
      */
     public ZRangeArgs limit(Limit limit) {
 
@@ -120,7 +120,7 @@ public class ZRangeArgs implements CompositeArgument {
      * Return whether {@literal REV} is enabled.
      *
      * @return {@code true} if {@literal REV} is enabled.
-     * @since 7.7
+     * @since 7.8
      */
     public boolean isRev() {
         return rev;
@@ -130,7 +130,7 @@ public class ZRangeArgs implements CompositeArgument {
      * Return the {@link Limit}.
      *
      * @return the {@link Limit}, {@link Limit#unlimited()} if not set.
-     * @since 7.7
+     * @since 7.8
      */
     public Limit getLimit() {
         return limit;

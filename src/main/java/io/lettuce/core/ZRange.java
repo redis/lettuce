@@ -18,7 +18,7 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @param <T> Value type.
  * @author Yordan Tsintsov
- * @since 7.7
+ * @since 7.8
  */
 public final class ZRange<T> {
 
@@ -46,7 +46,7 @@ public final class ZRange<T> {
      * @param stop the stop index, inclusive.
      * @param <T> Value type.
      * @return the {@link ZRange} selecting members between {@code start} and {@code stop}.
-     * @since 7.7
+     * @since 7.8
      */
     public static <T> ZRange<T> byIndex(long start, long stop) {
         return new ZRange<>(RangeType.INDEX, start, stop, null);
@@ -60,7 +60,7 @@ public final class ZRange<T> {
      * @param <T> Value type.
      * @return the {@link ZRange} selecting members with a score within {@code range}.
      * @throws IllegalArgumentException if {@code range} is {@code null}.
-     * @since 7.7
+     * @since 7.8
      */
     public static <T> ZRange<T> byScore(Range<? extends Number> range) {
 
@@ -77,7 +77,7 @@ public final class ZRange<T> {
      * @param <T> Value type.
      * @return the {@link ZRange} selecting members within {@code range}.
      * @throws IllegalArgumentException if {@code range} is {@code null}.
-     * @since 7.7
+     * @since 7.8
      */
     public static <T> ZRange<T> byLex(Range<T> range) {
 
