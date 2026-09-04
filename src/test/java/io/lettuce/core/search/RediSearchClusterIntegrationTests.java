@@ -87,12 +87,11 @@ public class RediSearchClusterIntegrationTests {
     @Test
     void testFtSearchAcrossMultipleShards() {
         // Create field definitions
-        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
-        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
-        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
+        FieldArgs nameField = TextFieldArgs.builder().name("name").build();
+        FieldArgs categoryField = TagFieldArgs.builder().name("category").build();
+        FieldArgs priceField = NumericFieldArgs.builder().name("price").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PRODUCT_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(PRODUCT_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         // Create index on all cluster nodes
         assertThat(redis.ftCreate(PRODUCTS_INDEX, createArgs, Arrays.asList(nameField, categoryField, priceField)))
@@ -152,25 +151,25 @@ public class RediSearchClusterIntegrationTests {
         redis.hmset(productKeys[5], phone);
 
         // Test 1: Search for all electronics across cluster
-        SearchReply<String, String> searchResults = redis.ftSearch(PRODUCTS_INDEX, "@category:{electronics}");
+        SearchReply<String> searchResults = redis.ftSearch(PRODUCTS_INDEX, "@category:{electronics}");
 
         // Verify we get results - should find laptop, mouse, keyboard, monitor
         assertThat(searchResults.getCount()).isEqualTo(4);
         assertThat(searchResults.getResults()).hasSize(4);
 
         // Test 2: Search with price range across cluster
-        SearchArgs<String, String> priceSearchArgs = SearchArgs.<String, String> builder().build();
-        SearchReply<String, String> priceResults = redis.ftSearch(PRODUCTS_INDEX, "@price:[100 500]", priceSearchArgs);
+        SearchArgs<String> priceSearchArgs = SearchArgs.<String> builder().build();
+        SearchReply<String> priceResults = redis.ftSearch(PRODUCTS_INDEX, "@price:[100 500]", priceSearchArgs);
 
         // Should find keyboard, monitor, tablet (prices 149.99, 399.99, 299.99)
         assertThat(priceResults.getCount()).isEqualTo(3);
 
         // Test 3: Text search across cluster
-        SearchReply<String, String> textResults = redis.ftSearch(PRODUCTS_INDEX, "@name:Gaming");
+        SearchReply<String> textResults = redis.ftSearch(PRODUCTS_INDEX, "@name:Gaming");
 
         // Should find only the Gaming Laptop
         assertThat(textResults.getCount()).isEqualTo(1);
-        assertThat(textResults.getResults().get(0).getFields().get("name")).isEqualTo("Gaming Laptop");
+        assertThat(textResults.getResults().get(0).getFields().get("name").asString()).isEqualTo("Gaming Laptop");
 
         // Cleanup
         redis.ftDropindex(PRODUCTS_INDEX);
@@ -183,13 +182,12 @@ public class RediSearchClusterIntegrationTests {
     @Test
     void testFtCursorAcrossMultipleShards() {
         // Create field definitions for books
-        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
-        FieldArgs<String> authorField = TagFieldArgs.<String> builder().name("author").build();
-        FieldArgs<String> yearField = NumericFieldArgs.<String> builder().name("year").sortable().build();
-        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").sortable().build();
+        FieldArgs titleField = TextFieldArgs.builder().name("title").build();
+        FieldArgs authorField = TagFieldArgs.builder().name("author").build();
+        FieldArgs yearField = NumericFieldArgs.builder().name("year").sortable().build();
+        FieldArgs ratingField = NumericFieldArgs.builder().name("rating").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(BOOK_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
+        CreateArgs createArgs = CreateArgs.builder().withPrefix(BOOK_PREFIX).on(CreateArgs.TargetType.HASH).build();
 
         // Create index on cluster
         String createResult = redis.ftCreate(BOOKS_INDEX, createArgs,
@@ -218,14 +216,13 @@ public class RediSearchClusterIntegrationTests {
         }
 
         // Test aggregation with cursor - group by author and get average rating
-        AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()
-                .groupBy(AggregateArgs.GroupBy.<String, String> of("author")
-                        .reduce(AggregateArgs.Reducer.<String, String> avg("@rating").as("avg_rating")))
+        AggregateArgs aggregateArgs = AggregateArgs.builder()
+                .groupBy(AggregateArgs.GroupBy.of("author").reduce(AggregateArgs.Reducer.avg("@rating").as("avg_rating")))
                 .withCursor(AggregateArgs.WithCursor.of(2L)) // Small batch size to test cursor functionality
                 .build();
 
         // Execute aggregation with cursor
-        AggregationReply<String, String> aggregateResults = redis.ftAggregate(BOOKS_INDEX, "*", aggregateArgs);
+        AggregationReply<String> aggregateResults = redis.ftAggregate(BOOKS_INDEX, "*", aggregateArgs);
 
         // Verify we get results with cursor
         assertThat(aggregateResults).isNotNull();
@@ -234,8 +231,7 @@ public class RediSearchClusterIntegrationTests {
         // Test cursor read functionality if cursor is available
         if (aggregateResults.getCursor().isPresent() && aggregateResults.getCursor().get().getCursorId() > 0) {
             // Read next batch using cursor
-            AggregationReply<String, String> cursorResults = redis.ftCursorread(BOOKS_INDEX,
-                    aggregateResults.getCursor().get());
+            AggregationReply<String> cursorResults = redis.ftCursorread(BOOKS_INDEX, aggregateResults.getCursor().get());
 
             // Verify cursor read works
             assertThat(cursorResults).isNotNull();
