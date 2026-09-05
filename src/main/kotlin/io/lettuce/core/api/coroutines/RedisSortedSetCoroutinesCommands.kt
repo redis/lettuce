@@ -523,6 +523,56 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     fun zrangeWithScores(key: K, start: Long, stop: Long): Flow<ScoredValue<V>>
 
     /**
+     * Return a range of members in a sorted set using the unified range syntax, by index, by score (`BYSCORE`) or by
+     * lexicographical order (`BYLEX`).
+     *
+     * @param key the key.
+     * @param range the range selector ([ZRange.byIndex], [ZRange.byScore] or [ZRange.byLex]).
+     * @return V array-reply list of elements in the specified range.
+     * @since 7.7
+     */
+    fun zrange(key: K, range: ZRange<out V>): Flow<V>
+
+    /**
+     * Return a range of members in a sorted set using the unified range syntax, by index, by score (`BYSCORE`) or by
+     * lexicographical order (`BYLEX`), applying [ZRangeArgs] such as `REV` and `LIMIT`.
+     *
+     * @param key the key.
+     * @param range the range selector ([ZRange.byIndex], [ZRange.byScore] or [ZRange.byLex]).
+     * @param args the command arguments.
+     * @return V array-reply list of elements in the specified range.
+     * @throws IllegalArgumentException if a limit is applied to a [ZRange.byIndex] range.
+     * @since 7.7
+     */
+    fun zrange(key: K, range: ZRange<out V>, args: ZRangeArgs): Flow<V>
+
+    /**
+     * Return a range of members with scores in a sorted set using the unified range syntax, by index or by score
+     * (`BYSCORE`).
+     *
+     * @param key the key.
+     * @param range the range selector ([ZRange.byIndex] or [ZRange.byScore]).
+     * @return ScoredValue<V> array-reply list of elements with their scores in the specified range.
+     * @throws IllegalArgumentException if `range` is a [ZRange.byLex] range.
+     * @since 7.7
+     */
+    fun zrangeWithScores(key: K, range: ZRange<out V>): Flow<ScoredValue<V>>
+
+    /**
+     * Return a range of members with scores in a sorted set using the unified range syntax, by index or by score
+     * (`BYSCORE`), applying [ZRangeArgs] such as `REV` and `LIMIT`.
+     *
+     * @param key the key.
+     * @param range the range selector ([ZRange.byIndex] or [ZRange.byScore]).
+     * @param args the command arguments.
+     * @return ScoredValue<V> array-reply list of elements with their scores in the specified range.
+     * @throws IllegalArgumentException if `range` is a [ZRange.byLex] range, or if a limit is applied to a
+     *     [ZRange.byIndex] range.
+     * @since 7.7
+     */
+    fun zrangeWithScores(key: K, range: ZRange<out V>, args: ZRangeArgs): Flow<ScoredValue<V>>
+
+    /**
      * Return a range of members in a sorted set, by lexicographical range.
      *
      * @param key the key.

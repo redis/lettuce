@@ -3,6 +3,7 @@
 
 ## What's new in Lettuce 7.8
 
+- Support for the unified [`ZRANGE`](https://redis.io/docs/latest/commands/zrange/) syntax introduced in Redis 6.2 through new `zrange` and `zrangeWithScores` overloads accepting `ZRange` (an index, score `BYSCORE` or lexicographical `BYLEX` range) and `ZRangeArgs` (`REV`, `LIMIT`), available in the sync, async, reactive and Kotlin APIs — a single entry point covering the `ZREVRANGE`, `ZRANGEBYSCORE`, `ZREVRANGEBYSCORE`, `ZRANGEBYLEX` and `ZREVRANGEBYLEX` variants
 - Deprecated the server-assisted client-side caching support (`ClientSideCaching`, `CacheFrontend`, `CacheAccessor`, `RedisCache` in `io.lettuce.core.support.caching`). This implementation is legacy and incomplete and is scheduled for removal in a future major release. There is no replacement yet — a redesigned client-side caching API is planned.
 - Fixed `ScriptOutputType.OBJECT` decoding so top-level scalar responses are returned directly instead of being treated as collections. Top-level integer responses now return `Long` instead of a one-element `List<Long>`; RESP arrays remain lists.
 - Fixed `XAUTOCLAIM` reply decoding for pending entries that were deleted from the stream (the third reply element added in Redis 7.0). With `JUSTID`, those deleted IDs are no longer misreported as claimed messages through `ClaimedMessages.getMessages()`; they are now exposed through the new `ClaimedMessages.getDeletedIds()`, which returns an empty list on Redis before 7.0.

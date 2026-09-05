@@ -4223,6 +4223,72 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), args);
     }
 
+    Command<K, V, List<V>> zrange(K key, ZRange<? extends V> range) {
+        return zrange(key, range, new ZRangeArgs());
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZRange<? extends V> range, ZRangeArgs args) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(args, "ZRangeArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key);
+        addZRange(commandArgs, range, args);
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), commandArgs);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange<? extends V> range) {
+        return zrangeWithScores(key, range, new ZRangeArgs());
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange<? extends V> range, ZRangeArgs args) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(args, "ZRangeArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(range.getRangeType() != ZRange.RangeType.LEX, "WITHSCORES is not supported with a BYLEX range");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key);
+        addZRange(commandArgs, range, args);
+        commandArgs.add(WITHSCORES);
+        return createCommand(ZRANGE, new ScoredValueListOutput<>(codec), commandArgs);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addZRange(CommandArgs<K, V> commandArgs, ZRange<? extends V> range, ZRangeArgs args) {
+
+        ZRange.RangeType rangeType = range.getRangeType();
+        LettuceAssert.isTrue(!args.getLimit().isLimited() || rangeType != ZRange.RangeType.INDEX,
+                "LIMIT requires a BYSCORE or BYLEX range");
+
+        boolean rev = args.isRev();
+
+        switch (rangeType) {
+            case INDEX:
+                commandArgs.add(range.getStart()).add(range.getStop());
+                break;
+            case SCORE:
+                Range<? extends Number> scoreRange = (Range<? extends Number>) range.getRange();
+                if (rev) {
+                    commandArgs.add(max(scoreRange)).add(min(scoreRange));
+                } else {
+                    commandArgs.add(min(scoreRange)).add(max(scoreRange));
+                }
+                commandArgs.add(BYSCORE);
+                break;
+            case LEX:
+                Range<? extends V> lexRange = (Range<? extends V>) range.getRange();
+                if (rev) {
+                    commandArgs.add(maxValue(lexRange)).add(minValue(lexRange));
+                } else {
+                    commandArgs.add(minValue(lexRange)).add(maxValue(lexRange));
+                }
+                commandArgs.add(BYLEX);
+                break;
+        }
+
+        args.build(commandArgs);
+    }
+
     RedisCommand<K, V, List<V>> zrangebylex(K key, String min, String max) {
         notNullKey(key);
         notNullMinMax(min, max);

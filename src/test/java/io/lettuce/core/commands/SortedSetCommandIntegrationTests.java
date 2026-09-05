@@ -53,6 +53,7 @@ import io.lettuce.test.condition.RedisConditions;
  * @author Mark Paluch
  * @author dengliming
  * @author Mikhael Sokolov
+ * @author Yordan Tsintsov
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -412,6 +413,57 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     void zrangeWithScores() {
         setup();
         assertThat(redis.zrangeWithScores(key, 0, -1)).isEqualTo(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c")));
+    }
+
+    @Test
+    void zrangeUnifiedByIndex() {
+        setup();
+
+        assertThat(redis.zrange(key, ZRange.byIndex(0, 1))).isEqualTo(list("a", "b"));
+        assertThat(redis.zrange(key, ZRange.byIndex(0, -1))).isEqualTo(list("a", "b", "c"));
+        assertThat(redis.zrange(key, ZRange.byIndex(0, 1), ZRangeArgs.Builder.rev())).isEqualTo(list("c", "b"));
+    }
+
+    @Test
+    void zrangeUnifiedByScore() {
+        setup();
+
+        assertThat(redis.zrange(key, ZRange.byScore(Range.create(2, 3)))).isEqualTo(list("b", "c"));
+        assertThat(redis.zrange(key, ZRange.byScore(Range.from(excluding(1), unbounded())))).isEqualTo(list("b", "c"));
+        assertThat(redis.zrange(key, ZRange.byScore(Range.create(2, 3)), ZRangeArgs.Builder.rev())).isEqualTo(list("c", "b"));
+        assertThat(redis.zrange(key, ZRange.byScore(Range.unbounded()), ZRangeArgs.Builder.limit(1, 2)))
+                .isEqualTo(list("b", "c"));
+        assertThat(redis.zrange(key, ZRange.byScore(Range.unbounded()), ZRangeArgs.Builder.rev().limit(1, 2)))
+                .isEqualTo(list("b", "a"));
+    }
+
+    @Test
+    void zrangeUnifiedByLex() {
+        redis.zadd(key, 0.0, "a", 0.0, "b", 0.0, "c");
+
+        assertThat(redis.zrange(key, ZRange.byLex(Range.create("a", "b")))).isEqualTo(list("a", "b"));
+        assertThat(redis.zrange(key, ZRange.byLex(Range.from(excluding("a"), unbounded())))).isEqualTo(list("b", "c"));
+        assertThat(redis.zrange(key, ZRange.byLex(Range.create("a", "b")), ZRangeArgs.Builder.rev())).isEqualTo(list("b", "a"));
+        assertThat(redis.zrange(key, ZRange.byLex(Range.unbounded()), ZRangeArgs.Builder.limit(1, 2)))
+                .isEqualTo(list("b", "c"));
+    }
+
+    @Test
+    void zrangeUnifiedWithScores() {
+        setup();
+
+        assertThat(redis.zrangeWithScores(key, ZRange.byIndex(0, -1)))
+                .isEqualTo(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c")));
+        assertThat(redis.zrangeWithScores(key, ZRange.byScore(Range.create(2, 3)), ZRangeArgs.Builder.rev()))
+                .isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b")));
+    }
+
+    @Test
+    void zrangeUnifiedShouldRejectInvalidCombinations() {
+        assertThatThrownBy(() -> redis.zrange(key, ZRange.byIndex(0, 1), ZRangeArgs.Builder.limit(0, 1)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.zrangeWithScores(key, ZRange.byLex(Range.create("a", "b"))))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
