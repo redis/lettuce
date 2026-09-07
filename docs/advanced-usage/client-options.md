@@ -6,6 +6,10 @@ ClientOptions are immutable. Connections inherit the current options at
 the moment the connection is created. Changes to options will not affect
 existing connections.
 
+RedisClient uses the same options throughout connection initialization, including
+asynchronous Sentinel retries. Calling `setOptions` while a connection is being
+initialized applies the new options to subsequent connections.
+
 ``` java
 client.setOptions(ClientOptions.builder()
                        .autoReconnect(false)
