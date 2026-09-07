@@ -16,7 +16,6 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
@@ -106,11 +105,9 @@ public class RedisTimeSeriesReactiveIntegrationTests extends RedisTimeSeriesInte
      * Confirmed independently against {@code
      * reactive().cfInfo("does-not-exist")}, which exhibits the identical hang, so this is not specific to {@code TS.MGET} or to
      * this PR. Fixed in {@code redis/lettuce} PR #3851, which reorders {@code doOnComplete()} to check {@code hasError()}
-     * before {@code get()}; this test is disabled until that PR merges.
+     * before {@code get()}.
      */
     @Test
-    @Disabled("Blocked by RedisPublisher reactive error-handling bug; fixed in redis/lettuce#3851. "
-            + "Re-enable once that fix is merged.")
     @Override
     void tsMGetWithoutEqualityFilterFails() {
         prepareMGetFixture();
