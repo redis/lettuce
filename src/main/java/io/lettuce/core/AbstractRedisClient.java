@@ -79,6 +79,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Jongyeol Choi
  * @author Poorva Gokhale
  * @author Tihomir Mateev
+ * @author Seongju Hong
  * @since 3.0
  * @see ClientResources
  * @see DefaultClientResources
