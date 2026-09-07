@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -65,6 +66,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
     @Override
     public CompletableFuture<StatefulRedisMasterReplicaConnection<K, V>> connectAsync() {
 
+        ClientOptions clientOptions = redisClient.getOptions();
         ConnectionFuture<StatefulRedisConnection<K, V>> initialConnection = redisClient.connectAsync(codec, redisURI);
         Mono<StatefulRedisMasterReplicaConnection<K, V>> connect = Mono.fromCompletionStage(initialConnection)
                 .flatMap(nodeConnection -> {
@@ -76,7 +78,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
                     return Mono.fromCompletionStage(topologyProvider.getNodesAsync())
                             .flatMap(nodes -> getMasterConnectionAndUri(nodes, Tuples.of(redisURI, nodeConnection), codec));
                 }).flatMap(connectionAndUri -> {
-                    return initializeConnection(codec, connectionAndUri);
+                    return initializeConnection(codec, connectionAndUri, clientOptions);
                 });
 
         return connect.onErrorResume(t -> {
@@ -113,7 +115,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
     @SuppressWarnings("unchecked")
     private Mono<StatefulRedisMasterReplicaConnection<K, V>> initializeConnection(RedisCodec<K, V> codec,
-            Tuple2<RedisURI, StatefulRedisConnection<K, V>> connectionAndUri) {
+            Tuple2<RedisURI, StatefulRedisConnection<K, V>> connectionAndUri, ClientOptions clientOptions) {
 
         ReplicaTopologyProvider topologyProvider = new ReplicaTopologyProvider(connectionAndUri.getT2(),
                 connectionAndUri.getT1());
@@ -131,12 +133,12 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
             connectionProvider.setKnownNodes(nodes);
 
             MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
-                    redisClient.getResources(), redisClient.getOptions());
+                    redisClient.getResources(), clientOptions);
 
             StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
-                    channelWriter, codec, redisURI.getTimeout(), redisClient.getOptions().getJsonParser());
+                    channelWriter, codec, redisURI.getTimeout(), clientOptions.getJsonParser());
 
-            connection.setOptions(redisClient.getOptions());
+            connection.setOptions(clientOptions);
 
             return connection;
         });

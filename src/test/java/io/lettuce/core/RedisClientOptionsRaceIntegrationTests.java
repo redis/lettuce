@@ -72,15 +72,16 @@ class RedisClientOptionsRaceIntegrationTests {
             .jsonParser(() -> ClientOptions.DEFAULT_JSON_PARSER.get()).build();
 
     static Stream<Arguments> connectionStages() {
-        return Arrays.stream(ConnectionType.values())
-                .flatMap(type -> Arrays.stream(Stage.values()).map(stage -> Arguments.of(type, stage)));
+        return Stream.of(false, true).flatMap(explicitOptions -> Arrays.stream(ConnectionType.values())
+                .flatMap(type -> Arrays.stream(Stage.values()).map(stage -> Arguments.of(type, stage, explicitOptions))));
     }
 
     @ParameterizedTest
     @MethodSource("connectionStages")
-    void shouldKeepOptionsConsistentDuringConnectionCreation(ConnectionType type, Stage stage) throws Exception {
+    void shouldKeepOptionsConsistentDuringConnectionCreation(ConnectionType type, Stage stage, boolean explicitOptions)
+            throws Exception {
 
-        PausingRedisClient client = new PausingRedisClient(stage);
+        PausingRedisClient client = explicitOptions ? new OptionsAwareRedisClient(stage) : new PausingRedisClient(stage);
         ExecutorService executor = Executors.newSingleThreadExecutor();
         client.setOptions(FIRST);
 
@@ -324,7 +325,7 @@ class RedisClientOptionsRaceIntegrationTests {
             this.stage = stage;
         }
 
-        private void pauseAt(Stage currentStage) {
+        void pauseAt(Stage currentStage) {
             if (stage == currentStage && pause.compareAndSet(true, false)) {
                 paused.countDown();
                 try {
@@ -388,6 +389,72 @@ class RedisClientOptionsRaceIntegrationTests {
         protected RedisHandshake createHandshake(ConnectionState state) {
             handshakeCalls++;
             return super.createHandshake(state);
+        }
+
+    }
+
+    private static class OptionsAwareRedisClient extends PausingRedisClient {
+
+        OptionsAwareRedisClient(Stage stage) {
+            super(stage);
+        }
+
+        @Override
+        protected DefaultEndpoint createEndpoint(ClientOptions clientOptions) {
+            pauseAt(Stage.BEFORE_ENDPOINT);
+            DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions, getResources());
+            endpointCalls++;
+            pauseAt(Stage.ENDPOINT);
+            return endpoint;
+        }
+
+        @Override
+        protected <K, V> PubSubEndpoint<K, V> createPubSubEndpoint(ClientOptions clientOptions) {
+            pauseAt(Stage.BEFORE_ENDPOINT);
+            PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(clientOptions, getResources());
+            endpointCalls++;
+            pauseAt(Stage.ENDPOINT);
+            return endpoint;
+        }
+
+        @Override
+        protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter writer,
+                PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout, ClientOptions clientOptions) {
+            StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(writer, pushHandler, codec,
+                    timeout, clientOptions.getJsonParser());
+            connectionCalls++;
+            pauseAt(Stage.CONNECTION);
+            return connection;
+        }
+
+        @Override
+        protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(PubSubEndpoint<K, V> endpoint,
+                RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout, ClientOptions clientOptions) {
+            StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer,
+                    codec, timeout);
+            connectionCalls++;
+            pauseAt(Stage.CONNECTION);
+            return connection;
+        }
+
+        @Override
+        protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(RedisChannelWriter writer,
+                RedisCodec<K, V> codec, Duration timeout, ClientOptions clientOptions) {
+            StatefulRedisSentinelConnectionImpl<K, V> connection = new StatefulRedisSentinelConnectionImpl<>(writer, codec,
+                    timeout, clientOptions.getJsonParser());
+            connectionCalls++;
+            pauseAt(Stage.CONNECTION);
+            return connection;
+        }
+
+        @Override
+        protected RedisHandshake createHandshake(ConnectionState state, ClientOptions clientOptions) {
+            handshakeCalls++;
+            return new RedisHandshake(clientOptions.getConfiguredProtocolVersion(),
+                    clientOptions.isPingBeforeActivateConnection(), state,
+                    clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()
+                            ? clientOptions.getMaintNotificationsConfig().getEndpointTypeSource()
+                            : null);
         }
 
     }

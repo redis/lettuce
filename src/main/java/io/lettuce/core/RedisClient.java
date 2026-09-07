@@ -100,7 +100,7 @@ public class RedisClient extends AbstractRedisClient {
 
     private final RedisURI redisURI;
 
-    private final ThreadLocal<ClientOptions> connectionOptions = new ThreadLocal<>();
+    private final ThreadLocal<ClientOptions> legacyConnectionOptions = new ThreadLocal<>();
 
     protected RedisClient(ClientResources clientResources, RedisURI redisURI) {
 
@@ -265,28 +265,44 @@ public class RedisClient extends AbstractRedisClient {
      * @since 5.0
      */
     public <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI) {
+        return connectAsync(codec, redisURI, getOptions());
+    }
+
+    /**
+     * Open asynchronously a connection using the supplied options throughout connection initialization.
+     *
+     * @param <K> key type.
+     * @param <V> value type.
+     * @param codec the codec for keys and values, must not be {@code null}.
+     * @param redisURI the Redis server to connect to, must not be {@code null}.
+     * @param clientOptions the options for this connection, must not be {@code null}.
+     * @return a future completing with the connection or a connection failure.
+     * @throws IllegalArgumentException if {@code codec}, {@code redisURI}, or {@code clientOptions} is {@code null}.
+     * @since 7.8
+     */
+    protected <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI,
+            ClientOptions clientOptions) {
 
         assertNotNull(redisURI);
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
 
-        return transformAsyncConnectionException(connectStandaloneAsync(codec, redisURI, redisURI.getTimeout()));
+        return transformAsyncConnectionException(connectStandaloneAsync(codec, redisURI, redisURI.getTimeout(), clientOptions));
     }
 
     private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
             RedisURI redisURI, Duration timeout) {
+        return connectStandaloneAsync(codec, redisURI, timeout, getOptions());
+    }
+
+    private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectStandaloneAsync(RedisCodec<K, V> codec,
+            RedisURI redisURI, Duration timeout, ClientOptions clientOptions) {
 
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
         logger.debug("Trying to get a Redis connection for: {}", redisURI);
 
-        ClientOptions clientOptions = getOptions();
-        return withConnectionOptions(clientOptions, () -> doConnectStandaloneAsync(codec, redisURI, timeout, clientOptions));
-    }
-
-    private <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> doConnectStandaloneAsync(RedisCodec<K, V> codec,
-            RedisURI redisURI, Duration timeout, ClientOptions clientOptions) {
-
-        DefaultEndpoint endpoint = createEndpoint();
+        DefaultEndpoint endpoint = createEndpoint(clientOptions);
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(clientOptions)) {
@@ -297,7 +313,8 @@ public class RedisClient extends AbstractRedisClient {
             writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
-        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, timeout);
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, timeout,
+                clientOptions);
 
         ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
                 () -> new CommandHandler(clientOptions, getResources(), endpoint), false, clientOptions);
@@ -336,7 +353,7 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.commandHandler(commandHandlerSupplier).endpoint(endpoint);
 
         connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(), redisURI);
-        connectionBuilder.connectionInitializer(createHandshake(state));
+        connectionBuilder.connectionInitializer(createHandshake(state, clientOptions));
 
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
@@ -408,25 +425,41 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec,
             RedisURI redisURI) {
+        return connectPubSubAsync(codec, redisURI, getOptions());
+    }
+
+    /**
+     * Open asynchronously a Pub/Sub connection using the supplied options throughout connection initialization.
+     *
+     * @param <K> key type.
+     * @param <V> value type.
+     * @param codec the codec for keys and values, must not be {@code null}.
+     * @param redisURI the Redis server to connect to, must not be {@code null}.
+     * @param clientOptions the options for this connection, must not be {@code null}.
+     * @return a future completing with the connection or a connection failure.
+     * @throws IllegalArgumentException if {@code codec}, {@code redisURI}, or {@code clientOptions} is {@code null}.
+     * @since 7.8
+     */
+    protected <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec,
+            RedisURI redisURI, ClientOptions clientOptions) {
 
         assertNotNull(redisURI);
-        return transformAsyncConnectionException(connectPubSubAsync(codec, redisURI, redisURI.getTimeout()));
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+        return transformAsyncConnectionException(connectPubSubAsync(codec, redisURI, redisURI.getTimeout(), clientOptions));
     }
 
     private <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec,
             RedisURI redisURI, Duration timeout) {
+        return connectPubSubAsync(codec, redisURI, timeout, getOptions());
+    }
+
+    private <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec,
+            RedisURI redisURI, Duration timeout, ClientOptions clientOptions) {
 
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        ClientOptions clientOptions = getOptions();
-        return withConnectionOptions(clientOptions, () -> doConnectPubSubAsync(codec, redisURI, timeout, clientOptions));
-    }
-
-    private <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> doConnectPubSubAsync(RedisCodec<K, V> codec,
-            RedisURI redisURI, Duration timeout, ClientOptions clientOptions) {
-
-        PubSubEndpoint<K, V> endpoint = createPubSubEndpoint();
+        PubSubEndpoint<K, V> endpoint = createPubSubEndpoint(clientOptions);
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(clientOptions)) {
@@ -437,7 +470,8 @@ public class RedisClient extends AbstractRedisClient {
             writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
-        StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, writer, codec, timeout);
+        StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, writer, codec, timeout,
+                clientOptions);
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
                 () -> new PubSubCommandHandler<>(clientOptions, getResources(), codec, endpoint), true, clientOptions);
@@ -534,9 +568,8 @@ public class RedisClient extends AbstractRedisClient {
         logger.debug("Trying to get a Redis Sentinel connection for one of: " + redisURI.getSentinels());
 
         if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
-            return withConnectionOptions(clientOptions,
-                    () -> doConnectSentinelAsync(codec, redisURI, timeout, new ConnectionMetadata(redisURI), clientOptions))
-                            .toCompletableFuture();
+            return doConnectSentinelAsync(codec, redisURI, timeout, new ConnectionMetadata(redisURI), clientOptions)
+                    .toCompletableFuture();
         }
 
         List<RedisURI> sentinels = redisURI.getSentinels();
@@ -548,8 +581,8 @@ public class RedisClient extends AbstractRedisClient {
         for (RedisURI uri : sentinels) {
 
             Mono<StatefulRedisSentinelConnection<K, V>> connectionMono = Mono
-                    .fromCompletionStage(() -> withConnectionOptions(clientOptions,
-                            () -> doConnectSentinelAsync(codec, uri, timeout, new ConnectionMetadata(redisURI), clientOptions)))
+                    .fromCompletionStage(
+                            () -> doConnectSentinelAsync(codec, uri, timeout, new ConnectionMetadata(redisURI), clientOptions))
                     .onErrorMap(CompletionException.class, Throwable::getCause)
                     .onErrorMap(e -> new RedisConnectionException("Cannot connect Redis Sentinel at " + uri, e))
                     .doOnError(exceptionCollector::add);
@@ -597,7 +630,7 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.clientOptions(ClientOptions.copyOf(clientOptions));
         connectionBuilder.clientResources(getResources());
 
-        DefaultEndpoint endpoint = createEndpoint();
+        DefaultEndpoint endpoint = createEndpoint(clientOptions);
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(clientOptions)) {
@@ -608,13 +641,14 @@ public class RedisClient extends AbstractRedisClient {
             writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
-        StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(writer, codec, timeout);
+        StatefulRedisSentinelConnectionImpl<K, V> connection = newStatefulRedisSentinelConnection(writer, codec, timeout,
+                clientOptions);
         ConnectionState state = connection.getConnectionState();
 
         state.apply(redisURI);
         state.apply(metadata);
 
-        connectionBuilder.connectionInitializer(createHandshake(state));
+        connectionBuilder.connectionInitializer(createHandshake(state, clientOptions));
 
         logger.debug("Connecting to Redis Sentinel, address: " + redisURI);
 
@@ -660,10 +694,36 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key-Type
      * @param <V> Value Type
      * @return new instance of StatefulRedisPubSubConnectionImpl
+     * @deprecated since 7.8, use
+     *             {@link #newStatefulRedisPubSubConnection(PubSubEndpoint, RedisChannelWriter, RedisCodec, Duration, ClientOptions)}
+     *             instead; scheduled for removal in a future major release.
      */
+    @Deprecated
     protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(PubSubEndpoint<K, V> endpoint,
             RedisChannelWriter channelWriter, RedisCodec<K, V> codec, Duration timeout) {
         return new StatefulRedisPubSubConnectionImpl<>(endpoint, channelWriter, codec, timeout);
+    }
+
+    /**
+     * Create a Pub/Sub connection using the options captured for this connection.
+     * <p>
+     * Subclasses may override this method and use {@code clientOptions} when constructing connection components.
+     *
+     * @param <K> key type.
+     * @param <V> value type.
+     * @param endpoint the Pub/Sub endpoint, must not be {@code null}.
+     * @param channelWriter the channel writer, must not be {@code null}.
+     * @param codec the codec for keys and values, must not be {@code null}.
+     * @param timeout the default command timeout, must not be {@code null}.
+     * @param clientOptions the options for this connection, must not be {@code null}.
+     * @return a new Pub/Sub connection.
+     * @throws IllegalArgumentException if {@code clientOptions} is {@code null}.
+     * @since 7.8
+     */
+    protected <K, V> StatefulRedisPubSubConnectionImpl<K, V> newStatefulRedisPubSubConnection(PubSubEndpoint<K, V> endpoint,
+            RedisChannelWriter channelWriter, RedisCodec<K, V> codec, Duration timeout, ClientOptions clientOptions) {
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+        return newStatefulRedisPubSubConnection(endpoint, channelWriter, codec, timeout);
     }
 
     /**
@@ -677,10 +737,36 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key-Type
      * @param <V> Value Type
      * @return new instance of StatefulRedisSentinelConnectionImpl
+     * @deprecated since 7.8, use
+     *             {@link #newStatefulRedisSentinelConnection(RedisChannelWriter, RedisCodec, Duration, ClientOptions)} instead;
+     *             scheduled for removal in a future major release.
      */
+    @Deprecated
     protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(
             RedisChannelWriter channelWriter, RedisCodec<K, V> codec, Duration timeout) {
-        return new StatefulRedisSentinelConnectionImpl<>(channelWriter, codec, timeout, getConnectionOptions().getJsonParser());
+        return new StatefulRedisSentinelConnectionImpl<>(channelWriter, codec, timeout,
+                getLegacyConnectionOptions().getJsonParser());
+    }
+
+    /**
+     * Create a Sentinel connection using the options captured for this connection.
+     * <p>
+     * Subclasses may override this method and use {@code clientOptions} when constructing connection components.
+     *
+     * @param <K> key type.
+     * @param <V> value type.
+     * @param channelWriter the channel writer, must not be {@code null}.
+     * @param codec the codec for keys and values, must not be {@code null}.
+     * @param timeout the default command timeout, must not be {@code null}.
+     * @param clientOptions the options for this connection, must not be {@code null}.
+     * @return a new Sentinel connection.
+     * @throws IllegalArgumentException if {@code clientOptions} is {@code null}.
+     * @since 7.8
+     */
+    protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(
+            RedisChannelWriter channelWriter, RedisCodec<K, V> codec, Duration timeout, ClientOptions clientOptions) {
+        return withLegacyConnectionOptions(clientOptions,
+                () -> newStatefulRedisSentinelConnection(channelWriter, codec, timeout));
     }
 
     /**
@@ -695,34 +781,56 @@ public class RedisClient extends AbstractRedisClient {
      * @param <K> Key-Type
      * @param <V> Value Type
      * @return new instance of StatefulRedisConnectionImpl
+     * @deprecated since 7.8, use
+     *             {@link #newStatefulRedisConnection(RedisChannelWriter, PushHandler, RedisCodec, Duration, ClientOptions)}
+     *             instead; scheduled for removal in a future major release.
      */
+    @Deprecated
     protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
             PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
         return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout,
-                getConnectionOptions().getJsonParser());
+                getLegacyConnectionOptions().getJsonParser());
     }
 
-    @Override
-    protected RedisHandshake createHandshake(ConnectionState state) {
-        return super.createHandshake(state, getConnectionOptions());
+    /**
+     * Create a connection using the options captured for this connection.
+     * <p>
+     * Subclasses may override this method and use {@code clientOptions} when constructing connection components.
+     *
+     * @param <K> key type.
+     * @param <V> value type.
+     * @param channelWriter the channel writer, must not be {@code null}.
+     * @param pushHandler the handler for push notifications, must not be {@code null}.
+     * @param codec the codec for keys and values, must not be {@code null}.
+     * @param timeout the default command timeout, must not be {@code null}.
+     * @param clientOptions the options for this connection, must not be {@code null}.
+     * @return a new connection.
+     * @throws IllegalArgumentException if {@code clientOptions} is {@code null}.
+     * @since 7.8
+     */
+    protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
+            PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout, ClientOptions clientOptions) {
+        return withLegacyConnectionOptions(clientOptions,
+                () -> newStatefulRedisConnection(channelWriter, pushHandler, codec, timeout));
     }
 
-    private ClientOptions getConnectionOptions() {
-        ClientOptions clientOptions = connectionOptions.get();
+    private ClientOptions getLegacyConnectionOptions() {
+        ClientOptions clientOptions = legacyConnectionOptions.get();
         return clientOptions == null ? getOptions() : clientOptions;
     }
 
-    private <T> T withConnectionOptions(ClientOptions clientOptions, Supplier<T> supplier) {
-        // Keep the existing factory hooks while limiting the snapshot to synchronous connection setup.
-        ClientOptions previousOptions = connectionOptions.get();
-        connectionOptions.set(clientOptions);
+    private <T> T withLegacyConnectionOptions(ClientOptions clientOptions, Supplier<T> supplier) {
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+        // Bridge deprecated factory overrides only; asynchronous consumers receive options explicitly.
+        ClientOptions previousOptions = legacyConnectionOptions.get();
+        legacyConnectionOptions.set(clientOptions);
         try {
             return supplier.get();
         } finally {
             if (previousOptions == null) {
-                connectionOptions.remove();
+                legacyConnectionOptions.remove();
             } else {
-                connectionOptions.set(previousOptions);
+                legacyConnectionOptions.set(previousOptions);
             }
         }
     }
@@ -893,10 +1001,28 @@ public class RedisClient extends AbstractRedisClient {
      *
      * @return a new {@link DefaultEndpoint}.
      * @since 7.4
+     * @deprecated since 7.8, use {@link #createEndpoint(ClientOptions)} instead; scheduled for removal in a future major
+     *             release.
      */
     @Experimental
+    @Deprecated
     protected DefaultEndpoint createEndpoint() {
-        return new DefaultEndpoint(getConnectionOptions(), getResources());
+        return new DefaultEndpoint(getLegacyConnectionOptions(), getResources());
+    }
+
+    /**
+     * Create an endpoint using the options captured for this connection.
+     * <p>
+     * Subclasses may override this method and use {@code clientOptions} when constructing the endpoint.
+     *
+     * @param clientOptions the options for this connection, must not be {@code null}.
+     * @return a new endpoint.
+     * @throws IllegalArgumentException if {@code clientOptions} is {@code null}.
+     * @since 7.8
+     */
+    @Experimental
+    protected DefaultEndpoint createEndpoint(ClientOptions clientOptions) {
+        return withLegacyConnectionOptions(clientOptions, this::createEndpoint);
     }
 
     /**
@@ -904,10 +1030,30 @@ public class RedisClient extends AbstractRedisClient {
      *
      * @return a new {@link PubSubEndpoint}.
      * @since 7.4
+     * @deprecated since 7.8, use {@link #createPubSubEndpoint(ClientOptions)} instead; scheduled for removal in a future major
+     *             release.
      */
     @Experimental
+    @Deprecated
     protected <K, V> PubSubEndpoint<K, V> createPubSubEndpoint() {
-        return new PubSubEndpoint<>(getConnectionOptions(), getResources());
+        return new PubSubEndpoint<>(getLegacyConnectionOptions(), getResources());
+    }
+
+    /**
+     * Create a Pub/Sub endpoint using the options captured for this connection.
+     * <p>
+     * Subclasses may override this method and use {@code clientOptions} when constructing the endpoint.
+     *
+     * @param <K> key type.
+     * @param <V> value type.
+     * @param clientOptions the options for this connection, must not be {@code null}.
+     * @return a new Pub/Sub endpoint.
+     * @throws IllegalArgumentException if {@code clientOptions} is {@code null}.
+     * @since 7.8
+     */
+    @Experimental
+    protected <K, V> PubSubEndpoint<K, V> createPubSubEndpoint(ClientOptions clientOptions) {
+        return withLegacyConnectionOptions(clientOptions, this::createPubSubEndpoint);
     }
 
 }

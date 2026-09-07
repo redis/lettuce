@@ -6,9 +6,15 @@ ClientOptions are immutable. Connections inherit the current options at
 the moment the connection is created. Changes to options will not affect
 existing connections.
 
-RedisClient uses the same options throughout connection initialization, including
-asynchronous Sentinel retries. Calling `setOptions` while a connection is being
-initialized applies the new options to subsequent connections.
+RedisClient and RedisClusterClient capture options when starting a connection and
+use them throughout its initialization, including asynchronous connection retries.
+Calling `setOptions` during initialization applies the new options to subsequent
+connections. Cluster node connections capture their own options when they are
+created, including nodes opened later by an existing cluster connection.
+Master/Replica connections also retain the options captured before topology
+discovery when configuring their command writer and command APIs.
+MultiDbClient passes each database's options to its application and health-check
+connections.
 
 ``` java
 client.setOptions(ClientOptions.builder()
@@ -16,6 +22,32 @@ client.setOptions(ClientOptions.builder()
                        .pingBeforeActivateConnection(true)
                        .build());
 ```
+
+### Custom connection factories
+
+Since 7.8, subclasses can override the connection factories that accept
+`ClientOptions` to receive the options captured for the connection. Use that
+argument to construct custom components:
+
+```java
+@Override
+protected DefaultEndpoint createEndpoint(ClientOptions clientOptions) {
+    return new DefaultEndpoint(clientOptions, getResources());
+}
+```
+
+The same convention applies to the connection and Pub/Sub endpoint factories.
+RedisClusterClient's connection factories take `ClientOptions` as their first
+argument. The shared `createHandshake(ConnectionState, ClientOptions)` hook
+returns `ConnectionInitializer`, so subclasses outside the core package can
+customize initialization as well.
+
+The previous factory overloads are deprecated. Overloads already used during
+connection initialization remain in the call path for compatibility. Delegating to
+the default implementation preserves the captured options for that connection.
+Custom overrides that read `getOptions()` must migrate to the overloads
+accepting options: `getOptions()` still returns the client's current configuration,
+which can change during connection initialization.
 
 <table style="width:97%;">
 <colgroup>

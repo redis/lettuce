@@ -26,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import reactor.core.publisher.Mono;
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
@@ -59,6 +60,7 @@ class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V>
     @Override
     public CompletableFuture<StatefulRedisMasterReplicaConnection<K, V>> connectAsync() {
 
+        ClientOptions clientOptions = redisClient.getOptions();
         Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections = new HashMap<>();
 
         TopologyProvider topologyProvider = new StaticMasterReplicaTopologyProvider(redisClient, redisURIs);
@@ -77,21 +79,22 @@ class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V>
                 return Mono.error(new RedisException(String.format("Cannot determine topology from %s", redisURIs)));
             }
 
-            return initializeConnection(codec, seedNode, connectionProvider, nodes);
+            return initializeConnection(codec, seedNode, connectionProvider, nodes, clientOptions);
         }).onErrorMap(ExecutionException.class, Throwable::getCause).toFuture();
     }
 
     private Mono<StatefulRedisMasterReplicaConnection<K, V>> initializeConnection(RedisCodec<K, V> codec, RedisURI seedNode,
-            MasterReplicaConnectionProvider<K, V> connectionProvider, List<RedisNodeDescription> nodes) {
+            MasterReplicaConnectionProvider<K, V> connectionProvider, List<RedisNodeDescription> nodes,
+            ClientOptions clientOptions) {
 
         connectionProvider.setKnownNodes(nodes);
 
         MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
-                redisClient.getResources(), redisClient.getOptions());
+                redisClient.getResources(), clientOptions);
 
         StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
-                channelWriter, codec, seedNode.getTimeout(), redisClient.getOptions().getJsonParser());
-        connection.setOptions(redisClient.getOptions());
+                channelWriter, codec, seedNode.getTimeout(), clientOptions.getJsonParser());
+        connection.setOptions(clientOptions);
 
         return Mono.just(connection);
     }
