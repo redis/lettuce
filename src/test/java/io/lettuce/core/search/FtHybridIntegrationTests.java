@@ -45,6 +45,7 @@ import java.util.Map;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 @Tag(INTEGRATION_TEST)
 @EnabledOnCommand("FT.HYBRID")
@@ -68,7 +69,7 @@ public class FtHybridIntegrationTests {
 
     @BeforeAll
     static void setupOnce() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
         client = RedisClient.create(redisURI);
         client.setOptions(ClientOptions.builder().build());
         redis = client.connect().sync();

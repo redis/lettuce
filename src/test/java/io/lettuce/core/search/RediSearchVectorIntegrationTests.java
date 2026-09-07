@@ -53,6 +53,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 /**
  * Integration tests for Redis Vector Search functionality using FT.SEARCH command with vector fields.
@@ -86,7 +87,7 @@ public class RediSearchVectorIntegrationTests {
     protected static RedisCommands<String, String> redis;
 
     public RediSearchVectorIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
         client = RedisClient.create(redisURI);
         client.setOptions(getOptions());
         redis = client.connect().sync();
@@ -356,6 +357,9 @@ public class RediSearchVectorIntegrationTests {
             vec3.put(ByteBuffer.wrap("name".getBytes()), ByteBuffer.wrap("Vector 3".getBytes()));
             vec3.put(ByteBuffer.wrap("embedding".getBytes()), floatArrayToByteBuffer(new float[] { 0.5f, 0.5f, 0.0f }));
             redisBinary.hmset(ByteBuffer.wrap((metric.toLowerCase() + ":vec3").getBytes()), vec3);
+
+            // Let the notification-driven indexer catch up before querying
+            SearchTestSupport.awaitIndexReady(redis, indexName, 3);
 
             // Query with vector similar to vec1
             ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 0.9f, 0.1f, 0.0f });

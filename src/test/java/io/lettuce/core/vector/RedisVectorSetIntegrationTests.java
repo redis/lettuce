@@ -35,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 @Tag(INTEGRATION_TEST)
 public class RedisVectorSetIntegrationTests {
@@ -68,7 +69,7 @@ public class RedisVectorSetIntegrationTests {
     protected static RedisReactiveCommands<String, String> reactiveRedis;
 
     public RedisVectorSetIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         client = RedisClient.create(redisURI);
         client.setOptions(getOptions());

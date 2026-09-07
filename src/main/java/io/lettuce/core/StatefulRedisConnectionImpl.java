@@ -30,9 +30,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -44,6 +42,7 @@ import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.output.MultiOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
+import reactor.core.publisher.Mono;
 
 /**
  * A thread-safe connection to a Redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
@@ -63,11 +62,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     protected final RedisAsyncCommandsImpl<K, V> async;
 
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
-     *             removal in Lettuce 8.0.
-     */
-    @Deprecated
     protected final RedisReactiveCommandsImpl<K, V> reactive;
 
     private final ConnectionState state = new ConnectionState();
@@ -121,12 +115,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     @Override
-    public <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> f) {
-        LettuceAssert.notNull(f, "CommandsFactory must not be null");
-        return store.compute(f.key(), () -> f.apply(this));
-    }
-
-    @Override
     public RedisAsyncCommands<K, V> async() {
         return async;
     }
@@ -149,11 +137,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return new RedisAsyncCommandsImpl<>(this, codec, parser);
     }
 
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
-     *             removal in Lettuce 8.0.
-     */
-    @Deprecated
     @Override
     public RedisReactiveCommands<K, V> reactive() {
         return reactive;
@@ -163,10 +146,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
      *
      * @return a new instance
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
-     *             removal in Lettuce 8.0.
      */
-    @Deprecated
     protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisReactiveCommandsImpl<>(this, codec, parser);
     }
@@ -308,6 +288,10 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
                 multiOutput = new MultiOutput<>(codec);
             }
             local.setOutput((MultiOutput) multiOutput);
+        }
+
+        if (multi != null && commandType.equals(HIMPORT.name())) {
+            throw new UnsupportedOperationException("HIMPORT is not supported within a MULTI transaction");
         }
 
         if (multi != null && !commandType.equals(MULTI.name()) && !commandType.equals(WATCH.name())) {

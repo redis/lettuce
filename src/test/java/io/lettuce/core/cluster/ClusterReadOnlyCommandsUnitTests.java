@@ -20,7 +20,7 @@ class ClusterReadOnlyCommandsUnitTests {
 
     @Test
     void testCount() {
-        assertThat(ClusterReadOnlyCommands.getReadOnlyCommands()).hasSize(139);
+        assertThat(ClusterReadOnlyCommands.getReadOnlyCommands()).hasSize(154);
     }
 
     @Test

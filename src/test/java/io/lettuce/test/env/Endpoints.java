@@ -13,10 +13,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class Endpoints {
 
     private static final Logger log = LoggerFactory.getLogger(Endpoints.class);
+
+    private static final String LOCAL_RESOURCE = "/endpoints.json";
 
     private Map<String, Endpoint> endpoints;
 
@@ -24,11 +27,19 @@ public class Endpoints {
 
     static {
         String filePath = System.getenv("REDIS_ENDPOINTS_CONFIG_PATH");
-        if (filePath == null || filePath.isEmpty()) {
-            log.info("REDIS_ENDPOINTS_CONFIG_PATH environment variable is not set. No Endpoints configuration will be loaded.");
+        if (filePath != null && !filePath.isEmpty()) {
+            DEFAULT = fromFile(filePath);
+        } else if (System.getenv("TEST_ENV_PROVIDER") != null && !System.getenv("TEST_ENV_PROVIDER").isEmpty()) {
+            // An external test environment provider requires an explicit endpoint configuration. Do not fall back to the
+            // bundled local configuration; an empty configuration makes endpoint resolution fail fast instead of silently
+            // targeting the local test environment.
+            log.error("TEST_ENV_PROVIDER is set but the REDIS_ENDPOINTS_CONFIG_PATH environment variable is not. "
+                    + "No Endpoints configuration will be loaded.");
             DEFAULT = new Endpoints(Collections.emptyMap());
         } else {
-            DEFAULT = fromFile(filePath);
+            log.info("REDIS_ENDPOINTS_CONFIG_PATH environment variable is not set. Using the bundled " + LOCAL_RESOURCE
+                    + " endpoint configuration for the local test environment.");
+            DEFAULT = fromResource(LOCAL_RESOURCE);
         }
     }
 
@@ -53,6 +64,26 @@ public class Endpoints {
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to load Endpoints from file: " + filePath, e);
+        }
+    }
+
+    /**
+     * Factory method to create an Endpoints instance from a classpath resource.
+     *
+     * @param resourcePath Absolute classpath resource path.
+     * @return Populated Endpoints instance.
+     */
+    public static Endpoints fromResource(String resourcePath) {
+        try (InputStream stream = Endpoints.class.getResourceAsStream(resourcePath)) {
+            if (stream == null) {
+                throw new IOException("Resource not found: " + resourcePath);
+            }
+            ObjectMapper objectMapper = new ObjectMapper();
+            HashMap<String, Endpoint> endpoints = objectMapper.readValue(stream,
+                    objectMapper.getTypeFactory().constructMapType(HashMap.class, String.class, Endpoint.class));
+            return new Endpoints(endpoints);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load Endpoints from resource: " + resourcePath, e);
         }
     }
 

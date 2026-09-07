@@ -39,12 +39,14 @@ import io.lettuce.test.CanConnect;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Ivo Gaydajiev
  */
 @Tag(INTEGRATION_TEST)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DisabledOnProvider("re")
 class RedisClusterStreamingCredentialsProviderIntegrationTests extends TestSupport {
 
     private static final int CLUSTER_PORT_SSL_1 = 7443;

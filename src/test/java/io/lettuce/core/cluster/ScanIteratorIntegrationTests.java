@@ -48,6 +48,7 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.test.KeysAndValues;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Mark Paluch
@@ -121,6 +122,8 @@ class ScanIteratorIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Node-scoped SCAN semantics differ on the Redis Enterprise proxy topology
+    @DisabledOnProvider("re")
     void keysMultiPassFromAnyNode() {
 
         redis.mset(KeysAndValues.MAP);

@@ -112,6 +112,32 @@ public class LettuceAssert {
     }
 
     /**
+     * Assert that an array has elements; that is, it must not be {@code null} and must have at least one element.
+     *
+     * @param array the array to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the object array is {@code null} or has no elements
+     */
+    public static void notEmpty(long[] array, String message) {
+        if (array == null || array.length == 0) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    /**
+     * Assert that an array has elements; that is, it must not be {@code null} and must have at least one element.
+     *
+     * @param array the array to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the object array is {@code null} or has no elements
+     */
+    public static void notEmpty(double[] array, String message) {
+        if (array == null || array.length == 0) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    /**
      * Assert that an array has no null elements.
      *
      * @param array the array to check

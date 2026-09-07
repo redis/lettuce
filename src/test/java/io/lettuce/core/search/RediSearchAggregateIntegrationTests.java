@@ -43,6 +43,7 @@ import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
+import io.lettuce.test.resource.ModulesTestUri;
 
 /**
  * Integration tests for Redis FT.AGGREGATE command.
@@ -57,7 +58,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     private RedisCommands<String, String> redis;
 
     RediSearchAggregateIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
         client = RedisClient.create(redisURI);
         client.setOptions(getOptions());
     }

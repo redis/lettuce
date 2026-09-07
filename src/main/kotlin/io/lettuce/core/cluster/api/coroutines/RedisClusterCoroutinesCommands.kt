@@ -45,10 +45,17 @@ interface RedisClusterCoroutinesCommands<K : Any, V : Any> :
     RedisSortedSetCoroutinesCommands<K, V>,
     RedisStreamCoroutinesCommands<K, V>,
     RedisStringCoroutinesCommands<K, V>,
+    RedisFunctionCoroutinesCommands<K, V>,
+    RedisJsonCoroutinesCommands<K, V>,
+    RedisVectorSetCoroutinesCommands<K, V>,
+    RedisArrayCoroutinesCommands<K, V>,
+    RediSearchCoroutinesCommands<K, V>,
     RedisBloomFilterCoroutinesCommands<K, V>,
     RedisCuckooFilterCoroutinesCommands<K, V>,
+    RedisTopKCoroutinesCommands<K, V>,
     RedisTimeSeriesCoroutinesCommands<K, V>,
-    RedisTopKCoroutinesCommands<K, V> {
+    RedisCMSCoroutinesCommands<K, V>,
+    RedisTDigestCoroutinesCommands<K, V> {
 
     /**
      * Authenticate to the server.

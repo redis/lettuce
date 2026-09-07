@@ -44,6 +44,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 @Tag(INTEGRATION_TEST)
 public class RedisJsonIntegrationTests {
@@ -63,7 +64,7 @@ public class RedisJsonIntegrationTests {
     protected static RedisCommands<String, String> redis;
 
     public RedisJsonIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         client = RedisClient.create(redisURI);
         redis = client.connect().sync();
@@ -721,7 +722,7 @@ public class RedisJsonIntegrationTests {
 
     @Test
     void withCustomParser() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         try (RedisClient client = RedisClient.create(redisURI)) {
             client.setOptions(ClientOptions.builder().jsonParser(CustomParser::new).build());

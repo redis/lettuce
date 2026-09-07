@@ -19,11 +19,10 @@
  */
 package io.lettuce.core.output;
 
-import static java.lang.Double.parseDouble;
-
 import java.nio.ByteBuffer;
 
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceStrings;
 
 /**
  * Double output, may be null.
@@ -40,7 +39,7 @@ public class DoubleOutput<K, V> extends CommandOutput<K, V, Double> {
 
     @Override
     public void set(ByteBuffer bytes) {
-        output = (bytes == null) ? null : parseDouble(decodeString(bytes));
+        output = (bytes == null) ? null : LettuceStrings.toDouble(decodeString(bytes));
     }
 
     @Override
