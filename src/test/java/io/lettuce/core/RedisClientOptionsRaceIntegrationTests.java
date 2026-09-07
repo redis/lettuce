@@ -57,9 +57,6 @@ import io.lettuce.test.settings.TestSettings;
 import io.netty.channel.Channel;
 import reactor.core.publisher.Mono;
 
-/**
- * @author Seongju Hong
- */
 @Tag(INTEGRATION_TEST)
 class RedisClientOptionsRaceIntegrationTests {
 

@@ -80,7 +80,6 @@ import reactor.core.publisher.Mono;
  *
  * @author Will Glozer
  * @author Mark Paluch
- * @author Seongju Hong
  * @see RedisURI
  * @see StatefulRedisConnection
  * @see RedisFuture
