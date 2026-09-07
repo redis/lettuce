@@ -11,10 +11,16 @@ use them throughout its initialization, including asynchronous connection retrie
 Calling `setOptions` during initialization applies the new options to subsequent
 connections. Cluster node connections capture their own options when they are
 created, including nodes opened later by an existing cluster connection.
-Master/Replica connections also retain the options captured before topology
-discovery when configuring their command writer and command APIs.
+Master/Replica connections retain the options captured before topology discovery
+for their command writer, command APIs, topology probes, and all underlying node
+connections, including nodes opened later after a topology change. Sentinel
+discovery and Pub/Sub connections use the same captured options.
 MultiDbClient passes each database's options to its application and health-check
 connections.
+
+The `RedisClient.connectAsync`, `connectPubSubAsync`, and `connectSentinelAsync`
+overloads accepting `ClientOptions` create connections with the supplied options
+without changing the client's configuration.
 
 ``` java
 client.setOptions(ClientOptions.builder()

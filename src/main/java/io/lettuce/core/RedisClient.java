@@ -279,7 +279,7 @@ public class RedisClient extends AbstractRedisClient {
      * @throws IllegalArgumentException if {@code codec}, {@code redisURI}, or {@code clientOptions} is {@code null}.
      * @since 7.8
      */
-    protected <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI,
+    public <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI,
             ClientOptions clientOptions) {
 
         assertNotNull(redisURI);
@@ -439,7 +439,7 @@ public class RedisClient extends AbstractRedisClient {
      * @throws IllegalArgumentException if {@code codec}, {@code redisURI}, or {@code clientOptions} is {@code null}.
      * @since 7.8
      */
-    protected <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec,
+    public <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec,
             RedisURI redisURI, ClientOptions clientOptions) {
 
         assertNotNull(redisURI);
@@ -551,19 +551,42 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> CompletableFuture<StatefulRedisSentinelConnection<K, V>> connectSentinelAsync(RedisCodec<K, V> codec,
             RedisURI redisURI) {
+        return connectSentinelAsync(codec, redisURI, getOptions());
+    }
+
+    /**
+     * Open asynchronously a Sentinel connection using the supplied options throughout connection initialization and retries.
+     *
+     * @param <K> key type.
+     * @param <V> value type.
+     * @param codec the codec for keys and values, must not be {@code null}.
+     * @param redisURI the Redis Sentinel server or servers to connect to, must not be {@code null}.
+     * @param clientOptions the options for this connection, must not be {@code null}.
+     * @return a future completing with the connection or a connection failure.
+     * @throws IllegalArgumentException if {@code codec}, {@code redisURI}, or {@code clientOptions} is {@code null}.
+     * @since 7.8
+     */
+    public <K, V> CompletableFuture<StatefulRedisSentinelConnection<K, V>> connectSentinelAsync(RedisCodec<K, V> codec,
+            RedisURI redisURI, ClientOptions clientOptions) {
 
         assertNotNull(redisURI);
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
 
-        return transformAsyncConnectionException(connectSentinelAsync(codec, redisURI, redisURI.getTimeout()), redisURI);
+        return transformAsyncConnectionException(connectSentinelAsync(codec, redisURI, redisURI.getTimeout(), clientOptions),
+                redisURI);
     }
 
     private <K, V> CompletableFuture<StatefulRedisSentinelConnection<K, V>> connectSentinelAsync(RedisCodec<K, V> codec,
             RedisURI redisURI, Duration timeout) {
+        return connectSentinelAsync(codec, redisURI, timeout, getOptions());
+    }
+
+    private <K, V> CompletableFuture<StatefulRedisSentinelConnection<K, V>> connectSentinelAsync(RedisCodec<K, V> codec,
+            RedisURI redisURI, Duration timeout, ClientOptions clientOptions) {
 
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        ClientOptions clientOptions = getOptions();
         logger.debug("Trying to get a Redis Sentinel connection for one of: " + redisURI.getSentinels());
 
         if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {

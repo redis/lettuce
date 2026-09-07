@@ -63,13 +63,14 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
     public CompletableFuture<StatefulRedisMasterReplicaConnection<K, V>> connectAsync() {
 
         ClientOptions clientOptions = redisClient.getOptions();
-        TopologyProvider topologyProvider = new SentinelTopologyProvider(redisURI.getSentinelMasterId(), redisClient, redisURI);
+        TopologyProvider topologyProvider = new SentinelTopologyProvider(redisURI.getSentinelMasterId(), redisClient, redisURI,
+                clientOptions);
         SentinelTopologyRefresh sentinelTopologyRefresh = new SentinelTopologyRefresh(redisClient,
-                redisURI.getSentinelMasterId(), redisURI.getSentinels());
+                redisURI.getSentinelMasterId(), redisURI.getSentinels(), clientOptions);
 
-        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider, clientOptions);
         MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<>(redisClient, codec,
-                redisURI, Collections.emptyMap());
+                redisURI, Collections.emptyMap(), clientOptions);
 
         Runnable runnable = getTopologyRefreshRunnable(refresh, connectionProvider);
 

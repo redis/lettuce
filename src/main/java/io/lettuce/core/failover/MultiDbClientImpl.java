@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
@@ -229,18 +228,6 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      */
     protected <K, V> MultiDbAsyncPubSubConnectionBuilder<K, V> createPubSubConnectionBuilder(RedisCodec<K, V> codec) {
         return new MultiDbAsyncPubSubConnectionBuilder<>(this, getResources(), codec, closeableResources, multiDbOptions);
-    }
-
-    @Override
-    protected <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectAsync(RedisCodec<K, V> codec, RedisURI redisURI,
-            ClientOptions clientOptions) {
-        return super.connectAsync(codec, redisURI, clientOptions);
-    }
-
-    @Override
-    protected <K, V> ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectPubSubAsync(RedisCodec<K, V> codec,
-            RedisURI redisURI, ClientOptions clientOptions) {
-        return super.connectPubSubAsync(codec, redisURI, clientOptions);
     }
 
     StatefulRedisConnection<String, String> connectRaw(RedisURI redisURI, ClientOptions clientOptions) {

@@ -67,7 +67,8 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
     public CompletableFuture<StatefulRedisMasterReplicaConnection<K, V>> connectAsync() {
 
         ClientOptions clientOptions = redisClient.getOptions();
-        ConnectionFuture<StatefulRedisConnection<K, V>> initialConnection = redisClient.connectAsync(codec, redisURI);
+        ConnectionFuture<StatefulRedisConnection<K, V>> initialConnection = redisClient.connectAsync(codec, redisURI,
+                clientOptions);
         Mono<StatefulRedisMasterReplicaConnection<K, V>> connect = Mono.fromCompletionStage(initialConnection)
                 .flatMap(nodeConnection -> {
 
@@ -76,7 +77,8 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
                     TopologyProvider topologyProvider = new ReplicaTopologyProvider(nodeConnection, redisURI);
 
                     return Mono.fromCompletionStage(topologyProvider.getNodesAsync())
-                            .flatMap(nodes -> getMasterConnectionAndUri(nodes, Tuples.of(redisURI, nodeConnection), codec));
+                            .flatMap(nodes -> getMasterConnectionAndUri(nodes, Tuples.of(redisURI, nodeConnection), codec,
+                                    clientOptions));
                 }).flatMap(connectionAndUri -> {
                     return initializeConnection(codec, connectionAndUri, clientOptions);
                 });
@@ -95,14 +97,16 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
     }
 
     private Mono<Tuple2<RedisURI, StatefulRedisConnection<K, V>>> getMasterConnectionAndUri(List<RedisNodeDescription> nodes,
-            Tuple2<RedisURI, StatefulRedisConnection<K, V>> connectionTuple, RedisCodec<K, V> codec) {
+            Tuple2<RedisURI, StatefulRedisConnection<K, V>> connectionTuple, RedisCodec<K, V> codec,
+            ClientOptions clientOptions) {
 
         RedisNodeDescription node = getConnectedNode(redisURI, nodes);
 
         if (!node.getRole().isUpstream()) {
 
             RedisNodeDescription master = lookupMaster(nodes);
-            ConnectionFuture<StatefulRedisConnection<K, V>> masterConnection = redisClient.connectAsync(codec, master.getUri());
+            ConnectionFuture<StatefulRedisConnection<K, V>> masterConnection = redisClient.connectAsync(codec, master.getUri(),
+                    clientOptions);
 
             return Mono.just(master.getUri()).zipWith(Mono.fromCompletionStage(masterConnection)) //
                     .doOnNext(it -> {
@@ -120,9 +124,9 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
         ReplicaTopologyProvider topologyProvider = new ReplicaTopologyProvider(connectionAndUri.getT2(),
                 connectionAndUri.getT1());
 
-        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider, clientOptions);
         MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<>(redisClient, codec,
-                redisURI, (Map) initialConnections);
+                redisURI, (Map) initialConnections, clientOptions);
 
         Mono<List<RedisNodeDescription>> refreshFuture = refresh.getNodes(redisURI);
 

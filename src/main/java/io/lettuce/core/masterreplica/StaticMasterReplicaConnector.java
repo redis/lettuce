@@ -63,13 +63,13 @@ class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V>
         ClientOptions clientOptions = redisClient.getOptions();
         Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections = new HashMap<>();
 
-        TopologyProvider topologyProvider = new StaticMasterReplicaTopologyProvider(redisClient, redisURIs);
+        TopologyProvider topologyProvider = new StaticMasterReplicaTopologyProvider(redisClient, redisURIs, clientOptions);
 
         RedisURI seedNode = redisURIs.iterator().next();
 
-        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider, clientOptions);
         MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<>(redisClient, codec,
-                seedNode, initialConnections);
+                seedNode, initialConnections, clientOptions);
 
         return refresh.getNodes(seedNode).flatMap(nodes -> {
 
