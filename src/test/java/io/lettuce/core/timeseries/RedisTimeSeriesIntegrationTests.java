@@ -306,10 +306,46 @@ public class RedisTimeSeriesIntegrationTests {
         assertSample(redis.tsGet(key2), 1000L, 20.0);
     }
 
+    /**
+     * Unlike {@code TS.ADD}, {@code TS.MADD} does <b>not</b> auto-create missing series: the server replies with a
+     * {@code TSDB: the key is not a TSDB key} error for that entry's array position, not a timestamp. This contradicts the
+     * {@code tsMAdd} Javadoc's claim of implicit creation; see the discovered-bug notes in issues.md.
+     * <p>
+     * The reply is still an array containing that error, not a top-level error, even when it is the command's only entry, so
+     * this surfaces as a {@code null} element rather than a thrown exception.
+     */
     @Test
     void tsMAddOnMissingKeyFailsInsteadOfAutoCreating() {
-        assertThatThrownBy(() -> redis.tsMAdd(mAddEntry("series:does-not-exist", 1000, 1.0)))
-                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("TSDB: the key is not a TSDB key");
+        List<Long> results = redis.tsMAdd(mAddEntry("series:does-not-exist", 1000, 1.0));
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)).isNull();
+    }
+
+    /**
+     * {@code TS.MADD} replies with one array element per input entry, and a single entry failing (e.g. a
+     * {@code DUPLICATE_POLICY=BLOCK} violation) does not fail the whole array: the server still returns the timestamps for
+     * every entry that succeeded, with an error in place of the timestamp for the one that failed. Confirmed directly against a
+     * live server: {@code TS.MADD k1 2000 10.0 k2 1000 20.0} against a {@code k2} that already holds a sample at timestamp
+     * {@code 1000} under {@code DUPLICATE_POLICY=BLOCK} replies {@code (integer) 2000} then
+     * {@code (error) ERR TSDB: Error at upsert, update is not supported when DUPLICATE_POLICY is set to BLOCK mode, ...}.
+     */
+    @Test
+    void tsMAddPartialFailureReturnsNullForFailedEntryAndKeepsSuccessfulTimestamps() {
+        String key1 = "{ts-madd-partial}:k1";
+        String key2 = "{ts-madd-partial}:k2";
+        redis.tsCreate(key1);
+        redis.tsCreate(key2, TsCreateArgs.Builder.duplicatePolicy(TsDuplicatePolicy.BLOCK));
+        redis.tsAdd(key2, 1000, 5.0);
+
+        List<Long> results = redis.tsMAdd(mAddEntry(key1, 2000, 10.0), mAddEntry(key2, 1000, 20.0));
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0)).isEqualTo(2000L);
+        assertThat(results.get(1)).isNull();
+        // The successful entry actually persisted server-side; the failed one left key2's existing sample untouched.
+        assertSample(redis.tsGet(key1), 2000L, 10.0);
+        assertSample(redis.tsGet(key2), 1000L, 5.0);
     }
 
     /**

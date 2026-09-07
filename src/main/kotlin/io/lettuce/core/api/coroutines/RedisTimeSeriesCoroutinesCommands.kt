@@ -141,19 +141,21 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * Append samples to multiple time series at once, creating any of the series automatically if it does not yet exist.
      *
      * @param entries the (key, sample) entries to append; each [TsSample] must carry a single value.
-     * @return List<Long> the timestamps that were ultimately used, in the same order as `entries`.
+     * @return List<Long> the timestamps that were ultimately used, in the same order as `entries`; `null` for an entry that
+     *         failed (e.g. a `DUPLICATE_POLICY=BLOCK` violation).
      * @throws IllegalArgumentException if any [TsSample] carries more than one value.
      */
-    suspend fun tsMAdd(vararg entries: Map.Entry<K, TsSample>): List<Long>
+    suspend fun tsMAdd(vararg entries: Map.Entry<K, TsSample>): List<Long?>
 
     /**
      * Append samples to multiple time series at once, creating any of the series automatically if it does not yet exist.
      *
      * @param entry the (key, sample) entry to append; the [TsSample] must carry a single value.
-     * @return List<Long> the timestamps that were ultimately used, in the same order as `entries`.
+     * @return List<Long> the timestamps that were ultimately used, in the same order as `entries`; `null` for an entry that
+     *         failed (e.g. a `DUPLICATE_POLICY=BLOCK` violation).
      * @throws IllegalArgumentException if the [TsSample] carries more than one value.
      */
-    suspend fun tsMAdd(entry: Map.Entry<K, TsSample>): List<Long>
+    suspend fun tsMAdd(entry: Map.Entry<K, TsSample>): List<Long?>
 
     /**
      * Increment the value of the last sample of a time series, creating the series automatically if it does not yet exist.

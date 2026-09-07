@@ -4685,13 +4685,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> tsMAdd(Map.Entry<K, TsSample>... entries) {
-        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAdd(entries));
+    public Flux<Value<Long>> tsMAdd(Map.Entry<K, TsSample>... entries) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAddValues(entries));
     }
 
     @Override
-    public Flux<Long> tsMAdd(Map.Entry<K, TsSample> entry) {
-        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAdd(entry));
+    public Flux<Value<Long>> tsMAdd(Map.Entry<K, TsSample> entry) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAddValues(entry));
     }
 
     @Override

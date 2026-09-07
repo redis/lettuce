@@ -71,11 +71,11 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tsAdd(key: K, value: Double): Long? =
         ops.tsAdd(key, value).awaitFirstOrNull()
 
-    override suspend fun tsMAdd(vararg entries: Map.Entry<K, TsSample>): List<Long> =
-        ops.tsMAdd(*entries).asFlow().toList()
+    override suspend fun tsMAdd(vararg entries: Map.Entry<K, TsSample>): List<Long?> =
+        ops.tsMAdd(*entries).asFlow().toList().map { it.getValueOrElse(null) }
 
-    override suspend fun tsMAdd(entry: Map.Entry<K, TsSample>): List<Long> =
-        ops.tsMAdd(entry).asFlow().toList()
+    override suspend fun tsMAdd(entry: Map.Entry<K, TsSample>): List<Long?> =
+        ops.tsMAdd(entry).asFlow().toList().map { it.getValueOrElse(null) }
 
     override suspend fun tsIncrBy(key: K, value: Double): Long? =
         ops.tsIncrBy(key, value).awaitFirstOrNull()

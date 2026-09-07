@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import io.lettuce.core.Value;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
@@ -114,6 +115,60 @@ public class RedisTimeSeriesReactiveIntegrationTests extends RedisTimeSeriesInte
 
         StepVerifier.create(reactive.tsMGet("type!=temp")).expectErrorMessage("ERR TSDB: please provide at least one matcher")
                 .verify(Duration.ofSeconds(5));
+    }
+
+    /**
+     * Overridden because {@code TS.MADD} is {@code Flux<Value<Long>>} on the reactive flavor (Reactive Streams cannot emit
+     * {@code null}), so the base assertions against raw {@code Long} elements don't apply here; verified directly against
+     * {@link #reactive} instead of through the sync-mirrored {@code redis}.
+     */
+    @Test
+    @Override
+    void tsMAddAndGetRoundTrip() {
+        String key1 = "{ts-madd}:k1";
+        String key2 = "{ts-madd}:k2";
+        redis.tsCreate(key1);
+        redis.tsCreate(key2);
+
+        StepVerifier.create(reactive.tsMAdd(mAddEntry(key1, 1000, 10.0), mAddEntry(key2, 1000, 20.0)))
+                .expectNext(Value.just(1000L)).expectNext(Value.just(1000L)).verifyComplete();
+
+        assertSample(redis.tsGet(key1), 1000L, 10.0);
+        assertSample(redis.tsGet(key2), 1000L, 20.0);
+    }
+
+    /**
+     * Overridden because {@code TS.MADD} is {@code Flux<Value<Long>>} on the reactive flavor: a failed entry is
+     * {@link Value#empty()}, not {@code null}, so the base assertion doesn't apply here.
+     */
+    @Test
+    @Override
+    void tsMAddOnMissingKeyFailsInsteadOfAutoCreating() {
+        StepVerifier.create(reactive.tsMAdd(mAddEntry("series:does-not-exist", 1000, 1.0))).expectNext(Value.empty())
+                .verifyComplete();
+    }
+
+    /**
+     * Overridden because {@code TS.MADD} is {@code Flux<Value<Long>>} on the reactive flavor: a partial failure surfaces as
+     * {@link Value#empty()} in place of the failed entry's timestamp, instead of a {@code null} list element. This is the
+     * scenario a shared-output regression previously broke: {@code RedisSubscription} rejects a {@code null} emission with
+     * {@code IllegalArgumentException: Data must not be null}, masking the server's own error reply.
+     */
+    @Test
+    @Override
+    void tsMAddPartialFailureReturnsNullForFailedEntryAndKeepsSuccessfulTimestamps() {
+        String key1 = "{ts-madd-partial}:k1";
+        String key2 = "{ts-madd-partial}:k2";
+        redis.tsCreate(key1);
+        redis.tsCreate(key2, TsCreateArgs.Builder.duplicatePolicy(TsDuplicatePolicy.BLOCK));
+        redis.tsAdd(key2, 1000, 5.0);
+
+        StepVerifier.create(reactive.tsMAdd(mAddEntry(key1, 2000, 10.0), mAddEntry(key2, 1000, 20.0)))
+                .expectNext(Value.just(2000L)).expectNext(Value.empty()).verifyComplete();
+
+        // The successful entry actually persisted server-side; the failed one left key2's existing sample untouched.
+        assertSample(redis.tsGet(key1), 2000L, 10.0);
+        assertSample(redis.tsGet(key2), 1000L, 5.0);
     }
 
 }

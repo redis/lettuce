@@ -11,7 +11,8 @@ import java.util.Map;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.EncodedComplexOutput;
-import io.lettuce.core.output.IntegerListOutput;
+import io.lettuce.core.output.ErrorTolerantLongListOutput;
+import io.lettuce.core.output.ErrorTolerantLongValueListOutput;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.KeyListOutput;
 import io.lettuce.core.output.StatusOutput;
@@ -145,14 +146,33 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
             addMAddEntry(args, entry);
         }
 
-        return createCommand(TS_MADD, new IntegerListOutput<>(codec), args);
+        return createCommand(TS_MADD, new ErrorTolerantLongListOutput<>(codec), args);
     }
 
     Command<K, V, List<Long>> tsMAdd(Map.Entry<K, TsSample> entry) {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         addMAddEntry(args, entry);
 
-        return createCommand(TS_MADD, new IntegerListOutput<>(codec), args);
+        return createCommand(TS_MADD, new ErrorTolerantLongListOutput<>(codec), args);
+    }
+
+    @SafeVarargs
+    final Command<K, V, List<Value<Long>>> tsMAddValues(Map.Entry<K, TsSample>... entries) {
+        notEmpty(entries);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        for (Map.Entry<K, TsSample> entry : entries) {
+            addMAddEntry(args, entry);
+        }
+
+        return createCommand(TS_MADD, new ErrorTolerantLongValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Value<Long>>> tsMAddValues(Map.Entry<K, TsSample> entry) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        addMAddEntry(args, entry);
+
+        return createCommand(TS_MADD, new ErrorTolerantLongValueListOutput<>(codec), args);
     }
 
     private void addMAddEntry(CommandArgs<K, V> args, Map.Entry<K, TsSample> entry) {

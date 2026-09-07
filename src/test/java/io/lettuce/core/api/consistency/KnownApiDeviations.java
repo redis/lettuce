@@ -101,7 +101,7 @@ public final class KnownApiDeviations {
      * {@code CreateReactiveApi#VALUE_WRAP}.
      */
     public static final Set<String> REACTIVE_VALUE_WRAP = setOf("geopos", "bitfield", "bfInsert", "bfMAdd", "cfInsertNx",
-            "topKAdd", "topKIncrBy",
+            "topKAdd", "topKIncrBy", "tsMAdd",
             // calibration 2026-07: RedisArray element reads return null for missing indexes
             "argetrange", "armget");
 
@@ -169,7 +169,7 @@ public final class KnownApiDeviations {
      */
     public static final Set<String> BUILDER_INTERNAL = setOf("bitfieldValue", "geoposValues", "hgetallKeyValue",
             "hmgetKeyValue", "mgetKeyValue", "armgetValues", "argetrangeValues", "bfInsertValues", "bfMAddValues",
-            "cfInsertNxValues", "topKAddValues", "topKIncrByValues", "hscanStreaming", "hscanNoValuesStreaming",
+            "cfInsertNxValues", "topKAddValues", "topKIncrByValues", "tsMAddValues", "hscanStreaming", "hscanNoValuesStreaming",
             "scanStreaming", "sscanStreaming", "zscanStreaming", "hello", "sync", "clusterAddslots", "clusterDelslots",
             // connection-level commands exposed via StatefulRedisConnection, not via the command interfaces
             "select", "swapdb",
