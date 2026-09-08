@@ -17,7 +17,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * dot. These constants use the {@link #TsAggregationType(String)} constructor to override the wire value.
  *
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 public enum TsAggregationType implements ProtocolKeyword {
 

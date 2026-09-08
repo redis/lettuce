@@ -92,7 +92,6 @@ import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
-import io.lettuce.core.timeseries.arguments.TsGetArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.vector.RawVector;
@@ -4600,6 +4599,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> tsAlter(K key) {
+        return dispatch(timeSeriesCommandBuilder.tsAlter(key));
+    }
+
+    @Override
     public RedisFuture<String> tsAlter(K key, TsAlterArgs alterArgs) {
         return dispatch(timeSeriesCommandBuilder.tsAlter(key, alterArgs));
     }
@@ -4642,6 +4646,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> tsAdd(K key, double value, TsAddArgs addArgs) {
+        return dispatch(timeSeriesCommandBuilder.tsAdd(key, value, addArgs));
+    }
+
+    @Override
     public RedisFuture<List<Long>> tsMAdd(Map.Entry<K, TsSample>... entries) {
         return dispatch(timeSeriesCommandBuilder.tsMAdd(entries));
     }
@@ -4677,8 +4686,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<TsSample> tsGet(K key, TsGetArgs getArgs) {
-        return dispatch(timeSeriesCommandBuilder.tsGet(key, getArgs));
+    public RedisFuture<TsSample> tsGet(K key, boolean latest) {
+        return dispatch(timeSeriesCommandBuilder.tsGet(key, latest));
     }
 
     @Override
@@ -4707,8 +4716,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<TsInfoValue<K>> tsInfoDebug(K key) {
-        return dispatch(timeSeriesCommandBuilder.tsInfoDebug(key));
+    public RedisFuture<TsInfoValue<K>> tsInfo(K key, boolean debug) {
+        return dispatch(timeSeriesCommandBuilder.tsInfo(key, debug));
     }
 
     @Override

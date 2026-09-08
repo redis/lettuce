@@ -888,27 +888,27 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         if (delay != null) {
             args.add(delay);
         }
-        return createCommand(DEBUG, new StatusOutput<>(codec), args);
+        return createCommand(CommandType.DEBUG, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, String> debugHtstats(int db) {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(HTSTATS).add(db);
-        return createCommand(DEBUG, new StatusOutput<>(codec), args);
+        return createCommand(CommandType.DEBUG, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, String> debugObject(K key) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(OBJECT).addKey(key);
-        return createCommand(DEBUG, new StatusOutput<>(codec), args);
+        return createCommand(CommandType.DEBUG, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, Void> debugOom() {
-        return createCommand(DEBUG, null, new CommandArgs<>(codec).add("OOM"));
+        return createCommand(CommandType.DEBUG, null, new CommandArgs<>(codec).add("OOM"));
     }
 
     Command<K, V, String> debugReload() {
-        return createCommand(DEBUG, new StatusOutput<>(codec), new CommandArgs<>(codec).add(RELOAD));
+        return createCommand(CommandType.DEBUG, new StatusOutput<>(codec), new CommandArgs<>(codec).add(RELOAD));
     }
 
     Command<K, V, String> debugRestart(Long delay) {
@@ -916,18 +916,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         if (delay != null) {
             args.add(delay);
         }
-        return createCommand(DEBUG, new StatusOutput<>(codec), args);
+        return createCommand(CommandType.DEBUG, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, String> debugSdslen(K key) {
         notNullKey(key);
 
-        return createCommand(DEBUG, new StatusOutput<>(codec), new CommandArgs<>(codec).add("SDSLEN").addKey(key));
+        return createCommand(CommandType.DEBUG, new StatusOutput<>(codec), new CommandArgs<>(codec).add("SDSLEN").addKey(key));
     }
 
     Command<K, V, Void> debugSegfault() {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(SEGFAULT);
-        return createCommand(DEBUG, null, args);
+        return createCommand(CommandType.DEBUG, null, args);
     }
 
     Command<K, V, Long> decr(K key) {

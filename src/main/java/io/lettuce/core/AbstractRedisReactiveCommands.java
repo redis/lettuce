@@ -92,7 +92,6 @@ import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
-import io.lettuce.core.timeseries.arguments.TsGetArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.tracing.TraceContext;
@@ -4643,6 +4642,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> tsAlter(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAlter(key));
+    }
+
+    @Override
     public Mono<String> tsAlter(K key, TsAlterArgs alterArgs) {
         return createMono(() -> timeSeriesCommandBuilder.tsAlter(key, alterArgs));
     }
@@ -4685,6 +4689,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Long> tsAdd(K key, double value, TsAddArgs addArgs) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, value, addArgs));
+    }
+
+    @Override
     public Flux<Value<Long>> tsMAdd(Map.Entry<K, TsSample>... entries) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAddValues(entries));
     }
@@ -4720,8 +4729,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<TsSample> tsGet(K key, TsGetArgs getArgs) {
-        return createMono(() -> timeSeriesCommandBuilder.tsGet(key, getArgs));
+    public Mono<TsSample> tsGet(K key, boolean latest) {
+        return createMono(() -> timeSeriesCommandBuilder.tsGet(key, latest));
     }
 
     @Override
@@ -4750,8 +4759,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<TsInfoValue<K>> tsInfoDebug(K key) {
-        return createMono(() -> timeSeriesCommandBuilder.tsInfoDebug(key));
+    public Mono<TsInfoValue<K>> tsInfo(K key, boolean debug) {
+        return createMono(() -> timeSeriesCommandBuilder.tsInfo(key, debug));
     }
 
     @Override

@@ -15,7 +15,6 @@ import io.lettuce.core.timeseries.TsSample
 import io.lettuce.core.timeseries.arguments.TsAddArgs
 import io.lettuce.core.timeseries.arguments.TsAlterArgs
 import io.lettuce.core.timeseries.arguments.TsCreateArgs
-import io.lettuce.core.timeseries.arguments.TsGetArgs
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs
 import io.lettuce.core.timeseries.arguments.TsMGetArgs
 import kotlinx.coroutines.flow.toList
@@ -28,7 +27,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 @ExperimentalLettuceCoroutinesApi
 internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
@@ -40,6 +39,9 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
 
     override suspend fun tsCreate(key: K, createArgs: TsCreateArgs): String? =
         ops.tsCreate(key, createArgs).awaitFirstOrNull()
+
+    override suspend fun tsAlter(key: K): String? =
+        ops.tsAlter(key).awaitFirstOrNull()
 
     override suspend fun tsAlter(key: K, alterArgs: TsAlterArgs): String? =
         ops.tsAlter(key, alterArgs).awaitFirstOrNull()
@@ -71,6 +73,9 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tsAdd(key: K, value: Double): Long? =
         ops.tsAdd(key, value).awaitFirstOrNull()
 
+    override suspend fun tsAdd(key: K, value: Double, addArgs: TsAddArgs): Long? =
+        ops.tsAdd(key, value, addArgs).awaitFirstOrNull()
+
     override suspend fun tsMAdd(vararg entries: Map.Entry<K, TsSample>): List<Long?> =
         ops.tsMAdd(*entries).asFlow().toList().map { it.getValueOrElse(null) }
 
@@ -92,8 +97,8 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tsGet(key: K): TsSample? =
         ops.tsGet(key).awaitFirstOrNull()
 
-    override suspend fun tsGet(key: K, getArgs: TsGetArgs): TsSample? =
-        ops.tsGet(key, getArgs).awaitFirstOrNull()
+    override suspend fun tsGet(key: K, latest: Boolean): TsSample? =
+        ops.tsGet(key, latest).awaitFirstOrNull()
 
     override suspend fun tsMGet(vararg filters: V): List<TsMGetValue<K>> =
         ops.tsMGet(*filters).asFlow().toList()
@@ -110,8 +115,8 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tsInfo(key: K): TsInfoValue<K>? =
         ops.tsInfo(key).awaitFirstOrNull()
 
-    override suspend fun tsInfoDebug(key: K): TsInfoValue<K>? =
-        ops.tsInfoDebug(key).awaitFirstOrNull()
+    override suspend fun tsInfo(key: K, debug: Boolean): TsInfoValue<K>? =
+        ops.tsInfo(key, debug).awaitFirstOrNull()
 
     override suspend fun tsQueryIndex(vararg filters: V): List<K> =
         ops.tsQueryIndex(*filters).asFlow().toList()

@@ -14,7 +14,7 @@ import java.util.Map;
  *
  * @param <K> Key type
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 public class TsMGetValue<K> {
 

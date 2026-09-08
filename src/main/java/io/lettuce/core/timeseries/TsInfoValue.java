@@ -15,7 +15,7 @@ import java.util.Map;
  *
  * @param <K> Key type
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 public class TsInfoValue<K> {
 
@@ -234,7 +234,7 @@ public class TsInfoValue<K> {
      *
      * @param <K> Key type
      * @author Gyumin Hwang
-     * @since 7.7
+     * @since 7.8
      */
     public static class Rule<K> {
 
@@ -295,7 +295,7 @@ public class TsInfoValue<K> {
      * Represents a single chunk of a series, as reported by {@code TS.INFO ... DEBUG}.
      *
      * @author Gyumin Hwang
-     * @since 7.7
+     * @since 7.8
      */
     public static class Chunk {
 

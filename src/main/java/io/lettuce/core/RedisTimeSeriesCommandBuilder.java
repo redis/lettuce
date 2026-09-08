@@ -30,7 +30,6 @@ import io.lettuce.core.timeseries.TsSampleParser;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
-import io.lettuce.core.timeseries.arguments.TsGetArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 
@@ -42,7 +41,7 @@ import static io.lettuce.core.protocol.CommandType.*;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
@@ -63,6 +62,14 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         createArgs.build(args);
 
         return createCommand(TS_CREATE, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> tsAlter(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        return createCommand(TS_ALTER, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, String> tsAlter(K key, TsAlterArgs alterArgs) {
@@ -133,6 +140,15 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add("*").add(value);
+
+        return createCommand(TS_ADD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> tsAdd(K key, double value, TsAddArgs addArgs) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add("*").add(value);
+        addArgs.build(args);
 
         return createCommand(TS_ADD, new IntegerOutput<>(codec), args);
     }
@@ -223,11 +239,13 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         return createCommand(TS_GET, new EncodedComplexOutput<>(codec, TsSampleParser.INSTANCE), key);
     }
 
-    Command<K, V, TsSample> tsGet(K key, TsGetArgs getArgs) {
+    Command<K, V, TsSample> tsGet(K key, boolean latest) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        getArgs.build(args);
+        if (latest) {
+            args.add(CommandKeyword.LATEST);
+        }
 
         return createCommand(TS_GET, new EncodedComplexOutput<>(codec, TsSampleParser.INSTANCE), args);
     }
@@ -238,10 +256,13 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         return createCommand(TS_INFO, new EncodedComplexOutput<>(codec, new TsInfoValueParser<>(codec)), key);
     }
 
-    Command<K, V, TsInfoValue<K>> tsInfoDebug(K key) {
+    Command<K, V, TsInfoValue<K>> tsInfo(K key, boolean debug) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add("DEBUG");
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        if (debug) {
+            args.add(CommandKeyword.DEBUG);
+        }
 
         return createCommand(TS_INFO, new EncodedComplexOutput<>(codec, new TsInfoValueParser<>(codec)), args);
     }

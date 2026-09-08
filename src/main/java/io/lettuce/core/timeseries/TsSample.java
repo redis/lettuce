@@ -20,7 +20,7 @@ import java.util.List;
  * accessible, in declaration order, via {@link #getValues()}.
  *
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 public class TsSample {
 

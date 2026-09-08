@@ -28,7 +28,7 @@ import io.lettuce.core.timeseries.TsEncodingFormat;
  * {@link TsAddArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 public class TsAddArgs implements CompositeArgument {
 

@@ -15,7 +15,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * <a href="https://redis.io/commands/ts.alter/">TS.ALTER</a> {@code DUPLICATE_POLICY} option.
  *
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 public enum TsDuplicatePolicy implements ProtocolKeyword {
 

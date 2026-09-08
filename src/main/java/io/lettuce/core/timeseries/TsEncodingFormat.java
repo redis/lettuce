@@ -15,7 +15,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * option.
  *
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 public enum TsEncodingFormat implements ProtocolKeyword {
 

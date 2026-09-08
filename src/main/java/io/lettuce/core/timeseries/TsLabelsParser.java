@@ -24,7 +24,7 @@ import io.lettuce.core.output.ComplexData;
  * same {@link Map}.
  *
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 final class TsLabelsParser {
 

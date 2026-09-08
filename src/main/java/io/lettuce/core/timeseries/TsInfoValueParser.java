@@ -28,7 +28,7 @@ import io.lettuce.core.output.ComplexDataParser;
  * @param <K> Key type
  * @param <V> Value type
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 public final class TsInfoValueParser<K, V> implements ComplexDataParser<TsInfoValue<K>> {
 

@@ -16,7 +16,6 @@ import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
-import io.lettuce.core.timeseries.arguments.TsGetArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.netty.buffer.ByteBuf;
@@ -48,6 +47,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * LABELS).</li>
  * <li>Given a key with {@code TsAlterArgs}, when {@code tsAlter(key, args)} is built, then the wire is
  * {@code TS.ALTER key CHUNK_SIZE 4096}.</li>
+ * <li>Given a key with no options, when {@code tsAlter(key)} is built, then the wire is {@code TS.ALTER key} with no
+ * options.</li>
  * <li>Given a source/dest key pair and an aggregation type/bucket duration, when {@code tsCreateRule(...)} is built without
  * {@code alignTimestamp}, then the wire is {@code TS.CREATERULE src dst AGGREGATION AVG 60000}.</li>
  * <li>Given the same inputs plus an {@code alignTimestamp}, when the overload is built, then the wire is
@@ -62,6 +63,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * {@code TS.ADD key 1000 23.5 ON_DUPLICATE LAST LABELS a b} with {@code LABELS} emitted last.</li>
  * <li>Given a key and value with no timestamp, when {@code tsAdd(key, value)} is built, then the wire is
  * {@code TS.ADD key * 23.5} (server auto-assigns the timestamp).</li>
+ * <li>Given a key, value and {@code TsAddArgs} with no timestamp, when {@code tsAdd(key, value, args)} is built, then the wire
+ * is {@code TS.ADD key * 23.5 ON_DUPLICATE LAST} (server auto-assigns the timestamp).</li>
  * <li>Given two (key, {@link TsSample}) entries, when {@code tsMAdd(...)} is built, then the wire is
  * {@code TS.MADD src 1000 23.5 dst 2000 24.5}.</li>
  * <li>Given a single (key, {@link TsSample}) entry, when the non-varargs {@code tsMAdd(entry)} overload is built, then the wire
@@ -76,10 +79,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * <li>Given a key, subtrahend and {@code TsIncrByArgs}, when {@code tsDecrBy(key, value, args)} is built, then the wire is
  * {@code TS.DECRBY key 1.5 CHUNK_SIZE 4096}.</li>
  * <li>Given a key, when {@code tsGet(key)} is built, then the wire is {@code TS.GET key}.</li>
- * <li>Given a key and {@code TsGetArgs.latest()}, when {@code tsGet(key, args)} is built, then the wire is
+ * <li>Given a key and {@code latest=true}, when {@code tsGet(key, latest)} is built, then the wire is
  * {@code TS.GET key LATEST}.</li>
+ * <li>Given a key and {@code latest=false}, when {@code tsGet(key, latest)} is built, then the wire is {@code TS.GET key} with
+ * no options.</li>
  * <li>Given a key, when {@code tsInfo(key)} is built, then the wire is {@code TS.INFO key}.</li>
- * <li>Given a key, when {@code tsInfoDebug(key)} is built, then the wire is {@code TS.INFO key DEBUG}.</li>
+ * <li>Given a key and {@code debug=true}, when {@code tsInfo(key, debug)} is built, then the wire is
+ * {@code TS.INFO key DEBUG}.</li>
+ * <li>Given a key and {@code debug=false}, when {@code tsInfo(key, debug)} is built, then the wire is {@code TS.INFO key} with
+ * no options.</li>
  * <li>Given a single filter, when the non-varargs {@code tsMGet(filter)} overload is built, then the wire is
  * {@code TS.MGET FILTER a=1}.</li>
  * <li>Given two or more filters, when the varargs {@code tsMGet(filters)} overload is built, then the wire is
@@ -138,6 +146,16 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
         assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo(
                 "*4\r\n" + "$8\r\nTS.ALTER\r\n" + "$15\r\n" + SOURCE_KEY + "\r\n" + "$10\r\nCHUNK_SIZE\r\n" + "$4\r\n4096\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructTsAlterCommandWithoutArgs() {
+        Command<String, String, String> command = builder.tsAlter(SOURCE_KEY);
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*2\r\n" + "$8\r\nTS.ALTER\r\n" + "$15\r\n" + SOURCE_KEY + "\r\n");
     }
 
     @Test
@@ -212,6 +230,17 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
         assertThat(buff.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*4\r\n" + "$6\r\nTS.ADD\r\n" + "$15\r\n" + SOURCE_KEY + "\r\n" + "$1\r\n*\r\n" + "$4\r\n23.5\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructTsAddCommandWithArgsAndAutoTimestamp() {
+        TsAddArgs args = TsAddArgs.Builder.onDuplicate(TsDuplicatePolicy.LAST);
+        Command<String, String, Long> command = builder.tsAdd(SOURCE_KEY, 23.5, args);
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\nTS.ADD\r\n" + "$15\r\n" + SOURCE_KEY
+                + "\r\n" + "$1\r\n*\r\n" + "$4\r\n23.5\r\n" + "$12\r\nON_DUPLICATE\r\n" + "$4\r\nLAST\r\n");
     }
 
     @Test
@@ -316,14 +345,23 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     }
 
     @Test
-    void shouldCorrectlyConstructTsGetCommandWithArgs() {
-        TsGetArgs args = TsGetArgs.Builder.latest();
-        Command<String, String, TsSample> command = builder.tsGet(SOURCE_KEY, args);
+    void shouldCorrectlyConstructTsGetCommandWithLatestTrue() {
+        Command<String, String, TsSample> command = builder.tsGet(SOURCE_KEY, true);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
         assertThat(buff.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*3\r\n" + "$6\r\nTS.GET\r\n" + "$15\r\n" + SOURCE_KEY + "\r\n" + "$6\r\nLATEST\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructTsGetCommandWithLatestFalse() {
+        Command<String, String, TsSample> command = builder.tsGet(SOURCE_KEY, false);
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*2\r\n" + "$6\r\nTS.GET\r\n" + "$15\r\n" + SOURCE_KEY + "\r\n");
     }
 
     @Test
@@ -337,13 +375,23 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     }
 
     @Test
-    void shouldCorrectlyConstructTsInfoDebugCommand() {
-        Command<String, String, TsInfoValue<String>> command = builder.tsInfoDebug(SOURCE_KEY);
+    void shouldCorrectlyConstructTsInfoCommandWithDebugTrue() {
+        Command<String, String, TsInfoValue<String>> command = builder.tsInfo(SOURCE_KEY, true);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
         assertThat(buff.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*3\r\n" + "$7\r\nTS.INFO\r\n" + "$15\r\n" + SOURCE_KEY + "\r\n" + "$5\r\nDEBUG\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructTsInfoCommandWithDebugFalse() {
+        Command<String, String, TsInfoValue<String>> command = builder.tsInfo(SOURCE_KEY, false);
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*2\r\n" + "$7\r\nTS.INFO\r\n" + "$15\r\n" + SOURCE_KEY + "\r\n");
     }
 
     @Test

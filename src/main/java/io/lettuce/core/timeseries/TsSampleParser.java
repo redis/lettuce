@@ -24,7 +24,7 @@ import io.lettuce.core.output.ComplexDataParser;
  * ever produces a single, possibly {@code null}, {@link TsSample} for the single-sample {@code TS.GET} reply.
  *
  * @author Gyumin Hwang
- * @since 7.7
+ * @since 7.8
  */
 public final class TsSampleParser implements ComplexDataParser<TsSample> {
 
