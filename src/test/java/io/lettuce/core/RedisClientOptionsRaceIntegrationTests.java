@@ -24,10 +24,13 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -50,7 +53,9 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.PushHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnectionImpl;
+import io.lettuce.core.sentinel.RedisSentinelReactiveCommandsImpl;
 import io.lettuce.core.sentinel.StatefulRedisSentinelConnectionImpl;
+import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
@@ -149,6 +154,65 @@ class RedisClientOptionsRaceIntegrationTests {
             }
         } finally {
             firstAddress.cancel(false);
+            FastShutdown.shutdown(client);
+        }
+    }
+
+    static Stream<Arguments> sentinelConnections() {
+        return Stream.of(ConnectionType.STANDALONE, ConnectionType.PUBSUB)
+                .flatMap(type -> Stream.of(false, true).map(explicitOptions -> Arguments.of(type, explicitOptions)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("sentinelConnections")
+    void shouldRetainOptionsDuringSentinelAddressLookup(ConnectionType type, boolean explicitOptions) throws Exception {
+
+        SentinelLookupRedisClient client = new SentinelLookupRedisClient();
+        ClientOptions firstOptions = FIRST.mutate().autoReconnect(true).build();
+        client.setOptions(explicitOptions ? SECOND : firstOptions);
+        RedisURI sentinel = RedisURI.Builder.sentinel(TestSettings.host(), TestSettings.port(), "mymaster").build();
+
+        try {
+            CompletableFuture<RedisChannelHandler<String, String>> pending;
+            if (explicitOptions) {
+                pending = (type == ConnectionType.STANDALONE ? client.connectAsync(StringCodec.UTF8, sentinel, firstOptions)
+                        : client.connectPubSubAsync(StringCodec.UTF8, sentinel, firstOptions))
+                                .thenApply(connection -> (RedisChannelHandler<String, String>) connection)
+                                .toCompletableFuture();
+            } else {
+                pending = connect(client, type, sentinel);
+            }
+
+            client.lookupStarted.get(10, SECONDS);
+            assertThat(pending).isNotDone();
+            client.setOptions(SECOND);
+            client.lookupReady.complete(true);
+
+            try (RedisChannelHandler<String, String> connection = pending.get(10, SECONDS)) {
+                assertConnectionOptions(connection, firstOptions);
+                client.assertDiscoveryOptions(firstOptions, 1);
+
+                RedisChannelWriter writer = connection.getChannelWriter();
+                if (writer instanceof CommandExpiryWriter) {
+                    writer = ((CommandExpiryWriter) writer).getDelegate();
+                }
+                Channel channel = ReflectionTestUtils.getField(writer, "channel");
+                channel.close().sync();
+                assertThat(((StatefulRedisConnection<String, String>) connection).async().ping().get(10, SECONDS))
+                        .isEqualTo("PONG");
+                assertConnectionOptions(connection, firstOptions);
+                client.assertDiscoveryOptions(firstOptions, 2);
+            }
+
+            client.discoveryOptions.clear();
+            client.discoveryProtocols.clear();
+            try (RedisChannelHandler<String, String> connection = connect(client, type, sentinel).get(10, SECONDS)) {
+                assertConnectionOptions(connection, SECOND);
+                client.assertDiscoveryOptions(SECOND, 1);
+            }
+            assertThat(client.getOptions()).isSameAs(SECOND);
+        } finally {
+            client.lookupReady.complete(true);
             FastShutdown.shutdown(client);
         }
     }
@@ -299,6 +363,71 @@ class RedisClientOptionsRaceIntegrationTests {
 
     enum Stage {
         BEFORE_ENDPOINT, ENDPOINT, CONNECTION
+    }
+
+    private static class SentinelLookupRedisClient extends RedisClient {
+
+        final CompletableFuture<Boolean> lookupStarted = new CompletableFuture<>();
+
+        final CompletableFuture<Boolean> lookupReady = new CompletableFuture<>();
+
+        final List<ClientOptions> discoveryOptions = new CopyOnWriteArrayList<>();
+
+        final List<ProtocolVersion> discoveryProtocols = new CopyOnWriteArrayList<>();
+
+        SentinelLookupRedisClient() {
+            super(null, uri());
+        }
+
+        @Override
+        protected Mono<SocketAddress> getSocketAddress(RedisURI redisURI) {
+            Mono<SocketAddress> address = super.getSocketAddress(redisURI);
+            if (!redisURI.getSentinels().isEmpty()) {
+                return Mono.defer(() -> {
+                    lookupStarted.complete(true);
+                    return Mono.fromFuture(lookupReady).then(address);
+                });
+            }
+            return address;
+        }
+
+        @Override
+        protected <K, V> StatefulRedisSentinelConnectionImpl<K, V> newStatefulRedisSentinelConnection(RedisChannelWriter writer,
+                RedisCodec<K, V> codec, Duration timeout, ClientOptions clientOptions) {
+            return new StatefulRedisSentinelConnectionImpl<K, V>(writer, codec, timeout, clientOptions.getJsonParser()) {
+
+                @Override
+                public RedisSentinelReactiveCommands<K, V> reactive() {
+                    discoveryOptions.add(getOptions());
+                    discoveryProtocols.add(getConnectionState().getNegotiatedProtocolVersion());
+                    RedisChannelWriter endpoint = getChannelWriter();
+                    if (endpoint instanceof CommandExpiryWriter) {
+                        endpoint = ((CommandExpiryWriter) endpoint).getDelegate();
+                    }
+                    assertOptions(ReflectionTestUtils.getField(endpoint, "clientOptions"), getOptions());
+                    Channel channel = ReflectionTestUtils.getField(endpoint, "channel");
+                    assertOptions(ReflectionTestUtils.getField(channel.pipeline().get(CommandHandler.class), "clientOptions"),
+                            getOptions());
+
+                    // Only the Sentinel response is stubbed; discovery still performs a real Redis handshake.
+                    return new RedisSentinelReactiveCommandsImpl<K, V>(this, codec, clientOptions.getJsonParser()) {
+
+                        @Override
+                        public Mono<SocketAddress> getMasterAddrByName(K key) {
+                            return Mono.just(new InetSocketAddress(TestSettings.host(), TestSettings.port()));
+                        }
+
+                    };
+                }
+
+            };
+        }
+
+        void assertDiscoveryOptions(ClientOptions expected, int count) {
+            assertThat(discoveryOptions).hasSize(count).allSatisfy(options -> assertOptions(options, expected));
+            assertThat(discoveryProtocols).hasSize(count).containsOnly(expected.getConfiguredProtocolVersion());
+        }
+
     }
 
     private static class PausingRedisClient extends RedisClient {

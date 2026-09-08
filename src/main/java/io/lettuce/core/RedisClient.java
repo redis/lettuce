@@ -351,7 +351,8 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.clientResources(getResources());
         connectionBuilder.commandHandler(commandHandlerSupplier).endpoint(endpoint);
 
-        connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(), redisURI);
+        connectionBuilder(getSocketAddressSupplier(redisURI, clientOptions), connectionBuilder,
+                connection.getConnectionEvents(), redisURI);
         connectionBuilder.connectionInitializer(createHandshake(state, clientOptions));
 
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
@@ -676,7 +677,8 @@ public class RedisClient extends AbstractRedisClient {
 
         connectionBuilder.endpoint(endpoint).commandHandler(() -> new CommandHandler(clientOptions, getResources(), endpoint))
                 .connection(connection);
-        connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(), redisURI);
+        connectionBuilder(getSocketAddressSupplier(redisURI, clientOptions), connectionBuilder,
+                connection.getConnectionEvents(), redisURI);
 
         ConnectionFuture<?> sync = initializeChannelAsync(connectionBuilder);
 
@@ -868,21 +870,43 @@ public class RedisClient extends AbstractRedisClient {
      * @see ClientResources#addressResolverGroup()
      * @see RedisURI#getSentinels()
      * @see RedisURI#getSentinelMasterId()
+     * @deprecated since 7.8, use {@link #getSocketAddress(RedisURI, ClientOptions)} instead; scheduled for removal in a future
+     *             major release.
      */
+    @Deprecated
     protected Mono<SocketAddress> getSocketAddress(RedisURI redisURI) {
 
+        ClientOptions clientOptions = getLegacyConnectionOptions();
         return Mono.defer(() -> {
 
             if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
                 logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(),
                         redisURI.getSentinelMasterId());
-                return lookupRedis(redisURI).switchIfEmpty(Mono.error(new RedisConnectionException(
+                return lookupRedis(redisURI, clientOptions).switchIfEmpty(Mono.error(new RedisConnectionException(
                         "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId())));
 
             } else {
                 return Mono.fromCallable(() -> getResources().socketAddressResolver().resolve((redisURI)));
             }
         });
+    }
+
+    /**
+     * Get a {@link Mono} that resolves {@link RedisURI} to a {@link SocketAddress} using the captured connection options.
+     * Resolution uses Redis Sentinel when configured or DNS otherwise. Sentinel connections use {@code clientOptions} on every
+     * subscription, including address lookups during reconnection.
+     * <p>
+     * Subclasses can override this method to customize address resolution with the options captured for the connection.
+     *
+     * @param redisURI must not be {@code null}.
+     * @param clientOptions the captured connection options, must not be {@code null}.
+     * @return a {@link Mono} emitting the resolved address or an error if resolution fails.
+     * @since 7.8
+     * @see ClientResources#addressResolverGroup()
+     * @see RedisURI#getSentinels()
+     */
+    protected Mono<SocketAddress> getSocketAddress(RedisURI redisURI, ClientOptions clientOptions) {
+        return withLegacyConnectionOptions(clientOptions, () -> getSocketAddress(redisURI));
     }
 
     /**
@@ -913,16 +937,17 @@ public class RedisClient extends AbstractRedisClient {
         }
     }
 
-    private Mono<SocketAddress> getSocketAddressSupplier(RedisURI redisURI) {
-        return getSocketAddress(redisURI).doOnNext(addr -> logger.debug("Resolved SocketAddress {} using {}", addr, redisURI));
+    private Mono<SocketAddress> getSocketAddressSupplier(RedisURI redisURI, ClientOptions clientOptions) {
+        return getSocketAddress(redisURI, clientOptions)
+                .doOnNext(addr -> logger.debug("Resolved SocketAddress {} using {}", addr, redisURI));
     }
 
-    private Mono<SocketAddress> lookupRedis(RedisURI sentinelUri) {
+    private Mono<SocketAddress> lookupRedis(RedisURI sentinelUri, ClientOptions clientOptions) {
 
         Duration timeout = sentinelUri.getTimeout();
 
-        return Mono.usingWhen(
-                Mono.fromCompletionStage(() -> connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout)), c -> {
+        return Mono.usingWhen(Mono.fromCompletionStage(
+                () -> connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout, clientOptions)), c -> {
 
                     String sentinelMasterId = sentinelUri.getSentinelMasterId();
                     return c.reactive().getMasterAddrByName(sentinelMasterId).map(it -> {

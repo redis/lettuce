@@ -8,6 +8,8 @@ existing connections.
 
 RedisClient and RedisClusterClient capture options when starting a connection and
 use them throughout its initialization, including asynchronous connection retries.
+Sentinel address lookups for standalone and Pub/Sub connections retain those
+options when resolving the master, including lookups triggered by a reconnect.
 Calling `setOptions` during initialization applies the new options to subsequent
 connections. Cluster node connections capture their own options when they are
 created, including nodes opened later by an existing cluster connection.
@@ -42,7 +44,8 @@ protected DefaultEndpoint createEndpoint(ClientOptions clientOptions) {
 }
 ```
 
-The same convention applies to the connection and Pub/Sub endpoint factories.
+The same convention applies to the connection and Pub/Sub endpoint factories,
+and to `getSocketAddress(RedisURI, ClientOptions)` for address resolution.
 RedisClusterClient's connection factories take `ClientOptions` as their first
 argument. The shared `createHandshake(ConnectionState, ClientOptions)` hook
 returns `ConnectionInitializer`, so subclasses outside the core package can
