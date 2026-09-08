@@ -1,10 +1,13 @@
 package io.lettuce.core;
 
+import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import io.lettuce.core.internal.LettuceAssert;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Interface for loading {@link RedisCredentials} that are used for authentication. A commonly-used implementation is
@@ -26,8 +29,25 @@ public interface RedisCredentialsProvider {
      * an error occurs during the loading of credentials or credentials could not be found, a runtime exception will be raised.
      *
      * @return a {@link Mono} emitting {@link RedisCredentials} that can be used to authorize a Redis connection.
+     * @deprecated since 7.7, use {@link #resolveCredentialsAsync()} instead. This Reactor-typed method is removed in Lettuce
+     *             8.0, when {@code reactor-core} becomes optional and {@link #resolveCredentialsAsync()} becomes the primary
+     *             credential-resolution contract.
      */
+    @Deprecated
     Mono<RedisCredentials> resolveCredentials();
+
+    /**
+     * Resolve the latest available credentials as a {@link CompletionStage}. This Reactor-free method replaces
+     * {@link #resolveCredentials()} and becomes the primary credential-resolution contract in Lettuce 8.0. Prefer it for new
+     * code; implementations continue to supply credentials through {@link #resolveCredentials()} until 8.0.
+     *
+     * @return a {@link CompletionStage} that completes with the {@link RedisCredentials} used to authorize a Redis connection.
+     * @since 7.7
+     */
+    @SuppressWarnings("deprecation")
+    default CompletionStage<RedisCredentials> resolveCredentialsAsync() {
+        return resolveCredentials().toFuture();
+    }
 
     /**
      * Creates a new {@link RedisCredentialsProvider} from a given {@link Supplier}.
@@ -46,7 +66,7 @@ public interface RedisCredentialsProvider {
      * Some implementations of the {@link RedisCredentialsProvider} may support streaming new credentials, based on some event
      * that originates outside the driver. In this case they should indicate that so the {@link RedisAuthenticationHandler} is
      * able to process these new credentials.
-     * 
+     *
      * @return whether the {@link RedisCredentialsProvider} supports streaming credentials.
      */
     default boolean supportsStreaming() {
@@ -65,9 +85,33 @@ public interface RedisCredentialsProvider {
      *
      * @return a {@link Flux} emitting {@link RedisCredentials}, or throws an exception if streaming is not supported.
      * @throws UnsupportedOperationException if the provider does not support streaming credentials.
+     * @deprecated since 7.7, use {@link #subscribeToCredentials(Consumer, Consumer)} instead; scheduled for removal in Lettuce
+     *             8.0 (when {@code reactor-core} becomes optional).
      */
+    @Deprecated
     default Flux<RedisCredentials> credentials() {
         throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
+    }
+
+    /**
+     * Subscribe to credential updates produced by this provider. For providers that support streaming (as indicated by
+     * {@link #supportsStreaming()} returning {@code true}), {@code onNext} is invoked whenever new credentials become available
+     * (e.g. token renewal or rotation) and {@code onError} is invoked when the provider observes a failure while producing
+     * credentials. Delivery stops once the returned {@link Subscription} is {@link Subscription#close() closed}.
+     * <p>
+     * Providers that do not support streaming throw an {@link UnsupportedOperationException} by default.
+     *
+     * @param onNext consumer invoked with each new {@link RedisCredentials} value, must not be {@code null}.
+     * @param onError consumer invoked with errors observed while producing credentials, must not be {@code null}.
+     * @return a {@link Subscription} that stops delivery when closed.
+     * @throws UnsupportedOperationException if the provider does not support streaming credentials.
+     * @since 7.7
+     */
+    default Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+        LettuceAssert.notNull(onNext, "onNext consumer must not be null");
+        LettuceAssert.notNull(onError, "onError consumer must not be null");
+        Disposable disposable = credentials().subscribe(onNext, onError);
+        return disposable::dispose;
     }
 
     /**

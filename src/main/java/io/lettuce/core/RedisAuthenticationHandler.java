@@ -120,6 +120,7 @@ public class RedisAuthenticationHandler<K, V> {
      * Each time new credentials are received, the client is re-authenticated. The previous subscription, if any, is disposed of
      * before setting the new subscription.
      */
+    @SuppressWarnings("deprecation")
     public void subscribe() {
         if (credentialsProvider == null || !credentialsProvider.supportsStreaming()) {
             return;
