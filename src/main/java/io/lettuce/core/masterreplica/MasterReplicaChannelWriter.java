@@ -94,6 +94,15 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
         return command;
     }
 
+    /**
+     * @return {@code true} if a transaction ({@code MULTI}) is currently open on this connection. Scan routing consults this so
+     *         that scans issued inside a transaction stay on the transaction (master) connection instead of being pinned to a
+     *         read node.
+     */
+    boolean isInTransaction() {
+        return inTransaction;
+    }
+
     @SuppressWarnings("unchecked")
     private static <K, V> void writeCommand(RedisCommand<K, V, ?> command, StatefulRedisConnection<K, V> connection,
             Throwable throwable) {
