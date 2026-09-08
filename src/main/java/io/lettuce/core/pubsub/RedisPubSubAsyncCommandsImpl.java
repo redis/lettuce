@@ -114,6 +114,14 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
     @Override
     @SuppressWarnings("unchecked")
     public RedisFuture<Void> sunsubscribe(K... channels) {
+        // Mark these channels as intentionally unsubscribed to prevent auto-resubscription
+        StatefulRedisPubSubConnection<K, V> connection = getStatefulConnection();
+        if (connection instanceof StatefulRedisPubSubConnectionImpl) {
+            StatefulRedisPubSubConnectionImpl<K, V> impl = (StatefulRedisPubSubConnectionImpl<K, V>) connection;
+            for (K channel : channels) {
+                impl.markIntentionalUnsubscribe(channel);
+            }
+        }
         return (RedisFuture<Void>) dispatch(commandBuilder.sunsubscribe(channels));
     }
 
