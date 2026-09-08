@@ -3708,22 +3708,32 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> zrange(K key, ZRange<? extends V> range) {
+    public RedisFuture<List<V>> zrange(K key, ZRange range) {
         return dispatch(commandBuilder.zrange(key, range));
     }
 
     @Override
-    public RedisFuture<List<V>> zrange(K key, ZRange<? extends V> range, ZRangeArgs args) {
+    public RedisFuture<List<V>> zrange(K key, ZRange range, ZRangeArgs args) {
         return dispatch(commandBuilder.zrange(key, range, args));
     }
 
     @Override
-    public RedisFuture<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange<? extends V> range) {
+    public RedisFuture<List<V>> zrange(K key, ZLexRange<? extends V> range) {
+        return dispatch(commandBuilder.zrange(key, range));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrange(K key, ZLexRange<? extends V> range, ZRangeArgs args) {
+        return dispatch(commandBuilder.zrange(key, range, args));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange range) {
         return dispatch(commandBuilder.zrangeWithScores(key, range));
     }
 
     @Override
-    public RedisFuture<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange<? extends V> range, ZRangeArgs args) {
+    public RedisFuture<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange range, ZRangeArgs args) {
         return dispatch(commandBuilder.zrangeWithScores(key, range, args));
     }
 

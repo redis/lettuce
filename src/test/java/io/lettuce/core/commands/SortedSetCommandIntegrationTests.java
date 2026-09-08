@@ -441,10 +441,11 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     void zrangeUnifiedByLex() {
         redis.zadd(key, 0.0, "a", 0.0, "b", 0.0, "c");
 
-        assertThat(redis.zrange(key, ZRange.byLex(Range.create("a", "b")))).isEqualTo(list("a", "b"));
-        assertThat(redis.zrange(key, ZRange.byLex(Range.from(excluding("a"), unbounded())))).isEqualTo(list("b", "c"));
-        assertThat(redis.zrange(key, ZRange.byLex(Range.create("a", "b")), ZRangeArgs.Builder.rev())).isEqualTo(list("b", "a"));
-        assertThat(redis.zrange(key, ZRange.byLex(Range.unbounded()), ZRangeArgs.Builder.limit(1, 2)))
+        assertThat(redis.zrange(key, ZLexRange.create(Range.create("a", "b")))).isEqualTo(list("a", "b"));
+        assertThat(redis.zrange(key, ZLexRange.create(Range.from(excluding("a"), unbounded())))).isEqualTo(list("b", "c"));
+        assertThat(redis.zrange(key, ZLexRange.create(Range.create("a", "b")), ZRangeArgs.Builder.rev()))
+                .isEqualTo(list("b", "a"));
+        assertThat(redis.zrange(key, ZLexRange.create(Range.unbounded()), ZRangeArgs.Builder.limit(1, 2)))
                 .isEqualTo(list("b", "c"));
     }
 
@@ -462,7 +463,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     void zrangeUnifiedShouldRejectInvalidCombinations() {
         assertThatThrownBy(() -> redis.zrange(key, ZRange.byIndex(0, 1), ZRangeArgs.Builder.limit(0, 1)))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> redis.zrangeWithScores(key, ZRange.byLex(Range.create("a", "b"))))
+        assertThatThrownBy(() -> redis.zrangeWithScores(key, ZRange.byIndex(0, 1), ZRangeArgs.Builder.limit(0, 1)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

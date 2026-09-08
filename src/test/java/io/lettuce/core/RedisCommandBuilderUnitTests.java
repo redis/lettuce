@@ -164,7 +164,7 @@ class RedisCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructZrangeByLexWithLimit() {
 
-        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byLex(Range.create("banana", "date")),
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZLexRange.create(Range.create("banana", "date")),
                 ZRangeArgs.Builder.limit(1, 2));
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -203,16 +203,12 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
-    void zrangeWithScoresShouldRejectLexRange() {
-        assertThatThrownBy(() -> sut.zrangeWithScores(MY_KEY, ZRange.byLex(Range.create("a", "b"))))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("WITHSCORES is not supported with a BYLEX range");
-    }
-
-    @Test
     void zrangeShouldRejectNullRangeAndArgs() {
-        assertThatThrownBy(() -> sut.zrange(MY_KEY, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, (ZRange) null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> sut.zrange(MY_KEY, ZRange.byIndex(0, 2), null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, (ZLexRange<String>) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, ZLexRange.create(Range.create("a", "b")), null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

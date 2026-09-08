@@ -10,17 +10,17 @@ import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Range selector for the Redis <a href="https://redis.io/docs/latest/commands/zrange/">ZRANGE</a> command, coupling the range
- * boundaries with the range mode (by index, by score using {@code BYSCORE}, or by lexicographical order using {@code BYLEX}).
- * Instances are created through the static factory methods {@link #byIndex(long, long)}, {@link #byScore(Range)} and
- * {@link #byLex(Range)}.
+ * boundaries with the range mode (by index, or by score using {@code BYSCORE}). Instances are created through the static
+ * factory methods {@link #byIndex(long, long)} and {@link #byScore(Range)}. Use {@link ZLexRange} to select members by
+ * lexicographical order ({@code BYLEX}).
  * <p>
  * Ranges are always specified from lower to upper boundary, also for reverse traversal with {@link ZRangeArgs#rev()}.
  *
- * @param <T> Value type.
  * @author Yordan Tsintsov
  * @since 7.8
+ * @see ZLexRange
  */
-public final class ZRange<T> {
+public final class ZRange {
 
     private final RangeType rangeType;
 
@@ -28,9 +28,9 @@ public final class ZRange<T> {
 
     private final long stop;
 
-    private final Range<?> range;
+    private final Range<? extends Number> range;
 
-    private ZRange(RangeType rangeType, long start, long stop, Range<?> range) {
+    private ZRange(RangeType rangeType, long start, long stop, Range<? extends Number> range) {
         this.rangeType = rangeType;
         this.start = start;
         this.stop = stop;
@@ -44,12 +44,11 @@ public final class ZRange<T> {
      *
      * @param start the start index.
      * @param stop the stop index, inclusive.
-     * @param <T> Value type.
      * @return the {@link ZRange} selecting members between {@code start} and {@code stop}.
      * @since 7.8
      */
-    public static <T> ZRange<T> byIndex(long start, long stop) {
-        return new ZRange<>(RangeType.INDEX, start, stop, null);
+    public static ZRange byIndex(long start, long stop) {
+        return new ZRange(RangeType.INDEX, start, stop, null);
     }
 
     /**
@@ -57,33 +56,13 @@ public final class ZRange<T> {
      * {@link Range.Boundary#excluding(Object) excluding} or {@link Range.Boundary#unbounded() unbounded}.
      *
      * @param range the score range, must not be {@code null}.
-     * @param <T> Value type.
      * @return the {@link ZRange} selecting members with a score within {@code range}.
      * @throws IllegalArgumentException if {@code range} is {@code null}.
      * @since 7.8
      */
-    public static <T> ZRange<T> byScore(Range<? extends Number> range) {
-
+    public static ZRange byScore(Range<? extends Number> range) {
         LettuceAssert.notNull(range, "Range must not be null");
-
-        return new ZRange<>(RangeType.SCORE, 0, 0, range);
-    }
-
-    /**
-     * Create a {@link ZRange} selecting members by lexicographical order, corresponding to {@code BYLEX}. Boundaries can be
-     * {@link Range.Boundary#excluding(Object) excluding} or {@link Range.Boundary#unbounded() unbounded}.
-     *
-     * @param range the lexicographical range, must not be {@code null}.
-     * @param <T> Value type.
-     * @return the {@link ZRange} selecting members within {@code range}.
-     * @throws IllegalArgumentException if {@code range} is {@code null}.
-     * @since 7.8
-     */
-    public static <T> ZRange<T> byLex(Range<T> range) {
-
-        LettuceAssert.notNull(range, "Range must not be null");
-
-        return new ZRange<>(RangeType.LEX, 0, 0, range);
+        return new ZRange(RangeType.SCORE, 0, 0, range);
     }
 
     RangeType getRangeType() {
@@ -98,7 +77,7 @@ public final class ZRange<T> {
         return stop;
     }
 
-    Range<?> getRange() {
+    Range<? extends Number> getRange() {
         return range;
     }
 
@@ -130,13 +109,7 @@ public final class ZRange<T> {
         /**
          * Range by score, corresponds to {@code BYSCORE}.
          */
-        SCORE,
-
-        /**
-         * Range by lexicographical order, corresponds to {@code BYLEX}.
-         */
-        LEX
-
+        SCORE
     }
 
 }

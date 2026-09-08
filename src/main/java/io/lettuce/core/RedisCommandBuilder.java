@@ -4223,11 +4223,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), args);
     }
 
-    Command<K, V, List<V>> zrange(K key, ZRange<? extends V> range) {
+    Command<K, V, List<V>> zrange(K key, ZRange range) {
         return zrange(key, range, new ZRangeArgs());
     }
 
-    Command<K, V, List<V>> zrange(K key, ZRange<? extends V> range, ZRangeArgs args) {
+    Command<K, V, List<V>> zrange(K key, ZRange range, ZRangeArgs args) {
         notNullKey(key);
         LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(args, "ZRangeArgs " + MUST_NOT_BE_NULL);
@@ -4237,15 +4237,28 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGE, new ValueListOutput<>(codec), commandArgs);
     }
 
-    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange<? extends V> range) {
+    Command<K, V, List<V>> zrange(K key, ZLexRange<? extends V> range) {
+        return zrange(key, range, new ZRangeArgs());
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZLexRange<? extends V> range, ZRangeArgs args) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZLexRange " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(args, "ZRangeArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key);
+        addZLexRange(commandArgs, range, args);
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), commandArgs);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange range) {
         return zrangeWithScores(key, range, new ZRangeArgs());
     }
 
-    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange<? extends V> range, ZRangeArgs args) {
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange range, ZRangeArgs args) {
         notNullKey(key);
         LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(args, "ZRangeArgs " + MUST_NOT_BE_NULL);
-        LettuceAssert.isTrue(range.getRangeType() != ZRange.RangeType.LEX, "WITHSCORES is not supported with a BYLEX range");
 
         CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key);
         addZRange(commandArgs, range, args);
@@ -4253,38 +4266,39 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGE, new ScoredValueListOutput<>(codec), commandArgs);
     }
 
-    @SuppressWarnings("unchecked")
-    private void addZRange(CommandArgs<K, V> commandArgs, ZRange<? extends V> range, ZRangeArgs args) {
+    private void addZRange(CommandArgs<K, V> commandArgs, ZRange range, ZRangeArgs args) {
 
         ZRange.RangeType rangeType = range.getRangeType();
         LettuceAssert.isTrue(!args.getLimit().isLimited() || rangeType != ZRange.RangeType.INDEX,
                 "LIMIT requires a BYSCORE or BYLEX range");
-
-        boolean rev = args.isRev();
 
         switch (rangeType) {
             case INDEX:
                 commandArgs.add(range.getStart()).add(range.getStop());
                 break;
             case SCORE:
-                Range<? extends Number> scoreRange = (Range<? extends Number>) range.getRange();
-                if (rev) {
+                Range<? extends Number> scoreRange = range.getRange();
+                if (args.isRev()) {
                     commandArgs.add(max(scoreRange)).add(min(scoreRange));
                 } else {
                     commandArgs.add(min(scoreRange)).add(max(scoreRange));
                 }
                 commandArgs.add(BYSCORE);
                 break;
-            case LEX:
-                Range<? extends V> lexRange = (Range<? extends V>) range.getRange();
-                if (rev) {
-                    commandArgs.add(maxValue(lexRange)).add(minValue(lexRange));
-                } else {
-                    commandArgs.add(minValue(lexRange)).add(maxValue(lexRange));
-                }
-                commandArgs.add(BYLEX);
-                break;
         }
+
+        args.build(commandArgs);
+    }
+
+    private void addZLexRange(CommandArgs<K, V> commandArgs, ZLexRange<? extends V> range, ZRangeArgs args) {
+
+        Range<? extends V> lexRange = range.getRange();
+        if (args.isRev()) {
+            commandArgs.add(maxValue(lexRange)).add(minValue(lexRange));
+        } else {
+            commandArgs.add(minValue(lexRange)).add(maxValue(lexRange));
+        }
+        commandArgs.add(BYLEX);
 
         args.build(commandArgs);
     }
