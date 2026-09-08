@@ -33,11 +33,15 @@ public class DefaultEventBus implements EventBus {
     @Override
     public void publish(Event event) {
 
-        recorder.record(event);
+        final Event sourceEvent = (event instanceof EventRecorder.RecordableEvent)
+                ? ((EventRecorder.RecordableEvent) event).getSource()
+                : event;
+
+        recorder.record(sourceEvent);
 
         Sinks.EmitResult emitResult;
 
-        while ((emitResult = bus.tryEmitNext(event)) == Sinks.EmitResult.FAIL_NON_SERIALIZED) {
+        while ((emitResult = bus.tryEmitNext(sourceEvent)) == Sinks.EmitResult.FAIL_NON_SERIALIZED) {
             // busy-loop
         }
 
