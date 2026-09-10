@@ -135,13 +135,16 @@ public class HybridArgs {
         }
 
         /**
-         * Add a parameter for parameterized queries.
+         * Add a query parameter. The query references it as {@code $name} and the server substitutes the value wherever that
+         * reference appears, so values need no escaping and cannot alter the query structure, for example
+         * {@code param("category", "electronics")} with the query {@code @category:{$category}}. The value is sent as UTF-8
+         * text. Adding a parameter with the same name again replaces its value.
          * <p>
-         * Parameters can be referenced in queries using {@code $name} syntax.
-         * </p>
+         * {@code FT.HYBRID} always accepts parameters; the query vector of the {@code VSIM} clause is passed this way, as
+         * {@code vector("$vec")} together with {@code param("vec", blob)}.
          *
-         * @param name the parameter name
-         * @param value the parameter value
+         * @param name the parameter name, referenced as {@code $name} in the query, must not be {@code null}
+         * @param value the parameter value, must not be {@code null}
          * @return this builder
          */
         public Builder param(String name, String value) {
@@ -152,14 +155,15 @@ public class HybridArgs {
         }
 
         /**
-         * Add a binary parameter for parameterized queries.
+         * Add a binary query parameter, for example the query vector of a KNN clause ({@code *=>[KNN 10 @embedding $vec]}). The
+         * bytes are sent exactly as given, which the {@link String} overload cannot do for arbitrary binary data. The query
+         * references the parameter as {@code $name}; adding a parameter with the same name again replaces its value.
          * <p>
-         * Use this for vector data that needs to be passed as binary. Parameters can be referenced in queries using
-         * {@code $name} syntax.
-         * </p>
+         * {@code FT.HYBRID} always accepts parameters; the query vector of the {@code VSIM} clause is passed this way, as
+         * {@code vector("$vec")} together with {@code param("vec", blob)}.
          *
-         * @param name the parameter name
-         * @param value the binary parameter value (e.g., vector data)
+         * @param name the parameter name, referenced as {@code $name} in the query, must not be {@code null}
+         * @param value the binary parameter value, sent as-is, must not be {@code null}
          * @return this builder
          * @since 7.8
          */

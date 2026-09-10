@@ -51,7 +51,10 @@ public class SugAddArgs {
          * @param payload the payload to save with the suggestion.
          * @return new {@link SugAddArgs} with {@literal PAYLOAD} set.
          * @see SugAddArgs#payload(String)
+         * @deprecated since 7.8, there is no replacement. The {@code PAYLOAD} argument of {@code FT.SUGADD} is deprecated by
+         *             Redis since RediSearch 2.0.0.
          */
+        @Deprecated
         public static SugAddArgs payload(String payload) {
             return new SugAddArgs().payload(payload);
         }
@@ -74,7 +77,10 @@ public class SugAddArgs {
      *
      * @param payload the payload to save with the suggestion.
      * @return {@code this} {@link SugAddArgs}.
+     * @deprecated since 7.8, there is no replacement. The {@code PAYLOAD} argument of {@code FT.SUGADD} is deprecated by Redis
+     *             since RediSearch 2.0.0.
      */
+    @Deprecated
     public SugAddArgs payload(String payload) {
         this.payload = payload;
         return this;

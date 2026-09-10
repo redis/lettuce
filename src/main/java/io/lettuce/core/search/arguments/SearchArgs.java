@@ -7,6 +7,7 @@
 
 package io.lettuce.core.search.arguments;
 
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
@@ -472,30 +473,39 @@ public class SearchArgs<K> {
         }
 
         /**
-         * Add one or more value parameters. Each parameter has a name and a value.
-         * <p/>
+         * Add a query parameter. The query references it as {@code $name} and the server substitutes the value wherever that
+         * reference appears, so values need no escaping and cannot alter the query structure, for example
+         * {@code param("category", "electronics")} with the query {@code @category:{$category}}. The value is sent as UTF-8
+         * text. Adding a parameter with the same name again replaces its value.
+         * <p>
          * Requires {@link QueryDialects#DIALECT2} or higher.
          *
-         * @param name the name of the parameter
-         * @param value the value of the parameter
+         * @param name the parameter name, referenced as {@code $name} in the query, must not be {@code null}
+         * @param value the parameter value, must not be {@code null}
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
         public SearchArgs.Builder<K> param(String name, String value) {
+            LettuceAssert.notNull(name, "Parameter name must not be null");
+            LettuceAssert.notNull(value, "Parameter value must not be null");
             instance.params.put(name, value);
             return this;
         }
 
         /**
-         * Add a binary value parameter, for example a vector blob for a KNN query ({@code $BLOB}).
-         * <p/>
+         * Add a binary query parameter, for example the query vector of a KNN clause ({@code *=>[KNN 10 @embedding $vec]}). The
+         * bytes are sent exactly as given, which the {@link String} overload cannot do for arbitrary binary data. The query
+         * references the parameter as {@code $name}; adding a parameter with the same name again replaces its value.
+         * <p>
          * Requires {@link QueryDialects#DIALECT2} or higher.
          *
-         * @param name the name of the parameter
-         * @param value the binary value of the parameter
+         * @param name the parameter name, referenced as {@code $name} in the query, must not be {@code null}
+         * @param value the binary parameter value, sent as-is, must not be {@code null}
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          * @since 7.8
          */
         public SearchArgs.Builder<K> param(String name, byte[] value) {
+            LettuceAssert.notNull(name, "Parameter name must not be null");
+            LettuceAssert.notNull(value, "Parameter value must not be null");
             instance.params.put(name, value);
             return this;
         }

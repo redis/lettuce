@@ -30,6 +30,15 @@ import io.lettuce.core.search.arguments.SynUpdateArgs;
 /**
  * Synchronous executed commands for RediSearch functionality
  *
+ * <p>
+ * Search operates on the bytes stored in Redis. Keys (document keys, {@code INKEYS}, suggestion dictionary keys and document
+ * ids in replies) go through the connection's key codec; index names, schema identifiers and aliases, query text and
+ * server-side tokens are plain {@link String}s. Binary data travels through {@code byte[]} query parameters and is returned as
+ * {@code FieldValue}. Identity codecs ({@code StringCodec}, {@code ByteArrayCodec}) are fully supported; codecs that transform
+ * values (compression, encryption) make indexed content unsearchable, and codecs that transform keys are honoured only where a
+ * key is passed through the API (document keys, {@code INKEYS}, suggestion dictionary keys), never for the index prefix, query
+ * text or JSONPaths. The failure mode is an empty result, not an error.
+ *
  * @param <K> Key type.
  * @author Tihomir Mateev
  * @see <a href="https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/search/">RediSearch</a>
@@ -373,6 +382,13 @@ public interface RediSearchCommands<K> {
      *
      * <p>
      * <strong>Time complexity:</strong> O(N) where N is the number of distinct values in the tag field
+     * </p>
+     *
+     * <p>
+     * Values are decoded as UTF-8. A {@code CASESENSITIVE} tag field keeps the stored bytes unchanged, so a value that is not
+     * valid UTF-8 comes back mangled and cannot be fed back into a query. To filter on such a value, pass the bytes you stored
+     * as a {@code byte[]} query parameter, for example {@code @field:{$t}} with
+     * {@code SearchArgs.Builder#param(String, byte[])}.
      * </p>
      *
      * @param index the index name containing the tag field
@@ -787,7 +803,7 @@ public interface RediSearchCommands<K> {
      *
      * <p>
      * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score and optional
-     * arguments for incremental updates and payload storage.
+     * arguments for incremental updates and (deprecated) payload storage.
      * </p>
      *
      * <p>
@@ -797,7 +813,7 @@ public interface RediSearchCommands<K> {
      * @param key the suggestion dictionary key
      * @param suggestion the suggestion string to index
      * @param score the floating point number of the suggestion string's weight
-     * @param args the suggestion add arguments (INCR, PAYLOAD)
+     * @param args the suggestion add arguments (INCR, deprecated PAYLOAD)
      * @return the current size of the suggestion dictionary after adding the suggestion
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
@@ -863,7 +879,7 @@ public interface RediSearchCommands<K> {
      *
      * <p>
      * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary with optional
-     * arguments for fuzzy matching, score inclusion, payload inclusion, and result limiting.
+     * arguments for fuzzy matching, score inclusion, deprecated payload inclusion, and result limiting.
      * </p>
      *
      * <p>
@@ -872,7 +888,7 @@ public interface RediSearchCommands<K> {
      *
      * @param key the suggestion dictionary key
      * @param prefix the prefix to complete on
-     * @param args the suggestion get arguments (FUZZY, WITHSCORES, WITHPAYLOADS, MAX)
+     * @param args the suggestion get arguments (FUZZY, WITHSCORES, deprecated WITHPAYLOADS, MAX)
      * @return a list of suggestions matching the prefix, optionally with scores and payloads
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
@@ -1011,7 +1027,7 @@ public interface RediSearchCommands<K> {
      * The {@link SearchArgs} parameter enables you to specify:
      * </p>
      * <ul>
-     * <li><strong>Result options:</strong> NOCONTENT, WITHSCORES, WITHPAYLOADS, WITHSORTKEYS</li>
+     * <li><strong>Result options:</strong> NOCONTENT, WITHSCORES, WITHSORTKEYS</li>
      * <li><strong>Query behavior:</strong> VERBATIM (no stemming), NOSTOPWORDS</li>
      * <li><strong>Filtering:</strong> Numeric filters, geo filters, field filters</li>
      * <li><strong>Result customization:</strong> RETURN specific fields, SUMMARIZE, HIGHLIGHT</li>

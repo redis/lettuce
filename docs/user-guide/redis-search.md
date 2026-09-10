@@ -18,6 +18,15 @@ Redis Search operates on **indexes** that define how your data should be searcha
 - **Field definitions**: Which fields are searchable and their types (TEXT, NUMERIC, TAG, GEO, VECTOR)
 - **Search capabilities**: Full-text search, exact matching, range queries, vector similarity
 
+### Codecs
+
+Search operates on the bytes stored in Redis, so the connection's `RedisCodec` matters in two ways:
+
+- **Keys go through the codec.** Document keys, `INKEYS`, suggestion dictionary keys and the document ids in results are encoded and decoded with the key codec, exactly like every other Lettuce command.
+- **Everything else is text.** Index names, schema field identifiers and aliases, query text and the attribute references inside it, dictionary and synonym terms, and server-side tokens such as tag values are sent and read as `String`. Binary data has two dedicated paths: query parameters accept `byte[]` through `param(String, byte[])`, and result field values are `FieldValue`s that expose their raw bytes.
+
+Identity codecs (`StringCodec`, `ByteArrayCodec`) are fully supported. Codecs that transform values, such as `CompressionCodec` or `CipherCodec`, store bytes the server cannot search, so an index over such values matches nothing, for every client and not only Lettuce. Codecs that transform keys, such as a prefixing codec, are honoured only where a key is passed through the API: the index prefix and hash field identifiers are sent as written and must match the stored bytes, and nothing inside query text or a JSONPath is encoded. Note the asymmetry: `INKEYS` values and suggestion dictionary keys are keys and are encoded, while the `PREFIX` filter is not, so with such a codec you pass logical keys everywhere except the prefix. In all of these cases the failure mode is an empty result, not an error.
+
 ## Getting Started
 
 ### Basic Setup
@@ -556,11 +565,12 @@ search.ftSugadd("autocomplete", "bluetooth speakers", 0.8);
 search.ftSugadd("autocomplete", "noise cancelling earbuds", 0.9);
 
 // Add with additional options
-SugAddArgs sugArgs = SugAddArgs.Builder.incr() // Increment score if suggestion exists
-    .payload("category:electronics");           // Additional metadata
+SugAddArgs sugArgs = SugAddArgs.Builder.incr(); // Increment score if suggestion exists
 
 search.ftSugadd("autocomplete", "gaming headset", 0.7, sugArgs);
 ```
+
+Suggestion payloads (`PAYLOAD` on `FT.SUGADD`, `WITHPAYLOADS` on `FT.SUGGET`) are deprecated by Redis since RediSearch 2.0 and are deprecated in Lettuce as well; avoid them in new code.
 
 ### Getting Suggestions
 
@@ -571,15 +581,13 @@ List<Suggestion> suggestions = search.ftSugget("autocomplete", "head");
 // Advanced suggestion options
 SugGetArgs getArgs = SugGetArgs.Builder.fuzzy() // Enable fuzzy matching
     .max(5)         // Limit to 5 suggestions
-    .withScores()   // Include scores
-    .withPayloads(); // Include payloads
+    .withScores();  // Include scores
 
 List<Suggestion> results = search.ftSugget("autocomplete", "head", getArgs);
 
 for (Suggestion suggestion : results) {
     System.out.println("Suggestion: " + suggestion.getValue());
     System.out.println("Score: " + suggestion.getScore());
-    System.out.println("Payload: " + suggestion.getPayload());
 }
 ```
 

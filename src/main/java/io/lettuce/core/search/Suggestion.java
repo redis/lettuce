@@ -65,7 +65,10 @@ public class Suggestion {
      * Get the suggestion payload.
      *
      * @return the suggestion payload, or {@code null} if not available
+     * @deprecated since 7.8, there is no replacement. Suggestion payloads ({@code WITHPAYLOADS}) are deprecated by Redis since
+     *             RediSearch 2.0.0.
      */
+    @Deprecated
     public String getPayload() {
         return payload;
     }
@@ -83,7 +86,10 @@ public class Suggestion {
      * Check if this suggestion has a payload.
      *
      * @return {@code true} if the suggestion has a payload
+     * @deprecated since 7.8, there is no replacement. Suggestion payloads ({@code WITHPAYLOADS}) are deprecated by Redis since
+     *             RediSearch 2.0.0.
      */
+    @Deprecated
     public boolean hasPayload() {
         return payload != null;
     }

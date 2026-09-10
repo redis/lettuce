@@ -148,7 +148,8 @@ classic layout splits them out (`core/commands/` for base + RESP2, `core/command
 `core/commands/transactional/`, and `core/cluster/commands/` for cluster). Naming
 follows the `*IntegrationTests` → Failsafe convention (see the published guide). A
 singular `*Test` suffix also lands in Failsafe, because Surefire excludes it, so a unit
-test named that way silently needs the Docker environment — name unit tests `*UnitTests`.
+test named that way is skipped by `mvn test` and runs only under `make test` (CI) with the
+Docker environment — name unit tests `*UnitTests`.
 
 Not every command needs every overload — add the ones that carry real risk for that
 command (e.g. RESP2 when the reply shape differs between protocols, cluster when

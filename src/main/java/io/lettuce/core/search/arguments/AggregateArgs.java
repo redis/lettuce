@@ -7,6 +7,7 @@
 
 package io.lettuce.core.search.arguments;
 
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.search.AggregationReply;
@@ -332,61 +333,39 @@ public class AggregateArgs {
         }
 
         /**
-         * Add a parameter for parameterized queries.
-         *
+         * Add a query parameter. The query references it as {@code $name} and the server substitutes the value wherever that
+         * reference appears, so values need no escaping and cannot alter the query structure, for example
+         * {@code param("category", "electronics")} with the query {@code @category:{$category}}. The value is sent as UTF-8
+         * text. Adding a parameter with the same name again replaces its value.
          * <p>
-         * Defines a value parameter that can be referenced in the query using {@code $name}. Each parameter reference in the
-         * search query is substituted by the corresponding parameter value. This is useful for dynamic queries and prevents
-         * injection attacks.
-         * </p>
+         * Requires {@link QueryDialects#DIALECT2} or higher.
          *
-         * <p>
-         * <strong>Note:</strong> To use PARAMS, set DIALECT to 2 or greater.
-         * </p>
-         *
-         * <h3>Example Usage:</h3>
-         *
-         * <pre>
-         * {@code
-         * // Define parameters
-         * AggregateArgs.builder()
-         *     .param("category", "electronics")
-         *     .param("min_price", "100")
-         *     .dialect(QueryDialects.DIALECT2)
-         *     .build();
-         *
-         * // Use in query: "@category:$category @price:[$min_price +inf]"
-         * }
-         * </pre>
-         *
-         * @param name the parameter name (referenced as $name in query)
-         * @param value the parameter value
+         * @param name the parameter name, referenced as {@code $name} in the query, must not be {@code null}
+         * @param value the parameter value, must not be {@code null}
          * @return the builder.
          */
         public Builder param(String name, String value) {
+            LettuceAssert.notNull(name, "Parameter name must not be null");
+            LettuceAssert.notNull(value, "Parameter value must not be null");
             args.params.put(name, value);
             return this;
         }
 
         /**
-         * Add a binary parameter for parameterized queries.
-         *
+         * Add a binary query parameter, for example the query vector of a KNN clause ({@code *=>[KNN 10 @embedding $vec]}). The
+         * bytes are sent exactly as given, which the {@link String} overload cannot do for arbitrary binary data. The query
+         * references the parameter as {@code $name}; adding a parameter with the same name again replaces its value.
          * <p>
-         * Defines a binary value parameter that can be referenced in the query using {@code $name}. The value bypasses the
-         * connection's value codec, which is useful for passing vector blobs (e.g. KNN {@code $BLOB}) over a non-binary
-         * connection.
-         * </p>
+         * Requires {@link QueryDialects#DIALECT2} or higher.
          *
-         * <p>
-         * <strong>Note:</strong> To use PARAMS, set DIALECT to 2 or greater.
-         * </p>
-         *
-         * @param name the parameter name (referenced as $name in query)
-         * @param value the binary parameter value (e.g., vector data)
+         * @param name the parameter name, referenced as {@code $name} in the query, must not be {@code null}
+         * @param value the binary parameter value, sent as-is, must not be {@code null}
          * @return the builder.
          * @since 7.8
          */
         public Builder param(String name, byte[] value) {
+            LettuceAssert.notNull(name, "Parameter name must not be null");
+            LettuceAssert.notNull(value, "Parameter value must not be null");
             args.params.put(name, value);
             return this;
         }

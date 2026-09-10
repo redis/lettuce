@@ -8,6 +8,7 @@
 package io.lettuce.core.search.arguments;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -102,6 +103,14 @@ class AggregateArgsUnitTests {
         Reducer.avg("@price").as("avg_price").build(args);
 
         assertThat(args.toString()).contains("@price");
+    }
+
+    @Test
+    void paramRejectsNullNameAndValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> AggregateArgs.builder().param(null, "value"));
+        assertThatIllegalArgumentException().isThrownBy(() -> AggregateArgs.builder().param("name", (String) null));
+        assertThatIllegalArgumentException().isThrownBy(() -> AggregateArgs.builder().param(null, new byte[] { 1 }));
+        assertThatIllegalArgumentException().isThrownBy(() -> AggregateArgs.builder().param("name", (byte[]) null));
     }
 
 }

@@ -8,6 +8,7 @@
 package io.lettuce.core.search.arguments;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.time.Duration;
 
@@ -146,6 +147,14 @@ class SearchArgsUnitTests {
         String argsString = commandArgs.toString();
         assertThat(argsString).contains("HIGHLIGHT");
         assertThat(argsString).contains("SUMMARIZE");
+    }
+
+    @Test
+    void paramRejectsNullNameAndValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> SearchArgs.<String> builder().param(null, "value"));
+        assertThatIllegalArgumentException().isThrownBy(() -> SearchArgs.<String> builder().param("name", (String) null));
+        assertThatIllegalArgumentException().isThrownBy(() -> SearchArgs.<String> builder().param(null, new byte[] { 1 }));
+        assertThatIllegalArgumentException().isThrownBy(() -> SearchArgs.<String> builder().param("name", (byte[]) null));
     }
 
 }

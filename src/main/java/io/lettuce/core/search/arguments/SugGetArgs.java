@@ -64,7 +64,10 @@ public class SugGetArgs {
          *
          * @return new {@link SugGetArgs} with {@literal WITHPAYLOADS} set.
          * @see SugGetArgs#withPayloads()
+         * @deprecated since 7.8, there is no replacement. The {@code WITHPAYLOADS} argument of {@code FT.SUGGET} is deprecated
+         *             by Redis since RediSearch 2.0.0.
          */
+        @Deprecated
         public static SugGetArgs withPayloads() {
             return new SugGetArgs().withPayloads();
         }
@@ -107,7 +110,10 @@ public class SugGetArgs {
      * reply.
      *
      * @return {@code this} {@link SugGetArgs}.
+     * @deprecated since 7.8, there is no replacement. The {@code WITHPAYLOADS} argument of {@code FT.SUGGET} is deprecated by
+     *             Redis since RediSearch 2.0.0.
      */
+    @Deprecated
     public SugGetArgs withPayloads() {
         this.withPayloads = true;
         return this;

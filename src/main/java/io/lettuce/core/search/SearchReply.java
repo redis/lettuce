@@ -272,6 +272,7 @@ public class SearchReply<K> {
          *
          * @param key the field name
          * @param value the raw field value
+         * @since 7.8
          */
         public void addField(String key, byte[] value) {
             this.fields.put(key, value == null ? FieldValue.NULL : FieldValue.of(value));

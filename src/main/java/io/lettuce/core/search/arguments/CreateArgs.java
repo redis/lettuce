@@ -99,6 +99,9 @@ public class CreateArgs {
 
         /**
          * Add a prefix to the index. You can add several prefixes to index. Default setting is * (all keys).
+         * <p>
+         * The prefix is sent as written and is not passed through the key codec. With a codec that transforms keys, pass the
+         * physical prefix of the stored keys, for example {@code tenant:user:} for a codec that prepends {@code tenant:}.
          *
          * @param prefix the prefix
          * @return the instance of the current {@link Builder} for the purpose of method chaining
@@ -110,6 +113,9 @@ public class CreateArgs {
 
         /**
          * Add a list of prefixes to the index. You can add several prefixes to index. Default setting is * (all keys).
+         * <p>
+         * The prefixes are sent as written and is not passed through the key codec. With a codec that transforms keys, pass the
+         * physical prefix of the stored keys, for example {@code tenant:user:} for a codec that prepends {@code tenant:}.
          *
          * @param prefixes a {@link List} of prefixes
          * @return the instance of the current {@link Builder} for the purpose of method chaining
