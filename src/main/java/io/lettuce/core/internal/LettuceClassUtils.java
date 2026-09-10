@@ -101,24 +101,13 @@ public class LettuceClassUtils {
     }
 
     /**
-     * Return the default ClassLoader to use: typically the thread context ClassLoader, if available; the ClassLoader that
-     * loaded the ClassUtils class will be used as fallback.
+     * This method ensures that the same ClassLoader strategy is consistently applied during
+     * both class existence detection and actual class loading.
      *
      * @return the default ClassLoader (never <code>null</code>)
-     * @see java.lang.Thread#getContextClassLoader()
      */
     private static ClassLoader getDefaultClassLoader() {
-        ClassLoader cl = null;
-        try {
-            cl = Thread.currentThread().getContextClassLoader();
-        } catch (Throwable ex) {
-            // Cannot access thread context ClassLoader - falling back to system class loader...
-        }
-        if (cl == null) {
-            // No thread context class loader -> use class loader of this class.
-            cl = LettuceClassUtils.class.getClassLoader();
-        }
-        return cl;
+        return LettuceClassUtils.class.getClassLoader();
     }
 
     /**
