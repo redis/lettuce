@@ -49,21 +49,19 @@ public final class Combiners {
     /**
      * Create an RRF (Reciprocal Rank Fusion) combiner.
      *
-     * @param <K> Key type
      * @return a new RRF combiner
      */
-    public static <K> RRF<K> rrf() {
-        return new RRF<>();
+    public static RRF rrf() {
+        return new RRF();
     }
 
     /**
      * Create a Linear combination combiner.
      *
-     * @param <K> Key type
      * @return a new Linear combiner
      */
-    public static <K> Linear<K> linear() {
-        return new Linear<>();
+    public static Linear linear() {
+        return new Linear();
     }
 
     /**
@@ -73,9 +71,8 @@ public final class Combiners {
      * rank_in_window)
      * </p>
      *
-     * @param <K> Key type
      */
-    public static class RRF<K> extends Combiner<K> {
+    public static class RRF extends Combiner {
 
         private Integer window;
 
@@ -91,7 +88,7 @@ public final class Combiners {
          * @param window number of top results
          * @return this RRF instance
          */
-        public RRF<K> window(int window) {
+        public RRF window(int window) {
             LettuceAssert.isTrue(window > 0, "Window must be positive");
             this.window = window;
             return this;
@@ -103,7 +100,7 @@ public final class Combiners {
          * @param constant constant value (typically 60)
          * @return this RRF instance
          */
-        public RRF<K> constant(double constant) {
+        public RRF constant(double constant) {
             LettuceAssert.isTrue(constant > 0, "Constant must be positive");
             this.constant = constant;
             return this;
@@ -135,9 +132,8 @@ public final class Combiners {
      * vector_score
      * </p>
      *
-     * @param <K> Key type
      */
-    public static class Linear<K> extends Combiner<K> {
+    public static class Linear extends Combiner {
 
         private Integer window;
 
@@ -155,7 +151,7 @@ public final class Combiners {
          * @param window number of top results
          * @return this Linear instance
          */
-        public Linear<K> window(int window) {
+        public Linear window(int window) {
             LettuceAssert.isTrue(window > 0, "Window must be positive");
             this.window = window;
             return this;
@@ -167,7 +163,7 @@ public final class Combiners {
          * @param alpha weight for text score (0.0 to 1.0)
          * @return this Linear instance
          */
-        public Linear<K> alpha(double alpha) {
+        public Linear alpha(double alpha) {
             LettuceAssert.isTrue(alpha >= 0, "Alpha must be non-negative");
             this.alpha = alpha;
             return this;
@@ -179,7 +175,7 @@ public final class Combiners {
          * @param beta weight for vector score (0.0 to 1.0)
          * @return this Linear instance
          */
-        public Linear<K> beta(double beta) {
+        public Linear beta(double beta) {
             LettuceAssert.isTrue(beta >= 0, "Beta must be non-negative");
             this.beta = beta;
             return this;
