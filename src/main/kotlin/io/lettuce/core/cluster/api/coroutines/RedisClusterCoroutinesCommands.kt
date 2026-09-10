@@ -49,7 +49,7 @@ interface RedisClusterCoroutinesCommands<K : Any, V : Any> :
     RedisJsonCoroutinesCommands<K, V>,
     RedisVectorSetCoroutinesCommands<K, V>,
     RedisArrayCoroutinesCommands<K, V>,
-    RediSearchCoroutinesCommands<K, V>,
+    RediSearchCoroutinesCommands<K>,
     RedisBloomFilterCoroutinesCommands<K, V>,
     RedisCuckooFilterCoroutinesCommands<K, V>,
     RedisTopKCoroutinesCommands<K, V>,
