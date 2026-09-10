@@ -7,7 +7,6 @@
 package io.lettuce.core;
 
 import java.util.List;
-import java.util.Map;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.EncodedComplexOutput;
@@ -23,6 +22,7 @@ import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.timeseries.TsAggregationType;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsInfoValueParser;
+import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
 import io.lettuce.core.timeseries.TsMGetValueParser;
 import io.lettuce.core.timeseries.TsSample;
@@ -154,18 +154,18 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
     }
 
     @SafeVarargs
-    final Command<K, V, List<Long>> tsMAdd(Map.Entry<K, TsSample>... entries) {
+    final Command<K, V, List<Long>> tsMAdd(TsMAddValue<K>... entries) {
         notEmpty(entries);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        for (Map.Entry<K, TsSample> entry : entries) {
+        for (TsMAddValue<K> entry : entries) {
             addMAddEntry(args, entry);
         }
 
         return createCommand(TS_MADD, new ErrorTolerantLongListOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> tsMAdd(Map.Entry<K, TsSample> entry) {
+    Command<K, V, List<Long>> tsMAdd(TsMAddValue<K> entry) {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         addMAddEntry(args, entry);
 
@@ -173,30 +173,26 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
     }
 
     @SafeVarargs
-    final Command<K, V, List<Value<Long>>> tsMAddValues(Map.Entry<K, TsSample>... entries) {
+    final Command<K, V, List<Value<Long>>> tsMAddValues(TsMAddValue<K>... entries) {
         notEmpty(entries);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        for (Map.Entry<K, TsSample> entry : entries) {
+        for (TsMAddValue<K> entry : entries) {
             addMAddEntry(args, entry);
         }
 
         return createCommand(TS_MADD, new ErrorTolerantLongValueListOutput<>(codec), args);
     }
 
-    Command<K, V, List<Value<Long>>> tsMAddValues(Map.Entry<K, TsSample> entry) {
+    Command<K, V, List<Value<Long>>> tsMAddValues(TsMAddValue<K> entry) {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         addMAddEntry(args, entry);
 
         return createCommand(TS_MADD, new ErrorTolerantLongValueListOutput<>(codec), args);
     }
 
-    private void addMAddEntry(CommandArgs<K, V> args, Map.Entry<K, TsSample> entry) {
-        TsSample sample = entry.getValue();
-        if (sample.getValues().size() != 1) {
-            throw new IllegalArgumentException("TS.MADD does not support samples with more than one value");
-        }
-        args.addKey(entry.getKey()).add(sample.getTimestamp()).add(sample.getValue());
+    private void addMAddEntry(CommandArgs<K, V> args, TsMAddValue<K> entry) {
+        args.addKey(entry.getKey()).add(entry.getTimestamp()).add(entry.getValue());
     }
 
     Command<K, V, Long> tsIncrBy(K key, double value) {

@@ -7,11 +7,11 @@
 package io.lettuce.core.api.reactive;
 
 import java.util.List;
-import java.util.Map;
 
 import io.lettuce.core.Value;
 import io.lettuce.core.timeseries.TsAggregationType;
 import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
 import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
@@ -155,22 +155,20 @@ public interface RedisTimeSeriesReactiveCommands<K, V> {
     /**
      * Append samples to multiple time series at once, creating any of the series automatically if it does not yet exist.
      *
-     * @param entries the (key, sample) entries to append; each {@link TsSample} must carry a single value.
+     * @param entries the {@link TsMAddValue} entries to append.
      * @return {@link Value} with the timestamp that was ultimately used, in the same order as {@code entries};
      *         {@link Value#empty()} for an entry that failed (e.g. a {@code DUPLICATE_POLICY=BLOCK} violation).
-     * @throws IllegalArgumentException if any {@link TsSample} carries more than one value.
      */
-    Flux<Value<Long>> tsMAdd(Map.Entry<K, TsSample>... entries);
+    Flux<Value<Long>> tsMAdd(TsMAddValue<K>... entries);
 
     /**
      * Append samples to multiple time series at once, creating any of the series automatically if it does not yet exist.
      *
-     * @param entry the (key, sample) entry to append; the {@link TsSample} must carry a single value.
+     * @param entry the {@link TsMAddValue} entry to append.
      * @return {@link Value} with the timestamp that was ultimately used, in the same order as {@code entries};
      *         {@link Value#empty()} for an entry that failed (e.g. a {@code DUPLICATE_POLICY=BLOCK} violation).
-     * @throws IllegalArgumentException if the {@link TsSample} carries more than one value.
      */
-    Flux<Value<Long>> tsMAdd(Map.Entry<K, TsSample> entry);
+    Flux<Value<Long>> tsMAdd(TsMAddValue<K> entry);
 
     /**
      * Increment the value of the last sample of a time series, creating the series automatically if it does not yet exist.

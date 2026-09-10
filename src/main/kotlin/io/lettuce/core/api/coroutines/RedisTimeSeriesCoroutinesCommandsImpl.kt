@@ -10,6 +10,7 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisTimeSeriesReactiveCommands
 import io.lettuce.core.timeseries.TsAggregationType
 import io.lettuce.core.timeseries.TsInfoValue
+import io.lettuce.core.timeseries.TsMAddValue
 import io.lettuce.core.timeseries.TsMGetValue
 import io.lettuce.core.timeseries.TsSample
 import io.lettuce.core.timeseries.arguments.TsAddArgs
@@ -76,10 +77,10 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tsAdd(key: K, value: Double, addArgs: TsAddArgs): Long? =
         ops.tsAdd(key, value, addArgs).awaitFirstOrNull()
 
-    override suspend fun tsMAdd(vararg entries: Map.Entry<K, TsSample>): List<Long?> =
+    override suspend fun tsMAdd(vararg entries: TsMAddValue<K>): List<Long?> =
         ops.tsMAdd(*entries).asFlow().toList().map { it.getValueOrElse(null) }
 
-    override suspend fun tsMAdd(entry: Map.Entry<K, TsSample>): List<Long?> =
+    override suspend fun tsMAdd(entry: TsMAddValue<K>): List<Long?> =
         ops.tsMAdd(entry).asFlow().toList().map { it.getValueOrElse(null) }
 
     override suspend fun tsIncrBy(key: K, value: Double): Long? =

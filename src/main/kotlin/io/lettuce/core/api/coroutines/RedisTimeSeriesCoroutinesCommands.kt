@@ -10,6 +10,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.timeseries.TsAggregationType
 import io.lettuce.core.timeseries.TsInfoValue
+import io.lettuce.core.timeseries.TsMAddValue
 import io.lettuce.core.timeseries.TsMGetValue
 import io.lettuce.core.timeseries.TsSample
 import io.lettuce.core.timeseries.arguments.TsAddArgs
@@ -157,22 +158,20 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
     /**
      * Append samples to multiple time series at once, creating any of the series automatically if it does not yet exist.
      *
-     * @param entries the (key, sample) entries to append; each [TsSample] must carry a single value.
+     * @param entries the [TsMAddValue] entries to append.
      * @return List<Long> the timestamps that were ultimately used, in the same order as `entries`; `null` for an entry that
      *         failed (e.g. a `DUPLICATE_POLICY=BLOCK` violation).
-     * @throws IllegalArgumentException if any [TsSample] carries more than one value.
      */
-    suspend fun tsMAdd(vararg entries: Map.Entry<K, TsSample>): List<Long?>
+    suspend fun tsMAdd(vararg entries: TsMAddValue<K>): List<Long?>
 
     /**
      * Append samples to multiple time series at once, creating any of the series automatically if it does not yet exist.
      *
-     * @param entry the (key, sample) entry to append; the [TsSample] must carry a single value.
+     * @param entry the [TsMAddValue] entry to append.
      * @return List<Long> the timestamps that were ultimately used, in the same order as `entries`; `null` for an entry that
      *         failed (e.g. a `DUPLICATE_POLICY=BLOCK` violation).
-     * @throws IllegalArgumentException if the [TsSample] carries more than one value.
      */
-    suspend fun tsMAdd(entry: Map.Entry<K, TsSample>): List<Long?>
+    suspend fun tsMAdd(entry: TsMAddValue<K>): List<Long?>
 
     /**
      * Increment the value of the last sample of a time series, creating the series automatically if it does not yet exist.

@@ -11,6 +11,7 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.timeseries.TsAggregationType;
 import io.lettuce.core.timeseries.TsDuplicatePolicy;
 import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
 import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
@@ -24,15 +25,10 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
-import java.util.AbstractMap;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link RedisTimeSeriesCommandBuilder}.
@@ -65,12 +61,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * {@code TS.ADD key * 23.5} (server auto-assigns the timestamp).</li>
  * <li>Given a key, value and {@code TsAddArgs} with no timestamp, when {@code tsAdd(key, value, args)} is built, then the wire
  * is {@code TS.ADD key * 23.5 ON_DUPLICATE LAST} (server auto-assigns the timestamp).</li>
- * <li>Given two (key, {@link TsSample}) entries, when {@code tsMAdd(...)} is built, then the wire is
+ * <li>Given two {@link TsMAddValue} entries, when {@code tsMAdd(...)} is built, then the wire is
  * {@code TS.MADD src 1000 23.5 dst 2000 24.5}.</li>
- * <li>Given a single (key, {@link TsSample}) entry, when the non-varargs {@code tsMAdd(entry)} overload is built, then the wire
- * is {@code TS.MADD src 1000 23.5}.</li>
- * <li>Given an entry whose {@link TsSample} carries more than one value, when {@code tsMAdd(...)} (either overload) is built,
- * then an {@link IllegalArgumentException} is thrown instead of silently dropping the extra values.</li>
+ * <li>Given a single {@link TsMAddValue} entry, when the non-varargs {@code tsMAdd(entry)} overload is built, then the wire is
+ * {@code TS.MADD src 1000 23.5}.</li>
  * <li>Given a key and an addend, when {@code tsIncrBy(key, value)} is built, then the wire is {@code TS.INCRBY key 1.5}.</li>
  * <li>Given a key, addend and {@code TsIncrByArgs}, when {@code tsIncrBy(key, value, args)} is built, then the wire is
  * {@code TS.INCRBY key 1.5 RETENTION 1000}.</li>
@@ -245,10 +239,8 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTsMAddCommand() {
-        Map.Entry<String, TsSample> first = new AbstractMap.SimpleEntry<>(SOURCE_KEY,
-                new TsSample(1000, Collections.singletonList(23.5)));
-        Map.Entry<String, TsSample> second = new AbstractMap.SimpleEntry<>(DEST_KEY,
-                new TsSample(2000, Collections.singletonList(24.5)));
+        TsMAddValue<String> first = TsMAddValue.of(SOURCE_KEY, 1000, 23.5);
+        TsMAddValue<String> second = TsMAddValue.of(DEST_KEY, 2000, 24.5);
 
         Command<String, String, List<Long>> command = builder.tsMAdd(first, second);
         ByteBuf buff = Unpooled.buffer();
@@ -261,8 +253,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTsMAddCommandWithSingleEntry() {
-        Map.Entry<String, TsSample> entry = new AbstractMap.SimpleEntry<>(SOURCE_KEY,
-                new TsSample(1000, Collections.singletonList(23.5)));
+        TsMAddValue<String> entry = TsMAddValue.of(SOURCE_KEY, 1000, 23.5);
 
         Command<String, String, List<Long>> command = builder.tsMAdd(entry);
         ByteBuf buff = Unpooled.buffer();
@@ -270,26 +261,6 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
         assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$7\r\nTS.MADD\r\n" + "$" + SOURCE_KEY.length()
                 + "\r\n" + SOURCE_KEY + "\r\n" + "$4\r\n1000\r\n" + "$4\r\n23.5\r\n");
-    }
-
-    @Test
-    void shouldRejectTsMAddSingleEntryWithMultiValueSample() {
-        Map.Entry<String, TsSample> entry = new AbstractMap.SimpleEntry<>(SOURCE_KEY,
-                new TsSample(1000, Arrays.asList(23.5, 24.5)));
-
-        assertThatThrownBy(() -> builder.tsMAdd(entry)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("TS.MADD");
-    }
-
-    @Test
-    void shouldRejectTsMAddVarargsWithMultiValueSample() {
-        Map.Entry<String, TsSample> first = new AbstractMap.SimpleEntry<>(SOURCE_KEY,
-                new TsSample(1000, Collections.singletonList(23.5)));
-        Map.Entry<String, TsSample> second = new AbstractMap.SimpleEntry<>(DEST_KEY,
-                new TsSample(2000, Arrays.asList(24.5, 25.5)));
-
-        assertThatThrownBy(() -> builder.tsMAdd(first, second)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("TS.MADD");
     }
 
     @Test

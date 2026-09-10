@@ -87,6 +87,7 @@ import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.timeseries.TsAggregationType;
 import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
 import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
@@ -4651,12 +4652,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> tsMAdd(Map.Entry<K, TsSample>... entries) {
+    public RedisFuture<List<Long>> tsMAdd(TsMAddValue<K>... entries) {
         return dispatch(timeSeriesCommandBuilder.tsMAdd(entries));
     }
 
     @Override
-    public RedisFuture<List<Long>> tsMAdd(Map.Entry<K, TsSample> entry) {
+    public RedisFuture<List<Long>> tsMAdd(TsMAddValue<K> entry) {
         return dispatch(timeSeriesCommandBuilder.tsMAdd(entry));
     }
 

@@ -87,6 +87,7 @@ import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.timeseries.TsAggregationType;
 import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
 import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
@@ -4694,12 +4695,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Value<Long>> tsMAdd(Map.Entry<K, TsSample>... entries) {
+    public Flux<Value<Long>> tsMAdd(TsMAddValue<K>... entries) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAddValues(entries));
     }
 
     @Override
-    public Flux<Value<Long>> tsMAdd(Map.Entry<K, TsSample> entry) {
+    public Flux<Value<Long>> tsMAdd(TsMAddValue<K> entry) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAddValues(entry));
     }
 

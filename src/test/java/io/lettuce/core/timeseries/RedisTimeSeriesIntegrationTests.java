@@ -7,7 +7,6 @@
 package io.lettuce.core.timeseries;
 
 import java.util.AbstractMap;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -544,8 +543,8 @@ public class RedisTimeSeriesIntegrationTests {
         assertThat(sample.getValue()).isEqualTo(expectedValue);
     }
 
-    static Map.Entry<String, TsSample> mAddEntry(String key, long timestamp, double value) {
-        return new AbstractMap.SimpleEntry<>(key, new TsSample(timestamp, Collections.singletonList(value)));
+    static TsMAddValue<String> mAddEntry(String key, long timestamp, double value) {
+        return TsMAddValue.of(key, timestamp, value);
     }
 
 }
