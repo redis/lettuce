@@ -16,7 +16,7 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  * @since 6.2
- * @deprecated since 7.7, use {@link CredentialsProvider} instead; scheduled for removal in a future major release.
+ * @deprecated since 7.8, use {@link CredentialsProvider} instead; scheduled for removal in a future major release.
  */
 @Deprecated
 @FunctionalInterface
