@@ -63,6 +63,7 @@ import static io.lettuce.core.protocol.CommandType.SAVE;
  * @author Ali Takavci
  * @author Seonghwan Lee
  * @author dae won
+ * @author Yordan Tsintsov
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -4237,17 +4238,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGE, new ValueListOutput<>(codec), commandArgs);
     }
 
-    Command<K, V, List<V>> zrange(K key, ZLexRange<? extends V> range) {
-        return zrange(key, range, new ZRangeArgs());
+    Command<K, V, List<V>> zrangeWithLex(K key, Range<V> range) {
+        return zrangeWithLex(key, range, new ZRangeArgs());
     }
 
-    Command<K, V, List<V>> zrange(K key, ZLexRange<? extends V> range, ZRangeArgs args) {
+    Command<K, V, List<V>> zrangeWithLex(K key, Range<V> range, ZRangeArgs args) {
         notNullKey(key);
-        LettuceAssert.notNull(range, "ZLexRange " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(args, "ZRangeArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key);
-        addZLexRange(commandArgs, range, args);
+        addLexRange(commandArgs, range, args);
         return createCommand(ZRANGE, new ValueListOutput<>(codec), commandArgs);
     }
 
@@ -4290,13 +4291,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.build(commandArgs);
     }
 
-    private void addZLexRange(CommandArgs<K, V> commandArgs, ZLexRange<? extends V> range, ZRangeArgs args) {
+    private void addLexRange(CommandArgs<K, V> commandArgs, Range<V> range, ZRangeArgs args) {
 
-        Range<? extends V> lexRange = range.getRange();
         if (args.isRev()) {
-            commandArgs.add(maxValue(lexRange)).add(minValue(lexRange));
+            commandArgs.add(maxValue(range)).add(minValue(range));
         } else {
-            commandArgs.add(minValue(lexRange)).add(maxValue(lexRange));
+            commandArgs.add(minValue(range)).add(maxValue(range));
         }
         commandArgs.add(BYLEX);
 

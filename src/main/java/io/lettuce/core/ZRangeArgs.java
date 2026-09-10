@@ -90,7 +90,7 @@ public class ZRangeArgs implements CompositeArgument {
 
     /**
      * Limit the returned members to {@code count} members, starting at {@code offset} within the range. Requires a
-     * {@link ZRange#byScore(Range)} or {@link ZLexRange#create(Range)} range.
+     * {@link ZRange#byScore(Range)} or a lexicographical ({@code zrangeWithLex}) range.
      *
      * @param offset the offset within the range.
      * @param count the number of members to return, {@code -1} to return all members starting at {@code offset}.
@@ -102,8 +102,8 @@ public class ZRangeArgs implements CompositeArgument {
     }
 
     /**
-     * Limit the returned members according to {@link Limit}. Requires a {@link ZRange#byScore(Range)} or
-     * {@link ZLexRange#create(Range)} range.
+     * Limit the returned members according to {@link Limit}. Requires a {@link ZRange#byScore(Range)} or a lexicographical
+     * ({@code zrangeWithLex}) range.
      *
      * @param limit the limit, must not be {@code null}.
      * @return {@code this} {@link ZRangeArgs}.

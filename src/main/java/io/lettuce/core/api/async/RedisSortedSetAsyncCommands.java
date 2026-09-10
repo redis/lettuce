@@ -592,7 +592,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @since 7.8
      */
-    RedisFuture<List<V>> zrange(K key, ZLexRange<? extends V> range);
+    RedisFuture<List<V>> zrangeWithLex(K key, Range<V> range);
 
     /**
      * Return a range of members in a sorted set using the unified range syntax, by lexicographical order ({@code BYLEX}),
@@ -604,7 +604,7 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @since 7.8
      */
-    RedisFuture<List<V>> zrange(K key, ZLexRange<? extends V> range, ZRangeArgs args);
+    RedisFuture<List<V>> zrangeWithLex(K key, Range<V> range, ZRangeArgs args);
 
     /**
      * Return a range of members with scores in a sorted set using the unified range syntax, by index or by score

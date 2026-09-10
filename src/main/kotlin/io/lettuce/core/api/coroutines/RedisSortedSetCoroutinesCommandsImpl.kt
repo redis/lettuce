@@ -208,11 +208,11 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override fun zrange(key: K, range: ZRange, args: ZRangeArgs): Flow<V> =
         ops.zrange(key, range, args).asFlow()
 
-    override fun zrange(key: K, range: ZLexRange<out V>): Flow<V> =
-        ops.zrange(key, range).asFlow()
+    override fun zrangeWithLex(key: K, range: Range<V>): Flow<V> =
+        ops.zrangeWithLex(key, range).asFlow()
 
-    override fun zrange(key: K, range: ZLexRange<out V>, args: ZRangeArgs): Flow<V> =
-        ops.zrange(key, range, args).asFlow()
+    override fun zrangeWithLex(key: K, range: Range<V>, args: ZRangeArgs): Flow<V> =
+        ops.zrangeWithLex(key, range, args).asFlow()
 
     override fun zrangeWithScores(key: K, range: ZRange): Flow<ScoredValue<V>> =
         ops.zrangeWithScores(key, range).asFlow()

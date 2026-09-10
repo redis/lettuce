@@ -553,7 +553,7 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @return V array-reply list of elements in the specified range.
      * @since 7.8
      */
-    fun zrange(key: K, range: ZLexRange<out V>): Flow<V>
+    fun zrangeWithLex(key: K, range: Range<V>): Flow<V>
 
     /**
      * Return a range of members in a sorted set using the unified range syntax, by lexicographical order (`BYLEX`), applying
@@ -565,7 +565,7 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @return V array-reply list of elements in the specified range.
      * @since 7.8
      */
-    fun zrange(key: K, range: ZLexRange<out V>, args: ZRangeArgs): Flow<V>
+    fun zrangeWithLex(key: K, range: Range<V>, args: ZRangeArgs): Flow<V>
 
     /**
      * Return a range of members with scores in a sorted set using the unified range syntax, by index or by score

@@ -11,14 +11,13 @@ import io.lettuce.core.internal.LettuceAssert;
 /**
  * Range selector for the Redis <a href="https://redis.io/docs/latest/commands/zrange/">ZRANGE</a> command, coupling the range
  * boundaries with the range mode (by index, or by score using {@code BYSCORE}). Instances are created through the static
- * factory methods {@link #byIndex(long, long)} and {@link #byScore(Range)}. Use {@link ZLexRange} to select members by
- * lexicographical order ({@code BYLEX}).
+ * factory methods {@link #byIndex(long, long)} and {@link #byScore(Range)}. Use the {@code zrangeWithLex} methods with a plain
+ * {@link Range} to select members by lexicographical order ({@code BYLEX}).
  * <p>
  * Ranges are always specified from lower to upper boundary, also for reverse traversal with {@link ZRangeArgs#rev()}.
  *
  * @author Yordan Tsintsov
  * @since 7.8
- * @see ZLexRange
  */
 public final class ZRange {
 

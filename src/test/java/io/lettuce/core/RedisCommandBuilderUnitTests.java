@@ -164,7 +164,7 @@ class RedisCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructZrangeByLexWithLimit() {
 
-        Command<String, String, ?> command = sut.zrange(MY_KEY, ZLexRange.create(Range.create("banana", "date")),
+        Command<String, String, ?> command = sut.zrangeWithLex(MY_KEY, Range.create("banana", "date"),
                 ZRangeArgs.Builder.limit(1, 2));
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -204,10 +204,10 @@ class RedisCommandBuilderUnitTests {
 
     @Test
     void zrangeShouldRejectNullRangeAndArgs() {
-        assertThatThrownBy(() -> sut.zrange(MY_KEY, (ZRange) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> sut.zrange(MY_KEY, ZRange.byIndex(0, 2), null)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> sut.zrange(MY_KEY, (ZLexRange<String>) null)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> sut.zrange(MY_KEY, ZLexRange.create(Range.create("a", "b")), null))
+        assertThatThrownBy(() -> sut.zrangeWithLex(MY_KEY, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrangeWithLex(MY_KEY, Range.create("a", "b"), null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

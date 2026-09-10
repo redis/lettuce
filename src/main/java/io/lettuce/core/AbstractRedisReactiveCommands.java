@@ -3774,13 +3774,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> zrange(K key, ZLexRange<? extends V> range) {
-        return createDissolvingFlux(() -> commandBuilder.zrange(key, range));
+    public Flux<V> zrangeWithLex(K key, Range<V> range) {
+        return createDissolvingFlux(() -> commandBuilder.zrangeWithLex(key, range));
     }
 
     @Override
-    public Flux<V> zrange(K key, ZLexRange<? extends V> range, ZRangeArgs args) {
-        return createDissolvingFlux(() -> commandBuilder.zrange(key, range, args));
+    public Flux<V> zrangeWithLex(K key, Range<V> range, ZRangeArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.zrangeWithLex(key, range, args));
     }
 
     @Override

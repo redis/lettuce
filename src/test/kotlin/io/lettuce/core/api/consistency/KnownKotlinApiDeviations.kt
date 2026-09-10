@@ -70,7 +70,7 @@ object KnownKotlinApiDeviations {
         "aclList", "aclLog", "dispatch", "geohash", "georadius", "georadiusbymember", "geosearch", "hgetall", "hkeys",
         "hmget", "hvals", "keys", "mget", "sdiff", "sinter", "smembers", "smismember", "sort", "sortReadOnly", "sunion",
         "xclaim", "xrange", "xread", "xreadgroup", "xrevrange", "zdiff", "zdiffWithScores", "zinter", "zinterWithScores",
-        "zrange", "zrangeWithScores", "zrangebylex", "zrangebyscore", "zrangebyscoreWithScores", "zrevrange",
+        "zrange", "zrangeWithLex", "zrangeWithScores", "zrangebylex", "zrangebyscore", "zrangebyscoreWithScores", "zrevrange",
         "zrevrangeWithScores", "zrevrangebylex", "zrevrangebyscore", "zrevrangebyscoreWithScores", "zunion",
         "zunionWithScores",
         // calibration 2026-07: only the multi-element overloads stream; the single-element overloads suspend

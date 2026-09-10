@@ -3718,13 +3718,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> zrange(K key, ZLexRange<? extends V> range) {
-        return dispatch(commandBuilder.zrange(key, range));
+    public RedisFuture<List<V>> zrangeWithLex(K key, Range<V> range) {
+        return dispatch(commandBuilder.zrangeWithLex(key, range));
     }
 
     @Override
-    public RedisFuture<List<V>> zrange(K key, ZLexRange<? extends V> range, ZRangeArgs args) {
-        return dispatch(commandBuilder.zrange(key, range, args));
+    public RedisFuture<List<V>> zrangeWithLex(K key, Range<V> range, ZRangeArgs args) {
+        return dispatch(commandBuilder.zrangeWithLex(key, range, args));
     }
 
     @Override
