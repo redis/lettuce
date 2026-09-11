@@ -1,8 +1,10 @@
 package io.lettuce.core;
 
 import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
@@ -82,6 +84,19 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
      */
     default Flux<RedisCredentials> credentials() {
         throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Bridges the reactive {@link #credentials()} stream to the callback-based {@link CredentialsProvider} contract.
+     *
+     * @since 7.8
+     */
+    @Override
+    default Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+        Disposable disposable = credentials().subscribe(onNext, onError);
+        return disposable::dispose;
     }
 
     /**

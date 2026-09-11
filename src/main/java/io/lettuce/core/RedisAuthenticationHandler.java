@@ -22,8 +22,6 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.RedisCommand;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
 
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,7 +47,7 @@ public class RedisAuthenticationHandler<K, V> {
 
     private final RedisCredentialsProvider credentialsProvider;
 
-    private final AtomicReference<Disposable> credentialsSubscription = new AtomicReference<>();
+    private final AtomicReference<Subscription> credentialsSubscription = new AtomicReference<>();
 
     private final Boolean isPubSubConnection;
 
@@ -129,13 +127,11 @@ public class RedisAuthenticationHandler<K, V> {
             return;
         }
 
-        Flux<RedisCredentials> credentialsFlux = credentialsProvider.credentials();
+        Subscription subscription = credentialsProvider.subscribeToCredentials(this::onNext, this::onError);
 
-        Disposable subscription = credentialsFlux.subscribe(this::onNext, this::onError, this::complete);
-
-        Disposable oldSubscription = credentialsSubscription.getAndSet(subscription);
-        if (oldSubscription != null && !oldSubscription.isDisposed()) {
-            oldSubscription.dispose();
+        Subscription oldSubscription = credentialsSubscription.getAndSet(subscription);
+        if (oldSubscription != null) {
+            oldSubscription.close();
         }
     }
 
@@ -143,14 +139,10 @@ public class RedisAuthenticationHandler<K, V> {
      * Unsubscribes from the current credentials stream.
      */
     public void unsubscribe() {
-        Disposable subscription = credentialsSubscription.getAndSet(null);
-        if (subscription != null && !subscription.isDisposed()) {
-            subscription.dispose();
+        Subscription subscription = credentialsSubscription.getAndSet(null);
+        if (subscription != null) {
+            subscription.close();
         }
-    }
-
-    protected void complete() {
-        log.debug("Credentials stream completed");
     }
 
     protected void onNext(RedisCredentials credentials) {
