@@ -251,6 +251,7 @@ public final class ZRange {
 
         /**
          * Traverse the sorted set in reverse order ({@code REV}).
+         * 
          * @return {@code this}.
          */
         public ByLex<V> rev() {
