@@ -10,6 +10,7 @@ import java.util.List;
 
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.timeseries.TsAggregationType;
+import io.lettuce.core.timeseries.TsFilter;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
@@ -230,7 +231,7 @@ public interface RedisTimeSeriesAsyncCommands<K, V> {
      *         matching time series.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    RedisFuture<List<TsMGetValue<K>>> tsMGet(V... filters);
+    RedisFuture<List<TsMGetValue<K>>> tsMGet(TsFilter... filters);
 
     /**
      * Get the last samples of multiple time series matching one or more label filters.
@@ -240,7 +241,7 @@ public interface RedisTimeSeriesAsyncCommands<K, V> {
      *         matching time series.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    RedisFuture<List<TsMGetValue<K>>> tsMGet(V filter);
+    RedisFuture<List<TsMGetValue<K>>> tsMGet(TsFilter filter);
 
     /**
      * Get the last samples of multiple time series matching one or more label filters.
@@ -252,7 +253,7 @@ public interface RedisTimeSeriesAsyncCommands<K, V> {
      * @throws IllegalArgumentException if {@code mGetArgs} combines {@code WITHLABELS} and {@code SELECTED_LABELS}.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, V... filters);
+    RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter... filters);
 
     /**
      * Get the last samples of multiple time series matching one or more label filters.
@@ -264,7 +265,7 @@ public interface RedisTimeSeriesAsyncCommands<K, V> {
      * @throws IllegalArgumentException if {@code mGetArgs} combines {@code WITHLABELS} and {@code SELECTED_LABELS}.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, V filter);
+    RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter filter);
 
     /**
      * Get metadata about a time series.
@@ -291,7 +292,7 @@ public interface RedisTimeSeriesAsyncCommands<K, V> {
      * @return List&lt;K&gt; the keys of the matching time series; order is not guaranteed.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    RedisFuture<List<K>> tsQueryIndex(V... filters);
+    RedisFuture<List<K>> tsQueryIndex(TsFilter... filters);
 
     /**
      * Get all time series keys matching one or more label filters.
@@ -300,6 +301,6 @@ public interface RedisTimeSeriesAsyncCommands<K, V> {
      * @return List&lt;K&gt; the keys of the matching time series; order is not guaranteed.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    RedisFuture<List<K>> tsQueryIndex(V filter);
+    RedisFuture<List<K>> tsQueryIndex(TsFilter filter);
 
 }

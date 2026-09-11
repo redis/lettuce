@@ -9,6 +9,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisTimeSeriesReactiveCommands
 import io.lettuce.core.timeseries.TsAggregationType
+import io.lettuce.core.timeseries.TsFilter
 import io.lettuce.core.timeseries.TsInfoValue
 import io.lettuce.core.timeseries.TsMAddValue
 import io.lettuce.core.timeseries.TsMGetValue
@@ -101,16 +102,16 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tsGet(key: K, latest: Boolean): TsSample? =
         ops.tsGet(key, latest).awaitFirstOrNull()
 
-    override suspend fun tsMGet(vararg filters: V): List<TsMGetValue<K>> =
+    override suspend fun tsMGet(vararg filters: TsFilter): List<TsMGetValue<K>> =
         ops.tsMGet(*filters).asFlow().toList()
 
-    override suspend fun tsMGet(filter: V): List<TsMGetValue<K>> =
+    override suspend fun tsMGet(filter: TsFilter): List<TsMGetValue<K>> =
         ops.tsMGet(filter).asFlow().toList()
 
-    override suspend fun tsMGet(mGetArgs: TsMGetArgs, vararg filters: V): List<TsMGetValue<K>> =
+    override suspend fun tsMGet(mGetArgs: TsMGetArgs, vararg filters: TsFilter): List<TsMGetValue<K>> =
         ops.tsMGet(mGetArgs, *filters).asFlow().toList()
 
-    override suspend fun tsMGet(mGetArgs: TsMGetArgs, filter: V): List<TsMGetValue<K>> =
+    override suspend fun tsMGet(mGetArgs: TsMGetArgs, filter: TsFilter): List<TsMGetValue<K>> =
         ops.tsMGet(mGetArgs, filter).asFlow().toList()
 
     override suspend fun tsInfo(key: K): TsInfoValue<K>? =
@@ -119,10 +120,10 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tsInfo(key: K, debug: Boolean): TsInfoValue<K>? =
         ops.tsInfo(key, debug).awaitFirstOrNull()
 
-    override suspend fun tsQueryIndex(vararg filters: V): List<K> =
+    override suspend fun tsQueryIndex(vararg filters: TsFilter): List<K> =
         ops.tsQueryIndex(*filters).asFlow().toList()
 
-    override suspend fun tsQueryIndex(filter: V): List<K> =
+    override suspend fun tsQueryIndex(filter: TsFilter): List<K> =
         ops.tsQueryIndex(filter).asFlow().toList()
 
 }

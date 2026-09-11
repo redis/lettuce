@@ -20,6 +20,7 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.timeseries.TsAggregationType;
+import io.lettuce.core.timeseries.TsFilter;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsInfoValueParser;
 import io.lettuce.core.timeseries.TsMAddValue;
@@ -263,51 +264,57 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         return createCommand(TS_INFO, new EncodedComplexOutput<>(codec, new TsInfoValueParser<>(codec)), args);
     }
 
-    @SafeVarargs
-    final Command<K, V, List<TsMGetValue<K>>> tsMGet(V... filters) {
+    final Command<K, V, List<TsMGetValue<K>>> tsMGet(TsFilter... filters) {
         notEmptyValues(filters);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.FILTER).addValues(filters);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.FILTER);
+        for (TsFilter filter : filters) {
+            args.add(filter.toExpression());
+        }
 
         return createCommand(TS_MGET, new EncodedComplexOutput<>(codec, new TsMGetValueParser<>(codec)), args);
     }
 
-    Command<K, V, List<TsMGetValue<K>>> tsMGet(V filter) {
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.FILTER).addValue(filter);
+    Command<K, V, List<TsMGetValue<K>>> tsMGet(TsFilter filter) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.FILTER).add(filter.toExpression());
 
         return createCommand(TS_MGET, new EncodedComplexOutput<>(codec, new TsMGetValueParser<>(codec)), args);
     }
 
-    @SafeVarargs
-    final Command<K, V, List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, V... filters) {
+    final Command<K, V, List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter... filters) {
         notEmptyValues(filters);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         mGetArgs.build(args);
-        args.add(CommandKeyword.FILTER).addValues(filters);
+        args.add(CommandKeyword.FILTER);
+        for (TsFilter filter : filters) {
+            args.add(filter.toExpression());
+        }
 
         return createCommand(TS_MGET, new EncodedComplexOutput<>(codec, new TsMGetValueParser<>(codec)), args);
     }
 
-    Command<K, V, List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, V filter) {
+    Command<K, V, List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter filter) {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         mGetArgs.build(args);
-        args.add(CommandKeyword.FILTER).addValue(filter);
+        args.add(CommandKeyword.FILTER).add(filter.toExpression());
 
         return createCommand(TS_MGET, new EncodedComplexOutput<>(codec, new TsMGetValueParser<>(codec)), args);
     }
 
-    @SafeVarargs
-    final Command<K, V, List<K>> tsQueryIndex(V... filters) {
+    final Command<K, V, List<K>> tsQueryIndex(TsFilter... filters) {
         notEmptyValues(filters);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addValues(filters);
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        for (TsFilter filter : filters) {
+            args.add(filter.toExpression());
+        }
 
         return createCommand(TS_QUERYINDEX, new KeyListOutput<>(codec), args);
     }
 
-    Command<K, V, List<K>> tsQueryIndex(V filter) {
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addValue(filter);
+    Command<K, V, List<K>> tsQueryIndex(TsFilter filter) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(filter.toExpression());
 
         return createCommand(TS_QUERYINDEX, new KeyListOutput<>(codec), args);
     }

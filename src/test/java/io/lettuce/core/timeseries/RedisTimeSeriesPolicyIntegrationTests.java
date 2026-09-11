@@ -304,28 +304,29 @@ public class RedisTimeSeriesPolicyIntegrationTests {
         prepareFilterSyntaxFixture();
 
         // l=v (EQ): matches series whose label equals the given value.
-        List<String> eq = redis.tsQueryIndex("region=us");
+        List<String> eq = redis.tsQueryIndex(TsFilter.equal("region", "us"));
         assertThat(eq).containsExactly("filter:us-temp");
 
         // l= (label absent): counter-intuitively means the label does not exist on the series at all, not "equals empty
-        // string".
-        List<String> labelAbsent = redis.tsQueryIndex("type=humid", "region=");
+        // string". TsFilter.notExists(...) builds this form.
+        List<String> labelAbsent = redis.tsQueryIndex(TsFilter.equal("type", "humid"), TsFilter.notExists("region"));
         assertThat(labelAbsent).containsExactly("filter:humid-only");
 
         // l!=v (NEQ): matches series where the label exists and differs from the given value.
-        List<String> neq = redis.tsQueryIndex("type=temp", "region!=us");
+        List<String> neq = redis.tsQueryIndex(TsFilter.equal("type", "temp"), TsFilter.notEqual("region", "us"));
         assertThat(neq).containsExactly("filter:eu-temp");
 
         // l!= (label present): counter-intuitively means the label exists on the series, not "not equal to empty string".
-        List<String> labelPresent = redis.tsQueryIndex("type=temp", "region!=");
+        // TsFilter.exists(...) builds this form.
+        List<String> labelPresent = redis.tsQueryIndex(TsFilter.equal("type", "temp"), TsFilter.exists("region"));
         assertThat(labelPresent).containsExactlyInAnyOrder("filter:us-temp", "filter:eu-temp");
 
         // l=(v1,v2) (LIST_MATCH): matches series whose label equals any value in the list.
-        List<String> listMatch = redis.tsQueryIndex("region=(us,eu)");
+        List<String> listMatch = redis.tsQueryIndex(TsFilter.in("region", "us", "eu"));
         assertThat(listMatch).containsExactlyInAnyOrder("filter:us-temp", "filter:eu-temp");
 
         // l!=(v1,v2) (LIST_NOTMATCH): excludes series whose label equals any value in the list.
-        List<String> listNotMatch = redis.tsQueryIndex("type=temp", "region!=(us,eu)");
+        List<String> listNotMatch = redis.tsQueryIndex(TsFilter.equal("type", "temp"), TsFilter.notIn("region", "us", "eu"));
         assertThat(listNotMatch).isEmpty();
     }
 

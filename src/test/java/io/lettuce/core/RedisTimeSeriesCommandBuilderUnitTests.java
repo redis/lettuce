@@ -10,6 +10,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.timeseries.TsAggregationType;
 import io.lettuce.core.timeseries.TsDuplicatePolicy;
+import io.lettuce.core.timeseries.TsFilter;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
@@ -367,7 +368,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTsMGetCommand() {
-        Command<String, String, List<TsMGetValue<String>>> command = builder.tsMGet("region=us");
+        Command<String, String, List<TsMGetValue<String>>> command = builder.tsMGet(TsFilter.equal("region", "us"));
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
@@ -377,7 +378,8 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTsMGetCommandWithMultipleFilters() {
-        Command<String, String, List<TsMGetValue<String>>> command = builder.tsMGet("region=us", "env=prod");
+        Command<String, String, List<TsMGetValue<String>>> command = builder.tsMGet(TsFilter.equal("region", "us"),
+                TsFilter.equal("env", "prod"));
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
@@ -388,7 +390,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructTsMGetCommandWithArgs() {
         TsMGetArgs args = TsMGetArgs.Builder.withLabels();
-        Command<String, String, List<TsMGetValue<String>>> command = builder.tsMGet(args, "region=us");
+        Command<String, String, List<TsMGetValue<String>>> command = builder.tsMGet(args, TsFilter.equal("region", "us"));
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
@@ -399,7 +401,8 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructTsMGetCommandWithArgsAndMultipleFilters() {
         TsMGetArgs args = TsMGetArgs.Builder.withLabels();
-        Command<String, String, List<TsMGetValue<String>>> command = builder.tsMGet(args, "region=us", "env=prod");
+        Command<String, String, List<TsMGetValue<String>>> command = builder.tsMGet(args, TsFilter.equal("region", "us"),
+                TsFilter.equal("env", "prod"));
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
@@ -409,7 +412,8 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTsQueryIndexCommand() {
-        Command<String, String, List<String>> command = builder.tsQueryIndex("region=us", "env=prod");
+        Command<String, String, List<String>> command = builder.tsQueryIndex(TsFilter.equal("region", "us"),
+                TsFilter.equal("env", "prod"));
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
@@ -419,7 +423,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructTsQueryIndexCommandWithSingleFilter() {
-        Command<String, String, List<String>> command = builder.tsQueryIndex("region=us");
+        Command<String, String, List<String>> command = builder.tsQueryIndex(TsFilter.equal("region", "us"));
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 

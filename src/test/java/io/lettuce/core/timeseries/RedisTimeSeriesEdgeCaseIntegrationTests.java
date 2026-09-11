@@ -170,7 +170,7 @@ class RedisTimeSeriesEdgeCaseIntegrationTests {
 
     @Test
     void tsMGetWithoutEqualityFilterCompletesExceptionallyInsteadOfHanging() {
-        RedisFuture<?> future = async.tsMGet("type!=temp");
+        RedisFuture<?> future = async.tsMGet(TsFilter.notEqual("type", "temp"));
 
         assertThatThrownBy(() -> future.get(5, TimeUnit.SECONDS)).isInstanceOf(ExecutionException.class)
                 .hasCauseInstanceOf(RedisCommandExecutionException.class).cause()

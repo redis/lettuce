@@ -441,7 +441,7 @@ public class RedisTimeSeriesIntegrationTests {
     void tsMGetWithoutLabelsOptionReturnsEmptyLabelMap() {
         prepareMGetFixture();
 
-        List<TsMGetValue<String>> result = redis.tsMGet("region=us");
+        List<TsMGetValue<String>> result = redis.tsMGet(TsFilter.equal("region", "us"));
 
         assertThat(result).extracting(TsMGetValue::getKey).containsExactlyInAnyOrder("mget:us:temp", "mget:us:humid");
         assertThat(result).allSatisfy(value -> assertThat(value.getLabels()).isEmpty());
@@ -451,7 +451,7 @@ public class RedisTimeSeriesIntegrationTests {
     void tsMGetWithLabelsIncludesAllLabels() {
         prepareMGetFixture();
 
-        List<TsMGetValue<String>> result = redis.tsMGet(TsMGetArgs.Builder.withLabels(), "region=us");
+        List<TsMGetValue<String>> result = redis.tsMGet(TsMGetArgs.Builder.withLabels(), TsFilter.equal("region", "us"));
 
         TsMGetValue<String> temp = result.stream().filter(v -> v.getKey().equals("mget:us:temp")).findFirst().get();
         assertThat(temp.getLabels()).containsExactly(new AbstractMap.SimpleEntry<>("region", "us"),
@@ -463,7 +463,8 @@ public class RedisTimeSeriesIntegrationTests {
     void tsMGetWithSelectedLabelsIncludesOnlyRequestedLabels() {
         prepareMGetFixture();
 
-        List<TsMGetValue<String>> result = redis.tsMGet(TsMGetArgs.Builder.selectedLabels("type"), "region=us");
+        List<TsMGetValue<String>> result = redis.tsMGet(TsMGetArgs.Builder.selectedLabels("type"),
+                TsFilter.equal("region", "us"));
 
         assertThat(result).allSatisfy(value -> assertThat(value.getLabels()).containsOnlyKeys("type"));
     }
@@ -472,7 +473,7 @@ public class RedisTimeSeriesIntegrationTests {
     void tsMGetWithNonMatchingFilterReturnsEmptyList() {
         prepareMGetFixture();
 
-        List<TsMGetValue<String>> result = redis.tsMGet("region=nonexistent");
+        List<TsMGetValue<String>> result = redis.tsMGet(TsFilter.equal("region", "nonexistent"));
 
         assertThat(result).isEmpty();
     }
@@ -487,7 +488,7 @@ public class RedisTimeSeriesIntegrationTests {
         prepareMGetFixture();
         redis.tsCreate("mget:us:empty", TsCreateArgs.Builder.label("region", "us"));
 
-        List<TsMGetValue<String>> result = redis.tsMGet("region=us");
+        List<TsMGetValue<String>> result = redis.tsMGet(TsFilter.equal("region", "us"));
 
         assertThat(result).extracting(TsMGetValue::getKey).contains("mget:us:empty");
         TsMGetValue<String> empty = result.stream().filter(v -> v.getKey().equals("mget:us:empty")).findFirst().get();
@@ -498,7 +499,8 @@ public class RedisTimeSeriesIntegrationTests {
     void tsMGetWithoutEqualityFilterFails() {
         prepareMGetFixture();
 
-        assertThatThrownBy(() -> redis.tsMGet("type!=temp")).isInstanceOf(RedisCommandExecutionException.class)
+        assertThatThrownBy(() -> redis.tsMGet(TsFilter.notEqual("type", "temp")))
+                .isInstanceOf(RedisCommandExecutionException.class)
                 .hasMessageContaining("TSDB: please provide at least one matcher");
     }
 
@@ -510,7 +512,7 @@ public class RedisTimeSeriesIntegrationTests {
     void tsQueryIndexReturnsMatchingKeys() {
         prepareMGetFixture();
 
-        List<String> result = redis.tsQueryIndex("region=us");
+        List<String> result = redis.tsQueryIndex(TsFilter.equal("region", "us"));
 
         assertThat(result).containsExactlyInAnyOrder("mget:us:temp", "mget:us:humid");
     }
@@ -519,7 +521,7 @@ public class RedisTimeSeriesIntegrationTests {
     void tsQueryIndexWithMultipleFiltersNarrowsResults() {
         prepareMGetFixture();
 
-        List<String> result = redis.tsQueryIndex("region=us", "type=temp");
+        List<String> result = redis.tsQueryIndex(TsFilter.equal("region", "us"), TsFilter.equal("type", "temp"));
 
         assertThat(result).containsExactly("mget:us:temp");
     }
@@ -528,7 +530,7 @@ public class RedisTimeSeriesIntegrationTests {
     void tsQueryIndexWithNonMatchingFilterReturnsEmptyList() {
         prepareMGetFixture();
 
-        List<String> result = redis.tsQueryIndex("region=nonexistent");
+        List<String> result = redis.tsQueryIndex(TsFilter.equal("region", "nonexistent"));
 
         assertThat(result).isEmpty();
     }

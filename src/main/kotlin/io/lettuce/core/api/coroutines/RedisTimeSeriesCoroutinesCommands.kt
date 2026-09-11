@@ -9,6 +9,7 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.timeseries.TsAggregationType
+import io.lettuce.core.timeseries.TsFilter
 import io.lettuce.core.timeseries.TsInfoValue
 import io.lettuce.core.timeseries.TsMAddValue
 import io.lettuce.core.timeseries.TsMGetValue
@@ -236,7 +237,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @return List<TsMGetValue<K>> the last sample and, depending on [TsMGetArgs], the labels of each matching time series.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    suspend fun tsMGet(vararg filters: V): List<TsMGetValue<K>>
+    suspend fun tsMGet(vararg filters: TsFilter): List<TsMGetValue<K>>
 
     /**
      * Get the last samples of multiple time series matching one or more label filters.
@@ -245,7 +246,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @return List<TsMGetValue<K>> the last sample and, depending on [TsMGetArgs], the labels of each matching time series.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    suspend fun tsMGet(filter: V): List<TsMGetValue<K>>
+    suspend fun tsMGet(filter: TsFilter): List<TsMGetValue<K>>
 
     /**
      * Get the last samples of multiple time series matching one or more label filters.
@@ -256,7 +257,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @throws IllegalArgumentException if `mGetArgs` combines `WITHLABELS` and `SELECTED_LABELS`.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    suspend fun tsMGet(mGetArgs: TsMGetArgs, vararg filters: V): List<TsMGetValue<K>>
+    suspend fun tsMGet(mGetArgs: TsMGetArgs, vararg filters: TsFilter): List<TsMGetValue<K>>
 
     /**
      * Get the last samples of multiple time series matching one or more label filters.
@@ -267,7 +268,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @throws IllegalArgumentException if `mGetArgs` combines `WITHLABELS` and `SELECTED_LABELS`.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    suspend fun tsMGet(mGetArgs: TsMGetArgs, filter: V): List<TsMGetValue<K>>
+    suspend fun tsMGet(mGetArgs: TsMGetArgs, filter: TsFilter): List<TsMGetValue<K>>
 
     /**
      * Get metadata about a time series.
@@ -293,7 +294,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @return List<K> the keys of the matching time series; order is not guaranteed.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    suspend fun tsQueryIndex(vararg filters: V): List<K>
+    suspend fun tsQueryIndex(vararg filters: TsFilter): List<K>
 
     /**
      * Get all time series keys matching one or more label filters.
@@ -302,6 +303,6 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @return List<K> the keys of the matching time series; order is not guaranteed.
      * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
      */
-    suspend fun tsQueryIndex(filter: V): List<K>
+    suspend fun tsQueryIndex(filter: TsFilter): List<K>
 
 }

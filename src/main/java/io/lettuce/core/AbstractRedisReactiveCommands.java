@@ -86,6 +86,7 @@ import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.timeseries.TsAggregationType;
+import io.lettuce.core.timeseries.TsFilter;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
@@ -4735,22 +4736,22 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<TsMGetValue<K>> tsMGet(V... filters) {
+    public Flux<TsMGetValue<K>> tsMGet(TsFilter... filters) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(filters));
     }
 
     @Override
-    public Flux<TsMGetValue<K>> tsMGet(V filter) {
+    public Flux<TsMGetValue<K>> tsMGet(TsFilter filter) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(filter));
     }
 
     @Override
-    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs mGetArgs, V... filters) {
+    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs mGetArgs, TsFilter... filters) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(mGetArgs, filters));
     }
 
     @Override
-    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs mGetArgs, V filter) {
+    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs mGetArgs, TsFilter filter) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(mGetArgs, filter));
     }
 
@@ -4765,12 +4766,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<K> tsQueryIndex(V... filters) {
+    public Flux<K> tsQueryIndex(TsFilter... filters) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryIndex(filters));
     }
 
     @Override
-    public Flux<K> tsQueryIndex(V filter) {
+    public Flux<K> tsQueryIndex(TsFilter filter) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryIndex(filter));
     }
 

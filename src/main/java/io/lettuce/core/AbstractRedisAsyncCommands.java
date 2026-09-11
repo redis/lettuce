@@ -86,6 +86,7 @@ import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.timeseries.TsAggregationType;
+import io.lettuce.core.timeseries.TsFilter;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
@@ -4692,22 +4693,22 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<TsMGetValue<K>>> tsMGet(V... filters) {
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsFilter... filters) {
         return dispatch(timeSeriesCommandBuilder.tsMGet(filters));
     }
 
     @Override
-    public RedisFuture<List<TsMGetValue<K>>> tsMGet(V filter) {
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsFilter filter) {
         return dispatch(timeSeriesCommandBuilder.tsMGet(filter));
     }
 
     @Override
-    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, V... filters) {
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter... filters) {
         return dispatch(timeSeriesCommandBuilder.tsMGet(mGetArgs, filters));
     }
 
     @Override
-    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, V filter) {
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter filter) {
         return dispatch(timeSeriesCommandBuilder.tsMGet(mGetArgs, filter));
     }
 
@@ -4722,12 +4723,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<K>> tsQueryIndex(V... filters) {
+    public RedisFuture<List<K>> tsQueryIndex(TsFilter... filters) {
         return dispatch(timeSeriesCommandBuilder.tsQueryIndex(filters));
     }
 
     @Override
-    public RedisFuture<List<K>> tsQueryIndex(V filter) {
+    public RedisFuture<List<K>> tsQueryIndex(TsFilter filter) {
         return dispatch(timeSeriesCommandBuilder.tsQueryIndex(filter));
     }
 

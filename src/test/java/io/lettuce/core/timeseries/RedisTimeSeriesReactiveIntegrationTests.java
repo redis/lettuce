@@ -113,8 +113,8 @@ public class RedisTimeSeriesReactiveIntegrationTests extends RedisTimeSeriesInte
     void tsMGetWithoutEqualityFilterFails() {
         prepareMGetFixture();
 
-        StepVerifier.create(reactive.tsMGet("type!=temp")).expectErrorMessage("ERR TSDB: please provide at least one matcher")
-                .verify(Duration.ofSeconds(5));
+        StepVerifier.create(reactive.tsMGet(TsFilter.notEqual("type", "temp")))
+                .expectErrorMessage("ERR TSDB: please provide at least one matcher").verify(Duration.ofSeconds(5));
     }
 
     /**
