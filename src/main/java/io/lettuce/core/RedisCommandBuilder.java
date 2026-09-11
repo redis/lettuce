@@ -4224,83 +4224,108 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), args);
     }
 
-    Command<K, V, List<V>> zrange(K key, ZRange range) {
-        return zrange(key, range, new ZRangeArgs());
+    Command<K, V, List<V>> zrange(K key, ZRange.ByIndex range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
     }
 
-    Command<K, V, List<V>> zrange(K key, ZRange range, ZRangeArgs args) {
+    Command<K, V, List<V>> zrange(K key, ZRange.ByScore range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZRange.ByLex<V> range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<V> range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByIndex range) {
+        return createCommand(ZRANGE, new ScoredValueListOutput<>(codec), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByScore range) {
+        return createCommand(ZRANGE, new ScoredValueListOutput<>(codec), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByIndex range) {
         notNullKey(key);
         LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(args, "ZRangeArgs " + MUST_NOT_BE_NULL);
 
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key);
-        addZRange(commandArgs, range, args);
-        return createCommand(ZRANGE, new ValueListOutput<>(codec), commandArgs);
-    }
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(range.getStart()).add(range.getStop());
 
-    Command<K, V, List<V>> zrangeWithLex(K key, Range<V> range) {
-        return zrangeWithLex(key, range, new ZRangeArgs());
-    }
-
-    Command<K, V, List<V>> zrangeWithLex(K key, Range<V> range, ZRangeArgs args) {
-        notNullKey(key);
-        LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(args, "ZRangeArgs " + MUST_NOT_BE_NULL);
-
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key);
-        addLexRange(commandArgs, range, args);
-        return createCommand(ZRANGE, new ValueListOutput<>(codec), commandArgs);
-    }
-
-    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange range) {
-        return zrangeWithScores(key, range, new ZRangeArgs());
-    }
-
-    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange range, ZRangeArgs args) {
-        notNullKey(key);
-        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(args, "ZRangeArgs " + MUST_NOT_BE_NULL);
-
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key);
-        addZRange(commandArgs, range, args);
-        commandArgs.add(WITHSCORES);
-        return createCommand(ZRANGE, new ScoredValueListOutput<>(codec), commandArgs);
-    }
-
-    private void addZRange(CommandArgs<K, V> commandArgs, ZRange range, ZRangeArgs args) {
-
-        ZRange.RangeType rangeType = range.getRangeType();
-        LettuceAssert.isTrue(!args.getLimit().isLimited() || rangeType != ZRange.RangeType.INDEX,
-                "LIMIT requires a BYSCORE or BYLEX range");
-
-        switch (rangeType) {
-            case INDEX:
-                commandArgs.add(range.getStart()).add(range.getStop());
-                break;
-            case SCORE:
-                Range<? extends Number> scoreRange = range.getRange();
-                if (args.isRev()) {
-                    commandArgs.add(max(scoreRange)).add(min(scoreRange));
-                } else {
-                    commandArgs.add(min(scoreRange)).add(max(scoreRange));
-                }
-                commandArgs.add(BYSCORE);
-                break;
+        if (range.isRev()) {
+            args.add(REV);
         }
 
-        args.build(commandArgs);
+        return args;
     }
 
-    private void addLexRange(CommandArgs<K, V> commandArgs, Range<V> range, ZRangeArgs args) {
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByScore range) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
 
-        if (args.isRev()) {
-            commandArgs.add(maxValue(range)).add(minValue(range));
+        Range<? extends Number> scoreRange = range.getRange();
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (range.isRev()) {
+            args.add(max(scoreRange)).add(min(scoreRange));
         } else {
-            commandArgs.add(minValue(range)).add(maxValue(range));
+            args.add(min(scoreRange)).add(max(scoreRange));
         }
-        commandArgs.add(BYLEX);
 
-        args.build(commandArgs);
+        args.add(BYSCORE);
+
+        if (range.isRev()) {
+            args.add(REV);
+        }
+
+        addLimit(args, range.getLimit());
+        return args;
+    }
+
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByLex<V> range) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+
+        Range<V> lexRange = range.getRange();
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (range.isRev()) {
+            args.add(maxValue(lexRange)).add(minValue(lexRange));
+        } else {
+            args.add(minValue(lexRange)).add(maxValue(lexRange));
+        }
+
+        args.add(BYLEX);
+
+        if (range.isRev()) {
+            args.add(REV);
+        }
+
+        addLimit(args, range.getLimit());
+        return args;
     }
 
     RedisCommand<K, V, List<V>> zrangebylex(K key, String min, String max) {

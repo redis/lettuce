@@ -3764,33 +3764,53 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> zrange(K key, ZRange range) {
+    public Flux<V> zrange(K key, ZRange.ByIndex range) {
         return createDissolvingFlux(() -> commandBuilder.zrange(key, range));
     }
 
     @Override
-    public Flux<V> zrange(K key, ZRange range, ZRangeArgs args) {
-        return createDissolvingFlux(() -> commandBuilder.zrange(key, range, args));
+    public Flux<V> zrange(K key, ZRange.ByScore range) {
+        return createDissolvingFlux(() -> commandBuilder.zrange(key, range));
     }
 
     @Override
-    public Flux<V> zrangeWithLex(K key, Range<V> range) {
-        return createDissolvingFlux(() -> commandBuilder.zrangeWithLex(key, range));
+    public Flux<V> zrange(K key, ZRange.ByLex<V> range) {
+        return createDissolvingFlux(() -> commandBuilder.zrange(key, range));
     }
 
     @Override
-    public Flux<V> zrangeWithLex(K key, Range<V> range, ZRangeArgs args) {
-        return createDissolvingFlux(() -> commandBuilder.zrangeWithLex(key, range, args));
+    public Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        return createMono(() -> commandBuilder.zrange(channel, key, range));
     }
 
     @Override
-    public Flux<ScoredValue<V>> zrangeWithScores(K key, ZRange range) {
+    public Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        return createMono(() -> commandBuilder.zrange(channel, key, range));
+    }
+
+    @Override
+    public Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<V> range) {
+        return createMono(() -> commandBuilder.zrange(channel, key, range));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zrangeWithScores(K key, ZRange.ByIndex range) {
         return createDissolvingFlux(() -> commandBuilder.zrangeWithScores(key, range));
     }
 
     @Override
-    public Flux<ScoredValue<V>> zrangeWithScores(K key, ZRange range, ZRangeArgs args) {
-        return createDissolvingFlux(() -> commandBuilder.zrangeWithScores(key, range, args));
+    public Flux<ScoredValue<V>> zrangeWithScores(K key, ZRange.ByScore range) {
+        return createDissolvingFlux(() -> commandBuilder.zrangeWithScores(key, range));
+    }
+
+    @Override
+    public Mono<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        return createMono(() -> commandBuilder.zrangeWithScores(channel, key, range));
+    }
+
+    @Override
+    public Mono<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        return createMono(() -> commandBuilder.zrangeWithScores(channel, key, range));
     }
 
     @Override

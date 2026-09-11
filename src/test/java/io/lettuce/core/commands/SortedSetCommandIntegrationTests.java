@@ -416,53 +416,86 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
     void zrangeUnifiedByIndex() {
         setup();
 
         assertThat(redis.zrange(key, ZRange.byIndex(0, 1))).isEqualTo(list("a", "b"));
         assertThat(redis.zrange(key, ZRange.byIndex(0, -1))).isEqualTo(list("a", "b", "c"));
-        assertThat(redis.zrange(key, ZRange.byIndex(0, 1), ZRangeArgs.Builder.rev())).isEqualTo(list("c", "b"));
+        assertThat(redis.zrange(key, ZRange.byIndex(0, 1).rev())).isEqualTo(list("c", "b"));
     }
 
     @Test
+    @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
     void zrangeUnifiedByScore() {
         setup();
 
         assertThat(redis.zrange(key, ZRange.byScore(Range.create(2, 3)))).isEqualTo(list("b", "c"));
+        assertThat(redis.zrange(key, ZRange.byScore(2, 3))).isEqualTo(list("b", "c"));
         assertThat(redis.zrange(key, ZRange.byScore(Range.from(excluding(1), unbounded())))).isEqualTo(list("b", "c"));
-        assertThat(redis.zrange(key, ZRange.byScore(Range.create(2, 3)), ZRangeArgs.Builder.rev())).isEqualTo(list("c", "b"));
-        assertThat(redis.zrange(key, ZRange.byScore(Range.unbounded()), ZRangeArgs.Builder.limit(1, 2)))
-                .isEqualTo(list("b", "c"));
-        assertThat(redis.zrange(key, ZRange.byScore(Range.unbounded()), ZRangeArgs.Builder.rev().limit(1, 2)))
-                .isEqualTo(list("b", "a"));
+        assertThat(redis.zrange(key, ZRange.byScore(Range.create(2, 3)).rev())).isEqualTo(list("c", "b"));
+        assertThat(redis.zrange(key, ZRange.byScore(Range.unbounded()).limit(1, 2))).isEqualTo(list("b", "c"));
+        assertThat(redis.zrange(key, ZRange.byScore(Range.unbounded()).rev().limit(1, 2))).isEqualTo(list("b", "a"));
     }
 
     @Test
+    @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
     void zrangeUnifiedByLex() {
         redis.zadd(key, 0.0, "a", 0.0, "b", 0.0, "c");
 
-        assertThat(redis.zrangeWithLex(key, Range.create("a", "b"))).isEqualTo(list("a", "b"));
-        assertThat(redis.zrangeWithLex(key, Range.from(excluding("a"), unbounded()))).isEqualTo(list("b", "c"));
-        assertThat(redis.zrangeWithLex(key, Range.create("a", "b"), ZRangeArgs.Builder.rev())).isEqualTo(list("b", "a"));
-        assertThat(redis.zrangeWithLex(key, Range.unbounded(), ZRangeArgs.Builder.limit(1, 2))).isEqualTo(list("b", "c"));
+        assertThat(redis.zrange(key, ZRange.byLex(Range.create("a", "b")))).isEqualTo(list("a", "b"));
+        assertThat(redis.zrange(key, ZRange.byLex(Range.from(excluding("a"), unbounded())))).isEqualTo(list("b", "c"));
+        assertThat(redis.zrange(key, ZRange.byLex(Range.create("a", "b")).rev())).isEqualTo(list("b", "a"));
+        assertThat(redis.zrange(key, ZRange.byLex(Range.<String> unbounded()).limit(1, 2))).isEqualTo(list("b", "c"));
+        assertThat(redis.zrange(key, ZRange.byLex(Range.<String> unbounded()).rev().limit(0, 2))).isEqualTo(list("c", "b"));
     }
 
     @Test
+    @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
     void zrangeUnifiedWithScores() {
         setup();
 
         assertThat(redis.zrangeWithScores(key, ZRange.byIndex(0, -1)))
                 .isEqualTo(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c")));
-        assertThat(redis.zrangeWithScores(key, ZRange.byScore(Range.create(2, 3)), ZRangeArgs.Builder.rev()))
+        assertThat(redis.zrangeWithScores(key, ZRange.byIndex(0, 1).rev())).isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b")));
+        assertThat(redis.zrangeWithScores(key, ZRange.byScore(Range.create(2, 3)).rev()))
                 .isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b")));
+        assertThat(redis.zrangeWithScores(key, ZRange.byScore(Range.unbounded()).limit(1, 1))).isEqualTo(svlist(sv(2.0, "b")));
     }
 
     @Test
-    void zrangeUnifiedShouldRejectInvalidCombinations() {
-        assertThatThrownBy(() -> redis.zrange(key, ZRange.byIndex(0, 1), ZRangeArgs.Builder.limit(0, 1)))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> redis.zrangeWithScores(key, ZRange.byIndex(0, 1), ZRangeArgs.Builder.limit(0, 1)))
-                .isInstanceOf(IllegalArgumentException.class);
+    @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
+    void zrangeUnifiedStreaming() {
+        setup();
+
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
+
+        assertThat(redis.zrange(streamingAdapter, key, ZRange.byIndex(0, 1).rev())).isEqualTo(2);
+        assertThat(streamingAdapter.getList()).isEqualTo(list("c", "b"));
+
+        streamingAdapter = new ListStreamingAdapter<>();
+        assertThat(redis.zrange(streamingAdapter, key, ZRange.byScore(Range.unbounded()).limit(1, 2))).isEqualTo(2);
+        assertThat(streamingAdapter.getList()).isEqualTo(list("b", "c"));
+
+        redis.zadd(key, 0.0, "a", 0.0, "b", 0.0, "c");
+        streamingAdapter = new ListStreamingAdapter<>();
+        assertThat(redis.zrange(streamingAdapter, key, ZRange.byLex(Range.create("a", "b")).rev())).isEqualTo(2);
+        assertThat(streamingAdapter.getList()).isEqualTo(list("b", "a"));
+    }
+
+    @Test
+    @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
+    void zrangeUnifiedWithScoresStreaming() {
+        setup();
+
+        ScoredValueStreamingAdapter<String> streamingAdapter = new ScoredValueStreamingAdapter<>();
+
+        assertThat(redis.zrangeWithScores(streamingAdapter, key, ZRange.byIndex(0, -1))).isEqualTo(3);
+        assertThat(streamingAdapter.getList()).isEqualTo(svlist(sv(1.0, "a"), sv(2.0, "b"), sv(3.0, "c")));
+
+        streamingAdapter = new ScoredValueStreamingAdapter<>();
+        assertThat(redis.zrangeWithScores(streamingAdapter, key, ZRange.byScore(Range.create(2, 3)).rev())).isEqualTo(2);
+        assertThat(streamingAdapter.getList()).isEqualTo(svlist(sv(3.0, "c"), sv(2.0, "b")));
     }
 
     @Test

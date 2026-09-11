@@ -523,72 +523,54 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     fun zrangeWithScores(key: K, start: Long, stop: Long): Flow<ScoredValue<V>>
 
     /**
-     * Return a range of members in a sorted set using the unified range syntax, by index or by score (`BYSCORE`).
+     * Return a range of members in a sorted set, by index, using the unified `ZRANGE` syntax.
      *
      * @param key the key.
-     * @param range the range selector ([ZRange.byIndex] or [ZRange.byScore]).
+     * @param range the index range selector, see [ZRange.byIndex].
      * @return V array-reply list of elements in the specified range.
      * @since 7.8
      */
-    fun zrange(key: K, range: ZRange): Flow<V>
+    fun zrange(key: K, range: ZRange.ByIndex): Flow<V>
 
     /**
-     * Return a range of members in a sorted set using the unified range syntax, by index or by score (`BYSCORE`), applying
-     * [ZRangeArgs] such as `REV` and `LIMIT`.
+     * Return a range of members in a sorted set, by score (`BYSCORE`), using the unified `ZRANGE` syntax.
      *
      * @param key the key.
-     * @param range the range selector ([ZRange.byIndex] or [ZRange.byScore]).
-     * @param args the command arguments.
-     * @return V array-reply list of elements in the specified range.
-     * @throws IllegalArgumentException if a limit is applied to a [ZRange.byIndex] range.
-     * @since 7.8
-     */
-    fun zrange(key: K, range: ZRange, args: ZRangeArgs): Flow<V>
-
-    /**
-     * Return a range of members in a sorted set using the unified range syntax, by lexicographical order (`BYLEX`).
-     *
-     * @param key the key.
-     * @param range the lexicographical range.
+     * @param range the score range selector, see [ZRange.byScore].
      * @return V array-reply list of elements in the specified range.
      * @since 7.8
      */
-    fun zrangeWithLex(key: K, range: Range<V>): Flow<V>
+    fun zrange(key: K, range: ZRange.ByScore): Flow<V>
 
     /**
-     * Return a range of members in a sorted set using the unified range syntax, by lexicographical order (`BYLEX`), applying
-     * [ZRangeArgs] such as `REV` and `LIMIT`.
+     * Return a range of members in a sorted set, by lexicographical order (`BYLEX`), using the unified `ZRANGE` syntax.
      *
      * @param key the key.
-     * @param range the lexicographical range.
-     * @param args the command arguments.
+     * @param range the lexicographical range selector, see [ZRange.byLex].
      * @return V array-reply list of elements in the specified range.
      * @since 7.8
      */
-    fun zrangeWithLex(key: K, range: Range<V>, args: ZRangeArgs): Flow<V>
+    fun zrange(key: K, range: ZRange.ByLex<V>): Flow<V>
 
     /**
-     * Return a range of members with scores in a sorted set using the unified range syntax, by index or by score
-     * (`BYSCORE`).
+     * Return a range of members with scores in a sorted set, by index, using the unified `ZRANGE` syntax.
      *
      * @param key the key.
-     * @param range the range selector ([ZRange.byIndex] or [ZRange.byScore]).
+     * @param range the index range selector, see [ZRange.byIndex].
      * @return ScoredValue<V> array-reply list of elements with their scores in the specified range.
      * @since 7.8
      */
-    fun zrangeWithScores(key: K, range: ZRange): Flow<ScoredValue<V>>
+    fun zrangeWithScores(key: K, range: ZRange.ByIndex): Flow<ScoredValue<V>>
 
     /**
-     * Return a range of members with scores in a sorted set using the unified range syntax, by index or by score
-     * (`BYSCORE`), applying [ZRangeArgs] such as `REV` and `LIMIT`.
+     * Return a range of members with scores in a sorted set, by score (`BYSCORE`), using the unified `ZRANGE` syntax.
      *
      * @param key the key.
-     * @param range the range selector ([ZRange.byIndex] or [ZRange.byScore]).
-     * @param args the command arguments.
+     * @param range the score range selector, see [ZRange.byScore].
      * @return ScoredValue<V> array-reply list of elements with their scores in the specified range.
      * @since 7.8
      */
-    fun zrangeWithScores(key: K, range: ZRange, args: ZRangeArgs): Flow<ScoredValue<V>>
+    fun zrangeWithScores(key: K, range: ZRange.ByScore): Flow<ScoredValue<V>>
 
     /**
      * Return a range of members in a sorted set, by lexicographical range.
