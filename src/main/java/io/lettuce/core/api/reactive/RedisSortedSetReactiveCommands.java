@@ -596,50 +596,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @return V array-reply list of elements in the specified range.
      * @since 7.8
      */
-    Flux<V> zrange(K key, ZRange.ByLex<V> range);
-
-    /**
-     * Stream over a range of members in a sorted set, by index, using the unified {@code ZRANGE} syntax.
-     *
-     * @param channel streaming channel that receives a call for every value.
-     * @param key the key, must not be {@code null}.
-     * @param range the index range selector, see {@link ZRange#byIndex(long, long)}, must not be {@code null}.
-     * @return Long count of elements in the specified range.
-     * @since 7.8
-     * @deprecated since 7.8 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrange(Object, ZRange.ByIndex)}.
-     */
-    @Deprecated
-    Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByIndex range);
-
-    /**
-     * Stream over a range of members in a sorted set, by score ({@code BYSCORE}), using the unified {@code ZRANGE} syntax.
-     *
-     * @param channel streaming channel that receives a call for every value.
-     * @param key the key, must not be {@code null}.
-     * @param range the score range selector, see {@link ZRange#byScore(Range)}, must not be {@code null}.
-     * @return Long count of elements in the specified range.
-     * @since 7.8
-     * @deprecated since 7.8 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrange(Object, ZRange.ByScore)}.
-     */
-    @Deprecated
-    Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByScore range);
-
-    /**
-     * Stream over a range of members in a sorted set, by lexicographical order ({@code BYLEX}), using the unified
-     * {@code ZRANGE} syntax.
-     *
-     * @param channel streaming channel that receives a call for every value.
-     * @param key the key, must not be {@code null}.
-     * @param range the lexicographical range selector, see {@link ZRange#byLex(Range)}, must not be {@code null}.
-     * @return Long count of elements in the specified range.
-     * @since 7.8
-     * @deprecated since 7.8 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrange(Object, ZRange.ByLex)}.
-     */
-    @Deprecated
-    Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<V> range);
+    Flux<V> zrange(K key, ZRange.ByLex<? extends V> range);
 
     /**
      * Return a range of members with scores in a sorted set, by index, using the unified {@code ZRANGE} syntax.
@@ -661,35 +618,6 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @since 7.8
      */
     Flux<ScoredValue<V>> zrangeWithScores(K key, ZRange.ByScore range);
-
-    /**
-     * Stream over a range of members with scores in a sorted set, by index, using the unified {@code ZRANGE} syntax.
-     *
-     * @param channel streaming channel that receives a call for every value.
-     * @param key the key, must not be {@code null}.
-     * @param range the index range selector, see {@link ZRange#byIndex(long, long)}, must not be {@code null}.
-     * @return Long count of elements in the specified range.
-     * @since 7.8
-     * @deprecated since 7.8 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangeWithScores(Object, ZRange.ByIndex)}.
-     */
-    @Deprecated
-    Mono<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByIndex range);
-
-    /**
-     * Stream over a range of members with scores in a sorted set, by score ({@code BYSCORE}), using the unified {@code ZRANGE}
-     * syntax.
-     *
-     * @param channel streaming channel that receives a call for every value.
-     * @param key the key, must not be {@code null}.
-     * @param range the score range selector, see {@link ZRange#byScore(Range)}, must not be {@code null}.
-     * @return Long count of elements in the specified range.
-     * @since 7.8
-     * @deprecated since 7.8 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangeWithScores(Object, ZRange.ByScore)}.
-     */
-    @Deprecated
-    Mono<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByScore range);
 
     /**
      * Return a range of members in a sorted set, by lexicographical range.

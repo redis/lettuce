@@ -4232,7 +4232,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
     }
 
-    Command<K, V, List<V>> zrange(K key, ZRange.ByLex<V> range) {
+    Command<K, V, List<V>> zrange(K key, ZRange.ByLex<? extends V> range) {
         return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
     }
 
@@ -4246,7 +4246,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
     }
 
-    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<V> range) {
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<? extends V> range) {
         notNull(channel);
         return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
     }
@@ -4305,11 +4305,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return args;
     }
 
-    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByLex<V> range) {
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByLex<? extends V> range) {
         notNullKey(key);
         LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
 
-        Range<V> lexRange = range.getRange();
+        Range<? extends V> lexRange = range.getRange();
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (range.isRev()) {

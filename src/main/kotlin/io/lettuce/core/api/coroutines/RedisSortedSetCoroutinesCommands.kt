@@ -550,7 +550,7 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @return V array-reply list of elements in the specified range.
      * @since 7.8
      */
-    fun zrange(key: K, range: ZRange.ByLex<V>): Flow<V>
+    fun zrange(key: K, range: ZRange.ByLex<out V>): Flow<V>
 
     /**
      * Return a range of members with scores in a sorted set, by index, using the unified `ZRANGE` syntax.

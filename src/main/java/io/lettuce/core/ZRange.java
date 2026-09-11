@@ -115,6 +115,7 @@ public final class ZRange {
          * Traverse the sorted set in reverse order ({@code REV}).
          *
          * @return {@code this}.
+         * @since 7.8
          */
         public ByIndex rev() {
             this.rev = true;
@@ -169,6 +170,7 @@ public final class ZRange {
          * Traverse the sorted set in reverse order ({@code REV}).
          *
          * @return {@code this}.
+         * @since 7.8
          */
         public ByScore rev() {
             this.rev = true;
@@ -181,6 +183,7 @@ public final class ZRange {
          * @param offset the offset.
          * @param count the count.
          * @return {@code this}.
+         * @since 7.8
          */
         public ByScore limit(long offset, long count) {
             return limit(Limit.create(offset, count));
@@ -191,6 +194,7 @@ public final class ZRange {
          *
          * @param limit the limit, must not be {@code null}.
          * @return {@code this}.
+         * @since 7.8
          */
         public ByScore limit(Limit limit) {
 
@@ -253,6 +257,7 @@ public final class ZRange {
          * Traverse the sorted set in reverse order ({@code REV}).
          * 
          * @return {@code this}.
+         * @since 7.8
          */
         public ByLex<V> rev() {
             this.rev = true;
@@ -265,6 +270,7 @@ public final class ZRange {
          * @param offset the offset.
          * @param count the count.
          * @return {@code this}.
+         * @since 7.8
          */
         public ByLex<V> limit(long offset, long count) {
             return limit(Limit.create(offset, count));
@@ -275,6 +281,7 @@ public final class ZRange {
          *
          * @param limit the limit, must not be {@code null}.
          * @return {@code this}.
+         * @since 7.8
          */
         public ByLex<V> limit(Limit limit) {
 

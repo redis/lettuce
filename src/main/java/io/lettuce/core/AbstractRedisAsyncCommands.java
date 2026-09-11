@@ -3718,7 +3718,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> zrange(K key, ZRange.ByLex<V> range) {
+    public RedisFuture<List<V>> zrange(K key, ZRange.ByLex<? extends V> range) {
         return dispatch(commandBuilder.zrange(key, range));
     }
 
@@ -3733,7 +3733,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<V> range) {
+    public RedisFuture<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<? extends V> range) {
         return dispatch(commandBuilder.zrange(channel, key, range));
     }
 

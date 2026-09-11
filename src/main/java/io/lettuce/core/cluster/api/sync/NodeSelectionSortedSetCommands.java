@@ -588,7 +588,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @since 7.8
      */
-    Executions<List<V>> zrange(K key, ZRange.ByLex<V> range);
+    Executions<List<V>> zrange(K key, ZRange.ByLex<? extends V> range);
 
     /**
      * Stream over a range of members in a sorted set, by index, using the unified {@code ZRANGE} syntax.
@@ -622,7 +622,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @return Long count of elements in the specified range.
      * @since 7.8
      */
-    Executions<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<V> range);
+    Executions<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<? extends V> range);
 
     /**
      * Return a range of members with scores in a sorted set, by index, using the unified {@code ZRANGE} syntax.

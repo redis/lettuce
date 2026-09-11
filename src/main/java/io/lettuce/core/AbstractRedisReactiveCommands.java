@@ -3774,23 +3774,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> zrange(K key, ZRange.ByLex<V> range) {
+    public Flux<V> zrange(K key, ZRange.ByLex<? extends V> range) {
         return createDissolvingFlux(() -> commandBuilder.zrange(key, range));
-    }
-
-    @Override
-    public Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
-        return createMono(() -> commandBuilder.zrange(channel, key, range));
-    }
-
-    @Override
-    public Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
-        return createMono(() -> commandBuilder.zrange(channel, key, range));
-    }
-
-    @Override
-    public Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<V> range) {
-        return createMono(() -> commandBuilder.zrange(channel, key, range));
     }
 
     @Override
@@ -3801,16 +3786,6 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<ScoredValue<V>> zrangeWithScores(K key, ZRange.ByScore range) {
         return createDissolvingFlux(() -> commandBuilder.zrangeWithScores(key, range));
-    }
-
-    @Override
-    public Mono<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
-        return createMono(() -> commandBuilder.zrangeWithScores(channel, key, range));
-    }
-
-    @Override
-    public Mono<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
-        return createMono(() -> commandBuilder.zrangeWithScores(channel, key, range));
     }
 
     @Override

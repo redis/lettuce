@@ -47,6 +47,19 @@ public final class KnownApiDeviations {
     public static final Set<String> NOT_ON_SYNC_API = Collections.emptySet();
 
     /**
+     * Sync streaming-channel methods intentionally absent from the reactive API. The reactive flavor exposes the elements
+     * through the returned {@link org.reactivestreams.Publisher}, so a channel overload there would bypass back-pressure and
+     * run the callback on the event loop. Applies to commands introduced in 7.8 and later; the pre-existing channel variants
+     * remain present-and-{@code @Deprecated} for source compatibility.
+     */
+    public static final Set<String> NOT_ON_REACTIVE = setOf( //
+            "zrange(ValueStreamingChannel, K, ByIndex)", //
+            "zrange(ValueStreamingChannel, K, ByScore)", //
+            "zrange(ValueStreamingChannel, K, ByLex)", //
+            "zrangeWithScores(ScoredValueStreamingChannel, K, ByIndex)", //
+            "zrangeWithScores(ScoredValueStreamingChannel, K, ByScore)");
+
+    /**
      * Async methods that keep the sync return type instead of wrapping it in {@code RedisFuture}. From
      * {@code CreateAsyncApi#KEEP_METHOD_RESULT_TYPE}.
      */
