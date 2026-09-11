@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -43,6 +44,18 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
         reactive.zmscore("zset1", "a", "c", "b").as(StepVerifier::create).assertNext(actual -> {
             assertThat(actual).isEqualTo(list(1.0, null, 2.0));
         }).verifyComplete();
+    }
+
+    @Test
+    @Disabled("API differences")
+    @Override
+    public void zrangeUnifiedStreaming() {
+    }
+
+    @Test
+    @Disabled("API differences")
+    @Override
+    public void zrangeUnifiedWithScoresStreaming() {
     }
 
 }

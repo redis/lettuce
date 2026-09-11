@@ -465,7 +465,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
-    void zrangeUnifiedStreaming() {
+    public void zrangeUnifiedStreaming() {
         setup();
 
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
@@ -485,7 +485,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("ZRANGESTORE") // Redis 6.2
-    void zrangeUnifiedWithScoresStreaming() {
+    public void zrangeUnifiedWithScoresStreaming() {
         setup();
 
         ScoredValueStreamingAdapter<String> streamingAdapter = new ScoredValueStreamingAdapter<>();
