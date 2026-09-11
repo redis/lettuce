@@ -37,7 +37,10 @@ intentionally not on sync.)
   Exceptions (`shutdown`, `close`, `isOpen`, …) keep the sync type.
 - **reactive** = `Mono<T>` for scalars; `List<E>`/`Set<E>` → `Flux<E>`; a few
   methods force `Flux` (`eval`, `dispatch`, …) or wrap elements in `Value<…>`
-  (`geopos`, `bitfield`, …); streaming-channel variants are `@Deprecated`.
+  (`geopos`, `bitfield`, …); streaming-channel variants introduced before 7.8
+  are present and `@Deprecated`; streaming-channel variants introduced in 7.8 or
+  later are **omitted** from the reactive API (a `Flux` already streams with
+  back-pressure) and registered in `KnownApiDeviations#NOT_ON_REACTIVE`.
 - **coroutines** = `suspend fun` returning the sync type; collection-streaming
   methods return `Flow<E>` (not suspend); deprecated and streaming-channel
   methods are omitted. The suite verifies presence and the suspend/`Flow` shape
@@ -77,7 +80,7 @@ to the Kotlin flavor).
 | Class | Checks |
 |-------|--------|
 | `CommandInterfaces` | the catalog: one enum entry per command group → its five Java flavor classes (the coroutine flavor is derived by naming convention via the Kotlin `coroutines()` extension) |
-| `KnownApiDeviations` | the exceptions registry for the Java flavors (ported from the former generators) |
+| `KnownApiDeviations` | the exceptions registry for the Java flavors (ported from the former generators; `NOT_ON_REACTIVE` lists the 7.8+ streaming-channel overloads omitted from reactive) |
 | `KnownKotlinApiDeviations` (Kotlin) | the exceptions registry for the coroutine flavor + the `CommandInterfaces.coroutines()` extension |
 | `TypeSignatures` | shared reflection/normalization helpers |
 | `SyncAsyncConsistencyUnitTests` | presence both directions + `RedisFuture` wrapping |

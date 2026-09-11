@@ -3708,6 +3708,56 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<V>> zrange(K key, ZRange.ByIndex range) {
+        return dispatch(commandBuilder.zrange(key, range));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrange(K key, ZRange.ByScore range) {
+        return dispatch(commandBuilder.zrange(key, range));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrange(K key, ZRange.ByLex<? extends V> range) {
+        return dispatch(commandBuilder.zrange(key, range));
+    }
+
+    @Override
+    public RedisFuture<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        return dispatch(commandBuilder.zrange(channel, key, range));
+    }
+
+    @Override
+    public RedisFuture<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        return dispatch(commandBuilder.zrange(channel, key, range));
+    }
+
+    @Override
+    public RedisFuture<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<? extends V> range) {
+        return dispatch(commandBuilder.zrange(channel, key, range));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByIndex range) {
+        return dispatch(commandBuilder.zrangeWithScores(key, range));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByScore range) {
+        return dispatch(commandBuilder.zrangeWithScores(key, range));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        return dispatch(commandBuilder.zrangeWithScores(channel, key, range));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        return dispatch(commandBuilder.zrangeWithScores(channel, key, range));
+    }
+
+    @Override
     public RedisFuture<List<V>> zrangebylex(K key, String min, String max) {
         return dispatch(commandBuilder.zrangebylex(key, min, max));
     }
