@@ -46,6 +46,7 @@ import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceStrings;
+import io.lettuce.core.protocol.ConnectionInitializer;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisHandshakeHandler;
 import io.lettuce.core.resource.ClientResources;
@@ -110,6 +111,8 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
     private final AtomicBoolean shutdown = new AtomicBoolean();
 
     private volatile ClientOptions clientOptions = ClientOptions.create();
+
+    private final ThreadLocal<ClientOptions> legacyHandshakeOptions = new ThreadLocal<>();
 
     /**
      * Create a new instance with client resources.
@@ -596,7 +599,48 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
         return Futures.allOf(groupCloseFutures);
     }
 
+    /**
+     * Create the handshake for a connection.
+     *
+     * @param state the connection state, must not be {@code null}.
+     * @return a new handshake.
+     * @deprecated since 7.8, use {@link #createHandshake(ConnectionState, ClientOptions)} instead; scheduled for removal in a
+     *             future major release.
+     */
+    @Deprecated
     protected RedisHandshake createHandshake(ConnectionState state) {
+        ClientOptions clientOptions = legacyHandshakeOptions.get();
+        return newHandshake(state, clientOptions == null ? getOptions() : clientOptions);
+    }
+
+    /**
+     * Create the handshake using the options captured for this connection.
+     * <p>
+     * Subclasses may override this method and use {@code clientOptions} when constructing the handshake.
+     *
+     * @param state the connection state, must not be {@code null}.
+     * @param clientOptions the options for this connection, must not be {@code null}.
+     * @return a new handshake.
+     * @throws IllegalArgumentException if {@code clientOptions} is {@code null}.
+     * @since 7.8
+     */
+    protected ConnectionInitializer createHandshake(ConnectionState state, ClientOptions clientOptions) {
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+        // Preserve deprecated overrides without relying on thread-local state after this factory returns.
+        ClientOptions previousOptions = legacyHandshakeOptions.get();
+        legacyHandshakeOptions.set(clientOptions);
+        try {
+            return createHandshake(state);
+        } finally {
+            if (previousOptions == null) {
+                legacyHandshakeOptions.remove();
+            } else {
+                legacyHandshakeOptions.set(previousOptions);
+            }
+        }
+    }
+
+    private RedisHandshake newHandshake(ConnectionState state, ClientOptions clientOptions) {
         EndpointTypeSource source = null;
         if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
             LettuceAssert.notNull(clientOptions.getMaintNotificationsConfig().getEndpointTypeSource(),

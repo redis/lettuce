@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.StringCodec;
@@ -40,14 +41,18 @@ class SentinelTopologyProvider implements TopologyProvider {
 
     private final Duration timeout;
 
+    private final ClientOptions clientOptions;
+
     /**
      * Creates a new {@link SentinelTopologyProvider}.
      *
      * @param masterId must not be empty
      * @param redisClient must not be {@code null}.
      * @param sentinelUri must not be {@code null}.
+     * @param clientOptions the options for Sentinel connections, must not be {@code null}.
      */
-    public SentinelTopologyProvider(String masterId, RedisClient redisClient, RedisURI sentinelUri) {
+    public SentinelTopologyProvider(String masterId, RedisClient redisClient, RedisURI sentinelUri,
+            ClientOptions clientOptions) {
 
         LettuceAssert.notEmpty(masterId, "MasterId must not be empty");
         LettuceAssert.notNull(redisClient, "RedisClient must not be null");
@@ -57,6 +62,7 @@ class SentinelTopologyProvider implements TopologyProvider {
         this.redisClient = redisClient;
         this.sentinelUri = sentinelUri;
         this.timeout = sentinelUri.getTimeout();
+        this.clientOptions = clientOptions;
     }
 
     @Override
@@ -77,7 +83,7 @@ class SentinelTopologyProvider implements TopologyProvider {
         logger.debug("lookup topology for masterId {}", masterId);
 
         Mono<StatefulRedisSentinelConnection<String, String>> connect = Mono
-                .fromFuture(redisClient.connectSentinelAsync(StringCodec.UTF8, sentinelUri));
+                .fromFuture(redisClient.connectSentinelAsync(StringCodec.UTF8, sentinelUri, clientOptions));
 
         return connect.flatMap(this::getNodes).toFuture();
     }

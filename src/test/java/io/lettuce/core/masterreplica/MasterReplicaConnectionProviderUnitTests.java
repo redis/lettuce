@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelHandler;
@@ -37,6 +38,8 @@ import io.lettuce.core.protocol.ConnectionIntent;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class MasterReplicaConnectionProviderUnitTests {
 
+    private final ClientOptions clientOptions = ClientOptions.create();
+
     private MasterReplicaConnectionProvider<String, String> sut;
 
     @Mock
@@ -55,7 +58,7 @@ class MasterReplicaConnectionProviderUnitTests {
 
         nodeConnectionMock = (StatefulRedisConnection) channelHandlerMock;
         sut = new MasterReplicaConnectionProvider<>(clientMock, StringCodec.UTF8, RedisURI.create("localhost", 1),
-                Collections.emptyMap());
+                Collections.emptyMap(), clientOptions);
         sut.setKnownNodes(Arrays.asList(
                 new RedisMasterReplicaNode("localhost", 1, RedisURI.create("localhost", 1), RedisInstance.Role.UPSTREAM)));
     }
@@ -65,7 +68,7 @@ class MasterReplicaConnectionProviderUnitTests {
 
         when(channelHandlerMock.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
 
-        when(clientMock.connectAsync(eq(StringCodec.UTF8), any()))
+        when(clientMock.connectAsync(eq(StringCodec.UTF8), any(), same(clientOptions)))
                 .thenReturn(ConnectionFuture.completed(null, nodeConnectionMock));
 
         StatefulRedisConnection<String, String> connection = sut.getConnection(ConnectionIntent.READ);
@@ -79,7 +82,7 @@ class MasterReplicaConnectionProviderUnitTests {
     @Test
     void shouldUseDirectConnectionForSingleReadSelection() {
 
-        when(clientMock.connectAsync(eq(StringCodec.UTF8), any()))
+        when(clientMock.connectAsync(eq(StringCodec.UTF8), any(), same(clientOptions)))
                 .thenReturn(ConnectionFuture.completed(null, nodeConnectionMock));
 
         sut.setReadFrom(ReadFrom.ANY);

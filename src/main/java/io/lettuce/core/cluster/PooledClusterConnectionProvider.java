@@ -107,10 +107,15 @@ class PooledClusterConnectionProvider<K, V>
 
     public PooledClusterConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
             RedisCodec<K, V> redisCodec, ClusterEventListener clusterEventListener) {
+        this(redisClusterClient, clusterWriter, redisCodec, clusterEventListener, redisClusterClient.getClusterClientOptions());
+    }
+
+    PooledClusterConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
+            RedisCodec<K, V> redisCodec, ClusterEventListener clusterEventListener, ClusterClientOptions clientOptions) {
 
         this.redisCodec = redisCodec;
         this.redisClusterClient = redisClusterClient;
-        this.options = redisClusterClient.getClusterClientOptions();
+        this.options = clientOptions;
         this.clusterWriter = clusterWriter;
         this.clusterEventListener = clusterEventListener;
         this.connectionFactory = new NodeConnectionPostProcessor(getConnectionFactory(redisClusterClient));

@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
@@ -35,7 +36,10 @@ class StaticMasterReplicaTopologyProvider implements TopologyProvider {
 
     private final Iterable<RedisURI> redisURIs;
 
-    public StaticMasterReplicaTopologyProvider(RedisClient redisClient, Iterable<RedisURI> redisURIs) {
+    private final ClientOptions clientOptions;
+
+    public StaticMasterReplicaTopologyProvider(RedisClient redisClient, Iterable<RedisURI> redisURIs,
+            ClientOptions clientOptions) {
 
         LettuceAssert.notNull(redisClient, "RedisClient must not be null");
         LettuceAssert.notNull(redisURIs, "RedisURIs must not be null");
@@ -43,6 +47,7 @@ class StaticMasterReplicaTopologyProvider implements TopologyProvider {
 
         this.redisClient = redisClient;
         this.redisURIs = redisURIs;
+        this.clientOptions = clientOptions;
     }
 
     @Override
@@ -81,7 +86,7 @@ class StaticMasterReplicaTopologyProvider implements TopologyProvider {
     private Mono<RedisNodeDescription> getNodeDescription(List<StatefulRedisConnection<String, String>> connections,
             RedisURI uri) {
 
-        return Mono.fromCompletionStage(redisClient.connectAsync(StringCodec.UTF8, uri)) //
+        return Mono.fromCompletionStage(redisClient.connectAsync(StringCodec.UTF8, uri, clientOptions)) //
                 .onErrorResume(t -> {
 
                     logger.warn("Cannot connect to {}", uri, t);

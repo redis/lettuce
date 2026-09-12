@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.Map;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -40,8 +41,9 @@ class MultiDbAsyncConnectionBuilder<K, V> extends
     }
 
     @Override
-    protected ConnectionFuture<StatefulRedisConnection<K, V>> connectAsync(RedisCodec<K, V> codec, RedisURI uri) {
-        return client.connectAsync(codec, uri);
+    protected ConnectionFuture<StatefulRedisConnection<K, V>> connectAsync(RedisCodec<K, V> codec, RedisURI uri,
+            ClientOptions clientOptions) {
+        return client.connectAsync(codec, uri, clientOptions);
     }
 
     @Override
