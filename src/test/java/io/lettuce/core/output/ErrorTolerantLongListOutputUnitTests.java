@@ -77,4 +77,25 @@ class ErrorTolerantLongListOutputUnitTests {
         assertThat(sut.hasError()).isFalse();
     }
 
+    @Test
+    void setByteBufferPushesNullWhenInitialized() {
+        sut.multi(1);
+        sut.set(ByteBuffer.wrap("unexpected bulk string".getBytes()));
+
+        List<Long> result = sut.get();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isNull();
+        assertThat(sut.hasError()).isFalse();
+    }
+
+    @Test
+    void setNullByteBufferPushesNullWhenInitialized() {
+        sut.multi(1);
+        sut.set((ByteBuffer) null);
+
+        List<Long> result = sut.get();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isNull();
+    }
+
 }

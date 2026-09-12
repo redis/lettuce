@@ -19,7 +19,8 @@ import java.util.List;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @since 7.7
+ * @author Gyumin Hwang
+ * @since 7.8
  */
 public class ErrorTolerantLongValueListOutput<K, V> extends CommandOutput<K, V, List<Value<Long>>>
         implements StreamingOutput<Value<Long>> {

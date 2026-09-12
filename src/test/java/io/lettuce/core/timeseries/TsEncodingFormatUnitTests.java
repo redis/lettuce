@@ -32,4 +32,29 @@ class TsEncodingFormatUnitTests {
         assertThat(TsEncodingFormat.UNCOMPRESSED.toString()).isEqualTo("UNCOMPRESSED");
     }
 
+    // ---------------------------------------------------------------------------
+    // Given: a wire-format string from TS.INFO (server sends lowercase), When: fromWire, Then: round-trips
+    // ---------------------------------------------------------------------------
+
+    @Test
+    void fromWireRoundTripsLowercaseValue() {
+        assertThat(TsEncodingFormat.fromWire("compressed")).isEqualTo(TsEncodingFormat.COMPRESSED);
+        assertThat(TsEncodingFormat.fromWire("uncompressed")).isEqualTo(TsEncodingFormat.UNCOMPRESSED);
+    }
+
+    @Test
+    void fromWireRoundTripsUppercaseValue() {
+        assertThat(TsEncodingFormat.fromWire("COMPRESSED")).isEqualTo(TsEncodingFormat.COMPRESSED);
+    }
+
+    @Test
+    void fromWireReturnsNullForUnknownValue() {
+        assertThat(TsEncodingFormat.fromWire("not-a-real-encoding")).isNull();
+    }
+
+    @Test
+    void fromWireReturnsNullForNull() {
+        assertThat(TsEncodingFormat.fromWire(null)).isNull();
+    }
+
 }

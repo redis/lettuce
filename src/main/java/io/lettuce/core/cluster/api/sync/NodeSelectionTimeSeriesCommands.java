@@ -154,7 +154,8 @@ public interface NodeSelectionTimeSeriesCommands<K, V> {
      * Append samples to multiple time series at once, creating any of the series automatically if it does not yet exist.
      *
      * @param entries the {@link TsMAddValue} entries to append.
-     * @return List&lt;Long&gt; the timestamps that were ultimately used, in the same order as {@code entries}.
+     * @return List&lt;Long&gt; the timestamps that were ultimately used, in the same order as {@code entries}; {@code null} for
+     *         an entry that failed (e.g. a {@code DUPLICATE_POLICY=BLOCK} violation).
      */
     Executions<List<Long>> tsMAdd(TsMAddValue<K>... entries);
 
@@ -162,7 +163,8 @@ public interface NodeSelectionTimeSeriesCommands<K, V> {
      * Append samples to multiple time series at once, creating any of the series automatically if it does not yet exist.
      *
      * @param entry the {@link TsMAddValue} entry to append.
-     * @return List&lt;Long&gt; the timestamps that were ultimately used, in the same order as {@code entries}.
+     * @return List&lt;Long&gt; the timestamps that were ultimately used, in the same order as {@code entries}; {@code null} for
+     *         an entry that failed (e.g. a {@code DUPLICATE_POLICY=BLOCK} violation).
      */
     Executions<List<Long>> tsMAdd(TsMAddValue<K> entry);
 

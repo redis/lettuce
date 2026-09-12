@@ -7,6 +7,7 @@
 package io.lettuce.core.timeseries;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 import io.lettuce.core.protocol.ProtocolKeyword;
 
@@ -32,6 +33,25 @@ public enum TsEncodingFormat implements ProtocolKeyword {
     @Override
     public byte[] getBytes() {
         return bytes;
+    }
+
+    /**
+     * Parses the wire-format value reported by {@code TS.INFO} (e.g. {@code "compressed"}) back into a
+     * {@link TsEncodingFormat}.
+     *
+     * @param wireValue the wire-format value, or {@code null}.
+     * @return the matching {@link TsEncodingFormat}, or {@code null} if {@code wireValue} is {@code null} or does not match a
+     *         known constant.
+     */
+    public static TsEncodingFormat fromWire(String wireValue) {
+        if (wireValue == null) {
+            return null;
+        }
+        try {
+            return valueOf(wireValue.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
 }

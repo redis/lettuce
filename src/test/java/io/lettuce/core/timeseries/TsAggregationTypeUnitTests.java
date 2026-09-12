@@ -75,4 +75,31 @@ class TsAggregationTypeUnitTests {
         assertThat(TsAggregationType.COUNTALL.toString()).isEqualTo("COUNTALL");
     }
 
+    // ---------------------------------------------------------------------------
+    // Given: a wire-format string from TS.INFO, When: fromWire, Then: round-trips to the matching constant
+    // ---------------------------------------------------------------------------
+
+    @Test
+    void fromWireRoundTripsPlainValue() {
+        assertThat(TsAggregationType.fromWire("avg")).isEqualTo(TsAggregationType.AVG);
+        assertThat(TsAggregationType.fromWire("AVG")).isEqualTo(TsAggregationType.AVG);
+    }
+
+    @Test
+    void fromWireRoundTripsDottedValue() {
+        assertThat(TsAggregationType.fromWire("std.p")).isEqualTo(TsAggregationType.STD_P);
+        assertThat(TsAggregationType.fromWire("STD.P")).isEqualTo(TsAggregationType.STD_P);
+        assertThat(TsAggregationType.fromWire("var.s")).isEqualTo(TsAggregationType.VAR_S);
+    }
+
+    @Test
+    void fromWireReturnsNullForUnknownValue() {
+        assertThat(TsAggregationType.fromWire("not-a-real-aggregation")).isNull();
+    }
+
+    @Test
+    void fromWireReturnsNullForNull() {
+        assertThat(TsAggregationType.fromWire(null)).isNull();
+    }
+
 }

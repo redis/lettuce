@@ -100,7 +100,7 @@ public class RedisTimeSeriesIntegrationTests {
         TsInfoValue<String> info = redis.tsInfo(MY_KEY);
         assertThat(info.getRetentionTime()).isEqualTo(86400000L);
         assertThat(info.getChunkSize()).isEqualTo(4096L);
-        assertThat(info.getDuplicatePolicy()).isEqualToIgnoringCase("LAST");
+        assertThat(info.getDuplicatePolicy()).isEqualTo(TsDuplicatePolicy.LAST);
         assertThat(info.getIgnoreMaxTimeDiff()).isEqualTo(5L);
         assertThat(info.getIgnoreMaxValDiff()).isEqualTo(0.1);
         assertThat(info.getTotalSamples()).isEqualTo(0L);
@@ -128,7 +128,7 @@ public class RedisTimeSeriesIntegrationTests {
     void tsCreateWithoutDuplicatePolicyReportsServerDefaultPolicy() {
         redis.tsCreate(MY_KEY);
 
-        assertThat(redis.tsInfo(MY_KEY).getDuplicatePolicy()).isEqualToIgnoringCase("block");
+        assertThat(redis.tsInfo(MY_KEY).getDuplicatePolicy()).isEqualTo(TsDuplicatePolicy.BLOCK);
     }
 
     /**
@@ -357,7 +357,7 @@ public class RedisTimeSeriesIntegrationTests {
 
         redis.tsAdd(newKey, 1000, 1.0, TsAddArgs.Builder.duplicatePolicy(TsDuplicatePolicy.MAX));
 
-        assertThat(redis.tsInfo(newKey).getDuplicatePolicy()).isEqualToIgnoringCase("MAX");
+        assertThat(redis.tsInfo(newKey).getDuplicatePolicy()).isEqualTo(TsDuplicatePolicy.MAX);
     }
 
     /**
@@ -370,7 +370,7 @@ public class RedisTimeSeriesIntegrationTests {
     void tsAddOnDuplicateIsOneShotOverrideNotPersistedButEffective() {
         String key = "series:on-duplicate";
         redis.tsCreate(key);
-        String policyAfterCreate = redis.tsInfo(key).getDuplicatePolicy();
+        TsDuplicatePolicy policyAfterCreate = redis.tsInfo(key).getDuplicatePolicy();
 
         redis.tsAdd(key, 1000, 5.0, TsAddArgs.Builder.onDuplicate(TsDuplicatePolicy.MIN));
         assertThat(redis.tsInfo(key).getDuplicatePolicy()).isEqualTo(policyAfterCreate);

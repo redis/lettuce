@@ -9,6 +9,7 @@ package io.lettuce.core.timeseries;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents the result of the Redis <a href="https://redis.io/commands/ts.info/">TS.INFO</a> command.
@@ -35,9 +36,9 @@ public class TsInfoValue<K> {
 
     private final Long chunkSize;
 
-    private final String chunkType;
+    private final TsEncodingFormat chunkType;
 
-    private final String duplicatePolicy;
+    private final TsDuplicatePolicy duplicatePolicy;
 
     private final Map<String, String> labels;
 
@@ -54,7 +55,7 @@ public class TsInfoValue<K> {
     private final List<Chunk> chunks;
 
     @SuppressWarnings("unchecked")
-    public TsInfoValue(Map<String, Object> rawInfo) {
+    TsInfoValue(Map<String, Object> rawInfo) {
         this.rawInfo = rawInfo;
         this.totalSamples = (Long) rawInfo.get("totalSamples");
         this.memoryUsage = (Long) rawInfo.get("memoryUsage");
@@ -63,19 +64,25 @@ public class TsInfoValue<K> {
         this.retentionTime = (Long) rawInfo.get("retentionTime");
         this.chunkCount = (Long) rawInfo.get("chunkCount");
         this.chunkSize = (Long) rawInfo.get("chunkSize");
-        this.chunkType = (String) rawInfo.get("chunkType");
-        this.duplicatePolicy = (String) rawInfo.get("duplicatePolicy");
-        this.labels = (Map<String, String>) rawInfo.get("labels");
+        this.chunkType = (TsEncodingFormat) rawInfo.get("chunkType");
+        this.duplicatePolicy = (TsDuplicatePolicy) rawInfo.get("duplicatePolicy");
+        Map<String, String> labels = (Map<String, String>) rawInfo.get("labels");
+        this.labels = labels == null ? Collections.emptyMap() : Collections.unmodifiableMap(labels);
         this.sourceKey = (K) rawInfo.get("sourceKey");
-        this.rules = (List<Rule<K>>) rawInfo.get("rules");
+        List<Rule<K>> rules = (List<Rule<K>>) rawInfo.get("rules");
+        this.rules = rules == null ? Collections.emptyList() : Collections.unmodifiableList(rules);
         this.ignoreMaxTimeDiff = (Long) rawInfo.get("ignoreMaxTimeDiff");
         this.ignoreMaxValDiff = (Double) rawInfo.get("ignoreMaxValDiff");
         this.keySelfName = (K) rawInfo.get("keySelfName");
-        this.chunks = (List<Chunk>) rawInfo.get("Chunks");
+        List<Chunk> chunks = (List<Chunk>) rawInfo.get("Chunks");
+        this.chunks = chunks == null ? null : Collections.unmodifiableList(chunks);
     }
 
     /**
      * Returns the raw info map returned by the Redis server.
+     * <p>
+     * This is an escape hatch for accessing the server response verbatim, including any fields not (yet) surfaced by a typed
+     * getter on this class. Every value covered by a typed getter on this class originates from this map.
      *
      * @return the raw info map returned by the Redis server
      */
@@ -147,11 +154,11 @@ public class TsInfoValue<K> {
     }
 
     /**
-     * Returns the chunk encoding used by the series ({@code "compressed"} or {@code "uncompressed"}).
+     * Returns the chunk encoding used by the series.
      *
      * @return the chunk encoding used by the series
      */
-    public String getChunkType() {
+    public TsEncodingFormat getChunkType() {
         return chunkType;
     }
 
@@ -160,7 +167,7 @@ public class TsInfoValue<K> {
      *
      * @return the duplicate sample handling policy configured for the series, or {@code null} if none was configured
      */
-    public String getDuplicatePolicy() {
+    public TsDuplicatePolicy getDuplicatePolicy() {
         return duplicatePolicy;
     }
 
@@ -229,6 +236,38 @@ public class TsInfoValue<K> {
         return chunks;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        TsInfoValue<?> that = (TsInfoValue<?>) o;
+        return Objects.equals(rawInfo, that.rawInfo) && Objects.equals(totalSamples, that.totalSamples)
+                && Objects.equals(memoryUsage, that.memoryUsage) && Objects.equals(firstTimestamp, that.firstTimestamp)
+                && Objects.equals(lastTimestamp, that.lastTimestamp) && Objects.equals(retentionTime, that.retentionTime)
+                && Objects.equals(chunkCount, that.chunkCount) && Objects.equals(chunkSize, that.chunkSize)
+                && chunkType == that.chunkType && duplicatePolicy == that.duplicatePolicy && Objects.equals(labels, that.labels)
+                && Objects.equals(sourceKey, that.sourceKey) && Objects.equals(rules, that.rules)
+                && Objects.equals(ignoreMaxTimeDiff, that.ignoreMaxTimeDiff)
+                && Objects.equals(ignoreMaxValDiff, that.ignoreMaxValDiff) && Objects.equals(keySelfName, that.keySelfName)
+                && Objects.equals(chunks, that.chunks);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(rawInfo, totalSamples, memoryUsage, firstTimestamp, lastTimestamp, retentionTime, chunkCount,
+                chunkSize, chunkType, duplicatePolicy, labels, sourceKey, rules, ignoreMaxTimeDiff, ignoreMaxValDiff,
+                keySelfName, chunks);
+    }
+
+    @Override
+    public String toString() {
+        return "TsInfoValue[totalSamples=" + totalSamples + ", memoryUsage=" + memoryUsage + ", chunkType=" + chunkType
+                + ", duplicatePolicy=" + duplicatePolicy + ", labels=" + labels + ", sourceKey=" + sourceKey + ", rules="
+                + rules + ']';
+    }
+
     /**
      * Represents a single compaction rule attached to a series, as reported by {@code TS.INFO}.
      *
@@ -287,6 +326,28 @@ public class TsInfoValue<K> {
          */
         public long getTimestampAlignment() {
             return timestampAlignment;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            Rule<?> that = (Rule<?>) o;
+            return bucketDuration == that.bucketDuration && timestampAlignment == that.timestampAlignment
+                    && Objects.equals(destKey, that.destKey) && aggregationType == that.aggregationType;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(destKey, bucketDuration, aggregationType, timestampAlignment);
+        }
+
+        @Override
+        public String toString() {
+            return "Rule[destKey=" + destKey + ", bucketDuration=" + bucketDuration + ", aggregationType=" + aggregationType
+                    + ", timestampAlignment=" + timestampAlignment + ']';
         }
 
     }
@@ -360,6 +421,28 @@ public class TsInfoValue<K> {
          */
         public double getBytesPerSample() {
             return bytesPerSample;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            Chunk that = (Chunk) o;
+            return startTimestamp == that.startTimestamp && endTimestamp == that.endTimestamp && samples == that.samples
+                    && size == that.size && Double.compare(that.bytesPerSample, bytesPerSample) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(startTimestamp, endTimestamp, samples, size, bytesPerSample);
+        }
+
+        @Override
+        public String toString() {
+            return "Chunk[startTimestamp=" + startTimestamp + ", endTimestamp=" + endTimestamp + ", samples=" + samples
+                    + ", size=" + size + ", bytesPerSample=" + bytesPerSample + ']';
         }
 
     }

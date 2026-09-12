@@ -156,8 +156,8 @@ class TsInfoValueParserUnitTests {
         assertThat(value.getRetentionTime()).isEqualTo(60000L);
         assertThat(value.getChunkCount()).isEqualTo(2L);
         assertThat(value.getChunkSize()).isEqualTo(4096L);
-        assertThat(value.getChunkType()).isEqualTo("compressed");
-        assertThat(value.getDuplicatePolicy()).isEqualTo("last");
+        assertThat(value.getChunkType()).isEqualTo(TsEncodingFormat.COMPRESSED);
+        assertThat(value.getDuplicatePolicy()).isEqualTo(TsDuplicatePolicy.LAST);
         assertThat(value.getLabels()).containsEntry("region", "us");
         assertThat(value.getSourceKey()).isEqualTo("src-key");
         assertThat(value.getRules()).isEmpty();
@@ -176,8 +176,8 @@ class TsInfoValueParserUnitTests {
         TsInfoValue<String> value = parser.parse(data);
 
         assertThat(value.getTotalSamples()).isEqualTo(100L);
-        assertThat(value.getChunkType()).isEqualTo("compressed");
-        assertThat(value.getDuplicatePolicy()).isEqualTo("last");
+        assertThat(value.getChunkType()).isEqualTo(TsEncodingFormat.COMPRESSED);
+        assertThat(value.getDuplicatePolicy()).isEqualTo(TsDuplicatePolicy.LAST);
         assertThat(value.getLabels()).containsEntry("region", "us");
         assertThat(value.getSourceKey()).isEqualTo("src-key");
         assertThat(value.getRules()).isEmpty();
@@ -385,6 +385,90 @@ class TsInfoValueParserUnitTests {
         assertThat(chunk.getSamples()).isEqualTo(10L);
         assertThat(chunk.getSize()).isEqualTo(256L);
         assertThat(chunk.getBytesPerSample()).isEqualTo(25.6);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Given: a parsed TsInfoValue, When: labels/rules/chunks are mutated, Then: they reject mutation (defensive copy)
+    // ---------------------------------------------------------------------------
+
+    @Test
+    void labelsIsUnmodifiable() {
+        ComplexData data = flatMapData(buf("labels"), listData(listData(buf("region"), buf("us"))));
+
+        TsInfoValue<String> value = parser.parse(data);
+
+        assertThatThrownBy(() -> value.getLabels().put("x", "y")).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void rulesIsUnmodifiable() {
+        ComplexData data = flatMapData(buf("rules"), listData());
+
+        TsInfoValue<String> value = parser.parse(data);
+
+        assertThatThrownBy(() -> value.getRules().add(null)).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void chunksIsUnmodifiable() {
+        ComplexData chunks = listData(flatMapData(buf("startTimestamp"), 0L, buf("endTimestamp"), 1000L, buf("samples"), 10L,
+                buf("size"), 256L, buf("bytesPerSample"), buf("25.6")));
+        ComplexData data = flatMapData(buf("Chunks"), chunks);
+
+        TsInfoValue<String> value = parser.parse(data);
+
+        assertThatThrownBy(() -> value.getChunks().add(null)).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Given: two TsInfoValue parsed from equal source data, When: equals/hashCode, Then: they are equal
+    // ---------------------------------------------------------------------------
+
+    @Test
+    void equalsAndHashCodeForEqualData() {
+        ComplexData data1 = flatMapData(buf("totalSamples"), 100L, buf("chunkType"), buf("compressed"), buf("duplicatePolicy"),
+                buf("last"));
+        ComplexData data2 = flatMapData(buf("totalSamples"), 100L, buf("chunkType"), buf("compressed"), buf("duplicatePolicy"),
+                buf("last"));
+
+        TsInfoValue<String> value1 = parser.parse(data1);
+        TsInfoValue<String> value2 = parser.parse(data2);
+
+        assertThat(value1).isEqualTo(value2);
+        assertThat(value1.hashCode()).isEqualTo(value2.hashCode());
+    }
+
+    @Test
+    void notEqualsForDifferentData() {
+        ComplexData data1 = flatMapData(buf("totalSamples"), 100L);
+        ComplexData data2 = flatMapData(buf("totalSamples"), 200L);
+
+        TsInfoValue<String> value1 = parser.parse(data1);
+        TsInfoValue<String> value2 = parser.parse(data2);
+
+        assertThat(value1).isNotEqualTo(value2);
+    }
+
+    @Test
+    void ruleEqualsAndHashCode() {
+        TsInfoValue.Rule<String> rule1 = new TsInfoValue.Rule<>("dest", 60000L, TsAggregationType.AVG, 0L);
+        TsInfoValue.Rule<String> rule2 = new TsInfoValue.Rule<>("dest", 60000L, TsAggregationType.AVG, 0L);
+        TsInfoValue.Rule<String> rule3 = new TsInfoValue.Rule<>("other", 60000L, TsAggregationType.AVG, 0L);
+
+        assertThat(rule1).isEqualTo(rule2);
+        assertThat(rule1.hashCode()).isEqualTo(rule2.hashCode());
+        assertThat(rule1).isNotEqualTo(rule3);
+    }
+
+    @Test
+    void chunkEqualsAndHashCode() {
+        TsInfoValue.Chunk chunk1 = new TsInfoValue.Chunk(0L, 1000L, 10L, 256L, 25.6);
+        TsInfoValue.Chunk chunk2 = new TsInfoValue.Chunk(0L, 1000L, 10L, 256L, 25.6);
+        TsInfoValue.Chunk chunk3 = new TsInfoValue.Chunk(0L, 2000L, 10L, 256L, 25.6);
+
+        assertThat(chunk1).isEqualTo(chunk2);
+        assertThat(chunk1.hashCode()).isEqualTo(chunk2.hashCode());
+        assertThat(chunk1).isNotEqualTo(chunk3);
     }
 
 }

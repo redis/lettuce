@@ -76,4 +76,30 @@ class TsSampleUnitTests {
         assertThatThrownBy(() -> sample.getValues().add(3.0)).isInstanceOf(UnsupportedOperationException.class);
     }
 
+    // ---------------------------------------------------------------------------
+    // Given two samples with the same timestamp and values, When compared, Then equal and same hashCode
+    // ---------------------------------------------------------------------------
+
+    @Test
+    void equalInstancesHaveEqualHashCode() {
+        TsSample first = new TsSample(1000L, Arrays.asList(10.0, 1.0, 20.0));
+        TsSample second = new TsSample(1000L, Arrays.asList(10.0, 1.0, 20.0));
+
+        assertThat(first).isEqualTo(second);
+        assertThat(first.hashCode()).isEqualTo(second.hashCode());
+    }
+
+    // ---------------------------------------------------------------------------
+    // Given two samples that differ in timestamp or values, When compared, Then not equal
+    // ---------------------------------------------------------------------------
+
+    @Test
+    void differingTimestampOrValuesAreNotEqual() {
+        TsSample base = new TsSample(1000L, Collections.singletonList(42.5));
+
+        assertThat(base).isNotEqualTo(new TsSample(2000L, Collections.singletonList(42.5)));
+        assertThat(base).isNotEqualTo(new TsSample(1000L, Collections.singletonList(43.5)));
+        assertThat(base).isNotEqualTo(new TsSample(1000L, Arrays.asList(42.5, 1.0)));
+    }
+
 }

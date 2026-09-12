@@ -20,7 +20,8 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @since 7.7
+ * @author Gyumin Hwang
+ * @since 7.8
  */
 public class ErrorTolerantLongListOutput<K, V> extends CommandOutput<K, V, List<Long>> implements StreamingOutput<Long> {
 
@@ -50,11 +51,11 @@ public class ErrorTolerantLongListOutput<K, V> extends CommandOutput<K, V, List<
 
     @Override
     public void set(ByteBuffer bytes) {
-        // nil results should produce an empty list
-        if (bytes == null) {
+
+        if (initialized) {
+            subscriber.onNext(output, null);
             return;
         }
-
         super.set(bytes);
     }
 

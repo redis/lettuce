@@ -64,4 +64,30 @@ public class TsSample {
         return values.get(0);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof TsSample))
+            return false;
+
+        TsSample that = (TsSample) o;
+
+        if (timestamp != that.timestamp)
+            return false;
+        return values.equals(that.values);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (timestamp ^ (timestamp >>> 32));
+        result = 31 * result + values.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("TsSample[%d, %s]", timestamp, values);
+    }
+
 }

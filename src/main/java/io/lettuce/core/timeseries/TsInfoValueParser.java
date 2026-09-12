@@ -10,7 +10,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import io.lettuce.core.codec.RedisCodec;
@@ -49,8 +48,8 @@ public final class TsInfoValueParser<K, V> implements ComplexDataParser<TsInfoVa
             info.put(decodeUtf8(entry.getKey()), entry.getValue());
         }
 
-        info.put("chunkType", decodeUtf8(info.get("chunkType")));
-        info.put("duplicatePolicy", decodeUtf8(info.get("duplicatePolicy")));
+        info.put("chunkType", TsEncodingFormat.fromWire(decodeUtf8(info.get("chunkType"))));
+        info.put("duplicatePolicy", TsDuplicatePolicy.fromWire(decodeUtf8(info.get("duplicatePolicy"))));
         info.put("sourceKey", decodeKey(info.get("sourceKey")));
         info.put("labels", TsLabelsParser.decode(info.get("labels")));
         info.put("rules", decodeRules(info.get("rules")));
@@ -87,20 +86,8 @@ public final class TsInfoValueParser<K, V> implements ComplexDataParser<TsInfoVa
     }
 
     private TsInfoValue.Rule<K> buildRule(K destKey, Object bucketDuration, Object aggregationType, Object timestampAlignment) {
-        return new TsInfoValue.Rule<>(destKey, ((Number) bucketDuration).longValue(), decodeAggregationType(aggregationType),
-                ((Number) timestampAlignment).longValue());
-    }
-
-    private TsAggregationType decodeAggregationType(Object value) {
-        String raw = decodeUtf8(value);
-        if (raw == null) {
-            return null;
-        }
-        try {
-            return TsAggregationType.valueOf(raw.replace('.', '_').toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        return new TsInfoValue.Rule<>(destKey, ((Number) bucketDuration).longValue(),
+                TsAggregationType.fromWire(decodeUtf8(aggregationType)), ((Number) timestampAlignment).longValue());
     }
 
     private List<TsInfoValue.Chunk> decodeChunks(Object rawChunks) {

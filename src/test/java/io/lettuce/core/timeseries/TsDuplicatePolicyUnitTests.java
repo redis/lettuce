@@ -36,4 +36,29 @@ class TsDuplicatePolicyUnitTests {
         assertThat(TsDuplicatePolicy.SUM.toString()).isEqualTo("SUM");
     }
 
+    // ---------------------------------------------------------------------------
+    // Given: a wire-format string from TS.INFO (server sends lowercase), When: fromWire, Then: round-trips
+    // ---------------------------------------------------------------------------
+
+    @Test
+    void fromWireRoundTripsLowercaseValue() {
+        assertThat(TsDuplicatePolicy.fromWire("last")).isEqualTo(TsDuplicatePolicy.LAST);
+        assertThat(TsDuplicatePolicy.fromWire("block")).isEqualTo(TsDuplicatePolicy.BLOCK);
+    }
+
+    @Test
+    void fromWireRoundTripsUppercaseValue() {
+        assertThat(TsDuplicatePolicy.fromWire("LAST")).isEqualTo(TsDuplicatePolicy.LAST);
+    }
+
+    @Test
+    void fromWireReturnsNullForUnknownValue() {
+        assertThat(TsDuplicatePolicy.fromWire("not-a-real-policy")).isNull();
+    }
+
+    @Test
+    void fromWireReturnsNullForNull() {
+        assertThat(TsDuplicatePolicy.fromWire(null)).isNull();
+    }
+
 }

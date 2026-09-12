@@ -7,6 +7,7 @@
 package io.lettuce.core.timeseries;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 import io.lettuce.core.protocol.ProtocolKeyword;
 
@@ -73,6 +74,24 @@ public enum TsAggregationType implements ProtocolKeyword {
     @Override
     public String toString() {
         return value;
+    }
+
+    /**
+     * Parses the wire-format value reported by {@code TS.INFO} (e.g. {@code "std.p"}) back into a {@link TsAggregationType}.
+     *
+     * @param wireValue the wire-format value, or {@code null}.
+     * @return the matching {@link TsAggregationType}, or {@code null} if {@code wireValue} is {@code null} or does not match a
+     *         known constant.
+     */
+    public static TsAggregationType fromWire(String wireValue) {
+        if (wireValue == null) {
+            return null;
+        }
+        try {
+            return valueOf(wireValue.replace('.', '_').toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
 }
