@@ -16,8 +16,21 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 class PartitionsConsensusTestSupport {
 
     static RedisClusterNode createNode(int nodeId) {
-        return new RedisClusterNode(RedisURI.create("localhost", 6379 - 2020 + nodeId), "" + nodeId, true, "", 0, 0, 0,
-                Collections.emptyList(), new HashSet<>());
+        return createNode(nodeId, Collections.emptyList());
+    }
+
+    static RedisClusterNode createNode(int nodeId, List<Integer> slots) {
+        return new RedisClusterNode(RedisURI.create("localhost", 6379 - 2020 + nodeId), "" + nodeId, true, "", 0, 0, 0, slots,
+                new HashSet<>());
+    }
+
+    static List<Integer> createSlots(int fromInclusive, int toExclusive) {
+
+        List<Integer> slots = new ArrayList<>();
+        for (int slot = fromInclusive; slot < toExclusive; slot++) {
+            slots.add(slot);
+        }
+        return slots;
     }
 
     static Partitions createPartitions(RedisClusterNode... nodes) {
