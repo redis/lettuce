@@ -85,6 +85,17 @@ import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
+import io.lettuce.core.timeseries.TsAggregationType;
+import io.lettuce.core.timeseries.TsFilter;
+import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsMGetValue;
+import io.lettuce.core.timeseries.TsSample;
+import io.lettuce.core.timeseries.arguments.TsAddArgs;
+import io.lettuce.core.timeseries.arguments.TsAlterArgs;
+import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
@@ -134,7 +145,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
         RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K>, RedisArrayReactiveCommands<K, V>,
         RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>,
-        RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
+        RedisTimeSeriesReactiveCommands<K, V>, RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -153,6 +164,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private final RedisCuckooFilterCommandBuilder<K, V> cuckooFilterCommandBuilder;
 
     private final RedisTopKCommandBuilder<K, V> topKCommandBuilder;
+
+    private final RedisTimeSeriesCommandBuilder<K, V> timeSeriesCommandBuilder;
 
     private final RedisCMSCommandBuilder<K, V> cmsCommandBuilder;
 
@@ -185,6 +198,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
         this.cuckooFilterCommandBuilder = new RedisCuckooFilterCommandBuilder<>(codec);
         this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
+        this.timeSeriesCommandBuilder = new RedisTimeSeriesCommandBuilder<>(codec);
         this.cmsCommandBuilder = new RedisCMSCommandBuilder<>(codec);
         this.tDigestCommandBuilder = new RedisTDigestCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
@@ -4640,6 +4654,150 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> topKReserve(K key, long k, TopKReserveArgs args) {
         return createMono(() -> topKCommandBuilder.topKReserve(key, k, args));
+    }
+
+    // --- Redis Time Series Commands ---
+
+    @Override
+    public Mono<String> tsCreate(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreate(key));
+    }
+
+    @Override
+    public Mono<String> tsCreate(K key, TsCreateArgs createArgs) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreate(key, createArgs));
+    }
+
+    @Override
+    public Mono<String> tsAlter(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAlter(key));
+    }
+
+    @Override
+    public Mono<String> tsAlter(K key, TsAlterArgs alterArgs) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAlter(key, alterArgs));
+    }
+
+    @Override
+    public Mono<String> tsCreateRule(K sourceKey, K destKey, TsAggregationType aggregationType, long bucketDuration) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreateRule(sourceKey, destKey, aggregationType, bucketDuration));
+    }
+
+    @Override
+    public Mono<String> tsCreateRule(K sourceKey, K destKey, TsAggregationType aggregationType, long bucketDuration,
+            long alignTimestamp) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreateRule(sourceKey, destKey, aggregationType, bucketDuration,
+                alignTimestamp));
+    }
+
+    @Override
+    public Mono<String> tsDeleteRule(K sourceKey, K destKey) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDeleteRule(sourceKey, destKey));
+    }
+
+    @Override
+    public Mono<Long> tsDel(K key, long fromTimestamp, long toTimestamp) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDel(key, fromTimestamp, toTimestamp));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, long timestamp, double value) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, timestamp, value));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, long timestamp, double value, TsAddArgs addArgs) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, timestamp, value, addArgs));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, double value) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, value));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, double value, TsAddArgs addArgs) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, value, addArgs));
+    }
+
+    @Override
+    public Flux<Value<Long>> tsMAdd(TsMAddValue<K>... entries) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAddValues(entries));
+    }
+
+    @Override
+    public Flux<Value<Long>> tsMAdd(TsMAddValue<K> entry) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAddValues(entry));
+    }
+
+    @Override
+    public Mono<Long> tsIncrBy(K key, double value) {
+        return createMono(() -> timeSeriesCommandBuilder.tsIncrBy(key, value));
+    }
+
+    @Override
+    public Mono<Long> tsIncrBy(K key, double value, TsIncrByArgs incrByArgs) {
+        return createMono(() -> timeSeriesCommandBuilder.tsIncrBy(key, value, incrByArgs));
+    }
+
+    @Override
+    public Mono<Long> tsDecrBy(K key, double value) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDecrBy(key, value));
+    }
+
+    @Override
+    public Mono<Long> tsDecrBy(K key, double value, TsIncrByArgs decrByArgs) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDecrBy(key, value, decrByArgs));
+    }
+
+    @Override
+    public Mono<TsSample> tsGet(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsGet(key));
+    }
+
+    @Override
+    public Mono<TsSample> tsGet(K key, boolean latest) {
+        return createMono(() -> timeSeriesCommandBuilder.tsGet(key, latest));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(filters));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(filter));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs mGetArgs, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(mGetArgs, filters));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs mGetArgs, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(mGetArgs, filter));
+    }
+
+    @Override
+    public Mono<TsInfoValue<K>> tsInfo(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsInfo(key));
+    }
+
+    @Override
+    public Mono<TsInfoValue<K>> tsInfo(K key, boolean debug) {
+        return createMono(() -> timeSeriesCommandBuilder.tsInfo(key, debug));
+    }
+
+    @Override
+    public Flux<K> tsQueryIndex(TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryIndex(filters));
+    }
+
+    @Override
+    public Flux<K> tsQueryIndex(TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryIndex(filter));
     }
 
     // --- Redis CMS Commands ---

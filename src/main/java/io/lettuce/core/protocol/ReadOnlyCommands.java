@@ -95,6 +95,8 @@ public class ReadOnlyCommands {
         CMS_INFO, CMS_QUERY,
         // T-Digest read-only commands
         TDIGEST_BYRANK, TDIGEST_BYREVRANK, TDIGEST_CDF, TDIGEST_INFO, TDIGEST_MAX, TDIGEST_MIN, TDIGEST_QUANTILE, TDIGEST_RANK, TDIGEST_REVRANK, TDIGEST_TRIMMED_MEAN,
+        // TimeSeries read-only commands
+        TS_GET, TS_MGET, TS_INFO, TS_QUERYINDEX
     }
 
     /**

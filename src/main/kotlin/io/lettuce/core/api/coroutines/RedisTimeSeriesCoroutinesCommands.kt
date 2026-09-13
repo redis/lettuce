@@ -1,0 +1,308 @@
+/*
+ * Copyright (c) 2026-Present, Redis Ltd.
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+package io.lettuce.core.api.coroutines
+
+import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.timeseries.TsAggregationType
+import io.lettuce.core.timeseries.TsFilter
+import io.lettuce.core.timeseries.TsInfoValue
+import io.lettuce.core.timeseries.TsMAddValue
+import io.lettuce.core.timeseries.TsMGetValue
+import io.lettuce.core.timeseries.TsSample
+import io.lettuce.core.timeseries.arguments.TsAddArgs
+import io.lettuce.core.timeseries.arguments.TsAlterArgs
+import io.lettuce.core.timeseries.arguments.TsCreateArgs
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs
+import io.lettuce.core.timeseries.arguments.TsMGetArgs
+
+/**
+ * Coroutine executed commands for RedisTimeSeries.
+ *
+ * @author Gyumin Hwang
+ * @param <K> Key type.
+ * @param <V> Value type.
+ * @see <a href="https://redis.io/docs/latest/develop/data-types/timeseries/">Redis Time Series</a>
+ * @since 7.8
+ */
+@ExperimentalLettuceCoroutinesApi
+interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
+
+    /**
+     * Create a new time series.
+     *
+     * @param key the key.
+     * @return String simple-string-reply `OK` if `TS.CREATE` was executed correctly.
+     */
+    suspend fun tsCreate(key: K): String?
+
+    /**
+     * Create a new time series.
+     *
+     * @param key the key.
+     * @param createArgs the create arguments.
+     * @return String simple-string-reply `OK` if `TS.CREATE` was executed correctly.
+     */
+    suspend fun tsCreate(key: K, createArgs: TsCreateArgs): String?
+
+    /**
+     * Update the retention, chunk size, duplicate policy, and/or labels of an existing time series.
+     *
+     * @param key the key.
+     * @return String simple-string-reply `OK` if `TS.ALTER` was executed correctly.
+     */
+    suspend fun tsAlter(key: K): String?
+
+    /**
+     * Update the retention, chunk size, duplicate policy, and/or labels of an existing time series.
+     *
+     * @param key the key.
+     * @param alterArgs the alter arguments.
+     * @return String simple-string-reply `OK` if `TS.ALTER` was executed correctly.
+     */
+    suspend fun tsAlter(key: K, alterArgs: TsAlterArgs): String?
+
+    /**
+     * Create a compaction rule.
+     *
+     * @param sourceKey the source key.
+     * @param destKey the destination key, that should be already created.
+     * @param aggregationType the aggregation type.
+     * @param bucketDuration the bucket duration, in milliseconds.
+     * @return String simple-string-reply `OK` if `TS.CREATERULE` was executed correctly.
+     */
+    suspend fun tsCreateRule(sourceKey: K, destKey: K, aggregationType: TsAggregationType, bucketDuration: Long): String?
+
+    /**
+     * Create a compaction rule.
+     *
+     * @param sourceKey the source key.
+     * @param destKey the destination key, that should be already created.
+     * @param aggregationType the aggregation type.
+     * @param bucketDuration the bucket duration, in milliseconds.
+     * @param alignTimestamp ensures that there is a bucket that starts exactly at this timestamp, in milliseconds.
+     * @return String simple-string-reply `OK` if `TS.CREATERULE` was executed correctly.
+     */
+    suspend fun tsCreateRule(
+        sourceKey: K,
+        destKey: K,
+        aggregationType: TsAggregationType,
+        bucketDuration: Long,
+        alignTimestamp: Long
+    ): String?
+
+    /**
+     * Delete a compaction rule.
+     *
+     * @param sourceKey the source key.
+     * @param destKey the destination key.
+     * @return String simple-string-reply `OK` if `TS.DELETERULE` was executed correctly.
+     */
+    suspend fun tsDeleteRule(sourceKey: K, destKey: K): String?
+
+    /**
+     * Delete all samples between two timestamps for a given time series.
+     *
+     * @param key the key.
+     * @param fromTimestamp start timestamp, in milliseconds.
+     * @param toTimestamp end timestamp, in milliseconds.
+     * @return Long integer-reply the number of samples that were removed.
+     */
+    suspend fun tsDel(key: K, fromTimestamp: Long, toTimestamp: Long): Long?
+
+    /**
+     * Append a sample to a time series, creating the series automatically if it does not yet exist.
+     *
+     * @param key the key.
+     * @param timestamp the sample timestamp, in milliseconds.
+     * @param value the sample value.
+     * @return Long integer-reply the timestamp that was ultimately used for the sample.
+     */
+    suspend fun tsAdd(key: K, timestamp: Long, value: Double): Long?
+
+    /**
+     * Append a sample to a time series, creating the series automatically if it does not yet exist.
+     *
+     * @param key the key.
+     * @param timestamp the sample timestamp, in milliseconds.
+     * @param value the sample value.
+     * @param addArgs the add arguments.
+     * @return Long integer-reply the timestamp that was ultimately used for the sample.
+     */
+    suspend fun tsAdd(key: K, timestamp: Long, value: Double, addArgs: TsAddArgs): Long?
+
+    /**
+     * Append a sample to a time series, letting the server assign the current time as the sample timestamp, creating the series
+     * automatically if it does not yet exist.
+     *
+     * @param key the key.
+     * @param value the sample value.
+     * @return Long integer-reply the timestamp that was ultimately used for the sample.
+     */
+    suspend fun tsAdd(key: K, value: Double): Long?
+
+    /**
+     * Append a sample to a time series, letting the server assign the current time as the sample timestamp, creating the series
+     * automatically if it does not yet exist.
+     *
+     * @param key the key.
+     * @param value the sample value.
+     * @param addArgs the add arguments.
+     * @return Long integer-reply the timestamp that was ultimately used for the sample.
+     */
+    suspend fun tsAdd(key: K, value: Double, addArgs: TsAddArgs): Long?
+
+    /**
+     * Append samples to multiple time series at once, creating any of the series automatically if it does not yet exist.
+     *
+     * @param entries the [TsMAddValue] entries to append.
+     * @return List<Long> the timestamps that were ultimately used, in the same order as `entries`; `null` for an entry that
+     *         failed (e.g. a `DUPLICATE_POLICY=BLOCK` violation).
+     */
+    suspend fun tsMAdd(vararg entries: TsMAddValue<K>): List<Long?>
+
+    /**
+     * Append samples to multiple time series at once, creating any of the series automatically if it does not yet exist.
+     *
+     * @param entry the [TsMAddValue] entry to append.
+     * @return List<Long> the timestamps that were ultimately used, in the same order as `entries`; `null` for an entry that
+     *         failed (e.g. a `DUPLICATE_POLICY=BLOCK` violation).
+     */
+    suspend fun tsMAdd(entry: TsMAddValue<K>): List<Long?>
+
+    /**
+     * Increment the value of the last sample of a time series, creating the series automatically if it does not yet exist.
+     *
+     * @param key the key.
+     * @param value the value to add to the last sample.
+     * @return Long integer-reply the timestamp of the updated sample.
+     */
+    suspend fun tsIncrBy(key: K, value: Double): Long?
+
+    /**
+     * Increment the value of the last sample of a time series, creating the series automatically if it does not yet exist.
+     *
+     * @param key the key.
+     * @param value the value to add to the last sample.
+     * @param incrByArgs the increment-by arguments.
+     * @return Long integer-reply the timestamp of the updated sample.
+     */
+    suspend fun tsIncrBy(key: K, value: Double, incrByArgs: TsIncrByArgs): Long?
+
+    /**
+     * Decrement the value of the last sample of a time series, creating the series automatically if it does not yet exist.
+     *
+     * @param key the key.
+     * @param value the value to subtract from the last sample.
+     * @return Long integer-reply the timestamp of the updated sample.
+     */
+    suspend fun tsDecrBy(key: K, value: Double): Long?
+
+    /**
+     * Decrement the value of the last sample of a time series, creating the series automatically if it does not yet exist.
+     *
+     * @param key the key.
+     * @param value the value to subtract from the last sample.
+     * @param decrByArgs the decrement-by arguments.
+     * @return Long integer-reply the timestamp of the updated sample.
+     */
+    suspend fun tsDecrBy(key: K, value: Double, decrByArgs: TsIncrByArgs): Long?
+
+    /**
+     * Get the last sample of a time series.
+     *
+     * @param key the key.
+     * @return TsSample the last sample of the time series, or `null` if the series has no samples.
+     */
+    suspend fun tsGet(key: K): TsSample?
+
+    /**
+     * Get the last sample of a time series.
+     *
+     * @param key the key.
+     * @param latest whether to request the compacted value of the latest, possibly partial, bucket. Only meaningful when the
+     *        key is the destination of a compaction rule; ignored otherwise.
+     * @return TsSample the last sample of the time series, or `null` if the series has no samples.
+     */
+    suspend fun tsGet(key: K, latest: Boolean): TsSample?
+
+    /**
+     * Get the last samples of multiple time series matching one or more label filters.
+     *
+     * @param filters one or more label filters, at least one of which must be an equality filter.
+     * @return List<TsMGetValue<K>> the last sample and, depending on [TsMGetArgs], the labels of each matching time series.
+     * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
+     */
+    suspend fun tsMGet(vararg filters: TsFilter): List<TsMGetValue<K>>
+
+    /**
+     * Get the last samples of multiple time series matching one or more label filters.
+     *
+     * @param filter one or more label filters, at least one of which must be an equality filter.
+     * @return List<TsMGetValue<K>> the last sample and, depending on [TsMGetArgs], the labels of each matching time series.
+     * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
+     */
+    suspend fun tsMGet(filter: TsFilter): List<TsMGetValue<K>>
+
+    /**
+     * Get the last samples of multiple time series matching one or more label filters.
+     *
+     * @param mGetArgs the get arguments.
+     * @param filters one or more label filters, at least one of which must be an equality filter.
+     * @return List<TsMGetValue<K>> the last sample and, depending on [TsMGetArgs], the labels of each matching time series.
+     * @throws IllegalArgumentException if `mGetArgs` combines `WITHLABELS` and `SELECTED_LABELS`.
+     * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
+     */
+    suspend fun tsMGet(mGetArgs: TsMGetArgs, vararg filters: TsFilter): List<TsMGetValue<K>>
+
+    /**
+     * Get the last samples of multiple time series matching one or more label filters.
+     *
+     * @param mGetArgs the get arguments.
+     * @param filter one or more label filters, at least one of which must be an equality filter.
+     * @return List<TsMGetValue<K>> the last sample and, depending on [TsMGetArgs], the labels of each matching time series.
+     * @throws IllegalArgumentException if `mGetArgs` combines `WITHLABELS` and `SELECTED_LABELS`.
+     * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
+     */
+    suspend fun tsMGet(mGetArgs: TsMGetArgs, filter: TsFilter): List<TsMGetValue<K>>
+
+    /**
+     * Get metadata about a time series.
+     *
+     * @param key the key.
+     * @return TsInfoValue metadata about the time series.
+     */
+    suspend fun tsInfo(key: K): TsInfoValue<K>?
+
+    /**
+     * Get metadata about a time series.
+     *
+     * @param key the key.
+     * @param debug whether to include chunk-level debug information.
+     * @return TsInfoValue metadata about the time series, including chunk-level debug information if `debug` is `true`.
+     */
+    suspend fun tsInfo(key: K, debug: Boolean): TsInfoValue<K>?
+
+    /**
+     * Get all time series keys matching one or more label filters.
+     *
+     * @param filters one or more label filters, at least one of which must be an equality filter.
+     * @return List<K> the keys of the matching time series; order is not guaranteed.
+     * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
+     */
+    suspend fun tsQueryIndex(vararg filters: TsFilter): List<K>
+
+    /**
+     * Get all time series keys matching one or more label filters.
+     *
+     * @param filter one or more label filters, at least one of which must be an equality filter.
+     * @return List<K> the keys of the matching time series; order is not guaranteed.
+     * @throws io.lettuce.core.RedisCommandExecutionException if no filter is an equality filter.
+     */
+    suspend fun tsQueryIndex(filter: TsFilter): List<K>
+
+}

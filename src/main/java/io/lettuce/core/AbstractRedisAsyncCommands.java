@@ -85,6 +85,17 @@ import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
+import io.lettuce.core.timeseries.TsAggregationType;
+import io.lettuce.core.timeseries.TsFilter;
+import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsMGetValue;
+import io.lettuce.core.timeseries.TsSample;
+import io.lettuce.core.timeseries.arguments.TsAddArgs;
+import io.lettuce.core.timeseries.arguments.TsAlterArgs;
+import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VSimScoreAttribs;
 import io.lettuce.core.vector.VectorMetadata;
@@ -128,7 +139,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
         RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K>, RedisArrayAsyncCommands<K, V>,
         RedisBloomFilterAsyncCommands<K, V>, RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V>,
-        RedisCMSAsyncCommands<K, V>, RedisTDigestAsyncCommands<K, V> {
+        RedisTimeSeriesAsyncCommands<K, V>, RedisCMSAsyncCommands<K, V>, RedisTDigestAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -147,6 +158,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     private final RedisCuckooFilterCommandBuilder<K, V> cuckooFilterCommandBuilder;
 
     private final RedisTopKCommandBuilder<K, V> topKCommandBuilder;
+
+    private final RedisTimeSeriesCommandBuilder<K, V> timeSeriesCommandBuilder;
 
     private final RedisCMSCommandBuilder<K, V> cmsCommandBuilder;
 
@@ -173,6 +186,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
         this.cuckooFilterCommandBuilder = new RedisCuckooFilterCommandBuilder<>(codec);
         this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
+        this.timeSeriesCommandBuilder = new RedisTimeSeriesCommandBuilder<>(codec);
         this.cmsCommandBuilder = new RedisCMSCommandBuilder<>(codec);
         this.tDigestCommandBuilder = new RedisTDigestCommandBuilder<>(codec);
     }
@@ -4622,6 +4636,150 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> topKReserve(K key, long k, TopKReserveArgs args) {
         return dispatch(topKCommandBuilder.topKReserve(key, k, args));
+    }
+
+    // --- Redis Time Series Commands ---
+
+    @Override
+    public RedisFuture<String> tsCreate(K key) {
+        return dispatch(timeSeriesCommandBuilder.tsCreate(key));
+    }
+
+    @Override
+    public RedisFuture<String> tsCreate(K key, TsCreateArgs createArgs) {
+        return dispatch(timeSeriesCommandBuilder.tsCreate(key, createArgs));
+    }
+
+    @Override
+    public RedisFuture<String> tsAlter(K key) {
+        return dispatch(timeSeriesCommandBuilder.tsAlter(key));
+    }
+
+    @Override
+    public RedisFuture<String> tsAlter(K key, TsAlterArgs alterArgs) {
+        return dispatch(timeSeriesCommandBuilder.tsAlter(key, alterArgs));
+    }
+
+    @Override
+    public RedisFuture<String> tsCreateRule(K sourceKey, K destKey, TsAggregationType aggregationType, long bucketDuration) {
+        return dispatch(timeSeriesCommandBuilder.tsCreateRule(sourceKey, destKey, aggregationType, bucketDuration));
+    }
+
+    @Override
+    public RedisFuture<String> tsCreateRule(K sourceKey, K destKey, TsAggregationType aggregationType, long bucketDuration,
+            long alignTimestamp) {
+        return dispatch(
+                timeSeriesCommandBuilder.tsCreateRule(sourceKey, destKey, aggregationType, bucketDuration, alignTimestamp));
+    }
+
+    @Override
+    public RedisFuture<String> tsDeleteRule(K sourceKey, K destKey) {
+        return dispatch(timeSeriesCommandBuilder.tsDeleteRule(sourceKey, destKey));
+    }
+
+    @Override
+    public RedisFuture<Long> tsDel(K key, long fromTimestamp, long toTimestamp) {
+        return dispatch(timeSeriesCommandBuilder.tsDel(key, fromTimestamp, toTimestamp));
+    }
+
+    @Override
+    public RedisFuture<Long> tsAdd(K key, long timestamp, double value) {
+        return dispatch(timeSeriesCommandBuilder.tsAdd(key, timestamp, value));
+    }
+
+    @Override
+    public RedisFuture<Long> tsAdd(K key, long timestamp, double value, TsAddArgs addArgs) {
+        return dispatch(timeSeriesCommandBuilder.tsAdd(key, timestamp, value, addArgs));
+    }
+
+    @Override
+    public RedisFuture<Long> tsAdd(K key, double value) {
+        return dispatch(timeSeriesCommandBuilder.tsAdd(key, value));
+    }
+
+    @Override
+    public RedisFuture<Long> tsAdd(K key, double value, TsAddArgs addArgs) {
+        return dispatch(timeSeriesCommandBuilder.tsAdd(key, value, addArgs));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> tsMAdd(TsMAddValue<K>... entries) {
+        return dispatch(timeSeriesCommandBuilder.tsMAdd(entries));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> tsMAdd(TsMAddValue<K> entry) {
+        return dispatch(timeSeriesCommandBuilder.tsMAdd(entry));
+    }
+
+    @Override
+    public RedisFuture<Long> tsIncrBy(K key, double value) {
+        return dispatch(timeSeriesCommandBuilder.tsIncrBy(key, value));
+    }
+
+    @Override
+    public RedisFuture<Long> tsIncrBy(K key, double value, TsIncrByArgs incrByArgs) {
+        return dispatch(timeSeriesCommandBuilder.tsIncrBy(key, value, incrByArgs));
+    }
+
+    @Override
+    public RedisFuture<Long> tsDecrBy(K key, double value) {
+        return dispatch(timeSeriesCommandBuilder.tsDecrBy(key, value));
+    }
+
+    @Override
+    public RedisFuture<Long> tsDecrBy(K key, double value, TsIncrByArgs decrByArgs) {
+        return dispatch(timeSeriesCommandBuilder.tsDecrBy(key, value, decrByArgs));
+    }
+
+    @Override
+    public RedisFuture<TsSample> tsGet(K key) {
+        return dispatch(timeSeriesCommandBuilder.tsGet(key));
+    }
+
+    @Override
+    public RedisFuture<TsSample> tsGet(K key, boolean latest) {
+        return dispatch(timeSeriesCommandBuilder.tsGet(key, latest));
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsFilter... filters) {
+        return dispatch(timeSeriesCommandBuilder.tsMGet(filters));
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsFilter filter) {
+        return dispatch(timeSeriesCommandBuilder.tsMGet(filter));
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter... filters) {
+        return dispatch(timeSeriesCommandBuilder.tsMGet(mGetArgs, filters));
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter filter) {
+        return dispatch(timeSeriesCommandBuilder.tsMGet(mGetArgs, filter));
+    }
+
+    @Override
+    public RedisFuture<TsInfoValue<K>> tsInfo(K key) {
+        return dispatch(timeSeriesCommandBuilder.tsInfo(key));
+    }
+
+    @Override
+    public RedisFuture<TsInfoValue<K>> tsInfo(K key, boolean debug) {
+        return dispatch(timeSeriesCommandBuilder.tsInfo(key, debug));
+    }
+
+    @Override
+    public RedisFuture<List<K>> tsQueryIndex(TsFilter... filters) {
+        return dispatch(timeSeriesCommandBuilder.tsQueryIndex(filters));
+    }
+
+    @Override
+    public RedisFuture<List<K>> tsQueryIndex(TsFilter filter) {
+        return dispatch(timeSeriesCommandBuilder.tsQueryIndex(filter));
     }
 
     // --- Redis CMS Commands ---
