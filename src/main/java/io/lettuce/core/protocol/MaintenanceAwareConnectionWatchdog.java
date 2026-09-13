@@ -154,15 +154,26 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
         rebindAwareAddressSupplier.rebind(movingEvent.getTime(), movingEvent.getEndpoint());
 
+        // Relax the timeouts for the whole re-bind window, not only while commands are still in flight. While the
+        // re-bind is in progress the endpoint reports itself as disconnected (see DefaultEndpoint#isConnected), so
+        // every command issued after the MOVING notification is buffered until the connection to the new endpoint has
+        // been established. Those commands need the relaxed timeout just as much as the ones already on the wire.
+        notifyRebindStarted(movingEvent.getTime(), movingEvent.getEndpoint());
+
         ChannelPipeline pipeline = channel.pipeline();
         CommandHandler commandHandler = pipeline.get(CommandHandler.class);
         if (commandHandler.getStack().isEmpty()) {
             logger.debug("[{}] Closing channel as part of rebind", ChannelLogDescriptor.logDescriptor(channel));
             channel.close().awaitUninterruptibly();
             channel.attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
-        } else {
-            notifyRebindStarted(movingEvent.getTime(), movingEvent.getEndpoint());
+
+            // The channel is closed already, so channelReadComplete() is not going to fire for it again and cannot
+            // report the completion. Report it here, which lifts the relaxed timeouts after the grace period.
+            notifyRebindCompleted();
         }
+
+        // Otherwise CommandHandler#decode flips the state to COMPLETED once the stack has been drained and
+        // channelReadComplete() closes the channel and reports the completion of the re-bind.
     }
 
     private String getMigratingShards(PushMessage message) {

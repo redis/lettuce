@@ -20,7 +20,7 @@ import java.util.List;
  * @param <V> Value type.
  *
  * @author hutiefang76
- * @since 7.7
+ * @since 7.8
  */
 public class ValueListListOutput<K, V> extends CommandOutput<K, V, List<List<V>>> {
 

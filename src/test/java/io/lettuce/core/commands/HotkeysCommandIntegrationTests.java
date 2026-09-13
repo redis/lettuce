@@ -26,6 +26,7 @@ import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnProvider;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
@@ -37,6 +38,8 @@ import io.lettuce.test.condition.EnabledOnCommand;
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledOnCommand("HOTKEYS")
+// Redis Enterprise blocks the HOTKEYS command (also covers HotkeysCommandResp2IntegrationTests via inheritance)
+@DisabledOnProvider("re")
 public class HotkeysCommandIntegrationTests extends TestSupport {
 
     protected RedisCommands<String, String> redis;

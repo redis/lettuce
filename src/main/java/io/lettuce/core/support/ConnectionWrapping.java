@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.AsyncCloseable;
-import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 
@@ -75,8 +74,6 @@ public class ConnectionWrapping {
 
         private Map<Method, Object> connectionProxies = new ConcurrentHashMap<>(5, 1);
 
-        private final Map<Object, Object> commandsProxies = new ConcurrentHashMap<>(5, 1);
-
         private final Origin<T> pool;
 
         ReturnObjectOnCloseInvocationHandler(T connection, Origin<T> pool) {
@@ -108,7 +105,6 @@ public class ConnectionWrapping {
                 connection = null;
                 proxiedConnection = null;
                 connectionProxies.clear();
-                commandsProxies.clear();
                 return null;
             }
 
@@ -117,7 +113,6 @@ public class ConnectionWrapping {
                 connection = null;
                 proxiedConnection = null;
                 connectionProxies.clear();
-                commandsProxies.clear();
                 return future;
             }
 
@@ -126,11 +121,6 @@ public class ConnectionWrapping {
                 if (method.getName().equals("sync") || method.getName().equals("async")
                         || method.getName().equals("reactive")) {
                     return connectionProxies.computeIfAbsent(method, m -> getInnerProxy(method, args));
-                }
-
-                if (method.getName().equals("commands")) {
-                    Object key = ((CommandsFactory<?, ?>) args[0]).key();
-                    return commandsProxies.computeIfAbsent(key, k -> getInnerProxy(method, args));
                 }
 
                 return method.invoke(connection, args);

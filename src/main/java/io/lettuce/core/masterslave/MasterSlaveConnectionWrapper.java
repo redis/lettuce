@@ -7,8 +7,6 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisConnectionStateListener;
-import io.lettuce.core.api.CommandsFactory;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -57,11 +55,6 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
         return delegate.async();
     }
 
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
-     *             removal in Lettuce 8.0.
-     */
-    @Deprecated
     @Override
     public RedisReactiveCommands<K, V> reactive() {
         return delegate.reactive();
@@ -140,11 +133,6 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     @Override
     public void flushCommands() {
         delegate.flushCommands();
-    }
-
-    @Override
-    public <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> f) {
-        return delegate.commands(f);
     }
 
     @Override

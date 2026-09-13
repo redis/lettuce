@@ -28,6 +28,7 @@ import io.lettuce.core.dynamic.Commands;
 import io.lettuce.core.dynamic.RedisCommandFactory;
 import io.lettuce.core.dynamic.annotation.Command;
 import io.lettuce.core.dynamic.annotation.Param;
+import io.lettuce.test.resource.ModulesTestUri;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -53,7 +54,7 @@ public class CommandInterfacesIntegrationTests {
     protected static RedisCommands<String, String> redis;
 
     protected CommandInterfacesIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         client = RedisClient.create(redisURI);
         redis = client.connect().sync();

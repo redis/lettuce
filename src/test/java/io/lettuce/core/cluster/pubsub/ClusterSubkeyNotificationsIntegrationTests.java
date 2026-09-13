@@ -29,6 +29,7 @@ import io.lettuce.core.cluster.pubsub.api.sync.PubSubNodeSelection;
 import io.lettuce.core.support.CapturingPubSubListener;
 import io.lettuce.core.support.CapturingPubSubListener.Notification;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Cluster integration tests for Redis 8.8 Subkey Notifications. Subkey notifications are published locally on the slot owner,
@@ -39,6 +40,7 @@ import io.lettuce.test.LettuceExtension;
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class ClusterSubkeyNotificationsIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;

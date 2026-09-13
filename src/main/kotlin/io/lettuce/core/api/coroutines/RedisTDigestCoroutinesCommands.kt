@@ -1,0 +1,288 @@
+/*
+ * Copyright (c) 2026-Present, Redis Ltd.
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+package io.lettuce.core.api.coroutines
+
+import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import io.lettuce.core.probabilistic.TDigestInfoValue
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs
+
+/**
+ * Coroutine executed commands for T-Digest sketch.
+ *
+ * @author Yordan Tsintsov
+ * @param <K> Key type.
+ * @param <V> Value type.
+ * @see <a href="https://redis.io/docs/latest/develop/data-types/probabilistic/t-digest/">Redis T-Digest</a>
+ * @since 7.7
+ */
+@ExperimentalLettuceCoroutinesApi
+interface RedisTDigestCoroutinesCommands<K : Any, V : Any> {
+
+    /**
+     * Adds one observation to a t-digest sketch. The sketch must have been created beforehand with `TDIGEST.CREATE`.
+     *
+     * @param key the key.
+     * @param value the value of the observation.
+     * @return String simple-string-reply `OK` if the command was executed correctly.
+     */
+    suspend fun tdigestAdd(key: K, value: Double): String?
+
+    /**
+     * Adds one or more observations to a t-digest sketch. The sketch must have been created beforehand with
+     * `TDIGEST.CREATE`.
+     *
+     * @param key the key.
+     * @param values the values of the observations.
+     * @return String simple-string-reply `OK` if the command was executed correctly.
+     */
+    suspend fun tdigestAdd(key: K, vararg values: Double): String?
+
+    /**
+     * Returns, for the given rank, an estimation of the value with that rank. Ranks are zero-based, where rank `0`
+     * corresponds to the smallest observation (the minimum).
+     *
+     * @param key the key.
+     * @param rank the rank for which the value should be estimated, must not be negative.
+     * @return List<Double> a single-element list holding the estimated value with the given rank. The value is
+     *         `inf` if the rank is equal to or exceeds the number of observations and `nan` if the sketch is empty.
+     */
+    suspend fun tdigestByRank(key: K, rank: Long): List<Double>
+
+    /**
+     * Returns, for each given rank, an estimation of the value with that rank. Ranks are zero-based, where rank `0`
+     * corresponds to the smallest observation (the minimum).
+     *
+     * @param key the key.
+     * @param ranks the ranks for which the values should be estimated, must not be negative.
+     * @return List<Double> one entry per input rank holding the estimated value with that rank. An entry is `inf`
+     *         if the rank is equal to or exceeds the number of observations. All entries are `nan` if the sketch is empty.
+     */
+    suspend fun tdigestByRank(key: K, vararg ranks: Long): List<Double>
+
+    /**
+     * Returns, for the given reverse rank, an estimation of the value with that reverse rank. Reverse ranks are zero-based,
+     * where reverse rank `0` corresponds to the largest observation (the maximum).
+     *
+     * @param key the key.
+     * @param reverseRank the reverse rank for which the value should be estimated, must not be negative.
+     * @return List<Double> a single-element list holding the estimated value with the given reverse rank. The value is
+     *         `-inf` if the reverse rank is equal to or exceeds the number of observations and `nan` if the sketch is empty.
+     */
+    suspend fun tdigestByRevRank(key: K, reverseRank: Long): List<Double>
+
+    /**
+     * Returns, for each given reverse rank, an estimation of the value with that reverse rank. Reverse ranks are zero-based,
+     * where reverse rank `0` corresponds to the largest observation (the maximum).
+     *
+     * @param key the key.
+     * @param reverseRanks the reverse ranks for which the values should be estimated, must not be negative.
+     * @return List<Double> one entry per input reverse rank holding the estimated value with that reverse rank. An entry
+     *         is `-inf` if the reverse rank is equal to or exceeds the number of observations. All entries are `nan` if the
+     *         sketch is empty.
+     */
+    suspend fun tdigestByRevRank(key: K, vararg reverseRanks: Long): List<Double>
+
+    /**
+     * Returns, for the given value, an estimation of the fraction (cumulative distribution) of observations that are smaller
+     * than or equal to it.
+     *
+     * @param key the key.
+     * @param value the value for which the fraction should be estimated.
+     * @return List<Double> a single-element list holding the estimated fraction, in the range {@code [0, 1]}, of
+     *         observations smaller than or equal to the given value.
+     */
+    suspend fun tdigestCDF(key: K, value: Double): List<Double>
+
+    /**
+     * Returns, for each given value, an estimation of the fraction (cumulative distribution) of observations that are smaller
+     * than or equal to it.
+     *
+     * @param key the key.
+     * @param values the values for which the fractions should be estimated.
+     * @return List<Double> one entry per input value holding the estimated fraction, in the range {@code [0, 1]}, of
+     *         observations smaller than or equal to that value.
+     */
+    suspend fun tdigestCDF(key: K, vararg values: Double): List<Double>
+
+    /**
+     * Creates a new t-digest sketch with the default compression. The default compression is `100`.
+     *
+     * @param key the key.
+     * @return String simple-string-reply `OK` if the command was executed correctly.
+     */
+    suspend fun tdigestCreate(key: K): String?
+
+    /**
+     * Creates a new t-digest sketch with the given compression. Higher compression values yield more accurate estimates at the
+     * cost of more memory and slower operations.
+     *
+     * @param key the key.
+     * @param compression the compression parameter that controls the accuracy versus memory trade-off.
+     * @return String simple-string-reply `OK` if the command was executed correctly.
+     */
+    suspend fun tdigestCreate(key: K, compression: Long): String?
+
+    /**
+     * Returns information and configuration about a t-digest sketch.
+     *
+     * @param key the key.
+     * @return TDigestInfoValue the information about the sketch.
+     */
+    suspend fun tdigestInfo(key: K): TDigestInfoValue?
+
+    /**
+     * Returns the maximum observation value from a t-digest sketch.
+     *
+     * @param key the key.
+     * @return Double the maximum observation value, or `nan` if the sketch is empty.
+     */
+    suspend fun tdigestMax(key: K): Double?
+
+    /**
+     * Merges a source sketch into the destination sketch. The destination sketch is created if it does not exist.
+     *
+     * @param destination the key of the destination sketch that receives the merged data.
+     * @param sourceKey the key of the source sketch to merge.
+     * @return String simple-string-reply `OK` if the command was executed correctly.
+     */
+    suspend fun tdigestMerge(destination: K, sourceKey: K): String?
+
+    /**
+     * Merges a source sketch into the destination sketch applying the given arguments. The destination sketch is created if it
+     * does not exist.
+     *
+     * @param destination the key of the destination sketch that receives the merged data.
+     * @param sourceKey the key of the source sketch to merge.
+     * @param mergeArgs the arguments controlling the compression of the destination sketch and whether the destination sketch is
+     *        reset before the merge, must not be `null`.
+     * @return String simple-string-reply `OK` if the command was executed correctly.
+     */
+    suspend fun tdigestMerge(destination: K, sourceKey: K, mergeArgs: TDigestMergeArgs): String?
+
+    /**
+     * Merges one or more source sketches into the destination sketch. The destination sketch is created if it does not exist.
+     * The source data is merged into the existing destination data and the compression of the destination sketch is retained.
+     *
+     * @param destination the key of the destination sketch that receives the merged data.
+     * @param sourceKeys the keys of the source sketches to merge, must not be empty.
+     * @return String simple-string-reply `OK` if the command was executed correctly.
+     */
+    suspend fun tdigestMerge(destination: K, vararg sourceKeys: K): String?
+
+    /**
+     * Merges one or more source sketches into the destination sketch applying the given arguments. The destination sketch is
+     * created if it does not exist.
+     *
+     * @param destination the key of the destination sketch that receives the merged data.
+     * @param mergeArgs the arguments controlling the compression of the destination sketch and whether the destination sketch is
+     *        reset before the merge, must not be `null`.
+     * @param sourceKeys the keys of the source sketches to merge, must not be empty.
+     * @return String simple-string-reply `OK` if the command was executed correctly.
+     */
+    suspend fun tdigestMerge(destination: K, mergeArgs: TDigestMergeArgs, vararg sourceKeys: K): String?
+
+    /**
+     * Returns the minimum observation value from a t-digest sketch.
+     *
+     * @param key the key.
+     * @return Double the minimum observation value, or `nan` if the sketch is empty.
+     */
+    suspend fun tdigestMin(key: K): Double?
+
+    /**
+     * Returns, for the given quantile, an estimation of the value at that quantile.
+     *
+     * @param key the key.
+     * @param quantile the quantile, in the range {@code [0, 1]}, for which the value should be estimated.
+     * @return List<Double> a single-element list holding the estimated value at the given quantile, or `nan` if the
+     *         sketch is empty.
+     */
+    suspend fun tdigestQuantile(key: K, quantile: Double): List<Double>
+
+    /**
+     * Returns, for each given quantile, an estimation of the value at that quantile.
+     *
+     * @param key the key.
+     * @param quantiles the quantiles, each in the range {@code [0, 1]}, for which the values should be estimated.
+     * @return List<Double> one entry per input quantile holding the estimated value at that quantile, or `nan` if
+     *         the sketch is empty.
+     */
+    suspend fun tdigestQuantile(key: K, vararg quantiles: Double): List<Double>
+
+    /**
+     * Returns, for the given value, the estimated rank, that is the number of observations that are smaller than the value
+     * plus half the number of observations that are equal to the value. Ranks are zero-based.
+     *
+     * @param key the key.
+     * @param value the value for which the rank should be estimated.
+     * @return List<Long> a single-element list holding the estimated rank of the value. The rank is `-1` if the
+     *         value is smaller than the minimum observation, equal to the number of observations if it is larger than the
+     *         maximum, and `-2` if the sketch is empty.
+     */
+    suspend fun tdigestRank(key: K, value: Double): List<Long>
+
+    /**
+     * Returns, for each given value, the estimated rank, that is the number of observations that are smaller than the value
+     * plus half the number of observations that are equal to the value. Ranks are zero-based.
+     *
+     * @param key the key.
+     * @param values the values for which the ranks should be estimated.
+     * @return List<Long> one entry per input value holding its estimated rank. An entry is `-1` if the value is
+     *         smaller than the minimum observation and equal to the number of observations if it is larger than the maximum.
+     *         All entries are `-2` if the sketch is empty.
+     */
+    suspend fun tdigestRank(key: K, vararg values: Double): List<Long>
+
+    /**
+     * Resets a t-digest sketch, removing all its observations while keeping the sketch and its configuration in place.
+     *
+     * @param key the key.
+     * @return String simple-string-reply `OK` if the command was executed correctly.
+     */
+    suspend fun tdigestReset(key: K): String?
+
+    /**
+     * Returns, for the given value, the estimated reverse rank, that is the number of observations that are larger than the
+     * value plus half the number of observations that are equal to the value. Reverse ranks are zero-based.
+     *
+     * @param key the key.
+     * @param value the value for which the reverse rank should be estimated.
+     * @return List<Long> a single-element list holding the estimated reverse rank of the value. The reverse rank is
+     *         `-1` if the value is larger than the maximum observation, equal to the number of observations if it is
+     *         smaller than the minimum, and `-2` if the sketch is empty.
+     */
+    suspend fun tdigestRevRank(key: K, value: Double): List<Long>
+
+    /**
+     * Returns, for each given value, the estimated reverse rank, that is the number of observations that are larger than the
+     * value plus half the number of observations that are equal to the value. Reverse ranks are zero-based.
+     *
+     * @param key the key.
+     * @param values the values for which the reverse ranks should be estimated.
+     * @return List<Long> one entry per input value holding its estimated reverse rank. An entry is `-1` if the
+     *         value is larger than the maximum observation and equal to the number of observations if it is smaller than the
+     *         minimum. All entries are `-2` if the sketch is empty.
+     */
+    suspend fun tdigestRevRank(key: K, vararg values: Double): List<Long>
+
+    /**
+     * Returns an estimation of the mean value from the sketch, excluding observation values outside the low and high cutoff
+     * quantiles.
+     *
+     * @param key the key.
+     * @param lowCutQuantile the low cutoff quantile, in the range {@code [0, 1]}; observations below it are excluded. Must be
+     *        smaller than `highCutQuantile`.
+     * @param highCutQuantile the high cutoff quantile, in the range {@code [0, 1]}; observations above it are excluded. Must be
+     *        larger than `lowCutQuantile`.
+     * @return Double the estimated trimmed mean, or `nan` if the sketch is empty.
+     */
+    suspend fun tdigestTrimmedMean(key: K, lowCutQuantile: Double, highCutQuantile: Double): Double?
+
+}
+

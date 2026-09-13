@@ -38,6 +38,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 @EnabledOnCommand("ACL")
+@SuppressWarnings("deprecation")
 public class ClientsideCachingIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;

@@ -17,6 +17,7 @@ import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Mark Paluch
@@ -47,6 +48,8 @@ class RedisReactiveClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Not supported on Redis Enterprise
+    @DisabledOnProvider("re")
     void getKeysInSlot() {
 
         sync.flushall();
@@ -61,6 +64,8 @@ class RedisReactiveClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Not supported on Redis Enterprise
+    @DisabledOnProvider("re")
     void countKeysInSlot() {
 
         sync.flushall();
@@ -76,6 +81,8 @@ class RedisReactiveClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Not supported on Redis Enterprise
+    @DisabledOnProvider("re")
     void testClusterCountFailureReports() {
         RedisClusterNode ownPartition = getOwnPartition(sync);
         StepVerifier.create(reactive.clusterCountFailureReports(ownPartition.getNodeId())).consumeNextWith(actual -> {
@@ -91,11 +98,15 @@ class RedisReactiveClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Not supported on Redis Enterprise
+    @DisabledOnProvider("re")
     void testClusterSaveconfig() {
         StepVerifier.create(reactive.clusterSaveconfig()).expectNext("OK").verifyComplete();
     }
 
     @Test
+    // Not supported on Redis Enterprise
+    @DisabledOnProvider("re")
     void testClusterSetConfigEpoch() {
         StepVerifier.create(reactive.clusterSetConfigEpoch(1L)).consumeErrorWith(e -> {
             assertThat(e).hasMessageContaining("ERR The user can assign a config epoch only");

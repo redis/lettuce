@@ -65,6 +65,10 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun hsetex(key: K, hSetExArgs: HSetExArgs, map: Map<K, V>): Long? =
         ops.hsetex(key, hSetExArgs, map).awaitFirstOrNull()
 
+    override suspend fun hsetex(key: K, map: Map<K, V>): Long? = ops.hsetex(key, map).awaitFirstOrNull()
+
+    override fun hgetex(key: K, vararg fields: K): Flow<KeyValue<K, V>> = ops.hgetex(key, *fields).asFlow()
+
     override fun hgetex(key: K, hGetExArgs: HGetExArgs, vararg fields: K): Flow<KeyValue<K, V>> = ops.hgetex(key, hGetExArgs, *fields).asFlow()
 
     override fun hgetdel(key: K, vararg fields: K): Flow<KeyValue<K, V>> = ops.hgetdel(key, *fields).asFlow()
@@ -238,5 +242,8 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun hpttl(key: K, vararg fields: K): List<Long> =
         ops.hpttl(key, *fields).asFlow().toList()
+
+    override suspend fun himportSet(key: K, fieldset: HashImport<K>, vararg values: V): String? =
+        ops.himportSet(key, fieldset, *values).awaitFirstOrNull()
 }
 

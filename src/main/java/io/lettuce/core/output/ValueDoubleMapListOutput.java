@@ -21,7 +21,7 @@ import java.util.Map;
  * @param <V> Value type.
  *
  * @author hutiefang76
- * @since 7.7
+ * @since 7.8
  */
 public class ValueDoubleMapListOutput<K, V> extends CommandOutput<K, V, List<Map<V, Double>>> {
 

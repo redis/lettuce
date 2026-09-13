@@ -37,6 +37,7 @@ import io.lettuce.core.TestSupport;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Mark Paluch
@@ -45,6 +46,7 @@ import io.lettuce.test.LettuceExtension;
 @Tag(INTEGRATION_TEST)
 @SuppressWarnings("unchecked")
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class RedisClusterReadFromIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;

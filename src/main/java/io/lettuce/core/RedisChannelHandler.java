@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.internal.Store;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandWrapper;
 import io.lettuce.core.protocol.ConnectionFacade;
@@ -57,8 +56,6 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     private final boolean tracingEnabled;
 
     private final boolean debugEnabled = logger.isDebugEnabled();
-
-    protected final Store store = new Store();
 
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 

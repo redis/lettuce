@@ -29,9 +29,7 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.StatefulRedisConnectionImpl;
-import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
@@ -111,21 +109,11 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
         return syncHandler(async(), RedisPubSubCommands.class);
     }
 
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisPubSubReactiveCommands#factory()} instead; scheduled
-     *             for removal in Lettuce 8.0.
-     */
-    @Deprecated
     @Override
     public RedisPubSubReactiveCommands<K, V> reactive() {
         return (RedisPubSubReactiveCommands<K, V>) reactive;
     }
 
-    /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisPubSubReactiveCommands#factory()} instead; scheduled
-     *             for removal in Lettuce 8.0.
-     */
-    @Deprecated
     @Override
     protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
         return new RedisPubSubReactiveCommandsImpl<>(this, codec);
@@ -173,12 +161,6 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
                 return null;
             });
         }
-    }
-
-    @Override
-    public <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory) {
-        LettuceAssert.notNull(factory, "CommandsFactory must not be null");
-        return store.compute(factory.key(), () -> factory.apply(this));
     }
 
 }
