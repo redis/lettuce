@@ -89,7 +89,9 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      *
      * @param addr ip:port.
      * @return String simple-string-reply `OK` if the connection exists and has been closed.
+     * @deprecated since 7.7, use [clientKill(KillArgs)] instead.
      */
+    @Deprecated("Use [clientKill(KillArgs)] instead.")
     suspend fun clientKill(addr: String): String?
 
     /**
