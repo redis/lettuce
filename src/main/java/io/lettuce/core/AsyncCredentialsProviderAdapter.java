@@ -7,13 +7,14 @@ package io.lettuce.core;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
  * Adapts a {@link CredentialsProvider} to the deprecated reactive {@link RedisCredentialsProvider}, so that
  * {@link RedisURI#getCredentialsProvider()} can keep returning a {@link RedisCredentialsProvider} while credentials may be
- * configured as a {@link CredentialsProvider}. Only {@link #resolveCredentials()} materialises a {@link Mono}; the async path
- * delegates directly.
+ * configured as a {@link CredentialsProvider}. The async and streaming capabilities delegate to the reactor-free provider;
+ * {@link #resolveCredentials()} and {@link #credentials()} only materialise the reactive types at that boundary.
  *
  * @author Aleksandar Todorov
  * @since 7.8
@@ -44,6 +45,17 @@ class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
     @Override
     public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
         return delegate.subscribeToCredentials(onNext, onError);
+    }
+
+    @Override
+    public Flux<RedisCredentials> credentials() {
+        if (!delegate.supportsStreaming()) {
+            throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
+        }
+        return Flux.create(sink -> {
+            Subscription subscription = delegate.subscribeToCredentials(sink::next, sink::error);
+            sink.onDispose(subscription::close);
+        });
     }
 
     @Override

@@ -29,6 +29,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Tag;
@@ -630,6 +631,33 @@ class RedisURIUnitTests {
         CredentialsProvider provider = CredentialsProvider.from(() -> RedisCredentials.just("dave", "secret".toCharArray()));
 
         assertThatThrownBy(() -> immutable.setCredentialsProvider(provider)).isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void toStringMasksCredentialsWhenStageRejectsToCompletableFuture() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        // A CredentialsProvider whose CompletionStage rejects toCompletableFuture() (permitted by the contract).
+        redisURI.setCredentialsProvider(() -> {
+            RejectingCompletableFuture stage = new RejectingCompletableFuture();
+            stage.complete(RedisCredentials.just("alice", "secret".toCharArray()));
+            return stage;
+        });
+
+        assertThat(redisURI.toString()).contains("alice:******@");
+    }
+
+    /**
+     * A {@link CompletableFuture} that refuses {@link #toCompletableFuture()} to emulate a minimal {@link CompletionStage}
+     * implementation; {@code whenComplete} still works.
+     */
+    private static class RejectingCompletableFuture extends CompletableFuture<RedisCredentials> {
+
+        @Override
+        public CompletableFuture<RedisCredentials> toCompletableFuture() {
+            throw new UnsupportedOperationException("minimal CompletionStage does not support toCompletableFuture()");
+        }
+
     }
 
 }

@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -105,6 +106,55 @@ class CredentialsProviderUnitTests {
         }, e -> {
         });
         assertThat(captured).hasSize(1);
+    }
+
+    @Test
+    void adapterBridgesReactorFreeStreamToReactiveFlux() {
+
+        PushCredentialsProvider provider = new PushCredentialsProvider();
+        AsyncCredentialsProviderAdapter adapter = new AsyncCredentialsProviderAdapter(provider);
+
+        // A reactive consumer of the deprecated credentials() Flux must see the reactor-free provider's rotations.
+        List<RedisCredentials> received = new ArrayList<>();
+        Disposable disposable = adapter.credentials().subscribe(received::add);
+
+        provider.emit(RedisCredentials.just("alice", "s1".toCharArray()));
+        assertThat(received).hasSize(1);
+        assertThat(received.get(0).getUsername()).isEqualTo("alice");
+
+        disposable.dispose();
+        provider.emit(RedisCredentials.just("bob", "s2".toCharArray()));
+        assertThat(received).hasSize(1);
+    }
+
+    /** Reactor-free {@link CredentialsProvider} that streams via {@link #subscribeToCredentials} with a manual push. */
+    private static class PushCredentialsProvider implements CredentialsProvider {
+
+        private volatile Consumer<RedisCredentials> onNext;
+
+        @Override
+        public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
+            return CompletableFuture.completedFuture(RedisCredentials.just("u", "p".toCharArray()));
+        }
+
+        @Override
+        public boolean supportsStreaming() {
+            return true;
+        }
+
+        @Override
+        public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+            this.onNext = onNext;
+            return () -> this.onNext = null;
+        }
+
+        void emit(RedisCredentials credentials) {
+            Consumer<RedisCredentials> consumer = this.onNext;
+            if (consumer != null) {
+                consumer.accept(credentials);
+            }
+        }
+
     }
 
 }
