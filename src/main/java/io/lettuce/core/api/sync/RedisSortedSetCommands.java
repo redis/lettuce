@@ -675,7 +675,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
-     * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} instead. This command is deprecated by Redis since
+     *             version 6.2.0.
      */
     @Deprecated
     List<V> zrangebylex(K key, String min, String max);
@@ -687,7 +688,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} instead. This command is deprecated by Redis since
+     *             version 6.2.0.
      */
+    @Deprecated
     List<V> zrangebylex(K key, Range<? extends V> range);
 
     /**
@@ -699,7 +703,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
-     * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#limit(Limit)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<V> zrangebylex(K key, String min, String max, long offset, long count);
@@ -712,7 +717,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#limit(Limit)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     List<V> zrangebylex(K key, Range<? extends V> range, Limit limit);
 
     /**
@@ -722,7 +730,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} instead. This command is deprecated by Redis since
+     *             version 6.2.0.
      */
     @Deprecated
     List<V> zrangebyscore(K key, double min, double max);
@@ -734,7 +743,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} instead. This command is deprecated by Redis since
+     *             version 6.2.0.
      */
     @Deprecated
     List<V> zrangebyscore(K key, String min, String max);
@@ -746,7 +756,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} instead. This command is deprecated by Redis since
+     *             version 6.2.0.
      */
+    @Deprecated
     List<V> zrangebyscore(K key, Range<? extends Number> range);
 
     /**
@@ -758,7 +771,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(java.lang.Object, Range, Limit)}.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<V> zrangebyscore(K key, double min, double max, long offset, long count);
@@ -772,7 +786,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(java.lang.Object, Range, Limit)}.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<V> zrangebyscore(K key, String min, String max, long offset, long count);
@@ -785,7 +800,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     List<V> zrangebyscore(K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -796,7 +814,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} instead. This command is
+     *             deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max);
@@ -809,7 +828,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} instead. This command is
+     *             deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max);
@@ -822,7 +842,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} instead. This command is
+     *             deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     Long zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
 
     /**
@@ -835,7 +858,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
@@ -850,7 +874,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
@@ -864,7 +889,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     Long zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -874,7 +902,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} instead. This command is deprecated by Redis
+     *             since version 6.2.0.
      */
     @Deprecated
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max);
@@ -886,7 +915,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} instead. This command is deprecated by Redis
+     *             since version 6.2.0.
      */
     @Deprecated
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max);
@@ -898,7 +928,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} instead. This command is deprecated by Redis
+     *             since version 6.2.0.
      */
+    @Deprecated
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range);
 
     /**
@@ -910,7 +943,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range, Limit limit)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)}
+     *             instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count);
@@ -924,7 +958,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)}
+     *             instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count);
@@ -937,7 +972,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)}
+     *             instead. This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     List<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -948,7 +986,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max);
@@ -961,7 +1000,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max);
@@ -974,7 +1014,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
 
     /**
@@ -987,7 +1030,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset,
@@ -1003,7 +1047,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset,
@@ -1018,7 +1063,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -1163,7 +1211,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByIndex)} with {@link ZRange.ByIndex#rev()} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     List<V> zrevrange(K key, long start, long stop);
 
     /**
@@ -1174,7 +1225,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return Long count of elements in the specified range.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByIndex)} with
+     *             {@link ZRange.ByIndex#rev()} instead. This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     Long zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
@@ -1184,7 +1238,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByIndex)} with {@link ZRange.ByIndex#rev()} instead.
+     *             This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     List<ScoredValue<V>> zrevrangeWithScores(K key, long start, long stop);
 
     /**
@@ -1195,7 +1252,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return Long count of elements in the specified range.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByIndex)} with
+     *             {@link ZRange.ByIndex#rev()} instead. This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     Long zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
@@ -1205,7 +1265,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#rev()} instead. This command is
+     *             deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     List<V> zrevrangebylex(K key, Range<? extends V> range);
 
     /**
@@ -1216,7 +1279,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#rev()} and
+     *             {@link ZRange.ByLex#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     List<V> zrevrangebylex(K key, Range<? extends V> range, Limit limit);
 
     /**
@@ -1226,7 +1292,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<V> zrevrangebyscore(K key, double max, double min);
@@ -1238,7 +1305,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<V> zrevrangebyscore(K key, String max, String min);
@@ -1250,7 +1318,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead. This
+     *             command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     List<V> zrevrangebyscore(K key, Range<? extends Number> range);
 
     /**
@@ -1262,7 +1333,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the withscores.
      * @param count the number of items.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range, Limit)}.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<V> zrevrangebyscore(K key, double max, double min, long offset, long count);
@@ -1276,7 +1348,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range, Limit)}.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<V> zrevrangebyscore(K key, String max, String min, long offset, long count);
@@ -1289,7 +1362,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     List<V> zrevrangebyscore(K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -1300,7 +1376,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param max max score.
      * @param min min score.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min);
@@ -1313,7 +1390,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min);
@@ -1326,7 +1404,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
 
     /**
@@ -1339,7 +1420,9 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
+     *             Redis since version 6.2.0.
      */
     @Deprecated
     Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
@@ -1354,7 +1437,9 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
+     *             Redis since version 6.2.0.
      */
     @Deprecated
     Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
@@ -1368,7 +1453,11 @@ public interface RedisSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
+     *             Redis since version 6.2.0.
      */
+    @Deprecated
     Long zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -1378,7 +1467,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param max max score.
      * @param min min score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead.
+     *             This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min);
@@ -1390,7 +1480,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param max max score.
      * @param min min score.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead.
+     *             This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min);
@@ -1402,7 +1493,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead.
+     *             This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range);
 
     /**
@@ -1414,7 +1508,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count);
@@ -1428,7 +1523,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
@@ -1441,7 +1537,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param limit limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     List<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -1452,7 +1551,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min);
@@ -1465,7 +1565,8 @@ public interface RedisSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
      */
     @Deprecated
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min);
@@ -1477,7 +1578,10 @@ public interface RedisSortedSetCommands<K, V> {
      * @param key the key.
      * @param range the range.
      * @return Long count of elements in the specified range.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
      */
+    @Deprecated
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
 
     /**
@@ -1490,7 +1594,9 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
+     *             Redis since version 6.2.0.
      */
     @Deprecated
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset,
@@ -1506,7 +1612,9 @@ public interface RedisSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
+     *             Redis since version 6.2.0.
      */
     @Deprecated
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset,
@@ -1521,7 +1629,11 @@ public interface RedisSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
+     *             Redis since version 6.2.0.
      */
+    @Deprecated
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
