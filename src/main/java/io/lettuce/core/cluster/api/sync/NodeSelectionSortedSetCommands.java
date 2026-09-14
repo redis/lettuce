@@ -560,6 +560,115 @@ public interface NodeSelectionSortedSetCommands<K, V> {
     Executions<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
+     * Return a range of members in a sorted set, by index, using the unified {@code ZRANGE} syntax.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the index range selector, see {@link ZRange#byIndex(long, long)}, must not be {@code null}.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<List<V>> zrange(K key, ZRange.ByIndex range);
+
+    /**
+     * Return a range of members in a sorted set, by score ({@code BYSCORE}), using the unified {@code ZRANGE} syntax.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the score range selector, see {@link ZRange#byScore(Range)}, must not be {@code null}.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<List<V>> zrange(K key, ZRange.ByScore range);
+
+    /**
+     * Return a range of members in a sorted set, by lexicographical order ({@code BYLEX}), using the unified {@code ZRANGE}
+     * syntax.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the lexicographical range selector, see {@link ZRange#byLex(Range)}, must not be {@code null}.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<List<V>> zrange(K key, ZRange.ByLex<? extends V> range);
+
+    /**
+     * Stream over a range of members in a sorted set, by index, using the unified {@code ZRANGE} syntax.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key, must not be {@code null}.
+     * @param range the index range selector, see {@link ZRange#byIndex(long, long)}, must not be {@code null}.
+     * @return Long count of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByIndex range);
+
+    /**
+     * Stream over a range of members in a sorted set, by score ({@code BYSCORE}), using the unified {@code ZRANGE} syntax.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key, must not be {@code null}.
+     * @param range the score range selector, see {@link ZRange#byScore(Range)}, must not be {@code null}.
+     * @return Long count of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByScore range);
+
+    /**
+     * Stream over a range of members in a sorted set, by lexicographical order ({@code BYLEX}), using the unified
+     * {@code ZRANGE} syntax.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key, must not be {@code null}.
+     * @param range the lexicographical range selector, see {@link ZRange#byLex(Range)}, must not be {@code null}.
+     * @return Long count of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<? extends V> range);
+
+    /**
+     * Return a range of members with scores in a sorted set, by index, using the unified {@code ZRANGE} syntax.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the index range selector, see {@link ZRange#byIndex(long, long)}, must not be {@code null}.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements with their scores in the specified range.
+     * @since 7.8
+     */
+    Executions<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByIndex range);
+
+    /**
+     * Return a range of members with scores in a sorted set, by score ({@code BYSCORE}), using the unified {@code ZRANGE}
+     * syntax.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the score range selector, see {@link ZRange#byScore(Range)}, must not be {@code null}.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements with their scores in the specified range.
+     * @since 7.8
+     */
+    Executions<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByScore range);
+
+    /**
+     * Stream over a range of members with scores in a sorted set, by index, using the unified {@code ZRANGE} syntax.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key, must not be {@code null}.
+     * @param range the index range selector, see {@link ZRange#byIndex(long, long)}, must not be {@code null}.
+     * @return Long count of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByIndex range);
+
+    /**
+     * Stream over a range of members with scores in a sorted set, by score ({@code BYSCORE}), using the unified {@code ZRANGE}
+     * syntax.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key, must not be {@code null}.
+     * @param range the score range selector, see {@link ZRange#byScore(Range)}, must not be {@code null}.
+     * @return Long count of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByScore range);
+
+    /**
      * Return a range of members in a sorted set, by lexicographical range.
      *
      * @param key the key.

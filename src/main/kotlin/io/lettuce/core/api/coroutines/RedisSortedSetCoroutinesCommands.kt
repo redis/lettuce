@@ -523,6 +523,56 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     fun zrangeWithScores(key: K, start: Long, stop: Long): Flow<ScoredValue<V>>
 
     /**
+     * Return a range of members in a sorted set, by index, using the unified `ZRANGE` syntax.
+     *
+     * @param key the key.
+     * @param range the index range selector, see [ZRange.byIndex].
+     * @return V array-reply list of elements in the specified range.
+     * @since 7.8
+     */
+    fun zrange(key: K, range: ZRange.ByIndex): Flow<V>
+
+    /**
+     * Return a range of members in a sorted set, by score (`BYSCORE`), using the unified `ZRANGE` syntax.
+     *
+     * @param key the key.
+     * @param range the score range selector, see [ZRange.byScore].
+     * @return V array-reply list of elements in the specified range.
+     * @since 7.8
+     */
+    fun zrange(key: K, range: ZRange.ByScore): Flow<V>
+
+    /**
+     * Return a range of members in a sorted set, by lexicographical order (`BYLEX`), using the unified `ZRANGE` syntax.
+     *
+     * @param key the key.
+     * @param range the lexicographical range selector, see [ZRange.byLex].
+     * @return V array-reply list of elements in the specified range.
+     * @since 7.8
+     */
+    fun zrange(key: K, range: ZRange.ByLex<out V>): Flow<V>
+
+    /**
+     * Return a range of members with scores in a sorted set, by index, using the unified `ZRANGE` syntax.
+     *
+     * @param key the key.
+     * @param range the index range selector, see [ZRange.byIndex].
+     * @return ScoredValue<V> array-reply list of elements with their scores in the specified range.
+     * @since 7.8
+     */
+    fun zrangeWithScores(key: K, range: ZRange.ByIndex): Flow<ScoredValue<V>>
+
+    /**
+     * Return a range of members with scores in a sorted set, by score (`BYSCORE`), using the unified `ZRANGE` syntax.
+     *
+     * @param key the key.
+     * @param range the score range selector, see [ZRange.byScore].
+     * @return ScoredValue<V> array-reply list of elements with their scores in the specified range.
+     * @since 7.8
+     */
+    fun zrangeWithScores(key: K, range: ZRange.ByScore): Flow<ScoredValue<V>>
+
+    /**
      * Return a range of members in a sorted set, by lexicographical range.
      *
      * @param key the key.

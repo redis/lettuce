@@ -59,10 +59,8 @@ public abstract class Scorer {
      * </p>
      *
      * @param args the {@link CommandArgs} to append to
-     * @param <K> key type
-     * @param <V> value type
      */
-    public final <K, V> void build(CommandArgs<K, V> args) {
+    public final void build(CommandArgs<?, ?> args) {
         args.add(CommandKeyword.SCORER);
         args.add(name);
         getOwnArgs().forEach(args::add);

@@ -21,7 +21,6 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * stored as-is without tokenization or stemming. They are useful for organizing and categorizing data, making it easier to
  * filter and retrieve documents based on specific tags.
  *
- * @param <K> Key type
  * @see <a href=
  *      "https://redis.io/docs/latest/develop/interact/search-and-query/basic-constructs/field-and-type-options/#tag-fields">Tag
  *      Fields</a>
@@ -29,7 +28,7 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * @author Tihomir Mateev
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class TagFieldArgs<K> extends FieldArgs<K> {
+public class TagFieldArgs extends FieldArgs {
 
     private Optional<String> separator = Optional.empty();
 
@@ -40,11 +39,10 @@ public class TagFieldArgs<K> extends FieldArgs<K> {
     /**
      * Create a new {@link TagFieldArgs} using the builder pattern.
      * 
-     * @param <K> Key type
      * @return a new {@link Builder}
      */
-    public static <K> Builder<K> builder() {
-        return new Builder<>();
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -80,7 +78,7 @@ public class TagFieldArgs<K> extends FieldArgs<K> {
     }
 
     @Override
-    protected void buildTypeSpecificArgs(CommandArgs<K, ?> args) {
+    protected void buildTypeSpecificArgs(CommandArgs<?, ?> args) {
         separator.ifPresent(s -> args.add(SEPARATOR).add(s));
         if (caseSensitive) {
             args.add(CASESENSITIVE);
@@ -93,12 +91,11 @@ public class TagFieldArgs<K> extends FieldArgs<K> {
     /**
      * Builder for {@link TagFieldArgs}.
      * 
-     * @param <K> Key type
      */
-    public static class Builder<K> extends FieldArgs.Builder<K, TagFieldArgs<K>, Builder<K>> {
+    public static class Builder extends FieldArgs.Builder<TagFieldArgs, Builder> {
 
         public Builder() {
-            super(new TagFieldArgs<>());
+            super(new TagFieldArgs());
         }
 
         /**
@@ -107,7 +104,7 @@ public class TagFieldArgs<K> extends FieldArgs<K> {
          * @param separator the separator for tag fields
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> separator(String separator) {
+        public Builder separator(String separator) {
             instance.separator = Optional.of(separator);
             return self();
         }
@@ -118,7 +115,7 @@ public class TagFieldArgs<K> extends FieldArgs<K> {
          *
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> caseSensitive() {
+        public Builder caseSensitive() {
             instance.caseSensitive = true;
             return self();
         }
@@ -130,7 +127,7 @@ public class TagFieldArgs<K> extends FieldArgs<K> {
          *
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
-        public Builder<K> withSuffixTrie() {
+        public Builder withSuffixTrie() {
             instance.withSuffixTrie = true;
             return self();
         }
