@@ -17,8 +17,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Parser for Redis Search (RediSearch) command responses that converts raw Redis data into structured {@link SearchReply}
@@ -32,23 +30,32 @@ import java.util.stream.IntStream;
  * <ul>
  * <li>Document IDs and content fields</li>
  * <li>Search scores when requested with WITHSCORES</li>
+ * <li>Sort keys when requested with WITHSORTKEYS</li>
  * <li>Cursor-based pagination for large result sets</li>
  * <li>Warning messages from Redis</li>
  * <li>Total result counts</li>
  * </ul>
  *
- * @param <K> the type of keys used in the search results
- * @param <V> the type of values used in the search results
+ * <p>
+ * Document ids are decoded through the connection's key codec; rows that carry no id (FT.AGGREGATE and FT.CURSOR READ) get a
+ * {@code null} id. Field names are schema identifiers (hash field names, JSONPath expressions or aliases) and are decoded as
+ * raw UTF-8; field values are kept as raw bytes so that binary content (for example vector embeddings) survives the round-trip.
+ * Sort keys are decoded as UTF-8 text exactly as serialized by the server (see {@link SearchReply.SearchResult#getSortKey()}).
+ * </p>
+ *
+ * @param <K> the type of the document id in the search results
  * @author Redis Ltd.
  * @since 6.8
  */
-public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K, V>> {
+public class SearchReplyParser<K> implements ComplexDataParser<SearchReply<K>> {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SearchReplyParser.class);
 
-    private final RedisCodec<K, V> codec;
+    private final RedisCodec<K, ?> codec;
 
     private final boolean withScores;
+
+    private final boolean withSortKeys;
 
     private final boolean withContent;
 
@@ -59,18 +66,20 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
      * arguments to determine which components of the search results should be parsed and included in the final
      * {@link SearchReply}.
      *
-     * @param codec the Redis codec used for encoding/decoding keys and values. Must not be {@code null}.
+     * @param codec the Redis codec used for decoding document ids. Must not be {@code null}.
      * @param args the search arguments that determine parsing behavior. If {@code null}, default parsing behavior is used (with
      *        content, without scores, with IDs).
      *        <ul>
      *        <li>If {@code args.isWithScores()} is {@code true}, search scores will be parsed and included</li>
+     *        <li>If {@code args.isWithSortKeys()} is {@code true}, sort keys will be parsed and included</li>
      *        <li>If {@code args.isNoContent()} is {@code true}, document content will be excluded from parsing</li>
      *        <li>Document IDs are always parsed when using this constructor</li>
      *        </ul>
      */
-    public SearchReplyParser(RedisCodec<K, V> codec, SearchArgs<K, V> args) {
+    public SearchReplyParser(RedisCodec<K, ?> codec, SearchArgs<K> args) {
         this.codec = codec;
         this.withScores = args != null && args.isWithScores();
+        this.withSortKeys = args != null && args.isWithSortKeys();
         this.withContent = args == null || !args.isNoContent();
         this.withIds = true;
     }
@@ -84,15 +93,17 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
      * </p>
      * <ul>
      * <li>Scores are not parsed ({@code withScores = false})</li>
+     * <li>Sort keys are not parsed ({@code withSortKeys = false})</li>
      * <li>Content is parsed ({@code withContent = true})</li>
-     * <li>IDs are not parsed ({@code withIds = false})</li>
+     * <li>IDs are not parsed ({@code withIds = false}); every parsed row has a {@code null} id</li>
      * </ul>
      *
-     * @param codec the Redis codec used for encoding/decoding keys and values. Must not be {@code null}.
+     * @param codec the Redis codec used for decoding document ids. Must not be {@code null}.
      */
-    public SearchReplyParser(RedisCodec<K, V> codec) {
+    public SearchReplyParser(RedisCodec<K, ?> codec) {
         this.codec = codec;
         this.withScores = false;
+        this.withSortKeys = false;
         this.withContent = true;
         this.withIds = false;
     }
@@ -106,7 +117,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
      *         {@link SearchReply} if parsing fails.
      */
     @Override
-    public SearchReply<K, V> parse(ComplexData data) {
+    public SearchReply<K> parse(ComplexData data) {
         try {
             if (data.isList()) {
                 return new Resp2SearchResultsParser().parse(data);
@@ -119,11 +130,17 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
         }
     }
 
-    class Resp2SearchResultsParser implements ComplexDataParser<SearchReply<K, V>> {
+    private static byte[] toBytes(ByteBuffer buffer) {
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.duplicate().get(bytes);
+        return bytes;
+    }
+
+    class Resp2SearchResultsParser implements ComplexDataParser<SearchReply<K>> {
 
         @Override
-        public SearchReply<K, V> parse(ComplexData data) {
-            final SearchReply<K, V> searchReply = new SearchReply<>();
+        public SearchReply<K> parse(ComplexData data) {
+            final SearchReply<K> searchReply = new SearchReply<>();
 
             final List<Object> resultsList = data.getDynamicList();
 
@@ -166,19 +183,29 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
             return searchReply;
         }
 
-        private void parseResults(SearchReply<K, V> searchReply, List<Object> resultsList) {
+        private void parseResults(SearchReply<K> searchReply, List<Object> resultsList) {
+            // Each row is laid out as: [id] [score] [sortkey] [fields], each part present only when requested
             for (int i = 1; i < resultsList.size();) {
 
-                K id = codec.decodeKey(StringCodec.UTF8.encodeKey("0"));
+                K id = null;
                 if (withIds) {
                     id = codec.decodeKey((ByteBuffer) resultsList.get(i));
                     i++;
                 }
 
-                final SearchReply.SearchResult<K, V> searchResult = new SearchReply.SearchResult<>(id);
+                final SearchReply.SearchResult<K> searchResult = new SearchReply.SearchResult<>(id);
 
                 if (withScores) {
                     searchResult.setScore(Double.parseDouble(StringCodec.UTF8.decodeKey((ByteBuffer) resultsList.get(i))));
+                    i++;
+                }
+
+                if (withSortKeys) {
+                    // nil when SORTBY was not given or the document has no value for the sorting attribute
+                    Object sortKey = resultsList.get(i);
+                    if (sortKey != null) {
+                        searchResult.setSortKey(StringCodec.UTF8.decodeValue((ByteBuffer) sortKey));
+                    }
                     i++;
                 }
 
@@ -187,10 +214,9 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                     List<Object> resultEntries = resultData.getDynamicList();
 
                     for (int idx = 0; idx < resultEntries.size(); idx += 2) {
-                        K decodedKey = codec.decodeKey((ByteBuffer) resultEntries.get(idx));
+                        String fieldName = StringCodec.UTF8.decodeKey((ByteBuffer) resultEntries.get(idx));
                         Object value = resultEntries.get(idx + 1);
-                        V decodedValue = value == null ? null : codec.decodeValue((ByteBuffer) value);
-                        searchResult.addFields(decodedKey, decodedValue);
+                        searchResult.addField(fieldName, value == null ? null : toBytes((ByteBuffer) value));
                     }
 
                     i++;
@@ -202,7 +228,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
 
     }
 
-    class Resp3SearchResultsParser implements ComplexDataParser<SearchReply<K, V>> {
+    class Resp3SearchResultsParser implements ComplexDataParser<SearchReply<K>> {
 
         private final ByteBuffer ATTRIBUTES_KEY = StringCodec.UTF8.encodeKey("attributes");
 
@@ -218,6 +244,8 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
 
         private final ByteBuffer ID_KEY = StringCodec.UTF8.encodeKey("id");
 
+        private final ByteBuffer SORT_KEY_KEY = StringCodec.UTF8.encodeKey("sortkey");
+
         private final ByteBuffer EXTRA_ATTRIBUTES_KEY = StringCodec.UTF8.encodeKey("extra_attributes");
 
         private final ByteBuffer VALUES_KEY = StringCodec.UTF8.encodeKey("values");
@@ -225,8 +253,8 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
         private final ByteBuffer CURSOR_KEY = StringCodec.UTF8.encodeKey("cursor");
 
         @Override
-        public SearchReply<K, V> parse(ComplexData data) {
-            final SearchReply<K, V> searchReply = new SearchReply<>();
+        public SearchReply<K> parse(ComplexData data) {
+            final SearchReply<K> searchReply = new SearchReply<>();
 
             final Map<Object, Object> resultsMap = data.getDynamicMap();
 
@@ -245,7 +273,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                     ComplexData resultData = (ComplexData) result;
                     Map<Object, Object> resultEntry = resultData.getDynamicMap();
 
-                    SearchReply.SearchResult<K, V> searchResult;
+                    SearchReply.SearchResult<K> searchResult;
                     if (resultEntry.containsKey(ID_KEY)) {
                         final K id = codec.decodeKey((ByteBuffer) resultEntry.get(ID_KEY));
                         searchResult = new SearchReply.SearchResult<>(id);
@@ -263,12 +291,16 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                         }
                     }
 
+                    Object sortKey = resultEntry.get(SORT_KEY_KEY);
+                    if (sortKey != null) {
+                        searchResult.setSortKey(StringCodec.UTF8.decodeValue((ByteBuffer) sortKey));
+                    }
+
                     if (resultEntry.containsKey(EXTRA_ATTRIBUTES_KEY)) {
                         ComplexData extraAttributes = (ComplexData) resultEntry.get(EXTRA_ATTRIBUTES_KEY);
                         extraAttributes.getDynamicMap().forEach((key, value) -> {
-                            K decodedKey = codec.decodeKey((ByteBuffer) key);
-                            V decodedValue = value == null ? null : codec.decodeValue((ByteBuffer) value);
-                            searchResult.addFields(decodedKey, decodedValue);
+                            String fieldName = StringCodec.UTF8.decodeKey((ByteBuffer) key);
+                            searchResult.addField(fieldName, value == null ? null : toBytes((ByteBuffer) value));
                         });
                     }
                     searchReply.addResult(searchResult);
@@ -286,7 +318,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
             if (resultsMap.containsKey(WARNING_KEY)) {
                 ComplexData warning = (ComplexData) resultsMap.get(WARNING_KEY);
                 warning.getDynamicList().forEach(warningEntry -> {
-                    searchReply.addWarning(codec.decodeValue((ByteBuffer) warningEntry));
+                    searchReply.addWarning(StringCodec.UTF8.decodeValue((ByteBuffer) warningEntry));
                 });
             }
 

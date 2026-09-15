@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.CircuitBreaker.State;
@@ -28,7 +27,6 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements RedisDatabase, AsyncCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(RedisDatabaseImpl.class);

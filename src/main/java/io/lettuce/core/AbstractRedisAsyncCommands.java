@@ -126,7 +126,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
-        RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V>, RedisArrayAsyncCommands<K, V>,
+        RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K>, RedisArrayAsyncCommands<K, V>,
         RedisBloomFilterAsyncCommands<K, V>, RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V>,
         RedisCMSAsyncCommands<K, V>, RedisTDigestAsyncCommands<K, V> {
 
@@ -1725,12 +1725,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftCreate(String index, CreateArgs<K, V> options, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, CreateArgs options, List<FieldArgs> fieldArgs) {
         return dispatch(searchCommandBuilder.ftCreate(index, options, fieldArgs));
     }
 
     @Override
-    public RedisFuture<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, List<FieldArgs> fieldArgs) {
         return dispatch(searchCommandBuilder.ftCreate(index, null, fieldArgs));
     }
 
@@ -1755,92 +1755,92 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs) {
         return dispatch(searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
     }
 
     @Override
-    public RedisFuture<List<V>> ftTagvals(String index, String fieldName) {
+    public RedisFuture<List<String>> ftTagvals(String index, String fieldName) {
         return dispatch(searchCommandBuilder.ftTagvals(index, fieldName));
     }
 
     @Override
-    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(String index, V query) {
+    public RedisFuture<SpellCheckResult> ftSpellcheck(String index, String query) {
         return dispatch(searchCommandBuilder.ftSpellcheck(index, query));
     }
 
     @Override
-    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(String index, V query, SpellCheckArgs<K, V> args) {
+    public RedisFuture<SpellCheckResult> ftSpellcheck(String index, String query, SpellCheckArgs args) {
         return dispatch(searchCommandBuilder.ftSpellcheck(index, query, args));
     }
 
     @Override
-    public RedisFuture<Long> ftDictadd(String dict, V... terms) {
+    public RedisFuture<Long> ftDictadd(String dict, String... terms) {
         return dispatch(searchCommandBuilder.ftDictadd(dict, terms));
     }
 
     @Override
-    public RedisFuture<Long> ftDictdel(String dict, V... terms) {
+    public RedisFuture<Long> ftDictdel(String dict, String... terms) {
         return dispatch(searchCommandBuilder.ftDictdel(dict, terms));
     }
 
     @Override
-    public RedisFuture<List<V>> ftDictdump(String dict) {
+    public RedisFuture<List<String>> ftDictdump(String dict) {
         return dispatch(searchCommandBuilder.ftDictdump(dict));
     }
 
     @Override
-    public RedisFuture<String> ftExplain(String index, V query) {
+    public RedisFuture<String> ftExplain(String index, String query) {
         return dispatch(searchCommandBuilder.ftExplain(index, query));
     }
 
     @Override
-    public RedisFuture<String> ftExplain(String index, V query, ExplainArgs<K, V> args) {
+    public RedisFuture<String> ftExplain(String index, String query, ExplainArgs args) {
         return dispatch(searchCommandBuilder.ftExplain(index, query, args));
     }
 
     @Override
-    public RedisFuture<List<V>> ftList() {
+    public RedisFuture<List<String>> ftList() {
         return dispatch(searchCommandBuilder.ftList());
     }
 
     @Override
-    public RedisFuture<Map<V, List<V>>> ftSyndump(String index) {
+    public RedisFuture<Map<String, List<String>>> ftSyndump(String index) {
         return dispatch(searchCommandBuilder.ftSyndump(index));
     }
 
     @Override
-    public RedisFuture<String> ftSynupdate(String index, V synonymGroupId, V... terms) {
+    public RedisFuture<String> ftSynupdate(String index, String synonymGroupId, String... terms) {
         return dispatch(searchCommandBuilder.ftSynupdate(index, synonymGroupId, terms));
     }
 
     @Override
-    public RedisFuture<String> ftSynupdate(String index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+    public RedisFuture<String> ftSynupdate(String index, String synonymGroupId, SynUpdateArgs args, String... terms) {
         return dispatch(searchCommandBuilder.ftSynupdate(index, synonymGroupId, args, terms));
     }
 
     @Override
-    public RedisFuture<Long> ftSugadd(K key, V string, double score) {
-        return dispatch(searchCommandBuilder.ftSugadd(key, string, score));
+    public RedisFuture<Long> ftSugadd(K key, String suggestion, double score) {
+        return dispatch(searchCommandBuilder.ftSugadd(key, suggestion, score));
     }
 
     @Override
-    public RedisFuture<Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
-        return dispatch(searchCommandBuilder.ftSugadd(key, string, score, args));
+    public RedisFuture<Long> ftSugadd(K key, String suggestion, double score, SugAddArgs args) {
+        return dispatch(searchCommandBuilder.ftSugadd(key, suggestion, score, args));
     }
 
     @Override
-    public RedisFuture<Boolean> ftSugdel(K key, V string) {
-        return dispatch(searchCommandBuilder.ftSugdel(key, string));
+    public RedisFuture<Boolean> ftSugdel(K key, String suggestion) {
+        return dispatch(searchCommandBuilder.ftSugdel(key, suggestion));
     }
 
     @Override
-    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix) {
+    public RedisFuture<List<Suggestion>> ftSugget(K key, String prefix) {
         return dispatch(searchCommandBuilder.ftSugget(key, prefix));
     }
 
     @Override
-    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
+    public RedisFuture<List<Suggestion>> ftSugget(K key, String prefix, SugGetArgs args) {
         return dispatch(searchCommandBuilder.ftSugget(key, prefix, args));
     }
 
@@ -1850,7 +1850,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftAlter(String index, List<FieldArgs> fieldArgs) {
         return dispatch(searchCommandBuilder.ftAlter(index, false, fieldArgs));
     }
 
@@ -1865,32 +1865,32 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(String index, V query, SearchArgs<K, V> args) {
+    public RedisFuture<SearchReply<K>> ftSearch(String index, String query, SearchArgs<K> args) {
         return dispatch(searchCommandBuilder.ftSearch(index, query, args));
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(String index, V query) {
-        return dispatch(searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
+    public RedisFuture<SearchReply<K>> ftSearch(String index, String query) {
+        return dispatch(searchCommandBuilder.ftSearch(index, query, SearchArgs.<K> builder().build()));
     }
 
     @Override
-    public RedisFuture<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args) {
+    public RedisFuture<HybridReply<K>> ftHybrid(String index, HybridArgs args) {
         return dispatch(searchCommandBuilder.ftHybrid(index, args));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args) {
+    public RedisFuture<AggregationReply<K>> ftAggregate(String index, String query, AggregateArgs args) {
         return dispatch(searchCommandBuilder.ftAggregate(index, query, args));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, V query) {
+    public RedisFuture<AggregationReply<K>> ftAggregate(String index, String query) {
         return dispatch(searchCommandBuilder.ftAggregate(index, query, null));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
+    public RedisFuture<AggregationReply<K>> ftCursorread(String index, Cursor cursor, int count) {
         if (cursor == null) {
             throw new IllegalArgumentException("cursor must not be null");
         }
@@ -1899,7 +1899,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
+    public RedisFuture<AggregationReply<K>> ftCursorread(String index, Cursor cursor) {
         return ftCursorread(index, cursor, -1);
     }
 
@@ -3708,146 +3708,224 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<V>> zrange(K key, ZRange.ByIndex range) {
+        return dispatch(commandBuilder.zrange(key, range));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrange(K key, ZRange.ByScore range) {
+        return dispatch(commandBuilder.zrange(key, range));
+    }
+
+    @Override
+    public RedisFuture<List<V>> zrange(K key, ZRange.ByLex<? extends V> range) {
+        return dispatch(commandBuilder.zrange(key, range));
+    }
+
+    @Override
+    public RedisFuture<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        return dispatch(commandBuilder.zrange(channel, key, range));
+    }
+
+    @Override
+    public RedisFuture<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        return dispatch(commandBuilder.zrange(channel, key, range));
+    }
+
+    @Override
+    public RedisFuture<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<? extends V> range) {
+        return dispatch(commandBuilder.zrange(channel, key, range));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByIndex range) {
+        return dispatch(commandBuilder.zrangeWithScores(key, range));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByScore range) {
+        return dispatch(commandBuilder.zrangeWithScores(key, range));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        return dispatch(commandBuilder.zrangeWithScores(channel, key, range));
+    }
+
+    @Override
+    public RedisFuture<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        return dispatch(commandBuilder.zrangeWithScores(channel, key, range));
+    }
+
+    @Deprecated
+    @Override
     public RedisFuture<List<V>> zrangebylex(K key, String min, String max) {
         return dispatch(commandBuilder.zrangebylex(key, min, max));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrangebylex(K key, Range<? extends V> range) {
         return dispatch(commandBuilder.zrangebylex(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrangebylex(K key, String min, String max, long offset, long count) {
         return dispatch(commandBuilder.zrangebylex(key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrangebylex(K key, Range<? extends V> range, Limit limit) {
         return dispatch(commandBuilder.zrangebylex(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrangebyscore(K key, double min, double max) {
         return dispatch(commandBuilder.zrangebyscore(key, min, max));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrangebyscore(K key, String min, String max) {
         return dispatch(commandBuilder.zrangebyscore(key, min, max));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrangebyscore(K key, Range<? extends Number> range) {
         return dispatch(commandBuilder.zrangebyscore(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrangebyscore(K key, double min, double max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscore(key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrangebyscore(K key, String min, String max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscore(key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrangebyscore(K key, Range<? extends Number> range, Limit limit) {
         return dispatch(commandBuilder.zrangebyscore(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max) {
         return dispatch(commandBuilder.zrangebyscore(channel, key, min, max));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max) {
         return dispatch(commandBuilder.zrangebyscore(channel, key, min, max));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
         return dispatch(commandBuilder.zrangebyscore(channel, key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset,
             long count) {
         return dispatch(commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset,
             long count) {
         return dispatch(commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
             Limit limit) {
         return dispatch(commandBuilder.zrangebyscore(channel, key, range, limit));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, min, max));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, min, max));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, Range<? extends Number> range) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
             Range<? extends Number> range) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
             long offset, long count) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
             long offset, long count) {
         return dispatch(commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
             Range<? extends Number> range, Limit limit) {
@@ -3914,21 +3992,25 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.zremrangebyscore(key, range));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrevrange(K key, long start, long stop) {
         return dispatch(commandBuilder.zrevrange(key, start, stop));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
         return dispatch(commandBuilder.zrevrange(channel, key, start, stop));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrevrangeWithScores(K key, long start, long stop) {
         return dispatch(commandBuilder.zrevrangeWithScores(key, start, stop));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
         return dispatch(commandBuilder.zrevrangeWithScores(channel, key, start, stop));
@@ -3949,139 +4031,165 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.zrangestorebyscore(dstKey, srcKey, range, limit, true));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrevrangebylex(K key, Range<? extends V> range) {
         return dispatch(commandBuilder.zrevrangebylex(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrevrangebylex(K key, Range<? extends V> range, Limit limit) {
         return dispatch(commandBuilder.zrevrangebylex(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrevrangebyscore(K key, double max, double min) {
         return dispatch(commandBuilder.zrevrangebyscore(key, max, min));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrevrangebyscore(K key, String max, String min) {
         return dispatch(commandBuilder.zrevrangebyscore(key, max, min));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrevrangebyscore(K key, Range<? extends Number> range) {
         return dispatch(commandBuilder.zrevrangebyscore(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrevrangebyscore(K key, double max, double min, long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscore(key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrevrangebyscore(K key, String max, String min, long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscore(key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<V>> zrevrangebyscore(K key, Range<? extends Number> range, Limit limit) {
         return dispatch(commandBuilder.zrevrangebyscore(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min) {
         return dispatch(commandBuilder.zrevrangebyscore(channel, key, max, min));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min) {
         return dispatch(commandBuilder.zrevrangebyscore(channel, key, max, min));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
         return dispatch(commandBuilder.zrevrangebyscore(channel, key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
             long count) {
         return dispatch(commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
             long count) {
         return dispatch(commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
             Limit limit) {
         return dispatch(commandBuilder.zrevrangebyscore(channel, key, range, limit));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset,
             long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset,
             long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
             Range<? extends Number> range) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
             long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
             long offset, long count) {
         return dispatch(commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key,
             Range<? extends Number> range, Limit limit) {

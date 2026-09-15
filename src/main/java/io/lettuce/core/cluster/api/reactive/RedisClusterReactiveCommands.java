@@ -27,7 +27,6 @@ import io.lettuce.core.HotkeysArgs;
 import io.lettuce.core.HotkeysReply;
 import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.Range;
-import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.reactive.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,7 +46,7 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
         RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisListReactiveCommands<K, V>,
         RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
         RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
-        RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>,
+        RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K>,
         RedisArrayReactiveCommands<K, V>, RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>,
         RedisTopKReactiveCommands<K, V>, RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
 

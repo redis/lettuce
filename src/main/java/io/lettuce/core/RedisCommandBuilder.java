@@ -63,6 +63,7 @@ import static io.lettuce.core.protocol.CommandType.SAVE;
  * @author Ali Takavci
  * @author Seonghwan Lee
  * @author dae won
+ * @author Yordan Tsintsov
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -4221,6 +4222,110 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.addKey(key).add(start).add(stop).add(WITHSCORES);
         return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), args);
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZRange.ByIndex range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZRange.ByScore range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZRange.ByLex<? extends V> range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<? extends V> range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByIndex range) {
+        return createCommand(ZRANGE, new ScoredValueListOutput<>(codec), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByScore range) {
+        return createCommand(ZRANGE, new ScoredValueListOutput<>(codec), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByIndex range) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(range.getStart()).add(range.getStop());
+
+        if (range.isRev()) {
+            args.add(REV);
+        }
+
+        return args;
+    }
+
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByScore range) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+
+        Range<? extends Number> scoreRange = range.getRange();
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (range.isRev()) {
+            args.add(max(scoreRange)).add(min(scoreRange));
+        } else {
+            args.add(min(scoreRange)).add(max(scoreRange));
+        }
+
+        args.add(BYSCORE);
+
+        if (range.isRev()) {
+            args.add(REV);
+        }
+
+        addLimit(args, range.getLimit());
+        return args;
+    }
+
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByLex<? extends V> range) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+
+        Range<? extends V> lexRange = range.getRange();
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (range.isRev()) {
+            args.add(maxValue(lexRange)).add(minValue(lexRange));
+        } else {
+            args.add(minValue(lexRange)).add(maxValue(lexRange));
+        }
+
+        args.add(BYLEX);
+
+        if (range.isRev()) {
+            args.add(REV);
+        }
+
+        addLimit(args, range.getLimit());
+        return args;
     }
 
     RedisCommand<K, V, List<V>> zrangebylex(K key, String min, String max) {

@@ -19,7 +19,8 @@ import org.junit.jupiter.params.provider.EnumSource;
  * Verify that the sync and reactive command interfaces of every command group declare the same methods and that the reactive
  * return types follow the mapping rules: {@code Mono<T>} for scalars, {@code Flux<E>} for {@code List}/{@code Set} results,
  * plus the deviations recorded in {@link KnownApiDeviations}. Streaming-channel variants must be deprecated on the reactive API
- * in favor of consuming the {@code Publisher}.
+ * in favor of consuming the {@code Publisher}, or omitted from it altogether and registered in
+ * {@link KnownApiDeviations#NOT_ON_REACTIVE}.
  */
 @Tag(UNIT_TEST)
 class SyncReactiveConsistencyUnitTests {
@@ -36,6 +37,14 @@ class SyncReactiveConsistencyUnitTests {
         for (Method syncMethod : TypeSignatures.apiMethods(group.sync())) {
 
             Method reactiveMethod = TypeSignatures.findCounterpart(group.reactive(), syncMethod);
+            boolean notOnReactive = KnownApiDeviations.contains(KnownApiDeviations.NOT_ON_REACTIVE, syncMethod, group.sync());
+
+            if (notOnReactive) {
+                softly.assertThat(reactiveMethod).as("%s is registered in NOT_ON_REACTIVE but exists on %s",
+                        TypeSignatures.describe(group.sync(), syncMethod), group.reactive().getSimpleName()).isNull();
+                continue;
+            }
+
             if (reactiveMethod == null) {
                 softly.fail("%s is missing on %s", TypeSignatures.describe(group.sync(), syncMethod),
                         group.reactive().getSimpleName());

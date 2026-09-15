@@ -560,13 +560,126 @@ public interface NodeSelectionSortedSetCommands<K, V> {
     Executions<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
+     * Return a range of members in a sorted set, by index, using the unified {@code ZRANGE} syntax.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the index range selector, see {@link ZRange#byIndex(long, long)}, must not be {@code null}.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<List<V>> zrange(K key, ZRange.ByIndex range);
+
+    /**
+     * Return a range of members in a sorted set, by score ({@code BYSCORE}), using the unified {@code ZRANGE} syntax.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the score range selector, see {@link ZRange#byScore(Range)}, must not be {@code null}.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<List<V>> zrange(K key, ZRange.ByScore range);
+
+    /**
+     * Return a range of members in a sorted set, by lexicographical order ({@code BYLEX}), using the unified {@code ZRANGE}
+     * syntax.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the lexicographical range selector, see {@link ZRange#byLex(Range)}, must not be {@code null}.
+     * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<List<V>> zrange(K key, ZRange.ByLex<? extends V> range);
+
+    /**
+     * Stream over a range of members in a sorted set, by index, using the unified {@code ZRANGE} syntax.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key, must not be {@code null}.
+     * @param range the index range selector, see {@link ZRange#byIndex(long, long)}, must not be {@code null}.
+     * @return Long count of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByIndex range);
+
+    /**
+     * Stream over a range of members in a sorted set, by score ({@code BYSCORE}), using the unified {@code ZRANGE} syntax.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key, must not be {@code null}.
+     * @param range the score range selector, see {@link ZRange#byScore(Range)}, must not be {@code null}.
+     * @return Long count of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByScore range);
+
+    /**
+     * Stream over a range of members in a sorted set, by lexicographical order ({@code BYLEX}), using the unified
+     * {@code ZRANGE} syntax.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key, must not be {@code null}.
+     * @param range the lexicographical range selector, see {@link ZRange#byLex(Range)}, must not be {@code null}.
+     * @return Long count of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<? extends V> range);
+
+    /**
+     * Return a range of members with scores in a sorted set, by index, using the unified {@code ZRANGE} syntax.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the index range selector, see {@link ZRange#byIndex(long, long)}, must not be {@code null}.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements with their scores in the specified range.
+     * @since 7.8
+     */
+    Executions<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByIndex range);
+
+    /**
+     * Return a range of members with scores in a sorted set, by score ({@code BYSCORE}), using the unified {@code ZRANGE}
+     * syntax.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the score range selector, see {@link ZRange#byScore(Range)}, must not be {@code null}.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements with their scores in the specified range.
+     * @since 7.8
+     */
+    Executions<List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByScore range);
+
+    /**
+     * Stream over a range of members with scores in a sorted set, by index, using the unified {@code ZRANGE} syntax.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key, must not be {@code null}.
+     * @param range the index range selector, see {@link ZRange#byIndex(long, long)}, must not be {@code null}.
+     * @return Long count of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByIndex range);
+
+    /**
+     * Stream over a range of members with scores in a sorted set, by score ({@code BYSCORE}), using the unified {@code ZRANGE}
+     * syntax.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key, must not be {@code null}.
+     * @param range the score range selector, see {@link ZRange#byScore(Range)}, must not be {@code null}.
+     * @return Long count of elements in the specified range.
+     * @since 7.8
+     */
+    Executions<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByScore range);
+
+    /**
      * Return a range of members in a sorted set, by lexicographical range.
      *
      * @param key the key.
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
-     * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrange(Object, ZRange.ByLex)} instead; scheduled for removal in a future major
+     *             release. String boundaries map onto {@link Range.Boundary}: {@code "[a"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(a"} becomes {@link Range.Boundary#excluding(Object)}, and
+     *             {@code "-"}/{@code "+"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0;
+     *             the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<V>> zrangebylex(K key, String min, String max);
@@ -578,7 +691,10 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} instead; scheduled for removal in a future major
+     *             release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<List<V>> zrangebylex(K key, Range<? extends V> range);
 
     /**
@@ -590,7 +706,12 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
-     * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#limit(Limit)} instead;
+     *             scheduled for removal in a future major release. String boundaries map onto {@link Range.Boundary}:
+     *             {@code "[a"} becomes {@link Range.Boundary#including(Object)}, {@code "(a"} becomes
+     *             {@link Range.Boundary#excluding(Object)}, and {@code "-"}/{@code "+"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<V>> zrangebylex(K key, String min, String max, long offset, long count);
@@ -603,7 +724,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#limit(Limit)} instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement
+     *             requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<List<V>> zrangebylex(K key, Range<? extends V> range, Limit limit);
 
     /**
@@ -613,7 +738,9 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrange(Object, ZRange.ByScore)} (see {@link ZRange#byScore(double, double)}) instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement API
+     *             was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<V>> zrangebyscore(K key, double min, double max);
@@ -625,7 +752,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrange(Object, ZRange.ByScore)} instead; scheduled for removal in a future major
+     *             release. String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<V>> zrangebyscore(K key, String min, String max);
@@ -637,7 +768,10 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} instead; scheduled for removal in a future major
+     *             release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<List<V>> zrangebyscore(K key, Range<? extends Number> range);
 
     /**
@@ -649,7 +783,10 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(java.lang.Object, Range, Limit)}.
+     * @deprecated since 4.3, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or
+     *             later.
      */
     @Deprecated
     Executions<List<V>> zrangebyscore(K key, double min, double max, long offset, long count);
@@ -663,7 +800,12 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(java.lang.Object, Range, Limit)}.
+     * @deprecated since 4.3, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} instead;
+     *             scheduled for removal in a future major release. String boundaries map onto {@link Range.Boundary}:
+     *             {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes
+     *             {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<V>> zrangebyscore(K key, String min, String max, long offset, long count);
@@ -676,7 +818,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement
+     *             requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<List<V>> zrangebyscore(K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -687,7 +833,10 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or
+     *             later.
      */
     @Deprecated
     Executions<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max);
@@ -700,7 +849,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} instead; scheduled for removal
+     *             in a future major release. String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max);
@@ -713,7 +866,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} instead; scheduled for removal
+     *             in a future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or
+     *             later.
      */
+    @Deprecated
     Executions<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
 
     /**
@@ -726,7 +883,10 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
+     * @deprecated since 4.3, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} (see {@link ZRange#byScore(double, double)}) instead; scheduled for
+     *             removal in a future major release. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
@@ -741,7 +901,12 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
+     * @deprecated since 4.3, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. String
+     *             boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)},
+     *             {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
@@ -755,7 +920,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -765,7 +934,9 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(Object, ZRange.ByScore)} (see {@link ZRange#byScore(double, double)})
+     *             instead; scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the
+     *             replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max);
@@ -777,7 +948,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(Object, ZRange.ByScore)} instead; scheduled for removal in a future
+     *             major release. String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max);
@@ -789,7 +964,10 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} instead; scheduled for removal in a future
+     *             major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, Range<? extends Number> range);
 
     /**
@@ -801,7 +979,10 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range, Limit limit)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)}
+     *             (see {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or
+     *             later.
      */
     @Deprecated
     Executions<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count);
@@ -815,7 +996,12 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)}
+     *             instead; scheduled for removal in a future major release. String boundaries map onto {@link Range.Boundary}:
+     *             {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes
+     *             {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count);
@@ -828,7 +1014,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)}
+     *             instead; scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the
+     *             replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -839,7 +1029,10 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or
+     *             later.
      */
     @Deprecated
     Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max);
@@ -852,7 +1045,12 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} instead;
+     *             scheduled for removal in a future major release. String boundaries map onto {@link Range.Boundary}:
+     *             {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes
+     *             {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max);
@@ -865,7 +1063,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement
+     *             requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
 
     /**
@@ -878,7 +1080,10 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} (see {@link ZRange#byScore(double, double)}) instead; scheduled for
+     *             removal in a future major release. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset,
@@ -894,7 +1099,12 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified score range.
-     * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. String
+     *             boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)},
+     *             {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset,
@@ -909,7 +1119,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
             Limit limit);
 
@@ -1055,7 +1269,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByIndex)} with {@link ZRange.ByIndex#rev()} instead; scheduled
+     *             for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
+    @Deprecated
     Executions<List<V>> zrevrange(K key, long start, long stop);
 
     /**
@@ -1066,7 +1284,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return Long count of elements in the specified range.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByIndex)} with
+     *             {@link ZRange.ByIndex#rev()} instead; scheduled for removal in a future major release. Redis deprecated this
+     *             command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
@@ -1076,7 +1298,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByIndex)} with {@link ZRange.ByIndex#rev()} instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement
+     *             requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<List<ScoredValue<V>>> zrevrangeWithScores(K key, long start, long stop);
 
     /**
@@ -1087,7 +1313,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return Long count of elements in the specified range.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByIndex)} with
+     *             {@link ZRange.ByIndex#rev()} instead; scheduled for removal in a future major release. Redis deprecated this
+     *             command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
     /**
@@ -1097,7 +1327,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#rev()} instead; scheduled for
+     *             removal in a future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2
+     *             or later.
      */
+    @Deprecated
     Executions<List<V>> zrevrangebylex(K key, Range<? extends V> range);
 
     /**
@@ -1108,7 +1342,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#rev()} and
+     *             {@link ZRange.ByLex#limit(Limit)} instead; scheduled for removal in a future major release. Redis deprecated
+     *             this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<List<V>> zrevrangebylex(K key, Range<? extends V> range, Limit limit);
 
     /**
@@ -1118,7 +1356,10 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Note that
+     *             the boundaries are supplied in ascending order, i.e. {@code min} first. Redis deprecated this command in
+     *             6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<V>> zrevrangebyscore(K key, double max, double min);
@@ -1130,7 +1371,12 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead; scheduled
+     *             for removal in a future major release. Note that the boundaries are supplied in ascending order, i.e.
+     *             {@code min} first. String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<V>> zrevrangebyscore(K key, String max, String min);
@@ -1142,7 +1388,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead; scheduled
+     *             for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
+    @Deprecated
     Executions<List<V>> zrevrangebyscore(K key, Range<? extends Number> range);
 
     /**
@@ -1154,7 +1404,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the withscores.
      * @param count the number of items.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range, Limit)}.
+     * @deprecated since 4.3, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} (see {@link ZRange#byScore(double, double)}) instead; scheduled for
+     *             removal in a future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min}
+     *             first. Redis deprecated this command in 6.2.0; the replacement API was added in Lettuce 7.8 and requires
+     *             Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<V>> zrevrangebyscore(K key, double max, double min, long offset, long count);
@@ -1168,7 +1422,13 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range, Limit)}.
+     * @deprecated since 4.3, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Note that the
+     *             boundaries are supplied in ascending order, i.e. {@code min} first. String boundaries map onto
+     *             {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"}
+     *             becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<V>> zrevrangebyscore(K key, String max, String min, long offset, long count);
@@ -1181,7 +1441,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<List<V>> zrevrangebyscore(K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -1192,7 +1456,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param max max score.
      * @param min min score.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} (see {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a
+     *             future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min} first. Redis
+     *             deprecated this command in 6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or
+     *             later.
      */
     @Deprecated
     Executions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min);
@@ -1205,7 +1473,13 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} instead; scheduled for removal in a future major release. Note that the
+     *             boundaries are supplied in ascending order, i.e. {@code min} first. String boundaries map onto
+     *             {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"}
+     *             becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min);
@@ -1218,7 +1492,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} instead; scheduled for removal in a future major release. Redis deprecated this
+     *             command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
 
     /**
@@ -1231,7 +1509,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
+     * @deprecated since 4.3, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Note that
+     *             the boundaries are supplied in ascending order, i.e. {@code min} first. Redis deprecated this command in
+     *             6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
@@ -1246,7 +1528,13 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
+     * @deprecated since 4.3, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a
+     *             future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min} first.
+     *             String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
@@ -1260,7 +1548,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a
+     *             future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -1270,7 +1562,10 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param max max score.
      * @param min min score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Note that
+     *             the boundaries are supplied in ascending order, i.e. {@code min} first. Redis deprecated this command in
+     *             6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min);
@@ -1282,7 +1577,12 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param max max score.
      * @param min min score.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead;
+     *             scheduled for removal in a future major release. Note that the boundaries are supplied in ascending order,
+     *             i.e. {@code min} first. String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min);
@@ -1294,7 +1594,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param range the range.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement
+     *             requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range);
 
     /**
@@ -1306,7 +1610,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} (see {@link ZRange#byScore(double, double)}) instead; scheduled for
+     *             removal in a future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min}
+     *             first. Redis deprecated this command in 6.2.0; the replacement API was added in Lettuce 7.8 and requires
+     *             Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count);
@@ -1320,7 +1628,13 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Note that the
+     *             boundaries are supplied in ascending order, i.e. {@code min} first. String boundaries map onto
+     *             {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"}
+     *             becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
@@ -1333,7 +1647,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param limit limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit);
 
     /**
@@ -1344,7 +1662,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} (see {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a
+     *             future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min} first. Redis
+     *             deprecated this command in 6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or
+     *             later.
      */
     @Deprecated
     Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min);
@@ -1357,7 +1679,13 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} instead; scheduled for removal in a future major release. Note that the
+     *             boundaries are supplied in ascending order, i.e. {@code min} first. String boundaries map onto
+     *             {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"}
+     *             becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement API was added in
+     *             Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min);
@@ -1369,7 +1697,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param key the key.
      * @param range the range.
      * @return Long count of elements in the specified range.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} instead; scheduled for removal in a future major release. Redis deprecated this
+     *             command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
 
     /**
@@ -1382,7 +1714,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Note that
+     *             the boundaries are supplied in ascending order, i.e. {@code min} first. Redis deprecated this command in
+     *             6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
@@ -1398,7 +1734,13 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return Long count of elements in the specified range.
-     * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}.
+     * @deprecated since 4.3, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a
+     *             future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min} first.
+     *             String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement API was added in Lettuce 7.8 and requires Redis 6.2 or later.
      */
     @Deprecated
     Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
@@ -1413,7 +1755,11 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified range.
      * @since 4.3
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a
+     *             future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
+    @Deprecated
     Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
             Limit limit);
 
