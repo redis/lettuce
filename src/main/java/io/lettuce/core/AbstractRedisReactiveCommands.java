@@ -4640,8 +4640,18 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> cmsInitByDim(K key, long width, long depth, int cellSize) {
+        return createMono(() -> cmsCommandBuilder.cmsInitByDim(key, width, depth, cellSize));
+    }
+
+    @Override
     public Mono<String> cmsInitByProb(K key, double error, double probability) {
         return createMono(() -> cmsCommandBuilder.cmsInitByProb(key, error, probability));
+    }
+
+    @Override
+    public Mono<String> cmsInitByProb(K key, double error, double probability, int cellSize) {
+        return createMono(() -> cmsCommandBuilder.cmsInitByProb(key, error, probability, cellSize));
     }
 
     @Override

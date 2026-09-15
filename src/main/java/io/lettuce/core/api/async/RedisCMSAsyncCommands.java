@@ -24,7 +24,9 @@ import io.lettuce.core.probabilistic.MergePair;
 public interface RedisCMSAsyncCommands<K, V> {
 
     /**
-     * Increases the count of an item by the given increment.
+     * Increases the count of an item by the given increment. A negative increment decrements the count; the server applies it
+     * only if every counter cell of the item holds at least that amount, otherwise the command fails with a
+     * {@code CMS: INCRBY underflow} error and the sketch is left unchanged. Negative increments require Redis 8.12 or later.
      *
      * @param key the key.
      * @param pair the item paired with the increment to add to its count.
@@ -33,7 +35,10 @@ public interface RedisCMSAsyncCommands<K, V> {
     RedisFuture<List<Long>> cmsIncrBy(K key, IncrementPair<V> pair);
 
     /**
-     * Increases the count of several items by their given increments in a single call.
+     * Increases the count of several items by their given increments in a single call. A negative increment decrements the
+     * count of its item; the server applies it only if every counter cell of the item holds at least that amount, otherwise the
+     * command fails with a {@code CMS: INCRBY underflow} error. Items preceding the failing pair are still applied. Negative
+     * increments require Redis 8.12 or later.
      *
      * @param key the key.
      * @param pairs the items paired with the increment to add to each item's count.
@@ -42,7 +47,8 @@ public interface RedisCMSAsyncCommands<K, V> {
     RedisFuture<List<Long>> cmsIncrBy(K key, IncrementPair<V>... pairs);
 
     /**
-     * Returns width, depth and total count of the sketch.
+     * Returns width, depth, total count and cell size of the sketch. The cell size is reported by Redis 8.12 and later;
+     * {@link CMSInfoValue#getCellSize()} is {@code null} on earlier servers.
      *
      * @param key the key.
      * @return the {@link CMSInfoValue} holding the sketch information.
@@ -60,6 +66,21 @@ public interface RedisCMSAsyncCommands<K, V> {
     RedisFuture<String> cmsInitByDim(K key, long width, long depth);
 
     /**
+     * Initializes a Count-Min Sketch to the dimensions specified by the user and the number of bytes per counter cell.
+     *
+     * @param key the key. An error is returned if the key already exists.
+     * @param width the number of counters in each array. Reduces the error size.
+     * @param depth the number of counter-arrays. Reduces the probability of an error exceeding the estimated size.
+     * @param cellSize the number of bytes per counter cell ({@code CELL_SIZE}), must be {@code 1}, {@code 2}, {@code 4} or
+     *        {@code 8}. Smaller cells reduce the memory footprint but lower the maximum count a cell can hold ({@code 255} for
+     *        1-byte cells, {@code 65535} for 2-byte cells, and so on). The server default is {@code 4}.
+     * @return String simple-string-reply {@code OK} if {@code CMS.INITBYDIM} was executed correctly.
+     * @throws IllegalArgumentException if {@code cellSize} is not {@code 1}, {@code 2}, {@code 4} or {@code 8}.
+     * @since 7.8
+     */
+    RedisFuture<String> cmsInitByDim(K key, long width, long depth, int cellSize);
+
+    /**
      * Initializes a Count-Min Sketch to accommodate requested tolerances.
      *
      * @param key the key. An error is returned if the key already exists.
@@ -68,6 +89,21 @@ public interface RedisCMSAsyncCommands<K, V> {
      * @return String simple-string-reply {@code OK} if {@code CMS.INITBYPROB} was executed correctly.
      */
     RedisFuture<String> cmsInitByProb(K key, double error, double probability);
+
+    /**
+     * Initializes a Count-Min Sketch to accommodate requested tolerances and the number of bytes per counter cell.
+     *
+     * @param key the key. An error is returned if the key already exists.
+     * @param error estimate size of the error.
+     * @param probability the desired probability for inflated count.
+     * @param cellSize the number of bytes per counter cell ({@code CELL_SIZE}), must be {@code 1}, {@code 2}, {@code 4} or
+     *        {@code 8}. Smaller cells reduce the memory footprint but lower the maximum count a cell can hold ({@code 255} for
+     *        1-byte cells, {@code 65535} for 2-byte cells, and so on). The server default is {@code 4}.
+     * @return String simple-string-reply {@code OK} if {@code CMS.INITBYPROB} was executed correctly.
+     * @throws IllegalArgumentException if {@code cellSize} is not {@code 1}, {@code 2}, {@code 4} or {@code 8}.
+     * @since 7.8
+     */
+    RedisFuture<String> cmsInitByProb(K key, double error, double probability, int cellSize);
 
     /**
      * Merges a single source sketch into a destination sketch. All sketches must have identical width and depth, and the

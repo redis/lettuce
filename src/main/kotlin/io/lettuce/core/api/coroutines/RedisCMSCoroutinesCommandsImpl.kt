@@ -40,8 +40,14 @@ internal class RedisCMSCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun cmsInitByDim(key: K, width: Long, depth: Long): String? =
         ops.cmsInitByDim(key, width, depth).awaitFirstOrNull()
 
+    override suspend fun cmsInitByDim(key: K, width: Long, depth: Long, cellSize: Int): String? =
+        ops.cmsInitByDim(key, width, depth, cellSize).awaitFirstOrNull()
+
     override suspend fun cmsInitByProb(key: K, error: Double, probability: Double): String? =
         ops.cmsInitByProb(key, error, probability).awaitFirstOrNull()
+
+    override suspend fun cmsInitByProb(key: K, error: Double, probability: Double, cellSize: Int): String? =
+        ops.cmsInitByProb(key, error, probability, cellSize).awaitFirstOrNull()
 
     override suspend fun cmsMerge(destination: K, source: K): String? =
         ops.cmsMerge(destination, source).awaitFirstOrNull()

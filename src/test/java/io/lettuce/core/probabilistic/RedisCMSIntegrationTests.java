@@ -9,14 +9,18 @@ package io.lettuce.core.probabilistic;
 import javax.inject.Inject;
 import java.util.List;
 
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisCMSCommands}.
@@ -60,6 +64,89 @@ public class RedisCMSIntegrationTests {
     @Test
     void cmsInitByProb() {
         assertThat(redis.cmsInitByProb(MY_KEY, 0.001, 0.01)).isEqualTo("OK");
+    }
+
+    @Test
+    void cmsInitByDimWithCellSize() {
+        assumeCellSizeSupported();
+
+        assertThat(redis.cmsInitByDim(MY_KEY, 1000, 5, 1)).isEqualTo("OK");
+
+        CMSInfoValue info = redis.cmsInfo(MY_KEY);
+        assertThat(info.getWidth()).isEqualTo(1000L);
+        assertThat(info.getDepth()).isEqualTo(5L);
+        assertThat(info.getCellSize()).isEqualTo(1L);
+    }
+
+    @Test
+    void cmsInitByDimWithCellSizeUsesLessMemory() {
+        assumeCellSizeSupported();
+
+        redis.cmsInitByDim("{cms}small", 1000, 5, 1);
+        redis.cmsInitByDim("{cms}large", 1000, 5, 8);
+
+        assertThat(redis.memoryUsage("{cms}small")).isLessThan(redis.memoryUsage("{cms}large"));
+    }
+
+    @Test
+    void cmsInitByProbWithCellSize() {
+        assumeCellSizeSupported();
+
+        assertThat(redis.cmsInitByProb(MY_KEY, 0.001, 0.01, 8)).isEqualTo("OK");
+
+        assertThat(redis.cmsInfo(MY_KEY).getCellSize()).isEqualTo(8L);
+    }
+
+    @Test
+    void cmsInitByDimWithoutCellSizeUsesServerDefault() {
+        assumeCellSizeSupported();
+
+        redis.cmsInitByDim(MY_KEY, 2000, 5);
+
+        assertThat(redis.cmsInfo(MY_KEY).getCellSize()).isEqualTo(4L);
+    }
+
+    @Test
+    void cmsIncrByNegative() {
+        assumeCellSizeSupported();
+        redis.cmsInitByDim(MY_KEY, 2000, 5);
+        redis.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, 5));
+
+        assertThat(redis.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, -2))).containsExactly(3L);
+        assertThat(redis.cmsQuery(MY_KEY, MY_ITEM)).containsExactly(3L);
+        assertThat(redis.cmsInfo(MY_KEY).getCount()).isEqualTo(3L);
+    }
+
+    @Test
+    void cmsIncrByNegativeBelowZeroFails() {
+        assumeCellSizeSupported();
+        redis.cmsInitByDim(MY_KEY, 2000, 5);
+        redis.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, 5));
+
+        assertThatThrownBy(() -> redis.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, -10)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("underflow");
+        assertThat(redis.cmsQuery(MY_KEY, MY_ITEM)).containsExactly(5L);
+    }
+
+    @Test
+    void cmsIncrByOverflowOnSmallCellFails() {
+        assumeCellSizeSupported();
+        redis.cmsInitByDim(MY_KEY, 2000, 5, 1);
+        redis.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, 200));
+
+        assertThatThrownBy(() -> redis.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, 100)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("overflow");
+        assertThat(redis.cmsQuery(MY_KEY, MY_ITEM)).containsExactly(200L);
+    }
+
+    @Test
+    void cmsMergeRequiresMatchingCellSize() {
+        assumeCellSizeSupported();
+        redis.cmsInitByDim("{cms}dest", 2000, 5, 2);
+        redis.cmsInitByDim("{cms}src", 2000, 5, 1);
+
+        assertThatThrownBy(() -> redis.cmsMerge("{cms}dest", "{cms}src")).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("cell size");
     }
 
     @Test
@@ -111,6 +198,15 @@ public class RedisCMSIntegrationTests {
         assertThat(result.getWidth()).isEqualTo(2000L);
         assertThat(result.getDepth()).isEqualTo(5L);
         assertThat(result.getCount()).isEqualTo(5L);
+    }
+
+    /**
+     * {@code CELL_SIZE} and negative increments arrived together with the arity change of {@code CMS.INITBYDIM} from {@code 4}
+     * to {@code -4} (RedisBloom 8.12).
+     */
+    private void assumeCellSizeSupported() {
+        assumeTrue(RedisConditions.of(redis).hasCommandArity("CMS.INITBYDIM", -4),
+                "CMS CELL_SIZE / negative increments not supported by this server");
     }
 
     @Test

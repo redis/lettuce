@@ -9,6 +9,7 @@ package io.lettuce.core;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.EncodedComplexOutput;
 import io.lettuce.core.output.IntegerListOutput;
+import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.MergePair;
 import io.lettuce.core.protocol.Command;
@@ -16,12 +17,15 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link RedisCMSCommandBuilder}.
@@ -90,6 +94,47 @@ class RedisCMSCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructCmsInitByDimCommandWithCellSize() {
+        Command<String, String, String> command = builder.cmsInitByDim(MY_KEY, 2000, 5, 1);
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$13\r\nCMS.INITBYDIM\r\n" + "$3\r\n" + MY_KEY
+                + "\r\n" + "$4\r\n2000\r\n" + "$1\r\n5\r\n" + "$9\r\nCELL_SIZE\r\n" + "$1\r\n1\r\n");
+        assertThat(command.getOutput()).isInstanceOf(StatusOutput.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 2, 4, 8 })
+    void shouldAcceptValidCellSizes(int cellSize) {
+        Command<String, String, String> command = builder.cmsInitByDim(MY_KEY, 2000, 5, cellSize);
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8)).endsWith("$9\r\nCELL_SIZE\r\n" + "$1\r\n" + cellSize + "\r\n");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 3, 5, 16, -1 })
+    void shouldRejectInvalidCellSize(int cellSize) {
+        assertThatThrownBy(() -> builder.cmsInitByDim(MY_KEY, 2000, 5, cellSize)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("1, 2, 4 or 8");
+        assertThatThrownBy(() -> builder.cmsInitByProb(MY_KEY, 0.001, 0.01, cellSize))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("1, 2, 4 or 8");
+    }
+
+    @Test
+    void shouldCorrectlyConstructCmsIncrByCommandWithNegativeIncrement() {
+        Command<String, String, List<Long>> command = builder.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, -3));
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$10\r\nCMS.INCRBY\r\n" + "$3\r\n" + MY_KEY + "\r\n" + "$5\r\n" + MY_ITEM + "\r\n" + "$2\r\n-3\r\n");
+        assertThat(command.getOutput()).isInstanceOf(IntegerListOutput.class);
+    }
+
+    @Test
     void shouldCorrectlyConstructCmsInitByProbCommand() {
         Command<String, String, String> command = builder.cmsInitByProb(MY_KEY, 0.001, 0.01);
         ByteBuf buff = Unpooled.buffer();
@@ -97,6 +142,17 @@ class RedisCMSCommandBuilderUnitTests {
 
         assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo(
                 "*4\r\n" + "$14\r\nCMS.INITBYPROB\r\n" + "$3\r\n" + MY_KEY + "\r\n" + "$5\r\n0.001\r\n" + "$4\r\n0.01\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructCmsInitByProbCommandWithCellSize() {
+        Command<String, String, String> command = builder.cmsInitByProb(MY_KEY, 0.001, 0.01, 8);
+        ByteBuf buff = Unpooled.buffer();
+        command.encode(buff);
+
+        assertThat(buff.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$14\r\nCMS.INITBYPROB\r\n" + "$3\r\n" + MY_KEY
+                + "\r\n" + "$5\r\n0.001\r\n" + "$4\r\n0.01\r\n" + "$9\r\nCELL_SIZE\r\n" + "$1\r\n8\r\n");
+        assertThat(command.getOutput()).isInstanceOf(StatusOutput.class);
     }
 
     @Test
