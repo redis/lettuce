@@ -9,8 +9,8 @@ import java.io.Closeable;
 /**
  * Handle to a callback subscription on a Lettuce streaming SPI, such as
  * {@link CredentialsProvider#subscribeToCredentials(java.util.function.Consumer, java.util.function.Consumer)}
- * {@link io.lettuce.core.event.EventBus#subscribe(java.util.function.Consumer)}.
- * Closing the subscription stops delivery of further values to the registered callback.
+ * {@link io.lettuce.core.event.EventBus#subscribe(java.util.function.Consumer)}. Closing the subscription stops delivery of
+ * further values to the registered callback.
  *
  * <p>
  * This is not related to {@code org.reactivestreams.Subscription} or to Redis Pub/Sub channel subscriptions.
