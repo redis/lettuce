@@ -676,8 +676,11 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} instead. This command is deprecated by Redis since
-     *             version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} instead; scheduled for removal in a future major
+     *             release. String boundaries map onto {@link Range.Boundary}: {@code "[a"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(a"} becomes {@link Range.Boundary#excluding(Object)}, and
+     *             {@code "-"}/{@code "+"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0;
+     *             the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrangebylex(K key, String min, String max);
@@ -689,8 +692,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @since 4.3
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} instead. This command is deprecated by Redis since
-     *             version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} instead; scheduled for removal in a future major
+     *             release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrangebylex(K key, Range<? extends V> range);
@@ -704,8 +707,12 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#limit(Limit)} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#limit(Limit)} instead;
+     *             scheduled for removal in a future major release. String boundaries map onto {@link Range.Boundary}:
+     *             {@code "[a"} becomes {@link Range.Boundary#including(Object)}, {@code "(a"} becomes
+     *             {@link Range.Boundary#excluding(Object)}, and {@code "-"}/{@code "+"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrangebylex(K key, String min, String max, long offset, long count);
@@ -718,8 +725,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
      * @since 4.3
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#limit(Limit)} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#limit(Limit)} instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement
+     *             requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrangebylex(K key, Range<? extends V> range, Limit limit);
@@ -731,8 +739,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} instead. This command is deprecated by Redis since
-     *             version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} (see {@link ZRange#byScore(double, double)}) instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement
+     *             requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrangebyscore(K key, double min, double max);
@@ -744,8 +753,11 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} instead. This command is deprecated by Redis since
-     *             version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} instead; scheduled for removal in a future major
+     *             release. String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrangebyscore(K key, String min, String max);
@@ -757,8 +769,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} instead. This command is deprecated by Redis since
-     *             version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} instead; scheduled for removal in a future major
+     *             release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrangebyscore(K key, Range<? extends Number> range);
@@ -772,8 +784,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrangebyscore(K key, double min, double max, long offset, long count);
@@ -787,8 +800,12 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param offset the offset.
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} instead;
+     *             scheduled for removal in a future major release. String boundaries map onto {@link Range.Boundary}:
+     *             {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes
+     *             {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrangebyscore(K key, String min, String max, long offset, long count);
@@ -801,8 +818,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param limit the limit.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)} instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement
+     *             requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrangebyscore(K key, Range<? extends Number> range, Limit limit);
@@ -815,8 +833,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} instead. This command is
-     *             deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max);
@@ -829,8 +848,11 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} instead. This command is
-     *             deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} instead; scheduled for removal
+     *             in a future major release. String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max);
@@ -843,8 +865,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} instead. This command is
-     *             deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} instead; scheduled for removal
+     *             in a future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or
+     *             later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
@@ -860,7 +883,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified score range.
      * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} (see {@link ZRange#byScore(double, double)}) instead; scheduled for
+     *             removal in a future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2
+     *             or later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
@@ -876,7 +901,11 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified score range.
      * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. String
+     *             boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)},
+     *             {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
@@ -891,7 +920,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return Long count of elements in the specified score range.
      * @since 4.3
      * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
@@ -903,8 +933,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} instead. This command is deprecated by Redis
-     *             since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} (see {@link ZRange#byScore(double, double)})
+     *             instead; scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the
+     *             replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max);
@@ -916,8 +947,11 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} instead. This command is deprecated by Redis
-     *             since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} instead; scheduled for removal in a future
+     *             major release. String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max);
@@ -929,8 +963,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param range the range.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} instead. This command is deprecated by Redis
-     *             since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} instead; scheduled for removal in a future
+     *             major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, Range<? extends Number> range);
@@ -945,7 +979,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)}
-     *             instead. This command is deprecated by Redis since version 6.2.0.
+     *             (see {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count);
@@ -960,7 +995,11 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)}
-     *             instead. This command is deprecated by Redis since version 6.2.0.
+     *             instead; scheduled for removal in a future major release. String boundaries map onto {@link Range.Boundary}:
+     *             {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes
+     *             {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count);
@@ -974,7 +1013,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @since 4.3
      * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#limit(Limit)}
-     *             instead. This command is deprecated by Redis since version 6.2.0.
+     *             instead; scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the
+     *             replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit);
@@ -987,8 +1027,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max);
@@ -1001,8 +1042,12 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return Long count of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} instead;
+     *             scheduled for removal in a future major release. String boundaries map onto {@link Range.Boundary}:
+     *             {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes
+     *             {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max);
@@ -1015,8 +1060,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement
+     *             requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
@@ -1032,7 +1078,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified score range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} (see {@link ZRange#byScore(double, double)}) instead; scheduled for
+     *             removal in a future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2
+     *             or later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
@@ -1049,7 +1097,11 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified score range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. String
+     *             boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)},
+     *             {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
@@ -1065,7 +1117,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return Long count of elements in the specified score range.
      * @since 4.3
      * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
@@ -1213,8 +1266,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByIndex)} with {@link ZRange.ByIndex#rev()} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByIndex)} with {@link ZRange.ByIndex#rev()} instead; scheduled
+     *             for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrevrange(K key, long start, long stop);
@@ -1228,7 +1282,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param stop the stop.
      * @return Long count of elements in the specified range.
      * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByIndex)} with
-     *             {@link ZRange.ByIndex#rev()} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByIndex#rev()} instead; scheduled for removal in a future major release. Redis deprecated this
+     *             command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
@@ -1240,8 +1295,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return List&lt;V&gt; array-reply list of elements in the specified range.
-     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByIndex)} with {@link ZRange.ByIndex#rev()} instead.
-     *             This command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByIndex)} with {@link ZRange.ByIndex#rev()} instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement
+     *             requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrevrangeWithScores(K key, long start, long stop);
@@ -1255,7 +1311,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param stop the stop.
      * @return Long count of elements in the specified range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByIndex)} with
-     *             {@link ZRange.ByIndex#rev()} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByIndex#rev()} instead; scheduled for removal in a future major release. Redis deprecated this
+     *             command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
@@ -1267,8 +1324,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#rev()} instead. This command is
-     *             deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#rev()} instead; scheduled for
+     *             removal in a future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2
+     *             or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrevrangebylex(K key, Range<? extends V> range);
@@ -1282,7 +1340,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
      * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByLex)} with {@link ZRange.ByLex#rev()} and
-     *             {@link ZRange.ByLex#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByLex#limit(Limit)} instead; scheduled for removal in a future major release. Redis deprecated
+     *             this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrevrangebylex(K key, Range<? extends V> range, Limit limit);
@@ -1294,8 +1353,10 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Note that
+     *             the boundaries are supplied in ascending order, i.e. {@code min} first. Redis deprecated this command in
+     *             6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrevrangebyscore(K key, double max, double min);
@@ -1307,8 +1368,12 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @param max max score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead; scheduled
+     *             for removal in a future major release. Note that the boundaries are supplied in ascending order, i.e.
+     *             {@code min} first. String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrevrangebyscore(K key, String max, String min);
@@ -1320,8 +1385,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param range the range.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead. This
-     *             command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead; scheduled
+     *             for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrevrangebyscore(K key, Range<? extends Number> range);
@@ -1336,7 +1402,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the number of items.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} (see {@link ZRange#byScore(double, double)}) instead; scheduled for
+     *             removal in a future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min}
+     *             first. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrevrangebyscore(K key, double max, double min, long offset, long count);
@@ -1351,7 +1419,12 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Note that the
+     *             boundaries are supplied in ascending order, i.e. {@code min} first. String boundaries map onto
+     *             {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"}
+     *             becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrevrangebyscore(K key, String max, String min, long offset, long count);
@@ -1365,7 +1438,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
      * @deprecated since 7.8, use {@link #zrange(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<V>> zrevrangebyscore(K key, Range<? extends Number> range, Limit limit);
@@ -1379,7 +1453,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param min min score.
      * @return Long count of elements in the specified range.
      * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} (see {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a
+     *             future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min} first. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min);
@@ -1393,7 +1469,12 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param max max score.
      * @return Long count of elements in the specified range.
      * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} instead; scheduled for removal in a future major release. Note that the
+     *             boundaries are supplied in ascending order, i.e. {@code min} first. String boundaries map onto
+     *             {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"}
+     *             becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min);
@@ -1407,7 +1488,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return Long count of elements in the specified range.
      * @since 4.3
      * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} instead; scheduled for removal in a future major release. Redis deprecated this
+     *             command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
@@ -1423,8 +1505,10 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified range.
      * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
-     *             Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Note that
+     *             the boundaries are supplied in ascending order, i.e. {@code min} first. Redis deprecated this command in
+     *             6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
@@ -1441,8 +1525,12 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified range.
      * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
-     *             Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a
+     *             future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min} first.
+     *             String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
@@ -1458,8 +1546,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return Long count of elements in the specified range.
      * @since 4.3
      * @deprecated since 7.8, use {@link #zrange(ValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
-     *             Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a
+     *             future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
@@ -1471,8 +1559,10 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param max max score.
      * @param min min score.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead.
-     *             This command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Note that
+     *             the boundaries are supplied in ascending order, i.e. {@code min} first. Redis deprecated this command in
+     *             6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min);
@@ -1484,8 +1574,12 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param max max score.
      * @param min min score.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
-     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead.
-     *             This command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead;
+     *             scheduled for removal in a future major release. Note that the boundaries are supplied in ascending order,
+     *             i.e. {@code min} first. String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min);
@@ -1497,8 +1591,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param range the range.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead.
-     *             This command is deprecated by Redis since version 6.2.0.
+     * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} instead;
+     *             scheduled for removal in a future major release. Redis deprecated this command in 6.2.0; the replacement
+     *             requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range);
@@ -1513,7 +1608,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of elements in the specified score range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} (see {@link ZRange#byScore(double, double)}) instead; scheduled for
+     *             removal in a future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min}
+     *             first. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count);
@@ -1528,7 +1625,12 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Note that the
+     *             boundaries are supplied in ascending order, i.e. {@code min} first. String boundaries map onto
+     *             {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"}
+     *             becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count);
@@ -1542,7 +1644,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @since 4.3
      * @deprecated since 7.8, use {@link #zrangeWithScores(Object, ZRange.ByScore)} with {@link ZRange.ByScore#rev()} and
-     *             {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a future major release. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<List<ScoredValue<V>>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit);
@@ -1556,7 +1659,9 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param max max score.
      * @return Long count of elements in the specified range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} (see {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a
+     *             future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min} first. Redis
+     *             deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min);
@@ -1570,7 +1675,12 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param max max score.
      * @return Long count of elements in the specified range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} instead; scheduled for removal in a future major release. Note that the
+     *             boundaries are supplied in ascending order, i.e. {@code min} first. String boundaries map onto
+     *             {@link Range.Boundary}: {@code "1.5"} becomes {@link Range.Boundary#including(Object)}, {@code "(1.5"}
+     *             becomes {@link Range.Boundary#excluding(Object)}, and {@code "-inf"}/{@code "+inf"} become
+     *             {@link Range.Boundary#unbounded()}. Redis deprecated this command in 6.2.0; the replacement requires Redis
+     *             6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min);
@@ -1583,7 +1693,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} instead. This command is deprecated by Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} instead; scheduled for removal in a future major release. Redis deprecated this
+     *             command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
@@ -1599,8 +1710,10 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
-     *             Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} (see
+     *             {@link ZRange#byScore(double, double)}) instead; scheduled for removal in a future major release. Note that
+     *             the boundaries are supplied in ascending order, i.e. {@code min} first. Redis deprecated this command in
+     *             6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
@@ -1617,8 +1730,12 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified range.
      * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
-     *             Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a
+     *             future major release. Note that the boundaries are supplied in ascending order, i.e. {@code min} first.
+     *             String boundaries map onto {@link Range.Boundary}: {@code "1.5"} becomes
+     *             {@link Range.Boundary#including(Object)}, {@code "(1.5"} becomes {@link Range.Boundary#excluding(Object)},
+     *             and {@code "-inf"}/{@code "+inf"} become {@link Range.Boundary#unbounded()}. Redis deprecated this command in
+     *             6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
@@ -1634,8 +1751,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return Long count of elements in the specified range.
      * @since 4.3
      * @deprecated since 7.8, use {@link #zrangeWithScores(ScoredValueStreamingChannel, Object, ZRange.ByScore)} with
-     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead. This command is deprecated by
-     *             Redis since version 6.2.0.
+     *             {@link ZRange.ByScore#rev()} and {@link ZRange.ByScore#limit(Limit)} instead; scheduled for removal in a
+     *             future major release. Redis deprecated this command in 6.2.0; the replacement requires Redis 6.2 or later.
      */
     @Deprecated
     RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
