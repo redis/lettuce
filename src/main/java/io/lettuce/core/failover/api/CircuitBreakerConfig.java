@@ -9,7 +9,6 @@ import java.util.concurrent.TimeoutException;
 
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -21,7 +20,6 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 public class CircuitBreakerConfig {
 
     private final static float DEFAULT_FAILURE_RATE_THRESHOLD = 10;

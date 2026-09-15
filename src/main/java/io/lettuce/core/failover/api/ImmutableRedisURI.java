@@ -9,13 +9,11 @@ import io.lettuce.core.DriverInfo;
 import io.lettuce.core.RedisCredentialsProvider;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SslVerifyMode;
-import io.lettuce.core.annotations.Experimental;
 
 /**
  * An immutable implementation of {@link RedisURI} that prevents any modifications after construction. All setter methods throw
  * {@link UnsupportedOperationException}.
  */
-@Experimental
 public class ImmutableRedisURI extends RedisURI {
 
     private List<RedisURI> sentinels;
