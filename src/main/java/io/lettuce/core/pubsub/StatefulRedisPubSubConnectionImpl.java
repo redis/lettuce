@@ -24,6 +24,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisCommandExecutionException;
@@ -53,6 +55,8 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
 
     private final PubSubEndpoint<K, V> endpoint;
 
+    private final ShardedPubSubAutoResubscribeListener autoResubscribeListener;
+
     /**
      * Initialize a new connection.
      *
@@ -67,6 +71,10 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
         super(writer, endpoint, codec, timeout, DEFAULT_JSON_PARSER);
         this.endpoint = endpoint;
         endpoint.setConnectionState(getConnectionState());
+
+        // Add internal listener for auto-resubscription on sunsubscribe events
+        this.autoResubscribeListener = new ShardedPubSubAutoResubscribeListener();
+        endpoint.addListener(autoResubscribeListener);
     }
 
     /**
@@ -161,6 +169,50 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
                 return null;
             });
         }
+    }
+
+    /**
+     * Internal listener that handles automatic resubscription for sharded pub/sub channels when they are unsubscribed due to
+     * slot rebalancing.
+     */
+    private class ShardedPubSubAutoResubscribeListener extends RedisPubSubAdapter<K, V> {
+
+        private final Set<K> intentionalUnsubscriptions = ConcurrentHashMap.newKeySet();
+
+        @Override
+        public void sunsubscribed(K shardChannel, long count) {
+            if (intentionalUnsubscriptions.remove(shardChannel)) {
+                return;
+            }
+
+            if (shardChannel != null) {
+                InternalLoggerFactory.getInstance(getClass()).debug(
+                        "Triggering auto-resubscribe to generate MovedRedirectionEvent for shard channel: {}", shardChannel);
+                RedisFuture<Void> resubscribeResult = async().ssubscribe(shardChannel);
+                resubscribeResult.exceptionally(throwable -> {
+                    InternalLoggerFactory.getInstance(getClass()).debug(
+                            "Auto-resubscribe triggered cluster redirection for shard channel {}: {}", shardChannel,
+                            throwable.getMessage());
+                    return null;
+                });
+            }
+        }
+
+        /**
+         * Mark a channel as intentionally unsubscribed to prevent auto-resubscription
+         */
+        public void markIntentionalUnsubscribe(K shardChannel) {
+            intentionalUnsubscriptions.add(shardChannel);
+        }
+
+    }
+
+    /**
+     * Mark a channel as intentionally unsubscribed to prevent auto-resubscription. This method is called by
+     * RedisPubSubAsyncCommandsImpl when sunsubscribe is explicitly called.
+     */
+    public void markIntentionalUnsubscribe(K shardChannel) {
+        autoResubscribeListener.markIntentionalUnsubscribe(shardChannel);
     }
 
 }

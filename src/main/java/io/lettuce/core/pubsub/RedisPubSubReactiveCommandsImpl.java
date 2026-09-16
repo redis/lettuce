@@ -171,6 +171,14 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
 
     @Override
     public Mono<Void> sunsubscribe(K... shardChannels) {
+        // Mark these channels as intentionally unsubscribed to prevent auto-resubscription
+        StatefulRedisPubSubConnection<K, V> connection = getStatefulConnection();
+        if (connection instanceof StatefulRedisPubSubConnectionImpl) {
+            StatefulRedisPubSubConnectionImpl<K, V> impl = (StatefulRedisPubSubConnectionImpl<K, V>) connection;
+            for (K channel : shardChannels) {
+                impl.markIntentionalUnsubscribe(channel);
+            }
+        }
         return createFlux(() -> commandBuilder.sunsubscribe(shardChannels)).then();
     }
 
