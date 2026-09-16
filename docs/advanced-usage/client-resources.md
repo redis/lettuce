@@ -163,8 +163,9 @@ to be shut down once you no longer need the resources.</td>
 <tr>
 <td colspan="3">The event bus system is used to transport events from the client to
 subscribers. Events are about connection state changes, metrics, and
-more. Events are published using a RxJava subject and the default
-implementation drops events on backpressure. Learn more about the <a href="../user-guide/reactive-api.md">Reactive API</a>. You can also publish your own
+more. Events are delivered to subscribers through a callback API
+(<code>EventBus.subscribe(Consumer)</code>) and the default
+implementation drops events on backpressure. Learn more about <a href="events.md">Events</a>. You can also publish your own
 events. If you wish to do so, make sure that your events implement the
 <code>Event</code> marker interface.</td>
 </tr>
