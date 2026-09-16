@@ -50,6 +50,16 @@ public class LcsArgs<K> implements CompositeArgument {
          *
          * @return new {@link LcsArgs} with {@literal By KEYS} set.
          */
+        public static LcsArgs<String> keys(String... keys) {
+            return new LcsArgs<String>().by(keys);
+        }
+
+        /**
+         * Creates new {@link LcsArgs} by keys.
+         *
+         * @return new {@link LcsArgs} with {@literal By KEYS} set.
+         * @since 7.8
+         */
         @SafeVarargs
         public static <K> LcsArgs<K> keys(K... keys) {
             return new LcsArgs<K>().by(keys);
@@ -97,6 +107,11 @@ public class LcsArgs<K> implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Set the keys.
+     *
+     * @return {@code this} {@link LcsArgs}.
+     */
     @SafeVarargs
     public final LcsArgs<K> by(K... keys) {
         LettuceAssert.notEmpty(keys, "Keys must not be empty");
@@ -112,10 +127,13 @@ public class LcsArgs<K> implements CompositeArgument {
     @SuppressWarnings("unchecked")
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
+
         args.addKeys((K[]) keys);
+
         if (justLen) {
             args.add(CommandKeyword.LEN);
         }
+
         if (withIdx) {
             args.add(CommandKeyword.IDX);
         }

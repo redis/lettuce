@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.TestTags;
 import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.codec.CompressionCodec;
+import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.RedisStateMachine;
@@ -166,6 +168,57 @@ public class StringMatchResultOutputUnitTests {
         StringMatchResult result = output.get();
         assertThat(result.getLen()).isEqualTo(6);
         assertThat(result.getMatches()).hasSize(1).satisfies(m -> assertMatchedPositions(m.get(0), 4, 7, 5, 8));
+    }
+
+    @Test
+    void parseFullResponseWithCompressionCodec() {
+        byte[] raw = "%2\r\n$7\r\nmatches\r\n*1\r\n*3\r\n*2\r\n:4\r\n:7\r\n*2\r\n:5\r\n:8\r\n:4\r\n$3\r\nlen\r\n:6\r\n"
+                .getBytes(StandardCharsets.US_ASCII);
+        RedisStateMachine rsm = new RedisStateMachine();
+        rsm.setProtocolVersion(ProtocolVersion.RESP3);
+
+        RedisCodec<String, String> codec = CompressionCodec.valueCompressor(StringCodec.UTF8,
+                CompressionCodec.CompressionType.GZIP);
+        StringMatchResultOutput<String, String> output = new StringMatchResultOutput<>(codec);
+        List<Throwable> decodingErrors = new ArrayList<>();
+        assertThat(rsm.decode(Unpooled.wrappedBuffer(raw), output, decodingErrors::add)).isTrue();
+        assertThat(decodingErrors).isEmpty();
+
+        StringMatchResult result = output.get();
+        assertThat(result.getMatchString()).isNull();
+        assertThat(result.getLen()).isEqualTo(6);
+        assertThat(result.getMatches()).hasSize(1).satisfies(m -> assertMatchedPositions(m.get(0), 4, 7, 5, 8));
+    }
+
+    @Test
+    void parseOnlyStringMatchWithCompressionCodec() {
+        RedisCodec<String, String> codec = CompressionCodec.valueCompressor(StringCodec.UTF8,
+                CompressionCodec.CompressionType.DEFLATE);
+        StringMatchResultOutput<String, String> output = new StringMatchResultOutput<>(codec);
+
+        String matchString = "some-string";
+        output.set(ByteBuffer.wrap(matchString.getBytes()));
+        output.complete(0);
+
+        StringMatchResult result = output.get();
+        assertThat(result.getMatchString()).isEqualTo(matchString);
+        assertThat(result.getMatches()).isEmpty();
+        assertThat(result.getLen()).isZero();
+    }
+
+    @Test
+    void parseOnlyStringMatchWithNonUtf8Charset() {
+        StringMatchResultOutput<String, String> output = new StringMatchResultOutput<>(
+                new StringCodec(StandardCharsets.ISO_8859_1));
+
+        String matchString = "café";
+        output.set(ByteBuffer.wrap(matchString.getBytes(StandardCharsets.ISO_8859_1)));
+        output.complete(0);
+
+        StringMatchResult result = output.get();
+        assertThat(result.getMatchString()).isEqualTo(matchString);
+        assertThat(result.getMatches()).isEmpty();
+        assertThat(result.getLen()).isZero();
     }
 
     private void assertMatchedPositions(StringMatchResult.MatchedPosition match, int... expected) {

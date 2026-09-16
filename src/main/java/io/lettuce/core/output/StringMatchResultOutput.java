@@ -69,7 +69,7 @@ public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMat
 
     private String decodeMatchString(ByteBuffer bytes) {
 
-        Object decoded = codec.decodeValue(bytes.duplicate());
+        Object decoded = codec.decodeKey(bytes.duplicate());
         if (decoded instanceof String) {
             return (String) decoded;
         }
