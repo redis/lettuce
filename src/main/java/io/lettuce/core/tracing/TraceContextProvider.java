@@ -16,7 +16,7 @@ public interface TraceContextProvider {
      * Returns the {@link TraceContext} in a blocking fashion.
      * <p>
      * Return value can be null depending on the implementation, and application context it is called from.
-     *
+     * 
      * @return the {@link TraceContext}.
      */
     TraceContext getTraceContext();
@@ -28,9 +28,9 @@ public interface TraceContextProvider {
      * Return value of the supplier, the {@link TraceContext}, can be null depending on the implementation, and application
      * context it is called from.
      *
-     * @param appContext application context
-     * @return the supplier for the {@link TraceContext}.
-     * @since 7.7
+     * @param appContext the application context used to resolve the {@link TraceContext}.
+     * @return a {@link Supplier} of the {@link TraceContext}.
+     * @since 7.8
      */
     default Supplier<TraceContext> getTraceContextAsync(Map<Object, Object> appContext) {
         return this::getTraceContext;

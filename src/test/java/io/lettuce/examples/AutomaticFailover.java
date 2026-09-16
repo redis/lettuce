@@ -28,8 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Example of automatic failover using MultiDbClient. Automatic Failover API is subject to change since we are still in Beta and
- * actively improving the API.
+ * Example of automatic failover using MultiDbClient.
  */
 public class AutomaticFailover {
 
@@ -57,8 +56,6 @@ public class AutomaticFailover {
 
         List<DatabaseConfig> databaseConfigs = createDatabaseConfigs(clientOptions, endpoints);
         MultiDbClient multiDbClient = MultiDbClient.create(databaseConfigs);
-
-        // Automatic failback are not supported in the current Beta release.
 
         // Listen to database switch events
         multiDbClient.getResources().eventBus().subscribe(event -> {

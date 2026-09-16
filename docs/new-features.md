@@ -1,6 +1,25 @@
 # New & Noteworthy
 
 
+## What's new in Lettuce 7.8
+
+- Support for the unified [`ZRANGE`](https://redis.io/docs/latest/commands/zrange/) syntax introduced in Redis 6.2 through new `zrange` and `zrangeWithScores` overloads (list-returning, plus streaming-channel variants on the sync and async APIs) accepting a `ZRange` selector: `ZRange.byIndex(start, stop)`, `ZRange.byScore(range)` (`BYSCORE`) or `ZRange.byLex(range)` (`BYLEX`). Each selector exposes only the options the server accepts for its kind — `rev()` on all three, `limit(...)` on score and lexicographical ranges — and `zrangeWithScores` has no lexicographical overload because `BYLEX` cannot be combined with `WITHSCORES`, so illegal combinations do not compile. Available in the sync, async, reactive, cluster node-selection and Kotlin APIs — a single entry point covering the `ZREVRANGE`, `ZRANGEBYSCORE`, `ZREVRANGEBYSCORE`, `ZRANGEBYLEX` and `ZREVRANGEBYLEX` variants
+- Deprecated the sorted-set range commands that Redis 6.2 superseded with the unified `ZRANGE` syntax: `zrangebylex`, `zrangebyscore`, `zrangebyscoreWithScores`, `zrevrange`, `zrevrangeWithScores`, `zrevrangebylex`, `zrevrangebyscore` and `zrevrangebyscoreWithScores` (all overloads, including the streaming-channel variants) on the sync, async, reactive and cluster node-selection APIs. Each `@deprecated` note names the `zrange`/`zrangeWithScores` overload and `ZRange` selector option (`rev()`, `limit(...)`) that replaces it. The Kotlin coroutine API no longer exposes these commands; use the `ZRange`-based `zrange`/`zrangeWithScores` functions instead
+- Deprecated the server-assisted client-side caching support (`ClientSideCaching`, `CacheFrontend`, `CacheAccessor`, `RedisCache` in `io.lettuce.core.support.caching`). This implementation is legacy and incomplete and is scheduled for removal in a future major release. There is no replacement yet — a redesigned client-side caching API is planned.
+- Fixed `ScriptOutputType.OBJECT` decoding so top-level scalar responses are returned directly instead of being treated as collections. Top-level integer responses now return `Long` instead of a one-element `List<Long>`; RESP arrays remain lists.
+- Fixed `XAUTOCLAIM` reply decoding for pending entries that were deleted from the stream (the third reply element added in Redis 7.0). With `JUSTID`, those deleted IDs are no longer misreported as claimed messages through `ClaimedMessages.getMessages()`; they are now exposed through the new `ClaimedMessages.getDeletedIds()`, which returns an empty list on Redis before 7.0.
+
+## What's new in Lettuce 7.7
+
+- [Probabilistic data structures (RedisBloom)](user-guide/probabilistic.md) support through `RedisBloomFilterCommands`, `RedisCuckooFilterCommands`, `RedisTopKCommands`, `RedisCMSCommands` and `RedisTDigestCommands`, with the respective async, reactive and Kotlin APIs — covering Bloom Filter (`BF.*`), Cuckoo Filter (`CF.*`), Top-K, Count-Min Sketch and T-Digest
+- Support for the `HIMPORT` command family for bulk-loading hashes that share the same field names, declaring the field names once per connection and sending only values per hash — see [Hash Import](user-guide/hash-import.md)
+- Support for the [`SUNIONCARD`](https://redis.io/docs/latest/commands/sunioncard/) and [`SDIFFCARD`](https://redis.io/docs/latest/commands/sdiffcard/) set cardinality commands
+- Support for the [`LMOVEM`](https://redis.io/docs/latest/commands/lmovem/) and [`BLMOVEM`](https://redis.io/docs/latest/commands/blmovem/) multi-element list move commands
+- Support for the `MAXCOUNT` and `MAXSIZE` options on [`XREAD`](https://redis.io/docs/latest/commands/xread/) and [`XREADGROUP`](https://redis.io/docs/latest/commands/xreadgroup/)
+- Support for [`FT.ALIASLIST`](https://redis.io/docs/latest/commands/ft.aliaslist/) to list search index aliases
+- Support for the `VISMEMBER` Vector Set command — see [Redis Vector Sets](user-guide/vector-sets.md)
+- Support for [`CLIENT NO-TOUCH`](https://redis.io/docs/latest/commands/client-no-touch/) to control key access-time updates per connection
+
 ## What's new in Lettuce 7.2
 
 - Support for [`FT.HYBRID`](https://redis.io/docs/latest/commands/ft.hybrid/) command enabling hybrid vector and full-text search queries

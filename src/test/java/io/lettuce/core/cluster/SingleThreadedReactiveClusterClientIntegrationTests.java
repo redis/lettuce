@@ -10,12 +10,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.lettuce.core.resource.DefaultEventLoopGroupProvider;
+import io.lettuce.test.resource.DefaultRedisClusterClient;
 import io.lettuce.test.resource.FastShutdown;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 
@@ -35,7 +35,7 @@ class SingleThreadedReactiveClusterClientIntegrationTests {
                 .eventLoopGroupProvider(new DefaultEventLoopGroupProvider(1))
                 .commandLatencyCollectorOptions(DefaultCommandLatencyCollectorOptions.disabled()).build();
 
-        client = RedisClusterClient.create(clientResources, RedisURI.create("localhost", 7379));
+        client = RedisClusterClient.create(clientResources, DefaultRedisClusterClient.seedUris());
     }
 
     @AfterEach

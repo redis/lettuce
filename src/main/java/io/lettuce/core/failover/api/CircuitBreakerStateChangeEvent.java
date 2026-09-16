@@ -1,6 +1,5 @@
 package io.lettuce.core.failover.api;
 
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.CircuitBreaker;
 
 /**
@@ -9,7 +8,6 @@ import io.lettuce.core.failover.CircuitBreaker;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 public class CircuitBreakerStateChangeEvent {
 
     private final CircuitBreaker circuitBreaker;

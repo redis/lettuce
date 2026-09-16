@@ -289,6 +289,18 @@ RedisClient client = RedisClient.create("redis://localhost");
 RedisStringReactiveCommands<String, String> commands = client.connect().reactive();
 ```
 
+**Deprecated since 7.8:** `StatefulRedisConnection.reactive()` (and the
+`reactive()` accessor on the other connection types) is deprecated in
+favor of `commands(...)`, which obtains the reactive API through a
+`CommandsFactory`. This is part of making Project Reactor an optional
+dependency. The `reactive()` accessor and the examples below continue to
+work in Lettuce 7.x and are scheduled for removal in Lettuce 8.0.
+
+``` java
+RedisReactiveCommands<String, String> commands =
+        client.connect().commands(RedisReactiveCommands.factory());
+```
+
 In the next step, obtaining a value from a key requires the `GET`
 operation:
 

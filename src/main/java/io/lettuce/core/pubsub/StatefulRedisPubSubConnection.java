@@ -65,7 +65,7 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
      * @param factory the command API factory, must not be {@code null}
      * @param <T> the command API type
      * @return the command API bound to this connection
-     * @since 7.7
+     * @since 7.8
      */
     <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory);
 

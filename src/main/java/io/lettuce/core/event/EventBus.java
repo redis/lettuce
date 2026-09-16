@@ -22,12 +22,13 @@ public interface EventBus {
 
     /**
      * Subscribes to all {@link Event}s published to the bus. The {@code listener} is invoked for every event until the returned
-     * {@link Subscription} is {@link Subscription#close() closed}. Events are dropped for a subscriber that cannot keep up, to
-     * avoid contention.
+     * {@link Subscription} is {@link Subscription#close() closed}. Events are dropped on backpressure to avoid contention.
+     * Exceptions thrown by the {@code listener} are caught and logged so that a single failing invocation does not cancel the
+     * subscription or affect delivery to other subscribers.
      *
      * @param listener callback invoked with each published event, must not be {@code null}.
      * @return a {@link Subscription} that stops delivery when closed.
-     * @since 8.0
+     * @since 7.8
      */
     Subscription subscribe(Consumer<Event> listener);
 
@@ -42,7 +43,7 @@ public interface EventBus {
      * @param listener callback invoked with each matching event, must not be {@code null}.
      * @param <T> the event type.
      * @return a {@link Subscription} that stops delivery when closed.
-     * @since 8.0
+     * @since 7.8
      */
     default <T extends Event> Subscription subscribe(Class<T> type, Consumer<T> listener) {
         LettuceAssert.notNull(type, "Event type must not be null");

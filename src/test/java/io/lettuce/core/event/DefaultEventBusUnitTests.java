@@ -11,6 +11,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
@@ -237,6 +238,28 @@ class DefaultEventBusUnitTests {
     }
 
     static class TestEvent implements Event {
+    }
+
+    @Test
+    void listenerExceptionDoesNotCancelSubscription() throws Exception {
+
+        EventBus sut = new DefaultEventBus(Schedulers.immediate());
+        ArrayBlockingQueue<Event> received = new ArrayBlockingQueue<>(5);
+        AtomicBoolean firstEvent = new AtomicBoolean(true);
+
+        Subscription subscription = sut.subscribe(e -> {
+            if (firstEvent.compareAndSet(true, false)) {
+                throw new IllegalStateException("listener failure");
+            }
+            received.add(e);
+        });
+
+        sut.publish(new EventA()); // listener throws on this one, subscription must survive
+        EventB expected = new EventB();
+        sut.publish(expected); // must still be delivered
+
+        assertThat(received.poll(1, TimeUnit.SECONDS)).isSameAs(expected);
+        subscription.close();
     }
 
     static class EventA implements Event {
