@@ -459,7 +459,7 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/commands/lcs">LCS command refference</a>
      * @since 6.6
      */
-    suspend fun lcs(lcsArgs: LcsArgs): StringMatchResult?
+    suspend fun lcs(lcsArgs: LcsArgs<K>): StringMatchResult?
 
     /**
      * Get the length of the value stored in a key.

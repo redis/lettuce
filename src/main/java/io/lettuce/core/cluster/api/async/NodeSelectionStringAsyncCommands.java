@@ -547,7 +547,7 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * @see <a href="https://redis.io/commands/lcs">LCS command refference</a>
      * @since 6.6
      */
-    AsyncExecutions<StringMatchResult> lcs(LcsArgs lcsArgs);
+    AsyncExecutions<StringMatchResult> lcs(LcsArgs<K> lcsArgs);
 
     /**
      * Get the length of the value stored in a key.

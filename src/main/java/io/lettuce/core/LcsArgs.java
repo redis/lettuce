@@ -17,10 +17,12 @@ import io.lettuce.core.protocol.CommandKeyword;
  * {@link LcsArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Seonghwan Lee
+ * @author Yordan Tsintsov
+ * @param <K> Key type.
  * @since 6.6
  * @see <a href="https://redis.io/commands/lcs">LCS command refference</a>
  */
-public class LcsArgs implements CompositeArgument {
+public class LcsArgs<K> implements CompositeArgument {
 
     private boolean justLen;
 
@@ -30,7 +32,7 @@ public class LcsArgs implements CompositeArgument {
 
     private boolean withIdx;
 
-    private String[] keys;
+    private K[] keys;
 
     /**
      * Builder entry points for {@link LcsArgs}.
@@ -48,8 +50,9 @@ public class LcsArgs implements CompositeArgument {
          *
          * @return new {@link LcsArgs} with {@literal By KEYS} set.
          */
-        public static LcsArgs keys(String... keys) {
-            return new LcsArgs().by(keys);
+        @SafeVarargs
+        public static <K> LcsArgs<K> keys(K... keys) {
+            return new LcsArgs<K>().by(keys);
         }
 
     }
@@ -59,7 +62,7 @@ public class LcsArgs implements CompositeArgument {
      *
      * @return {@code this} {@link LcsArgs}.
      */
-    public LcsArgs minMatchLen(int minMatchLen) {
+    public LcsArgs<K> minMatchLen(int minMatchLen) {
         this.minMatchLen = minMatchLen;
         return this;
     }
@@ -69,7 +72,7 @@ public class LcsArgs implements CompositeArgument {
      *
      * @return {@code this} {@link LcsArgs}.
      */
-    public LcsArgs justLen() {
+    public LcsArgs<K> justLen() {
         justLen = true;
         return this;
     }
@@ -79,7 +82,7 @@ public class LcsArgs implements CompositeArgument {
      *
      * @return {@code this} {@link LcsArgs}.
      */
-    public LcsArgs withMatchLen() {
+    public LcsArgs<K> withMatchLen() {
         withMatchLen = true;
         return this;
     }
@@ -89,12 +92,13 @@ public class LcsArgs implements CompositeArgument {
      *
      * @return {@code this} {@link LcsArgs}.
      */
-    public LcsArgs withIdx() {
+    public LcsArgs<K> withIdx() {
         withIdx = true;
         return this;
     }
 
-    public LcsArgs by(String... keys) {
+    @SafeVarargs
+    public final LcsArgs<K> by(K... keys) {
         LettuceAssert.notEmpty(keys, "Keys must not be empty");
 
         this.keys = keys;
@@ -105,11 +109,10 @@ public class LcsArgs implements CompositeArgument {
         return withIdx;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
-        for (String key : keys) {
-            args.add(key);
-        }
+        args.addKeys((K[]) keys);
         if (justLen) {
             args.add(CommandKeyword.LEN);
         }

@@ -549,7 +549,7 @@ public interface RedisStringAsyncCommands<K, V> {
      * @see <a href="https://redis.io/commands/lcs">LCS command refference</a>
      * @since 6.6
      */
-    RedisFuture<StringMatchResult> lcs(LcsArgs lcsArgs);
+    RedisFuture<StringMatchResult> lcs(LcsArgs<K> lcsArgs);
 
     /**
      * Get the length of the value stored in a key.

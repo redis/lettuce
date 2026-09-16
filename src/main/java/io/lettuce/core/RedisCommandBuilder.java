@@ -3224,7 +3224,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(STRALGO, new StringMatchResultOutput<>(codec), args);
     }
 
-    Command<K, V, StringMatchResult> lcs(LcsArgs lcsArgs) {
+    Command<K, V, StringMatchResult> lcs(LcsArgs<K> lcsArgs) {
         LettuceAssert.notNull(lcsArgs, "lcsArgs" + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);

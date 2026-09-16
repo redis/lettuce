@@ -553,7 +553,7 @@ public interface RedisStringReactiveCommands<K, V> {
      * @see <a href="https://redis.io/commands/lcs">LCS command refference</a>
      * @since 6.6
      */
-    Mono<StringMatchResult> lcs(LcsArgs lcsArgs);
+    Mono<StringMatchResult> lcs(LcsArgs<K> lcsArgs);
 
     /**
      * Get the length of the value stored in a key.
