@@ -243,7 +243,7 @@ class DefaultEventBusUnitTests {
     @Test
     void listenerExceptionDoesNotCancelSubscription() throws Exception {
 
-        EventBus sut = new DefaultEventBus(Schedulers.immediate());
+        EventBus sut = new DefaultEventBus(group);
         ArrayBlockingQueue<Event> received = new ArrayBlockingQueue<>(5);
         AtomicBoolean firstEvent = new AtomicBoolean(true);
 
