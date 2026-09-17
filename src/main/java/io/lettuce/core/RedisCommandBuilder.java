@@ -3227,6 +3227,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @Deprecated
     Command<K, V, StringMatchResult> lcs(LcsArgs lcsArgs) {
         LettuceAssert.notNull(lcsArgs, "LcsArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(lcsArgs.hasKeys(),
+                "LcsArgs must carry keys, use LcsArgs.Builder.keys(…) or lcs(key1, key2, LcsArgs) instead");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         lcsArgs.build(args);

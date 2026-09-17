@@ -460,9 +460,9 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @since 6.6
      */
     @Deprecated(
-        "Use [lcs(key1, key2)] or [lcs(key1, key2, lcsArgs)] instead. " +
-            "The keys carried by [LcsArgs] are encoded as plain strings and not through the key codec.",
-        ReplaceWith("lcs(key1, key2, lcsArgs)")
+        "Use [lcs(key1, key2)] or [lcs(key1, key2, lcsArgs)] instead and pass the keys directly, " +
+            "e.g. lcs(k1, k2, LcsArgs.Builder.withIdx()) instead of lcs(LcsArgs.Builder.keys(k1, k2).withIdx()). " +
+            "The keys carried by [LcsArgs] are encoded as plain strings and not through the key codec."
     )
     suspend fun lcs(lcsArgs: LcsArgs): StringMatchResult?
 
