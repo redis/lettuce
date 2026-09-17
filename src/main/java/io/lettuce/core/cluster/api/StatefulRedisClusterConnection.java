@@ -72,7 +72,7 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      *
      * @return the reactive API for the underlying connection.
      * @deprecated since 7.8, use {@link #commands(CommandsFactory)} with {@link RedisAdvancedClusterReactiveCommands#factory()}
-     *             instead; scheduled for removal in Lettuce 8.0.
+     *             instead; scheduled for removal in a future major release.
      */
     @Deprecated
     RedisAdvancedClusterReactiveCommands<K, V> reactive();

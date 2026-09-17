@@ -50,7 +50,7 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      *
      * @return the reactive API for the underlying connection.
      * @deprecated since 7.8, use {@link #commands(CommandsFactory)} with {@link RedisReactiveCommands#factory()} instead;
-     *             scheduled for removal in Lettuce 8.0.
+     *             scheduled for removal in a future major release.
      */
     @Deprecated
     RedisReactiveCommands<K, V> reactive();
