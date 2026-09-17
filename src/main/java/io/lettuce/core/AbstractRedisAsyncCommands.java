@@ -3154,8 +3154,19 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<StringMatchResult> lcs(LcsArgs<K> args) {
+    @Deprecated
+    public RedisFuture<StringMatchResult> lcs(LcsArgs args) {
         return dispatch(commandBuilder.lcs(args));
+    }
+
+    @Override
+    public RedisFuture<V> lcs(K key1, K key2) {
+        return dispatch(commandBuilder.lcs(key1, key2));
+    }
+
+    @Override
+    public RedisFuture<StringMatchResult> lcs(K key1, K key2, LcsArgs lcsArgs) {
+        return dispatch(commandBuilder.lcs(key1, key2, lcsArgs));
     }
 
     @Override

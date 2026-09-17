@@ -3256,8 +3256,19 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<StringMatchResult> lcs(LcsArgs<K> lcsArgs) {
+    @Deprecated
+    public Mono<StringMatchResult> lcs(LcsArgs lcsArgs) {
         return createMono(() -> commandBuilder.lcs(lcsArgs));
+    }
+
+    @Override
+    public Mono<V> lcs(K key1, K key2) {
+        return createMono(() -> commandBuilder.lcs(key1, key2));
+    }
+
+    @Override
+    public Mono<StringMatchResult> lcs(K key1, K key2, LcsArgs lcsArgs) {
+        return createMono(() -> commandBuilder.lcs(key1, key2, lcsArgs));
     }
 
     @Override
