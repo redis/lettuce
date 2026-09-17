@@ -39,6 +39,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 /**
  * Integration tests for Redis Vector Sets based on the examples from the Redis documentation.
@@ -55,7 +56,7 @@ public class RedisVectorSetAdvancedIntegrationTests {
     protected static RedisCommands<String, String> redis;
 
     public RedisVectorSetAdvancedIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         client = RedisClient.create(redisURI);
         StatefulRedisConnection<String, String> connection = client.connect();

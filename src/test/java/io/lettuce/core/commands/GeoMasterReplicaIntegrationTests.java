@@ -8,6 +8,7 @@ import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RoleParser;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnProvider;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 import org.junit.jupiter.api.*;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 @EnabledOnCommand("GEOADD")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class GeoMasterReplicaIntegrationTests extends AbstractRedisClientTest {

@@ -125,7 +125,7 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
      * @param <K> Key type
      * @param <V> Value type
      * @return the factory that creates {@link RedisClusterPubSubReactiveCommands}
-     * @since 7.7
+     * @since 7.8
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     static <K, V> ClusterPubSubCommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, RedisClusterPubSubReactiveCommands<K, V>> factory() {

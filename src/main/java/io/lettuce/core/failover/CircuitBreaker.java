@@ -2,7 +2,6 @@ package io.lettuce.core.failover;
 
 import java.io.Closeable;
 
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
 
@@ -17,7 +16,6 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 public interface CircuitBreaker extends Closeable {
 
     /**

@@ -3,6 +3,7 @@ package io.lettuce.core.pubsub;
 import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
+import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 
 /**
@@ -43,6 +44,18 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
     RedisPubSubAsyncCommands<K, V> async();
 
     /**
+     * Returns the {@link RedisPubSubReactiveCommands} API for the current connection. Does not create a new connection.
+     *
+     * @return the reactive API for the underlying connection.
+     * @deprecated since 7.8, use {@link #commands(PubSubCommandsFactory)} with {@link RedisPubSubReactiveCommands#factory()}
+     *             instead; scheduled for removal in a future major release.
+     */
+    @Deprecated
+    default RedisPubSubReactiveCommands<K, V> reactive() {
+        return commands(RedisPubSubReactiveCommands.factory());
+    }
+
+    /**
      * Add a new {@link RedisPubSubListener listener}.
      *
      * @param listener the listener, must not be {@code null}.
@@ -65,7 +78,7 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
      * @param factory the command API factory, must not be {@code null}
      * @param <T> the command API type
      * @return the command API bound to this connection
-     * @since 7.7
+     * @since 7.8
      */
     <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory);
 

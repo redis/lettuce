@@ -40,7 +40,7 @@ public class ConnectionEventBusMonitoringUtil {
     public void setupEventBusMonitoring(RedisClient client) {
         EventBus eventBus = client.getResources().eventBus();
 
-        eventBus.get().subscribe(event -> {
+        eventBus.subscribe(event -> {
             if (!monitoringActive.get())
                 return;
 

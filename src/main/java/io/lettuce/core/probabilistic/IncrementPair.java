@@ -11,7 +11,7 @@ import java.util.Objects;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * A value paired with an increment for use with {@code TOPK.INCRBY}.
+ * A value paired with an increment for use with {@code TOPK.INCRBY} and {@code CMS.INCRBY}.
  *
  * @param <V> the value type
  * @author Redis

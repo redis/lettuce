@@ -14,7 +14,7 @@ import java.io.Closeable;
  * This is not related to {@code org.reactivestreams.Subscription} or to Redis Pub/Sub channel subscriptions.
  *
  * @author Aleksandar Todorov
- * @since 7.7
+ * @since 7.8
  */
 public interface Subscription extends Closeable {
 

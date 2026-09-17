@@ -53,6 +53,7 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
+import io.lettuce.test.condition.DisabledOnProvider;
 import io.lettuce.test.settings.TestSettings;
 
 /**
@@ -60,6 +61,9 @@ import io.lettuce.test.settings.TestSettings;
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+// Assumes TestSettings.host() is the local machine: connects it to a local ServerSocket and blocks in accept().
+// On an externally provisioned environment the connection never arrives and the test hangs forever.
+@DisabledOnProvider("re")
 class AsyncConnectionProviderIntegrationTests {
 
     private final ClientResources resources;

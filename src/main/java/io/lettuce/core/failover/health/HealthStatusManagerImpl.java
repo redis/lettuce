@@ -1,7 +1,6 @@
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
 
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Ivo Gaydazhiev
  * @since 7.4
  */
-@Experimental
 public class HealthStatusManagerImpl implements HealthStatusManager, AutoCloseable {
 
     private final HealthCheckCollection healthChecks = new HealthCheckCollection();

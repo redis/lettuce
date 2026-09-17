@@ -9,7 +9,9 @@ import java.util.Map;
  * @param <V> Value type.
  * @author Mark Paluch
  * @since 6.0
+ * @deprecated since 7.8, along with {@link CacheAccessor}; scheduled for removal in a future major release.
  */
+@Deprecated
 class MapCacheAccessor<K, V> implements CacheAccessor<K, V> {
 
     private final Map<K, V> map;

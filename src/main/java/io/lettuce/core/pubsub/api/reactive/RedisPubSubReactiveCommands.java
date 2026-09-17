@@ -121,7 +121,8 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
 
     /**
      * @return the underlying connection.
-     * @since 6.2, will be removed with Lettuce 7 to avoid exposing the underlying connection.
+     * @deprecated since 6.2, there is no replacement — the underlying connection is not meant to be reached through the command
+     *             interfaces; scheduled for removal in a future major release.
      */
     @Deprecated
     StatefulRedisPubSubConnection<K, V> getStatefulConnection();
@@ -141,7 +142,7 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
      * @param <K> Key type
      * @param <V> Value type
      * @return the factory that creates {@link RedisPubSubReactiveCommands}
-     * @since 7.7
+     * @since 7.8
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     static <K, V> PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, RedisPubSubReactiveCommands<K, V>> factory() {

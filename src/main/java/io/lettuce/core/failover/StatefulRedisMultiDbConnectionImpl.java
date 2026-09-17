@@ -29,7 +29,6 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -66,7 +65,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
         implements StatefulRedisMultiDbConnection<K, V> {
 

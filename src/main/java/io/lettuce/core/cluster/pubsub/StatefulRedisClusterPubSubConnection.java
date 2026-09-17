@@ -80,6 +80,19 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
     RedisClusterPubSubAsyncCommands<K, V> async();
 
     /**
+     * Returns the {@link RedisClusterPubSubReactiveCommands} API for the current connection. Does not create a new connection.
+     *
+     * @return the reactive API for the underlying connection.
+     * @deprecated since 7.8, use {@link #commands(ClusterPubSubCommandsFactory)} with
+     *             {@link RedisClusterPubSubReactiveCommands#factory()} instead; scheduled for removal in a future major
+     *             release.
+     */
+    @Deprecated
+    default RedisClusterPubSubReactiveCommands<K, V> reactive() {
+        return commands(RedisClusterPubSubReactiveCommands.factory());
+    }
+
+    /**
      * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list. This
      * connection is bound to the node id. Once the cluster topology view is updated, the connection will try to reconnect the
      * to the node with the specified {@code nodeId}, that behavior can also lead to a closed connection once the node with the
@@ -198,7 +211,7 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * @param factory the command API factory, must not be {@code null}
      * @param <T> the command API type
      * @return the command API bound to this connection
-     * @since 7.7
+     * @since 7.8
      */
     <T> T commands(ClusterPubSubCommandsFactory<StatefulRedisClusterPubSubConnection<K, V>, T> factory);
 

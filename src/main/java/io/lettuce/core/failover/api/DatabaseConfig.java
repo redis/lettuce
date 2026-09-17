@@ -3,7 +3,6 @@ package io.lettuce.core.failover.api;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.MaintNotificationsConfig;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.core.internal.LettuceAssert;
@@ -25,7 +24,6 @@ import io.lettuce.core.internal.LettuceAssert;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 public class DatabaseConfig {
 
     private static final float DEFAULT_WEIGHT = 1.0f;
