@@ -30,6 +30,7 @@ import java.util.List;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link RedisTimeSeriesCommandBuilder}.
@@ -429,6 +430,180 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
         assertThat(buff.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*2\r\n" + "$13\r\nTS.QUERYINDEX\r\n" + "$9\r\nregion=us\r\n");
+    }
+
+    @Test
+    void tsCreateShouldRejectNullCreateArgs() {
+        assertThatThrownBy(() -> builder.tsCreate(SOURCE_KEY, null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("TsCreateArgs must not be null");
+    }
+
+    @Test
+    void tsAlterShouldRejectNullAlterArgs() {
+        assertThatThrownBy(() -> builder.tsAlter(SOURCE_KEY, null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("TsAlterArgs must not be null");
+    }
+
+    @Test
+    void tsAddShouldRejectNullAddArgs() {
+        assertThatThrownBy(() -> builder.tsAdd(SOURCE_KEY, 1000, 23.5, null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("TsAddArgs must not be null");
+    }
+
+    @Test
+    void tsAddWithAutoTimestampShouldRejectNullAddArgs() {
+        assertThatThrownBy(() -> builder.tsAdd(SOURCE_KEY, 23.5, null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("TsAddArgs must not be null");
+    }
+
+    @Test
+    void tsIncrByShouldRejectNullIncrByArgs() {
+        assertThatThrownBy(() -> builder.tsIncrBy(SOURCE_KEY, 1.5, null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("TsIncrByArgs must not be null");
+    }
+
+    @Test
+    void tsDecrByShouldRejectNullDecrByArgs() {
+        assertThatThrownBy(() -> builder.tsDecrBy(SOURCE_KEY, 1.5, null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("TsIncrByArgs must not be null");
+    }
+
+    @Test
+    void tsMAddShouldRejectNullEntries() {
+        assertThatThrownBy(() -> builder.tsMAdd((TsMAddValue<String>[]) null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Entries must not be null");
+    }
+
+    @Test
+    void tsMAddShouldRejectEmptyEntries() {
+        assertThatThrownBy(builder::tsMAdd).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Entries must not be empty");
+    }
+
+    @Test
+    void tsMAddShouldRejectNullElementInEntries() {
+        TsMAddValue<String> entry = TsMAddValue.of(SOURCE_KEY, 1000, 23.5);
+
+        assertThatThrownBy(() -> builder.tsMAdd(entry, null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Entry must not be null");
+    }
+
+    @Test
+    void tsMAddShouldRejectNullSingleEntry() {
+        assertThatThrownBy(() -> builder.tsMAdd((TsMAddValue<String>) null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Entry must not be null");
+    }
+
+    @Test
+    void tsMAddValuesShouldRejectNullEntries() {
+        assertThatThrownBy(() -> builder.tsMAddValues((TsMAddValue<String>[]) null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Entries must not be null");
+    }
+
+    @Test
+    void tsMAddValuesShouldRejectEmptyEntries() {
+        assertThatThrownBy(builder::tsMAddValues).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Entries must not be empty");
+    }
+
+    @Test
+    void tsMAddValuesShouldRejectNullElementInEntries() {
+        TsMAddValue<String> entry = TsMAddValue.of(SOURCE_KEY, 1000, 23.5);
+
+        assertThatThrownBy(() -> builder.tsMAddValues(entry, null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Entry must not be null");
+    }
+
+    @Test
+    void tsMAddValuesShouldRejectNullSingleEntry() {
+        assertThatThrownBy(() -> builder.tsMAddValues((TsMAddValue<String>) null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Entry must not be null");
+    }
+
+    @Test
+    void tsMGetShouldRejectNullFilters() {
+        assertThatThrownBy(() -> builder.tsMGet((TsFilter[]) null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Filters must not be null");
+    }
+
+    @Test
+    void tsMGetShouldRejectEmptyFilters() {
+        assertThatThrownBy(builder::tsMGet).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Filters must not be empty");
+    }
+
+    @Test
+    void tsMGetShouldRejectNullElementInFilters() {
+        assertThatThrownBy(() -> builder.tsMGet(TsFilter.equal("region", "us"), null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Filter must not be null");
+    }
+
+    @Test
+    void tsMGetShouldRejectNullSingleFilter() {
+        assertThatThrownBy(() -> builder.tsMGet((TsFilter) null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Filter must not be null");
+    }
+
+    @Test
+    void tsMGetWithArgsShouldRejectNullMGetArgs() {
+        assertThatThrownBy(() -> builder.tsMGet((TsMGetArgs) null, TsFilter.equal("region", "us")))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("TsMGetArgs must not be null");
+    }
+
+    @Test
+    void tsMGetWithArgsShouldRejectNullFilters() {
+        TsMGetArgs args = TsMGetArgs.Builder.withLabels();
+
+        assertThatThrownBy(() -> builder.tsMGet(args, (TsFilter[]) null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Filters must not be null");
+    }
+
+    @Test
+    void tsMGetWithArgsShouldRejectEmptyFilters() {
+        TsMGetArgs args = TsMGetArgs.Builder.withLabels();
+
+        assertThatThrownBy(() -> builder.tsMGet(args)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Filters must not be empty");
+    }
+
+    @Test
+    void tsMGetWithArgsShouldRejectNullElementInFilters() {
+        TsMGetArgs args = TsMGetArgs.Builder.withLabels();
+
+        assertThatThrownBy(() -> builder.tsMGet(args, TsFilter.equal("region", "us"), null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Filter must not be null");
+    }
+
+    @Test
+    void tsMGetWithArgsShouldRejectNullSingleFilter() {
+        TsMGetArgs args = TsMGetArgs.Builder.withLabels();
+
+        assertThatThrownBy(() -> builder.tsMGet(args, (TsFilter) null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Filter must not be null");
+    }
+
+    @Test
+    void tsQueryIndexShouldRejectNullFilters() {
+        assertThatThrownBy(() -> builder.tsQueryIndex((TsFilter[]) null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Filters must not be null");
+    }
+
+    @Test
+    void tsQueryIndexShouldRejectEmptyFilters() {
+        assertThatThrownBy(builder::tsQueryIndex).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Filters must not be empty");
+    }
+
+    @Test
+    void tsQueryIndexShouldRejectNullElementInFilters() {
+        assertThatThrownBy(() -> builder.tsQueryIndex(TsFilter.equal("region", "us"), null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Filter must not be null");
+    }
+
+    @Test
+    void tsQueryIndexShouldRejectNullSingleFilter() {
+        assertThatThrownBy(() -> builder.tsQueryIndex((TsFilter) null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Filter must not be null");
     }
 
 }

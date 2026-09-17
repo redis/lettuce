@@ -19,21 +19,21 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * <p>
  * PLAN (Given/When/Then):
  * <ul>
- * <li>Given a label and a value, when {@code TsFilter.equal(label, value)}, then {@code toExpression()} returns
+ * <li>Given a label and a value, when {@code TsFilter.equal(label, value)}, then {@code toString()} returns
  * {@code "label=value"}.</li>
- * <li>Given a label and a value, when {@code TsFilter.notEqual(label, value)}, then {@code toExpression()} returns
+ * <li>Given a label and a value, when {@code TsFilter.notEqual(label, value)}, then {@code toString()} returns
  * {@code "label!=value"}.</li>
- * <li>Given a label, when {@code TsFilter.exists(label)}, then {@code toExpression()} returns {@code "label!="} (the server's
+ * <li>Given a label, when {@code TsFilter.exists(label)}, then {@code toString()} returns {@code "label!="} (the server's
  * FILTER syntax uses {@code !=} to mean "label is present").</li>
- * <li>Given a label, when {@code TsFilter.notExists(label)}, then {@code toExpression()} returns {@code "label="} (the server's
+ * <li>Given a label, when {@code TsFilter.notExists(label)}, then {@code toString()} returns {@code "label="} (the server's
  * FILTER syntax uses {@code =} to mean "label is absent").</li>
- * <li>Given a label and two or more values, when {@code TsFilter.in(label, values...)}, then {@code toExpression()} returns
+ * <li>Given a label and two or more values, when {@code TsFilter.in(label, values...)}, then {@code toString()} returns
  * {@code "label=(v1,v2)"}.</li>
- * <li>Given a label and two or more values, when {@code TsFilter.notIn(label, values...)}, then {@code toExpression()} returns
+ * <li>Given a label and two or more values, when {@code TsFilter.notIn(label, values...)}, then {@code toString()} returns
  * {@code "label!=(v1,v2)"}.</li>
- * <li>Given an arbitrary expression string, when {@code TsFilter.raw(expression)}, then {@code toExpression()} returns that
- * string unchanged.</li>
- * <li>Given two {@link TsFilter} instances that produce the same {@code toExpression()} result, when compared, then they are
+ * <li>Given an arbitrary expression string, when {@code TsFilter.raw(expression)}, then {@code toString()} returns that string
+ * unchanged.</li>
+ * <li>Given two {@link TsFilter} instances that produce the same {@code toString()} result, when compared, then they are
  * {@code equal} and share the same {@code hashCode()}.</li>
  * <li>Given a {@code null} or empty label, when any factory method is called, then an {@link IllegalArgumentException} is
  * thrown.</li>
@@ -46,37 +46,37 @@ class TsFilterUnitTests {
 
     @Test
     void equalBuildsEqualityExpression() {
-        assertThat(TsFilter.equal("region", "us").toExpression()).isEqualTo("region=us");
+        assertThat(TsFilter.equal("region", "us").toString()).isEqualTo("region=us");
     }
 
     @Test
     void notEqualBuildsInequalityExpression() {
-        assertThat(TsFilter.notEqual("region", "us").toExpression()).isEqualTo("region!=us");
+        assertThat(TsFilter.notEqual("region", "us").toString()).isEqualTo("region!=us");
     }
 
     @Test
     void existsBuildsNotEqualsEmptyExpression() {
-        assertThat(TsFilter.exists("region").toExpression()).isEqualTo("region!=");
+        assertThat(TsFilter.exists("region").toString()).isEqualTo("region!=");
     }
 
     @Test
     void notExistsBuildsEqualsEmptyExpression() {
-        assertThat(TsFilter.notExists("region").toExpression()).isEqualTo("region=");
+        assertThat(TsFilter.notExists("region").toString()).isEqualTo("region=");
     }
 
     @Test
     void inBuildsListMatchExpression() {
-        assertThat(TsFilter.in("region", "us", "eu").toExpression()).isEqualTo("region=(us,eu)");
+        assertThat(TsFilter.in("region", "us", "eu").toString()).isEqualTo("region=(us,eu)");
     }
 
     @Test
     void notInBuildsListNotMatchExpression() {
-        assertThat(TsFilter.notIn("region", "us", "eu").toExpression()).isEqualTo("region!=(us,eu)");
+        assertThat(TsFilter.notIn("region", "us", "eu").toString()).isEqualTo("region!=(us,eu)");
     }
 
     @Test
     void rawReturnsExpressionUnchanged() {
-        assertThat(TsFilter.raw("region=(us,eu)").toExpression()).isEqualTo("region=(us,eu)");
+        assertThat(TsFilter.raw("region=(us,eu)").toString()).isEqualTo("region=(us,eu)");
     }
 
     @Test

@@ -9,6 +9,7 @@ package io.lettuce.core;
 import java.util.List;
 
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.EncodedComplexOutput;
 import io.lettuce.core.output.ErrorTolerantLongListOutput;
 import io.lettuce.core.output.ErrorTolerantLongValueListOutput;
@@ -58,6 +59,7 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
 
     Command<K, V, String> tsCreate(K key, TsCreateArgs createArgs) {
         notNullKey(key);
+        LettuceAssert.notNull(createArgs, "TsCreateArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         createArgs.build(args);
@@ -68,13 +70,12 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
     Command<K, V, String> tsAlter(K key) {
         notNullKey(key);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-
-        return createCommand(TS_ALTER, new StatusOutput<>(codec), args);
+        return createCommand(TS_ALTER, new StatusOutput<>(codec), key);
     }
 
     Command<K, V, String> tsAlter(K key, TsAlterArgs alterArgs) {
         notNullKey(key);
+        LettuceAssert.notNull(alterArgs, "TsAlterArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         alterArgs.build(args);
@@ -130,6 +131,7 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
 
     Command<K, V, Long> tsAdd(K key, long timestamp, double value, TsAddArgs addArgs) {
         notNullKey(key);
+        LettuceAssert.notNull(addArgs, "TsAddArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp).add(value);
         addArgs.build(args);
@@ -147,6 +149,7 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
 
     Command<K, V, Long> tsAdd(K key, double value, TsAddArgs addArgs) {
         notNullKey(key);
+        LettuceAssert.notNull(addArgs, "TsAddArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add("*").add(value);
         addArgs.build(args);
@@ -156,10 +159,12 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
 
     @SafeVarargs
     final Command<K, V, List<Long>> tsMAdd(TsMAddValue<K>... entries) {
-        notEmpty(entries);
+        LettuceAssert.notNull(entries, "Entries " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(entries, "Entries " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         for (TsMAddValue<K> entry : entries) {
+            LettuceAssert.notNull(entry, "Entry " + MUST_NOT_BE_NULL);
             addMAddEntry(args, entry);
         }
 
@@ -167,6 +172,8 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
     }
 
     Command<K, V, List<Long>> tsMAdd(TsMAddValue<K> entry) {
+        LettuceAssert.notNull(entry, "Entry " + MUST_NOT_BE_NULL);
+
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         addMAddEntry(args, entry);
 
@@ -175,10 +182,12 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
 
     @SafeVarargs
     final Command<K, V, List<Value<Long>>> tsMAddValues(TsMAddValue<K>... entries) {
-        notEmpty(entries);
+        LettuceAssert.notNull(entries, "Entries " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(entries, "Entries " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         for (TsMAddValue<K> entry : entries) {
+            LettuceAssert.notNull(entry, "Entry " + MUST_NOT_BE_NULL);
             addMAddEntry(args, entry);
         }
 
@@ -186,6 +195,8 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
     }
 
     Command<K, V, List<Value<Long>>> tsMAddValues(TsMAddValue<K> entry) {
+        LettuceAssert.notNull(entry, "Entry " + MUST_NOT_BE_NULL);
+
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         addMAddEntry(args, entry);
 
@@ -206,6 +217,7 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
 
     Command<K, V, Long> tsIncrBy(K key, double value, TsIncrByArgs incrByArgs) {
         notNullKey(key);
+        LettuceAssert.notNull(incrByArgs, "TsIncrByArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(value);
         incrByArgs.build(args);
@@ -223,6 +235,7 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
 
     Command<K, V, Long> tsDecrBy(K key, double value, TsIncrByArgs decrByArgs) {
         notNullKey(key);
+        LettuceAssert.notNull(decrByArgs, "TsIncrByArgs " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(value);
         decrByArgs.build(args);
@@ -258,63 +271,77 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         if (debug) {
-            args.add(CommandKeyword.DEBUG);
+            args.add(DEBUG);
         }
 
         return createCommand(TS_INFO, new EncodedComplexOutput<>(codec, new TsInfoValueParser<>(codec)), args);
     }
 
-    final Command<K, V, List<TsMGetValue<K>>> tsMGet(TsFilter... filters) {
-        notEmptyValues(filters);
+    Command<K, V, List<TsMGetValue<K>>> tsMGet(TsFilter... filters) {
+        LettuceAssert.notNull(filters, "Filters " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(filters, "Filters " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.FILTER);
         for (TsFilter filter : filters) {
-            args.add(filter.toExpression());
+            LettuceAssert.notNull(filter, "Filter " + MUST_NOT_BE_NULL);
+            args.add(filter.toString());
         }
 
         return createCommand(TS_MGET, new EncodedComplexOutput<>(codec, new TsMGetValueParser<>(codec)), args);
     }
 
     Command<K, V, List<TsMGetValue<K>>> tsMGet(TsFilter filter) {
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.FILTER).add(filter.toExpression());
+        LettuceAssert.notNull(filter, "Filter " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.FILTER).add(filter.toString());
 
         return createCommand(TS_MGET, new EncodedComplexOutput<>(codec, new TsMGetValueParser<>(codec)), args);
     }
 
-    final Command<K, V, List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter... filters) {
-        notEmptyValues(filters);
+    Command<K, V, List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter... filters) {
+        LettuceAssert.notNull(mGetArgs, "TsMGetArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(filters, "Filters " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(filters, "Filters " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         mGetArgs.build(args);
         args.add(CommandKeyword.FILTER);
         for (TsFilter filter : filters) {
-            args.add(filter.toExpression());
+            LettuceAssert.notNull(filter, "Filter " + MUST_NOT_BE_NULL);
+            args.add(filter.toString());
         }
 
         return createCommand(TS_MGET, new EncodedComplexOutput<>(codec, new TsMGetValueParser<>(codec)), args);
     }
 
     Command<K, V, List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter filter) {
+        LettuceAssert.notNull(mGetArgs, "TsMGetArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(filter, "Filter " + MUST_NOT_BE_NULL);
+
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         mGetArgs.build(args);
-        args.add(CommandKeyword.FILTER).add(filter.toExpression());
+        args.add(CommandKeyword.FILTER).add(filter.toString());
 
         return createCommand(TS_MGET, new EncodedComplexOutput<>(codec, new TsMGetValueParser<>(codec)), args);
     }
 
-    final Command<K, V, List<K>> tsQueryIndex(TsFilter... filters) {
-        notEmptyValues(filters);
+    Command<K, V, List<K>> tsQueryIndex(TsFilter... filters) {
+        LettuceAssert.notNull(filters, "Filters " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(filters, "Filters " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         for (TsFilter filter : filters) {
-            args.add(filter.toExpression());
+            LettuceAssert.notNull(filter, "Filter " + MUST_NOT_BE_NULL);
+            args.add(filter.toString());
         }
 
         return createCommand(TS_QUERYINDEX, new KeyListOutput<>(codec), args);
     }
 
     Command<K, V, List<K>> tsQueryIndex(TsFilter filter) {
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(filter.toExpression());
+        LettuceAssert.notNull(filter, "Filter " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(filter.toString());
 
         return createCommand(TS_QUERYINDEX, new KeyListOutput<>(codec), args);
     }

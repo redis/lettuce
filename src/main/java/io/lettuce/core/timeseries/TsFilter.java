@@ -133,15 +133,6 @@ public class TsFilter {
         return new TsFilter(expression);
     }
 
-    /**
-     * Returns the FILTER expression this {@link TsFilter} represents, exactly as sent on the wire.
-     *
-     * @return the FILTER expression.
-     */
-    public String toExpression() {
-        return expression;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -161,7 +152,7 @@ public class TsFilter {
 
     @Override
     public String toString() {
-        return String.format("TsFilter[%s]", expression);
+        return expression;
     }
 
 }
