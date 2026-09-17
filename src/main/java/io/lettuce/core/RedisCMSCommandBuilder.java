@@ -72,12 +72,37 @@ class RedisCMSCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CMS_INITBYDIM, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, String> cmsInitByDim(K key, long width, long depth, int cellSize) {
+        notNullKey(key);
+        assertValidCellSize(cellSize);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(width).add(depth).add(CommandKeyword.CELL_SIZE)
+                .add(cellSize);
+
+        return createCommand(CMS_INITBYDIM, new StatusOutput<>(codec), args);
+    }
+
     Command<K, V, String> cmsInitByProb(K key, double error, double probability) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(error).add(probability);
 
         return createCommand(CMS_INITBYPROB, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> cmsInitByProb(K key, double error, double probability, int cellSize) {
+        notNullKey(key);
+        assertValidCellSize(cellSize);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(error).add(probability).add(CommandKeyword.CELL_SIZE)
+                .add(cellSize);
+
+        return createCommand(CMS_INITBYPROB, new StatusOutput<>(codec), args);
+    }
+
+    private static void assertValidCellSize(int cellSize) {
+        LettuceAssert.isTrue(cellSize == 1 || cellSize == 2 || cellSize == 4 || cellSize == 8,
+                "Cell size must be 1, 2, 4 or 8");
     }
 
     Command<K, V, String> cmsMerge(K destination, K source) {

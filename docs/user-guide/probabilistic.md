@@ -119,8 +119,33 @@ commands.cmsInitByProb("hits", 0.001, 0.0001);
 CMSInfoValue info = commands.cmsInfo("hits");
 ```
 
-`CMS.MERGE` requires every sketch — sources and destination — to share the same width
-and depth, so initialize them with matching dimensions:
+Counters default to 4 bytes per cell. Redis 8.12 adds the `CELL_SIZE` option so a sketch
+can trade counter range for memory: 1-byte cells (max count 255) are enough to spot
+repeating requests in a short time window and take a quarter of the memory, while 8-byte
+cells hold very high counts. Pass it as the trailing `cellSize` argument; the chosen size is
+reported by `CMSInfoValue.getCellSize()` (`null` on servers that predate the option).
+
+```java
+commands.cmsInitByDim("req:1m", 1000, 5, 1);
+commands.cmsInitByProb("big", 0.001, 0.01, 8);
+
+Long cellSize = commands.cmsInfo("req:1m").getCellSize(); // 1
+```
+
+Since Redis 8.12, `CMS.INCRBY` also accepts negative increments, so a count that was added
+earlier can be taken back again (for example when an event leaves a sliding window). The
+server only applies a decrement if every counter cell of the item holds at least that
+amount; otherwise the command fails with `CMS: INCRBY underflow` and the sketch is left
+unchanged. Never decrement an item that was not added before — that would corrupt the
+sketch.
+
+```java
+commands.cmsIncrBy("req:1m", IncrementPair.of("/login", 5));   // [5]
+commands.cmsIncrBy("req:1m", IncrementPair.of("/login", -2));  // [3]
+```
+
+`CMS.MERGE` requires every sketch — sources and destination — to share the same width,
+depth and cell size, so initialize them with matching dimensions:
 
 ```java
 commands.cmsInitByDim("day-1", 2000, 5);

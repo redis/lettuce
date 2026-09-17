@@ -4705,8 +4705,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> cmsInitByDim(K key, long width, long depth, int cellSize) {
+        return dispatch(cmsCommandBuilder.cmsInitByDim(key, width, depth, cellSize));
+    }
+
+    @Override
     public RedisFuture<String> cmsInitByProb(K key, double error, double probability) {
         return dispatch(cmsCommandBuilder.cmsInitByProb(key, error, probability));
+    }
+
+    @Override
+    public RedisFuture<String> cmsInitByProb(K key, double error, double probability, int cellSize) {
+        return dispatch(cmsCommandBuilder.cmsInitByProb(key, error, probability, cellSize));
     }
 
     @Override

@@ -27,7 +27,8 @@ public class IncrementPair<V> {
      * Creates a new {@link IncrementPair}.
      *
      * @param value the value, must not be {@code null}.
-     * @param increment the increment.
+     * @param increment the increment. {@code CMS.INCRBY} accepts a negative increment to decrement the count (Redis 8.12 and
+     *        later).
      */
     public IncrementPair(V value, long increment) {
         LettuceAssert.notNull(value, "Value must not be null");
@@ -39,7 +40,8 @@ public class IncrementPair<V> {
      * Creates a new {@link IncrementPair}.
      *
      * @param value the value, must not be {@code null}.
-     * @param increment the increment.
+     * @param increment the increment. {@code CMS.INCRBY} accepts a negative increment to decrement the count (Redis 8.12 and
+     *        later).
      * @param <V> the value type.
      * @return a new {@link IncrementPair}.
      */
