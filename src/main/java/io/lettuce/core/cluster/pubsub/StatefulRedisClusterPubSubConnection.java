@@ -84,7 +84,8 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      *
      * @return the reactive API for the underlying connection.
      * @deprecated since 7.8, use {@link #commands(ClusterPubSubCommandsFactory)} with
-     *             {@link RedisClusterPubSubReactiveCommands#factory()} instead; scheduled for removal in Lettuce 8.0.
+     *             {@link RedisClusterPubSubReactiveCommands#factory()} instead; scheduled for removal in a future major
+     *             release.
      */
     @Deprecated
     RedisClusterPubSubReactiveCommands<K, V> reactive();
