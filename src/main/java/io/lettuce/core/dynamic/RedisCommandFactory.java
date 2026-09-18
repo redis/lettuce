@@ -10,10 +10,13 @@ import io.lettuce.core.AbstractRedisReactiveCommands;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.dynamic.ReactiveTypes.ReactiveLibrary;
 import io.lettuce.core.dynamic.batch.BatchSize;
 import io.lettuce.core.dynamic.intercept.DefaultMethodInvokingInterceptor;
 import io.lettuce.core.dynamic.intercept.InvocationProxyFactory;
@@ -240,15 +243,18 @@ public class RedisCommandFactory {
 
             CommandMethodVerifier verifier = verifyCommandMethods ? commandMethodVerifier : CommandMethodVerifier.NONE;
 
-            AbstractRedisReactiveCommands reactive = getReactiveCommands();
-
-            LettuceAssert.isTrue(reactive != null, "Reactive commands is null");
-
             this.async = new AsyncExecutableCommandLookupStrategy(redisCodecs, commandOutputFactoryResolver, verifier,
                     (StatefulConnection) connection);
 
-            this.reactive = new ReactiveExecutableCommandLookupStrategy(redisCodecs, commandOutputFactoryResolver, verifier,
-                    reactive);
+            if (ReactiveTypes.isAvailable(ReactiveLibrary.PROJECT_REACTOR)) {
+                AbstractRedisReactiveCommands reactive = getReactiveCommands();
+
+                LettuceAssert.isTrue(reactive != null, "Reactive commands is null");
+                this.reactive = new ReactiveExecutableCommandLookupStrategy(redisCodecs, commandOutputFactoryResolver, verifier,
+                        reactive);
+            } else {
+                this.reactive = null;
+            }
         }
 
         private AbstractRedisReactiveCommands getReactiveCommands() {
@@ -256,11 +262,12 @@ public class RedisCommandFactory {
             Object reactive = null;
 
             if (connection instanceof StatefulRedisConnection) {
-                reactive = ((StatefulRedisConnection) connection).reactive();
+                reactive = ((StatefulRedisConnection) connection).commands(RedisReactiveCommands.factory());
             }
 
             if (connection instanceof StatefulRedisClusterConnection) {
-                reactive = ((StatefulRedisClusterConnection) connection).reactive();
+                reactive = ((StatefulRedisClusterConnection) connection)
+                        .commands(RedisAdvancedClusterReactiveCommands.factory());
             }
 
             if (reactive != null && Proxy.isProxyClass(reactive.getClass())) {
@@ -276,6 +283,13 @@ public class RedisCommandFactory {
         public ExecutableCommand resolveCommandMethod(CommandMethod method, RedisCommandsMetadata metadata) {
 
             if (method.isReactiveExecution()) {
+
+                LettuceAssert.assertState(reactive != null,
+                        () -> String.format(
+                                "Cannot resolve reactive command method %s: Project Reactor is not available on the classpath. "
+                                        + "Add a dependency on Project Reactor to use reactive command methods.",
+                                method));
+
                 return reactive.resolveCommandMethod(method, metadata);
             }
 

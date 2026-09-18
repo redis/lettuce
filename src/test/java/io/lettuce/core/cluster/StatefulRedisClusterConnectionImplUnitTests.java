@@ -60,10 +60,9 @@ class StatefulRedisClusterConnectionImplUnitTests {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    void factoryProducesSameTypeAsReactive() {
-        assertThat(connection.commands(RedisAdvancedClusterReactiveCommands.factory()).getClass())
-                .isSameAs(connection.reactive().getClass());
+    void factoryProducesReactiveCommands() {
+        assertThat(connection.commands(RedisAdvancedClusterReactiveCommands.factory()))
+                .isInstanceOf(RedisAdvancedClusterReactiveCommandsImpl.class);
     }
 
 }

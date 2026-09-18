@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import reactor.test.StepVerifier;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.*;
 import io.lettuce.test.LettuceExtension;
@@ -80,7 +81,8 @@ class CustomCodecIntegrationTests extends TestSupport {
         StatefulRedisConnection<String, Object> redisConnection = client.connect(new SerializedObjectCodec());
         List<String> list = list("one", "two");
 
-        StepVerifier.create(redisConnection.reactive().set(key, list, SetArgs.Builder.ex(1))).expectNext("OK").verifyComplete();
+        StepVerifier.create(redisConnection.commands(RedisReactiveCommands.factory()).set(key, list, SetArgs.Builder.ex(1)))
+                .expectNext("OK").verifyComplete();
         redisConnection.close();
     }
 
