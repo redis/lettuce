@@ -433,11 +433,36 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.set(KEY_2, "mynewtext");
 
         // > LCS key1 key2
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2));
+        assertThat(redis.lcs(KEY_1, KEY_2)).isEqualTo("mytext");
+
+        StringMatchResult matchResult = redis.lcs(KEY_1, KEY_2, new LcsArgs());
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
         assertThat(matchResult.getMatches().size()).isEqualTo(0);
         assertThat(matchResult.getLen()).isEqualTo(0);
+    }
 
+    @Test
+    @EnabledOnCommand("LCS")
+    void lcsNoCommonSubstring() {
+        redis.set(KEY_1, "abc");
+        redis.set(KEY_2, "xyz");
+
+        // > LCS key1 key2
+        assertThat(redis.lcs(KEY_1, KEY_2)).isEmpty();
+        assertThat(redis.lcs(KEY_1, "missing{k}")).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("LCS")
+    @SuppressWarnings("deprecation")
+    void lcsDeprecatedKeysInArgs() {
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
+
+        // > LCS key1 key2 IDX
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).withIdx());
+        assertThat(matchResult.getMatches().size()).isEqualTo(2);
+        assertThat(matchResult.getLen()).isEqualTo(6);
     }
 
     @Test
@@ -446,7 +471,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
         // > LCS a b IDX MINMATCHLEN 4 WITHMATCHLEN
         // Keys don't exist.
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys("a{k}", "b{k}").minMatchLen(4).withMatchLen());
+        StringMatchResult matchResult = redis.lcs("a{k}", "b{k}", LcsArgs.Builder.minMatchLen(4).withMatchLen());
         assertThat(matchResult.getMatchString()).isNullOrEmpty();
         assertThat(matchResult.getMatches()).isNullOrEmpty();
         assertThat(matchResult.getLen()).isEqualTo(0);
@@ -459,7 +484,7 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.set(KEY_2, "mynewtext");
 
         // > LCS key1 key2 LEN
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).justLen());
+        StringMatchResult matchResult = redis.lcs(KEY_1, KEY_2, LcsArgs.Builder.justLen());
         assertThat(matchResult.getLen()).isEqualTo(6);
         assertThat(matchResult.getMatchString()).isNullOrEmpty();
         assertThat(matchResult.getMatches()).isNullOrEmpty();
@@ -472,7 +497,7 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.set(KEY_2, "mynewtext");
 
         // > LCS key1 key2 IDX
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).withIdx());
+        StringMatchResult matchResult = redis.lcs(KEY_1, KEY_2, LcsArgs.Builder.withIdx());
 
         assertThat(matchResult.getMatches().size()).isEqualTo(2);
         assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
@@ -497,7 +522,7 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.set(KEY_2, "mynewtext");
 
         // > LCS key1 key2 IDX MINMATCHLEN 4
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).withIdx().minMatchLen(4));
+        StringMatchResult matchResult = redis.lcs(KEY_1, KEY_2, LcsArgs.Builder.withIdx().minMatchLen(4));
 
         assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
         assertThat(matchResult.getMatches().get(0).getA().getEnd()).isEqualTo(7);
@@ -516,7 +541,7 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.set(KEY_2, "mynewtext");
 
         // > LCS key1 key2 IDX MINMATCHLEN 4 WITHMATCHLEN
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).minMatchLen(4).withMatchLen().withIdx());
+        StringMatchResult matchResult = redis.lcs(KEY_1, KEY_2, LcsArgs.Builder.minMatchLen(4).withMatchLen().withIdx());
 
         assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
         assertThat(matchResult.getMatches().get(0).getA().getEnd()).isEqualTo(7);
