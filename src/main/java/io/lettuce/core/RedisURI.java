@@ -547,7 +547,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      *
      * @return the {@link RedisCredentialsProvider} to use to authenticate Redis connections
      * @since 6.2
-     * @deprecated since 7.7, use {@link #getCredentialsProviderAsync()} instead; scheduled for removal in a future major
+     * @deprecated since 7.8, use {@link #getCredentialsProviderAsync()} instead; scheduled for removal in a future major
      *             release.
      */
     @Deprecated
@@ -564,16 +564,33 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * {@link RedisCredentialsProvider}; this is the accessor used on the driver's reactor-free authentication path.
      *
      * @return the {@link CredentialsProvider} to use to authenticate Redis connections.
-     * @since 7.7
+     * @since 7.8
      */
     public CredentialsProvider getCredentialsProviderAsync() {
         return this.credentialsProvider;
     }
 
     /**
+     * Sets the {@link RedisCredentialsProvider}. Configuring a credentials provider resets the configured static
+     * username/password.
+     *
+     * @param credentialsProvider the credentials provider to use when authenticating a Redis connection.
+     * @since 6.2
+     * @deprecated since 7.8, use {@link #setCredentialsProvider(CredentialsProvider)} instead; scheduled for removal in a
+     *             future major release.
+     */
+    @Deprecated
+    public void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
+
+        LettuceAssert.notNull(credentialsProvider, "RedisCredentialsProvider must not be null");
+
+        this.credentialsProvider = credentialsProvider;
+    }
+
+    /**
      * Sets the {@link CredentialsProvider}. Configuring a credentials provider resets the configured static username/password.
-     * Accepts the deprecated {@link RedisCredentialsProvider} as well; {@link #getCredentialsProvider()} keeps returning a
-     * {@link RedisCredentialsProvider} view for backward compatibility.
+     * This is the reactor-free replacement for {@link #setCredentialsProvider(RedisCredentialsProvider)};
+     * {@link #getCredentialsProvider()} keeps returning a {@link RedisCredentialsProvider} view for backward compatibility.
      *
      * @param credentialsProvider the credentials provider to use when authenticating a Redis connection.
      * @since 6.2
@@ -1810,6 +1827,20 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         /**
          * Configures authentication.
+         *
+         * @param credentialsProvider the credentials provider to use
+         * @since 6.2
+         * @deprecated since 7.8, use {@link #withAuthentication(CredentialsProvider)} instead; scheduled for removal in a
+         *             future major release.
+         */
+        @Deprecated
+        public Builder withAuthentication(RedisCredentialsProvider credentialsProvider) {
+            this.credentialsProvider = credentialsProvider;
+            return this;
+        }
+
+        /**
+         * Configures authentication using a reactor-free {@link CredentialsProvider}.
          *
          * @param credentialsProvider the credentials provider to use
          * @since 6.2
