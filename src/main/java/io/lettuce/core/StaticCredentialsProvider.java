@@ -6,13 +6,12 @@ import java.util.concurrent.CompletionStage;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Static implementation of {@link RedisCredentialsProvider}.
+ * Static implementation of {@link CredentialsProvider}.
  *
  * @author Mark Paluch
  * @since 6.2
  */
-public class StaticCredentialsProvider
-        implements RedisCredentialsProvider, RedisCredentialsProvider.ImmediateRedisCredentialsProvider {
+public class StaticCredentialsProvider implements CredentialsProvider.ImmediateCredentialsProvider {
 
     private final RedisCredentials credentials;
 
@@ -44,7 +43,7 @@ public class StaticCredentialsProvider
     }
 
     @Override
-    public CompletionStage<RedisCredentials> resolveCredentials() {
+    public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
         return future;
     }
 

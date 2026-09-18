@@ -6,8 +6,9 @@
  */
 package io.lettuce.authx;
 
+import io.lettuce.core.CredentialsProvider;
 import io.lettuce.core.RedisCredentials;
-import io.lettuce.core.RedisCredentialsProvider;
+import io.lettuce.core.Subscription;
 import io.lettuce.core.internal.LettuceAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
- * A {@link RedisCredentialsProvider} implementation that supports token-based authentication for Redis.
+ * A {@link CredentialsProvider} implementation that supports token-based authentication for Redis.
  * <p>
  * This provider uses a {@link TokenManager} to manage and renew tokens, ensuring that the Redis client can authenticate with
  * Redis using a dynamically updated token. This is particularly useful in scenarios where Redis access is controlled via
@@ -48,11 +49,11 @@ import java.util.function.Consumer;
  *
  * @since 6.6
  */
-public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvider, AutoCloseable {
+public class TokenBasedRedisCredentialsProvider implements CredentialsProvider, AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(TokenBasedRedisCredentialsProvider.class);
 
-    private static class SimpleSubscription implements CredentialsSubscription {
+    private static class SimpleSubscription implements Subscription {
 
         private final TokenBasedRedisCredentialsProvider provider;
 
@@ -205,7 +206,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      * @return a {@link CompletionStage} that completes with the latest Redis credentials
      */
     @Override
-    public CompletionStage<RedisCredentials> resolveCredentials() {
+    public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
         CompletableFuture<RedisCredentials> result = new CompletableFuture<>();
         credentialsFutureRef.get().whenComplete((creds, throwable) -> {
             if (throwable != null) {
@@ -218,7 +219,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
     }
 
     @Override
-    public CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+    public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
         if (isClosed) {
             throw new IllegalStateException("Credentials provider closed");
         }
@@ -280,7 +281,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      * <ul>
      * <li>Subscriber {@code onNext}/{@code onError} callbacks for live token renewals run on the {@link TokenManager}'s renewal
      * thread. A slow or blocking subscriber can delay or miss subsequent renewals.</li>
-     * <li>Continuations chained off {@link #resolveCredentials()} run on the renewal thread when the initial future
+     * <li>Continuations chained off {@link #resolveCredentialsAsync()} run on the renewal thread when the initial future
      * completes.</li>
      * <li>Replay deliveries to a newly subscribing consumer run on the subscribing thread.</li>
      * </ul>
@@ -323,7 +324,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      * <ul>
      * <li>Subscriber {@code onNext}/{@code onError} callbacks for live token renewals run on the {@link TokenManager}'s renewal
      * thread. A slow or blocking subscriber can delay or miss subsequent renewals.</li>
-     * <li>Continuations chained off {@link #resolveCredentials()} run on the renewal thread when the initial future
+     * <li>Continuations chained off {@link #resolveCredentialsAsync()} run on the renewal thread when the initial future
      * completes.</li>
      * <li>Replay deliveries to a newly subscribing consumer run on the subscribing thread.</li>
      * </ul>
