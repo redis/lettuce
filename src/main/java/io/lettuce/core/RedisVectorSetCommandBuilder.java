@@ -34,6 +34,7 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Tihomir Mateev
+ * @author hutiefang76
  * @since 6.7
  */
 public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -248,14 +249,14 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      *
      * @param key the key of the vector set, must not be {@code null}
      * @param element the name of the element in the vector set, must not be {@code null}
-     * @return a new {@link Command} that returns a list of elements that are linked to the specified element
+     * @return a new {@link Command} that returns linked elements grouped by HNSW graph layer
      * @see <a href="https://redis.io/docs/latest/commands/vlinks/">Redis Documentation: VLINKS</a>
      */
-    public Command<K, V, List<V>> vlinks(K key, V element) {
+    public Command<K, V, List<List<V>>> vlinks(K key, V element) {
         notNullKey(key);
         notNullKey(element);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(element);
-        return createCommand(VLINKS, new ValueListOutput<>(codec), args);
+        return createCommand(VLINKS, new ValueListListOutput<>(codec), args);
     }
 
     /**
@@ -263,14 +264,14 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      *
      * @param key the key of the vector set, must not be {@code null}
      * @param element the name of the element in the vector set, must not be {@code null}
-     * @return a new {@link Command} that returns a list of elements with their similarity scores
+     * @return a new {@link Command} that returns linked elements and scores grouped by HNSW graph layer
      * @see <a href="https://redis.io/docs/latest/commands/vlinks/">Redis Documentation: VLINKS</a>
      */
-    public Command<K, V, Map<V, Double>> vlinksWithScores(K key, V element) {
+    public Command<K, V, List<Map<V, Double>>> vlinksWithScores(K key, V element) {
         notNullKey(key);
         notNullKey(element);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(element).add(WITHSCORES);
-        return createCommand(VLINKS, new ValueDoubleMapOutput<>(codec), args);
+        return createCommand(VLINKS, new ValueDoubleMapListOutput<>(codec), args);
     }
 
     /**
