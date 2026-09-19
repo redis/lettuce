@@ -1,7 +1,10 @@
 package io.lettuce.core;
 
+import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
@@ -15,9 +18,11 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  * @since 6.2
+ * @deprecated since 7.8, use {@link CredentialsProvider} instead; scheduled for removal in a future major release.
  */
+@Deprecated
 @FunctionalInterface
-public interface RedisCredentialsProvider {
+public interface RedisCredentialsProvider extends CredentialsProvider {
 
     /**
      * Returns {@link RedisCredentials} that can be used to authorize a Redis connection. Each implementation of
@@ -28,6 +33,17 @@ public interface RedisCredentialsProvider {
      * @return a {@link Mono} emitting {@link RedisCredentials} that can be used to authorize a Redis connection.
      */
     Mono<RedisCredentials> resolveCredentials();
+
+    /**
+     * Resolves the latest available credentials as a {@link CompletionStage}, adapting {@link #resolveCredentials()}.
+     *
+     * @return a {@link CompletionStage} that completes with the {@link RedisCredentials} used to authorize a Redis connection.
+     * @since 7.8
+     */
+    @Override
+    default CompletionStage<RedisCredentials> resolveCredentialsAsync() {
+        return resolveCredentials().toFuture();
+    }
 
     /**
      * Creates a new {@link RedisCredentialsProvider} from a given {@link Supplier}.
@@ -68,6 +84,19 @@ public interface RedisCredentialsProvider {
      */
     default Flux<RedisCredentials> credentials() {
         throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Bridges the reactive {@link #credentials()} stream to the callback-based {@link CredentialsProvider} contract.
+     *
+     * @since 7.8
+     */
+    @Override
+    default Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+        Disposable disposable = credentials().subscribe(onNext, onError);
+        return disposable::dispose;
     }
 
     /**
