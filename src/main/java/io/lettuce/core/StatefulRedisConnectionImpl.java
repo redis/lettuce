@@ -141,6 +141,14 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     /**
+     * @return the {@link JsonParser} supplier configured on this connection. Exposed for subclasses that build custom command
+     *         implementations in their factory overrides.
+     */
+    protected Supplier<JsonParser> getJsonParser() {
+        return parser;
+    }
+
+    /**
      * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overriden to extend.
      *
      * @return a new instance
