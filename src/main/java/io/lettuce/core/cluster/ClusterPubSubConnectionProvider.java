@@ -42,8 +42,15 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
     ClusterPubSubConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
             RedisCodec<K, V> redisCodec, RedisClusterPubSubListener<K, V> notificationTarget,
             ClusterEventListener clusterEventListener) {
+        this(redisClusterClient, clusterWriter, redisCodec, notificationTarget, clusterEventListener,
+                redisClusterClient.getClusterClientOptions());
+    }
 
-        super(redisClusterClient, clusterWriter, redisCodec, clusterEventListener);
+    ClusterPubSubConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
+            RedisCodec<K, V> redisCodec, RedisClusterPubSubListener<K, V> notificationTarget,
+            ClusterEventListener clusterEventListener, ClusterClientOptions clientOptions) {
+
+        super(redisClusterClient, clusterWriter, redisCodec, clusterEventListener, clientOptions);
 
         this.redisClusterClient = redisClusterClient;
         this.redisCodec = redisCodec;
