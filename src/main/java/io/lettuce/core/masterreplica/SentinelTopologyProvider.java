@@ -2,6 +2,7 @@ package io.lettuce.core.masterreplica;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -11,6 +12,7 @@ import java.util.stream.Collectors;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Exceptions;
@@ -87,7 +89,7 @@ class SentinelTopologyProvider implements TopologyProvider {
         RedisSentinelReactiveCommands<String, String> reactive = connection.reactive();
 
         Mono<Tuple2<Map<String, String>, List<Map<String, String>>>> masterAndReplicas = reactive.master(masterId)
-                .zipWith(reactive.replicas(masterId).collectList()).timeout(this.timeout).flatMap(tuple -> {
+                .zipWith(getReplicas(reactive)).timeout(this.timeout).flatMap(tuple -> {
                     return ResumeAfter.close(connection).thenEmit(tuple);
                 }).doOnError(e -> connection.closeAsync());
 
@@ -100,6 +102,34 @@ class SentinelTopologyProvider implements TopologyProvider {
                     .map(map -> toNode(map, RedisInstance.Role.REPLICA)).collect(Collectors.toList()));
 
             return result;
+        });
+    }
+
+    /**
+     * Look up replicas using {@code SENTINEL REPLICAS}, falling back to the pre-5.0 {@code SENTINEL SLAVES} and finally to an
+     * empty replica list.
+     * <p>
+     * An empty replica list is a correct answer for a Sentinel implementation that fronts a proxied endpoint, such as the Redis
+     * Enterprise discovery service: there are no client-visible replicas, so the topology consists of the upstream node only.
+     * Only command-execution failures are absorbed, so connection and timeout errors still propagate, and a genuinely unknown
+     * master name still fails through {@code SENTINEL MASTER} in the same {@code zipWith}.
+     *
+     * @param reactive Sentinel commands to use.
+     * @return the replicas of the monitored master, empty if the server supports neither command.
+     */
+    private Mono<List<Map<String, String>>> getReplicas(RedisSentinelReactiveCommands<String, String> reactive) {
+
+        return reactive.replicas(masterId).collectList().onErrorResume(RedisCommandExecutionException.class, e -> {
+
+            logger.debug("SENTINEL REPLICAS failed for masterId {}, falling back to SENTINEL SLAVES", masterId, e);
+
+            return reactive.slaves(masterId).collectList().onErrorResume(RedisCommandExecutionException.class, nested -> {
+
+                logger.info("Neither SENTINEL REPLICAS nor SENTINEL SLAVES is supported by {}, continuing with an empty "
+                        + "replica list for masterId {}", sentinelUri, masterId);
+
+                return Mono.just(Collections.<Map<String, String>> emptyList());
+            });
         });
     }
 

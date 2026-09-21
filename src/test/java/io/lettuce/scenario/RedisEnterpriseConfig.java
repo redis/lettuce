@@ -63,6 +63,14 @@ public class RedisEnterpriseConfig {
     private static final Pattern ENDPOINT_PATTERN = Pattern
             .compile("db:(\\d+)\\s+\\S+\\s+(endpoint:\\d+:\\d+)\\s+(node:\\d+)\\s+\\S+\\s+.*");
 
+    // The DATABASES section has a dynamic column set (rladmin inserts MODULE when any database in the cluster loads
+    // modules, and appends a traffic column conditionally), so anchor only on DB:ID and NAME, which are always first.
+    private static final Pattern DATABASE_PATTERN = Pattern.compile("^db:(\\d+)\\s+(\\S+)\\s+.*");
+
+    // Name of the database under test, as reported by rladmin. This is also the master name used by the Redis
+    // Enterprise discovery service (Sentinel-compatible API).
+    private String dbName;
+
     public RedisEnterpriseConfig(String bdbId) {
         this.bdbId = bdbId;
     }
@@ -164,11 +172,39 @@ public class RedisEnterpriseConfig {
             } else if (section.startsWith("CLUSTER NODES:")) {
                 log.debug("Parsing CLUSTER NODES section with {} characters", section.length());
                 parseNodes(section);
+            } else if (section.startsWith("DATABASES:")) {
+                log.debug("Parsing DATABASES section with {} characters", section.length());
+                parseDatabases(section);
             } else {
                 log.debug("Skipping section that starts with: {}", section.substring(0, Math.min(20, section.length())));
             }
-            // We can ignore DATABASES: section for now as it's not used
         }
+    }
+
+    /**
+     * Parse the name of the database under test from rladmin status databases output.
+     */
+    public void parseDatabases(String databasesOutput) {
+        log.info("Parsing databases from output...");
+
+        if (databasesOutput == null || databasesOutput.trim().isEmpty()) {
+            log.warn("Empty databases output received");
+            return;
+        }
+
+        dbName = null;
+
+        String[] lines = databasesOutput.split("\\n");
+        for (String line : lines) {
+            Matcher matcher = DATABASE_PATTERN.matcher(line.trim());
+            if (matcher.matches() && bdbId.equals(matcher.group(1))) {
+                dbName = matcher.group(2);
+                log.info("Found database name for BDB {}: {}", bdbId, dbName);
+                return;
+            }
+        }
+
+        log.warn("Could not determine the database name for BDB {}", bdbId);
     }
 
     /**
@@ -461,6 +497,14 @@ public class RedisEnterpriseConfig {
 
     public List<String> getEndpointIds() {
         return new ArrayList<>(endpointIds);
+    }
+
+    /**
+     * Name of the database under test as reported by rladmin, or {@code null} when it could not be parsed. This is the master
+     * name to use against the discovery service.
+     */
+    public String getDbName() {
+        return dbName;
     }
 
     public String getBdbId() {
