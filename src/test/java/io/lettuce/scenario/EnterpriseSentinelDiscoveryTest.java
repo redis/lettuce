@@ -198,8 +198,9 @@ public class EnterpriseSentinelDiscoveryTest {
             assertThatThrownBy(() -> sentinel.sync().replicas(DB_NAME)).isInstanceOf(RedisCommandExecutionException.class)
                     .hasMessageContaining("unknown command");
 
-            // The pre-5.0 spelling is implemented, and returns an empty list: a proxied endpoint has no client-visible
-            // replicas, so an empty replica list is the correct topology answer for Redis Enterprise.
+            // Lettuce does not issue the pre-5.0 spelling; it takes the unknown-command reply above as an empty replica
+            // list. This asserts the server agrees that this is the right answer: SENTINEL SLAVES is implemented and
+            // reports nothing, because a proxied endpoint has no client-visible replicas.
             assertThat(sentinel.sync().slaves(DB_NAME)).isEmpty();
         } finally {
             client.shutdown();

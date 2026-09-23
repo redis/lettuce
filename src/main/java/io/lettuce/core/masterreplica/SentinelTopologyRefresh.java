@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -48,8 +49,8 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
     private static final StringCodec CODEC = new StringCodec(StandardCharsets.US_ASCII);
 
-    private static final Set<String> PROCESSING_CHANNELS = new HashSet<>(
-            Arrays.asList("failover-end", "failover-end-for-timeout"));
+    private static final Set<String> PROCESSING_CHANNELS = Collections
+            .unmodifiableSet(new HashSet<>(Arrays.asList("failover-end", "failover-end-for-timeout")));
 
     private final Map<RedisURI, ConnectionFuture<StatefulRedisPubSubConnection<String, String>>> pubSubConnections = new ConcurrentHashMap<>();
 
@@ -392,11 +393,24 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
      */
     static class TopologyRefreshMessagePredicate implements MessagePredicate {
 
-        private static final Set<String> TOPOLOGY_CHANGE_CHANNELS = new HashSet<>(
-                Arrays.asList("+slave", "+sdown", "-sdown", "fix-slave-config", "+convert-to-slave", "+role-change"));
+        private static final Set<String> TOPOLOGY_CHANGE_CHANNELS = Collections.unmodifiableSet(new HashSet<>(
+                Arrays.asList("+slave", "+sdown", "-sdown", "fix-slave-config", "+convert-to-slave", "+role-change")));
 
-        private static final Set<String> MASTER_CHANNELS = new HashSet<>(
-                Arrays.asList("+elected-leader", "+reset-master", "+switch-master"));
+        private static final Set<String> MASTER_CHANNELS = Collections
+                .unmodifiableSet(new HashSet<>(Arrays.asList("+elected-leader", "+reset-master", "+switch-master")));
+
+        /**
+         * The channels this predicate can match do not depend on the master id, so the union is computed once.
+         */
+        private static final Set<String> CHANNELS;
+
+        static {
+
+            Set<String> channels = new LinkedHashSet<>(MASTER_CHANNELS);
+            channels.addAll(TOPOLOGY_CHANGE_CHANNELS);
+            channels.addAll(PROCESSING_CHANNELS);
+            CHANNELS = Collections.unmodifiableSet(channels);
+        }
 
         private final String masterId;
 
@@ -406,11 +420,7 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
         @Override
         public Set<String> channels() {
-
-            Set<String> channels = new LinkedHashSet<>(MASTER_CHANNELS);
-            channels.addAll(TOPOLOGY_CHANGE_CHANNELS);
-            channels.addAll(PROCESSING_CHANNELS);
-            return channels;
+            return CHANNELS;
         }
 
         @Override
@@ -446,11 +456,12 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
      */
     static class SentinelReconnectMessagePredicate implements MessagePredicate {
 
-        private static final Set<String> RECONNECT_CHANNELS = new HashSet<>(Arrays.asList("+sentinel", "-odown", "-sdown"));
+        private static final Set<String> RECONNECT_CHANNELS = Collections
+                .unmodifiableSet(new LinkedHashSet<>(Arrays.asList("+sentinel", "-odown", "-sdown")));
 
         @Override
         public Set<String> channels() {
-            return new LinkedHashSet<>(RECONNECT_CHANNELS);
+            return RECONNECT_CHANNELS;
         }
 
         @Override

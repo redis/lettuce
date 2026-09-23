@@ -85,6 +85,25 @@ class RedisHandshakeUnitTests {
     }
 
     @Test
+    void handshakeWithCapitalisedUnknownCommandShouldDowngrade() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
+        handshake.initialize(channel);
+
+        // Servers differ in how they capitalise the word; a pre-RESP3 server rejecting HELLO must downgrade either way.
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        hello.getOutput().setError("ERR Unknown command 'HELLO'");
+        hello.completeExceptionally(new RedisException("ERR Unknown command 'HELLO'"));
+        hello.complete();
+
+        assertThat(state.getNegotiatedProtocolVersion()).isEqualTo(ProtocolVersion.RESP2);
+    }
+
+    @Test
     void handshakeFireAndForgetPostHandshake() {
 
         EmbeddedChannel channel = new EmbeddedChannel(true, false);

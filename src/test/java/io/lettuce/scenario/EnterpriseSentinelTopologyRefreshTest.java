@@ -43,9 +43,9 @@ import io.lettuce.test.env.Endpoints;
  * Two things had to change in Lettuce for this to work against the discovery service, which implements only a subset of the
  * Sentinel protocol:
  * <ol>
- * <li>{@code SentinelTopologyProvider} now falls back from {@code SENTINEL REPLICAS} to {@code SENTINEL SLAVES} and finally to
- * an empty replica list. The discovery service implements only the pre-5.0 spelling, and an empty replica list is the correct
- * topology for a proxied endpoint.</li>
+ * <li>{@code SentinelTopologyProvider} now treats an unknown-command reply to {@code SENTINEL REPLICAS} as an empty replica
+ * list instead of a connect failure. The discovery service does not implement the command, and an empty replica list is the
+ * correct topology for a proxied endpoint, which exposes no client-visible replicas.</li>
  * <li>{@code SentinelTopologyRefresh} subscribes to the channels its predicates can match instead of {@code PSUBSCRIBE *}. The
  * discovery service implements {@code SUBSCRIBE} only.</li>
  * </ol>
