@@ -61,6 +61,31 @@ public abstract class Futures {
     }
 
     /**
+     * Unwrap exceptions from a {@link CompletionStage} into a new {@link CompletableFuture}.
+     * <p>
+     * The stage is bridged through {@link CompletionStage#whenComplete(java.util.function.BiConsumer)} rather than
+     * {@link CompletionStage#toCompletableFuture()}, which the contract permits a minimal {@link CompletionStage}
+     * implementation to reject with {@link UnsupportedOperationException}.
+     *
+     * @param stage the original stage
+     * @param <T> the result type
+     * @return a new {@link CompletableFuture} with unwrapped exceptions
+     * @since 7.8
+     */
+    public static <T> CompletableFuture<T> unwrapExceptions(CompletionStage<T> stage) {
+
+        CompletableFuture<T> f = new CompletableFuture<>();
+        stage.whenComplete((v, t) -> {
+            if (t != null) {
+                f.completeExceptionally(Exceptions.unwrap(t));
+            } else {
+                f.complete(v);
+            }
+        });
+        return f;
+    }
+
+    /**
      * Adapt Netty's {@link ChannelFuture} emitting a {@link Void} result.
      *
      * @param future the {@link ChannelFuture} to adapt.

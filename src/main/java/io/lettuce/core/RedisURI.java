@@ -39,6 +39,7 @@ import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
@@ -1012,17 +1013,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // Resolve through CompletableFuture instead of Mono#block(): Reactor rejects block() on non-blocking
                 // threads (e.g. the reactor-http-nio workers used by Spring WebFlux), whereas CompletableFuture#join() is
                 // not subject to that check. This mirrors the approach taken on feature/reactor-optional-1 (#3739).
-                // Bridge via whenComplete rather than CompletionStage#toCompletableFuture(), which the contract permits a
-                // minimal CompletionStage implementation to reject with UnsupportedOperationException.
-                CompletableFuture<RedisCredentials> credentialsFuture = new CompletableFuture<>();
-                credentialsProvider.resolveCredentialsAsync().whenComplete((resolved, error) -> {
-                    if (error != null) {
-                        credentialsFuture.completeExceptionally(error);
-                    } else {
-                        credentialsFuture.complete(resolved);
-                    }
-                });
-                RedisCredentials creds = credentialsFuture.join();
+                // Futures.unwrapExceptions bridges via whenComplete rather than CompletionStage#toCompletableFuture(), which
+                // the contract permits a minimal CompletionStage implementation to reject with UnsupportedOperationException.
+                RedisCredentials creds = Futures.unwrapExceptions(credentialsProvider.resolveCredentialsAsync()).join();
                 if (creds != null) {
                     String credentials = "";
 
