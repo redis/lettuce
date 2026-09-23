@@ -2,8 +2,6 @@ package io.lettuce.core.protocol;
 
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 import io.lettuce.core.internal.LettuceAssert;
@@ -26,6 +24,13 @@ import io.lettuce.core.internal.LettuceAssert;
  * <li>Explicitly removes entries when writer count reaches zero for immediate cleanup</li>
  * <li>Eliminates the memory leak that occurred with per-instance ThreadLocal in connection pooling scenarios</li>
  * </ul>
+ * <p>
+ * <b>Holder-death safety:</b> The state guard is a {@code synchronized} block on a private monitor rather than a
+ * {@link java.util.concurrent.locks.ReentrantLock}. {@code ReentrantLock} relies on a user-level {@code finally} block calling
+ * {@code unlock()} to release ownership; if the holder thread dies on a path where that {@code finally} cannot run (for
+ * example, a {@link StackOverflowError} thrown at a safepoint inside the guarded region), the lock stays held forever and every
+ * subsequent writer parks indefinitely on an uninterruptible {@code lock.lock()}. The JVM releases an object monitor implicitly
+ * as part of stack-frame unwinding, so {@code synchronized} survives holder death.
  *
  * @author Mark Paluch
  */
@@ -34,7 +39,14 @@ class SharedLock {
     private static final AtomicLongFieldUpdater<SharedLock> WRITERS = AtomicLongFieldUpdater.newUpdater(SharedLock.class,
             "writers");
 
-    private final Lock lock = new ReentrantLock();
+    /**
+     * State guard. Held via {@code synchronized} blocks rather than a {@link java.util.concurrent.locks.ReentrantLock} so that
+     * the JVM's implicit {@code monitorexit} releases the monitor on stack-frame unwinding — including paths where a user-level
+     * {@code finally { lock.unlock(); }} block cannot run (notably {@link StackOverflowError} thrown at a safepoint inside the
+     * guarded region). A {@code ReentrantLock} held by a thread that dies without running {@code unlock()} stays held forever,
+     * wedging every subsequent writer; the monitor here does not.
+     */
+    private final Object monitor = new Object();
 
     private static final ThreadLocal<WeakHashMap<SharedLock, Integer>> THREAD_WRITERS = ThreadLocal
             .withInitial(WeakHashMap::new);
@@ -52,8 +64,7 @@ class SharedLock {
             return;
         }
 
-        lock.lock();
-        try {
+        synchronized (monitor) {
             for (;;) {
 
                 if (WRITERS.get(this) >= 0) {
@@ -63,8 +74,6 @@ class SharedLock {
                     return;
                 }
             }
-        } finally {
-            lock.unlock();
         }
     }
 
@@ -108,18 +117,13 @@ class SharedLock {
 
         LettuceAssert.notNull(supplier, "Supplier must not be null");
 
-        lock.lock();
-        try {
-
+        synchronized (monitor) {
             try {
-
                 lockWritersExclusive();
                 return supplier.get();
             } finally {
                 unlockWritersExclusive();
             }
-        } finally {
-            lock.unlock();
         }
     }
 
@@ -134,8 +138,7 @@ class SharedLock {
             return;
         }
 
-        lock.lock();
-        try {
+        synchronized (monitor) {
             for (;;) {
 
                 // allow reentrant exclusive lock by comparing writers count and threadWriters count
@@ -145,8 +148,6 @@ class SharedLock {
                     return;
                 }
             }
-        } finally {
-            lock.unlock();
         }
     }
 
