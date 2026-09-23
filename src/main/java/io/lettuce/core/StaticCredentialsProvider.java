@@ -41,6 +41,12 @@ public class StaticCredentialsProvider
         this.mono = Mono.just(credentials);
     }
 
+    /**
+     * @return a {@link Mono} emitting the static {@link RedisCredentials}
+     * @deprecated since 7.8, use {@link #resolveCredentialsAsync()} — or {@link #resolveCredentialsNow()} for immediate,
+     *             non-deferred access — instead; scheduled for removal in a future major release.
+     */
+    @Deprecated
     @Override
     public Mono<RedisCredentials> resolveCredentials() {
         return mono;
