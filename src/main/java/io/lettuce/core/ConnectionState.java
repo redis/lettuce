@@ -35,7 +35,7 @@ public class ConnectionState {
 
     private volatile HandshakeResponse handshakeResponse;
 
-    private volatile RedisCredentialsProvider credentialsProvider;
+    private volatile CredentialsProvider credentialsProvider;
 
     private volatile int db;
 
@@ -51,7 +51,7 @@ public class ConnectionState {
     public void apply(RedisURI redisURI) {
 
         connectionMetadata.apply(redisURI);
-        setCredentialsProvider(redisURI.getCredentialsProvider());
+        setCredentialsProvider(redisURI.getCredentialsProviderAsync());
     }
 
     void apply(ConnectionMetadata metadata) {
@@ -129,11 +129,42 @@ public class ConnectionState {
         }
     }
 
+    /**
+     * @param credentialsProvider the credentials provider to use
+     * @deprecated since 7.8, use {@link #setCredentialsProvider(CredentialsProvider)} instead; scheduled for removal in a
+     *             future major release.
+     */
+    @Deprecated
     protected void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
+        setCredentialsProvider((CredentialsProvider) credentialsProvider);
+    }
+
+    /**
+     * @param credentialsProvider the credentials provider to use
+     * @since 7.8
+     */
+    protected void setCredentialsProvider(CredentialsProvider credentialsProvider) {
         this.credentialsProvider = credentialsProvider;
     }
 
+    /**
+     * @return the configured credentials provider adapted to the reactive {@link RedisCredentialsProvider} contract
+     * @deprecated since 7.8, use {@link #getCredentialsProviderAsync()} instead; scheduled for removal in a future major
+     *             release.
+     */
+    @Deprecated
     public RedisCredentialsProvider getCredentialsProvider() {
+        if (credentialsProvider instanceof RedisCredentialsProvider) {
+            return (RedisCredentialsProvider) credentialsProvider;
+        }
+        return new AsyncCredentialsProviderAdapter(credentialsProvider);
+    }
+
+    /**
+     * @return the configured reactor-free {@link CredentialsProvider}
+     * @since 7.8
+     */
+    public CredentialsProvider getCredentialsProviderAsync() {
         return credentialsProvider;
     }
 
