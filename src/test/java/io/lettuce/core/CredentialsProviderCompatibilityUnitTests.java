@@ -10,6 +10,7 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.junit.jupiter.api.Tag;
@@ -84,6 +85,42 @@ class CredentialsProviderCompatibilityUnitTests {
         viaSetter.setCredentialsProvider(provider);
         RedisCredentials fromSetter = viaSetter.getCredentialsProvider().resolveCredentials().block();
         assertThat(new String(fromSetter.getPassword())).isEqualTo("secret");
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void connectionStateAdaptsReactorFreeProviderForDeprecatedReactiveAccessor() {
+
+        // A reactor-free provider configured on ConnectionState is returned verbatim by the async accessor, and wrapped in a
+        // reactive adapter by the deprecated getCredentialsProvider() so callers on the old reactive shape keep working.
+        CredentialsProvider provider = () -> CompletableFuture
+                .completedFuture(RedisCredentials.just("alice", "secret".toCharArray()));
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(provider);
+
+        assertThat(state.getCredentialsProviderAsync()).isSameAs(provider);
+
+        RedisCredentialsProvider reactiveView = state.getCredentialsProvider();
+        RedisCredentials resolved = reactiveView.resolveCredentials().block();
+        assertThat(resolved.getUsername()).isEqualTo("alice");
+        assertThat(new String(resolved.getPassword())).isEqualTo("secret");
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void connectionStateReturnsReactiveProviderUnwrappedForDeprecatedAccessor() {
+
+        // A reactive RedisCredentialsProvider must be handed back as-is (no adapter wrapping) so identity-sensitive callers and
+        // streaming behaviour are preserved.
+        RedisCredentialsProvider provider = RedisCredentialsProvider
+                .from(() -> RedisCredentials.just("bob", "hunter2".toCharArray()));
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(provider);
+
+        assertThat(state.getCredentialsProvider()).isSameAs(provider);
+        assertThat(state.getCredentialsProviderAsync()).isSameAs(provider);
     }
 
 }
