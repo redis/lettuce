@@ -1062,6 +1062,7 @@ public class AggregateArgs {
          * </p>
          *
          * @return new {@link CollectReducer} instance
+         * @since 7.8
          * @see CollectReducer
          */
         @Experimental
@@ -1165,6 +1166,8 @@ public class AggregateArgs {
          *
          * @param fields the fields to project
          * @return {@code this} for chaining
+         * @throws IllegalStateException if {@link #fieldsAll()} was already requested
+         * @since 7.8
          */
         public CollectReducer fields(String... fields) {
             if (this.allFields) {
@@ -1184,6 +1187,8 @@ public class AggregateArgs {
          * </p>
          *
          * @return {@code this} for chaining
+         * @throws IllegalStateException if explicit fields were already added via {@link #fields(String[])}
+         * @since 7.8
          */
         public CollectReducer fieldsAll() {
             if (!this.fields.isEmpty()) {
@@ -1205,6 +1210,7 @@ public class AggregateArgs {
          *
          * @param properties the sort properties
          * @return {@code this} for chaining
+         * @since 7.8
          */
         public CollectReducer sortBy(SortProperty... properties) {
             Collections.addAll(this.sortProperties, properties);
@@ -1216,6 +1222,7 @@ public class AggregateArgs {
          *
          * @param field the field to sort by ascending
          * @return {@code this} for chaining
+         * @since 7.8
          */
         public CollectReducer sortByAsc(String field) {
             this.sortProperties.add(new SortProperty(field, SortDirection.ASC));
@@ -1227,6 +1234,7 @@ public class AggregateArgs {
          *
          * @param field the field to sort by descending
          * @return {@code this} for chaining
+         * @since 7.8
          */
         public CollectReducer sortByDesc(String field) {
             this.sortProperties.add(new SortProperty(field, SortDirection.DESC));
@@ -1238,6 +1246,8 @@ public class AggregateArgs {
          *
          * @param count the maximum number of entries per group
          * @return {@code this} for chaining
+         * @throws IllegalArgumentException if {@code count} is negative
+         * @since 7.8
          */
         public CollectReducer limit(long count) {
             return limit(0, count);
@@ -1249,6 +1259,8 @@ public class AggregateArgs {
          * @param offset the number of entries to skip
          * @param count the maximum number of entries to return
          * @return {@code this} for chaining
+         * @throws IllegalArgumentException if {@code offset} or {@code count} is negative
+         * @since 7.8
          */
         public CollectReducer limit(long offset, long count) {
             if (offset < 0 || count < 0) {

@@ -285,13 +285,14 @@ public class SearchReply<K> {
         }
 
         /**
-         * Adds a single document field.
+         * Adds a single document field. Kept non-public so that the public {@link #addField(String, byte[])} stays unambiguous
+         * for {@code null} arguments; the reply parsers in this package are the only producers of nested {@link FieldValue}
+         * columns.
          *
          * @param key the field name
          * @param value the field value; {@code null} is stored as a {@link FieldValue#isNull() null value}
-         * @since 7.8
          */
-        public void addField(String key, FieldValue value) {
+        void addField(String key, FieldValue value) {
             this.fields.put(key, value == null ? FieldValue.NULL : value);
         }
 

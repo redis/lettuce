@@ -92,6 +92,7 @@ public final class FieldValue {
      *
      * @param value the raw field value exactly as returned by the server. Must not be {@code null}.
      * @return a {@link Kind#SCALAR} {@link FieldValue} view over the given bytes
+     * @since 7.8
      */
     public static FieldValue of(byte[] value) {
         LettuceAssert.notNull(value, "Field value must not be null");
@@ -158,6 +159,7 @@ public final class FieldValue {
      * @return the raw field bytes, or {@code null} if the server returned a null value (see {@link #isNull()}). This is the
      *         backing array and must not be modified.
      * @throws IllegalStateException if this value is an {@link Kind#ARRAY} or a {@link Kind#MAP}
+     * @since 7.8
      */
     public byte[] asBytes() {
         if (kind == Kind.NULL) {
@@ -175,6 +177,7 @@ public final class FieldValue {
      *
      * @return the field value decoded as UTF-8, or {@code null} if the server returned a null value (see {@link #isNull()})
      * @throws IllegalStateException if this value is an {@link Kind#ARRAY} or a {@link Kind#MAP}
+     * @since 7.8
      */
     public String asString() {
         return asString(StandardCharsets.UTF_8);
@@ -186,6 +189,7 @@ public final class FieldValue {
      * @param charset the charset to decode with
      * @return the decoded field value, or {@code null} if the server returned a null value (see {@link #isNull()})
      * @throws IllegalStateException if this value is an {@link Kind#ARRAY} or a {@link Kind#MAP}
+     * @since 7.8
      */
     public String asString(Charset charset) {
         byte[] bytes = asBytes();
@@ -245,6 +249,7 @@ public final class FieldValue {
      * Reports whether the server returned this field with a null value. When {@code true}, all accessors return {@code null}.
      *
      * @return {@code true} if this field value is null
+     * @since 7.8
      */
     public boolean isNull() {
         return kind == Kind.NULL;

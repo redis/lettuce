@@ -26,6 +26,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -140,8 +141,11 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
     @Test
     void shouldPerformCollectAggregation() {
-        // COLLECT is gated behind search-enable-unstable-features; enable it and skip the test on builds where the
-        // reducer (or the config flag) is not available yet.
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.10"),
+                "FT.AGGREGATE REDUCE COLLECT requires Redis 8.10 or newer");
+
+        // COLLECT is gated behind search-enable-unstable-features; enable it and skip the test on deployments where the
+        // flag cannot be set (for example managed environments that reject CONFIG SET).
         try {
             redis.configSet("search-enable-unstable-features", "yes");
         } catch (RedisCommandExecutionException e) {
@@ -164,13 +168,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                                 .sortBy(new AggregateArgs.SortProperty("sweetness", SortDirection.DESC)).limit(0, 2).as("top")))
                 .build();
 
-        AggregationReply<String> result;
-        try {
-            result = redis.ftAggregate("collect-test-idx", "*", args);
-        } catch (RedisCommandExecutionException e) {
-            assumeTrue(false, "FT.AGGREGATE REDUCE COLLECT not supported by this Redis Search build: " + e.getMessage());
-            return;
-        }
+        // Any server-side rejection from here on is a real failure: the version and the unstable-features flag have both
+        // been established above, so a command error means the builder emitted something the server would not accept.
+        AggregationReply<String> result = redis.ftAggregate("collect-test-idx", "*", args);
 
         assertThat(result.getReplies()).hasSize(1);
         SearchReply<String> reply = result.getReplies().get(0);
