@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import io.lettuce.core.internal.Exceptions;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
@@ -1012,7 +1013,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // would get asterix for each character of the password.
                 RedisCredentials creds;
                 try {
-                    creds = credentialsProvider.resolveCredentialsAsync().toCompletableFuture().join();
+                    creds = Futures.unwrapExceptions(credentialsProvider.resolveCredentialsAsync()).join();
                 } catch (Exception e) {
                     throw Exceptions.bubble(e);
                 }

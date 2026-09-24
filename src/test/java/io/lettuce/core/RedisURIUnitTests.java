@@ -118,6 +118,33 @@ class RedisURIUnitTests {
         assertThatThrownBy(redisURI::toString).isSameAs(cause).isNotInstanceOf(CompletionException.class);
     }
 
+    @Test
+    void toStringMasksCredentialsWhenStageRejectsToCompletableFuture() {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        // A CredentialsProvider whose CompletionStage rejects toCompletableFuture() (permitted by the contract).
+        redisURI.setCredentialsProvider(() -> {
+            RejectingCompletableFuture stage = new RejectingCompletableFuture();
+            stage.complete(RedisCredentials.just("user", "secret".toCharArray()));
+            return stage;
+        });
+
+        assertThat(redisURI).hasToString("redis://user:******@localhost:1234/5");
+    }
+
+    /**
+     * A {@link CompletableFuture} that refuses {@link #toCompletableFuture()} to emulate a minimal {@link CompletionStage}
+     * implementation; {@code whenComplete} still works.
+     */
+    private static class RejectingCompletableFuture extends CompletableFuture<RedisCredentials> {
+
+        @Override
+        public CompletableFuture<RedisCredentials> toCompletableFuture() {
+            throw new UnsupportedOperationException("minimal CompletionStage does not support toCompletableFuture()");
+        }
+
+    }
+
     void shouldNotBlockOnReactiveThreadForToString() {
 
         RedisURI redisURI = RedisURI.create("redis://user:secret@localhost:1234/5");

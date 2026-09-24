@@ -9,6 +9,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.awaitility.Awaitility;
@@ -161,6 +162,50 @@ class RedisHandshakeUnitTests {
 
         assertThat(postHandshake.size()).isEqualTo(2);
         assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isFalse();
+    }
+
+    @Test
+    void handshakeResp3ResolvesMinimalCompletionStageProvider() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        // A CompletionStage whose toCompletableFuture() throws UnsupportedOperationException (permitted by the contract for a
+        // minimal stage). The handshake must bridge via whenComplete and still dispatch HELLO rather than fail.
+        CredentialsProvider cp = () -> minimalStage(RedisCredentials.just("foo", "bar".toCharArray()));
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(cp);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, null);
+        CompletionStage<Void> handshakeInit = handshake.initialize(channel);
+
+        Awaitility.await().atMost(5, SECONDS).pollInterval(50, MILLISECONDS).until(() -> !channel.outboundMessages().isEmpty());
+
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        assertThat(hello.getArgs().toCommandString()).contains("AUTH", "foo", "bar");
+
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isFalse();
+    }
+
+    @Test
+    void handshakeResp2ResolvesMinimalCompletionStageProvider() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        CredentialsProvider cp = () -> minimalStage(RedisCredentials.just("foo", "bar".toCharArray()));
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(cp);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP2, false, state, null);
+        handshake.initialize(channel);
+
+        Awaitility.await().atMost(5, SECONDS).pollInterval(50, MILLISECONDS).until(() -> !channel.outboundMessages().isEmpty());
+
+        AsyncCommand<String, String, String> auth = channel.readOutbound();
+        assertThat(auth.getType().toString()).isEqualTo("AUTH");
+        assertThat(auth.getArgs().toCommandString()).contains("foo", "bar");
     }
 
     @Test
@@ -321,6 +366,25 @@ class RedisHandshakeUnitTests {
 
         // The error should be swallowed and the handshake should still complete successfully
         assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isFalse();
+    }
+
+    /**
+     * A completed {@link CompletionStage} that rejects {@link CompletionStage#toCompletableFuture()}, modelling a "minimal"
+     * stage as the contract permits; {@code whenComplete} still works.
+     */
+    private static CompletionStage<RedisCredentials> minimalStage(RedisCredentials credentials) {
+        RejectingCompletableFuture stage = new RejectingCompletableFuture();
+        stage.complete(credentials);
+        return stage;
+    }
+
+    private static final class RejectingCompletableFuture extends CompletableFuture<RedisCredentials> {
+
+        @Override
+        public CompletableFuture<RedisCredentials> toCompletableFuture() {
+            throw new UnsupportedOperationException("minimal CompletionStage does not support toCompletableFuture()");
+        }
+
     }
 
     private static void helloResponse(CommandOutput<String, String, Map<String, String>> output) {
