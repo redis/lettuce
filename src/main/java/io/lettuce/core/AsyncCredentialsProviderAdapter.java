@@ -29,7 +29,7 @@ class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
 
     @Override
     public Mono<RedisCredentials> resolveCredentials() {
-        return Mono.fromCompletionStage(delegate.resolveCredentialsAsync());
+        return Mono.fromCompletionStage(delegate::resolveCredentialsAsync);
     }
 
     @Override
