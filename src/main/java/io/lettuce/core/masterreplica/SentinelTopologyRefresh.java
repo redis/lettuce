@@ -5,8 +5,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,8 +49,8 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
     private static final StringCodec CODEC = new StringCodec(StandardCharsets.US_ASCII);
 
-    private static final Set<String> PROCESSING_CHANNELS = new HashSet<>(
-            Arrays.asList("failover-end", "failover-end-for-timeout"));
+    private static final Set<String> PROCESSING_CHANNELS = Collections
+            .unmodifiableSet(new HashSet<>(Arrays.asList("failover-end", "failover-end-for-timeout")));
 
     private final Map<RedisURI, ConnectionFuture<StatefulRedisPubSubConnection<String, String>>> pubSubConnections = new ConcurrentHashMap<>();
 
@@ -68,14 +70,26 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
     private volatile boolean closed = false;
 
+    /**
+     * Channels to subscribe to, derived from the message predicates so that the two cannot drift apart.
+     */
+    private final String[] subscribeChannels;
+
     SentinelTopologyRefresh(RedisClient redisClient, String masterId, List<RedisURI> sentinels) {
+
+        MessagePredicate topologyRefreshPredicate = new TopologyRefreshMessagePredicate(masterId);
+        MessagePredicate sentinelReconnectPredicate = new SentinelReconnectMessagePredicate();
+
+        Set<String> channels = new LinkedHashSet<>(topologyRefreshPredicate.channels());
+        channels.addAll(sentinelReconnectPredicate.channels());
+        this.subscribeChannels = channels.toArray(new String[0]);
 
         this.redisClient = redisClient;
         this.sentinels = LettuceLists.newList(sentinels);
         this.topologyRefresh = new PubSubMessageActionScheduler(redisClient.getResources().eventExecutorGroup(),
-                new TopologyRefreshMessagePredicate(masterId));
+                topologyRefreshPredicate);
         this.sentinelReconnect = new PubSubMessageActionScheduler(redisClient.getResources().eventExecutorGroup(),
-                new SentinelReconnectMessagePredicate());
+                sentinelReconnectPredicate);
     }
 
     @Override
@@ -211,13 +225,13 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
                 connection.addListener(new RedisPubSubAdapter<String, String>() {
 
                     @Override
-                    public void message(String pattern, String channel, String message) {
+                    public void message(String channel, String message) {
                         messageHandler.handle(source, channel, message);
                     }
 
                 });
 
-                return connection.async().psubscribe("*").thenApply(v -> connection).whenComplete((c, t) -> {
+                return connection.async().subscribe(subscribeChannels).thenApply(v -> connection).whenComplete((c, t) -> {
 
                     if (t != null) {
                         connection.closeAsync();
@@ -363,21 +377,50 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
         @Override
         boolean test(String message, String channel);
 
+        /**
+         * Channels this predicate can ever match. Sentinel channel names are fixed literals - the master name appears in the
+         * message payload, not in the channel - so the set is closed and can be subscribed to explicitly.
+         *
+         * @return the channels to subscribe to for this predicate to be able to fire.
+         */
+        Set<String> channels();
+
     }
 
     /**
      * {@link MessagePredicate} to check whether the channel and message contain topology changes related to the monitored
      * master.
      */
-    private static class TopologyRefreshMessagePredicate implements MessagePredicate {
+    static class TopologyRefreshMessagePredicate implements MessagePredicate {
+
+        private static final Set<String> TOPOLOGY_CHANGE_CHANNELS = Collections.unmodifiableSet(new HashSet<>(
+                Arrays.asList("+slave", "+sdown", "-sdown", "fix-slave-config", "+convert-to-slave", "+role-change")));
+
+        private static final Set<String> MASTER_CHANNELS = Collections
+                .unmodifiableSet(new HashSet<>(Arrays.asList("+elected-leader", "+reset-master", "+switch-master")));
+
+        /**
+         * The channels this predicate can match do not depend on the master id, so the union is computed once.
+         */
+        private static final Set<String> CHANNELS;
+
+        static {
+
+            Set<String> channels = new LinkedHashSet<>(MASTER_CHANNELS);
+            channels.addAll(TOPOLOGY_CHANGE_CHANNELS);
+            channels.addAll(PROCESSING_CHANNELS);
+            CHANNELS = Collections.unmodifiableSet(channels);
+        }
 
         private final String masterId;
 
-        private Set<String> TOPOLOGY_CHANGE_CHANNELS = new HashSet<>(
-                Arrays.asList("+slave", "+sdown", "-sdown", "fix-slave-config", "+convert-to-slave", "+role-change"));
-
         TopologyRefreshMessagePredicate(String masterId) {
             this.masterId = masterId;
+        }
+
+        @Override
+        public Set<String> channels() {
+            return CHANNELS;
         }
 
         @Override
@@ -411,7 +454,15 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
      * {@link MessagePredicate} to check whether the channel and message contain Sentinel availability changes or a Sentinel was
      * added.
      */
-    private static class SentinelReconnectMessagePredicate implements MessagePredicate {
+    static class SentinelReconnectMessagePredicate implements MessagePredicate {
+
+        private static final Set<String> RECONNECT_CHANNELS = Collections
+                .unmodifiableSet(new LinkedHashSet<>(Arrays.asList("+sentinel", "-odown", "-sdown")));
+
+        @Override
+        public Set<String> channels() {
+            return RECONNECT_CHANNELS;
+        }
 
         @Override
         public boolean test(String channel, String message) {

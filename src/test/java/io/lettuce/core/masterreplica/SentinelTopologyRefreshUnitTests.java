@@ -8,7 +8,9 @@ import static org.mockito.Mockito.anyString;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.AfterEach;
@@ -28,6 +30,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.pubsub.RedisPubSubListener;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.masterreplica.SentinelTopologyRefresh.PubSubMessageHandler;
 import io.lettuce.core.protocol.AsyncCommand;
@@ -75,6 +78,9 @@ class SentinelTopologyRefreshUnitTests {
     @Captor
     private ArgumentCaptor<Runnable> captor;
 
+    @Captor
+    private ArgumentCaptor<String> subscribedChannels;
+
     private SentinelTopologyRefresh sut;
 
     @BeforeEach
@@ -86,10 +92,10 @@ class SentinelTopologyRefreshUnitTests {
         when(redisClient.getResources()).thenReturn(clientResources);
         when(connection.async()).thenReturn(pubSubAsyncCommands);
 
-        AsyncCommand<String, String, Void> command = new AsyncCommand<>(new Command<>(CommandType.PSUBSCRIBE, null));
+        AsyncCommand<String, String, Void> command = new AsyncCommand<>(new Command<>(CommandType.SUBSCRIBE, null));
         command.complete();
 
-        when(connection.async().psubscribe(anyString())).thenReturn(command);
+        when(connection.async().subscribe(any())).thenReturn(command);
 
         sut = new SentinelTopologyRefresh(redisClient, "mymaster", Collections.singletonList(host1));
     }
@@ -107,7 +113,64 @@ class SentinelTopologyRefreshUnitTests {
         sut.bind(refreshRunnable);
 
         verify(redisClient).connectPubSubAsync(any(), any());
-        verify(pubSubAsyncCommands).psubscribe("*");
+
+        // Sentinel channel names are fixed literals, so the channels the predicates can match are subscribed explicitly
+        // rather than pattern-matched. PSUBSCRIBE * additionally delivered __sentinel__:hello once per second per sentinel,
+        // all of which was decoded and discarded.
+        verify(pubSubAsyncCommands).subscribe(subscribedChannels.capture());
+        verify(pubSubAsyncCommands, never()).psubscribe(anyString());
+
+        assertThat(subscribedChannels.getAllValues()).containsExactlyInAnyOrder("+switch-master", "+elected-leader",
+                "+reset-master", "+slave", "+sdown", "-sdown", "fix-slave-config", "+convert-to-slave", "+role-change",
+                "failover-end", "failover-end-for-timeout", "+sentinel", "-odown");
+    }
+
+    @Test
+    void bindSubscribesToEveryChannelThePredicatesCanMatch() {
+
+        sut.bind(refreshRunnable);
+
+        verify(pubSubAsyncCommands).subscribe(subscribedChannels.capture());
+
+        // Guards the derivation itself: if a channel is added to a predicate without reaching the subscribe list, that
+        // predicate silently stops firing, with no error anywhere.
+        Set<String> expected = new LinkedHashSet<>();
+        expected.addAll(new SentinelTopologyRefresh.TopologyRefreshMessagePredicate("mymaster").channels());
+        expected.addAll(new SentinelTopologyRefresh.SentinelReconnectMessagePredicate().channels());
+
+        assertThat(subscribedChannels.getAllValues()).containsExactlyInAnyOrderElementsOf(expected);
+    }
+
+    @Test
+    void shouldProcessMessageDeliveredWithoutAPattern() {
+
+        sut.bind(refreshRunnable);
+
+        ArgumentCaptor<RedisPubSubListener<String, String>> listener = ArgumentCaptor.forClass(RedisPubSubListener.class);
+        verify(connection).addListener(listener.capture());
+
+        // SUBSCRIBE delivers 'message', not 'pmessage', so the pattern-less callback is the one that must be implemented.
+        listener.getValue().message("+switch-master", "mymaster 127.0.0.1 6483 127.0.0.1 6484");
+
+        verify(eventExecutors).schedule(captor.capture(), anyLong(), any());
+        captor.getValue().run();
+        verify(refreshRunnable).run();
+    }
+
+    @Test
+    void shouldIgnoreMessageForAnotherMasterDeliveredWithoutAPattern() {
+
+        sut.bind(refreshRunnable);
+
+        ArgumentCaptor<RedisPubSubListener<String, String>> listener = ArgumentCaptor.forClass(RedisPubSubListener.class);
+        verify(connection).addListener(listener.capture());
+
+        // Pins the "<masterId> " prefix semantics - the trailing space is what keeps 'mymaster2' and Redis Enterprise's
+        // '<db>@internal' variant from matching '<db>'.
+        listener.getValue().message("+switch-master", "mymaster2 127.0.0.1 6483 127.0.0.1 6484");
+
+        verify(eventExecutors, never()).schedule(any(Runnable.class), anyLong(), any());
+        verify(refreshRunnable, never()).run();
     }
 
     @Test
@@ -136,7 +199,7 @@ class SentinelTopologyRefreshUnitTests {
         AsyncCommand<String, String, Void> command = new AsyncCommand<>(new Command<>(CommandType.PSUBSCRIBE, null));
         command.complete();
 
-        when(async2.psubscribe(anyString())).thenReturn(command);
+        when(async2.subscribe(any())).thenReturn(command);
 
         sut = new SentinelTopologyRefresh(redisClient, "mymaster", Arrays.asList(host1, host2));
 
