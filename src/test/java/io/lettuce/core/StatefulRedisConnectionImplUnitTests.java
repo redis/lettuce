@@ -57,9 +57,8 @@ class StatefulRedisConnectionImplUnitTests {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    void factoryProducesSameTypeAsReactive() {
-        assertThat(connection.commands(RedisReactiveCommands.factory()).getClass()).isSameAs(connection.reactive().getClass());
+    void factoryProducesReactiveCommands() {
+        assertThat(connection.commands(RedisReactiveCommands.factory())).isInstanceOf(RedisReactiveCommandsImpl.class);
     }
 
 }

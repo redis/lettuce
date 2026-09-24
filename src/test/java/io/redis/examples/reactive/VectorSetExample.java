@@ -22,7 +22,7 @@ public class VectorSetExample {
         RedisClient redisClient = RedisClient.create("redis://localhost:6379");
 
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
-            RedisReactiveCommands<String, String> reactiveCommands = connection.reactive();
+            RedisReactiveCommands<String, String> reactiveCommands = connection.commands(RedisReactiveCommands.factory());
 
             // REMOVE_START
             // Clean up any existing data

@@ -7,6 +7,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -82,12 +83,12 @@ public class TokenBasedAuthExample {
             // create connection using default URI (authorised as user1)
             try (StatefulRedisConnection<String, String> user1 = redisClient.connect(StringCodec.UTF8)) {
 
-                user1.reactive().aclWhoami().doOnNext(System.out::println).block();
+                user1.commands(RedisReactiveCommands.factory()).aclWhoami().doOnNext(System.out::println).block();
             }
 
             // another connection using different authorizations (user2 credentials provider)
             try (StatefulRedisConnection<String, String> user2 = redisClient.connect(StringCodec.UTF8, redisURI2);) {
-                user2.reactive().aclWhoami().doOnNext(System.out::println).block();
+                user2.commands(RedisReactiveCommands.factory()).aclWhoami().doOnNext(System.out::println).block();
             }
 
             // Shutdown Redis client and close connections

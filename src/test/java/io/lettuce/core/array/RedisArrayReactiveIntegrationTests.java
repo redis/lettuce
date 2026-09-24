@@ -40,7 +40,7 @@ public class RedisArrayReactiveIntegrationTests extends RedisArrayIntegrationTes
     @Inject
     RedisArrayReactiveIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
-        this.reactive = connection.reactive();
+        this.reactive = connection.commands(RedisReactiveCommands.factory());
     }
 
     @Test
