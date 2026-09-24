@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790128653794,
+  "lastUpdate": 1790215197581,
   "repoUrl": "https://github.com/redis/lettuce",
   "entries": {
     "Benchmark": [
@@ -263936,6 +263936,574 @@ window.BENCHMARK_DATA = {
           {
             "name": "io.lettuce.core.support.GenericConnectionPoolBenchmark.twentyConnections",
             "value": 9758.106157552182,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "github-action-benchmark",
+            "username": "github",
+            "email": "github@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "github-action-benchmark",
+            "username": "github",
+            "email": "github@users.noreply.github.com"
+          },
+          "id": "f1d9072b66e50c607f36051d790bd92bde2f60ab",
+          "message": "add Benchmark (jmh) benchmark result for 42ec551e0aa7764d85b20653bc162635d3e93f31",
+          "timestamp": "2026-09-23T01:57:33Z",
+          "url": "https://github.com/redis/lettuce/commit/f1d9072b66e50c607f36051d790bd92bde2f60ab"
+        },
+        "date": 1790215195942,
+        "tool": "jmh",
+        "benches": [
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.himportSet ( {\"fieldCount\":\"1\"} )",
+            "value": 175730.7575852243,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.himportSet ( {\"fieldCount\":\"10\"} )",
+            "value": 176717.71286866657,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.himportSet ( {\"fieldCount\":\"50\"} )",
+            "value": 182502.5288714537,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.himportSetBatch ( {\"fieldCount\":\"1\"} )",
+            "value": 17231.237711834503,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.himportSetBatch ( {\"fieldCount\":\"10\"} )",
+            "value": 18067.273013708444,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.himportSetBatch ( {\"fieldCount\":\"50\"} )",
+            "value": 22601.545700623206,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.hset ( {\"fieldCount\":\"1\"} )",
+            "value": 171569.90902629256,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.hset ( {\"fieldCount\":\"10\"} )",
+            "value": 177046.01807695368,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.hset ( {\"fieldCount\":\"50\"} )",
+            "value": 190023.27420788835,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.hsetBatch ( {\"fieldCount\":\"1\"} )",
+            "value": 16610.047140701972,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.hsetBatch ( {\"fieldCount\":\"10\"} )",
+            "value": 19143.881900201453,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.HashImportBenchmark.hsetBatch ( {\"fieldCount\":\"50\"} )",
+            "value": 31795.2392174373,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.RedisClientBenchmark.asyncSet",
+            "value": 172126.61369928037,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.RedisClientBenchmark.asyncSetBatch",
+            "value": 16671.223071643828,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.RedisClientBenchmark.asyncSetBatchFlush",
+            "value": 10423.94494477434,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.RedisClientBenchmark.reactiveSet",
+            "value": 173895.68880973264,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.RedisClientBenchmark.reactiveSetBatch",
+            "value": 17542.674966529674,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.RedisClientBenchmark.reactiveSetBatchFlush",
+            "value": 17383.66360387958,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.RedisClientBenchmark.syncList",
+            "value": 370234.7986433227,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.RedisClientBenchmark.syncSet",
+            "value": 172261.46494056465,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.ClusterDistributionChannelWriterBenchmark.write3KeyedCommands",
+            "value": 95.58304121917033,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.ClusterDistributionChannelWriterBenchmark.write3KeyedCommandsAsBatch",
+            "value": 367.79924125723556,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.ClusterDistributionChannelWriterBenchmark.writeKeyedCommand",
+            "value": 32.504507428446935,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.ClusterDistributionChannelWriterBenchmark.writePlainCommand",
+            "value": 7.764706679361039,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.RedisClusterClientBenchmark.asyncSet",
+            "value": 193573.71433946138,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.RedisClusterClientBenchmark.asyncSetBatch",
+            "value": 19841.816904801726,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.RedisClusterClientBenchmark.asyncSetBatchFlush",
+            "value": 11955.46876337835,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.RedisClusterClientBenchmark.reactiveSet",
+            "value": 195066.04159458066,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.RedisClusterClientBenchmark.reactiveSetBatch",
+            "value": 20496.564540732223,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.RedisClusterClientBenchmark.reactiveSetBatchFlush",
+            "value": 20639.936102198273,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.RedisClusterClientBenchmark.syncSet",
+            "value": 193403.11111042433,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.SlotHashBenchmark.measureSlotHashDirect",
+            "value": 40.62655840981249,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.SlotHashBenchmark.measureSlotHashHeap",
+            "value": 37.30269740820425,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.SlotHashBenchmark.measureSlotHashTaggedDirect",
+            "value": 28.574937338545226,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.SlotHashBenchmark.measureSlotHashTaggedHeap",
+            "value": 31.690088258685847,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.models.partitions.RedisClusterNodeBenchmark.createClusterNodeAllSlots",
+            "value": 27464.015013548382,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.models.partitions.RedisClusterNodeBenchmark.createClusterNodeLowerSlots",
+            "value": 13430.138156581219,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.models.partitions.RedisClusterNodeBenchmark.querySlotStatusAbsent",
+            "value": 1.0043722905179353,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.cluster.models.partitions.RedisClusterNodeBenchmark.querySlotStatusPresent",
+            "value": 0.9918766774755472,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.codec.ExactVsEstimatedSizeCodecBenchmark.encodeKeyEstimatedSize",
+            "value": 196.67251351819039,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.codec.ExactVsEstimatedSizeCodecBenchmark.encodeKeyExactSize",
+            "value": 69.56783559525736,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.codec.ExactVsEstimatedSizeCodecBenchmark.encodeValueEstimatedSize",
+            "value": 204.0852051440625,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.codec.ExactVsEstimatedSizeCodecBenchmark.encodeValueExactSize",
+            "value": 71.7570667934748,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.codec.StringCodecBenchmark.decodeUtf8Unpooled",
+            "value": 4.398069901073102,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.codec.StringCodecBenchmark.encodeAsciiToBuf",
+            "value": 16.150397098787966,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.codec.StringCodecBenchmark.encodeIsoToBuf",
+            "value": 28.118733238300514,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.codec.StringCodecBenchmark.encodeUtf8PlainStringToBuf",
+            "value": 19.09502063246753,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.codec.StringCodecBenchmark.encodeUtf8ToBuf",
+            "value": 30.416788644685937,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.codec.StringCodecBenchmark.encodeUtf8Unpooled",
+            "value": 86.09896449024471,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.dynamic.RedisCommandFactoryBenchmark.createBatchCommands",
+            "value": 863118.559063217,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.dynamic.RedisCommandFactoryBenchmark.createRegularCommands",
+            "value": 871764.9424629423,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.dynamic.RedisCommandFactoryBenchmark.executeAsyncCommand",
+            "value": 27.56736444209987,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.dynamic.RedisCommandFactoryBenchmark.executeCommandInterfaceCommand",
+            "value": 160.30616653489693,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.dynamic.RedisCommandsBenchmark.asyncSet",
+            "value": 17349.212572328073,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.dynamic.RedisCommandsBenchmark.batchSet",
+            "value": 11124.570705606568,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.dynamic.intercept.InvocationProxyFactoryBenchmark.run",
+            "value": 56.4501503996715,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.record1MillionEvents1Thread ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"2\"} )",
+            "value": 22.696881851010097,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.record1MillionEvents1Thread ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"30\"} )",
+            "value": 22.920174125,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.record1MillionEvents1Thread ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"180\"} )",
+            "value": 23.143729528118392,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.record1MillionEvents4Threads ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"2\"} )",
+            "value": 614.6205853125,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 4"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.record1MillionEvents4Threads ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"30\"} )",
+            "value": 609.0426648625,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 4"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.record1MillionEvents4Threads ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"180\"} )",
+            "value": 608.1368580124999,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 4"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.recordAndQuery1MillionOps1Thread ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"2\"} )",
+            "value": 17.878045291697997,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.recordAndQuery1MillionOps1Thread ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"30\"} )",
+            "value": 17.928257612499998,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.recordAndQuery1MillionOps1Thread ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"180\"} )",
+            "value": 17.968152710714286,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.recordAndQuery1MillionOps4Threads ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"2\"} )",
+            "value": 419.13472395833344,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 4"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.recordAndQuery1MillionOps4Threads ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"30\"} )",
+            "value": 420.7276163875,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 4"
+          },
+          {
+            "name": "io.lettuce.core.failover.metrics.SlidingTimeWindowMetricsBenchmark.recordAndQuery1MillionOps4Threads ( {\"implementation\":\"LockFreeSlidingTimeWindowMetrics\",\"windowSize\":\"180\"} )",
+            "value": 419.304234825,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 4"
+          },
+          {
+            "name": "io.lettuce.core.output.ValueListOutputBenchmark.measure100Elements",
+            "value": 387.9351785688723,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.output.ValueListOutputBenchmark.measure100ElementsWithResizeElement",
+            "value": 579.1343705658755,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.output.ValueListOutputBenchmark.measure16Elements",
+            "value": 49.37153994572637,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.output.ValueListOutputBenchmark.measure16ElementsWithResizeElement",
+            "value": 123.61614845062718,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.output.ValueListOutputBenchmark.measureSingleElement",
+            "value": 6.943043946930764,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.output.ValueListOutputBenchmark.measureZeroElement",
+            "value": 0.6333344632004867,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.CommandBenchmark.createAsyncCommandUsingByteArrayCodec",
+            "value": 27.860888195506845,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.CommandBenchmark.createCommandUsingByteArrayCodec",
+            "value": 23.276883876450857,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.CommandBenchmark.createCommandUsingStringCodec",
+            "value": 13.068241204276433,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.CommandBenchmark.encodeCommandUsingByteArrayCodec",
+            "value": 14.263670333377288,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.CommandBenchmark.encodeCommandUsingNewStringCodec",
+            "value": 69.78889126229521,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.CommandBenchmark.encodeCommandUsingOldStringCodec",
+            "value": 67.42414638075078,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.CommandHandlerBenchmark.measureNettyWriteAndRead",
+            "value": 207.61392849876975,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.CommandHandlerBenchmark.measureNettyWriteAndReadBatch1",
+            "value": 149.26444659831483,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.CommandHandlerBenchmark.measureNettyWriteAndReadBatch10",
+            "value": 1411.151774264251,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.CommandHandlerBenchmark.measureNettyWriteAndReadBatch100",
+            "value": 14391.21011496877,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.CommandHandlerBenchmark.measureNettyWriteAndReadBatch1000",
+            "value": 130811.4397170076,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.RedisEndpointBenchmark.measureUserWrite",
+            "value": 47.12293218851355,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.protocol.RedisStateMachineBenchmark.measureDecode",
+            "value": 166.2078574668596,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.support.AsyncConnectionPoolBenchmark.singleConnection",
+            "value": 367.8531725544582,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.support.AsyncConnectionPoolBenchmark.twentyConnections",
+            "value": 7885.332449949687,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.support.GenericConnectionPoolBenchmark.singleConnection",
+            "value": 668.1231490375064,
+            "unit": "ns/op",
+            "extra": "iterations: 10\nforks: 1\nthreads: 1"
+          },
+          {
+            "name": "io.lettuce.core.support.GenericConnectionPoolBenchmark.twentyConnections",
+            "value": 13751.361179921925,
             "unit": "ns/op",
             "extra": "iterations: 10\nforks: 1\nthreads: 1"
           }
