@@ -28,7 +28,9 @@ class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
 
     @Override
     public Mono<RedisCredentials> resolveCredentials() {
-        return Mono.fromCompletionStage(delegate.resolveCredentialsAsync());
+        // Defer to the Supplier overload so the delegate is invoked per subscription rather than eagerly at Mono creation;
+        // this keeps the returned Mono cold and re-subscribable, matching other RedisCredentialsProvider implementations.
+        return Mono.fromCompletionStage(delegate::resolveCredentialsAsync);
     }
 
     @Override
