@@ -80,7 +80,11 @@ public class EnterpriseSentinelDiscoveryTest {
 
     private String endpointId;
 
-    private String boundNodeUid;
+    /**
+     * Node the discovery service currently reports for the database. Removing this node from the endpoint's proxies is what
+     * makes Redis Enterprise publish {@code +switch-master}; removing any other proxy is silent.
+     */
+    private String trackedNodeUid;
 
     /**
      * Set by the tests that actually move the endpoint, so read-only tests skip the restore entirely.
@@ -109,14 +113,18 @@ public class EnterpriseSentinelDiscoveryTest {
         assertThat(clusterConfig.getDbName()).as("database name reported by rladmin for bdb %s", bdbId).isEqualTo(DB_NAME);
 
         endpointId = clusterConfig.getFirstEndpointId();
-        // getFirstEndpointId() strips the prefix ("2:1") but endpointToNode is keyed with it ("endpoint:2:1").
-        String boundNode = clusterConfig.getEndpointNode("endpoint:" + endpointId);
-        assertThat(boundNode).as("node hosting endpoint %s", endpointId).isNotNull();
-        // rladmin include/exclude take a bare node id.
-        boundNodeUid = boundNode.replace("node:", "");
+        // getFirstEndpointId() strips the prefix ("2:1") but endpointToNodes is keyed with it ("endpoint:2:1").
+        List<String> proxies = clusterConfig.getEndpointNodes("endpoint:" + endpointId);
+        assertThat(proxies).as("nodes proxying endpoint %s", endpointId).isNotEmpty();
+
+        // Ask the discovery service which node it reports, rather than assuming it is the node rladmin lists for the
+        // endpoint. Those agree only while the endpoint has a single proxy, and rladmin's row order is not stable.
+        trackedNodeUid = EnterpriseSentinelSupport.trackedNodeUid(sentinels.get(0), DB_NAME, clusterConfig);
+        assertThat(trackedNodeUid).as("node the discovery service reports for %s", DB_NAME).isNotNull();
         endpointMoved = false;
 
-        log.info("Database {} (bdb {}): endpoint {} bound to node {}", DB_NAME, bdbId, endpointId, boundNodeUid);
+        log.info("Database {} (bdb {}): endpoint {} proxied by {}, discovery service tracks node {}", DB_NAME, bdbId,
+                endpointId, proxies, trackedNodeUid);
     }
 
     @AfterEach
@@ -126,9 +134,11 @@ public class EnterpriseSentinelDiscoveryTest {
             return;
         }
 
-        // 'bind ... exclude' writes a persistent exclude_proxies attribute that 'bind ... policy single' does NOT clear.
-        // 'include' does clear it (include overrules exclude) and moves the endpoint back in the same operation.
-        String command = String.format("bind endpoint %s include %s", endpointId, boundNodeUid);
+        // 'policy single' resets both overriding constraints - rladmin sends empty include_proxies and exclude_proxies
+        // alongside the policy - and collapses the endpoint back onto one proxy. 'include <node>' would clear the exclude
+        // but leave a two-proxy endpoint behind, which then makes the next test's 'exclude' a coin flip: removing a proxy
+        // the discovery service is not tracking changes nothing and publishes nothing.
+        String command = String.format("bind endpoint %s policy single", endpointId);
         try {
             Boolean restored = faultClient.executeRladminCommand(bdbId, command, RLADMIN_CHECK_INTERVAL, RLADMIN_TIMEOUT)
                     .onErrorReturn(Boolean.FALSE).block(RLADMIN_TIMEOUT);
@@ -254,9 +264,9 @@ public class EnterpriseSentinelDiscoveryTest {
                 String key = "sentinel-discovery-" + System.currentTimeMillis();
                 connection.sync().set(key, "before-move");
 
-                // Move the endpoint off the node it is bound to. Excluding the bound node is the one deterministic
-                // producer of +switch-master: it removes the tracked node from proxy_uids under every proxy policy.
-                String command = String.format("bind endpoint %s exclude %s", endpointId, boundNodeUid);
+                // Move the endpoint off the node the discovery service tracks. That is the deterministic producer of
+                // +switch-master: it removes the tracked node from proxy_uids, so the reported address has to change.
+                String command = String.format("bind endpoint %s exclude %s", endpointId, trackedNodeUid);
                 log.info("Triggering endpoint move: rladmin {}", command);
                 endpointMoved = true;
                 Boolean moved = faultClient.executeRladminCommand(bdbId, command, RLADMIN_CHECK_INTERVAL, RLADMIN_TIMEOUT)

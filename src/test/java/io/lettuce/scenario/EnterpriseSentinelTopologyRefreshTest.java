@@ -84,6 +84,11 @@ public class EnterpriseSentinelTopologyRefreshTest {
      */
     private static final Duration ACTIVATION_TIMEOUT = Duration.ofSeconds(30);
 
+    /**
+     * How long the discovery service may lag CCS before the endpoint it reports has to match the endpoint's only proxy.
+     */
+    private static final Duration DISCOVERY_AGREEMENT_TIMEOUT = Duration.ofSeconds(30);
+
     private static final Duration RLADMIN_CHECK_INTERVAL = Duration.ofSeconds(3);
 
     private static final Duration RLADMIN_TIMEOUT = Duration.ofMinutes(2);
@@ -104,7 +109,11 @@ public class EnterpriseSentinelTopologyRefreshTest {
 
     private String endpointId;
 
-    private String boundNodeUid;
+    /**
+     * Node the discovery service currently reports for the database. Draining this node is what makes Redis Enterprise publish
+     * {@code +switch-master}; draining any other proxy of the same endpoint is silent.
+     */
+    private String trackedNodeUid;
 
     private int dbPort;
 
@@ -144,13 +153,14 @@ public class EnterpriseSentinelTopologyRefreshTest {
         assertThat(clusterConfig.getDbName()).as("database name reported by rladmin for bdb %s", bdbId).isEqualTo(DB_NAME);
 
         endpointId = clusterConfig.getFirstEndpointId();
-        // getFirstEndpointId() strips the prefix ("2:1"), endpointToNode keeps it ("endpoint:2:1").
-        String boundNode = clusterConfig.getEndpointNode("endpoint:" + endpointId);
-        assertThat(boundNode).as("node hosting endpoint %s", endpointId).isNotNull();
-        boundNodeUid = boundNode.replace("node:", "");
         maintenanceModeEnabled = false;
         endpointMoved = false;
         pendingActionId = null;
+
+        // Collapse the endpoint onto a single proxy before measuring anything. A previous test may have left it with two -
+        // 'bind endpoint <id> include <node>' unions the node onto the proxy set instead of moving the endpoint - and with
+        // two proxies the node rladmin lists and the node the discovery service reports can differ.
+        trackedNodeUid = normaliseToSingleProxy();
 
         // Widen the window during which the old proxy keeps serving, so that "did the client react" is separable from
         // "was the client given any time to react".
@@ -162,8 +172,8 @@ public class EnterpriseSentinelTopologyRefreshTest {
         events = new EnterpriseSentinelSupport.ConnectionEventCapture(client);
         capture = new EnterpriseSentinelSupport.SwitchMasterCapture(reachableSentinel);
 
-        log.info("Database {} (bdb {}): endpoint {} bound to node {}, port {}", DB_NAME, bdbId, endpointId, boundNodeUid,
-                dbPort);
+        log.info("Database {} (bdb {}): endpoint {} on the single proxy node {}, port {}", DB_NAME, bdbId, endpointId,
+                trackedNodeUid, dbPort);
     }
 
     @AfterEach
@@ -177,14 +187,15 @@ public class EnterpriseSentinelTopologyRefreshTest {
         drainPendingAction(MAINTENANCE_TIMEOUT);
 
         if (maintenanceModeEnabled) {
-            runRladmin(String.format("node %s maintenance_mode off", boundNodeUid), MAINTENANCE_TIMEOUT);
+            runRladmin(String.format("node %s maintenance_mode off", trackedNodeUid), MAINTENANCE_TIMEOUT);
             resetMaintenanceState();
         }
 
         if (endpointMoved) {
-            // 'bind ... exclude' persists an exclude_proxies attribute that 'bind ... policy single' does not clear;
-            // 'include' does clear it and moves the endpoint back in one operation.
-            runRladmin(String.format("bind endpoint %s include %s", endpointId, boundNodeUid), RLADMIN_TIMEOUT);
+            // 'policy single' resets both overriding constraints - rladmin sends empty include_proxies and
+            // exclude_proxies alongside the policy - and collapses the endpoint back onto one proxy. 'include <node>'
+            // would clear the exclude but leave a two-proxy endpoint behind for the next test.
+            runRladmin(String.format("bind endpoint %s policy single", endpointId), RLADMIN_TIMEOUT);
         }
 
         if (graceTimeChanged) {
@@ -216,7 +227,7 @@ public class EnterpriseSentinelTopologyRefreshTest {
 
         String before = connectThroughSentinel();
 
-        String command = String.format("bind endpoint %s exclude %s", endpointId, boundNodeUid);
+        String command = String.format("bind endpoint %s exclude %s", endpointId, trackedNodeUid);
         endpointMoved = true;
         startRladmin(command);
 
@@ -232,7 +243,7 @@ public class EnterpriseSentinelTopologyRefreshTest {
 
         // The operator-facing version of the same event: maintenance mode sets accept_servers=false and max_listeners=0
         // on the node, evicts its shards and moves the endpoint off it.
-        String command = String.format("node %s maintenance_mode on", boundNodeUid);
+        String command = String.format("node %s maintenance_mode on", trackedNodeUid);
         maintenanceModeEnabled = true;
         endpointMoved = true;
         startRladmin(command);
@@ -319,6 +330,48 @@ public class EnterpriseSentinelTopologyRefreshTest {
     }
 
     /**
+     * Collapse the endpoint onto exactly one proxy and return the node uid of that proxy.
+     * <p>
+     * Redis Enterprise publishes {@code +switch-master} only when the address it reports for the database changes, and
+     * {@code sentinel_ccs.go} keeps reporting the same node for as long as that node stays in the endpoint's
+     * {@code proxy_uids}. With more than one proxy, draining the node rladmin happens to list first is therefore not enough: if
+     * it is not the node being tracked, the reported address never changes and nothing is published. Starting from a single
+     * proxy removes the ambiguity, because then rladmin and the discovery service cannot disagree.
+     *
+     * @return the bare node uid of the single proxy, which is also the node the discovery service reports.
+     */
+    private String normaliseToSingleProxy() {
+
+        String fullEndpointId = "endpoint:" + endpointId;
+
+        if (clusterConfig.getEndpointNodes(fullEndpointId).size() > 1) {
+            log.info("Endpoint {} has proxies {}; collapsing onto one", endpointId,
+                    clusterConfig.getEndpointNodes(fullEndpointId));
+            // rladmin exits non-zero when there is nothing to do, so the outcome is checked by re-reading the endpoint
+            // rather than trusted from the command.
+            runRladmin(String.format("bind endpoint %s policy single", endpointId), RLADMIN_TIMEOUT);
+            await().atMost(RLADMIN_TIMEOUT).pollInterval(RLADMIN_CHECK_INTERVAL).untilAsserted(() -> {
+                clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, bdbId);
+                assertThat(clusterConfig.getEndpointNodes(fullEndpointId)).as("proxies of endpoint %s", endpointId).hasSize(1);
+            });
+        }
+
+        List<String> proxies = clusterConfig.getEndpointNodes(fullEndpointId);
+        assertThat(proxies).as("proxies of endpoint %s", endpointId).hasSize(1);
+        String proxyNodeUid = proxies.get(0).replace("node:", "");
+
+        // A single-proxy endpoint takes the len(nodeUids)==1 path in sentinel_ccs.go, which reports that node
+        // unconditionally - but the discovery service watches CCS and can still be a moment behind it. Waiting for the two
+        // to agree is what makes the drain below meaningful; without it the test could drain a node that is not the one
+        // being reported, and nothing would be published.
+        await().atMost(DISCOVERY_AGREEMENT_TIMEOUT).pollInterval(Duration.ofSeconds(2)).untilAsserted(
+                () -> assertThat(EnterpriseSentinelSupport.trackedNodeUid(reachableSentinel, DB_NAME, clusterConfig))
+                        .as("node the discovery service reports for %s", DB_NAME).isEqualTo(proxyNodeUid));
+
+        return proxyNodeUid;
+    }
+
+    /**
      * Start an rladmin command and return immediately.
      * <p>
      * The endpoint-rebind state machine waits {@code endpoint_rebind_propagation_grace_time} between publishing
@@ -389,7 +442,7 @@ public class EnterpriseSentinelTopologyRefreshTest {
         try {
             faultClient.triggerActionAndWait("reset_cluster", parameters, Duration.ofSeconds(3), Duration.ofSeconds(1),
                     MAINTENANCE_TIMEOUT).onErrorReturn(Boolean.FALSE).block(MAINTENANCE_TIMEOUT);
-            log.info("Cleared maintenance-mode state on node {}", boundNodeUid);
+            log.info("Cleared maintenance-mode state on node {}", trackedNodeUid);
         } catch (RuntimeException e) {
             log.warn("Could not clear maintenance-mode state: {}", e.toString());
         } finally {

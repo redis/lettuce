@@ -4,8 +4,11 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.time.Duration;
 
@@ -46,8 +49,14 @@ public class RedisEnterpriseConfig {
     // Track which shards are on which nodes
     private final Map<String, List<String>> nodeToShards = new HashMap<>();
 
-    // Track which endpoints are bound to which nodes
-    private final Map<String, String> endpointToNode = new HashMap<>();
+    // Track which nodes proxy each endpoint. An endpoint can have more than one proxy - 'bind endpoint <id> include
+    // <node>' unions the node onto whatever the proxy policy picked rather than moving the endpoint - and rladmin then
+    // prints one ENDPOINTS row per proxy. Keeping a list makes that visible instead of letting the last row parsed win.
+    private final Map<String, List<String>> endpointToNodes = new HashMap<>();
+
+    // Every IPv4 address rladmin prints on a node's CLUSTER NODES row (internal ADDRESS and EXTERNAL_ADDRESS), so an
+    // address reported by the Sentinel discovery service can be resolved back to the node that owns it.
+    private final Map<String, Set<String>> nodeAddresses = new HashMap<>();
 
     // Dynamic target configuration - captured during first discovery
     private Map<String, Integer> originalConfiguration = new HashMap<>();
@@ -62,6 +71,10 @@ public class RedisEnterpriseConfig {
 
     private static final Pattern ENDPOINT_PATTERN = Pattern
             .compile("db:(\\d+)\\s+\\S+\\s+(endpoint:\\d+:\\d+)\\s+(node:\\d+)\\s+\\S+\\s+.*");
+
+    // The EXTERNAL_ADDRESS column is blank on clusters without external addressing, which shifts every column after it.
+    // Rather than mapping columns positionally, collect every address-shaped token on the row.
+    private static final Pattern IPV4_PATTERN = Pattern.compile("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b");
 
     // The DATABASES section has a dynamic column set (rladmin inserts MODULE when any database in the cluster loads
     // modules, and appends a traffic column conditionally), so anchor only on DB:ID and NAME, which are always first.
@@ -282,6 +295,7 @@ public class RedisEnterpriseConfig {
 
         // Clear previous node data to ensure fresh discovery
         nodeIds.clear();
+        nodeAddresses.clear();
         log.info("DEBUG: Cleared previous node data");
 
         String[] lines = nodesOutput.split("\\n");
@@ -306,11 +320,20 @@ public class RedisEnterpriseConfig {
                         // Initialize shard count if not already tracked
                         nodeShardCounts.putIfAbsent(nodeId, 0);
                     }
+
+                    if (nodeId != null) {
+                        Set<String> addresses = nodeAddresses.computeIfAbsent(nodeId, k -> new LinkedHashSet<>());
+                        Matcher addressMatcher = IPV4_PATTERN.matcher(line);
+                        while (addressMatcher.find()) {
+                            addresses.add(addressMatcher.group());
+                        }
+                    }
                 }
             }
         }
 
         log.info("All discovered nodes: {}", nodeIds);
+        log.info("Node addresses: {}", nodeAddresses);
         log.info("Initial node shard distribution: {}", nodeShardCounts);
     }
 
@@ -319,7 +342,7 @@ public class RedisEnterpriseConfig {
      */
     public void parseEndpoints(String endpointsOutput) {
         log.info("Parsing endpoints from output...");
-        log.info("DEBUG: parseEndpoints called - current endpointToNode state: {}", endpointToNode);
+        log.info("DEBUG: parseEndpoints called - current endpointToNodes state: {}", endpointToNodes);
         log.debug("Raw endpoints output: {}", endpointsOutput);
 
         if (endpointsOutput == null || endpointsOutput.trim().isEmpty()) {
@@ -329,7 +352,7 @@ public class RedisEnterpriseConfig {
 
         // Clear previous endpoint data to avoid stale mappings
         endpointIds.clear();
-        endpointToNode.clear();
+        endpointToNodes.clear();
         log.info("DEBUG: Cleared previous endpoint data");
 
         String[] lines = endpointsOutput.split("\\n");
@@ -343,11 +366,16 @@ public class RedisEnterpriseConfig {
                     String nodeId = matcher.group(3);
 
                     log.debug("Matched endpoint - raw endpointId: '{}', nodeId: '{}'", endpointId, nodeId);
-                    endpointIds.add(endpointId);
-                    String previousNode = endpointToNode.put(endpointId, nodeId);
+                    // A multi-proxy endpoint appears once per proxy, so guard against listing the endpoint twice.
+                    if (!endpointIds.contains(endpointId)) {
+                        endpointIds.add(endpointId);
+                    }
+                    List<String> proxies = endpointToNodes.computeIfAbsent(endpointId, k -> new ArrayList<>());
+                    if (!proxies.contains(nodeId)) {
+                        proxies.add(nodeId);
+                    }
                     log.info("Found endpoint: {} on {}", endpointId, nodeId);
-                    log.info("DEBUG: Added endpoint mapping: '{}' -> '{}' (previous mapping was '{}')", endpointId, nodeId,
-                            previousNode);
+                    log.info("DEBUG: Endpoint '{}' now has proxies {}", endpointId, proxies);
 
                     // Track node IDs in case they have appeared during endpoint discovery
                     if (!nodeIds.contains(nodeId)) {
@@ -434,12 +462,61 @@ public class RedisEnterpriseConfig {
     }
 
     /**
+     * Get every node that proxies an endpoint, in the order rladmin printed them.
+     *
+     * @param endpointId endpoint id, with or without the {@code endpoint:} prefix as parsed from rladmin.
+     * @return the proxy nodes, empty if the endpoint is unknown.
+     */
+    public List<String> getEndpointNodes(String endpointId) {
+        List<String> result = endpointToNodes.get(endpointId);
+        return result == null ? Collections.<String> emptyList() : Collections.unmodifiableList(result);
+    }
+
+    /**
      * Get the node where an endpoint is bound.
+     * <p>
+     * An endpoint can be proxied by several nodes at once, in which case "the" node is ambiguous: this returns the first one
+     * rladmin printed, which is not stable between invocations. Callers that depend on the endpoint having a single proxy
+     * should use {@link #getEndpointNodes(String)} and check the size, or normalise the endpoint with
+     * {@code rladmin bind endpoint <id> policy single} first.
+     *
+     * @param endpointId endpoint id, with or without the {@code endpoint:} prefix as parsed from rladmin.
+     * @return a proxy node for the endpoint, {@code null} if the endpoint is unknown.
      */
     public String getEndpointNode(String endpointId) {
-        String result = endpointToNode.get(endpointId);
-        log.info("DEBUG: getEndpointNode('{}') -> '{}' from endpointToNode={}", endpointId, result, endpointToNode);
+        List<String> proxies = endpointToNodes.get(endpointId);
+        if (proxies == null || proxies.isEmpty()) {
+            log.info("DEBUG: getEndpointNode('{}') -> 'null' from endpointToNodes={}", endpointId, endpointToNodes);
+            return null;
+        }
+        if (proxies.size() > 1) {
+            log.warn("Endpoint {} is proxied by {} nodes {}; returning the first one, which is not stable between rladmin "
+                    + "invocations", endpointId, proxies.size(), proxies);
+        }
+        String result = proxies.get(0);
+        log.info("DEBUG: getEndpointNode('{}') -> '{}' from endpointToNodes={}", endpointId, result, endpointToNodes);
         return result;
+    }
+
+    /**
+     * Resolve the node that owns an address, matching against every address rladmin printed for the node - both the internal
+     * {@code ADDRESS} and the {@code EXTERNAL_ADDRESS}.
+     *
+     * @param address an IPv4 address, such as the one the Sentinel discovery service reports as the master.
+     * @return the owning node id in {@code node:X} form, {@code null} if no node claims the address.
+     */
+    public String findNodeByAddress(String address) {
+        if (address == null || address.trim().isEmpty()) {
+            return null;
+        }
+        String wanted = address.trim();
+        for (Map.Entry<String, Set<String>> entry : nodeAddresses.entrySet()) {
+            if (entry.getValue().contains(wanted)) {
+                return entry.getKey();
+            }
+        }
+        log.warn("No node claims address {}; known node addresses are {}", wanted, nodeAddresses);
+        return null;
     }
 
     /**
@@ -801,7 +878,7 @@ public class RedisEnterpriseConfig {
             log.warn(
                     "Could not determine which node endpoint {} is bound to (tried both '{}' and 'endpoint:{}'), falling back to general source node selection",
                     endpointId, endpointId, endpointId);
-            log.warn("Available endpoint mappings: {}", endpointToNode);
+            log.warn("Available endpoint mappings: {}", endpointToNodes);
             return getOptimalSourceNode();
         }
 

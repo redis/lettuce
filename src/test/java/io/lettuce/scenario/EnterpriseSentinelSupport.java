@@ -203,6 +203,33 @@ final class EnterpriseSentinelSupport {
         }
     }
 
+    /**
+     * Node uid the discovery service currently tracks for a master name.
+     * <p>
+     * This is the node that matters when provoking a {@code +switch-master}: Redis Enterprise publishes the event only when the
+     * address it reports changes, and {@code sentinel_ccs.go} keeps reporting the same node for as long as that node remains
+     * one of the endpoint's proxies. Removing any other proxy is silent. The node rladmin prints for the endpoint is not a
+     * substitute - an endpoint can have several proxies, and then the two disagree.
+     *
+     * @param sentinel a reachable discovery-service URI.
+     * @param masterName the Sentinel master name, which is the database name.
+     * @param clusterConfig cluster configuration used to resolve the reported address back to a node.
+     * @return the bare node uid rladmin takes, for example {@code 3}, or {@code null} if the address maps to no known node.
+     */
+    static String trackedNodeUid(RedisURI sentinel, String masterName, RedisEnterpriseConfig clusterConfig) {
+
+        SocketAddress reported = reportedMaster(sentinel, masterName);
+        if (!(reported instanceof InetSocketAddress)) {
+            log.warn("Discovery service reported a non-inet address for {}: {}", masterName, reported);
+            return null;
+        }
+
+        String host = ((InetSocketAddress) reported).getHostString();
+        String node = clusterConfig.findNodeByAddress(host);
+        log.info("Discovery service reports {} at {}, which is {}", masterName, host, node);
+        return node == null ? null : node.replace("node:", "");
+    }
+
     static String format(SocketAddress address) {
 
         if (address instanceof InetSocketAddress) {
