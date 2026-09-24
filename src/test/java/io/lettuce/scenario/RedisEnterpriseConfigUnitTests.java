@@ -18,11 +18,15 @@ import org.junit.jupiter.api.Test;
 @Tag(UNIT_TEST)
 class RedisEnterpriseConfigUnitTests {
 
+    /**
+     * Shaped after a real {@code rladmin status}. Addresses are from the ranges RFC 5737 and RFC 1918 reserve for documentation
+     * and private use, so nothing here points at a real cluster.
+     */
     private static final String NODES = "CLUSTER NODES:\n"
-            + "NODE:ID    ROLE       ADDRESS       EXTERNAL_ADDRESS  HOSTNAME  SHARDS   CORES  VERSION     STATUS\n"
-            + "*node:1    master     10.0.101.25   100.53.13.62      node1     0/100    2      7.4.2-54    OK\n"
-            + " node:2    slave      10.0.101.188  13.220.255.215    node2     2/100    2      7.4.2-54    OK\n"
-            + " node:3    slave      10.0.101.34   54.90.199.133     node3     2/100    2      7.4.2-54    OK\n";
+            + "NODE:ID    ROLE       ADDRESS     EXTERNAL_ADDRESS  HOSTNAME  SHARDS   CORES  VERSION     STATUS\n"
+            + "*node:1    master     10.0.0.1    192.0.2.1         node1     0/100    2      7.4.2-54    OK\n"
+            + " node:2    slave      10.0.0.2    192.0.2.2         node2     2/100    2      7.4.2-54    OK\n"
+            + " node:3    slave      10.0.0.3    192.0.2.3         node3     2/100    2      7.4.2-54    OK\n";
 
     private static final String SINGLE_PROXY_ENDPOINT = "ENDPOINTS:\n"
             + "DB:ID   NAME        ID            NODE      ROLE    SSL\n"
@@ -90,12 +94,12 @@ class RedisEnterpriseConfigUnitTests {
         config.parseFullStatus(NODES + SINGLE_PROXY_ENDPOINT);
 
         // The discovery service reports external addresses; the @internal master name carries the internal ones.
-        assertThat(config.findNodeByAddress("54.90.199.133")).isEqualTo("node:3");
-        assertThat(config.findNodeByAddress("10.0.101.34")).isEqualTo("node:3");
-        assertThat(config.findNodeByAddress("13.220.255.215")).isEqualTo("node:2");
+        assertThat(config.findNodeByAddress("192.0.2.3")).isEqualTo("node:3");
+        assertThat(config.findNodeByAddress("10.0.0.3")).isEqualTo("node:3");
+        assertThat(config.findNodeByAddress("192.0.2.2")).isEqualTo("node:2");
 
         // The master row is prefixed with '*', which must not stop the node being recognised.
-        assertThat(config.findNodeByAddress("100.53.13.62")).isEqualTo("node:1");
+        assertThat(config.findNodeByAddress("192.0.2.1")).isEqualTo("node:1");
     }
 
     @Test
