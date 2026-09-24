@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 
 import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceStrings;
@@ -393,8 +394,7 @@ class RedisHandshake implements ConnectionInitializer {
     }
 
     private static boolean isUnknownCommand(Throwable error) {
-        return error instanceof RedisException && LettuceStrings.isNotEmpty(error.getMessage())
-                && ((error.getMessage().startsWith("ERR") && error.getMessage().contains("unknown")));
+        return ExceptionFactory.isUnknownCommandError(error);
     }
 
     private static boolean isNoProto(Throwable error) {
