@@ -100,7 +100,7 @@ username/password on the URI statically, a `StaticCredentialsProvider`
 holds the configured information.
 
 The reactive `RedisCredentialsProvider`, which resolves credentials as a
-`Mono`, is deprecated since 7.8 in favor of `CredentialsProvider`. It
+`Mono`, is deprecated since 7.9 in favor of `CredentialsProvider`. It
 still works — a `RedisCredentialsProvider` is a `CredentialsProvider`,
 and providers configured through the deprecated API are adapted
 automatically — so existing code keeps working without changes.
