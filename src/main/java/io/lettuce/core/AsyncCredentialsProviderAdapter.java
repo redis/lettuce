@@ -7,6 +7,7 @@ package io.lettuce.core;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -46,6 +47,17 @@ class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
     @Override
     public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
         return delegate.subscribeToCredentials(onNext, onError);
+    }
+
+    @Override
+    public Flux<RedisCredentials> credentials() {
+        if (!delegate.supportsStreaming()) {
+            throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
+        }
+        return Flux.create(sink -> {
+            Subscription subscription = delegate.subscribeToCredentials(sink::next, sink::error);
+            sink.onDispose(subscription::close);
+        });
     }
 
     @Override

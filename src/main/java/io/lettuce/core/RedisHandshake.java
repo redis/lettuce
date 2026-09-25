@@ -205,6 +205,11 @@ class RedisHandshake implements ConnectionInitializer {
      */
     private CompletableFuture<?> initiateHandshakeResp2(Channel channel, CredentialsProvider credentialsProvider) {
 
+        if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
+            return dispatchAuthOrPing(channel,
+                    ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider).resolveCredentialsNow());
+        }
+
         if (credentialsProvider instanceof CredentialsProvider.ImmediateCredentialsProvider) {
             return dispatchAuthOrPing(channel,
                     ((CredentialsProvider.ImmediateCredentialsProvider) credentialsProvider).resolveCredentialsNow());
@@ -236,6 +241,11 @@ class RedisHandshake implements ConnectionInitializer {
      */
     private CompletionStage<Map<String, Object>> initiateHandshakeResp3(Channel channel,
             CredentialsProvider credentialsProvider) {
+
+        if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
+            return dispatchHello(channel,
+                    ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider).resolveCredentialsNow());
+        }
 
         if (credentialsProvider instanceof CredentialsProvider.ImmediateCredentialsProvider) {
             return dispatchHello(channel,

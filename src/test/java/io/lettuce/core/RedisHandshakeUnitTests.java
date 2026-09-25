@@ -209,6 +209,31 @@ class RedisHandshakeUnitTests {
     }
 
     @Test
+    void handshakeResp3WithReactiveImmediateProviderResolvesSynchronously() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        // The deprecated reactive immediate provider must still take the synchronous handshake fast-path
+        // (resolveCredentialsNow)
+        // rather than deferring through resolveCredentialsAsync().
+        RedisCredentialsProvider.ImmediateRedisCredentialsProvider cp = () -> RedisCredentials.just("foo", "bar".toCharArray());
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(cp);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, null);
+        handshake.initialize(channel);
+
+        // HELLO is on the wire synchronously (no await), proving the fast-path branch was taken.
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        assertThat(hello.getArgs().toCommandString()).contains("AUTH", "foo", "bar");
+
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        assertThat(state.getNegotiatedProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
+    }
+
+    @Test
     void shouldParseVersionWithCharacters() {
 
         assertThat(RedisHandshake.RedisVersion.of("1.2.3").toString()).isEqualTo("1.2.3");

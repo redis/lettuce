@@ -57,7 +57,8 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
 
         LettuceAssert.notNull(supplier, "Supplier must not be null");
 
-        return () -> Mono.fromSupplier(supplier);
+        return () -> Mono.fromSupplier(supplier)
+                .switchIfEmpty(Mono.error(new IllegalStateException("Provided RedisCredentials supplier returned null")));
     }
 
     /**
@@ -111,7 +112,8 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
 
         @Override
         default Mono<RedisCredentials> resolveCredentials() {
-            return Mono.just(resolveCredentialsNow());
+            return Mono.fromSupplier(this::resolveCredentialsNow)
+                    .switchIfEmpty(Mono.error(new IllegalStateException("RedisCredentials resolved to null")));
         }
 
         @Override
