@@ -9,12 +9,14 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.AsyncCommand;
@@ -160,6 +162,75 @@ class RedisHandshakeUnitTests {
 
         assertThat(postHandshake.size()).isEqualTo(2);
         assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isFalse();
+    }
+
+    @Test
+    void handshakeResp3ResolvesMinimalCompletionStageProvider() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        // A CompletionStage whose toCompletableFuture() throws UnsupportedOperationException (permitted by the contract for a
+        // minimal stage). The handshake must bridge via whenComplete and still dispatch HELLO rather than fail.
+        CredentialsProvider cp = () -> minimalStage(RedisCredentials.just("foo", "bar".toCharArray()));
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(cp);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, null);
+        CompletionStage<Void> handshakeInit = handshake.initialize(channel);
+
+        Awaitility.await().atMost(5, SECONDS).pollInterval(50, MILLISECONDS).until(() -> !channel.outboundMessages().isEmpty());
+
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        assertThat(hello.getArgs().toCommandString()).contains("AUTH", "foo", "bar");
+
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isFalse();
+    }
+
+    @Test
+    void handshakeResp2ResolvesMinimalCompletionStageProvider() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        CredentialsProvider cp = () -> minimalStage(RedisCredentials.just("foo", "bar".toCharArray()));
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(cp);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP2, false, state, null);
+        handshake.initialize(channel);
+
+        Awaitility.await().atMost(5, SECONDS).pollInterval(50, MILLISECONDS).until(() -> !channel.outboundMessages().isEmpty());
+
+        AsyncCommand<String, String, String> auth = channel.readOutbound();
+        assertThat(auth.getType().toString()).isEqualTo("AUTH");
+        assertThat(auth.getArgs().toCommandString()).contains("foo", "bar");
+    }
+
+    @Test
+    void handshakeResp3WithReactiveImmediateProviderResolvesSynchronously() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        // The deprecated reactive immediate provider must still take the synchronous handshake fast-path
+        // (resolveCredentialsNow)
+        // rather than deferring through resolveCredentialsAsync().
+        RedisCredentialsProvider.ImmediateRedisCredentialsProvider cp = () -> RedisCredentials.just("foo", "bar".toCharArray());
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(cp);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, null);
+        handshake.initialize(channel);
+
+        // HELLO is on the wire synchronously (no await), proving the fast-path branch was taken.
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        assertThat(hello.getArgs().toCommandString()).contains("AUTH", "foo", "bar");
+
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        assertThat(state.getNegotiatedProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
     }
 
     @Test
@@ -322,6 +393,25 @@ class RedisHandshakeUnitTests {
         assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isFalse();
     }
 
+    /**
+     * A completed {@link CompletionStage} that rejects {@link CompletionStage#toCompletableFuture()}, modelling a "minimal"
+     * stage as the contract permits; {@code whenComplete} still works.
+     */
+    private static CompletionStage<RedisCredentials> minimalStage(RedisCredentials credentials) {
+        RejectingCompletableFuture stage = new RejectingCompletableFuture();
+        stage.complete(credentials);
+        return stage;
+    }
+
+    private static final class RejectingCompletableFuture extends CompletableFuture<RedisCredentials> {
+
+        @Override
+        public CompletableFuture<RedisCredentials> toCompletableFuture() {
+            throw new UnsupportedOperationException("minimal CompletionStage does not support toCompletableFuture()");
+        }
+
+    }
+
     private static void helloResponse(CommandOutput<String, String, Map<String, String>> output) {
 
         output.multiMap(8);
@@ -359,8 +449,8 @@ class RedisHandshakeUnitTests {
         private final Sinks.One<RedisCredentials> credentialsSink = Sinks.one();
 
         @Override
-        public CompletionStage<RedisCredentials> resolveCredentials() {
-            return credentialsSink.asMono().toFuture();
+        public Mono<RedisCredentials> resolveCredentials() {
+            return credentialsSink.asMono();
         }
 
         public void completeCredentials(RedisCredentials credentials) {
