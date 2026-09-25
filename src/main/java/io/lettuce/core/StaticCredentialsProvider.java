@@ -43,7 +43,7 @@ public class StaticCredentialsProvider
 
     /**
      * @return a {@link Mono} emitting the static {@link RedisCredentials}
-     * @deprecated since 7.8, use {@link #resolveCredentialsAsync()} — or {@link #resolveCredentialsNow()} for immediate,
+     * @deprecated since 7.9, use {@link #resolveCredentialsAsync()} — or {@link #resolveCredentialsNow()} for immediate,
      *             non-deferred access — instead; scheduled for removal in a future major release.
      */
     @Deprecated

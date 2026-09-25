@@ -18,7 +18,7 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  * @since 6.2
- * @deprecated since 7.8, use {@link CredentialsProvider} instead; scheduled for removal in a future major release.
+ * @deprecated since 7.9, use {@link CredentialsProvider} instead; scheduled for removal in a future major release.
  */
 @Deprecated
 @FunctionalInterface
@@ -38,7 +38,7 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
      * Resolves the latest available credentials as a {@link CompletionStage}, adapting {@link #resolveCredentials()}.
      *
      * @return a {@link CompletionStage} that completes with the {@link RedisCredentials} used to authorize a Redis connection.
-     * @since 7.8
+     * @since 7.9
      */
     @Override
     default CompletionStage<RedisCredentials> resolveCredentialsAsync() {
@@ -92,7 +92,7 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
      * <p>
      * Bridges the reactive {@link #credentials()} stream to the callback-based {@link CredentialsProvider} contract.
      *
-     * @since 7.8
+     * @since 7.9
      */
     @Override
     default Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {

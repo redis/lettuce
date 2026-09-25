@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
  * {@link #resolveCredentials()} and {@link #credentials()} only materialise the reactive types at that boundary.
  *
  * @author Aleksandar Todorov
- * @since 7.8
+ * @since 7.9
  */
 class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
 
