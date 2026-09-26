@@ -274,10 +274,16 @@ System.out.println("Random elements: " + randomElements);
 VectorMetadata metadata = vectorSet.vinfo("points");
 System.out.println("Vector set metadata: " + metadata);
 
-// Get links/connections for HNSW graph structure
-List<String> links = vectorSet.vlinks("points", "pt:A");
-System.out.println("Graph links for pt:A: " + links);
+// Get links/connections for each layer of the HNSW graph
+List<List<String>> links = vectorSet.vlinks("points", "pt:A");
+System.out.println("Graph layers for pt:A: " + links);
+
+// Get links with similarity scores, grouped by graph layer
+List<Map<String, Double>> linksWithScores = vectorSet.vlinksWithScores("points", "pt:A");
 ```
+
+`vlinks` and `vlinksWithScores` preserve graph layers, including empty layers.
+The reactive API emits one list or score map per layer.
 
 ## Real-World Use Cases
 
