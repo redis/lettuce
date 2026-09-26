@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -148,6 +149,7 @@ import static io.lettuce.core.RedisAuthenticationHandler.createHandler;
  * possible.
  *
  * @author Mark Paluch
+ * @author Tony Zhang
  * @since 3.0
  * @see RedisURI
  * @see StatefulRedisClusterConnection
@@ -1119,7 +1121,8 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Determines a {@link Partitions topology view} based on the current and the obtain topology views.
+     * Determines a {@link Partitions topology view} based on the current and the obtain topology views. Topology views without
+     * full slot coverage are only considered if no view provides full slot coverage.
      *
      * @param current the current topology view. May be {@code null} if {@link RedisClusterClient} has no topology view yet.
      * @param topologyViews the obtain topology views
@@ -1127,11 +1130,35 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     protected Partitions determinePartitions(Partitions current, Map<RedisURI, Partitions> topologyViews) {
 
+        Map<RedisURI, Partitions> preferredViews = getViewsWithFullSlotCoverage(topologyViews);
+
         if (current == null) {
-            return PartitionsConsensus.HEALTHY_MAJORITY.getPartitions(null, topologyViews);
+            return PartitionsConsensus.HEALTHY_MAJORITY.getPartitions(null, preferredViews);
         }
 
-        return PartitionsConsensus.KNOWN_MAJORITY.getPartitions(current, topologyViews);
+        return PartitionsConsensus.KNOWN_MAJORITY.getPartitions(current, preferredViews);
+    }
+
+    private static Map<RedisURI, Partitions> getViewsWithFullSlotCoverage(Map<RedisURI, Partitions> topologyViews) {
+
+        Map<RedisURI, Partitions> result = new LinkedHashMap<>(topologyViews);
+        result.entrySet().removeIf(entry -> !hasFullSlotCoverage(entry.getValue()));
+
+        if (result.isEmpty() || result.size() == topologyViews.size()) {
+            return topologyViews;
+        }
+
+        return result;
+    }
+
+    private static boolean hasFullSlotCoverage(Partitions partitions) {
+
+        int slots = 0;
+        for (RedisClusterNode node : partitions) {
+            slots += node.getSlotCount();
+        }
+
+        return slots == SlotHash.SLOT_COUNT;
     }
 
     /**
