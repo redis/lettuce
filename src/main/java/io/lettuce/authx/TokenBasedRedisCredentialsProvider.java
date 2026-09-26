@@ -85,7 +85,9 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      * credentials are available.
      *
      * @return a Mono that emits the latest Redis credentials
+     * @deprecated since 7.9, use {@link #resolveCredentialsAsync()} instead; scheduled for removal in a future major release.
      */
+    @Deprecated
     @Override
     public Mono<RedisCredentials> resolveCredentials() {
 
@@ -99,7 +101,10 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      * credentials whenever they are updated. The Flux will continue to emit updates until the provider is shut down.
      *
      * @return a Flux that emits all updates to the Redis credentials
+     * @deprecated since 7.9, use {@link #subscribeToCredentials(java.util.function.Consumer, java.util.function.Consumer)}
+     *             instead; scheduled for removal in a future major release.
      */
+    @Deprecated
     @Override
     public Flux<RedisCredentials> credentials() {
 
