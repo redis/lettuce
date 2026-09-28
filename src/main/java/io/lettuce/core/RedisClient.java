@@ -32,6 +32,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import io.lettuce.core.annotations.Experimental;
@@ -546,9 +547,16 @@ public class RedisClient extends AbstractRedisClient {
             });
         }
 
+        // Keep the first failure as the cause and attach every later sentinel failure as a suppressed exception, so a
+        // connect failure across all sentinels still reports why each individual node was unreachable.
+        BinaryOperator<Throwable> keepAllFailures = (first, next) -> {
+            first.addSuppressed(next);
+            return first;
+        };
+
         CompletableFuture<StatefulRedisSentinelConnection<K, V>> connectionFuture = attempts.get(0).get().toCompletableFuture();
         for (int i = 1; i < attempts.size(); i++) {
-            connectionFuture = Futures.withFallback(connectionFuture, attempts.get(i));
+            connectionFuture = Futures.withFallback(connectionFuture, attempts.get(i), keepAllFailures);
         }
 
         CompletableFuture<StatefulRedisSentinelConnection<K, V>> result = new CompletableFuture<>();

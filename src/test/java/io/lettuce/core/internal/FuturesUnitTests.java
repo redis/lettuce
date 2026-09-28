@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -17,6 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.AfterAll;
@@ -198,6 +200,41 @@ class FuturesUnitTests {
                 () -> Futures.failed(fallbackError));
 
         assertThatThrownBy(() -> result.get(2, SECONDS)).hasCause(fallbackError);
+    }
+
+    @Test
+    void withFallbackCombinerSkippedWhenFallbackSucceeds() throws Exception {
+        AtomicInteger combinerInvocations = new AtomicInteger();
+        CompletableFuture<String> result = Futures.withFallback(Futures.failed(new RuntimeException("primary failed")),
+                () -> CompletableFuture.completedFuture("recovered"), (first, next) -> {
+                    combinerInvocations.incrementAndGet();
+                    return first;
+                });
+
+        assertThat(result.get(2, SECONDS)).isEqualTo("recovered");
+        assertThat(combinerInvocations).hasValue(0);
+    }
+
+    @Test
+    void withFallbackCombinerAggregatesFailuresWhenFoldedOverAttempts() {
+        RuntimeException e1 = new RuntimeException("e1");
+        RuntimeException e2 = new RuntimeException("e2");
+        RuntimeException e3 = new RuntimeException("e3");
+        List<Supplier<CompletionStage<String>>> attempts = Arrays.asList(() -> Futures.failed(e1), () -> Futures.failed(e2),
+                () -> Futures.failed(e3));
+
+        BinaryOperator<Throwable> keepAllFailures = (first, next) -> {
+            first.addSuppressed(next);
+            return first;
+        };
+
+        CompletableFuture<String> result = attempts.get(0).get().toCompletableFuture();
+        for (int i = 1; i < attempts.size(); i++) {
+            result = Futures.withFallback(result, attempts.get(i), keepAllFailures);
+        }
+
+        assertThatThrownBy(result::join).hasCause(e1);
+        assertThat(e1.getSuppressed()).containsExactly(e2, e3);
     }
 
 }

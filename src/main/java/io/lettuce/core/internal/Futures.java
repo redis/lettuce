@@ -3,6 +3,7 @@ package io.lettuce.core.internal;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.*;
+import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import io.lettuce.core.RedisFuture;
@@ -316,6 +317,25 @@ public abstract class Futures {
     public static <T> CompletableFuture<T> withFallback(CompletionStage<T> task,
             Supplier<? extends CompletionStage<T>> fallback) {
 
+        return withFallback(task, fallback, (error, fallbackError) -> fallbackError);
+    }
+
+    /**
+     * Complete with {@code task}, or if it fails, with the result of {@code fallback}. The {@code fallback} is invoked only
+     * when {@code task} completes exceptionally; if the fallback also fails, {@code onBothFailed} combines the {@code task}
+     * failure with the fallback failure and the combined throwable is propagated. This allows callers to retain earlier
+     * failures, for example by attaching them as suppressed exceptions, when folding over a sequence of attempts.
+     *
+     * @param task the primary stage.
+     * @param fallback supplies the fallback stage, invoked only when {@code task} fails.
+     * @param onBothFailed combines the {@code task} failure (first argument) with the fallback failure (second argument) when
+     *        both fail; the returned throwable is propagated.
+     * @param <T> the result type.
+     * @return a {@link CompletableFuture} completing with {@code task}, or with the fallback on failure.
+     */
+    public static <T> CompletableFuture<T> withFallback(CompletionStage<T> task,
+            Supplier<? extends CompletionStage<T>> fallback, BinaryOperator<Throwable> onBothFailed) {
+
         CompletableFuture<T> result = new CompletableFuture<>();
         task.whenComplete((value, error) -> {
             if (error == null) {
@@ -326,12 +346,12 @@ public abstract class Futures {
             try {
                 next = fallback.get();
             } catch (Throwable t) {
-                result.completeExceptionally(t);
+                result.completeExceptionally(onBothFailed.apply(error, t));
                 return;
             }
             next.whenComplete((fallbackValue, fallbackError) -> {
                 if (fallbackError != null) {
-                    result.completeExceptionally(fallbackError);
+                    result.completeExceptionally(onBothFailed.apply(error, fallbackError));
                 } else {
                     result.complete(fallbackValue);
                 }

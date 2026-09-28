@@ -763,11 +763,11 @@ public class RedisClusterClient extends AbstractRedisClient {
         ConnectionFuture<T> future = connectStatefulAsync(connection, endpoint, getFirstUri(), socketAddressSupplier,
                 commandHandlerSupplier);
 
-        return future.whenComplete((c, t) -> {
+        return Futures.unwrapExceptions(future.whenComplete((c, t) -> {
             if (t != null) {
                 logger.warn(t.getMessage());
             }
-        });
+        }));
     }
 
     private <T, K, V> CompletionStage<T> connect(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
@@ -777,11 +777,11 @@ public class RedisClusterClient extends AbstractRedisClient {
         ConnectionFuture<T> future = connectStatefulAsync(connection, endpoint, getFirstUri(), socketAddressSupplier,
                 commandHandlerSupplier);
 
-        return future.whenComplete((c, t) -> {
+        return Futures.unwrapExceptions(future.whenComplete((c, t) -> {
             if (t != null) {
                 logger.warn(t.getMessage());
             }
-        });
+        }));
     }
 
     /**
