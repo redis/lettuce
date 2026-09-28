@@ -706,11 +706,16 @@ public class RedisClusterClient extends AbstractRedisClient {
         Supplier<CompletionStage<StatefulRedisClusterConnectionImpl<K, V>>> connectSupplier = () -> connect(
                 socketAddressSupplier, endpoint, connection, commandHandlerSupplier);
 
-        return Futures.firstSuccess(Collections.nCopies(getConnectionAttempts(), connectSupplier),
-                errors -> errors.get(errors.size() - 1)).thenApply(it -> {
-                    connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider);
-                    return (StatefulRedisClusterConnection<K, V>) it;
-                });
+        CompletableFuture<StatefulRedisClusterConnectionImpl<K, V>> connectionFuture = connectSupplier.get()
+                .toCompletableFuture();
+        for (int i = 1; i < getConnectionAttempts(); i++) {
+            connectionFuture = Futures.withFallback(connectionFuture, connectSupplier);
+        }
+
+        return connectionFuture.thenApply(it -> {
+            connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider);
+            return (StatefulRedisClusterConnection<K, V>) it;
+        });
     }
 
     /**
@@ -831,11 +836,16 @@ public class RedisClusterClient extends AbstractRedisClient {
         Supplier<CompletionStage<StatefulRedisClusterPubSubConnectionImpl<K, V>>> connectSupplier = () -> connect(
                 socketAddressSupplier, endpoint, connection, commandHandlerSupplier);
 
-        return Futures.firstSuccess(Collections.nCopies(getConnectionAttempts(), connectSupplier),
-                errors -> errors.get(errors.size() - 1)).thenApply(it -> {
-                    connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider);
-                    return (StatefulRedisClusterPubSubConnection<K, V>) it;
-                });
+        CompletableFuture<StatefulRedisClusterPubSubConnectionImpl<K, V>> connectionFuture = connectSupplier.get()
+                .toCompletableFuture();
+        for (int i = 1; i < getConnectionAttempts(); i++) {
+            connectionFuture = Futures.withFallback(connectionFuture, connectSupplier);
+        }
+
+        return connectionFuture.thenApply(it -> {
+            connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider);
+            return (StatefulRedisClusterPubSubConnection<K, V>) it;
+        });
     }
 
     private int getConnectionAttempts() {

@@ -546,20 +546,22 @@ public class RedisClient extends AbstractRedisClient {
             });
         }
 
-        return Futures.firstSuccess(attempts, errors -> {
+        CompletableFuture<StatefulRedisSentinelConnection<K, V>> connectionFuture = attempts.get(0).get().toCompletableFuture();
+        for (int i = 1; i < attempts.size(); i++) {
+            connectionFuture = Futures.withFallback(connectionFuture, attempts.get(i));
+        }
 
-            Throwable last = errors.get(errors.size() - 1);
-            RedisConnectionException ex = new RedisConnectionException(
-                    "Cannot connect to a Redis Sentinel: " + redisURI.getSentinels(), last);
-
-            for (Throwable throwable : errors) {
-                if (throwable != last) {
-                    ex.addSuppressed(throwable);
-                }
+        CompletableFuture<StatefulRedisSentinelConnection<K, V>> result = new CompletableFuture<>();
+        connectionFuture.whenComplete((connection, e) -> {
+            if (e == null) {
+                result.complete(connection);
+            } else {
+                Throwable cause = e instanceof CompletionException && e.getCause() != null ? e.getCause() : e;
+                result.completeExceptionally(
+                        new RedisConnectionException("Cannot connect to a Redis Sentinel: " + redisURI.getSentinels(), cause));
             }
-
-            return ex;
         });
+        return result;
     }
 
     private <K, V> ConnectionFuture<StatefulRedisSentinelConnection<K, V>> doConnectSentinelAsync(RedisCodec<K, V> codec,

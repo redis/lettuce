@@ -1,11 +1,8 @@
 package io.lettuce.core.internal;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.*;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.lettuce.core.RedisFuture;
@@ -308,48 +305,39 @@ public abstract class Futures {
     }
 
     /**
-     * Attempt a sequence of asynchronous operations in order, completing with the result of the first successful attempt. Each
-     * supplier is invoked lazily, only once the preceding attempt has failed. If every attempt fails, the returned future
-     * completes exceptionally with the result of applying {@code errorHandler} to the failures collected in attempt order.
+     * Complete with {@code task}, or if it fails, with the result of {@code fallback}. The {@code fallback} is invoked only
+     * when {@code task} completes exceptionally; if the fallback also fails, its failure is propagated.
      *
-     * @param attempts the ordered attempts; must not be {@code null} and must not be empty.
-     * @param errorHandler produces the terminal failure from the collected errors; must not be {@code null}.
-     * @param <T> result type.
-     * @return a {@link CompletableFuture} completing with the first successful result or the aggregated failure.
+     * @param task the primary stage.
+     * @param fallback supplies the fallback stage, invoked only when {@code task} fails.
+     * @param <T> the result type.
+     * @return a {@link CompletableFuture} completing with {@code task}, or with the fallback on failure.
      */
-    public static <T> CompletableFuture<T> firstSuccess(List<? extends Supplier<? extends CompletionStage<T>>> attempts,
-            Function<List<Throwable>, Throwable> errorHandler) {
+    public static <T> CompletableFuture<T> withFallback(CompletionStage<T> task,
+            Supplier<? extends CompletionStage<T>> fallback) {
 
         CompletableFuture<T> result = new CompletableFuture<>();
-        attempt(attempts, 0, new ArrayList<>(), errorHandler, result);
-        return result;
-    }
-
-    private static <T> void attempt(List<? extends Supplier<? extends CompletionStage<T>>> attempts, int index,
-            List<Throwable> errors, Function<List<Throwable>, Throwable> errorHandler, CompletableFuture<T> result) {
-
-        if (index >= attempts.size()) {
-            result.completeExceptionally(errorHandler.apply(errors));
-            return;
-        }
-
-        CompletionStage<T> stage;
-        try {
-            stage = attempts.get(index).get();
-        } catch (Throwable t) {
-            errors.add(t);
-            attempt(attempts, index + 1, errors, errorHandler, result);
-            return;
-        }
-
-        stage.whenComplete((value, error) -> {
-            if (error != null) {
-                errors.add(error);
-                attempt(attempts, index + 1, errors, errorHandler, result);
-            } else {
+        task.whenComplete((value, error) -> {
+            if (error == null) {
                 result.complete(value);
+                return;
             }
+            CompletionStage<T> next;
+            try {
+                next = fallback.get();
+            } catch (Throwable t) {
+                result.completeExceptionally(t);
+                return;
+            }
+            next.whenComplete((fallbackValue, fallbackError) -> {
+                if (fallbackError != null) {
+                    result.completeExceptionally(fallbackError);
+                } else {
+                    result.complete(fallbackValue);
+                }
+            });
         });
+        return result;
     }
 
 }

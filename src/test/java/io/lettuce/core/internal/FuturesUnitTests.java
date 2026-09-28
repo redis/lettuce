@@ -7,7 +7,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -18,7 +17,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.AfterAll;
@@ -172,62 +170,34 @@ class FuturesUnitTests {
     }
 
     @Test
-    void firstSuccessReturnsFirstResultAndSkipsRemainingAttempts() throws Exception {
-        AtomicInteger invocations = new AtomicInteger();
-        List<Supplier<CompletionStage<String>>> attempts = Arrays.asList(() -> {
-            invocations.incrementAndGet();
-            return CompletableFuture.completedFuture("first");
-        }, () -> {
-            invocations.incrementAndGet();
-            return CompletableFuture.completedFuture("second");
-        });
+    void withFallbackReturnsPrimaryResultAndSkipsFallback() throws Exception {
+        AtomicInteger fallbackInvocations = new AtomicInteger();
+        Supplier<CompletionStage<String>> fallback = () -> {
+            fallbackInvocations.incrementAndGet();
+            return CompletableFuture.completedFuture("fallback");
+        };
 
-        CompletableFuture<String> result = Futures.firstSuccess(attempts, errors -> new IllegalStateException());
+        CompletableFuture<String> result = Futures.withFallback(CompletableFuture.completedFuture("primary"), fallback);
 
-        assertThat(result.get(2, SECONDS)).isEqualTo("first");
-        assertThat(invocations).hasValue(1);
+        assertThat(result.get(2, SECONDS)).isEqualTo("primary");
+        assertThat(fallbackInvocations).hasValue(0);
     }
 
     @Test
-    void firstSuccessFallsThroughToLaterAttempt() throws Exception {
-        List<Supplier<CompletionStage<String>>> attempts = Arrays.asList(() -> Futures.failed(new RuntimeException("nope")),
+    void withFallbackFallsBackWhenPrimaryFails() throws Exception {
+        CompletableFuture<String> result = Futures.withFallback(Futures.failed(new RuntimeException("nope")),
                 () -> CompletableFuture.completedFuture("recovered"));
-
-        CompletableFuture<String> result = Futures.firstSuccess(attempts, errors -> new IllegalStateException());
 
         assertThat(result.get(2, SECONDS)).isEqualTo("recovered");
     }
 
     @Test
-    void firstSuccessAggregatesFailuresInOrderWhenAllFail() {
-        RuntimeException e1 = new RuntimeException("e1");
-        RuntimeException e2 = new RuntimeException("e2");
-        List<Supplier<CompletionStage<String>>> attempts = Arrays.asList(() -> Futures.failed(e1), () -> Futures.failed(e2));
+    void withFallbackPropagatesFallbackFailureWhenBothFail() {
+        RuntimeException fallbackError = new RuntimeException("fallback failed");
+        CompletableFuture<String> result = Futures.withFallback(Futures.failed(new RuntimeException("primary failed")),
+                () -> Futures.failed(fallbackError));
 
-        Function<List<Throwable>, Throwable> aggregator = errors -> {
-            Throwable last = errors.get(errors.size() - 1);
-            RuntimeException aggregate = new RuntimeException("all failed", last);
-            for (Throwable t : errors) {
-                if (t != last) {
-                    aggregate.addSuppressed(t);
-                }
-            }
-            return aggregate;
-        };
-
-        CompletableFuture<String> result = Futures.firstSuccess(attempts, aggregator);
-
-        Throwable aggregate = null;
-        try {
-            result.get(2, SECONDS);
-        } catch (ExecutionException e) {
-            aggregate = e.getCause();
-        } catch (InterruptedException | TimeoutException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        assertThat(aggregate).hasMessage("all failed").hasCause(e2);
-        assertThat(aggregate.getSuppressed()).containsExactly(e1);
+        assertThatThrownBy(() -> result.get(2, SECONDS)).hasCause(fallbackError);
     }
 
 }
