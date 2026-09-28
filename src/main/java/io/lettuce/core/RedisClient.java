@@ -32,7 +32,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import io.lettuce.core.annotations.Experimental;
@@ -547,29 +546,16 @@ public class RedisClient extends AbstractRedisClient {
             });
         }
 
-        // Keep the first failure as the cause and attach every later sentinel failure as a suppressed exception, so a
-        // connect failure across all sentinels still reports why each individual node was unreachable.
-        BinaryOperator<Throwable> keepAllFailures = (first, next) -> {
-            first.addSuppressed(next);
-            return first;
-        };
-
-        CompletableFuture<StatefulRedisSentinelConnection<K, V>> connectionFuture = attempts.get(0).get().toCompletableFuture();
-        for (int i = 1; i < attempts.size(); i++) {
-            connectionFuture = Futures.withFallback(connectionFuture, attempts.get(i), keepAllFailures);
-        }
-
-        CompletableFuture<StatefulRedisSentinelConnection<K, V>> result = new CompletableFuture<>();
-        connectionFuture.whenComplete((connection, e) -> {
-            if (e == null) {
-                result.complete(connection);
-            } else {
-                Throwable cause = e instanceof CompletionException && e.getCause() != null ? e.getCause() : e;
-                result.completeExceptionally(
-                        new RedisConnectionException("Cannot connect to a Redis Sentinel: " + redisURI.getSentinels(), cause));
+        // Try each sentinel in order; if all fail, surface the last failure as the cause and attach the earlier ones as
+        // suppressed exceptions so a connect failure across all sentinels still reports why each node was unreachable.
+        return Futures.withFallback(attempts, errors -> {
+            RedisConnectionException aggregate = new RedisConnectionException(
+                    "Cannot connect to a Redis Sentinel: " + redisURI.getSentinels(), errors.get(errors.size() - 1));
+            for (int i = 0; i < errors.size() - 1; i++) {
+                aggregate.addSuppressed(errors.get(i));
             }
+            return aggregate;
         });
-        return result;
     }
 
     private <K, V> ConnectionFuture<StatefulRedisSentinelConnection<K, V>> doConnectSentinelAsync(RedisCodec<K, V> codec,

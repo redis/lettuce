@@ -1,9 +1,12 @@
 package io.lettuce.core.internal;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.*;
-import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.lettuce.core.RedisFuture;
@@ -306,58 +309,85 @@ public abstract class Futures {
     }
 
     /**
-     * Complete with {@code task}, or if it fails, with the result of {@code fallback}. The {@code fallback} is invoked only
-     * when {@code task} completes exceptionally; if the fallback also fails, its failure is propagated.
+     * Try {@code attempts} in order, completing with the result of the first one that succeeds. Each attempt is invoked lazily:
+     * the first attempt starts immediately, and each subsequent attempt starts only after the previous one fails. Every attempt
+     * is invoked through this method, so a synchronous throw from a supplier is captured as a failure rather than propagated to
+     * the caller. If all attempts fail, {@code onAllFailed} receives the failures in the order they occurred and returns the
+     * throwable to complete with.
      *
-     * @param task the primary stage.
-     * @param fallback supplies the fallback stage, invoked only when {@code task} fails.
+     * @param attempts the attempts to try in order, must not be {@code null} or empty.
+     * @param onAllFailed builds the throwable to propagate from all collected failures, invoked only when every attempt fails.
      * @param <T> the result type.
-     * @return a {@link CompletableFuture} completing with {@code task}, or with the fallback on failure.
+     * @return a {@link CompletableFuture} completing with the first successful attempt, or with {@code onAllFailed} applied to
+     *         all failures.
      */
-    public static <T> CompletableFuture<T> withFallback(CompletionStage<T> task,
-            Supplier<? extends CompletionStage<T>> fallback) {
+    public static <T> CompletableFuture<T> withFallback(List<Supplier<CompletionStage<T>>> attempts,
+            Function<List<Throwable>, Throwable> onAllFailed) {
 
-        return withFallback(task, fallback, (error, fallbackError) -> fallbackError);
-    }
+        LettuceAssert.isTrue(attempts != null && !attempts.isEmpty(), "Attempts must not be empty");
+        LettuceAssert.notNull(onAllFailed, "Error handler must not be null");
 
-    /**
-     * Complete with {@code task}, or if it fails, with the result of {@code fallback}. The {@code fallback} is invoked only
-     * when {@code task} completes exceptionally; if the fallback also fails, {@code onBothFailed} combines the {@code task}
-     * failure with the fallback failure and the combined throwable is propagated. This allows callers to retain earlier
-     * failures, for example by attaching them as suppressed exceptions, when folding over a sequence of attempts.
-     *
-     * @param task the primary stage.
-     * @param fallback supplies the fallback stage, invoked only when {@code task} fails.
-     * @param onBothFailed combines the {@code task} failure (first argument) with the fallback failure (second argument) when
-     *        both fail; the returned throwable is propagated.
-     * @param <T> the result type.
-     * @return a {@link CompletableFuture} completing with {@code task}, or with the fallback on failure.
-     */
-    public static <T> CompletableFuture<T> withFallback(CompletionStage<T> task,
-            Supplier<? extends CompletionStage<T>> fallback, BinaryOperator<Throwable> onBothFailed) {
+        List<Throwable> failures = Collections.synchronizedList(new ArrayList<>(attempts.size()));
+
+        CompletableFuture<T> chain = attempt(attempts.get(0), failures);
+        for (int i = 1; i < attempts.size(); i++) {
+            chain = fallbackTo(chain, attempts.get(i), failures);
+        }
 
         CompletableFuture<T> result = new CompletableFuture<>();
-        task.whenComplete((value, error) -> {
+        chain.whenComplete((value, error) -> {
             if (error == null) {
                 result.complete(value);
-                return;
+            } else {
+                result.completeExceptionally(onAllFailed.apply(failures));
             }
-            CompletionStage<T> next;
-            try {
-                next = fallback.get();
-            } catch (Throwable t) {
-                result.completeExceptionally(onBothFailed.apply(error, t));
-                return;
-            }
-            next.whenComplete((fallbackValue, fallbackError) -> {
-                if (fallbackError != null) {
-                    result.completeExceptionally(onBothFailed.apply(error, fallbackError));
-                } else {
-                    result.complete(fallbackValue);
-                }
-            });
         });
         return result;
+    }
+
+    private static <T> CompletableFuture<T> fallbackTo(CompletableFuture<T> current, Supplier<CompletionStage<T>> next,
+            List<Throwable> failures) {
+
+        CompletableFuture<T> result = new CompletableFuture<>();
+        current.whenComplete((value, error) -> {
+            if (error == null) {
+                result.complete(value);
+            } else {
+                attempt(next, failures).whenComplete((fallbackValue, fallbackError) -> {
+                    if (fallbackError != null) {
+                        result.completeExceptionally(fallbackError);
+                    } else {
+                        result.complete(fallbackValue);
+                    }
+                });
+            }
+        });
+        return result;
+    }
+
+    private static <T> CompletableFuture<T> attempt(Supplier<? extends CompletionStage<T>> supplier, List<Throwable> failures) {
+
+        CompletableFuture<T> future = new CompletableFuture<>();
+
+        CompletionStage<T> stage;
+        try {
+            stage = supplier.get();
+        } catch (Throwable t) {
+            failures.add(t);
+            future.completeExceptionally(t);
+            return future;
+        }
+
+        stage.whenComplete((value, error) -> {
+            if (error == null) {
+                future.complete(value);
+            } else {
+                Throwable cause = Exceptions.unwrap(error);
+                failures.add(cause);
+                future.completeExceptionally(cause);
+            }
+        });
+        return future;
     }
 
 }

@@ -18,7 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.AfterAll;
@@ -172,69 +171,70 @@ class FuturesUnitTests {
     }
 
     @Test
-    void withFallbackReturnsPrimaryResultAndSkipsFallback() throws Exception {
-        AtomicInteger fallbackInvocations = new AtomicInteger();
-        Supplier<CompletionStage<String>> fallback = () -> {
-            fallbackInvocations.incrementAndGet();
-            return CompletableFuture.completedFuture("fallback");
-        };
+    void withFallbackReturnsFirstSuccessAndSkipsRemainingAttempts() throws Exception {
+        AtomicInteger invocations = new AtomicInteger();
+        List<Supplier<CompletionStage<String>>> attempts = Arrays.asList(() -> {
+            invocations.incrementAndGet();
+            return CompletableFuture.completedFuture("first");
+        }, () -> {
+            invocations.incrementAndGet();
+            return CompletableFuture.completedFuture("second");
+        });
 
-        CompletableFuture<String> result = Futures.withFallback(CompletableFuture.completedFuture("primary"), fallback);
+        CompletableFuture<String> result = Futures.withFallback(attempts, errors -> new IllegalStateException());
 
-        assertThat(result.get(2, SECONDS)).isEqualTo("primary");
-        assertThat(fallbackInvocations).hasValue(0);
+        assertThat(result.get(2, SECONDS)).isEqualTo("first");
+        assertThat(invocations).hasValue(1);
     }
 
     @Test
-    void withFallbackFallsBackWhenPrimaryFails() throws Exception {
-        CompletableFuture<String> result = Futures.withFallback(Futures.failed(new RuntimeException("nope")),
+    void withFallbackFallsThroughToLaterAttempt() throws Exception {
+        List<Supplier<CompletionStage<String>>> attempts = Arrays.asList(() -> Futures.failed(new RuntimeException("nope")),
                 () -> CompletableFuture.completedFuture("recovered"));
 
+        CompletableFuture<String> result = Futures.withFallback(attempts, errors -> new IllegalStateException());
+
+        assertThat(result.get(2, SECONDS)).isEqualTo("recovered");
+    }
+
+    @Test
+    void withFallbackCapturesSynchronousSupplierThrow() throws Exception {
+        List<Supplier<CompletionStage<String>>> attempts = Arrays.asList(() -> {
+            throw new IllegalStateException("boom");
+        }, () -> CompletableFuture.completedFuture("recovered"));
+
+        CompletableFuture<String> result = Futures.withFallback(attempts, errors -> new IllegalStateException());
+
         assertThat(result.get(2, SECONDS)).isEqualTo("recovered");
     }
 
     @Test
-    void withFallbackPropagatesFallbackFailureWhenBothFail() {
-        RuntimeException fallbackError = new RuntimeException("fallback failed");
-        CompletableFuture<String> result = Futures.withFallback(Futures.failed(new RuntimeException("primary failed")),
-                () -> Futures.failed(fallbackError));
-
-        assertThatThrownBy(() -> result.get(2, SECONDS)).hasCause(fallbackError);
-    }
-
-    @Test
-    void withFallbackCombinerSkippedWhenFallbackSucceeds() throws Exception {
-        AtomicInteger combinerInvocations = new AtomicInteger();
-        CompletableFuture<String> result = Futures.withFallback(Futures.failed(new RuntimeException("primary failed")),
-                () -> CompletableFuture.completedFuture("recovered"), (first, next) -> {
-                    combinerInvocations.incrementAndGet();
-                    return first;
-                });
-
-        assertThat(result.get(2, SECONDS)).isEqualTo("recovered");
-        assertThat(combinerInvocations).hasValue(0);
-    }
-
-    @Test
-    void withFallbackCombinerAggregatesFailuresWhenFoldedOverAttempts() {
+    void withFallbackAggregatesFailuresInOrderWhenAllFail() {
         RuntimeException e1 = new RuntimeException("e1");
         RuntimeException e2 = new RuntimeException("e2");
         RuntimeException e3 = new RuntimeException("e3");
         List<Supplier<CompletionStage<String>>> attempts = Arrays.asList(() -> Futures.failed(e1), () -> Futures.failed(e2),
                 () -> Futures.failed(e3));
 
-        BinaryOperator<Throwable> keepAllFailures = (first, next) -> {
-            first.addSuppressed(next);
-            return first;
-        };
+        CompletableFuture<String> result = Futures.withFallback(attempts, errors -> {
+            RuntimeException aggregate = new RuntimeException("all failed", errors.get(errors.size() - 1));
+            for (int i = 0; i < errors.size() - 1; i++) {
+                aggregate.addSuppressed(errors.get(i));
+            }
+            return aggregate;
+        });
 
-        CompletableFuture<String> result = attempts.get(0).get().toCompletableFuture();
-        for (int i = 1; i < attempts.size(); i++) {
-            result = Futures.withFallback(result, attempts.get(i), keepAllFailures);
+        Throwable aggregate = null;
+        try {
+            result.get(2, SECONDS);
+        } catch (ExecutionException e) {
+            aggregate = e.getCause();
+        } catch (InterruptedException | TimeoutException e) {
+            Thread.currentThread().interrupt();
         }
 
-        assertThatThrownBy(result::join).hasCause(e1);
-        assertThat(e1.getSuppressed()).containsExactly(e2, e3);
+        assertThat(aggregate).hasMessage("all failed").hasCause(e3);
+        assertThat(aggregate.getSuppressed()).containsExactly(e1, e2);
     }
 
 }
