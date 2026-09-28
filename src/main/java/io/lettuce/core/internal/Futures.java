@@ -70,7 +70,7 @@ public abstract class Futures {
      * @param stage the original stage
      * @param <T> the result type
      * @return a new {@link CompletableFuture} with unwrapped exceptions
-     * @since 7.8
+     * @since 7.9
      */
     public static <T> CompletableFuture<T> unwrapExceptions(CompletionStage<T> stage) {
 

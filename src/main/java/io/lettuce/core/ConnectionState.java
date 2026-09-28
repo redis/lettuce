@@ -154,6 +154,9 @@ public class ConnectionState {
      */
     @Deprecated
     public RedisCredentialsProvider getCredentialsProvider() {
+        if (credentialsProvider == null) {
+            return null;
+        }
         if (credentialsProvider instanceof RedisCredentialsProvider) {
             return (RedisCredentialsProvider) credentialsProvider;
         }

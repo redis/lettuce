@@ -123,4 +123,16 @@ class CredentialsProviderCompatibilityUnitTests {
         assertThat(state.getCredentialsProviderAsync()).isSameAs(provider);
     }
 
+    @Test
+    @SuppressWarnings("deprecation")
+    void connectionStateReturnsNullFromDeprecatedAccessorWhenUnset() {
+
+        // Before apply(...)/a setter runs the provider is unset; the deprecated getter must return null (as it did before the
+        // migration) rather than an AsyncCredentialsProviderAdapter wrapping a null delegate, which would NPE on use.
+        ConnectionState state = new ConnectionState();
+
+        assertThat(state.getCredentialsProvider()).isNull();
+        assertThat(state.getCredentialsProviderAsync()).isNull();
+    }
+
 }

@@ -1846,6 +1846,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @since 7.9
          */
         public Builder withAuthentication(CredentialsProvider credentialsProvider) {
+
+            LettuceAssert.notNull(credentialsProvider, "CredentialsProvider must not be null");
+
             this.credentialsProvider = credentialsProvider;
             return this;
         }
