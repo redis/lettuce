@@ -77,7 +77,8 @@ public abstract class Futures {
         CompletableFuture<T> f = new CompletableFuture<>();
         stage.whenComplete((v, t) -> {
             if (t != null) {
-                f.completeExceptionally(Exceptions.unwrap(t));
+                Throwable cause = Exceptions.unwrap(t);
+                f.completeExceptionally(cause != null ? cause : t);
             } else {
                 f.complete(v);
             }
