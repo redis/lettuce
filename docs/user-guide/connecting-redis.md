@@ -249,6 +249,8 @@ client.shutdown();
 It is useful when you need to refresh credentials periodically. Example use cases include: token expiration, rotating credentials, etc.
 A connection configured with a `CredentialsProvider` that supports streaming is re-authenticated automatically when new credentials are emitted and `ReauthenticateBehavior` is set to `ON_NEW_CREDENTIALS`.
 
+A streaming provider returns `true` from `supportsStreaming()` and pushes updates through `subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError)`. That method returns a `Subscription`, which the client closes to stop receiving updates. This is the reactor-free replacement for the deprecated reactive `credentials()` stream.
+
 ### Step 1 - Create a Streaming Credentials Provider
 A simple example of a streaming credentials provider that emits new credentials. Replay semantics on subscription are
 implementation-defined (see `CredentialsProvider#subscribeToCredentials`): this sample replays the most recent
@@ -389,6 +391,10 @@ Notes on the sample:
 
 ```
 
+> **Note**
+>
+> The reactive `RedisCredentialsProvider` streaming API — `resolveCredentials()` returning `Mono<RedisCredentials>` and `credentials()` returning `Flux<RedisCredentials>` — is deprecated since 7.9 in favor of `CredentialsProvider` and `subscribeToCredentials(...)`. Existing reactive providers continue to work.
+
 ## Microsoft Entra ID Authentication
 
 [Lettuce 6.6.0](https://github.com/redis/lettuce/releases/tag/6.6.0.RELEASE) introduces built-in support for authentication with [Azure Managed Redis](https://azure.microsoft.com/en-us/products/managed-redis) and Azure Cache for Redis using Microsoft Entra ID (formerly Azure Active Directory). It enables seamless integration with Azure's Redis services by fetching authentication tokens and managing the token renewal in the background. 
@@ -415,7 +421,7 @@ If using Maven, add the following dependency to your `pom.xml`:
         <dependency>
             <groupId>redis.clients.authentication</groupId>
             <artifactId>redis-authx-entraid</artifactId>
-            <version>0.1.1-beta1</version>
+            <version>0.2.0</version>
         </dependency>
 ```
 

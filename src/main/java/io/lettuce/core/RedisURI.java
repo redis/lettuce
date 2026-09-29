@@ -472,7 +472,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         LettuceAssert.notNull(source, "Source RedisURI must not be null");
 
         if (source.credentialsProvider != null) {
-            setCredentialsProvider(source.credentialsProvider);
+            setCredentialsProvider(source.getCredentialsProviderAsync());
         }
     }
 
@@ -594,7 +594,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * {@link #getCredentialsProvider()} keeps returning a {@link RedisCredentialsProvider} view for backward compatibility.
      *
      * @param credentialsProvider the credentials provider to use when authenticating a Redis connection.
-     * @since 6.2
+     * @since 7.9
      */
     public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
 
@@ -1807,7 +1807,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             LettuceAssert.notNull(source, "Source RedisURI must not be null");
 
-            return withAuthentication(source.credentialsProvider);
+            return withAuthentication(source.getCredentialsProviderAsync());
         }
 
         /**
@@ -1844,9 +1844,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * Configures authentication using a reactor-free {@link CredentialsProvider}.
          *
          * @param credentialsProvider the credentials provider to use
-         * @since 6.2
+         * @since 7.9
          */
         public Builder withAuthentication(CredentialsProvider credentialsProvider) {
+
+            LettuceAssert.notNull(credentialsProvider, "CredentialsProvider must not be null");
+
             this.credentialsProvider = credentialsProvider;
             return this;
         }

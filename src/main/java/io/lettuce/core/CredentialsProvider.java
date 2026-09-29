@@ -65,6 +65,7 @@ public interface CredentialsProvider {
      * to process these new credentials.
      *
      * @return whether the {@link CredentialsProvider} supports streaming credentials.
+     * @since 7.9
      */
     default boolean supportsStreaming() {
         return false;
@@ -88,6 +89,7 @@ public interface CredentialsProvider {
      * @param onError consumer invoked with errors observed while producing credentials, must not be {@code null}.
      * @return a {@link Subscription} that can be used to stop receiving updates.
      * @throws UnsupportedOperationException if the provider does not support streaming credentials.
+     * @since 7.9
      */
     default Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
         throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");

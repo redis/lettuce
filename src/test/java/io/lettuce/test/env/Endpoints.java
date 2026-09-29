@@ -122,6 +122,9 @@ public class Endpoints {
 
         private List<String> endpoints;
 
+        @JsonProperty("discovery_endpoints")
+        private List<String> discoveryEndpoints;
+
         // Getters and Setters
         public int getBdbId() {
             return bdbId;
@@ -169,6 +172,20 @@ public class Endpoints {
 
         public void setEndpoints(List<String> endpoints) {
             this.endpoints = endpoints;
+        }
+
+        /**
+         * Addresses of the Redis Enterprise discovery service (Sentinel-compatible API), as {@code host:port} strings. One
+         * entry per cluster node; {@code null} when the endpoint configuration does not advertise the discovery service.
+         *
+         * @return discovery service addresses, or {@code null}.
+         */
+        public List<String> getDiscoveryEndpoints() {
+            return discoveryEndpoints;
+        }
+
+        public void setDiscoveryEndpoints(List<String> discoveryEndpoints) {
+            this.discoveryEndpoints = discoveryEndpoints;
         }
 
     }

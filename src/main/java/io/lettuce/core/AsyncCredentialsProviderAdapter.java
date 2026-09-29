@@ -11,10 +11,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Adapts a reactor-free {@link CredentialsProvider} to the deprecated reactive {@link RedisCredentialsProvider}, so
- * {@link RedisURI#getCredentialsProvider()} can keep returning a {@link RedisCredentialsProvider} while credentials are stored
- * internally as a {@link CredentialsProvider}. Only {@link #resolveCredentials()} materialises a {@link Mono}; the async and
- * streaming paths delegate directly and stay reactor-free.
+ * Adapts a {@link CredentialsProvider} to the deprecated reactive {@link RedisCredentialsProvider}, so that
+ * {@link RedisURI#getCredentialsProvider()} can keep returning a {@link RedisCredentialsProvider} while credentials may be
+ * configured as a {@link CredentialsProvider}. The async and streaming capabilities delegate to the reactor-free provider;
+ * {@link #resolveCredentials()} and {@link #credentials()} only materialise the reactive types at that boundary.
  *
  * @author Aleksandar Todorov
  * @since 7.9
@@ -29,8 +29,6 @@ class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
 
     @Override
     public Mono<RedisCredentials> resolveCredentials() {
-        // Defer to the Supplier overload so the delegate is invoked per subscription rather than eagerly at Mono creation;
-        // this keeps the returned Mono cold and re-subscribable, matching other RedisCredentialsProvider implementations.
         return Mono.fromCompletionStage(delegate::resolveCredentialsAsync);
     }
 

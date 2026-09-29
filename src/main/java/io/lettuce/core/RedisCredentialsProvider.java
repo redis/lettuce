@@ -1,11 +1,9 @@
 package io.lettuce.core;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -114,19 +112,6 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
         default Mono<RedisCredentials> resolveCredentials() {
             return Mono.fromSupplier(this::resolveCredentialsNow)
                     .switchIfEmpty(Mono.error(new IllegalStateException("RedisCredentials resolved to null")));
-        }
-
-        @Override
-        default CompletionStage<RedisCredentials> resolveCredentialsAsync() {
-            try {
-                RedisCredentials credentials = resolveCredentialsNow();
-                if (credentials == null) {
-                    return Futures.failed(new IllegalStateException("RedisCredentials resolved to null"));
-                }
-                return CompletableFuture.completedFuture(credentials);
-            } catch (Exception e) {
-                return Futures.failed(e);
-            }
         }
 
         /**

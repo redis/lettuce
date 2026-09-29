@@ -42,6 +42,12 @@ public class StaticCredentialsProvider implements CredentialsProvider.ImmediateC
         this.future = CompletableFuture.completedFuture(this.credentials);
     }
 
+    /**
+     * @return a {@link Mono} emitting the static {@link RedisCredentials}
+     * @deprecated since 7.9, use {@link #resolveCredentialsAsync()} — or {@link #resolveCredentialsNow()} for immediate,
+     *             non-deferred access — instead; scheduled for removal in a future major release.
+     */
+    @Deprecated
     @Override
     public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
         return future;

@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 
 import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceStrings;
@@ -125,7 +126,8 @@ class RedisHandshake implements ConnectionInitializer {
     private CompletionStage<?> tryHandshakeResp3(Channel channel) {
 
         CompletableFuture<?> handshake = new CompletableFuture<>();
-        CompletionStage<Map<String, Object>> hello = initiateHandshakeResp3(channel, connectionState.getCredentialsProvider());
+        CompletionStage<Map<String, Object>> hello = initiateHandshakeResp3(channel,
+                connectionState.getCredentialsProviderAsync());
 
         hello.whenComplete((settings, throwable) -> {
 
@@ -171,7 +173,7 @@ class RedisHandshake implements ConnectionInitializer {
 
     private CompletableFuture<?> initializeResp2(Channel channel) {
 
-        return initiateHandshakeResp2(channel, connectionState.getCredentialsProvider()).thenRun(() -> {
+        return initiateHandshakeResp2(channel, connectionState.getCredentialsProviderAsync()).thenRun(() -> {
             negotiatedProtocolVersion = ProtocolVersion.RESP2;
 
             connectionState.setHandshakeResponse(
@@ -180,7 +182,7 @@ class RedisHandshake implements ConnectionInitializer {
     }
 
     private CompletionStage<Void> initializeResp3(Channel channel) {
-        return initiateHandshakeResp3(channel, connectionState.getCredentialsProvider()).thenAccept(this::onHelloResponse);
+        return initiateHandshakeResp3(channel, connectionState.getCredentialsProviderAsync()).thenAccept(this::onHelloResponse);
     }
 
     private void onHelloResponse(Map<String, Object> response) {
@@ -401,8 +403,7 @@ class RedisHandshake implements ConnectionInitializer {
     }
 
     private static boolean isUnknownCommand(Throwable error) {
-        return error instanceof RedisException && LettuceStrings.isNotEmpty(error.getMessage())
-                && ((error.getMessage().startsWith("ERR") && error.getMessage().contains("unknown")));
+        return ExceptionFactory.isUnknownCommandError(error);
     }
 
     private static boolean isNoProto(Throwable error) {

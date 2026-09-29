@@ -86,6 +86,25 @@ class RedisHandshakeUnitTests {
     }
 
     @Test
+    void handshakeWithCapitalisedUnknownCommandShouldDowngrade() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
+        handshake.initialize(channel);
+
+        // Servers differ in how they capitalise the word; a pre-RESP3 server rejecting HELLO must downgrade either way.
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        hello.getOutput().setError("ERR Unknown command 'HELLO'");
+        hello.completeExceptionally(new RedisException("ERR Unknown command 'HELLO'"));
+        hello.complete();
+
+        assertThat(state.getNegotiatedProtocolVersion()).isEqualTo(ProtocolVersion.RESP2);
+    }
+
+    @Test
     void handshakeFireAndForgetPostHandshake() {
 
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
@@ -162,6 +181,75 @@ class RedisHandshakeUnitTests {
 
         assertThat(postHandshake.size()).isEqualTo(2);
         assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isFalse();
+    }
+
+    @Test
+    void handshakeResp3WithReactorFreeImmediateProviderResolvesSynchronously() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        // Reactor-free immediate provider (the going-forward SPI). The handshake fast-paths on
+        // CredentialsProvider.ImmediateCredentialsProvider and dispatches HELLO synchronously, without awaiting a
+        // CompletionStage.
+        CredentialsProvider.ImmediateCredentialsProvider cp = () -> RedisCredentials.just("foo", "bar".toCharArray());
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(cp);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, null);
+        handshake.initialize(channel);
+
+        // HELLO is on the wire right away, carrying AUTH with the resolved credentials.
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        assertThat(hello.getArgs().toCommandString()).contains("AUTH", "foo", "bar");
+
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        assertThat(state.getNegotiatedProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
+    }
+
+    @Test
+    void handshakeResp3WithReactorFreeAsyncProviderResolvesViaCompletionStage() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        // Reactor-free, non-immediate provider: credentials are resolved through resolveCredentialsAsync() and the HELLO is
+        // dispatched once the CompletionStage completes.
+        CredentialsProvider cp = () -> CompletableFuture.completedFuture(RedisCredentials.just("foo", "bar".toCharArray()));
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(cp);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, null);
+        CompletionStage<Void> handshakeInit = handshake.initialize(channel);
+
+        Awaitility.await().atMost(5, SECONDS).pollInterval(50, MILLISECONDS).until(() -> !channel.outboundMessages().isEmpty());
+
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        assertThat(hello.getArgs().toCommandString()).contains("AUTH", "foo", "bar");
+
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isFalse();
+        assertThat(state.getNegotiatedProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
+    }
+
+    @Test
+    void handshakeResp2WithReactorFreeImmediateProviderDispatchesAuth() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        // The RESP2 path fast-paths on the same reactor-free immediate type and issues a standalone AUTH command.
+        CredentialsProvider.ImmediateCredentialsProvider cp = () -> RedisCredentials.just("foo", "bar".toCharArray());
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(cp);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP2, false, state, null);
+        handshake.initialize(channel);
+
+        AsyncCommand<String, String, String> auth = channel.readOutbound();
+        assertThat(auth.getType().toString()).isEqualTo("AUTH");
+        assertThat(auth.getArgs().toCommandString()).contains("foo", "bar");
     }
 
     @Test

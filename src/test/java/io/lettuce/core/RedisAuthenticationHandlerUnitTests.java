@@ -1,6 +1,5 @@
 package io.lettuce.core;
 
-import io.lettuce.core.Subscription;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.DefaultEventBus;
 import io.lettuce.core.event.Event;
@@ -20,6 +19,9 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.protocol.CommandType.AUTH;
@@ -216,6 +218,64 @@ public class RedisAuthenticationHandlerUnitTests {
             }
 
         };
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void subscribeWithReactorFreeStreamingProviderInvokesReauth() {
+
+        // A reactor-free CredentialsProvider that streams via subscribeToCredentials (no Reactor types).
+        ReactorFreeStreamingCredentialsProvider provider = new ReactorFreeStreamingCredentialsProvider();
+
+        // Wrapped exactly as the RedisURI credentials path does: getCredentialsProvider() returns the adapter.
+        RedisAuthenticationHandler<String, String> handler = new RedisAuthenticationHandler<>(connection,
+                new AsyncCredentialsProviderAdapter(provider), false);
+
+        handler.subscribe();
+        provider.emit("newuser", "newpassword".toCharArray());
+
+        ArgumentCaptor<AsyncCommand<String, String, String>> captor = ArgumentCaptor.forClass(AsyncCommand.class);
+        verify(writer).write(captor.capture());
+
+        AsyncCommand<String, String, String> credentialsCommand = captor.getValue();
+        assertThat(credentialsCommand.getType()).isEqualTo(AUTH);
+        assertThat(credentialsCommand.getArgs().count()).isEqualTo(2);
+        assertThat(credentialsCommand.getArgs().toCommandString()).isEqualTo("newuser newpassword");
+
+        handler.unsubscribe();
+    }
+
+    /**
+     * Minimal reactor-free streaming {@link CredentialsProvider} used to prove the 7.x migration path: it exposes streaming
+     * through {@link CredentialsProvider#subscribeToCredentials} without any Reactor type.
+     */
+    private static class ReactorFreeStreamingCredentialsProvider implements CredentialsProvider {
+
+        private volatile Consumer<RedisCredentials> onNext;
+
+        @Override
+        public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
+            return CompletableFuture.completedFuture(RedisCredentials.just("user", "pass".toCharArray()));
+        }
+
+        @Override
+        public boolean supportsStreaming() {
+            return true;
+        }
+
+        @Override
+        public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+            this.onNext = onNext;
+            return () -> this.onNext = null;
+        }
+
+        void emit(String username, char[] password) {
+            Consumer<RedisCredentials> consumer = this.onNext;
+            if (consumer != null) {
+                consumer.accept(RedisCredentials.just(username, password));
+            }
+        }
+
     }
 
 }
