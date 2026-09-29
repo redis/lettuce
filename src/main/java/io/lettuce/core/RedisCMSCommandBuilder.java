@@ -10,6 +10,7 @@ import java.util.List;
 
 import io.lettuce.core.probabilistic.CMSInfoValue;
 import io.lettuce.core.probabilistic.CMSInfoValueParser;
+import io.lettuce.core.probabilistic.CmsCellSize;
 import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.MergePair;
 import io.lettuce.core.codec.RedisCodec;
@@ -72,9 +73,9 @@ class RedisCMSCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CMS_INITBYDIM, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, String> cmsInitByDim(K key, long width, long depth, int cellSize) {
+    Command<K, V, String> cmsInitByDim(K key, long width, long depth, CmsCellSize cellSize) {
         notNullKey(key);
-        assertValidCellSize(cellSize);
+        LettuceAssert.notNull(cellSize, "CmsCellSize " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(width).add(depth).add(CommandKeyword.CELL_SIZE)
                 .add(cellSize);
@@ -90,19 +91,14 @@ class RedisCMSCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CMS_INITBYPROB, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, String> cmsInitByProb(K key, double error, double probability, int cellSize) {
+    Command<K, V, String> cmsInitByProb(K key, double error, double probability, CmsCellSize cellSize) {
         notNullKey(key);
-        assertValidCellSize(cellSize);
+        LettuceAssert.notNull(cellSize, "CmsCellSize " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(error).add(probability).add(CommandKeyword.CELL_SIZE)
                 .add(cellSize);
 
         return createCommand(CMS_INITBYPROB, new StatusOutput<>(codec), args);
-    }
-
-    private static void assertValidCellSize(int cellSize) {
-        LettuceAssert.isTrue(cellSize == 1 || cellSize == 2 || cellSize == 4 || cellSize == 8,
-                "Cell size must be 1, 2, 4 or 8");
     }
 
     Command<K, V, String> cmsMerge(K destination, K source) {

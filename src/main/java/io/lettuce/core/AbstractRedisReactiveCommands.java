@@ -29,6 +29,7 @@ import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.probabilistic.CfInfoValue;
 import io.lettuce.core.probabilistic.CMSInfoValue;
+import io.lettuce.core.probabilistic.CmsCellSize;
 import io.lettuce.core.probabilistic.MergePair;
 import io.lettuce.core.probabilistic.TDigestInfoValue;
 import io.lettuce.core.probabilistic.ScanDumpValue;
@@ -4723,7 +4724,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> cmsInitByDim(K key, long width, long depth, int cellSize) {
+    public Mono<String> cmsInitByDim(K key, long width, long depth, CmsCellSize cellSize) {
         return createMono(() -> cmsCommandBuilder.cmsInitByDim(key, width, depth, cellSize));
     }
 
@@ -4733,7 +4734,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> cmsInitByProb(K key, double error, double probability, int cellSize) {
+    public Mono<String> cmsInitByProb(K key, double error, double probability, CmsCellSize cellSize) {
         return createMono(() -> cmsCommandBuilder.cmsInitByProb(key, error, probability, cellSize));
     }
 

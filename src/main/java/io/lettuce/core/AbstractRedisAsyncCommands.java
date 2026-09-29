@@ -29,6 +29,7 @@ import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.probabilistic.CfInfoValue;
 import io.lettuce.core.probabilistic.CMSInfoValue;
+import io.lettuce.core.probabilistic.CmsCellSize;
 import io.lettuce.core.probabilistic.MergePair;
 import io.lettuce.core.probabilistic.TDigestInfoValue;
 import io.lettuce.core.probabilistic.ScanDumpValue;
@@ -4705,7 +4706,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> cmsInitByDim(K key, long width, long depth, int cellSize) {
+    public RedisFuture<String> cmsInitByDim(K key, long width, long depth, CmsCellSize cellSize) {
         return dispatch(cmsCommandBuilder.cmsInitByDim(key, width, depth, cellSize));
     }
 
@@ -4715,7 +4716,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> cmsInitByProb(K key, double error, double probability, int cellSize) {
+    public RedisFuture<String> cmsInitByProb(K key, double error, double probability, CmsCellSize cellSize) {
         return dispatch(cmsCommandBuilder.cmsInitByProb(key, error, probability, cellSize));
     }
 

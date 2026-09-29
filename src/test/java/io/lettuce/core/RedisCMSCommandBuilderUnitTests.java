@@ -10,6 +10,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.EncodedComplexOutput;
 import io.lettuce.core.output.IntegerListOutput;
 import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.probabilistic.CmsCellSize;
 import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.MergePair;
 import io.lettuce.core.protocol.Command;
@@ -18,7 +19,7 @@ import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -95,7 +96,7 @@ class RedisCMSCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructCmsInitByDimCommandWithCellSize() {
-        Command<String, String, String> command = builder.cmsInitByDim(MY_KEY, 2000, 5, 1);
+        Command<String, String, String> command = builder.cmsInitByDim(MY_KEY, 2000, 5, CmsCellSize.ONE_BYTE);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
@@ -105,22 +106,21 @@ class RedisCMSCommandBuilderUnitTests {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = { 1, 2, 4, 8 })
-    void shouldAcceptValidCellSizes(int cellSize) {
+    @CsvSource({ "ONE_BYTE,1", "TWO_BYTES,2", "FOUR_BYTES,4", "EIGHT_BYTES,8" })
+    void shouldEncodeEveryCellSizeAsItsByteCount(CmsCellSize cellSize, String expected) {
         Command<String, String, String> command = builder.cmsInitByDim(MY_KEY, 2000, 5, cellSize);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 
-        assertThat(buff.toString(StandardCharsets.UTF_8)).endsWith("$9\r\nCELL_SIZE\r\n" + "$1\r\n" + cellSize + "\r\n");
+        assertThat(buff.toString(StandardCharsets.UTF_8)).endsWith("$9\r\nCELL_SIZE\r\n" + "$1\r\n" + expected + "\r\n");
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = { 0, 3, 5, 16, -1 })
-    void shouldRejectInvalidCellSize(int cellSize) {
-        assertThatThrownBy(() -> builder.cmsInitByDim(MY_KEY, 2000, 5, cellSize)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("1, 2, 4 or 8");
-        assertThatThrownBy(() -> builder.cmsInitByProb(MY_KEY, 0.001, 0.01, cellSize))
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("1, 2, 4 or 8");
+    @Test
+    void shouldRejectNullCellSize() {
+        assertThatThrownBy(() -> builder.cmsInitByDim(MY_KEY, 2000, 5, null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("CmsCellSize");
+        assertThatThrownBy(() -> builder.cmsInitByProb(MY_KEY, 0.001, 0.01, null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("CmsCellSize");
     }
 
     @Test
@@ -146,7 +146,7 @@ class RedisCMSCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructCmsInitByProbCommandWithCellSize() {
-        Command<String, String, String> command = builder.cmsInitByProb(MY_KEY, 0.001, 0.01, 8);
+        Command<String, String, String> command = builder.cmsInitByProb(MY_KEY, 0.001, 0.01, CmsCellSize.EIGHT_BYTES);
         ByteBuf buff = Unpooled.buffer();
         command.encode(buff);
 

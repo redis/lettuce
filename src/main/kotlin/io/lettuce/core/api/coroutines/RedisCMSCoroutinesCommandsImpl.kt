@@ -9,6 +9,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisCMSReactiveCommands
 import io.lettuce.core.probabilistic.CMSInfoValue
+import io.lettuce.core.probabilistic.CmsCellSize
 import io.lettuce.core.probabilistic.IncrementPair
 import io.lettuce.core.probabilistic.MergePair
 import kotlinx.coroutines.flow.toList
@@ -40,13 +41,13 @@ internal class RedisCMSCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun cmsInitByDim(key: K, width: Long, depth: Long): String? =
         ops.cmsInitByDim(key, width, depth).awaitFirstOrNull()
 
-    override suspend fun cmsInitByDim(key: K, width: Long, depth: Long, cellSize: Int): String? =
+    override suspend fun cmsInitByDim(key: K, width: Long, depth: Long, cellSize: CmsCellSize): String? =
         ops.cmsInitByDim(key, width, depth, cellSize).awaitFirstOrNull()
 
     override suspend fun cmsInitByProb(key: K, error: Double, probability: Double): String? =
         ops.cmsInitByProb(key, error, probability).awaitFirstOrNull()
 
-    override suspend fun cmsInitByProb(key: K, error: Double, probability: Double, cellSize: Int): String? =
+    override suspend fun cmsInitByProb(key: K, error: Double, probability: Double, cellSize: CmsCellSize): String? =
         ops.cmsInitByProb(key, error, probability, cellSize).awaitFirstOrNull()
 
     override suspend fun cmsMerge(destination: K, source: K): String? =

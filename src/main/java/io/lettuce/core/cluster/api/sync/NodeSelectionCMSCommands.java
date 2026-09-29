@@ -8,6 +8,7 @@ package io.lettuce.core.cluster.api.sync;
 
 import java.util.List;
 import io.lettuce.core.probabilistic.CMSInfoValue;
+import io.lettuce.core.probabilistic.CmsCellSize;
 import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.MergePair;
 
@@ -70,14 +71,14 @@ public interface NodeSelectionCMSCommands<K, V> {
      * @param key the key. An error is returned if the key already exists.
      * @param width the number of counters in each array. Reduces the error size.
      * @param depth the number of counter-arrays. Reduces the probability of an error exceeding the estimated size.
-     * @param cellSize the number of bytes per counter cell ({@code CELL_SIZE}), must be {@code 1}, {@code 2}, {@code 4} or
-     *        {@code 8}. Smaller cells reduce the memory footprint but lower the maximum count a cell can hold ({@code 255} for
-     *        1-byte cells, {@code 65535} for 2-byte cells, and so on). The server default is {@code 4}.
+     * @param cellSize the number of bytes per counter cell ({@code CELL_SIZE}), must not be {@code null}. Smaller cells reduce
+     *        the memory footprint but lower the maximum count a cell can hold. The server default is
+     *        {@link CmsCellSize#FOUR_BYTES}.
      * @return String simple-string-reply {@code OK} if {@code CMS.INITBYDIM} was executed correctly.
-     * @throws IllegalArgumentException if {@code cellSize} is not {@code 1}, {@code 2}, {@code 4} or {@code 8}.
+     * @throws IllegalArgumentException if {@code cellSize} is {@code null}.
      * @since 7.8
      */
-    Executions<String> cmsInitByDim(K key, long width, long depth, int cellSize);
+    Executions<String> cmsInitByDim(K key, long width, long depth, CmsCellSize cellSize);
 
     /**
      * Initializes a Count-Min Sketch to accommodate requested tolerances.
@@ -95,14 +96,14 @@ public interface NodeSelectionCMSCommands<K, V> {
      * @param key the key. An error is returned if the key already exists.
      * @param error estimate size of the error.
      * @param probability the desired probability for inflated count.
-     * @param cellSize the number of bytes per counter cell ({@code CELL_SIZE}), must be {@code 1}, {@code 2}, {@code 4} or
-     *        {@code 8}. Smaller cells reduce the memory footprint but lower the maximum count a cell can hold ({@code 255} for
-     *        1-byte cells, {@code 65535} for 2-byte cells, and so on). The server default is {@code 4}.
+     * @param cellSize the number of bytes per counter cell ({@code CELL_SIZE}), must not be {@code null}. Smaller cells reduce
+     *        the memory footprint but lower the maximum count a cell can hold. The server default is
+     *        {@link CmsCellSize#FOUR_BYTES}.
      * @return String simple-string-reply {@code OK} if {@code CMS.INITBYPROB} was executed correctly.
-     * @throws IllegalArgumentException if {@code cellSize} is not {@code 1}, {@code 2}, {@code 4} or {@code 8}.
+     * @throws IllegalArgumentException if {@code cellSize} is {@code null}.
      * @since 7.8
      */
-    Executions<String> cmsInitByProb(K key, double error, double probability, int cellSize);
+    Executions<String> cmsInitByProb(K key, double error, double probability, CmsCellSize cellSize);
 
     /**
      * Merges a single source sketch into a destination sketch. All sketches must have identical width and depth, and the

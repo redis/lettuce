@@ -122,12 +122,12 @@ CMSInfoValue info = commands.cmsInfo("hits");
 Counters default to 4 bytes per cell. Redis 8.12 adds the `CELL_SIZE` option so a sketch
 can trade counter range for memory: 1-byte cells (max count 255) are enough to spot
 repeating requests in a short time window and take a quarter of the memory, while 8-byte
-cells hold very high counts. Pass it as the trailing `cellSize` argument; the chosen size is
+cells hold very high counts. Pass it as the trailing `CmsCellSize` argument; the chosen size is
 reported by `CMSInfoValue.getCellSize()` (`null` on servers that predate the option).
 
 ```java
-commands.cmsInitByDim("req:1m", 1000, 5, 1);
-commands.cmsInitByProb("big", 0.001, 0.01, 8);
+commands.cmsInitByDim("req:1m", 1000, 5, CmsCellSize.ONE_BYTE);
+commands.cmsInitByProb("big", 0.001, 0.01, CmsCellSize.EIGHT_BYTES);
 
 Long cellSize = commands.cmsInfo("req:1m").getCellSize(); // 1
 ```

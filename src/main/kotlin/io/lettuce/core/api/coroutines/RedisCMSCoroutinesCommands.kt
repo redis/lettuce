@@ -10,6 +10,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.probabilistic.CMSInfoValue
+import io.lettuce.core.probabilistic.CmsCellSize
 import io.lettuce.core.probabilistic.IncrementPair
 import io.lettuce.core.probabilistic.MergePair
 
@@ -73,14 +74,12 @@ interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
      * @param key the key. An error is returned if the key already exists.
      * @param width the number of counters in each array. Reduces the error size.
      * @param depth the number of counter-arrays. Reduces the probability of an error exceeding the estimated size.
-     * @param cellSize the number of bytes per counter cell (`CELL_SIZE`), must be `1`, `2`, `4` or
-     *        `8`. Smaller cells reduce the memory footprint but lower the maximum count a cell can hold (`255` for
-     *        1-byte cells, `65535` for 2-byte cells, and so on). The server default is `4`.
+     * @param cellSize the number of bytes per counter cell (`CELL_SIZE`). Smaller cells reduce the memory footprint but
+     *        lower the maximum count a cell can hold. The server default is [CmsCellSize.FOUR_BYTES].
      * @return String simple-string-reply `OK` if `CMS.INITBYDIM` was executed correctly.
-     * @throws IllegalArgumentException if `cellSize` is not `1`, `2`, `4` or `8`.
      * @since 7.8
      */
-    suspend fun cmsInitByDim(key: K, width: Long, depth: Long, cellSize: Int): String?
+    suspend fun cmsInitByDim(key: K, width: Long, depth: Long, cellSize: CmsCellSize): String?
 
     /**
      * Initializes a Count-Min Sketch to accommodate requested tolerances.
@@ -98,14 +97,12 @@ interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
      * @param key the key. An error is returned if the key already exists.
      * @param error estimate size of the error.
      * @param probability the desired probability for inflated count.
-     * @param cellSize the number of bytes per counter cell (`CELL_SIZE`), must be `1`, `2`, `4` or
-     *        `8`. Smaller cells reduce the memory footprint but lower the maximum count a cell can hold (`255` for
-     *        1-byte cells, `65535` for 2-byte cells, and so on). The server default is `4`.
+     * @param cellSize the number of bytes per counter cell (`CELL_SIZE`). Smaller cells reduce the memory footprint but
+     *        lower the maximum count a cell can hold. The server default is [CmsCellSize.FOUR_BYTES].
      * @return String simple-string-reply `OK` if `CMS.INITBYPROB` was executed correctly.
-     * @throws IllegalArgumentException if `cellSize` is not `1`, `2`, `4` or `8`.
      * @since 7.8
      */
-    suspend fun cmsInitByProb(key: K, error: Double, probability: Double, cellSize: Int): String?
+    suspend fun cmsInitByProb(key: K, error: Double, probability: Double, cellSize: CmsCellSize): String?
 
     /**
      * Merges a single source sketch into a destination sketch. All sketches must have identical width and depth, and the

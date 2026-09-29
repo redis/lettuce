@@ -70,7 +70,7 @@ public class RedisCMSIntegrationTests {
     void cmsInitByDimWithCellSize() {
         assumeCellSizeSupported();
 
-        assertThat(redis.cmsInitByDim(MY_KEY, 1000, 5, 1)).isEqualTo("OK");
+        assertThat(redis.cmsInitByDim(MY_KEY, 1000, 5, CmsCellSize.ONE_BYTE)).isEqualTo("OK");
 
         CMSInfoValue info = redis.cmsInfo(MY_KEY);
         assertThat(info.getWidth()).isEqualTo(1000L);
@@ -82,8 +82,8 @@ public class RedisCMSIntegrationTests {
     void cmsInitByDimWithCellSizeUsesLessMemory() {
         assumeCellSizeSupported();
 
-        redis.cmsInitByDim("{cms}small", 1000, 5, 1);
-        redis.cmsInitByDim("{cms}large", 1000, 5, 8);
+        redis.cmsInitByDim("{cms}small", 1000, 5, CmsCellSize.ONE_BYTE);
+        redis.cmsInitByDim("{cms}large", 1000, 5, CmsCellSize.EIGHT_BYTES);
 
         assertThat(redis.memoryUsage("{cms}small")).isLessThan(redis.memoryUsage("{cms}large"));
     }
@@ -92,7 +92,7 @@ public class RedisCMSIntegrationTests {
     void cmsInitByProbWithCellSize() {
         assumeCellSizeSupported();
 
-        assertThat(redis.cmsInitByProb(MY_KEY, 0.001, 0.01, 8)).isEqualTo("OK");
+        assertThat(redis.cmsInitByProb(MY_KEY, 0.001, 0.01, CmsCellSize.EIGHT_BYTES)).isEqualTo("OK");
 
         assertThat(redis.cmsInfo(MY_KEY).getCellSize()).isEqualTo(8L);
     }
@@ -131,7 +131,7 @@ public class RedisCMSIntegrationTests {
     @Test
     void cmsIncrByOverflowOnSmallCellFails() {
         assumeCellSizeSupported();
-        redis.cmsInitByDim(MY_KEY, 2000, 5, 1);
+        redis.cmsInitByDim(MY_KEY, 2000, 5, CmsCellSize.ONE_BYTE);
         redis.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, 200));
 
         assertThatThrownBy(() -> redis.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, 100)))
@@ -142,8 +142,8 @@ public class RedisCMSIntegrationTests {
     @Test
     void cmsMergeRequiresMatchingCellSize() {
         assumeCellSizeSupported();
-        redis.cmsInitByDim("{cms}dest", 2000, 5, 2);
-        redis.cmsInitByDim("{cms}src", 2000, 5, 1);
+        redis.cmsInitByDim("{cms}dest", 2000, 5, CmsCellSize.TWO_BYTES);
+        redis.cmsInitByDim("{cms}src", 2000, 5, CmsCellSize.ONE_BYTE);
 
         assertThatThrownBy(() -> redis.cmsMerge("{cms}dest", "{cms}src")).isInstanceOf(RedisCommandExecutionException.class)
                 .hasMessageContaining("cell size");
