@@ -1,6 +1,10 @@
 # New & Noteworthy
 
 
+## What's new in Lettuce 7.9
+
+- Introduced a reactor-free credentials SPI: [`CredentialsProvider`](user-guide/connecting-redis.md#authentication) resolves credentials as a `CompletionStage` via `resolveCredentialsAsync()` and no longer requires Project Reactor. It adds a `from(Supplier)` factory and a nested `ImmediateCredentialsProvider` (`resolveCredentialsNow()`) for synchronous resolution, and supports streaming credentials through the callback-based `subscribeToCredentials(Consumer<RedisCredentials>, Consumer<Throwable>)` that returns an `io.lettuce.core.Subscription`. `RedisURI` now stores a `CredentialsProvider` and exposes `getCredentialsProviderAsync()`, `setCredentialsProvider(CredentialsProvider)` and `Builder.withAuthentication(CredentialsProvider)`. The reactive `RedisCredentialsProvider` (returning `Mono` through `resolveCredentials()`/`credentials()`) now extends `CredentialsProvider` and is deprecated; the reactive `RedisURI` accessors are retained as compatibility shims, so existing code keeps working.
+
 ## What's new in Lettuce 7.8
 
 - Support for the `CELL_SIZE` option on [`CMS.INITBYDIM`](https://redis.io/docs/latest/commands/cms.initbydim/) and [`CMS.INITBYPROB`](https://redis.io/docs/latest/commands/cms.initbyprob/) via a `CmsCellSize` overload of `cmsInitByDim`/`cmsInitByProb`, the `cell_size` field of [`CMS.INFO`](https://redis.io/docs/latest/commands/cms.info/) through `CMSInfoValue.getCellSize()`, and negative increments on [`CMS.INCRBY`](https://redis.io/docs/latest/commands/cms.incrby/) (Redis 8.12) — see [Probabilistic data structures](user-guide/probabilistic.md#count-min-sketch)
@@ -13,7 +17,6 @@
 - Began making **Project Reactor an optional dependency** for the client's public API. Added `commands(CommandsFactory)` on the stateful connection interfaces (`StatefulRedisConnection` and the cluster, pub/sub and sentinel variants), which returns a command API bound to the connection and cached per factory. Command APIs now expose a static `factory()` — for example `RedisReactiveCommands.factory()` — so the reactive API can be obtained via `connection.commands(RedisReactiveCommands.factory())`. The `reactive()` accessor is deprecated in favor of this factory-based accessor.
 - Deprecated the Reactor-based `EventBus.get()` (which returns a `Flux<Event>`) in favor of a callback-based subscription API: `EventBus.subscribe(Consumer<Event>)` and `EventBus.subscribe(Class<T>, Consumer<T>)`, each returning an `io.lettuce.core.Subscription` that is closed to stop delivery. This lets event consumers avoid a direct dependency on Project Reactor.
 - Deprecated the Reactor (`Mono`) parts of the tracing SPI: `TraceContextProvider.getTraceContextLater()` (returning `Mono<TraceContext>`) is deprecated in favor of the callback-based `getTraceContextAsync(...)`, removing Project Reactor from the trace-context propagation path used by custom `TraceContextProvider` implementations.
-
 ## What's new in Lettuce 7.7
 
 - [Probabilistic data structures (RedisBloom)](user-guide/probabilistic.md) support through `RedisBloomFilterCommands`, `RedisCuckooFilterCommands`, `RedisTopKCommands`, `RedisCMSCommands` and `RedisTDigestCommands`, with the respective async, reactive and Kotlin APIs — covering Bloom Filter (`BF.*`), Cuckoo Filter (`CF.*`), Top-K, Count-Min Sketch and T-Digest
