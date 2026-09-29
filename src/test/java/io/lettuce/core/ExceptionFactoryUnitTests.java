@@ -91,6 +91,47 @@ class ExceptionFactoryUnitTests {
     }
 
     @Test
+    void shouldDetectUnknownCommandErrors() {
+
+        // The canonical reply from a Redis server that does not know the command at all.
+        assertThat(ExceptionFactory.isUnknownCommandError(
+                new RedisCommandExecutionException("ERR unknown command 'CLIENT', with args beginning with: 'NO-EVICT' ")))
+                        .isTrue();
+
+        // A newer server knows the container command but not the subcommand, and capitalises the word differently.
+        assertThat(ExceptionFactory.isUnknownCommandError(
+                new RedisCommandExecutionException("ERR Unknown subcommand or wrong number of arguments for 'NO-TOUCH'")))
+                        .isTrue();
+
+        // Sentinel implementations fronting a proxy, such as the Redis Enterprise discovery service, phrase it with the
+        // words apart. That is why the match is a contains rather than a prefix.
+        assertThat(ExceptionFactory.isUnknownCommandError(new RedisCommandExecutionException("ERR sentinel unknown command")))
+                .isTrue();
+    }
+
+    @Test
+    void shouldNotDetectOtherErrorsAsUnknownCommand() {
+
+        assertThat(
+                ExceptionFactory.isUnknownCommandError(new RedisCommandExecutionException("ERR No such master with that name")))
+                        .isFalse();
+        assertThat(ExceptionFactory.isUnknownCommandError(
+                new RedisCommandExecutionException("NOPERM this user has no permissions to run the 'get' command"))).isFalse();
+
+        // An unknown-command wording carried by a code other than ERR is not a recognised unknown-command reply.
+        assertThat(
+                ExceptionFactory.isUnknownCommandError(new RedisCommandExecutionException("NOPROTO unknown command 'HELLO'")))
+                        .isFalse();
+
+        assertThat(ExceptionFactory.isUnknownCommandError(new RedisCommandExecutionException(""))).isFalse();
+        assertThat(ExceptionFactory.isUnknownCommandError(new RedisCommandExecutionException((String) null))).isFalse();
+
+        // Not a Redis error reply at all.
+        assertThat(ExceptionFactory.isUnknownCommandError(new IllegalStateException("ERR unknown command"))).isFalse();
+        assertThat(ExceptionFactory.isUnknownCommandError(null)).isFalse();
+    }
+
+    @Test
     void shouldFormatExactUnits() {
 
         assertThat(ExceptionFactory.formatTimeout(Duration.ofMinutes(2))).isEqualTo("2 minute(s)");

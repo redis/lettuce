@@ -130,7 +130,13 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun setrange(key: K, offset: Long, value: V): Long? = ops.setrange(key, offset, value).awaitFirstOrNull()
 
+    @Suppress("DEPRECATION")
     override suspend fun lcs(lcsArgs: LcsArgs): StringMatchResult? = ops.lcs(lcsArgs).awaitFirstOrNull()
+
+    override suspend fun lcs(key1: K, key2: K): V? = ops.lcs(key1, key2).awaitFirstOrNull()
+
+    override suspend fun lcs(key1: K, key2: K, lcsArgs: LcsArgs): StringMatchResult? =
+        ops.lcs(key1, key2, lcsArgs).awaitFirstOrNull()
 
     override suspend fun strlen(key: K): Long? = ops.strlen(key).awaitFirstOrNull()
 

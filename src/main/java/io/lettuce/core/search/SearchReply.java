@@ -251,6 +251,12 @@ public class SearchReply<K> {
          * Gets the document fields, mapping each field name to its {@link FieldValue}, in the order returned by the server. If
          * NOCONTENT was used in the search, this will be empty. Read each value as text via {@link FieldValue#asString()} or as
          * raw bytes via {@link FieldValue#asBytes()}.
+         * <p>
+         * Aggregation reducers that produce non-scalar columns (for example {@code FT.AGGREGATE REDUCE COLLECT}) are
+         * represented as {@link FieldValue.Kind#ARRAY} values with one element per collected entry; read the entries via
+         * {@link FieldValue#asList()} and each entry via {@link FieldValue#asMap()}, which normalizes the protocol-specific
+         * entry shape. Entry order within a collected column follows the server ({@code SORTBY} order); iteration order of
+         * {@link FieldValue.Kind#MAP} values is not guaranteed to match the server.
          *
          * @return an unmodifiable, ordered map of field name to {@link FieldValue}, or an empty map if not available
          */
@@ -275,7 +281,19 @@ public class SearchReply<K> {
          * @since 7.8
          */
         public void addField(String key, byte[] value) {
-            this.fields.put(key, value == null ? FieldValue.NULL : FieldValue.of(value));
+            addField(key, value == null ? FieldValue.NULL : FieldValue.of(value));
+        }
+
+        /**
+         * Adds a single document field. Kept non-public so that the public {@link #addField(String, byte[])} stays unambiguous
+         * for {@code null} arguments; the reply parsers in this package are the only producers of nested {@link FieldValue}
+         * columns.
+         *
+         * @param key the field name
+         * @param value the field value; {@code null} is stored as a {@link FieldValue#isNull() null value}
+         */
+        void addField(String key, FieldValue value) {
+            this.fields.put(key, value == null ? FieldValue.NULL : value);
         }
 
     }
