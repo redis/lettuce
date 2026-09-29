@@ -1484,10 +1484,13 @@ public class RediSearchIntegrationTests {
     private static final String TIMEOUT_PREFIX = "tdoc:";
 
     /**
-     * Number of documents indexed by the on-timeout tests. Large enough that scanning, scoring and sorting them cannot complete
-     * within the 1ms per-query timeout, so the query engine's on-timeout policy is guaranteed to kick in.
+     * Number of documents indexed by the on-timeout tests. With {@code search-workers > 0} the {@code FAIL} policy is enforced
+     * by a blocked-client timeout callback racing the worker thread that runs the query: the error is only returned when the
+     * callback wins, so a query that only slightly overruns its timeout may still return full results (intended server
+     * behavior, see RediSearch/RediSearch#11274). The query runtime must therefore exceed the 1ms per-query timeout by a wide
+     * margin; 10k documents proved flaky on Redis 8.12, while 100k documents keep the margin around ~200x.
      */
-    private static final int TIMEOUT_DOC_COUNT = 10_000;
+    private static final int TIMEOUT_DOC_COUNT = 100_000;
 
     private void populateTimeoutIndex() {
         FieldArgs titleField = TextFieldArgs.builder().name("title").build();
@@ -1495,7 +1498,7 @@ public class RediSearchIntegrationTests {
         CreateArgs createArgs = CreateArgs.builder().withPrefix(TIMEOUT_PREFIX).on(CreateArgs.TargetType.HASH).build();
         assertThat(redis.ftCreate(TIMEOUT_INDEX, createArgs, Arrays.asList(titleField, numField))).isEqualTo("OK");
 
-        // Bulk-load with pipelining so 1k documents load quickly.
+        // Bulk-load with pipelining so the documents load quickly.
         StatefulRedisConnection<String, String> connection = redis.getStatefulConnection();
         RedisAsyncCommands<String, String> async = connection.async();
         connection.setAutoFlushCommands(false);
@@ -1574,8 +1577,8 @@ public class RediSearchIntegrationTests {
      * A heavy FT.AGGREGATE that cannot finish within a 1ms timeout. A plain sort over the numeric field is optimized away
      * (partial-range/skip-sorter), so instead we force the "no optimization" path documented for FT.AGGREGATE: score every
      * document (ADDSCORES) and sort by {@code @__score}, load the text field (an HMGET per document) and blow it up with
-     * repeated string formatting (each APPLY triples the string). This costs tens of ms over ~1k documents, well beyond the 1ms
-     * budget on any hardware.
+     * repeated string formatting (each APPLY triples the string). Over {@link #TIMEOUT_DOC_COUNT} documents this runs far
+     * beyond the 1ms budget on any hardware.
      */
     private AggregateArgs timingOutAggregateArgs() {
         return AggregateArgs.builder().addScores().load("@title").apply("format(\"%s%s%s\",@title,@title,@title)", "a")
