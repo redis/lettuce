@@ -126,7 +126,8 @@ class RedisHandshake implements ConnectionInitializer {
     private CompletionStage<?> tryHandshakeResp3(Channel channel) {
 
         CompletableFuture<?> handshake = new CompletableFuture<>();
-        CompletionStage<Map<String, Object>> hello = initiateHandshakeResp3(channel, connectionState.getCredentialsProvider());
+        CompletionStage<Map<String, Object>> hello = initiateHandshakeResp3(channel,
+                connectionState.getCredentialsProviderAsync());
 
         hello.whenComplete((settings, throwable) -> {
 
@@ -172,7 +173,7 @@ class RedisHandshake implements ConnectionInitializer {
 
     private CompletableFuture<?> initializeResp2(Channel channel) {
 
-        return initiateHandshakeResp2(channel, connectionState.getCredentialsProvider()).thenRun(() -> {
+        return initiateHandshakeResp2(channel, connectionState.getCredentialsProviderAsync()).thenRun(() -> {
             negotiatedProtocolVersion = ProtocolVersion.RESP2;
 
             connectionState.setHandshakeResponse(
@@ -181,7 +182,7 @@ class RedisHandshake implements ConnectionInitializer {
     }
 
     private CompletionStage<Void> initializeResp3(Channel channel) {
-        return initiateHandshakeResp3(channel, connectionState.getCredentialsProvider()).thenAccept(this::onHelloResponse);
+        return initiateHandshakeResp3(channel, connectionState.getCredentialsProviderAsync()).thenAccept(this::onHelloResponse);
     }
 
     private void onHelloResponse(Map<String, Object> response) {
@@ -204,16 +205,20 @@ class RedisHandshake implements ConnectionInitializer {
      * @param credentialsProvider
      * @return
      */
-    private CompletableFuture<?> initiateHandshakeResp2(Channel channel, RedisCredentialsProvider credentialsProvider) {
+    private CompletableFuture<?> initiateHandshakeResp2(Channel channel, CredentialsProvider credentialsProvider) {
 
         if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
             return dispatchAuthOrPing(channel,
                     ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider).resolveCredentialsNow());
         }
 
-        CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toFuture();
+        if (credentialsProvider instanceof CredentialsProvider.ImmediateCredentialsProvider) {
+            return dispatchAuthOrPing(channel,
+                    ((CredentialsProvider.ImmediateCredentialsProvider) credentialsProvider).resolveCredentialsNow());
+        }
 
-        return credentialsFuture.thenComposeAsync(credentials -> dispatchAuthOrPing(channel, credentials));
+        return Futures.unwrapExceptions(credentialsProvider.resolveCredentialsAsync())
+                .thenComposeAsync(credentials -> dispatchAuthOrPing(channel, credentials));
     }
 
     private CompletableFuture<String> dispatchAuthOrPing(Channel channel, RedisCredentials credentials) {
@@ -237,16 +242,20 @@ class RedisHandshake implements ConnectionInitializer {
      * @return
      */
     private CompletionStage<Map<String, Object>> initiateHandshakeResp3(Channel channel,
-            RedisCredentialsProvider credentialsProvider) {
+            CredentialsProvider credentialsProvider) {
 
         if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
             return dispatchHello(channel,
                     ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider).resolveCredentialsNow());
         }
 
-        CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toFuture();
+        if (credentialsProvider instanceof CredentialsProvider.ImmediateCredentialsProvider) {
+            return dispatchHello(channel,
+                    ((CredentialsProvider.ImmediateCredentialsProvider) credentialsProvider).resolveCredentialsNow());
+        }
 
-        return credentialsFuture.thenComposeAsync(credentials -> dispatchHello(channel, credentials));
+        return Futures.unwrapExceptions(credentialsProvider.resolveCredentialsAsync())
+                .thenComposeAsync(credentials -> dispatchHello(channel, credentials));
     }
 
     private AsyncCommand<String, String, Map<String, Object>> dispatchHello(Channel channel, RedisCredentials credentials) {
