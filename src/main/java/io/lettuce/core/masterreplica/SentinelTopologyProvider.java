@@ -21,10 +21,8 @@ import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
-import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.publisher.Mono;
 
 /**
  * Topology provider using Redis Sentinel and the Sentinel API.
@@ -88,7 +86,7 @@ class SentinelTopologyProvider implements TopologyProvider {
         RedisSentinelAsyncCommands<String, String> async = connection.async();
 
         CompletableFuture<Pair<Map<String, String>, List<Map<String, String>>>> masterAndReplicas = async.master(masterId)
-                .toCompletableFuture().thenCombine(async.replicas(masterId).toCompletableFuture(), Pair::of);
+                .toCompletableFuture().thenCombine(getReplicas(async), Pair::of);
 
         return Futures.withTimeout(masterAndReplicas, this.timeout, redisClient.getResources(), "Sentinel command")
                 .whenComplete((pair, err) -> closeSilently(connection)).thenApply(pair -> {
@@ -120,21 +118,32 @@ class SentinelTopologyProvider implements TopologyProvider {
      * rather than failing - its replicas are not discovered.
      * <p>
      * Only an unknown-command reply is absorbed, so authorization, connection and timeout failures still propagate, as does
-     * every other command error. A master name the Sentinel does not monitor still fails through {@code SENTINEL MASTER} in the
-     * same {@code zipWith}.
+     * every other command error. A master name the Sentinel does not monitor still fails through {@code SENTINEL MASTER}, which
+     * is combined with this lookup.
      *
-     * @param reactive Sentinel commands to use.
+     * @param async Sentinel commands to use.
      * @return the replicas of the monitored master, empty if the server does not implement the command.
      */
-    private Mono<List<Map<String, String>>> getReplicas(RedisSentinelReactiveCommands<String, String> reactive) {
+    private CompletableFuture<List<Map<String, String>>> getReplicas(RedisSentinelAsyncCommands<String, String> async) {
 
-        return reactive.replicas(masterId).collectList().onErrorResume(ExceptionFactory::isUnknownCommandError, e -> {
+        CompletableFuture<List<Map<String, String>>> replicas = new CompletableFuture<>();
 
-            logger.info("{} does not implement SENTINEL REPLICAS, continuing with an empty replica list for masterId {}",
-                    sentinelUri, masterId);
+        Futures.unwrapExceptions(async.replicas(masterId)).whenComplete((result, error) -> {
 
-            return Mono.just(Collections.emptyList());
+            if (error == null) {
+                replicas.complete(result);
+            } else if (ExceptionFactory.isUnknownCommandError(error)) {
+
+                logger.info("{} does not implement SENTINEL REPLICAS, continuing with an empty replica list for masterId {}",
+                        sentinelUri, masterId);
+
+                replicas.complete(Collections.emptyList());
+            } else {
+                replicas.completeExceptionally(error);
+            }
         });
+
+        return replicas;
     }
 
     private static boolean isAvailable(Map<String, String> map) {
