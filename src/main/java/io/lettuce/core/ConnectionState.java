@@ -133,7 +133,11 @@ public class ConnectionState {
         this.credentialsProvider = credentialsProvider;
     }
 
-    public CredentialsProvider getCredentialsProvider() {
+    /**
+     * @return the configured reactor-free {@link CredentialsProvider}
+     * @since 7.9
+     */
+    public CredentialsProvider getCredentialsProviderAsync() {
         return credentialsProvider;
     }
 

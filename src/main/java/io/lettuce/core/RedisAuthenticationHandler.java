@@ -66,7 +66,7 @@ public class RedisAuthenticationHandler<K, V> {
      * @since 7.9
      */
     public RedisAuthenticationHandler(StatefulRedisConnectionImpl<K, V> connection, CredentialsProvider credentialsProvider,
-                                      Boolean isPubSubConnection) {
+            Boolean isPubSubConnection) {
         this.connection = connection;
         this.credentialsProvider = credentialsProvider;
         this.isPubSubConnection = isPubSubConnection;
@@ -85,7 +85,7 @@ public class RedisAuthenticationHandler<K, V> {
      * @see CredentialsProvider
      */
     public static <K, V> RedisAuthenticationHandler<K, V> createHandler(StatefulRedisConnectionImpl<K, V> connection,
-                                                                        CredentialsProvider credentialsProvider, Boolean isPubSubConnection, ClientOptions options) {
+            CredentialsProvider credentialsProvider, Boolean isPubSubConnection, ClientOptions options) {
 
         if (isSupported(options)) {
 
@@ -146,7 +146,6 @@ public class RedisAuthenticationHandler<K, V> {
         }
     }
 
-
     /**
      * Performs re-authentication with the provided credentials.
      *
@@ -154,6 +153,10 @@ public class RedisAuthenticationHandler<K, V> {
      */
     protected void reauthenticate(RedisCredentials credentials) {
         setCredentials(credentials);
+    }
+
+    protected void onNext(RedisCredentials credentials) {
+        reauthenticate(credentials);
     }
 
     /**

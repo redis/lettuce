@@ -285,7 +285,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
         } catch (RedisException e) {
             assertThat(e.getMessage()).startsWith("ERR").contains("AUTH");
             StatefulRedisConnectionImpl<String, String> connectionImpl = (StatefulRedisConnectionImpl<String, String>) connection;
-            assertThat(connectionImpl.getConnectionState().getCredentialsProvider().resolveCredentialsAsync()
+            assertThat(connectionImpl.getConnectionState().getCredentialsProviderAsync().resolveCredentialsAsync()
                     .toCompletableFuture().join().getPassword()).isNull();
         } finally {
             connection.close();
