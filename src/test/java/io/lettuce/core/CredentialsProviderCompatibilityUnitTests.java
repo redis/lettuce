@@ -10,6 +10,7 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -67,6 +68,15 @@ class CredentialsProviderCompatibilityUnitTests {
         // The reactor-free method resolves as a CompletionStage.
         Method resolveAsync = CredentialsProvider.class.getMethod("resolveCredentialsAsync");
         assertThat(resolveAsync.getReturnType()).isEqualTo(CompletionStage.class);
+    }
+
+    @Test
+    void redisAuthenticationHandlerRetainsCompleteHook() throws NoSuchMethodException {
+
+        // Subclasses compiled against 7.8 or earlier may override complete() and call super.complete().
+        Method complete = RedisAuthenticationHandler.class.getDeclaredMethod("complete");
+        assertThat(complete.getReturnType()).isEqualTo(void.class);
+        assertThat(Modifier.isProtected(complete.getModifiers())).isTrue();
     }
 
     @Test

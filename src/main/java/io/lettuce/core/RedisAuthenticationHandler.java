@@ -182,6 +182,18 @@ public class RedisAuthenticationHandler<K, V> {
         }
     }
 
+    /**
+     * Called when the credentials stream completes.
+     *
+     * @deprecated since 7.9, no longer invoked, because
+     *             {@link CredentialsProvider#subscribeToCredentials(java.util.function.Consumer, java.util.function.Consumer)}
+     *             has no completion signal; there is no replacement. Scheduled for removal in a future major release.
+     */
+    @Deprecated
+    protected void complete() {
+        log.debug("Credentials stream completed");
+    }
+
     protected void onNext(RedisCredentials credentials) {
         reauthenticate(credentials);
     }
