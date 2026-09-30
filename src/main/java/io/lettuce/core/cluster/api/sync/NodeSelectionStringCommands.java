@@ -525,7 +525,7 @@ public interface NodeSelectionStringCommands<K, V> {
      *
      * @param strAlgoArgs command arguments.
      * @return StringMatchResult.
-     * @deprecated since 6.6 in favor of {@link #lcs(LcsArgs)}.
+     * @deprecated since 6.6 in favor of {@link #lcs(K, K, LcsArgs)}.
      * @since 6.0
      */
     @Deprecated
@@ -542,12 +542,52 @@ public interface NodeSelectionStringCommands<K, V> {
      * WITHMATCHLEN} is given each array representing a match will also have the length of the match.</li>
      * </ul>
      *
-     * @param lcsArgs command arguments supplied by the {@link LcsArgs}.
+     * @param lcsArgs command arguments supplied by the {@link LcsArgs}, including the keys set through
+     *        {@link LcsArgs.Builder#keys(String...)}.
      * @return StringMatchResult
-     * @see <a href="https://redis.io/commands/lcs">LCS command refference</a>
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
      * @since 6.6
+     * @deprecated since 7.8, use {@link #lcs(K, K)} or {@link #lcs(K, K, LcsArgs)} instead; scheduled for removal in a future
+     *             major release. The keys carried by {@link LcsArgs} are encoded as plain strings and not through the key
+     *             codec, so this method neither works with non-{@code String} key codecs nor participates in Redis Cluster slot
+     *             routing.
      */
+    @Deprecated
     Executions<StringMatchResult> lcs(LcsArgs lcsArgs);
+
+    /**
+     * Return the longest common substring of the values stored at {@code key1} and {@code key2}.
+     *
+     * @param key1 the first key, must not be {@code null}.
+     * @param key2 the second key, must not be {@code null}.
+     * @return V bulk-string-reply the longest common substring, or an empty value when the values have no common substring or
+     *         one of the keys does not exist.
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
+     * @since 7.8
+     */
+    Executions<V> lcs(K key1, K key2);
+
+    /**
+     * The LCS command implements the longest common subsequence algorithm on the values stored at {@code key1} and
+     * {@code key2}.
+     *
+     * <ul>
+     * <li>Without modifiers, the string representing the longest common substring is returned.</li>
+     * <li>When {@link LcsArgs#justLen() LEN} is given the command returns the length of the longest common substring.</li>
+     * <li>When {@link LcsArgs#withIdx() IDX} is given the command returns an array with the LCS length and all the ranges in
+     * both the strings, start and end offset for each string, where there are matches. When {@link LcsArgs#withMatchLen()
+     * WITHMATCHLEN} is given each array representing a match will also have the length of the match.</li>
+     * </ul>
+     *
+     * @param key1 the first key, must not be {@code null}.
+     * @param key2 the second key, must not be {@code null}.
+     * @param lcsArgs command arguments supplied by the {@link LcsArgs}, must not be {@code null} and must not carry keys set
+     *        through the deprecated {@link LcsArgs.Builder#keys(String...)}.
+     * @return StringMatchResult
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
+     * @since 7.8
+     */
+    Executions<StringMatchResult> lcs(K key1, K key2, LcsArgs lcsArgs);
 
     /**
      * Get the length of the value stored in a key.

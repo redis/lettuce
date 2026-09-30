@@ -3224,10 +3224,33 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(STRALGO, new StringMatchResultOutput<>(codec), args);
     }
 
+    @Deprecated
     Command<K, V, StringMatchResult> lcs(LcsArgs lcsArgs) {
-        LettuceAssert.notNull(lcsArgs, "lcsArgs" + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lcsArgs, "LcsArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(lcsArgs.hasKeys(),
+                "LcsArgs must carry keys, use LcsArgs.Builder.keys(…) or lcs(key1, key2, LcsArgs) instead");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
+        lcsArgs.build(args);
+        return createCommand(LCS, new StringMatchResultOutput<>(codec), args);
+    }
+
+    Command<K, V, V> lcs(K key1, K key2) {
+        notNullKey(key1);
+        notNullKey(key2);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key1).addKey(key2);
+        return createCommand(LCS, new ValueOutput<>(codec), args);
+    }
+
+    Command<K, V, StringMatchResult> lcs(K key1, K key2, LcsArgs lcsArgs) {
+        notNullKey(key1);
+        notNullKey(key2);
+        LettuceAssert.notNull(lcsArgs, "LcsArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!lcsArgs.hasKeys(),
+                "LcsArgs must not carry keys, pass the keys as key1 and key2 instead of using LcsArgs.Builder.keys(…)");
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key1).addKey(key2);
         lcsArgs.build(args);
         return createCommand(LCS, new StringMatchResultOutput<>(codec), args);
     }
