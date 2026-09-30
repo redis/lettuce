@@ -79,7 +79,8 @@ public class DefaultAzureCredentialsIntegrationTests {
     @Test
     public void azureTokenAuthWithDefaultAzureCredentials() throws ExecutionException, InterruptedException, TimeoutException {
 
-        RedisCredentials credentials = credentialsProvider.resolveCredentials().toCompletableFuture().get(5, TimeUnit.SECONDS);
+        RedisCredentials credentials = credentialsProvider.resolveCredentialsAsync().toCompletableFuture().get(5,
+                TimeUnit.SECONDS);
         assertThat(credentials).isNotNull();
 
         String key = UUID.randomUUID().toString();

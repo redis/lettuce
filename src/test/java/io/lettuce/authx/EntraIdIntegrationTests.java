@@ -1,7 +1,7 @@
 package io.lettuce.authx;
 
 import io.lettuce.core.*;
-import io.lettuce.core.RedisCredentialsProvider.CredentialsSubscription;
+import io.lettuce.core.Subscription;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -116,7 +116,7 @@ public class EntraIdIntegrationTests {
         commandThread.start();
 
         CountDownLatch latch = new CountDownLatch(10); // Wait for at least 10 token renewalss
-        CredentialsSubscription subscription = credentialsProvider.subscribeToCredentials(cred -> latch.countDown(), t -> {
+        Subscription subscription = credentialsProvider.subscribeToCredentials(cred -> latch.countDown(), t -> {
         });
         try {
             assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue(); // Wait to reach 10 renewals
@@ -150,7 +150,7 @@ public class EntraIdIntegrationTests {
             pubsubThread.start();
 
             CountDownLatch latch = new CountDownLatch(10);
-            CredentialsSubscription subscription = credentialsProvider.subscribeToCredentials(cred -> latch.countDown(), t -> {
+            Subscription subscription = credentialsProvider.subscribeToCredentials(cred -> latch.countDown(), t -> {
             });
             try {
                 assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue(); // Wait for at least 10 token renewals
