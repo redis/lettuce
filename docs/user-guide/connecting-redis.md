@@ -93,17 +93,10 @@ connections.
 Redis URIs may contain authentication details that effectively lead to
 usernames with passwords, password-only, or no authentication.
 Connections are authenticated by using the information provided through
-`RedisCredentials`. Credentials are obtained at connection time from a
-`CredentialsProvider`, which resolves credentials asynchronously as a
-`CompletionStage` and does not require Project Reactor. When configuring
-username/password on the URI statically, a `StaticCredentialsProvider`
-holds the configured information.
-
-The reactive `RedisCredentialsProvider`, which resolves credentials as a
-`Mono`, is deprecated since 7.9 in favor of `CredentialsProvider`. It
-still works — a `RedisCredentialsProvider` is a `CredentialsProvider`,
-and providers configured through the deprecated API are adapted
-automatically — so existing code keeps working without changes.
+`RedisCredentials`. Credentials are obtained at connection time from
+`RedisCredentialsProvider`. When configuring username/password on the
+URI statically, then a `StaticCredentialsProvider` holds the configured
+information.
 
 **Notes**
 
@@ -245,20 +238,22 @@ client.shutdown();
 ```
 
 ## Streaming Credentials Provider
-[Lettuce 6.6.0](https://github.com/redis/lettuce/releases/tag/6.6.0.RELEASE) added support for streaming credentials.
+[Lettuce 6.6.0](https://github.com/redis/lettuce/releases/tag/6.6.0.RELEASE)  extends `RedisCredentialsProvider` to support streaming credentials. 
 It is useful when you need to refresh credentials periodically. Example use cases include: token expiration, rotating credentials, etc.
-A connection configured with a `CredentialsProvider` that supports streaming is re-authenticated automatically when new credentials are emitted and `ReauthenticateBehavior` is set to `ON_NEW_CREDENTIALS`.
-
-A streaming provider returns `true` from `supportsStreaming()` and pushes updates through `subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError)`. That method returns a `Subscription`, which the client closes to stop receiving updates. This is the reactor-free replacement for the deprecated reactive `credentials()` stream.
+Connection configured with `RedisCredentialsProvider` supporting streaming will be re-authenticated automatically when new credentials are emitted and `ReauthenticateBehavior` is set to `ON_NEW_CREDENTIALS`.
 
 ### Step 1 - Create a Streaming Credentials Provider
-A simple example of a streaming credentials provider that emits new credentials.
+A simple example of a streaming credentials provider that emits new credentials. Replay semantics on subscription are
+implementation-defined (see `RedisCredentialsProvider#subscribeToCredentials`): this sample replays the most recent
+successful credentials to a new subscriber and does not retain prior errors for replay to subscribers added later.
+
 ```java
-public class MyStreamingCredentialsProvider implements CredentialsProvider {
+public class MyStreamingRedisCredentialsProvider implements RedisCredentialsProvider, AutoCloseable {
 
-    private final List<Consumer<RedisCredentials>> listeners = new CopyOnWriteArrayList<>();
-
-    private volatile RedisCredentials current;
+    private final List<Listener> listeners = new CopyOnWriteArrayList<>();
+    private final AtomicReference<CompletableFuture<RedisCredentials>> credentialsFutureRef =
+            new AtomicReference<>(new CompletableFuture<>());
+    private volatile boolean closed;
 
     @Override
     public boolean supportsStreaming() {
@@ -266,32 +261,101 @@ public class MyStreamingCredentialsProvider implements CredentialsProvider {
     }
 
     @Override
-    public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
-        return CompletableFuture.completedFuture(current);
+    public CompletionStage<RedisCredentials> resolveCredentials() {
+        // Return a fresh wrapper so callers cannot complete the provider's internal future.
+        CompletableFuture<RedisCredentials> result = new CompletableFuture<>();
+        credentialsFutureRef.get().whenComplete((creds, t) -> {
+            if (t != null) {
+                result.completeExceptionally(t);
+            } else {
+                result.complete(creds);
+            }
+        });
+        return result;
     }
 
     @Override
-    public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
-        listeners.add(onNext);
-        if (current != null) {
-            onNext.accept(current); // emit the latest credentials to a new subscriber
+    public CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> onNext,
+            Consumer<Throwable> onError) {
+        if (closed) {
+            throw new IllegalStateException("Credentials provider closed");
         }
-        return () -> listeners.remove(onNext); // Subscription#close stops updates
+        Listener listener = new Listener(onNext, onError);
+        listeners.add(listener);
+        // Replay the latest known credentials, if any, to synchronize the new subscriber.
+        CompletableFuture<RedisCredentials> latest = credentialsFutureRef.get();
+        if (latest.isDone() && !latest.isCompletedExceptionally()) {
+            onNext.accept(latest.getNow(null));
+        }
+        return () -> listeners.remove(listener);
     }
 
-    // Emit new credentials when needed
+    @Override
+    public void close() {
+        closed = true;
+        listeners.clear();
+        CompletableFuture<RedisCredentials> pending = credentialsFutureRef.get();
+        if (!pending.isDone()) {
+            pending.completeExceptionally(new IllegalStateException("Credentials provider closed"));
+        }
+    }
+
+    // Emit new credentials when needed.
     public void emitCredentials(String username, char[] password) {
-        this.current = RedisCredentials.just(username, password);
-        listeners.forEach(listener -> listener.accept(current));
+        if (closed) {
+            return;
+        }
+        RedisCredentials credentials = new StaticRedisCredentials(username, password);
+        CompletableFuture<RedisCredentials> previous = credentialsFutureRef
+                .getAndSet(CompletableFuture.completedFuture(credentials));
+        if (!previous.isDone()) {
+            previous.complete(credentials);
+        }
+        for (Listener l : listeners) {
+            l.onNext.accept(credentials);
+        }
     }
 
+    // Emit a transient error. Delivered live to existing subscribers and to any in-flight
+    // resolveCredentials() waiter; not retained for replay to subscribers added later.
+    public void emitError(Throwable error) {
+        if (closed) {
+            return;
+        }
+        CompletableFuture<RedisCredentials> previous = credentialsFutureRef.get();
+        if (!previous.isDone() && credentialsFutureRef.compareAndSet(previous, new CompletableFuture<>())) {
+            previous.completeExceptionally(error);
+        }
+        for (Listener l : listeners) {
+            l.onError.accept(error);
+        }
+    }
+
+    private static class Listener {
+        final Consumer<RedisCredentials> onNext;
+        final Consumer<Throwable> onError;
+        Listener(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+            this.onNext = onNext;
+            this.onError = onError;
+        }
+    }
 }
 ```
+
+Notes on the sample:
+
+- No explicit locking is used. `CopyOnWriteArrayList` makes subscriber iteration safe against concurrent
+  add/remove, and `AtomicReference` makes the latest-credentials swap atomic. A subscribe call that races
+  with `emitCredentials` may miss the in-flight notification but will observe the new value on the next
+  emission, which is acceptable because re-authentication is idempotent.
+- `subscribeToCredentials` and `emitCredentials` dispatch on the caller thread for brevity. Production
+  providers should consider hopping to a dedicated `Executor` so that subscriber callbacks cannot block
+  the thread that drives credential renewal.
 ###  Step 2 - Create a RedisURI with streaming credentials provider
 
 ```java
     // Create a streaming credentials provider
-    MyStreamingCredentialsProvider streamingCredentialsProvider = new MyStreamingCredentialsProvider();
+    MyStreamingRedisCredentialsProvider streamingCredentialsProvider = new MyStreamingRedisCredentialsProvider();
     
     // Emit initial credentials
     streamingCredentialsProvider.emitCredentials("testuser", "testpass".toCharArray());
@@ -311,16 +375,12 @@ public class MyStreamingCredentialsProvider implements CredentialsProvider {
     RedisClient redisClient = RedisClient.create(redisURI);
     redisClient.setOptions(clientOptions);
     redisClient.connect().sync().ping();
-    
+
     // ...
     // Emit new credentials when needed
     streamingCredentialsProvider.emitCredentials("testuser", "password-rotated".toCharArray());
-    
-```
 
-> **Note**
->
-> The reactive `RedisCredentialsProvider` streaming API — `resolveCredentials()` returning `Mono<RedisCredentials>` and `credentials()` returning `Flux<RedisCredentials>` — is deprecated since 7.9 in favor of `CredentialsProvider` and `subscribeToCredentials(...)`. Existing reactive providers continue to work.
+```
 
 ## Microsoft Entra ID Authentication
 
@@ -373,13 +433,12 @@ You can test the credentials provider by obtaining a token.
 
 ```java
   // Test Entra ID credentials provider can resolve credentials
-  RedisCredentials credentials = credentialsSP.resolveCredentialsAsync()
-      .toCompletableFuture().join();
-  System.out.println(credentials.getUsername());
+  RedisCredentials c = credentialsSP.resolveCredentials().toCompletableFuture().join();
+  System.out.println(c.getUsername());
 ```
 
 ### Step 3 - Enable automatic re-authentication
-Microsoft Entra ID tokens have a limited lifetime. Lettuce provides a mechanism to automatically re-authenticate when new credentials are emitted by a credentials provider.
+Microsoft Entra ID tokens have a limited lifetime. Lettuce provides a mechanism to automatically re-authenticate when new credentials are emitted by a `RedisCredentialsProvider`.
 ```java
   // Enable automatic re-authentication
   ClientOptions clientOptions = ClientOptions.builder()

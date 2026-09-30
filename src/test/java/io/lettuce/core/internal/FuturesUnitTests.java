@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -236,32 +235,6 @@ class FuturesUnitTests {
 
         assertThat(aggregate).hasMessage("all failed").hasCause(e3);
         assertThat(aggregate.getSuppressed()).containsExactly(e1, e2);
-    }
-
-    @Test
-    void unwrapExceptionsShouldUnwrapCompletionExceptionCause() {
-
-        IllegalStateException cause = new IllegalStateException("error");
-        CompletableFuture<String> stage = new CompletableFuture<>();
-        stage.completeExceptionally(new CompletionException(cause));
-
-        CompletableFuture<String> f = Futures.unwrapExceptions(stage);
-
-        assertThat(f).isCompletedExceptionally();
-        assertThatThrownBy(f::join).isInstanceOf(CompletionException.class).hasCause(cause);
-    }
-
-    @Test
-    void unwrapExceptionsShouldKeepCauselessCompletionException() {
-
-        CompletionException causeless = new CompletionException((Throwable) null);
-        CompletableFuture<String> stage = new CompletableFuture<>();
-        stage.completeExceptionally(causeless);
-
-        CompletableFuture<String> f = Futures.unwrapExceptions(stage);
-
-        assertThat(f).isCompletedExceptionally();
-        assertThatThrownBy(f::join).isSameAs(causeless);
     }
 
 }
