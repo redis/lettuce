@@ -35,7 +35,7 @@ public class ConnectionState {
 
     private volatile HandshakeResponse handshakeResponse;
 
-    private volatile RedisCredentialsProvider credentialsProvider;
+    private volatile CredentialsProvider credentialsProvider;
 
     private volatile int db;
 
@@ -51,7 +51,7 @@ public class ConnectionState {
     public void apply(RedisURI redisURI) {
 
         connectionMetadata.apply(redisURI);
-        setCredentialsProvider(redisURI.getCredentialsProvider());
+        setCredentialsProvider(redisURI.getCredentialsProviderAsync());
     }
 
     void apply(ConnectionMetadata metadata) {
@@ -129,11 +129,15 @@ public class ConnectionState {
         }
     }
 
-    protected void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
+    protected void setCredentialsProvider(CredentialsProvider credentialsProvider) {
         this.credentialsProvider = credentialsProvider;
     }
 
-    public RedisCredentialsProvider getCredentialsProvider() {
+    /**
+     * @return the configured reactor-free {@link CredentialsProvider}
+     * @since 7.9
+     */
+    public CredentialsProvider getCredentialsProviderAsync() {
         return credentialsProvider;
     }
 
