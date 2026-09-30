@@ -135,6 +135,12 @@ class RedisURIBuilderUnitTests {
     }
 
     @Test
+    void withAuthenticationNullCredentialsProviderShouldFail() {
+        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withAuthentication((CredentialsProvider) null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void redisWithLibraryNameThenDriverInfo() {
         // Last call wins: withDriverInfo overwrites previous withLibraryName
         DriverInfo driverInfo = DriverInfo.builder().addUpstreamDriver("spring-data-redis", "3.2.0").build();

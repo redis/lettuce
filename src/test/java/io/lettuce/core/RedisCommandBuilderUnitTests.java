@@ -1,5 +1,6 @@
 package io.lettuce.core;
 
+import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.stream.StreamEntryDeletionResult;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
@@ -62,6 +63,75 @@ class RedisCommandBuilderUnitTests {
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$5\r\n" + "HELLO\r\n" + "$1\r\n" + "3\r\n"
                 + "$4\r\n" + "AUTH\r\n" + "$9\r\n" + "日本語\r\n" + "$9\r\n" + "日本語\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLcs() {
+
+        Command<String, String, ?> command = sut.lcs("key1", "key2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLcsWithArgs() {
+
+        Command<String, String, ?> command = sut.lcs("key1", "key2", LcsArgs.Builder.withIdx().minMatchLen(4).withMatchLen());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n" + "$3\r\n"
+                        + "IDX\r\n" + "$11\r\n" + "MINMATCHLEN\r\n" + "$1\r\n" + "4\r\n" + "$12\r\n" + "WITHMATCHLEN\r\n");
+    }
+
+    @Test
+    void lcsShouldEncodeKeysUsingCodec() {
+
+        RedisCommandBuilder<byte[], byte[]> builder = new RedisCommandBuilder<>(ByteArrayCodec.INSTANCE);
+        byte[] key1 = "key1".getBytes(StandardCharsets.UTF_8);
+        byte[] key2 = "key2".getBytes(StandardCharsets.UTF_8);
+
+        Command<byte[], byte[], ?> command = builder.lcs(key1, key2);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n");
+
+        command = builder.lcs(key1, key2, LcsArgs.Builder.justLen());
+        buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n" + "$3\r\n" + "LEN\r\n");
+    }
+
+    @Test
+    void lcsShouldExposeFirstKeyForClusterRouting() {
+
+        Command<String, String, ?> command = sut.lcs("key1", "key2");
+        assertThat(command.getArgs().getFirstEncodedKey()).isEqualTo(StandardCharsets.UTF_8.encode("key1"));
+
+        command = sut.lcs("key1", "key2", LcsArgs.Builder.withIdx());
+        assertThat(command.getArgs().getFirstEncodedKey()).isEqualTo(StandardCharsets.UTF_8.encode("key1"));
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void deprecatedLcsShouldEncodeKeysFromArgs() {
+
+        Command<String, String, ?> command = sut
+                .lcs(LcsArgs.Builder.keys("key1", "key2").withIdx().minMatchLen(4).withMatchLen());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n" + "$3\r\n"
+                        + "IDX\r\n" + "$11\r\n" + "MINMATCHLEN\r\n" + "$1\r\n" + "4\r\n" + "$12\r\n" + "WITHMATCHLEN\r\n");
     }
 
     @Test
