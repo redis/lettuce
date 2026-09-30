@@ -24,8 +24,6 @@ import redis.clients.authentication.entraid.AzureTokenAuthConfigBuilder;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static io.lettuce.TestTags.ENTRA_ID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,9 +75,9 @@ public class DefaultAzureCredentialsIntegrationTests {
     }
 
     @Test
-    public void azureTokenAuthWithDefaultAzureCredentials() throws ExecutionException, InterruptedException, TimeoutException {
+    public void azureTokenAuthWithDefaultAzureCredentials() throws ExecutionException, InterruptedException {
 
-        RedisCredentials credentials = credentialsProvider.resolveCredentials().toCompletableFuture().get(5, TimeUnit.SECONDS);
+        RedisCredentials credentials = credentialsProvider.resolveCredentials().block(Duration.ofSeconds(5));
         assertThat(credentials).isNotNull();
 
         String key = UUID.randomUUID().toString();
