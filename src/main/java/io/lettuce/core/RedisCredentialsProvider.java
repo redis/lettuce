@@ -1,12 +1,9 @@
 package io.lettuce.core;
 
-import java.io.Closeable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import io.lettuce.core.internal.Futures;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -23,25 +20,14 @@ import io.lettuce.core.internal.LettuceAssert;
 public interface RedisCredentialsProvider {
 
     /**
-     * Handle to a subscription created by {@link #subscribeToCredentials(Consumer, Consumer)}. Closing the subscription stops
-     * the provider from delivering further credential updates to the registered consumers.
-     */
-    interface CredentialsSubscription extends Closeable {
-
-        @Override
-        void close();
-
-    }
-
-    /**
      * Returns {@link RedisCredentials} that can be used to authorize a Redis connection. Each implementation of
      * {@code RedisCredentialsProvider} can choose its own strategy for loading credentials. For example, an implementation
      * might load credentials from an existing key management system, or load new credentials when credentials are rotated. If
      * an error occurs during the loading of credentials or credentials could not be found, a runtime exception will be raised.
      *
-     * @return a {@link CompletionStage} emitting {@link RedisCredentials} that can be used to authorize a Redis connection.
+     * @return a {@link Mono} emitting {@link RedisCredentials} that can be used to authorize a Redis connection.
      */
-    CompletionStage<RedisCredentials> resolveCredentials();
+    Mono<RedisCredentials> resolveCredentials();
 
     /**
      * Creates a new {@link RedisCredentialsProvider} from a given {@link Supplier}.
@@ -53,17 +39,7 @@ public interface RedisCredentialsProvider {
 
         LettuceAssert.notNull(supplier, "Supplier must not be null");
 
-        return () -> {
-            try {
-                RedisCredentials credentials = supplier.get();
-                if (credentials == null) {
-                    return Futures.failed(new IllegalStateException("Provided RedisCredentials supplier returned null"));
-                }
-                return CompletableFuture.completedFuture(credentials);
-            } catch (Exception e) {
-                return Futures.failed(e);
-            }
-        };
+        return () -> Mono.fromSupplier(supplier);
     }
 
     /**
@@ -78,33 +54,19 @@ public interface RedisCredentialsProvider {
     }
 
     /**
-     * Subscribe to credential updates produced by this provider.
-     * <p>
-     * For implementations that support streaming credentials (as indicated by {@link #supportsStreaming()} returning
-     * {@code true}), the {@code onNext} consumer is invoked whenever new credentials become available, typically as a result of
-     * external events such as token renewal or rotation. The {@code onError} consumer is invoked when the provider observes a
-     * failure while obtaining new credentials.
-     * <p>
-     * Replay semantics on subscription are defined by the implementation and callers should consult the concrete provider's
-     * documentation. Typical aspects an implementation may choose to specify include:
-     * <ul>
-     * <li>whether the most recently known credentials are delivered to {@code onNext} immediately on subscription;</li>
-     * <li>whether prior errors observed before subscription are delivered to {@code onError}, or are silently dropped in favour
-     * of waiting for the next credentials or next error event;</li>
-     * <li>the threading context on which {@code onNext} and {@code onError} are invoked, and any ordering guarantees between
-     * replay deliveries and live updates.</li>
-     * </ul>
-     * Subscribers must not assume any specific replay behaviour from this interface alone.
-     * <p>
-     * Implementations that do not support streaming credentials (where {@link #supportsStreaming()} returns {@code false})
-     * throw an {@link UnsupportedOperationException} by default.
+     * Returns a {@link Flux} emitting {@link RedisCredentials} that can be used to authorize a Redis connection.
      *
-     * @param onNext consumer invoked with each new {@link RedisCredentials} value, must not be {@code null}.
-     * @param onError consumer invoked with errors observed while producing credentials, must not be {@code null}.
-     * @return a {@link CredentialsSubscription} that can be used to stop receiving updates.
+     * For implementations that support streaming credentials (as indicated by {@link #supportsStreaming()} returning
+     * {@code true}), this method can emit multiple credentials over time, typically based on external events like token renewal
+     * or rotation.
+     *
+     * For implementations that do not support streaming credentials (where {@link #supportsStreaming()} returns {@code false}),
+     * this method throws an {@link UnsupportedOperationException} by default.
+     *
+     * @return a {@link Flux} emitting {@link RedisCredentials}, or throws an exception if streaming is not supported.
      * @throws UnsupportedOperationException if the provider does not support streaming credentials.
      */
-    default CredentialsSubscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+    default Flux<RedisCredentials> credentials() {
         throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
     }
 
@@ -116,16 +78,8 @@ public interface RedisCredentialsProvider {
     interface ImmediateRedisCredentialsProvider extends RedisCredentialsProvider {
 
         @Override
-        default CompletionStage<RedisCredentials> resolveCredentials() {
-            try {
-                RedisCredentials credentials = resolveCredentialsNow();
-                if (credentials == null) {
-                    return Futures.failed(new IllegalStateException("RedisCredentials resolved to null"));
-                }
-                return CompletableFuture.completedFuture(credentials);
-            } catch (Exception e) {
-                return Futures.failed(e);
-            }
+        default Mono<RedisCredentials> resolveCredentials() {
+            return Mono.just(resolveCredentialsNow());
         }
 
         /**

@@ -1,8 +1,6 @@
 package io.lettuce.core;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
+import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -16,7 +14,7 @@ public class StaticCredentialsProvider
 
     private final RedisCredentials credentials;
 
-    private final CompletableFuture<RedisCredentials> future;
+    private final Mono<RedisCredentials> mono;
 
     /**
      * Create a static {@link StaticCredentialsProvider} object from {@code username} and {@code password}.
@@ -40,12 +38,12 @@ public class StaticCredentialsProvider
         LettuceAssert.notNull(credentials, "RedisCredentials must not be null");
 
         this.credentials = RedisCredentials.just(credentials.getUsername(), credentials.getPassword());
-        this.future = CompletableFuture.completedFuture(this.credentials);
+        this.mono = Mono.just(credentials);
     }
 
     @Override
-    public CompletionStage<RedisCredentials> resolveCredentials() {
-        return future;
+    public Mono<RedisCredentials> resolveCredentials() {
+        return mono;
     }
 
     @Override
