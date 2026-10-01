@@ -63,6 +63,7 @@ public class RedisAuthenticationHandler<K, V> {
      * @param connection the connection to authenticate
      * @param credentialsProvider the implementation of {@link CredentialsProvider} to use
      * @param isPubSubConnection {@code true} if the connection is a pub/sub connection
+     * @since 7.9
      */
     public RedisAuthenticationHandler(StatefulRedisConnectionImpl<K, V> connection, CredentialsProvider credentialsProvider,
             Boolean isPubSubConnection) {
@@ -80,7 +81,7 @@ public class RedisAuthenticationHandler<K, V> {
      * @param options the {@link ClientOptions} to use
      * @return a new {@link RedisAuthenticationHandler} if the connection supports re-authentication, otherwise an
      *         implementation of the {@link RedisAuthenticationHandler} that does nothing
-     * @since 6.6.0
+     * @since 7.9
      * @see CredentialsProvider
      */
     public static <K, V> RedisAuthenticationHandler<K, V> createHandler(StatefulRedisConnectionImpl<K, V> connection,
