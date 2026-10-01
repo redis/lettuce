@@ -269,17 +269,20 @@ public class TokenBasedRedisCredentialsProvider implements CredentialsProvider, 
     @Override
     public void close() {
         isClosed = true;
-        tokenManager.stop();
-        CompletableFuture<RedisCredentials> credentialsFuture = credentialsFutureRef.get();
-        if (!credentialsFuture.isDone()) {
-            credentialsFuture.completeExceptionally(new IllegalStateException("Credentials provider closed"));
+        try {
+            tokenManager.stop();
+        } finally {
+            CompletableFuture<RedisCredentials> credentialsFuture = credentialsFutureRef.get();
+            if (!credentialsFuture.isDone()) {
+                credentialsFuture.completeExceptionally(new IllegalStateException("Credentials provider closed"));
+            }
+            // Mark each registered subscription as closed before clearing the list so that any
+            // executor task already in flight (replay or dispatch) becomes a no-op on delivery.
+            for (SimpleSubscription s : subscriptions) {
+                s.closed = true;
+            }
+            subscriptions.clear();
         }
-        // Mark each registered subscription as closed before clearing the list so that any
-        // executor task already in flight (replay or dispatch) becomes a no-op on delivery.
-        for (SimpleSubscription s : subscriptions) {
-            s.closed = true;
-        }
-        subscriptions.clear();
     }
 
     /**

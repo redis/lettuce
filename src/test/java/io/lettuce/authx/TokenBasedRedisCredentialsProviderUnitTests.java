@@ -12,6 +12,7 @@ import reactor.test.StepVerifier;
 import redis.clients.authentication.core.SimpleToken;
 import redis.clients.authentication.core.TokenManagerConfig;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -133,6 +135,40 @@ public class TokenBasedRedisCredentialsProviderUnitTests {
 
         sub1.close();
         sub2.close();
+    }
+
+    @Test
+    public void shouldReleaseStateOnCloseWhenTokenManagerStopFails() throws InterruptedException {
+        TokenManagerConfig tokenManagerConfig = mock(TokenManagerConfig.class);
+        when(tokenManagerConfig.getRetryPolicy()).thenReturn(mock(TokenManagerConfig.RetryPolicy.class));
+        TestTokenManager failingTokenManager = new TestTokenManager(null, tokenManagerConfig) {
+
+            @Override
+            public void stop() {
+                throw new IllegalStateException("stop failed");
+            }
+
+        };
+        TokenBasedRedisCredentialsProvider provider = TokenBasedRedisCredentialsProvider.create(failingTokenManager);
+
+        Mono<RedisCredentials> pending = Mono.fromCompletionStage(provider.resolveCredentialsAsync());
+        List<RedisCredentials> received = new CopyOnWriteArrayList<>();
+        Subscription sub = provider.subscribeToCredentials(received::add, t -> {
+        });
+
+        assertThatThrownBy(provider::close).isInstanceOf(IllegalStateException.class).hasMessage("stop failed");
+
+        StepVerifier.create(pending)
+                .expectErrorSatisfies(
+                        e -> assertThat(e).isInstanceOf(IllegalStateException.class).hasMessage("Credentials provider closed"))
+                .verify(Duration.ofSeconds(1));
+
+        // Emissions after close must not reach subscribers.
+        failingTokenManager.emitToken(testToken("test-user", "token-1"));
+        Thread.sleep(50);
+        assertThat(received).isEmpty();
+
+        sub.close();
     }
 
     @Test
