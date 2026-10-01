@@ -4,6 +4,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -11,6 +12,7 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.cluster.ClusterTestUtil;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
@@ -21,6 +23,7 @@ import io.lettuce.test.KeyValueStreamingAdapter;
  * Integration tests for {@link io.lettuce.core.api.sync.RedisStringCommands} using Redis Cluster.
  *
  * @author Mark Paluch
+ * @author devbini
  */
 @Tag(INTEGRATION_TEST)
 class StringClusterCommandIntegrationTests extends StringCommandIntegrationTests {
@@ -56,6 +59,20 @@ class StringClusterCommandIntegrationTests extends StringCommandIntegrationTests
         assertThat(streamingAdapter.getMap()).containsEntry("one", "1").containsEntry("two", "2");
 
         assertThat(count.intValue()).isEqualTo(2);
+    }
+
+    @Test
+    void mgetOptimization() {
+        redis.set("{slot-a}:test", "value-a");
+        redis.set("{slot-b}:test", "value-b");
+
+        List<KeyValue<String, String>> result = redis.mget("{slot-a}:test", "{slot-b}:test");
+
+        redis.del("{slot-a}:test", "{slot-b}:test");
+
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactly(KeyValue.just("{slot-a}:test", "value-a"),
+                KeyValue.just("{slot-b}:test", "value-b"));
     }
 
 }
