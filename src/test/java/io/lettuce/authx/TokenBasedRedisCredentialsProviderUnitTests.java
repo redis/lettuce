@@ -179,6 +179,30 @@ public class TokenBasedRedisCredentialsProviderUnitTests {
     }
 
     @Test
+    public void shouldReturnSubscriptionWhenSubscriberThrowsDuringReplay() {
+        tokenManager.emitToken(testToken("test-user", "token-1"));
+
+        List<String> received = new CopyOnWriteArrayList<>();
+        Subscription sub = credentialsProvider.subscribeToCredentials(c -> {
+            received.add(String.valueOf(c.getPassword()));
+            if (received.size() == 1) {
+                throw new IllegalStateException("subscriber failed on replay");
+            }
+        }, t -> {
+        });
+
+        assertThat(sub).isNotNull();
+        assertThat(received).containsExactly("token-1");
+
+        tokenManager.emitToken(testToken("test-user", "token-2"));
+        assertThat(received).containsExactly("token-1", "token-2");
+
+        sub.close();
+        tokenManager.emitToken(testToken("test-user", "token-3"));
+        assertThat(received).containsExactly("token-1", "token-2");
+    }
+
+    @Test
     public void shouldPropagateTokenRequestErrorsToSubscribers() throws InterruptedException {
         Exception simulatedError = new RuntimeException("Token request failed");
 

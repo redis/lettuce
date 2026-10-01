@@ -185,6 +185,14 @@ public class TokenBasedRedisCredentialsProvider implements CredentialsProvider, 
         }
     }
 
+    private static void dispatchReplay(SimpleSubscription subscription, RedisCredentials candidate) {
+        try {
+            subscription.replay(candidate);
+        } catch (Throwable t) {
+            log.warn("Subscriber threw while replaying credentials", t);
+        }
+    }
+
     private static void dispatchOnError(SimpleSubscription subscription, Throwable throwable) {
         try {
             subscription.onError(throwable);
@@ -235,7 +243,7 @@ public class TokenBasedRedisCredentialsProvider implements CredentialsProvider, 
             subscription.close();
             throw new IllegalStateException("Credentials provider closed");
         }
-        executor.execute(() -> subscription.replay(getReplayCandidate()));
+        executor.execute(() -> dispatchReplay(subscription, getReplayCandidate()));
         return subscription;
     }
 
