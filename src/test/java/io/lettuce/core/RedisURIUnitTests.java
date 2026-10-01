@@ -119,6 +119,7 @@ class RedisURIUnitTests {
         assertThatThrownBy(redisURI::toString).isSameAs(cause).isNotInstanceOf(CompletionException.class);
     }
 
+    @Test
     void shouldNotBlockOnReactiveThreadForToString() {
 
         RedisURI redisURI = RedisURI.create("redis://user:secret@localhost:1234/5");
