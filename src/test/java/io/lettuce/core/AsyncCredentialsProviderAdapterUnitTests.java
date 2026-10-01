@@ -85,6 +85,39 @@ class AsyncCredentialsProviderAdapterUnitTests {
     }
 
     @Test
+    void credentialsStreamStaysOpenAfterDelegateError() {
+
+        // A streaming delegate that reports a non-terminal error between two credentials.
+        CredentialsProvider delegate = new CredentialsProvider() {
+
+            @Override
+            public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
+                return CompletableFuture.completedFuture(RedisCredentials.just("user", "first".toCharArray()));
+            }
+
+            @Override
+            public boolean supportsStreaming() {
+                return true;
+            }
+
+            @Override
+            public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+                onNext.accept(RedisCredentials.just("user", "first".toCharArray()));
+                onError.accept(new IllegalStateException("transient failure"));
+                onNext.accept(RedisCredentials.just("user", "second".toCharArray()));
+                return () -> {
+                };
+            }
+
+        };
+
+        AsyncCredentialsProviderAdapter adapter = new AsyncCredentialsProviderAdapter(delegate);
+
+        StepVerifier.create(adapter.credentials().map(c -> new String(c.getPassword()))).expectNext("first", "second")
+                .thenCancel().verify();
+    }
+
+    @Test
     void credentialsThrowsWhenDelegateDoesNotStream() {
 
         CredentialsProvider delegate = () -> CompletableFuture

@@ -7,6 +7,8 @@ package io.lettuce.core;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -20,6 +22,8 @@ import reactor.core.publisher.Mono;
  * @since 7.9
  */
 class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
+
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(AsyncCredentialsProviderAdapter.class);
 
     private final CredentialsProvider delegate;
 
@@ -55,7 +59,8 @@ class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
             throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
         }
         return Flux.create(sink -> {
-            Subscription subscription = delegate.subscribeToCredentials(sink::next, sink::error);
+            Subscription subscription = delegate.subscribeToCredentials(sink::next,
+                    e -> log.warn("Credentials provider reported an error; the credentials stream stays open", e));
             sink.onDispose(subscription::close);
         });
     }
