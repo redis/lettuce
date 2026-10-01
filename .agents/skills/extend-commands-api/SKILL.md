@@ -217,9 +217,14 @@ Do all of the following before writing any plan or code:
    test assertions, and the PR description. If the command could not be made
    available on any image, still write the scenarios as *expected* transcripts and
    mark them unverified.
-   **Unattended:** run the scenarios against `$REDIS_URL` (`redis-cli -u
-   "$REDIS_URL"`, plus `-3` for RESP3), and against the cluster with `redis-cli -c
-   -h "$REDIS_CLUSTER_HOST" -p "$REDIS_CLUSTER_START_PORT"` when routing matters.
+   **Unattended:** run the scenarios against `$REDIS_URL` (add `-3` for RESP3), and
+   through the cluster when routing matters. Always pass the Redis command as
+   arguments: a bare `redis-cli` waits on stdin and hangs a headless run.
+   ```bash
+   redis-cli -u "$REDIS_URL" <COMMAND> <args...>
+   redis-cli -c -h "$REDIS_CLUSTER_HOST" -p "$REDIS_CLUSTER_START_PORT" \
+     -a "$REDIS_CLUSTER_PASSWORD" --no-auth-warning <COMMAND> <args...>
+   ```
    Keep the scratch file out of the change; carry the transcripts into the report.
 
 5. **Read the testing and consistency docs**:
