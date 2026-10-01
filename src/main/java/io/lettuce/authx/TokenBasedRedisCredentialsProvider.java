@@ -291,9 +291,11 @@ public class TokenBasedRedisCredentialsProvider implements CredentialsProvider, 
      * thread. A slow or blocking subscriber can delay or miss subsequent renewals.</li>
      * <li>Continuations chained off {@link #resolveCredentialsAsync()} run on the renewal thread when the initial future
      * completes.</li>
-     * <li>Replay deliveries to a newly subscribing consumer run on the subscribing thread.</li>
+     * <li>Replay deliveries to a newly subscribing consumer run on the subscribing thread. A replay can overlap with a
+     * concurrent token renewal, so the replayed credentials may be delivered after the renewed ones.</li>
      * </ul>
-     * Use {@link #create(TokenAuthConfig, Executor)} when subscriber code is non-trivial.
+     * Use {@link #create(TokenAuthConfig, Executor)} with a single-threaded executor when subscriber code is non-trivial or
+     * when delivery order matters.
      *
      * @param tokenAuthConfig the token authentication configuration, must not be {@code null}
      * @return a started {@link TokenBasedRedisCredentialsProvider}
@@ -310,9 +312,10 @@ public class TokenBasedRedisCredentialsProvider implements CredentialsProvider, 
      * <ul>
      * <li>Subscriber {@code onNext}/{@code onError} callbacks and the completion of the initial credentials future are
      * dispatched on {@code executor}, isolating the {@link TokenManager}'s renewal thread from arbitrary consumer code.</li>
-     * <li>The executor must preserve submission order per subscription to keep live deliveries monotonically ordered. A direct,
-     * single-threaded, or otherwise serial executor satisfies this trivially; a multi-threaded executor (e.g.
-     * {@link java.util.concurrent.ForkJoinPool#commonPool()}) does not, and out-of-order delivery becomes possible.</li>
+     * <li>The executor must run tasks one at a time in submission order to keep deliveries to a subscriber ordered, including
+     * the replay of the latest credentials to a new subscriber. A single-threaded executor satisfies this; a direct executor or
+     * a multi-threaded executor (e.g. {@link java.util.concurrent.ForkJoinPool#commonPool()}) does not, and out-of-order
+     * delivery becomes possible.</li>
      * <li>The executor's lifecycle is owned by the caller; {@link #close()} does not shut it down.</li>
      * </ul>
      *
@@ -335,9 +338,11 @@ public class TokenBasedRedisCredentialsProvider implements CredentialsProvider, 
      * thread. A slow or blocking subscriber can delay or miss subsequent renewals.</li>
      * <li>Continuations chained off {@link #resolveCredentialsAsync()} run on the renewal thread when the initial future
      * completes.</li>
-     * <li>Replay deliveries to a newly subscribing consumer run on the subscribing thread.</li>
+     * <li>Replay deliveries to a newly subscribing consumer run on the subscribing thread. A replay can overlap with a
+     * concurrent token renewal, so the replayed credentials may be delivered after the renewed ones.</li>
      * </ul>
-     * Use {@link #create(TokenManager, Executor)} when subscriber code is non-trivial.
+     * Use {@link #create(TokenManager, Executor)} with a single-threaded executor when subscriber code is non-trivial or when
+     * delivery order matters.
      *
      * @param tokenManager the {@link TokenManager} to use, must not be {@code null}
      * @return a started {@link TokenBasedRedisCredentialsProvider}
@@ -354,9 +359,10 @@ public class TokenBasedRedisCredentialsProvider implements CredentialsProvider, 
      * <ul>
      * <li>Subscriber {@code onNext}/{@code onError} callbacks and the completion of the initial credentials future are
      * dispatched on {@code executor}, isolating the {@link TokenManager}'s renewal thread from arbitrary consumer code.</li>
-     * <li>The executor must preserve submission order per subscription to keep live deliveries monotonically ordered. A direct,
-     * single-threaded, or otherwise serial executor satisfies this trivially; a multi-threaded executor (e.g.
-     * {@link java.util.concurrent.ForkJoinPool#commonPool()}) does not, and out-of-order delivery becomes possible.</li>
+     * <li>The executor must run tasks one at a time in submission order to keep deliveries to a subscriber ordered, including
+     * the replay of the latest credentials to a new subscriber. A single-threaded executor satisfies this; a direct executor or
+     * a multi-threaded executor (e.g. {@link java.util.concurrent.ForkJoinPool#commonPool()}) does not, and out-of-order
+     * delivery becomes possible.</li>
      * <li>The executor's lifecycle is owned by the caller; {@link #close()} does not shut it down.</li>
      * </ul>
      *
