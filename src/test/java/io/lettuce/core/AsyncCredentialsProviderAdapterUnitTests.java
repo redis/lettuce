@@ -8,14 +8,18 @@ package io.lettuce.core;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 /**
  * Unit tests for {@link AsyncCredentialsProviderAdapter}.
@@ -45,6 +49,83 @@ class AsyncCredentialsProviderAdapterUnitTests {
         assertThat(resolveCount).hasValue(2);
         assertThat(first.getUsername()).isEqualTo("user");
         assertThat(second.getUsername()).isEqualTo("user");
+    }
+
+    @Test
+    void credentialsBridgesStreamingDelegate() {
+
+        // A reactor-free delegate that supports streaming and emits one value on subscription.
+        CredentialsProvider delegate = new CredentialsProvider() {
+
+            @Override
+            public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
+                return CompletableFuture.completedFuture(RedisCredentials.just("user", "secret".toCharArray()));
+            }
+
+            @Override
+            public boolean supportsStreaming() {
+                return true;
+            }
+
+            @Override
+            public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+                onNext.accept(RedisCredentials.just("user", "secret".toCharArray()));
+                return () -> {
+                };
+            }
+
+        };
+
+        AsyncCredentialsProviderAdapter adapter = new AsyncCredentialsProviderAdapter(delegate);
+
+        // The adapter advertises streaming, so credentials() must bridge instead of throwing.
+        assertThat(adapter.supportsStreaming()).isTrue();
+        StepVerifier.create(adapter.credentials().next())
+                .assertNext(credentials -> assertThat(credentials.getUsername()).isEqualTo("user")).verifyComplete();
+    }
+
+    @Test
+    void credentialsStreamStaysOpenAfterDelegateError() {
+
+        // A streaming delegate that reports a non-terminal error between two credentials.
+        CredentialsProvider delegate = new CredentialsProvider() {
+
+            @Override
+            public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
+                return CompletableFuture.completedFuture(RedisCredentials.just("user", "first".toCharArray()));
+            }
+
+            @Override
+            public boolean supportsStreaming() {
+                return true;
+            }
+
+            @Override
+            public Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+                onNext.accept(RedisCredentials.just("user", "first".toCharArray()));
+                onError.accept(new IllegalStateException("transient failure"));
+                onNext.accept(RedisCredentials.just("user", "second".toCharArray()));
+                return () -> {
+                };
+            }
+
+        };
+
+        AsyncCredentialsProviderAdapter adapter = new AsyncCredentialsProviderAdapter(delegate);
+
+        StepVerifier.create(adapter.credentials().map(c -> new String(c.getPassword()))).expectNext("first", "second")
+                .thenCancel().verify();
+    }
+
+    @Test
+    void credentialsThrowsWhenDelegateDoesNotStream() {
+
+        CredentialsProvider delegate = () -> CompletableFuture
+                .completedFuture(RedisCredentials.just("user", "secret".toCharArray()));
+        AsyncCredentialsProviderAdapter adapter = new AsyncCredentialsProviderAdapter(delegate);
+
+        assertThat(adapter.supportsStreaming()).isFalse();
+        assertThatThrownBy(adapter::credentials).isInstanceOf(UnsupportedOperationException.class);
     }
 
 }

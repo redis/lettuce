@@ -1,13 +1,15 @@
 package io.lettuce.core;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.LettuceAssert;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Interface for loading {@link RedisCredentials} that are used for authentication. A commonly-used implementation is
@@ -60,12 +62,34 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
     }
 
     /**
+     * Adapts a {@link CredentialsProvider} to the {@link RedisCredentialsProvider} contract, for APIs that still require a
+     * {@link RedisCredentialsProvider}. The returned provider resolves credentials through {@code provider} and supports
+     * streaming whenever {@code provider} does, so connections configured with it are still re-authenticated when
+     * {@code provider} emits new credentials. If {@code provider} already is a {@link RedisCredentialsProvider}, it is returned
+     * as is.
+     *
+     * @param provider must not be {@code null}.
+     * @return a {@link RedisCredentialsProvider} backed by {@code provider}.
+     * @since 7.9
+     */
+    static RedisCredentialsProvider adapt(CredentialsProvider provider) {
+
+        LettuceAssert.notNull(provider, "CredentialsProvider must not be null");
+
+        if (provider instanceof RedisCredentialsProvider) {
+            return (RedisCredentialsProvider) provider;
+        }
+        return new AsyncCredentialsProviderAdapter(provider);
+    }
+
+    /**
      * Some implementations of the {@link RedisCredentialsProvider} may support streaming new credentials, based on some event
      * that originates outside the driver. In this case they should indicate that so the {@link RedisAuthenticationHandler} is
      * able to process these new credentials.
-     * 
+     *
      * @return whether the {@link RedisCredentialsProvider} supports streaming credentials.
      */
+    @Override
     default boolean supportsStreaming() {
         return false;
     }
@@ -111,6 +135,19 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
         default Mono<RedisCredentials> resolveCredentials() {
             return Mono.fromSupplier(this::resolveCredentialsNow)
                     .switchIfEmpty(Mono.error(new IllegalStateException("RedisCredentials resolved to null")));
+        }
+
+        @Override
+        default CompletionStage<RedisCredentials> resolveCredentialsAsync() {
+            try {
+                RedisCredentials credentials = resolveCredentialsNow();
+                if (credentials == null) {
+                    return Futures.failed(new IllegalStateException("RedisCredentials resolved to null"));
+                }
+                return CompletableFuture.completedFuture(credentials);
+            } catch (Exception e) {
+                return Futures.failed(e);
+            }
         }
 
         /**

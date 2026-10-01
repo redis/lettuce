@@ -7,19 +7,23 @@ package io.lettuce.core;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Adapts a {@link CredentialsProvider} to the deprecated reactive {@link RedisCredentialsProvider}, so that
- * {@link RedisURI#getCredentialsProvider()} can keep returning a {@link RedisCredentialsProvider} while credentials may be
- * configured as a {@link CredentialsProvider}. The async and streaming capabilities delegate to the reactor-free provider;
- * {@link #resolveCredentials()} and {@link #credentials()} only materialise the reactive types at that boundary.
+ * Adapts a reactor-free {@link CredentialsProvider} to the deprecated reactive {@link RedisCredentialsProvider}, so
+ * {@link RedisURI#getCredentialsProvider()} can keep returning a {@link RedisCredentialsProvider} while credentials are stored
+ * internally as a {@link CredentialsProvider}. Only {@link #resolveCredentials()} materialises a {@link Mono}; the async and
+ * streaming paths delegate directly and stay reactor-free.
  *
  * @author Aleksandar Todorov
  * @since 7.9
  */
 class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
+
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(AsyncCredentialsProviderAdapter.class);
 
     private final CredentialsProvider delegate;
 
@@ -29,6 +33,8 @@ class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
 
     @Override
     public Mono<RedisCredentials> resolveCredentials() {
+        // Defer to the Supplier overload so the delegate is invoked per subscription rather than eagerly at Mono creation;
+        // this keeps the returned Mono cold and re-subscribable, matching other RedisCredentialsProvider implementations.
         return Mono.fromCompletionStage(delegate::resolveCredentialsAsync);
     }
 
@@ -53,7 +59,8 @@ class AsyncCredentialsProviderAdapter implements RedisCredentialsProvider {
             throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
         }
         return Flux.create(sink -> {
-            Subscription subscription = delegate.subscribeToCredentials(sink::next, sink::error);
+            Subscription subscription = delegate.subscribeToCredentials(sink::next,
+                    e -> log.warn("Credentials provider reported an error; the credentials stream stays open", e));
             sink.onDispose(subscription::close);
         });
     }

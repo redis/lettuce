@@ -1,6 +1,5 @@
 package io.lettuce.core;
 
-import io.lettuce.core.Subscription;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.DefaultEventBus;
 import io.lettuce.core.event.Event;
@@ -20,7 +19,6 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;

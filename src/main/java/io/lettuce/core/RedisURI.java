@@ -39,6 +39,7 @@ import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
@@ -1010,12 +1011,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // compatibility with versions before 7.0 - in previous versions of the Lettuce driver there was an option to
                 // have a username and password pair as part of the RedisURI; in these cases when we were masking credentials we
                 // would get asterix for each character of the password.
-                // Resolve through CompletableFuture instead of Mono#block(): Reactor rejects block() on non-blocking
-                // threads (e.g. the reactor-http-nio workers used by Spring WebFlux), whereas CompletableFuture#join() is
-                // not subject to that check. This mirrors the approach taken on feature/reactor-optional-1 (#3739).
-                // Futures.unwrapExceptions bridges via whenComplete rather than CompletionStage#toCompletableFuture(), which
-                // the contract permits a minimal CompletionStage implementation to reject with UnsupportedOperationException.
-                RedisCredentials creds = Futures.unwrapExceptions(credentialsProvider.resolveCredentialsAsync()).join();
+                RedisCredentials creds;
+                try {
+                    creds = Futures.unwrapExceptions(credentialsProvider.resolveCredentialsAsync()).join();
+                } catch (Exception e) {
+                    throw Exceptions.bubble(e);
+                }
                 if (creds != null) {
                     String credentials = "";
 

@@ -157,4 +157,17 @@ class CredentialsProviderUnitTests {
 
     }
 
+    @Test
+    void staticProviderDoesNotShareItsResultBetweenCallers() {
+
+        StaticCredentialsProvider provider = new StaticCredentialsProvider("user", "secret".toCharArray());
+
+        // A caller overwriting the future it received must not affect later resolutions.
+        provider.resolveCredentialsAsync().toCompletableFuture().obtrudeException(new IllegalStateException("tampered"));
+
+        RedisCredentials resolved = provider.resolveCredentialsAsync().toCompletableFuture().join();
+        assertThat(resolved.getUsername()).isEqualTo("user");
+        assertThat(new String(resolved.getPassword())).isEqualTo("secret");
+    }
+
 }
