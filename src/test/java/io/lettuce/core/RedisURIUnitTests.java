@@ -681,6 +681,28 @@ class RedisURIUnitTests {
         assertThat(redisURI.toString()).contains("alice:******@");
     }
 
+    @Test
+    void copyingAuthenticationShouldUseOverriddenCredentialsProviderAccessor() {
+
+        CredentialsProvider exposed = () -> CompletableFuture
+                .completedFuture(RedisCredentials.just("exposed", "secret".toCharArray()));
+        RedisURI source = new RedisURI() {
+
+            @Override
+            public CredentialsProvider getCredentialsProviderAsync() {
+                return exposed;
+            }
+
+        };
+
+        RedisURI target = RedisURI.create("localhost", 6379);
+        target.applyAuthentication(source);
+        assertThat(target.getCredentialsProviderAsync()).isSameAs(exposed);
+
+        RedisURI built = RedisURI.builder().withHost("localhost").withAuthentication(source).build();
+        assertThat(built.getCredentialsProviderAsync()).isSameAs(exposed);
+    }
+
     /**
      * A {@link CompletableFuture} that refuses {@link #toCompletableFuture()} to emulate a minimal {@link CompletionStage}
      * implementation; {@code whenComplete} still works.

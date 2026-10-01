@@ -472,7 +472,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         LettuceAssert.notNull(source, "Source RedisURI must not be null");
 
         if (source.credentialsProvider != null) {
-            setCredentialsProvider(source.credentialsProvider);
+            setCredentialsProvider(source.getCredentialsProviderAsync());
         }
     }
 
@@ -1807,7 +1807,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             LettuceAssert.notNull(source, "Source RedisURI must not be null");
 
-            return withAuthentication(source.credentialsProvider);
+            return withAuthentication(source.getCredentialsProviderAsync());
         }
 
         /**
