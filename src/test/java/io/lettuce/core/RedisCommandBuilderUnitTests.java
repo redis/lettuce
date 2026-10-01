@@ -3,9 +3,13 @@ package io.lettuce.core;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.stream.StreamEntryDeletionResult;
+import io.lettuce.core.output.BlessFlagListOutput;
+import io.lettuce.core.output.BooleanOutput;
+import io.lettuce.core.output.KeyScanOutput;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandType;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Tag;
@@ -1284,6 +1288,91 @@ class RedisCommandBuilderUnitTests {
         Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight());
         String s = command.getArgs().toCommandString();
         assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessSet() {
+
+        Command<String, String, ?> command = sut.blessSet("key", BlessFlag.NO_EVICT);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$5\r\n" + "BLESS\r\n" + "$3\r\n" + "SET\r\n" + "$3\r\n" + "key\r\n" + "$8\r\n" + "NO-EVICT\r\n");
+        assertThat(command.getOutput()).isInstanceOf(BooleanOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessClear() {
+
+        Command<String, String, ?> command = sut.blessClear("key", BlessFlag.NO_EVICT);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$5\r\n" + "BLESS\r\n" + "$5\r\n" + "CLEAR\r\n" + "$3\r\n" + "key\r\n" + "$8\r\n" + "NO-EVICT\r\n");
+        assertThat(command.getOutput()).isInstanceOf(BooleanOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessGet() {
+
+        Command<String, String, ?> command = sut.blessGet("key");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$5\r\n" + "BLESS\r\n" + "$3\r\n" + "GET\r\n" + "$3\r\n" + "key\r\n");
+        assertThat(command.getOutput()).isInstanceOf(BlessFlagListOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessScan() {
+
+        Command<String, String, ?> command = sut.blessScan(BlessFlag.NO_EVICT);
+
+        assertThat(command.getType()).isEqualTo(CommandType.BLESS);
+        assertThat(command.getArgs().toCommandString()).isEqualTo("SCAN 0 NO-EVICT");
+        assertThat(command.getOutput()).isInstanceOf(KeyScanOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessScanWithCount() {
+
+        Command<String, String, ?> command = sut.blessScan(BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(10));
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("SCAN 0 NO-EVICT COUNT 10");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessScanWithCursor() {
+
+        Command<String, String, ?> command = sut.blessScan(ScanCursor.of("42"), BlessFlag.NO_EVICT);
+        assertThat(command.getArgs().toCommandString()).isEqualTo("SCAN 42 NO-EVICT");
+
+        command = sut.blessScan(ScanCursor.of("42"), BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(7));
+        assertThat(command.getArgs().toCommandString()).isEqualTo("SCAN 42 NO-EVICT COUNT 7");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBlessScanWithCustomFlag() {
+
+        Command<String, String, ?> command = sut.blessScan(BlessFlag.of("FUTURE-FLAG"));
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("SCAN 0 FUTURE-FLAG");
+    }
+
+    @Test
+    void blessCommandsShouldRejectInvalidArguments() {
+
+        assertThatThrownBy(() -> sut.blessSet(null, BlessFlag.NO_EVICT)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessSet("key", null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessClear("key", null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessGet(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessScan((BlessFlag) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessScan(null, BlessFlag.NO_EVICT)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.blessScan(ScanCursor.FINISHED, BlessFlag.NO_EVICT))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
 }

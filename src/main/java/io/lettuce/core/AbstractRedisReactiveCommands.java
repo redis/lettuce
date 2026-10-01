@@ -2875,6 +2875,41 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Boolean> blessSet(K key, BlessFlag flag) {
+        return createMono(() -> commandBuilder.blessSet(key, flag));
+    }
+
+    @Override
+    public Mono<Boolean> blessClear(K key, BlessFlag flag) {
+        return createMono(() -> commandBuilder.blessClear(key, flag));
+    }
+
+    @Override
+    public Flux<BlessFlag> blessGet(K key) {
+        return createDissolvingFlux(() -> commandBuilder.blessGet(key));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> blessScan(BlessFlag flag) {
+        return createMono(() -> commandBuilder.blessScan(flag));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.blessScan(flag, scanArgs));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag) {
+        return createMono(() -> commandBuilder.blessScan(scanCursor, flag));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.blessScan(scanCursor, flag, scanArgs));
+    }
+
+    @Override
     public Mono<KeyScanCursor<K>> scan() {
         return createMono(commandBuilder::scan);
     }
