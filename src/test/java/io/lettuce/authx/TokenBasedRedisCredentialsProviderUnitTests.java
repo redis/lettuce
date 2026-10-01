@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Tag(TestTags.UNIT_TEST)
-public class TokenBasedRedisCredentialsProviderTest {
+public class TokenBasedRedisCredentialsProviderUnitTests {
 
     private TestTokenManager tokenManager;
 
