@@ -105,6 +105,16 @@ still works — a `RedisCredentialsProvider` is a `CredentialsProvider`,
 and providers configured through the deprecated API are adapted
 automatically — so existing code keeps working without changes.
 
+If an API still requires a `RedisCredentialsProvider`, for example a
+Spring Data Redis `RedisCredentialsProviderFactory`, wrap your
+`CredentialsProvider` with `RedisCredentialsProvider.adapt(...)`. The
+adapted provider streams whenever the original one does, so connections
+are still re-authenticated when new credentials are emitted:
+
+```java
+RedisCredentialsProvider adapted = RedisCredentialsProvider.adapt(credentialsProvider);
+```
+
 **Notes**
 
 - When using Redis Sentinel, the password from the URI applies to the

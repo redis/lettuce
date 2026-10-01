@@ -62,6 +62,27 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
     }
 
     /**
+     * Adapts a {@link CredentialsProvider} to the {@link RedisCredentialsProvider} contract, for APIs that still require a
+     * {@link RedisCredentialsProvider}. The returned provider resolves credentials through {@code provider} and supports
+     * streaming whenever {@code provider} does, so connections configured with it are still re-authenticated when
+     * {@code provider} emits new credentials. If {@code provider} already is a {@link RedisCredentialsProvider}, it is returned
+     * as is.
+     *
+     * @param provider must not be {@code null}.
+     * @return a {@link RedisCredentialsProvider} backed by {@code provider}.
+     * @since 7.9
+     */
+    static RedisCredentialsProvider adapt(CredentialsProvider provider) {
+
+        LettuceAssert.notNull(provider, "CredentialsProvider must not be null");
+
+        if (provider instanceof RedisCredentialsProvider) {
+            return (RedisCredentialsProvider) provider;
+        }
+        return new AsyncCredentialsProviderAdapter(provider);
+    }
+
+    /**
      * Some implementations of the {@link RedisCredentialsProvider} may support streaming new credentials, based on some event
      * that originates outside the driver. In this case they should indicate that so the {@link RedisAuthenticationHandler} is
      * able to process these new credentials.
