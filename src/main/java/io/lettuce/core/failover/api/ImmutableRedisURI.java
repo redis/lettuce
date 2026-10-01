@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.CredentialsProvider;
-import io.lettuce.core.RedisCredentialsProvider;
 import io.lettuce.core.DriverInfo;
+import io.lettuce.core.RedisCredentialsProvider;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SslVerifyMode;
 
