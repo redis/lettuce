@@ -319,6 +319,7 @@ public class TokenBasedRedisCredentialsProvider implements CredentialsProvider, 
      * @param tokenAuthConfig the token authentication configuration, must not be {@code null}
      * @param executor the executor used to dispatch credential and error notifications, must not be {@code null}
      * @return a started {@link TokenBasedRedisCredentialsProvider}
+     * @since 8.0
      */
     public static TokenBasedRedisCredentialsProvider create(TokenAuthConfig tokenAuthConfig, Executor executor) {
         return create(new TokenManager(tokenAuthConfig.getIdentityProviderConfig().getProvider(),
@@ -362,6 +363,7 @@ public class TokenBasedRedisCredentialsProvider implements CredentialsProvider, 
      * @param tokenManager the {@link TokenManager} to use, must not be {@code null}
      * @param executor the executor used to dispatch credential and error notifications, must not be {@code null}
      * @return a started {@link TokenBasedRedisCredentialsProvider}
+     * @since 8.0
      */
     public static TokenBasedRedisCredentialsProvider create(TokenManager tokenManager, Executor executor) {
         LettuceAssert.notNull(tokenManager, "TokenManager must not be null");
