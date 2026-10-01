@@ -38,16 +38,20 @@ which servers the tests run against differ.
 In unattended mode the automation supplies the inputs a human would give: the HLD
 at `./HLD.md`, the server PR reference (`tracks:` in the prompt), and the test
 command. The sandbox has JDK + Maven and `redis-cli`, but **no Docker**. Instead it
-runs two `redislabs/client-libs-test` servers (no password, no TLS):
+runs two `redislabs/client-libs-test` servers, password-protected, no TLS:
 
-- a standalone Redis — `REDIS_URL` (`redis://host:6379`), `REDIS_STANDALONE_HOST`,
-  `REDIS_STANDALONE_PORT`;
-- a 6-node OSS cluster (3 masters + 3 replicas) — `REDIS_CLUSTER_HOST`,
+- a standalone Redis with the modules: `REDIS_URL` (`redis://default:<pw>@host:6379`),
+  `REDIS_STANDALONE_HOST`, `REDIS_STANDALONE_PORT`, `REDIS_STANDALONE_PASSWORD`
+  (`foobared`, the `TestSettings.password()` default);
+- a 6-node OSS cluster (3 masters + 3 replicas): `REDIS_CLUSTER_HOST`,
   `REDIS_CLUSTER_START_PORT` (7000), `REDIS_CLUSTER_NODES` (6),
-  `REDIS_CLUSTER_URLS` (comma list);
+  `REDIS_CLUSTER_PASSWORD` (`cluster`), `REDIS_CLUSTER_URLS` (comma list, with
+  credentials);
 - `REDIS_VERSION`, and `REDIS_ENDPOINTS_CONFIG_PATH` pointing at an endpoints file
-  with the ids `standalone` and `cluster` (the cluster entry lists all six node
-  URIs). Lettuce's test harness (`io.lettuce.test.env.Endpoints` →
+  with the ids `standalone`, `standalone-modules` (the same standalone) and
+  `cluster`, each carrying its `password` (the cluster entry lists all six node
+  URIs). `DefaultRedisClient` and `DefaultRedisClusterClient` authenticate with
+  those passwords. Lettuce's test harness (`io.lettuce.test.env.Endpoints` →
   `TestSettings`, `DefaultRedisClient`, `DefaultRedisClusterClient`) reads this
   file directly, so the integration tests target these servers with no extra
   setup.
@@ -190,7 +194,7 @@ Do all of the following before writing any plan or code:
    redis-cli -u "$REDIS_URL" INFO server | grep redis_version
    redis-cli -u "$REDIS_URL" COMMAND INFO <COMMAND>
    redis-cli -u "$REDIS_URL" COMMAND DOCS <COMMAND>
-   redis-cli -h "$REDIS_CLUSTER_HOST" -p "$REDIS_CLUSTER_START_PORT" CLUSTER INFO   # cluster_state:ok
+   redis-cli -h "$REDIS_CLUSTER_HOST" -p "$REDIS_CLUSTER_START_PORT" -a "$REDIS_CLUSTER_PASSWORD" --no-auth-warning CLUSTER INFO   # cluster_state:ok
    ```
    If the command/option is missing there, continue anyway: write the
    integration tests with `@EnabledOnCommand` gating (they will be skipped), and
@@ -466,9 +470,8 @@ scan-family commands).
   parsers in an area package (e.g. `core/search/arguments/`).
 - Module commands still gate on server capability, not version:
   `@EnabledOnCommand("FT.CREATE")`-style probes; integration tests target the
-  stack node. (Unattended: there is no `standalone-modules` endpoint, so
-  `TestSettings.moduleHost()`/`modulePort()` fall back to the provided
-  standalone — see "Running the tests".)
+  stack node. (Unattended: `standalone-modules` is the provided standalone, which
+  loads the modules; see "Running the tests".)
 
 ## Types & args conventions
 
@@ -596,17 +599,17 @@ integration-testing notes is a local-machine workaround). Then:
    Add `-Dmaven.gitcommitid.skip=true` only if the checkout is a git worktree.
    If the group has no cluster overload and routing matters for the command,
    create one (see the test matrix) so cluster coverage actually runs. Module
-   command tests resolve `standalone-modules`, which falls back to the provided
-   standalone: run them only if `COMMAND INFO <MODULE CMD>` is non-empty on
-   `$REDIS_URL`, otherwise list them as not run.
+   command tests resolve `standalone-modules`, the provided standalone with the
+   modules loaded: run them, and if `COMMAND INFO <MODULE CMD>` is empty on
+   `$REDIS_URL`, list them as not run.
 4. Read the Failsafe summary (`target/failsafe-reports/`) and report, per
    topology, the classes run and their tests/failures/errors/skipped counts.
    Skips from `@EnabledOnCommand` are expected when the server lacks the
    command — say so.
 
 Out of scope unattended — list them as not run, don't try to make them work:
-integration tests that need sentinel, TLS/mTLS, ACL users or a password, modules
-on cluster, Unix sockets, Toxiproxy, or the fixed 7379–7385 `ClusterTestSettings`
+integration tests that need sentinel, TLS/mTLS, ACL users other than `default`,
+modules on cluster, Unix sockets, Toxiproxy, or the fixed 7379–7385 `ClusterTestSettings`
 cluster layout.
 
 **Tear the environment down when you are done.** The Docker topology started in
