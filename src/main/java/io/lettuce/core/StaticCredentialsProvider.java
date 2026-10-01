@@ -1,8 +1,5 @@
 package io.lettuce.core;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -14,8 +11,6 @@ import io.lettuce.core.internal.LettuceAssert;
 public class StaticCredentialsProvider implements CredentialsProvider.ImmediateCredentialsProvider {
 
     private final RedisCredentials credentials;
-
-    private final CompletableFuture<RedisCredentials> future;
 
     /**
      * Create a static {@link StaticCredentialsProvider} object from {@code username} and {@code password}.
@@ -39,12 +34,6 @@ public class StaticCredentialsProvider implements CredentialsProvider.ImmediateC
         LettuceAssert.notNull(credentials, "RedisCredentials must not be null");
 
         this.credentials = RedisCredentials.just(credentials.getUsername(), credentials.getPassword());
-        this.future = CompletableFuture.completedFuture(this.credentials);
-    }
-
-    @Override
-    public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
-        return future;
     }
 
     @Override
