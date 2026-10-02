@@ -170,10 +170,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private volatile EventExecutorGroup scheduler;
 
     /**
-     * A thin adapter — no copying, delegates directly to ContextView
-     * <p>
-     * Adapts a {@link ContextView} to the {@link Map} interface. This allows reusing existing code that expects a
-     * <code>Map</code> to represent a context.
+     * Read-only {@link Map} view of a Reactor {@link ContextView}, used to pass the subscriber context to
+     * {@link TraceContextProvider#getTraceContextAsync(Map)}. Lookups delegate to the {@link ContextView} without copying;
+     * {@link #entrySet()} is not supported.
      */
     static class ContextViewMapAdapter extends AbstractMap<Object, Object> {
 

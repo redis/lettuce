@@ -272,10 +272,11 @@ public abstract class Futures {
     }
 
     /**
-     * Return a new {@link CompletableFuture} that mirrors {@code source} but completes exceptionally with
-     * {@link TimeoutException} if {@code source} does not complete within {@code duration}. The timeout is scheduled on the
-     * {@link ClientResources#timer()} and cancelled upon source completion. A {@code duration} of {@link Duration#ZERO}
-     * disables the timeout and {@code source} is returned as-is.
+     * Return a {@link CompletableFuture} that mirrors {@code source} but completes exceptionally with {@link TimeoutException}
+     * if {@code source} does not complete within {@code duration}. The timeout is scheduled on the
+     * {@link ClientResources#timer()} and cancelled upon source completion. Timing out does not cancel {@code source}. If
+     * {@code source} is already done, or {@code duration} is {@link Duration#ZERO} (no timeout), {@code source} itself is
+     * returned.
      *
      * @param source the source future, must not be {@code null}.
      * @param duration timeout duration, must not be {@code null} or negative. {@link Duration#ZERO} means "do not time out".
@@ -283,7 +284,8 @@ public abstract class Futures {
      * @param taskName short description of the awaited operation, used in the {@link TimeoutException} message; must not be
      *        {@code null}.
      * @param <T> the result type.
-     * @return a new {@link CompletableFuture} completing with the same result or a {@link TimeoutException}.
+     * @return a {@link CompletableFuture} completing with the same result as {@code source} or with a {@link TimeoutException}.
+     * @since 8.0
      */
     public static <T> CompletableFuture<T> withTimeout(CompletableFuture<T> source, Duration duration,
             ClientResources resources, String taskName) {
@@ -328,6 +330,7 @@ public abstract class Futures {
      * @param <T> the result type.
      * @return a {@link CompletableFuture} completing with the first successful attempt, or with {@code onAllFailed} applied to
      *         all failures.
+     * @since 8.0
      */
     public static <T> CompletableFuture<T> withFallback(List<Supplier<CompletionStage<T>>> attempts,
             Function<List<Throwable>, Throwable> onAllFailed) {

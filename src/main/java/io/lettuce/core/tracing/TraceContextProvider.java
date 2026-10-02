@@ -22,10 +22,10 @@ public interface TraceContextProvider {
     TraceContext getTraceContext();
 
     /**
-     * Provides a {@link TraceContext} in delayed fashion, accepts an application context to obtain/populate a particular
-     * context in case required.
+     * Returns a {@link Supplier} that resolves the {@link TraceContext} on demand, using the given application context to
+     * obtain or populate a particular context where required.
      * <p>
-     * Return value of the supplier, the {@link TraceContext}, can be null depending on the implementation, and application
+     * The value produced by the {@link Supplier} may be {@code null} depending on the implementation and the application
      * context it is called from.
      *
      * @param appContext the application context used to resolve the {@link TraceContext}.

@@ -1,6 +1,51 @@
 # New & Noteworthy
 
 
+## What's new in Lettuce 8.0
+
+- **Project Reactor is no longer needed for the synchronous and asynchronous APIs.** `reactor-core` is still a dependency of `lettuce-core`, but applications that use only `sync()`/`async()` can exclude it. The parts that still need Reactor are:
+  - the reactive API (`reactive()`, `commands(...ReactiveCommands.factory())`);
+  - the Kotlin coroutines API;
+  - the deprecated `RedisCredentialsProvider`.
+
+  Internally, connection setup, reconnection, Sentinel and Master/Replica topology discovery, the event bus and trace-context propagation no longer use Reactor.
+  When compiling without Reactor on the classpath, pass a typed `CredentialsProvider` to `RedisURI.setCredentialsProvider(...)` and `RedisURI.Builder.withAuthentication(...)`, for example a variable, a cast, `CredentialsProvider.from(...)` or `StaticCredentialsProvider`. A bare lambda doesn't compile, because the compiler needs Reactor to choose between those methods' two overloads.
+- `connectAsync(...)` failures now report the original cause and message, as `connect(...)` does. Previously the asynchronous path could surface a `RedisConnectionException` with a `null` message that wrapped a `CompletionException`.
+
+### Breaking changes
+
+Lettuce 8.0 removes the Reactor-based APIs deprecated in 7.8 and 7.9, and changes the Reactor-typed extension points that subclasses and custom implementations use.
+
+- **Event bus:**
+  - `EventBus.get()`, which returned a `Flux<Event>`, is removed. Use `subscribe(Consumer)` or `subscribe(Class, Consumer)`, which return a `Subscription`; see [Events](advanced-usage/events.md) for bridging to a `Flux`.
+  - `EventBus.subscribe(Consumer)` is now abstract, so custom `EventBus` implementations must implement it.
+  - `DefaultEventBus(Scheduler)` is replaced by `DefaultEventBus(EventExecutorGroup)` and `DefaultEventBus(EventExecutorGroup, int)`.
+- **Tracing:**
+  - `TraceContextProvider.getTraceContextLater()` is removed. Implement `getTraceContextAsync(Map)` instead.
+  - `Tracing.getContext()`, `Tracing.clearContext()` and `Tracing.withTraceContextProvider(TraceContextProvider)` are removed. Use the methods of the same names on `AbstractRedisReactiveCommands.ReactorTraceContext`.
+- **Reactive accessors:**
+  - `reactive()` remains available on all stateful connection interfaces as a deprecated default method that delegates to `commands(...)` with the matching `*ReactiveCommands.factory()`.
+  - The connection implementations no longer hold a reactive API instance. Removed:
+    - the protected `reactive` fields;
+    - the `newRedisReactiveCommandsImpl()` factory methods on `StatefulRedisConnectionImpl`, `StatefulRedisPubSubConnectionImpl` and `StatefulRedisClusterPubSubConnectionImpl`;
+    - `newRedisAdvancedClusterReactiveCommandsImpl()` on `StatefulRedisClusterConnectionImpl`.
+
+    Subclasses that override these methods are no longer called; obtain a custom reactive API through `commands(CommandsFactory)` instead.
+  - `commands(CommandsFactory)` is now abstract on `StatefulRedisConnection`, `StatefulRedisClusterConnection`, `StatefulRedisPubSubConnection`, `StatefulRedisClusterPubSubConnection` and `StatefulRedisSentinelConnection`, so custom implementations of these interfaces must implement it.
+- **Credentials:**
+  - `StaticCredentialsProvider` and `TokenBasedRedisCredentialsProvider` implement only `CredentialsProvider`. They no longer implement `RedisCredentialsProvider`, `resolveCredentials()` or `credentials()`. Use `resolveCredentialsAsync()` and `subscribeToCredentials(...)`, or wrap a provider with `RedisCredentialsProvider.adapt(...)` where a `RedisCredentialsProvider` is required.
+  - The deprecated `RedisURI.getCredentialsProvider()` returns such providers wrapped in an adapter, so don't cast its result to a concrete provider type; use `RedisURI.getCredentialsProviderAsync()`. See [Authentication](user-guide/connecting-redis.md#authentication).
+  - `ConnectionState.getCredentialsProvider()` and `ConnectionState.setCredentialsProvider(RedisCredentialsProvider)` are removed in favor of `getCredentialsProviderAsync()` and `setCredentialsProvider(CredentialsProvider)`.
+  - On `RedisAuthenticationHandler`, the constructor and `createHandler(...)` variants that take a `RedisCredentialsProvider` are removed, as are `complete()` and `onNext(RedisCredentials)`.
+- **Connection extension points:** these now use `Supplier<CompletionStage<SocketAddress>>` instead of `Mono<SocketAddress>`:
+  - `RedisClient.getSocketAddress(RedisURI)`;
+  - `RedisClusterClient.getSocketAddressSupplier(...)`;
+  - `AbstractRedisClient.connectionBuilder(...)`;
+  - `ConnectionBuilder.socketAddressSupplier(...)` and `socketAddress()`;
+  - the `ConnectionWatchdog` and `MaintenanceAwareConnectionWatchdog` constructors and their `wrapSocketAddressSupplier(...)`.
+
+  The watchdog constructors also no longer take a `ConnectionFacade`.
+
 ## What's new in Lettuce 7.9
 
 - Introduced a reactor-free credentials SPI: [`CredentialsProvider`](user-guide/connecting-redis.md#authentication) resolves credentials as a `CompletionStage` via `resolveCredentialsAsync()` and no longer requires Project Reactor. It adds a `from(Supplier)` factory and a nested `ImmediateCredentialsProvider` (`resolveCredentialsNow()`) for synchronous resolution, and supports streaming credentials through the callback-based `subscribeToCredentials(Consumer<RedisCredentials>, Consumer<Throwable>)` that returns an `io.lettuce.core.Subscription`. `RedisURI` now stores a `CredentialsProvider` and exposes `getCredentialsProviderAsync()`, `setCredentialsProvider(CredentialsProvider)` and `Builder.withAuthentication(CredentialsProvider)`. The reactive `RedisCredentialsProvider` (returning `Mono` through `resolveCredentials()`/`credentials()`) now extends `CredentialsProvider` and is deprecated; the reactive `RedisURI` accessors are retained as compatibility shims, so existing code keeps working. `RedisCredentialsProvider.adapt(CredentialsProvider)` wraps a `CredentialsProvider` for APIs that still require a `RedisCredentialsProvider`, such as a Spring Data Redis `RedisCredentialsProviderFactory`, and keeps streaming.

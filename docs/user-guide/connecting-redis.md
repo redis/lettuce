@@ -100,10 +100,20 @@ username/password on the URI statically, a `StaticCredentialsProvider`
 holds the configured information.
 
 The reactive `RedisCredentialsProvider`, which resolves credentials as a
-`Mono`, is deprecated since 7.9 in favor of `CredentialsProvider`. It
-still works — a `RedisCredentialsProvider` is a `CredentialsProvider`,
-and providers configured through the deprecated API are adapted
-automatically — so existing code keeps working without changes.
+`Mono`, is deprecated since 7.9 in favor of `CredentialsProvider`. Your
+own `RedisCredentialsProvider` implementations still work — a
+`RedisCredentialsProvider` is a `CredentialsProvider`, and providers
+configured through the deprecated API are adapted automatically.
+
+As of Lettuce 8.0, the built-in providers — `StaticCredentialsProvider`
+and `TokenBasedRedisCredentialsProvider` — implement only
+`CredentialsProvider` and no longer implement `RedisCredentialsProvider`.
+Code that assigns them to a `RedisCredentialsProvider`, calls
+`resolveCredentials()` or `credentials()` on them, or casts the result
+of the deprecated `RedisURI.getCredentialsProvider()` to one of them must
+use `CredentialsProvider` (`resolveCredentialsAsync()`,
+`subscribeToCredentials(...)`, `RedisURI.getCredentialsProviderAsync()`)
+or wrap the provider with `RedisCredentialsProvider.adapt(...)`.
 
 If an API still requires a `RedisCredentialsProvider`, for example a
 Spring Data Redis `RedisCredentialsProviderFactory`, wrap your

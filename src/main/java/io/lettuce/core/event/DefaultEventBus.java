@@ -43,6 +43,7 @@ public class DefaultEventBus implements EventBus {
      * per-subscription in-flight bound.
      *
      * @param eventExecutorGroup the executor group on which events are dispatched to subscribers, must not be {@code null}.
+     * @since 8.0
      */
     public DefaultEventBus(EventExecutorGroup eventExecutorGroup) {
         this(eventExecutorGroup, DEFAULT_MAX_IN_FLIGHT);
@@ -55,6 +56,7 @@ public class DefaultEventBus implements EventBus {
      * @param eventExecutorGroup the executor group on which events are dispatched to subscribers, must not be {@code null}.
      * @param maxInFlightPerSubscription the number of events that may await delivery per subscriber before further events are
      *        dropped, must be greater than {@code 0}.
+     * @since 8.0
      */
     public DefaultEventBus(EventExecutorGroup eventExecutorGroup, int maxInFlightPerSubscription) {
         LettuceAssert.notNull(eventExecutorGroup, "EventExecutorGroup must not be null");
