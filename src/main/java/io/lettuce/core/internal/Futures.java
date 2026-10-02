@@ -323,7 +323,8 @@ public abstract class Futures {
      * the first attempt starts immediately, and each subsequent attempt starts only after the previous one fails. Every attempt
      * is invoked through this method, so a synchronous throw from a supplier is captured as a failure rather than propagated to
      * the caller. If all attempts fail, {@code onAllFailed} receives the failures in the order they occurred and returns the
-     * throwable to complete with.
+     * throwable to complete with. If {@code onAllFailed} throws or returns {@code null}, the result completes with that throw
+     * or with the last failure instead, so it always completes.
      *
      * @param attempts the attempts to try in order, must not be {@code null} or empty.
      * @param onAllFailed builds the throwable to propagate from all collected failures, invoked only when every attempt fails.
@@ -350,7 +351,13 @@ public abstract class Futures {
             if (error == null) {
                 result.complete(value);
             } else {
-                result.completeExceptionally(onAllFailed.apply(failures));
+                Throwable aggregate;
+                try {
+                    aggregate = onAllFailed.apply(failures);
+                } catch (Throwable t) {
+                    aggregate = t;
+                }
+                result.completeExceptionally(aggregate != null ? aggregate : error);
             }
         });
         return result;
