@@ -19,7 +19,6 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.ClusterScanSupport.*;
 import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.*;
 
 import java.util.ArrayList;
@@ -954,6 +953,30 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         Mono<T> scanCursor = getMono(connectionProvider.<K, V> getConnectionAsync(ConnectionIntent.WRITE, currentNodeId))
                 .flatMap(conn -> scanFunction.apply(conn.commands(RedisReactiveCommands.factory()), continuationCursor));
         return mapper.map(nodeIds, currentNodeId, scanCursor);
+    }
+
+    /**
+     * Map a {@link Mono} of {@link KeyScanCursor} to a {@link Mono} of a cluster-aware {@link KeyScanCursor}. Kept here rather
+     * than in {@link ClusterScanSupport} so that the shared scan support used by the sync/async API does not depend on Reactor.
+     */
+    private static final ClusterScanSupport.ScanCursorMapper<Mono<KeyScanCursor<?>>> reactiveKeyScanCursorMapper = (nodeIds,
+            currentNodeId, cursor) -> cursor
+                    .map(keyScanCursor -> ClusterScanSupport.toClusterKeyScanCursor(nodeIds, currentNodeId, keyScanCursor));
+
+    /**
+     * Map a {@link Mono} of {@link StreamScanCursor} to a {@link Mono} of a cluster-aware {@link StreamScanCursor}.
+     */
+    private static final ClusterScanSupport.ScanCursorMapper<Mono<StreamScanCursor>> reactiveStreamScanCursorMapper = (nodeIds,
+            currentNodeId, cursor) -> cursor.map(
+                    streamScanCursor -> ClusterScanSupport.toClusterStreamScanCursor(nodeIds, currentNodeId, streamScanCursor));
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static <K> ClusterScanSupport.ScanCursorMapper<Mono<KeyScanCursor<K>>> reactiveClusterKeyScanCursorMapper() {
+        return (ClusterScanSupport.ScanCursorMapper) reactiveKeyScanCursorMapper;
+    }
+
+    private static ClusterScanSupport.ScanCursorMapper<Mono<StreamScanCursor>> reactiveClusterStreamScanCursorMapper() {
+        return reactiveStreamScanCursorMapper;
     }
 
     private static <T> Mono<T> getMono(CompletableFuture<T> future) {
