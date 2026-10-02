@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
  * {@code includeCommandArgsInSpanTags}. You should carefully consider the impact of this setting as all command arguments will
  * be captured in traces including these that may contain sensitive details.
  *
- * @author Mark Paluch
+ * @author Mark Paluch, Tommy Luk
  * @since 6.3
  */
 public class MicrometerTracing implements Tracing {
@@ -141,16 +141,18 @@ public class MicrometerTracing implements Tracing {
                     return nextSpan();
                 }
 
-                return new MicrometerSpan(serviceName,
-                        context -> createObservation(context).parentObservation(micrometerTraceContext.getObservation()));
+                return new MicrometerSpan(serviceName, context -> {
+                    context.setParentObservation(micrometerTraceContext.getObservation());
+                    return createObservation(context);
+                });
             }
 
             return nextSpan();
         }
 
         private Observation createObservation(LettuceObservationContext context) {
-            return REDIS_COMMAND_OBSERVATION.observation(observationRegistry, () -> context)
-                    .observationConvention(observationConvention);
+            return REDIS_COMMAND_OBSERVATION.observation(observationConvention, new DefaultLettuceObservationConvention(false),
+                    () -> context, observationRegistry);
         }
 
     }
