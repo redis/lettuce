@@ -34,6 +34,7 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.Pair;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.SslConnectionBuilder;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.netty.bootstrap.Bootstrap;
@@ -90,12 +91,12 @@ class ReconnectionHandler {
 
         // handle synchronous exceptions during get(), before obtaining the CompletionStage
         try {
-            socketAddressSupplierAsync.get().thenAccept(remoteAddress -> {
+            Futures.unwrapExceptions(socketAddressSupplierAsync.get().thenAccept(remoteAddress -> {
                 address.complete(remoteAddress);
                 if (!future.isCancelled()) {
                     reconnect0(future, remoteAddress);
                 }
-            }).exceptionally(error -> {
+            })).exceptionally(error -> {
                 address.completeExceptionally(error);
                 future.completeExceptionally(error);
                 return null;

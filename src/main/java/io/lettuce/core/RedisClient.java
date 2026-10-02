@@ -39,6 +39,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.ExceptionFactory;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.masterreplica.MasterReplica;
@@ -807,7 +808,7 @@ public class RedisClient extends AbstractRedisClient {
         return future.thenCompose((v, e) -> {
 
             if (e != null) {
-                return Futures.failed(RedisConnectionException.create(future.getRemoteAddress(), e));
+                return Futures.failed(RedisConnectionException.create(future.getRemoteAddress(), unwrap(e)));
             }
 
             return CompletableFuture.completedFuture(v);
@@ -819,11 +820,21 @@ public class RedisClient extends AbstractRedisClient {
         return ConnectionFuture.from(null, future.toCompletableFuture()).thenCompose((v, e) -> {
 
             if (e != null) {
-                return Futures.failed(RedisConnectionException.create(target.toString(), e));
+                return Futures.failed(RedisConnectionException.create(target.toString(), unwrap(e)));
             }
 
             return CompletableFuture.completedFuture(v);
         }).toCompletableFuture();
+    }
+
+    /**
+     * Unwrap the {@link CompletionException} that dependent stages wrap failures in, so the original cause (e.g. a
+     * {@link RedisConnectionException} carrying the failure reason) is preserved.
+     */
+    private static Throwable unwrap(Throwable e) {
+
+        Throwable cause = Exceptions.unwrap(e);
+        return cause != null ? cause : e;
     }
 
     private static void checkValidRedisURI(RedisURI redisURI) {
