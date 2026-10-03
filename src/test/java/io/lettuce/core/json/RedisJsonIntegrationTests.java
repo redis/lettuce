@@ -21,6 +21,7 @@ import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.test.condition.RedisConditions;
+import io.lettuce.test.resource.ModulesTestUri;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +45,6 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import io.lettuce.test.resource.ModulesTestUri;
 
 @Tag(INTEGRATION_TEST)
 public class RedisJsonIntegrationTests {
@@ -67,7 +67,12 @@ public class RedisJsonIntegrationTests {
         RedisURI redisURI = ModulesTestUri.create();
 
         client = RedisClient.create(redisURI);
+        client.setOptions(getOptions());
         redis = client.connect().sync();
+    }
+
+    protected ClientOptions getOptions() {
+        return ClientOptions.builder().build();
     }
 
     @BeforeEach
@@ -420,6 +425,26 @@ public class RedisJsonIntegrationTests {
         List<Number> value = redis.jsonNumincrby(BIKES_INVENTORY, myPath, 5L);
         assertThat(value).hasSize(1);
         assertThat(value.get(0).longValue()).isEqualTo(1933L);
+    }
+
+    @Test
+    void jsonNumincrbyMultiplePaths() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[*].price");
+
+        List<Number> value = redis.jsonNumincrby(BIKES_INVENTORY, myPath, 0.5);
+        assertThat(value).hasSize(3);
+        assertThat(value.get(0).doubleValue()).isEqualTo(1928.5);
+        assertThat(value.get(1).doubleValue()).isEqualTo(2072.5);
+        assertThat(value.get(2).doubleValue()).isEqualTo(3264.5);
+    }
+
+    @Test
+    void jsonNumincrbyNonNumericPath() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[0].model");
+
+        List<Number> value = redis.jsonNumincrby(BIKES_INVENTORY, myPath, 5L);
+        assertThat(value).hasSize(1);
+        assertThat(value.get(0)).isNull();
     }
 
     @ParameterizedTest(name = "With {0} as path")
