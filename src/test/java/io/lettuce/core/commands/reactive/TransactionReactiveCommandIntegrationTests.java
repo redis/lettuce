@@ -33,7 +33,7 @@ public class TransactionReactiveCommandIntegrationTests extends TransactionComma
     public TransactionReactiveCommandIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
         super(client, ReactiveSyncInvocationHandler.sync(connection));
         this.client = client;
-        this.commands = connection.reactive();
+        this.commands = connection.commands(RedisReactiveCommands.factory());
         this.connection = connection;
     }
 

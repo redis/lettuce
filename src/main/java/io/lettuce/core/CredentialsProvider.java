@@ -79,6 +79,9 @@ public interface CredentialsProvider {
      * external events such as token renewal or rotation. The {@code onError} consumer is invoked when the provider observes a
      * failure while obtaining new credentials.
      * <p>
+     * Replay semantics on subscription are defined by the implementation and callers should consult the concrete provider's
+     * documentation. Subscribers must not assume any specific replay behaviour from this interface alone.
+     * <p>
      * Implementations that do not support streaming credentials (where {@link #supportsStreaming()} returns {@code false})
      * throw an {@link UnsupportedOperationException} by default.
      *

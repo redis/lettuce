@@ -57,7 +57,8 @@ class StringClusterReactiveCommandIntegrationTests extends StringCommandIntegrat
         redis.set("key1", value);
         redis.set("key2", value);
 
-        RedisAdvancedClusterReactiveCommands<String, String> reactive = connection.reactive();
+        RedisAdvancedClusterReactiveCommands<String, String> reactive = connection
+                .commands(RedisAdvancedClusterReactiveCommands.factory());
 
         Flux<KeyValue<String, String>> mget = reactive.mget(key, "key1", "key2");
         StepVerifier.create(mget.next()).expectNext(KeyValue.just(key, value)).verifyComplete();

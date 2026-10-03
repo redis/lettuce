@@ -34,7 +34,7 @@ class GeoReactiveCommandIntegrationTests extends GeoCommandIntegrationTests {
     @Override
     public void geopos() {
 
-        RedisReactiveCommands<String, String> reactive = connection.reactive();
+        RedisReactiveCommands<String, String> reactive = connection.commands(RedisReactiveCommands.factory());
 
         prepareGeo();
 

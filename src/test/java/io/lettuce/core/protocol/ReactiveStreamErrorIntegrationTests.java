@@ -65,7 +65,7 @@ class ReactiveStreamErrorIntegrationTests extends TestSupport {
         ExecutorService executorService = Executors.newCachedThreadPool();
         AtomicInteger messageOutOfOrder = new AtomicInteger(0);
 
-        RedisReactiveCommands<String, String> reactive = connection.reactive();
+        RedisReactiveCommands<String, String> reactive = connection.commands(RedisReactiveCommands.factory());
 
         Runnable readTask = () -> IntStream.range(0, 100).forEach(i -> {
             reactive.get(KEY_TO_WORK_ON).doOnNext(result -> {

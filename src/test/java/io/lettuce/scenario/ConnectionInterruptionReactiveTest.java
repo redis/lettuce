@@ -77,7 +77,7 @@ public class ConnectionInterruptionReactiveTest {
         // Also track with state listener for comparison
         tracker.trackWithStateListener(connection);
 
-        RedisReactiveCommands<String, String> reactive = connection.reactive();
+        RedisReactiveCommands<String, String> reactive = connection.commands(RedisReactiveCommands.factory());
 
         String keyName = "counter";
 
@@ -145,7 +145,7 @@ public class ConnectionInterruptionReactiveTest {
         publisherClient.setOptions(RecommendedSettingsProvider.forConnectionInterruption());
 
         StatefulRedisConnection<String, String> publisherConnection = publisherClient.connect();
-        RedisReactiveCommands<String, String> publisherReactive = publisherConnection.reactive();
+        RedisReactiveCommands<String, String> publisherReactive = publisherConnection.commands(RedisReactiveCommands.factory());
 
         AtomicLong messagesSent = new AtomicLong();
         AtomicLong messagesReceived = new AtomicLong();
@@ -160,7 +160,8 @@ public class ConnectionInterruptionReactiveTest {
         // Also track with state listener for comparison
         tracker.trackWithStateListener(pubSubConnection);
 
-        RedisPubSubReactiveCommands<String, String> pubSubReactive = pubSubConnection.reactive();
+        RedisPubSubReactiveCommands<String, String> pubSubReactive = pubSubConnection
+                .commands(RedisPubSubReactiveCommands.factory());
         pubSubConnection.addListener(new RedisPubSubAdapter<String, String>() {
 
             @Override

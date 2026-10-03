@@ -26,7 +26,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
 import brave.Span;
 import brave.propagation.TraceContextOrSamplingFlags;
 import io.lettuce.core.internal.LettuceAssert;
@@ -484,20 +483,6 @@ public class BraveTracing implements Tracing {
                 }
             }
             return null;
-        }
-
-        @Override
-        public Mono<TraceContext> getTraceContextLater() {
-
-            return Mono.deferContextual(Mono::justOrEmpty)
-                    .filter(it -> it.hasKey(Span.class) || it.hasKey(brave.propagation.TraceContext.class)).map(it -> {
-
-                        if (it.hasKey(Span.class)) {
-                            return new BraveTraceContext(it.get(Span.class).context());
-                        }
-
-                        return new BraveTraceContext(it.get(brave.propagation.TraceContext.class));
-                    });
         }
 
         @Override

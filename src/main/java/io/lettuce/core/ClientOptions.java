@@ -37,7 +37,6 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
-import reactor.core.publisher.Mono;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
@@ -433,7 +432,7 @@ public class ClientOptions implements Serializable {
         /**
          * Set a custom implementation for the {@link JsonParser} to use.
          *
-         * @param parser a {@link Mono} that emits the {@link JsonParser} to use.
+         * @param parser a {@link Supplier} that emits the {@link JsonParser} to use.
          * @return {@code this}
          * @see JsonParser
          * @since 6.5
@@ -622,7 +621,7 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Behavior for re-authentication when the {@link RedisCredentialsProvider} emits new credentials. Defaults to
+     * Behavior for re-authentication when the {@link CredentialsProvider} emits new credentials. Defaults to
      * {@link ReauthenticateBehavior#DEFAULT}.
      *
      * @return the currently set {@link ReauthenticateBehavior}.
@@ -765,33 +764,34 @@ public class ClientOptions implements Serializable {
     /**
      * Defines the re-authentication behavior of the Redis client.
      * <p/>
-     * Certain implementations of the {@link RedisCredentialsProvider} could emit new credentials at runtime. This setting
-     * controls how the driver reacts to these newly emitted credentials.
+     * Certain implementations of the {@link CredentialsProvider} could emit new credentials at runtime. This setting controls
+     * how the driver reacts to these newly emitted credentials.
      */
     public enum ReauthenticateBehavior {
 
         /**
          * This is the default behavior. The client will fetch current credentials from the underlying
-         * {@link RedisCredentialsProvider} only when the driver needs to, e.g. when the connection is first established or when
-         * it is re-established after a disconnect.
+         * {@link CredentialsProvider} only when the driver needs to, e.g. when the connection is first established or when it
+         * is re-established after a disconnect.
          * <p/>
          * <p>
-         * No re-authentication is performed when new credentials are emitted by a {@link RedisCredentialsProvider} that
-         * supports streaming. The client does not subscribe to or react to any updates in the credential stream provided by
-         * {@link RedisCredentialsProvider#credentials()}.
+         * No re-authentication is performed when new credentials are emitted by a {@link CredentialsProvider} that supports
+         * streaming. The client does not subscribe to or react to any updates published by
+         * {@link CredentialsProvider#subscribeToCredentials(java.util.function.Consumer, java.util.function.Consumer)}.
          * </p>
          */
         DEFAULT,
 
         /**
-         * Automatically triggers re-authentication whenever new credentials are emitted by a {@link RedisCredentialsProvider}
-         * that supports streaming, as indicated by {@link RedisCredentialsProvider#supportsStreaming()}.
+         * Automatically triggers re-authentication whenever new credentials are emitted by a {@link CredentialsProvider} that
+         * supports streaming, as indicated by {@link CredentialsProvider#supportsStreaming()}.
          *
          * <p>
-         * When this behavior is enabled, the client subscribes to the credential stream provided by
-         * {@link RedisCredentialsProvider#credentials()} and issues an {@code AUTH} command to the Redis server each time new
-         * credentials are received. This behavior supports dynamic credential scenarios, such as token-based authentication, or
-         * credential rotation where credentials are refreshed periodically to maintain access.
+         * When this behavior is enabled, the client subscribes to credential updates via
+         * {@link CredentialsProvider#subscribeToCredentials(java.util.function.Consumer, java.util.function.Consumer)} and
+         * issues an {@code AUTH} command to the Redis server each time new credentials are received. This behavior supports
+         * dynamic credential scenarios, such as token-based authentication, or credential rotation where credentials are
+         * refreshed periodically to maintain access.
          * </p>
          *
          * <p>

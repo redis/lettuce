@@ -7,7 +7,6 @@ import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.RedisCommand;
@@ -37,11 +36,6 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
 
     @Override
     public RedisAsyncCommands async() {
-        return null;
-    }
-
-    @Override
-    public RedisReactiveCommands reactive() {
         return null;
     }
 

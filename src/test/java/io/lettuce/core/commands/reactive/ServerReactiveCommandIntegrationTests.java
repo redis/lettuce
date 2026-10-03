@@ -32,7 +32,7 @@ class ServerReactiveCommandIntegrationTests extends ServerCommandIntegrationTest
     @Inject
     ServerReactiveCommandIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
         super(client, ReactiveSyncInvocationHandler.sync(connection));
-        this.reactive = connection.reactive();
+        this.reactive = connection.commands(RedisReactiveCommands.factory());
     }
 
     /**

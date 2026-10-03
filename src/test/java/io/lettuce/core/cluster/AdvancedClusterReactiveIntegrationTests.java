@@ -93,7 +93,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     AdvancedClusterReactiveIntegrationTests(RedisClusterClient clusterClient,
             StatefulRedisClusterConnection<String, String> connection) {
         this.clusterClient = clusterClient;
-        this.commands = connection.reactive();
+        this.commands = connection.commands(RedisAdvancedClusterReactiveCommands.factory());
         this.syncCommands = connection.sync();
     }
 

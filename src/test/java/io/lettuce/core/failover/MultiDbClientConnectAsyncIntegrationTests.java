@@ -34,6 +34,7 @@ import io.lettuce.core.failover.api.InitializationPolicy;
 import io.lettuce.core.failover.api.MultiDbConnectionFuture;
 import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.NoFailback;
 import io.lettuce.test.TestFutures;
@@ -273,10 +274,11 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         StatefulRedisMultiDbConnection<String, String> connection = future.get(10, TimeUnit.SECONDS);
 
         // Use reactive API
-        String result = connection.reactive().set("reactiveKey", "reactiveValue").block(Duration.ofSeconds(5));
+        String result = connection.commands(RedisReactiveCommands.factory()).set("reactiveKey", "reactiveValue")
+                .block(Duration.ofSeconds(5));
         assertThat(result).isEqualTo("OK");
 
-        String value = connection.reactive().get("reactiveKey").block(Duration.ofSeconds(5));
+        String value = connection.commands(RedisReactiveCommands.factory()).get("reactiveKey").block(Duration.ofSeconds(5));
         assertThat(value).isEqualTo("reactiveValue");
     }
 

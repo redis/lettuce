@@ -81,13 +81,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     protected final RedisAsyncCommandsImpl<K, V> async;
 
-    /**
-     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
-     *             removal in Lettuce 8.0.
-     */
-    @Deprecated
-    protected final RedisReactiveCommandsImpl<K, V> reactive;
-
     protected final RedisCodec<K, V> codec;
 
     protected final Store store = new Store();
@@ -201,7 +194,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
-        this.reactive = newRedisReactiveCommandsImpl();
         this.completion = completion;
         if (completion != null) {
             completion.whenComplete(this::onDatabaseCompletion);
@@ -467,31 +459,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      */
     protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
         return new RedisAsyncCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
-    }
-
-    /**
-     * Returns the reactive API. The API is a dynamic proxy that remains valid across database switches.
-     *
-     * @return the reactive commands API.
-     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
-     *             removal in Lettuce 8.0.
-     */
-    @Deprecated
-    @Override
-    public RedisReactiveCommands<K, V> reactive() {
-        return reactive;
-    }
-
-    /**
-     * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overridden to extend.
-     *
-     * @return a new instance
-     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
-     *             removal in Lettuce 8.0.
-     */
-    @Deprecated
-    protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
-        return new RedisReactiveCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
     }
 
     /**

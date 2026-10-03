@@ -129,38 +129,8 @@ public class ConnectionState {
         }
     }
 
-    /**
-     * @param credentialsProvider the credentials provider to use
-     * @deprecated since 7.9, use {@link #setCredentialsProvider(CredentialsProvider)} instead; scheduled for removal in a
-     *             future major release.
-     */
-    @Deprecated
-    protected void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
-        setCredentialsProvider((CredentialsProvider) credentialsProvider);
-    }
-
-    /**
-     * @param credentialsProvider the credentials provider to use
-     * @since 7.9
-     */
     protected void setCredentialsProvider(CredentialsProvider credentialsProvider) {
         this.credentialsProvider = credentialsProvider;
-    }
-
-    /**
-     * @return the configured credentials provider adapted to the reactive {@link RedisCredentialsProvider} contract
-     * @deprecated since 7.9, use {@link #getCredentialsProviderAsync()} instead; scheduled for removal in a future major
-     *             release.
-     */
-    @Deprecated
-    public RedisCredentialsProvider getCredentialsProvider() {
-        if (credentialsProvider == null) {
-            return null;
-        }
-        if (credentialsProvider instanceof RedisCredentialsProvider) {
-            return (RedisCredentialsProvider) credentialsProvider;
-        }
-        return new AsyncCredentialsProviderAdapter(credentialsProvider);
     }
 
     /**
