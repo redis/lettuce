@@ -95,7 +95,9 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      *
      * @param addr ip:port.
      * @return String simple-string-reply {@code OK} if the connection exists and has been closed.
+     * @deprecated since 7.7, use {@link #clientKill(KillArgs)} instead.
      */
+    @Deprecated
     AsyncExecutions<String> clientKill(String addr);
 
     /**
