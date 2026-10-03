@@ -42,8 +42,8 @@ public interface RedisAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, 
         RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
         RedisTransactionalAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>, RedisVectorSetAsyncCommands<K, V>,
         RediSearchAsyncCommands<K>, RedisArrayAsyncCommands<K, V>, RedisBloomFilterAsyncCommands<K, V>,
-        RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V>, RedisCMSAsyncCommands<K, V>,
-        RedisTDigestAsyncCommands<K, V> {
+        RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V>, RedisTimeSeriesAsyncCommands<K, V>,
+        RedisCMSAsyncCommands<K, V>, RedisTDigestAsyncCommands<K, V> {
 
     /**
      * Authenticate to the server.
