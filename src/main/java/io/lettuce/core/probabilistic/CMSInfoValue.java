@@ -24,6 +24,8 @@ public class CMSInfoValue {
 
     private final Long count;
 
+    private final Long cellSize;
+
     /**
      * Creates a new {@link CMSInfoValue}.
      *
@@ -34,6 +36,16 @@ public class CMSInfoValue {
         this.width = (Long) rawInfo.get("width");
         this.depth = (Long) rawInfo.get("depth");
         this.count = (Long) rawInfo.get("count");
+        this.cellSize = readCellSize(rawInfo);
+    }
+
+    private static Long readCellSize(Map<String, Object> rawInfo) {
+
+        Object value = rawInfo.get("cell_size");
+        if (value == null) {
+            value = rawInfo.get("cell size");
+        }
+        return (Long) value;
     }
 
     /**
@@ -70,6 +82,17 @@ public class CMSInfoValue {
      */
     public Long getCount() {
         return count;
+    }
+
+    /**
+     * Returns the number of bytes per counter cell of the sketch.
+     *
+     * @return the number of bytes per counter cell ({@code 1}, {@code 2}, {@code 4} or {@code 8}), or {@code null} when the
+     *         server predates the {@code CELL_SIZE} option and does not report it.
+     * @since 7.8
+     */
+    public Long getCellSize() {
+        return cellSize;
     }
 
 }
