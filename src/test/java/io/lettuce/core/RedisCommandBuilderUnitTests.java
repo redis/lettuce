@@ -1286,4 +1286,16 @@ class RedisCommandBuilderUnitTests {
         assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0");
     }
 
+    @Test
+    void geodistShouldRejectNullTo() {
+        assertThatThrownBy(() -> sut.geodist("key", "from", null, GeoArgs.Unit.m)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("To must not be null");
+    }
+
+    @Test
+    void geodistShouldRejectNullFrom() {
+        assertThatThrownBy(() -> sut.geodist("key", null, "to", GeoArgs.Unit.m)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("From must not be null");
+    }
+
 }

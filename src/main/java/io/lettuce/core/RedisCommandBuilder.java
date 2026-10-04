@@ -1331,7 +1331,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     Command<K, V, Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
         notNullKey(key);
         LettuceAssert.notNull(from, "From " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(from, "To " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(to, "To " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(from).addValue(to);
 
