@@ -272,10 +272,11 @@ public abstract class Futures {
     }
 
     /**
-     * Return a new {@link CompletableFuture} that mirrors {@code source} but completes exceptionally with
-     * {@link TimeoutException} if {@code source} does not complete within {@code duration}. The timeout is scheduled on the
-     * {@link ClientResources#timer()} and cancelled upon source completion. A {@code duration} of {@link Duration#ZERO}
-     * disables the timeout and {@code source} is returned as-is.
+     * Return a {@link CompletableFuture} that mirrors {@code source} but completes exceptionally with {@link TimeoutException}
+     * if {@code source} does not complete within {@code duration}. The timeout is scheduled on the
+     * {@link ClientResources#timer()} and cancelled upon source completion. Timing out does not cancel {@code source}. If
+     * {@code source} is already done, or {@code duration} is {@link Duration#ZERO} (no timeout), {@code source} itself is
+     * returned.
      *
      * @param source the source future, must not be {@code null}.
      * @param duration timeout duration, must not be {@code null} or negative. {@link Duration#ZERO} means "do not time out".
@@ -283,7 +284,8 @@ public abstract class Futures {
      * @param taskName short description of the awaited operation, used in the {@link TimeoutException} message; must not be
      *        {@code null}.
      * @param <T> the result type.
-     * @return a new {@link CompletableFuture} completing with the same result or a {@link TimeoutException}.
+     * @return a {@link CompletableFuture} completing with the same result as {@code source} or with a {@link TimeoutException}.
+     * @since 8.0
      */
     public static <T> CompletableFuture<T> withTimeout(CompletableFuture<T> source, Duration duration,
             ClientResources resources, String taskName) {
@@ -321,13 +323,15 @@ public abstract class Futures {
      * the first attempt starts immediately, and each subsequent attempt starts only after the previous one fails. Every attempt
      * is invoked through this method, so a synchronous throw from a supplier is captured as a failure rather than propagated to
      * the caller. If all attempts fail, {@code onAllFailed} receives the failures in the order they occurred and returns the
-     * throwable to complete with.
+     * throwable to complete with. If {@code onAllFailed} throws or returns {@code null}, the result completes with that throw
+     * or with the last failure instead, so it always completes.
      *
      * @param attempts the attempts to try in order, must not be {@code null} or empty.
      * @param onAllFailed builds the throwable to propagate from all collected failures, invoked only when every attempt fails.
      * @param <T> the result type.
      * @return a {@link CompletableFuture} completing with the first successful attempt, or with {@code onAllFailed} applied to
      *         all failures.
+     * @since 8.0
      */
     public static <T> CompletableFuture<T> withFallback(List<Supplier<CompletionStage<T>>> attempts,
             Function<List<Throwable>, Throwable> onAllFailed) {
@@ -347,7 +351,13 @@ public abstract class Futures {
             if (error == null) {
                 result.complete(value);
             } else {
-                result.completeExceptionally(onAllFailed.apply(failures));
+                Throwable aggregate;
+                try {
+                    aggregate = onAllFailed.apply(failures);
+                } catch (Throwable t) {
+                    aggregate = t;
+                }
+                result.completeExceptionally(aggregate != null ? aggregate : error);
             }
         });
         return result;
@@ -391,6 +401,9 @@ public abstract class Futures {
                 future.complete(value);
             } else {
                 Throwable cause = Exceptions.unwrap(error);
+                if (cause == null) {
+                    cause = error;
+                }
                 failures.add(cause);
                 future.completeExceptionally(cause);
             }

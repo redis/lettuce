@@ -53,7 +53,7 @@ class ClusterReactiveCommandIntegrationTests {
         this.clusterClient = clusterClient;
         this.connection = connection;
 
-        this.reactive = connection.commands(RedisAdvancedClusterReactiveCommands.factory());
+        this.reactive = connection.reactive();
         this.sync = connection.sync();
     }
 
@@ -168,8 +168,7 @@ class ClusterReactiveCommandIntegrationTests {
             try (RedisClusterClient restrictedClient = RedisClusterClient.create(restrictedUri);
                     StatefulRedisClusterConnection<String, String> restrictedConnection = restrictedClient.connect()) {
 
-                RedisAdvancedClusterReactiveCommands<String, String> restrictedReactive = restrictedConnection
-                        .commands(RedisAdvancedClusterReactiveCommands.factory());
+                RedisAdvancedClusterReactiveCommands<String, String> restrictedReactive = restrictedConnection.reactive();
 
                 // This should trigger the fallback to CLUSTER NODES parsing
                 StepVerifier.create(restrictedReactive.clusterMyId().zipWith(restrictedReactive.clusterNodes()))

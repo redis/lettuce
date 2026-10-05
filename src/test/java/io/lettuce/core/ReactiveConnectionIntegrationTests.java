@@ -72,7 +72,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
     ReactiveConnectionIntegrationTests(StatefulRedisConnection<String, String> connection) {
         this.connection = connection;
         this.redis = connection.sync();
-        this.reactive = connection.commands(RedisReactiveCommands.factory());
+        this.reactive = connection.reactive();
     }
 
     @BeforeEach
@@ -83,7 +83,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
     @Test
     void doNotFireCommandUntilObservation() {
 
-        RedisReactiveCommands<String, String> reactive = connection.commands(RedisReactiveCommands.factory());
+        RedisReactiveCommands<String, String> reactive = connection.reactive();
         Mono<String> set = reactive.set(key, value);
         Delay.delay(Duration.ofMillis(50));
         assertThat(redis.get(key)).isNull();
@@ -91,6 +91,16 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
         Wait.untilEquals(value, () -> redis.get(key)).waitOrTimeout();
 
         assertThat(redis.get(key)).isEqualTo(value);
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void commandsAccessorReturnsWorkingReactiveApi() {
+
+        RedisReactiveCommands<String, String> commands = connection.commands(RedisReactiveCommands.factory());
+
+        StepVerifier.create(commands.ping()).expectNext("PONG").verifyComplete();
+        assertThat(commands).isSameAs(connection.reactive());
     }
 
     @Test
@@ -132,7 +142,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
 
         final CountDownLatch sync = new CountDownLatch(1);
         try (StatefulRedisConnection<String, String> statefulRedisConnection = client.connect()) {
-            RedisReactiveCommands<String, String> reactive = statefulRedisConnection.commands(RedisReactiveCommands.factory());
+            RedisReactiveCommands<String, String> reactive = statefulRedisConnection.reactive();
 
             reactive.multi().subscribe(multiResponse -> {
                 reactive.set(key, "1").subscribe();
@@ -199,9 +209,9 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
         connection.async().quit();
         Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
-        StepVerifier.create(connection.commands(RedisReactiveCommands.factory()).ping())
-                .consumeErrorWith(throwable -> assertThat(throwable).isInstanceOf(RedisException.class)
-                        .hasMessageContaining("not connected. Commands are rejected"))
+        StepVerifier
+                .create(connection.reactive().ping()).consumeErrorWith(throwable -> assertThat(throwable)
+                        .isInstanceOf(RedisException.class).hasMessageContaining("not connected. Commands are rejected"))
                 .verify();
 
         connection.close();
@@ -213,7 +223,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
 
         client.setOptions(ClientOptions.builder().publishOnScheduler(true).build());
         try (StatefulRedisConnection<String, String> statefulRedisConnection = client.connect()) {
-            RedisReactiveCommands<String, String> reactive = statefulRedisConnection.commands(RedisReactiveCommands.factory());
+            RedisReactiveCommands<String, String> reactive = statefulRedisConnection.reactive();
 
             int counter = 0;
             for (int i = 0; i < 1000; i++) {

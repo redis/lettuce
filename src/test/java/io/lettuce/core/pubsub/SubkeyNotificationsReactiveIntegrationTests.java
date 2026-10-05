@@ -48,7 +48,7 @@ class SubkeyNotificationsReactiveIntegrationTests extends AbstractRedisClientTes
     @BeforeEach
     void openPubSubConnection() {
         pubSubConnection = client.connectPubSub();
-        pubsub = pubSubConnection.commands(RedisPubSubReactiveCommands.factory());
+        pubsub = pubSubConnection.reactive();
 
         RedisCommands<String, String> sync = redis;
         originalNotifyConfig = sync.configGet("notify-keyspace-events").getOrDefault("notify-keyspace-events", "");

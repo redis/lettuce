@@ -28,7 +28,6 @@ import io.lettuce.core.cluster.pubsub.api.async.PubSubAsyncNodeSelection;
 import io.lettuce.core.cluster.pubsub.api.async.RedisClusterPubSubAsyncCommands;
 import io.lettuce.core.cluster.pubsub.api.reactive.NodeSelectionPubSubReactiveCommands;
 import io.lettuce.core.cluster.pubsub.api.reactive.PubSubReactiveNodeSelection;
-import io.lettuce.core.cluster.pubsub.api.reactive.RedisClusterPubSubReactiveCommands;
 import io.lettuce.core.cluster.pubsub.api.sync.NodeSelectionPubSubCommands;
 import io.lettuce.core.cluster.pubsub.api.sync.PubSubNodeSelection;
 import io.lettuce.core.event.command.CommandFailedEvent;
@@ -410,8 +409,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         pubSubConnection.setNodeMessagePropagation(true);
 
-        PubSubReactiveNodeSelection<String, String> masters = pubSubConnection
-                .commands(RedisClusterPubSubReactiveCommands.factory()).masters();
+        PubSubReactiveNodeSelection<String, String> masters = pubSubConnection.reactive().masters();
         NodeSelectionPubSubReactiveCommands<String, String> commands = masters.commands();
 
         commands.psubscribe("chann*").flux().then().block();

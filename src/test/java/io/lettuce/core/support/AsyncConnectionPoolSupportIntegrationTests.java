@@ -161,6 +161,7 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void wrappedConnectionShouldUseWrappers() {
 
         AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport
@@ -175,8 +176,9 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
 
         assertThat(sync).isInstanceOf(RedisCommands.class);
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isNotInstanceOf(RedisAsyncCommandsImpl.class);
-        assertThat(connection.commands(RedisReactiveCommands.factory())).isInstanceOf(RedisReactiveCommands.class)
+        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class)
                 .isNotInstanceOf(RedisReactiveCommandsImpl.class);
+        assertThat(connection.reactive().getStatefulConnection()).isSameAs(connection);
         assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
                 .isNotInstanceOf(StatefulRedisConnectionImpl.class).isSameAs(connection);
 

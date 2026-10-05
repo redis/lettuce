@@ -213,6 +213,7 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void wrappedConnectionShouldUseWrappers() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
@@ -227,8 +228,9 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
 
         assertThat(sync).isInstanceOf(RedisCommands.class);
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isNotInstanceOf(RedisAsyncCommandsImpl.class);
-        assertThat(connection.commands(RedisReactiveCommands.factory())).isInstanceOf(RedisReactiveCommands.class)
+        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class)
                 .isNotInstanceOf(RedisReactiveCommandsImpl.class);
+        assertThat(connection.reactive().getStatefulConnection()).isSameAs(connection);
         assertThat(connection.commands(RedisReactiveCommands.factory())).isInstanceOf(RedisReactiveCommands.class)
                 .isNotInstanceOf(RedisReactiveCommandsImpl.class);
         assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
@@ -239,6 +241,7 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void wrappedMasterSlaveConnectionShouldUseWrappers() throws Exception {
 
         GenericObjectPool<StatefulRedisMasterReplicaConnection<String, String>> pool = ConnectionPoolSupport
@@ -253,8 +256,9 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
 
         assertThat(sync).isInstanceOf(RedisCommands.class);
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isNotInstanceOf(RedisAsyncCommandsImpl.class);
-        assertThat(connection.commands(RedisReactiveCommands.factory())).isInstanceOf(RedisReactiveCommands.class)
+        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class)
                 .isNotInstanceOf(RedisReactiveCommandsImpl.class);
+        assertThat(connection.reactive().getStatefulConnection()).isSameAs(connection);
         assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
                 .isNotInstanceOf(StatefulRedisConnectionImpl.class).isSameAs(connection);
 
@@ -263,6 +267,7 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void wrappedClusterConnectionShouldUseWrappers() throws Exception {
 
         RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
@@ -281,9 +286,9 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
         assertThat(sync).isInstanceOf(RedisAdvancedClusterCommands.class);
         assertThat(connection.async()).isInstanceOf(RedisAdvancedClusterAsyncCommands.class)
                 .isNotInstanceOf(RedisAdvancedClusterAsyncCommandsImpl.class);
-        assertThat(connection.commands(RedisAdvancedClusterReactiveCommands.factory()))
-                .isInstanceOf(RedisAdvancedClusterReactiveCommands.class)
+        assertThat(connection.reactive()).isInstanceOf(RedisAdvancedClusterReactiveCommands.class)
                 .isNotInstanceOf(RedisAdvancedClusterReactiveCommandsImpl.class);
+        assertThat(connection.reactive().getStatefulConnection()).isSameAs(connection);
         assertThat(connection.commands(RedisAdvancedClusterReactiveCommands.factory()))
                 .isInstanceOf(RedisAdvancedClusterReactiveCommands.class)
                 .isNotInstanceOf(RedisAdvancedClusterReactiveCommandsImpl.class);
@@ -311,7 +316,7 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
 
         assertThat(sync).isInstanceOf(RedisCommands.class);
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isInstanceOf(RedisAsyncCommandsImpl.class);
-        assertThat(connection.commands(RedisReactiveCommands.factory())).isInstanceOf(RedisReactiveCommands.class)
+        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class)
                 .isInstanceOf(RedisReactiveCommandsImpl.class);
         assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
                 .isInstanceOf(StatefulRedisConnectionImpl.class);

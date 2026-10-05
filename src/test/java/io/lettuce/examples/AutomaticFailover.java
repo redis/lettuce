@@ -79,7 +79,7 @@ public class AutomaticFailover {
         log.info("Available Endpoints: {}", connection.getEndpoints());
 
         // Get reactive commands interface
-        RedisReactiveCommands<String, String> reactive = connection.commands(RedisReactiveCommands.factory());
+        RedisReactiveCommands<String, String> reactive = connection.reactive();
 
         String keyName = "multidb-counter";
 

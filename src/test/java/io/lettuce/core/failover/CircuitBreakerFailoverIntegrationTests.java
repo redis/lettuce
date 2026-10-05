@@ -38,7 +38,6 @@ import io.lettuce.core.failover.api.CircuitBreakerConfig;
 import io.lettuce.core.failover.api.CircuitBreakerStateChangeEvent;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.test.WithPassword;
 import io.lettuce.test.settings.TestSettings;
 
@@ -429,7 +428,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
 
         // Execute commands that will fail using REACTIVE API
         for (int i = 0; i < 20; i++) {
-            connection.commands(RedisReactiveCommands.factory()).get("key" + i).subscribe();
+            connection.reactive().get("key" + i).subscribe();
         }
 
         // Then: Should receive state change event
@@ -465,8 +464,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
 
         // Write a test key to endpoint2 (so we can verify failover)
         connection.switchTo(endpoint2);
-        connection.commands(RedisReactiveCommands.factory()).set("failover-test-key-reactive", "endpoint2-value")
-                .block(Duration.ofSeconds(1));
+        connection.reactive().set("failover-test-key-reactive", "endpoint2-value").block(Duration.ofSeconds(1));
         connection.switchTo(endpoint1);
 
         // Track state changes
@@ -487,7 +485,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         int aimedFailureCount = cbConfig.getMinimumNumberOfFailures();
         // Execute commands that will fail on endpoint1 using REACTIVE API
         for (int i = 0; i < aimedFailureCount; i++) {
-            connection.commands(RedisReactiveCommands.factory()).get("key" + i).subscribe();
+            connection.reactive().get("key" + i).subscribe();
         }
 
         // Then: Should automatically failover to endpoint2
@@ -496,8 +494,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> assertEquals(endpoint2, connection.getCurrentEndpoint()));
 
         // Verify we can read from endpoint2
-        String value = connection.commands(RedisReactiveCommands.factory()).get("failover-test-key-reactive")
-                .block(Duration.ofSeconds(1));
+        String value = connection.reactive().get("failover-test-key-reactive").block(Duration.ofSeconds(1));
         assertThat(value).isEqualTo("endpoint2-value");
 
         // Cleanup
@@ -519,8 +516,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         AtomicInteger failureCounter = new AtomicInteger();
         int aimedFailureCount = cbConfig.getMinimumNumberOfFailures() - 1;
         for (int i = 0; i < aimedFailureCount; i++) {
-            connection.commands(RedisReactiveCommands.factory()).get("key" + i).doOnError(e -> failureCounter.incrementAndGet())
-                    .subscribe();
+            connection.reactive().get("key" + i).doOnError(e -> failureCounter.incrementAndGet()).subscribe();
         }
 
         // Then: Metrics should track failures
@@ -541,7 +537,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         shutdownRedisInstance(currentEndpoint);
 
         for (int i = 0; i < 20; i++) {
-            connection.commands(RedisReactiveCommands.factory()).get("key" + i).subscribe();
+            connection.reactive().get("key" + i).subscribe();
         }
 
         // Then: Circuit breaker should open
@@ -580,7 +576,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         shutdownRedisInstance(currentEndpoint);
 
         for (int i = 0; i < 20; i++) {
-            connection.commands(RedisReactiveCommands.factory()).get("key" + i).subscribe();
+            connection.reactive().get("key" + i).subscribe();
         }
 
         // Then: Both listeners should be notified

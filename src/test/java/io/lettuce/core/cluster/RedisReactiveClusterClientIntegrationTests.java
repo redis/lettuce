@@ -34,7 +34,7 @@ class RedisReactiveClusterClientIntegrationTests extends TestSupport {
     @Inject
     RedisReactiveClusterClientIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
         this.sync = connection.sync();
-        this.reactive = connection.commands(RedisAdvancedClusterReactiveCommands.factory());
+        this.reactive = connection.reactive();
     }
 
     @Test

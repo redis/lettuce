@@ -36,7 +36,7 @@ public class RedisCMSReactiveIntegrationTests extends RedisCMSIntegrationTests {
     @Inject
     public RedisCMSReactiveIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
-        this.reactive = connection.commands(RedisReactiveCommands.factory());
+        this.reactive = connection.reactive();
     }
 
     @Test

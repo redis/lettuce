@@ -68,7 +68,7 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
         connection = clusterClient.connect();
         sync = connection.sync();
         async = connection.async();
-        reactive = connection.commands(RedisAdvancedClusterReactiveCommands.factory());
+        reactive = connection.reactive();
     }
 
     @AfterEach

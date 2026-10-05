@@ -239,6 +239,46 @@ class FuturesUnitTests {
     }
 
     @Test
+    void withFallbackCompletesWhenErrorHandlerThrows() {
+
+        IllegalStateException handlerFailure = new IllegalStateException("handler failed");
+        List<Supplier<CompletionStage<String>>> attempts = Collections
+                .singletonList(() -> Futures.failed(new RuntimeException("e1")));
+
+        CompletableFuture<String> result = Futures.withFallback(attempts, errors -> {
+            throw handlerFailure;
+        });
+
+        assertThat(result).isCompletedExceptionally();
+        assertThatThrownBy(result::join).hasCause(handlerFailure);
+    }
+
+    @Test
+    void withFallbackCompletesWithLastFailureWhenErrorHandlerReturnsNull() {
+
+        RuntimeException e1 = new RuntimeException("e1");
+        RuntimeException e2 = new RuntimeException("e2");
+        List<Supplier<CompletionStage<String>>> attempts = Arrays.asList(() -> Futures.failed(e1), () -> Futures.failed(e2));
+
+        CompletableFuture<String> result = Futures.withFallback(attempts, errors -> null);
+
+        assertThat(result).isCompletedExceptionally();
+        assertThatThrownBy(result::join).hasCause(e2);
+    }
+
+    @Test
+    void withFallbackCompletesWhenAttemptFailsWithCauselessCompletionException() {
+
+        CompletionException causeless = new CompletionException("no cause", null);
+        List<Supplier<CompletionStage<String>>> attempts = Collections.singletonList(() -> Futures.failed(causeless));
+
+        CompletableFuture<String> result = Futures.withFallback(attempts, errors -> errors.get(errors.size() - 1));
+
+        assertThat(result).isCompletedExceptionally();
+        assertThatThrownBy(result::join).isSameAs(causeless);
+    }
+
+    @Test
     void unwrapExceptionsShouldUnwrapCompletionExceptionCause() {
 
         IllegalStateException cause = new IllegalStateException("error");
