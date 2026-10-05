@@ -17,7 +17,6 @@ import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.commands.BitCommandIntegrationTests;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
@@ -33,7 +32,7 @@ class BitReactiveCommandIntegrationTests extends BitCommandIntegrationTests {
     @Inject
     BitReactiveCommandIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
         super(client, ReactiveSyncInvocationHandler.sync(connection));
-        this.reactive = connection.commands(RedisReactiveCommands.factory());
+        this.reactive = connection.reactive();
     }
 
     @Test

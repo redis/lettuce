@@ -38,7 +38,7 @@ public class RedisBloomFilterReactiveIntegrationTests extends RedisBloomFilterIn
     @Inject
     public RedisBloomFilterReactiveIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
-        this.reactive = connection.commands(RedisReactiveCommands.factory());
+        this.reactive = connection.reactive();
     }
 
     @Test

@@ -27,7 +27,6 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.AclSetuserArgs;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -112,7 +111,7 @@ class ClusterCommandIntegrationTests extends TestSupport {
         List<Object> result = sync.clusterShards();
         assertThat(result).hasSize(2);
 
-        result = connection.commands(RedisReactiveCommands.factory()).clusterShards().block(Duration.ofSeconds(5));
+        result = connection.reactive().clusterShards().block(Duration.ofSeconds(5));
         assertThat(result).hasSize(2);
     }
 

@@ -9,7 +9,6 @@ import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.ClusterTopologyRefreshOptions;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DnsResolver;
@@ -110,8 +109,7 @@ public class EntraIdClusterIntegrationTests {
             for (String mykey : mset.keySet()) {
                 assertThat(defaultConnection.sync().get(mykey)).isEqualTo("value-" + mykey);
                 assertThat(defaultConnection.async().get(mykey).get()).isEqualTo("value-" + mykey);
-                assertThat(defaultConnection.commands(RedisAdvancedClusterReactiveCommands.factory()).get(mykey).block())
-                        .isEqualTo("value-" + mykey);
+                assertThat(defaultConnection.reactive().get(mykey).block()).isEqualTo("value-" + mykey);
             }
             assertThat(sync.del(mset.keySet().toArray(new String[0]))).isEqualTo(mset.keySet().size());
 

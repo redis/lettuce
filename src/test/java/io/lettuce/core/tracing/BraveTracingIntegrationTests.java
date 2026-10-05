@@ -48,7 +48,6 @@ import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.resource.FastShutdown;
@@ -186,7 +185,7 @@ class BraveTracingIntegrationTests extends TestSupport {
     void reactivePing() {
 
         StatefulRedisConnection<String, String> connect = client.connect();
-        connect.commands(RedisReactiveCommands.factory()).ping().as(StepVerifier::create).expectNext("PONG").verifyComplete();
+        connect.reactive().ping().as(StepVerifier::create).expectNext("PONG").verifyComplete();
 
         Wait.untilNotEquals(true, spans::isEmpty).waitOrTimeout();
         assertThat(spans).isNotEmpty();
@@ -198,7 +197,7 @@ class BraveTracingIntegrationTests extends TestSupport {
         ScopedSpan trace = clientTracing.tracer().startScopedSpan("foo");
 
         StatefulRedisConnection<String, String> connect = client.connect();
-        connect.commands(RedisReactiveCommands.factory()).ping() //
+        connect.reactive().ping() //
                 .contextWrite(it -> it.put(TraceContext.class, trace.context())) //
                 .as(StepVerifier::create) //
                 .expectNext("PONG").verifyComplete();
@@ -219,8 +218,8 @@ class BraveTracingIntegrationTests extends TestSupport {
         ScopedSpan trace = clientTracing.tracer().startScopedSpan("foo");
 
         StatefulRedisConnection<String, String> connect = client.connect();
-        connect.commands(RedisReactiveCommands.factory()).set("foo", "bar") //
-                .then(connect.commands(RedisReactiveCommands.factory()).get("foo")) //
+        connect.reactive().set("foo", "bar") //
+                .then(connect.reactive().get("foo")) //
                 .contextWrite(it -> it.put(TraceContext.class, trace.context())) //
                 .as(StepVerifier::create) //
                 .expectNext("bar").verifyComplete();
@@ -244,8 +243,7 @@ class BraveTracingIntegrationTests extends TestSupport {
         brave.Span trace = clientTracing.tracer().newTrace();
 
         StatefulRedisConnection<String, String> connect = client.connect();
-        connect.commands(RedisReactiveCommands.factory()).set("foo", "bar")
-                .then(connect.commands(RedisReactiveCommands.factory()).get("foo"))
+        connect.reactive().set("foo", "bar").then(connect.reactive().get("foo"))
                 .contextWrite(ReactorTraceContext
                         .withTraceContextProvider(() -> BraveTracing.BraveTraceContext.create(trace.context()))) //
                 .as(StepVerifier::create) //

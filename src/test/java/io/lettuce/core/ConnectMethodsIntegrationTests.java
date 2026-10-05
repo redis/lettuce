@@ -3,12 +3,8 @@ package io.lettuce.core;
 import javax.inject.Inject;
 
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
-import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
-import io.lettuce.core.cluster.pubsub.api.reactive.RedisClusterPubSubReactiveCommands;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
-import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +50,7 @@ class ConnectMethodsIntegrationTests {
     @Test
     void standaloneReactive() {
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
-            connection.commands(RedisReactiveCommands.factory());
+            connection.reactive();
         }
     }
 
@@ -102,7 +98,7 @@ class ConnectMethodsIntegrationTests {
     @Test
     void sentinelReactive() {
         try (StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel()) {
-            connection.commands(RedisSentinelReactiveCommands.factory());
+            connection.reactive();
         }
     }
 
@@ -129,7 +125,7 @@ class ConnectMethodsIntegrationTests {
     @Test
     void clusterReactive() {
         try (StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
-            connection.commands(RedisAdvancedClusterReactiveCommands.factory());
+            connection.reactive();
         }
     }
 
@@ -155,7 +151,7 @@ class ConnectMethodsIntegrationTests {
     @Test
     void clusterPubSubReactive() {
         try (StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub()) {
-            connection.commands(RedisClusterPubSubReactiveCommands.factory());
+            connection.reactive();
         }
     }
 
@@ -185,7 +181,7 @@ class ConnectMethodsIntegrationTests {
     void advancedClusterReactive() {
         try (StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connect()) {
             RedisURI uri = clusterClient.getPartitions().getPartition(0).getUri();
-            statefulConnection.getConnection(uri.getHost(), uri.getPort()).commands(RedisReactiveCommands.factory());
+            statefulConnection.getConnection(uri.getHost(), uri.getPort()).reactive();
         }
     }
 

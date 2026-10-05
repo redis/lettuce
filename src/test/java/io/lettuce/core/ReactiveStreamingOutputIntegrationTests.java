@@ -38,7 +38,7 @@ class ReactiveStreamingOutputIntegrationTests extends TestSupport {
     @Inject
     ReactiveStreamingOutputIntegrationTests(StatefulRedisConnection<String, String> connection) {
         this.redis = connection.sync();
-        this.reactive = connection.commands(RedisReactiveCommands.factory());
+        this.reactive = connection.reactive();
     }
 
     @BeforeEach

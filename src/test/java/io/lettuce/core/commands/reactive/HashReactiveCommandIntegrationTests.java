@@ -15,7 +15,6 @@ import reactor.test.StepVerifier;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.commands.HashCommandIntegrationTests;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
 
@@ -40,8 +39,8 @@ class HashReactiveCommandIntegrationTests extends HashCommandIntegrationTests {
         connection.sync().hset(key, "one", "1");
         connection.sync().hset(key, "two", "2");
 
-        connection.commands(RedisReactiveCommands.factory()).hgetall(key)
-                .collect(Collectors.toMap(KeyValue::getKey, Value::getValue)).as(StepVerifier::create).assertNext(actual -> {
+        connection.reactive().hgetall(key).collect(Collectors.toMap(KeyValue::getKey, Value::getValue)).as(StepVerifier::create)
+                .assertNext(actual -> {
 
                     assertThat(actual).containsEntry("zero", "0").containsEntry("one", "1").containsEntry("two", "2");
                 }).verifyComplete();

@@ -13,7 +13,6 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.ScanStream;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
@@ -77,7 +76,7 @@ public class ScanStreamVerification extends PublisherVerification<String> {
             map.clear();
         }
 
-        return ScanStream.scan(connection.commands(RedisReactiveCommands.factory()));
+        return ScanStream.scan(connection.reactive());
     }
 
     @Override

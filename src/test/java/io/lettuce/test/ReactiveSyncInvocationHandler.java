@@ -10,13 +10,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
-import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
 
 /**
@@ -98,24 +95,21 @@ public class ReactiveSyncInvocationHandler<K, V> extends ConnectionDecoratingInv
 
     public static <K, V> RedisCommands<K, V> sync(StatefulRedisConnection<K, V> connection) {
 
-        ReactiveSyncInvocationHandler<K, V> handler = new ReactiveSyncInvocationHandler<>(connection,
-                connection.commands(RedisReactiveCommands.factory()));
+        ReactiveSyncInvocationHandler<K, V> handler = new ReactiveSyncInvocationHandler<>(connection, connection.reactive());
         return (RedisCommands<K, V>) Proxy.newProxyInstance(handler.getClass().getClassLoader(),
                 new Class<?>[] { RedisCommands.class }, handler);
     }
 
     public static <K, V> RedisCommands<K, V> sync(StatefulRedisClusterConnection<K, V> connection) {
 
-        ReactiveSyncInvocationHandler<K, V> handler = new ReactiveSyncInvocationHandler<>(connection,
-                connection.commands(RedisAdvancedClusterReactiveCommands.factory()));
+        ReactiveSyncInvocationHandler<K, V> handler = new ReactiveSyncInvocationHandler<>(connection, connection.reactive());
         return (RedisCommands<K, V>) Proxy.newProxyInstance(handler.getClass().getClassLoader(),
                 new Class<?>[] { RedisCommands.class }, handler);
     }
 
     public static <K, V> RedisSentinelCommands<K, V> sync(StatefulRedisSentinelConnection<K, V> connection) {
 
-        ReactiveSyncInvocationHandler<K, V> handler = new ReactiveSyncInvocationHandler<>(connection,
-                connection.commands(RedisSentinelReactiveCommands.factory()));
+        ReactiveSyncInvocationHandler<K, V> handler = new ReactiveSyncInvocationHandler<>(connection, connection.reactive());
         return (RedisSentinelCommands<K, V>) Proxy.newProxyInstance(handler.getClass().getClassLoader(),
                 new Class<?>[] { RedisSentinelCommands.class }, handler);
     }
