@@ -123,9 +123,12 @@ public class ConnectionWrapping {
 
             try {
 
-                // TODO: when sync()/async() are removed, delete this branch and the connectionProxies map - the
-                // commands(...) branch below already wraps every command API generically (keyed by factory).
-                if (method.getName().equals("sync") || method.getName().equals("async")) {
+                // TODO: when sync()/async()/reactive() are removed, delete this branch and the connectionProxies map - the
+                // commands(...) branch below already wraps every command API generically (keyed by factory). reactive() must
+                // be listed here: it is a default interface method, so falling through to method.invoke(connection, ...)
+                // would run its body against the target connection and return an unwrapped API.
+                if (method.getName().equals("sync") || method.getName().equals("async")
+                        || method.getName().equals("reactive")) {
                     return connectionProxies.computeIfAbsent(method, m -> getInnerProxy(method, args));
                 }
 
