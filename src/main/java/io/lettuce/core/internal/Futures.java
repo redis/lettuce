@@ -401,6 +401,9 @@ public abstract class Futures {
                 future.complete(value);
             } else {
                 Throwable cause = Exceptions.unwrap(error);
+                if (cause == null) {
+                    cause = error;
+                }
                 failures.add(cause);
                 future.completeExceptionally(cause);
             }

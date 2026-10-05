@@ -267,6 +267,18 @@ class FuturesUnitTests {
     }
 
     @Test
+    void withFallbackCompletesWhenAttemptFailsWithCauselessCompletionException() {
+
+        CompletionException causeless = new CompletionException("no cause", null);
+        List<Supplier<CompletionStage<String>>> attempts = Collections.singletonList(() -> Futures.failed(causeless));
+
+        CompletableFuture<String> result = Futures.withFallback(attempts, errors -> errors.get(errors.size() - 1));
+
+        assertThat(result).isCompletedExceptionally();
+        assertThatThrownBy(result::join).isSameAs(causeless);
+    }
+
+    @Test
     void unwrapExceptionsShouldUnwrapCompletionExceptionCause() {
 
         IllegalStateException cause = new IllegalStateException("error");
