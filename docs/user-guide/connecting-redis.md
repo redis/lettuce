@@ -374,9 +374,12 @@ public class MyStreamingCredentialsProvider implements CredentialsProvider, Auto
 Notes on the sample:
 
 - No explicit locking is used. `CopyOnWriteArrayList` makes subscriber iteration safe against concurrent
-  add/remove, and `AtomicReference` makes the latest-credentials swap atomic. A subscribe call that races
-  with `emitCredentials` may miss the in-flight notification but will observe the new value on the next
-  emission, which is acceptable because re-authentication is idempotent.
+  add/remove, and `AtomicReference` makes the latest-credentials swap atomic. This leaves one race: if
+  `subscribeToCredentials` reads the latest credentials while `emitCredentials` runs, the new subscriber
+  can receive the new credentials first and the replayed previous ones afterwards, re-authenticating with
+  stale credentials. Providers that emit credentials concurrently with subscriptions should serialize the
+  two, for example by running emission and replay on a single-threaded `Executor` or by making both
+  methods `synchronized`.
 - `subscribeToCredentials` and `emitCredentials` dispatch on the caller thread for brevity. Production
   providers should consider hopping to a dedicated `Executor` so that subscriber callbacks cannot block
   the thread that drives credential renewal.
