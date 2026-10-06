@@ -67,7 +67,11 @@ class StaticMasterReplicaTopologyProvider implements TopologyProvider {
         CompletableFuture.allOf(perUri.toArray(new CompletableFuture[0])).whenComplete((ignored, error) -> {
 
             if (error != null) {
-                result.completeExceptionally(Exceptions.unwrap(error));
+                Throwable cause = Exceptions.unwrap(error);
+                if (cause == null) {
+                    cause = error;
+                }
+                result.completeExceptionally(cause);
                 return;
             }
 
