@@ -21,12 +21,12 @@ import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.test.condition.RedisConditions;
-import io.lettuce.test.resource.ModulesTestUri;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import reactor.test.StepVerifier;
@@ -45,8 +45,10 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 @Tag(INTEGRATION_TEST)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RedisJsonIntegrationTests {
 
     private static final String BIKES_INVENTORY = "bikes:inventory";

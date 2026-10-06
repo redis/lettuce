@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
+import java.util.Locale;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,6 +73,33 @@ class NumberListOutputUnitTests {
         sut.set(ByteBuffer.wrap("1933".getBytes()));
 
         assertThat(sut.get()).containsExactly(1933L);
+    }
+
+    @Test
+    void setResp2KeepsNumberTypes() {
+        NumberListOutput<String, String> sut = new NumberListOutput<>(StringCodec.UTF8);
+        sut.set(ByteBuffer.wrap("[2.0]".getBytes()));
+        sut.set(ByteBuffer.wrap("[1934]".getBytes()));
+
+        assertThat(sut.get()).containsExactly(2.0, 1934L);
+        assertThat(sut.get().get(0)).isInstanceOf(Double.class);
+        assertThat(sut.get().get(1)).isInstanceOf(Long.class);
+    }
+
+    @Test
+    void setIgnoresDefaultLocale() {
+        Locale defaultLocale = Locale.getDefault();
+        Locale.setDefault(Locale.GERMANY);
+
+        try {
+            NumberListOutput<String, String> sut = new NumberListOutput<>(StringCodec.UTF8);
+            sut.set(ByteBuffer.wrap("1929.5".getBytes()));
+            sut.set(ByteBuffer.wrap("[1928.5]".getBytes()));
+
+            assertThat(sut.get()).containsExactly(1929.5, 1928.5);
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 
     @Test

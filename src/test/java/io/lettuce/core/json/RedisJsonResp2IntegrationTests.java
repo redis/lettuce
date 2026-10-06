@@ -17,7 +17,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
  * RESP2 integration tests for Redis JSON commands. Re-runs all tests from {@link RedisJsonIntegrationTests} using RESP2.
  *
  * @author Yordan Tsintsov
- * @since 8.0
+ * @since 7.9
  */
 @Tag(INTEGRATION_TEST)
 public class RedisJsonResp2IntegrationTests extends RedisJsonIntegrationTests {
