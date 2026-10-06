@@ -1373,6 +1373,8 @@ class RedisCommandBuilderUnitTests {
         assertThatThrownBy(() -> sut.blessScan(null, BlessFlag.NO_EVICT)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> sut.blessScan(ScanCursor.FINISHED, BlessFlag.NO_EVICT))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
     @Test
     void geodistShouldRejectNullTo() {
         assertThatThrownBy(() -> sut.geodist("key", "from", null, GeoArgs.Unit.m)).isInstanceOf(IllegalArgumentException.class)
