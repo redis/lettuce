@@ -13,13 +13,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import io.lettuce.core.Pair;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.Pair;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.Command;

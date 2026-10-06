@@ -28,13 +28,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 import io.lettuce.core.ConnectionFuture;
-import io.lettuce.core.Pair;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.event.jfr.EventRecorder;
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.Pair;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**

@@ -13,9 +13,9 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.Pair;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.Pair;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 

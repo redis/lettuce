@@ -8,9 +8,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 
-import io.lettuce.core.Pair;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.internal.Pair;
 import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
