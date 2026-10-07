@@ -98,7 +98,7 @@ public class RedisJsonClusterIntegrationTests {
         JsonPath myPath = JsonPath.of(path);
         JsonValue element = parser.createJsonValue("\"white\"");
 
-        List<Long> arrayIndex = redis.jsonArrindex(BIKES_INVENTORY, myPath, element, null);
+        List<Long> arrayIndex = redis.jsonArrindex(BIKES_INVENTORY, myPath, element, JsonRangeArgs.Builder.defaults());
         assertThat(arrayIndex).isNotNull();
         assertThat(arrayIndex).hasSize(1);
         assertThat(arrayIndex.get(0).longValue()).isEqualTo(1L);

@@ -42,7 +42,7 @@ package io.lettuce.core.json;
  *                 "colors": ["black", "silver"],
  *             },
  *             ...
- *         }
+ *         ]
  *     }
  *}
  * </pre>
@@ -52,6 +52,7 @@ package io.lettuce.core.json;
  * {@code JSON.GET store '$.inventory["mountain_bikes"]' }
  *
  * @author Tihomir Mateev
+ * @author Yordan Tsintsov
  * @since 6.5
  * @see <a href="https://redis.io/docs/latest/develop/data-types/json/path/#jsonpath-support">JSON Path in Redis docs</a>
  */
@@ -70,6 +71,7 @@ public class JsonPath {
      * 
      * @deprecated since 6.5, use {@link #ROOT_PATH} instead.
      */
+    @Deprecated
     public static final JsonPath ROOT_PATH_LEGACY = new JsonPath(".");
 
     private final String path;
@@ -109,7 +111,14 @@ public class JsonPath {
 
     @Override
     public boolean equals(Object obj) {
-        return this.path.equals(obj);
+        if (obj == this) {
+            return true;
+        }
+        if (obj instanceof JsonPath) {
+            JsonPath other = (JsonPath) obj;
+            return path.equals(other.path);
+        }
+        return false;
     }
 
     @Override
