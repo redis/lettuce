@@ -1,7 +1,9 @@
 package io.lettuce.core;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
@@ -11,10 +13,14 @@ import java.util.TreeMap;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 
 /**
  * Confines Reactor to the declared reactive layer + a small allowlist of reactor-bearing bridges. Any production class outside
@@ -63,9 +69,45 @@ class ReactorConfinementUnitTests {
 
     };
 
+    private static final ArchCondition<JavaField> HAVE_A_TYPE_INVOLVING_REACTOR = new ArchCondition<JavaField>(
+            "have a type involving Reactor") {
+
+        @Override
+        public void check(JavaField field, ConditionEvents events) {
+            boolean involvesReactor = field.getType().getAllInvolvedRawTypes().stream().anyMatch(REACTOR_TYPES);
+            events.add(new SimpleConditionEvent(field, involvesReactor,
+                    field.getFullName() + " has type " + field.getType().getName()));
+        }
+
+    };
+
+    private static final ArchCondition<JavaClass> NOT_ACCESS_REACTOR_IN_STATIC_INITIALIZER = new ArchCondition<JavaClass>(
+            "not access Reactor in their static initializer") {
+
+        @Override
+        public void check(JavaClass clazz, ConditionEvents events) {
+            clazz.getStaticInitializer()
+                    .ifPresent(initializer -> initializer.getAccessesFromSelf().stream()
+                            .filter(access -> REACTOR_TYPES.test(access.getTargetOwner()))
+                            .forEach(access -> events.add(SimpleConditionEvent.violated(access, access.getDescription()))));
+        }
+
+    };
+
     @ArchTest
     static final ArchRule reactor_only_where_declared = noClasses().that(OUTSIDE_DECLARED_REACTOR_HOMES).should()
             .dependOnClassesThat(REACTOR_TYPES);
+
+    /**
+     * Static state must not involve Reactor, not even in a reactive home: initializing such a class then needs Reactor, and
+     * GraalVM native images link classes whether or not they are used. A {@code Mono}-typed lambda held in a static field is
+     * enough to break a native image built without Reactor.
+     */
+    @ArchTest
+    static final ArchRule no_reactor_in_static_fields = noFields().that().areStatic().should(HAVE_A_TYPE_INVOLVING_REACTOR);
+
+    @ArchTest
+    static final ArchRule no_reactor_in_static_initializers = classes().should(NOT_ACCESS_REACTOR_IN_STATIC_INITIALIZER);
 
     @ArchTest
     static void allowlistIsNotStale(JavaClasses classes) {
