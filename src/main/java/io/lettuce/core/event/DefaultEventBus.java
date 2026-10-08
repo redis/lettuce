@@ -19,7 +19,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * {@link EventExecutor}, so events published from a single thread are delivered to that subscriber in publication order;
  * ordering across concurrent publishers, and relative to {@link EventRecorder}, is not guaranteed. A subscriber that cannot
  * keep up drops events (bounded by {@code maxInFlightPerSubscription}) rather than applying back-pressure to the publishing
- * thread.
+ * thread. Dropped events are logged at {@code DEBUG} level.
  *
  * @author Mark Paluch
  * @since 3.4
@@ -132,8 +132,10 @@ public class DefaultEventBus implements EventBus {
 
             if (inFlight.incrementAndGet() > maxInFlightPerSubscription) {
                 inFlight.decrementAndGet();
-                logger.warn("Dropping event {} for a slow event bus subscriber ({} in-flight events exceeded)",
-                        event.getClass().getName(), maxInFlightPerSubscription);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Dropping event {} for a slow event bus subscriber ({} in-flight events exceeded)",
+                            event.getClass().getName(), maxInFlightPerSubscription);
+                }
                 return;
             }
 

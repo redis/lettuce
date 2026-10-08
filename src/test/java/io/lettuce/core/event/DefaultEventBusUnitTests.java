@@ -13,11 +13,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.Subscription;
+import io.lettuce.test.LoggingTestUtils;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 
@@ -182,6 +184,37 @@ class DefaultEventBusUnitTests {
 
         assertThat(received.poll(1, TimeUnit.SECONDS)).isSameAs(first);
         assertThat(received.poll(200, TimeUnit.MILLISECONDS)).isNull();
+    }
+
+    @Test
+    void logsDroppedEventsAtDebug() throws Exception {
+
+        try (LoggingTestUtils.CapturingAppender debug = LoggingTestUtils.attachAppenderFor(DefaultEventBus.class,
+                Level.DEBUG)) {
+            dropOneEvent();
+            assertThat(debug.messages()).hasSize(1).allMatch(message -> message.startsWith("Dropping event"));
+        }
+    }
+
+    private void dropOneEvent() throws InterruptedException {
+
+        DefaultEventBus sut = new DefaultEventBus(group, 1);
+        CountDownLatch gate = new CountDownLatch(1);
+        CountDownLatch firstRunning = new CountDownLatch(1);
+
+        sut.subscribe(event -> {
+            firstRunning.countDown();
+            try {
+                gate.await(2, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        sut.publish(new TestEvent()); // blocks the single executor thread; in-flight == 1
+        assertThat(firstRunning.await(1, TimeUnit.SECONDS)).isTrue();
+        sut.publish(new TestEvent()); // dropped
+        gate.countDown();
     }
 
     @Test
