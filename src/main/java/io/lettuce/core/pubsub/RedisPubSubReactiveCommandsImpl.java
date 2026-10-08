@@ -19,10 +19,13 @@
  */
 package io.lettuce.core.pubsub;
 
+import io.lettuce.core.pubsub.api.reactive.SubscriptionMessage;
 import java.util.Map;
 
+import java.util.function.Function;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.FluxSink.OverflowStrategy;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.codec.RedisCodec;
@@ -110,6 +113,27 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
             sink.onDispose(() -> {
                 statefulConnection.removeListener(listener);
             });
+
+        }, overflowStrategy);
+    }
+
+    @Override
+    public Flux<SubscriptionMessage<K, V>> observe(
+            Function<FluxSink<SubscriptionMessage<K, V>>, RedisPubSubAdapter<K, V>> adapterFactory) {
+        return observe(FluxSink.OverflowStrategy.BUFFER, adapterFactory);
+    }
+
+    @Override
+    public Flux<SubscriptionMessage<K, V>> observe(OverflowStrategy overflowStrategy,
+            Function<FluxSink<SubscriptionMessage<K, V>>, RedisPubSubAdapter<K, V>> adapterFactory) {
+        return Flux.create(sink -> {
+
+            RedisPubSubAdapter<K, V> listener = adapterFactory.apply(sink);
+
+            StatefulRedisPubSubConnection<K, V> statefulConnection = getStatefulConnection();
+            statefulConnection.addListener(listener);
+
+            sink.onDispose(() -> statefulConnection.removeListener(listener));
 
         }, overflowStrategy);
     }
