@@ -103,24 +103,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     private final RedisCodec<K, V> codec;
 
     /**
-     * Map a {@link Mono} of {@link KeyScanCursor} to a {@link Mono} of a cluster-aware {@link KeyScanCursor}. Kept here rather
-     * than in {@link ClusterScanSupport} so that the shared scan support used by the sync/async API does not depend on Reactor.
-     * <p>
-     * The scan cursor mappers are instance rather than static fields: a {@link Mono}-typed lambda in the static initializer
-     * makes initializing this class require Reactor, which breaks GraalVM native images built without Reactor.
-     */
-    private final ClusterScanSupport.ScanCursorMapper<Mono<KeyScanCursor<K>>> keyScanCursorMapper = (nodeIds, currentNodeId,
-            cursor) -> cursor
-                    .map(keyScanCursor -> ClusterScanSupport.toClusterKeyScanCursor(nodeIds, currentNodeId, keyScanCursor));
-
-    /**
-     * Map a {@link Mono} of {@link StreamScanCursor} to a {@link Mono} of a cluster-aware {@link StreamScanCursor}.
-     */
-    private final ClusterScanSupport.ScanCursorMapper<Mono<StreamScanCursor>> streamScanCursorMapper = (nodeIds, currentNodeId,
-            cursor) -> cursor.map(
-                    streamScanCursor -> ClusterScanSupport.toClusterStreamScanCursor(nodeIds, currentNodeId, streamScanCursor));
-
-    /**
      * Initialize a new connection.
      *
      * @param connection the stateful connection.
@@ -565,44 +547,44 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Mono<KeyScanCursor<K>> scan() {
-        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(), keyScanCursorMapper);
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(), keyScanCursorMapper());
     }
 
     @Override
     public Mono<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
-        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(scanArgs), keyScanCursorMapper);
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(scanArgs), keyScanCursorMapper());
     }
 
     @Override
     public Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
-        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor, scanArgs), keyScanCursorMapper);
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor, scanArgs), keyScanCursorMapper());
     }
 
     @Override
     public Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
-        return clusterScan(scanCursor, RedisKeyReactiveCommands::scan, keyScanCursorMapper);
+        return clusterScan(scanCursor, RedisKeyReactiveCommands::scan, keyScanCursorMapper());
     }
 
     @Override
     public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel) {
-        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel), streamScanCursorMapper);
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel), streamScanCursorMapper());
     }
 
     @Override
     public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel, scanArgs),
-                streamScanCursorMapper);
+                streamScanCursorMapper());
     }
 
     @Override
     public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor, scanArgs),
-                streamScanCursorMapper);
+                streamScanCursorMapper());
     }
 
     @Override
     public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
-        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor), streamScanCursorMapper);
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor), streamScanCursorMapper());
     }
 
     @Override
@@ -967,6 +949,51 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         Mono<T> scanCursor = getMono(connectionProvider.<K, V> getConnectionAsync(ConnectionIntent.WRITE, currentNodeId))
                 .flatMap(conn -> scanFunction.apply(conn.commands(RedisReactiveCommands.factory()), continuationCursor));
         return mapper.map(nodeIds, currentNodeId, scanCursor);
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static <K> ClusterScanSupport.ScanCursorMapper<Mono<KeyScanCursor<K>>> keyScanCursorMapper() {
+        return (ClusterScanSupport.ScanCursorMapper) KeyScanCursorMapper.INSTANCE;
+    }
+
+    private static ClusterScanSupport.ScanCursorMapper<Mono<StreamScanCursor>> streamScanCursorMapper() {
+        return StreamScanCursorMapper.INSTANCE;
+    }
+
+    /**
+     * Map a {@link Mono} of {@link KeyScanCursor} to a {@link Mono} of a cluster-aware {@link KeyScanCursor}. Kept here rather
+     * than in {@link ClusterScanSupport} so that the shared scan support used by the sync/async API does not depend on Reactor.
+     * <p>
+     * The scan cursor mappers are nested classes rather than lambdas held in static or instance fields: GraalVM native image
+     * analysis reaches the static initializer and the constructors of all command implementations through
+     * {@code commands(CommandsFactory)} even if the reactive API is never used, and a {@link Mono}-typed lambda there breaks
+     * native images built without Reactor. The nested classes are only reached through the reactive scan methods.
+     */
+    private static final class KeyScanCursorMapper implements ClusterScanSupport.ScanCursorMapper<Mono<KeyScanCursor<?>>> {
+
+        static final KeyScanCursorMapper INSTANCE = new KeyScanCursorMapper();
+
+        @Override
+        public Mono<KeyScanCursor<?>> map(List<String> nodeIds, String currentNodeId, Mono<KeyScanCursor<?>> cursor) {
+            return cursor
+                    .map(keyScanCursor -> ClusterScanSupport.toClusterKeyScanCursor(nodeIds, currentNodeId, keyScanCursor));
+        }
+
+    }
+
+    /**
+     * Map a {@link Mono} of {@link StreamScanCursor} to a {@link Mono} of a cluster-aware {@link StreamScanCursor}.
+     */
+    private static final class StreamScanCursorMapper implements ClusterScanSupport.ScanCursorMapper<Mono<StreamScanCursor>> {
+
+        static final StreamScanCursorMapper INSTANCE = new StreamScanCursorMapper();
+
+        @Override
+        public Mono<StreamScanCursor> map(List<String> nodeIds, String currentNodeId, Mono<StreamScanCursor> cursor) {
+            return cursor.map(
+                    streamScanCursor -> ClusterScanSupport.toClusterStreamScanCursor(nodeIds, currentNodeId, streamScanCursor));
+        }
+
     }
 
     private static <T> Mono<T> getMono(CompletableFuture<T> future) {

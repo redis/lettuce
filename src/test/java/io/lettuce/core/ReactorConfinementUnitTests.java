@@ -6,13 +6,16 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -81,15 +84,21 @@ class ReactorConfinementUnitTests {
 
     };
 
-    private static final ArchCondition<JavaClass> NOT_ACCESS_REACTOR_IN_STATIC_INITIALIZER = new ArchCondition<JavaClass>(
-            "not access Reactor in their static initializer") {
+    private static final ArchCondition<JavaClass> NOT_ACCESS_REACTOR_IN_INITIALIZERS = new ArchCondition<JavaClass>(
+            "not access Reactor in their static initializer or, for command implementations, their constructors") {
 
         @Override
         public void check(JavaClass clazz, ConditionEvents events) {
-            clazz.getStaticInitializer()
-                    .ifPresent(initializer -> initializer.getAccessesFromSelf().stream()
-                            .filter(access -> REACTOR_TYPES.test(access.getTargetOwner()))
-                            .forEach(access -> events.add(SimpleConditionEvent.violated(access, access.getDescription()))));
+
+            List<JavaCodeUnit> initializers = new ArrayList<>();
+            clazz.getStaticInitializer().ifPresent(initializers::add);
+            if (isCommandImplementation(clazz)) {
+                initializers.addAll(clazz.getConstructors());
+            }
+
+            initializers.stream().flatMap(initializer -> initializer.getAccessesFromSelf().stream())
+                    .filter(access -> REACTOR_TYPES.test(access.getTargetOwner()))
+                    .forEach(access -> events.add(SimpleConditionEvent.violated(access, access.getDescription())));
         }
 
     };
@@ -106,8 +115,14 @@ class ReactorConfinementUnitTests {
     @ArchTest
     static final ArchRule no_reactor_in_static_fields = noFields().that().areStatic().should(HAVE_A_TYPE_INVOLVING_REACTOR);
 
+    /**
+     * Static initializers, and constructors of command implementations (including their instance field initializers), must not
+     * use Reactor, not even in a reactive home. GraalVM native image analysis reaches the constructors of all command
+     * implementations through {@code commands(CommandsFactory)}, whether or not the reactive API is used; other method bodies
+     * are only analyzed when reachable.
+     */
     @ArchTest
-    static final ArchRule no_reactor_in_static_initializers = classes().should(NOT_ACCESS_REACTOR_IN_STATIC_INITIALIZER);
+    static final ArchRule no_reactor_in_initializers = classes().should(NOT_ACCESS_REACTOR_IN_INITIALIZERS);
 
     @ArchTest
     static void allowlistIsNotStale(JavaClasses classes) {
@@ -134,6 +149,15 @@ class ReactorConfinementUnitTests {
         return classes.stream().filter(clazz -> topLevelName(clazz).equals(topLevelName))
                 .flatMap(clazz -> clazz.getDirectDependenciesFromSelf().stream())
                 .anyMatch(dependency -> REACTOR_TYPES.test(dependency.getTargetClass()));
+    }
+
+    /**
+     * Whether the class implements a reactive or coroutines command API, so its constructor is reachable through
+     * {@code commands(CommandsFactory)}.
+     */
+    private static boolean isCommandImplementation(JavaClass clazz) {
+        return !clazz.isInterface()
+                && clazz.getAllRawInterfaces().stream().anyMatch(type -> isReactivePackage(type.getPackageName()));
     }
 
     private static boolean isReactivePackage(String packageName) {
