@@ -144,8 +144,12 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
         @SuppressWarnings("rawtypes")
         private static final ClusterPubSubCommandsFactory INSTANCE = newFactory();
 
-        // Separate from INSTANCE so that a GraalVM native image substitution can replace it, keeping the
-        // Reactor-based implementation out of images built without Reactor.
+        /**
+         * Create the shared factory. Separate from {@code INSTANCE} so that a GraalVM native image substitution can replace it,
+         * keeping the Reactor-based implementation out of images built without Reactor.
+         *
+         * @return the factory creating {@link RedisClusterPubSubReactiveCommands} instances.
+         */
         @SuppressWarnings({ "rawtypes", "unchecked" })
         private static ClusterPubSubCommandsFactory newFactory() {
             return ClusterPubSubCommandsFactory.of(RedisClusterPubSubReactiveCommands.class,

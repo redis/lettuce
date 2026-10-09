@@ -122,8 +122,12 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
         @SuppressWarnings("rawtypes")
         private static final CommandsFactory INSTANCE = newFactory();
 
-        // Separate from INSTANCE so that a GraalVM native image substitution can replace it, keeping the
-        // Reactor-based implementation out of images built without Reactor.
+        /**
+         * Create the shared factory. Separate from {@code INSTANCE} so that a GraalVM native image substitution can replace it,
+         * keeping the Reactor-based implementation out of images built without Reactor.
+         *
+         * @return the factory creating {@link RedisReactiveCommands} instances.
+         */
         @SuppressWarnings({ "rawtypes", "unchecked" })
         private static CommandsFactory newFactory() {
             return CommandsFactory.of(RedisReactiveCommands.class,
