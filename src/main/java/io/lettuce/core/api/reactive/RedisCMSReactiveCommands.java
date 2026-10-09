@@ -7,6 +7,7 @@
 package io.lettuce.core.api.reactive;
 
 import io.lettuce.core.probabilistic.CMSInfoValue;
+import io.lettuce.core.probabilistic.CmsCellSize;
 import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.MergePair;
 import reactor.core.publisher.Flux;
@@ -24,7 +25,9 @@ import reactor.core.publisher.Mono;
 public interface RedisCMSReactiveCommands<K, V> {
 
     /**
-     * Increases the count of an item by the given increment.
+     * Increases the count of an item by the given increment. A negative increment decrements the count; the server applies it
+     * only if every counter cell of the item holds at least that amount, otherwise the command fails with a
+     * {@code CMS: INCRBY underflow} error and the sketch is left unchanged. Negative increments require Redis 8.12 or later.
      *
      * @param key the key.
      * @param pair the item paired with the increment to add to its count.
@@ -33,7 +36,10 @@ public interface RedisCMSReactiveCommands<K, V> {
     Flux<Long> cmsIncrBy(K key, IncrementPair<V> pair);
 
     /**
-     * Increases the count of several items by their given increments in a single call.
+     * Increases the count of several items by their given increments in a single call. A negative increment decrements the
+     * count of its item; the server applies it only if every counter cell of the item holds at least that amount, otherwise the
+     * command fails with a {@code CMS: INCRBY underflow} error. Items preceding the failing pair are still applied. Negative
+     * increments require Redis 8.12 or later.
      *
      * @param key the key.
      * @param pairs the items paired with the increment to add to each item's count.
@@ -42,7 +48,8 @@ public interface RedisCMSReactiveCommands<K, V> {
     Flux<Long> cmsIncrBy(K key, IncrementPair<V>... pairs);
 
     /**
-     * Returns width, depth and total count of the sketch.
+     * Returns width, depth, total count and cell size of the sketch. The cell size is reported by Redis 8.12 and later;
+     * {@link CMSInfoValue#getCellSize()} is {@code null} on earlier servers.
      *
      * @param key the key.
      * @return the {@link CMSInfoValue} holding the sketch information.
@@ -60,6 +67,21 @@ public interface RedisCMSReactiveCommands<K, V> {
     Mono<String> cmsInitByDim(K key, long width, long depth);
 
     /**
+     * Initializes a Count-Min Sketch to the dimensions specified by the user and the number of bytes per counter cell.
+     *
+     * @param key the key. An error is returned if the key already exists.
+     * @param width the number of counters in each array. Reduces the error size.
+     * @param depth the number of counter-arrays. Reduces the probability of an error exceeding the estimated size.
+     * @param cellSize the number of bytes per counter cell ({@code CELL_SIZE}), must not be {@code null}. Smaller cells reduce
+     *        the memory footprint but lower the maximum count a cell can hold. The server default is
+     *        {@link CmsCellSize#FOUR_BYTES}.
+     * @return String simple-string-reply {@code OK} if {@code CMS.INITBYDIM} was executed correctly.
+     * @throws IllegalArgumentException if {@code cellSize} is {@code null}.
+     * @since 7.8
+     */
+    Mono<String> cmsInitByDim(K key, long width, long depth, CmsCellSize cellSize);
+
+    /**
      * Initializes a Count-Min Sketch to accommodate requested tolerances.
      *
      * @param key the key. An error is returned if the key already exists.
@@ -68,6 +90,21 @@ public interface RedisCMSReactiveCommands<K, V> {
      * @return String simple-string-reply {@code OK} if {@code CMS.INITBYPROB} was executed correctly.
      */
     Mono<String> cmsInitByProb(K key, double error, double probability);
+
+    /**
+     * Initializes a Count-Min Sketch to accommodate requested tolerances and the number of bytes per counter cell.
+     *
+     * @param key the key. An error is returned if the key already exists.
+     * @param error estimate size of the error.
+     * @param probability the desired probability for inflated count.
+     * @param cellSize the number of bytes per counter cell ({@code CELL_SIZE}), must not be {@code null}. Smaller cells reduce
+     *        the memory footprint but lower the maximum count a cell can hold. The server default is
+     *        {@link CmsCellSize#FOUR_BYTES}.
+     * @return String simple-string-reply {@code OK} if {@code CMS.INITBYPROB} was executed correctly.
+     * @throws IllegalArgumentException if {@code cellSize} is {@code null}.
+     * @since 7.8
+     */
+    Mono<String> cmsInitByProb(K key, double error, double probability, CmsCellSize cellSize);
 
     /**
      * Merges a single source sketch into a destination sketch. All sketches must have identical width and depth, and the
