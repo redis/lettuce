@@ -404,9 +404,9 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return the factory that creates {@link RedisAdvancedClusterReactiveCommands}
      * @since 7.8
      */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings("unchecked")
     static <K, V> CommandsFactory<StatefulRedisClusterConnection<K, V>, RedisAdvancedClusterReactiveCommands<K, V>> factory() {
-        return (CommandsFactory) FactoryHolder.INSTANCE;
+        return FactoryHolder.INSTANCE;
     }
 
     /**
@@ -418,10 +418,17 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
         private FactoryHolder() {
         }
 
+        @SuppressWarnings("rawtypes")
+        private static final CommandsFactory INSTANCE = newFactory();
+
+        // Separate from INSTANCE so that a GraalVM native image substitution can replace it, keeping the
+        // Reactor-based implementation out of images built without Reactor.
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        private static final CommandsFactory INSTANCE = CommandsFactory.of(RedisAdvancedClusterReactiveCommands.class,
-                (StatefulRedisClusterConnection c) -> new RedisAdvancedClusterReactiveCommandsImpl(c, c.getCodec(),
-                        () -> c.getOptions().getJsonParser().get()));
+        private static CommandsFactory newFactory() {
+            return CommandsFactory.of(RedisAdvancedClusterReactiveCommands.class,
+                    (StatefulRedisClusterConnection c) -> new RedisAdvancedClusterReactiveCommandsImpl(c, c.getCodec(),
+                            () -> c.getOptions().getJsonParser().get()));
+        }
 
     }
 

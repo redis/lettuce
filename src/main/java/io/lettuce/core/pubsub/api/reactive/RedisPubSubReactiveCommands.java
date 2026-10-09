@@ -144,9 +144,9 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
      * @return the factory that creates {@link RedisPubSubReactiveCommands}
      * @since 7.8
      */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings("unchecked")
     static <K, V> PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, RedisPubSubReactiveCommands<K, V>> factory() {
-        return (PubSubCommandsFactory) FactoryHolder.INSTANCE;
+        return FactoryHolder.INSTANCE;
     }
 
     /**
@@ -158,9 +158,16 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
         private FactoryHolder() {
         }
 
+        @SuppressWarnings("rawtypes")
+        private static final PubSubCommandsFactory INSTANCE = newFactory();
+
+        // Separate from INSTANCE so that a GraalVM native image substitution can replace it, keeping the
+        // Reactor-based implementation out of images built without Reactor.
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        private static final PubSubCommandsFactory INSTANCE = PubSubCommandsFactory.of(RedisPubSubReactiveCommands.class,
-                (StatefulRedisPubSubConnection c) -> new RedisPubSubReactiveCommandsImpl(c, c.getCodec()));
+        private static PubSubCommandsFactory newFactory() {
+            return PubSubCommandsFactory.of(RedisPubSubReactiveCommands.class,
+                    (StatefulRedisPubSubConnection c) -> new RedisPubSubReactiveCommandsImpl(c, c.getCodec()));
+        }
 
     }
 
