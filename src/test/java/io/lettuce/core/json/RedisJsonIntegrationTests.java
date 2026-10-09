@@ -232,6 +232,28 @@ public class RedisJsonIntegrationTests {
 
     @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { BIKE_COLORS_V1, BIKE_COLORS_V2 })
+    void jsonArrtrimWithIndexes(String path) {
+        JsonPath myPath = JsonPath.of(path);
+
+        List<Long> arrayIndex = redis.jsonArrtrim(BIKES_INVENTORY, myPath, 1, 2);
+        assertThat(arrayIndex).isNotNull();
+        assertThat(arrayIndex).hasSize(1);
+        assertThat(arrayIndex.get(0).longValue()).isEqualTo(1L);
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { BIKE_COLORS_V1, BIKE_COLORS_V2 })
+    void jsonArrtrimToFirstElement(String path) {
+        JsonPath myPath = JsonPath.of(path);
+
+        List<Long> arrayIndex = redis.jsonArrtrim(BIKES_INVENTORY, myPath, 0, 0);
+        assertThat(arrayIndex).isNotNull();
+        assertThat(arrayIndex).hasSize(1);
+        assertThat(arrayIndex.get(0).longValue()).isEqualTo(1L);
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { BIKE_COLORS_V1, BIKE_COLORS_V2 })
     void jsonClear(String path) {
         JsonPath myPath = JsonPath.of(path);
 
@@ -627,6 +649,14 @@ public class RedisJsonIntegrationTests {
 
         JsonType jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
         assertThat(jsonType).isEqualTo(JsonType.ARRAY);
+    }
+
+    @Test
+    void jsonTypeMissingKey() {
+        List<JsonType> result = redis.jsonType("bikes:missing", JsonPath.ROOT_PATH);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isNull();
     }
 
     @Test

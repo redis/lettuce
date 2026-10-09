@@ -2006,6 +2006,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<Long>> jsonArrtrim(K key, JsonPath jsonPath, int start, int stop) {
+        return dispatch(jsonCommandBuilder.jsonArrtrim(key, jsonPath, start, stop));
+    }
+
+    @Override
     public RedisFuture<List<Long>> jsonArrtrim(K key, JsonPath jsonPath, JsonRangeArgs range) {
         return dispatch(jsonCommandBuilder.jsonArrtrim(key, jsonPath, range));
     }
