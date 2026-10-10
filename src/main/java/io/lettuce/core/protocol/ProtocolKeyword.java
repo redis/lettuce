@@ -4,6 +4,7 @@ package io.lettuce.core.protocol;
  * Interface for protocol keywords providing an encoded representation.
  *
  * @author Mark Paluch
+ * @author shariorfarhan07 (Sharior Hossain Farhan)
  */
 public interface ProtocolKeyword {
 
@@ -14,6 +15,10 @@ public interface ProtocolKeyword {
     byte[] getBytes();
 
     /**
+     * Return the name of the command. The name identifies the command type in command latency metrics, so implementations must
+     * return the same value for every instance representing the same command, typically the command name such as {@code GET}.
+     * Relying on {@link Object#toString()} yields a distinct name per instance, which makes latency recorders retain a separate
+     * metric for every command instance.
      *
      * @return name of the command.
      */

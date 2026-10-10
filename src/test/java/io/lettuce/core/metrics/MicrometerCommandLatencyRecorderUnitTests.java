@@ -47,6 +47,7 @@ import io.netty.channel.local.LocalAddress;
  * Unit tests for {@link MicrometerCommandLatencyRecorder}.
  *
  * @author Steven Sheehy
+ * @author shariorfarhan07 (Sharior Hossain Farhan)
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
@@ -159,6 +160,53 @@ class MicrometerCommandLatencyRecorderUnitTests {
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tags(tags).timers()).hasSize(1);
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_COMMAND, CommandType.AUTH.name()).timers()).hasSize(1);
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_REMOTE, REMOTE_ADDRESS.toString()).timers()).hasSize(1);
+    }
+
+    @Test
+    void shouldLimitCommandLatencyIdsForUnstableCommandNames() {
+
+        MicrometerOptions options = MicrometerOptions.builder().maxCommandLatencyIds(3).build();
+        MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
+
+        for (int i = 0; i < 10; i++) {
+            commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS,
+                    new DefaultCommandLatencyCollectorUnitTests.IdentityKeyword(), 1, 10);
+        }
+
+        assertThat(meterRegistry.find(METRIC_COMPLETION).timers()).hasSize(3);
+        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers()).hasSize(3);
+    }
+
+    @Test
+    void shouldLimitCommandLatencyIdsForChangingRemoteAddresses() {
+
+        MicrometerOptions options = MicrometerOptions.builder().maxCommandLatencyIds(2).build();
+        MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
+
+        for (int i = 0; i < 5; i++) {
+            commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, new LocalAddress("localhost:" + (6379 + i)),
+                    CommandType.GET, 1, 10);
+        }
+
+        assertThat(meterRegistry.find(METRIC_COMPLETION).timers()).hasSize(2);
+        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers()).hasSize(2);
+    }
+
+    @Test
+    void shouldRecordKnownCommandLatencyIdsAfterLimitReached() {
+
+        MicrometerOptions options = MicrometerOptions.builder().maxCommandLatencyIds(1).build();
+        MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
+
+        commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.BGSAVE, 100, 500);
+        commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.GET, 1, 10);
+        commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.BGSAVE, 200, 1000);
+
+        assertThat(meterRegistry.find(METRIC_COMPLETION).timers()).hasSize(1);
+        assertThat(meterRegistry.find(METRIC_COMPLETION).tag(LABEL_COMMAND, CommandType.BGSAVE.name()).timers()).hasSize(1)
+                .element(0).extracting(Timer::takeSnapshot).hasFieldOrPropertyWithValue("count", 2L);
+        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_COMMAND, CommandType.BGSAVE.name()).timers()).hasSize(1)
+                .element(0).extracting(Timer::takeSnapshot).hasFieldOrPropertyWithValue("count", 2L);
     }
 
     @Test

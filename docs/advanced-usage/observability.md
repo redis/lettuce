@@ -30,6 +30,18 @@ and port or socket path) and command type level (`GET`, `SET`, …​). It is
 possible to track command latencies on a per-connection level (see
 `DefaultCommandLatencyCollectorOptions`).
 
+!!! NOTE
+    The collector keeps latency data for each distinct remote endpoint and
+    command type in memory until the metrics are published (and reset). With
+    the default settings, metrics are published and reset every 10 minutes.
+    If you disable event publishing or set `resetLatenciesAfterEvent` to
+    `false`, the collected data is retained until you call
+    `CommandLatencyCollector.retrieveMetrics()`, so memory usage grows with
+    every new remote endpoint and command type up to `maxCommandLatencyIds`
+    (500 by default). Custom command types (`ProtocolKeyword`) must return a
+    stable command name from `toString()`; otherwise each command instance
+    is tracked separately and the limit is reached quickly.
+
 Command latencies are transported using Events on the `EventBus`. The
 `EventBus` can be obtained from the [client
 resources](client-resources.md) of the client instance. Please
@@ -98,6 +110,8 @@ The following settings are available to configure from
 | Allows controlling whether the latency metrics are reset to zero once they were published. Setting `resetLatenciesAfterEvent` allows accumulating metrics over a long period for long-term analytics.                                                                                                                                                                                  |                            |                                 |
 | **Local socket distinction**                                                                                                                                                                                                                                                                                                                                                          | `localDistinction`         | `false`                         |
 | Enables per connection metrics tracking instead of per host/port. If `true`, multiple connections to the same host/connection point will be recorded separately which allows to inspection of every connection individually. If `false`, multiple connections to the same host/connection point will be recorded together. This allows a consolidated view on one particular service. |                            |                                 |
+| **Maximum tracked command latency ids** | `maxCommandLatencyIds` | `500` |
+| Limits the number of distinct remote endpoint and command type combinations tracked between two metric resets. Once the limit is reached, latencies of new combinations are not recorded until the metrics are reset and a warning is logged once. | | |
 
 ### EventPublisher Options
 
@@ -127,6 +141,10 @@ following tags are attached to each timer:
 - `remote`: Remote socket (`localhost/127.0.0.1:6379`)
 
 Command latencies are reported using the provided `MeterRegistry`.
+Timers are registered once per distinct combination of tags and are kept
+for the lifetime of the recorder, so the `command` tag relies on custom
+command types (`ProtocolKeyword`) returning a stable name from
+`toString()`.
 
 ``` java
 MeterRegistry meterRegistry = …;
@@ -166,6 +184,8 @@ The following settings are available to configure from
 | Enables per connection metrics tracking instead of per host/port. If `true`, multiple connections to the same host/connection point will be recorded separately which allows inspection of every connection individually. If `false`, multiple connections to the same host/connection point will be recorded together. This allows a consolidated view on one particular service. |                     |                                                                                    |
 | **Maximum Latency**                                                                                                                                                                                                                                                                                                                                                                | `maxLatency`        | `5 Minutes`                                                                        |
 | Sets the maximum value that this timer is expected to observe. Applies only if Histogram publishing is enabled.                                                                                                                                                                                                                                                                    |                     |                                                                                    |
+| **Maximum tracked command latency ids** | `maxCommandLatencyIds` | `500` |
+| Limits the number of distinct remote endpoint and command type combinations for which timers are registered. Timers are retained for the lifetime of the recorder. Once the limit is reached, latencies of new combinations are not recorded and a warning is logged once. | | |
 | **Minimum Latency**                                                                                                                                                                                                                                                                                                                                                                | `minLatency`        | `1ms`                                                                              |
 | Sets the minimum value that this timer is expected to observe. Applies only if Histogram publishing is enabled.                                                                                                                                                                                                                                                                    |                     |                                                                                    |
 | **Additional Tags**                                                                                                                                                                                                                                                                                                                                                                | `tags`              | `Tags.empty()`                                                                     |
