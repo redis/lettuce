@@ -1,7 +1,10 @@
 package io.lettuce.core;
 
 import static io.lettuce.TestTags.UNIT_TEST;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
