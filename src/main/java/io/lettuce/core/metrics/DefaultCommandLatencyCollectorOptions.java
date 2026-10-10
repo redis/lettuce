@@ -27,6 +27,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * The default implementation of {@link CommandLatencyCollectorOptions}.
  *
  * @author Mark Paluch
+ * @author shariorfarhan07 (Sharior Hossain Farhan)
  */
 public class DefaultCommandLatencyCollectorOptions implements CommandLatencyCollectorOptions {
 
@@ -42,6 +43,13 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
 
     public static final boolean DEFAULT_USE_NO_PAUSE_DETECTOR = false;
 
+    /**
+     * Default maximum number of distinct {@link CommandLatencyId}s.
+     *
+     * @since 7.9
+     */
+    public static final int DEFAULT_MAX_COMMAND_LATENCY_IDS = 500;
+
     private static final DefaultCommandLatencyCollectorOptions DISABLED = builder().disable().build();
 
     private final TimeUnit targetUnit;
@@ -56,6 +64,8 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
 
     private final boolean usePauseDetector;
 
+    private final int maxCommandLatencyIds;
+
     private final Builder builder;
 
     protected DefaultCommandLatencyCollectorOptions(Builder builder) {
@@ -65,6 +75,7 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         this.localDistinction = builder.localDistinction;
         this.enabled = builder.enabled;
         this.usePauseDetector = builder.usePauseDetector;
+        this.maxCommandLatencyIds = builder.maxCommandLatencyIds;
         this.builder = builder;
     }
 
@@ -127,6 +138,8 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         private boolean enabled = DEFAULT_ENABLED;
 
         private boolean usePauseDetector = DEFAULT_USE_NO_PAUSE_DETECTOR;
+
+        private int maxCommandLatencyIds = DEFAULT_MAX_COMMAND_LATENCY_IDS;
 
         private Builder() {
         }
@@ -209,7 +222,8 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
 
         /**
          * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}. See
-         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
+         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}. If {@code false}, the collector
+         * retains latency data for every distinct remote address and command type for its lifetime.
          *
          * @param resetLatenciesAfterEvent {@code true} if the recorded latencies should be reset once the metrics event was
          *        emitted
@@ -218,6 +232,23 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         @Override
         public Builder resetLatenciesAfterEvent(boolean resetLatenciesAfterEvent) {
             this.resetLatenciesAfterEvent = resetLatenciesAfterEvent;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of distinct {@link CommandLatencyId}s for which latencies are collected between two metric
+         * resets. Once the limit is reached, latencies for new remote address and command type combinations are not recorded
+         * until the collected metrics are reset. Defaults to {@code 500}. See
+         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_MAX_COMMAND_LATENCY_IDS}.
+         *
+         * @param maxCommandLatencyIds the maximum number of distinct {@link CommandLatencyId}s, must be greater than zero.
+         * @return this {@link Builder}.
+         * @since 7.9
+         */
+        @Override
+        public Builder maxCommandLatencyIds(int maxCommandLatencyIds) {
+            LettuceAssert.isTrue(maxCommandLatencyIds > 0, "MaxCommandLatencyIds must be greater than zero");
+            this.maxCommandLatencyIds = maxCommandLatencyIds;
             return this;
         }
 
@@ -277,6 +308,11 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
     @Override
     public boolean usePauseDetector() {
         return usePauseDetector;
+    }
+
+    @Override
+    public int maxCommandLatencyIds() {
+        return maxCommandLatencyIds;
     }
 
 }
