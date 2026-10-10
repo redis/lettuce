@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Tag;
  * Collection of tests that log metrics and tracing using the asynchronous API. This guards against regressions in the
  * Micrometer tracing integration for async command flows.
  *
- * @author Aleksandar Todorov
+ * @author Ali Takavci
  */
 @Tag(INTEGRATION_TEST)
 public class AsynchronousIntegrationTests extends SampleTestRunner {

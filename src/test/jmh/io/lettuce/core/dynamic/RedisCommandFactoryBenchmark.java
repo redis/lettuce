@@ -8,6 +8,7 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
 import io.lettuce.core.*;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
@@ -86,7 +87,7 @@ public class RedisCommandFactoryBenchmark {
         }
 
         @Override
-        public RedisReactiveCommands reactive() {
+        public Object commands(CommandsFactory factory) {
             return reactive;
         }
     }

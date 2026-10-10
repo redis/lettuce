@@ -71,6 +71,7 @@ public class ImmutableRedisURI extends RedisURI {
     }
 
     @Override
+    @Deprecated
     public void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
         throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
     }

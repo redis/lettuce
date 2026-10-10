@@ -95,9 +95,11 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
+import reactor.util.context.ContextView;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.AbstractMap;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -166,6 +168,37 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private final boolean tracingEnabled;
 
     private volatile EventExecutorGroup scheduler;
+
+    /**
+     * Read-only {@link Map} view of a Reactor {@link ContextView}, used to pass the subscriber context to
+     * {@link TraceContextProvider#getTraceContextAsync(Map)}. Lookups delegate to the {@link ContextView} without copying;
+     * {@link #entrySet()} is not supported.
+     */
+    static class ContextViewMapAdapter extends AbstractMap<Object, Object> {
+
+        private final ContextView ctx;
+
+        public ContextViewMapAdapter(ContextView ctx) {
+            this.ctx = ctx;
+        }
+
+        @Override
+        public Object get(Object key) {
+            return ctx.hasKey(key) ? ctx.get(key) : null;
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return ctx.hasKey(key);
+        }
+
+        @Override
+        public Set<Entry<Object, Object>> entrySet() {
+            // no need to implement, just for the sake of AbstractMap contract
+            throw new UnsupportedOperationException();
+        }
+
+    }
 
     /**
      * Initialize a new instance.
@@ -801,7 +834,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
         return ReactorTraceContext.getContext()
                 .switchIfEmpty(Mono.fromSupplier(() -> clientResources.tracing().initialTraceContextProvider()))
-                .flatMap(TraceContextProvider::getTraceContextLater).defaultIfEmpty(TraceContext.EMPTY);
+                .flatMap(p -> Mono
+                        .deferContextual(ctx -> Mono.justOrEmpty(p.getTraceContextAsync(new ContextViewMapAdapter(ctx)).get())))
+                .defaultIfEmpty(TraceContext.EMPTY);
     }
 
     /**
