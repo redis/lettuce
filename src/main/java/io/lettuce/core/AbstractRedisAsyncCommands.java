@@ -2772,6 +2772,41 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Boolean> blessSet(K key, BlessFlag flag) {
+        return dispatch(commandBuilder.blessSet(key, flag));
+    }
+
+    @Override
+    public RedisFuture<Boolean> blessClear(K key, BlessFlag flag) {
+        return dispatch(commandBuilder.blessClear(key, flag));
+    }
+
+    @Override
+    public RedisFuture<List<BlessFlag>> blessGet(K key) {
+        return dispatch(commandBuilder.blessGet(key));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> blessScan(BlessFlag flag) {
+        return dispatch(commandBuilder.blessScan(flag));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs) {
+        return dispatch(commandBuilder.blessScan(flag, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag) {
+        return dispatch(commandBuilder.blessScan(scanCursor, flag));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs) {
+        return dispatch(commandBuilder.blessScan(scanCursor, flag, scanArgs));
+    }
+
+    @Override
     public RedisFuture<KeyScanCursor<K>> scan() {
         return dispatch(commandBuilder.scan());
     }

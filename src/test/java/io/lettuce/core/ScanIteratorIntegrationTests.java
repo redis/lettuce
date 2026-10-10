@@ -27,10 +27,12 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -309,6 +311,37 @@ class ScanIteratorIntegrationTests extends TestSupport {
         List<ScoredValue<String>> values = scan.stream().collect(Collectors.toList());
 
         assertThat(values).containsAll(values);
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessScanMultiPass() {
+
+        for (int i = 0; i < 50; i++) {
+            redis.set("key-" + i, value);
+            redis.blessSet("key-" + i, BlessFlag.NO_EVICT);
+        }
+        redis.set("unblessed", value);
+
+        ScanIterator<String> scan = ScanIterator.blessScan(redis, BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(5));
+        Set<String> keys = scan.stream().collect(Collectors.toSet());
+
+        assertThat(keys).hasSize(50).doesNotContain("unblessed");
+        assertThat(scan.hasNext()).isFalse();
+
+        assertThat(ScanIterator.blessScan(redis, BlessFlag.NO_EVICT).stream().collect(Collectors.toSet())).isEqualTo(keys);
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessScanShouldThrowNoSuchElementExceptionOnEmpty() {
+
+        redis.set(key, value);
+
+        ScanIterator<String> scan = ScanIterator.blessScan(redis, BlessFlag.NO_EVICT);
+
+        assertThat(scan.hasNext()).isFalse();
+        assertThatThrownBy(scan::next).isInstanceOf(NoSuchElementException.class);
     }
 
 }

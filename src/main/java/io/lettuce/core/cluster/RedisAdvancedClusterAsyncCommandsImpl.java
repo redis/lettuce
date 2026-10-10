@@ -729,6 +729,30 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
+    public RedisFuture<KeyScanCursor<K>> blessScan(BlessFlag flag) {
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.blessScan(flag),
+                asyncClusterKeyScanCursorMapper());
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs) {
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.blessScan(flag, scanArgs),
+                asyncClusterKeyScanCursorMapper());
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag) {
+        return clusterScan(scanCursor, (connection, cursor) -> connection.blessScan(cursor, flag),
+                asyncClusterKeyScanCursorMapper());
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs) {
+        return clusterScan(scanCursor, (connection, cursor) -> connection.blessScan(cursor, flag, scanArgs),
+                asyncClusterKeyScanCursorMapper());
+    }
+
+    @Override
     public RedisFuture<KeyScanCursor<K>> scan() {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(), asyncClusterKeyScanCursorMapper());
     }

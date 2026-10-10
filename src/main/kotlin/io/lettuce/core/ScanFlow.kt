@@ -55,6 +55,28 @@ object ScanFlow {
     }
 
     /**
+     * Sequentially iterate the keys of the current database that are blessed with [flag].
+     *
+     * @param commands coroutines commands
+     * @param flag the blessing flag to filter on.
+     * @param scanArgs scan arguments.
+     * @return `Flow<K>` flow of keys.
+     * @since 7.9
+     */
+    fun <K : Any, V : Any> blessScan(commands: RedisKeyCoroutinesCommands<K, V>, flag: BlessFlag, scanArgs: BlessScanArgs? = null): Flow<K> {
+        val ops = when (commands) {
+            is RedisCoroutinesCommandsImpl -> commands.ops
+            is RedisClusterCoroutinesCommandsImpl -> commands.ops
+            is RedisKeyCoroutinesCommandsImpl -> commands.ops
+            else -> throw IllegalArgumentException("Cannot access underlying reactive API")
+        }
+        return when (scanArgs) {
+            null -> ScanStream.blessScan(ops, flag)
+            else -> ScanStream.blessScan(ops, flag, scanArgs)
+        }.asFlow()
+    }
+
+    /**
      * Sequentially iterate hash fields and associated values.
      *
      * @param commands coroutines commands
