@@ -328,7 +328,7 @@ public class RedisClient extends AbstractRedisClient {
         state.apply(redisURI);
         state.setDb(redisURI.getDatabase());
         connection.setAuthenticationHandler(
-                createHandler(connection, redisURI.getCredentialsProvider(), isPubSub, clientOptions));
+                createHandler(connection, redisURI.getCredentialsProviderAsync(), isPubSub, clientOptions));
         connectionBuilder.connection(connection);
         connectionBuilder.clientOptions(clientOptions);
         connectionBuilder.clientResources(getResources());
