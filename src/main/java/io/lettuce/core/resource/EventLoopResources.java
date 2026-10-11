@@ -22,6 +22,7 @@ package io.lettuce.core.resource;
 import java.net.SocketAddress;
 import java.util.concurrent.ThreadFactory;
 
+import io.lettuce.core.internal.LettuceAssert;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
@@ -41,8 +42,15 @@ public interface EventLoopResources {
      *
      * @param type must not be {@code null}.
      * @return {@code true} if {@code type} is a {@link EventExecutorGroup} of the underlying loop resources.
+     * @deprecated since 7.7, use {@link #eventLoopGroupClass()} instead; scheduled for removal in a future
+     *             major release.
      */
-    boolean matches(Class<? extends EventExecutorGroup> type);
+    @Deprecated
+    default boolean matches(Class<? extends EventExecutorGroup> type) {
+
+        LettuceAssert.notNull(type, "EventLoopGroup type must not be null");
+        return eventLoopGroupClass().equals(type);
+    }
 
     /**
      * @return the {@link EventLoopGroup} class.
@@ -57,6 +65,16 @@ public interface EventLoopResources {
      * @return the {@link EventLoopGroup}.
      */
     EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory);
+
+    /**
+     * Get the thread name prefix for this event loop resource.
+     *
+     * @return the prefix used to name event loop threads.
+     * @since 7.7
+     */
+    default String threadNamePrefix() {
+        return "lettuce-eventLoop";
+    }
 
     /**
      * @return the {@link Channel} class.

@@ -139,7 +139,15 @@ public class KqueueProvider {
         public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
 
             checkForKqueueLibrary();
+
             return null;
+        }
+
+        @Override
+        public String threadNamePrefix() {
+
+            checkForKqueueLibrary();
+            return "lettuce-kqueueEventLoop";
         }
 
         @Override
@@ -204,6 +212,12 @@ public class KqueueProvider {
 
             // Use the new Netty 4.2 approach with IoHandlerFactory
             return new MultiThreadIoEventLoopGroup(nThreads, threadFactory, KQueueIoHandler.newFactory());
+        }
+
+        @Override
+        public String threadNamePrefix() {
+            checkForKqueueLibrary();
+            return "lettuce-kqueueEventLoop";
         }
 
         @Override

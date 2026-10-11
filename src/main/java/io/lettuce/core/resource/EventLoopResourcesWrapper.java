@@ -43,6 +43,12 @@ class EventLoopResourcesWrapper implements EventLoopResources {
     }
 
     @Override
+    public String threadNamePrefix() {
+        verifier.run();
+        return delegate.threadNamePrefix();
+    }
+
+    @Override
     public Class<? extends Channel> socketChannelClass() {
         verifier.run();
         return delegate.socketChannelClass();

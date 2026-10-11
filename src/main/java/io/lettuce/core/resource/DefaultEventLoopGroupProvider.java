@@ -13,7 +13,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -176,38 +175,27 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
     }
 
     /**
-     * Create an instance of a {@link EventExecutorGroup} using the default {@link ThreadFactoryProvider}. Supported types are:
-     * <ul>
-     * <li>DefaultEventExecutorGroup</li>
-     * <li>NioEventLoopGroup</li>
-     * <li>EpollEventLoopGroup</li>
-     * <li>KqueueEventLoopGroup</li>
-     * </ul>
+     * Create an instance of an {@link EventExecutorGroup} using the default {@link ThreadFactoryProvider}.
      *
-     * @param type the type
-     * @param numberOfThreads the number of threads to use for the {@link EventExecutorGroup}
      * @param <T> type parameter
-     * @return a new instance of a {@link EventExecutorGroup}
-     * @throws IllegalArgumentException if the {@code type} is not supported.
+     * @param type the executor group type; {@link DefaultEventExecutorGroup} creates a default executor group, while other
+     *        types use the best available event loop resources.
+     * @param numberOfThreads the number of threads to use for the {@link EventExecutorGroup}
+     * @return a new instance of an {@link EventExecutorGroup}
      */
     public static <T extends EventExecutorGroup> EventExecutorGroup createEventLoopGroup(Class<T> type, int numberOfThreads) {
         return createEventLoopGroup(type, numberOfThreads, DefaultThreadFactoryProvider.INSTANCE);
     }
 
     /**
-     * Create an instance of a {@link EventExecutorGroup}. Supported types are:
-     * <ul>
-     * <li>DefaultEventExecutorGroup</li>
-     * <li>NioEventLoopGroup</li>
-     * <li>EpollEventLoopGroup</li>
-     * <li>KqueueEventLoopGroup</li>
-     * </ul>
+     * Create an instance of an {@link EventExecutorGroup} using the supplied thread factory provider.
      *
-     * @param type the type
-     * @param numberOfThreads the number of threads to use for the {@link EventExecutorGroup}
      * @param <T> type parameter
+     * @param type the executor group type; {@link DefaultEventExecutorGroup} creates a default executor group, while other
+     *        types use the best available event loop resources.
+     * @param numberOfThreads the number of threads to use for the {@link EventExecutorGroup}
+     * @param factoryProvider provider for thread factories
      * @return a new instance of a {@link EventExecutorGroup}
-     * @throws IllegalArgumentException if the {@code type} is not supported.
      * @since 5.3
      */
     static <T extends EventExecutorGroup> EventExecutorGroup createEventLoopGroup(Class<T> type, int numberOfThreads,
@@ -220,46 +208,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
                     factoryProvider.getThreadFactory("lettuce-eventExecutorLoop"));
         }
 
-        // Check native transports FIRST (priority order: Epoll > Kqueue > IOUring)
-        // This ensures native transports are used when available, even though all providers
-        // now match MultiThreadIoEventLoopGroup.class in Netty 4.2
-        if (EpollProvider.isAvailable()) {
-
-            EventLoopResources resources = EpollProvider.getResources();
-
-            if (resources.matches(type)) {
-                return resources.newEventLoopGroup(numberOfThreads, factoryProvider.getThreadFactory("lettuce-epollEventLoop"));
-            }
-        }
-
-        if (KqueueProvider.isAvailable()) {
-
-            EventLoopResources resources = KqueueProvider.getResources();
-
-            if (resources.matches(type)) {
-                return resources.newEventLoopGroup(numberOfThreads,
-                        factoryProvider.getThreadFactory("lettuce-kqueueEventLoop"));
-            }
-        }
-
-        if (IOUringProvider.isAvailable()) {
-
-            EventLoopResources resources = IOUringProvider.getResources();
-
-            if (resources.matches(type)) {
-                return resources.newEventLoopGroup(numberOfThreads,
-                        factoryProvider.getThreadFactory("lettuce-io_uringEventLoop"));
-            }
-        }
-
-        // NIO as fallback (checked LAST)
-        EventLoopResources nioResources = NioProvider.getResources();
-
-        if (nioResources.matches(type)) {
-            return nioResources.newEventLoopGroup(numberOfThreads, factoryProvider.getThreadFactory("lettuce-nioEventLoop"));
-        }
-
-        throw new IllegalArgumentException(String.format("Type %s not supported", type.getName()));
+        EventLoopResources resources = Transports.eventLoopResources();
+        return resources.newEventLoopGroup(numberOfThreads, factoryProvider.getThreadFactory(resources.threadNamePrefix()));
     }
 
     @Override

@@ -50,6 +50,7 @@ import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisHandshakeHandler;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
+import io.lettuce.core.resource.EventLoopResources;
 import io.lettuce.core.resource.Transports;
 import io.lettuce.core.resource.Transports.NativeTransports;
 import io.netty.bootstrap.Bootstrap;
@@ -266,14 +267,14 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
         LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
 
         boolean domainSocket = LettuceStrings.isNotEmpty(connectionPoint.getSocket());
-        connectionBuilder.bootstrap().group(getEventLoopGroup(
-                domainSocket ? NativeTransports.eventLoopGroupClass(true) : Transports.eventLoopGroupClass()));
-
-        if (connectionPoint.getSocket() != null) {
+        if (domainSocket) {
             NativeTransports.assertDomainSocketAvailable();
+            connectionBuilder.bootstrap().group(getEventLoopGroup(NativeTransports.eventLoopGroupClass(true)));
             connectionBuilder.bootstrap().channel(NativeTransports.domainSocketChannelClass());
         } else {
-            connectionBuilder.bootstrap().channel(Transports.socketChannelClass());
+            EventLoopResources resources = Transports.eventLoopResources();
+            connectionBuilder.bootstrap().group(getEventLoopGroup(resources.eventLoopGroupClass()));
+            connectionBuilder.bootstrap().channel(resources.socketChannelClass());
         }
     }
 

@@ -156,6 +156,11 @@ public class IOUringProvider {
         }
 
         @Override
+        public String threadNamePrefix() {
+            return "lettuce-io_uringEventLoop";
+        }
+
+        @Override
         public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
             // Use the new Netty 4.2 approach with IoHandlerFactory
             return new MultiThreadIoEventLoopGroup(nThreads, threadFactory, IoUringIoHandler.newFactory());

@@ -158,6 +158,11 @@ public class EpollProvider {
         }
 
         @Override
+        public String threadNamePrefix() {
+            return "lettuce-epollEventLoop";
+        }
+
+        @Override
         public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
             // Use the new Netty 4.2 approach with IoHandlerFactory
             return new MultiThreadIoEventLoopGroup(nThreads, threadFactory, EpollIoHandler.newFactory());

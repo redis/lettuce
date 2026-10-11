@@ -3,10 +3,7 @@ package io.lettuce.core.resource;
 import io.lettuce.core.internal.LettuceAssert;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
-import io.netty.channel.socket.nio.NioDatagramChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -21,39 +18,57 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class Transports {
 
     /**
-     * @return the default {@link EventLoopGroup} for socket transport that is compatible with {@link #socketChannelClass()}.
+     * Get the best available event loop resources.
+     *
+     * @return the available native event loop resources, or NIO resources if no native transport is available.
+     * @since 7.7
      */
+    public static EventLoopResources eventLoopResources() {
+
+        if (NativeTransports.isAvailable()) {
+            return NativeTransports.RESOURCES;
+        }
+
+        return NioProvider.getResources();
+    }
+
+    /**
+     * Get the default {@link EventLoopGroup} class for socket transport.
+     *
+     * @return the default event loop group class compatible with the socket transport.
+     * @deprecated since 7.7, use {@link #eventLoopResources()} instead; scheduled for removal in a future
+     *             major release.
+     */
+    @Deprecated
     public static Class<? extends EventLoopGroup> eventLoopGroupClass() {
 
-        if (NativeTransports.isAvailable()) {
-            return NativeTransports.eventLoopGroupClass();
-        }
-
-        return NioProvider.getResources().eventLoopGroupClass();
+        return eventLoopResources().eventLoopGroupClass();
     }
 
     /**
-     * @return the default {@link Channel} for socket (network/TCP) transport.
+     * Get the default {@link Channel} class for socket (network/TCP) transport.
+     *
+     * @return the default socket channel class.
+     * @deprecated since 7.7, use {@link #eventLoopResources()} instead; scheduled for removal in a future
+     *             major release.
      */
+    @Deprecated
     public static Class<? extends Channel> socketChannelClass() {
 
-        if (NativeTransports.isAvailable()) {
-            return NativeTransports.socketChannelClass();
-        }
-
-        return NioSocketChannel.class;
+        return eventLoopResources().socketChannelClass();
     }
 
     /**
-     * @return the default {@link DatagramChannel} for socket (network/UDP) transport.
+     * Get the default {@link DatagramChannel} class for socket (network/UDP) transport.
+     *
+     * @return the default datagram channel class.
+     * @deprecated since 7.7, use {@link #eventLoopResources()} instead; scheduled for removal in a future
+     *             major release.
      */
+    @Deprecated
     public static Class<? extends DatagramChannel> datagramChannelClass() {
 
-        if (NativeTransports.isAvailable()) {
-            return NativeTransports.datagramChannelClass();
-        }
-
-        return NioDatagramChannel.class;
+        return eventLoopResources().datagramChannelClass();
     }
 
     /**
