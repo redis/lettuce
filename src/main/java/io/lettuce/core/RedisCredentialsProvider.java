@@ -1,7 +1,10 @@
 package io.lettuce.core;
 
+import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
@@ -15,9 +18,11 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @author Mark Paluch
  * @since 6.2
+ * @deprecated since 7.9, use {@link CredentialsProvider} instead; scheduled for removal in a future major release.
  */
+@Deprecated
 @FunctionalInterface
-public interface RedisCredentialsProvider {
+public interface RedisCredentialsProvider extends CredentialsProvider {
 
     /**
      * Returns {@link RedisCredentials} that can be used to authorize a Redis connection. Each implementation of
@@ -30,6 +35,17 @@ public interface RedisCredentialsProvider {
     Mono<RedisCredentials> resolveCredentials();
 
     /**
+     * Resolves the latest available credentials as a {@link CompletionStage}, adapting {@link #resolveCredentials()}.
+     *
+     * @return a {@link CompletionStage} that completes with the {@link RedisCredentials} used to authorize a Redis connection.
+     * @since 7.9
+     */
+    @Override
+    default CompletionStage<RedisCredentials> resolveCredentialsAsync() {
+        return resolveCredentials().toFuture();
+    }
+
+    /**
      * Creates a new {@link RedisCredentialsProvider} from a given {@link Supplier}.
      *
      * @param supplier must not be {@code null}.
@@ -39,7 +55,29 @@ public interface RedisCredentialsProvider {
 
         LettuceAssert.notNull(supplier, "Supplier must not be null");
 
-        return () -> Mono.fromSupplier(supplier);
+        return () -> Mono.fromSupplier(supplier)
+                .switchIfEmpty(Mono.error(new IllegalStateException("Provided RedisCredentials supplier returned null")));
+    }
+
+    /**
+     * Adapts a {@link CredentialsProvider} to the {@link RedisCredentialsProvider} contract, for APIs that still require a
+     * {@link RedisCredentialsProvider}. The returned provider resolves credentials through {@code provider} and supports
+     * streaming whenever {@code provider} does, so connections configured with it are still re-authenticated when
+     * {@code provider} emits new credentials. If {@code provider} already is a {@link RedisCredentialsProvider}, it is returned
+     * as is.
+     *
+     * @param provider must not be {@code null}.
+     * @return a {@link RedisCredentialsProvider} backed by {@code provider}.
+     * @since 7.9
+     */
+    static RedisCredentialsProvider adapt(CredentialsProvider provider) {
+
+        LettuceAssert.notNull(provider, "CredentialsProvider must not be null");
+
+        if (provider instanceof RedisCredentialsProvider) {
+            return (RedisCredentialsProvider) provider;
+        }
+        return new AsyncCredentialsProviderAdapter(provider);
     }
 
     /**
@@ -71,6 +109,19 @@ public interface RedisCredentialsProvider {
     }
 
     /**
+     * {@inheritDoc}
+     * <p>
+     * Bridges the reactive {@link #credentials()} stream to the callback-based {@link CredentialsProvider} contract.
+     *
+     * @since 7.9
+     */
+    @Override
+    default Subscription subscribeToCredentials(Consumer<RedisCredentials> onNext, Consumer<Throwable> onError) {
+        Disposable disposable = credentials().subscribe(onNext, onError);
+        return disposable::dispose;
+    }
+
+    /**
      * Extension to {@link RedisCredentialsProvider} that resolves credentials immediately without the need to defer the
      * credential resolution.
      */
@@ -79,7 +130,8 @@ public interface RedisCredentialsProvider {
 
         @Override
         default Mono<RedisCredentials> resolveCredentials() {
-            return Mono.just(resolveCredentialsNow());
+            return Mono.fromSupplier(this::resolveCredentialsNow)
+                    .switchIfEmpty(Mono.error(new IllegalStateException("RedisCredentials resolved to null")));
         }
 
         /**

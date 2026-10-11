@@ -58,7 +58,7 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     }
 
     /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
+     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
      *             removal in Lettuce 8.0.
      */
     @Deprecated

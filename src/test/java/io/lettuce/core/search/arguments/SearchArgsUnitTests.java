@@ -1,0 +1,160 @@
+/*
+ * Copyright 2025, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
+
+package io.lettuce.core.search.arguments;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
+import java.time.Duration;
+
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import io.lettuce.TestTags;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.protocol.CommandArgs;
+
+/**
+ * Unit tests for {@link SearchArgs}.
+ *
+ * @author Tihomir Mateev
+ */
+@Tag(TestTags.UNIT_TEST)
+class SearchArgsUnitTests {
+
+    @Test
+    void testDefaultSearchArgs() {
+        SearchArgs<String> args = SearchArgs.<String> builder().build();
+
+        assertThat(args.isNoContent()).isFalse();
+        assertThat(args.isWithScores()).isFalse();
+        assertThat(args.isWithSortKeys()).isFalse();
+    }
+
+    @Test
+    void testSearchArgsWithOptions() {
+        SearchArgs<String> args = SearchArgs.<String> builder().noContent().withScores().withSortKeys().verbatim().build();
+
+        assertThat(args.isNoContent()).isTrue();
+        assertThat(args.isWithScores()).isTrue();
+        assertThat(args.isWithSortKeys()).isTrue();
+    }
+
+    @Test
+    void testSearchArgsWithFields() {
+        SearchArgs<String> args = SearchArgs.<String> builder().inKey("key1").inKey("key2").inField("field1").inField("field2")
+                .returnField("title").returnField("content", "text").build();
+
+        // Test that the args can be built without errors
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        args.build(commandArgs);
+
+        // The command args should contain the appropriate keywords
+        String argsString = commandArgs.toString();
+        assertThat(argsString).contains("INKEYS");
+        assertThat(argsString).contains("INFIELDS");
+        assertThat(argsString).contains("RETURN");
+    }
+
+    @Test
+    void testReturnFieldsKeepInsertionOrder() {
+        SearchArgs<String> args = SearchArgs.<String> builder().returnField("price").returnField("title")
+                .returnField("category", "cat").build();
+
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        args.build(commandArgs);
+
+        assertThat(commandArgs.toCommandString()).contains("RETURN 5 price title category AS cat");
+
+        SearchArgs<String> reversed = SearchArgs.<String> builder().returnField("title").returnField("price").build();
+
+        commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        reversed.build(commandArgs);
+
+        assertThat(commandArgs.toCommandString()).contains("RETURN 2 title price");
+    }
+
+    @Test
+    void testSearchArgsWithLimitAndTimeout() {
+        SearchArgs<String> args = SearchArgs.<String> builder().limit(10, 20).timeout(Duration.ofSeconds(5)).slop(2).inOrder()
+                .build();
+
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        args.build(commandArgs);
+
+        String argsString = commandArgs.toString();
+        assertThat(argsString).contains("LIMIT");
+        assertThat(argsString).contains("TIMEOUT");
+        assertThat(argsString).contains("SLOP");
+        assertThat(argsString).contains("INORDER");
+    }
+
+    @Test
+    void testSearchArgsWithLanguageAndScoring() {
+        SearchArgs<String> args = SearchArgs.<String> builder().language(DocumentLanguage.ENGLISH)
+                .scorer(ScoringFunction.TF_IDF).build();
+
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        args.build(commandArgs);
+
+        String argsString = commandArgs.toString();
+        assertThat(argsString).contains("LANGUAGE");
+        assertThat(argsString).contains("SCORER");
+    }
+
+    @Test
+    void testSearchArgsWithParams() {
+        SearchArgs<String> args = SearchArgs.<String> builder().param("param1", "value1").param("param2", "value2")
+                .dialect(QueryDialects.DIALECT3).build();
+
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        args.build(commandArgs);
+
+        String argsString = commandArgs.toString();
+        assertThat(argsString).contains("PARAMS");
+        assertThat(argsString).contains("DIALECT");
+        assertThat(argsString).contains("3"); // DIALECT3
+    }
+
+    @Test
+    void testSearchArgsWithSortBy() {
+        SortByArgs sortBy = SortByArgs.builder().attribute("score").descending().build();
+
+        SearchArgs<String> args = SearchArgs.<String> builder().sortBy(sortBy).build();
+
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        args.build(commandArgs);
+
+        String argsString = commandArgs.toString();
+        assertThat(argsString).contains("SORTBY");
+    }
+
+    @Test
+    void testSearchArgsWithHighlightAndSummarize() {
+        HighlightArgs highlight = HighlightArgs.builder().field("title").tags("<b>", "</b>").build();
+
+        SearchArgs<String> args = SearchArgs.<String> builder().highlightArgs(highlight).summarizeField("content")
+                .summarizeFragments(3).summarizeLen(100).summarizeSeparator("...").build();
+
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        args.build(commandArgs);
+
+        String argsString = commandArgs.toString();
+        assertThat(argsString).contains("HIGHLIGHT");
+        assertThat(argsString).contains("SUMMARIZE");
+    }
+
+    @Test
+    void paramRejectsNullNameAndValue() {
+        assertThatIllegalArgumentException().isThrownBy(() -> SearchArgs.<String> builder().param(null, "value"));
+        assertThatIllegalArgumentException().isThrownBy(() -> SearchArgs.<String> builder().param("name", (String) null));
+        assertThatIllegalArgumentException().isThrownBy(() -> SearchArgs.<String> builder().param(null, new byte[] { 1 }));
+        assertThatIllegalArgumentException().isThrownBy(() -> SearchArgs.<String> builder().param("name", (byte[]) null));
+    }
+
+}

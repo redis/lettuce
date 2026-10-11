@@ -63,6 +63,7 @@ import static io.lettuce.core.protocol.CommandType.SAVE;
  * @author Ali Takavci
  * @author Seonghwan Lee
  * @author dae won
+ * @author Yordan Tsintsov
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -1330,7 +1331,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     Command<K, V, Double> geodist(K key, V from, V to, GeoArgs.Unit unit) {
         notNullKey(key);
         LettuceAssert.notNull(from, "From " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(from, "To " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(to, "To " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(from).addValue(to);
 
@@ -1854,6 +1855,35 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(map);
         return createCommand(HSET, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, String> himportPrepare(HashImport<K> fieldset) {
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(PREPARE).addKey(fieldset.name()).addKeys(fieldset.fields());
+        return createCommand(HIMPORT, new StatusOutput<>(codec), args);
+    }
+
+    HashImportSetCommand<K, V> himportSet(K key, HashImport<K> fieldset, V... values) {
+        notNullKey(key);
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(values, "Values " + MUST_NOT_BE_NULL);
+
+        if (values.length != fieldset.size()) {
+            throw new IllegalArgumentException("Number of values (" + values.length
+                    + ") must match the number of fields in the fieldset (" + fieldset.size() + ")");
+        }
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.SET).addKey(key).addKey(fieldset.name())
+                .addValues(values);
+        return new HashImportSetCommand<>(HIMPORT, new StatusOutput<>(codec), args, fieldset, codec);
+    }
+
+    Command<K, V, Boolean> himportDiscard(HashImport<K> fieldset) {
+        LettuceAssert.notNull(fieldset, "HashImport " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.DISCARD).addKey(fieldset.name());
+        return createCommand(HIMPORT, new BooleanOutput<>(codec), args);
     }
 
     Command<K, V, Long> hsetex(K key, Map<K, V> map) {
@@ -2769,6 +2799,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SDIFF, new ValueStreamingOutput<>(codec, channel), args);
     }
 
+    Command<K, V, Long> sdiffcard(K key1, K key2) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sdiffcard(List<K> keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sdiffcard(K key1, K key2, SDiffCardArgs sdiffCardArgs) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(sdiffCardArgs, "SDiffCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        sdiffCardArgs.build(args);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sdiffcard(List<K> keys, SDiffCardArgs sdiffCardArgs) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(sdiffCardArgs, "SDiffCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        sdiffCardArgs.build(args);
+        return createCommand(SDIFFCARD, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, Long> sdiffstore(K destination, K... keys) {
         notEmpty(keys);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
@@ -3162,10 +3224,33 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(STRALGO, new StringMatchResultOutput<>(codec), args);
     }
 
+    @Deprecated
     Command<K, V, StringMatchResult> lcs(LcsArgs lcsArgs) {
-        LettuceAssert.notNull(lcsArgs, "lcsArgs" + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lcsArgs, "LcsArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(lcsArgs.hasKeys(),
+                "LcsArgs must carry keys, use LcsArgs.Builder.keys(…) or lcs(key1, key2, LcsArgs) instead");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
+        lcsArgs.build(args);
+        return createCommand(LCS, new StringMatchResultOutput<>(codec), args);
+    }
+
+    Command<K, V, V> lcs(K key1, K key2) {
+        notNullKey(key1);
+        notNullKey(key2);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key1).addKey(key2);
+        return createCommand(LCS, new ValueOutput<>(codec), args);
+    }
+
+    Command<K, V, StringMatchResult> lcs(K key1, K key2, LcsArgs lcsArgs) {
+        notNullKey(key1);
+        notNullKey(key2);
+        LettuceAssert.notNull(lcsArgs, "LcsArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!lcsArgs.hasKeys(),
+                "LcsArgs must not carry keys, pass the keys as key1 and key2 instead of using LcsArgs.Builder.keys(…)");
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key1).addKey(key2);
         lcsArgs.build(args);
         return createCommand(LCS, new StringMatchResultOutput<>(codec), args);
     }
@@ -3183,6 +3268,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys);
         return createCommand(SUNION, new ValueStreamingOutput<>(codec, channel), args);
+    }
+
+    Command<K, V, Long> sunioncard(K key1, K key2) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sunioncard(List<K> keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sunioncard(K key1, K key2, SUnionCardArgs sunionCardArgs) {
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(sunionCardArgs, "SUnionCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(2).addKey(key1).addKey(key2);
+        sunionCardArgs.build(args);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sunioncard(List<K> keys, SUnionCardArgs sunionCardArgs) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(sunionCardArgs, "SUnionCardArgs " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size()).addKeys(keys);
+        sunionCardArgs.build(args);
+        return createCommand(SUNIONCARD, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, Long> sunionstore(K destination, K... keys) {
@@ -4128,6 +4245,110 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.addKey(key).add(start).add(stop).add(WITHSCORES);
         return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), args);
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZRange.ByIndex range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZRange.ByScore range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
+    }
+
+    Command<K, V, List<V>> zrange(K key, ZRange.ByLex<? extends V> range) {
+        return createCommand(ZRANGE, new ValueListOutput<>(codec), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, Long> zrange(ValueStreamingChannel<V> channel, K key, ZRange.ByLex<? extends V> range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ValueStreamingOutput<>(codec, channel), zrangeArgs(key, range));
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByIndex range) {
+        return createCommand(ZRANGE, new ScoredValueListOutput<>(codec), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zrangeWithScores(K key, ZRange.ByScore range) {
+        return createCommand(ZRANGE, new ScoredValueListOutput<>(codec), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByIndex range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    Command<K, V, Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, ZRange.ByScore range) {
+        notNull(channel);
+        return createCommand(ZRANGE, new ScoredValueStreamingOutput<>(codec, channel), zrangeArgs(key, range).add(WITHSCORES));
+    }
+
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByIndex range) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(range.getStart()).add(range.getStop());
+
+        if (range.isRev()) {
+            args.add(REV);
+        }
+
+        return args;
+    }
+
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByScore range) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+
+        Range<? extends Number> scoreRange = range.getRange();
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (range.isRev()) {
+            args.add(max(scoreRange)).add(min(scoreRange));
+        } else {
+            args.add(min(scoreRange)).add(max(scoreRange));
+        }
+
+        args.add(BYSCORE);
+
+        if (range.isRev()) {
+            args.add(REV);
+        }
+
+        addLimit(args, range.getLimit());
+        return args;
+    }
+
+    private CommandArgs<K, V> zrangeArgs(K key, ZRange.ByLex<? extends V> range) {
+        notNullKey(key);
+        LettuceAssert.notNull(range, "ZRange " + MUST_NOT_BE_NULL);
+
+        Range<? extends V> lexRange = range.getRange();
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (range.isRev()) {
+            args.add(maxValue(lexRange)).add(minValue(lexRange));
+        } else {
+            args.add(minValue(lexRange)).add(maxValue(lexRange));
+        }
+
+        args.add(BYLEX);
+
+        if (range.isRev()) {
+            args.add(REV);
+        }
+
+        addLimit(args, range.getLimit());
+        return args;
     }
 
     RedisCommand<K, V, List<V>> zrangebylex(K key, String min, String max) {

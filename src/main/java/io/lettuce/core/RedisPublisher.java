@@ -761,12 +761,12 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             if (getOutput() != null) {
 
-                Object result = getOutput().get();
-
                 if (getOutput().hasError()) {
                     onError(ExceptionFactory.createExecutionException(getOutput().getError()));
                     return;
                 }
+
+                Object result = getOutput().get();
 
                 if (!(getOutput() instanceof StreamingOutput<?>) && result != null) {
 

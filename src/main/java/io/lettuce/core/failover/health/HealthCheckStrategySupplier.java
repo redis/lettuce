@@ -1,7 +1,6 @@
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.api.RawConnectionFactory;
 
 /**
@@ -10,7 +9,6 @@ import io.lettuce.core.failover.api.RawConnectionFactory;
  * @author Ivo Gaydazhiev
  * @since 7.4
  */
-@Experimental
 @FunctionalInterface
 public interface HealthCheckStrategySupplier {
 

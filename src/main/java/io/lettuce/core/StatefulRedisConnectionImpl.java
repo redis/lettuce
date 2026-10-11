@@ -64,7 +64,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     protected final RedisAsyncCommandsImpl<K, V> async;
 
     /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
+     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
      *             removal in Lettuce 8.0.
      */
     @Deprecated
@@ -150,7 +150,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
+     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
      *             removal in Lettuce 8.0.
      */
     @Deprecated
@@ -163,7 +163,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
      *
      * @return a new instance
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
+     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
      *             removal in Lettuce 8.0.
      */
     @Deprecated
@@ -308,6 +308,10 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
                 multiOutput = new MultiOutput<>(codec);
             }
             local.setOutput((MultiOutput) multiOutput);
+        }
+
+        if (multi != null && commandType.equals(HIMPORT.name())) {
+            throw new UnsupportedOperationException("HIMPORT is not supported within a MULTI transaction");
         }
 
         if (multi != null && !commandType.equals(MULTI.name()) && !commandType.equals(WATCH.name())) {

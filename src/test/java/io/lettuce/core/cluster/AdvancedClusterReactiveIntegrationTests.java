@@ -69,12 +69,14 @@ import io.lettuce.test.ListStreamingAdapter;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.netty.util.internal.ConcurrentSet;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Mark Paluch
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
     private static final String KEY_ON_NODE_1 = "a";

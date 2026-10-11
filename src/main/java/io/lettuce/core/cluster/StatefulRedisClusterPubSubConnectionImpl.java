@@ -112,7 +112,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     }
 
     /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisClusterPubSubReactiveCommands#factory()} instead;
+     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisClusterPubSubReactiveCommands#factory()} instead;
      *             scheduled for removal in Lettuce 8.0.
      */
     @Deprecated
@@ -122,7 +122,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     }
 
     /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisClusterPubSubReactiveCommands#factory()} instead;
+     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisClusterPubSubReactiveCommands#factory()} instead;
      *             scheduled for removal in Lettuce 8.0.
      */
     @Deprecated

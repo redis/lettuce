@@ -45,8 +45,8 @@ public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnectio
      * Returns the {@link RedisSentinelReactiveCommands} API for the current connection. Does not create a new connection.
      *
      * @return the reactive API for the underlying connection.
-     * @deprecated since 7.7, use {@link #commands(CommandsFactory)} with {@link RedisSentinelReactiveCommands#factory()}
-     *             instead; scheduled for removal in Lettuce 8.0.
+     * @deprecated since 7.8, use {@link #commands(CommandsFactory)} with {@link RedisSentinelReactiveCommands#factory()}
+     *             instead; scheduled for removal in a future major release.
      */
     @Deprecated
     RedisSentinelReactiveCommands<K, V> reactive();
@@ -62,7 +62,7 @@ public interface StatefulRedisSentinelConnection<K, V> extends StatefulConnectio
      * @return the command API bound to this connection
      * @throws UnsupportedOperationException if the connection implementation does not override this method. The default is
      *         provided only for source compatibility in Lettuce 7.x and becomes an abstract method in Lettuce 8.0.
-     * @since 7.7
+     * @since 7.8
      */
     default <T> T commands(CommandsFactory<StatefulRedisSentinelConnection<K, V>, T> factory) {
         throw new UnsupportedOperationException("commands(CommandsFactory) is not implemented by this connection");

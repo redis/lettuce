@@ -83,7 +83,7 @@ public interface Tracing {
      * Gets the {@link TraceContextProvider} from the Reactor {@link Context}.
      *
      * @return a {@link Mono} emitting the {@link TraceContextProvider} held in the subscriber {@link Context}, if any.
-     * @deprecated since 7.7, use {@link io.lettuce.core.AbstractRedisReactiveCommands.ReactorTraceContext#getContext()}
+     * @deprecated since 7.8, use {@link io.lettuce.core.AbstractRedisReactiveCommands.ReactorTraceContext#getContext()}
      *             instead; scheduled for removal in Lettuce 8.0.
      */
     @Deprecated
@@ -96,7 +96,7 @@ public interface Tracing {
      * Returns a {@link Function} that clears the {@link TraceContextProvider} from a Reactor {@link Context}.
      *
      * @return a {@link Function} that removes the {@link TraceContextProvider} from a {@link Context}.
-     * @deprecated since 7.7, use {@link io.lettuce.core.AbstractRedisReactiveCommands.ReactorTraceContext#clearContext()}
+     * @deprecated since 7.8, use {@link io.lettuce.core.AbstractRedisReactiveCommands.ReactorTraceContext#clearContext()}
      *             instead; scheduled for removal in Lettuce 8.0.
      */
     @Deprecated
@@ -110,7 +110,7 @@ public interface Tracing {
      *
      * @param supplier the {@link TraceContextProvider} to place into the returned Reactor {@link Context}.
      * @return a Reactor {@link Context} containing the {@link TraceContextProvider}.
-     * @deprecated since 7.7, use
+     * @deprecated since 7.8, use
      *             {@link io.lettuce.core.AbstractRedisReactiveCommands.ReactorTraceContext#withTraceContextProvider(TraceContextProvider)}
      *             instead; scheduled for removal in Lettuce 8.0.
      */

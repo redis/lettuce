@@ -25,7 +25,7 @@ the owner only.
 |-------|-------|
 | Always-on facts, guardrails, index (this file) | `AGENTS.md` |
 | Command flow & code generation | `.agents/docs/architecture.md` |
-| Running the API generators (safe workflow) | `.agents/docs/code-generation.md` |
+| API consistency (flavors, mapping rules, tests) | `.agents/docs/api-consistency.md` |
 | Testing — environment, running, naming, layout, CI | `.agents/docs/integration-testing.md` |
 | Javadoc conventions (incl. `@since` derivation) | `.agents/docs/javadoc.md` |
 | Coding rules (Java style, …) | `.agents/rules/*` |
@@ -86,11 +86,11 @@ Makefile                                       Docker-backed test lifecycle
 Where to look: connect → `core/`; pooling → `core/support/`; sharding →
 `core/cluster/`; HA/Sentinel → `core/masterreplica/`.
 
-**How a command flows** through the API interfaces, code generation, command
-builder, codec, and the netty/RESP wire layer is documented in
-`.agents/docs/architecture.md`. Read it before adding commands or touching the protocol
-layer — note the sync/async/reactive command interfaces are **generated** from
-templates in `src/main/templates/` and must not be hand-edited.
+**How a command flows** through the API interfaces, command builder, codec, and
+the netty/RESP wire layer is documented in `.agents/docs/architecture.md`. Read it
+before adding commands or touching the protocol layer — note the
+sync/async/reactive/Kotlin command interfaces are **hand-edited** and kept in
+lockstep by the API consistency test suite (see `.agents/docs/api-consistency.md`).
 
 ## Build & Test Commands
 
@@ -131,7 +131,11 @@ mvn formatter:format                 # applies formatting.xml; do NOT submit for
 ## Testing Rules
 
 - **The file-name suffix picks the runner:** `*UnitTests` (Surefire, no server),
-  `*IntegrationTests` (Failsafe, needs Redis). Prefer those suffixes.
+  `*IntegrationTests` (Failsafe, needs Redis). Prefer those suffixes. A singular
+  `*Test` suffix is excluded by Surefire and picked up by Failsafe instead, so such a
+  class never runs in `mvn test`; it only runs in the integration phase (`make test`,
+  which is what CI runs, Docker required) or when named explicitly via `-Dtest=`. Name
+  pure unit tests `*UnitTests`.
 - Integration tests read host/port/TLS from `TestSettings` / `TlsSettings` — never
   hard-code them.
 - Everything else about testing (topologies, TLS/mTLS, layout, CI) lives in
@@ -167,7 +171,7 @@ mvn formatter:format                 # applies formatting.xml; do NOT submit for
 |----------|----------------|
 | `.github/CONTRIBUTING.md` | How to build, test, and contribute |
 | `.agents/docs/architecture.md` | How a command flows: API shapes, code generation, command model, codec, RESP/netty wire layer |
-| `.agents/docs/code-generation.md` | Running the API interface generators safely (non-idempotent; scope `Constants`, review, revert) |
+| `.agents/docs/api-consistency.md` | The API flavors, their return-type mapping rules, and the consistency test suite that enforces them |
 | `.agents/docs/integration-testing.md` | Test environment, topologies, unit vs. integration, CI |
 | `.agents/docs/javadoc.md` | Javadoc house conventions for public API |
 | `.github/PULL_REQUEST_TEMPLATE.md` | PR checklist |
@@ -181,6 +185,7 @@ before doing that type of work.
 
 | Skill | When to use |
 |-------|-------------|
-| `adding-a-redis-command` | Add a new Redis command (or overload) end-to-end: builder, async/reactive impls, API template + generated interfaces, Kotlin, tests |
+| `extend-commands-api` | Add or extend a Redis command (or overload) end-to-end, evidence-first: HLD + server PR + live redis-cli verification, plan-mode approval, then all API interface flavors, builder, async/reactive/Kotlin impls, and tests |
+| `create-implementation-plan-for-redis-api-change` | Turn a shared client HLD into Lettuce's reviewed implementation plan (API, files per flavor, ordered steps, test matrix) without touching sources; read-only, writes one plan file; conventions come from `extend-commands-api` |
 | `writing-javadoc` | Write or fix Javadoc for public API following Lettuce house conventions |
 | `draft-pr-description` | Generate a GitHub PR title and description from the diff between two local branches |

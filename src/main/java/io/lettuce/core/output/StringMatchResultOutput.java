@@ -32,9 +32,10 @@ import static io.lettuce.core.StringMatchResult.MatchedPosition;
 import static io.lettuce.core.StringMatchResult.Position;
 
 /**
- * Command output for {@code STRALGO} returning {@link StringMatchResult}.
+ * Command output for {@code STRALGO} and {@code LCS} returning {@link StringMatchResult}.
  *
  * @author dengliming
+ * @author Yordan Tsintsov
  * @since 6.0
  */
 public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMatchResult> {
@@ -57,8 +58,22 @@ public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMat
 
     @Override
     public void set(ByteBuffer bytes) {
-        matchString = (String) codec.decodeKey(bytes);
+
+        if (bytes == null) {
+            return;
+        }
+
         readingLen = LEN.equals(bytes);
+        matchString = decodeMatchString(bytes);
+    }
+
+    private String decodeMatchString(ByteBuffer bytes) {
+
+        Object decoded = codec.decodeKey(bytes.duplicate());
+        if (decoded instanceof String) {
+            return (String) decoded;
+        }
+        return decodeString(bytes);
     }
 
     @Override

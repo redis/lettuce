@@ -85,7 +85,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
 
     /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisAdvancedClusterReactiveCommands#factory()} instead;
+     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisAdvancedClusterReactiveCommands#factory()} instead;
      *             scheduled for removal in Lettuce 8.0.
      */
     @Deprecated
@@ -174,7 +174,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisAdvancedClusterReactiveCommands#factory()} instead;
+     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisAdvancedClusterReactiveCommands#factory()} instead;
      *             scheduled for removal in Lettuce 8.0.
      */
     @Deprecated

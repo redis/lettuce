@@ -811,6 +811,52 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xautoclaimJustIdWithDeletedEntries() {
+
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.0"),
+                "Redis 7.0+ required for the deleted-entries reply element");
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id1 = redis.xadd(key, Collections.singletonMap("key1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("key2", "value2"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+
+        // Delete both entries from the stream; they remain pending in the PEL.
+        redis.xdel(key, id1, id2);
+
+        ClaimedMessages<String, String> claimedMessages = redis.xautoclaim(key, XAutoClaimArgs.Builder
+                .xautoclaim(Consumer.from("group", "consumer2"), Duration.ZERO, "0-0").justid().count(20));
+
+        // Deleted entries must NOT appear as claimed messages.
+        assertThat(claimedMessages.getMessages()).isEmpty();
+        assertThat(claimedMessages.getDeletedIds()).containsExactlyInAnyOrder(id1, id2);
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xautoclaimWithDeletedEntries() {
+
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.0"),
+                "Redis 7.0+ required for the deleted-entries reply element");
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id1 = redis.xadd(key, Collections.singletonMap("key1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("key2", "value2"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+
+        redis.xdel(key, id1, id2);
+
+        ClaimedMessages<String, String> claimedMessages = redis.xautoclaim(key,
+                XAutoClaimArgs.Builder.xautoclaim(Consumer.from("group", "consumer2"), Duration.ZERO, "0-0").count(20));
+
+        assertThat(claimedMessages.getMessages()).isEmpty();
+        assertThat(claimedMessages.getDeletedIds()).containsExactlyInAnyOrder(id1, id2);
+    }
+
+    @Test
     void xclaim() {
 
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());

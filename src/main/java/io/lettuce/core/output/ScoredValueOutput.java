@@ -44,6 +44,7 @@ public class ScoredValueOutput<K, V> extends CommandOutput<K, V, ScoredValue<V>>
     @Override
     public void set(long integer) {
         value = (V) (Long) integer;
+        hasValue = true;
     }
 
     @Override

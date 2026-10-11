@@ -31,7 +31,7 @@ public interface TraceContextProvider {
      * The emitted value may be {@code null} depending on the implementation and the application context it is called from.
      *
      * @return a {@link Mono} emitting the {@link TraceContext}.
-     * @deprecated since 7.7, override {@link #getTraceContextAsync(Map)} instead; scheduled for removal in Lettuce 8.0.
+     * @deprecated since 7.8, override {@link #getTraceContextAsync(Map)} instead; scheduled for removal in Lettuce 8.0.
      */
     @Deprecated
     default Mono<TraceContext> getTraceContextLater() {
@@ -64,7 +64,7 @@ public interface TraceContextProvider {
      *
      * @param appContext the application context used to resolve the {@link TraceContext}.
      * @return a {@link Supplier} of the {@link TraceContext}.
-     * @since 7.7
+     * @since 7.8
      */
     default Supplier<TraceContext> getTraceContextAsync(Map<Object, Object> appContext) {
         return this::getTraceContext;

@@ -29,7 +29,6 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -66,7 +65,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
         implements StatefulRedisMultiDbConnection<K, V> {
 
@@ -84,7 +82,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     protected final RedisAsyncCommandsImpl<K, V> async;
 
     /**
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
+     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
      *             removal in Lettuce 8.0.
      */
     @Deprecated
@@ -475,7 +473,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * Returns the reactive API. The API is a dynamic proxy that remains valid across database switches.
      *
      * @return the reactive commands API.
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
+     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
      *             removal in Lettuce 8.0.
      */
     @Deprecated
@@ -488,7 +486,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overridden to extend.
      *
      * @return a new instance
-     * @deprecated since 7.7, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
+     * @deprecated since 7.8, use {@code commands(...)} with {@link RedisReactiveCommands#factory()} instead; scheduled for
      *             removal in Lettuce 8.0.
      */
     @Deprecated
