@@ -29,6 +29,40 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
     }
 
     @Override
+    public void setSingle(ByteBuffer bytes) {
+        recordBytes(bytes, new SimpleString(copy(bytes)));
+    }
+
+    @Override
+    public void setBigNumber(ByteBuffer bytes) {
+        recordBytes(bytes, new BigNumber(copy(bytes)));
+    }
+
+    private static ByteBuffer copy(ByteBuffer bytes) {
+        return bytes == null ? null : bytes.duplicate();
+    }
+
+    private void recordBytes(ByteBuffer bytes, Signal signal) {
+        int index = output.size();
+        set(bytes);
+        replaceLast(index, signal);
+    }
+
+    private void recordMulti(int count, Multi.Type type) {
+        int index = output.size();
+        multi(count);
+        replaceLast(index, new Multi(count, type));
+    }
+
+    private void replaceLast(int index, Signal signal) {
+        if (output.size() > index) {
+            output.set(index, signal);
+        } else {
+            output.add(signal);
+        }
+    }
+
+    @Override
     public void set(long integer) {
         output.add(new Integer(integer));
     }
@@ -36,6 +70,11 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
     @Override
     public void set(double number) {
         output.add(new Double(number));
+    }
+
+    @Override
+    public void set(boolean value) {
+        output.add(new BooleanValue(value));
     }
 
     @Override
@@ -59,7 +98,27 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
 
     @Override
     public void multi(int count) {
-        output.add(new Multi(count));
+        output.add(new Multi(count, Multi.Type.MULTI));
+    }
+
+    @Override
+    public void multiArray(int count) {
+        recordMulti(count, Multi.Type.ARRAY);
+    }
+
+    @Override
+    public void multiPush(int count) {
+        recordMulti(count, Multi.Type.PUSH);
+    }
+
+    @Override
+    public void multiMap(int count) {
+        recordMulti(count, Multi.Type.MAP);
+    }
+
+    @Override
+    public void multiSet(int count) {
+        recordMulti(count, Multi.Type.SET);
     }
 
     /**
@@ -120,6 +179,32 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
 
     }
 
+    static class SimpleString extends BulkStringSupport {
+
+        SimpleString(ByteBuffer message) {
+            super(message);
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.setSingle(message);
+        }
+
+    }
+
+    static class BigNumber extends BulkStringSupport {
+
+        BigNumber(ByteBuffer message) {
+            super(message);
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.setBigNumber(message);
+        }
+
+    }
+
     static class Integer extends Signal {
 
         final long message;
@@ -140,6 +225,21 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
         final double message;
 
         Double(double message) {
+            this.message = message;
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.set(message);
+        }
+
+    }
+
+    static class BooleanValue extends Signal {
+
+        final boolean message;
+
+        BooleanValue(boolean message) {
             this.message = message;
         }
 
@@ -182,13 +282,38 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
 
         final int count;
 
-        Multi(int count) {
+        final Type type;
+
+        Multi(int count, Type type) {
             this.count = count;
+            this.type = type;
         }
 
         @Override
         protected void replay(CommandOutput<?, ?, ?> target) {
-            target.multi(count);
+            switch (type) {
+                case MULTI:
+                    target.multi(count);
+                    break;
+                case ARRAY:
+                    target.multiArray(count);
+                    break;
+                case PUSH:
+                    target.multiPush(count);
+                    break;
+                case MAP:
+                    target.multiMap(count);
+                    break;
+                case SET:
+                    target.multiSet(count);
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported multi signal type " + type);
+            }
+        }
+
+        enum Type {
+            MULTI, ARRAY, PUSH, MAP, SET
         }
 
     }
