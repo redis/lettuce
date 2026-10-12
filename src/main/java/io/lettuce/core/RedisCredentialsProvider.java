@@ -77,7 +77,7 @@ public interface RedisCredentialsProvider extends CredentialsProvider {
         if (provider instanceof RedisCredentialsProvider) {
             return (RedisCredentialsProvider) provider;
         }
-        return new AsyncCredentialsProviderAdapter(provider);
+        return AsyncCredentialsProviderAdapter.of(provider);
     }
 
     /**
