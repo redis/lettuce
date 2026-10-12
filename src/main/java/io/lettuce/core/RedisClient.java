@@ -694,7 +694,10 @@ public class RedisClient extends AbstractRedisClient {
      * @see ClientResources#addressResolverGroup()
      * @see RedisURI#getSentinels()
      * @see RedisURI#getSentinelMasterId()
+     * @deprecated since 7.9, in Lettuce 8.0 this method returns a {@code Supplier<CompletionStage<SocketAddress>>} instead of a
+     *             {@link Mono}; subclasses overriding it must change the return type. There is no replacement in 7.x.
      */
+    @Deprecated
     protected Mono<SocketAddress> getSocketAddress(RedisURI redisURI) {
 
         return Mono.defer(() -> {
