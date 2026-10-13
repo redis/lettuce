@@ -19,12 +19,14 @@
  */
 package io.lettuce.core.protocol;
 
+import java.net.SocketAddress;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -66,10 +68,29 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
     private volatile long queuedAtNanos;
 
     @SuppressWarnings("rawtypes")
-    private static final AtomicLongFieldUpdater<AsyncCommand> FIRST_SENT_UPDATER = AtomicLongFieldUpdater
-            .newUpdater(AsyncCommand.class, "firstSentNanos");
+    private static final AtomicReferenceFieldUpdater<AsyncCommand, FirstSend> FIRST_SENT_UPDATER = AtomicReferenceFieldUpdater
+            .newUpdater(AsyncCommand.class, FirstSend.class, "firstSend");
 
-    private volatile long firstSentNanos;
+    private volatile FirstSend firstSend;
+
+    /**
+     * The timestamp and connection identity must be published together: a replay can run on another channel.
+     */
+    static final class FirstSend {
+
+        final long timestampNanos;
+
+        final SocketAddress local;
+
+        final SocketAddress remote;
+
+        FirstSend(long timestampNanos, SocketAddress local, SocketAddress remote) {
+            this.timestampNanos = timestampNanos;
+            this.local = local;
+            this.remote = remote;
+        }
+
+    }
 
     /**
      * @param command the command, must not be {@code null}.
@@ -107,20 +128,31 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
     }
 
     static void markSent(RedisCommand<?, ?, ?> command, long timestampNanos) {
+        markSent(command, timestampNanos, null, null);
+    }
+
+    static void markSent(RedisCommand<?, ?, ?> command, long timestampNanos, SocketAddress local,
+            SocketAddress remote) {
         RedisCommand<?, ?, ?> carrier = findTimestampCarrier(command);
+        FirstSend firstSend = new FirstSend(timestampNanos, local, remote);
         if (carrier instanceof AsyncCommand) {
-            FIRST_SENT_UPDATER.compareAndSet((AsyncCommand<?, ?, ?>) carrier, 0, timestampNanos);
+            FIRST_SENT_UPDATER.compareAndSet((AsyncCommand<?, ?, ?>) carrier, null, firstSend);
         } else if (carrier instanceof Command) {
-            ((Command<?, ?, ?>) carrier).markSent(timestampNanos);
+            ((Command<?, ?, ?>) carrier).markSent(firstSend);
         }
     }
 
-    static long firstSent(RedisCommand<?, ?, ?> command) {
+    static FirstSend firstSend(RedisCommand<?, ?, ?> command) {
         RedisCommand<?, ?, ?> carrier = findTimestampCarrier(command);
         if (carrier instanceof AsyncCommand) {
-            return ((AsyncCommand<?, ?, ?>) carrier).firstSentNanos;
+            return ((AsyncCommand<?, ?, ?>) carrier).firstSend;
         }
-        return carrier instanceof Command ? ((Command<?, ?, ?>) carrier).firstSent() : 0;
+        return carrier instanceof Command ? ((Command<?, ?, ?>) carrier).firstSend() : null;
+    }
+
+    static long firstSent(RedisCommand<?, ?, ?> command) {
+        FirstSend firstSend = firstSend(command);
+        return firstSend != null ? firstSend.timestampNanos : 0;
     }
 
     /** Check future cancellation after completion without mistaking reactive cleanup for cancellation of a result. */

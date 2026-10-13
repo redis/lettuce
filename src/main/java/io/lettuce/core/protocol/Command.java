@@ -20,6 +20,7 @@
 package io.lettuce.core.protocol;
 
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.CommandOutput;
@@ -45,10 +46,10 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     private volatile long queuedAtNanos;
 
     @SuppressWarnings("rawtypes")
-    private static final AtomicLongFieldUpdater<Command> FIRST_SENT_UPDATER = AtomicLongFieldUpdater.newUpdater(Command.class,
-            "firstSentNanos");
+    private static final AtomicReferenceFieldUpdater<Command, AsyncCommand.FirstSend> FIRST_SENT_UPDATER = AtomicReferenceFieldUpdater
+            .newUpdater(Command.class, AsyncCommand.FirstSend.class, "firstSend");
 
-    private volatile long firstSentNanos;
+    private volatile AsyncCommand.FirstSend firstSend;
 
     void markEnqueued(long timestampNanos) {
         QUEUED_AT_UPDATER.compareAndSet(this, 0, timestampNanos);
@@ -59,11 +60,19 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     }
 
     void markSent(long timestampNanos) {
-        FIRST_SENT_UPDATER.compareAndSet(this, 0, timestampNanos);
+        markSent(new AsyncCommand.FirstSend(timestampNanos, null, null));
+    }
+
+    void markSent(AsyncCommand.FirstSend firstSend) {
+        FIRST_SENT_UPDATER.compareAndSet(this, null, firstSend);
+    }
+
+    AsyncCommand.FirstSend firstSend() {
+        return firstSend;
     }
 
     long firstSent() {
-        return firstSentNanos;
+        return firstSend != null ? firstSend.timestampNanos : 0;
     }
 
     protected static final byte ST_INITIAL = 0;

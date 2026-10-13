@@ -23,6 +23,7 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -36,6 +37,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import io.lettuce.core.ClientOptions;
@@ -254,6 +257,31 @@ class CommandHandlerQueueLatencyUnitTests {
         // Rejecting the end-to-end duration must never produce a negative timer observation.
         verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong(), anyLong());
         assertThat(AsyncCommand.firstSent(command) - AsyncCommand.queuedAt(command)).isEqualTo(50);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void shouldAttributeReplayMetricsToFirstSendConnection(boolean async) throws Exception {
+        RedisCommand<String, String, String> command = async ? new AsyncCommand<>(command()) : command();
+        InetSocketAddress firstLocal = new InetSocketAddress("127.0.0.1", 1234);
+        InetSocketAddress firstRemote = new InetSocketAddress("127.0.0.1", 6379);
+        AsyncCommand.markEnqueued(command, System.nanoTime() - 100_000);
+
+        handler.write(context, command, promise);
+        long firstSent = AsyncCommand.firstSent(command);
+        assertThat(firstSent).isNotZero();
+
+        // Simulate an in-flight command moved to a different channel after reconnect or redirect.
+        handler.getStack().poll();
+        when(channel.localAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 2345));
+        when(channel.remoteAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 6380));
+        handler.write(context, command, promise);
+        reply("+OK\r\n");
+
+        assertThat(command.isDone()).isTrue();
+        assertThat(AsyncCommand.firstSent(command)).isEqualTo(firstSent);
+        verify(recorder).recordCommandQueueLatency(eq(firstLocal), eq(firstRemote), any(RedisCommand.class), anyLong(),
+                anyLong());
     }
 
     private Command<String, String, String> command() {
