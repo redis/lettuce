@@ -365,8 +365,8 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Use a dedicated {@link reactor.core.scheduler.Scheduler} to emit reactive data signals. Enabling this option can be
-         * useful for reactive sequences that require a significant amount of processing with a single/a few Redis connections.
+         * Use a dedicated scheduler to emit reactive data signals. Enabling this option can be useful for reactive sequences
+         * that require a significant amount of processing with a single/a few Redis connections.
          * <p>
          * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
          * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
@@ -375,7 +375,6 @@ public class ClientOptions implements Serializable {
          *
          * @param publishOnScheduler true/false
          * @return {@code this}
-         * @see org.reactivestreams.Subscriber#onNext(Object)
          * @see ClientResources#eventExecutorGroup()
          * @since 5.2
          */
@@ -688,15 +687,15 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Use a dedicated {@link reactor.core.scheduler.Scheduler} to emit reactive data signals. Enabling this option can be
-     * useful for reactive sequences that require a significant amount of processing with a single/a few Redis connections.
+     * Use a dedicated scheduler to emit reactive data signals. Enabling this option can be useful for reactive sequences that
+     * require a significant amount of processing with a single/a few Redis connections.
      * <p>
      * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
      * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
      * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false} , see
      * {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
      *
-     * @return {@code true} to use a dedicated {@link reactor.core.scheduler.Scheduler}
+     * @return {@code true} to use a dedicated scheduler
      * @since 5.2
      */
     public boolean isPublishOnScheduler() {

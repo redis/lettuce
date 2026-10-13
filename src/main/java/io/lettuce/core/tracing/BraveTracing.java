@@ -41,8 +41,8 @@ import io.lettuce.core.protocol.RedisCommand;
  * imperative (synchronous/asynchronous) API usage from {@link brave.Tracing#currentTracer()}. The context is not propagated
  * across asynchronous call chains resulting from {@link java.util.concurrent.CompletionStage} chaining.
  * <p>
- * Reactive API usage leverages Reactor's {@link reactor.util.context.Context} so that subscribers can register one of the
- * following objects (using their {@link Class} as context key):
+ * Reactive API usage leverages Reactor's {@code Context} so that subscribers can register one of the following objects (using
+ * their {@link Class} as context key):
  *
  * <ol>
  * <li>A {@link TraceContextProvider}</li>

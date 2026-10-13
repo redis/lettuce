@@ -84,8 +84,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @see RedisURI
  * @see StatefulRedisConnection
  * @see RedisFuture
- * @see reactor.core.publisher.Mono
- * @see reactor.core.publisher.Flux
  * @see RedisCodec
  * @see ClientOptions
  * @see ClientResources

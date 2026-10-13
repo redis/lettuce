@@ -12,7 +12,7 @@ import java.io.Closeable;
  * {@link io.lettuce.core.event.EventBus#subscribe(java.util.function.Consumer)}. Closing the subscription stops delivery of
  * further values to the registered callback.
  * <p>
- * This is not related to {@code org.reactivestreams.Subscription} or to Redis Pub/Sub channel subscriptions.
+ * This is not related to the Reactive Streams {@code Subscription} or to Redis Pub/Sub channel subscriptions.
  *
  * @author Aleksandar Todorov
  * @since 7.8
