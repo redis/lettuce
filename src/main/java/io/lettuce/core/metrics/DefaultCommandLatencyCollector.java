@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -53,6 +54,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  * @author Bryce J. Fisher
+ * @author shariorfarhan07 (Sharior Hossain Farhan)
  */
 public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
@@ -67,6 +69,8 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     private static final PauseDetectorWrapper GLOBAL_NO_PAUSE_DETECTOR = PauseDetectorWrapper.noop();
 
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultCommandLatencyCollector.class);
+
     private static final long MIN_LATENCY = 1000;
 
     private static final long MAX_LATENCY = TimeUnit.MINUTES.toNanos(5);
@@ -75,6 +79,8 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     private final AtomicReference<Map<CommandLatencyId, Latencies>> latencyMetricsRef = new AtomicReference<>(
             createNewLatencyMap());
+
+    private final AtomicBoolean maxCommandLatencyIdsReachedLogged = new AtomicBoolean();
 
     // Updated via PAUSE_DETECTOR_UPDATER
     private volatile PauseDetectorWrapper pauseDetectorWrapper;
@@ -119,14 +125,26 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         } while (pauseDetector == null);
 
         PauseDetector pauseDetectorToUse = pauseDetector;
-        Latencies latencies = latencyMetricsRef.get().computeIfAbsent(createId(local, remote, commandType), id -> {
+        Map<CommandLatencyId, Latencies> latencyMetrics = latencyMetricsRef.get();
+        CommandLatencyId commandLatencyId = createId(local, remote, commandType);
+        Latencies latencies = latencyMetrics.get(commandLatencyId);
 
-            if (options.resetLatenciesAfterEvent()) {
-                return new Latencies(pauseDetectorToUse);
+        if (latencies == null) {
+
+            if (latencyMetrics.size() >= options.maxCommandLatencyIds()) {
+                logMaxCommandLatencyIdsReached();
+                return;
             }
 
-            return new CummulativeLatencies(pauseDetectorToUse);
-        });
+            latencies = latencyMetrics.computeIfAbsent(commandLatencyId, id -> {
+
+                if (options.resetLatenciesAfterEvent()) {
+                    return new Latencies(pauseDetectorToUse);
+                }
+
+                return new CummulativeLatencies(pauseDetectorToUse);
+            });
+        }
 
         latencies.firstResponse.recordLatency(rangify(firstResponseLatency));
         latencies.completion.recordLatency(rangify(completionLatency));
@@ -134,6 +152,16 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     private CommandLatencyId createId(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType) {
         return CommandLatencyId.create(options.localDistinction() ? local : LocalAddress.ANY, remote, commandType);
+    }
+
+    private void logMaxCommandLatencyIdsReached() {
+
+        if (maxCommandLatencyIdsReachedLogged.compareAndSet(false, true)) {
+            logger.warn("Command latency collection reached the limit of {} distinct remote address and command type "
+                    + "combinations; latencies of new combinations are not recorded until the metrics are reset. Ensure that "
+                    + "custom ProtocolKeyword implementations return a stable command name from toString() or raise "
+                    + "CommandLatencyCollectorOptions.maxCommandLatencyIds", options.maxCommandLatencyIds());
+        }
     }
 
     private long rangify(long latency) {

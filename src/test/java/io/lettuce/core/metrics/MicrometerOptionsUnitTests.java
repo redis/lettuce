@@ -38,6 +38,7 @@ import io.micrometer.core.instrument.Tags;
  * @author Steven Sheehy
  * @author André Tibola
  * @author Mark Paluch
+ * @author shariorfarhan07 (Sharior Hossain Farhan)
  */
 @Tag(UNIT_TEST)
 class MicrometerOptionsUnitTests {
@@ -54,6 +55,23 @@ class MicrometerOptionsUnitTests {
         assertThat(options.minLatency()).isEqualTo(DEFAULT_MIN_LATENCY);
         assertThat(options.tags()).isEqualTo(Tags.empty());
         assertThat(options.targetPercentiles()).isEqualTo(DEFAULT_TARGET_PERCENTILES);
+    }
+
+    @Test
+    void defaultMaxCommandLatencyIds() {
+
+        MicrometerOptions options = MicrometerOptions.create();
+
+        assertThat(options.maxCommandLatencyIds()).isEqualTo(DEFAULT_MAX_COMMAND_LATENCY_IDS).isEqualTo(500);
+    }
+
+    @Test
+    void maxCommandLatencyIds() {
+
+        MicrometerOptions options = MicrometerOptions.builder().maxCommandLatencyIds(42).build();
+
+        assertThat(options.maxCommandLatencyIds()).isEqualTo(42);
+        assertThatIllegalArgumentException().isThrownBy(() -> MicrometerOptions.builder().maxCommandLatencyIds(0));
     }
 
     @Test

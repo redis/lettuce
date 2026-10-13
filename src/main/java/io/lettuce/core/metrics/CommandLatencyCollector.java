@@ -13,8 +13,14 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * <li>Latency between command send and first response (first response received)</li>
  * <li>Latency between command send and command completion (complete response received)</li>
  * </ul>
+ * <p>
+ * The collector retains latency data for each distinct remote address and command type until {@link #retrieveMetrics()} is
+ * called with {@link CommandLatencyCollectorOptions#resetLatenciesAfterEvent()} enabled, or until {@link #shutdown()}. Memory
+ * usage therefore grows with the number of distinct remote addresses and command names (see {@link ProtocolKeyword#toString()})
+ * observed between two retrievals, up to {@link CommandLatencyCollectorOptions#maxCommandLatencyIds()}.
  *
  * @author Mark Paluch
+ * @author shariorfarhan07 (Sharior Hossain Farhan)
  * @since 3.4
  */
 public interface CommandLatencyCollector

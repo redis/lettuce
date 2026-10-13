@@ -35,6 +35,7 @@ import io.micrometer.core.instrument.Tags;
  * @author Steven Sheehy
  * @author Mark Paluch
  * @author André Tibola
+ * @author shariorfarhan07 (Sharior Hossain Farhan)
  * @since 6.1
  */
 public class MicrometerOptions {
@@ -51,6 +52,13 @@ public class MicrometerOptions {
 
     public static final double[] DEFAULT_TARGET_PERCENTILES = new double[] { 0.50, 0.90, 0.95, 0.99, 0.999 };
 
+    /**
+     * Default maximum number of distinct {@link CommandLatencyId}s.
+     *
+     * @since 7.9
+     */
+    public static final int DEFAULT_MAX_COMMAND_LATENCY_IDS = 500;
+
     private static final MicrometerOptions DISABLED = builder().disable().build();
 
     private final Builder builder;
@@ -64,6 +72,8 @@ public class MicrometerOptions {
     private final Duration maxLatency;
 
     private final Duration minLatency;
+
+    private final int maxCommandLatencyIds;
 
     private final Predicate<RedisCommand<?, ?, ?>> metricsFilter;
 
@@ -80,6 +90,7 @@ public class MicrometerOptions {
         this.metricsFilter = builder.metricsFilter;
         this.maxLatency = builder.maxLatency;
         this.minLatency = builder.minLatency;
+        this.maxCommandLatencyIds = builder.maxCommandLatencyIds;
         this.tags = builder.tags;
         this.targetPercentiles = builder.targetPercentiles;
     }
@@ -138,6 +149,8 @@ public class MicrometerOptions {
         private Duration maxLatency = DEFAULT_MAX_LATENCY;
 
         private Duration minLatency = DEFAULT_MIN_LATENCY;
+
+        private int maxCommandLatencyIds = DEFAULT_MAX_COMMAND_LATENCY_IDS;
 
         private Tags tags = Tags.empty();
 
@@ -262,6 +275,22 @@ public class MicrometerOptions {
         }
 
         /**
+         * Sets the maximum number of distinct {@link CommandLatencyId}s for which timers are registered. Once the limit is
+         * reached, latencies for new remote address and command type combinations are not recorded. Registered timers are
+         * retained for the lifetime of the {@link MicrometerCommandLatencyRecorder}. Defaults to {@code 500}. See
+         * {@link MicrometerOptions#DEFAULT_MAX_COMMAND_LATENCY_IDS}.
+         *
+         * @param maxCommandLatencyIds the maximum number of distinct {@link CommandLatencyId}s, must be greater than zero
+         * @return this {@link Builder}.
+         * @since 7.9
+         */
+        public Builder maxCommandLatencyIds(int maxCommandLatencyIds) {
+            LettuceAssert.isTrue(maxCommandLatencyIds > 0, "MaxCommandLatencyIds must be greater than zero");
+            this.maxCommandLatencyIds = maxCommandLatencyIds;
+            return this;
+        }
+
+        /**
          * Extra tags to add to the generated metrics. Defaults to {@code Tags.empty()}.
          *
          * @param tags tags to add to the metrics
@@ -318,6 +347,16 @@ public class MicrometerOptions {
 
     public Duration minLatency() {
         return minLatency;
+    }
+
+    /**
+     * Returns the maximum number of distinct {@link CommandLatencyId}s for which timers are registered.
+     *
+     * @return the maximum number of distinct {@link CommandLatencyId}s.
+     * @since 7.9
+     */
+    public int maxCommandLatencyIds() {
+        return maxCommandLatencyIds;
     }
 
     public Tags tags() {

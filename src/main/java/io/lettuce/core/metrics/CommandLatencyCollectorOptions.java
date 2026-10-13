@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
  * Configuration interface for command latency collection.
  *
  * @author Mark Paluch
+ * @author shariorfarhan07 (Sharior Hossain Farhan)
  */
 public interface CommandLatencyCollectorOptions {
 
@@ -84,7 +85,8 @@ public interface CommandLatencyCollectorOptions {
     double[] targetPercentiles();
 
     /**
-     * Returns whether the latencies should be reset once an event is emitted.
+     * Returns whether the latencies should be reset once an event is emitted. If {@code false}, the collector retains latency
+     * data for every distinct remote address and command type for its lifetime.
      *
      * @return {@code true} if the latencies should be reset once an event is emitted.
      */
@@ -114,6 +116,18 @@ public interface CommandLatencyCollectorOptions {
      * @since 6.1.7
      */
     boolean usePauseDetector();
+
+    /**
+     * Returns the maximum number of distinct {@link CommandLatencyId}s for which latencies are collected between two metric
+     * resets. Once the limit is reached, latencies for new remote address and command type combinations are not recorded until
+     * the collected metrics are reset.
+     *
+     * @return the maximum number of distinct {@link CommandLatencyId}s.
+     * @since 7.9
+     */
+    default int maxCommandLatencyIds() {
+        return DefaultCommandLatencyCollectorOptions.DEFAULT_MAX_COMMAND_LATENCY_IDS;
+    }
 
     /**
      * Builder for {@link CommandLatencyCollectorOptions}.
@@ -167,7 +181,8 @@ public interface CommandLatencyCollectorOptions {
 
         /**
          * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}. See
-         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
+         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}. If {@code false}, the collector
+         * retains latency data for every distinct remote address and command type for its lifetime.
          *
          * @param resetLatenciesAfterEvent {@code true} if the recorded latencies should be reset once the metrics event was
          *        emitted.
@@ -175,6 +190,18 @@ public interface CommandLatencyCollectorOptions {
          * @return this {@link Builder}.
          */
         Builder resetLatenciesAfterEvent(boolean resetLatenciesAfterEvent);
+
+        /**
+         * Sets the maximum number of distinct {@link CommandLatencyId}s for which latencies are collected between two metric
+         * resets. Once the limit is reached, latencies for new remote address and command type combinations are not recorded
+         * until the collected metrics are reset. Defaults to {@code 500}. See
+         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_MAX_COMMAND_LATENCY_IDS}.
+         *
+         * @param maxCommandLatencyIds the maximum number of distinct {@link CommandLatencyId}s, must be greater than zero.
+         * @return this {@link Builder}.
+         * @since 7.9
+         */
+        Builder maxCommandLatencyIds(int maxCommandLatencyIds);
 
         /**
          * Sets the emitted percentiles. Defaults to 50.0, 90.0, 95.0, 99.0, 99.9}. See

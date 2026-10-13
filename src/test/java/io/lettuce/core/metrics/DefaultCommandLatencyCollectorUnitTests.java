@@ -23,6 +23,8 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.junit.jupiter.api.Tag;
@@ -32,11 +34,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.lettuce.core.metrics.DefaultCommandLatencyCollector.PauseDetectorWrapper;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.test.ReflectionTestUtils;
 import io.netty.channel.local.LocalAddress;
 
 /**
  * @author Mark Paluch
+ * @author shariorfarhan07 (Sharior Hossain Farhan)
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
@@ -144,6 +148,77 @@ class DefaultCommandLatencyCollectorUnitTests {
         sut.shutdown();
     }
 
+    @Test
+    void shouldLimitCommandLatencyIdsForUnstableCommandNames() {
+
+        sut = new DefaultCommandLatencyCollector(
+                DefaultCommandLatencyCollectorOptions.builder().maxCommandLatencyIds(3).build());
+
+        for (int i = 0; i < 10; i++) {
+            sut.recordCommandLatency(LocalAddress.ANY, LocalAddress.ANY, new IdentityKeyword(), MILLISECONDS.toNanos(100),
+                    MILLISECONDS.toNanos(1000));
+        }
+
+        assertThat(sut.retrieveMetrics()).hasSize(3);
+
+        sut.shutdown();
+    }
+
+    @Test
+    void shouldLimitCommandLatencyIdsForChangingRemoteAddresses() {
+
+        sut = new DefaultCommandLatencyCollector(
+                DefaultCommandLatencyCollectorOptions.builder().maxCommandLatencyIds(2).build());
+
+        for (int i = 0; i < 5; i++) {
+            sut.recordCommandLatency(LocalAddress.ANY, new InetSocketAddress("10.0.0." + i, 6379), CommandType.GET,
+                    MILLISECONDS.toNanos(100), MILLISECONDS.toNanos(1000));
+        }
+
+        assertThat(sut.retrieveMetrics()).hasSize(2);
+
+        sut.shutdown();
+    }
+
+    @Test
+    void shouldRecordKnownCommandLatencyIdsAfterLimitReached() {
+
+        sut = new DefaultCommandLatencyCollector(
+                DefaultCommandLatencyCollectorOptions.builder().maxCommandLatencyIds(1).build());
+
+        setupData();
+        sut.recordCommandLatency(LocalAddress.ANY, LocalAddress.ANY, CommandType.GET, MILLISECONDS.toNanos(100),
+                MILLISECONDS.toNanos(1000));
+
+        Map<CommandLatencyId, CommandMetrics> latencies = sut.retrieveMetrics();
+
+        assertThat(latencies).hasSize(1);
+        assertThat(latencies.keySet().iterator().next().commandType()).isSameAs(CommandType.BGSAVE);
+        assertThat(latencies.values().iterator().next().getCount()).isEqualTo(3);
+
+        sut.shutdown();
+    }
+
+    @Test
+    void shouldRecordNewCommandLatencyIdsAfterReset() {
+
+        sut = new DefaultCommandLatencyCollector(
+                DefaultCommandLatencyCollectorOptions.builder().maxCommandLatencyIds(1).build());
+
+        setupData();
+        assertThat(sut.retrieveMetrics()).hasSize(1);
+
+        sut.recordCommandLatency(LocalAddress.ANY, LocalAddress.ANY, CommandType.GET, MILLISECONDS.toNanos(100),
+                MILLISECONDS.toNanos(1000));
+
+        Map<CommandLatencyId, CommandMetrics> latencies = sut.retrieveMetrics();
+
+        assertThat(latencies).hasSize(1);
+        assertThat(latencies.keySet().iterator().next().commandType()).isSameAs(CommandType.GET);
+
+        sut.shutdown();
+    }
+
     private void setupData() {
         sut.recordCommandLatency(LocalAddress.ANY, LocalAddress.ANY, CommandType.BGSAVE, MILLISECONDS.toNanos(100),
                 MILLISECONDS.toNanos(1000));
@@ -151,6 +226,18 @@ class DefaultCommandLatencyCollectorUnitTests {
                 MILLISECONDS.toNanos(1000));
         sut.recordCommandLatency(LocalAddress.ANY, LocalAddress.ANY, CommandType.BGSAVE, MILLISECONDS.toNanos(300),
                 MILLISECONDS.toNanos(1000));
+    }
+
+    /**
+     * {@link ProtocolKeyword} without a {@code toString()} override, yielding a distinct command name per instance.
+     */
+    static class IdentityKeyword implements ProtocolKeyword {
+
+        @Override
+        public byte[] getBytes() {
+            return "IDENTITY".getBytes(StandardCharsets.US_ASCII);
+        }
+
     }
 
 }
