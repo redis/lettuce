@@ -18,8 +18,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.reactivestreams.Publisher;
-
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.api.CommandsFactory;
@@ -193,8 +191,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
             throws ExecutionException, InterruptedException {
 
         if (executionModel == ExecutionModel.REACTIVE) {
-            Map<RedisClusterNode, CompletionStage<? extends Publisher<?>>> reactiveExecutions = (Map) executions;
-            return new ReactiveExecutionsImpl(reactiveExecutions);
+            return new ReactiveExecutionsImpl(executions);
         }
 
         Map<RedisClusterNode, CompletionStage<?>> asyncExecutions = (Map) executions;
