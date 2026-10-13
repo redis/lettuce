@@ -23,6 +23,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
+import io.lettuce.core.BlessFlag;
+import io.lettuce.core.BlessScanArgs;
 import io.lettuce.core.CompareCondition;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -756,5 +758,90 @@ public interface RedisKeyReactiveCommands<K, V> {
      */
     @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
+
+    /**
+     * Protect {@code key} against eviction by turning on the blessing {@code flag}. The blessing survives value overwrites of
+     * {@code key} and is removed when {@code key} is deleted. Fails with {@code ERR no such key} if {@code key} does not exist.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param flag the blessing flag to turn on, must not be {@code null}.
+     * @return {@code true} if the flag was turned on, {@code false} if it was already set on {@code key}.
+     * @throws IllegalArgumentException if {@code key} or {@code flag} is {@code null}.
+     * @since 7.9
+     */
+    Mono<Boolean> blessSet(K key, BlessFlag flag);
+
+    /**
+     * Remove the blessing {@code flag} from {@code key} so that the key is no longer protected by it. Fails with
+     * {@code ERR no such key} if {@code key} does not exist.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param flag the blessing flag to turn off, must not be {@code null}.
+     * @return {@code true} if the flag was turned off, {@code false} if it was not set on {@code key}.
+     * @throws IllegalArgumentException if {@code key} or {@code flag} is {@code null}.
+     * @since 7.9
+     */
+    Mono<Boolean> blessClear(K key, BlessFlag flag);
+
+    /**
+     * Get the blessing flags that are active on {@code key}. Fails with {@code ERR no such key} if {@code key} does not exist.
+     *
+     * @param key the key, must not be {@code null}.
+     * @return the active blessing flags of {@code key}; completes empty if the key is not blessed.
+     * @throws IllegalArgumentException if {@code key} is {@code null}.
+     * @since 7.9
+     */
+    Flux<BlessFlag> blessGet(K key);
+
+    /**
+     * Incrementally iterate the keys of the current database that are blessed with {@code flag}. Iteration is complete when the
+     * returned cursor is finished.
+     *
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @throws IllegalArgumentException if {@code flag} is {@code null}.
+     * @since 7.9
+     */
+    Mono<KeyScanCursor<K>> blessScan(BlessFlag flag);
+
+    /**
+     * Incrementally iterate the keys of the current database that are blessed with {@code flag}. Use {@link BlessScanArgs} to
+     * specify {@code BLESS SCAN}-specific arguments.
+     *
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @param scanArgs scan arguments, can be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @throws IllegalArgumentException if {@code flag} is {@code null}.
+     * @since 7.9
+     * @see BlessScanArgs
+     */
+    Mono<KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate the keys of the current database that are blessed with {@code flag}.
+     *
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @throws IllegalArgumentException if {@code scanCursor} or {@code flag} is {@code null}, or if {@code scanCursor} is
+     *         finished.
+     * @since 7.9
+     */
+    Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag);
+
+    /**
+     * Incrementally iterate the keys of the current database that are blessed with {@code flag}. Use {@link BlessScanArgs} to
+     * specify {@code BLESS SCAN}-specific arguments.
+     *
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @param scanArgs scan arguments, can be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @throws IllegalArgumentException if {@code scanCursor} or {@code flag} is {@code null}, or if {@code scanCursor} is
+     *         finished.
+     * @since 7.9
+     * @see BlessScanArgs
+     */
+    Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs);
 
 }

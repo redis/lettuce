@@ -92,6 +92,53 @@ public abstract class ScanStream {
     }
 
     /**
+     * Sequentially iterate over the keys of the current database that are blessed with {@code flag}. This method uses
+     * {@code BLESS SCAN} to perform an iterative scan.
+     *
+     * @param commands the commands interface, must not be {@code null}.
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new {@link Flux}.
+     * @since 7.9
+     */
+    public static <K, V> Flux<K> blessScan(RedisKeyReactiveCommands<K, V> commands, BlessFlag flag) {
+        return blessScan(commands, flag, Optional.empty());
+    }
+
+    /**
+     * Sequentially iterate over the keys of the current database that are blessed with {@code flag}. This method uses
+     * {@code BLESS SCAN} to perform an iterative scan.
+     *
+     * @param commands the commands interface, must not be {@code null}.
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @param scanArgs the scan arguments, must not be {@code null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new {@link Flux}.
+     * @since 7.9
+     */
+    public static <K, V> Flux<K> blessScan(RedisKeyReactiveCommands<K, V> commands, BlessFlag flag, BlessScanArgs scanArgs) {
+
+        LettuceAssert.notNull(scanArgs, "BlessScanArgs must not be null");
+
+        return blessScan(commands, flag, Optional.of(scanArgs));
+    }
+
+    private static <K, V> Flux<K> blessScan(RedisKeyReactiveCommands<K, V> commands, BlessFlag flag,
+            Optional<BlessScanArgs> scanArgs) {
+
+        LettuceAssert.notNull(commands, "RedisKeyReactiveCommands must not be null");
+        LettuceAssert.notNull(flag, "BlessFlag must not be null");
+
+        return scanArgs.map(it -> commands.blessScan(flag, it)).orElseGet(() -> commands.blessScan(flag))
+                .expand(c -> !c.isFinished()
+                        ? scanArgs.map(it -> commands.blessScan(c, flag, it)).orElseGet(() -> commands.blessScan(c, flag))
+                        : Mono.empty())
+                .flatMapIterable(KeyScanCursor::getKeys);
+    }
+
+    /**
      * Sequentially iterate over entries in a hash identified by {@code key}. This method uses {@code HSCAN} to perform an
      * iterative scan.
      *

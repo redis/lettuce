@@ -116,4 +116,21 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
             assertThat(ScanFlow.zscan(this, key).count()).isEqualTo(iterations)
         }
     }
+
+    @Test
+    fun `should blessScan iteratively`() = runBlocking<Unit> {
+        assumeTrue(RedisConditions.of(connection).hasCommand("BLESS"))
+
+        with(connection.coroutines()) {
+            repeat(iterations) {
+                set("key-$it", value)
+                blessSet("key-$it", BlessFlag.NO_EVICT)
+            }
+            set("unblessed", value)
+
+            assertThat(ScanFlow.blessScan(this, BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(50)).take(100).toList()).hasSize(100)
+            assertThat(ScanFlow.blessScan(this, BlessFlag.NO_EVICT).count()).isEqualTo(iterations)
+        }
+    }
+
 }

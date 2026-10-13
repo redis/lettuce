@@ -20,6 +20,8 @@
 
 package io.lettuce.core.api.coroutines
 
+import io.lettuce.core.BlessFlag
+import io.lettuce.core.BlessScanArgs
 import io.lettuce.core.CompareCondition
 import java.util.Date
 import java.time.Instant
@@ -623,5 +625,87 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      */
     suspend fun scan(scanCursor: ScanCursor): KeyScanCursor<K>?
 
-}
+    /**
+     * Protect `key` against eviction by turning on the blessing `flag`. The blessing survives value overwrites of
+     * `key` and is removed when `key` is deleted. Fails with `ERR no such key` if `key` does not exist.
+     *
+     * @param key the key, must not be `null`.
+     * @param flag the blessing flag to turn on, must not be `null`.
+     * @return `true` if the flag was turned on, `false` if it was already set on `key`.
+     * @throws IllegalArgumentException if `key` or `flag` is `null`.
+     * @since 7.9
+     */
+    suspend fun blessSet(key: K, flag: BlessFlag): Boolean?
 
+    /**
+     * Remove the blessing `flag` from `key` so that the key is no longer protected by it. Fails with
+     * `ERR no such key` if `key` does not exist.
+     *
+     * @param key the key, must not be `null`.
+     * @param flag the blessing flag to turn off, must not be `null`.
+     * @return `true` if the flag was turned off, `false` if it was not set on `key`.
+     * @throws IllegalArgumentException if `key` or `flag` is `null`.
+     * @since 7.9
+     */
+    suspend fun blessClear(key: K, flag: BlessFlag): Boolean?
+
+    /**
+     * Get the blessing flags that are active on `key`. Fails with `ERR no such key` if `key` does not exist.
+     *
+     * @param key the key, must not be `null`.
+     * @return List<BlessFlag> array-reply the active blessing flags of `key`, empty if the key is not blessed.
+     * @throws IllegalArgumentException if `key` is `null`.
+     * @since 7.9
+     */
+    suspend fun blessGet(key: K): List<BlessFlag>
+
+    /**
+     * Incrementally iterate the keys of the current database that are blessed with `flag`. Iteration is complete when the
+     * returned cursor is finished.
+     *
+     * @param flag the blessing flag to filter on, must not be `null`.
+     * @return KeyScanCursor<K> scan cursor.
+     * @throws IllegalArgumentException if `flag` is `null`.
+     * @since 7.9
+     */
+    suspend fun blessScan(flag: BlessFlag): KeyScanCursor<K>?
+
+    /**
+     * Incrementally iterate the keys of the current database that are blessed with `flag`. Use [BlessScanArgs] to
+     * specify `BLESS SCAN`-specific arguments.
+     *
+     * @param flag the blessing flag to filter on, must not be `null`.
+     * @param scanArgs scan arguments, can be `null`.
+     * @return KeyScanCursor<K> scan cursor.
+     * @throws IllegalArgumentException if `flag` is `null`.
+     * @since 7.9
+     * @see [BlessScanArgs]
+     */
+    suspend fun blessScan(flag: BlessFlag, scanArgs: BlessScanArgs): KeyScanCursor<K>?
+
+    /**
+     * Incrementally iterate the keys of the current database that are blessed with `flag`.
+     *
+     * @param scanCursor cursor to resume from a previous scan, must not be `null`.
+     * @param flag the blessing flag to filter on, must not be `null`.
+     * @return KeyScanCursor<K> scan cursor.
+     * @throws IllegalArgumentException if `scanCursor` or `flag` is `null`, or if `scanCursor` is finished.
+     * @since 7.9
+     */
+    suspend fun blessScan(scanCursor: ScanCursor, flag: BlessFlag): KeyScanCursor<K>?
+
+    /**
+     * Incrementally iterate the keys of the current database that are blessed with `flag`. Use [BlessScanArgs] to
+     * specify `BLESS SCAN`-specific arguments.
+     *
+     * @param scanCursor cursor to resume from a previous scan, must not be `null`.
+     * @param flag the blessing flag to filter on, must not be `null`.
+     * @param scanArgs scan arguments, can be `null`.
+     * @return KeyScanCursor<K> scan cursor.
+     * @throws IllegalArgumentException if `scanCursor` or `flag` is `null`, or if `scanCursor` is finished.
+     * @since 7.9
+     * @see [BlessScanArgs]
+     */
+    suspend fun blessScan(scanCursor: ScanCursor, flag: BlessFlag, scanArgs: BlessScanArgs): KeyScanCursor<K>?
+
+}

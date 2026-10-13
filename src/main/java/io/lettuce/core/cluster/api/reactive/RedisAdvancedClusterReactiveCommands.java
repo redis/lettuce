@@ -25,6 +25,8 @@ import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.SetArgs;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.BlessFlag;
+import io.lettuce.core.BlessScanArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.ScanArgs;
@@ -322,6 +324,52 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @see RedisKeyReactiveCommands#scan(ScanCursor)
      */
     Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor);
+
+    /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 7.9
+     * @see RedisKeyReactiveCommands#blessScan(BlessFlag)
+     */
+    Mono<KeyScanCursor<K>> blessScan(BlessFlag flag);
+
+    /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @param scanArgs scan arguments, can be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 7.9
+     * @see RedisKeyReactiveCommands#blessScan(BlessFlag, BlessScanArgs)
+     */
+    Mono<KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
+     *        {@link #blessScan(BlessFlag)} call.
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 7.9
+     * @see RedisKeyReactiveCommands#blessScan(ScanCursor, BlessFlag)
+     */
+    Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag);
+
+    /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
+     *        {@link #blessScan(BlessFlag)} call.
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @param scanArgs scan arguments, can be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 7.9
+     * @see RedisKeyReactiveCommands#blessScan(ScanCursor, BlessFlag, BlessScanArgs)
+     */
+    Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.

@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import io.lettuce.core.BlessFlag;
+import io.lettuce.core.BlessScanArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.ScanArgs;
@@ -389,6 +391,52 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @see RedisKeyCommands#scan(ScanCursor)
      */
     KeyScanCursor<K> scan(ScanCursor scanCursor);
+
+    /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 7.9
+     * @see RedisKeyCommands#blessScan(BlessFlag)
+     */
+    KeyScanCursor<K> blessScan(BlessFlag flag);
+
+    /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @param scanArgs scan arguments, can be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 7.9
+     * @see RedisKeyCommands#blessScan(BlessFlag, BlessScanArgs)
+     */
+    KeyScanCursor<K> blessScan(BlessFlag flag, BlessScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
+     *        {@link #blessScan(BlessFlag)} call.
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 7.9
+     * @see RedisKeyCommands#blessScan(ScanCursor, BlessFlag)
+     */
+    KeyScanCursor<K> blessScan(ScanCursor scanCursor, BlessFlag flag);
+
+    /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
+     *        {@link #blessScan(BlessFlag)} call.
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @param scanArgs scan arguments, can be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 7.9
+     * @see RedisKeyCommands#blessScan(ScanCursor, BlessFlag, BlessScanArgs)
+     */
+    KeyScanCursor<K> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs);
 
     /**
      * Incrementally iterate the keys space over the whole Cluster.
