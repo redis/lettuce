@@ -1316,7 +1316,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     protected static <T> CompletableFuture<T> transformAsyncConnectionException(CompletionStage<T> future,
             Iterable<RedisURI> target) {
 
-        return ConnectionFuture.from(null, future.toCompletableFuture()).thenCompose((v, e) -> {
+        return ConnectionFuture.from(null, Futures.unwrapExceptions(future)).thenCompose((v, e) -> {
 
             if (e != null) {
                 return Futures.failed(RedisConnectionException.create(target.toString(), e));
