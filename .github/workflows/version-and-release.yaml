@@ -4,10 +4,17 @@ on:
   release:
     types: [published]                                      # once a release is published in the GitHub UI
   workflow_dispatch:                                        # or manually, by clicking the button
+    inputs:
+      version:
+        description: 'Version to publish for a manual run'
+        required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      RELEASE_VERSION: ${{ github.event.release.tag_name || inputs.version }}
 
     steps:
       - name: Checkout sources
@@ -23,10 +30,11 @@ jobs:
 
       - name: Update version in Maven configuration
         run: |
-          mvn --no-transfer-progress \
+          ./mvnw --version
+          ./mvnw --no-transfer-progress \
             --batch-mode \
-            versions:set -DnewVersion=${{ github.event.release.tag_name  }}
-        if: ${{ github.event.release.tag_name  }}
+            versions:set -DnewVersion="$RELEASE_VERSION"
+        if: ${{ env.RELEASE_VERSION }}
 
       - name: Install GPG key
 
@@ -37,7 +45,7 @@ jobs:
       - name: Publish to Maven
 
         run: |
-          mvn --no-transfer-progress \
+          ./mvnw --no-transfer-progress \
             --batch-mode \
             --settings .github/maven-settings.xml \
             -Dgpg.passphrase='${{ secrets.OSSH_GPG_SECRET_KEY_PASSWORD }}' \
