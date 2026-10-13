@@ -692,7 +692,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
                 hasDecodeProgress = false;
                 if (isProtectedMode(command)) {
-                    onProtectedMode(command.getOutput().getError());
+                    onProtectedMode(command.getOutput().getError(), command);
                 } else {
 
                     if (canComplete(command)) {
@@ -793,7 +793,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     protected final void completeWithQueueLatency(RedisCommand<?, ?, ?> command, boolean pushAcknowledgement) {
         boolean cancelled = queueLatencyMetricsEnabled && command.isCancelled();
         if (pushAcknowledgement && queueLatencyMetricsEnabled && command instanceof WithLatency) {
-            ((WithLatency) command).completed(nanoTime());
+            long decodedAt = nanoTime();
+            ((WithLatency) command).completed(decodedAt);
+            AsyncCommand.markDecoded(command, decodedAt);
         }
         complete(command);
         if (queueLatencyMetricsEnabled && !cancelled) {
@@ -823,7 +825,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             }
 
             if (queueLatencyMetricsEnabled) {
-                withLatency.completed(nanoTime());
+                long decodedAt = nanoTime();
+                withLatency.completed(decodedAt);
+                AsyncCommand.markDecoded(command, decodedAt);
             }
             recordLatency(withLatency, command);
 
@@ -938,12 +942,22 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     private void onProtectedMode(String message) {
+        onProtectedMode(message, null);
+    }
+
+    private void onProtectedMode(String message, RedisCommand<?, ?, ?> decodedCommand) {
 
         RedisConnectionException exception = new RedisConnectionException(message);
 
         endpoint.notifyException(exception);
 
-        stack.forEach(cmd -> cmd.completeExceptionally(exception));
+        stack.forEach(cmd -> {
+            cmd.completeExceptionally(exception);
+            // Only the current command received the complete DENIED response; subsequent commands did not.
+            if (cmd == decodedCommand) {
+                recordQueueLatency(cmd);
+            }
+        });
         stack.clear();
 
         if (channel != null) {
@@ -1012,8 +1026,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         AsyncCommand.FirstSend firstSend = AsyncCommand.firstSend(command);
         long firstSent = firstSend == null ? 0 : firstSend.timestampNanos;
         long queueLatency = firstSent - queuedAt;
+        // Another event loop may have decoded and completed a redirected attempt while this handler returns.
+        // Use the latest completed decode time, not an earlier redirected attempt's local timestamp.
+        if (firstSend != null) {
+            long latestDecodedAt = firstSend.latestDecodedAt();
+            if (latestDecodedAt != 0 && latestDecodedAt - completedAt > 0) {
+                completedAt = latestDecodedAt;
+            }
+        }
         long endToEndLatency = completedAt - queuedAt;
-        if (queuedAt != 0 && firstSent != 0 && queueLatency >= 0 && endToEndLatency >= queueLatency) {
+        if (firstSend != null && queuedAt != 0 && firstSent != 0 && queueLatency >= 0
+                && endToEndLatency >= queueLatency && !command.isCancelled()
+                && !AsyncCommand.hasCancelledFuture(command) && firstSend.claimQueueSample()) {
             // Queue waiting belongs to the connection that first sent the command, not a redirect/replay target.
             SocketAddress firstLocal = firstSend.local != null ? firstSend.local : local;
             SocketAddress firstRemote = firstSend.remote != null ? firstSend.remote : remote;

@@ -284,6 +284,24 @@ class CommandHandlerQueueLatencyUnitTests {
                 anyLong());
     }
 
+    @Test
+    void shouldRecordCompletedProtectedModeErrorButNotPendingCommands() throws Exception {
+        AsyncCommand<String, String, String> denied = new AsyncCommand<>(command());
+        AsyncCommand<String, String, String> pending = new AsyncCommand<>(command());
+        AsyncCommand.markEnqueued(denied, System.nanoTime() - 100_000);
+        AsyncCommand.markEnqueued(pending, System.nanoTime() - 100_000);
+        handler.write(context, denied, promise);
+        handler.write(context, pending, promise);
+
+        reply("-DENIED Redis is running in protected mode\r\n");
+
+        assertThat(denied.isCompletedExceptionally()).isTrue();
+        assertThat(pending.isCompletedExceptionally()).isTrue();
+        assertThat(handler.getStack()).isEmpty();
+        verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(RedisCommand.class), anyLong(),
+                anyLong());
+    }
+
     private Command<String, String, String> command() {
         return new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
     }

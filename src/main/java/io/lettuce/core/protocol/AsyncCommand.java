@@ -78,6 +78,18 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
      */
     static final class FirstSend {
 
+        @SuppressWarnings("rawtypes")
+        private static final AtomicLongFieldUpdater<FirstSend> DECODED_AT_UPDATER = AtomicLongFieldUpdater
+                .newUpdater(FirstSend.class, "decodedAtNanos");
+
+        @SuppressWarnings("rawtypes")
+        private static final AtomicIntegerFieldUpdater<FirstSend> SAMPLE_CLAIMED_UPDATER = AtomicIntegerFieldUpdater
+                .newUpdater(FirstSend.class, "sampleClaimed");
+
+        private volatile long decodedAtNanos;
+
+        private volatile int sampleClaimed;
+
         final long timestampNanos;
 
         final SocketAddress local;
@@ -88,6 +100,25 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
             this.timestampNanos = timestampNanos;
             this.local = local;
             this.remote = remote;
+        }
+
+        void markDecoded(long timestampNanos) {
+            long previous = decodedAtNanos;
+            // Redirected commands may decode concurrently; retain the final decode timestamp.
+            while (previous == 0 || timestampNanos - previous > 0) {
+                if (DECODED_AT_UPDATER.compareAndSet(this, previous, timestampNanos)) {
+                    return;
+                }
+                previous = decodedAtNanos;
+            }
+        }
+
+        long latestDecodedAt() {
+            return decodedAtNanos;
+        }
+
+        boolean claimQueueSample() {
+            return SAMPLE_CLAIMED_UPDATER.compareAndSet(this, 0, 1);
         }
 
     }
@@ -153,6 +184,13 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
     static long firstSent(RedisCommand<?, ?, ?> command) {
         FirstSend firstSend = firstSend(command);
         return firstSend != null ? firstSend.timestampNanos : 0;
+    }
+
+    static void markDecoded(RedisCommand<?, ?, ?> command, long timestampNanos) {
+        FirstSend firstSend = firstSend(command);
+        if (firstSend != null) {
+            firstSend.markDecoded(timestampNanos);
+        }
     }
 
     /** Check future cancellation after completion without mistaking reactive cleanup for cancellation of a result. */

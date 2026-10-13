@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -139,6 +140,62 @@ class ClusterCommandQueueLatencyUnitTests {
                 endToEndLatency.capture());
         assertThat(queueLatency.getValue()).isGreaterThanOrEqualTo(0);
         assertThat(endToEndLatency.getValue()).isGreaterThanOrEqualTo(queueLatency.getValue());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "MOVED", "ASK" })
+    void shouldRecordExactlyOneSampleWhenRedirectCompletesOnAnotherEventLoop(String error) throws Exception {
+        ClientResources resources = mock(ClientResources.class);
+        when(resources.commandLatencyRecorder()).thenReturn(recorder);
+        when(resources.tracing()).thenReturn(Tracing.disabled());
+
+        Channel otherChannel = mock(Channel.class);
+        ChannelHandlerContext otherContext = mock(ChannelHandlerContext.class);
+        ChannelPromise otherPromise = mock(ChannelPromise.class);
+        when(otherContext.channel()).thenReturn(otherChannel);
+        when(otherContext.alloc()).thenReturn(ByteBufAllocator.DEFAULT);
+        when(otherChannel.config()).thenReturn(mock(ChannelConfig.class));
+        when(otherChannel.remoteAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 6380));
+        when(otherChannel.localAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 2345));
+        when(otherPromise.isVoid()).thenReturn(true);
+
+        CommandHandler otherHandler = new CommandHandler(ClientOptions.create(), resources, mock(Endpoint.class));
+        otherHandler.channelRegistered(otherContext);
+        try {
+            AsyncCommand<String, String, String> future = new AsyncCommand<>(
+                    new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+            ClusterCommand<String, String, String> command = new ClusterCommand<>(future, retry, 5);
+            endpoint.write(command);
+            handler.write(context, command, promise);
+
+            AtomicReference<Throwable> workerFailure = new AtomicReference<>();
+            doAnswer(invocation -> {
+                RedisCommand<?, ?, ?> redirected = invocation.getArgument(0);
+                Thread worker = new Thread(() -> {
+                    try {
+                        redirected.getOutput().setError((String) null);
+                        otherHandler.write(otherContext, redirected, otherPromise);
+                        otherHandler.channelRead(otherContext,
+                                Unpooled.wrappedBuffer("+OK\r\n".getBytes(StandardCharsets.US_ASCII)));
+                    } catch (Throwable t) {
+                        workerFailure.set(t);
+                    }
+                });
+                worker.start();
+                worker.join(10_000);
+                assertThat(worker.isAlive()).isFalse();
+                assertThat(workerFailure.get()).isNull();
+                return redirected;
+            }).when(retry).write(any(RedisCommand.class));
+
+            reply("-" + error + " 1 127.0.0.1:6380\r\n");
+
+            assertThat(future).isCompletedWithValue("OK");
+            verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(RedisCommand.class), anyLong(),
+                    anyLong());
+        } finally {
+            otherHandler.channelUnregistered(otherContext);
+        }
     }
 
     private void reply(String response) throws Exception {
