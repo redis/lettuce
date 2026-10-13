@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.nio.channels.ClosedChannelException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Queue;
@@ -37,6 +39,7 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.ConnectionTestUtil;
@@ -123,6 +126,152 @@ class DefaultEndpointUnitTests {
 
         sut = new DefaultEndpoint(ClientOptions.create(), clientResources);
         sut.setConnectionFacade(connectionFacade);
+    }
+
+    @Test
+    void shouldTimestampCommandWhenQueueingMetricsAreEnabled() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(
+                new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+
+        endpoint.write(async); // disconnected buffer is intentionally used here
+
+        assertThat(AsyncCommand.queuedAt(async)).isNotZero();
+    }
+
+    @Test
+    void shouldUseSameSubmissionTimestampForBatch() {
+        DefaultEndpoint endpoint = queueLatencyEndpoint(ClientOptions.create());
+        AsyncCommand<String, String, String> first = asyncCommand();
+        AsyncCommand<String, String, String> second = asyncCommand();
+
+        endpoint.write(Arrays.asList(first, second));
+
+        assertThat(AsyncCommand.queuedAt(first)).isNotZero().isEqualTo(AsyncCommand.queuedAt(second));
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(first, second);
+    }
+
+    @Test
+    void shouldNotTimestampCommandsWhenQueueingMetricsAreDisabled() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        AsyncCommand<String, String, String> single = asyncCommand();
+        AsyncCommand<String, String, String> batched = asyncCommand();
+
+        endpoint.write(single);
+        endpoint.write(Collections.singletonList(batched));
+
+        assertThat(AsyncCommand.queuedAt(single)).isZero();
+        assertThat(AsyncCommand.queuedAt(batched)).isZero();
+    }
+
+    @Test
+    void shouldNotTimestampRejectedCommands() {
+        DefaultEndpoint endpoint = queueLatencyEndpoint(
+                ClientOptions.builder().disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS).build());
+        AsyncCommand<String, String, String> single = asyncCommand();
+        AsyncCommand<String, String, String> batched = asyncCommand();
+
+        endpoint.write(single);
+        endpoint.write(Collections.singletonList(batched));
+
+        assertThat(single).isCompletedExceptionally();
+        assertThat(batched).isCompletedExceptionally();
+        assertThat(AsyncCommand.queuedAt(single)).isZero();
+        assertThat(AsyncCommand.queuedAt(batched)).isZero();
+    }
+
+    @Test
+    void shouldNotTimestampCommandsAfterClose() {
+        DefaultEndpoint endpoint = queueLatencyEndpoint(ClientOptions.create());
+        endpoint.close();
+        AsyncCommand<String, String, String> single = asyncCommand();
+        AsyncCommand<String, String, String> batched = asyncCommand();
+
+        endpoint.write(single);
+        endpoint.write(Collections.singletonList(batched));
+
+        assertThat(single).isCompletedExceptionally();
+        assertThat(batched).isCompletedExceptionally();
+        assertThat(AsyncCommand.queuedAt(single)).isZero();
+        assertThat(AsyncCommand.queuedAt(batched)).isZero();
+    }
+
+    @Test
+    void shouldPreserveSubmissionTimestampWhenFlushingBufferedCommands() {
+        DefaultEndpoint endpoint = queueLatencyEndpoint(ClientOptions.create());
+        when(channel.isActive()).thenReturn(true);
+        endpoint.notifyChannelActive(channel);
+        endpoint.setAutoFlushCommands(false);
+        AsyncCommand<String, String, String> async = asyncCommand();
+        endpoint.write(async);
+        long submittedAt = AsyncCommand.queuedAt(async);
+
+        assertThat(queue).isEmpty();
+        endpoint.flushCommands();
+
+        assertThat(queue).containsExactly(async);
+        assertThat(submittedAt).isNotZero();
+        assertThat(AsyncCommand.queuedAt(async)).isEqualTo(submittedAt);
+    }
+
+    @Test
+    void shouldPreserveSubmissionTimestampAcrossDisconnectAndReplay() {
+        DefaultEndpoint endpoint = queueLatencyEndpoint(ClientOptions.create());
+        when(channel.isActive()).thenReturn(true);
+        endpoint.notifyChannelActive(channel);
+        AsyncCommand<String, String, String> async = asyncCommand();
+        endpoint.write(async);
+        long submittedAt = AsyncCommand.queuedAt(async);
+
+        when(channel.isActive()).thenReturn(false);
+        endpoint.notifyChannelInactive(channel);
+        Collection<RedisCommand<?, ?, ?>> inFlight = new ArrayList<>(queue);
+        queue.clear();
+        endpoint.notifyDrainQueuedCommands(() -> inFlight);
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(async);
+
+        when(channel.isActive()).thenReturn(true);
+        endpoint.notifyChannelActive(channel);
+
+        assertThat(queue).containsExactly(async);
+        assertThat(submittedAt).isNotZero();
+        assertThat(AsyncCommand.queuedAt(async)).isEqualTo(submittedAt);
+        assertThat(async).isNotDone();
+    }
+
+    @Test
+    void shouldDiscardCancelledCommandsBeforeReconnect() {
+        DefaultEndpoint endpoint = queueLatencyEndpoint(ClientOptions.create());
+        AsyncCommand<String, String, String> async = asyncCommand();
+        endpoint.write(async);
+        long submittedAt = AsyncCommand.queuedAt(async);
+        async.cancel();
+
+        when(channel.isActive()).thenReturn(true);
+        endpoint.notifyChannelActive(channel);
+
+        assertThat(queue).isEmpty();
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).isEmpty();
+        assertThat(async).isCancelled();
+        assertThat(AsyncCommand.queuedAt(async)).isEqualTo(submittedAt);
+    }
+
+    private DefaultEndpoint queueLatencyEndpoint(ClientOptions options) {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(options, clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+        return endpoint;
+    }
+
+    private AsyncCommand<String, String, String> asyncCommand() {
+        return new AsyncCommand<>(new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
     }
 
     @Test

@@ -43,6 +43,13 @@ public class MicrometerOptions {
 
     public static final boolean DEFAULT_HISTOGRAM = false;
 
+    /**
+     * Default setting for queueing and end-to-end latency metrics: {@code false}.
+     *
+     * @since 7.9
+     */
+    public static final boolean DEFAULT_QUEUE_LATENCY = false;
+
     public static final boolean DEFAULT_LOCAL_DISTINCTION = false;
 
     public static final Duration DEFAULT_MAX_LATENCY = Duration.ofMinutes(5L);
@@ -58,6 +65,8 @@ public class MicrometerOptions {
     private final boolean enabled;
 
     private final boolean histogram;
+
+    private final boolean queueLatency;
 
     private final boolean localDistinction;
 
@@ -76,6 +85,7 @@ public class MicrometerOptions {
         this.builder = builder;
         this.enabled = builder.enabled;
         this.histogram = builder.histogram;
+        this.queueLatency = builder.queueLatency;
         this.localDistinction = builder.localDistinction;
         this.metricsFilter = builder.metricsFilter;
         this.maxLatency = builder.maxLatency;
@@ -131,6 +141,8 @@ public class MicrometerOptions {
 
         private boolean histogram = DEFAULT_HISTOGRAM;
 
+        private boolean queueLatency = DEFAULT_QUEUE_LATENCY;
+
         private boolean localDistinction = DEFAULT_LOCAL_DISTINCTION;
 
         private Predicate<RedisCommand<?, ?, ?>> metricsFilter = command -> true;
@@ -175,6 +187,21 @@ public class MicrometerOptions {
          */
         public Builder histogram(boolean histogram) {
             this.histogram = histogram;
+            return this;
+        }
+
+        /**
+         * Enable queueing and end-to-end latency metrics in addition to network latency metrics. Queueing measures the time
+         * between endpoint acceptance and the first send. End-to-end measures the time between endpoint acceptance and final
+         * response decode. Enabling these metrics adds per-command timing and two additional timers per command/address
+         * combination. Defaults to {@code false}. See {@link MicrometerOptions#DEFAULT_QUEUE_LATENCY}.
+         *
+         * @param queueLatency {@code true} to record queueing and end-to-end latencies
+         * @return this {@link Builder}.
+         * @since 7.9
+         */
+        public Builder queueLatency(boolean queueLatency) {
+            this.queueLatency = queueLatency;
             return this;
         }
 
@@ -302,6 +329,17 @@ public class MicrometerOptions {
 
     public boolean isHistogram() {
         return histogram;
+    }
+
+    /**
+     * Returns whether queueing and end-to-end latency metrics are configured. The recorder must also be enabled to record these
+     * metrics.
+     *
+     * @return {@code true} if queueing and end-to-end latency metrics are configured
+     * @since 7.9
+     */
+    public boolean isQueueLatencyEnabled() {
+        return queueLatency;
     }
 
     public boolean localDistinction() {

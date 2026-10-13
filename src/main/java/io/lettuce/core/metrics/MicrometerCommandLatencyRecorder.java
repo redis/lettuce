@@ -49,6 +49,10 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
 
     static final String METRIC_FIRST_RESPONSE = "lettuce.command.firstresponse";
 
+    static final String METRIC_QUEUEING = "lettuce.command.queueing";
+
+    static final String METRIC_END_TO_END = "lettuce.command.endtoend";
+
     private final MeterRegistry meterRegistry;
 
     private final MicrometerOptions options;
@@ -56,6 +60,10 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
     private final Map<CommandLatencyId, Timer> completionTimers = new ConcurrentHashMap<>();
 
     private final Map<CommandLatencyId, Timer> firstResponseTimers = new ConcurrentHashMap<>();
+
+    private final Map<CommandLatencyId, Timer> queueingTimers = new ConcurrentHashMap<>();
+
+    private final Map<CommandLatencyId, Timer> endToEndTimers = new ConcurrentHashMap<>();
 
     /**
      * Create a new {@link MicrometerCommandLatencyRecorder} instance given {@link MeterRegistry} and {@link MicrometerOptions}.
@@ -82,6 +90,26 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
     }
 
     @Override
+    public void recordCommandQueueLatency(SocketAddress local, SocketAddress remote, RedisCommand<?, ?, ?> command,
+            long queueLatency, long endToEndLatency) {
+
+        if (!isQueueLatencyEnabled() || !isCommandEnabled(command)) {
+            return;
+        }
+
+        CommandLatencyId id = createId(local, remote, command.getType());
+        queueingTimers
+                .computeIfAbsent(id,
+                        it -> extraTimer(it, METRIC_QUEUEING, "Latency between endpoint acceptance and first command send"))
+                .record(queueLatency, TimeUnit.NANOSECONDS);
+        endToEndTimers
+                .computeIfAbsent(id,
+                        it -> extraTimer(it, METRIC_END_TO_END,
+                                "Latency between endpoint acceptance and final response decode"))
+                .record(endToEndLatency, TimeUnit.NANOSECONDS);
+    }
+
+    @Override
     public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
             long firstResponseLatency, long completionLatency) {
 
@@ -101,6 +129,11 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
     @Override
     public boolean isEnabled() {
         return options.isEnabled();
+    }
+
+    @Override
+    public boolean isQueueLatencyEnabled() {
+        return isEnabled() && options.isQueueLatencyEnabled();
     }
 
     private boolean isCommandEnabled(RedisCommand<?, ?, ?> redisCommand) {
@@ -140,6 +173,17 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
                     .minimumExpectedValue(options.minLatency()).maximumExpectedValue(options.maxLatency());
         }
 
+        return timer.register(meterRegistry);
+    }
+
+    private Timer extraTimer(CommandLatencyId id, String name, String description) {
+        Timer.Builder timer = Timer.builder(name).description(description).tag(LABEL_COMMAND, id.commandType().toString())
+                .tag(LABEL_LOCAL, id.localAddress().toString()).tag(LABEL_REMOTE, id.remoteAddress().toString())
+                .tags(options.tags());
+        if (options.isHistogram()) {
+            timer.publishPercentileHistogram().publishPercentiles(options.targetPercentiles())
+                    .minimumExpectedValue(options.minLatency()).maximumExpectedValue(options.maxLatency());
+        }
         return timer.register(meterRegistry);
     }
 

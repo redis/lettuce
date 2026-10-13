@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -51,11 +52,24 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
     private static final AtomicIntegerFieldUpdater<AsyncCommand> COUNT_UPDATER = AtomicIntegerFieldUpdater
             .newUpdater(AsyncCommand.class, "count");
 
+    @SuppressWarnings("rawtypes")
+    private static final AtomicLongFieldUpdater<AsyncCommand> QUEUED_AT_UPDATER = AtomicLongFieldUpdater
+            .newUpdater(AsyncCommand.class, "queuedAtNanos");
+
     private final RedisCommand<K, V, T> command;
 
     // access via COUNT_UPDATER
     @SuppressWarnings({ "unused" })
     private volatile int count = 1;
+
+    // First accepted submission, preserved when a command is replayed after reconnect.
+    private volatile long queuedAtNanos;
+
+    @SuppressWarnings("rawtypes")
+    private static final AtomicLongFieldUpdater<AsyncCommand> FIRST_SENT_UPDATER = AtomicLongFieldUpdater
+            .newUpdater(AsyncCommand.class, "firstSentNanos");
+
+    private volatile long firstSentNanos;
 
     /**
      * @param command the command, must not be {@code null}.
@@ -71,6 +85,77 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
         LettuceAssert.notNull(command, "RedisCommand must not be null");
         this.command = command;
         this.count = count;
+    }
+
+    /** Record submission once, including when the command is nested in other decorators. */
+    static void markEnqueued(RedisCommand<?, ?, ?> command, long timestampNanos) {
+        RedisCommand<?, ?, ?> carrier = findTimestampCarrier(command);
+        if (carrier instanceof AsyncCommand) {
+            QUEUED_AT_UPDATER.compareAndSet((AsyncCommand<?, ?, ?>) carrier, 0, timestampNanos);
+        } else if (carrier instanceof Command) {
+            ((Command<?, ?, ?>) carrier).markEnqueued(timestampNanos);
+        }
+    }
+
+    /** Returns zero when the command has not been instrumented. */
+    static long queuedAt(RedisCommand<?, ?, ?> command) {
+        RedisCommand<?, ?, ?> carrier = findTimestampCarrier(command);
+        if (carrier instanceof AsyncCommand) {
+            return ((AsyncCommand<?, ?, ?>) carrier).queuedAtNanos;
+        }
+        return carrier instanceof Command ? ((Command<?, ?, ?>) carrier).queuedAt() : 0;
+    }
+
+    static void markSent(RedisCommand<?, ?, ?> command, long timestampNanos) {
+        RedisCommand<?, ?, ?> carrier = findTimestampCarrier(command);
+        if (carrier instanceof AsyncCommand) {
+            FIRST_SENT_UPDATER.compareAndSet((AsyncCommand<?, ?, ?>) carrier, 0, timestampNanos);
+        } else if (carrier instanceof Command) {
+            ((Command<?, ?, ?>) carrier).markSent(timestampNanos);
+        }
+    }
+
+    static long firstSent(RedisCommand<?, ?, ?> command) {
+        RedisCommand<?, ?, ?> carrier = findTimestampCarrier(command);
+        if (carrier instanceof AsyncCommand) {
+            return ((AsyncCommand<?, ?, ?>) carrier).firstSentNanos;
+        }
+        return carrier instanceof Command ? ((Command<?, ?, ?>) carrier).firstSent() : 0;
+    }
+
+    /** Check future cancellation after completion without mistaking reactive cleanup for cancellation of a result. */
+    static boolean hasCancelledFuture(RedisCommand<?, ?, ?> command) {
+        while (command != null) {
+            if (command instanceof AsyncCommand && command.isCancelled()) {
+                return true;
+            }
+            if (!(command instanceof DecoratedCommand)) {
+                break;
+            }
+            RedisCommand<?, ?, ?> delegate = ((DecoratedCommand<?, ?, ?>) command).getDelegate();
+            if (delegate == command) {
+                break;
+            }
+            command = delegate;
+        }
+        return false;
+    }
+
+    private static RedisCommand<?, ?, ?> findTimestampCarrier(RedisCommand<?, ?, ?> command) {
+        while (command != null) {
+            if (command instanceof AsyncCommand || command instanceof Command) {
+                return command;
+            }
+            if (!(command instanceof DecoratedCommand)) {
+                break;
+            }
+            RedisCommand<?, ?, ?> delegate = ((DecoratedCommand<?, ?, ?>) command).getDelegate();
+            if (delegate == command) {
+                break;
+            }
+            command = delegate;
+        }
+        return null;
     }
 
     /**

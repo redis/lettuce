@@ -29,6 +29,7 @@ import io.lettuce.core.TransactionResult;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.protocol.TransactionalCommand;
 
 /**
  * Output of all commands within a MULTI block.
@@ -160,7 +161,11 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
             RedisCommand<K, V, ?> cmd = queue.remove();
             CommandOutput<K, V, ?> o = cmd.getOutput();
             responses.add(!o.hasError() ? o.get() : ExceptionFactory.createExecutionException(o.getError()));
-            cmd.complete();
+            if (cmd instanceof TransactionalCommand) {
+                ((TransactionalCommand<?, ?, ?>) cmd).completeResponse();
+            } else {
+                cmd.complete();
+            }
         } else if (depth == 0 && !queue.isEmpty()) {
             for (RedisCommand<K, V, ?> cmd : queue) {
                 cmd.complete();

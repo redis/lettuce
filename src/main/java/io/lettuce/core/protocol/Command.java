@@ -19,6 +19,8 @@
  */
 package io.lettuce.core.protocol;
 
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
@@ -35,6 +37,34 @@ import io.netty.buffer.ByteBuf;
  * @author Mark Paluch
  */
 public class Command<K, V, T> implements RedisCommand<K, V, T> {
+
+    @SuppressWarnings("rawtypes")
+    private static final AtomicLongFieldUpdater<Command> QUEUED_AT_UPDATER = AtomicLongFieldUpdater.newUpdater(Command.class,
+            "queuedAtNanos");
+
+    private volatile long queuedAtNanos;
+
+    @SuppressWarnings("rawtypes")
+    private static final AtomicLongFieldUpdater<Command> FIRST_SENT_UPDATER = AtomicLongFieldUpdater.newUpdater(Command.class,
+            "firstSentNanos");
+
+    private volatile long firstSentNanos;
+
+    void markEnqueued(long timestampNanos) {
+        QUEUED_AT_UPDATER.compareAndSet(this, 0, timestampNanos);
+    }
+
+    long queuedAt() {
+        return queuedAtNanos;
+    }
+
+    void markSent(long timestampNanos) {
+        FIRST_SENT_UPDATER.compareAndSet(this, 0, timestampNanos);
+    }
+
+    long firstSent() {
+        return firstSentNanos;
+    }
 
     protected static final byte ST_INITIAL = 0;
 

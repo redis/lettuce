@@ -46,6 +46,7 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceFactories;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -93,6 +94,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     private final Queue<RedisCommand<?, ?, ?>> disconnectedBuffer;
 
     private final Queue<RedisCommand<?, ?, ?>> commandBuffer;
+
+    private final boolean queueLatencyMetricsEnabled;
 
     private final boolean boundedQueues;
 
@@ -143,6 +146,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;
+        CommandLatencyRecorder recorder = clientResources.commandLatencyRecorder();
+        this.queueLatencyMetricsEnabled = recorder != null && recorder.isQueueLatencyEnabled();
         this.reliability = clientOptions.isAutoReconnect() ? Reliability.AT_LEAST_ONCE : Reliability.AT_MOST_ONCE;
         this.replayFilter = clientOptions.getReplayFilter();
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
@@ -193,6 +198,10 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return command;
         }
 
+        if (queueLatencyMetricsEnabled) {
+            AsyncCommand.markEnqueued(command, System.nanoTime());
+        }
+
         try {
             sharedLock.incrementWriters();
 
@@ -232,6 +241,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         if (validation != null) {
             commands.forEach(it -> it.completeExceptionally(validation));
             return (Collection<RedisCommand<K, V, ?>>) commands;
+        }
+
+        if (queueLatencyMetricsEnabled) {
+            long acceptedAt = System.nanoTime();
+            commands.forEach(command -> AsyncCommand.markEnqueued(command, acceptedAt));
         }
 
         try {
