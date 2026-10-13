@@ -556,7 +556,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         if (this.credentialsProvider instanceof RedisCredentialsProvider) {
             return (RedisCredentialsProvider) this.credentialsProvider;
         }
-        return new AsyncCredentialsProviderAdapter(this.credentialsProvider);
+        return AsyncCredentialsProviderAdapter.of(this.credentialsProvider);
     }
 
     /**

@@ -128,4 +128,46 @@ class AsyncCredentialsProviderAdapterUnitTests {
         assertThatThrownBy(adapter::credentials).isInstanceOf(UnsupportedOperationException.class);
     }
 
+    @Test
+    void adaptedImmediateProviderStaysImmediate() {
+
+        CredentialsProvider.ImmediateCredentialsProvider delegate = () -> RedisCredentials.just("user", "secret".toCharArray());
+
+        AsyncCredentialsProviderAdapter adapter = AsyncCredentialsProviderAdapter.of(delegate);
+
+        assertThat(adapter).isInstanceOf(RedisCredentialsProvider.ImmediateRedisCredentialsProvider.class);
+        assertThat(((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) adapter).resolveCredentialsNow().getUsername())
+                .isEqualTo("user");
+        assertThat(adapter.resolveCredentials().block().getUsername()).isEqualTo("user");
+        assertThat(adapter).isEqualTo(AsyncCredentialsProviderAdapter.of(delegate));
+    }
+
+    @Test
+    void adaptedDeferredProviderIsNotImmediate() {
+
+        CredentialsProvider delegate = () -> CompletableFuture
+                .completedFuture(RedisCredentials.just("user", "secret".toCharArray()));
+
+        AsyncCredentialsProviderAdapter adapter = AsyncCredentialsProviderAdapter.of(delegate);
+
+        assertThat(adapter).isNotInstanceOf(RedisCredentialsProvider.ImmediateRedisCredentialsProvider.class);
+        assertThat(adapter.resolveCredentials().block().getUsername()).isEqualTo("user");
+    }
+
+    @Test
+    void redisUriReturnsAnImmediateProviderForAnImmediateCredentialsProvider() {
+
+        CredentialsProvider.ImmediateCredentialsProvider delegate = () -> RedisCredentials.just("user", "secret".toCharArray());
+        RedisURI uri = RedisURI.create("redis://localhost");
+        uri.setCredentialsProvider(delegate);
+
+        // code written against RedisCredentialsProvider checks for an immediate provider like this
+        RedisCredentialsProvider provider = uri.getCredentialsProvider();
+
+        assertThat(provider).isInstanceOf(RedisCredentialsProvider.ImmediateRedisCredentialsProvider.class);
+        assertThat(
+                ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) provider).resolveCredentialsNow().getUsername())
+                        .isEqualTo("user");
+    }
+
 }

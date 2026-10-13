@@ -147,6 +147,13 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         resetReconnectDelay();
     }
 
+    /**
+     * Wrap the socket address supplier used for reconnection: record the address it emits, and reuse the last recorded address
+     * when it fails.
+     *
+     * @param source the socket address supplier.
+     * @return the wrapped socket address supplier.
+     */
     protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplier(
             Supplier<CompletionStage<SocketAddress>> source) {
         return () -> {
