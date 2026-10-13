@@ -83,12 +83,20 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
                 .newUpdater(FirstSend.class, "decodedAtNanos");
 
         @SuppressWarnings("rawtypes")
-        private static final AtomicIntegerFieldUpdater<FirstSend> SAMPLE_CLAIMED_UPDATER = AtomicIntegerFieldUpdater
-                .newUpdater(FirstSend.class, "sampleClaimed");
+        private static final AtomicIntegerFieldUpdater<FirstSend> STATE_UPDATER = AtomicIntegerFieldUpdater
+                .newUpdater(FirstSend.class, "state");
+
+        private static final int ACTIVE = 0;
+
+        private static final int COMPLETED = 1;
+
+        private static final int CANCELLED = 2;
+
+        private static final int SAMPLED = 3;
 
         private volatile long decodedAtNanos;
 
-        private volatile int sampleClaimed;
+        private volatile int state;
 
         final long timestampNanos;
 
@@ -118,7 +126,22 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
         }
 
         boolean claimQueueSample() {
-            return SAMPLE_CLAIMED_UPDATER.compareAndSet(this, 0, 1);
+            int previous = state;
+            while (previous != CANCELLED && previous != SAMPLED) {
+                if (STATE_UPDATER.compareAndSet(this, previous, SAMPLED)) {
+                    return true;
+                }
+                previous = state;
+            }
+            return false;
+        }
+
+        void markCompleted() {
+            STATE_UPDATER.compareAndSet(this, ACTIVE, COMPLETED);
+        }
+
+        void markCancelled() {
+            STATE_UPDATER.compareAndSet(this, ACTIVE, CANCELLED);
         }
 
     }
@@ -162,14 +185,22 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
         markSent(command, timestampNanos, null, null);
     }
 
-    static void markSent(RedisCommand<?, ?, ?> command, long timestampNanos, SocketAddress local,
-            SocketAddress remote) {
+    static void markSent(RedisCommand<?, ?, ?> command, long timestampNanos, SocketAddress local, SocketAddress remote) {
         RedisCommand<?, ?, ?> carrier = findTimestampCarrier(command);
         FirstSend firstSend = new FirstSend(timestampNanos, local, remote);
         if (carrier instanceof AsyncCommand) {
             FIRST_SENT_UPDATER.compareAndSet((AsyncCommand<?, ?, ?>) carrier, null, firstSend);
         } else if (carrier instanceof Command) {
             ((Command<?, ?, ?>) carrier).markSent(firstSend);
+        }
+        // Reactive cancellation reaches the underlying Command directly, including inside an AsyncCommand transaction.
+        // Publish the same state there so a later completion cannot erase a cancellation that already won.
+        FirstSend shared = firstSend(command);
+        if (shared != null) {
+            Command<?, ?, ?> underlying = CommandWrapper.unwrap(command, Command.class);
+            if (underlying != null && underlying != carrier) {
+                underlying.markSent(shared);
+            }
         }
     }
 
@@ -267,6 +298,10 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
     @Override
     public void complete() {
         if (COUNT_UPDATER.decrementAndGet(this) == 0) {
+            FirstSend firstSend = this.firstSend;
+            if (firstSend != null) {
+                firstSend.markCompleted();
+            }
             completeResult();
             command.complete();
         }

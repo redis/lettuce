@@ -164,10 +164,12 @@ address/command tuple. Enabling histograms also adds two distributions per
 tuple. As with the existing timers, changing remote addresses or custom
 command names can increase cardinality.
 
-Queue timing adds two timestamps to command carriers, first-write atomic
-updates, decorator traversal and two timer recordings. Disabling metrics
-avoids these operations, though the timestamp fields still occupy command
-memory. Existing custom `CommandLatencyRecorder` implementations remain
+Queue timing adds an acceptance timestamp and a shared first-send record,
+atomic completion/cancellation arbitration, decorator traversal and two
+timer recordings. Disabling queue timing avoids timestamp collection,
+record allocation and these atomic updates. The carrier fields still occupy
+command memory, and completion/cancellation checks for an attached timing
+record remain. Existing custom `CommandLatencyRecorder` implementations remain
 compatible: queue timing is disabled by default and can be enabled through
 `isQueueLatencyEnabled()` and `recordCommandQueueLatency(...)`.
 

@@ -95,8 +95,8 @@ class PubSubQueueLatencyUnitTests {
     }
 
     @ParameterizedTest
-    @EnumSource(value = CommandType.class, names = { "SUBSCRIBE", "UNSUBSCRIBE", "PSUBSCRIBE", "PUNSUBSCRIBE",
-            "SSUBSCRIBE", "SUNSUBSCRIBE" })
+    @EnumSource(value = CommandType.class, names = { "SUBSCRIBE", "UNSUBSCRIBE", "PSUBSCRIBE", "PUNSUBSCRIBE", "SSUBSCRIBE",
+            "SUNSUBSCRIBE" })
     void shouldRecordResp3PushAcknowledgementExactlyOnce(CommandType type) throws Exception {
         Command<String, String, String> command = command(type);
         AsyncCommand.markEnqueued(command, System.nanoTime() - 100_000);

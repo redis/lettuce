@@ -65,6 +65,10 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
 
     void markSent(AsyncCommand.FirstSend firstSend) {
         FIRST_SENT_UPDATER.compareAndSet(this, null, firstSend);
+        // Cancellation may have happened just before the timing state was attached.
+        if (isCancelled()) {
+            this.firstSend.markCancelled();
+        }
     }
 
     AsyncCommand.FirstSend firstSend() {
@@ -132,6 +136,7 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
         }
 
         exception = throwable;
+        markQueueLatencyCompleted();
         this.status = ST_COMPLETED;
         return true;
     }
@@ -141,12 +146,24 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
      */
     @Override
     public void complete() {
+        markQueueLatencyCompleted();
         this.status = ST_COMPLETED;
     }
 
     @Override
     public void cancel() {
         this.status = ST_CANCELLED;
+        AsyncCommand.FirstSend firstSend = this.firstSend;
+        if (firstSend != null) {
+            firstSend.markCancelled();
+        }
+    }
+
+    private void markQueueLatencyCompleted() {
+        AsyncCommand.FirstSend firstSend = this.firstSend;
+        if (firstSend != null) {
+            firstSend.markCompleted();
+        }
     }
 
     /**

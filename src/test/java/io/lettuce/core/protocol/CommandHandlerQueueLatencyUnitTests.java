@@ -298,8 +298,28 @@ class CommandHandlerQueueLatencyUnitTests {
         assertThat(denied.isCompletedExceptionally()).isTrue();
         assertThat(pending.isCompletedExceptionally()).isTrue();
         assertThat(handler.getStack()).isEmpty();
-        verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(RedisCommand.class), anyLong(),
-                anyLong());
+        verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(RedisCommand.class), anyLong(), anyLong());
+    }
+
+    @Test
+    void shouldCountSuccessfulReactiveCompletionEvenIfDeliveryCancelsUnderlyingCommand() throws Exception {
+        RedisCommand<String, String, String> underlying = command();
+        CommandWrapper<String, String, String> reactive = new CommandWrapper<String, String, String>(underlying) {
+
+            @Override
+            protected void doOnComplete() {
+                // RedisPublisher's immediate subscriber cancels the underlying command after onNext.
+                getDelegate().cancel();
+            }
+
+        };
+        AsyncCommand.markEnqueued(reactive, System.nanoTime() - 100_000);
+        handler.write(context, reactive, promise);
+
+        reply("+OK\r\n");
+
+        assertThat(underlying.isCancelled()).isTrue();
+        verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(RedisCommand.class), anyLong(), anyLong());
     }
 
     private Command<String, String, String> command() {

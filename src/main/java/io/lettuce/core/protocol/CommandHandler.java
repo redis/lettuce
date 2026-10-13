@@ -787,8 +787,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     /**
-     * Complete a decoded command, including a RESP3 Pub/Sub push acknowledgement, without double-counting cancelled
-     * commands. The normal response decoder already stamps completion; push acknowledgements bypass that decoder.
+     * Complete a decoded command, including a RESP3 Pub/Sub push acknowledgement, without double-counting cancelled commands.
+     * The normal response decoder already stamps completion; push acknowledgements bypass that decoder.
      */
     protected final void completeWithQueueLatency(RedisCommand<?, ?, ?> command, boolean pushAcknowledgement) {
         boolean cancelled = queueLatencyMetricsEnabled && command.isCancelled();
@@ -799,7 +799,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
         complete(command);
         if (queueLatencyMetricsEnabled && !cancelled) {
-            recordQueueLatency(command);
+            // A redirect may have completed exceptionally without a final reply from its target.
+            // Only the handler that observes a decoded terminal response may claim a queue sample.
+            TerminalResponseAware terminal = CommandWrapper.unwrap(command, TerminalResponseAware.class);
+            if (terminal == null || terminal.isTerminalResponseDecoded()) {
+                recordQueueLatency(command);
+            }
         }
     }
 
@@ -951,17 +956,19 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         endpoint.notifyException(exception);
 
-        stack.forEach(cmd -> {
-            cmd.completeExceptionally(exception);
-            // Only the current command received the complete DENIED response; subsequent commands did not.
-            if (cmd == decodedCommand) {
-                recordQueueLatency(cmd);
-            }
-        });
+        stack.forEach(cmd -> cmd.completeExceptionally(exception));
         stack.clear();
 
-        if (channel != null) {
-            channel.disconnect();
+        try {
+            // Pending requests are already terminated. Only this command received a complete DENIED reply.
+            if (decodedCommand != null) {
+                recordQueueLatency(decodedCommand);
+            }
+        } finally {
+            // A recorder failure must not prevent disconnecting a protected-mode connection.
+            if (channel != null) {
+                channel.disconnect();
+            }
         }
     }
 
@@ -1035,14 +1042,14 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             }
         }
         long endToEndLatency = completedAt - queuedAt;
-        if (firstSend != null && queuedAt != 0 && firstSent != 0 && queueLatency >= 0
-                && endToEndLatency >= queueLatency && !command.isCancelled()
+        // A Reactive subscriber may cancel after onNext delivered the decoded result while complete() unwinds.
+        // The shared claim preserves cancellation that won before completion, even if Command.status was overwritten.
+        if (firstSend != null && queuedAt != 0 && firstSent != 0 && queueLatency >= 0 && endToEndLatency >= queueLatency
                 && !AsyncCommand.hasCancelledFuture(command) && firstSend.claimQueueSample()) {
             // Queue waiting belongs to the connection that first sent the command, not a redirect/replay target.
             SocketAddress firstLocal = firstSend.local != null ? firstSend.local : local;
             SocketAddress firstRemote = firstSend.remote != null ? firstSend.remote : remote;
-            commandLatencyRecorder.recordCommandQueueLatency(firstLocal, firstRemote, command, queueLatency,
-                    endToEndLatency);
+            commandLatencyRecorder.recordCommandQueueLatency(firstLocal, firstRemote, command, queueLatency, endToEndLatency);
         }
     }
 

@@ -8,7 +8,7 @@ import io.netty.buffer.ByteBuf;
  * @author Mark Paluch
  * @since 3.0
  */
-class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCommand<K, V, T> {
+class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, TerminalResponseAware {
 
     private int redirections;
 
@@ -17,6 +17,8 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
     private final RedisChannelWriter retry;
 
     private boolean completed;
+
+    private volatile boolean terminalResponseDecoded;
 
     /**
      *
@@ -48,7 +50,13 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
             }
         }
         super.complete();
+        terminalResponseDecoded = true;
         completed = true;
+    }
+
+    @Override
+    public boolean isTerminalResponseDecoded() {
+        return terminalResponseDecoded;
     }
 
     public boolean isMoved() {
