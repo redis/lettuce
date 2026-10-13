@@ -1182,7 +1182,10 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param sortFunction Sort function to enforce a specific order. The sort function must not change the order or the input
      *        parameter but create a new collection with the desired order, must not be {@code null}.
      * @return {@link Supplier} for {@link SocketAddress connection points}.
+     * @deprecated since 7.9, in Lettuce 8.0 this method returns a {@code Supplier<CompletionStage<SocketAddress>>} instead of a
+     *             {@link Mono}; subclasses overriding or calling it must change the type. There is no replacement in 7.x.
      */
+    @Deprecated
     protected Mono<SocketAddress> getSocketAddressSupplier(Supplier<Partitions> partitionsSupplier,
             Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
 
