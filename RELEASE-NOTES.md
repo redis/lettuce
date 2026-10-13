@@ -1,4 +1,4 @@
-Lettuce 7.8.0 RELEASE NOTES
+Lettuce 7.9.0 RELEASE NOTES
 ==============================
 The Lettuce team is pleased to announce the Lettuce **7.9.0** minor release!
 
