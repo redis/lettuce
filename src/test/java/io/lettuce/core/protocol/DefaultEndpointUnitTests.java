@@ -315,6 +315,32 @@ class DefaultEndpointUnitTests {
     }
 
     @Test
+    void cancelledInnerClusterStyleCommandIsRemovedFromBuffer() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        AsyncCommand<String, String, String> inner = new AsyncCommand<>(
+                new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+        // A ClusterCommand reports outer completion separately from its inner future.
+        CommandWrapper<String, String, String> outer = new CommandWrapper<String, String, String>(inner) {
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+        };
+
+        endpoint.write(outer);
+        inner.cancel();
+
+        assertThat(outer.isDone()).isFalse();
+        assertThat(outer.isCancelled()).isTrue();
+        assertThat(endpoint.takeQueueLatencyStart(outer)).isNull();
+        assertThat(endpoint.drainCommands()).doesNotContain(outer);
+    }
+
+    @Test
     void cancelledBufferedDecoratedCommandReleasesTimestampWithoutDispatch() {
         CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
