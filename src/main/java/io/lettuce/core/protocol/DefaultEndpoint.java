@@ -206,6 +206,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return command;
         }
 
+        // Include time waiting for the endpoint lock in the queueing interval.
+        long acceptedAt = queueingTimestamps == null ? 0 : System.nanoTime();
+
         try {
             sharedLock.incrementWriters();
 
@@ -214,7 +217,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             }
 
             if (queueingTimestamps != null) {
-                trackQueueLatency(command, System.nanoTime());
+                trackQueueLatency(command, acceptedAt);
             }
 
             if (autoFlushCommands) {
@@ -251,6 +254,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return (Collection<RedisCommand<K, V, ?>>) commands;
         }
 
+        long acceptedAt = queueingTimestamps == null ? 0 : System.nanoTime();
+
         try {
             sharedLock.incrementWriters();
 
@@ -259,7 +264,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             }
 
             if (queueingTimestamps != null) {
-                long acceptedAt = System.nanoTime();
                 for (RedisCommand<?, ?, ?> command : commands) {
                     trackQueueLatency(command, acceptedAt);
                 }
