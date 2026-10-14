@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -138,6 +139,51 @@ class CommandHandlerQueueLatencyUnitTests {
         WithLatency networkTiming = (WithLatency) handler.getStack().peek();
         assertThat(recorderFinishedAt.get()).isNotZero();
         assertThat(networkTiming.getSent()).isGreaterThanOrEqualTo(recorderFinishedAt.get());
+    }
+
+    @Test
+    void batchNetworkTimersStartAfterEveryQueueCallback() throws Exception {
+        Command<String, String, String> first = command();
+        Command<String, String, String> second = command();
+        AtomicInteger recordings = new AtomicInteger();
+        AtomicLong secondRecorderFinishedAt = new AtomicLong();
+
+        doAnswer(invocation -> {
+            if (recordings.incrementAndGet() == 2) {
+                secondRecorderFinishedAt.set(System.nanoTime());
+            }
+            return null;
+        }).when(recorder).recordCommandQueueLatency(any(), any(), any(), anyLong());
+
+        endpoint.write(Arrays.asList(first, second));
+        handler.write(context, Arrays.asList(first, second), promise);
+
+        assertThat(recordings.get()).isEqualTo(2);
+        WithLatency firstNetworkTiming = (WithLatency) handler.getStack().poll();
+        WithLatency secondNetworkTiming = (WithLatency) handler.getStack().poll();
+        assertThat(firstNetworkTiming.getSent()).isGreaterThanOrEqualTo(secondRecorderFinishedAt.get());
+        assertThat(secondNetworkTiming.getSent()).isGreaterThanOrEqualTo(secondRecorderFinishedAt.get());
+    }
+
+    @Test
+    void cancelledDecoratedCommandIsSkippedEvenWhenOuterIsNotDone() throws Exception {
+        AsyncCommand<String, String, String> inner = new AsyncCommand<>(command());
+        CommandWrapper<String, String, String> outer = new CommandWrapper<String, String, String>(inner) {
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+        };
+
+        endpoint.write(outer);
+        inner.cancel();
+        handler.write(context, outer, promise);
+
+        assertThat(handler.getStack()).isEmpty();
+        assertThat(endpoint.takeQueueLatencyStart(outer)).isNull();
+        verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
+        verify(context, never()).write(any(), any());
     }
 
     @Test
