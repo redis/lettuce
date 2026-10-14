@@ -232,7 +232,10 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @param socketAddressSupplier address supplier for initial connect and re-connect
      * @param connectionBuilder connection builder to configure the connection
      * @param redisURI URI of the Redis instance
+     * @deprecated since 7.9, in Lettuce 8.0 this method takes {@code socketAddressSupplier} as a
+     *             {@code Supplier<CompletionStage<SocketAddress>>} instead of a {@link Mono}; there is no replacement in 7.x.
      */
+    @Deprecated
     protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
             RedisURI redisURI) {
         connectionBuilder(socketAddressSupplier, connectionBuilder, connectionEvents, redisURI);
@@ -246,7 +249,10 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @param connectionEvents connection events dispatcher
      * @param redisURI URI of the Redis instance
      * @since 6.2
+     * @deprecated since 7.9, in Lettuce 8.0 this method takes {@code socketAddressSupplier} as a
+     *             {@code Supplier<CompletionStage<SocketAddress>>} instead of a {@link Mono}; there is no replacement in 7.x.
      */
+    @Deprecated
     protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
             ConnectionEvents connectionEvents, RedisURI redisURI) {
 

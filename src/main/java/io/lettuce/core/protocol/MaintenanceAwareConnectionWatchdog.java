@@ -75,6 +75,25 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     private RebindAwareAddressSupplier rebindAwareAddressSupplier;
 
+    /**
+     * Create a new maintenance-aware watchdog, see
+     * {@link ConnectionWatchdog#ConnectionWatchdog(Delay, ClientOptions, Bootstrap, Timer, EventExecutorGroup, Mono, ReconnectionListener, ConnectionFacade, EventBus, Endpoint)}.
+     *
+     * @param reconnectDelay reconnect delay, must not be {@code null}
+     * @param clientOptions client options for the current connection, must not be {@code null}
+     * @param bootstrap Configuration for new channels, must not be {@code null}
+     * @param timer Timer used for delayed reconnect, must not be {@code null}
+     * @param reconnectWorkers executor group for reconnect tasks, must not be {@code null}
+     * @param socketAddressSupplier the socket address supplier to obtain an address for reconnection, may be {@code null}
+     * @param reconnectionListener the reconnection listener, must not be {@code null}
+     * @param connectionFacade the connection facade, must not be {@code null}
+     * @param eventBus Event bus to emit reconnect events.
+     * @param endpoint must not be {@code null}
+     * @deprecated since 7.9, in Lettuce 8.0 this constructor takes {@code socketAddressSupplier} as a
+     *             {@code Supplier<CompletionStage<SocketAddress>>} instead of a {@link Mono} and no longer takes
+     *             {@code connectionFacade}; there is no replacement in 7.x.
+     */
+    @Deprecated
     public MaintenanceAwareConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap,
             Timer timer, EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
             ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
@@ -110,6 +129,13 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         super.channelReadComplete(ctx);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @deprecated since 7.9, in Lettuce 8.0 this method takes and returns a {@code Supplier<CompletionStage<SocketAddress>>}
+     *             instead of a {@link Mono}; subclasses overriding it must change the types. There is no replacement in 7.x.
+     */
+    @Deprecated
     @Override
     protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
         Mono<SocketAddress> source = super.wrapSocketAddressSupplier(socketAddressSupplier);

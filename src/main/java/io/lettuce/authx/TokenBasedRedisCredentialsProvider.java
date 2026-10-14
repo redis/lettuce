@@ -34,6 +34,12 @@ import redis.clients.authentication.core.TokenManager;
  * The lifecycle of this provider is externally managed. It should be closed when there are no longer any connections using it,
  * to stop the token management process and release resources.
  * </p>
+ * <p>
+ * In Lettuce 8.0, this class implements only {@link io.lettuce.core.CredentialsProvider}: it is no longer a
+ * {@link RedisCredentialsProvider}, and {@link #resolveCredentials()} and {@link #credentials()} are removed. Refer to it as a
+ * {@link io.lettuce.core.CredentialsProvider}, resolve credentials with {@link #resolveCredentialsAsync()} and receive new
+ * credentials with {@link #subscribeToCredentials(java.util.function.Consumer, java.util.function.Consumer)}.
+ * </p>
  *
  * @since 6.6
  */
@@ -85,7 +91,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      * credentials are available.
      *
      * @return a Mono that emits the latest Redis credentials
-     * @deprecated since 7.9, use {@link #resolveCredentialsAsync()} instead; scheduled for removal in a future major release.
+     * @deprecated since 7.9, use {@link #resolveCredentialsAsync()} instead; scheduled for removal in Lettuce 8.0.
      */
     @Deprecated
     @Override
@@ -102,7 +108,7 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
      *
      * @return a Flux that emits all updates to the Redis credentials
      * @deprecated since 7.9, use {@link #subscribeToCredentials(java.util.function.Consumer, java.util.function.Consumer)}
-     *             instead; scheduled for removal in a future major release.
+     *             instead; scheduled for removal in Lettuce 8.0.
      */
     @Deprecated
     @Override

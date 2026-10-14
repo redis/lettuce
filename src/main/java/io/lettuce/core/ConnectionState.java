@@ -160,7 +160,7 @@ public class ConnectionState {
         if (credentialsProvider instanceof RedisCredentialsProvider) {
             return (RedisCredentialsProvider) credentialsProvider;
         }
-        return new AsyncCredentialsProviderAdapter(credentialsProvider);
+        return AsyncCredentialsProviderAdapter.of(credentialsProvider);
     }
 
     /**

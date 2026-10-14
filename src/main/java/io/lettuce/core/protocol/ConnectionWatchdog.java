@@ -115,7 +115,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      * @param connectionFacade the connection facade, must not be {@code null}
      * @param eventBus Event bus to emit reconnect events.
      * @param endpoint must not be {@code null}
+     * @deprecated since 7.9, in Lettuce 8.0 this constructor takes {@code socketAddressSupplier} as a
+     *             {@code Supplier<CompletionStage<SocketAddress>>} instead of a {@link Mono} and no longer takes
+     *             {@code connectionFacade}; there is no replacement in 7.x.
      */
+    @Deprecated
     public ConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
             EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
             ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
@@ -149,6 +153,16 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         resetReconnectDelay();
     }
 
+    /**
+     * Wrap the socket address supplier used for reconnection: record the address it emits, and reuse the last recorded address
+     * when it fails.
+     *
+     * @param source the socket address supplier.
+     * @return the wrapped socket address supplier.
+     * @deprecated since 7.9, in Lettuce 8.0 this method takes and returns a {@code Supplier<CompletionStage<SocketAddress>>}
+     *             instead of a {@link Mono}; subclasses overriding it must change the types. There is no replacement in 7.x.
+     */
+    @Deprecated
     protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> source) {
         return source.doOnNext(addr -> remoteAddress = addr).onErrorResume(t -> {
 
