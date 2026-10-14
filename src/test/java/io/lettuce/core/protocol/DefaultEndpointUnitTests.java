@@ -6,9 +6,11 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.nio.channels.ClosedChannelException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -16,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -143,6 +146,69 @@ class DefaultEndpointUnitTests {
         // A redirected attempt passes through write() again and gets a new start time.
         endpoint.write(queued);
         assertThat(endpoint.takeQueueLatencyStart(queued)).isNotNull();
+    }
+
+    @Test
+    void olderAttemptCompletionCannotRemoveNewAcceptanceTimestamp() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        DelayedCompletionCommand queued = new DelayedCompletionCommand();
+
+        endpoint.write(queued);
+        endpoint.write(queued);
+
+        queued.done = true;
+        queued.completeListener(0);
+
+        // The first acceptance's completion callback must not clear the second timestamp.
+        assertThat(endpoint.takeQueueLatencyStart(queued)).isNotNull();
+    }
+
+    @Test
+    void innerCompletionDoesNotRemovePendingRedirectTimestamp() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        DelayedCompletionCommand queued = new DelayedCompletionCommand();
+
+        endpoint.write(queued);
+        queued.completeListener(0);
+
+        // Like ClusterCommand, the outer command remains writable during an inner completion.
+        assertThat(endpoint.takeQueueLatencyStart(queued)).isNotNull();
+
+        endpoint.write(queued);
+        queued.done = true;
+        queued.completeListener(1);
+        assertThat(endpoint.takeQueueLatencyStart(queued)).isNull();
+    }
+
+    private static final class DelayedCompletionCommand extends CommandWrapper<String, String, String> {
+
+        private final List<BiConsumer<? super String, Throwable>> listeners = new ArrayList<>();
+
+        private boolean done;
+
+        DelayedCompletionCommand() {
+            super(new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+        }
+
+        @Override
+        public void onComplete(BiConsumer<? super String, Throwable> action) {
+            listeners.add(action);
+        }
+
+        @Override
+        public boolean isDone() {
+            return done;
+        }
+
+        void completeListener(int index) {
+            listeners.get(index).accept(null, null);
+        }
     }
 
     @Test
