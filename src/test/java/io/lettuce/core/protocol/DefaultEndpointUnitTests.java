@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.nio.channels.ClosedChannelException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Queue;
@@ -154,7 +155,7 @@ class DefaultEndpointUnitTests {
                 new StatusOutput<>(StringCodec.UTF8));
         RedisCommand<String, String, String> second = new Command<>(CommandType.GET,
                 new StatusOutput<>(StringCodec.UTF8));
-        enabled.write(java.util.Arrays.asList(first, second));
+        enabled.write(Arrays.asList(first, second));
         Long firstStamp = enabled.takeQueueLatencyStart(first);
         assertThat(firstStamp).isNotNull().isEqualTo(enabled.takeQueueLatencyStart(second));
 
@@ -162,6 +163,59 @@ class DefaultEndpointUnitTests {
         DefaultEndpoint disabled = new DefaultEndpoint(ClientOptions.create(), clientResources);
         disabled.write(new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
         assertThat(disabled.takeQueueLatencyStart(first)).isNull();
+    }
+
+    @Test
+    void queueingTimestampsUseCommandIdentityRatherThanWrapperEquality() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        RedisCommand<String, String, String> original = new Command<>(CommandType.GET,
+                new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> wrapper = new LatencyMeteredCommand<>(original);
+
+        endpoint.write(original);
+        assertThat(endpoint.takeQueueLatencyStart(wrapper)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(original)).isNotNull();
+
+        // A later acceptance of the original must not be consumed by an earlier wrapper.
+        endpoint.write(original);
+        assertThat(endpoint.takeQueueLatencyStart(wrapper)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(original)).isNotNull();
+
+        endpoint.write(wrapper);
+        assertThat(endpoint.takeQueueLatencyStart(original)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(wrapper)).isNotNull();
+    }
+
+    @Test
+    void closingConnectionPreservesTimestampsForPendingEventLoopWrites() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+
+        when(channel.isActive()).thenReturn(true);
+        DefaultChannelPromise closePromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        when(channel.close()).thenReturn(closePromise);
+        endpoint.notifyChannelActive(channel);
+
+        RedisCommand<String, String, String> first = new Command<>(CommandType.GET,
+                new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> second = new Command<>(CommandType.GET,
+                new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(first);
+        endpoint.write(second);
+
+        endpoint.closeAsync();
+
+        // The channel has not closed yet; an outbound event-loop task can still dispatch.
+        assertThat(endpoint.takeQueueLatencyStart(first)).isNotNull();
+
+        closePromise.setSuccess();
+        assertThat(endpoint.takeQueueLatencyStart(second)).isNull();
     }
 
     @Test

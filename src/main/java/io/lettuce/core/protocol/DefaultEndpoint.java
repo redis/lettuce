@@ -23,14 +23,16 @@ import static io.lettuce.core.protocol.CommandHandler.*;
 import static io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE;
 
 import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -97,8 +99,10 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
     private final Queue<RedisCommand<?, ?, ?>> commandBuffer;
 
-    // Connection-local, weakly keyed acceptance timestamps. Entries are consumed at first dispatch.
-    private final Map<RedisCommand<?, ?, ?>, Long> queueingTimestamps;
+    // Connection-local, weak identity keys keep wrappers from consuming each other's timestamps.
+    private final Map<IdentityWeakReference, Long> queueingTimestamps;
+
+    private final ReferenceQueue<RedisCommand<?, ?, ?>> queueingTimestampReferences = new ReferenceQueue<>();
 
     private final boolean boundedQueues;
 
@@ -155,7 +159,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         CommandLatencyRecorder recorder = clientResources.commandLatencyRecorder();
         this.queueingTimestamps = recorder != null && recorder.isQueueLatencyEnabled()
-                ? Collections.synchronizedMap(new WeakHashMap<>()) : null;
+                ? Collections.synchronizedMap(new HashMap<>()) : null;
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
         this.rejectCommandsWhileDisconnected = clientOptions.isRejectCommandsWhileDisconnected();
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
@@ -283,7 +287,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     }
 
     Long takeQueueLatencyStart(RedisCommand<?, ?, ?> command) {
-        return queueingTimestamps == null ? null : queueingTimestamps.remove(command);
+        if (queueingTimestamps == null) {
+            return null;
+        }
+
+        expungeStaleQueueingTimestamps();
+        return queueingTimestamps.remove(new IdentityWeakReference(command, null));
     }
 
     private void trackQueueLatency(RedisCommand<?, ?, ?> command, long acceptedAt) {
@@ -291,11 +300,46 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return;
         }
 
-        queueingTimestamps.put(command, acceptedAt);
+        expungeStaleQueueingTimestamps();
+        queueingTimestamps.put(new IdentityWeakReference(command, queueingTimestampReferences), acceptedAt);
 
         // Commands may terminate while still buffered, with no dispatch to consume the timestamp.
         if (command instanceof CompleteableCommand) {
             ((CompleteableCommand<?>) command).onComplete((result, failure) -> takeQueueLatencyStart(command));
+        }
+    }
+
+    private void expungeStaleQueueingTimestamps() {
+        IdentityWeakReference reference;
+        while ((reference = (IdentityWeakReference) queueingTimestampReferences.poll()) != null) {
+            queueingTimestamps.remove(reference);
+        }
+    }
+
+    private static final class IdentityWeakReference extends WeakReference<RedisCommand<?, ?, ?>> {
+
+        private final int hash;
+
+        IdentityWeakReference(RedisCommand<?, ?, ?> command, ReferenceQueue<RedisCommand<?, ?, ?>> queue) {
+            super(command, queue);
+            this.hash = System.identityHashCode(command);
+        }
+
+        @Override
+        public int hashCode() {
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof IdentityWeakReference)) {
+                return false;
+            }
+            RedisCommand<?, ?, ?> command = get();
+            return command != null && command == ((IdentityWeakReference) other).get();
         }
     }
 
@@ -648,7 +692,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
             cancelBufferedCommands("Close");
             if (queueingTimestamps != null) {
-                queueingTimestamps.clear();
+                // Writes queued on the event loop must consume their timestamps before cleanup.
+                closeFuture.whenComplete((result, failure) -> queueingTimestamps.clear());
             }
 
             Channel channel = getOpenChannel();

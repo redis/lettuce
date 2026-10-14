@@ -132,6 +132,13 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
         return CommandLatencyId.create(options.localDistinction() ? local : LocalAddress.ANY, remote, commandType);
     }
 
+    /**
+     * Create a timer for the queueing duration of a command attempt.
+     *
+     * @param commandLatencyId the command latency identifier
+     * @return the timer
+     * @since 7.9
+     */
     protected Timer queueingTimer(CommandLatencyId commandLatencyId) {
 
         Timer.Builder timer = Timer.builder(METRIC_QUEUEING)
