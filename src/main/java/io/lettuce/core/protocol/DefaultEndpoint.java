@@ -28,7 +28,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -95,7 +97,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
     private final Queue<RedisCommand<?, ?, ?>> commandBuffer;
 
-    private final boolean queueLatencyMetricsEnabled;
+    // Connection-local, weakly keyed acceptance timestamps. Entries are consumed at first dispatch.
+    private final Map<RedisCommand<?, ?, ?>, Long> queueingTimestamps;
 
     private final boolean boundedQueues;
 
@@ -146,12 +149,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;
-        CommandLatencyRecorder recorder = clientResources.commandLatencyRecorder();
-        this.queueLatencyMetricsEnabled = recorder != null && recorder.isQueueLatencyEnabled();
         this.reliability = clientOptions.isAutoReconnect() ? Reliability.AT_LEAST_ONCE : Reliability.AT_MOST_ONCE;
         this.replayFilter = clientOptions.getReplayFilter();
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
+        CommandLatencyRecorder recorder = clientResources.commandLatencyRecorder();
+        this.queueingTimestamps = recorder != null && recorder.isQueueLatencyEnabled()
+                ? Collections.synchronizedMap(new WeakHashMap<>()) : null;
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
         this.rejectCommandsWhileDisconnected = clientOptions.isRejectCommandsWhileDisconnected();
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
@@ -198,15 +202,15 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return command;
         }
 
-        if (queueLatencyMetricsEnabled) {
-            AsyncCommand.markEnqueued(command, System.nanoTime());
-        }
-
         try {
             sharedLock.incrementWriters();
 
             if (inActivation) {
                 command = processActivationCommand(command);
+            }
+
+            if (queueingTimestamps != null && command.getOutput() != null && !command.isDone()) {
+                queueingTimestamps.put(command, System.nanoTime());
             }
 
             if (autoFlushCommands) {
@@ -243,16 +247,20 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return (Collection<RedisCommand<K, V, ?>>) commands;
         }
 
-        if (queueLatencyMetricsEnabled) {
-            long acceptedAt = System.nanoTime();
-            commands.forEach(command -> AsyncCommand.markEnqueued(command, acceptedAt));
-        }
-
         try {
             sharedLock.incrementWriters();
 
             if (inActivation) {
                 commands = processActivationCommands(commands);
+            }
+
+            if (queueingTimestamps != null) {
+                long acceptedAt = System.nanoTime();
+                for (RedisCommand<?, ?, ?> command : commands) {
+                    if (command.getOutput() != null && !command.isDone()) {
+                        queueingTimestamps.put(command, acceptedAt);
+                    }
+                }
             }
 
             if (autoFlushCommands) {
@@ -274,6 +282,10 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         }
 
         return (Collection<RedisCommand<K, V, ?>>) commands;
+    }
+
+    Long takeQueueLatencyStart(RedisCommand<?, ?, ?> command) {
+        return queueingTimestamps == null ? null : queueingTimestamps.remove(command);
     }
 
     private <K, V, T> RedisCommand<K, V, T> processActivationCommand(RedisCommand<K, V, T> command) {
@@ -621,6 +633,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             }
 
             cancelBufferedCommands("Close");
+            if (queueingTimestamps != null) {
+                queueingTimestamps.clear();
+            }
 
             Channel channel = getOpenChannel();
 

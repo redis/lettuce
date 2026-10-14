@@ -19,14 +19,11 @@
  */
 package io.lettuce.core.protocol;
 
-import java.net.SocketAddress;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.atomic.AtomicLongFieldUpdater;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -54,97 +51,11 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
     private static final AtomicIntegerFieldUpdater<AsyncCommand> COUNT_UPDATER = AtomicIntegerFieldUpdater
             .newUpdater(AsyncCommand.class, "count");
 
-    @SuppressWarnings("rawtypes")
-    private static final AtomicLongFieldUpdater<AsyncCommand> QUEUED_AT_UPDATER = AtomicLongFieldUpdater
-            .newUpdater(AsyncCommand.class, "queuedAtNanos");
-
     private final RedisCommand<K, V, T> command;
 
     // access via COUNT_UPDATER
     @SuppressWarnings({ "unused" })
     private volatile int count = 1;
-
-    // First accepted submission, preserved when a command is replayed after reconnect.
-    private volatile long queuedAtNanos;
-
-    @SuppressWarnings("rawtypes")
-    private static final AtomicReferenceFieldUpdater<AsyncCommand, FirstSend> FIRST_SENT_UPDATER = AtomicReferenceFieldUpdater
-            .newUpdater(AsyncCommand.class, FirstSend.class, "firstSend");
-
-    private volatile FirstSend firstSend;
-
-    /**
-     * The timestamp and connection identity must be published together: a replay can run on another channel.
-     */
-    static final class FirstSend {
-
-        @SuppressWarnings("rawtypes")
-        private static final AtomicLongFieldUpdater<FirstSend> DECODED_AT_UPDATER = AtomicLongFieldUpdater
-                .newUpdater(FirstSend.class, "decodedAtNanos");
-
-        @SuppressWarnings("rawtypes")
-        private static final AtomicIntegerFieldUpdater<FirstSend> STATE_UPDATER = AtomicIntegerFieldUpdater
-                .newUpdater(FirstSend.class, "state");
-
-        private static final int ACTIVE = 0;
-
-        private static final int COMPLETED = 1;
-
-        private static final int CANCELLED = 2;
-
-        private static final int SAMPLED = 3;
-
-        private volatile long decodedAtNanos;
-
-        private volatile int state;
-
-        final long timestampNanos;
-
-        final SocketAddress local;
-
-        final SocketAddress remote;
-
-        FirstSend(long timestampNanos, SocketAddress local, SocketAddress remote) {
-            this.timestampNanos = timestampNanos;
-            this.local = local;
-            this.remote = remote;
-        }
-
-        void markDecoded(long timestampNanos) {
-            long previous = decodedAtNanos;
-            // Redirected commands may decode concurrently; retain the final decode timestamp.
-            while (previous == 0 || timestampNanos - previous > 0) {
-                if (DECODED_AT_UPDATER.compareAndSet(this, previous, timestampNanos)) {
-                    return;
-                }
-                previous = decodedAtNanos;
-            }
-        }
-
-        long latestDecodedAt() {
-            return decodedAtNanos;
-        }
-
-        boolean claimQueueSample() {
-            int previous = state;
-            while (previous != CANCELLED && previous != SAMPLED) {
-                if (STATE_UPDATER.compareAndSet(this, previous, SAMPLED)) {
-                    return true;
-                }
-                previous = state;
-            }
-            return false;
-        }
-
-        void markCompleted() {
-            STATE_UPDATER.compareAndSet(this, ACTIVE, COMPLETED);
-        }
-
-        void markCancelled() {
-            STATE_UPDATER.compareAndSet(this, ACTIVE, CANCELLED);
-        }
-
-    }
 
     /**
      * @param command the command, must not be {@code null}.
@@ -160,103 +71,6 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
         LettuceAssert.notNull(command, "RedisCommand must not be null");
         this.command = command;
         this.count = count;
-    }
-
-    /** Record submission once, including when the command is nested in other decorators. */
-    static void markEnqueued(RedisCommand<?, ?, ?> command, long timestampNanos) {
-        RedisCommand<?, ?, ?> carrier = findTimestampCarrier(command);
-        if (carrier instanceof AsyncCommand) {
-            QUEUED_AT_UPDATER.compareAndSet((AsyncCommand<?, ?, ?>) carrier, 0, timestampNanos);
-        } else if (carrier instanceof Command) {
-            ((Command<?, ?, ?>) carrier).markEnqueued(timestampNanos);
-        }
-    }
-
-    /** Returns zero when the command has not been instrumented. */
-    static long queuedAt(RedisCommand<?, ?, ?> command) {
-        RedisCommand<?, ?, ?> carrier = findTimestampCarrier(command);
-        if (carrier instanceof AsyncCommand) {
-            return ((AsyncCommand<?, ?, ?>) carrier).queuedAtNanos;
-        }
-        return carrier instanceof Command ? ((Command<?, ?, ?>) carrier).queuedAt() : 0;
-    }
-
-    static void markSent(RedisCommand<?, ?, ?> command, long timestampNanos) {
-        markSent(command, timestampNanos, null, null);
-    }
-
-    static void markSent(RedisCommand<?, ?, ?> command, long timestampNanos, SocketAddress local, SocketAddress remote) {
-        RedisCommand<?, ?, ?> carrier = findTimestampCarrier(command);
-        FirstSend firstSend = new FirstSend(timestampNanos, local, remote);
-        if (carrier instanceof AsyncCommand) {
-            FIRST_SENT_UPDATER.compareAndSet((AsyncCommand<?, ?, ?>) carrier, null, firstSend);
-        } else if (carrier instanceof Command) {
-            ((Command<?, ?, ?>) carrier).markSent(firstSend);
-        }
-        // Reactive cancellation reaches the underlying Command directly, including inside an AsyncCommand transaction.
-        // Publish the same state there so a later completion cannot erase a cancellation that already won.
-        FirstSend shared = firstSend(command);
-        if (shared != null) {
-            Command<?, ?, ?> underlying = CommandWrapper.unwrap(command, Command.class);
-            if (underlying != null && underlying != carrier) {
-                underlying.markSent(shared);
-            }
-        }
-    }
-
-    static FirstSend firstSend(RedisCommand<?, ?, ?> command) {
-        RedisCommand<?, ?, ?> carrier = findTimestampCarrier(command);
-        if (carrier instanceof AsyncCommand) {
-            return ((AsyncCommand<?, ?, ?>) carrier).firstSend;
-        }
-        return carrier instanceof Command ? ((Command<?, ?, ?>) carrier).firstSend() : null;
-    }
-
-    static long firstSent(RedisCommand<?, ?, ?> command) {
-        FirstSend firstSend = firstSend(command);
-        return firstSend != null ? firstSend.timestampNanos : 0;
-    }
-
-    static void markDecoded(RedisCommand<?, ?, ?> command, long timestampNanos) {
-        FirstSend firstSend = firstSend(command);
-        if (firstSend != null) {
-            firstSend.markDecoded(timestampNanos);
-        }
-    }
-
-    /** Check future cancellation after completion without mistaking reactive cleanup for cancellation of a result. */
-    static boolean hasCancelledFuture(RedisCommand<?, ?, ?> command) {
-        while (command != null) {
-            if (command instanceof AsyncCommand && command.isCancelled()) {
-                return true;
-            }
-            if (!(command instanceof DecoratedCommand)) {
-                break;
-            }
-            RedisCommand<?, ?, ?> delegate = ((DecoratedCommand<?, ?, ?>) command).getDelegate();
-            if (delegate == command) {
-                break;
-            }
-            command = delegate;
-        }
-        return false;
-    }
-
-    private static RedisCommand<?, ?, ?> findTimestampCarrier(RedisCommand<?, ?, ?> command) {
-        while (command != null) {
-            if (command instanceof AsyncCommand || command instanceof Command) {
-                return command;
-            }
-            if (!(command instanceof DecoratedCommand)) {
-                break;
-            }
-            RedisCommand<?, ?, ?> delegate = ((DecoratedCommand<?, ?, ?>) command).getDelegate();
-            if (delegate == command) {
-                break;
-            }
-            command = delegate;
-        }
-        return null;
     }
 
     /**
@@ -298,10 +112,6 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
     @Override
     public void complete() {
         if (COUNT_UPDATER.decrementAndGet(this) == 0) {
-            FirstSend firstSend = this.firstSend;
-            if (firstSend != null) {
-                firstSend.markCompleted();
-            }
             completeResult();
             command.complete();
         }

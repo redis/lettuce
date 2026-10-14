@@ -19,9 +19,6 @@
  */
 package io.lettuce.core.protocol;
 
-import java.util.concurrent.atomic.AtomicLongFieldUpdater;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
@@ -38,46 +35,6 @@ import io.netty.buffer.ByteBuf;
  * @author Mark Paluch
  */
 public class Command<K, V, T> implements RedisCommand<K, V, T> {
-
-    @SuppressWarnings("rawtypes")
-    private static final AtomicLongFieldUpdater<Command> QUEUED_AT_UPDATER = AtomicLongFieldUpdater.newUpdater(Command.class,
-            "queuedAtNanos");
-
-    private volatile long queuedAtNanos;
-
-    @SuppressWarnings("rawtypes")
-    private static final AtomicReferenceFieldUpdater<Command, AsyncCommand.FirstSend> FIRST_SENT_UPDATER = AtomicReferenceFieldUpdater
-            .newUpdater(Command.class, AsyncCommand.FirstSend.class, "firstSend");
-
-    private volatile AsyncCommand.FirstSend firstSend;
-
-    void markEnqueued(long timestampNanos) {
-        QUEUED_AT_UPDATER.compareAndSet(this, 0, timestampNanos);
-    }
-
-    long queuedAt() {
-        return queuedAtNanos;
-    }
-
-    void markSent(long timestampNanos) {
-        markSent(new AsyncCommand.FirstSend(timestampNanos, null, null));
-    }
-
-    void markSent(AsyncCommand.FirstSend firstSend) {
-        FIRST_SENT_UPDATER.compareAndSet(this, null, firstSend);
-        // Cancellation may have happened just before the timing state was attached.
-        if (isCancelled()) {
-            this.firstSend.markCancelled();
-        }
-    }
-
-    AsyncCommand.FirstSend firstSend() {
-        return firstSend;
-    }
-
-    long firstSent() {
-        return firstSend != null ? firstSend.timestampNanos : 0;
-    }
 
     protected static final byte ST_INITIAL = 0;
 
@@ -136,7 +93,6 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
         }
 
         exception = throwable;
-        markQueueLatencyCompleted();
         this.status = ST_COMPLETED;
         return true;
     }
@@ -146,24 +102,12 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
      */
     @Override
     public void complete() {
-        markQueueLatencyCompleted();
         this.status = ST_COMPLETED;
     }
 
     @Override
     public void cancel() {
         this.status = ST_CANCELLED;
-        AsyncCommand.FirstSend firstSend = this.firstSend;
-        if (firstSend != null) {
-            firstSend.markCancelled();
-        }
-    }
-
-    private void markQueueLatencyCompleted() {
-        AsyncCommand.FirstSend firstSend = this.firstSend;
-        if (firstSend != null) {
-            firstSend.markCompleted();
-        }
     }
 
     /**

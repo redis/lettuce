@@ -115,36 +115,19 @@ The following settings are available to configure from
 
 ## Micrometer
 
-Commands are tracked using Micrometer `Timer`s:
+Commands are tracked by using two Micrometer `Timer`s:
+`lettuce.command.firstresponse` and `lettuce.command.completion`. Optionally,
+`lettuce.command.queueing` measures the time from acceptance by
+`DefaultEndpoint.write()` to dispatch by `CommandHandler`. Enable it using
+`MicrometerOptions.builder().queueLatency(true).build()`; it is off by default.
 
-| Timer | Measurement |
-|-------|-------------|
-| `lettuce.command.firstresponse` | Send to first response, for each attempt. |
-| `lettuce.command.completion` | Send to complete response decode, for each attempt. |
-| `lettuce.command.queueing` | First acceptance by the connection endpoint to first send. |
-| `lettuce.command.endtoend` | First endpoint acceptance to final response decode, including retries. |
-
-The queueing and end-to-end timers are available since 7.9 and enabled with
-`MicrometerOptions.builder().queueLatency(true).build()`. They are disabled
-by default to preserve existing recording costs and meter counts. They include
-manual flush buffering, commands submitted while disconnected, and the
-wait for the Netty event loop before sending. The queueing timer measures
-the **initial** wait; additional waiting after an in-flight command is
-replayed is included in end-to-end latency. A cluster redirect records one
-end-to-end sample after the final response, while the existing network
-timers continue to measure each attempt.
-
-The starting point is `DefaultEndpoint.write()`, after write validation.
-Command construction, cluster routing and asynchronous node-connection
-acquisition before that point are outside these measurements. The ending
-point excludes user completion callbacks. Transactional commands record
-their end-to-end sample when their result is decoded from `EXEC`, rather
-than when Redis responds `QUEUED`. Commands discarded locally or in an
-aborted transaction, cancelled commands, and commands that never receive
-a complete response do not produce new latency samples. Redis error
-responses are included. Custom commands without an `AsyncCommand` or
-`Command` in their decorator chain retain the existing network timers only.
-Queue depth is not measured by these timers.
+Queueing is recorded **once per send attempt**, when the command is dispatched,
+including attempts that later time out or are cancelled. Commands cancelled or
+timed out before dispatch are not sampled. Each MOVED/ASK redirect starts a new
+attempt and is tagged with its destination node. In-flight replay after reconnect
+does not add a second sample unless the command is accepted again by an endpoint.
+Caller-side end-to-end latency is outside this metric. The existing first-response
+and completion timers are unchanged.
 
 The following tags are attached to each timer:
 
@@ -157,25 +140,9 @@ The following tags are attached to each timer:
 
 Command latencies are reported using the provided `MeterRegistry`.
 
-All four timers use the same command filter, tags, histogram settings, and
-local-address distinction. The new timers add no request keys or other
-per-request labels, but double the number of timers for each recorded
-address/command tuple. Enabling histograms also adds two distributions per
-tuple. As with the existing timers, changing remote addresses or custom
-command names can increase cardinality.
-
-Queue timing adds an acceptance timestamp and a shared first-send record,
-atomic completion/cancellation arbitration, decorator traversal and two
-timer recordings. Disabling queue timing avoids timestamp collection,
-record allocation and these atomic updates. The carrier fields still occupy
-command memory, and completion/cancellation checks for an attached timing
-record remain. Existing custom `CommandLatencyRecorder` implementations remain
-compatible: queue timing is disabled by default and can be enabled through
-`isQueueLatencyEnabled()` and `recordCommandQueueLatency(...)`.
-
 ``` java
 MeterRegistry meterRegistry = …;
-MicrometerOptions options = MicrometerOptions.builder().queueLatency(true).build();
+MicrometerOptions options = MicrometerOptions.create();
 ClientResources resources = ClientResources.builder().commandLatencyRecorder(new MicrometerCommandLatencyRecorder(meterRegistry, options)).build();
 
 RedisClient client = RedisClient.create(resources);

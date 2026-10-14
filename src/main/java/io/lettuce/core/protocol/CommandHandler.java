@@ -158,7 +158,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.endpoint = endpoint;
         this.commandLatencyRecorder = clientResources.commandLatencyRecorder();
         this.latencyMetricsEnabled = commandLatencyRecorder.isEnabled();
-        this.queueLatencyMetricsEnabled = commandLatencyRecorder.isQueueLatencyEnabled();
+        this.queueLatencyMetricsEnabled = latencyMetricsEnabled && commandLatencyRecorder.isQueueLatencyEnabled();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
         this.stack = clientOptions.isUseHashIndexedQueue() ? new HashIndexedQueue<>() : new ArrayDeque<>();
 
@@ -558,14 +558,16 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             return command;
         }
 
-        long sent = nanoTime();
-        if (queueLatencyMetricsEnabled) {
-            if (channel != null && remote() != null) {
-                AsyncCommand.markSent(command, sent, local(), remote());
-            } else {
-                AsyncCommand.markSent(command, sent);
+        long sentAt = nanoTime();
+        if (queueLatencyMetricsEnabled && endpoint instanceof DefaultEndpoint && channel != null && remote() != null
+                && command.getOutput() != null) {
+            Long acceptedAt = ((DefaultEndpoint) endpoint).takeQueueLatencyStart(command);
+            if (acceptedAt != null) {
+                long queueLatency = sentAt - acceptedAt;
+                if (queueLatency >= 0) {
+                    commandLatencyRecorder.recordCommandQueueLatency(local(), remote(), command, queueLatency);
+                }
             }
-            prepareTransactionQueueLatency(command);
         }
 
         if (command instanceof WithLatency) {
@@ -573,14 +575,14 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             WithLatency withLatency = (WithLatency) command;
 
             withLatency.firstResponse(-1);
-            withLatency.sent(sent);
+            withLatency.sent(sentAt);
 
             return command;
         }
 
         LatencyMeteredCommand<?, ?, ?> latencyMeteredCommand = new LatencyMeteredCommand<>(command);
         latencyMeteredCommand.firstResponse(-1);
-        latencyMeteredCommand.sent(sent);
+        latencyMeteredCommand.sent(sentAt);
 
         return latencyMeteredCommand;
     }
@@ -692,7 +694,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
                 hasDecodeProgress = false;
                 if (isProtectedMode(command)) {
-                    onProtectedMode(command.getOutput().getError(), command);
+                    onProtectedMode(command.getOutput().getError());
                 } else {
 
                     if (canComplete(command)) {
@@ -702,7 +704,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                             if (debugEnabled) {
                                 logger.debug("{} Completing command {}", logPrefix(), command);
                             }
-                            completeWithQueueLatency(command, false);
+                            complete(command);
                         } catch (Throwable e) {
                             logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
                             command.completeExceptionally(e);
@@ -787,28 +789,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     /**
-     * Complete a decoded command, including a RESP3 Pub/Sub push acknowledgement, without double-counting cancelled commands.
-     * The normal response decoder already stamps completion; push acknowledgements bypass that decoder.
-     */
-    protected final void completeWithQueueLatency(RedisCommand<?, ?, ?> command, boolean pushAcknowledgement) {
-        boolean cancelled = queueLatencyMetricsEnabled && command.isCancelled();
-        if (pushAcknowledgement && queueLatencyMetricsEnabled && command instanceof WithLatency) {
-            long decodedAt = nanoTime();
-            ((WithLatency) command).completed(decodedAt);
-            AsyncCommand.markDecoded(command, decodedAt);
-        }
-        complete(command);
-        if (queueLatencyMetricsEnabled && !cancelled) {
-            // A redirect may have completed exceptionally without a final reply from its target.
-            // Only the handler that observes a decoded terminal response may claim a queue sample.
-            TerminalResponseAware terminal = CommandWrapper.unwrap(command, TerminalResponseAware.class);
-            if (terminal == null || terminal.isTerminalResponseDecoded()) {
-                recordQueueLatency(command);
-            }
-        }
-    }
-
-    /**
      * Decode a command.
      *
      * @param ctx
@@ -829,11 +809,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 return false;
             }
 
-            if (queueLatencyMetricsEnabled) {
-                long decodedAt = nanoTime();
-                withLatency.completed(decodedAt);
-                AsyncCommand.markDecoded(command, decodedAt);
-            }
             recordLatency(withLatency, command);
 
             return true;
@@ -947,10 +922,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     private void onProtectedMode(String message) {
-        onProtectedMode(message, null);
-    }
-
-    private void onProtectedMode(String message, RedisCommand<?, ?, ?> decodedCommand) {
 
         RedisConnectionException exception = new RedisConnectionException(message);
 
@@ -959,16 +930,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         stack.forEach(cmd -> cmd.completeExceptionally(exception));
         stack.clear();
 
-        try {
-            // Pending requests are already terminated. Only this command received a complete DENIED reply.
-            if (decodedCommand != null) {
-                recordQueueLatency(decodedCommand);
-            }
-        } finally {
-            // A recorder failure must not prevent disconnecting a protected-mode connection.
-            if (channel != null) {
-                channel.disconnect();
-            }
+        if (channel != null) {
+            channel.disconnect();
         }
     }
 
@@ -987,69 +950,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         if (withLatency != null && latencyMetricsEnabled && channel != null && remote() != null) {
 
             long firstResponseLatency = withLatency.getFirstResponse() - withLatency.getSent();
-            long completionLatency = (queueLatencyMetricsEnabled ? withLatency.getCompleted() : nanoTime())
-                    - withLatency.getSent();
+            long completionLatency = nanoTime() - withLatency.getSent();
 
             commandLatencyRecorder.recordCommandLatency(local(), remote(), command, firstResponseLatency, completionLatency);
-        }
-    }
-
-    private void recordQueueLatency(RedisCommand<?, ?, ?> command) {
-        if (!queueLatencyMetricsEnabled || !latencyMetricsEnabled || !(command instanceof WithLatency) || !command.isDone()
-                || AsyncCommand.hasCancelledFuture(command) || channel == null || remote() == null) {
-            return;
-        }
-
-        // Local DISCARD can finish a transaction before its QUEUED reply arrives. Only EXEC result decoding may sample it.
-        if (CommandWrapper.unwrap(command, TransactionalCommand.class) != null) {
-            return;
-        }
-
-        recordQueueLatency(command, local(), remote(), ((WithLatency) command).getCompleted());
-    }
-
-    private void prepareTransactionQueueLatency(RedisCommand<?, ?, ?> command) {
-        if (!queueLatencyMetricsEnabled || !latencyMetricsEnabled || command.isCancelled() || channel == null
-                || remote() == null) {
-            return;
-        }
-        TransactionalCommand<?, ?, ?> transactional = CommandWrapper.unwrap(command, TransactionalCommand.class);
-        if (transactional != null) {
-            SocketAddress local = local();
-            SocketAddress remote = remote();
-            transactional.onQueueLatencyCompletion(completedAt -> {
-                try {
-                    recordQueueLatency(command, local, remote, completedAt);
-                } catch (RuntimeException e) {
-                    logger.warn("Unexpected exception recording transactional command queue latency", e);
-                }
-            });
-        }
-    }
-
-    private void recordQueueLatency(RedisCommand<?, ?, ?> command, SocketAddress local, SocketAddress remote,
-            long completedAt) {
-        long queuedAt = AsyncCommand.queuedAt(command);
-        AsyncCommand.FirstSend firstSend = AsyncCommand.firstSend(command);
-        long firstSent = firstSend == null ? 0 : firstSend.timestampNanos;
-        long queueLatency = firstSent - queuedAt;
-        // Another event loop may have decoded and completed a redirected attempt while this handler returns.
-        // Use the latest completed decode time, not an earlier redirected attempt's local timestamp.
-        if (firstSend != null) {
-            long latestDecodedAt = firstSend.latestDecodedAt();
-            if (latestDecodedAt != 0 && latestDecodedAt - completedAt > 0) {
-                completedAt = latestDecodedAt;
-            }
-        }
-        long endToEndLatency = completedAt - queuedAt;
-        // A Reactive subscriber may cancel after onNext delivered the decoded result while complete() unwinds.
-        // The shared claim preserves cancellation that won before completion, even if Command.status was overwritten.
-        if (firstSend != null && queuedAt != 0 && firstSent != 0 && queueLatency >= 0 && endToEndLatency >= queueLatency
-                && !AsyncCommand.hasCancelledFuture(command) && firstSend.claimQueueSample()) {
-            // Queue waiting belongs to the connection that first sent the command, not a redirect/replay target.
-            SocketAddress firstLocal = firstSend.local != null ? firstSend.local : local;
-            SocketAddress firstRemote = firstSend.remote != null ? firstSend.remote : remote;
-            commandLatencyRecorder.recordCommandQueueLatency(firstLocal, firstRemote, command, queueLatency, endToEndLatency);
         }
     }
 

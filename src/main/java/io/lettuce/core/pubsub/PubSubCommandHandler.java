@@ -248,8 +248,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
             }
         }
 
-        getStack().poll();
-        completeWithQueueLatency(command, true);
+        getStack().poll().complete();
     }
 
     private PubSubMessage<K, V> toPubSubMessage(PushMessage notification) {

@@ -43,11 +43,7 @@ public class MicrometerOptions {
 
     public static final boolean DEFAULT_HISTOGRAM = false;
 
-    /**
-     * Default setting for queueing and end-to-end latency metrics: {@code false}.
-     *
-     * @since 7.9
-     */
+    /** Default for per-attempt command queueing latency metrics. */
     public static final boolean DEFAULT_QUEUE_LATENCY = false;
 
     public static final boolean DEFAULT_LOCAL_DISTINCTION = false;
@@ -191,12 +187,10 @@ public class MicrometerOptions {
         }
 
         /**
-         * Enable queueing and end-to-end latency metrics in addition to network latency metrics. Queueing measures the time
-         * between endpoint acceptance and the first send. End-to-end measures the time between endpoint acceptance and final
-         * response decode. Enabling these metrics adds per-command timing and two additional timers per command/address
-         * combination. Defaults to {@code false}. See {@link MicrometerOptions#DEFAULT_QUEUE_LATENCY}.
+         * Enable per-attempt command queueing latency measurement (endpoint acceptance to command dispatch).
+         * The metric is disabled by default.
          *
-         * @param queueLatency {@code true} to record queueing and end-to-end latencies
+         * @param queueLatency whether to record queueing latency
          * @return this {@link Builder}.
          * @since 7.9
          */
@@ -332,10 +326,7 @@ public class MicrometerOptions {
     }
 
     /**
-     * Returns whether queueing and end-to-end latency metrics are configured. The recorder must also be enabled to record these
-     * metrics.
-     *
-     * @return {@code true} if queueing and end-to-end latency metrics are configured
+     * @return whether per-attempt queueing latency metrics are configured
      * @since 7.9
      */
     public boolean isQueueLatencyEnabled() {

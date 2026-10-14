@@ -71,18 +71,17 @@ public interface CommandLatencyRecorder {
     }
 
     /**
-     * Record initial queueing and end-to-end latency for a completed command. Network latency is recorded separately by
-     * {@link #recordCommandLatency(SocketAddress, SocketAddress, RedisCommand, long, long)}.
+     * Record command queueing latency for one send attempt. This default method preserves compatibility with
+     * existing command latency recorders.
      *
-     * @param local the local address, must not be {@code null}.
-     * @param remote the remote address, must not be {@code null}.
-     * @param command the completed command, must not be {@code null}.
-     * @param queueLatency nanoseconds from endpoint acceptance to the first send.
-     * @param endToEndLatency nanoseconds from endpoint acceptance to the final response decode, including retries.
+     * @param local the local address
+     * @param remote the remote address
+     * @param command the command
+     * @param queueLatency nanoseconds between endpoint acceptance and dispatch
      * @since 7.9
      */
     default void recordCommandQueueLatency(SocketAddress local, SocketAddress remote, RedisCommand<?, ?, ?> command,
-            long queueLatency, long endToEndLatency) {
+            long queueLatency) {
     }
 
     /**
@@ -109,10 +108,9 @@ public interface CommandLatencyRecorder {
     }
 
     /**
-     * Return whether initial queueing and end-to-end latency should be measured.
+     * Whether to measure queueing time for each send attempt. Disabled by default.
      *
-     * @return {@code true} to enable queueing timestamps and calls to {@link #recordCommandQueueLatency}; {@code false} by
-     *         default.
+     * @return whether queueing latency collection is enabled
      * @since 7.9
      */
     default boolean isQueueLatencyEnabled() {

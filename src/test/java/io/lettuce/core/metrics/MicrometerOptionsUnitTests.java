@@ -20,14 +20,8 @@
 package io.lettuce.core.metrics;
 
 import static io.lettuce.TestTags.UNIT_TEST;
-import static io.lettuce.core.metrics.MicrometerOptions.DEFAULT_ENABLED;
-import static io.lettuce.core.metrics.MicrometerOptions.DEFAULT_HISTOGRAM;
-import static io.lettuce.core.metrics.MicrometerOptions.DEFAULT_LOCAL_DISTINCTION;
-import static io.lettuce.core.metrics.MicrometerOptions.DEFAULT_MAX_LATENCY;
-import static io.lettuce.core.metrics.MicrometerOptions.DEFAULT_MIN_LATENCY;
-import static io.lettuce.core.metrics.MicrometerOptions.DEFAULT_QUEUE_LATENCY;
-import static io.lettuce.core.metrics.MicrometerOptions.DEFAULT_TARGET_PERCENTILES;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.lettuce.core.metrics.MicrometerOptions.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 
@@ -55,7 +49,7 @@ class MicrometerOptionsUnitTests {
 
         assertThat(options.isEnabled()).isEqualTo(DEFAULT_ENABLED);
         assertThat(options.isHistogram()).isEqualTo(DEFAULT_HISTOGRAM);
-        assertThat(options.isQueueLatencyEnabled()).isEqualTo(DEFAULT_QUEUE_LATENCY).isFalse();
+        assertThat(options.isQueueLatencyEnabled()).isFalse();
         assertThat(options.localDistinction()).isEqualTo(DEFAULT_LOCAL_DISTINCTION);
         assertThat(options.maxLatency()).isEqualTo(DEFAULT_MAX_LATENCY);
         assertThat(options.minLatency()).isEqualTo(DEFAULT_MIN_LATENCY);
@@ -80,21 +74,11 @@ class MicrometerOptionsUnitTests {
     }
 
     @Test
-    void queueLatency() {
+    void queueLatencyOptIn() {
         MicrometerOptions options = MicrometerOptions.builder().queueLatency(true).build();
 
         assertThat(options.isQueueLatencyEnabled()).isTrue();
-        assertThat(options.mutate().histogram(true).build().isQueueLatencyEnabled()).isTrue();
-    }
-
-    @Test
-    void queueLatencyCanBeDisabledWhenMutating() {
-        MicrometerOptions options = MicrometerOptions.builder().queueLatency(true).build();
-
-        MicrometerOptions mutated = options.mutate().queueLatency(false).build();
-
-        assertThat(mutated.isQueueLatencyEnabled()).isFalse();
-        assertThat(options.isQueueLatencyEnabled()).isTrue();
+        assertThat(options.mutate().queueLatency(false).build().isQueueLatencyEnabled()).isFalse();
     }
 
     @Test
