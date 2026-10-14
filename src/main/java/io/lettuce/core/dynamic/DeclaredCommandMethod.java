@@ -7,8 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import org.reactivestreams.Publisher;
-
 import io.lettuce.core.dynamic.batch.BatchExecutor;
 import io.lettuce.core.dynamic.parameter.ExecutionSpecificParameters;
 import io.lettuce.core.dynamic.parameter.Parameter;
@@ -161,7 +159,7 @@ public class DeclaredCommandMethod implements CommandMethod {
     }
 
     /**
-     * @return {@code true} if the method uses reactive execution declaring {@link Publisher} as result type.
+     * @return {@code true} if the method uses reactive execution declaring one of "Reactive" types as result type.
      */
     @Override
     public boolean isReactiveExecution() {

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
-import reactor.core.publisher.Mono;
 import io.lettuce.core.*;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -58,25 +57,6 @@ class ClusterScanSupport {
         }
 
     };
-
-    /**
-     * Map a {@link Mono} of {@link KeyScanCursor} to a {@link Mono} of {@link ClusterKeyScanCursor}.
-     */
-    static final ScanCursorMapper<Mono<KeyScanCursor<?>>> reactiveKeyScanCursorMapper = (nodeIds, currentNodeId,
-            cursor) -> cursor.map(keyScanCursor -> new ClusterKeyScanCursor<>(nodeIds, currentNodeId, keyScanCursor));
-
-    /**
-     * Map a {@link Mono} of {@link StreamScanCursor} to a {@link Mono} of {@link ClusterStreamScanCursor}.
-     */
-    static final ScanCursorMapper<Mono<StreamScanCursor>> reactiveStreamScanCursorMapper = (nodeIds, currentNodeId,
-            cursor) -> cursor.map(new Function<StreamScanCursor, StreamScanCursor>() {
-
-                @Override
-                public StreamScanCursor apply(StreamScanCursor streamScanCursor) {
-                    return new ClusterStreamScanCursor(nodeIds, currentNodeId, streamScanCursor);
-                }
-
-            });
 
     /**
      * Retrieve the cursor to continue the scan.
@@ -206,12 +186,18 @@ class ClusterScanSupport {
         return futureStreamScanCursorMapper;
     }
 
-    static <K> ScanCursorMapper<Mono<KeyScanCursor<K>>> reactiveClusterKeyScanCursorMapper() {
-        return (ScanCursorMapper) reactiveKeyScanCursorMapper;
+    /**
+     * Wrap a node-local {@link KeyScanCursor} into a cluster-aware cursor that carries the scan position across nodes.
+     */
+    static <K> KeyScanCursor<K> toClusterKeyScanCursor(List<String> nodeIds, String currentNodeId, KeyScanCursor<K> cursor) {
+        return new ClusterKeyScanCursor<>(nodeIds, currentNodeId, cursor);
     }
 
-    static ScanCursorMapper<Mono<StreamScanCursor>> reactiveClusterStreamScanCursorMapper() {
-        return reactiveStreamScanCursorMapper;
+    /**
+     * Wrap a node-local {@link StreamScanCursor} into a cluster-aware cursor that carries the scan position across nodes.
+     */
+    static StreamScanCursor toClusterStreamScanCursor(List<String> nodeIds, String currentNodeId, StreamScanCursor cursor) {
+        return new ClusterStreamScanCursor(nodeIds, currentNodeId, cursor);
     }
 
     /**

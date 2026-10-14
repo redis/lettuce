@@ -22,7 +22,6 @@ import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.publisher.Mono;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -34,8 +33,11 @@ import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 /**
  * An extension to {@link ConnectionWatchdog} that intercepts maintenance events.
@@ -75,32 +77,12 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     private RebindAwareAddressSupplier rebindAwareAddressSupplier;
 
-    /**
-     * Create a new maintenance-aware watchdog, see
-     * {@link ConnectionWatchdog#ConnectionWatchdog(Delay, ClientOptions, Bootstrap, Timer, EventExecutorGroup, Mono, ReconnectionListener, ConnectionFacade, EventBus, Endpoint)}.
-     *
-     * @param reconnectDelay reconnect delay, must not be {@code null}
-     * @param clientOptions client options for the current connection, must not be {@code null}
-     * @param bootstrap Configuration for new channels, must not be {@code null}
-     * @param timer Timer used for delayed reconnect, must not be {@code null}
-     * @param reconnectWorkers executor group for reconnect tasks, must not be {@code null}
-     * @param socketAddressSupplier the socket address supplier to obtain an address for reconnection, may be {@code null}
-     * @param reconnectionListener the reconnection listener, must not be {@code null}
-     * @param connectionFacade the connection facade, must not be {@code null}
-     * @param eventBus Event bus to emit reconnect events.
-     * @param endpoint must not be {@code null}
-     * @deprecated since 7.9, in Lettuce 8.0 this constructor takes {@code socketAddressSupplier} as a
-     *             {@code Supplier<CompletionStage<SocketAddress>>} instead of a {@link Mono} and no longer takes
-     *             {@code connectionFacade}; there is no replacement in 7.x.
-     */
-    @Deprecated
     public MaintenanceAwareConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap,
-            Timer timer, EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
-            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
-            Endpoint endpoint) {
+            Timer timer, EventExecutorGroup reconnectWorkers, Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
+            ReconnectionListener reconnectionListener, EventBus eventBus, Endpoint endpoint) {
 
         super(reconnectDelay, clientOptions, bootstrap, timer, reconnectWorkers, socketAddressSupplier, reconnectionListener,
-                connectionFacade, eventBus, endpoint);
+                eventBus, endpoint);
     }
 
     @Override
@@ -129,16 +111,10 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         super.channelReadComplete(ctx);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @deprecated since 7.9, in Lettuce 8.0 this method takes and returns a {@code Supplier<CompletionStage<SocketAddress>>}
-     *             instead of a {@link Mono}; subclasses overriding it must change the types. There is no replacement in 7.x.
-     */
-    @Deprecated
     @Override
-    protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
-        Mono<SocketAddress> source = super.wrapSocketAddressSupplier(socketAddressSupplier);
+    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplier(
+            Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
+        Supplier<CompletionStage<SocketAddress>> source = super.wrapSocketAddressSupplier(socketAddressSupplier);
         rebindAwareAddressSupplier = new RebindAwareAddressSupplier();
         return rebindAwareAddressSupplier.wrappedSupplier(source);
     }
@@ -442,22 +418,23 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
          * @param original the original supplier
          * @return a new supplier that is aware of re-bind events
          */
-        public Mono<SocketAddress> wrappedSupplier(Mono<SocketAddress> original) {
-            return Mono.defer(() -> {
+        public Supplier<CompletionStage<SocketAddress>> wrappedSupplier(Supplier<CompletionStage<SocketAddress>> original) {
+            return () -> {
                 State current = state.get();
-                logger.debug("RebindAwareAddressSupplier rebind state: {}", state.get());
+                logger.debug("RebindAwareAddressSupplier rebind state: {}", current);
                 if (current != null && current.rebindAddress != null && clock.instant().isBefore(current.cutoff)) {
-                    logger.debug("RebindAwareAddressSupplier using rebind address: {}", state.get());
-                    return Mono.just(current.rebindAddress)
-                            .doOnSubscribe(s -> logger.debug("RebindAwareAddressSupplier subscribed to rebind address"))
-                            .doOnNext(address -> logger.debug("RebindAwareAddressSupplier rebind address: {}", address));
+                    logger.debug("RebindAwareAddressSupplier using rebind address: {}", current);
+                    logger.debug("RebindAwareAddressSupplier rebind address: {}", current.rebindAddress);
+                    return CompletableFuture.completedFuture(current.rebindAddress);
                 } else {
                     logger.debug("RebindAwareAddressSupplier falling back to original.");
                     state.compareAndSet(current, null);
-                    return original.doOnSubscribe(s -> logger.debug("RebindAwareAddressSupplier original to rebind address"))
-                            .doOnNext(address -> logger.debug("RebindAwareAddressSupplier original address: {}", address));
+                    return original.get().thenApply(address -> {
+                        logger.debug("RebindAwareAddressSupplier original address: {}", address);
+                        return address;
+                    });
                 }
-            });
+            };
         }
 
     }
