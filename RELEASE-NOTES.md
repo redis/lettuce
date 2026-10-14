@@ -1,33 +1,29 @@
-Lettuce 7.9.0 RELEASE NOTES
+Lettuce 8.0.0.BETA1
 ==============================
-The Lettuce team is pleased to announce the Lettuce **7.9.0** minor release!
+The Lettuce team is pleased to announce the **first beta release of Lettuce 8.0**!
 
-Lettuce 7.9.0 supports Redis 2.6+ up to Redis 8.x. In terms of Java runtime, Lettuce requires at least Java 8 and
-works with Java 24. The driver is tested against Redis 8.10, Redis 8.8, Redis 8.6, Redis 8.4, Redis 8.2, Redis 8.0, Redis 7.4 and Redis 7.2.
+This release makes **Project Reactor not-required**: applications that use only the synchronous and asynchronous APIs can exclude `reactor-core`:
 
-Thanks to all contributors who made Lettuce 7.9.0.RELEASE possible.
+```xml
+<dependency>
+    <groupId>io.lettuce</groupId>
+    <artifactId>lettuce-core</artifactId>
+    <version>8.0.0.BETA1</version>
+    <exclusions>
+        <exclusion>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+```
 
-📗 Links
-Reference documentation: https://lettuce.io/core/7.9.0.RELEASE
+Lettuce 8.0 also removes Reactor-based APIs, most of them deprecated in 7.8 and 7.9, and changes Reactor-typed extension points. See [What's new in Lettuce 8.0](https://github.com/redis/lettuce/blob/main/docs/new-features.md#whats-new-in-lettuce-80) for details and the breaking changes.
 
-🐞 Bug Fixes
-* Fix GEODIST destination argument validation by @codingkiddo in https://github.com/redis/lettuce/pull/3934
-* Fix snapshot and release publishing with Maven 3.10 credential scoping by @uglide in https://github.com/redis/lettuce/pull/3940
-* RedisPublisher must not drop an error when the state changes concurrently #3942 by @zenios in https://github.com/redis/lettuce/pull/3943
-* MultiOutput broken for boolean values by @Dgramada in https://github.com/redis/lettuce/pull/3932
-* JSON.NUMINCRBY parsing broken for RESP2 by @Dgramada in https://github.com/redis/lettuce/pull/3933
+PR: [reactor-optional]  Make 'Project Reactor' optional dependency by @atakavci in https://github.com/redis/lettuce/pull/3731
 
-⚙️ Maintenance
-* Bump redis-authx dependencies to version 0.2.0 by @atakavci in https://github.com/redis/lettuce/pull/3906
-* docs(agents): add create-implementation-plan-for-redis-api-change skill by @uglide in https://github.com/redis/lettuce/pull/3939
+**Lettuce 8.0.0.BETA1** supports Redis **2.6+** up to Redis **8.x** and requires **Java 8** or newer. The driver is tested against Redis **8.12**, **8.10**, **8.8**, **8.6**, **8.4**, **8.2**, **7.4** and **7.2**.
 
-💡 Other
-* Prepare 7.9 users for the Lettuce 8.0 credentials and connection changes by @a-TODO-rov in https://github.com/redis/lettuce/pull/3949
-* [reactor-optional] Introduce reactor-free CredentialsProvider and deprecate the reactive one by @a-TODO-rov in https://github.com/redis/lettuce/pull/3911
-* [reactor-optional] Keep adapter streams open and add RedisCredentialsProvider.adapt by @a-TODO-rov in https://github.com/redis/lettuce/pull/3930
+We encourage you to try out this beta, in particular with Reactor excluded, and to provide feedback ahead of the general availability release.
 
-❤️ New Contributors - Welcome to the Lettuce family!
-* @codingkiddo made their first contribution in https://github.com/redis/lettuce/pull/3934
-* @zenios made their first contribution in https://github.com/redis/lettuce/pull/3943
-
-**Full Changelog**: https://github.com/redis/lettuce/compare/7.8.0.RELEASE...7.9.0.RELEASE
+**Full Changelog**: https://github.com/redis/lettuce/compare/7.9.0.RELEASE...8.0.0.BETA1
