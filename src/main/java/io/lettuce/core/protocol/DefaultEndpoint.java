@@ -300,7 +300,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     }
 
     private void trackQueueLatency(RedisCommand<?, ?, ?> command, long acceptedAt) {
-        if (queueingTimestamps == null || command.getOutput() == null || command.isDone()) {
+        if (queueingTimestamps == null || command.getOutput() == null || command.isDone() || command.isCancelled()) {
             return;
         }
 
@@ -312,7 +312,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         // A decorated command may also report inner completion while a redirect remains writable.
         if (command instanceof CompleteableCommand) {
             ((CompleteableCommand<?>) command).onComplete((result, failure) -> {
-                if (command.isDone()) {
+                if (command.isDone() || command.isCancelled()) {
                     queueingTimestamps.remove(key, acceptedAt);
                 }
             });
@@ -849,7 +849,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         RedisCommand<?, ?, ?> cmd;
         while ((cmd = source.poll()) != null) {
 
-            if (!cmd.isDone() && !ActivationCommand.isActivationCommand(cmd)) {
+            if (!cmd.isDone() && !cmd.isCancelled() && !ActivationCommand.isActivationCommand(cmd)) {
                 target.add(cmd);
             } else {
                 takeQueueLatencyStart(cmd);
@@ -870,7 +870,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         RedisCommand<?, ?, ?> cmd;
         while ((cmd = source.poll()) != null) {
 
-            if (!cmd.isDone() && !ActivationCommand.isActivationCommand(cmd)) {
+            if (!cmd.isDone() && !cmd.isCancelled() && !ActivationCommand.isActivationCommand(cmd)) {
                 target.add(cmd);
             } else {
                 takeQueueLatencyStart(cmd);
