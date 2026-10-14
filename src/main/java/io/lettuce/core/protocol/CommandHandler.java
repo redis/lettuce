@@ -468,9 +468,21 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             throw e;
         }
 
+        // Collect all queue samples before starting any of the batch's network timers.
+        List<WithLatency> batchLatency = latencyMetricsEnabled ? new ArrayList<>(deduplicated.size()) : null;
         for (RedisCommand<?, ?, ?> command : deduplicated) {
             attachTracing(ctx, command);
-            addToStack(command, promise);
+            RedisCommand<?, ?, ?> stacked = addToStack(command, promise);
+            if (batchLatency != null) {
+                batchLatency.add((WithLatency) stacked);
+            }
+        }
+
+        if (batchLatency != null) {
+            long sentAt = nanoTime();
+            for (WithLatency latency : batchLatency) {
+                latency.sent(sentAt);
+            }
         }
 
         if (!deduplicated.isEmpty()) {
@@ -511,7 +523,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
-    private void addToStack(RedisCommand<?, ?, ?> command, ChannelPromise promise) {
+    private RedisCommand<?, ?, ?> addToStack(RedisCommand<?, ?, ?> command, ChannelPromise promise) {
 
         try {
 
@@ -530,6 +542,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             if (!promise.isVoid()) {
                 promise.addListener(AddToStack.newInstance(stack, redisCommand));
             }
+            return redisCommand;
         } catch (Exception e) {
             command.completeExceptionally(e);
             throw e;
@@ -555,7 +568,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     private static boolean isWriteable(RedisCommand<?, ?, ?> command) {
-        return !command.isDone();
+        return !command.isDone() && !command.isCancelled();
     }
 
     private void discardQueueLatencyStart(RedisCommand<?, ?, ?> command) {
