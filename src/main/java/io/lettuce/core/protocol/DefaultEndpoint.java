@@ -301,11 +301,17 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         }
 
         expungeStaleQueueingTimestamps();
-        queueingTimestamps.put(new IdentityWeakReference(command, queueingTimestampReferences), acceptedAt);
+        IdentityWeakReference key = new IdentityWeakReference(command, queueingTimestampReferences);
+        queueingTimestamps.put(key, acceptedAt);
 
-        // Commands may terminate while still buffered, with no dispatch to consume the timestamp.
+        // Completion of an earlier attempt must not remove a later acceptance timestamp.
+        // A decorated command may also report inner completion while a redirect remains writable.
         if (command instanceof CompleteableCommand) {
-            ((CompleteableCommand<?>) command).onComplete((result, failure) -> takeQueueLatencyStart(command));
+            ((CompleteableCommand<?>) command).onComplete((result, failure) -> {
+                if (command.isDone()) {
+                    queueingTimestamps.remove(key, acceptedAt);
+                }
+            });
         }
     }
 
