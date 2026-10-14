@@ -43,7 +43,11 @@ public class MicrometerOptions {
 
     public static final boolean DEFAULT_HISTOGRAM = false;
 
-    /** Default for per-attempt command queueing latency metrics. */
+    /**
+     * Default for per-attempt command queueing latency metrics.
+     *
+     * @since 7.9
+     */
     public static final boolean DEFAULT_QUEUE_LATENCY = false;
 
     public static final boolean DEFAULT_LOCAL_DISTINCTION = false;

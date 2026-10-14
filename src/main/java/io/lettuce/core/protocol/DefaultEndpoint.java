@@ -209,8 +209,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 command = processActivationCommand(command);
             }
 
-            if (queueingTimestamps != null && command.getOutput() != null && !command.isDone()) {
-                queueingTimestamps.put(command, System.nanoTime());
+            if (queueingTimestamps != null) {
+                trackQueueLatency(command, System.nanoTime());
             }
 
             if (autoFlushCommands) {
@@ -257,9 +257,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             if (queueingTimestamps != null) {
                 long acceptedAt = System.nanoTime();
                 for (RedisCommand<?, ?, ?> command : commands) {
-                    if (command.getOutput() != null && !command.isDone()) {
-                        queueingTimestamps.put(command, acceptedAt);
-                    }
+                    trackQueueLatency(command, acceptedAt);
                 }
             }
 
@@ -286,6 +284,19 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
     Long takeQueueLatencyStart(RedisCommand<?, ?, ?> command) {
         return queueingTimestamps == null ? null : queueingTimestamps.remove(command);
+    }
+
+    private void trackQueueLatency(RedisCommand<?, ?, ?> command, long acceptedAt) {
+        if (queueingTimestamps == null || command.getOutput() == null || command.isDone()) {
+            return;
+        }
+
+        queueingTimestamps.put(command, acceptedAt);
+
+        // Commands may terminate while still buffered, with no dispatch to consume the timestamp.
+        if (command instanceof CompleteableCommand) {
+            ((CompleteableCommand<?>) command).onComplete((result, failure) -> takeQueueLatencyStart(command));
+        }
     }
 
     private <K, V, T> RedisCommand<K, V, T> processActivationCommand(RedisCommand<K, V, T> command) {
@@ -370,12 +381,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 logger.debug("{} writeToDisconnectedBuffer() Completing command {} due to connection error", logPrefix(),
                         command);
             }
+            takeQueueLatencyStart(command);
             command.completeExceptionally(connectionError);
 
             return;
         }
 
         if (replayFilter.test(command)) {
+            takeQueueLatencyStart(command);
             if (debugEnabled) {
                 logger.debug("{} writeToDisconnectedBuffer() Filtering out command {}", logPrefix(), command);
             }
@@ -400,6 +413,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             if (debugEnabled) {
                 logger.debug("{} writeToBuffer() Completing command {} due to connection error", logPrefix(), command);
             }
+            takeQueueLatencyStart(command);
             command.completeExceptionally(connectionError);
 
             return;
@@ -773,7 +787,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
      * @param source the source queue.
      * @return List of commands.
      */
-    private static List<RedisCommand<?, ?, ?>> drainCommands(Queue<? extends RedisCommand<?, ?, ?>> source) {
+    private List<RedisCommand<?, ?, ?>> drainCommands(Queue<? extends RedisCommand<?, ?, ?>> source) {
 
         List<RedisCommand<?, ?, ?>> target = new ArrayList<>(source.size());
 
@@ -782,6 +796,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
             if (!cmd.isDone() && !ActivationCommand.isActivationCommand(cmd)) {
                 target.add(cmd);
+            } else {
+                takeQueueLatencyStart(cmd);
             }
         }
 
@@ -794,13 +810,15 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
      *
      * @param source the source queue.
      */
-    private static void drainCommands(Queue<? extends RedisCommand<?, ?, ?>> source, Collection<RedisCommand<?, ?, ?>> target) {
+    private void drainCommands(Queue<? extends RedisCommand<?, ?, ?>> source, Collection<RedisCommand<?, ?, ?>> target) {
 
         RedisCommand<?, ?, ?> cmd;
         while ((cmd = source.poll()) != null) {
 
             if (!cmd.isDone() && !ActivationCommand.isActivationCommand(cmd)) {
                 target.add(cmd);
+            } else {
+                takeQueueLatencyStart(cmd);
             }
         }
     }
@@ -816,6 +834,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             if (cmd.getOutput() != null) {
                 cmd.getOutput().setError(message);
             }
+            takeQueueLatencyStart(cmd);
             commandConsumer.accept(cmd);
         }
     }

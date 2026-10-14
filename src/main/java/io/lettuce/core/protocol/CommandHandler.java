@@ -427,6 +427,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private void writeSingleCommand(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command, ChannelPromise promise) {
 
         if (!isWriteable(command)) {
+            discardQueueLatencyStart(command);
             promise.trySuccess();
             return;
         }
@@ -444,7 +445,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         for (RedisCommand<?, ?, ?> command : batch) {
 
-            if (isWriteable(command) && !deduplicated.add(command)) {
+            if (!isWriteable(command)) {
+                discardQueueLatencyStart(command);
+                continue;
+            }
+
+            if (!deduplicated.add(command)) {
                 deduplicated.remove(command);
                 command.completeExceptionally(
                         new RedisException("Attempting to write duplicate command that is already enqueued: " + command));
@@ -552,23 +558,30 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         return !command.isDone();
     }
 
+    private void discardQueueLatencyStart(RedisCommand<?, ?, ?> command) {
+        if (queueLatencyMetricsEnabled && endpoint instanceof DefaultEndpoint) {
+            ((DefaultEndpoint) endpoint).takeQueueLatencyStart(command);
+        }
+    }
+
     private RedisCommand<?, ?, ?> potentiallyWrapLatencyCommand(RedisCommand<?, ?, ?> command) {
 
         if (!latencyMetricsEnabled) {
             return command;
         }
 
-        long sentAt = nanoTime();
-        if (queueLatencyMetricsEnabled && endpoint instanceof DefaultEndpoint && channel != null && remote() != null
-                && command.getOutput() != null) {
+        if (queueLatencyMetricsEnabled && endpoint instanceof DefaultEndpoint) {
             Long acceptedAt = ((DefaultEndpoint) endpoint).takeQueueLatencyStart(command);
-            if (acceptedAt != null) {
-                long queueLatency = sentAt - acceptedAt;
+            if (acceptedAt != null && channel != null && remote() != null && command.getOutput() != null) {
+                long queueLatency = nanoTime() - acceptedAt;
                 if (queueLatency >= 0) {
                     commandLatencyRecorder.recordCommandQueueLatency(local(), remote(), command, queueLatency);
                 }
             }
         }
+
+        // Meter registration and custom recorders must not inflate network latency.
+        long sentAt = nanoTime();
 
         if (command instanceof WithLatency) {
 
