@@ -165,6 +165,51 @@ class DefaultEndpointUnitTests {
     }
 
     @Test
+    void cancelledBufferedAsyncCommandReleasesTimestampWithoutDispatch() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        AsyncCommand<String, String, String> future = new AsyncCommand<>(
+                new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+
+        endpoint.write(future);
+        future.cancel();
+
+        assertThat(endpoint.takeQueueLatencyStart(future)).isNull();
+    }
+
+    @Test
+    void failedBufferedAsyncCommandReleasesTimestampWithoutDispatch() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        AsyncCommand<String, String, String> future = new AsyncCommand<>(
+                new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+
+        endpoint.write(future);
+        future.completeExceptionally(new IllegalStateException("timed out before send"));
+
+        assertThat(endpoint.takeQueueLatencyStart(future)).isNull();
+    }
+
+    @Test
+    void cancelledBufferedDecoratedCommandReleasesTimestampWithoutDispatch() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        CommandWrapper<String, String, String> decorated = new CommandWrapper<>(
+                new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+
+        endpoint.write(decorated);
+        decorated.cancel();
+
+        assertThat(endpoint.takeQueueLatencyStart(decorated)).isNull();
+    }
+
+    @Test
     void writeShouldGuaranteeFIFOOrder() {
         sut.write(Collections.singletonList(new Command<>(CommandType.SELECT, new StatusOutput<>(StringCodec.UTF8))));
 

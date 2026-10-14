@@ -10,6 +10,7 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -18,6 +19,8 @@ import static org.mockito.Mockito.when;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -117,6 +120,49 @@ class CommandHandlerQueueLatencyUnitTests {
         handler.write(context, command, promise);
 
         verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
+    }
+
+    @Test
+    void slowQueueRecorderDoesNotInflateNetworkLatency() throws Exception {
+        Command<String, String, String> command = command();
+        AtomicLong recorderFinishedAt = new AtomicLong();
+        doAnswer(invocation -> {
+            Thread.sleep(10);
+            recorderFinishedAt.set(System.nanoTime());
+            return null;
+        }).when(recorder).recordCommandQueueLatency(any(), any(), any(), anyLong());
+
+        endpoint.write(command);
+        handler.write(context, command, promise);
+
+        WithLatency networkTiming = (WithLatency) handler.getStack().peek();
+        assertThat(recorderFinishedAt.get()).isNotZero();
+        assertThat(networkTiming.getSent()).isGreaterThanOrEqualTo(recorderFinishedAt.get());
+    }
+
+    @Test
+    void skippedCancelledCommandClearsItsAcceptanceTimestamp() throws Exception {
+        Command<String, String, String> command = command();
+        endpoint.write(command);
+        command.cancel();
+
+        handler.write(context, command, promise);
+
+        assertThat(endpoint.takeQueueLatencyStart(command)).isNull();
+        verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
+    }
+
+    @Test
+    void cancelledCommandSkippedFromBatchClearsItsTimestamp() throws Exception {
+        Command<String, String, String> cancelled = command();
+        Command<String, String, String> active = command();
+        endpoint.write(Arrays.asList(cancelled, active));
+        cancelled.cancel();
+
+        handler.write(context, Arrays.asList(cancelled, active), promise);
+
+        assertThat(endpoint.takeQueueLatencyStart(cancelled)).isNull();
+        verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(), anyLong());
     }
 
     private Command<String, String, String> command() {
