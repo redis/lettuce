@@ -156,4 +156,17 @@ class MultiOutputUnitTests {
         assertThat(output.getError()).isEqualTo("Fail");
     }
 
+    @Test
+    void shouldNotRecurseOnErrorWhenQueueIsEmpty() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
+        output.multi(0);
+
+        output.setError("Error string");
+        assertThat(output.getError()).isEqualTo("Error string");
+
+        output.setError(ByteBuffer.wrap("Error buffer".getBytes()));
+        assertThat(output.getError()).isEqualTo("Error buffer");
+    }
+
 }

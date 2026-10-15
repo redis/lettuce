@@ -184,7 +184,12 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
             return;
         }
 
-        CommandOutput<K, V, ?> output = queue.isEmpty() ? this : currentOutput();
+        if (queue.isEmpty()) {
+            super.setError(error);
+            return;
+        }
+
+        CommandOutput<K, V, ?> output = currentOutput();
         if (output != null) {
             output.setError(decodeString(error));
         }
@@ -198,7 +203,12 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
             return;
         }
 
-        CommandOutput<K, V, ?> output = queue.isEmpty() ? this : currentOutput();
+        if (queue.isEmpty()) {
+            super.setError(error);
+            return;
+        }
+
+        CommandOutput<K, V, ?> output = currentOutput();
         if (output != null) {
             output.setError(error);
         }
