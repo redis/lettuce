@@ -25,6 +25,7 @@ class ClusterTopologyRefreshOptionsUnitTests {
         ClusterTopologyRefreshOptions options = ClusterTopologyRefreshOptions.builder()//
                 .enablePeriodicRefresh(true).refreshPeriod(10, TimeUnit.MINUTES)//
                 .dynamicRefreshSources(false) //
+                .maxTopologyRefreshSources(3) //
                 .disableAllAdaptiveRefreshTriggers()//
                 .enableAdaptiveRefreshTrigger(RefreshTrigger.MOVED_REDIRECT)//
                 .adaptiveRefreshTriggersTimeout(15, TimeUnit.MILLISECONDS)//
@@ -36,6 +37,7 @@ class ClusterTopologyRefreshOptionsUnitTests {
         assertThat(options.isCloseStaleConnections()).isEqualTo(false);
         assertThat(options.isPeriodicRefreshEnabled()).isTrue();
         assertThat(options.useDynamicRefreshSources()).isFalse();
+        assertThat(options.getMaxTopologyRefreshSources()).isEqualTo(3);
         assertThat(options.getAdaptiveRefreshTimeout()).isEqualTo(Duration.ofMillis(15));
         assertThat(options.getAdaptiveRefreshTriggers()).containsOnly(RefreshTrigger.MOVED_REDIRECT);
         assertThat(options.getRefreshTriggersReconnectAttempts()).isEqualTo(2);
@@ -47,6 +49,7 @@ class ClusterTopologyRefreshOptionsUnitTests {
         ClusterTopologyRefreshOptions master = ClusterTopologyRefreshOptions.builder()//
                 .enablePeriodicRefresh(true).refreshPeriod(10, TimeUnit.MINUTES)//
                 .dynamicRefreshSources(false) //
+                .maxTopologyRefreshSources(3) //
                 .disableAllAdaptiveRefreshTriggers()//
                 .enableAdaptiveRefreshTrigger(RefreshTrigger.MOVED_REDIRECT)//
                 .adaptiveRefreshTriggersTimeout(15, TimeUnit.MILLISECONDS)//
@@ -60,6 +63,7 @@ class ClusterTopologyRefreshOptionsUnitTests {
         assertThat(options.isCloseStaleConnections()).isEqualTo(false);
         assertThat(options.isPeriodicRefreshEnabled()).isTrue();
         assertThat(options.useDynamicRefreshSources()).isFalse();
+        assertThat(options.getMaxTopologyRefreshSources()).isEqualTo(3);
         assertThat(options.getAdaptiveRefreshTimeout()).isEqualTo(Duration.ofMillis(15));
         assertThat(options.getAdaptiveRefreshTriggers()).containsOnly(RefreshTrigger.MOVED_REDIRECT);
         assertThat(options.getRefreshTriggersReconnectAttempts()).isEqualTo(2);
@@ -76,6 +80,8 @@ class ClusterTopologyRefreshOptionsUnitTests {
                 .isFalse();
         assertThat(options.useDynamicRefreshSources()).isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_DYNAMIC_REFRESH_SOURCES)
                 .isTrue();
+        assertThat(options.getMaxTopologyRefreshSources())
+                .isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_MAX_TOPOLOGY_REFRESH_SOURCES);
         assertThat(options.getAdaptiveRefreshTimeout())
                 .isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_DURATION);
         assertThat(options.getAdaptiveRefreshTriggers())
@@ -91,6 +97,8 @@ class ClusterTopologyRefreshOptionsUnitTests {
 
         assertThat(options.isPeriodicRefreshEnabled()).isTrue();
         assertThat(options.useDynamicRefreshSources()).isTrue();
+        assertThat(options.getMaxTopologyRefreshSources())
+                .isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_MAX_TOPOLOGY_REFRESH_SOURCES);
         assertThat(options.getAdaptiveRefreshTriggers()).contains(RefreshTrigger.ASK_REDIRECT, RefreshTrigger.MOVED_REDIRECT,
                 RefreshTrigger.PERSISTENT_RECONNECTS);
     }
@@ -101,6 +109,14 @@ class ClusterTopologyRefreshOptionsUnitTests {
         ClusterTopologyRefreshOptions.Builder builder = ClusterTopologyRefreshOptions.builder();
 
         assertThatIllegalArgumentException().isThrownBy(builder::enableAdaptiveRefreshTrigger);
+    }
+
+    @Test
+    void invalidMaxTopologyRefreshSourcesShouldFail() {
+
+        ClusterTopologyRefreshOptions.Builder builder = ClusterTopologyRefreshOptions.builder();
+
+        assertThatIllegalArgumentException().isThrownBy(() -> builder.maxTopologyRefreshSources(0));
     }
 
 }

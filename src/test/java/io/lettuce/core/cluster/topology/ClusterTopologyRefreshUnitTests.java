@@ -418,6 +418,40 @@ class ClusterTopologyRefreshUnitTests {
     }
 
     @Test
+    void shouldLimitDiscoveredNodesToConfiguredMaximum() {
+
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("127.0.0.1", 7380));
+
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class),
+                eq(InetSocketAddress.createUnresolved("127.0.0.1", 7380))))
+                        .thenReturn(completedFuture((StatefulRedisConnection) connection1));
+
+        sut.loadViews(seed, Duration.ofSeconds(1), true, 1);
+
+        verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class),
+                eq(InetSocketAddress.createUnresolved("127.0.0.1", 7380)));
+        verify(nodeConnectionFactory, never()).connectToNodeAsync(any(RedisCodec.class),
+                eq(InetSocketAddress.createUnresolved("127.0.0.1", 7381)));
+    }
+
+    @Test
+    void shouldLimitSeedNodesToConfiguredMaximum() {
+
+        List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381));
+
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class),
+                eq(InetSocketAddress.createUnresolved("127.0.0.1", 7380))))
+                        .thenReturn(completedFuture((StatefulRedisConnection) connection1));
+
+        sut.loadViews(seed, Duration.ofSeconds(1), true, 1);
+
+        verify(nodeConnectionFactory).connectToNodeAsync(any(RedisCodec.class),
+                eq(InetSocketAddress.createUnresolved("127.0.0.1", 7380)));
+        verify(nodeConnectionFactory, never()).connectToNodeAsync(any(RedisCodec.class),
+                eq(InetSocketAddress.createUnresolved("127.0.0.1", 7381)));
+    }
+
+    @Test
     void shouldNotFailOnDuplicateSeedNodes() {
 
         List<RedisURI> seed = Arrays.asList(RedisURI.create("127.0.0.1", 7380), RedisURI.create("127.0.0.1", 7381),
