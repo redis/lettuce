@@ -3,6 +3,7 @@ package io.lettuce.core;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -50,6 +51,47 @@ class RedisPublisherUnitTests {
 
         assertThat(delegate.isCancelled()).isTrue();
         assertThat(completed.get()).isTrue();
+        verify(subscriber).onSubscribe(any());
+        verifyNoMoreInteractions(subscriber);
+    }
+
+    @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    void cancellationRetriesAfterRequestDispatchWinsStateRace() {
+        StatefulConnection<String, String> connection = mock(StatefulConnection.class);
+        Command<String, String, String> delegate = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        AtomicBoolean wrapperCompleted = new AtomicBoolean();
+
+        doAnswer(invocation -> {
+            RedisCommand<?, ?, ?> buffered = invocation.getArgument(0);
+            ((CompleteableCommand<?>) buffered).onComplete((result, failure) -> wrapperCompleted.set(true));
+            return null;
+        }).when(connection).dispatch(any(RedisCommand.class));
+
+        RedisPublisher.RedisSubscription<String> subscription = new RedisPublisher.RedisSubscription<String>(connection,
+                delegate, false, ImmediateEventExecutor.INSTANCE) {
+
+            private boolean raced;
+
+            @Override
+            boolean changeState(RedisPublisher.State oldState, RedisPublisher.State newState) {
+                if (!raced && oldState == RedisPublisher.State.NO_DEMAND && newState == RedisPublisher.State.COMPLETED) {
+                    raced = true;
+                    super.changeState(RedisPublisher.State.NO_DEMAND, RedisPublisher.State.DEMAND);
+                    checkCommandDispatch(); // A request dispatched the wrapper before cancellation could win.
+                }
+                return super.changeState(oldState, newState);
+            }
+
+        };
+
+        Subscriber<String> subscriber = mock(Subscriber.class);
+        subscription.subscribe(subscriber);
+        subscription.cancel();
+
+        verify(connection).dispatch(any(RedisCommand.class));
+        assertThat(delegate.isCancelled()).isTrue();
+        assertThat(wrapperCompleted.get()).isTrue();
         verify(subscriber).onSubscribe(any());
         verifyNoMoreInteractions(subscriber);
     }

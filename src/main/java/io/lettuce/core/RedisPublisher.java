@@ -677,13 +677,18 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         void cancel(RedisSubscription<?> subscription) {
 
-            if (subscription.changeState(this, COMPLETED)) {
-                // Cancel the actual buffered command so its completion callbacks can release
-                // endpoint queue-timing state. The completed state suppresses error signals.
+            // request() may win a state transition and buffer the wrapper after our initial read.
+            // Retry until we can cancel that wrapper or another caller has completed the subscription.
+            State state;
+            while ((state = subscription.state()) != COMPLETED) {
+                if (!subscription.changeState(state, COMPLETED)) {
+                    continue;
+                }
+                // Always cancel the buffered wrapper, not only the raw delegate, so its
+                // completion callbacks can release endpoint queue-timing state.
                 subscription.subscriptionCommand.cancel();
                 readData(subscription);
-            } else {
-                subscription.command.cancel();
+                return;
             }
         }
 

@@ -195,7 +195,7 @@ class CommandHandlerQueueLatencyUnitTests {
     }
 
     @Test
-    void cancellationDuringQueueRecordingSkipsActualWrite() throws Exception {
+    void cancellationInRecorderOccursAfterWriteHasBeenSubmitted() throws Exception {
         Command<String, String, String> command = command();
         doAnswer(invocation -> {
             command.cancel();
@@ -205,12 +205,12 @@ class CommandHandlerQueueLatencyUnitTests {
         endpoint.write(command);
         handler.write(context, command, promise);
 
-        assertThat(handler.getStack()).isEmpty();
-        verify(context, never()).write(any(), any());
+        verify(context).write(command, promise);
+        verify(recorder).recordCommandQueueLatency(any(), any(), any(), anyLong());
     }
 
     @Test
-    void cancellationDuringBatchQueueRecordingSkipsThatCommand() throws Exception {
+    void cancellationInBatchRecorderOccursAfterBatchWriteHasBeenSubmitted() throws Exception {
         Command<String, String, String> first = command();
         Command<String, String, String> second = command();
         AtomicInteger recordings = new AtomicInteger();
@@ -224,8 +224,23 @@ class CommandHandlerQueueLatencyUnitTests {
         endpoint.write(Arrays.asList(first, second));
         handler.write(context, Arrays.asList(first, second), promise);
 
-        assertThat(handler.getStack()).hasSize(1);
+        assertThat(handler.getStack()).hasSize(2);
+        assertThat(recordings.get()).isEqualTo(2);
         verify(context).write(any(), any());
+    }
+
+    @Test
+    void noQueueSampleWhenTransportWriteThrows() throws Exception {
+        Command<String, String, String> command = command();
+        doAnswer(invocation -> {
+            throw new IllegalStateException("outbound write rejected");
+        }).when(context).write(any(), any());
+
+        endpoint.write(command);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> handler.write(context, command, promise))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
     }
 
     @Test
