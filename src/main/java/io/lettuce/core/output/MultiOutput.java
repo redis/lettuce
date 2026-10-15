@@ -179,38 +179,32 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
     @Override
     public void setError(ByteBuffer error) {
 
-        if (discarded == null) {
-            super.setError(error);
-            return;
-        }
-
-        if (queue.isEmpty()) {
+        if (discarded == null || queue.isEmpty()) {
             super.setError(error);
             return;
         }
 
         CommandOutput<K, V, ?> output = currentOutput();
-        if (output != null) {
+        if (output != null && output != this) {
             output.setError(decodeString(error));
+        } else {
+            super.setError(error);
         }
     }
 
     @Override
     public void setError(String error) {
 
-        if (discarded == null) {
-            super.setError(error);
-            return;
-        }
-
-        if (queue.isEmpty()) {
+        if (discarded == null || queue.isEmpty()) {
             super.setError(error);
             return;
         }
 
         CommandOutput<K, V, ?> output = currentOutput();
-        if (output != null) {
+        if (output != null && output != this) {
             output.setError(error);
+        } else {
+            super.setError(error);
         }
     }
 

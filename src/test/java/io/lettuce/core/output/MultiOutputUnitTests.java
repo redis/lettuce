@@ -167,6 +167,16 @@ class MultiOutputUnitTests {
 
         output.setError(ByteBuffer.wrap("Error buffer".getBytes()));
         assertThat(output.getError()).isEqualTo("Error buffer");
+
+        MultiOutput<String, String> uninitialized = new MultiOutput<>(StringCodec.UTF8);
+        uninitialized.setError("Uninitialized error");
+        assertThat(uninitialized.getError()).isEqualTo("Uninitialized error");
+
+        MultiOutput<String, String> selfReferencing = new MultiOutput<>(StringCodec.UTF8);
+        selfReferencing.add(new Command<>(CommandType.APPEND, selfReferencing));
+        selfReferencing.multi(1);
+        selfReferencing.setError("Self error");
+        assertThat(selfReferencing.getError()).isEqualTo("Self error");
     }
 
 }
