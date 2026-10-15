@@ -112,6 +112,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private final boolean queueLatencyMetricsEnabled;
 
+    // Only used on the Netty event loop. Collection writes call write() per command before flushing.
+    private final List<WithLatency> pendingFlushLatency = new ArrayList<>();
+
     private final boolean tracingEnabled;
 
     private final DecodeBufferPolicy decodeBufferPolicy;
@@ -368,6 +371,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
 
         tracedEndpoint = null;
+        pendingFlushLatency.clear();
         setState(LifecycleState.DISCONNECTED);
         setState(LifecycleState.DEACTIVATING);
 
@@ -392,6 +396,20 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
      * @see io.netty.channel.ChannelDuplexHandler#write(io.netty.channel.ChannelHandlerContext, java.lang.Object,
      *      io.netty.channel.ChannelPromise)
      */
+    @Override
+    public void flush(ChannelHandlerContext ctx) throws Exception {
+
+        if (!pendingFlushLatency.isEmpty()) {
+            long sentAt = nanoTime();
+            for (WithLatency command : pendingFlushLatency) {
+                command.sent(sentAt);
+            }
+            pendingFlushLatency.clear();
+        }
+
+        ctx.flush();
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -432,7 +450,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             return;
         }
 
-        addToStack(command, promise);
+        if (addToStack(command, promise) == null) {
+            // A cancellation can race with queue recording after the initial writable check.
+            promise.trySuccess();
+            return;
+        }
 
         attachTracing(ctx, command);
 
@@ -468,20 +490,13 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             throw e;
         }
 
-        // Collect all queue samples before starting any of the batch's network timers.
-        List<WithLatency> batchLatency = latencyMetricsEnabled ? new ArrayList<>(deduplicated.size()) : null;
-        for (RedisCommand<?, ?, ?> command : deduplicated) {
+        // Endpoint collection writes are usually processed one command at a time.
+        // The common flush() method must assign the timing start in either case.
+        for (java.util.Iterator<RedisCommand<?, ?, ?>> iterator = deduplicated.iterator(); iterator.hasNext();) {
+            RedisCommand<?, ?, ?> command = iterator.next();
             attachTracing(ctx, command);
-            RedisCommand<?, ?, ?> stacked = addToStack(command, promise);
-            if (batchLatency != null) {
-                batchLatency.add((WithLatency) stacked);
-            }
-        }
-
-        if (batchLatency != null) {
-            long sentAt = nanoTime();
-            for (WithLatency latency : batchLatency) {
-                latency.sent(sentAt);
+            if (addToStack(command, promise) == null) {
+                iterator.remove();
             }
         }
 
@@ -538,7 +553,16 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             RedisCommand<?, ?, ?> redisCommand = potentiallyWrapLatencyCommand(command);
 
+            // Completion can happen on another thread during a slow queue recorder.
+            // Never dispatch a command that became terminal while we were preparing it.
+            if (queueLatencyMetricsEnabled && command.getOutput() != null && !isWriteable(command)) {
+                return null;
+            }
+
             stack.add(redisCommand);
+            if (queueLatencyMetricsEnabled) {
+                pendingFlushLatency.add((WithLatency) redisCommand);
+            }
             if (!promise.isVoid()) {
                 promise.addListener(AddToStack.newInstance(stack, redisCommand));
             }
@@ -593,8 +617,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             }
         }
 
-        // Meter registration and custom recorders must not inflate network latency.
-        long sentAt = nanoTime();
+        // Only the existing non-queue-metric path timestamps immediately.
+        // Queue-aware network starts are assigned as a group at the flush boundary.
+        long sentAt = queueLatencyMetricsEnabled ? 0 : nanoTime();
 
         if (command instanceof WithLatency) {
 
@@ -1000,6 +1025,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private void reset() {
 
+        pendingFlushLatency.clear();
         resetInternals();
         cancelCommands("Reset", drainCommands(stack));
     }

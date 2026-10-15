@@ -136,8 +136,7 @@ class DefaultEndpointUnitTests {
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
         DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
-        RedisCommand<String, String, String> queued = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> queued = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
 
         endpoint.write(queued);
         assertThat(endpoint.takeQueueLatencyStart(queued)).isNotNull();
@@ -209,6 +208,7 @@ class DefaultEndpointUnitTests {
         void completeListener(int index) {
             listeners.get(index).accept(null, null);
         }
+
     }
 
     @Test
@@ -217,10 +217,8 @@ class DefaultEndpointUnitTests {
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
         DefaultEndpoint enabled = new DefaultEndpoint(ClientOptions.create(), clientResources);
-        RedisCommand<String, String, String> first = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
-        RedisCommand<String, String, String> second = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         enabled.write(Arrays.asList(first, second));
         Long firstStamp = enabled.takeQueueLatencyStart(first);
         assertThat(firstStamp).isNotNull().isEqualTo(enabled.takeQueueLatencyStart(second));
@@ -237,8 +235,7 @@ class DefaultEndpointUnitTests {
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
         DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
-        RedisCommand<String, String, String> original = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> original = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         RedisCommand<String, String, String> wrapper = new LatencyMeteredCommand<>(original);
 
         endpoint.write(original);
@@ -268,10 +265,8 @@ class DefaultEndpointUnitTests {
         when(channel.close()).thenReturn(closePromise);
         endpoint.notifyChannelActive(channel);
 
-        RedisCommand<String, String, String> first = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
-        RedisCommand<String, String, String> second = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         endpoint.write(first);
         endpoint.write(second);
 
@@ -329,6 +324,7 @@ class DefaultEndpointUnitTests {
             public boolean isDone() {
                 return false;
             }
+
         };
 
         endpoint.write(outer);

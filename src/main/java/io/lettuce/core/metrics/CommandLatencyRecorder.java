@@ -71,8 +71,8 @@ public interface CommandLatencyRecorder {
     }
 
     /**
-     * Record command queueing latency for one send attempt. This default method preserves compatibility with
-     * existing command latency recorders.
+     * Record command queueing latency for one send attempt. This default method preserves compatibility with existing command
+     * latency recorders.
      *
      * @param local the local address
      * @param remote the remote address

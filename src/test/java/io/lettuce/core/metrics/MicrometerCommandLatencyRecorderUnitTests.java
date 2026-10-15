@@ -112,8 +112,7 @@ class MicrometerCommandLatencyRecorderUnitTests {
 
         assertThat(meterRegistry.find(METRIC_QUEUEING).timers()).hasSize(2);
         assertThat(meterRegistry.find(METRIC_QUEUEING).tag(LABEL_COMMAND, CommandType.SET.name()).timers()).isEmpty();
-        assertThat(meterRegistry.get(METRIC_QUEUEING).tag(LABEL_REMOTE, secondNode.toString()).timer().count())
-                .isEqualTo(1);
+        assertThat(meterRegistry.get(METRIC_QUEUEING).tag(LABEL_REMOTE, secondNode.toString()).timer().count()).isEqualTo(1);
     }
 
     @Test

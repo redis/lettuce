@@ -159,7 +159,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         CommandLatencyRecorder recorder = clientResources.commandLatencyRecorder();
         this.queueingTimestamps = recorder != null && recorder.isQueueLatencyEnabled()
-                ? Collections.synchronizedMap(new HashMap<>()) : null;
+                ? Collections.synchronizedMap(new HashMap<>())
+                : null;
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
         this.rejectCommandsWhileDisconnected = clientOptions.isRejectCommandsWhileDisconnected();
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
@@ -351,6 +352,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             RedisCommand<?, ?, ?> command = get();
             return command != null && command == ((IdentityWeakReference) other).get();
         }
+
     }
 
     private <K, V, T> RedisCommand<K, V, T> processActivationCommand(RedisCommand<K, V, T> command) {

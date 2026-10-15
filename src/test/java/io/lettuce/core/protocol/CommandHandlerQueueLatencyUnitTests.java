@@ -79,6 +79,7 @@ class CommandHandlerQueueLatencyUnitTests {
         endpoint.write(command);
 
         handler.write(context, command, promise);
+        handler.flush(context);
 
         verify(recorder).recordCommandQueueLatency(any(), any(), any(), anyLong());
         assertThat(command.isDone()).isFalse();
@@ -135,6 +136,7 @@ class CommandHandlerQueueLatencyUnitTests {
 
         endpoint.write(command);
         handler.write(context, command, promise);
+        handler.flush(context);
 
         WithLatency networkTiming = (WithLatency) handler.getStack().peek();
         assertThat(recorderFinishedAt.get()).isNotZero();
@@ -157,12 +159,73 @@ class CommandHandlerQueueLatencyUnitTests {
 
         endpoint.write(Arrays.asList(first, second));
         handler.write(context, Arrays.asList(first, second), promise);
+        handler.flush(context);
 
         assertThat(recordings.get()).isEqualTo(2);
         WithLatency firstNetworkTiming = (WithLatency) handler.getStack().poll();
         WithLatency secondNetworkTiming = (WithLatency) handler.getStack().poll();
         assertThat(firstNetworkTiming.getSent()).isGreaterThanOrEqualTo(secondRecorderFinishedAt.get());
         assertThat(secondNetworkTiming.getSent()).isGreaterThanOrEqualTo(secondRecorderFinishedAt.get());
+    }
+
+    @Test
+    void separatelyWrittenBatchCommandsStartNetworkTimersTogetherAtFlush() throws Exception {
+        Command<String, String, String> first = command();
+        Command<String, String, String> second = command();
+        AtomicInteger recordings = new AtomicInteger();
+        AtomicLong finalRecordingFinishedAt = new AtomicLong();
+
+        doAnswer(invocation -> {
+            if (recordings.incrementAndGet() == 2) {
+                finalRecordingFinishedAt.set(System.nanoTime());
+            }
+            return null;
+        }).when(recorder).recordCommandQueueLatency(any(), any(), any(), anyLong());
+
+        endpoint.write(Arrays.asList(first, second));
+        // Matches DefaultEndpoint.writeToChannelAndFlush(Collection): individual writes, one flush.
+        handler.write(context, first, promise);
+        handler.write(context, second, promise);
+        WithLatency firstTiming = (WithLatency) handler.getStack().peek();
+        assertThat(firstTiming.getSent()).isZero();
+
+        handler.flush(context);
+        assertThat(recordings.get()).isEqualTo(2);
+        assertThat(firstTiming.getSent()).isGreaterThanOrEqualTo(finalRecordingFinishedAt.get());
+    }
+
+    @Test
+    void cancellationDuringQueueRecordingSkipsActualWrite() throws Exception {
+        Command<String, String, String> command = command();
+        doAnswer(invocation -> {
+            command.cancel();
+            return null;
+        }).when(recorder).recordCommandQueueLatency(any(), any(), any(), anyLong());
+
+        endpoint.write(command);
+        handler.write(context, command, promise);
+
+        assertThat(handler.getStack()).isEmpty();
+        verify(context, never()).write(any(), any());
+    }
+
+    @Test
+    void cancellationDuringBatchQueueRecordingSkipsThatCommand() throws Exception {
+        Command<String, String, String> first = command();
+        Command<String, String, String> second = command();
+        AtomicInteger recordings = new AtomicInteger();
+        doAnswer(invocation -> {
+            if (recordings.incrementAndGet() == 2) {
+                second.cancel();
+            }
+            return null;
+        }).when(recorder).recordCommandQueueLatency(any(), any(), any(), anyLong());
+
+        endpoint.write(Arrays.asList(first, second));
+        handler.write(context, Arrays.asList(first, second), promise);
+
+        assertThat(handler.getStack()).hasSize(1);
+        verify(context).write(any(), any());
     }
 
     @Test
@@ -174,6 +237,7 @@ class CommandHandlerQueueLatencyUnitTests {
             public boolean isDone() {
                 return false;
             }
+
         };
 
         endpoint.write(outer);

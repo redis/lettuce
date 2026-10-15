@@ -191,8 +191,8 @@ public class MicrometerOptions {
         }
 
         /**
-         * Enable per-attempt command queueing latency measurement (endpoint acceptance to command dispatch).
-         * The metric is disabled by default.
+         * Enable per-attempt command queueing latency measurement (endpoint acceptance to command dispatch). The metric is
+         * disabled by default.
          *
          * @param queueLatency whether to record queueing latency
          * @return this {@link Builder}.

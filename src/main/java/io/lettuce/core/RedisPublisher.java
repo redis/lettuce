@@ -677,9 +677,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         void cancel(RedisSubscription<?> subscription) {
 
-            subscription.command.cancel();
             if (subscription.changeState(this, COMPLETED)) {
+                // Cancel the actual buffered command so its completion callbacks can release
+                // endpoint queue-timing state. The completed state suppresses error signals.
+                subscription.subscriptionCommand.cancel();
                 readData(subscription);
+            } else {
+                subscription.command.cancel();
             }
         }
 
