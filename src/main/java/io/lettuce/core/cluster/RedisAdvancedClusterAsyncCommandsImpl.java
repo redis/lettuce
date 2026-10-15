@@ -93,6 +93,7 @@ import io.lettuce.core.search.arguments.SynUpdateArgs;
  * @author Mark Paluch
  * @author Jon Chambers
  * @author Tihomir Mateev
+ * @author devbini
  * @since 3.3
  */
 @SuppressWarnings("unchecked")
@@ -424,8 +425,22 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         Map<Integer, RedisFuture<List<KeyValue<K, V>>>> executions = new HashMap<>(partitioned.size());
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            RedisFuture<List<KeyValue<K, V>>> mget = super.mget(entry.getValue());
-            executions.put(entry.getKey(), mget);
+
+            List<K> keysInPartition = entry.getValue();
+
+            if (keysInPartition.size() == 1) {
+                K singleKey = keysInPartition.get(0);
+                RedisFuture<V> get = super.get(singleKey);
+
+                RedisFuture<List<KeyValue<K, V>>> convert = new PipelinedRedisFuture<>(
+                        get.thenApply(value -> java.util.Collections.singletonList(KeyValue.fromNullable(singleKey, value)))
+                                .toCompletableFuture());
+
+                executions.put(entry.getKey(), convert);
+            } else {
+                RedisFuture<List<KeyValue<K, V>>> mget = super.mget(keysInPartition);
+                executions.put(entry.getKey(), mget);
+            }
         }
 
         // restore order of key
