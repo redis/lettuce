@@ -8,6 +8,7 @@ package io.lettuce.core.protocol;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
@@ -20,14 +21,17 @@ import static org.mockito.Mockito.when;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.output.StatusOutput;
@@ -51,13 +55,15 @@ class CommandHandlerQueueLatencyUnitTests {
 
     private final ChannelPromise promise = mock(ChannelPromise.class);
 
+    private ClientResources resources;
+
     private DefaultEndpoint endpoint;
 
     private CommandHandler handler;
 
     @BeforeEach
     void setUp() throws Exception {
-        ClientResources resources = mock(ClientResources.class);
+        resources = mock(ClientResources.class);
         when(resources.commandLatencyRecorder()).thenReturn(recorder);
         when(resources.tracing()).thenReturn(Tracing.disabled());
         when(recorder.isEnabled()).thenReturn(true);
@@ -288,6 +294,82 @@ class CommandHandlerQueueLatencyUnitTests {
 
         assertThat(endpoint.takeQueueLatencyStart(cancelled)).isNull();
         verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(), anyLong());
+    }
+
+    @Test
+    void outboundEncodingIsNotCountedAsQueueLatency() throws Exception {
+        Command<String, String, String> command = command();
+        AtomicLong writeStartedAt = new AtomicLong();
+        doAnswer(invocation -> {
+            writeStartedAt.set(System.nanoTime());
+            Thread.sleep(75);
+            return null;
+        }).when(context).write(any(), any());
+
+        long beforeAcceptance = System.nanoTime();
+        endpoint.write(command);
+        handler.write(context, command, promise);
+
+        ArgumentCaptor<Long> recorded = ArgumentCaptor.forClass(Long.class);
+        verify(recorder).recordCommandQueueLatency(any(), any(), any(), recorded.capture());
+        assertThat(writeStartedAt.get()).isPositive();
+        // The acceptance timestamp is no earlier than beforeAcceptance and dispatch
+        // starts before the synchronous outbound encoder is invoked.
+        assertThat(recorded.getValue()).isLessThanOrEqualTo(writeStartedAt.get() - beforeAcceptance);
+    }
+
+    @Test
+    void batchEncodingIsNotCountedAsQueueLatency() throws Exception {
+        Command<String, String, String> first = command();
+        Command<String, String, String> second = command();
+        AtomicLong writeStartedAt = new AtomicLong();
+        doAnswer(invocation -> {
+            writeStartedAt.set(System.nanoTime());
+            Thread.sleep(75);
+            return null;
+        }).when(context).write(any(), any());
+
+        long beforeAcceptance = System.nanoTime();
+        endpoint.write(Arrays.asList(first, second));
+        handler.write(context, Arrays.asList(first, second), promise);
+
+        ArgumentCaptor<Long> recorded = ArgumentCaptor.forClass(Long.class);
+        verify(recorder, times(2)).recordCommandQueueLatency(any(), any(), any(), recorded.capture());
+        assertThat(writeStartedAt.get()).isPositive();
+        for (Long queueLatency : recorded.getAllValues()) {
+            assertThat(queueLatency).isLessThanOrEqualTo(writeStartedAt.get() - beforeAcceptance);
+        }
+    }
+
+    @Test
+    void rejectedPlainCommandDoesNotRetainAnAcceptanceStamp() throws Exception {
+        ClientOptions bounded = ClientOptions.builder().requestQueueSize(1).build();
+        DefaultEndpoint boundedEndpoint = new DefaultEndpoint(bounded, resources);
+        CommandHandler boundedHandler = new CommandHandler(bounded, resources, boundedEndpoint);
+        boundedHandler.channelRegistered(context);
+
+        boundedHandler.write(context, command(), promise); // Fill the handler's bounded stack.
+        Command<String, String, String> rejected = command();
+        boundedEndpoint.write(rejected);
+
+        assertThatThrownBy(() -> boundedHandler.write(context, rejected, promise)).isInstanceOf(RedisException.class);
+        assertThat(boundedEndpoint.takeQueueLatencyStart(rejected)).isNull();
+    }
+
+    @Test
+    void rejectedBatchDoesNotRetainPlainCommandAcceptanceStamp() throws Exception {
+        ClientOptions bounded = ClientOptions.builder().requestQueueSize(1).build();
+        DefaultEndpoint boundedEndpoint = new DefaultEndpoint(bounded, resources);
+        CommandHandler boundedHandler = new CommandHandler(bounded, resources, boundedEndpoint);
+        boundedHandler.channelRegistered(context);
+
+        boundedHandler.write(context, command(), promise);
+        Command<String, String, String> rejected = command();
+        boundedEndpoint.write(rejected);
+
+        assertThatThrownBy(() -> boundedHandler.write(context, Collections.singleton(rejected), promise))
+                .isInstanceOf(RedisException.class);
+        assertThat(boundedEndpoint.takeQueueLatencyStart(rejected)).isNull();
     }
 
     private Command<String, String, String> command() {

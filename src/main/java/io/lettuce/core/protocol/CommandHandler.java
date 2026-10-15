@@ -464,8 +464,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         try {
             attachTracing(ctx, command);
+            long dispatchedAt = queueLatencyMetricsEnabled ? nanoTime() : 0;
             ctx.write(command, promise);
-            recordQueueLatencyAfterWrite(command);
+            recordQueueLatencyAfterWrite(command, dispatchedAt);
         } finally {
             pendingQueueSamples.remove(command);
         }
@@ -494,6 +495,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         } catch (Exception e) {
 
             for (RedisCommand<?, ?, ?> redisCommand : deduplicated) {
+                discardQueueLatencyStart(redisCommand);
                 redisCommand.completeExceptionally(e);
             }
 
@@ -512,9 +514,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         if (!deduplicated.isEmpty()) {
             try {
+                long dispatchedAt = queueLatencyMetricsEnabled ? nanoTime() : 0;
                 ctx.write(deduplicated, promise);
                 for (RedisCommand<?, ?, ?> command : deduplicated) {
-                    recordQueueLatencyAfterWrite(command);
+                    recordQueueLatencyAfterWrite(command, dispatchedAt);
                 }
             } finally {
                 for (RedisCommand<?, ?, ?> command : deduplicated) {
@@ -595,6 +598,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             }
             return redisCommand;
         } catch (Exception e) {
+            discardQueueLatencyStart(command);
             pendingQueueSamples.remove(command);
             command.completeExceptionally(e);
             throw e;
@@ -629,14 +633,16 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
-    private void recordQueueLatencyAfterWrite(RedisCommand<?, ?, ?> command) {
+    private void recordQueueLatencyAfterWrite(RedisCommand<?, ?, ?> command, long dispatchedAt) {
 
         Long acceptedAt = pendingQueueSamples.remove(command);
         if (acceptedAt == null || channel == null || remote() == null || command.getOutput() == null) {
             return;
         }
 
-        long queueLatency = nanoTime() - acceptedAt;
+        // Capture dispatch before outbound handlers synchronously encode the command.
+        // Publish the sample only after ctx.write returns without throwing.
+        long queueLatency = dispatchedAt - acceptedAt;
         if (queueLatency >= 0) {
             commandLatencyRecorder.recordCommandQueueLatency(local(), remote(), command, queueLatency);
         }
