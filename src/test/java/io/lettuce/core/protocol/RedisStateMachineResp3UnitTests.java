@@ -200,6 +200,22 @@ class RedisStateMachineResp3UnitTests {
     }
 
     @Test
+    void execWithMapReplies() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(codec);
+        Command<String, String, Object> eval = new Command<>(CommandType.EVAL, new ObjectOutput<>(codec));
+        output.add(eval);
+
+        ByteBuf buffer = buffer("*1\r\n%1\r\n$3\r\nfoo\r\n$2\r\nok\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(eval.getOutput().get()).isInstanceOf(Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>) eval.getOutput().get();
+        assertThat(map).containsEntry("foo", "ok");
+        assertThat((Object) output.get().get(0)).isEqualTo(map);
+    }
+
+    @Test
     void multiEmptyArray1() {
         CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<>(codec);
         ByteBuf buffer = buffer("*2\r\n$3\r\nABC\r\n*0\r\n");

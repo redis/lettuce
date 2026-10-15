@@ -39,6 +39,11 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
     }
 
     @Override
+    public void set(boolean value) {
+        output.add(new Boolean(value));
+    }
+
+    @Override
     public void setError(ByteBuffer error) {
         error.mark();
         output.add(new ErrorBytes(error));
@@ -60,6 +65,16 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
     @Override
     public void multi(int count) {
         output.add(new Multi(count));
+    }
+
+    @Override
+    public void multiMap(int count) {
+        output.add(new MultiMap(count));
+    }
+
+    @Override
+    public void multiSet(int count) {
+        output.add(new MultiSet(count));
     }
 
     /**
@@ -150,6 +165,21 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
 
     }
 
+    static class Boolean extends Signal {
+
+        final boolean message;
+
+        Boolean(boolean message) {
+            this.message = message;
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.set(message);
+        }
+
+    }
+
     public static class ErrorBytes extends BulkStringSupport {
 
         ErrorBytes(ByteBuffer message) {
@@ -189,6 +219,36 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
         @Override
         protected void replay(CommandOutput<?, ?, ?> target) {
             target.multi(count);
+        }
+
+    }
+
+    static class MultiMap extends Signal {
+
+        final int count;
+
+        MultiMap(int count) {
+            this.count = count;
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.multiMap(count);
+        }
+
+    }
+
+    static class MultiSet extends Signal {
+
+        final int count;
+
+        MultiSet(int count) {
+            this.count = count;
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.multiSet(count);
         }
 
     }
