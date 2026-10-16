@@ -328,7 +328,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         tracedEndpoint = clientResources.tracing().createEndpoint(ctx.channel().remoteAddress());
 
-        endpoint.notifyChannelActive(ctx.channel());
+        try {
+            endpoint.notifyChannelActive(ctx.channel());
+        } catch (Exception e) {
+            logger.warn("{} notifyChannelActive failed", logPrefix(), e);
+        }
         super.channelActive(ctx);
 
         if (debugEnabled) {

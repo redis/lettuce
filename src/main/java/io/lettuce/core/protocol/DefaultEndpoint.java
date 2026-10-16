@@ -466,7 +466,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             connectionWatchdog.arm();
         }
 
-        sharedLock.doExclusive(() -> {
+        Runnable activate = () -> {
             this.channel = channel;
 
             try {
@@ -499,7 +499,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
                 throw e;
             }
-        });
+        };
+
+        try {
+            sharedLock.doExclusive(activate);
+        } catch (RedisException e) {
+            logger.warn("{} Failed to acquire exclusive lock during notifyChannelActive, activating directly", logPrefix(), e);
+            activate.run();
+        }
     }
 
     @Override
@@ -568,14 +575,21 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         if (isConnected(channel)) {
 
-            List<RedisCommand<?, ?, ?>> commands = sharedLock.doExclusive(() -> {
+            List<RedisCommand<?, ?, ?>> commands;
+            try {
+                commands = sharedLock.doExclusive(() -> {
 
-                if (queue.isEmpty()) {
-                    return Collections.emptyList();
-                }
+                    if (queue.isEmpty()) {
+                        return Collections.emptyList();
+                    }
 
-                return drainCommands(queue);
-            });
+                    return drainCommands(queue);
+                });
+            } catch (RedisException e) {
+                logger.warn("{} Failed to acquire exclusive lock during flushCommands, draining commands directly", logPrefix(),
+                        e);
+                commands = drainCommands(queue);
+            }
 
             if (debugEnabled) {
                 logger.debug("{} flushCommands() Flushing {} commands", logPrefix(), commands.size());
@@ -617,7 +631,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 connectionWatchdog.prepareClose();
             }
 
-            cancelBufferedCommands("Close");
+            try {
+                cancelBufferedCommands("Close");
+            } catch (Exception e) {
+                logger.warn("{} Failed to cancel buffered commands during close", logPrefix(), e);
+            }
 
             Channel channel = getOpenChannel();
 
@@ -796,7 +814,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     }
 
     private void cancelBufferedCommands(String message) {
-        cancelCommands(message, doExclusive(this::drainCommands), RedisCommand::cancel);
+        try {
+            cancelCommands(message, doExclusive(this::drainCommands), RedisCommand::cancel);
+        } catch (RedisException e) {
+            logger.warn("{} Failed to acquire exclusive lock during cancelBufferedCommands, draining commands directly",
+                    logPrefix(), e);
+            cancelCommands(message, drainCommands(), RedisCommand::cancel);
+        }
     }
 
     private void cancelCommands(String message, Iterable<? extends RedisCommand<?, ?, ?>> toCancel,
