@@ -1,7 +1,10 @@
 package io.lettuce.core;
 
+import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.stream.StreamEntryDeletionResult;
+import io.lettuce.core.output.ScoredValueStreamingChannel;
+import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.protocol.Command;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -63,6 +66,75 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructLcs() {
+
+        Command<String, String, ?> command = sut.lcs("key1", "key2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructLcsWithArgs() {
+
+        Command<String, String, ?> command = sut.lcs("key1", "key2", LcsArgs.Builder.withIdx().minMatchLen(4).withMatchLen());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n" + "$3\r\n"
+                        + "IDX\r\n" + "$11\r\n" + "MINMATCHLEN\r\n" + "$1\r\n" + "4\r\n" + "$12\r\n" + "WITHMATCHLEN\r\n");
+    }
+
+    @Test
+    void lcsShouldEncodeKeysUsingCodec() {
+
+        RedisCommandBuilder<byte[], byte[]> builder = new RedisCommandBuilder<>(ByteArrayCodec.INSTANCE);
+        byte[] key1 = "key1".getBytes(StandardCharsets.UTF_8);
+        byte[] key2 = "key2".getBytes(StandardCharsets.UTF_8);
+
+        Command<byte[], byte[], ?> command = builder.lcs(key1, key2);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n");
+
+        command = builder.lcs(key1, key2, LcsArgs.Builder.justLen());
+        buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n" + "$3\r\n" + "LEN\r\n");
+    }
+
+    @Test
+    void lcsShouldExposeFirstKeyForClusterRouting() {
+
+        Command<String, String, ?> command = sut.lcs("key1", "key2");
+        assertThat(command.getArgs().getFirstEncodedKey()).isEqualTo(StandardCharsets.UTF_8.encode("key1"));
+
+        command = sut.lcs("key1", "key2", LcsArgs.Builder.withIdx());
+        assertThat(command.getArgs().getFirstEncodedKey()).isEqualTo(StandardCharsets.UTF_8.encode("key1"));
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void deprecatedLcsShouldEncodeKeysFromArgs() {
+
+        Command<String, String, ?> command = sut
+                .lcs(LcsArgs.Builder.keys("key1", "key2").withIdx().minMatchLen(4).withMatchLen());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$3\r\n" + "LCS\r\n" + "$4\r\n" + "key1\r\n" + "$4\r\n" + "key2\r\n" + "$3\r\n"
+                        + "IDX\r\n" + "$11\r\n" + "MINMATCHLEN\r\n" + "$1\r\n" + "4\r\n" + "$12\r\n" + "WITHMATCHLEN\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructHimportPrepare() {
 
         HashImport<String> fieldset = HashImport.of(seq -> "fs", "name", "email");
@@ -100,6 +172,166 @@ class RedisCommandBuilderUnitTests {
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*3\r\n" + "$7\r\n" + "HIMPORT\r\n" + "$7\r\n" + "DISCARD\r\n" + "$2\r\n" + "fs\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByIndex() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byIndex(0, 2));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "0\r\n" + "$1\r\n" + "2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByIndexRev() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byIndex(0, 2).rev());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        // index boundaries are not swapped with REV
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "0\r\n" + "$1\r\n" + "2\r\n" + "$3\r\n" + "REV\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScore() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byScore(Range.create(200, 400)));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$3\r\n" + "200\r\n" + "$3\r\n" + "400\r\n" + "$7\r\n" + "BYSCORE\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScoreDoubles() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byScore(1.5, 10));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$3\r\n" + "1.5\r\n" + "$4\r\n" + "10.0\r\n" + "$7\r\n" + "BYSCORE\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScoreRevLimit() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byScore(Range.create(200, 400)).rev().limit(1, 2));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        // score boundaries are emitted max-first with REV
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$3\r\n" + "400\r\n" + "$3\r\n" + "200\r\n" + "$7\r\n" + "BYSCORE\r\n" + "$3\r\n" + "REV\r\n" + "$5\r\n"
+                + "LIMIT\r\n" + "$1\r\n" + "1\r\n" + "$1\r\n" + "2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScoreWithBoundaries() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY,
+                ZRange.byScore(Range.from(Range.Boundary.excluding(100), Range.Boundary.unbounded())));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$4\r\n" + "(100\r\n" + "$4\r\n" + "+inf\r\n" + "$7\r\n" + "BYSCORE\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByLexWithLimit() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byLex(Range.create("banana", "date")).limit(1, 2));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "[banana\r\n" + "$5\r\n" + "[date\r\n"
+                        + "$5\r\n" + "BYLEX\r\n" + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "1\r\n" + "$1\r\n" + "2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByLexRev() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY,
+                ZRange.byLex(Range.from(Range.Boundary.excluding("a"), Range.Boundary.unbounded())).rev());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        // lexicographical boundaries are emitted max-first with REV
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "+\r\n" + "$2\r\n" + "(a\r\n" + "$5\r\n" + "BYLEX\r\n" + "$3\r\n" + "REV\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeWithScoresByScore() {
+
+        Command<String, String, ?> command = sut.zrangeWithScores(MY_KEY, ZRange.byScore(Range.create(200, 300)));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$3\r\n" + "200\r\n" + "$3\r\n" + "300\r\n" + "$7\r\n" + "BYSCORE\r\n" + "$10\r\n" + "WITHSCORES\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeWithScoresByIndexRev() {
+
+        Command<String, String, ?> command = sut.zrangeWithScores(MY_KEY, ZRange.byIndex(0, 1).rev());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "0\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "REV\r\n" + "$10\r\n" + "WITHSCORES\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeStreaming() {
+
+        ValueStreamingChannel<String> channel = value -> {
+        };
+        Command<String, String, ?> command = sut.zrange(channel, MY_KEY, ZRange.byScore(Range.create(200, 400)).limit(0, 1));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n" + "$3\r\n" + "200\r\n" + "$3\r\n" + "400\r\n"
+                        + "$7\r\n" + "BYSCORE\r\n" + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "0\r\n" + "$1\r\n" + "1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeWithScoresStreaming() {
+
+        ScoredValueStreamingChannel<String> channel = value -> {
+        };
+        Command<String, String, ?> command = sut.zrangeWithScores(channel, MY_KEY, ZRange.byIndex(0, 1));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "ZRANGE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "0\r\n" + "$1\r\n" + "1\r\n" + "$10\r\n" + "WITHSCORES\r\n");
+    }
+
+    @Test
+    void zrangeShouldRejectNullArguments() {
+
+        ValueStreamingChannel<String> channel = value -> {
+        };
+
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, (ZRange.ByIndex) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, (ZRange.ByScore) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(MY_KEY, (ZRange.ByLex<String>) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(null, ZRange.byIndex(0, 1))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange(channel, MY_KEY, (ZRange.ByIndex) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zrange((ValueStreamingChannel<String>) null, MY_KEY, ZRange.byIndex(0, 1)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -1052,6 +1284,18 @@ class RedisCommandBuilderUnitTests {
         Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight());
         String s = command.getArgs().toCommandString();
         assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0");
+    }
+
+    @Test
+    void geodistShouldRejectNullTo() {
+        assertThatThrownBy(() -> sut.geodist("key", "from", null, GeoArgs.Unit.m)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("To must not be null");
+    }
+
+    @Test
+    void geodistShouldRejectNullFrom() {
+        assertThatThrownBy(() -> sut.geodist("key", null, "to", GeoArgs.Unit.m)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("From must not be null");
     }
 
 }

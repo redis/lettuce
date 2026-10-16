@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
@@ -86,6 +87,20 @@ public class RedisBloomFilterIntegrationTests {
         Boolean result = redis.bfExists(MY_KEY, MY_VALUE);
 
         assertThat(result).isTrue();
+    }
+
+    @Test
+    void bfAddAndExistsInTransaction() {
+        redis.multi();
+        redis.bfAdd(MY_KEY, MY_VALUE);
+        redis.bfAdd(MY_KEY, MY_VALUE);
+        redis.bfExists(MY_KEY, MY_VALUE);
+        redis.bfExists(MY_KEY, MY_VALUE_2);
+
+        TransactionResult result = redis.exec();
+
+        assertThat(result.wasDiscarded()).isFalse();
+        assertThat(result).containsExactly(true, false, true, false);
     }
 
     @Test

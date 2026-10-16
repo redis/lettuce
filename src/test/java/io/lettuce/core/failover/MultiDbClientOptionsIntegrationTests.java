@@ -234,8 +234,6 @@ class MultiDbClientOptionsIntegrationTests {
 
         if (!(connection instanceof StatefulRedisPubSubConnection)) {
             assertThat((Object) ReflectionTestUtils.getField(connection.async(), "parser")).isSameAs(expected.getJsonParser());
-            assertThat((Object) ReflectionTestUtils.getField(connection.reactive(), "parser"))
-                    .isSameAs(expected.getJsonParser());
         }
 
         RedisChannelWriter writer = stateful.getChannelWriter();

@@ -19,8 +19,6 @@
  */
 package io.lettuce.core.failover.health;
 
-import io.lettuce.core.annotations.Experimental;
-
 /**
  * Enumeration representing the health status of a database endpoint as determined by the health check service.
  * <p>
@@ -32,7 +30,6 @@ import io.lettuce.core.annotations.Experimental;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 public enum HealthStatus {
 
     /**

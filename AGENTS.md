@@ -131,7 +131,11 @@ mvn formatter:format                 # applies formatting.xml; do NOT submit for
 ## Testing Rules
 
 - **The file-name suffix picks the runner:** `*UnitTests` (Surefire, no server),
-  `*IntegrationTests` (Failsafe, needs Redis). Prefer those suffixes.
+  `*IntegrationTests` (Failsafe, needs Redis). Prefer those suffixes. A singular
+  `*Test` suffix is excluded by Surefire and picked up by Failsafe instead, so such a
+  class never runs in `mvn test`; it only runs in the integration phase (`make test`,
+  which is what CI runs, Docker required) or when named explicitly via `-Dtest=`. Name
+  pure unit tests `*UnitTests`.
 - Integration tests read host/port/TLS from `TestSettings` / `TlsSettings` — never
   hard-code them.
 - Everything else about testing (topologies, TLS/mTLS, layout, CI) lives in
@@ -182,5 +186,6 @@ before doing that type of work.
 | Skill | When to use |
 |-------|-------------|
 | `extend-commands-api` | Add or extend a Redis command (or overload) end-to-end, evidence-first: HLD + server PR + live redis-cli verification, plan-mode approval, then all API interface flavors, builder, async/reactive/Kotlin impls, and tests |
+| `create-implementation-plan-for-redis-api-change` | Turn a shared client HLD into Lettuce's reviewed implementation plan (API, files per flavor, ordered steps, test matrix) without touching sources; read-only, writes one plan file; conventions come from `extend-commands-api` |
 | `writing-javadoc` | Write or fix Javadoc for public API following Lettuce house conventions |
 | `draft-pr-description` | Generate a GitHub PR title and description from the diff between two local branches |

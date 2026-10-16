@@ -9,8 +9,9 @@ import java.util.function.Function;
 
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.failover.api.MultiDbOptions;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.failover.event.SwitchReason;
@@ -30,7 +31,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
         extends StatefulRedisMultiDbConnectionImpl<StatefulRedisPubSubConnection<K, V>, K, V>
         implements StatefulRedisMultiDbPubSubConnection<K, V> {
@@ -58,6 +58,12 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
             RedisDatabaseDeferredCompletion<StatefulRedisPubSubConnection<K, V>> completion, MultiDbOptions multiDbOptions) {
         super(initialDatabase, connections, resources, codec, connectionFactory, healthStatusManager, completion,
                 multiDbOptions);
+    }
+
+    @Override
+    public <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory) {
+        LettuceAssert.notNull(factory, "CommandsFactory must not be null");
+        return store.compute(factory.key(), () -> factory.apply(this));
     }
 
     @Override
@@ -95,17 +101,6 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     @Override
     protected RedisPubSubCommands<K, V> newRedisSyncCommandsImpl() {
         return syncHandler(async(), RedisPubSubCommands.class);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public RedisPubSubReactiveCommands<K, V> reactive() {
-        return (RedisPubSubReactiveCommands<K, V>) reactive;
-    }
-
-    @Override
-    protected RedisPubSubReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
-        return new RedisPubSubReactiveCommandsImpl<>(this, codec);
     }
 
     /**

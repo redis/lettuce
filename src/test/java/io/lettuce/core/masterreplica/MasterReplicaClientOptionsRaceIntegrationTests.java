@@ -31,6 +31,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.cluster.PipelinedRedisFuture;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -41,13 +42,11 @@ import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
-import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
+import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
 import io.netty.channel.Channel;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Tag(INTEGRATION_TEST)
 class MasterReplicaClientOptionsRaceIntegrationTests {
@@ -148,7 +147,6 @@ class MasterReplicaClientOptionsRaceIntegrationTests {
         StatefulRedisMasterReplicaConnectionImpl<String, String> stateful = (StatefulRedisMasterReplicaConnectionImpl<String, String>) connection;
         assertThat((Object) ReflectionTestUtils.getField(stateful.getChannelWriter(), "clientOptions")).isSameAs(expected);
         assertThat((Object) ReflectionTestUtils.getField(connection.async(), "parser")).isSameAs(expected.getJsonParser());
-        assertThat((Object) ReflectionTestUtils.getField(connection.reactive(), "parser")).isSameAs(expected.getJsonParser());
         assertThat(connection.sync().ping()).isEqualTo("PONG");
         MasterReplicaChannelWriter writer = (MasterReplicaChannelWriter) stateful.getChannelWriter();
         StatefulRedisConnection<?, ?> node = writer.getUpstreamReplicaConnectionProvider()
@@ -246,14 +244,15 @@ class MasterReplicaClientOptionsRaceIntegrationTests {
 
             // Supply one master through Sentinel discovery; node connections and Pub/Sub use the test Redis server.
             StatefulRedisSentinelConnection<String, String> sentinel = mock(StatefulRedisSentinelConnection.class);
-            RedisSentinelReactiveCommands<String, String> commands = mock(RedisSentinelReactiveCommands.class);
+            RedisSentinelAsyncCommands<String, String> commands = mock(RedisSentinelAsyncCommands.class);
             Map<String, String> master = new HashMap<>();
             master.put("ip", TestSettings.host());
             master.put("port", Integer.toString(TestSettings.port()));
-            when(sentinel.reactive()).thenReturn(commands);
+            when(sentinel.async()).thenReturn(commands);
             when(sentinel.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
-            when(commands.master("mymaster")).thenReturn(Mono.just(master));
-            when(commands.replicas("mymaster")).thenReturn(Flux.empty());
+            when(commands.master("mymaster")).thenReturn(new PipelinedRedisFuture<>(CompletableFuture.completedFuture(master)));
+            when(commands.replicas("mymaster")).thenReturn(new PipelinedRedisFuture<>(
+                    CompletableFuture.completedFuture(Collections.<Map<String, String>> emptyList())));
 
             return CompletableFuture.completedFuture((StatefulRedisSentinelConnection<K, V>) sentinel);
         }

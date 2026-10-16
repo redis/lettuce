@@ -3,7 +3,7 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>7.8.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
@@ -185,12 +185,12 @@
         <dependency>
             <groupId>redis.clients.authentication</groupId>
             <artifactId>redis-authx-core</artifactId>
-            <version>0.1.1-beta2</version>
+            <version>0.2.0</version>
         </dependency>
         <dependency>
             <groupId>redis.clients.authentication</groupId>
             <artifactId>redis-authx-entraid</artifactId>
-            <version>0.1.1-beta2</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <!-- Start of core dependencies -->
@@ -426,6 +426,13 @@
         </dependency>
 
         <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.3.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
             <version>${hamcrest-library.version}</version>
@@ -442,7 +449,7 @@
         <dependency>
             <groupId>com.github.javaparser</groupId>
             <artifactId>javaparser-core</artifactId>
-            <version>3.6.3</version>
+            <version>3.28.0</version>
             <scope>test</scope>
         </dependency>
 

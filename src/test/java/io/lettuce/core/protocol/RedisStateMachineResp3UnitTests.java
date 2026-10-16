@@ -43,7 +43,6 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.*;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 
 /**
@@ -182,6 +181,22 @@ class RedisStateMachineResp3UnitTests {
         ByteBuf buffer = buffer("%1\r\n$3\r\nfoo\r\n$2\r\nok\r\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get()).containsEntry("foo", "ok");
+    }
+
+    @Test
+    void execWithBooleanReplies() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(codec);
+        Command<String, String, Boolean> added = new Command<>(CommandType.EXISTS, new BooleanOutput<>(codec));
+        Command<String, String, Boolean> exists = new Command<>(CommandType.EXISTS, new BooleanOutput<>(codec));
+        output.add(added);
+        output.add(exists);
+
+        ByteBuf buffer = buffer("*2\r\n#t\r\n#f\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(added.getOutput().get()).isTrue();
+        assertThat(exists.getOutput().get()).isFalse();
+        assertThat(output.get()).containsExactly(true, false);
     }
 
     @Test

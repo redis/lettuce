@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,7 +48,6 @@ import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
 import io.netty.channel.Channel;
-import reactor.core.publisher.Mono;
 
 @Tag(INTEGRATION_TEST)
 class RedisClusterClientOptionsRaceIntegrationTests {
@@ -127,10 +127,10 @@ class RedisClusterClientOptionsRaceIntegrationTests {
         RedisClusterClient client = new RedisClusterClient(null, Collections.singletonList(uri)) {
 
             @Override
-            protected Mono<SocketAddress> getSocketAddressSupplier(Supplier<Partitions> partitionsSupplier,
+            protected Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplier(Supplier<Partitions> partitionsSupplier,
                     Function<Partitions, Collection<RedisClusterNode>> sortFunction) {
-                return Mono.defer(() -> firstAttempt.compareAndSet(true, false) ? Mono.fromFuture(firstAddress)
-                        : Mono.just(new InetSocketAddress(TestSettings.host(), TestSettings.port())));
+                return () -> firstAttempt.compareAndSet(true, false) ? firstAddress
+                        : CompletableFuture.completedFuture(new InetSocketAddress(TestSettings.host(), TestSettings.port()));
             }
 
         };
@@ -163,7 +163,8 @@ class RedisClusterClientOptionsRaceIntegrationTests {
     private static CompletableFuture<RedisChannelHandler<String, String>> connect(RedisClusterClient client,
             ConnectionType type) {
 
-        Mono<SocketAddress> address = Mono.just(new InetSocketAddress(TestSettings.host(), TestSettings.port()));
+        Supplier<CompletionStage<SocketAddress>> address = () -> CompletableFuture
+                .completedFuture(new InetSocketAddress(TestSettings.host(), TestSettings.port()));
 
         switch (type) {
             case CLUSTER:
@@ -263,8 +264,8 @@ class RedisClusterClientOptionsRaceIntegrationTests {
         }
 
         @Override
-        protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
-                ConnectionEvents connectionEvents, RedisURI redisURI) {
+        protected void connectionBuilder(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
+                ConnectionBuilder connectionBuilder, ConnectionEvents connectionEvents, RedisURI redisURI) {
 
             super.connectionBuilder(socketAddressSupplier, connectionBuilder, connectionEvents, redisURI);
             pauseAt(Stage.BUILDER);

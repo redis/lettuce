@@ -30,11 +30,13 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Tag;
@@ -44,6 +46,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.cluster.PipelinedRedisFuture;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.CommandExpiryWriter;
@@ -53,14 +56,13 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.PushHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnectionImpl;
-import io.lettuce.core.sentinel.RedisSentinelReactiveCommandsImpl;
+import io.lettuce.core.sentinel.RedisSentinelAsyncCommandsImpl;
 import io.lettuce.core.sentinel.StatefulRedisSentinelConnectionImpl;
-import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
+import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
 import io.netty.channel.Channel;
-import reactor.core.publisher.Mono;
 
 @Tag(INTEGRATION_TEST)
 class RedisClientOptionsRaceIntegrationTests {
@@ -128,9 +130,8 @@ class RedisClientOptionsRaceIntegrationTests {
         RedisClient client = new RedisClient(null, uri()) {
 
             @Override
-            protected Mono<SocketAddress> getSocketAddress(RedisURI redisURI) {
-                return firstAttempt.compareAndSet(true, false) ? Mono.fromFuture(firstAddress)
-                        : super.getSocketAddress(redisURI);
+            protected Supplier<CompletionStage<SocketAddress>> getSocketAddress(RedisURI redisURI) {
+                return firstAttempt.compareAndSet(true, false) ? () -> firstAddress : super.getSocketAddress(redisURI);
             }
 
         };
@@ -331,7 +332,6 @@ class RedisClientOptionsRaceIntegrationTests {
             StatefulRedisSentinelConnectionImpl<String, String> sentinel = (StatefulRedisSentinelConnectionImpl<String, String>) connection;
             state = sentinel.getConnectionState();
             assertThat(sentinel.sync().ping()).isEqualTo("PONG");
-            assertThat((Object) ReflectionTestUtils.getField(sentinel.reactive(), "parser")).isSameAs(expected.getJsonParser());
         } else {
             StatefulRedisConnectionImpl<String, String> standalone = (StatefulRedisConnectionImpl<String, String>) connection;
             state = standalone.getConnectionState();
@@ -341,8 +341,6 @@ class RedisClientOptionsRaceIntegrationTests {
                     expected.getReauthenticateBehaviour() == ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS);
             if (!(connection instanceof StatefulRedisPubSubConnectionImpl)) {
                 assertThat((Object) ReflectionTestUtils.getField(standalone.async(), "parser"))
-                        .isSameAs(expected.getJsonParser());
-                assertThat((Object) ReflectionTestUtils.getField(standalone.reactive(), "parser"))
                         .isSameAs(expected.getJsonParser());
             }
         }
@@ -380,13 +378,13 @@ class RedisClientOptionsRaceIntegrationTests {
         }
 
         @Override
-        protected Mono<SocketAddress> getSocketAddress(RedisURI redisURI) {
-            Mono<SocketAddress> address = super.getSocketAddress(redisURI);
+        protected Supplier<CompletionStage<SocketAddress>> getSocketAddress(RedisURI redisURI) {
+            Supplier<CompletionStage<SocketAddress>> address = super.getSocketAddress(redisURI);
             if (!redisURI.getSentinels().isEmpty()) {
-                return Mono.defer(() -> {
+                return () -> {
                     lookupStarted.complete(true);
-                    return Mono.fromFuture(lookupReady).then(address);
-                });
+                    return lookupReady.thenCompose(ready -> address.get());
+                };
             }
             return address;
         }
@@ -397,7 +395,7 @@ class RedisClientOptionsRaceIntegrationTests {
             return new StatefulRedisSentinelConnectionImpl<K, V>(writer, codec, timeout, clientOptions.getJsonParser()) {
 
                 @Override
-                public RedisSentinelReactiveCommands<K, V> reactive() {
+                public RedisSentinelAsyncCommands<K, V> async() {
                     discoveryOptions.add(getOptions());
                     discoveryProtocols.add(getConnectionState().getNegotiatedProtocolVersion());
                     RedisChannelWriter endpoint = getChannelWriter();
@@ -410,11 +408,12 @@ class RedisClientOptionsRaceIntegrationTests {
                             getOptions());
 
                     // Only the Sentinel response is stubbed; discovery still performs a real Redis handshake.
-                    return new RedisSentinelReactiveCommandsImpl<K, V>(this, codec, clientOptions.getJsonParser()) {
+                    return new RedisSentinelAsyncCommandsImpl<K, V>(this, codec) {
 
                         @Override
-                        public Mono<SocketAddress> getMasterAddrByName(K key) {
-                            return Mono.just(new InetSocketAddress(TestSettings.host(), TestSettings.port()));
+                        public RedisFuture<SocketAddress> getMasterAddrByName(K key) {
+                            return new PipelinedRedisFuture<>(CompletableFuture
+                                    .completedFuture(new InetSocketAddress(TestSettings.host(), TestSettings.port())));
                         }
 
                     };

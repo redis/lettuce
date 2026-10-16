@@ -33,7 +33,7 @@ client.setOptions(ClientOptions.builder()
 
 ### Custom connection factories
 
-Since 7.8, subclasses can override the connection factories that accept
+Since 8.0, subclasses can override the connection factories that accept
 `ClientOptions` to receive the options captured for the connection. Use that
 argument to construct custom components:
 

@@ -19,6 +19,8 @@
  */
 package io.lettuce.core.api.reactive;
 
+import io.lettuce.core.RedisReactiveCommandsImpl;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import reactor.core.publisher.Mono;
@@ -38,7 +40,7 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
         RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
         RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>,
         RedisStringReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
-        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>,
+        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K>, RedisArrayReactiveCommands<K, V>,
         RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>,
         RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
 
@@ -85,5 +87,54 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
      */
     @Deprecated
     StatefulRedisConnection<K, V> getStatefulConnection();
+
+    /**
+     * Returns the {@link CommandsFactory} that creates {@link RedisReactiveCommands}, for use with
+     * {@link io.lettuce.core.api.StatefulRedisConnection#commands(CommandsFactory)}:
+     *
+     * <pre>
+     *
+     * {
+     *     &#64;code
+     *     RedisReactiveCommands<K, V> reactive = connection.commands(RedisReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return the factory that creates {@link RedisReactiveCommands}
+     * @since 7.8
+     */
+    @SuppressWarnings("unchecked")
+    static <K, V> CommandsFactory<StatefulRedisConnection<K, V>, RedisReactiveCommands<K, V>> factory() {
+        return FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton factory so {@link #factory()} returns one shared instance (no per-call allocation); {@code factory()}
+     * re-applies {@code <K, V>}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings("rawtypes")
+        private static final CommandsFactory INSTANCE = newFactory();
+
+        /**
+         * Create the shared factory. Separate from {@code INSTANCE} so that a GraalVM native image substitution can replace it,
+         * keeping the Reactor-based implementation out of images built without Reactor.
+         *
+         * @return the factory creating {@link RedisReactiveCommands} instances.
+         */
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static CommandsFactory newFactory() {
+            return CommandsFactory.of(RedisReactiveCommands.class,
+                    (StatefulRedisConnection c) -> new RedisReactiveCommandsImpl(c, c.getCodec(),
+                            () -> c.getOptions().getJsonParser().get()));
+        }
+
+    }
 
 }

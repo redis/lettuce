@@ -1,9 +1,5 @@
 # Automatic Failover and Failback with Lettuce
 
-!!! WARNING
-    **Experimental Feature** <p>
-    This feature is experimental and may change in future versions.
-
 Lettuce supports automatic failover and failback for your Redis deployments through the `MultiDbClient`. This is useful when:
 
 1. You have more than one Redis deployment (e.g., two independent Redis servers or multiple Redis databases replicated across active-active clusters).
@@ -439,10 +435,8 @@ Listen for database switch events to monitor failover and failback:
 ### Database Switch Events
 
 ```java
-client.getResources().eventBus().get()
-        .filter(event -> event instanceof DatabaseSwitchEvent)
-        .cast(DatabaseSwitchEvent.class)
-        .subscribe(event -> log.info("Switch: {} -> {} ({})",
+client.getResources().eventBus().subscribe(DatabaseSwitchEvent.class,
+        event -> log.info("Switch: {} -> {} ({})",
                 event.getFromDb(), event.getToDb(), event.getReason()));
 ```
 
@@ -457,10 +451,8 @@ Switch reasons:
 Fired when all databases are unhealthy and no failover target is available:
 
 ```java
-client.getResources().eventBus().get()
-        .filter(event -> event instanceof AllDatabasesUnhealthyEvent)
-        .cast(AllDatabasesUnhealthyEvent.class)
-        .subscribe(event -> log.warn("All databases unhealthy! Attempts: {}, DBs: {}",
+client.getResources().eventBus().subscribe(AllDatabasesUnhealthyEvent.class,
+        event -> log.warn("All databases unhealthy! Attempts: {}, DBs: {}",
                 event.getFailedAttempts(), event.getUnhealthyDatabases()));
 ```
 

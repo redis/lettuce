@@ -3,7 +3,9 @@ package io.lettuce.core.pubsub.api.reactive;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import io.lettuce.core.pubsub.RedisPubSubReactiveCommandsImpl;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 
 /**
@@ -124,5 +126,53 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
      */
     @Deprecated
     StatefulRedisPubSubConnection<K, V> getStatefulConnection();
+
+    /**
+     * Returns the {@link PubSubCommandsFactory} that creates {@link RedisPubSubReactiveCommands}, for use with
+     * {@link io.lettuce.core.pubsub.StatefulRedisPubSubConnection#commands(PubSubCommandsFactory)}:
+     *
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     RedisPubSubReactiveCommands<K, V> reactive = connection.commands(RedisPubSubReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return the factory that creates {@link RedisPubSubReactiveCommands}
+     * @since 7.8
+     */
+    @SuppressWarnings("unchecked")
+    static <K, V> PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, RedisPubSubReactiveCommands<K, V>> factory() {
+        return FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton factory so {@link #factory()} returns one shared instance (no per-call allocation); {@code factory()}
+     * re-applies {@code <K, V>}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings("rawtypes")
+        private static final PubSubCommandsFactory INSTANCE = newFactory();
+
+        /**
+         * Create the shared factory. Separate from {@code INSTANCE} so that a GraalVM native image substitution can replace it,
+         * keeping the Reactor-based implementation out of images built without Reactor.
+         *
+         * @return the factory creating {@link RedisPubSubReactiveCommands} instances.
+         */
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static PubSubCommandsFactory newFactory() {
+            return PubSubCommandsFactory.of(RedisPubSubReactiveCommands.class,
+                    (StatefulRedisPubSubConnection c) -> new RedisPubSubReactiveCommandsImpl(c, c.getCodec()));
+        }
+
+    }
 
 }

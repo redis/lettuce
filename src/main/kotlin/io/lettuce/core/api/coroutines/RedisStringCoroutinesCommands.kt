@@ -454,12 +454,50 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * WITHMATCHLEN] is given each array representing a match will also have the length of the match.</li>
      * </ul>
      *
-     * @param lcsArgs command arguments supplied by the [LcsArgs].
+     * @param lcsArgs command arguments supplied by the [LcsArgs], including the keys set through [LcsArgs.Builder.keys].
      * @return StringMatchResult
-     * @see <a href="https://redis.io/commands/lcs">LCS command refference</a>
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
      * @since 6.6
      */
+    @Deprecated(
+        "Use [lcs(key1, key2)] or [lcs(key1, key2, lcsArgs)] instead and pass the keys directly, " +
+            "e.g. lcs(k1, k2, LcsArgs.Builder.withIdx()) instead of lcs(LcsArgs.Builder.keys(k1, k2).withIdx()). " +
+            "The keys carried by [LcsArgs] are encoded as plain strings and not through the key codec."
+    )
     suspend fun lcs(lcsArgs: LcsArgs): StringMatchResult?
+
+    /**
+     * Return the longest common substring of the values stored at `key1` and `key2`.
+     *
+     * @param key1 the first key.
+     * @param key2 the second key.
+     * @return V bulk-string-reply the longest common substring, or an empty value when the values have no common substring or
+     *         one of the keys does not exist.
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
+     * @since 7.8
+     */
+    suspend fun lcs(key1: K, key2: K): V?
+
+    /**
+     * The LCS command implements the longest common subsequence algorithm on the values stored at `key1` and `key2`.
+     *
+     * <ul>
+     * <li>Without modifiers, the string representing the longest common substring is returned.</li>
+     * <li>When [LcsArgs#justLen LEN] is given the command returns the length of the longest common substring.</li>
+     * <li>When [LcsArgs#withIdx IDX] is given the command returns an array with the LCS length and all the ranges in
+     * both the strings, start and end offset for each string, where there are matches. When [LcsArgs#withMatchLen
+     * WITHMATCHLEN] is given each array representing a match will also have the length of the match.</li>
+     * </ul>
+     *
+     * @param key1 the first key.
+     * @param key2 the second key.
+     * @param lcsArgs command arguments supplied by the [LcsArgs], must not carry keys set through the deprecated
+     *        [LcsArgs.Builder.keys].
+     * @return StringMatchResult
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
+     * @since 7.8
+     */
+    suspend fun lcs(key1: K, key2: K, lcsArgs: LcsArgs): StringMatchResult?
 
     /**
      * Get the length of the value stored in a key.
