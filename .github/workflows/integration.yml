@@ -62,6 +62,9 @@ jobs:
           export TEST_WORK_FOLDER=$REDIS_ENV_WORK_DIR
           echo $TEST_WORK_FOLDER
           ls -la $TEST_WORK_FOLDER
+          # The io_uring transport needs locked memory for its rings; the runner's default memlock limit is too low.
+          sudo prlimit --pid $$ --memlock=unlimited:unlimited
+          ulimit -l
           make test-coverage
         env:
           JVM_OPTS: -Xmx3200m
