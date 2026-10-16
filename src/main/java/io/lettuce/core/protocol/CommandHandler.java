@@ -466,6 +466,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         boolean written = false;
         try {
             attachTracingSafely(ctx, command);
+            if (queueLatencyMetricsEnabled && command.getOutput() != null && !isWriteable(command)) {
+                discardPreparedCommand(command, queuedCommand);
+                promise.trySuccess();
+                return;
+            }
             long dispatchedAt = queueLatencyMetricsEnabled ? nanoTime() : 0;
             ctx.write(command, promise);
             written = true;
@@ -538,6 +543,20 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                         discardUndispatchedStackEntry(queuedCommand);
                         pendingQueueSamples.remove(command);
                         iterator.remove();
+                    }
+                }
+            }
+
+            // A command can finish while later batch entries are being traced. Check at
+            // the final dispatch boundary so it cannot be written or timed after cancellation.
+            if (queueLatencyMetricsEnabled) {
+                Iterator<RedisCommand<?, ?, ?>> queued = queuedCommands.iterator();
+                for (Iterator<RedisCommand<?, ?, ?>> iterator = deduplicated.iterator(); iterator.hasNext();) {
+                    RedisCommand<?, ?, ?> command = iterator.next();
+                    RedisCommand<?, ?, ?> queuedCommand = queued.next();
+                    if (command.getOutput() != null && !isWriteable(command)) {
+                        iterator.remove();
+                        discardPreparedCommand(command, queuedCommand);
                     }
                 }
             }
@@ -679,6 +698,31 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             command.completeExceptionally(e);
             throw e;
         }
+    }
+
+    private void discardPreparedCommand(RedisCommand<?, ?, ?> command, RedisCommand<?, ?, ?> queuedCommand) {
+        // The same command object can have an earlier, already-dispatched attempt in
+        // the reply stack. Remove the last identity-matching entry, not the first one.
+        int lastIndex = -1;
+        int index = 0;
+        for (RedisCommand<?, ?, ?> queued : stack) {
+            if (queued == queuedCommand) {
+                lastIndex = index;
+            }
+            index++;
+        }
+        if (lastIndex != -1) {
+            Iterator<RedisCommand<?, ?, ?>> iterator = stack.iterator();
+            for (index = 0; iterator.hasNext(); index++) {
+                iterator.next();
+                if (index == lastIndex) {
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+        removePendingFlushLatency(queuedCommand);
+        pendingQueueSamples.remove(command);
     }
 
     // Remove precisely the most recent pending entry for this attempt. The same
