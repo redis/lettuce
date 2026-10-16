@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -477,6 +478,32 @@ class DefaultEndpointUnitTests {
         endpoint.write(wrapper);
         assertThat(endpoint.takeQueueLatencyStart(original)).isNull();
         assertThat(endpoint.takeQueueLatencyStart(wrapper)).isNotNull();
+    }
+
+    @Test
+    void closingEndpointClearsAdmissionLocksAndDoesNotRecreateThem() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        Command<String, String, String> accepted = new Command<>(CommandType.GET,
+                new StatusOutput<>(StringCodec.UTF8));
+
+        endpoint.write(accepted);
+
+        Map<?, ?> locks = ReflectionTestUtils.getField(endpoint, "queueingAdmissionLocks");
+        assertThat(locks).hasSize(1);
+
+        endpoint.closeAsync().join();
+        assertThat(locks).isEmpty();
+
+        Command<String, String, String> rejected = new Command<>(CommandType.GET,
+                new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(rejected);
+
+        assertThat(rejected.exception).isInstanceOf(RedisException.class)
+                .hasMessage("Connection is closed");
+        assertThat(locks).isEmpty();
     }
 
     @Test

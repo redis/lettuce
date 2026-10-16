@@ -439,6 +439,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         List<AdmissionLock> locks = new ArrayList<>();
         Set<AdmissionLock> unique = Collections.newSetFromMap(new IdentityHashMap<>());
         synchronized (queueingAdmissionLocks) {
+            // A write may have passed validateWrite just before close changed the
+            // state. Do not recreate admission locks after the close cleanup.
+            if (isClosed()) {
+                return Collections.emptyList();
+            }
+
             IdentityWeakReference collected;
             while ((collected = (IdentityWeakReference) admissionLockReferences.poll()) != null) {
                 queueingAdmissionLocks.remove(collected);
@@ -918,7 +924,16 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             cancelBufferedCommands("Close");
             if (queueingTimestamps != null) {
                 // Writes queued on the event loop must consume their timestamps before cleanup.
-                closeFuture.whenComplete((result, failure) -> queueingTimestamps.clear());
+                closeFuture.whenComplete((result, failure) -> {
+                    queueingTimestamps.clear();
+                    // No new admissions are registered after ST_CLOSED.
+                    synchronized (queueingAdmissionLocks) {
+                        queueingAdmissionLocks.clear();
+                        while (admissionLockReferences.poll() != null) {
+                            // Drain stale weak references retained by this endpoint.
+                        }
+                    }
+                });
             }
 
             Channel channel = getOpenChannel();
