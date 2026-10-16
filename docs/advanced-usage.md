@@ -461,7 +461,10 @@ reject commands when auto-reconnect is disabled.</p>
 <p><code>ACCEPT_COMMANDS</code>: Accept commands in disconnected
 state.</p>
 <p><code>REJECT_COMMANDS</code>: Reject commands in disconnected
-state.</p></td>
+state. Since 6.9, in Redis Cluster this also rejects commands for a
+node whose connection is still being established, for example the
+first commands to a node after startup. Connect to the cluster nodes
+up front if you want to avoid these rejections.</p></td>
 </tr>
 <tr>
 <td>Protocol Version</td>
