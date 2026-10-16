@@ -40,7 +40,7 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCo
         RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V>,
         RedisTransactionalCommands<K, V>, RedisJsonCommands<K, V>, RedisVectorSetCommands<K, V>, RediSearchCommands<K>,
         RedisArrayCommands<K, V>, RedisBloomFilterCommands<K, V>, RedisCuckooFilterCommands<K, V>, RedisTopKCommands<K, V>,
-        RedisCMSCommands<K, V>, RedisTDigestCommands<K, V> {
+        RedisTimeSeriesCommands<K, V>, RedisCMSCommands<K, V>, RedisTDigestCommands<K, V> {
 
     /**
      * Authenticate to the server.
