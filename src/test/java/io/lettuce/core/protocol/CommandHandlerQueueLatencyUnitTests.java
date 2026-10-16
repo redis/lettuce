@@ -341,6 +341,8 @@ class CommandHandlerQueueLatencyUnitTests {
         assertThat(tracingHandler.getStack()).hasSize(1);
         verify(context, times(1)).write(same(repeated), same(promise));
         verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), same(repeated), anyLong());
+        tracingHandler.flush(context);
+        assertThat(((WithLatency) tracingHandler.getStack().peek()).getSent()).isPositive();
     }
 
     @Test
