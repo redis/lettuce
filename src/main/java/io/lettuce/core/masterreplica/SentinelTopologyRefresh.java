@@ -22,6 +22,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -56,6 +57,8 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
 
     private final RedisClient redisClient;
 
+    private final ClientOptions clientOptions;
+
     private final List<RedisURI> sentinels;
 
     private final List<Runnable> refreshRunnables = new CopyOnWriteArrayList<>();
@@ -75,7 +78,7 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
      */
     private final String[] subscribeChannels;
 
-    SentinelTopologyRefresh(RedisClient redisClient, String masterId, List<RedisURI> sentinels) {
+    SentinelTopologyRefresh(RedisClient redisClient, String masterId, List<RedisURI> sentinels, ClientOptions clientOptions) {
 
         MessagePredicate topologyRefreshPredicate = new TopologyRefreshMessagePredicate(masterId);
         MessagePredicate sentinelReconnectPredicate = new SentinelReconnectMessagePredicate();
@@ -85,6 +88,7 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
         this.subscribeChannels = channels.toArray(new String[0]);
 
         this.redisClient = redisClient;
+        this.clientOptions = clientOptions;
         this.sentinels = LettuceLists.newList(sentinels);
         this.topologyRefresh = new PubSubMessageActionScheduler(redisClient.getResources().eventExecutorGroup(),
                 topologyRefreshPredicate);
@@ -192,7 +196,7 @@ class SentinelTopologyRefresh implements AsyncCloseable, Closeable {
             }
 
             ConnectionFuture<StatefulRedisPubSubConnection<String, String>> future = redisClient.connectPubSubAsync(CODEC,
-                    sentinel);
+                    sentinel, clientOptions);
             pubSubConnections.put(sentinel, future);
 
             future.whenComplete((connection, throwable) -> {

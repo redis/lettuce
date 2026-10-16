@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
@@ -52,6 +53,8 @@ import io.netty.util.concurrent.EventExecutorGroup;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class SentinelTopologyRefreshUnitTests {
+
+    private final ClientOptions clientOptions = ClientOptions.create();
 
     private static final RedisURI host1 = RedisURI.create("localhost", 1234);
 
@@ -86,7 +89,7 @@ class SentinelTopologyRefreshUnitTests {
     @BeforeEach
     void before() {
 
-        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host1)))
+        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host1), same(clientOptions)))
                 .thenReturn(ConnectionFuture.completed(null, connection));
         when(clientResources.eventExecutorGroup()).thenReturn(eventExecutors);
         when(redisClient.getResources()).thenReturn(clientResources);
@@ -97,7 +100,7 @@ class SentinelTopologyRefreshUnitTests {
 
         when(connection.async().subscribe(any())).thenReturn(command);
 
-        sut = new SentinelTopologyRefresh(redisClient, "mymaster", Collections.singletonList(host1));
+        sut = new SentinelTopologyRefresh(redisClient, "mymaster", Collections.singletonList(host1), clientOptions);
     }
 
     @AfterEach
@@ -112,7 +115,7 @@ class SentinelTopologyRefreshUnitTests {
 
         sut.bind(refreshRunnable);
 
-        verify(redisClient).connectPubSubAsync(any(), any());
+        verify(redisClient).connectPubSubAsync(any(), any(), same(clientOptions));
 
         // Sentinel channel names are fixed literals, so the channels the predicates can match are subscribed explicitly
         // rather than pattern-matched. PSUBSCRIBE * additionally delivered __sentinel__:hello once per second per sentinel,
@@ -176,9 +179,9 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void bindWithSecondSentinelFails() {
 
-        sut = new SentinelTopologyRefresh(redisClient, "mymaster", Arrays.asList(host1, host2));
+        sut = new SentinelTopologyRefresh(redisClient, "mymaster", Arrays.asList(host1, host2), clientOptions);
 
-        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host2)))
+        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host2), same(clientOptions)))
                 .thenReturn(ConnectionFuture.from(null, Futures.failed(new RedisConnectionException("err"))));
 
         sut.bind(refreshRunnable);
@@ -201,16 +204,16 @@ class SentinelTopologyRefreshUnitTests {
 
         when(async2.subscribe(any())).thenReturn(command);
 
-        sut = new SentinelTopologyRefresh(redisClient, "mymaster", Arrays.asList(host1, host2));
+        sut = new SentinelTopologyRefresh(redisClient, "mymaster", Arrays.asList(host1, host2), clientOptions);
 
-        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host2)))
+        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host2), same(clientOptions)))
                 .thenReturn(ConnectionFuture.from(null, Futures.failed(new RedisConnectionException("err"))))
                 .thenReturn(ConnectionFuture.completed(null, connection2));
 
         sut.bind(refreshRunnable);
 
-        verify(redisClient).connectPubSubAsync(any(), eq(host1));
-        verify(redisClient).connectPubSubAsync(any(), eq(host2));
+        verify(redisClient).connectPubSubAsync(any(), eq(host1), same(clientOptions));
+        verify(redisClient).connectPubSubAsync(any(), eq(host2), same(clientOptions));
 
         Map<RedisURI, StatefulRedisPubSubConnection<String, String>> connections = (Map) ReflectionTestUtils.getField(sut,
                 "pubSubConnections");
@@ -223,7 +226,7 @@ class SentinelTopologyRefreshUnitTests {
         verify(eventExecutors, times(1)).schedule(captor.capture(), anyLong(), any());
         captor.getValue().run();
 
-        verify(redisClient, times(2)).connectPubSubAsync(any(), eq(host2));
+        verify(redisClient, times(2)).connectPubSubAsync(any(), eq(host2), same(clientOptions));
         assertThat(connections).containsKey(host1).containsKey(host2).hasSize(2);
         verify(refreshRunnable, never()).run();
     }
@@ -231,13 +234,13 @@ class SentinelTopologyRefreshUnitTests {
     @Test
     void bindDuringClose() {
 
-        sut = new SentinelTopologyRefresh(redisClient, "mymaster", Arrays.asList(host1, host2));
+        sut = new SentinelTopologyRefresh(redisClient, "mymaster", Arrays.asList(host1, host2), clientOptions);
 
         StatefulRedisPubSubConnection<String, String> connection2 = mock(StatefulRedisPubSubConnection.class);
         when(connection.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
         when(connection2.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
 
-        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host2))).thenAnswer(invocation -> {
+        when(redisClient.connectPubSubAsync(any(StringCodec.class), eq(host2), same(clientOptions))).thenAnswer(invocation -> {
 
             sut.closeAsync();
             return ConnectionFuture.completed(null, connection2);
@@ -245,7 +248,7 @@ class SentinelTopologyRefreshUnitTests {
 
         sut.bind(refreshRunnable);
 
-        verify(redisClient).connectPubSubAsync(any(), eq(host2));
+        verify(redisClient).connectPubSubAsync(any(), eq(host2), same(clientOptions));
         verify(connection).closeAsync();
         verify(connection2).closeAsync();
 
@@ -285,7 +288,7 @@ class SentinelTopologyRefreshUnitTests {
         adapter.handle("*", "*", "irrelevant");
 
         verify(redisClient, times(3)).getResources();
-        verify(redisClient).connectPubSubAsync(any(), any());
+        verify(redisClient).connectPubSubAsync(any(), any(), same(clientOptions));
         verifyNoMoreInteractions(redisClient);
     }
 
@@ -442,7 +445,7 @@ class SentinelTopologyRefreshUnitTests {
 
         adapter.handle("*", "failover-end-for-timeout", "");
 
-        verify(redisClient).connectPubSubAsync(any(), any());
+        verify(redisClient).connectPubSubAsync(any(), any(), same(clientOptions));
         verify(eventExecutors, never()).schedule(any(Runnable.class), anyLong(), any());
     }
 
