@@ -466,7 +466,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             connectionWatchdog.arm();
         }
 
-        Runnable activate = () -> {
+        sharedLock.doExclusive(() -> {
             this.channel = channel;
 
             try {
@@ -499,14 +499,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
                 throw e;
             }
-        };
-
-        try {
-            sharedLock.doExclusive(activate);
-        } catch (RedisException e) {
-            logger.warn("{} Failed to acquire exclusive lock during notifyChannelActive, activating directly", logPrefix(), e);
-            activate.run();
-        }
+        });
     }
 
     @Override
@@ -517,19 +510,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             cancelCommands("Connection closed", drainCommands(), it -> it.completeExceptionally(lazy.get()));
         }
 
-        try {
-            sharedLock.doExclusive(() -> {
+        sharedLock.doExclusive(() -> {
 
-                if (debugEnabled) {
-                    logger.debug("{} deactivating endpoint handler", logPrefix());
-                }
+            if (debugEnabled) {
+                logger.debug("{} deactivating endpoint handler", logPrefix());
+            }
 
-                connectionFacade.deactivated();
-            });
-        } catch (RedisException e) {
-            logger.warn("{} Failed to acquire exclusive lock during channelInactive, forcing deactivation", logPrefix(), e);
             connectionFacade.deactivated();
-        }
+        });
 
         if (this.channel == channel) {
             this.channel = null;
@@ -542,13 +530,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         if (t instanceof RedisConnectionException && RedisConnectionException.isProtectedMode(t.getMessage())) {
 
             connectionError = t;
-            try {
-                doExclusive(this::drainCommands).forEach(cmd -> cmd.completeExceptionally(t));
-            } catch (RedisException e) {
-                logger.warn("{} Failed to acquire exclusive lock during notifyException, draining commands directly",
-                        logPrefix(), e);
-                drainCommands().forEach(cmd -> cmd.completeExceptionally(t));
-            }
+            doExclusive(this::drainCommands).forEach(cmd -> cmd.completeExceptionally(t));
         }
 
         if (!isConnected(this.channel)) {
@@ -575,21 +557,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         if (isConnected(channel)) {
 
-            List<RedisCommand<?, ?, ?>> commands;
-            try {
-                commands = sharedLock.doExclusive(() -> {
+            List<RedisCommand<?, ?, ?>> commands = sharedLock.doExclusive(() -> {
 
-                    if (queue.isEmpty()) {
-                        return Collections.emptyList();
-                    }
+                if (queue.isEmpty()) {
+                    return Collections.emptyList();
+                }
 
-                    return drainCommands(queue);
-                });
-            } catch (RedisException e) {
-                logger.warn("{} Failed to acquire exclusive lock during flushCommands, draining commands directly", logPrefix(),
-                        e);
-                commands = drainCommands(queue);
-            }
+                return drainCommands(queue);
+            });
 
             if (debugEnabled) {
                 logger.debug("{} flushCommands() Flushing {} commands", logPrefix(), commands.size());
@@ -633,16 +608,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
             try {
                 cancelBufferedCommands("Close");
-            } catch (Exception e) {
-                logger.warn("{} Failed to cancel buffered commands during close", logPrefix(), e);
-            }
+            } finally {
+                Channel channel = getOpenChannel();
 
-            Channel channel = getOpenChannel();
-
-            if (channel != null) {
-                Futures.adapt(channel.close(), closeFuture);
-            } else {
-                closeFuture.complete(null);
+                if (channel != null) {
+                    Futures.adapt(channel.close(), closeFuture);
+                } else {
+                    closeFuture.complete(null);
+                }
             }
         }
 
@@ -706,48 +679,40 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return;
         }
 
-        try {
-            sharedLock.doExclusive(() -> {
+        sharedLock.doExclusive(() -> {
 
-                Collection<RedisCommand<?, ?, ?>> commands = queuedCommands.drainQueue();
+            Collection<RedisCommand<?, ?, ?>> commands = queuedCommands.drainQueue();
+
+            if (debugEnabled) {
+                logger.debug("{} notifyQueuedCommands adding {} command(s) to buffer", logPrefix(), commands.size());
+            }
+
+            drainCommands(disconnectedBuffer, commands);
+
+            for (RedisCommand<?, ?, ?> command : commands) {
+
+                if (command instanceof DemandAware.Sink) {
+                    ((DemandAware.Sink) command).removeSource();
+                }
+            }
+
+            try {
+                disconnectedBuffer.addAll(commands);
+            } catch (RuntimeException e) {
 
                 if (debugEnabled) {
-                    logger.debug("{} notifyQueuedCommands adding {} command(s) to buffer", logPrefix(), commands.size());
+                    logger.debug("{} notifyQueuedCommands Queue overcommit. Cannot add all commands to buffer (disconnected).",
+                            logPrefix(), commands.size());
                 }
-
-                drainCommands(disconnectedBuffer, commands);
+                commands.removeAll(disconnectedBuffer);
 
                 for (RedisCommand<?, ?, ?> command : commands) {
-
-                    if (command instanceof DemandAware.Sink) {
-                        ((DemandAware.Sink) command).removeSource();
-                    }
+                    command.completeExceptionally(e);
                 }
+            }
 
-                try {
-                    disconnectedBuffer.addAll(commands);
-                } catch (RuntimeException e) {
-
-                    if (debugEnabled) {
-                        logger.debug(
-                                "{} notifyQueuedCommands Queue overcommit. Cannot add all commands to buffer (disconnected).",
-                                logPrefix(), commands.size());
-                    }
-                    commands.removeAll(disconnectedBuffer);
-
-                    for (RedisCommand<?, ?, ?> command : commands) {
-                        command.completeExceptionally(e);
-                    }
-                }
-
-                flushCommands(this.channel, disconnectedBuffer);
-            });
-        } catch (RedisException e) {
-            logger.warn(
-                    "{} Failed to acquire exclusive lock during notifyDrainQueuedCommands, completing drained commands exceptionally",
-                    logPrefix(), e);
-            queuedCommands.drainQueue().forEach(cmd -> cmd.completeExceptionally(e));
-        }
+            flushCommands(this.channel, disconnectedBuffer);
+        });
     }
 
     public boolean isClosed() {
@@ -814,13 +779,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     }
 
     private void cancelBufferedCommands(String message) {
-        try {
-            cancelCommands(message, doExclusive(this::drainCommands), RedisCommand::cancel);
-        } catch (RedisException e) {
-            logger.warn("{} Failed to acquire exclusive lock during cancelBufferedCommands, draining commands directly",
-                    logPrefix(), e);
-            cancelCommands(message, drainCommands(), RedisCommand::cancel);
-        }
+        cancelCommands(message, doExclusive(this::drainCommands), RedisCommand::cancel);
     }
 
     private void cancelCommands(String message, Iterable<? extends RedisCommand<?, ?, ?>> toCancel,
