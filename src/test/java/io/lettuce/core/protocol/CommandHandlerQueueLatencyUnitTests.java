@@ -102,6 +102,21 @@ class CommandHandlerQueueLatencyUnitTests {
     }
 
     @Test
+    void separateAcceptedWritesOfSameInstanceEachRecordQueueLatency() throws Exception {
+        Command<String, String, String> reused = command();
+        // Accept two independent writes before either reaches the event loop.
+        endpoint.write(reused);
+        endpoint.write(reused);
+
+        handler.write(context, reused, promise);
+        handler.write(context, reused, promise);
+
+        assertThat(handler.getStack()).hasSize(2);
+        verify(recorder, times(2)).recordCommandQueueLatency(any(), any(), any(), anyLong());
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+    }
+
+    @Test
     void inFlightReplayDoesNotRecordASecondSample() throws Exception {
         Command<String, String, String> command = command();
         endpoint.write(command);
