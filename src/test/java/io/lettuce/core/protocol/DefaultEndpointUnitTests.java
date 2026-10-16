@@ -18,6 +18,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -148,6 +150,64 @@ class DefaultEndpointUnitTests {
         // A redirected attempt passes through write() again and gets a new start time.
         endpoint.write(queued);
         assertThat(endpoint.takeQueueLatencyStart(queued)).isNotNull();
+    }
+
+    @Test
+    void simultaneousWritersOfSameCommandCannotInvertEnqueueOrder() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        CountDownLatch firstWriterPaused = new CountDownLatch(1);
+        CountDownLatch releaseFirstWriter = new CountDownLatch(1);
+        CountDownLatch secondWriterStarted = new CountDownLatch(1);
+        AtomicInteger filterCalls = new AtomicInteger();
+        AtomicBoolean secondWriterOvertookFirst = new AtomicBoolean();
+        ClientOptions options = ClientOptions.builder().replayFilter(cmd -> {
+            int visit = filterCalls.incrementAndGet();
+            if (visit == 1) {
+                firstWriterPaused.countDown();
+                try {
+                    if (!releaseFirstWriter.await(5, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("Timed out waiting for the first writer");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+            } else if (releaseFirstWriter.getCount() != 0) {
+                secondWriterOvertookFirst.set(true);
+            }
+            return false;
+        }).build();
+        DefaultEndpoint endpoint = new DefaultEndpoint(options, clientResources);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
+
+        try {
+            CompletableFuture<Void> first = CompletableFuture.runAsync(() -> endpoint.write(reused), executor);
+            assertThat(firstWriterPaused.await(5, TimeUnit.SECONDS)).isTrue();
+
+            CompletableFuture<Void> second = CompletableFuture.runAsync(() -> {
+                secondWriterStarted.countDown();
+                endpoint.write(reused);
+            }, executor);
+            assertThat(secondWriterStarted.await(5, TimeUnit.SECONDS)).isTrue();
+
+            // The second submission cannot pass the first in its acceptance/enqueue phase.
+            Thread.sleep(100);
+            assertThat(filterCalls.get()).isEqualTo(1);
+            releaseFirstWriter.countDown();
+            CompletableFuture.allOf(first, second).get(5, TimeUnit.SECONDS);
+
+            assertThat(secondWriterOvertookFirst.get()).isFalse();
+            assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(reused, reused);
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+        } finally {
+            releaseFirstWriter.countDown();
+            executor.shutdownNow();
+        }
     }
 
     @Test
