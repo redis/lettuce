@@ -288,7 +288,9 @@ class CommandHandlerQueueLatencyUnitTests {
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(context).write(captor.capture(), same(promise));
-        assertThat((Collection<?>) captor.getValue()).containsExactly(dispatched);
+        Collection<?> submitted = (Collection<?>) captor.getValue();
+        assertThat(submitted).hasSize(1);
+        assertThat(submitted.iterator().next()).isSameAs(dispatched);
         assertThat(tracingHandler.getStack()).hasSize(1);
         verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(), anyLong());
         assertThat(endpoint.takeQueueLatencyStart(cancelled)).isNull();
