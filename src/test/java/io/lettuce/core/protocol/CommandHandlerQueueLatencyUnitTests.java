@@ -254,6 +254,47 @@ class CommandHandlerQueueLatencyUnitTests {
     }
 
     @Test
+    void cancellationDuringLaterBatchTracingIsExcludedFromDispatch() throws Exception {
+        Tracing tracing = mock(Tracing.class);
+        TraceContextProvider provider = mock(TraceContextProvider.class);
+        TraceContext traceContext = mock(TraceContext.class);
+        Tracer tracer = mock(Tracer.class);
+        Tracer.Span span = mock(Tracer.Span.class);
+        when(tracing.isEnabled()).thenReturn(true);
+        when(tracing.initialTraceContextProvider()).thenReturn(provider);
+        when(provider.getTraceContext()).thenReturn(traceContext);
+        when(tracing.getTracerProvider()).thenReturn(() -> tracer);
+        when(tracer.nextSpan(traceContext)).thenReturn(span);
+        when(tracing.createEndpoint(any())).thenReturn(mock(Tracing.Endpoint.class));
+        when(span.name(any())).thenReturn(span);
+
+        when(resources.tracing()).thenReturn(tracing);
+        CommandHandler tracingHandler = new CommandHandler(ClientOptions.create(), resources, endpoint);
+        tracingHandler.channelRegistered(context);
+
+        AsyncCommand<String, String, String> cancelled = new AsyncCommand<>(command());
+        AsyncCommand<String, String, String> dispatched = new AsyncCommand<>(command());
+        endpoint.write(Arrays.asList(cancelled, dispatched));
+
+        doAnswer(invocation -> {
+            if (invocation.getArgument(0) == dispatched) {
+                cancelled.cancel();
+            }
+            return null;
+        }).when(span).start(any());
+
+        tracingHandler.write(context, Arrays.asList(cancelled, dispatched), promise);
+        tracingHandler.flush(context);
+
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(context).write(captor.capture(), same(promise));
+        assertThat((Collection<?>) captor.getValue()).containsExactly(dispatched);
+        assertThat(tracingHandler.getStack()).hasSize(1);
+        verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(), anyLong());
+        assertThat(endpoint.takeQueueLatencyStart(cancelled)).isNull();
+    }
+
+    @Test
     void cancelledBeforeDispatchDoesNotRecordAQueueSample() throws Exception {
         Command<String, String, String> command = command();
         endpoint.write(command);

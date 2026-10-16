@@ -526,6 +526,22 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 }
             }
 
+            if (queueLatencyMetricsEnabled) {
+                // An earlier command can expire while a later command's tracing is
+                // prepared. A terminal command must not be sent or sampled.
+                Iterator<RedisCommand<?, ?, ?>> iterator = deduplicated.iterator();
+                int queuedIndex = 0;
+                while (iterator.hasNext()) {
+                    RedisCommand<?, ?, ?> command = iterator.next();
+                    RedisCommand<?, ?, ?> queuedCommand = queuedCommands.get(queuedIndex++);
+                    if (command.getOutput() != null && !isWriteable(command)) {
+                        discardUndispatchedStackEntry(queuedCommand);
+                        pendingQueueSamples.remove(command);
+                        iterator.remove();
+                    }
+                }
+            }
+
             if (!deduplicated.isEmpty()) {
                 long dispatchedAt = queueLatencyMetricsEnabled ? nanoTime() : 0;
                 ctx.write(deduplicated, promise);
@@ -548,6 +564,30 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 pendingQueueSamples.remove(command);
             }
         }
+    }
+
+    // Remove the most recently queued occurrence by identity. An earlier
+    // attempt of the same command instance may already be awaiting a reply.
+    private void discardUndispatchedStackEntry(RedisCommand<?, ?, ?> queuedCommand) {
+        int lastIndex = -1;
+        int index = 0;
+        for (RedisCommand<?, ?, ?> entry : stack) {
+            if (entry == queuedCommand) {
+                lastIndex = index;
+            }
+            index++;
+        }
+        if (lastIndex >= 0) {
+            Iterator<RedisCommand<?, ?, ?>> iterator = stack.iterator();
+            for (index = 0; iterator.hasNext(); index++) {
+                iterator.next();
+                if (index == lastIndex) {
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+        removePendingFlushLatency(queuedCommand);
     }
 
     private void attachTracingSafely(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
