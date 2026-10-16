@@ -465,7 +465,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         boolean written = false;
         try {
-            attachTracing(ctx, command);
+            attachTracingSafely(ctx, command);
             long dispatchedAt = queueLatencyMetricsEnabled ? nanoTime() : 0;
             ctx.write(command, promise);
             written = true;
@@ -520,8 +520,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 if (queuedCommand == null) {
                     iterator.remove();
                 } else {
-                    attachTracing(ctx, command);
+                    // Track the current entry before invoking any user-supplied tracing code.
                     queuedCommands.add(queuedCommand);
+                    attachTracingSafely(ctx, command);
                 }
             }
 
@@ -546,6 +547,15 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             for (RedisCommand<?, ?, ?> command : deduplicated) {
                 pendingQueueSamples.remove(command);
             }
+        }
+    }
+
+    private void attachTracingSafely(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
+        // Tracing is auxiliary. Failures must not leave a queued command without a write.
+        try {
+            attachTracing(ctx, command);
+        } catch (Exception e) {
+            logger.warn("{} Failed to attach command tracing", logPrefix(), e);
         }
     }
 
@@ -675,16 +685,22 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private void recordQueueLatencyAfterWrite(RedisCommand<?, ?, ?> command, long dispatchedAt) {
 
-        Long acceptedAt = pendingQueueSamples.remove(command);
-        if (acceptedAt == null || channel == null || remote() == null) {
-            return;
-        }
+        // The outbound write has already been accepted. A metrics failure must not fail
+        // the Netty promise and remove a command whose bytes may still be on the wire.
+        try {
+            Long acceptedAt = pendingQueueSamples.remove(command);
+            if (acceptedAt == null || channel == null || remote() == null) {
+                return;
+            }
 
-        // Capture dispatch before outbound handlers synchronously encode the command.
-        // Publish the sample only after ctx.write returns without throwing.
-        long queueLatency = dispatchedAt - acceptedAt;
-        if (queueLatency >= 0) {
-            commandLatencyRecorder.recordCommandQueueLatency(local(), remote(), command, queueLatency);
+            // Capture dispatch before outbound handlers synchronously encode the command.
+            // Publish the sample only after ctx.write returns without throwing.
+            long queueLatency = dispatchedAt - acceptedAt;
+            if (queueLatency >= 0) {
+                commandLatencyRecorder.recordCommandQueueLatency(local(), remote(), command, queueLatency);
+            }
+        } catch (Exception e) {
+            logger.warn("{} Failed to record command queue latency", logPrefix(), e);
         }
     }
 
