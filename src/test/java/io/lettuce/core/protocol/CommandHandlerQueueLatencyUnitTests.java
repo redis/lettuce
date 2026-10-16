@@ -235,6 +235,85 @@ class CommandHandlerQueueLatencyUnitTests {
         verify(context).write(any(), any());
     }
 
+
+    @Test
+    void failedSingleWriteDoesNotGetNetworkTimestampOnLaterFlush() throws Exception {
+        Command<String, String, String> accepted = command();
+        Command<String, String, String> rejected = command();
+        endpoint.write(Arrays.asList(accepted, rejected));
+
+        handler.write(context, accepted, promise);
+        WithLatency acceptedTiming = (WithLatency) handler.getStack().peek();
+
+        doAnswer(invocation -> {
+            throw new IllegalStateException("transport refused write");
+        }).when(context).write(org.mockito.ArgumentMatchers.same(rejected), any());
+
+        assertThatThrownBy(() -> handler.write(context, rejected, promise))
+                .isInstanceOf(IllegalStateException.class);
+        WithLatency rejectedTiming = (WithLatency) handler.getStack().toArray()[1];
+        assertThat(acceptedTiming.getSent()).isZero();
+        assertThat(rejectedTiming.getSent()).isZero();
+
+        handler.flush(context);
+
+        assertThat(acceptedTiming.getSent()).isPositive();
+        assertThat(rejectedTiming.getSent()).isZero();
+        verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(), anyLong());
+    }
+
+    @Test
+    void failedBatchWriteDoesNotTimestampItsCommandsOrEarlierSuccessfulWrites() throws Exception {
+        Command<String, String, String> accepted = command();
+        Command<String, String, String> rejectedOne = command();
+        Command<String, String, String> rejectedTwo = command();
+        endpoint.write(Arrays.asList(accepted, rejectedOne, rejectedTwo));
+
+        handler.write(context, accepted, promise);
+        WithLatency acceptedTiming = (WithLatency) handler.getStack().peek();
+
+        doAnswer(invocation -> {
+            throw new IllegalStateException("batch transport refused write");
+        }).when(context).write(org.mockito.ArgumentMatchers.argThat(value -> value instanceof java.util.Collection), any());
+
+        assertThatThrownBy(() -> handler.write(context, Arrays.asList(rejectedOne, rejectedTwo), promise))
+                .isInstanceOf(IllegalStateException.class);
+
+        Object[] stacked = handler.getStack().toArray();
+        WithLatency firstRejectedTiming = (WithLatency) stacked[1];
+        WithLatency secondRejectedTiming = (WithLatency) stacked[2];
+
+        handler.flush(context);
+
+        assertThat(acceptedTiming.getSent()).isPositive();
+        assertThat(firstRejectedTiming.getSent()).isZero();
+        assertThat(secondRejectedTiming.getSent()).isZero();
+        verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(), anyLong());
+    }
+
+    @Test
+    void successfulWriteAfterFailedBatchStillGetsNetworkTimestamp() throws Exception {
+        Command<String, String, String> rejectedOne = command();
+        Command<String, String, String> rejectedTwo = command();
+        Command<String, String, String> acceptedLater = command();
+        endpoint.write(Arrays.asList(rejectedOne, rejectedTwo, acceptedLater));
+
+        doAnswer(invocation -> {
+            throw new IllegalStateException("batch transport refused write");
+        }).when(context).write(org.mockito.ArgumentMatchers.argThat(value -> value instanceof java.util.Collection), any());
+
+        assertThatThrownBy(() -> handler.write(context, Arrays.asList(rejectedOne, rejectedTwo), promise))
+                .isInstanceOf(IllegalStateException.class);
+        handler.write(context, acceptedLater, promise);
+
+        Object[] stacked = handler.getStack().toArray();
+        handler.flush(context);
+        assertThat(((WithLatency) stacked[0]).getSent()).isZero();
+        assertThat(((WithLatency) stacked[1]).getSent()).isZero();
+        assertThat(((WithLatency) stacked[2]).getSent()).isPositive();
+        verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), any(), anyLong());
+    }
+
     @Test
     void noQueueSampleWhenTransportWriteThrows() throws Exception {
         Command<String, String, String> command = command();
