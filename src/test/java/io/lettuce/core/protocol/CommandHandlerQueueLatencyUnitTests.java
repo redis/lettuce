@@ -234,7 +234,7 @@ class CommandHandlerQueueLatencyUnitTests {
         CommandHandler tracingHandler = new CommandHandler(ClientOptions.create(), resources, endpoint);
         tracingHandler.channelRegistered(context);
 
-        AsyncCommand<String, String, String> cancelled = new AsyncCommand<>(command()) {
+        AsyncCommand<String, String, String> cancelled = new AsyncCommand<String, String, String>(command()) {
             @Override
             public CommandOutput<String, String, String> getOutput() {
                 cancel();
