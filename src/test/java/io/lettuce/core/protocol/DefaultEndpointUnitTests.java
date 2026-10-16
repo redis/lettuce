@@ -171,6 +171,26 @@ class DefaultEndpointUnitTests {
     }
 
     @Test
+    void rejectingLaterAttemptPreservesEarlierAcceptedTimestamp() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        AtomicLong attempts = new AtomicLong();
+        ClientOptions options = ClientOptions.builder()
+                .replayFilter(command -> attempts.incrementAndGet() == 2)
+                .build();
+        DefaultEndpoint endpoint = new DefaultEndpoint(options, clientResources);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        endpoint.write(reused);
+        endpoint.write(reused); // The replay filter rejects this later attempt.
+
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(reused);
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+    }
+
+    @Test
     void separateManualFlushWritesKeepBothQueueTimestamps() {
         CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
