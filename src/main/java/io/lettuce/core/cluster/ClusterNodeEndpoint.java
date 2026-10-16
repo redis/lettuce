@@ -52,7 +52,13 @@ class ClusterNodeEndpoint extends DefaultEndpoint {
         logger.debug("{} closeAsync()", logPrefix());
 
         if (clusterChannelWriter != null) {
-            retriggerCommands(doExclusive(this::drainCommands));
+            try {
+                retriggerCommands(doExclusive(this::drainCommands));
+            } catch (RedisException e) {
+                logger.warn("{} Failed to acquire exclusive lock during closeAsync, draining commands directly", logPrefix(),
+                        e);
+                retriggerCommands(drainCommands());
+            }
         }
 
         return super.closeAsync();

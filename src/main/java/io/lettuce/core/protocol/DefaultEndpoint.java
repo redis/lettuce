@@ -510,14 +510,19 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             cancelCommands("Connection closed", drainCommands(), it -> it.completeExceptionally(lazy.get()));
         }
 
-        sharedLock.doExclusive(() -> {
+        try {
+            sharedLock.doExclusive(() -> {
 
-            if (debugEnabled) {
-                logger.debug("{} deactivating endpoint handler", logPrefix());
-            }
+                if (debugEnabled) {
+                    logger.debug("{} deactivating endpoint handler", logPrefix());
+                }
 
+                connectionFacade.deactivated();
+            });
+        } catch (RedisException e) {
+            logger.warn("{} Failed to acquire exclusive lock during channelInactive, forcing deactivation", logPrefix(), e);
             connectionFacade.deactivated();
-        });
+        }
 
         if (this.channel == channel) {
             this.channel = null;
@@ -530,7 +535,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         if (t instanceof RedisConnectionException && RedisConnectionException.isProtectedMode(t.getMessage())) {
 
             connectionError = t;
-            doExclusive(this::drainCommands).forEach(cmd -> cmd.completeExceptionally(t));
+            try {
+                doExclusive(this::drainCommands).forEach(cmd -> cmd.completeExceptionally(t));
+            } catch (RedisException e) {
+                logger.warn("{} Failed to acquire exclusive lock during notifyException, draining commands directly",
+                        logPrefix(), e);
+                drainCommands().forEach(cmd -> cmd.completeExceptionally(t));
+            }
         }
 
         if (!isConnected(this.channel)) {
@@ -677,40 +688,48 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return;
         }
 
-        sharedLock.doExclusive(() -> {
+        try {
+            sharedLock.doExclusive(() -> {
 
-            Collection<RedisCommand<?, ?, ?>> commands = queuedCommands.drainQueue();
-
-            if (debugEnabled) {
-                logger.debug("{} notifyQueuedCommands adding {} command(s) to buffer", logPrefix(), commands.size());
-            }
-
-            drainCommands(disconnectedBuffer, commands);
-
-            for (RedisCommand<?, ?, ?> command : commands) {
-
-                if (command instanceof DemandAware.Sink) {
-                    ((DemandAware.Sink) command).removeSource();
-                }
-            }
-
-            try {
-                disconnectedBuffer.addAll(commands);
-            } catch (RuntimeException e) {
+                Collection<RedisCommand<?, ?, ?>> commands = queuedCommands.drainQueue();
 
                 if (debugEnabled) {
-                    logger.debug("{} notifyQueuedCommands Queue overcommit. Cannot add all commands to buffer (disconnected).",
-                            logPrefix(), commands.size());
+                    logger.debug("{} notifyQueuedCommands adding {} command(s) to buffer", logPrefix(), commands.size());
                 }
-                commands.removeAll(disconnectedBuffer);
+
+                drainCommands(disconnectedBuffer, commands);
 
                 for (RedisCommand<?, ?, ?> command : commands) {
-                    command.completeExceptionally(e);
-                }
-            }
 
-            flushCommands(this.channel, disconnectedBuffer);
-        });
+                    if (command instanceof DemandAware.Sink) {
+                        ((DemandAware.Sink) command).removeSource();
+                    }
+                }
+
+                try {
+                    disconnectedBuffer.addAll(commands);
+                } catch (RuntimeException e) {
+
+                    if (debugEnabled) {
+                        logger.debug(
+                                "{} notifyQueuedCommands Queue overcommit. Cannot add all commands to buffer (disconnected).",
+                                logPrefix(), commands.size());
+                    }
+                    commands.removeAll(disconnectedBuffer);
+
+                    for (RedisCommand<?, ?, ?> command : commands) {
+                        command.completeExceptionally(e);
+                    }
+                }
+
+                flushCommands(this.channel, disconnectedBuffer);
+            });
+        } catch (RedisException e) {
+            logger.warn(
+                    "{} Failed to acquire exclusive lock during notifyDrainQueuedCommands, completing drained commands exceptionally",
+                    logPrefix(), e);
+            queuedCommands.drainQueue().forEach(cmd -> cmd.completeExceptionally(e));
+        }
     }
 
     public boolean isClosed() {

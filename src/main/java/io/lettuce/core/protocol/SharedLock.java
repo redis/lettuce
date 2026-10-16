@@ -1,5 +1,8 @@
 package io.lettuce.core.protocol;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.time.Duration;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
@@ -37,6 +40,18 @@ class SharedLock {
 
     private static final AtomicLongFieldUpdater<SharedLock> WRITERS = AtomicLongFieldUpdater.newUpdater(SharedLock.class,
             "writers");
+
+    private static final MethodHandle ON_SPIN_WAIT_HANDLE;
+
+    static {
+        MethodHandle handle = null;
+        try {
+            handle = MethodHandles.lookup().findStatic(Thread.class, "onSpinWait", MethodType.methodType(void.class));
+        } catch (Throwable ignored) {
+            handle = null;
+        }
+        ON_SPIN_WAIT_HANDLE = handle;
+    }
 
     private final Lock lock = new ReentrantLock();
 
@@ -168,7 +183,7 @@ class SharedLock {
                     return;
                 }
 
-                Thread.onSpinWait();
+                spinWait();
 
                 if (System.nanoTime() >= deadline) {
                     throw new RedisException(
@@ -178,6 +193,17 @@ class SharedLock {
         } finally {
             lock.unlock();
         }
+    }
+
+    private static void spinWait() {
+        if (ON_SPIN_WAIT_HANDLE != null) {
+            try {
+                ON_SPIN_WAIT_HANDLE.invokeExact();
+                return;
+            } catch (Throwable ignored) {
+            }
+        }
+        Thread.yield();
     }
 
     /**
