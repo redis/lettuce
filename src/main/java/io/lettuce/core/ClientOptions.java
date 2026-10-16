@@ -46,6 +46,7 @@ import reactor.core.publisher.Mono;
  * @author Mark Paluch
  * @author Gavin Cook
  * @author Jim Brunner
+ * @author Vaibhav Vashisht
  */
 @SuppressWarnings("serial")
 public class ClientOptions implements Serializable {
@@ -630,6 +631,26 @@ public class ClientOptions implements Serializable {
      */
     public DisconnectedBehavior getDisconnectedBehavior() {
         return disconnectedBehavior;
+    }
+
+    /**
+     * Whether commands should be rejected while the underlying connection is not currently connected, derived from
+     * {@link #getDisconnectedBehavior()} and {@link #isAutoReconnect()}.
+     *
+     * @return {@code true} if commands should be rejected while disconnected.
+     * @since 6.9.0
+     */
+    public boolean isRejectCommandsWhileDisconnected() {
+
+        switch (disconnectedBehavior) {
+            case REJECT_COMMANDS:
+                return true;
+            case ACCEPT_COMMANDS:
+                return false;
+            case DEFAULT:
+            default:
+                return !autoReconnect;
+        }
     }
 
     /**
