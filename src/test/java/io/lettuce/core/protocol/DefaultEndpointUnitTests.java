@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.nio.channels.ClosedChannelException;
+import java.util.ArrayDeque;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -610,7 +611,9 @@ class DefaultEndpointUnitTests {
         Command<String, String, String> retained = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         endpoint.setAutoFlushCommands(false);
         endpoint.write(retained);
-        Queue<RedisCommand<?, ?, ?>> queued = LettuceFactories.newConcurrentQueue(1);
+        // The transfer queue must accept both drained buffers. Only the destination
+        // disconnected buffer is bounded, so the overcommit happens in addAll().
+        Queue<RedisCommand<?, ?, ?>> queued = new ArrayDeque<>();
         queued.addAll(endpoint.drainCommands());
 
         // Put a second tracked command in the disconnected buffer. Moving both into a
