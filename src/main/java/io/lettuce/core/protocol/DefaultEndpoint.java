@@ -228,6 +228,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         try {
             acquiredAdmissionLocks = acquireAdmissionLocks(command);
 
+            // Waiting for another attempt can temporarily release the SharedLock writer
+            // reservation. Close can finish during that gap, so recheck after admission.
+            if (isClosed()) {
+                command.completeExceptionally(new RedisException("Connection is closed"));
+                return command;
+            }
+
             if (inActivation) {
                 command = processActivationCommand(command);
             }
@@ -304,6 +311,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         try {
             acquiredAdmissionLocks = acquireAdmissionLocks(commands);
+
+            // A close may run while this batch waits for a command admission lock.
+            // Never enqueue the resumed batch after the endpoint was closed.
+            if (isClosed()) {
+                RedisException closed = new RedisException("Connection is closed");
+                commands.forEach(it -> it.completeExceptionally(closed));
+                return (Collection<RedisCommand<K, V, ?>>) commands;
+            }
 
             if (inActivation) {
                 commands = processActivationCommands(commands);
