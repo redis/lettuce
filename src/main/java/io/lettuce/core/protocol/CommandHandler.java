@@ -468,6 +468,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             attachTracingSafely(ctx, command);
             if (queueLatencyMetricsEnabled && command.getOutput() != null && !isWriteable(command)) {
                 discardPreparedCommand(command, queuedCommand);
+                written = true; // Cancellation was handled; do not remove an earlier flush entry in finally.
                 promise.trySuccess();
                 return;
             }
@@ -557,6 +558,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                     if (command.getOutput() != null && !isWriteable(command)) {
                         iterator.remove();
                         discardPreparedCommand(command, queuedCommand);
+                        queued.remove(); // Do not clean this attempt again in the failure handler.
                     }
                 }
             }
