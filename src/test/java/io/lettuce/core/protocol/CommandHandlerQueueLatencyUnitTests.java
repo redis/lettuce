@@ -10,7 +10,9 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -21,6 +23,7 @@ import static org.mockito.Mockito.when;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -157,7 +160,7 @@ class CommandHandlerQueueLatencyUnitTests {
         handler.write(context, Arrays.asList(first, second), promise);
         handler.flush(context);
 
-        verify(context).write(any(), org.mockito.ArgumentMatchers.same(promise));
+        verify(context).write(any(), same(promise));
         assertThat(handler.getStack()).hasSize(2);
         assertThat(calls.get()).isEqualTo(2);
         for (Object queued : handler.getStack()) {
@@ -189,7 +192,7 @@ class CommandHandlerQueueLatencyUnitTests {
         tracingHandler.write(context, Arrays.asList(first, second), promise);
         tracingHandler.flush(context);
 
-        verify(context).write(any(), org.mockito.ArgumentMatchers.same(promise));
+        verify(context).write(any(), same(promise));
         assertThat(tracingHandler.getStack()).hasSize(2);
         for (Object queued : tracingHandler.getStack()) {
             assertThat(((WithLatency) queued).getSent()).isPositive();
@@ -361,7 +364,7 @@ class CommandHandlerQueueLatencyUnitTests {
 
         doAnswer(invocation -> {
             throw new IllegalStateException("transport refused write");
-        }).when(context).write(org.mockito.ArgumentMatchers.same(rejected), any());
+        }).when(context).write(same(rejected), any());
 
         assertThatThrownBy(() -> handler.write(context, rejected, promise))
                 .isInstanceOf(IllegalStateException.class);
@@ -388,7 +391,7 @@ class CommandHandlerQueueLatencyUnitTests {
 
         doAnswer(invocation -> {
             throw new IllegalStateException("batch transport refused write");
-        }).when(context).write(org.mockito.ArgumentMatchers.argThat(value -> value instanceof java.util.Collection), any());
+        }).when(context).write(argThat(value -> value instanceof Collection), any());
 
         assertThatThrownBy(() -> handler.write(context, Arrays.asList(rejectedOne, rejectedTwo), promise))
                 .isInstanceOf(IllegalStateException.class);
@@ -414,7 +417,7 @@ class CommandHandlerQueueLatencyUnitTests {
 
         doAnswer(invocation -> {
             throw new IllegalStateException("batch transport refused write");
-        }).when(context).write(org.mockito.ArgumentMatchers.argThat(value -> value instanceof java.util.Collection), any());
+        }).when(context).write(argThat(value -> value instanceof Collection), any());
 
         assertThatThrownBy(() -> handler.write(context, Arrays.asList(rejectedOne, rejectedTwo), promise))
                 .isInstanceOf(IllegalStateException.class);
@@ -436,7 +439,7 @@ class CommandHandlerQueueLatencyUnitTests {
         }).when(context).write(any(), any());
 
         endpoint.write(command);
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> handler.write(context, command, promise))
+        assertThatThrownBy(() -> handler.write(context, command, promise))
                 .isInstanceOf(IllegalStateException.class);
 
         verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
@@ -573,7 +576,7 @@ class CommandHandlerQueueLatencyUnitTests {
         handler.write(context, fireAndForget, promise);
 
         verify(context).write(fireAndForget, promise);
-        verify(recorder).recordCommandQueueLatency(any(), any(), org.mockito.ArgumentMatchers.same(fireAndForget),
+        verify(recorder).recordCommandQueueLatency(any(), any(), same(fireAndForget),
                 anyLong());
         assertThat(endpoint.takeQueueLatencyStart(fireAndForget)).isNull();
     }
@@ -586,7 +589,7 @@ class CommandHandlerQueueLatencyUnitTests {
 
         handler.write(context, Arrays.asList(fireAndForget, regular), promise);
 
-        verify(recorder).recordCommandQueueLatency(any(), any(), org.mockito.ArgumentMatchers.same(fireAndForget),
+        verify(recorder).recordCommandQueueLatency(any(), any(), same(fireAndForget),
                 anyLong());
         verify(recorder, times(2)).recordCommandQueueLatency(any(), any(), any(), anyLong());
     }
