@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.nio.channels.ClosedChannelException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -102,7 +103,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     private final Queue<RedisCommand<?, ?, ?>> commandBuffer;
 
     // Connection-local, weak identity keys keep wrappers from consuming each other's timestamps.
-    private final Map<IdentityWeakReference, Long> queueingTimestamps;
+    private final Map<IdentityWeakReference, ArrayDeque<Long>> queueingTimestamps;
 
     private final ReferenceQueue<RedisCommand<?, ?, ?>> queueingTimestampReferences = new ReferenceQueue<>();
 
@@ -326,8 +327,35 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return null;
         }
 
-        expungeStaleQueueingTimestamps();
-        return queueingTimestamps.remove(new IdentityWeakReference(command, null));
+        synchronized (queueingTimestamps) {
+            expungeStaleQueueingTimestamps();
+            IdentityWeakReference key = new IdentityWeakReference(command, null);
+            ArrayDeque<Long> attempts = queueingTimestamps.get(key);
+            if (attempts == null) {
+                return null;
+            }
+            Long acceptedAt = attempts.removeFirst();
+            if (attempts.isEmpty()) {
+                queueingTimestamps.remove(key);
+            }
+            return acceptedAt;
+        }
+    }
+
+    private void discardLatestQueueLatencyStart(RedisCommand<?, ?, ?> command) {
+        if (queueingTimestamps == null) {
+            return;
+        }
+        synchronized (queueingTimestamps) {
+            IdentityWeakReference key = new IdentityWeakReference(command, null);
+            ArrayDeque<Long> attempts = queueingTimestamps.get(key);
+            if (attempts != null) {
+                attempts.removeLast();
+                if (attempts.isEmpty()) {
+                    queueingTimestamps.remove(key);
+                }
+            }
+        }
     }
 
     private void trackQueueLatency(RedisCommand<?, ?, ?> command, long acceptedAt) {
@@ -335,16 +363,27 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return;
         }
 
-        expungeStaleQueueingTimestamps();
         IdentityWeakReference key = new IdentityWeakReference(command, queueingTimestampReferences);
-        queueingTimestamps.put(key, acceptedAt);
+        synchronized (queueingTimestamps) {
+            expungeStaleQueueingTimestamps();
+            // Separate writes of the same command instance can queue before either reaches
+            // the event loop. Consume their acceptance times in dispatch (FIFO) order.
+            queueingTimestamps.computeIfAbsent(key, ignored -> new ArrayDeque<>()).addLast(acceptedAt);
+        }
 
-        // Completion of an earlier attempt must not remove a later acceptance timestamp.
-        // A decorated command may also report inner completion while a redirect remains writable.
+        // Completion of an earlier attempt must not remove later acceptance timestamps.
         if (command instanceof CompleteableCommand) {
             ((CompleteableCommand<?>) command).onComplete((result, failure) -> {
                 if (command.isDone() || command.isCancelled()) {
-                    queueingTimestamps.remove(key, acceptedAt);
+                    synchronized (queueingTimestamps) {
+                        ArrayDeque<Long> attempts = queueingTimestamps.get(key);
+                        if (attempts != null) {
+                            attempts.removeFirstOccurrence(acceptedAt);
+                            if (attempts.isEmpty()) {
+                                queueingTimestamps.remove(key);
+                            }
+                        }
+                    }
                 }
             });
         }
@@ -475,14 +514,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 logger.debug("{} writeToDisconnectedBuffer() Completing command {} due to connection error", logPrefix(),
                         command);
             }
-            takeQueueLatencyStart(command);
+            discardLatestQueueLatencyStart(command);
             command.completeExceptionally(connectionError);
 
             return;
         }
 
         if (replayFilter.test(command)) {
-            takeQueueLatencyStart(command);
+            discardLatestQueueLatencyStart(command);
             if (debugEnabled) {
                 logger.debug("{} writeToDisconnectedBuffer() Filtering out command {}", logPrefix(), command);
             }
@@ -497,7 +536,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             disconnectedBuffer.add(command);
         } catch (RuntimeException e) {
             // A concurrent writer can fill the bounded buffer after validateWrite().
-            takeQueueLatencyStart(command);
+            discardLatestQueueLatencyStart(command);
             throw e;
         }
     }
@@ -513,7 +552,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             if (debugEnabled) {
                 logger.debug("{} writeToBuffer() Completing command {} due to connection error", logPrefix(), command);
             }
-            takeQueueLatencyStart(command);
+            discardLatestQueueLatencyStart(command);
             command.completeExceptionally(connectionError);
 
             return;
@@ -522,8 +561,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         try {
             commandBuffer.add(command);
         } catch (RuntimeException e) {
-            // Do not retain an acceptance stamp for a failed bounded enqueue.
-            takeQueueLatencyStart(command);
+            // Do not retain the most recent acceptance stamp for a failed bounded enqueue.
+            discardLatestQueueLatencyStart(command);
             throw e;
         }
     }
