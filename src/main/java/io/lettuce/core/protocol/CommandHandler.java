@@ -516,11 +516,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         try {
             for (Iterator<RedisCommand<?, ?, ?>> iterator = deduplicated.iterator(); iterator.hasNext();) {
                 RedisCommand<?, ?, ?> command = iterator.next();
-                attachTracing(ctx, command);
                 RedisCommand<?, ?, ?> queuedCommand = addToStack(command, promise);
                 if (queuedCommand == null) {
                     iterator.remove();
                 } else {
+                    attachTracing(ctx, command);
                     queuedCommands.add(queuedCommand);
                 }
             }
