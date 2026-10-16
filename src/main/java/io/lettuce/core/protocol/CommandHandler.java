@@ -485,6 +485,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             if (!deduplicated.add(command)) {
                 deduplicated.remove(command);
+                discardQueueLatencyStart(command);
                 command.completeExceptionally(
                         new RedisException("Attempting to write duplicate command that is already enqueued: " + command));
             }
@@ -568,16 +569,16 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 validateWrite(1);
             }
 
-            if (command.getOutput() == null) {
-                // fire&forget commands are excluded from metrics and replies
-                complete(command);
-            }
-
-            // Claim this acceptance timestamp before dispatch. A completion callback can no
-            // longer remove a timestamp for an already-claimed write attempt.
+            // Claim the acceptance timestamp before completing output-less commands.
+            // Completion callbacks must not remove a stamp that is about to be dispatched.
             Long acceptedAt = queueLatencyMetricsEnabled && endpoint instanceof DefaultEndpoint
                     ? ((DefaultEndpoint) endpoint).takeQueueLatencyStart(command)
                     : null;
+
+            if (command.getOutput() == null) {
+                // fire&forget commands are excluded from reply/response latency metrics.
+                complete(command);
+            }
             RedisCommand<?, ?, ?> redisCommand = potentiallyWrapLatencyCommand(command);
 
             // Completion can happen on another thread between acceptance and dispatch.
@@ -589,7 +590,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             stack.add(redisCommand);
             if (queueLatencyMetricsEnabled) {
                 pendingFlushLatency.add((WithLatency) redisCommand);
-                if (acceptedAt != null && command.getOutput() != null) {
+                if (acceptedAt != null) {
                     pendingQueueSamples.put(command, acceptedAt);
                 }
             }
@@ -636,7 +637,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private void recordQueueLatencyAfterWrite(RedisCommand<?, ?, ?> command, long dispatchedAt) {
 
         Long acceptedAt = pendingQueueSamples.remove(command);
-        if (acceptedAt == null || channel == null || remote() == null || command.getOutput() == null) {
+        if (acceptedAt == null || channel == null || remote() == null) {
             return;
         }
 

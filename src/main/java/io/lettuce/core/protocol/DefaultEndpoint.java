@@ -301,7 +301,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     }
 
     private void trackQueueLatency(RedisCommand<?, ?, ?> command, long acceptedAt) {
-        if (queueingTimestamps == null || command.getOutput() == null || command.isDone() || command.isCancelled()) {
+        if (queueingTimestamps == null || command.isDone() || command.isCancelled()) {
             return;
         }
 
@@ -455,7 +455,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             logger.debug("{} writeToDisconnectedBuffer() buffering (disconnected) command {}", logPrefix(), command);
         }
 
-        disconnectedBuffer.add(command);
+        try {
+            disconnectedBuffer.add(command);
+        } catch (RuntimeException e) {
+            // A concurrent writer can fill the bounded buffer after validateWrite().
+            takeQueueLatencyStart(command);
+            throw e;
+        }
     }
 
     protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
@@ -475,7 +481,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return;
         }
 
-        commandBuffer.add(command);
+        try {
+            commandBuffer.add(command);
+        } catch (RuntimeException e) {
+            // Do not retain an acceptance stamp for a failed bounded enqueue.
+            takeQueueLatencyStart(command);
+            throw e;
+        }
     }
 
     private void writeToChannelAndFlush(Channel channel, RedisCommand<?, ?, ?> command) {

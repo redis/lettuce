@@ -372,6 +372,57 @@ class CommandHandlerQueueLatencyUnitTests {
         assertThat(boundedEndpoint.takeQueueLatencyStart(rejected)).isNull();
     }
 
+    @Test
+    void outputLessCommandRecordsQueueLatencyOnDispatch() throws Exception {
+        Command<String, String, String> fireAndForget = new Command<>(CommandType.PING, null);
+        endpoint.write(fireAndForget);
+
+        handler.write(context, fireAndForget, promise);
+
+        verify(context).write(fireAndForget, promise);
+        verify(recorder).recordCommandQueueLatency(any(), any(), org.mockito.ArgumentMatchers.same(fireAndForget),
+                anyLong());
+        assertThat(endpoint.takeQueueLatencyStart(fireAndForget)).isNull();
+    }
+
+    @Test
+    void outputLessBatchCommandRecordsQueueLatencyOnDispatch() throws Exception {
+        Command<String, String, String> fireAndForget = new Command<>(CommandType.PING, null);
+        Command<String, String, String> regular = command();
+        endpoint.write(Arrays.asList(fireAndForget, regular));
+
+        handler.write(context, Arrays.asList(fireAndForget, regular), promise);
+
+        verify(recorder).recordCommandQueueLatency(any(), any(), org.mockito.ArgumentMatchers.same(fireAndForget),
+                anyLong());
+        verify(recorder, times(2)).recordCommandQueueLatency(any(), any(), any(), anyLong());
+    }
+
+    @Test
+    void cancelledOutputLessCommandDoesNotRecordBeforeDispatch() throws Exception {
+        Command<String, String, String> fireAndForget = new Command<>(CommandType.PING, null);
+        endpoint.write(fireAndForget);
+        fireAndForget.cancel();
+
+        handler.write(context, fireAndForget, promise);
+
+        verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
+        assertThat(endpoint.takeQueueLatencyStart(fireAndForget)).isNull();
+    }
+
+    @Test
+    void duplicatePlainCommandInBatchReleasesAcceptanceStamp() throws Exception {
+        Command<String, String, String> duplicate = command();
+        endpoint.write(Arrays.asList(duplicate, duplicate));
+
+        handler.write(context, Arrays.asList(duplicate, duplicate), promise);
+
+        assertThat(duplicate.exception).isInstanceOf(RedisException.class);
+        assertThat(endpoint.takeQueueLatencyStart(duplicate)).isNull();
+        verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
+        verify(context, never()).write(any(), any());
+    }
+
     private Command<String, String, String> command() {
         return new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
     }

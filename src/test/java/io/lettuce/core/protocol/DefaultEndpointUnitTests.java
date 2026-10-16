@@ -403,6 +403,92 @@ class DefaultEndpointUnitTests {
     }
 
     @Test
+    void concurrentDisconnectedEnqueueFailureDropsOnlyRejectedStamp() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        CountDownLatch entered = new CountDownLatch(2);
+        ClientOptions bounded = ClientOptions.builder().requestQueueSize(1).replayFilter(cmd -> {
+            entered.countDown();
+            try {
+                if (!entered.await(5, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException("Timed out waiting for concurrent enqueues");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(e);
+            }
+            return false;
+        }).build();
+        DefaultEndpoint endpoint = new DefaultEndpoint(bounded, clientResources);
+        Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
+
+        try {
+            CompletableFuture<Void> a = CompletableFuture.runAsync(() -> endpoint.write(first), executor);
+            CompletableFuture<Void> b = CompletableFuture.runAsync(() -> endpoint.write(second), executor);
+            CompletableFuture.allOf(a.handle((result, failure) -> null), b.handle((result, failure) -> null))
+                    .get(10, TimeUnit.SECONDS);
+
+            assertThat(a.isCompletedExceptionally()).isNotEqualTo(b.isCompletedExceptionally());
+            Queue<RedisCommand<?, ?, ?>> buffer = ConnectionTestUtil.getDisconnectedBuffer(endpoint);
+            assertThat(buffer).hasSize(1);
+            RedisCommand<?, ?, ?> accepted = buffer.peek();
+            RedisCommand<?, ?, ?> rejected = accepted == first ? second : first;
+            assertThat(endpoint.takeQueueLatencyStart(accepted)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(rejected)).isNull();
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void concurrentManualFlushEnqueueFailureDropsOnlyRejectedStamp() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        CountDownLatch entered = new CountDownLatch(2);
+        ClientOptions bounded = ClientOptions.builder().requestQueueSize(1).build();
+        DefaultEndpoint endpoint = new DefaultEndpoint(bounded, clientResources) {
+            @Override
+            protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
+                entered.countDown();
+                try {
+                    if (!entered.await(5, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("Timed out waiting for concurrent enqueues");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+                super.writeToBuffer(command);
+            }
+        };
+        endpoint.setAutoFlushCommands(false);
+        Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
+
+        try {
+            CompletableFuture<Void> a = CompletableFuture.runAsync(() -> endpoint.write(first), executor);
+            CompletableFuture<Void> b = CompletableFuture.runAsync(() -> endpoint.write(second), executor);
+            CompletableFuture.allOf(a.handle((result, failure) -> null), b.handle((result, failure) -> null))
+                    .get(10, TimeUnit.SECONDS);
+
+            assertThat(a.isCompletedExceptionally()).isNotEqualTo(b.isCompletedExceptionally());
+            Queue<RedisCommand<?, ?, ?>> buffer = ReflectionTestUtils.getField(endpoint, "commandBuffer");
+            assertThat(buffer).hasSize(1);
+            RedisCommand<?, ?, ?> accepted = buffer.peek();
+            RedisCommand<?, ?, ?> rejected = accepted == first ? second : first;
+            assertThat(endpoint.takeQueueLatencyStart(accepted)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(rejected)).isNull();
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
     void writeShouldGuaranteeFIFOOrder() {
         sut.write(Collections.singletonList(new Command<>(CommandType.SELECT, new StatusOutput<>(StringCodec.UTF8))));
 
