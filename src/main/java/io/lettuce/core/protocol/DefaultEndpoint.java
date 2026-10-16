@@ -103,7 +103,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     private final Queue<RedisCommand<?, ?, ?>> commandBuffer;
 
     // Connection-local, weak identity keys keep wrappers from consuming each other's timestamps.
-    private final Map<IdentityWeakReference, ArrayDeque<Long>> queueingTimestamps;
+    private final Map<IdentityWeakReference, ArrayDeque<QueueLatencyStamp>> queueingTimestamps;
 
     private final ReferenceQueue<RedisCommand<?, ?, ?>> queueingTimestampReferences = new ReferenceQueue<>();
 
@@ -330,15 +330,15 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         synchronized (queueingTimestamps) {
             expungeStaleQueueingTimestamps();
             IdentityWeakReference key = new IdentityWeakReference(command, null);
-            ArrayDeque<Long> attempts = queueingTimestamps.get(key);
+            ArrayDeque<QueueLatencyStamp> attempts = queueingTimestamps.get(key);
             if (attempts == null) {
                 return null;
             }
-            Long acceptedAt = attempts.removeFirst();
+            QueueLatencyStamp stamp = attempts.removeFirst();
             if (attempts.isEmpty()) {
                 queueingTimestamps.remove(key);
             }
-            return acceptedAt;
+            return stamp.acceptedAt;
         }
     }
 
@@ -348,7 +348,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         }
         synchronized (queueingTimestamps) {
             IdentityWeakReference key = new IdentityWeakReference(command, null);
-            ArrayDeque<Long> attempts = queueingTimestamps.get(key);
+            ArrayDeque<QueueLatencyStamp> attempts = queueingTimestamps.get(key);
             if (attempts != null) {
                 attempts.removeLast();
                 if (attempts.isEmpty()) {
@@ -364,11 +364,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         }
 
         IdentityWeakReference key = new IdentityWeakReference(command, queueingTimestampReferences);
+        QueueLatencyStamp stamp = new QueueLatencyStamp(acceptedAt);
         synchronized (queueingTimestamps) {
             expungeStaleQueueingTimestamps();
             // Separate writes of the same command instance can queue before either reaches
             // the event loop. Consume their acceptance times in dispatch (FIFO) order.
-            queueingTimestamps.computeIfAbsent(key, ignored -> new ArrayDeque<>()).addLast(acceptedAt);
+            queueingTimestamps.computeIfAbsent(key, ignored -> new ArrayDeque<>()).addLast(stamp);
         }
 
         // Completion of an earlier attempt must not remove later acceptance timestamps.
@@ -376,9 +377,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             ((CompleteableCommand<?>) command).onComplete((result, failure) -> {
                 if (command.isDone() || command.isCancelled()) {
                     synchronized (queueingTimestamps) {
-                        ArrayDeque<Long> attempts = queueingTimestamps.get(key);
-                        if (attempts != null) {
-                            attempts.removeFirstOccurrence(acceptedAt);
+                        ArrayDeque<QueueLatencyStamp> attempts = queueingTimestamps.get(key);
+                        if (attempts != null && attempts.contains(stamp)) {
+                            // A terminal attempt also invalidates any earlier unclaimed stamps.
+                            // Later acceptances must remain untouched.
+                            while (attempts.removeFirst() != stamp) {
+                                // Discard older unclaimed attempts.
+                            }
                             if (attempts.isEmpty()) {
                                 queueingTimestamps.remove(key);
                             }
@@ -394,6 +399,16 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         while ((reference = (IdentityWeakReference) queueingTimestampReferences.poll()) != null) {
             queueingTimestamps.remove(reference);
         }
+    }
+
+    private static final class QueueLatencyStamp {
+
+        final long acceptedAt;
+
+        QueueLatencyStamp(long acceptedAt) {
+            this.acceptedAt = acceptedAt;
+        }
+
     }
 
     private static final class IdentityWeakReference extends WeakReference<RedisCommand<?, ?, ?>> {
