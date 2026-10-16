@@ -297,6 +297,53 @@ class CommandHandlerQueueLatencyUnitTests {
     }
 
     @Test
+    void cancellationDuringSingleTracingSkipsDispatchAndClearsReplyStack() throws Exception {
+        AsyncCommand<String, String, String> cancelled = new AsyncCommand<>(command());
+        CommandHandler tracingHandler = handlerWithCancellationOnSpan(cancelled, cancelled, 1);
+        endpoint.write(cancelled);
+
+        tracingHandler.write(context, cancelled, promise);
+
+        assertThat(cancelled.isCancelled()).isTrue();
+        assertThat(tracingHandler.getStack()).isEmpty();
+        verify(context, never()).write(any(), any());
+        verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
+    }
+
+    @Test
+    void cancellationOfEarlierBatchEntryDuringLaterTracingSkipsOnlyCancelledCommand() throws Exception {
+        AsyncCommand<String, String, String> first = new AsyncCommand<>(command());
+        AsyncCommand<String, String, String> second = new AsyncCommand<>(command());
+        CommandHandler tracingHandler = handlerWithCancellationOnSpan(first, second, 1);
+        endpoint.write(Arrays.asList(first, second));
+
+        tracingHandler.write(context, Arrays.asList(first, second), promise);
+
+        assertThat(first.isCancelled()).isTrue();
+        assertThat(tracingHandler.getStack()).hasSize(1);
+        verify(context).write(argThat(message -> message instanceof Collection
+                && ((Collection<?>) message).size() == 1 && ((Collection<?>) message).contains(second)), same(promise));
+        verify(recorder, never()).recordCommandQueueLatency(any(), any(), same(first), anyLong());
+        verify(recorder).recordCommandQueueLatency(any(), any(), same(second), anyLong());
+    }
+
+    @Test
+    void cancellingRepeatedAttemptRetainsEarlierReplyStackEntry() throws Exception {
+        AsyncCommand<String, String, String> repeated = new AsyncCommand<>(command());
+        CommandHandler tracingHandler = handlerWithCancellationOnSpan(repeated, repeated, 2);
+        endpoint.write(repeated);
+        endpoint.write(repeated);
+
+        tracingHandler.write(context, repeated, promise);
+        tracingHandler.write(context, repeated, promise);
+
+        assertThat(repeated.isCancelled()).isTrue();
+        assertThat(tracingHandler.getStack()).hasSize(1);
+        verify(context, times(1)).write(same(repeated), same(promise));
+        verify(recorder, times(1)).recordCommandQueueLatency(any(), any(), same(repeated), anyLong());
+    }
+
+    @Test
     void cancelledBeforeDispatchDoesNotRecordAQueueSample() throws Exception {
         Command<String, String, String> command = command();
         endpoint.write(command);
@@ -672,6 +719,33 @@ class CommandHandlerQueueLatencyUnitTests {
         assertThat(endpoint.takeQueueLatencyStart(duplicate)).isNull();
         verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
         verify(context, never()).write(any(), any());
+    }
+
+    private CommandHandler handlerWithCancellationOnSpan(AsyncCommand<?, ?, ?> target,
+            RedisCommand<?, ?, ?> trigger, int occurrence) throws Exception {
+        Tracing tracing = mock(Tracing.class);
+        TraceContextProvider provider = mock(TraceContextProvider.class);
+        TraceContext traceContext = mock(TraceContext.class);
+        Tracer tracer = mock(Tracer.class);
+        Tracer.Span span = mock(Tracer.Span.class);
+        AtomicInteger starts = new AtomicInteger();
+        when(tracing.isEnabled()).thenReturn(true);
+        when(tracing.initialTraceContextProvider()).thenReturn(provider);
+        when(provider.getTraceContext()).thenReturn(traceContext);
+        when(tracing.getTracerProvider()).thenReturn(() -> tracer);
+        when(tracer.nextSpan(traceContext)).thenReturn(span);
+        when(tracing.createEndpoint(any())).thenReturn(mock(Tracing.Endpoint.class));
+        when(span.name(any())).thenReturn(span);
+        doAnswer(invocation -> {
+            if (invocation.getArgument(0) == trigger && starts.incrementAndGet() == occurrence) {
+                target.cancel();
+            }
+            return null;
+        }).when(span).start(any(RedisCommand.class));
+        when(resources.tracing()).thenReturn(tracing);
+        CommandHandler tracingHandler = new CommandHandler(ClientOptions.create(), resources, endpoint);
+        tracingHandler.channelRegistered(context);
+        return tracingHandler;
     }
 
     private CommandHandler handlerWithThrowingTracer() throws Exception {
