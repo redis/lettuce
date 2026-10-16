@@ -226,7 +226,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         List<AdmissionLock> acquiredAdmissionLocks = Collections.emptyList();
 
         try {
-            sharedLock.incrementWriters();
             acquiredAdmissionLocks = acquireAdmissionLocks(command);
 
             if (inActivation) {
@@ -304,7 +303,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         List<AdmissionLock> acquiredAdmissionLocks = Collections.emptyList();
 
         try {
-            sharedLock.incrementWriters();
             acquiredAdmissionLocks = acquireAdmissionLocks(commands);
 
             if (inActivation) {
@@ -417,6 +415,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
     private List<AdmissionLock> acquireAdmissionLocks(Iterable<? extends RedisCommand<?, ?, ?>> commands) {
         if (queueingAdmissionLocks == null) {
+            sharedLock.incrementWriters();
             return Collections.emptyList();
         }
 
@@ -439,12 +438,31 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 }
             }
         }
-        // Stable order avoids deadlocks for two overlapping concurrent batches.
         locks.sort(Comparator.comparingLong(admission -> admission.id));
-        for (AdmissionLock admission : locks) {
-            admission.lock.lock();
+
+        for (;;) {
+            sharedLock.incrementWriters();
+            int acquired = 0;
+            while (acquired < locks.size() && locks.get(acquired).lock.tryLock()) {
+                acquired++;
+            }
+            if (acquired == locks.size()) {
+                return locks;
+            }
+
+            // A writer waiting for admission must not prevent the current lock holder
+            // from acquiring SharedLock exclusively (for example, in a write callback).
+            for (int i = acquired - 1; i >= 0; i--) {
+                locks.get(i).lock.unlock();
+            }
+            sharedLock.decrementWriters();
+
+            // Wait without being counted as a writer or holding another admission lock.
+            // Release before re-entering SharedLock to avoid the opposite lock inversion.
+            AdmissionLock contended = locks.get(acquired);
+            contended.lock.lock();
+            contended.lock.unlock();
         }
-        return locks;
     }
 
     private void releaseAdmissionLocks(List<AdmissionLock> locks) {

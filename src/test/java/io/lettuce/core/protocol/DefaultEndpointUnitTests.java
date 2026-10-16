@@ -210,6 +210,55 @@ class DefaultEndpointUnitTests {
     }
 
     @Test
+    void waitingForAdmissionCannotBlockReentrantExclusiveOperation() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        CountDownLatch firstInFilter = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        AtomicInteger filterCalls = new AtomicInteger();
+        AtomicReference<DefaultEndpoint> endpointRef = new AtomicReference<>();
+        ClientOptions options = ClientOptions.builder().replayFilter(command -> {
+            if (filterCalls.incrementAndGet() == 1) {
+                firstInFilter.countDown();
+                try {
+                    if (!secondStarted.await(5, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("The second writer did not start");
+                    }
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+                // The contending writer must suspend its writer count before waiting
+                // on this command's admission lock, or doExclusive cannot progress.
+                assertThat(endpointRef.get().doExclusive(() -> "exclusive")).isEqualTo("exclusive");
+            }
+            return false;
+        }).build();
+        DefaultEndpoint endpoint = new DefaultEndpoint(options, clientResources);
+        endpointRef.set(endpoint);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
+
+        try {
+            CompletableFuture<Void> first = CompletableFuture.runAsync(() -> endpoint.write(reused), executor);
+            assertThat(firstInFilter.await(5, TimeUnit.SECONDS)).isTrue();
+            CompletableFuture<Void> second = CompletableFuture.runAsync(() -> {
+                secondStarted.countDown();
+                endpoint.write(reused);
+            }, executor);
+            CompletableFuture.allOf(first, second).get(5, TimeUnit.SECONDS);
+            assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(reused, reused);
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
     void separateWritesOfSameCommandKeepBothQueueTimestampsInOrder() throws Exception {
         CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
