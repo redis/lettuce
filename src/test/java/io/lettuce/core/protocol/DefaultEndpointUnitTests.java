@@ -689,6 +689,82 @@ class DefaultEndpointUnitTests {
     }
 
     @Test
+    void resumedBatchAdmissionAfterCloseRejectsUnrelatedCommand() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> unrelated = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        CountDownLatch firstWriteEntered = new CountDownLatch(1);
+        CountDownLatch releaseFirstWrite = new CountDownLatch(1);
+        CountDownLatch secondAdmissionEntered = new CountDownLatch(1);
+        AtomicBoolean firstWrite = new AtomicBoolean();
+
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources) {
+            @Override
+            protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
+                if (command == reused && firstWrite.compareAndSet(false, true)) {
+                    firstWriteEntered.countDown();
+                    awaitConcurrentQueueLatencyGate(releaseFirstWrite);
+                }
+                super.writeToBuffer(command);
+            }
+        };
+        endpoint.setAutoFlushCommands(false);
+
+        // Iteration 1: duplicate scan before validateWrite. Iteration 2: admission
+        // lock lookup after validateWrite and after incrementing the writer count.
+        Collection<RedisCommand<String, String, ?>> overlapping = new AbstractCollection<RedisCommand<String, String, ?>>() {
+            private final List<RedisCommand<String, String, ?>> values = Arrays.asList(reused, unrelated);
+
+            private final AtomicInteger traversals = new AtomicInteger();
+
+            @Override
+            public Iterator<RedisCommand<String, String, ?>> iterator() {
+                if (traversals.incrementAndGet() == 2) {
+                    secondAdmissionEntered.countDown();
+                }
+                return values.iterator();
+            }
+
+            @Override
+            public int size() {
+                return values.size();
+            }
+        };
+
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(3));
+        try {
+            CompletableFuture<Void> first = CompletableFuture.runAsync(() -> endpoint.write(reused), executor);
+            assertThat(firstWriteEntered.await(5, TimeUnit.SECONDS)).isTrue();
+
+            CompletableFuture<Void> second = CompletableFuture.runAsync(() -> endpoint.write(overlapping), executor);
+            assertThat(secondAdmissionEntered.await(5, TimeUnit.SECONDS)).isTrue();
+
+            // closeAsync marks the endpoint closed before waiting for the first writer.
+            // The second writer drops its writer reservation while the admission lock is held.
+            CompletableFuture<Void> closing = CompletableFuture.runAsync(() -> endpoint.closeAsync(), executor);
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (!endpoint.isClosed() && System.nanoTime() < deadline) {
+                Thread.yield();
+            }
+            assertThat(endpoint.isClosed()).isTrue();
+
+            releaseFirstWrite.countDown();
+            CompletableFuture.allOf(first, second, closing).get(10, TimeUnit.SECONDS);
+
+            assertThat(unrelated.exception).isInstanceOf(RedisException.class)
+                    .hasMessage("Connection is closed");
+            assertThat(endpoint.drainCommands()).isEmpty();
+            assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).isEmpty();
+        } finally {
+            releaseFirstWrite.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
     void concurrentManualFlushWritesOfOneCommandKeepStampOrder() throws Exception {
         CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
