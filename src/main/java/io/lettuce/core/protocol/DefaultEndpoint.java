@@ -40,6 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -116,6 +117,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     private final List<PushListener> pushListeners = new CopyOnWriteArrayList<>();
 
     private final SharedLock sharedLock = new SharedLock();
+
+    // Only used with opt-in queue latency recording. Serialize timestamp admission
+    // with the corresponding enqueue/write so concurrent submissions cannot reorder
+    // accepted timestamps relative to actual command dispatch.
+    private final ReentrantLock queueingAdmissionLock = new ReentrantLock();
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
@@ -215,6 +221,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         try {
             sharedLock.incrementWriters();
+            if (queueingTimestamps != null) {
+                queueingAdmissionLock.lock();
+            }
 
             if (inActivation) {
                 command = processActivationCommand(command);
@@ -236,6 +245,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 writeToBuffer(command);
             }
         } finally {
+            if (queueingTimestamps != null) {
+                queueingAdmissionLock.unlock();
+            }
             sharedLock.decrementWriters();
             if (debugEnabled) {
                 logger.debug("{} write() done", logPrefix());
@@ -290,6 +302,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         try {
             sharedLock.incrementWriters();
+            if (queueingTimestamps != null) {
+                queueingAdmissionLock.lock();
+            }
 
             if (inActivation) {
                 commands = processActivationCommands(commands);
@@ -313,6 +328,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 writeToBuffer(commands, acceptedAt);
             }
         } finally {
+            if (queueingTimestamps != null) {
+                queueingAdmissionLock.unlock();
+            }
             sharedLock.decrementWriters();
             if (debugEnabled) {
                 logger.debug("{} write() done", logPrefix());
