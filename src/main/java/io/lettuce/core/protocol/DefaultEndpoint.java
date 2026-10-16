@@ -414,8 +414,10 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     }
 
     private List<AdmissionLock> acquireAdmissionLocks(Iterable<? extends RedisCommand<?, ?, ?>> commands) {
+        // Register as a writer before walking a caller-provided collection.
+        // If its iterator fails, write() still has a matching writer count to release.
+        sharedLock.incrementWriters();
         if (queueingAdmissionLocks == null) {
-            sharedLock.incrementWriters();
             return Collections.emptyList();
         }
 
@@ -441,7 +443,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         locks.sort(Comparator.comparingLong(admission -> admission.id));
 
         for (;;) {
-            sharedLock.incrementWriters();
             int acquired = 0;
             while (acquired < locks.size() && locks.get(acquired).lock.tryLock()) {
                 acquired++;
@@ -462,6 +463,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             AdmissionLock contended = locks.get(acquired);
             contended.lock.lock();
             contended.lock.unlock();
+            sharedLock.incrementWriters();
         }
     }
 

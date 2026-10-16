@@ -6,10 +6,12 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.nio.channels.ClosedChannelException;
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -149,6 +151,41 @@ class DefaultEndpointUnitTests {
         // A redirected attempt passes through write() again and gets a new start time.
         endpoint.write(queued);
         assertThat(endpoint.takeQueueLatencyStart(queued)).isNotNull();
+    }
+
+    @Test
+    void failedBatchAdmissionIterationReleasesWriterCount() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        AtomicInteger iterations = new AtomicInteger();
+        Collection<RedisCommand<String, String, ?>> batch = new AbstractCollection<RedisCommand<String, String, ?>>() {
+
+            @Override
+            public Iterator<RedisCommand<String, String, ?>> iterator() {
+                // The first pass checks duplicate command identities. Fail during the
+                // later admission-lock lookup, before any command can be written.
+                if (iterations.incrementAndGet() == 2) {
+                    throw new IllegalStateException("Could not iterate batch");
+                }
+                return Arrays.<RedisCommand<String, String, ?>>asList(first, second).iterator();
+            }
+
+            @Override
+            public int size() {
+                return 2;
+            }
+        };
+
+        assertThatThrownBy(() -> endpoint.write(batch)).isInstanceOf(IllegalStateException.class)
+                .hasMessage("Could not iterate batch");
+        SharedLock lock = ReflectionTestUtils.getField(endpoint, "sharedLock");
+        Long writers = ReflectionTestUtils.getField(lock, "writers");
+        assertThat(writers).isZero();
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).isEmpty();
     }
 
     @Test
