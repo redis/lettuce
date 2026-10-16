@@ -123,7 +123,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     /**
-     * Create a new instance of {@link RedisCommands}. Can be overriden to extend.
+     * Create a new instance of {@link RedisCommands}. Can be overridden to extend.
      *
      * @return a new instance
      */
@@ -132,7 +132,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     /**
-     * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overriden to extend.
+     * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overridden to extend.
      *
      * @return a new instance
      */
