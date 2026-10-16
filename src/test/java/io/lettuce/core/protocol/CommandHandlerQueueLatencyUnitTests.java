@@ -321,8 +321,8 @@ class CommandHandlerQueueLatencyUnitTests {
 
         assertThat(first.isCancelled()).isTrue();
         assertThat(tracingHandler.getStack()).hasSize(1);
-        verify(context).write(argThat(message -> message instanceof Collection
-                && ((Collection<?>) message).size() == 1 && ((Collection<?>) message).contains(second)), same(promise));
+        verify(context).write(argThat(message -> message instanceof Collection && ((Collection<?>) message).size() == 1
+                && ((Collection<?>) message).contains(second)), same(promise));
         verify(recorder, never()).recordCommandQueueLatency(any(), any(), same(first), anyLong());
         verify(recorder).recordCommandQueueLatency(any(), any(), same(second), anyLong());
     }
@@ -723,8 +723,8 @@ class CommandHandlerQueueLatencyUnitTests {
         verify(context, never()).write(any(), any());
     }
 
-    private CommandHandler handlerWithCancellationOnSpan(AsyncCommand<?, ?, ?> target,
-            RedisCommand<?, ?, ?> trigger, int occurrence) throws Exception {
+    private CommandHandler handlerWithCancellationOnSpan(AsyncCommand<?, ?, ?> target, RedisCommand<?, ?, ?> trigger,
+            int occurrence) throws Exception {
         Tracing tracing = mock(Tracing.class);
         TraceContextProvider provider = mock(TraceContextProvider.class);
         TraceContext traceContext = mock(TraceContext.class);

@@ -486,8 +486,7 @@ class DefaultEndpointUnitTests {
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
         DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
-        Command<String, String, String> accepted = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> accepted = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
 
         endpoint.write(accepted);
 
@@ -497,12 +496,10 @@ class DefaultEndpointUnitTests {
         endpoint.closeAsync().join();
         assertThat(locks).isEmpty();
 
-        Command<String, String, String> rejected = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> rejected = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         endpoint.write(rejected);
 
-        assertThat(rejected.exception).isInstanceOf(RedisException.class)
-                .hasMessage("Connection is closed");
+        assertThat(rejected.exception).isInstanceOf(RedisException.class).hasMessage("Connection is closed");
         assertThat(locks).isEmpty();
     }
 
