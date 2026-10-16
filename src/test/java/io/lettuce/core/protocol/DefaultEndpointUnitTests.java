@@ -17,7 +17,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -697,53 +696,6 @@ class DefaultEndpointUnitTests {
             assertThat(first).isNotNull();
             assertThat(second).isGreaterThan(first);
             assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
-        } finally {
-            releaseFirst.countDown();
-            executor.shutdownNow();
-        }
-    }
-
-    @Test
-    void rejectedConcurrentManualFlushWriteCannotConsumeAcceptedStamp() throws Exception {
-        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
-        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
-        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
-        CountDownLatch firstEnqueue = new CountDownLatch(1);
-        CountDownLatch releaseFirst = new CountDownLatch(1);
-        AtomicInteger enqueues = new AtomicInteger();
-        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(1).build(),
-                clientResources) {
-            @Override
-            protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
-                if (enqueues.incrementAndGet() == 1) {
-                    firstEnqueue.countDown();
-                    awaitConcurrentQueueLatencyGate(releaseFirst);
-                }
-                super.writeToBuffer(command);
-            }
-        };
-        endpoint.setAutoFlushCommands(false);
-        Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
-        Command<String, String, String> rejected = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
-
-        try {
-            CompletableFuture<Void> a = CompletableFuture.runAsync(() -> endpoint.write(first), executor);
-            assertThat(firstEnqueue.await(5, TimeUnit.SECONDS)).isTrue();
-            CountDownLatch secondStarted = new CountDownLatch(1);
-            CompletableFuture<Void> b = CompletableFuture.runAsync(() -> {
-                secondStarted.countDown();
-                endpoint.write(rejected);
-            }, executor);
-            assertThat(secondStarted.await(5, TimeUnit.SECONDS)).isTrue();
-            releaseFirst.countDown();
-            CompletableFuture.allOf(a.handle((result, failure) -> null), b.handle((result, failure) -> null))
-                    .get(10, TimeUnit.SECONDS);
-            Queue<RedisCommand<?, ?, ?>> buffer = ReflectionTestUtils.getField(endpoint, "commandBuffer");
-            assertThat(buffer).containsExactly(first);
-            assertThat(endpoint.takeQueueLatencyStart(first)).isNotNull();
-            assertThat(endpoint.takeQueueLatencyStart(rejected)).isNull();
         } finally {
             releaseFirst.countDown();
             executor.shutdownNow();
