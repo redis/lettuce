@@ -16,8 +16,8 @@
     <url>https://github.com/redis/lettuce</url>
 
     <organization>
-        <name>lettuce.io</name>
-        <url>https://lettuce.io</url>
+        <name>Redis</name>
+        <url>https://redis.io</url>
     </organization>
 
     <licenses>
