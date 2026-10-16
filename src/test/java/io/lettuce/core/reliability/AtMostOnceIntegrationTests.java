@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.TimeoutOptions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,13 @@ class AtMostOnceIntegrationTests extends AbstractRedisClientTest {
         connection.flushall();
         connection.flushdb();
         connection.getStatefulConnection().close();
+    }
+
+    @AfterEach
+    void after() {
+        // The client is shared across test classes; don't leak autoReconnect(false) into connections created later.
+        client.setOptions(ClientOptions.builder().build());
+        client.setDefaultTimeout(Duration.ofSeconds(60));
     }
 
     @Test
