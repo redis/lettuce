@@ -645,9 +645,9 @@ class DefaultEndpointUnitTests {
             CompletableFuture.allOf(a.handle((result, failure) -> null), b.handle((result, failure) -> null))
                     .get(10, TimeUnit.SECONDS);
 
-            Queue<RedisCommand<?, ?, ?>> buffer = ConnectionTestUtil.getDisconnectedBuffer(endpoint);
+            Queue<Object> buffer = ConnectionTestUtil.getDisconnectedBuffer(endpoint);
             assertThat(buffer).hasSize(1);
-            RedisCommand<?, ?, ?> accepted = buffer.peek();
+            RedisCommand<?, ?, ?> accepted = (RedisCommand<?, ?, ?>) buffer.peek();
             RedisCommand<?, ?, ?> rejected = accepted == first ? second : first;
             assertThat(endpoint.takeQueueLatencyStart(accepted)).isNotNull();
             assertThat(endpoint.takeQueueLatencyStart(rejected)).isNull();
@@ -813,7 +813,7 @@ class DefaultEndpointUnitTests {
         Command<String, String, String> competingTwo = new Command<>(CommandType.GET,
                 new StatusOutput<>(StringCodec.UTF8));
 
-        AtomicReference<Queue<RedisCommand<?, ?, ?>>> bufferRef = new AtomicReference<>();
+        AtomicReference<Queue<Object>> bufferRef = new AtomicReference<>();
         ClientOptions options = ClientOptions.builder().requestQueueSize(3).replayFilter(cmd -> {
             if (cmd == failing) {
                 // Simulate two concurrent enqueues after the batch's validation.
@@ -823,7 +823,7 @@ class DefaultEndpointUnitTests {
             return false;
         }).build();
         DefaultEndpoint endpoint = new DefaultEndpoint(options, clientResources);
-        Queue<RedisCommand<?, ?, ?>> buffer = ConnectionTestUtil.getDisconnectedBuffer(endpoint);
+        Queue<Object> buffer = ConnectionTestUtil.getDisconnectedBuffer(endpoint);
         bufferRef.set(buffer);
 
         assertThatThrownBy(() -> endpoint.write(Arrays.asList(first, failing, unvisited)))
