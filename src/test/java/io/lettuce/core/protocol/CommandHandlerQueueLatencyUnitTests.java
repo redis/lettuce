@@ -235,11 +235,13 @@ class CommandHandlerQueueLatencyUnitTests {
         tracingHandler.channelRegistered(context);
 
         AsyncCommand<String, String, String> cancelled = new AsyncCommand<String, String, String>(command()) {
+
             @Override
             public CommandOutput<String, String, String> getOutput() {
                 cancel();
                 return super.getOutput();
             }
+
         };
         AsyncCommand<String, String, String> accepted = new AsyncCommand<>(command());
 
@@ -367,7 +369,6 @@ class CommandHandlerQueueLatencyUnitTests {
         verify(context).write(any(), any());
     }
 
-
     @Test
     void failedSingleWriteDoesNotGetNetworkTimestampOnLaterFlush() throws Exception {
         Command<String, String, String> accepted = command();
@@ -381,8 +382,7 @@ class CommandHandlerQueueLatencyUnitTests {
             throw new IllegalStateException("transport refused write");
         }).when(context).write(same(rejected), any());
 
-        assertThatThrownBy(() -> handler.write(context, rejected, promise))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> handler.write(context, rejected, promise)).isInstanceOf(IllegalStateException.class);
         WithLatency rejectedTiming = (WithLatency) handler.getStack().toArray()[1];
         assertThat(acceptedTiming.getSent()).isZero();
         assertThat(rejectedTiming.getSent()).isZero();
@@ -454,8 +454,7 @@ class CommandHandlerQueueLatencyUnitTests {
         }).when(context).write(any(), any());
 
         endpoint.write(command);
-        assertThatThrownBy(() -> handler.write(context, command, promise))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> handler.write(context, command, promise)).isInstanceOf(IllegalStateException.class);
 
         verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
     }
@@ -591,8 +590,7 @@ class CommandHandlerQueueLatencyUnitTests {
         handler.write(context, fireAndForget, promise);
 
         verify(context).write(fireAndForget, promise);
-        verify(recorder).recordCommandQueueLatency(any(), any(), same(fireAndForget),
-                anyLong());
+        verify(recorder).recordCommandQueueLatency(any(), any(), same(fireAndForget), anyLong());
         assertThat(endpoint.takeQueueLatencyStart(fireAndForget)).isNull();
     }
 
@@ -604,8 +602,7 @@ class CommandHandlerQueueLatencyUnitTests {
 
         handler.write(context, Arrays.asList(fireAndForget, regular), promise);
 
-        verify(recorder).recordCommandQueueLatency(any(), any(), same(fireAndForget),
-                anyLong());
+        verify(recorder).recordCommandQueueLatency(any(), any(), same(fireAndForget), anyLong());
         verify(recorder, times(2)).recordCommandQueueLatency(any(), any(), any(), anyLong());
     }
 

@@ -292,8 +292,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                     }
                 }
                 for (RedisCommand<?, ?, ?> duplicate : duplicates) {
-                    duplicate.completeExceptionally(new RedisException(
-                            "Attempting to write duplicate command that is already enqueued: " + duplicate));
+                    duplicate.completeExceptionally(
+                            new RedisException("Attempting to write duplicate command that is already enqueued: " + duplicate));
                 }
                 commands = filtered;
             }
@@ -497,6 +497,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         AdmissionLock(long id) {
             this.id = id;
         }
+
     }
 
     private void expungeStaleQueueingTimestamps() {

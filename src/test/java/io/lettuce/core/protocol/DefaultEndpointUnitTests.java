@@ -172,13 +172,14 @@ class DefaultEndpointUnitTests {
                 if (iterations.incrementAndGet() == 2) {
                     throw new IllegalStateException("Could not iterate batch");
                 }
-                return Arrays.<RedisCommand<String, String, ?>>asList(first, second).iterator();
+                return Arrays.<RedisCommand<String, String, ?>> asList(first, second).iterator();
             }
 
             @Override
             public int size() {
                 return 2;
             }
+
         };
 
         assertThatThrownBy(() -> endpoint.write(batch)).isInstanceOf(IllegalStateException.class)
@@ -323,9 +324,7 @@ class DefaultEndpointUnitTests {
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
         AtomicLong attempts = new AtomicLong();
-        ClientOptions options = ClientOptions.builder()
-                .replayFilter(command -> attempts.incrementAndGet() == 2)
-                .build();
+        ClientOptions options = ClientOptions.builder().replayFilter(command -> attempts.incrementAndGet() == 2).build();
         DefaultEndpoint endpoint = new DefaultEndpoint(options, clientResources);
         Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
 
@@ -603,8 +602,7 @@ class DefaultEndpointUnitTests {
         CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
-        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(1).build(),
-                clientResources);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(1).build(), clientResources);
         endpoint.setConnectionFacade(connectionFacade);
 
         // Retain a tracked command that the requeue will accept.
@@ -636,8 +634,7 @@ class DefaultEndpointUnitTests {
         CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
-        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(1).build(),
-                clientResources);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(1).build(), clientResources);
         Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         Command<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
@@ -645,8 +642,8 @@ class DefaultEndpointUnitTests {
         try {
             CompletableFuture<Void> a = CompletableFuture.runAsync(() -> endpoint.write(first), executor);
             CompletableFuture<Void> b = CompletableFuture.runAsync(() -> endpoint.write(second), executor);
-            CompletableFuture.allOf(a.handle((result, failure) -> null), b.handle((result, failure) -> null))
-                    .get(10, TimeUnit.SECONDS);
+            CompletableFuture.allOf(a.handle((result, failure) -> null), b.handle((result, failure) -> null)).get(10,
+                    TimeUnit.SECONDS);
 
             Queue<Object> buffer = ConnectionTestUtil.getDisconnectedBuffer(endpoint);
             assertThat(buffer).hasSize(1);
@@ -664,8 +661,7 @@ class DefaultEndpointUnitTests {
         CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
-        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(1).build(),
-                clientResources);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(1).build(), clientResources);
         endpoint.setAutoFlushCommands(false);
         Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         Command<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
@@ -674,8 +670,8 @@ class DefaultEndpointUnitTests {
         try {
             CompletableFuture<Void> a = CompletableFuture.runAsync(() -> endpoint.write(first), executor);
             CompletableFuture<Void> b = CompletableFuture.runAsync(() -> endpoint.write(second), executor);
-            CompletableFuture.allOf(a.handle((result, failure) -> null), b.handle((result, failure) -> null))
-                    .get(10, TimeUnit.SECONDS);
+            CompletableFuture.allOf(a.handle((result, failure) -> null), b.handle((result, failure) -> null)).get(10,
+                    TimeUnit.SECONDS);
 
             Queue<RedisCommand<?, ?, ?>> buffer = ReflectionTestUtils.getField(endpoint, "commandBuffer");
             assertThat(buffer).hasSize(1);
@@ -702,6 +698,7 @@ class DefaultEndpointUnitTests {
         AtomicBoolean firstWrite = new AtomicBoolean();
 
         DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources) {
+
             @Override
             protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
                 if (command == reused && firstWrite.compareAndSet(false, true)) {
@@ -710,12 +707,14 @@ class DefaultEndpointUnitTests {
                 }
                 super.writeToBuffer(command);
             }
+
         };
         endpoint.setAutoFlushCommands(false);
 
         // Iteration 1: duplicate scan before validateWrite. Iteration 2: admission
         // lock lookup after validateWrite and after incrementing the writer count.
         Collection<RedisCommand<String, String, ?>> overlapping = new AbstractCollection<RedisCommand<String, String, ?>>() {
+
             private final List<RedisCommand<String, String, ?>> values = Arrays.asList(reused, unrelated);
 
             private final AtomicInteger traversals = new AtomicInteger();
@@ -732,6 +731,7 @@ class DefaultEndpointUnitTests {
             public int size() {
                 return values.size();
             }
+
         };
 
         ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(3));
@@ -754,8 +754,7 @@ class DefaultEndpointUnitTests {
             releaseFirstWrite.countDown();
             CompletableFuture.allOf(first, second, closing).get(10, TimeUnit.SECONDS);
 
-            assertThat(unrelated.exception).isInstanceOf(RedisException.class)
-                    .hasMessage("Connection is closed");
+            assertThat(unrelated.exception).isInstanceOf(RedisException.class).hasMessage("Connection is closed");
             assertThat(endpoint.drainCommands()).isEmpty();
             assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).isEmpty();
         } finally {
@@ -774,6 +773,7 @@ class DefaultEndpointUnitTests {
         CountDownLatch releaseFirst = new CountDownLatch(1);
         AtomicInteger enqueues = new AtomicInteger();
         DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources) {
+
             @Override
             protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
                 if (enqueues.incrementAndGet() == 1) {
@@ -784,6 +784,7 @@ class DefaultEndpointUnitTests {
                 }
                 super.writeToBuffer(command);
             }
+
         };
         endpoint.setAutoFlushCommands(false);
         Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
@@ -887,10 +888,8 @@ class DefaultEndpointUnitTests {
         Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         Command<String, String, String> failing = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         Command<String, String, String> unvisited = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
-        Command<String, String, String> competingOne = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
-        Command<String, String, String> competingTwo = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> competingOne = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> competingTwo = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
 
         AtomicReference<Queue<Object>> bufferRef = new AtomicReference<>();
         ClientOptions options = ClientOptions.builder().requestQueueSize(3).replayFilter(cmd -> {
@@ -923,13 +922,10 @@ class DefaultEndpointUnitTests {
         Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         Command<String, String, String> failing = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         Command<String, String, String> unvisited = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
-        Command<String, String, String> competingOne = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
-        Command<String, String, String> competingTwo = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> competingOne = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> competingTwo = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
 
-        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(3).build(),
-                clientResources) {
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(3).build(), clientResources) {
 
             @Override
             protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
@@ -965,13 +961,10 @@ class DefaultEndpointUnitTests {
         when(channel.isActive()).thenReturn(true);
         endpoint.notifyChannelActive(channel);
 
-        Command<String, String, String> duplicate = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
-        Command<String, String, String> other = new Command<>(CommandType.SET,
-                new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> duplicate = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
 
-        Collection<RedisCommand<String, String, ?>> dispatched = endpoint
-                .write(Arrays.asList(duplicate, other, duplicate));
+        Collection<RedisCommand<String, String, ?>> dispatched = endpoint.write(Arrays.asList(duplicate, other, duplicate));
 
         assertThat(dispatched).containsExactly(other);
         assertThat(duplicate.exception).isInstanceOf(RedisException.class);
@@ -988,13 +981,10 @@ class DefaultEndpointUnitTests {
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
 
         DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
-        Command<String, String, String> duplicate = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
-        Command<String, String, String> other = new Command<>(CommandType.SET,
-                new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> duplicate = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
 
-        Collection<RedisCommand<String, String, ?>> dispatched = endpoint
-                .write(Arrays.asList(duplicate, other, duplicate));
+        Collection<RedisCommand<String, String, ?>> dispatched = endpoint.write(Arrays.asList(duplicate, other, duplicate));
 
         assertThat(dispatched).containsExactly(other);
         assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(other);
