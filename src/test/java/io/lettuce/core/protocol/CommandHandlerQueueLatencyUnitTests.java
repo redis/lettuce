@@ -124,6 +124,79 @@ class CommandHandlerQueueLatencyUnitTests {
     }
 
     @Test
+    void throwingQueueRecorderDoesNotFailAlreadySubmittedSingleWrite() throws Exception {
+        Command<String, String, String> command = command();
+        endpoint.write(command);
+        doAnswer(invocation -> {
+            throw new IllegalStateException("metrics backend unavailable");
+        }).when(recorder).recordCommandQueueLatency(any(), any(), any(), anyLong());
+
+        handler.write(context, command, promise);
+        handler.flush(context);
+
+        verify(context).write(command, promise);
+        assertThat(handler.getStack()).hasSize(1);
+        assertThat(((WithLatency) handler.getStack().peek()).getSent()).isPositive();
+        handler.channelRead(context, Unpooled.wrappedBuffer("+OK\r\n".getBytes(StandardCharsets.US_ASCII)));
+        assertThat(handler.getStack()).isEmpty();
+    }
+
+    @Test
+    void throwingQueueRecorderDoesNotFailAlreadySubmittedBatchWrite() throws Exception {
+        Command<String, String, String> first = command();
+        Command<String, String, String> second = command();
+        endpoint.write(Arrays.asList(first, second));
+        AtomicInteger calls = new AtomicInteger();
+        doAnswer(invocation -> {
+            if (calls.incrementAndGet() == 1) {
+                throw new IllegalStateException("metrics backend unavailable");
+            }
+            return null;
+        }).when(recorder).recordCommandQueueLatency(any(), any(), any(), anyLong());
+
+        handler.write(context, Arrays.asList(first, second), promise);
+        handler.flush(context);
+
+        verify(context).write(any(), org.mockito.ArgumentMatchers.same(promise));
+        assertThat(handler.getStack()).hasSize(2);
+        assertThat(calls.get()).isEqualTo(2);
+        for (Object queued : handler.getStack()) {
+            assertThat(((WithLatency) queued).getSent()).isPositive();
+        }
+    }
+
+    @Test
+    void throwingTracerDoesNotPreventSingleCommandWrite() throws Exception {
+        CommandHandler tracingHandler = handlerWithThrowingTracer();
+        AsyncCommand<String, String, String> command = new AsyncCommand<>(command());
+        endpoint.write(command);
+
+        tracingHandler.write(context, command, promise);
+        tracingHandler.flush(context);
+
+        verify(context).write(command, promise);
+        assertThat(tracingHandler.getStack()).hasSize(1);
+        assertThat(((WithLatency) tracingHandler.getStack().peek()).getSent()).isPositive();
+    }
+
+    @Test
+    void throwingTracerDoesNotStrandBatchCommandsOnTheReplyStack() throws Exception {
+        CommandHandler tracingHandler = handlerWithThrowingTracer();
+        AsyncCommand<String, String, String> first = new AsyncCommand<>(command());
+        AsyncCommand<String, String, String> second = new AsyncCommand<>(command());
+        endpoint.write(Arrays.asList(first, second));
+
+        tracingHandler.write(context, Arrays.asList(first, second), promise);
+        tracingHandler.flush(context);
+
+        verify(context).write(any(), org.mockito.ArgumentMatchers.same(promise));
+        assertThat(tracingHandler.getStack()).hasSize(2);
+        for (Object queued : tracingHandler.getStack()) {
+            assertThat(((WithLatency) queued).getSent()).isPositive();
+        }
+    }
+
+    @Test
     void cancelledDuringBatchPreparationDoesNotStartAnOrphanTracingSpan() throws Exception {
         Tracing tracing = mock(Tracing.class);
         TraceContextProvider provider = mock(TraceContextProvider.class);
@@ -541,6 +614,22 @@ class CommandHandlerQueueLatencyUnitTests {
         assertThat(endpoint.takeQueueLatencyStart(duplicate)).isNull();
         verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
         verify(context, never()).write(any(), any());
+    }
+
+    private CommandHandler handlerWithThrowingTracer() throws Exception {
+        Tracing tracing = mock(Tracing.class);
+        TraceContextProvider provider = mock(TraceContextProvider.class);
+        TraceContext traceContext = mock(TraceContext.class);
+        Tracer tracer = mock(Tracer.class);
+        when(tracing.isEnabled()).thenReturn(true);
+        when(tracing.initialTraceContextProvider()).thenReturn(provider);
+        when(provider.getTraceContext()).thenReturn(traceContext);
+        when(tracing.getTracerProvider()).thenReturn(() -> tracer);
+        when(tracer.nextSpan(traceContext)).thenThrow(new IllegalStateException("tracing backend unavailable"));
+        when(resources.tracing()).thenReturn(tracing);
+        CommandHandler tracingHandler = new CommandHandler(ClientOptions.create(), resources, endpoint);
+        tracingHandler.channelRegistered(context);
+        return tracingHandler;
     }
 
     private Command<String, String, String> command() {
