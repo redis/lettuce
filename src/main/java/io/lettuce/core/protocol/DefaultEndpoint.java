@@ -29,6 +29,7 @@ import java.nio.channels.ClosedChannelException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -118,10 +119,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
     private final SharedLock sharedLock = new SharedLock();
 
-    // Only used with opt-in queue latency recording. Serialize timestamp admission
-    // with the corresponding enqueue/write so concurrent submissions cannot reorder
-    // accepted timestamps relative to actual command dispatch.
-    private final ReentrantLock queueingAdmissionLock = new ReentrantLock();
+    // With queue metrics enabled, a command's timing stamp and its enqueue/write
+    // must be serialized with other submissions of that same instance.
+    private final Map<IdentityWeakReference, AdmissionLock> queueingAdmissionLocks;
+
+    private final ReferenceQueue<RedisCommand<?, ?, ?>> admissionLockReferences = new ReferenceQueue<>();
+
+    private long nextAdmissionLockId;
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
@@ -170,6 +174,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         this.queueingTimestamps = recorder != null && recorder.isQueueLatencyEnabled()
                 ? Collections.synchronizedMap(new HashMap<>())
                 : null;
+        this.queueingAdmissionLocks = queueingTimestamps == null ? null : new HashMap<>();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
         this.rejectCommandsWhileDisconnected = clientOptions.isRejectCommandsWhileDisconnected();
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
@@ -218,12 +223,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         // Include time waiting for the endpoint lock in the queueing interval.
         long acceptedAt = queueingTimestamps == null ? 0 : System.nanoTime();
+        List<AdmissionLock> acquiredAdmissionLocks = Collections.emptyList();
 
         try {
             sharedLock.incrementWriters();
-            if (queueingTimestamps != null) {
-                queueingAdmissionLock.lock();
-            }
+            acquiredAdmissionLocks = acquireAdmissionLocks(command);
 
             if (inActivation) {
                 command = processActivationCommand(command);
@@ -245,9 +249,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 writeToBuffer(command);
             }
         } finally {
-            if (queueingTimestamps != null) {
-                queueingAdmissionLock.unlock();
-            }
+            releaseAdmissionLocks(acquiredAdmissionLocks);
             sharedLock.decrementWriters();
             if (debugEnabled) {
                 logger.debug("{} write() done", logPrefix());
@@ -299,12 +301,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         }
 
         long acceptedAt = queueingTimestamps == null ? 0 : System.nanoTime();
+        List<AdmissionLock> acquiredAdmissionLocks = Collections.emptyList();
 
         try {
             sharedLock.incrementWriters();
-            if (queueingTimestamps != null) {
-                queueingAdmissionLock.lock();
-            }
+            acquiredAdmissionLocks = acquireAdmissionLocks(commands);
 
             if (inActivation) {
                 commands = processActivationCommands(commands);
@@ -328,9 +329,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 writeToBuffer(commands, acceptedAt);
             }
         } finally {
-            if (queueingTimestamps != null) {
-                queueingAdmissionLock.unlock();
-            }
+            releaseAdmissionLocks(acquiredAdmissionLocks);
             sharedLock.decrementWriters();
             if (debugEnabled) {
                 logger.debug("{} write() done", logPrefix());
@@ -409,6 +408,59 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                     }
                 }
             });
+        }
+    }
+
+    private List<AdmissionLock> acquireAdmissionLocks(RedisCommand<?, ?, ?> command) {
+        return acquireAdmissionLocks(Collections.singleton(command));
+    }
+
+    private List<AdmissionLock> acquireAdmissionLocks(Iterable<? extends RedisCommand<?, ?, ?>> commands) {
+        if (queueingAdmissionLocks == null) {
+            return Collections.emptyList();
+        }
+
+        List<AdmissionLock> locks = new ArrayList<>();
+        Set<AdmissionLock> unique = Collections.newSetFromMap(new IdentityHashMap<>());
+        synchronized (queueingAdmissionLocks) {
+            IdentityWeakReference collected;
+            while ((collected = (IdentityWeakReference) admissionLockReferences.poll()) != null) {
+                queueingAdmissionLocks.remove(collected);
+            }
+            for (RedisCommand<?, ?, ?> command : commands) {
+                IdentityWeakReference lookup = new IdentityWeakReference(command, null);
+                AdmissionLock admission = queueingAdmissionLocks.get(lookup);
+                if (admission == null) {
+                    admission = new AdmissionLock(++nextAdmissionLockId);
+                    queueingAdmissionLocks.put(new IdentityWeakReference(command, admissionLockReferences), admission);
+                }
+                if (unique.add(admission)) {
+                    locks.add(admission);
+                }
+            }
+        }
+        // Stable order avoids deadlocks for two overlapping concurrent batches.
+        locks.sort(Comparator.comparingLong(admission -> admission.id));
+        for (AdmissionLock admission : locks) {
+            admission.lock.lock();
+        }
+        return locks;
+    }
+
+    private void releaseAdmissionLocks(List<AdmissionLock> locks) {
+        for (int i = locks.size() - 1; i >= 0; i--) {
+            locks.get(i).lock.unlock();
+        }
+    }
+
+    private static final class AdmissionLock {
+
+        final long id;
+
+        final ReentrantLock lock = new ReentrantLock();
+
+        AdmissionLock(long id) {
+            this.id = id;
         }
     }
 
