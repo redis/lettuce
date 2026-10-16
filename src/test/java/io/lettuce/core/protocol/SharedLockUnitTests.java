@@ -1,16 +1,19 @@
 package io.lettuce.core.protocol;
 
+import java.lang.reflect.Field;
+import java.time.Duration;
+import java.util.WeakHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
-import java.util.WeakHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import io.lettuce.core.RedisException;
 
 import static io.lettuce.TestTags.UNIT_TEST;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Tag(UNIT_TEST)
 public class SharedLockUnitTests {
@@ -217,6 +220,102 @@ public class SharedLockUnitTests {
         lock1.decrementWriters();
         lock2.decrementWriters();
         lock3.decrementWriters();
+    }
+
+    @Test
+    public void exclusiveLockFailsFastWhenSharedWritersDoNotDrain() throws InterruptedException {
+        Duration timeout = Duration.ofMillis(100);
+        SharedLock sharedLock = new SharedLock(timeout);
+
+        CountDownLatch writerAcquired = new CountDownLatch(1);
+        CountDownLatch finishLatch = new CountDownLatch(1);
+
+        Thread writerThread = new Thread(() -> {
+            try {
+                sharedLock.incrementWriters();
+                writerAcquired.countDown();
+                finishLatch.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                sharedLock.decrementWriters();
+            }
+        }, "shared-writer-thread");
+        writerThread.start();
+
+        try {
+            Assertions.assertTrue(writerAcquired.await(1, TimeUnit.SECONDS), "Writer thread should acquire lock");
+
+            long startTime = System.nanoTime();
+            RedisException exception = Assertions.assertThrows(RedisException.class, () -> {
+                sharedLock.doExclusive(() -> "exclusive");
+            });
+
+            long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
+
+            Assertions.assertTrue(elapsedMillis >= 80, "Should have waited at least near the timeout");
+            Assertions.assertTrue(
+                    exception.getMessage().contains("Failed to acquire exclusive lock: shared writers failed to drain within"));
+            Assertions.assertTrue(exception.getMessage().contains(timeout.toString()));
+        } finally {
+            finishLatch.countDown();
+            writerThread.join(2000);
+        }
+
+        // After writer has drained, exclusive lock should be successfully acquired
+        String result = sharedLock.doExclusive(() -> "ok");
+        Assertions.assertEquals("ok", result);
+    }
+
+    @Test
+    public void exclusiveLockRunnableFailsFastWhenSharedWritersDoNotDrain() throws InterruptedException {
+        Duration timeout = Duration.ofMillis(100);
+        SharedLock sharedLock = new SharedLock(timeout);
+
+        CountDownLatch writerAcquired = new CountDownLatch(1);
+        CountDownLatch finishLatch = new CountDownLatch(1);
+
+        Thread writerThread = new Thread(() -> {
+            try {
+                sharedLock.incrementWriters();
+                writerAcquired.countDown();
+                finishLatch.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                sharedLock.decrementWriters();
+            }
+        }, "shared-writer-thread");
+        writerThread.start();
+
+        try {
+            Assertions.assertTrue(writerAcquired.await(1, TimeUnit.SECONDS), "Writer thread should acquire lock");
+
+            RedisException exception = Assertions.assertThrows(RedisException.class, () -> {
+                sharedLock.doExclusive(() -> {
+                });
+            });
+
+            Assertions.assertTrue(
+                    exception.getMessage().contains("Failed to acquire exclusive lock: shared writers failed to drain within"));
+        } finally {
+            finishLatch.countDown();
+            writerThread.join(2000);
+        }
+    }
+
+    @Test
+    public void defaultExclusiveLockTimeoutIsThirtySeconds() {
+        SharedLock sharedLock = new SharedLock();
+        Assertions.assertEquals(Duration.ofSeconds(30), sharedLock.getExclusiveLockTimeout());
+        Assertions.assertEquals(Duration.ofSeconds(30), SharedLock.DEFAULT_EXCLUSIVE_LOCK_TIMEOUT);
+    }
+
+    @Test
+    public void invalidTimeoutThrowsException() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new SharedLock(null));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new SharedLock(Duration.ZERO));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> new SharedLock(Duration.ofMillis(-1)));
     }
 
 }

@@ -1,11 +1,13 @@
 package io.lettuce.core.protocol;
 
+import java.time.Duration;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import io.lettuce.core.RedisException;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -31,10 +33,14 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 class SharedLock {
 
+    static final Duration DEFAULT_EXCLUSIVE_LOCK_TIMEOUT = Duration.ofSeconds(30);
+
     private static final AtomicLongFieldUpdater<SharedLock> WRITERS = AtomicLongFieldUpdater.newUpdater(SharedLock.class,
             "writers");
 
     private final Lock lock = new ReentrantLock();
+
+    private final Duration exclusiveLockTimeout;
 
     private static final ThreadLocal<WeakHashMap<SharedLock, Integer>> THREAD_WRITERS = ThreadLocal
             .withInitial(WeakHashMap::new);
@@ -42,6 +48,21 @@ class SharedLock {
     private volatile long writers = 0;
 
     private volatile Thread exclusiveLockOwner;
+
+    SharedLock() {
+        this(DEFAULT_EXCLUSIVE_LOCK_TIMEOUT);
+    }
+
+    SharedLock(Duration exclusiveLockTimeout) {
+        LettuceAssert.notNull(exclusiveLockTimeout, "ExclusiveLockTimeout must not be null");
+        LettuceAssert.isTrue(!exclusiveLockTimeout.isNegative() && !exclusiveLockTimeout.isZero(),
+                "ExclusiveLockTimeout must be greater than zero");
+        this.exclusiveLockTimeout = exclusiveLockTimeout;
+    }
+
+    Duration getExclusiveLockTimeout() {
+        return exclusiveLockTimeout;
+    }
 
     /**
      * Wait for stateLock and increment writers. Will wait if stateLock is locked and if writer counter is negative.
@@ -134,6 +155,8 @@ class SharedLock {
             return;
         }
 
+        long deadline = System.nanoTime() + exclusiveLockTimeout.toNanos();
+
         lock.lock();
         try {
             for (;;) {
@@ -143,6 +166,13 @@ class SharedLock {
                 if (WRITERS.compareAndSet(this, threadWriterCount, -1)) {
                     exclusiveLockOwner = Thread.currentThread();
                     return;
+                }
+
+                Thread.onSpinWait();
+
+                if (System.nanoTime() >= deadline) {
+                    throw new RedisException(
+                            "Failed to acquire exclusive lock: shared writers failed to drain within " + exclusiveLockTimeout);
                 }
             }
         } finally {
