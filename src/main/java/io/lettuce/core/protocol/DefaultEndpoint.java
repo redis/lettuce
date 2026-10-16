@@ -626,7 +626,10 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         if (t instanceof RedisConnectionException && RedisConnectionException.isProtectedMode(t.getMessage())) {
 
             connectionError = t;
-            doExclusive(this::drainCommands).forEach(cmd -> cmd.completeExceptionally(t));
+            doExclusive(this::drainCommands).forEach(cmd -> {
+                takeQueueLatencyStart(cmd);
+                cmd.completeExceptionally(t);
+            });
         }
 
         if (!isConnected(this.channel)) {
@@ -805,6 +808,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 commands.removeAll(disconnectedBuffer);
 
                 for (RedisCommand<?, ?, ?> command : commands) {
+                    takeQueueLatencyStart(command);
                     command.completeExceptionally(e);
                 }
             }

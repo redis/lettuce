@@ -38,6 +38,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
@@ -349,6 +350,56 @@ class DefaultEndpointUnitTests {
         decorated.cancel();
 
         assertThat(endpoint.takeQueueLatencyStart(decorated)).isNull();
+    }
+
+    @Test
+    void protectedModeFailureReleasesBufferedPlainCommandTimestamp() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+
+        Command<String, String, String> buffered = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(buffered);
+        RedisConnectionException error = new RedisConnectionException("DENIED Redis is running in protected mode");
+
+        endpoint.notifyException(error);
+
+        assertThat(buffered.exception).isSameAs(error);
+        assertThat(endpoint.takeQueueLatencyStart(buffered)).isNull();
+        assertThat(endpoint.drainCommands()).isEmpty();
+    }
+
+    @Test
+    void disconnectedBufferOvercommitReleasesOnlyRejectedCommandTimestamps() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(1).build(),
+                clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+
+        // Retain a tracked command that the requeue will accept.
+        Command<String, String, String> retained = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.setAutoFlushCommands(false);
+        endpoint.write(retained);
+        Queue<RedisCommand<?, ?, ?>> queued = LettuceFactories.newConcurrentQueue(1);
+        queued.addAll(endpoint.drainCommands());
+
+        // Put a second tracked command in the disconnected buffer. Moving both into a
+        // capacity-one buffer accepts the queued command but rejects this second command.
+        endpoint.setAutoFlushCommands(true);
+        Command<String, String, String> rejected = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(rejected);
+
+        endpoint.notifyDrainQueuedCommands(() -> queued);
+
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).contains(retained).doesNotContain(rejected);
+        assertThat(retained.exception).isNull();
+        assertThat(rejected.exception).isInstanceOf(IllegalStateException.class);
+        assertThat(endpoint.takeQueueLatencyStart(rejected)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(retained)).isNotNull();
     }
 
     @Test
