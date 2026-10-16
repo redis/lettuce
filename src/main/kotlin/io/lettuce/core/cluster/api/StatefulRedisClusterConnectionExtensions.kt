@@ -3,6 +3,7 @@ package io.lettuce.core.cluster.api
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.cluster.api.coroutines.RedisClusterCoroutinesCommands
 import io.lettuce.core.cluster.api.coroutines.RedisClusterCoroutinesCommandsImpl
+import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands
 
 /**
  * Extension for [StatefulRedisClusterConnection] to create [RedisClusterCoroutinesCommands]
@@ -12,4 +13,4 @@ import io.lettuce.core.cluster.api.coroutines.RedisClusterCoroutinesCommandsImpl
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
-fun <K : Any, V : Any> StatefulRedisClusterConnection<K, V>.coroutines(): RedisClusterCoroutinesCommands<K, V> = RedisClusterCoroutinesCommandsImpl(reactive())
+fun <K : Any, V : Any> StatefulRedisClusterConnection<K, V>.coroutines(): RedisClusterCoroutinesCommands<K, V> = RedisClusterCoroutinesCommandsImpl(commands(RedisAdvancedClusterReactiveCommands.factory<K, V>()))

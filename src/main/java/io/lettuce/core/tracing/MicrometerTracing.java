@@ -6,15 +6,16 @@ import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.tracing.RedisObservation.HighCardinalityCommandKeyNames;
 import io.lettuce.core.tracing.Tracer.Span;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
-import reactor.core.publisher.Mono;
 
 /**
  * {@link Tracing} adapter using Micrometer's {@link Observation}. This adapter integrates with Micrometer to propagate
@@ -269,23 +270,26 @@ public class MicrometerTracing implements Tracing {
         }
 
         @Override
-        public Mono<TraceContext> getTraceContextLater() {
+        public Supplier<TraceContext> getTraceContextAsync(Map<Object, Object> asyncContext) {
+            return () -> {
+                if (asyncContext != null) {
+                    if (asyncContext.containsKey(Observation.class)) {
+                        return new MicrometerTraceContext((Observation) asyncContext.get(Observation.class));
+                    }
+                    if (asyncContext.containsKey(TraceContext.class)) {
+                        return (TraceContext) asyncContext.get(TraceContext.class);
+                    }
+                    if (asyncContext.containsKey(ObservationThreadLocalAccessor.KEY)) {
+                        return new MicrometerTraceContext((Observation) asyncContext.get(ObservationThreadLocalAccessor.KEY));
+                    }
 
-            return Mono.deferContextual(Mono::justOrEmpty).filter((it) -> {
-                return it.hasKey(TraceContext.class) || it.hasKey(Observation.class)
-                        || it.hasKey(ObservationThreadLocalAccessor.KEY);
-            }).map((it) -> {
-
-                if (it.hasKey(Observation.class)) {
-                    return new MicrometerTraceContext(it.get(Observation.class));
+                    // this is a deliberate choice to not fallback to ThreadLocal in async context
+                    // as we cannot guarantee that the ThreadLocal will be the same as the one that created the async context
+                    return null;
                 }
-
-                if (it.hasKey(TraceContext.class)) {
-                    return it.get(TraceContext.class);
-                }
-
-                return new MicrometerTraceContext(it.get(ObservationThreadLocalAccessor.KEY));
-            });
+                // fallback — no async context map provided, read ThreadLocal
+                return getTraceContext();
+            };
         }
 
         public ObservationRegistry getRegistry() {

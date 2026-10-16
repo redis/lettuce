@@ -26,6 +26,7 @@ import io.lettuce.core.api.reactive.RedisStreamReactiveCommands
 import io.lettuce.core.models.stream.ClaimedMessages
 import io.lettuce.core.models.stream.PendingMessage
 import io.lettuce.core.models.stream.PendingMessages
+import io.lettuce.core.models.stream.StreamEntryDeletionResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
@@ -65,6 +66,22 @@ internal class RedisStreamCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override fun xclaim(key: K, consumer: Consumer<K>, args: XClaimArgs, vararg messageIds: String): Flow<StreamMessage<K, V>> = ops.xclaim(key, consumer, args, *messageIds).asFlow()
 
     override suspend fun xdel(key: K, vararg messageIds: String): Long? = ops.xdel(key, *messageIds).awaitFirstOrNull()
+
+    override fun xackdel(key: K, group: K, vararg messageIds: String): Flow<StreamEntryDeletionResult> =
+        ops.xackdel(key, group, *messageIds).asFlow()
+
+    override fun xackdel(
+        key: K,
+        group: K,
+        policy: StreamDeletionPolicy,
+        vararg messageIds: String
+    ): Flow<StreamEntryDeletionResult> = ops.xackdel(key, group, policy, *messageIds).asFlow()
+
+    override fun xdelex(key: K, vararg messageIds: String): Flow<StreamEntryDeletionResult> =
+        ops.xdelex(key, *messageIds).asFlow()
+
+    override fun xdelex(key: K, policy: StreamDeletionPolicy, vararg messageIds: String): Flow<StreamEntryDeletionResult> =
+        ops.xdelex(key, policy, *messageIds).asFlow()
 
     override suspend fun xgroupCreate(streamOffset: StreamOffset<K>, group: K): String? = ops.xgroupCreate(streamOffset, group).awaitFirstOrNull()
 

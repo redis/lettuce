@@ -19,13 +19,12 @@
  */
 package io.lettuce.core.output;
 
-import static java.lang.Double.parseDouble;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceStrings;
 
 /**
  * {@link List} of Double output.
@@ -46,7 +45,7 @@ public class DoubleListOutput<K, V> extends CommandOutput<K, V, List<Double>> {
 
     @Override
     public void set(ByteBuffer bytes) {
-        output.add(bytes != null ? parseDouble(decodeString(bytes)) : null);
+        output.add(bytes != null ? LettuceStrings.toDouble(decodeString(bytes)) : null);
     }
 
     @Override

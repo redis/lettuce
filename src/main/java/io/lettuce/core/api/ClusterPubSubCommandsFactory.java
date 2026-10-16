@@ -15,7 +15,7 @@ import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
  * @param <C> the Cluster Pub/Sub connection type this factory accepts
  * @param <T> the command API type this factory creates
  * @author Aleksandar Todorov
- * @since 7.7
+ * @since 7.8
  */
 public interface ClusterPubSubCommandsFactory<C extends StatefulRedisClusterPubSubConnection<?, ?>, T>
         extends PubSubCommandsFactory<C, T> {

@@ -1,0 +1,99 @@
+package io.lettuce.core.tracing;
+
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+import static org.assertj.core.api.Assertions.*;
+
+import java.lang.reflect.Method;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.test.TestFutures;
+import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.test.settings.TestSettings;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.tracing.exporter.FinishedSpan;
+import io.micrometer.tracing.test.SampleTestRunner;
+import org.junit.jupiter.api.Tag;
+
+/**
+ * Collection of tests that log metrics and tracing using the asynchronous API. This guards against regressions in the
+ * Micrometer tracing integration for async command flows.
+ *
+ * @author Ali Takavci
+ */
+@Tag(INTEGRATION_TEST)
+public class AsynchronousIntegrationTests extends SampleTestRunner {
+
+    AsynchronousIntegrationTests() {
+        super(SampleRunnerConfig.builder().build());
+    }
+
+    @Override
+    protected MeterRegistry createMeterRegistry() {
+        return TestConfig.METER_REGISTRY;
+    }
+
+    @Override
+    protected ObservationRegistry createObservationRegistry() {
+        return TestConfig.OBSERVATION_REGISTRY;
+    }
+
+    public static void main(String[] args) throws Exception {
+        AsynchronousIntegrationTests tests = new AsynchronousIntegrationTests();
+        TracingSetup[] setups = tests.getTracingSetup();
+        TracingSetup setup = setups[0];
+        Class<AsynchronousIntegrationTests> c = AsynchronousIntegrationTests.class;
+        Method m = c.getSuperclass().getDeclaredMethod("run", TracingSetup.class);
+        m.setAccessible(true);
+        tests.setupRegistry();
+        m.invoke(tests, setup);
+    }
+
+    @Override
+    public SampleTestRunnerConsumer yourCode() {
+
+        LinkedBlockingQueue<RedisCommand<?, ?, ?>> commands = new LinkedBlockingQueue<>();
+        ObservationRegistry observationRegistry = createObservationRegistry();
+        observationRegistry.observationConfig().observationPredicate((s, context) -> {
+
+            if (context instanceof LettuceObservationContext) {
+                commands.add(((LettuceObservationContext) context).getRequiredCommand());
+            }
+
+            return true;
+        });
+        ClientResources clientResources = ClientResources.builder()
+                .tracing(new MicrometerTracing(observationRegistry, "Redis", true)).build();
+
+        return (tracer, meterRegistry) -> {
+
+            RedisURI redisURI = RedisURI.create(TestSettings.host(), TestSettings.port());
+            RedisClient redisClient = RedisClient.create(clientResources, redisURI);
+            StatefulRedisConnection<String, String> connection = redisClient.connect();
+
+            TestFutures.getOrTimeout(connection.async().ping());
+
+            connection.close();
+            FastShutdown.shutdown(redisClient);
+            FastShutdown.shutdown(clientResources);
+
+            assertThat(tracer.getFinishedSpans()).isNotEmpty();
+
+            for (FinishedSpan finishedSpan : tracer.getFinishedSpans()) {
+                assertThat(finishedSpan.getTags()).containsEntry("db.system", "redis")
+                        .containsEntry("net.sock.peer.addr", TestSettings.host())
+                        .containsEntry("net.sock.peer.port", "" + TestSettings.port());
+                assertThat(finishedSpan.getTags()).containsKeys("db.operation");
+            }
+
+            assertThat(commands).extracting(RedisCommand::getType).contains(CommandType.PING, CommandType.HELLO);
+        };
+    }
+
+}

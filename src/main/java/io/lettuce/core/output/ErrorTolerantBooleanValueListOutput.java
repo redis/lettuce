@@ -58,7 +58,7 @@ public class ErrorTolerantBooleanValueListOutput<K, V> extends CommandOutput<K, 
     public void set(ByteBuffer bytes) {
 
         if (initialized) {
-            subscriber.onNext(output, (bytes == null ? Value.empty() : Value.just(Boolean.parseBoolean(decodeString(bytes)))));
+            subscriber.onNext(output, Value.empty());
             return;
         }
         super.set(bytes);

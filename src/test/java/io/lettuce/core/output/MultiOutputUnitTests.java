@@ -34,6 +34,27 @@ class MultiOutputUnitTests {
     }
 
     @Test
+    void shouldForwardBooleanToCommand() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
+        Command<String, String, Boolean> added = new Command<>(CommandType.EXISTS, new BooleanOutput<>(StringCodec.UTF8));
+        Command<String, String, Boolean> exists = new Command<>(CommandType.EXISTS, new BooleanOutput<>(StringCodec.UTF8));
+
+        output.add(added);
+        output.add(exists);
+
+        output.multi(2);
+        output.set(true);
+        output.complete(1);
+        output.set(false);
+        output.complete(1);
+
+        assertThat(added.getOutput().get()).isTrue();
+        assertThat(exists.getOutput().get()).isFalse();
+        assertThat(output.get()).containsExactly(true, false);
+    }
+
+    @Test
     void shouldReportErrorForCommand() {
 
         MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);

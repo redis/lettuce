@@ -51,6 +51,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 
 /**
  * @author Mark Paluch
+ * @author Vaibhav Vashisht
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
@@ -364,6 +365,50 @@ class DefaultEndpointUnitTests {
     }
 
     @Test
+    void retryListenerFailsCommandFastWhenRejectCommandsWhileDisconnected() {
+
+        sut = new DefaultEndpoint(ClientOptions.builder() //
+                .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS) //
+                .build(), clientResources);
+        sut.setConnectionFacade(connectionFacade);
+
+        DefaultEndpoint.RetryListener listener = DefaultEndpoint.RetryListener.newInstance(sut, command);
+
+        ChannelFuture future = mock(ChannelFuture.class);
+        when(future.isSuccess()).thenReturn(false);
+        when(future.cause()).thenReturn(new ClosedChannelException());
+
+        listener.operationComplete(future);
+
+        assertThat(command.exception).isInstanceOf(RedisException.class)
+                .hasMessageContaining("Currently not connected. Commands are rejected.");
+        verify(channel, never()).eventLoop();
+    }
+
+    @Test
+    void retryListenerRequeuesUnderAcceptCommands() {
+
+        sut = new DefaultEndpoint(ClientOptions.builder() //
+                .disconnectedBehavior(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS) //
+                .build(), clientResources);
+        sut.setConnectionFacade(connectionFacade);
+
+        DefaultEndpoint.RetryListener listener = DefaultEndpoint.RetryListener.newInstance(sut, command);
+
+        ChannelFuture future = mock(ChannelFuture.class);
+        EventLoop eventLoop = mock(EventLoop.class);
+        when(future.isSuccess()).thenReturn(false);
+        when(future.cause()).thenReturn(new ClosedChannelException());
+        when(channel.eventLoop()).thenReturn(eventLoop);
+
+        sut.notifyChannelActive(channel);
+        listener.operationComplete(future);
+
+        verify(eventLoop).submit(any(Runnable.class));
+        assertThat(command.exception).isNull();
+    }
+
+    @Test
     void retryListenerDoesNotRetryCompletedCommands() {
 
         DefaultEndpoint.RetryListener listener = DefaultEndpoint.RetryListener.newInstance(sut, command);
@@ -515,6 +560,18 @@ class DefaultEndpointUnitTests {
             }
         }
 
+    }
+
+    @Test
+    void shouldRejectNullClientOptions() {
+        assertThatThrownBy(() -> new TestableEndpoint(null, clientResources)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("ClientOptions must not be null");
+    }
+
+    @Test
+    void shouldRejectNullClientResources() {
+        assertThatThrownBy(() -> new TestableEndpoint(ClientOptions.create(), null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessage("ClientResources must not be null");
     }
 
     static class TestableEndpoint extends DefaultEndpoint {

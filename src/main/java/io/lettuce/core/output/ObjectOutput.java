@@ -1,7 +1,6 @@
 package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -42,11 +41,6 @@ public class ObjectOutput<K, V> extends CommandOutput<K, V, Object> {
 
     @Override
     public void set(long integer) {
-
-        if (!initialized) {
-            output = new ArrayList<>();
-        }
-
         setValue(integer);
     }
 
@@ -77,6 +71,12 @@ public class ObjectOutput<K, V> extends CommandOutput<K, V, Object> {
 
     @SuppressWarnings("unchecked")
     private void setValue(Object value) {
+
+        if (!initialized) {
+            output = value;
+            initialized = true;
+            return;
+        }
 
         if (output != null) {
 

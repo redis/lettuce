@@ -68,6 +68,7 @@ import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Integration tests for {@link StatefulRedisClusterConnection}.
@@ -78,6 +79,7 @@ import io.lettuce.test.settings.TestSettings;
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class AdvancedClusterClientIntegrationTests extends TestSupport {
 
     private static final String KEY_ON_NODE_1 = "a";

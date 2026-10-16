@@ -273,6 +273,26 @@ class ClusterTopologyRefreshSchedulerUnitTests {
     }
 
     @Test
+    void doRunShouldResetInProgressFlagOnSynchronousException() {
+
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
+        when(clusterClient.refreshPartitionsAsync()).thenThrow(new IllegalStateException("boom"));
+
+        when(eventExecutors.submit(any(Runnable.class))).then(invocation -> {
+            ((Runnable) invocation.getArguments()[0]).run();
+            return null;
+        });
+
+        sut.run();
+
+        assertThat(sut.isTopologyRefreshInProgress()).isFalse();
+
+        sut.run();
+
+        verify(clusterClient, times(2)).refreshPartitionsAsync();
+    }
+
+    @Test
     void shouldRetrievePartitionsViaAdaptiveRefreshTriggeredEvent() {
 
         ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder().topologyRefreshOptions(immediateRefresh)

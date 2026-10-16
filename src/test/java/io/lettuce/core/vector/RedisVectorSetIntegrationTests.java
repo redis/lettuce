@@ -35,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 @Tag(INTEGRATION_TEST)
 public class RedisVectorSetIntegrationTests {
@@ -68,7 +69,7 @@ public class RedisVectorSetIntegrationTests {
     protected static RedisReactiveCommands<String, String> reactiveRedis;
 
     public RedisVectorSetIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         client = RedisClient.create(redisURI);
         client.setOptions(getOptions());
@@ -128,6 +129,13 @@ public class RedisVectorSetIntegrationTests {
     }
 
     @Test
+    void vaddSingleElementVector() {
+        Boolean result = redis.vadd(VECTOR_SET_KEY + ":single", "item", 0.1);
+        assertThat(result).isTrue();
+        assertThat(redis.vcard(VECTOR_SET_KEY + ":single")).isEqualTo(1L);
+    }
+
+    @Test
     void vcard() {
         Long count = redis.vcard(VECTOR_SET_KEY);
         assertThat(count).isEqualTo(3);
@@ -138,6 +146,18 @@ public class RedisVectorSetIntegrationTests {
         Long count = redis.vcard(MISSING_KEY);
         assertThat(count).isEqualTo(0L);
         assertThrows(RedisCommandExecutionException.class, () -> redis.vcard(WRONG_KEY));
+    }
+
+    @Test
+    void vismember() {
+        assertThat(redis.vismember(VECTOR_SET_KEY, ELEMENT1)).isTrue();
+        assertThat(redis.vismember(VECTOR_SET_KEY, "missing-element")).isFalse();
+    }
+
+    @Test
+    void vismemberMissingOrWrong() {
+        assertThat(redis.vismember(MISSING_KEY, ELEMENT1)).isFalse();
+        assertThrows(RedisCommandExecutionException.class, () -> redis.vismember(WRONG_KEY, ELEMENT1));
     }
 
     @Test
@@ -388,9 +408,19 @@ public class RedisVectorSetIntegrationTests {
     }
 
     @Test
+    void asyncVismember() throws ExecutionException, InterruptedException {
+        assertThat(asyncRedis.vismember(VECTOR_SET_KEY, ELEMENT1).get()).isTrue();
+    }
+
+    @Test
     void reactiveVadd() {
         StepVerifier.create(reactiveRedis.vadd(VECTOR_SET_KEY + ":reactive", "reactive1", 0.1, 0.2, 0.3)).expectNext(true)
                 .verifyComplete();
+    }
+
+    @Test
+    void reactiveVismember() {
+        StepVerifier.create(reactiveRedis.vismember(VECTOR_SET_KEY, ELEMENT1)).expectNext(true).verifyComplete();
     }
 
     @Test

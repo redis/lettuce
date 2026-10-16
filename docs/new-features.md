@@ -1,6 +1,79 @@
 # New & Noteworthy
 
 
+## What's new in Lettuce 8.0
+
+- **Project Reactor is no longer needed for the synchronous and asynchronous APIs.** `reactor-core` is still a dependency of `lettuce-core`, but applications that use only `sync()`/`async()` can exclude it. The parts that still need Reactor are:
+  - the reactive API (`reactive()`, `commands(...ReactiveCommands.factory())`);
+  - the Kotlin coroutines API;
+  - the deprecated `RedisCredentialsProvider`.
+
+  Internally, connection setup, reconnection, Sentinel and Master/Replica topology discovery, the event bus and trace-context propagation no longer use Reactor.
+  When compiling without Reactor on the classpath, pass a typed `CredentialsProvider` to `RedisURI.setCredentialsProvider(...)` and `RedisURI.Builder.withAuthentication(...)`, for example a variable, a cast, `CredentialsProvider.from(...)` or `StaticCredentialsProvider`. A bare lambda doesn't compile, because the compiler needs Reactor to choose between those methods' two overloads.
+- `connectAsync(...)` failures now report the original cause and message, as `connect(...)` does. Previously the asynchronous path could surface a `RedisConnectionException` with a `null` message that wrapped a `CompletionException`.
+
+### Breaking changes
+
+Lettuce 8.0 removes the Reactor-based APIs deprecated in 7.8 and 7.9, and changes the Reactor-typed extension points that subclasses and custom implementations use.
+
+- **Event bus:**
+  - `EventBus.get()`, which returned a `Flux<Event>`, is removed. Use `subscribe(Consumer)` or `subscribe(Class, Consumer)`, which return a `Subscription`; see [Events](advanced-usage/events.md) for bridging to a `Flux`.
+  - `EventBus.subscribe(Consumer)` is now abstract, so custom `EventBus` implementations must implement it.
+  - `DefaultEventBus(Scheduler)` is replaced by `DefaultEventBus(EventExecutorGroup)` and `DefaultEventBus(EventExecutorGroup, int)`.
+- **Tracing:**
+  - `TraceContextProvider.getTraceContextLater()` is removed. Implement `getTraceContextAsync(Map)` instead.
+  - `Tracing.getContext()`, `Tracing.clearContext()` and `Tracing.withTraceContextProvider(TraceContextProvider)` are removed. Use the methods of the same names on `AbstractRedisReactiveCommands.ReactorTraceContext`.
+- **Reactive accessors:**
+  - `reactive()` remains available on all stateful connection interfaces as a deprecated default method that delegates to `commands(...)` with the matching `*ReactiveCommands.factory()`.
+  - The connection implementations no longer hold a reactive API instance. Removed:
+    - the protected `reactive` fields;
+    - the `newRedisReactiveCommandsImpl()` factory methods on `StatefulRedisConnectionImpl`, `StatefulRedisPubSubConnectionImpl` and `StatefulRedisClusterPubSubConnectionImpl`;
+    - `newRedisAdvancedClusterReactiveCommandsImpl()` on `StatefulRedisClusterConnectionImpl`.
+
+    Subclasses that override these methods are no longer called; obtain a custom reactive API through `commands(CommandsFactory)` instead.
+  - `commands(CommandsFactory)` is now abstract on `StatefulRedisConnection`, `StatefulRedisClusterConnection`, `StatefulRedisPubSubConnection`, `StatefulRedisClusterPubSubConnection` and `StatefulRedisSentinelConnection`, so custom implementations of these interfaces must implement it.
+- **Credentials:**
+  - `StaticCredentialsProvider` and `TokenBasedRedisCredentialsProvider` implement only `CredentialsProvider`. They no longer implement `RedisCredentialsProvider`, `resolveCredentials()` or `credentials()`. Use `resolveCredentialsAsync()` and `subscribeToCredentials(...)`, or wrap a provider with `RedisCredentialsProvider.adapt(...)` where a `RedisCredentialsProvider` is required.
+  - The deprecated `RedisURI.getCredentialsProvider()` returns such providers wrapped in an adapter, so don't cast its result to a concrete provider type. The adapter of an immediate provider such as `StaticCredentialsProvider` is still a `RedisCredentialsProvider.ImmediateRedisCredentialsProvider`, so code that checks for that interface and calls `resolveCredentialsNow()` keeps working. Otherwise use `RedisURI.getCredentialsProviderAsync()`. See [Authentication](user-guide/connecting-redis.md#authentication).
+  - `ConnectionState.getCredentialsProvider()` and `ConnectionState.setCredentialsProvider(RedisCredentialsProvider)` are removed in favor of `getCredentialsProviderAsync()` and `setCredentialsProvider(CredentialsProvider)`.
+  - On `RedisAuthenticationHandler`, the constructor and `createHandler(...)` variants that take a `RedisCredentialsProvider` are removed, as are `complete()` and `onNext(RedisCredentials)`.
+- **Connection extension points:** these now use `Supplier<CompletionStage<SocketAddress>>` instead of `Mono<SocketAddress>`:
+  - `RedisClient.getSocketAddress(RedisURI)`;
+  - `RedisClusterClient.getSocketAddressSupplier(...)`;
+  - `AbstractRedisClient.connectionBuilder(...)`;
+  - `ConnectionBuilder.socketAddressSupplier(...)` and `socketAddress()`;
+  - the `ConnectionWatchdog` and `MaintenanceAwareConnectionWatchdog` constructors and their `wrapSocketAddressSupplier(...)`.
+
+  The watchdog constructors also no longer take a `ConnectionFacade`.
+
+## What's new in Lettuce 7.9
+
+- Introduced a reactor-free credentials SPI: [`CredentialsProvider`](user-guide/connecting-redis.md#authentication) resolves credentials as a `CompletionStage` via `resolveCredentialsAsync()` and no longer requires Project Reactor. It adds a `from(Supplier)` factory and a nested `ImmediateCredentialsProvider` (`resolveCredentialsNow()`) for synchronous resolution, and supports streaming credentials through the callback-based `subscribeToCredentials(Consumer<RedisCredentials>, Consumer<Throwable>)` that returns an `io.lettuce.core.Subscription`. `RedisURI` now stores a `CredentialsProvider` and exposes `getCredentialsProviderAsync()`, `setCredentialsProvider(CredentialsProvider)` and `Builder.withAuthentication(CredentialsProvider)`. The reactive `RedisCredentialsProvider` (returning `Mono` through `resolveCredentials()`/`credentials()`) now extends `CredentialsProvider` and is deprecated; the reactive `RedisURI` accessors are retained as compatibility shims, so existing code keeps working. `RedisCredentialsProvider.adapt(CredentialsProvider)` wraps a `CredentialsProvider` for APIs that still require a `RedisCredentialsProvider`, such as a Spring Data Redis `RedisCredentialsProviderFactory`, and keeps streaming. An adapted `CredentialsProvider.ImmediateCredentialsProvider` stays a `RedisCredentialsProvider.ImmediateRedisCredentialsProvider`.
+- Deprecated the Reactor-based `resolveCredentials()` of `StaticCredentialsProvider` and `resolveCredentials()`/`credentials()` of `TokenBasedRedisCredentialsProvider` in favor of `resolveCredentialsAsync()`, `resolveCredentialsNow()` and `subscribeToCredentials(...)`, which don't require Project Reactor.
+- Deprecated the `Mono`-based connection extension points used by subclasses and custom connection plumbing: both `AbstractRedisClient.connectionBuilder(...)` overloads, `RedisClient.getSocketAddress(RedisURI)`, `RedisClusterClient.getSocketAddressSupplier(...)`, and the `ConnectionWatchdog` and `MaintenanceAwareConnectionWatchdog` constructors and their `wrapSocketAddressSupplier(...)`. Their signatures change in the next major release; there is no replacement yet.
+
+## What's new in Lettuce 7.8
+
+- Fixed [`LCS`](https://redis.io/docs/latest/commands/lcs/) for non-`String` key codecs and Redis Cluster through the new `lcs(key1, key2)` and `lcs(key1, key2, LcsArgs)` overloads on the sync, async, reactive, cluster node-selection and Kotlin APIs. The keys are now passed as regular key arguments, so they are encoded through the key codec and participate in cluster slot routing; `lcs(key1, key2)` returns the longest common substring as `V`. `LcsArgs.Builder` gained key-less entry points (`justLen()`, `withIdx()`, `minMatchLen(…)`, `withMatchLen()`). Deprecated `lcs(LcsArgs)`, `LcsArgs.Builder.keys(…)` and `LcsArgs.by(…)`, which encode the keys as plain strings and do not participate in slot routing
+- Support for the unified [`ZRANGE`](https://redis.io/docs/latest/commands/zrange/) syntax introduced in Redis 6.2 through new `zrange` and `zrangeWithScores` overloads (list-returning, plus streaming-channel variants on the sync and async APIs) accepting a `ZRange` selector: `ZRange.byIndex(start, stop)`, `ZRange.byScore(range)` (`BYSCORE`) or `ZRange.byLex(range)` (`BYLEX`). Each selector exposes only the options the server accepts for its kind — `rev()` on all three, `limit(...)` on score and lexicographical ranges — and `zrangeWithScores` has no lexicographical overload because `BYLEX` cannot be combined with `WITHSCORES`, so illegal combinations do not compile. Available in the sync, async, reactive, cluster node-selection and Kotlin APIs — a single entry point covering the `ZREVRANGE`, `ZRANGEBYSCORE`, `ZREVRANGEBYSCORE`, `ZRANGEBYLEX` and `ZREVRANGEBYLEX` variants
+- Deprecated the sorted-set range commands that Redis 6.2 superseded with the unified `ZRANGE` syntax: `zrangebylex`, `zrangebyscore`, `zrangebyscoreWithScores`, `zrevrange`, `zrevrangeWithScores`, `zrevrangebylex`, `zrevrangebyscore` and `zrevrangebyscoreWithScores` (all overloads, including the streaming-channel variants) on the sync, async, reactive and cluster node-selection APIs. Each `@deprecated` note names the `zrange`/`zrangeWithScores` overload and `ZRange` selector option (`rev()`, `limit(...)`) that replaces it. The Kotlin coroutine API no longer exposes these commands; use the `ZRange`-based `zrange`/`zrangeWithScores` functions instead
+- Deprecated the server-assisted client-side caching support (`ClientSideCaching`, `CacheFrontend`, `CacheAccessor`, `RedisCache` in `io.lettuce.core.support.caching`). This implementation is legacy and incomplete and is scheduled for removal in a future major release. There is no replacement yet — a redesigned client-side caching API is planned.
+- Fixed `ScriptOutputType.OBJECT` decoding so top-level scalar responses are returned directly instead of being treated as collections. Top-level integer responses now return `Long` instead of a one-element `List<Long>`; RESP arrays remain lists.
+- Fixed `XAUTOCLAIM` reply decoding for pending entries that were deleted from the stream (the third reply element added in Redis 7.0). With `JUSTID`, those deleted IDs are no longer misreported as claimed messages through `ClaimedMessages.getMessages()`; they are now exposed through the new `ClaimedMessages.getDeletedIds()`, which returns an empty list on Redis before 7.0.
+- Began making **Project Reactor an optional dependency** for the client's public API. Added `commands(CommandsFactory)` on the stateful connection interfaces (`StatefulRedisConnection` and the cluster, pub/sub and sentinel variants), which returns a command API bound to the connection and cached per factory. Command APIs now expose a static `factory()` — for example `RedisReactiveCommands.factory()` — so the reactive API can be obtained via `connection.commands(RedisReactiveCommands.factory())`. The `reactive()` accessor is deprecated in favor of this factory-based accessor.
+- Deprecated the Reactor-based `EventBus.get()` (which returns a `Flux<Event>`) in favor of a callback-based subscription API: `EventBus.subscribe(Consumer<Event>)` and `EventBus.subscribe(Class<T>, Consumer<T>)`, each returning an `io.lettuce.core.Subscription` that is closed to stop delivery. This lets event consumers avoid a direct dependency on Project Reactor.
+- Deprecated the Reactor (`Mono`) parts of the tracing SPI: `TraceContextProvider.getTraceContextLater()` (returning `Mono<TraceContext>`) is deprecated in favor of the callback-based `getTraceContextAsync(...)`, removing Project Reactor from the trace-context propagation path used by custom `TraceContextProvider` implementations.
+## What's new in Lettuce 7.7
+
+- [Probabilistic data structures (RedisBloom)](user-guide/probabilistic.md) support through `RedisBloomFilterCommands`, `RedisCuckooFilterCommands`, `RedisTopKCommands`, `RedisCMSCommands` and `RedisTDigestCommands`, with the respective async, reactive and Kotlin APIs — covering Bloom Filter (`BF.*`), Cuckoo Filter (`CF.*`), Top-K, Count-Min Sketch and T-Digest
+- Support for the `HIMPORT` command family for bulk-loading hashes that share the same field names, declaring the field names once per connection and sending only values per hash — see [Hash Import](user-guide/hash-import.md)
+- Support for the [`SUNIONCARD`](https://redis.io/docs/latest/commands/sunioncard/) and [`SDIFFCARD`](https://redis.io/docs/latest/commands/sdiffcard/) set cardinality commands
+- Support for the [`LMOVEM`](https://redis.io/docs/latest/commands/lmovem/) and [`BLMOVEM`](https://redis.io/docs/latest/commands/blmovem/) multi-element list move commands
+- Support for the `MAXCOUNT` and `MAXSIZE` options on [`XREAD`](https://redis.io/docs/latest/commands/xread/) and [`XREADGROUP`](https://redis.io/docs/latest/commands/xreadgroup/)
+- Support for [`FT.ALIASLIST`](https://redis.io/docs/latest/commands/ft.aliaslist/) to list search index aliases
+- Support for the `VISMEMBER` Vector Set command — see [Redis Vector Sets](user-guide/vector-sets.md)
+- Support for [`CLIENT NO-TOUCH`](https://redis.io/docs/latest/commands/client-no-touch/) to control key access-time updates per connection
+
 ## What's new in Lettuce 7.2
 
 - Support for [`FT.HYBRID`](https://redis.io/docs/latest/commands/ft.hybrid/) command enabling hybrid vector and full-text search queries
@@ -214,5 +287,5 @@
 - Java 9 compatibility.
 
 - HTML and PDF reference documentation along with a new project website:
-  <https://lettuce.io>.
+  <https://redis.github.io/lettuce/>.
 

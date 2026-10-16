@@ -96,6 +96,14 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
     }
 
     @Override
+    public void set(boolean value) {
+        RedisCommand<K, V, ?> command = queue.peek();
+        if (command != null && command.getOutput() != null) {
+            command.getOutput().set(value);
+        }
+    }
+
+    @Override
     public void set(ByteBuffer bytes) {
 
         if (multi == null && bytes == null) {

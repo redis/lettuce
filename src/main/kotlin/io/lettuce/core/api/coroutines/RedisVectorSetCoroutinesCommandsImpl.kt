@@ -45,6 +45,8 @@ internal class RedisVectorSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override suspend fun vcard(key: K): Long? = ops.vcard(key).awaitFirstOrNull()
 
+    override suspend fun vismember(key: K, element: V): Boolean? = ops.vismember(key, element).awaitFirstOrNull()
+
     override suspend fun vClearAttributes(key: K, element: V): Boolean? = ops.vsetattr(key, element, "").awaitFirstOrNull()
 
     override suspend fun vdim(key: K): Long? = ops.vdim(key).awaitFirstOrNull()

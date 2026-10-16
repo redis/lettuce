@@ -129,6 +129,60 @@ class StreamReadOutputUnitTests {
     }
 
     @Test
+    void shouldDecodeTwoEntriesRESP2FullDepth() {
+        // Regression test for https://github.com/redis/lettuce/issues/3800
+        // Models the actual RESP2 XREADGROUP wire format including the outer *1 wrapper.
+        // RESP2: *1 outer -> *2 [stream_key, *N entries] -> *2 entry [id, *M body]
+        // The outer *1 shifts all depths by +1 relative to tests that omit it.
+        // stream_key fires complete(2), entries fire complete(3).
+
+        sut.multi(1); // outer *1
+        sut.multi(2); // *2 [stream_key, entries]
+        sut.set(ByteBuffer.wrap("stream-key".getBytes()));
+        sut.complete(2); // stream_key at depth 2 -> entryEmitDepth = 3
+        sut.multi(2); // *2 entries
+
+        // Entry 1
+        sut.multi(2); // *2 [id, body]
+        sut.set(ByteBuffer.wrap("1234-11".getBytes()));
+        sut.complete(4);
+        sut.multi(2); // *2 body
+        sut.set(ByteBuffer.wrap("key1".getBytes()));
+        sut.complete(5);
+        sut.set(ByteBuffer.wrap("value1".getBytes()));
+        sut.complete(5);
+        sut.complete(4); // body done
+        sut.complete(3); // entry done -> EMIT at entryEmitDepth=3
+
+        // Entry 2
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("1234-22".getBytes()));
+        sut.complete(4);
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("key2".getBytes()));
+        sut.complete(5);
+        sut.set(ByteBuffer.wrap("value2".getBytes()));
+        sut.complete(5);
+        sut.complete(4);
+        sut.complete(3); // entry done -> EMIT
+
+        sut.complete(2); // entries done
+        sut.complete(1); // stream_array done -> stream = null
+        sut.complete(0);
+
+        assertThat(sut.get()).hasSize(2);
+        StreamMessage<String, String> m1 = sut.get().get(0);
+        assertThat(m1.getId()).isEqualTo("1234-11");
+        assertThat(m1.getStream()).isEqualTo("stream-key");
+        assertThat(m1.getBody()).hasSize(1).containsEntry("key1", "value1");
+
+        StreamMessage<String, String> m2 = sut.get().get(1);
+        assertThat(m2.getId()).isEqualTo("1234-22");
+        assertThat(m2.getStream()).isEqualTo("stream-key");
+        assertThat(m2.getBody()).hasSize(1).containsEntry("key2", "value2");
+    }
+
+    @Test
     void shouldDecodeFromTwoStreams() {
 
         sut.multi(4);

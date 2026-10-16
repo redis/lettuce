@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 /**
@@ -131,6 +132,12 @@ class RedisURIBuilderUnitTests {
     @Test
     void redisWithDriverInfoNullShouldFail() {
         assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withDriverInfo(null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void withAuthenticationNullCredentialsProviderShouldFail() {
+        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withAuthentication((CredentialsProvider) null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

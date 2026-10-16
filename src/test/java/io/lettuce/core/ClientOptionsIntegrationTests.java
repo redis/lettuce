@@ -408,12 +408,18 @@ class ClientOptionsIntegrationTests extends TestSupport {
         try (StatefulRedisConnection<String, String> connection = client.connect()) {
             connection.setTimeout(Duration.ofMillis(100));
 
-            connection.async().clientPause(300);
+            // pause must outlast the command timeout by a wide margin to absorb CI timer jitter
+            connection.async().clientPause(2000);
 
             RedisFuture<String> future = connection.async().ping();
 
             assertThatThrownBy(future::get).isInstanceOf(ExecutionException.class)
                     .hasCauseInstanceOf(RedisCommandTimeoutException.class).hasMessageContaining("100 milli");
+
+            // drain the pause before releasing the shared server to the next test: this PING is
+            // postponed server-side and completes exactly when the pause lapses
+            connection.setTimeout(Duration.ofSeconds(10));
+            assertThat(connection.sync().ping()).isEqualTo("PONG");
         }
     }
 
@@ -425,11 +431,17 @@ class ClientOptionsIntegrationTests extends TestSupport {
         try (StatefulRedisConnection<String, String> connection = client.connect()) {
             connection.setTimeout(Duration.ofMillis(100));
 
-            connection.async().clientPause(300);
+            // pause must outlast the command timeout by a wide margin to absorb CI timer jitter
+            connection.async().clientPause(2000);
 
             Mono<String> mono = connection.reactive().ping();
 
             StepVerifier.create(mono).expectError(RedisCommandTimeoutException.class).verify();
+
+            // drain the pause before releasing the shared server to the next test: this PING is
+            // postponed server-side and completes exactly when the pause lapses
+            connection.setTimeout(Duration.ofSeconds(10));
+            assertThat(connection.sync().ping()).isEqualTo("PONG");
         }
     }
 

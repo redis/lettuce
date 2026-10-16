@@ -1,7 +1,5 @@
 package io.lettuce.core.failover.api;
 
-import io.lettuce.core.annotations.Experimental;
-
 /**
  * Interface for initialization policies.
  *
@@ -17,7 +15,6 @@ import io.lettuce.core.annotations.Experimental;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 public interface InitializationPolicy {
 
     enum Decision {

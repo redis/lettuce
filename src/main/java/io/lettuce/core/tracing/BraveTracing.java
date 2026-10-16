@@ -21,10 +21,11 @@ package io.lettuce.core.tracing;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
 import brave.Span;
 import brave.propagation.TraceContextOrSamplingFlags;
 import io.lettuce.core.internal.LettuceAssert;
@@ -40,8 +41,8 @@ import io.lettuce.core.protocol.RedisCommand;
  * imperative (synchronous/asynchronous) API usage from {@link brave.Tracing#currentTracer()}. The context is not propagated
  * across asynchronous call chains resulting from {@link java.util.concurrent.CompletionStage} chaining.
  * <p>
- * Reactive API usage leverages Reactor's {@link reactor.util.context.Context} so that subscribers can register one of the
- * following objects (using their {@link Class} as context key):
+ * Reactive API usage leverages Reactor's {@code Context} so that subscribers can register one of the following objects (using
+ * their {@link Class} as context key):
  *
  * <ol>
  * <li>A {@link TraceContextProvider}</li>
@@ -485,17 +486,25 @@ public class BraveTracing implements Tracing {
         }
 
         @Override
-        public Mono<TraceContext> getTraceContextLater() {
+        public Supplier<TraceContext> getTraceContextAsync(Map<Object, Object> asyncContext) {
+            return () -> {
+                if (asyncContext != null) {
+                    if (asyncContext.containsKey(Span.class)) {
+                        return new BraveTraceContext(((Span) asyncContext.get(Span.class)).context());
+                    }
 
-            return Mono.deferContextual(Mono::justOrEmpty)
-                    .filter(it -> it.hasKey(Span.class) || it.hasKey(brave.propagation.TraceContext.class)).map(it -> {
+                    if (asyncContext.containsKey(brave.propagation.TraceContext.class)) {
+                        return new BraveTraceContext(
+                                (brave.propagation.TraceContext) asyncContext.get(brave.propagation.TraceContext.class));
+                    }
 
-                        if (it.hasKey(Span.class)) {
-                            return new BraveTraceContext(it.get(Span.class).context());
-                        }
-
-                        return new BraveTraceContext(it.get(brave.propagation.TraceContext.class));
-                    });
+                    // this is a deliberate choice to not fallback to ThreadLocal in async context
+                    // as we cannot guarantee that the ThreadLocal will be the same as the one that created the async context
+                    return null;
+                }
+                // fallback — no async context map provided, read ThreadLocal
+                return getTraceContext();
+            };
         }
 
     }
