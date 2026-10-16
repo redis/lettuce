@@ -34,8 +34,12 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
+import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.tracing.TraceContext;
+import io.lettuce.core.tracing.TraceContextProvider;
+import io.lettuce.core.tracing.Tracer;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
@@ -117,6 +121,44 @@ class CommandHandlerQueueLatencyUnitTests {
         handler.write(context, command, promise);
 
         verify(recorder, times(2)).recordCommandQueueLatency(any(), any(), any(), anyLong());
+    }
+
+    @Test
+    void cancelledDuringBatchPreparationDoesNotStartAnOrphanTracingSpan() throws Exception {
+        Tracing tracing = mock(Tracing.class);
+        TraceContextProvider provider = mock(TraceContextProvider.class);
+        TraceContext traceContext = mock(TraceContext.class);
+        Tracer tracer = mock(Tracer.class);
+        Tracer.Span span = mock(Tracer.Span.class);
+        when(tracing.isEnabled()).thenReturn(true);
+        when(tracing.initialTraceContextProvider()).thenReturn(provider);
+        when(provider.getTraceContext()).thenReturn(traceContext);
+        when(tracing.getTracerProvider()).thenReturn(() -> tracer);
+        when(tracer.nextSpan(traceContext)).thenReturn(span);
+        when(tracing.createEndpoint(any())).thenReturn(mock(Tracing.Endpoint.class));
+        when(span.name(any())).thenReturn(span);
+
+        // Use enabled tracing, unlike the default test fixture.
+        when(resources.tracing()).thenReturn(tracing);
+        CommandHandler tracingHandler = new CommandHandler(ClientOptions.create(), resources, endpoint);
+        tracingHandler.channelRegistered(context);
+
+        Command<String, String, String> cancelled = new Command<>(CommandType.APPEND,
+                new StatusOutput<>(StringCodec.UTF8), null) {
+            @Override
+            public CommandOutput<String, String, String> getOutput() {
+                cancel();
+                return super.getOutput();
+            }
+        };
+        Command<String, String, String> accepted = command();
+
+        tracingHandler.write(context, Arrays.asList(cancelled, accepted), promise);
+
+        assertThat(cancelled.isCancelled()).isTrue();
+        assertThat(tracingHandler.getStack()).hasSize(1);
+        verify(tracer, times(1)).nextSpan(traceContext);
+        verify(span).start(accepted);
     }
 
     @Test
