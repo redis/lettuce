@@ -150,6 +150,64 @@ class DefaultEndpointUnitTests {
     }
 
     @Test
+    void separateWritesOfSameCommandKeepBothQueueTimestampsInOrder() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        // Both attempts are buffered before either reaches the CommandHandler.
+        endpoint.write(reused);
+        Thread.sleep(2);
+        endpoint.write(reused);
+
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(reused, reused);
+        Long first = endpoint.takeQueueLatencyStart(reused);
+        Long second = endpoint.takeQueueLatencyStart(reused);
+        assertThat(first).isNotNull();
+        assertThat(second).isNotNull().isGreaterThan(first);
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+    }
+
+    @Test
+    void separateManualFlushWritesKeepBothQueueTimestamps() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setAutoFlushCommands(false);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        endpoint.write(reused);
+        endpoint.write(reused);
+
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+    }
+
+    @Test
+    void separateConnectedWritesKeepBothQueueTimestamps() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+        when(channel.isActive()).thenReturn(true);
+        endpoint.notifyChannelActive(channel);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        endpoint.write(reused);
+        endpoint.write(reused);
+
+        verify(channel, times(2)).writeAndFlush(reused);
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+    }
+
+    @Test
     void olderAttemptCompletionCannotRemoveNewAcceptanceTimestamp() {
         CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
@@ -165,6 +223,7 @@ class DefaultEndpointUnitTests {
 
         // The first acceptance's completion callback must not clear the second timestamp.
         assertThat(endpoint.takeQueueLatencyStart(queued)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(queued)).isNull();
     }
 
     @Test
