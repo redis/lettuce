@@ -51,11 +51,28 @@ class ClusterNodeEndpoint extends DefaultEndpoint {
 
         logger.debug("{} closeAsync()", logPrefix());
 
+        Throwable drainError = null;
         if (clusterChannelWriter != null) {
-            retriggerCommands(doExclusive(this::drainCommands));
+            try {
+                retriggerCommands(doExclusive(this::drainCommands));
+            } catch (Throwable t) {
+                drainError = t;
+            }
         }
 
-        return super.closeAsync();
+        CompletableFuture<Void> superFuture = super.closeAsync();
+
+        if (drainError != null) {
+            final Throwable ex = drainError;
+            return superFuture.handle((v, t) -> {
+                if (t != null && t != ex) {
+                    ex.addSuppressed(t);
+                }
+                throw (ex instanceof RuntimeException) ? (RuntimeException) ex : new RedisException(ex);
+            });
+        }
+
+        return superFuture;
     }
 
     protected void retriggerCommands(Collection<RedisCommand<?, ?, ?>> commands) {
