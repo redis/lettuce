@@ -30,9 +30,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -248,6 +250,34 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         LettuceAssert.notNull(commands, "Commands must not be null");
 
+        // Multiple occurrences of one command instance cannot each own a distinct
+        // acceptance timestamp. Reject those commands before the endpoint can
+        // write each occurrence as a separate Netty message.
+        if (queueingTimestamps != null && commands.size() > 1) {
+            Set<RedisCommand<?, ?, ?>> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+            Set<RedisCommand<?, ?, ?>> duplicates = Collections.newSetFromMap(new IdentityHashMap<>());
+
+            for (RedisCommand<?, ?, ?> command : commands) {
+                if (!seen.add(command)) {
+                    duplicates.add(command);
+                }
+            }
+
+            if (!duplicates.isEmpty()) {
+                Collection<RedisCommand<K, V, ?>> filtered = new ArrayList<>(commands.size());
+                for (RedisCommand<K, V, ?> command : commands) {
+                    if (!duplicates.contains(command)) {
+                        filtered.add(command);
+                    }
+                }
+                for (RedisCommand<?, ?, ?> duplicate : duplicates) {
+                    duplicate.completeExceptionally(new RedisException(
+                            "Attempting to write duplicate command that is already enqueued: " + duplicate));
+                }
+                commands = filtered;
+            }
+        }
+
         RedisException validation = validateWrite(commands.size());
 
         if (validation != null) {
@@ -264,22 +294,22 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 commands = processActivationCommands(commands);
             }
 
-            if (queueingTimestamps != null) {
-                for (RedisCommand<?, ?, ?> command : commands) {
-                    trackQueueLatency(command, acceptedAt);
-                }
-            }
-
             if (autoFlushCommands) {
                 Channel channel = this.channel;
                 if (isConnected(channel)) {
+                    // A channel write can be dispatched asynchronously, so all
+                    // acceptance stamps must exist before the first write.
+                    if (queueingTimestamps != null) {
+                        for (RedisCommand<?, ?, ?> command : commands) {
+                            trackQueueLatency(command, acceptedAt);
+                        }
+                    }
                     writeToChannelAndFlush(channel, commands);
                 } else {
-                    writeToDisconnectedBuffer(commands);
+                    writeToDisconnectedBuffer(commands, acceptedAt);
                 }
-
             } else {
-                writeToBuffer(commands);
+                writeToBuffer(commands, acceptedAt);
             }
         } finally {
             sharedLock.decrementWriters();
@@ -417,15 +447,23 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         return boundedQueues;
     }
 
-    private void writeToBuffer(Iterable<? extends RedisCommand<?, ?, ?>> commands) {
+    private void writeToBuffer(Iterable<? extends RedisCommand<?, ?, ?>> commands, long acceptedAt) {
 
         for (RedisCommand<?, ?, ?> command : commands) {
+            // Track only commands actually visited: a failed bounded enqueue
+            // must not leave stamps for later batch entries that were not attempted.
+            if (queueingTimestamps != null) {
+                trackQueueLatency(command, acceptedAt);
+            }
             writeToBuffer(command);
         }
     }
 
-    private void writeToDisconnectedBuffer(Collection<? extends RedisCommand<?, ?, ?>> commands) {
+    private void writeToDisconnectedBuffer(Collection<? extends RedisCommand<?, ?, ?>> commands, long acceptedAt) {
         for (RedisCommand<?, ?, ?> command : commands) {
+            if (queueingTimestamps != null) {
+                trackQueueLatency(command, acceptedAt);
+            }
             writeToDisconnectedBuffer(command);
         }
     }
