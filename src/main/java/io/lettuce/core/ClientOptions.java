@@ -326,7 +326,7 @@ public class ClientOptions implements Serializable {
          */
         public Builder reauthenticateBehavior(ReauthenticateBehavior reauthenticateBehavior) {
 
-            LettuceAssert.notNull(reauthenticateBehavior, "ReuthenticatBehavior must not be null");
+            LettuceAssert.notNull(reauthenticateBehavior, "ReauthenticateBehavior must not be null");
             this.reauthenticateBehavior = reauthenticateBehavior;
             return this;
         }

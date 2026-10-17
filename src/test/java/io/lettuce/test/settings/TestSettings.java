@@ -54,7 +54,7 @@ public class TestSettings {
     /**
      *
      * @return hostname of your redis instance. Resolved from the endpoint configuration, defaults to {@literal localhost}. Can
-     *         be overriden with {@code -Dhost=YourHostName}
+     *         be overridden with {@code -Dhost=YourHostName}
      */
     public static String host() {
         String host = System.getProperty("host");
@@ -71,7 +71,7 @@ public class TestSettings {
 
     /**
      *
-     * @return unix domain socket name of your redis instance. Defaults to {@literal work/socket-6479}. Can be overriden with
+     * @return unix domain socket name of your redis instance. Defaults to {@literal work/socket-6479}. Can be overridden with
      *         {@code -Ddomainsocket=YourSocket}
      */
     public static String socket() {
@@ -81,7 +81,7 @@ public class TestSettings {
     /**
      *
      * @return unix domain socket name of your redis sentinel instance. Defaults to {@literal work/socket-26379}. Can be
-     *         overriden with {@code -Dsentineldomainsocket=YourSocket}
+     *         overridden with {@code -Dsentineldomainsocket=YourSocket}
      */
     public static String sentinelSocket() {
         return System.getProperty("sentineldomainsocket", "work/socket-26379");
@@ -161,7 +161,7 @@ public class TestSettings {
     /**
      *
      * @return port of your redis instance. Resolved from the endpoint configuration, defaults to {@literal 6479}. Can be
-     *         overriden with {@code -Dport=1234}
+     *         overridden with {@code -Dport=1234}
      */
     public static int port() {
         String port = System.getProperty("port");
@@ -178,7 +178,7 @@ public class TestSettings {
 
     /**
      *
-     * @return sslport of your redis instance. Defaults to {@literal 6443}. Can be overriden with {@code -Dsslport=1234}
+     * @return sslport of your redis instance. Defaults to {@literal 6443}. Can be overridden with {@code -Dsslport=1234}
      */
     public static int sslPort() {
         return Integer.parseInt(System.getProperty("sslport", "6443"));

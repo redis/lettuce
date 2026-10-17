@@ -1256,7 +1256,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
-     * Template method to create {@link ClusterTopologyRefresh}. Can be overriden by subclasses.
+     * Template method to create {@link ClusterTopologyRefresh}. Can be overridden by subclasses.
      *
      * @return
      * @since 6.0.3
