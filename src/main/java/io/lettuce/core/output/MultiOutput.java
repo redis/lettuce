@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.function.BiConsumer;
 
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.TransactionResult;
@@ -133,6 +134,38 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
     }
 
     @Override
+    public void multiArray(int count) {
+        forwardMulti(count, CommandOutput::multiArray);
+    }
+
+    @Override
+    public void multiPush(int count) {
+        forwardMulti(count, CommandOutput::multiPush);
+    }
+
+    @Override
+    public void multiMap(int count) {
+        forwardMulti(count, CommandOutput::multiMap);
+    }
+
+    @Override
+    public void multiSet(int count) {
+        forwardMulti(count, CommandOutput::multiSet);
+    }
+
+    private void forwardMulti(int count, BiConsumer<CommandOutput<K, V, ?>, Integer> callback) {
+        if (multi == null) {
+            multi(count);
+            return;
+        }
+
+        RedisCommand<K, V, ?> command = queue.peek();
+        if (command != null && command.getOutput() != null) {
+            callback.accept(command.getOutput(), count);
+        }
+    }
+
+    @Override
     public void setError(ByteBuffer error) {
 
         if (discarded == null) {
@@ -142,6 +175,16 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
 
         CommandOutput<K, V, ?> output = queue.isEmpty() ? this : queue.peek().getOutput();
         output.setError(decodeString(error));
+    }
+
+    @Override
+    public void setError(String error) {
+        if (discarded == null || queue.isEmpty()) {
+            super.setError(error);
+            return;
+        }
+
+        queue.peek().getOutput().setError(error);
     }
 
     @Override
