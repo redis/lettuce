@@ -466,7 +466,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         boolean written = false;
         try {
             attachTracingSafely(ctx, command);
-            if (queueLatencyMetricsEnabled && command.getOutput() != null && !isWriteable(command)) {
+            if (queueLatencyMetricsEnabled && (command.isCancelled() || command.getOutput() != null && !isWriteable(command))) {
                 discardPreparedCommand(command, queuedCommand);
                 written = true; // Cancellation was handled; do not remove an earlier flush entry in finally.
                 promise.trySuccess();
@@ -539,7 +539,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 for (Iterator<RedisCommand<?, ?, ?>> iterator = deduplicated.iterator(); iterator.hasNext();) {
                     RedisCommand<?, ?, ?> command = iterator.next();
                     RedisCommand<?, ?, ?> queuedCommand = queued.next();
-                    if (command.getOutput() != null && !isWriteable(command)) {
+                    if (command.isCancelled() || command.getOutput() != null && !isWriteable(command)) {
                         iterator.remove();
                         discardPreparedCommand(command, queuedCommand);
                         queued.remove(); // Do not clean this attempt again in the failure handler.
@@ -635,7 +635,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             // Completion can happen on another thread between acceptance and dispatch.
             // Never dispatch a command that became terminal while we were preparing it.
-            if (queueLatencyMetricsEnabled && command.getOutput() != null && !isWriteable(command)) {
+            if (queueLatencyMetricsEnabled && (command.isCancelled() || command.getOutput() != null && !isWriteable(command))) {
                 return null;
             }
 
