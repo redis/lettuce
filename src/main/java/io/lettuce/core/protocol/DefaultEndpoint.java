@@ -505,22 +505,24 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     @Override
     public void notifyChannelInactive(Channel channel) {
 
-        if (isClosed()) {
-            Lazy<RedisException> lazy = Lazy.of(() -> new RedisException("Connection closed"));
-            cancelCommands("Connection closed", drainCommands(), it -> it.completeExceptionally(lazy.get()));
-        }
-
-        sharedLock.doExclusive(() -> {
-
-            if (debugEnabled) {
-                logger.debug("{} deactivating endpoint handler", logPrefix());
+        try {
+            if (isClosed()) {
+                Lazy<RedisException> lazy = Lazy.of(() -> new RedisException("Connection closed"));
+                cancelCommands("Connection closed", drainCommands(), it -> it.completeExceptionally(lazy.get()));
             }
 
-            connectionFacade.deactivated();
-        });
+            sharedLock.doExclusive(() -> {
 
-        if (this.channel == channel) {
-            this.channel = null;
+                if (debugEnabled) {
+                    logger.debug("{} deactivating endpoint handler", logPrefix());
+                }
+
+                connectionFacade.deactivated();
+            });
+        } finally {
+            if (this.channel == channel) {
+                this.channel = null;
+            }
         }
     }
 

@@ -5,6 +5,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.time.Duration;
 import java.util.WeakHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -170,9 +171,21 @@ class SharedLock {
             return;
         }
 
-        long deadline = System.nanoTime() + exclusiveLockTimeout.toNanos();
+        long nanosTimeout = exclusiveLockTimeout.toNanos();
+        long deadline = System.nanoTime() + nanosTimeout;
 
-        lock.lock();
+        boolean locked;
+        try {
+            locked = lock.tryLock(nanosTimeout, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RedisException("Interrupted while waiting for exclusive lock", e);
+        }
+
+        if (!locked) {
+            throw new RedisException("Failed to acquire exclusive lock: lock wait timed out within " + exclusiveLockTimeout);
+        }
+
         try {
             for (;;) {
 
