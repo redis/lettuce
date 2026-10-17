@@ -287,5 +287,5 @@ Lettuce 8.0 removes the Reactor-based APIs deprecated in 7.8 and 7.9, and change
 - Java 9 compatibility.
 
 - HTML and PDF reference documentation along with a new project website:
-  <https://lettuce.io>.
+  <https://redis.github.io/lettuce/>.
 

@@ -16,8 +16,8 @@
     <url>https://github.com/redis/lettuce</url>
 
     <organization>
-        <name>lettuce.io</name>
-        <url>https://lettuce.io</url>
+        <name>Redis</name>
+        <url>https://redis.io</url>
     </organization>
 
     <licenses>
@@ -37,6 +37,10 @@
         <developer>
             <id>tishun</id>
             <name>Tihomir Mateev</name>
+        </developer>
+        <developer>
+            <id>a-TODO-rov</id>
+            <name>Aleksandar Todorov</name>
         </developer>
         <developer>
             <id>mp911de</id>
