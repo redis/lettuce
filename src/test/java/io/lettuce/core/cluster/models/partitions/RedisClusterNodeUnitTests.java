@@ -174,4 +174,31 @@ class RedisClusterNodeUnitTests {
         assertThat(node.hasNoSlots()).isFalse();
     }
 
+    @Test
+    void shouldReturnSlotCount() {
+
+        BitSet slots = new BitSet();
+        slots.set(1);
+        slots.set(2);
+        slots.set(SlotHash.SLOT_COUNT - 1);
+        RedisClusterNode node = new RedisClusterNode(RedisURI.create("localhost", 6379), "1", true, null, 0, 0, 0, slots,
+                Collections.emptySet());
+
+        assertThat(node.getSlotCount()).isEqualTo(3);
+        assertThat(node.getSlotCount()).isEqualTo(node.getSlots().size());
+    }
+
+    @Test
+    void shouldReturnZeroSlotCountWithoutSlots() {
+
+        BitSet nullSlots = null;
+        RedisClusterNode nodeWithoutSlots = new RedisClusterNode(RedisURI.create("localhost", 6379), "1", true, null, 0, 0, 0,
+                nullSlots, Collections.emptySet());
+        RedisClusterNode nodeWithEmptySlots = new RedisClusterNode(RedisURI.create("localhost", 6379), "2", true, null, 0, 0, 0,
+                new BitSet(), Collections.emptySet());
+
+        assertThat(nodeWithoutSlots.getSlotCount()).isZero();
+        assertThat(nodeWithEmptySlots.getSlotCount()).isZero();
+    }
+
 }
