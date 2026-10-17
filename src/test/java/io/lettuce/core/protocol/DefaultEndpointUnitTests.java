@@ -1005,7 +1005,7 @@ class DefaultEndpointUnitTests {
     }
 
     @Test
-    void directConnectedBatchRejectsDuplicateInstanceButDispatchesOtherCommands() {
+    void duplicateInstancesRejectEntireConnectedBatchWithoutCompletingCommands() {
         CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
@@ -1018,18 +1018,20 @@ class DefaultEndpointUnitTests {
         Command<String, String, String> duplicate = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
 
-        Collection<RedisCommand<String, String, ?>> dispatched = endpoint.write(Arrays.asList(duplicate, other, duplicate));
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(duplicate, other, duplicate)))
+                .isInstanceOf(RedisException.class)
+                .hasMessageContaining("repeated command instance");
 
-        assertThat(dispatched).containsExactly(other);
-        assertThat(duplicate.exception).isInstanceOf(RedisException.class);
+        assertThat(duplicate.exception).isNull();
+        assertThat(other.exception).isNull();
         assertThat(endpoint.takeQueueLatencyStart(duplicate)).isNull();
-        assertThat(endpoint.takeQueueLatencyStart(other)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(other)).isNull();
         verify(channel, never()).write(duplicate);
-        verify(channel).write(other);
+        verify(channel, never()).write(other);
     }
 
     @Test
-    void duplicateInstancesAreRejectedBeforeDisconnectedBatchEnqueue() {
+    void duplicateInstancesRejectEntireDisconnectedBatchWithoutCompletingCommands() {
         CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
@@ -1038,13 +1040,65 @@ class DefaultEndpointUnitTests {
         Command<String, String, String> duplicate = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
 
-        Collection<RedisCommand<String, String, ?>> dispatched = endpoint.write(Arrays.asList(duplicate, other, duplicate));
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(duplicate, other, duplicate)))
+                .isInstanceOf(RedisException.class)
+                .hasMessageContaining("repeated command instance");
 
-        assertThat(dispatched).containsExactly(other);
-        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(other);
-        assertThat(duplicate.exception).isInstanceOf(RedisException.class);
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).isEmpty();
+        assertThat(duplicate.exception).isNull();
+        assertThat(other.exception).isNull();
         assertThat(endpoint.takeQueueLatencyStart(duplicate)).isNull();
-        assertThat(endpoint.takeQueueLatencyStart(other)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(other)).isNull();
+    }
+
+    @Test
+    void rejectingDuplicateBatchPreservesEarlierBufferedCommandAttempt() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        Command<String, String, String> prior = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(prior);
+
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(prior, other, prior)))
+                .isInstanceOf(RedisException.class)
+                .hasMessageContaining("repeated command instance");
+
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(prior);
+        assertThat(prior.exception).isNull();
+        assertThat(other.exception).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(prior)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(prior)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(other)).isNull();
+    }
+
+    @Test
+    void rejectingDuplicateBatchPreservesEarlierInFlightCommandAttempt() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+        when(channel.isActive()).thenReturn(true);
+        endpoint.notifyChannelActive(channel);
+
+        Command<String, String, String> prior = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(prior);
+
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(prior, other, prior)))
+                .isInstanceOf(RedisException.class)
+                .hasMessageContaining("repeated command instance");
+
+        assertThat(prior.exception).isNull();
+        assertThat(other.exception).isNull();
+        verify(channel).writeAndFlush(prior);
+        verify(channel, never()).write(other);
+        assertThat(endpoint.takeQueueLatencyStart(prior)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(other)).isNull();
     }
 
     @Test
