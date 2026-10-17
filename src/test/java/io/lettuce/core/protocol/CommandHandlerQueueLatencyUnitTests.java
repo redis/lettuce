@@ -711,6 +711,49 @@ class CommandHandlerQueueLatencyUnitTests {
     }
 
     @Test
+    void cancellationAfterQueueStampClaimSkipsOutputLessSingleWrite() throws Exception {
+        AsyncCommand<String, String, String> cancelled = cancellingOutputLessCommand();
+        endpoint.write(cancelled);
+
+        handler.write(context, cancelled, promise);
+
+        assertThat(cancelled.isCancelled()).isTrue();
+        assertThat(handler.getStack()).isEmpty();
+        assertThat(endpoint.takeQueueLatencyStart(cancelled)).isNull();
+        verify(context, never()).write(any(), any());
+        verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
+    }
+
+    @Test
+    void cancellationAfterQueueStampClaimSkipsOutputLessBatchEntry() throws Exception {
+        AsyncCommand<String, String, String> cancelled = cancellingOutputLessCommand();
+        Command<String, String, String> accepted = command();
+        endpoint.write(Arrays.asList(cancelled, accepted));
+
+        handler.write(context, Arrays.asList(cancelled, accepted), promise);
+
+        assertThat(cancelled.isCancelled()).isTrue();
+        assertThat(handler.getStack()).hasSize(1);
+        verify(context).write(argThat(message -> message instanceof Collection
+                && ((Collection<?>) message).size() == 1
+                && ((Collection<?>) message).contains(accepted)), same(promise));
+        verify(recorder, never()).recordCommandQueueLatency(any(), any(), same(cancelled), anyLong());
+        verify(recorder).recordCommandQueueLatency(any(), any(), same(accepted), anyLong());
+        assertThat(endpoint.takeQueueLatencyStart(cancelled)).isNull();
+    }
+
+    private static AsyncCommand<String, String, String> cancellingOutputLessCommand() {
+        return new AsyncCommand<String, String, String>(new Command<>(CommandType.PING, null)) {
+            @Override
+            public CommandOutput<String, String, String> getOutput() {
+                // First queried after addToStack has claimed the endpoint queue stamp.
+                cancel();
+                return null;
+            }
+        };
+    }
+
+    @Test
     void duplicatePlainCommandBatchRejectsWithoutCompletingInstance() {
         Command<String, String, String> duplicate = command();
         assertThatThrownBy(() -> endpoint.write(Arrays.asList(duplicate, duplicate))).isInstanceOf(RedisException.class)
