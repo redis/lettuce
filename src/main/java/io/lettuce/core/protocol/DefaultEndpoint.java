@@ -271,31 +271,17 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         LettuceAssert.notNull(commands, "Commands must not be null");
 
-        // Multiple occurrences of one command instance cannot each own a distinct
-        // acceptance timestamp. Reject those commands before the endpoint can
-        // write each occurrence as a separate Netty message.
+        // A collection containing the same command instance multiple times is invalid
+        // for per-attempt queue metrics. Reject the submission as a whole without
+        // completing the shared command: an earlier write may already own that
+        // command instance and must remain live.
         if (queueingTimestamps != null && commands.size() > 1) {
             Set<RedisCommand<?, ?, ?>> seen = Collections.newSetFromMap(new IdentityHashMap<>());
-            Set<RedisCommand<?, ?, ?>> duplicates = Collections.newSetFromMap(new IdentityHashMap<>());
 
             for (RedisCommand<?, ?, ?> command : commands) {
                 if (!seen.add(command)) {
-                    duplicates.add(command);
+                    throw new RedisException("Batch contains repeated command instance: " + command);
                 }
-            }
-
-            if (!duplicates.isEmpty()) {
-                Collection<RedisCommand<K, V, ?>> filtered = new ArrayList<>(commands.size());
-                for (RedisCommand<K, V, ?> command : commands) {
-                    if (!duplicates.contains(command)) {
-                        filtered.add(command);
-                    }
-                }
-                for (RedisCommand<?, ?, ?> duplicate : duplicates) {
-                    duplicate.completeExceptionally(
-                            new RedisException("Attempting to write duplicate command that is already enqueued: " + duplicate));
-                }
-                commands = filtered;
             }
         }
 
