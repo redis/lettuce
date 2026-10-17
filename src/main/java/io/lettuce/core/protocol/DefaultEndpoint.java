@@ -1030,11 +1030,22 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                     logger.debug("{} notifyQueuedCommands Queue overcommit. Cannot add all commands to buffer (disconnected).",
                             logPrefix(), commands.size());
                 }
-                commands.removeAll(disconnectedBuffer);
-
+                // addAll may have enqueued a prefix before failing. Removing by
+                // equals() would also remove rejected occurrences of a command
+                // instance that was already accepted into the buffer.
+                int acceptedCount = disconnectedBuffer.size();
+                int index = 0;
+                Set<RedisCommand<?, ?, ?>> accepted = Collections.newSetFromMap(new IdentityHashMap<>());
                 for (RedisCommand<?, ?, ?> command : commands) {
-                    takeQueueLatencyStart(command);
-                    command.completeExceptionally(e);
+                    if (index++ < acceptedCount) {
+                        accepted.add(command);
+                        continue;
+                    }
+                    // A reused command may have an older accepted timestamp.
+                    discardLatestQueueLatencyStart(command);
+                    if (!accepted.contains(command)) {
+                        command.completeExceptionally(e);
+                    }
                 }
             }
 
