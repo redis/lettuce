@@ -74,7 +74,7 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
      * @param value the {@link JsonValue} to search for.
-     * @param range the {@link JsonRangeArgs} to search within.
+     * @param range the {@link JsonRangeArgs} to search within, must not be {@code null}.
      * @return Long the index hosting the searched element, -1 if not found or null if the specified path is not an array.
      * @since 6.5
      */
@@ -112,7 +112,7 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
      * @param jsonString the JSON string to search for.
-     * @param range the {@link JsonRangeArgs} to search within.
+     * @param range the {@link JsonRangeArgs} to search within, must not be {@code null}.
      * @return Long the index hosting the searched element, -1 if not found or null if the specified path is not an array.
      * @since 6.8
      */
@@ -247,10 +247,33 @@ public interface NodeSelectionJsonCommands<K, V> {
      *
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
+     * @param start the index of the first element to keep.
+     * @param stop the index of the last element to keep (inclusive).
+     * @return Long the resulting size of the arrays after the trimming, or null if the path does not exist.
+     * @since 7.9
+     */
+    Executions<List<Long>> jsonArrtrim(K key, JsonPath jsonPath, int start, int stop);
+
+    /**
+     * Trim an array at a given {@link JsonPath} so that it contains only the specified inclusive range of elements. All
+     * elements with indexes smaller than the start range and all elements with indexes bigger than the end range are trimmed.
+     * <p>
+     * Behavior as of RedisJSON v2.0:
+     * <ul>
+     * <li>If start is larger than the array's size or start > stop, returns 0 and an empty array.</li>
+     * <li>If start is < 0, then start from the end of the array.</li>
+     * <li>If stop is larger than the end of the array, it is treated like the last element.</li>
+     * </ul>
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
      * @param range the {@link JsonRangeArgs} to trim by.
      * @return Long the resulting size of the arrays after the trimming, or null if the path does not exist.
      * @since 6.5
+     * @deprecated since 7.9, use {@link #jsonArrtrim(Object, JsonPath, int, int)} instead; scheduled for removal in a future
+     *             major release.
      */
+    @Deprecated
     Executions<List<Long>> jsonArrtrim(K key, JsonPath jsonPath, JsonRangeArgs range);
 
     /**
