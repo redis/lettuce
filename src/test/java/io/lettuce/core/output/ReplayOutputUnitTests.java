@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -66,6 +68,59 @@ class ReplayOutputUnitTests {
 
         assertThat(replay.getError()).isEqualTo("foo");
         assertThat(target.getError()).isEqualTo("foo");
+    }
+
+    @Test
+    void shouldReplayBoolean() {
+
+        ReplayOutput<String, String> replay = new ReplayOutput<>();
+        BooleanOutput<String, String> target = new BooleanOutput<>(StringCodec.ASCII);
+
+        replay.set(true);
+
+        replay.replay(target);
+
+        assertThat(target.get()).isTrue();
+    }
+
+    @Test
+    void shouldReplayMap() {
+
+        ReplayOutput<String, String> replay = new ReplayOutput<>();
+        ObjectOutput<String, String> target = new ObjectOutput<>(StringCodec.ASCII);
+
+        replay.multiMap(1);
+        replay.set(ByteBuffer.wrap("foo".getBytes()));
+        replay.set(ByteBuffer.wrap("bar".getBytes()));
+        replay.complete(1);
+
+        replay.replay(target);
+
+        assertThat(target.get()).isInstanceOf(Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>) target.get();
+        assertThat(map).containsEntry("foo", "bar");
+    }
+
+    @Test
+    void shouldReplaySet() {
+
+        ReplayOutput<String, String> replay = new ReplayOutput<>();
+        AtomicInteger count = new AtomicInteger();
+        CommandOutput<String, String, String> target = new CommandOutput<String, String, String>(StringCodec.ASCII, null) {
+
+            @Override
+            public void multiSet(int c) {
+                count.set(c);
+            }
+
+        };
+
+        replay.multiSet(5);
+
+        replay.replay(target);
+
+        assertThat(count.get()).isEqualTo(5);
     }
 
 }

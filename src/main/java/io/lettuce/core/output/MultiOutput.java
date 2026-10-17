@@ -63,43 +63,48 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
         }
     }
 
+    private CommandOutput<K, V, ?> currentOutput() {
+        RedisCommand<K, V, ?> command = queue.peek();
+        return command != null ? command.getOutput() : null;
+    }
+
     @Override
     public void set(long integer) {
-        RedisCommand<K, V, ?> command = queue.peek();
-        if (command != null && command.getOutput() != null) {
-            command.getOutput().set(integer);
+        CommandOutput<K, V, ?> currentOutput = currentOutput();
+        if (currentOutput != null) {
+            currentOutput.set(integer);
         }
     }
 
     @Override
     public void setSingle(ByteBuffer bytes) {
-        RedisCommand<K, V, ?> command = queue.peek();
-        if (command != null && command.getOutput() != null) {
-            command.getOutput().setSingle(bytes);
+        CommandOutput<K, V, ?> currentOutput = currentOutput();
+        if (currentOutput != null) {
+            currentOutput.setSingle(bytes);
         }
     }
 
     @Override
     public void setBigNumber(ByteBuffer bytes) {
-        RedisCommand<K, V, ?> command = queue.peek();
-        if (command != null && command.getOutput() != null) {
-            command.getOutput().setBigNumber(bytes);
+        CommandOutput<K, V, ?> currentOutput = currentOutput();
+        if (currentOutput != null) {
+            currentOutput.setBigNumber(bytes);
         }
     }
 
     @Override
     public void set(double number) {
-        RedisCommand<K, V, ?> command = queue.peek();
-        if (command != null && command.getOutput() != null) {
-            command.getOutput().set(number);
+        CommandOutput<K, V, ?> currentOutput = currentOutput();
+        if (currentOutput != null) {
+            currentOutput.set(number);
         }
     }
 
     @Override
     public void set(boolean value) {
-        RedisCommand<K, V, ?> command = queue.peek();
-        if (command != null && command.getOutput() != null) {
-            command.getOutput().set(value);
+        CommandOutput<K, V, ?> currentOutput = currentOutput();
+        if (currentOutput != null) {
+            currentOutput.set(value);
         }
     }
 
@@ -111,9 +116,9 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
             return;
         }
 
-        RedisCommand<K, V, ?> command = queue.peek();
-        if (command != null && command.getOutput() != null) {
-            command.getOutput().set(bytes);
+        CommandOutput<K, V, ?> currentOutput = currentOutput();
+        if (currentOutput != null) {
+            currentOutput.set(bytes);
         }
     }
 
@@ -126,22 +131,81 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
         if (discarded == null) {
             discarded = count == -1;
         } else {
-            if (!queue.isEmpty()) {
-                queue.peek().getOutput().multi(count);
+            CommandOutput<K, V, ?> currentOutput = currentOutput();
+            if (currentOutput != null) {
+                currentOutput.multi(count);
             }
+        }
+    }
+
+    @Override
+    public void multiArray(int count) {
+
+        if (multi == null) {
+            multi(count);
+            return;
+        }
+
+        CommandOutput<K, V, ?> currentOutput = currentOutput();
+        if (currentOutput != null) {
+            currentOutput.multiArray(count);
+        }
+    }
+
+    @Override
+    public void multiPush(int count) {
+        CommandOutput<K, V, ?> currentOutput = currentOutput();
+        if (currentOutput != null) {
+            currentOutput.multiPush(count);
+        }
+    }
+
+    @Override
+    public void multiMap(int count) {
+        CommandOutput<K, V, ?> currentOutput = currentOutput();
+        if (currentOutput != null) {
+            currentOutput.multiMap(count);
+        }
+    }
+
+    @Override
+    public void multiSet(int count) {
+        CommandOutput<K, V, ?> currentOutput = currentOutput();
+        if (currentOutput != null) {
+            currentOutput.multiSet(count);
         }
     }
 
     @Override
     public void setError(ByteBuffer error) {
 
-        if (discarded == null) {
+        if (discarded == null || queue.isEmpty()) {
             super.setError(error);
             return;
         }
 
-        CommandOutput<K, V, ?> output = queue.isEmpty() ? this : queue.peek().getOutput();
-        output.setError(decodeString(error));
+        CommandOutput<K, V, ?> output = currentOutput();
+        if (output != null && output != this) {
+            output.setError(decodeString(error));
+        } else {
+            super.setError(error);
+        }
+    }
+
+    @Override
+    public void setError(String error) {
+
+        if (discarded == null || queue.isEmpty()) {
+            super.setError(error);
+            return;
+        }
+
+        CommandOutput<K, V, ?> output = currentOutput();
+        if (output != null && output != this) {
+            output.setError(error);
+        } else {
+            super.setError(error);
+        }
     }
 
     @Override
