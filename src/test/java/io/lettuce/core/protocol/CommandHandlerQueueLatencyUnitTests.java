@@ -711,13 +711,12 @@ class CommandHandlerQueueLatencyUnitTests {
     }
 
     @Test
-    void duplicatePlainCommandInBatchReleasesAcceptanceStamp() throws Exception {
+    void duplicatePlainCommandBatchRejectsWithoutCompletingInstance() {
         Command<String, String, String> duplicate = command();
-        endpoint.write(Arrays.asList(duplicate, duplicate));
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(duplicate, duplicate))).isInstanceOf(RedisException.class)
+                .hasMessageContaining("repeated command instance");
 
-        handler.write(context, Arrays.asList(duplicate, duplicate), promise);
-
-        assertThat(duplicate.exception).isInstanceOf(RedisException.class);
+        assertThat(duplicate.exception).isNull();
         assertThat(endpoint.takeQueueLatencyStart(duplicate)).isNull();
         verify(recorder, never()).recordCommandQueueLatency(any(), any(), any(), anyLong());
         verify(context, never()).write(any(), any());

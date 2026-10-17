@@ -658,8 +658,7 @@ class DefaultEndpointUnitTests {
         CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
         when(recorder.isQueueLatencyEnabled()).thenReturn(true);
         when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
-        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(2).build(),
-                clientResources);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(2).build(), clientResources);
         endpoint.setConnectionFacade(connectionFacade);
         endpoint.setAutoFlushCommands(false);
 
@@ -669,8 +668,7 @@ class DefaultEndpointUnitTests {
 
         // The bounded disconnected buffer accepts the filler and the first attempt
         // of reused, but rejects its second occurrence in the same drained batch.
-        RedisCommand<String, String, String> filler = new Command<>(CommandType.GET,
-                new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> filler = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         Queue<RedisCommand<?, ?, ?>> queued = new ArrayDeque<>();
         queued.add(filler);
         queued.addAll(endpoint.drainCommands());
@@ -1018,8 +1016,7 @@ class DefaultEndpointUnitTests {
         Command<String, String, String> duplicate = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
 
-        assertThatThrownBy(() -> endpoint.write(Arrays.asList(duplicate, other, duplicate)))
-                .isInstanceOf(RedisException.class)
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(duplicate, other, duplicate))).isInstanceOf(RedisException.class)
                 .hasMessageContaining("repeated command instance");
 
         assertThat(duplicate.exception).isNull();
@@ -1040,8 +1037,7 @@ class DefaultEndpointUnitTests {
         Command<String, String, String> duplicate = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
         Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
 
-        assertThatThrownBy(() -> endpoint.write(Arrays.asList(duplicate, other, duplicate)))
-                .isInstanceOf(RedisException.class)
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(duplicate, other, duplicate))).isInstanceOf(RedisException.class)
                 .hasMessageContaining("repeated command instance");
 
         assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).isEmpty();
@@ -1062,8 +1058,7 @@ class DefaultEndpointUnitTests {
         Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
         endpoint.write(prior);
 
-        assertThatThrownBy(() -> endpoint.write(Arrays.asList(prior, other, prior)))
-                .isInstanceOf(RedisException.class)
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(prior, other, prior))).isInstanceOf(RedisException.class)
                 .hasMessageContaining("repeated command instance");
 
         assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(prior);
@@ -1089,8 +1084,7 @@ class DefaultEndpointUnitTests {
         Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
         endpoint.write(prior);
 
-        assertThatThrownBy(() -> endpoint.write(Arrays.asList(prior, other, prior)))
-                .isInstanceOf(RedisException.class)
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(prior, other, prior))).isInstanceOf(RedisException.class)
                 .hasMessageContaining("repeated command instance");
 
         assertThat(prior.exception).isNull();
