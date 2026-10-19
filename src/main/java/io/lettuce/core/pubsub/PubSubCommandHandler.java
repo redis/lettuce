@@ -298,6 +298,8 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
 
         String firstElement;
 
+        private boolean headerSeen;
+
         @Override
         public void set(ByteBuffer bytes) {
 
@@ -313,25 +315,42 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
 
         @Override
         public void multi(int count) {
-
-            if (multiCount == null) {
-                multiCount = count;
-            }
-
+            captureHeader(count);
             super.multi(count);
         }
 
         @Override
         public void multiArray(int count) {
+            // the state machine reports array headers through multiArray(int), RESP2 Pub/Sub messages are arrays
+            captureHeader(count);
+            super.multiArray(count);
+        }
 
-            // The state machine reports array headers through multiArray(int), which no longer falls back to
-            // multi(int) now that ReplayOutput records the typed callback. Capture the header here so RESP2
-            // Pub/Sub interleave detection keeps working while ReplayOutput still replays multiArray(int).
-            if (multiCount == null) {
+        @Override
+        public void multiPush(int count) {
+            headerSeen = true;
+            super.multiPush(count);
+        }
+
+        @Override
+        public void multiMap(int count) {
+            // a RESP3 map or set is never a RESP2 Pub/Sub message, so arrays nested in it must not be inspected
+            headerSeen = true;
+            super.multiMap(count);
+        }
+
+        @Override
+        public void multiSet(int count) {
+            headerSeen = true;
+            super.multiSet(count);
+        }
+
+        private void captureHeader(int count) {
+
+            if (!headerSeen) {
+                headerSeen = true;
                 multiCount = count;
             }
-
-            super.multiArray(count);
         }
 
     }
