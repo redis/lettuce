@@ -29,6 +29,16 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
     }
 
     @Override
+    public void setSingle(ByteBuffer bytes) {
+        output.add(new Single(bytes));
+    }
+
+    @Override
+    public void setBigNumber(ByteBuffer bytes) {
+        output.add(new BigNumber(bytes));
+    }
+
+    @Override
     public void set(long integer) {
         output.add(new Integer(integer));
     }
@@ -36,6 +46,11 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
     @Override
     public void set(double number) {
         output.add(new Double(number));
+    }
+
+    @Override
+    public void set(boolean value) {
+        output.add(new Boolean(value));
     }
 
     @Override
@@ -60,6 +75,26 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
     @Override
     public void multi(int count) {
         output.add(new Multi(count));
+    }
+
+    @Override
+    public void multiArray(int count) {
+        output.add(new MultiArray(count));
+    }
+
+    @Override
+    public void multiPush(int count) {
+        output.add(new MultiPush(count));
+    }
+
+    @Override
+    public void multiMap(int count) {
+        output.add(new MultiMap(count));
+    }
+
+    @Override
+    public void multiSet(int count) {
+        output.add(new MultiSet(count));
     }
 
     /**
@@ -189,6 +224,107 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
         @Override
         protected void replay(CommandOutput<?, ?, ?> target) {
             target.multi(count);
+        }
+
+    }
+
+    static class Single extends BulkStringSupport {
+
+        Single(ByteBuffer message) {
+            super(message);
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.setSingle(message);
+        }
+
+    }
+
+    static class BigNumber extends BulkStringSupport {
+
+        BigNumber(ByteBuffer message) {
+            super(message);
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.setBigNumber(message);
+        }
+
+    }
+
+    static class Boolean extends Signal {
+
+        final boolean message;
+
+        Boolean(boolean message) {
+            this.message = message;
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.set(message);
+        }
+
+    }
+
+    static class MultiArray extends Signal {
+
+        final int count;
+
+        MultiArray(int count) {
+            this.count = count;
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.multiArray(count);
+        }
+
+    }
+
+    static class MultiPush extends Signal {
+
+        final int count;
+
+        MultiPush(int count) {
+            this.count = count;
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.multiPush(count);
+        }
+
+    }
+
+    static class MultiMap extends Signal {
+
+        final int count;
+
+        MultiMap(int count) {
+            this.count = count;
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.multiMap(count);
+        }
+
+    }
+
+    static class MultiSet extends Signal {
+
+        final int count;
+
+        MultiSet(int count) {
+            this.count = count;
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.multiSet(count);
         }
 
     }

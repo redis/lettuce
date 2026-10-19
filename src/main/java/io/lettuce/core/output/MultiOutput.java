@@ -145,6 +145,75 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
     }
 
     @Override
+    public void setError(String error) {
+
+        if (discarded == null) {
+            super.setError(error);
+            return;
+        }
+
+        CommandOutput<K, V, ?> output = queue.isEmpty() ? this : queue.peek().getOutput();
+        output.setError(error);
+    }
+
+    @Override
+    public void multiArray(int count) {
+
+        if (multi == null) {
+            // the EXEC reply itself is decoded as an array, so the first multiArray is the transaction header
+            multi(count);
+            return;
+        }
+
+        RedisCommand<K, V, ?> command = queue.peek();
+        if (command != null && command.getOutput() != null) {
+            command.getOutput().multiArray(count);
+        }
+    }
+
+    @Override
+    public void multiPush(int count) {
+
+        if (multi == null) {
+            multi(count);
+            return;
+        }
+
+        RedisCommand<K, V, ?> command = queue.peek();
+        if (command != null && command.getOutput() != null) {
+            command.getOutput().multiPush(count);
+        }
+    }
+
+    @Override
+    public void multiMap(int count) {
+
+        if (multi == null) {
+            multi(count);
+            return;
+        }
+
+        RedisCommand<K, V, ?> command = queue.peek();
+        if (command != null && command.getOutput() != null) {
+            command.getOutput().multiMap(count);
+        }
+    }
+
+    @Override
+    public void multiSet(int count) {
+
+        if (multi == null) {
+            multi(count);
+            return;
+        }
+
+        RedisCommand<K, V, ?> command = queue.peek();
+        if (command != null && command.getOutput() != null) {
+            command.getOutput().multiSet(count);
+        }
+    }
+
+    @Override
     public void complete(int depth) {
 
         if (queue.isEmpty()) {
