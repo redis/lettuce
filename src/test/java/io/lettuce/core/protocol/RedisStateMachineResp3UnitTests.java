@@ -200,6 +200,34 @@ class RedisStateMachineResp3UnitTests {
     }
 
     @Test
+    void execWithMapReply() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(codec);
+        Command<String, String, Object> eval = new Command<>(CommandType.EVAL, new ObjectOutput<>(codec));
+        output.add(eval);
+
+        ByteBuf buffer = buffer("*1\r\n%1\r\n$4\r\nname\r\n$7\r\nlettuce\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(eval.getOutput().get()).isEqualTo(Collections.singletonMap("name", "lettuce"));
+        assertThat((Object) output.get().get(0)).isEqualTo(Collections.singletonMap("name", "lettuce"));
+    }
+
+    @Test
+    void execWithMapNestedInArrayReply() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(codec);
+        Command<String, String, Object> eval = new Command<>(CommandType.EVAL, new ObjectOutput<>(codec));
+        Command<String, String, Boolean> exists = new Command<>(CommandType.EXISTS, new BooleanOutput<>(codec));
+        output.add(eval);
+        output.add(exists);
+
+        ByteBuf buffer = buffer("*2\r\n*2\r\n%1\r\n$4\r\nname\r\n$7\r\nlettuce\r\n$3\r\nfoo\r\n#t\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(eval.getOutput().get()).isEqualTo(Arrays.asList(Collections.singletonMap("name", "lettuce"), "foo"));
+        assertThat(exists.getOutput().get()).isTrue();
+    }
+
+    @Test
     void multiEmptyArray1() {
         CommandOutput<String, String, List<Object>> output = new NestedMultiOutput<>(codec);
         ByteBuf buffer = buffer("*2\r\n$3\r\nABC\r\n*0\r\n");

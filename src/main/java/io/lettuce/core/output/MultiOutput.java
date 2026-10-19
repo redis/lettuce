@@ -135,13 +135,65 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
     @Override
     public void setError(ByteBuffer error) {
 
-        if (discarded == null) {
+        if (discarded == null || queue.isEmpty()) {
             super.setError(error);
             return;
         }
 
-        CommandOutput<K, V, ?> output = queue.isEmpty() ? this : queue.peek().getOutput();
-        output.setError(decodeString(error));
+        queue.peek().getOutput().setError(decodeString(error));
+    }
+
+    @Override
+    public void setError(String error) {
+        // client-side errors (timeout, cancellation) fail the whole transaction, not the command that is being decoded
+        super.setError(error);
+    }
+
+    @Override
+    public void multiArray(int count) {
+
+        if (multi == null) {
+            // the EXEC reply itself is decoded as an array, so the first multiArray is the transaction header
+            multi(count);
+            return;
+        }
+
+        CommandOutput<K, V, ?> output = currentOutput();
+        if (output != null) {
+            output.multiArray(count);
+        }
+    }
+
+    @Override
+    public void multiPush(int count) {
+
+        CommandOutput<K, V, ?> output = currentOutput();
+        if (output != null) {
+            output.multiPush(count);
+        }
+    }
+
+    @Override
+    public void multiMap(int count) {
+
+        CommandOutput<K, V, ?> output = currentOutput();
+        if (output != null) {
+            output.multiMap(count);
+        }
+    }
+
+    @Override
+    public void multiSet(int count) {
+
+        CommandOutput<K, V, ?> output = currentOutput();
+        if (output != null) {
+            output.multiSet(count);
+        }
+    }
+
+    private CommandOutput<K, V, ?> currentOutput() {
+        RedisCommand<K, V, ?> command = queue.peek();
+        return command != null ? command.getOutput() : null;
     }
 
     @Override

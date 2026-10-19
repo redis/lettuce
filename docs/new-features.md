@@ -11,6 +11,7 @@
   Internally, connection setup, reconnection, Sentinel and Master/Replica topology discovery, the event bus and trace-context propagation no longer use Reactor.
   When compiling without Reactor on the classpath, pass a typed `CredentialsProvider` to `RedisURI.setCredentialsProvider(...)` and `RedisURI.Builder.withAuthentication(...)`, for example a variable, a cast, `CredentialsProvider.from(...)` or `StaticCredentialsProvider`. A bare lambda doesn't compile, because the compiler needs Reactor to choose between those methods' two overloads.
 - `connectAsync(...)` failures now report the original cause and message, as `connect(...)` does. Previously the asynchronous path could surface a `RedisConnectionException` with a `null` message that wrapped a `CompletionException`.
+- RESP3 replies are now decoded the same way inside transactions and on Pub/Sub connections as on regular connections. On a Pub/Sub connection, a command that returns a RESP3 boolean no longer fails with `UnsupportedOperationException`. Some RESP3 map and set replies whose first element is `message` or `pmessage` are no longer mistaken for Pub/Sub messages. Before, such a reply went to the Pub/Sub listeners and the command never completed.
 
 ### Breaking changes
 
@@ -45,6 +46,7 @@ Lettuce 8.0 removes the Reactor-based APIs deprecated in 7.8 and 7.9, and change
   - the `ConnectionWatchdog` and `MaintenanceAwareConnectionWatchdog` constructors and their `wrapSocketAddressSupplier(...)`.
 
   The watchdog constructors also no longer take a `ConnectionFacade`.
+- **RESP3 map replies in transactions:** inside `MULTI`/`EXEC` on a RESP3 connection, commands whose result is built from the RESP3 reply types now return a RESP3 map reply as a `Map`, the same as outside a transaction. Before, they returned a flat `List` of keys and values. This affects `EVAL`, `EVALSHA` and `FCALL` (and their read-only variants) with `ScriptOutputType.OBJECT`, `FUNCTION LIST`, `CLUSTER LINKS`, and `dispatch(...)` with an `ObjectOutput`. Code that casts these `TransactionResult` entries to `List` must handle a `Map` instead. RESP2 connections are not affected.
 
 ## What's new in Lettuce 7.9
 
