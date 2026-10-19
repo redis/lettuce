@@ -127,7 +127,7 @@ class MultiOutputUnitTests {
     }
 
     @Test
-    void shouldForwardStringErrorToCommand() {
+    void shouldKeepClientErrorOnTransactionWhileDecodingCommand() {
 
         MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
         RecordingOutput inner = new RecordingOutput(StringCodec.UTF8);
@@ -136,11 +136,10 @@ class MultiOutputUnitTests {
         output.add(command);
 
         output.multi(1);
-        output.setError("Fail");
-        output.complete(1);
+        output.setError("Command timed out");
 
-        assertThat(inner.events).contains("setError:Fail");
-        assertThat(output.getError()).isNull();
+        assertThat(output.getError()).isEqualTo("Command timed out");
+        assertThat(inner.events).isEmpty();
     }
 
     @Test

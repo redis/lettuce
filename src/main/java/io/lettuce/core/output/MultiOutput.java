@@ -145,13 +145,8 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
 
     @Override
     public void setError(String error) {
-
-        if (discarded == null || queue.isEmpty()) {
-            super.setError(error);
-            return;
-        }
-
-        queue.peek().getOutput().setError(error);
+        // client-side errors (timeout, cancellation) fail the whole transaction, not the command that is being decoded
+        super.setError(error);
     }
 
     @Override
