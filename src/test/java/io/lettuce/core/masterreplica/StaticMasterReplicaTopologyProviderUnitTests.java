@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
@@ -57,10 +58,11 @@ class StaticMasterReplicaTopologyProviderUnitTests {
 
         when(connection.async()).thenReturn(async);
         when(connection.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
-        when(redisClient.connectAsync(StringCodec.UTF8, NODE))
+        ClientOptions clientOptions = ClientOptions.create();
+        when(redisClient.connectAsync(StringCodec.UTF8, NODE, clientOptions))
                 .thenReturn(ConnectionFuture.completed(InetSocketAddress.createUnresolved("localhost", 6379), connection));
 
-        sut = new StaticMasterReplicaTopologyProvider(redisClient, Collections.singletonList(NODE));
+        sut = new StaticMasterReplicaTopologyProvider(redisClient, Collections.singletonList(NODE), clientOptions);
     }
 
     @Test

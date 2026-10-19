@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisConnectionException;
@@ -72,10 +73,11 @@ class SentinelTopologyProviderUnitTests {
         when(async.master(MASTER_ID)).thenReturn(completed(node("127.0.0.1", "6482", "master")));
 
         RedisURI sentinelUri = RedisURI.Builder.sentinel("127.0.0.1", 26379, MASTER_ID).build();
-        when(redisClient.connectSentinelAsync(StringCodec.UTF8, sentinelUri))
+        ClientOptions clientOptions = ClientOptions.create();
+        when(redisClient.connectSentinelAsync(StringCodec.UTF8, sentinelUri, clientOptions))
                 .thenReturn(CompletableFuture.completedFuture(connection));
 
-        sut = new SentinelTopologyProvider(MASTER_ID, redisClient, sentinelUri);
+        sut = new SentinelTopologyProvider(MASTER_ID, redisClient, sentinelUri, clientOptions);
     }
 
     @Test

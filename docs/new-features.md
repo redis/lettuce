@@ -11,6 +11,7 @@
   Internally, connection setup, reconnection, Sentinel and Master/Replica topology discovery, the event bus and trace-context propagation no longer use Reactor.
   When compiling without Reactor on the classpath, pass a typed `CredentialsProvider` to `RedisURI.setCredentialsProvider(...)` and `RedisURI.Builder.withAuthentication(...)`, for example a variable, a cast, `CredentialsProvider.from(...)` or `StaticCredentialsProvider`. A bare lambda doesn't compile, because the compiler needs Reactor to choose between those methods' two overloads.
 - `connectAsync(...)` failures now report the original cause and message, as `connect(...)` does. Previously the asynchronous path could surface a `RedisConnectionException` with a `null` message that wrapped a `CompletionException`.
+- Connections capture the client's `ClientOptions` when they are initiated and use that snapshot throughout initialization, including asynchronous retries, Sentinel lookups and Master/Replica topology discovery, so a concurrent `setOptions(...)` no longer mixes configurations within one connection. `RedisClient` gained `connectAsync`, `connectPubSubAsync` and `connectSentinelAsync` overloads that accept explicit `ClientOptions`, and the connection factory hooks on `AbstractRedisClient`, `RedisClient` and `RedisClusterClient` have options-aware overloads; the previous hooks are deprecated. See [Client Options](advanced-usage/client-options.md#custom-connection-factories).
 
 ### Breaking changes
 

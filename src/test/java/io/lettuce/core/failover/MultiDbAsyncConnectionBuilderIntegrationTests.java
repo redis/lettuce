@@ -151,15 +151,16 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
         }
 
         @Override
-        protected ConnectionFuture<StatefulRedisConnection<K, V>> connectAsync(RedisCodec<K, V> codec, RedisURI uri) {
+        protected ConnectionFuture<StatefulRedisConnection<K, V>> connectAsync(RedisCodec<K, V> codec, RedisURI uri,
+                ClientOptions clientOptions) {
             if (hangingUris.contains(uri)) {
                 // Return a never-completing future to simulate hanging connection
                 CompletableFuture<StatefulRedisConnection<K, V>> hangingFuture = new CompletableFuture<>();
                 hangingFutures.put(uri, hangingFuture);
-                actualFuturesMap.put(uri, super.connectAsync(codec, uri));
+                actualFuturesMap.put(uri, super.connectAsync(codec, uri, clientOptions));
                 return ConnectionFuture.from(null, hangingFuture);
             }
-            return super.connectAsync(codec, uri);
+            return super.connectAsync(codec, uri, clientOptions);
         }
 
         public void proceedHangingConnections() {
