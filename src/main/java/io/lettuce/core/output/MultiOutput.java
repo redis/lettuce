@@ -158,52 +158,42 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
             return;
         }
 
-        RedisCommand<K, V, ?> command = queue.peek();
-        if (command != null && command.getOutput() != null) {
-            command.getOutput().multiArray(count);
+        CommandOutput<K, V, ?> output = currentOutput();
+        if (output != null) {
+            output.multiArray(count);
         }
     }
 
     @Override
     public void multiPush(int count) {
 
-        if (multi == null) {
-            multi(count);
-            return;
-        }
-
-        RedisCommand<K, V, ?> command = queue.peek();
-        if (command != null && command.getOutput() != null) {
-            command.getOutput().multiPush(count);
+        CommandOutput<K, V, ?> output = currentOutput();
+        if (output != null) {
+            output.multiPush(count);
         }
     }
 
     @Override
     public void multiMap(int count) {
 
-        if (multi == null) {
-            multi(count);
-            return;
-        }
-
-        RedisCommand<K, V, ?> command = queue.peek();
-        if (command != null && command.getOutput() != null) {
-            command.getOutput().multiMap(count);
+        CommandOutput<K, V, ?> output = currentOutput();
+        if (output != null) {
+            output.multiMap(count);
         }
     }
 
     @Override
     public void multiSet(int count) {
 
-        if (multi == null) {
-            multi(count);
-            return;
+        CommandOutput<K, V, ?> output = currentOutput();
+        if (output != null) {
+            output.multiSet(count);
         }
+    }
 
+    private CommandOutput<K, V, ?> currentOutput() {
         RedisCommand<K, V, ?> command = queue.peek();
-        if (command != null && command.getOutput() != null) {
-            command.getOutput().multiSet(count);
-        }
+        return command != null ? command.getOutput() : null;
     }
 
     @Override

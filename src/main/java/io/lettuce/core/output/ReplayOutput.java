@@ -50,7 +50,7 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
 
     @Override
     public void set(boolean value) {
-        output.add(new Boolean(value));
+        output.add(new BooleanValue(value));
     }
 
     @Override
@@ -254,11 +254,11 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
 
     }
 
-    static class Boolean extends Signal {
+    static class BooleanValue extends Signal {
 
         final boolean message;
 
-        Boolean(boolean message) {
+        BooleanValue(boolean message) {
             this.message = message;
         }
 
