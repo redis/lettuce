@@ -135,25 +135,23 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
     @Override
     public void setError(ByteBuffer error) {
 
-        if (discarded == null) {
+        if (discarded == null || queue.isEmpty()) {
             super.setError(error);
             return;
         }
 
-        CommandOutput<K, V, ?> output = queue.isEmpty() ? this : queue.peek().getOutput();
-        output.setError(decodeString(error));
+        queue.peek().getOutput().setError(decodeString(error));
     }
 
     @Override
     public void setError(String error) {
 
-        if (discarded == null) {
+        if (discarded == null || queue.isEmpty()) {
             super.setError(error);
             return;
         }
 
-        CommandOutput<K, V, ?> output = queue.isEmpty() ? this : queue.peek().getOutput();
-        output.setError(error);
+        queue.peek().getOutput().setError(error);
     }
 
     @Override

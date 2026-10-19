@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class WrapperOutputCallbackCoverageUnitTests {
 
         List<Method> callbacks = Arrays.stream(CommandOutput.class.getMethods())
                 .filter(m -> m.getDeclaringClass() == CommandOutput.class).filter(m -> m.getReturnType() == void.class)
-                .toList();
+                .collect(Collectors.toList());
 
         assertThat(callbacks).hasSize(14);
 

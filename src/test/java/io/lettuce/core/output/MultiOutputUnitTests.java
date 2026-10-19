@@ -144,6 +144,32 @@ class MultiOutputUnitTests {
     }
 
     @Test
+    void shouldKeepStringErrorWhenCommandQueueIsEmpty() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
+
+        output.multi(1);
+
+        output.setError("EXECABORT");
+
+        assertThat(output.hasError()).isTrue();
+        assertThat(output.getError()).isEqualTo("EXECABORT");
+    }
+
+    @Test
+    void shouldKeepStringErrorWhenTransactionWasDiscarded() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
+
+        output.set(null);
+
+        output.setError("EXECABORT");
+
+        assertThat(output.hasError()).isTrue();
+        assertThat(output.getError()).isEqualTo("EXECABORT");
+    }
+
+    @Test
     void shouldKeepTransactionLevelStringError() {
 
         MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);

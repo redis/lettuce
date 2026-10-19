@@ -321,6 +321,19 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
             super.multi(count);
         }
 
+        @Override
+        public void multiArray(int count) {
+
+            // The state machine reports array headers through multiArray(int), which no longer falls back to
+            // multi(int) now that ReplayOutput records the typed callback. Capture the header here so RESP2
+            // Pub/Sub interleave detection keeps working while ReplayOutput still replays multiArray(int).
+            if (multiCount == null) {
+                multiCount = count;
+            }
+
+            super.multiArray(count);
+        }
+
     }
 
 }
