@@ -36,6 +36,8 @@ import io.lettuce.core.cluster.api.async.NodeSelectionTimeSeriesAsyncCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelectionTimeSeriesCommands;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsReadArgs;
 
 /**
  * Cross-cutting checks of the TimeSeries public API: {@code @since 8.0} and no {@code @Experimental} (M02), Reactor stays
@@ -198,7 +200,8 @@ class TsApiConventionsUnitTests {
         Pattern publicMethod = Pattern.compile("^\\s+public\\s+(?!class|static class|interface|enum)[^=;]*\\(",
                 Pattern.MULTILINE);
 
-        for (String name : new String[] { "TsCreateArgs", "TsAlterArgs", "BaseTsSeriesArgs", "BaseTsCreateArgs" }) {
+        for (String name : new String[] { "TsCreateArgs", "TsAlterArgs", "BaseTsSeriesArgs", "BaseTsCreateArgs", "TsAddArgs",
+                "TsIncrByArgs", "BaseTsRangeArgs", "TsRangeArgs", "TsReadArgs" }) {
 
             Path source = MAIN_JAVA.resolve("io/lettuce/core/timeseries/arguments/" + name + ".java");
             String text = read(source);
@@ -277,6 +280,21 @@ class TsApiConventionsUnitTests {
         assertThat(TsCreateArgs.class.getSuperclass()).isEqualTo(createBase);
         assertThat(createBase.getSuperclass()).isEqualTo(seriesBase);
         assertThat(TsAlterArgs.class.getSuperclass()).isEqualTo(seriesBase);
+    }
+
+    /**
+     * Scenario M04 (range layer): {@code BaseTsRangeArgs} is package-private; {@code TsRangeArgs} and {@code TsReadArgs} are
+     * public, and {@code TsRangeArgs} extends the range base.
+     */
+    @Test
+    void rangeArgumentBaseIsPackagePrivate() throws ClassNotFoundException {
+
+        Class<?> rangeBase = Class.forName("io.lettuce.core.timeseries.arguments.BaseTsRangeArgs");
+
+        assertThat(Modifier.isPublic(rangeBase.getModifiers())).isFalse();
+        assertThat(Modifier.isPublic(TsRangeArgs.class.getModifiers())).isTrue();
+        assertThat(Modifier.isPublic(TsReadArgs.class.getModifiers())).isTrue();
+        assertThat(TsRangeArgs.class.getSuperclass()).isEqualTo(rangeBase);
     }
 
     /**
