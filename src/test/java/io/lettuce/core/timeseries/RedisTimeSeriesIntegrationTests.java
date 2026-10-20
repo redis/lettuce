@@ -9,6 +9,7 @@ package io.lettuce.core.timeseries;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -54,6 +55,8 @@ import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.lettuce.test.LettuceExtension;
@@ -65,8 +68,8 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * Integration tests for {@link RedisTimeSeriesCommands}: the series lifecycle commands (TS.CREATE, TS.ALTER, TS.DEL, TS.INFO),
  * the write commands (TS.ADD, TS.MADD, TS.INCRBY, TS.DECRBY), the compaction rule commands (TS.CREATERULE, TS.DELETERULE) and
- * the single-key reads (TS.GET, TS.RANGE, TS.REVRANGE, TS.READ). The subclasses run the same tests on RESP2, through the
- * reactive API and over Redis Cluster.
+ * the single-key reads (TS.GET, TS.RANGE, TS.REVRANGE, TS.READ) and the label-index reads (TS.MGET, TS.MRANGE, TS.MREVRANGE,
+ * TS.QUERYINDEX, TS.QUERYLABELS). The subclasses run the same tests on RESP2, through the reactive API and over Redis Cluster.
  * <p>
  * Tests written before the read commands existed read stored samples back with a raw {@code TS.RANGE key - +} sent through
  * {@code dispatch} ({@link #storedSamples(String)}).
@@ -2568,6 +2571,765 @@ public class RedisTimeSeriesIntegrationTests {
         assertThat((TsSample) result.get(4)).isEqualTo(TsSample.of(2000, 3.0));
         assertThat((Object) result.get(2)).isNotInstanceOf(Throwable.class);
         assertThat(maddResultInTransaction(result.get(2))).containsExactly(null, 2000L);
+    }
+
+    // --- label-index reads: helpers ----------------------------------------------------------------------------------
+
+    protected static final String F1B = "{ts}:f1b";
+
+    protected static final String G1 = "{ts}:g1";
+
+    protected static final String G2 = "{ts}:g2";
+
+    protected static final String EMPTY_SERIES = "{ts}:empty";
+
+    protected static final String NAN_COMPANION = "{ts}:nan2";
+
+    /**
+     * The isolation filter {@code t=<testMethodName>} (test plan §3).
+     */
+    protected TsFilter isolation() {
+        return TsFilter.equal("t", testName);
+    }
+
+    /**
+     * Series {@code {ts}:f1b} with labels {@code t=<test>, sensor=hum, area=south} (test plan D03) and samples (1000, 10),
+     * (2000, 20).
+     */
+    protected void secondSeries() {
+        redis.tsCreate(F1B, new TsCreateArgs().labels(labels("t", testName, "sensor", "hum", "area", "south")));
+        redis.tsAdd(F1B, 1000L, 10.0);
+        redis.tsAdd(F1B, 2000L, 20.0);
+    }
+
+    /**
+     * Fixture F3 {@code groupPair}: {@code {ts}:g1} with labels {@code t=<test>, grp=x, src=a} and values 1, 2, 3;
+     * {@code {ts}:g2} with labels {@code t=<test>, grp=x, src=b} and values 3, 4, 5; both at 1000, 2000, 3000.
+     */
+    protected void groupPair() {
+        groupPair(G1, G2);
+    }
+
+    protected void groupPair(String g1, String g2) {
+        redis.tsCreate(g1, new TsCreateArgs().labels(labels("t", testName, "grp", "x", "src", "a")));
+        redis.tsCreate(g2, new TsCreateArgs().labels(labels("t", testName, "grp", "x", "src", "b")));
+        for (int i = 0; i < 3; i++) {
+            redis.tsAdd(g1, (i + 1) * 1000L, 1.0 + i);
+            redis.tsAdd(g2, (i + 1) * 1000L, 3.0 + i);
+        }
+    }
+
+    /**
+     * Fixture F5 {@code excludeEmpty}: F1 plus {@code {ts}:empty} with labels {@code t=<test>, sensor=temp} and no samples.
+     */
+    protected void excludeEmptySeries() {
+        simpleSeries();
+        redis.tsCreate(EMPTY_SERIES, new TsCreateArgs().labels(labels("t", testName, "sensor", "temp")));
+    }
+
+    protected static Map<String, TsMGetValue<String>> mgetByKey(List<TsMGetValue<String>> values) {
+
+        Map<String, TsMGetValue<String>> result = new LinkedHashMap<>();
+        for (TsMGetValue<String> value : values) {
+            assertThat(result.put(value.getKey(), value)).as("duplicate key " + value.getKey()).isNull();
+        }
+        return result;
+    }
+
+    protected static Map<String, TsSeries<String>> seriesByKey(List<TsSeries<String>> series) {
+
+        Map<String, TsSeries<String>> result = new LinkedHashMap<>();
+        for (TsSeries<String> entry : series) {
+            assertThat(entry.isGrouped()).isFalse();
+            assertThat(result.put(entry.getKey(), entry)).as("duplicate key " + entry.getKey()).isNull();
+        }
+        return result;
+    }
+
+    protected static List<String> keys(List<TsMGetValue<String>> values) {
+
+        List<String> result = new ArrayList<>();
+        for (TsMGetValue<String> value : values) {
+            result.add(value.getKey());
+        }
+        return result;
+    }
+
+    protected static List<String> seriesKeys(List<TsSeries<String>> series) {
+
+        List<String> result = new ArrayList<>();
+        for (TsSeries<String> entry : series) {
+            result.add(entry.getKey());
+        }
+        return result;
+    }
+
+    /**
+     * The one group of a GROUPBY reply.
+     */
+    protected static TsSeries<String> onlyGroup(List<TsSeries<String>> series) {
+
+        assertThat(series).hasSize(1);
+        assertThat(series.get(0).isGrouped()).isTrue();
+        return series.get(0);
+    }
+
+    protected List<TsSample> groupSamples(TsReducer reducer) {
+        return onlyGroup(redis.tsMRange(Range.unbounded(), new TsMRangeArgs().groupBy("grp", reducer), isolation()))
+                .getSamples();
+    }
+
+    // --- TS.MGET -----------------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario D01: F1 + {@code {ts}:f1b}. Without an option the labels are empty; WITHLABELS returns all labels in server
+     * order; SELECTED_LABELS {@code area, missing} returns {@code area=north} and {@code missing=null}. Order-insensitive.
+     */
+    @Test
+    void mgetLabelModes() {
+
+        simpleSeries();
+        secondSeries();
+
+        Map<String, TsMGetValue<String>> plain = mgetByKey(redis.tsMGet(isolation()));
+        assertThat(plain).containsOnlyKeys(F1, F1B);
+        assertThat(plain.get(F1).getLabels()).isEmpty();
+        assertThat(plain.get(F1).getSample()).isEqualTo(TsSample.of(3000, 3.0));
+        assertThat(plain.get(F1B).getLabels()).isEmpty();
+        assertThat(plain.get(F1B).getSample()).isEqualTo(TsSample.of(2000, 20.0));
+
+        Map<String, TsMGetValue<String>> withLabels = mgetByKey(redis.tsMGet(new TsMGetArgs().withLabels(), isolation()));
+        assertThat(withLabels.get(F1).getLabels()).containsExactly(entry("t", testName), entry("sensor", "temp"),
+                entry("area", "north"));
+        assertThat(withLabels.get(F1B).getLabels()).containsExactly(entry("t", testName), entry("sensor", "hum"),
+                entry("area", "south"));
+        assertThat(withLabels.get(F1).getSample()).isEqualTo(TsSample.of(3000, 3.0));
+
+        Map<String, TsMGetValue<String>> selected = mgetByKey(
+                redis.tsMGet(new TsMGetArgs().selectedLabels("area", "missing"), isolation()));
+        assertThat(selected.get(F1).getLabels()).containsExactly(entry("area", "north"), entry("missing", null));
+        assertThat(selected.get(F1B).getLabels()).containsExactly(entry("area", "south"), entry("missing", null));
+    }
+
+    /**
+     * Scenario D01: a series without samples has a {@code null} sample; no match → empty list.
+     */
+    @Test
+    void mgetEmptySeriesAndNoMatch() {
+
+        redis.tsCreate(KEY, new TsCreateArgs().label("t", testName));
+
+        List<TsMGetValue<String>> values = redis.tsMGet(isolation());
+        assertThat(values).hasSize(1);
+        assertThat(values.get(0).getKey()).isEqualTo(KEY);
+        assertThat(values.get(0).getSample()).isNull();
+        assertThat(values.get(0).getLabels()).isEmpty();
+
+        assertThat(redis.tsMGet(TsFilter.equal("t", testName + "-none"))).isEmpty();
+    }
+
+    /**
+     * Scenario D02: F4. MGET with LATEST reports the open bucket of the compaction (2000, 30); without LATEST the last closed
+     * bucket (1000, 15). The source series is not a compaction and reports (2000, 30) either way.
+     */
+    @Test
+    void mgetLatest() {
+
+        compactionPair();
+
+        Map<String, TsMGetValue<String>> latest = mgetByKey(redis.tsMGet(new TsMGetArgs().latest(), isolation()));
+        assertThat(latest).containsOnlyKeys(SRC, DST);
+        assertThat(latest.get(DST).getSample()).isEqualTo(TsSample.of(2000, 30.0));
+        assertThat(latest.get(SRC).getSample()).isEqualTo(TsSample.of(2000, 30.0));
+
+        Map<String, TsMGetValue<String>> closed = mgetByKey(redis.tsMGet(isolation()));
+        assertThat(closed.get(DST).getSample()).isEqualTo(TsSample.of(1000, 15.0));
+    }
+
+    /**
+     * Scenario D03: the filter grammar via {@link TsFilter}, on F1 + {@code {ts}:f1b}, through TS.QUERYINDEX and TS.MGET:
+     * {@code equal(sensor,temp)} → f1; {@code notEqual(sensor,temp)} → f1b; {@code exists(area)} → both;
+     * {@code notExists(area)} → none; {@code in(area,north,south)} → both; {@code notIn(area,north)} → f1b;
+     * {@code raw("sensor=(temp,hum)")} → both. Each query also has the isolation filter (several filters are ANDed).
+     */
+    @Test
+    void filterGrammar() {
+
+        simpleSeries();
+        secondSeries();
+
+        assertThat(redis.tsQueryIndex(isolation(), TsFilter.equal("sensor", "temp"))).containsExactly(F1);
+        assertThat(redis.tsQueryIndex(isolation(), TsFilter.notEqual("sensor", "temp"))).containsExactly(F1B);
+        assertThat(redis.tsQueryIndex(isolation(), TsFilter.exists("area"))).containsExactlyInAnyOrder(F1, F1B);
+        assertThat(redis.tsQueryIndex(isolation(), TsFilter.notExists("area"))).isEmpty();
+        assertThat(redis.tsQueryIndex(isolation(), TsFilter.in("area", "north", "south"))).containsExactlyInAnyOrder(F1, F1B);
+        assertThat(redis.tsQueryIndex(isolation(), TsFilter.notIn("area", "north"))).containsExactly(F1B);
+        assertThat(redis.tsQueryIndex(isolation(), TsFilter.raw("sensor=(temp,hum)"))).containsExactlyInAnyOrder(F1, F1B);
+        assertThat(redis.tsQueryIndex(TsFilter.in("t", testName), TsFilter.notIn("sensor", "temp", "hum"))).isEmpty();
+
+        assertThat(keys(redis.tsMGet(isolation(), TsFilter.equal("sensor", "temp")))).containsExactly(F1);
+        assertThat(keys(redis.tsMGet(isolation(), TsFilter.notIn("area", "north")))).containsExactly(F1B);
+        assertThat(keys(redis.tsMGet(isolation(), TsFilter.exists("area")))).containsExactlyInAnyOrder(F1, F1B);
+        assertThat(keys(redis.tsMGet(isolation(), TsFilter.notExists("area")))).isEmpty();
+    }
+
+    /**
+     * Scenario D03: a filter without a matching expression ({@code label=value} or {@code label=(…)}) is passed to the server,
+     * which rejects it with {@code TSDB: please provide at least one matcher} (observed on 8.10.0), on QUERYINDEX, MGET, MRANGE
+     * and MREVRANGE.
+     */
+    @Test
+    void filterWithoutMatcherIsAServerError() {
+
+        simpleSeries();
+
+        assertThatThrownBy(() -> redis.tsQueryIndex(TsFilter.notEqual("sensor", "temp")))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: please provide at least one matcher");
+        assertThatThrownBy(() -> redis.tsMGet(TsFilter.exists("area"))).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: please provide at least one matcher");
+        assertThatThrownBy(() -> redis.tsMRange(Range.unbounded(), TsFilter.notExists("area")))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: please provide at least one matcher");
+        assertThatThrownBy(() -> redis.tsMRevRange(Range.unbounded(), TsFilter.notIn("area", "x")))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: please provide at least one matcher");
+    }
+
+    // --- TS.MRANGE / TS.MREVRANGE ------------------------------------------------------------------------------------
+
+    /**
+     * Scenario D04: F1 and F2, raw MRANGE and MREVRANGE over the whole range and over {@code 2000..4000}: exact samples per
+     * series, ascending for MRANGE and descending for MREVRANGE; no labels without a label option.
+     */
+    @Test
+    void mrangeRaw() {
+
+        simpleSeries();
+        statsSeries();
+
+        Map<String, TsSeries<String>> all = seriesByKey(redis.tsMRange(Range.unbounded(), isolation()));
+        assertThat(all).containsOnlyKeys(F1, F2);
+        assertThat(all.get(F1).getSamples()).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 2.0),
+                TsSample.of(3000, 3.0));
+        assertThat(firstValues(all.get(F2).getSamples())).containsExactly(2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0);
+        assertThat(timestamps(all.get(F2).getSamples())).containsExactly(1000L, 2000L, 3000L, 4000L, 5000L, 6000L, 7000L,
+                8000L);
+        assertThat(all.get(F1).getLabels()).isEmpty();
+        assertThat(all.get(F1).getAggregations()).isEmpty();
+        assertThat(all.get(F1).getReducer()).isNull();
+        assertThat(all.get(F1).getGroup()).isNull();
+        assertThat(all.get(F1).getSources()).isNull();
+
+        Map<String, TsSeries<String>> window = seriesByKey(redis.tsMRange(Range.create(2000L, 4000L), isolation()));
+        assertThat(timestamps(window.get(F1).getSamples())).containsExactly(2000L, 3000L);
+        assertThat(timestamps(window.get(F2).getSamples())).containsExactly(2000L, 3000L, 4000L);
+
+        Map<String, TsSeries<String>> reverse = seriesByKey(redis.tsMRevRange(Range.unbounded(), isolation()));
+        assertThat(reverse.get(F1).getSamples()).containsExactly(TsSample.of(3000, 3.0), TsSample.of(2000, 2.0),
+                TsSample.of(1000, 1.0));
+        assertThat(firstValues(reverse.get(F2).getSamples())).containsExactly(9.0, 7.0, 5.0, 5.0, 4.0, 4.0, 4.0, 2.0);
+
+        Map<String, TsSeries<String>> reverseWindow = seriesByKey(
+                redis.tsMRevRange(Range.from(Boundary.excluding(2000L), Boundary.including(4000L)), isolation()));
+        assertThat(timestamps(reverseWindow.get(F1).getSamples())).containsExactly(3000L);
+        assertThat(timestamps(reverseWindow.get(F2).getSamples())).containsExactly(4000L, 3000L);
+    }
+
+    /**
+     * Scenario D04: label modes on MRANGE and MREVRANGE: WITHLABELS gives all labels; SELECTED_LABELS {@code sensor} gives
+     * {@code sensor=temp} on F1 and {@code sensor=null} on F2.
+     */
+    @Test
+    void mrangeLabelModes() {
+
+        simpleSeries();
+        statsSeries();
+
+        Map<String, TsSeries<String>> withLabels = seriesByKey(
+                redis.tsMRange(Range.unbounded(), new TsMRangeArgs().withLabels(), isolation()));
+        assertThat(withLabels.get(F1).getLabels()).containsExactly(entry("t", testName), entry("sensor", "temp"),
+                entry("area", "north"));
+        assertThat(withLabels.get(F2).getLabels()).containsExactly(entry("t", testName));
+        assertThat(withLabels.get(F1).getSamples()).hasSize(3);
+
+        Map<String, TsSeries<String>> selected = seriesByKey(
+                redis.tsMRevRange(Range.unbounded(), new TsMRangeArgs().selectedLabels("sensor"), isolation()));
+        assertThat(selected.get(F1).getLabels()).containsExactly(entry("sensor", "temp"));
+        assertThat(selected.get(F2).getLabels()).containsExactly(entry("sensor", null));
+        assertThat(selected.get(F2).getSamples().get(0)).isEqualTo(TsSample.of(8000, 9.0));
+    }
+
+    /**
+     * Scenario D04: COUNT limits the samples per series: MRANGE COUNT 2 → the two oldest per series, MREVRANGE COUNT 2 → the
+     * two newest.
+     */
+    @Test
+    void mrangeCount() {
+
+        simpleSeries();
+        statsSeries();
+
+        Map<String, TsSeries<String>> forward = seriesByKey(
+                redis.tsMRange(Range.unbounded(), new TsMRangeArgs().count(2), isolation()));
+        assertThat(timestamps(forward.get(F1).getSamples())).containsExactly(1000L, 2000L);
+        assertThat(timestamps(forward.get(F2).getSamples())).containsExactly(1000L, 2000L);
+
+        Map<String, TsSeries<String>> reverse = seriesByKey(
+                redis.tsMRevRange(Range.unbounded(), new TsMRangeArgs().count(2), isolation()));
+        assertThat(timestamps(reverse.get(F1).getSamples())).containsExactly(3000L, 2000L);
+        assertThat(timestamps(reverse.get(F2).getSamples())).containsExactly(8000L, 7000L);
+    }
+
+    /**
+     * Scenario D04: filters select the series: {@code sensor=temp} → F1 only; a filter that matches nothing → empty list.
+     */
+    @Test
+    void mrangeFilters() {
+
+        simpleSeries();
+        statsSeries();
+
+        assertThat(seriesKeys(redis.tsMRange(Range.unbounded(), isolation(), TsFilter.equal("sensor", "temp"))))
+                .containsExactly(F1);
+        assertThat(
+                seriesKeys(redis.tsMRevRange(Range.unbounded(), new TsMRangeArgs(), isolation(), TsFilter.notExists("sensor"))))
+                        .containsExactly(F2);
+        assertThat(redis.tsMRange(Range.unbounded(), TsFilter.equal("t", testName + "-none"))).isEmpty();
+    }
+
+    /**
+     * Scenario D04: one aggregation, bucket 3000 avg: F2 → (0, 3), (3000, 13/3), (6000, 7) (test plan §4); F1 → (0, 1.5),
+     * (3000, 3); MREVRANGE reversed; {@code getAggregations()} = [AVG].
+     */
+    @Test
+    void mrangeAggregation() {
+
+        simpleSeries();
+        statsSeries();
+
+        Map<String, TsSeries<String>> forward = seriesByKey(
+                redis.tsMRange(Range.unbounded(), new TsMRangeArgs().aggregation(3000, TsAggregationType.AVG), isolation()));
+        assertThat(forward.get(F2).getSamples()).containsExactly(TsSample.of(0, 3.0), TsSample.of(3000, 13.0 / 3),
+                TsSample.of(6000, 7.0));
+        assertThat(forward.get(F1).getSamples()).containsExactly(TsSample.of(0, 1.5), TsSample.of(3000, 3.0));
+        assertThat(forward.get(F2).getAggregations()).containsExactly(TsAggregationType.AVG);
+
+        Map<String, TsSeries<String>> reverse = seriesByKey(
+                redis.tsMRevRange(Range.unbounded(), new TsMRangeArgs().aggregation(3000, TsAggregationType.AVG), isolation()));
+        assertThat(reverse.get(F2).getSamples()).containsExactly(TsSample.of(6000, 7.0), TsSample.of(3000, 13.0 / 3),
+                TsSample.of(0, 3.0));
+
+        Map<String, TsSeries<String>> sum = seriesByKey(redis.tsMRange(Range.unbounded(),
+                new TsMRangeArgs().aggregation(10000, TsAggregationType.SUM).withLabels(), isolation()));
+        assertThat(sum.get(F2).getSamples()).containsExactly(TsSample.of(0, 40.0));
+        assertThat(sum.get(F2).getLabels()).containsExactly(entry("t", testName));
+    }
+
+    /**
+     * Scenario D04 / D05 (Redis 8.8+): several aggregations, bucket 3000 {@code min,avg,max}: F2 rows (0, [2, 3, 4]), (3000,
+     * [4, 13/3, 5]), (6000, [5, 7, 9]); F1 rows (0, [1, 1.5, 2]), (3000, [3, 3, 3]); {@code getAggregations()} = the request's
+     * list; with WITHLABELS the labels hold only the real labels; MREVRANGE reversed.
+     */
+    @Test
+    void mrangeSeveralAggregations() {
+
+        assumeVersion("8.8");
+        simpleSeries();
+        statsSeries();
+
+        TsAggregation[] minAvgMax = { TsAggregationType.MIN, TsAggregationType.AVG, TsAggregationType.MAX };
+
+        Map<String, TsSeries<String>> forward = seriesByKey(
+                redis.tsMRange(Range.unbounded(), new TsMRangeArgs().aggregation(3000, minAvgMax).withLabels(), isolation()));
+        assertThat(forward.get(F2).getSamples()).containsExactly(sample(0, 2, 3, 4), sample(3000, 4, 13.0 / 3, 5),
+                sample(6000, 5, 7, 9));
+        assertThat(forward.get(F1).getSamples()).containsExactly(sample(0, 1, 1.5, 2), sample(3000, 3, 3, 3));
+        assertThat(forward.get(F2).getAggregations()).containsExactly(minAvgMax);
+        assertThat(forward.get(F1).getAggregations()).containsExactly(minAvgMax);
+        assertThat(forward.get(F2).getLabels()).containsExactly(entry("t", testName));
+        assertThat(forward.get(F1).getLabels()).containsExactly(entry("t", testName), entry("sensor", "temp"),
+                entry("area", "north"));
+        assertThat(forward.get(F2).getSamples().get(1).getValue()).isEqualTo(4.0);
+
+        Map<String, TsSeries<String>> reverse = seriesByKey(
+                redis.tsMRevRange(Range.unbounded(), new TsMRangeArgs().aggregation(3000, minAvgMax), isolation()));
+        assertThat(reverse.get(F2).getSamples()).containsExactly(sample(6000, 5, 7, 9), sample(3000, 4, 13.0 / 3, 5),
+                sample(0, 2, 3, 4));
+        assertThat(reverse.get(F2).getLabels()).isEmpty();
+    }
+
+    /**
+     * Scenario D05 (Redis 8.8+): {@code getAggregations()} returns the request's aggregations in request order, also in an
+     * order different from the server's metadata, and the labels never contain the {@code aggregators} metadata.
+     */
+    @Test
+    void mrangeAggregationsFromTheRequest() {
+
+        assumeVersion("8.8");
+        statsSeries();
+
+        List<TsSeries<String>> series = redis.tsMRange(Range.unbounded(),
+                new TsMRangeArgs().aggregation(10000, TsAggregationType.COUNT, TsAggregationType.SUM).withLabels(),
+                isolation());
+
+        assertThat(series).hasSize(1);
+        assertThat(series.get(0).getAggregations()).containsExactly(TsAggregationType.COUNT, TsAggregationType.SUM);
+        assertThat(series.get(0).getLabels()).containsOnlyKeys("t");
+        assertThat(series.get(0).getSamples()).containsExactly(sample(0, 8, 40));
+    }
+
+    // --- GROUPBY -----------------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario D06: F3 GROUPBY grp with every reducer, exact values per timestamp 1000 / 2000 / 3000 (test plan §4): sum 4/6/8,
+     * min 1/2/3, max 3/4/5, avg 2/3/4, range 2/2/2, count 2/2/2, std.p 1, var.p 1, std.s √2, var.s 2.
+     */
+    @Test
+    void groupByEveryReducer() {
+
+        groupPair();
+
+        assertThat(firstValues(groupSamples(TsReducerType.SUM))).containsExactly(4.0, 6.0, 8.0);
+        assertThat(firstValues(groupSamples(TsReducerType.MIN))).containsExactly(1.0, 2.0, 3.0);
+        assertThat(firstValues(groupSamples(TsReducerType.MAX))).containsExactly(3.0, 4.0, 5.0);
+        assertThat(firstValues(groupSamples(TsReducerType.AVG))).containsExactly(2.0, 3.0, 4.0);
+        assertThat(firstValues(groupSamples(TsReducerType.RANGE))).containsExactly(2.0, 2.0, 2.0);
+        assertThat(firstValues(groupSamples(TsReducerType.COUNT))).containsExactly(2.0, 2.0, 2.0);
+        assertThat(firstValues(groupSamples(TsReducerType.STD_P))).containsExactly(1.0, 1.0, 1.0);
+        assertThat(firstValues(groupSamples(TsReducerType.VAR_P))).containsExactly(1.0, 1.0, 1.0);
+        assertThat(firstValues(groupSamples(TsReducerType.STD_S))).containsExactly(1.4142135623730951, 1.4142135623730951,
+                1.4142135623730951);
+        assertThat(firstValues(groupSamples(TsReducerType.VAR_S))).containsExactly(2.0, 2.0, 2.0);
+        assertThat(timestamps(groupSamples(TsReducerType.SUM))).containsExactly(1000L, 2000L, 3000L);
+    }
+
+    /**
+     * Scenario D06 (Redis 8.6+): countNaN and countAll with F7 ({@code {ts}:nan}: 1, NaN, 3, NaN at 1000 … 4000) grouped with a
+     * companion series {@code {ts}:nan2} (10, 20, 30, 40) by {@code t}, so every timestamp has a non-NaN input: countNaN
+     * 0/1/0/1, countAll 2/2/2/2, count 2/1/2/1.
+     */
+    @Test
+    void groupByCountNanAndCountAll() {
+
+        assumeVersion("8.6");
+        nanSeries();
+        redis.tsCreate(NAN_COMPANION, new TsCreateArgs().label("t", testName));
+        for (int i = 1; i <= 4; i++) {
+            redis.tsAdd(NAN_COMPANION, i * 1000L, i * 10.0);
+        }
+
+        assertThat(onlyGroup(
+                redis.tsMRange(Range.unbounded(), new TsMRangeArgs().groupBy("t", TsReducerType.COUNTNAN), isolation()))
+                        .getSamples()).containsExactly(TsSample.of(1000, 0.0), TsSample.of(2000, 1.0), TsSample.of(3000, 0.0),
+                                TsSample.of(4000, 1.0));
+        assertThat(onlyGroup(
+                redis.tsMRange(Range.unbounded(), new TsMRangeArgs().groupBy("t", TsReducerType.COUNTALL), isolation()))
+                        .getSamples()).containsExactly(TsSample.of(1000, 2.0), TsSample.of(2000, 2.0), TsSample.of(3000, 2.0),
+                                TsSample.of(4000, 2.0));
+        assertThat(
+                onlyGroup(redis.tsMRange(Range.unbounded(), new TsMRangeArgs().groupBy("t", TsReducerType.COUNT), isolation()))
+                        .getSamples()).containsExactly(TsSample.of(1000, 2.0), TsSample.of(2000, 1.0), TsSample.of(3000, 2.0),
+                                TsSample.of(4000, 1.0));
+    }
+
+    /**
+     * Scenario D06 (Redis 8.8+, RedisTimeSeries #2013): when every input of a timestamp is NaN, count, countNaN and countAll
+     * still return counts, not NaN. F7 alone grouped by {@code t}: at 2000 and 4000 the only input is NaN → count 0, countNaN
+     * 1, countAll 1.
+     */
+    @Test
+    void groupByCountsWhenEveryInputIsNan() {
+
+        assumeVersion("8.8");
+        nanSeries();
+
+        assertThat(
+                onlyGroup(redis.tsMRange(Range.unbounded(), new TsMRangeArgs().groupBy("t", TsReducerType.COUNT), isolation()))
+                        .getSamples()).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 0.0), TsSample.of(3000, 1.0),
+                                TsSample.of(4000, 0.0));
+        assertThat(onlyGroup(
+                redis.tsMRange(Range.unbounded(), new TsMRangeArgs().groupBy("t", TsReducerType.COUNTNAN), isolation()))
+                        .getSamples()).containsExactly(TsSample.of(1000, 0.0), TsSample.of(2000, 1.0), TsSample.of(3000, 0.0),
+                                TsSample.of(4000, 1.0));
+        assertThat(onlyGroup(
+                redis.tsMRange(Range.unbounded(), new TsMRangeArgs().groupBy("t", TsReducerType.COUNTALL), isolation()))
+                        .getSamples()).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 1.0), TsSample.of(3000, 1.0),
+                                TsSample.of(4000, 1.0));
+    }
+
+    /**
+     * Scenario D07: F3 GROUPBY grp REDUCE max with WITHLABELS: {@code isGrouped()}, {@code getKey()} null, {@code getGroup()} =
+     * {@code grp=x}, {@code getReducer()} = the request's reducer, {@code getSources()} = {g1, g2} in any order, no
+     * aggregations; the labels hold only {@code grp=x} (observed on 8.10.0), never {@code __reducer__} / {@code __source__}.
+     */
+    @Test
+    void groupByModel() {
+
+        groupPair();
+
+        TsSeries<String> group = onlyGroup(redis.tsMRange(Range.unbounded(),
+                new TsMRangeArgs().withLabels().groupBy("grp", TsReducerType.MAX), isolation()));
+
+        assertThat(group.isGrouped()).isTrue();
+        assertThat(group.getKey()).isNull();
+        assertThat(group.getGroup()).isEqualTo("grp=x");
+        assertThat(group.getReducer()).isSameAs(TsReducerType.MAX);
+        assertThat(group.getAggregations()).isEmpty();
+        assertThat(group.getSources()).containsExactlyInAnyOrder(G1, G2);
+        assertThat(group.getLabels()).doesNotContainKeys("__reducer__", "__source__").containsExactly(entry("grp", "x"));
+        assertThat(group.getSamples()).containsExactly(TsSample.of(1000, 3.0), TsSample.of(2000, 4.0), TsSample.of(3000, 5.0));
+    }
+
+    /**
+     * Scenario D07: GROUPBY with one aggregation: two groups ({@code src=a}, {@code src=b}) by {@code src}, aggregation sum
+     * bucket 10000 → (0, 6) and (0, 12); {@code getAggregations()} = [SUM], {@code getReducer()} = MIN.
+     */
+    @Test
+    void groupByWithAggregation() {
+
+        groupPair();
+
+        List<TsSeries<String>> groups = redis.tsMRange(Range.unbounded(),
+                new TsMRangeArgs().aggregation(10000, TsAggregationType.SUM).groupBy("src", TsReducerType.MIN), isolation());
+
+        assertThat(groups).hasSize(2);
+        Map<String, TsSeries<String>> byGroup = new LinkedHashMap<>();
+        for (TsSeries<String> group : groups) {
+            assertThat(group.isGrouped()).isTrue();
+            assertThat(group.getAggregations()).containsExactly(TsAggregationType.SUM);
+            assertThat(group.getReducer()).isSameAs(TsReducerType.MIN);
+            byGroup.put(group.getGroup(), group);
+        }
+        assertThat(byGroup).containsOnlyKeys("src=a", "src=b");
+        assertThat(byGroup.get("src=a").getSamples()).containsExactly(TsSample.of(0, 6.0));
+        assertThat(byGroup.get("src=b").getSamples()).containsExactly(TsSample.of(0, 12.0));
+    }
+
+    /**
+     * Scenario D08: GROUPBY sources. Without WITHLABELS the sources come only on RESP3 ({@code {g1, g2}}); the RESP2 subclass
+     * overrides this test ({@code null}, design §3.5, H7). With WITHLABELS they are {@code {g1, g2}} on both protocols.
+     */
+    @Test
+    void groupBySources() {
+
+        groupPair();
+
+        TsSeries<String> withoutLabels = onlyGroup(
+                redis.tsMRange(Range.unbounded(), new TsMRangeArgs().groupBy("grp", TsReducerType.SUM), isolation()));
+        assertThat(withoutLabels.getSources()).containsExactlyInAnyOrder(G1, G2);
+        assertThat(withoutLabels.getLabels()).isEmpty();
+
+        assertGroupSourcesWithLabels();
+    }
+
+    protected void assertGroupSourcesWithLabels() {
+
+        TsSeries<String> withLabels = onlyGroup(redis.tsMRevRange(Range.unbounded(),
+                new TsMRangeArgs().withLabels().groupBy("grp", TsReducerType.SUM), isolation()));
+        assertThat(withLabels.getSources()).containsExactlyInAnyOrder(G1, G2);
+        assertThat(withLabels.getLabels()).containsExactly(entry("grp", "x"));
+    }
+
+    /**
+     * Scenario D09: MREVRANGE GROUPBY grp on F3 → the grouped rows in descending order: sum (3000, 8), (2000, 6), (1000, 4);
+     * with COUNT 2 → (3000, 8), (2000, 6).
+     */
+    @Test
+    void mrevrangeGroupBy() {
+
+        groupPair();
+
+        TsSeries<String> group = onlyGroup(
+                redis.tsMRevRange(Range.unbounded(), new TsMRangeArgs().groupBy("grp", TsReducerType.SUM), isolation()));
+        assertThat(group.getGroup()).isEqualTo("grp=x");
+        assertThat(group.getReducer()).isSameAs(TsReducerType.SUM);
+        assertThat(group.getSamples()).containsExactly(TsSample.of(3000, 8.0), TsSample.of(2000, 6.0), TsSample.of(1000, 4.0));
+
+        assertThat(onlyGroup(redis.tsMRevRange(Range.unbounded(), new TsMRangeArgs().count(2).groupBy("grp", TsReducerType.SUM),
+                isolation())).getSamples()).containsExactly(TsSample.of(3000, 8.0), TsSample.of(2000, 6.0));
+    }
+
+    // --- EXCLUDEEMPTY (Redis 8.10+) ----------------------------------------------------------------------------------
+
+    /**
+     * Scenario D10 (Redis 8.10+): F5 over F1's range 1000..3000. By default MRANGE and MREVRANGE report both series (the empty
+     * one with no samples); EXCLUDEEMPTY → only F1; with AGGREGATION → only F1; with aggregation EMPTY → still only F1; when
+     * only the empty series matches → empty list.
+     */
+    @Test
+    void excludeEmpty() {
+
+        assumeVersion("8.10");
+        excludeEmptySeries();
+        Range<Long> range = Range.create(1000L, 3000L);
+
+        Map<String, TsSeries<String>> all = seriesByKey(redis.tsMRange(range, isolation()));
+        assertThat(all).containsOnlyKeys(F1, EMPTY_SERIES);
+        assertThat(all.get(EMPTY_SERIES).getSamples()).isEmpty();
+        assertThat(seriesKeys(redis.tsMRevRange(range, isolation()))).containsExactlyInAnyOrder(F1, EMPTY_SERIES);
+
+        assertThat(seriesKeys(redis.tsMRange(range, new TsMRangeArgs().excludeEmpty(), isolation()))).containsExactly(F1);
+        assertThat(seriesKeys(redis.tsMRevRange(range, new TsMRangeArgs().excludeEmpty(), isolation()))).containsExactly(F1);
+
+        List<TsSeries<String>> aggregated = redis.tsMRange(range,
+                new TsMRangeArgs().aggregation(1000, TsAggregationType.AVG).excludeEmpty(), isolation());
+        assertThat(seriesKeys(aggregated)).containsExactly(F1);
+        assertThat(aggregated.get(0).getSamples()).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 2.0),
+                TsSample.of(3000, 3.0));
+
+        assertThat(seriesKeys(redis.tsMRange(range,
+                new TsMRangeArgs().aggregation(1000, TsAggregationType.AVG).empty().excludeEmpty(), isolation())))
+                        .containsExactly(F1);
+        assertThat(seriesKeys(redis.tsMRevRange(range,
+                new TsMRangeArgs().aggregation(1000, TsAggregationType.COUNT).empty().excludeEmpty().withLabels(),
+                isolation()))).containsExactly(F1);
+
+        assertThat(redis.tsMRange(range, new TsMRangeArgs().excludeEmpty(), isolation(), TsFilter.notExists("area"))).isEmpty();
+        assertThat(redis.tsMRange(Range.create(5000L, 6000L), new TsMRangeArgs().excludeEmpty(), isolation())).isEmpty();
+    }
+
+    /**
+     * Scenario J04 (Redis 8.10+): a raw {@code TS.MRANGE - + EXCLUDEEMPTY FILTER t=<test> GROUPBY t REDUCE sum} sent with
+     * {@code dispatch} surfaces the server error unchanged: {@code TSDB: EXCLUDEEMPTY is not allowed with GROUPBY}
+     * (TIMESERIES-CANONICAL.md §8). Through the API the same combination is rejected before sending (A14).
+     */
+    @Test
+    void excludeEmptyWithGroupByRawPassthrough() {
+
+        assumeVersion("8.10");
+        groupPair();
+
+        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add("-").add("+").add("EXCLUDEEMPTY")
+                .add("FILTER").add("t=" + testName).add("GROUPBY").add("t").add("REDUCE").add("sum");
+        assertThatThrownBy(() -> redis.dispatch(CommandType.TS_MRANGE, new NestedMultiOutput<>(StringCodec.UTF8), args))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: EXCLUDEEMPTY is not allowed with GROUPBY");
+
+        assertThatThrownBy(() -> redis.tsMRange(Range.unbounded(),
+                new TsMRangeArgs().excludeEmpty().groupBy("t", TsReducerType.SUM), isolation()))
+                        .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.QUERYINDEX -----------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario D11: F1 + {@code {ts}:f1b}: {@code sensor=temp} → [f1]; the isolation filter alone → both, in any order; no
+     * match → empty list.
+     */
+    @Test
+    void queryIndex() {
+
+        simpleSeries();
+        secondSeries();
+
+        assertThat(redis.tsQueryIndex(isolation(), TsFilter.equal("sensor", "temp"))).containsExactly(F1);
+        assertThat(redis.tsQueryIndex(isolation())).containsExactlyInAnyOrder(F1, F1B);
+        assertThat(redis.tsQueryIndex(TsFilter.equal("t", testName + "-none"))).isEmpty();
+        assertThat(redis.tsQueryIndex(isolation(), TsFilter.equal("sensor", "nope"))).isEmpty();
+    }
+
+    // --- TS.QUERYLABELS (Redis 8.10+) --------------------------------------------------------------------------------
+
+    /**
+     * Scenario D12 (Redis 8.10+): label names. {@code tsQueryLabels()} ⊇ {t, sensor, area, kind}; with
+     * {@code equal(area,north)} → the names of F1 only (t, sensor, area); several filters are ANDed; no match → empty;
+     * order-insensitive.
+     */
+    @Test
+    @EnabledOnCommand("TS.QUERYLABELS")
+    void queryLabelNames() {
+
+        simpleSeries();
+        secondSeries();
+        redis.tsCreate(KEY, new TsCreateArgs().labels(labels("t", testName, "kind", "other")));
+
+        assertThat(redis.tsQueryLabels()).contains("t", "sensor", "area", "kind").doesNotHaveDuplicates();
+        assertThat(redis.tsQueryLabels(TsFilter.equal("area", "north"))).containsExactlyInAnyOrder("t", "sensor", "area");
+        assertThat(redis.tsQueryLabels(isolation())).containsExactlyInAnyOrder("t", "sensor", "area", "kind");
+        assertThat(redis.tsQueryLabels(isolation(), TsFilter.exists("kind"))).containsExactlyInAnyOrder("t", "kind");
+        assertThat(redis.tsQueryLabels(TsFilter.equal("t", testName + "-none"))).isEmpty();
+    }
+
+    /**
+     * Scenario D12 (Redis 8.10+): label values. {@code tsQueryLabelValues("sensor")} ⊇ {temp, hum}; with the isolation filter
+     * exactly {temp, hum}; with {@code area=south} → [hum]; an unknown label → empty; names and values are case-sensitive
+     * ({@code SENSOR} → empty, {@code sensor=TEMP} matches nothing); order-insensitive.
+     */
+    @Test
+    @EnabledOnCommand("TS.QUERYLABELS")
+    void queryLabelValues() {
+
+        simpleSeries();
+        secondSeries();
+
+        assertThat(redis.tsQueryLabelValues("sensor")).contains("temp", "hum").doesNotHaveDuplicates();
+        assertThat(redis.tsQueryLabelValues("sensor", isolation())).containsExactlyInAnyOrder("temp", "hum");
+        assertThat(redis.tsQueryLabelValues("sensor", isolation(), TsFilter.equal("area", "south"))).containsExactly("hum");
+        assertThat(redis.tsQueryLabelValues("area", TsFilter.in("sensor", "temp", "hum"))).containsExactlyInAnyOrder("north",
+                "south");
+        assertThat(redis.tsQueryLabelValues("nope")).isEmpty();
+        assertThat(redis.tsQueryLabelValues("SENSOR")).isEmpty();
+        assertThat(redis.tsQueryLabelValues("sensor", TsFilter.equal("sensor", "TEMP"))).isEmpty();
+    }
+
+    // --- NaN (Redis 8.6+) --------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario H01 (MGET, MRANGE, Redis 8.6+): F7. MGET returns the latest sample (4000, NaN); MRANGE and MREVRANGE return the
+     * stored NaN values.
+     */
+    @Test
+    void nanLabelIndexReads() {
+
+        assumeVersion("8.6");
+        nanSeries();
+
+        List<TsMGetValue<String>> latest = redis.tsMGet(isolation());
+        assertThat(latest).hasSize(1);
+        assertThat(latest.get(0).getSample().getTimestamp()).isEqualTo(4000);
+        assertThat(latest.get(0).getSample().getValue()).isNaN();
+
+        List<TsSeries<String>> series = redis.tsMRange(Range.unbounded(), isolation());
+        assertThat(series).hasSize(1);
+        assertThat(series.get(0).getSamples()).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, Double.NaN),
+                TsSample.of(3000, 3.0), TsSample.of(4000, Double.NaN));
+        assertThat(redis.tsMRevRange(Range.unbounded(), isolation()).get(0).getSamples().get(0))
+                .isEqualTo(TsSample.of(4000, Double.NaN));
+    }
+
+    // --- client-side validation through the API ----------------------------------------------------------------------
+
+    /**
+     * Scenario A13 (filters), through the API of every flavor and topology: no filters, {@code null} filters, {@code null}
+     * range, arguments or label, and an empty QUERYLABELS filter array throw {@link IllegalArgumentException}.
+     */
+    @Test
+    void labelIndexReadsRejectInvalidArgumentsThroughTheApi() {
+
+        assertThatThrownBy(() -> redis.tsMGet()).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsMGet((TsFilter) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsMGet(isolation(), null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsMGet(new TsMGetArgs())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsMGet(null, isolation())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsQueryIndex()).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsQueryIndex((TsFilter) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsMRange(Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsMRange(null, isolation())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsMRange(Range.unbounded(), null, isolation()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsMRevRange(Range.unbounded(), new TsMRangeArgs()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsMRevRange(Range.unbounded(), (TsFilter) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsMRange(Range.unbounded(), new TsMRangeArgs().empty(), isolation()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsQueryLabels(new TsFilter[0])).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsQueryLabels((TsFilter) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsQueryLabelValues(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsQueryLabelValues("sensor", new TsFilter[0]))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsQueryLabelValues("", isolation())).isInstanceOf(IllegalArgumentException.class);
     }
 
 }

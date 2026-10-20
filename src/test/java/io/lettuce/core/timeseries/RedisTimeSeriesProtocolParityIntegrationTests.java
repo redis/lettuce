@@ -28,6 +28,8 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
@@ -300,6 +302,163 @@ public class RedisTimeSeriesProtocolParityIntegrationTests {
 
         assertThat(resp2.tsRead("{ts}:rd", TsReadOffset.from(3000))).isEqualTo(resp3.tsRead("{ts}:rd", TsReadOffset.from(3000)))
                 .hasSize(6);
+    }
+
+    // --- label-index reads -------------------------------------------------------------------------------------------
+
+    private static final TsFilter PARITY = TsFilter.equal("t", "parity");
+
+    /**
+     * F1-like {@code {ts}:m1} (labels {@code t=parity, sensor=temp, area=north}, samples 1, 2.5, 3 at 1000 … 3000), F2 on
+     * {@code {ts}:m2}, and {@code {ts}:m3} without samples.
+     */
+    private void labelIndexSeries() {
+
+        resp3.tsCreate("{ts}:m1", new TsCreateArgs().label("t", "parity").label("sensor", "temp").label("area", "north"));
+        resp3.tsAdd("{ts}:m1", 1000L, 1.0);
+        resp3.tsAdd("{ts}:m1", 2000L, 2.5);
+        resp3.tsAdd("{ts}:m1", 3000L, 3.0);
+        statsSeries("{ts}:m2");
+        resp3.tsCreate("{ts}:m3", new TsCreateArgs().label("t", "parity").label("sensor", "hum"));
+    }
+
+    /**
+     * F3 on {@code {ts}:g1} / {@code {ts}:g2} with the label {@code t=parity}.
+     */
+    private void groupPair() {
+
+        resp3.tsCreate("{ts}:g1", new TsCreateArgs().label("t", "parity").label("grp", "x").label("src", "a"));
+        resp3.tsCreate("{ts}:g2", new TsCreateArgs().label("t", "parity").label("grp", "x").label("src", "b"));
+        for (int i = 0; i < 3; i++) {
+            resp3.tsAdd("{ts}:g1", (i + 1) * 1000L, 1.0 + i);
+            resp3.tsAdd("{ts}:g2", (i + 1) * 1000L, 3.0 + i);
+        }
+    }
+
+    /**
+     * Scenario I01 (MGET): MGET without labels, with WITHLABELS, with SELECTED_LABELS (a missing label), and with LATEST is
+     * equal on both protocols, order-insensitive.
+     */
+    @Test
+    void mget() {
+
+        labelIndexSeries();
+
+        assertThat(resp2.tsMGet(PARITY)).containsExactlyInAnyOrderElementsOf(resp3.tsMGet(PARITY)).hasSize(3);
+        assertThat(resp2.tsMGet(new TsMGetArgs().withLabels(), PARITY))
+                .containsExactlyInAnyOrderElementsOf(resp3.tsMGet(new TsMGetArgs().withLabels(), PARITY)).hasSize(3);
+        assertThat(resp2.tsMGet(new TsMGetArgs().selectedLabels("area", "missing"), PARITY))
+                .containsExactlyInAnyOrderElementsOf(resp3.tsMGet(new TsMGetArgs().selectedLabels("area", "missing"), PARITY));
+        assertThat(resp2.tsMGet(new TsMGetArgs().latest(), PARITY))
+                .containsExactlyInAnyOrderElementsOf(resp3.tsMGet(new TsMGetArgs().latest(), PARITY));
+    }
+
+    /**
+     * Scenario I01 (MRANGE raw): MRANGE and MREVRANGE with and without WITHLABELS are equal on both protocols,
+     * order-insensitive.
+     */
+    @Test
+    void mrangeRaw() {
+
+        labelIndexSeries();
+
+        assertThat(resp2.tsMRange(Range.unbounded(), PARITY))
+                .containsExactlyInAnyOrderElementsOf(resp3.tsMRange(Range.unbounded(), PARITY)).hasSize(3);
+        assertThat(resp2.tsMRevRange(Range.unbounded(), new TsMRangeArgs().withLabels(), PARITY))
+                .containsExactlyInAnyOrderElementsOf(
+                        resp3.tsMRevRange(Range.unbounded(), new TsMRangeArgs().withLabels(), PARITY))
+                .hasSize(3);
+        assertThat(resp2.tsMRange(Range.unbounded(), new TsMRangeArgs().aggregation(3000, TsAggregationType.AVG), PARITY))
+                .containsExactlyInAnyOrderElementsOf(
+                        resp3.tsMRange(Range.unbounded(), new TsMRangeArgs().aggregation(3000, TsAggregationType.AVG), PARITY));
+    }
+
+    /**
+     * Scenario I01 (MRANGE with several aggregations, Redis 8.8+): equal on both protocols, order-insensitive.
+     */
+    @Test
+    void mrangeSeveralAggregations() {
+
+        assumeTrue(RedisConditions.of(resp3).hasVersionGreaterOrEqualsTo("8.8"), "Requires Redis 8.8");
+        labelIndexSeries();
+
+        List<TsSeries<String>> fromResp2 = resp2.tsMRange(Range.unbounded(), new TsMRangeArgs().withLabels().aggregation(3000,
+                TsAggregationType.MIN, TsAggregationType.AVG, TsAggregationType.MAX), PARITY);
+        List<TsSeries<String>> fromResp3 = resp3.tsMRange(Range.unbounded(), new TsMRangeArgs().withLabels().aggregation(3000,
+                TsAggregationType.MIN, TsAggregationType.AVG, TsAggregationType.MAX), PARITY);
+
+        assertThat(fromResp2).containsExactlyInAnyOrderElementsOf(fromResp3).hasSize(3);
+    }
+
+    /**
+     * Scenario I01 (GROUPBY + WITHLABELS): the grouped series, including the sources, is equal on both protocols.
+     */
+    @Test
+    void mrangeGroupByWithLabels() {
+
+        groupPair();
+
+        List<TsSeries<String>> fromResp2 = resp2.tsMRange(Range.unbounded(),
+                new TsMRangeArgs().withLabels().groupBy("grp", TsReducerType.SUM), PARITY);
+        List<TsSeries<String>> fromResp3 = resp3.tsMRange(Range.unbounded(),
+                new TsMRangeArgs().withLabels().groupBy("grp", TsReducerType.SUM), PARITY);
+
+        assertThat(fromResp2).isEqualTo(fromResp3).hasSize(1);
+        assertThat(fromResp2.hashCode()).isEqualTo(fromResp3.hashCode());
+        assertThat(fromResp2.get(0).getSources()).containsExactlyInAnyOrder("{ts}:g1", "{ts}:g2");
+    }
+
+    /**
+     * Scenario I02: GROUPBY without WITHLABELS: everything is equal on both protocols except {@code getSources()}, which is
+     * {@code null} on RESP2 (design §3.5, H7).
+     */
+    @Test
+    void mrangeGroupByWithoutLabelsDiffersOnlyInSources() {
+
+        groupPair();
+
+        TsSeries<String> fromResp2 = resp2
+                .tsMRevRange(Range.unbounded(), new TsMRangeArgs().groupBy("grp", TsReducerType.AVG), PARITY).get(0);
+        TsSeries<String> fromResp3 = resp3
+                .tsMRevRange(Range.unbounded(), new TsMRangeArgs().groupBy("grp", TsReducerType.AVG), PARITY).get(0);
+
+        assertThat(fromResp2.getSources()).isNull();
+        assertThat(fromResp3.getSources()).containsExactlyInAnyOrder("{ts}:g1", "{ts}:g2");
+        assertThat(fromResp2).isNotEqualTo(fromResp3);
+        assertThat(fromResp2.isGrouped()).isEqualTo(fromResp3.isGrouped()).isTrue();
+        assertThat(fromResp2.getKey()).isEqualTo(fromResp3.getKey());
+        assertThat(fromResp2.getGroup()).isEqualTo(fromResp3.getGroup()).isEqualTo("grp=x");
+        assertThat(fromResp2.getLabels()).isEqualTo(fromResp3.getLabels());
+        assertThat(fromResp2.getAggregations()).isEqualTo(fromResp3.getAggregations());
+        assertThat(fromResp2.getReducer()).isEqualTo(fromResp3.getReducer());
+        assertThat(fromResp2.getSamples()).isEqualTo(fromResp3.getSamples()).hasSize(3);
+    }
+
+    /**
+     * Scenario I01 (QUERYINDEX): equal on both protocols (RESP2 array, RESP3 set), order-insensitive.
+     */
+    @Test
+    void queryIndex() {
+
+        labelIndexSeries();
+
+        assertThat(resp2.tsQueryIndex(PARITY)).containsExactlyInAnyOrderElementsOf(resp3.tsQueryIndex(PARITY))
+                .containsExactlyInAnyOrder("{ts}:m1", "{ts}:m2", "{ts}:m3");
+    }
+
+    /**
+     * Scenario I01 (QUERYLABELS, Redis 8.10+): label names and values are equal on both protocols, order-insensitive.
+     */
+    @Test
+    @EnabledOnCommand("TS.QUERYLABELS")
+    void queryLabels() {
+
+        labelIndexSeries();
+
+        assertThat(resp2.tsQueryLabels(PARITY)).containsExactlyInAnyOrderElementsOf(resp3.tsQueryLabels(PARITY))
+                .containsExactlyInAnyOrder("t", "sensor", "area");
+        assertThat(resp2.tsQueryLabelValues("sensor")).containsExactlyInAnyOrderElementsOf(resp3.tsQueryLabelValues("sensor"))
+                .containsExactlyInAnyOrder("temp", "hum");
     }
 
 }
