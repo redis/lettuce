@@ -375,3 +375,41 @@ In Redis Cluster, each label-index command runs on **one node**, chosen as for t
 - The server rejects these commands inside MULTI on a node in multi-shard mode.
 - If running the command on the chosen node fails for any reason, including a server error such as a malformed filter, Lettuce logs an ERROR ("Cluster routing failed for … - falling back to superCall") and runs the command again on the default connection. The second error is the one reported. The commands are read-only, so running them twice is safe, but expect the duplicate execution and the log entry.
 - The node-selection API (`connection.sync().nodes(...)`) runs the command on every selected node. On Redis 8.10 and later, each node returns every shard's series, so the combined results contain duplicates.
+
+## Multi-key reads
+
+`tsNRange` and `tsNRevRange` (Redis 8.10 and later) read several series by key and join their samples by timestamp into rows. `tsNRange` returns the rows in ascending timestamp order, `tsNRevRange` in descending order; Lettuce keeps the order the server sends.
+
+```java
+List<TsNRangeRow> rows = commands.tsNRange("{room1}:temperature", "{room1}:humidity", Range.unbounded());
+
+for (TsNRangeRow row : rows) {
+    long timestamp = row.getTimestamp();
+    double temperature = row.getValues(0).get(0);    // NaN if the series has no sample at this timestamp
+    double humidity = row.getValues(1).get(0);
+}
+```
+
+- Pass two keys, or a `List<K>` for any number of keys. A key given twice gets its own column.
+- Each row has one value per key, in key order. A key without a sample at that timestamp has `NaN`, which cannot be told apart from a stored NaN.
+- A key that does not exist is an error (`TSDB: the key does not exist`), not a column of NaN values.
+- The range follows the same rules as `tsRange`; `-` and `+` mean the earliest and latest sample across the given keys.
+
+`TsNRangeArgs` has the range options of `TsRangeArgs` (`latest()`, `filterByTimestamps(...)`, `filterByValue(...)`, `count(...)`, `align...`, `bucketTimestamp(...)`, `empty()`), but no labels, `GROUPBY` or `EXCLUDEEMPTY`. The server requires one aggregation argument per key, so there are two ways to aggregate:
+
+```java
+// one aggregation list per key, in key order
+commands.tsNRange(Arrays.asList("{room1}:temperature", "{room1}:humidity"), Range.unbounded(),
+        TsNRangeArgs.Builder.aggregation(Duration.ofHours(1), Arrays.asList(
+                Arrays.asList(TsAggregationType.MIN, TsAggregationType.MAX),     // temperature
+                Collections.singletonList(TsAggregationType.AVG))));             // humidity
+
+// the same aggregations for every key
+commands.tsNRange("{room1}:temperature", "{room1}:humidity", Range.unbounded(),
+        TsNRangeArgs.Builder.aggregationForEachKey(Duration.ofHours(1), TsAggregationType.AVG));
+```
+
+With an aggregation, `getValues()` is flat, in key order and then aggregation order, and `getValues(keyIndex)` returns the values of one key. A list count that differs from the number of keys throws `IllegalArgumentException` before the command is sent.
+
+!!! INFO
+    All keys must hash to the same slot. In Redis Cluster, use a shared hash tag such as `{room1}`; keys in different slots are rejected with `CROSSSLOT`. The command is routed by its first key and is read-only, so it follows `ReadFrom`.

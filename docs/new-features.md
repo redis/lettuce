@@ -3,6 +3,7 @@
 
 ## What's new in Lettuce 8.0
 
+- **Redis TimeSeries support.** All 21 `TS.*` commands are available through `RedisTimeSeriesCommands` and its asynchronous, reactive, Kotlin coroutine and node-selection flavors, on Redis 8.0 and later. This includes multiple aggregations per range query, `GROUPBY` with reducers, `TS.READ` with `BLOCK`, `TS.QUERYLABELS` and the multi-key `TS.NRANGE`/`TS.NREVRANGE`. In Redis Cluster, `TS.MADD` is split by slot and the label-index commands run on one node. See [Redis TimeSeries](user-guide/timeseries.md).
 - **Project Reactor is no longer needed for the synchronous and asynchronous APIs.** `reactor-core` is still a dependency of `lettuce-core`, but applications that use only `sync()`/`async()` can exclude it. The parts that still need Reactor are:
   - the reactive API (`reactive()`, `commands(...ReactiveCommands.factory())`);
   - the Kotlin coroutines API;
