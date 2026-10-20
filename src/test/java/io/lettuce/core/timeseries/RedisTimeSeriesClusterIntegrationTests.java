@@ -9,6 +9,7 @@ package io.lettuce.core.timeseries;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -16,7 +17,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -32,6 +35,7 @@ import io.lettuce.core.RedisFuture;
 import io.lettuce.core.Range;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.sync.RedisTimeSeriesCommands;
 import io.lettuce.core.cluster.ClusterTestSettings;
@@ -39,6 +43,8 @@ import io.lettuce.core.cluster.ClusterTestUtil;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.SlotHash;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.cluster.api.sync.Executions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
@@ -46,6 +52,8 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
@@ -500,6 +508,324 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
 
             assertThat(read.get(10, TimeUnit.SECONDS)).containsExactly(TsSample.of(2000, 2.0));
         }
+    }
+
+    // --- label-index reads across shards -----------------------------------------------------------------------------
+
+    /**
+     * Create {@code {a}:s}, {@code {b}:s}, {@code {c}:s} in three slots on both primaries, with labels {@code t=<test>,
+     * sensor=s<i>} and the samples (1000, i), (2000, 10 i) for i = 1, 2, 3.
+     */
+    private List<String> shardedSeries() {
+
+        List<String> keys = Arrays.asList("{a}:s", "{b}:s", "{c}:s");
+        Set<String> primaries = new HashSet<>();
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            primaries.add(primaryOf(key).getNodeId());
+            redis.tsCreate(key, new TsCreateArgs().label("t", testName).label("sensor", "s" + (i + 1)));
+            redis.tsAdd(key, 1000L, i + 1.0);
+            redis.tsAdd(key, 2000L, (i + 1) * 10.0);
+        }
+        assertThat(primaries).as("keys on different primaries").hasSize(2);
+        return keys;
+    }
+
+    private void awaitReplication(List<String> keys) {
+        for (String key : keys) {
+            awaitReplication(key);
+        }
+    }
+
+    private boolean isRedis810() {
+        return RedisConditions.of(connection).hasVersionGreaterOrEqualsTo("8.10");
+    }
+
+    /**
+     * Assert that every keyless read of {@code commands} returns all of {@code keys} once, in any order.
+     */
+    private void assertKeylessReadsReturnAll(RedisTimeSeriesCommands<String, String> commands, List<String> keys) {
+
+        assertThat(keys(commands.tsMGet(isolation()))).containsExactlyInAnyOrderElementsOf(keys);
+        assertThat(keys(commands.tsMGet(new TsMGetArgs().withLabels(), isolation()))).containsExactlyInAnyOrderElementsOf(keys);
+
+        Map<String, TsSeries<String>> range = seriesByKey(commands.tsMRange(Range.unbounded(), isolation()));
+        assertThat(range).containsOnlyKeys(keys.toArray(new String[0]));
+        for (int i = 0; i < keys.size(); i++) {
+            assertThat(range.get(keys.get(i)).getSamples()).containsExactly(TsSample.of(1000, i + 1.0),
+                    TsSample.of(2000, (i + 1) * 10.0));
+        }
+
+        Map<String, TsSeries<String>> reverse = seriesByKey(
+                commands.tsMRevRange(Range.unbounded(), new TsMRangeArgs().count(1), isolation()));
+        assertThat(reverse).containsOnlyKeys(keys.toArray(new String[0]));
+        assertThat(reverse.get(keys.get(2)).getSamples()).containsExactly(TsSample.of(2000, 30.0));
+
+        assertThat(commands.tsQueryIndex(isolation())).containsExactlyInAnyOrderElementsOf(keys);
+    }
+
+    /**
+     * Scenario K02: series in three slots on both primaries. MGET, MRANGE, MREVRANGE and QUERYINDEX through the cluster
+     * connection return all of them once, in any order (below 8.10 after {@code TIMESERIES.REFRESHCLUSTER} on every primary,
+     * see {@link #refreshClusterBelow810()}).
+     */
+    @Test
+    void keylessReadsAcrossShards() {
+
+        List<String> keys = shardedSeries();
+
+        assertKeylessReadsReturnAll(redis, keys);
+    }
+
+    /**
+     * Scenario K02 (QUERYLABELS, Redis 8.10+): label names and values across shards.
+     */
+    @Test
+    @EnabledOnCommand("TS.QUERYLABELS")
+    void queryLabelsAcrossShards() {
+
+        shardedSeries();
+
+        assertThat(redis.tsQueryLabels(isolation())).containsExactlyInAnyOrder("t", "sensor");
+        assertThat(redis.tsQueryLabelValues("sensor", isolation())).containsExactlyInAnyOrder("s1", "s2", "s3");
+        assertThat(redis.tsQueryLabelValues("sensor")).contains("s1", "s2", "s3");
+    }
+
+    /**
+     * Scenario K02 through the async and reactive APIs of the cluster connection.
+     */
+    @Test
+    void keylessReadsAcrossShardsAsyncAndReactive() throws Exception {
+
+        List<String> keys = shardedSeries();
+
+        assertThat(connection.async().tsQueryIndex(isolation()).get(10, TimeUnit.SECONDS))
+                .containsExactlyInAnyOrderElementsOf(keys);
+        assertThat(keys(connection.async().tsMGet(isolation()).get(10, TimeUnit.SECONDS)))
+                .containsExactlyInAnyOrderElementsOf(keys);
+        assertThat(connection.reactive().tsQueryIndex(isolation()).collectList().block())
+                .containsExactlyInAnyOrderElementsOf(keys);
+        assertThat(seriesKeys(connection.reactive().tsMRange(Range.unbounded(), isolation()).collectList().block()))
+                .containsExactlyInAnyOrderElementsOf(keys);
+    }
+
+    /**
+     * Scenario K03: F3 with {@code {a}:g1} and {@code {b}:g2} on different primaries; GROUPBY grp reduces both: sum 4/6/8, max
+     * 3/4/5, std.s √2; the sources are both keys.
+     */
+    @Test
+    void groupByAcrossShards() {
+
+        String g1 = "{a}:g1";
+        String g2 = "{b}:g2";
+        assertThat(primaryOf(g1).getNodeId()).isNotEqualTo(primaryOf(g2).getNodeId());
+        groupPair(g1, g2);
+
+        TsSeries<String> sum = onlyGroup(redis.tsMRange(Range.unbounded(),
+                new TsMRangeArgs().withLabels().groupBy("grp", TsReducerType.SUM), isolation()));
+        assertThat(sum.getGroup()).isEqualTo("grp=x");
+        assertThat(sum.getSources()).containsExactlyInAnyOrder(g1, g2);
+        assertThat(sum.getSamples()).containsExactly(TsSample.of(1000, 4.0), TsSample.of(2000, 6.0), TsSample.of(3000, 8.0));
+
+        assertThat(firstValues(groupSamples(TsReducerType.MAX))).containsExactly(3.0, 4.0, 5.0);
+        assertThat(firstValues(groupSamples(TsReducerType.STD_S))).containsExactly(1.4142135623730951, 1.4142135623730951,
+                1.4142135623730951);
+        assertThat(onlyGroup(
+                redis.tsMRevRange(Range.unbounded(), new TsMRangeArgs().groupBy("grp", TsReducerType.AVG), isolation()))
+                        .getSamples()).containsExactly(TsSample.of(3000, 4.0), TsSample.of(2000, 3.0), TsSample.of(1000, 2.0));
+    }
+
+    /**
+     * Scenario K04 (Redis 8.10+): without {@code TIMESERIES.REFRESHCLUSTER} (the {@code @BeforeAll} skips it on 8.10), every
+     * node, primary or replica, gathers across shards by itself: TS.QUERYINDEX and TS.MGET sent directly to each node return
+     * all three series.
+     */
+    @Test
+    void automaticGatherOnEveryNode() {
+
+        assumeTrue(isRedis810(), "Requires Redis 8.10");
+        List<String> keys = shardedSeries();
+        awaitReplication(keys);
+
+        for (RedisClusterNode node : connection.getPartitions()) {
+            RedisClusterCommands<String, String> commands = nodeCommands(node);
+            assertThat(commands.tsQueryIndex(isolation())).as(node.getUri().toString())
+                    .containsExactlyInAnyOrderElementsOf(keys);
+            assertThat(keys(commands.tsMGet(isolation()))).as(node.getUri().toString())
+                    .containsExactlyInAnyOrderElementsOf(keys);
+        }
+    }
+
+    /**
+     * Scenario K07 (keyless, Redis 8.10+): with {@code ReadFrom.REPLICA}, the keyless reads run on a replica and return the
+     * full set of series of both shards.
+     */
+    @Test
+    void keylessReadsOnReplicaReturnFullSet() {
+
+        assumeTrue(isRedis810(), "Requires Redis 8.10");
+        List<String> keys = shardedSeries();
+        awaitReplication(keys);
+
+        try (StatefulRedisClusterConnection<String, String> replicaConnection = connectReadFromReplica()) {
+            assertKeylessReadsReturnAll(replicaConnection.sync(), keys);
+            if (RedisConditions.of(connection).hasCommand("TS.QUERYLABELS")) {
+                assertThat(replicaConnection.sync().tsQueryLabelValues("sensor", isolation())).containsExactlyInAnyOrder("s1",
+                        "s2", "s3");
+            }
+        }
+    }
+
+    /**
+     * Scenario K08 (Redis 8.10+): {@code upstream().commands().tsQueryIndex(…)} runs on every primary, and each primary returns
+     * the full set, so the results contain each series once per node (design §5.1).
+     */
+    @Test
+    void nodeSelectionReturnsFullSetPerNode() {
+
+        assumeTrue(isRedis810(), "Requires Redis 8.10");
+        List<String> keys = shardedSeries();
+
+        Executions<List<String>> executions = connection.sync().upstream().commands().tsQueryIndex(isolation());
+
+        assertThat(executions.asMap()).hasSize(2);
+        for (List<String> result : executions) {
+            assertThat(result).containsExactlyInAnyOrderElementsOf(keys);
+        }
+
+        Executions<List<TsMGetValue<String>>> mget = connection.sync().upstream().commands().tsMGet(isolation());
+        for (List<TsMGetValue<String>> result : mget) {
+            assertThat(keys(result)).containsExactlyInAnyOrderElementsOf(keys);
+        }
+    }
+
+    /**
+     * Scenario K09: a keyless TS command inside MULTI on a node connection of a node in multi-shard mode is rejected by the
+     * server ({@code Can not run multi sharded command inside a multi exec, lua, or when blocking is not allowed},
+     * TIMESERIES-CANONICAL.md §8), and Lettuce passes the error through as the command's result.
+     */
+    @Test
+    void keylessCommandInsideMultiOnNodeConnection() throws Exception {
+
+        shardedSeries();
+
+        try (StatefulRedisClusterConnection<String, String> dedicated = clusterClient.connect()) {
+            RedisClusterNode primary = primaryOf("{a}:s");
+            RedisAsyncCommands<String, String> node = dedicated.getConnection(primary.getNodeId()).async();
+
+            assertThat(node.multi().get(10, TimeUnit.SECONDS)).isEqualTo("OK");
+            RedisFuture<List<String>> queryIndex = node.tsQueryIndex(isolation());
+            TransactionResult result = node.exec().get(10, TimeUnit.SECONDS);
+
+            assertThat(result.wasDiscarded()).isFalse();
+            assertThat(result).hasSize(1);
+            assertThatThrownBy(() -> queryIndex.get(10, TimeUnit.SECONDS)).isInstanceOf(ExecutionException.class)
+                    .hasMessageContaining("Can not run multi sharded command");
+        }
+    }
+
+    /**
+     * Scenario K10 (MGET, MRANGE, MREVRANGE, QUERYINDEX, QUERYLABELS): with {@code ReadFrom.REPLICA}, each keyless read runs on
+     * a replica: the {@code INFO commandstats} calls of the command grow by exactly one over all replicas and not at all over
+     * the primaries.
+     */
+    @Test
+    void keylessReadsRouteToReplica() {
+
+        List<String> keys = shardedSeries();
+        awaitReplication(keys);
+        boolean queryLabels = RedisConditions.of(connection).hasCommand("TS.QUERYLABELS");
+
+        List<String> commands = new ArrayList<>(Arrays.asList("ts.mget", "ts.mrange", "ts.mrevrange", "ts.queryindex"));
+        if (queryLabels) {
+            commands.add("ts.querylabels");
+        }
+
+        try (StatefulRedisClusterConnection<String, String> replicaConnection = connectReadFromReplica()) {
+            RedisTimeSeriesCommands<String, String> replicaCommands = replicaConnection.sync();
+            for (String command : commands) {
+                long replicasBefore = callsOn(RedisClusterNode.NodeFlag.REPLICA, command);
+                long primariesBefore = callsOn(RedisClusterNode.NodeFlag.UPSTREAM, command);
+
+                switch (command) {
+                    case "ts.mget":
+                        replicaCommands.tsMGet(isolation());
+                        break;
+                    case "ts.mrange":
+                        replicaCommands.tsMRange(Range.unbounded(), isolation());
+                        break;
+                    case "ts.mrevrange":
+                        replicaCommands.tsMRevRange(Range.unbounded(), isolation());
+                        break;
+                    case "ts.queryindex":
+                        replicaCommands.tsQueryIndex(isolation());
+                        break;
+                    default:
+                        replicaCommands.tsQueryLabels(isolation());
+                        break;
+                }
+
+                assertThat(callsOn(RedisClusterNode.NodeFlag.REPLICA, command) - replicasBefore).as("replicas " + command)
+                        .isEqualTo(1);
+                assertThat(callsOn(RedisClusterNode.NodeFlag.UPSTREAM, command) - primariesBefore).as("primaries " + command)
+                        .isZero();
+            }
+        }
+    }
+
+    /**
+     * The sum of the {@code INFO commandstats} calls of {@code command} over all nodes with {@code flag}.
+     */
+    private long callsOn(RedisClusterNode.NodeFlag flag, String command) {
+
+        long calls = 0;
+        for (RedisClusterNode node : connection.getPartitions()) {
+            if (node.is(flag)) {
+                calls += commandCalls(node, command);
+            }
+        }
+        return calls;
+    }
+
+    /**
+     * Scenario A13 (filters) on the cluster async API of the keyless reads: no filters, a {@code null} filter or {@code null}
+     * arguments throw {@link IllegalArgumentException} from the call, as the {@code @throws} clause of
+     * {@code RedisTimeSeriesAsyncCommands} states, as the standalone async API does, and as the cluster {@code tsMAdd} does
+     * ({@link #maddSplitRejectsNullAndEmpty()}).
+     */
+    @Disabled("Defect P5-D1: cluster async keyless TS reads return a failed future instead of throwing IllegalArgumentException")
+    @Test
+    void keylessReadsRejectInvalidArgumentsAsync() {
+
+        assertThatThrownBy(() -> connection.async().tsMGet()).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.async().tsQueryIndex((TsFilter) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.async().tsMRange(Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.async().tsMRevRange(Range.unbounded(), null, isolation()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.async().tsQueryLabels(new TsFilter[0]))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.async().tsQueryLabelValues(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario A13 (filters) on the cluster reactive API of the keyless reads: no filters, a {@code null} filter or
+     * {@code null} arguments are rejected with {@link IllegalArgumentException} (thrown by the call or signalled as the error).
+     */
+    @Test
+    void keylessReadsRejectInvalidArgumentsReactive() {
+
+        assertThatThrownBy(() -> connection.reactive().tsMGet().collectList().block())
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.reactive().tsQueryIndex((TsFilter) null).collectList().block())
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.reactive().tsMRange(Range.unbounded(), new TsMRangeArgs()).collectList().block())
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.reactive().tsMRevRange(Range.unbounded(), (TsFilter) null).collectList().block())
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.reactive().tsQueryLabels(new TsFilter[0]).collectList().block())
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.reactive().tsQueryLabelValues(null).collectList().block())
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
 }
