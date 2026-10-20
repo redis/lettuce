@@ -79,6 +79,7 @@ import io.lettuce.core.search.arguments.FieldArgs;
 
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
+import io.lettuce.core.timeseries.TsMAddValue;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
@@ -342,6 +343,31 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Flux<KeyValue<K, V>> mget(K... keys) {
         return mget(Arrays.asList(keys));
+    }
+
+    @Override
+    public Flux<Value<Long>> tsMAdd(List<TsMAddValue<K>> samples) {
+
+        TimeSeriesSlotPartition<K> partition = TimeSeriesSlotPartition.of(codec, samples);
+
+        if (partition == null || !partition.isMultiSlot()) {
+            return super.tsMAdd(samples);
+        }
+
+        List<Integer> slots = new ArrayList<>(partition.getSamplesBySlot().keySet());
+        List<Mono<List<Value<Long>>>> publishers = new ArrayList<>(slots.size());
+        for (Integer slot : slots) {
+            publishers.add(super.tsMAdd(partition.getSamplesBySlot().get(slot)).collectList());
+        }
+
+        // run the slots in parallel, then restore the caller's order; a failed slot fails the whole call
+        return Flux.mergeSequential(publishers).collectList().map(perSlot -> {
+            Map<Integer, List<Value<Long>>> results = new HashMap<>();
+            for (int i = 0; i < slots.size(); i++) {
+                results.put(slots.get(i), perSlot.get(i));
+            }
+            return partition.restoreOrder(results);
+        }).flatMapMany(Flux::fromIterable);
     }
 
     public Flux<KeyValue<K, V>> mget(Iterable<K> keys) {
