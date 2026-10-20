@@ -86,8 +86,11 @@ import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VSimScoreAttribs;
 import io.lettuce.core.vector.VectorMetadata;
@@ -4911,6 +4914,51 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<TsInfoValue<K>> tsInfo(K key, boolean debug) {
         return dispatch(timeSeriesCommandBuilder.tsInfo(key, debug));
+    }
+
+    @Override
+    public RedisFuture<Long> tsAdd(K key, double value) {
+        return dispatch(timeSeriesCommandBuilder.tsAdd(key, value));
+    }
+
+    @Override
+    public RedisFuture<Long> tsAdd(K key, double value, TsAddArgs args) {
+        return dispatch(timeSeriesCommandBuilder.tsAdd(key, value, args));
+    }
+
+    @Override
+    public RedisFuture<Long> tsAdd(K key, long timestamp, double value) {
+        return dispatch(timeSeriesCommandBuilder.tsAdd(key, timestamp, value));
+    }
+
+    @Override
+    public RedisFuture<Long> tsAdd(K key, long timestamp, double value, TsAddArgs args) {
+        return dispatch(timeSeriesCommandBuilder.tsAdd(key, timestamp, value, args));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> tsMAdd(List<TsMAddValue<K>> samples) {
+        return dispatch(timeSeriesCommandBuilder.tsMAdd(samples));
+    }
+
+    @Override
+    public RedisFuture<Long> tsIncrBy(K key, double addend) {
+        return dispatch(timeSeriesCommandBuilder.tsIncrBy(key, addend));
+    }
+
+    @Override
+    public RedisFuture<Long> tsIncrBy(K key, double addend, TsIncrByArgs args) {
+        return dispatch(timeSeriesCommandBuilder.tsIncrBy(key, addend, args));
+    }
+
+    @Override
+    public RedisFuture<Long> tsDecrBy(K key, double subtrahend) {
+        return dispatch(timeSeriesCommandBuilder.tsDecrBy(key, subtrahend));
+    }
+
+    @Override
+    public RedisFuture<Long> tsDecrBy(K key, double subtrahend, TsIncrByArgs args) {
+        return dispatch(timeSeriesCommandBuilder.tsDecrBy(key, subtrahend, args));
     }
 
 }

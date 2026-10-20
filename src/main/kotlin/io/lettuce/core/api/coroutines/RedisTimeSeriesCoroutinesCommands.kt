@@ -10,8 +10,11 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.Range
 import io.lettuce.core.timeseries.TsInfoValue
+import io.lettuce.core.timeseries.TsMAddValue
+import io.lettuce.core.timeseries.arguments.TsAddArgs
 import io.lettuce.core.timeseries.arguments.TsAlterArgs
 import io.lettuce.core.timeseries.arguments.TsCreateArgs
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs
 
 /**
  * Coroutine executed commands for Redis TimeSeries.
@@ -104,5 +107,164 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/commands/ts.info/">TS.INFO</a>
      */
     suspend fun tsInfo(key: K, debug: Boolean): TsInfoValue<K>?
+
+    /**
+     * Add a sample with the current server time to a time series, creating the series if it does not exist.
+     *
+     * The sample gets timestamp `*`, so the server clock sets it. Java converts a `long` to `double` without
+     * a cast, so `tsAdd(key, timestampMillis)` compiles and stores the timestamp as the value. To set the timestamp, use
+     * [tsAdd].
+     *
+     * @param key the key, must not be `null`.
+     * @param value the value.
+     * @return Long integer-reply the timestamp of the added sample, or the highest timestamp of the series if the sample was
+     *         ignored as a duplicate (`IGNORE`).
+     * @throws IllegalArgumentException if `key` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
+     */
+    suspend fun tsAdd(key: K, value: Double): Long?
+
+    /**
+     * Add a sample with the current server time to a time series, with options.
+     *
+     * The sample gets timestamp `*`, so the server clock sets it. Java converts a `long` to `double` without
+     * a cast, so `tsAdd(key, timestampMillis)` compiles and stores the timestamp as the value. To set the timestamp, use
+     * [tsAdd].
+     *
+     * If the series does not exist, it is created. The series options in `args` apply only when the series is created;
+     * for an existing series the server ignores them.
+     *
+     * @param key the key, must not be `null`.
+     * @param value the value.
+     * @param args the options, must not be `null`.
+     * @return Long integer-reply the timestamp of the added sample, or the highest timestamp of the series if the sample was
+     *         ignored as a duplicate (`IGNORE`).
+     * @throws IllegalArgumentException if `key` or `args` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
+     */
+    suspend fun tsAdd(key: K, value: Double, args: TsAddArgs): Long?
+
+    /**
+     * Add a sample to a time series, creating the series if it does not exist.
+     *
+     * @param key the key, must not be `null`.
+     * @param timestamp the timestamp in milliseconds.
+     * @param value the value. NaN requires Redis 8.6 or later.
+     * @return Long integer-reply the timestamp of the added sample, or the highest timestamp of the series if the sample was
+     *         ignored as a duplicate (`IGNORE`).
+     * @throws IllegalArgumentException if `key` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
+     */
+    suspend fun tsAdd(key: K, timestamp: Long, value: Double): Long?
+
+    /**
+     * Add a sample to a time series, with options.
+     *
+     * If the series does not exist, it is created. The series options in `args` apply only when the series is created;
+     * for an existing series the server ignores them.
+     *
+     * @param key the key, must not be `null`.
+     * @param timestamp the timestamp in milliseconds.
+     * @param value the value. NaN requires Redis 8.6 or later.
+     * @param args the options, must not be `null`.
+     * @return Long integer-reply the timestamp of the added sample, or the highest timestamp of the series if the sample was
+     *         ignored as a duplicate (`IGNORE`).
+     * @throws IllegalArgumentException if `key` or `args` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
+     */
+    suspend fun tsAdd(key: K, timestamp: Long, value: Double, args: TsAddArgs): Long?
+
+    /**
+     * Add samples to one or more existing time series. Unlike [tsAdd], the command does not create
+     * series.
+     *
+     * The server handles each sample on its own. A rejected sample, for example a duplicate under policy `BLOCK` or a
+     * missing key, gives a `null` element at its position, and the other samples are still added. To add a single sample
+     * with options, use [tsAdd].
+     *
+     * In Redis Cluster, samples whose keys hash to different slots are sent as one command per slot. The split is not atomic
+     * across slots: each slot's command is applied on its own. The result keeps the order of `samples`.
+     *
+     * @param samples the samples, must not be `null` or empty and must not contain `null` elements.
+     * @return List<Long> one element per sample, in the order of `samples`: the timestamp of the added sample, the
+     *         highest timestamp of the series if the sample was ignored as a duplicate, or `null` if the server rejected
+     *         the sample.
+     * @throws IllegalArgumentException if `samples` is `null`, empty or contains `null` elements.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.madd/">TS.MADD</a>
+     */
+    suspend fun tsMAdd(samples: List<TsMAddValue<K>>): List<Long?>
+
+    /**
+     * Increase the value of the latest sample of a time series, creating the series if it does not exist. The sample gets the
+     * current server time; if that equals the highest timestamp of the series, the latest sample is updated in place, otherwise
+     * a new sample with the increased value is added.
+     *
+     * @param key the key, must not be `null`.
+     * @param addend the amount to add, must not be NaN.
+     * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
+     *         sample was ignored as a duplicate (`IGNORE`).
+     * @throws IllegalArgumentException if `key` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.incrby/">TS.INCRBY</a>
+     */
+    suspend fun tsIncrBy(key: K, addend: Double): Long?
+
+    /**
+     * Increase the value of the latest sample of a time series, with options. With [TsIncrByArgs.timestamp], the
+     * timestamp must be equal to or higher than the highest timestamp of the series; an equal timestamp updates the latest
+     * sample in place.
+     *
+     * If the series does not exist, it is created. The series options in `args` apply only when the series is created;
+     * for an existing series the server ignores them.
+     *
+     * @param key the key, must not be `null`.
+     * @param addend the amount to add, must not be NaN.
+     * @param args the options, must not be `null`.
+     * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
+     *         sample was ignored as a duplicate (`IGNORE`).
+     * @throws IllegalArgumentException if `key` or `args` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.incrby/">TS.INCRBY</a>
+     */
+    suspend fun tsIncrBy(key: K, addend: Double, args: TsIncrByArgs): Long?
+
+    /**
+     * Decrease the value of the latest sample of a time series, creating the series if it does not exist. The sample gets the
+     * current server time; if that equals the highest timestamp of the series, the latest sample is updated in place, otherwise
+     * a new sample with the decreased value is added.
+     *
+     * @param key the key, must not be `null`.
+     * @param subtrahend the amount to subtract, must not be NaN.
+     * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
+     *         sample was ignored as a duplicate (`IGNORE`).
+     * @throws IllegalArgumentException if `key` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.decrby/">TS.DECRBY</a>
+     */
+    suspend fun tsDecrBy(key: K, subtrahend: Double): Long?
+
+    /**
+     * Decrease the value of the latest sample of a time series, with options. With [TsIncrByArgs.timestamp], the
+     * timestamp must be equal to or higher than the highest timestamp of the series; an equal timestamp updates the latest
+     * sample in place.
+     *
+     * If the series does not exist, it is created. The series options in `args` apply only when the series is created;
+     * for an existing series the server ignores them.
+     *
+     * @param key the key, must not be `null`.
+     * @param subtrahend the amount to subtract, must not be NaN.
+     * @param args the options, must not be `null`.
+     * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
+     *         sample was ignored as a duplicate (`IGNORE`).
+     * @throws IllegalArgumentException if `key` or `args` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.decrby/">TS.DECRBY</a>
+     */
+    suspend fun tsDecrBy(key: K, subtrahend: Double, args: TsIncrByArgs): Long?
 
 }

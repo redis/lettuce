@@ -6,11 +6,18 @@
  */
 package io.lettuce.core.api.reactive;
 
+import java.util.List;
+
 import io.lettuce.core.Range;
+import io.lettuce.core.Value;
 import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -103,5 +110,164 @@ public interface RedisTimeSeriesReactiveCommands<K, V> {
      * @see <a href="https://redis.io/commands/ts.info/">TS.INFO</a>
      */
     Mono<TsInfoValue<K>> tsInfo(K key, boolean debug);
+
+    /**
+     * Add a sample with the current server time to a time series, creating the series if it does not exist.
+     * <p>
+     * The sample gets timestamp {@code *}, so the server clock sets it. Java converts a {@code long} to {@code double} without
+     * a cast, so {@code tsAdd(key, timestampMillis)} compiles and stores the timestamp as the value. To set the timestamp, use
+     * {@link #tsAdd(Object, long, double)}.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param value the value.
+     * @return Long integer-reply the timestamp of the added sample, or the highest timestamp of the series if the sample was
+     *         ignored as a duplicate ({@code IGNORE}).
+     * @throws IllegalArgumentException if {@code key} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
+     */
+    Mono<Long> tsAdd(K key, double value);
+
+    /**
+     * Add a sample with the current server time to a time series, with options.
+     * <p>
+     * The sample gets timestamp {@code *}, so the server clock sets it. Java converts a {@code long} to {@code double} without
+     * a cast, so {@code tsAdd(key, timestampMillis)} compiles and stores the timestamp as the value. To set the timestamp, use
+     * {@link #tsAdd(Object, long, double)}.
+     * <p>
+     * If the series does not exist, it is created. The series options in {@code args} apply only when the series is created;
+     * for an existing series the server ignores them.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param value the value.
+     * @param args the options, must not be {@code null}.
+     * @return Long integer-reply the timestamp of the added sample, or the highest timestamp of the series if the sample was
+     *         ignored as a duplicate ({@code IGNORE}).
+     * @throws IllegalArgumentException if {@code key} or {@code args} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
+     */
+    Mono<Long> tsAdd(K key, double value, TsAddArgs args);
+
+    /**
+     * Add a sample to a time series, creating the series if it does not exist.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param timestamp the timestamp in milliseconds.
+     * @param value the value. NaN requires Redis 8.6 or later.
+     * @return Long integer-reply the timestamp of the added sample, or the highest timestamp of the series if the sample was
+     *         ignored as a duplicate ({@code IGNORE}).
+     * @throws IllegalArgumentException if {@code key} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
+     */
+    Mono<Long> tsAdd(K key, long timestamp, double value);
+
+    /**
+     * Add a sample to a time series, with options.
+     * <p>
+     * If the series does not exist, it is created. The series options in {@code args} apply only when the series is created;
+     * for an existing series the server ignores them.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param timestamp the timestamp in milliseconds.
+     * @param value the value. NaN requires Redis 8.6 or later.
+     * @param args the options, must not be {@code null}.
+     * @return Long integer-reply the timestamp of the added sample, or the highest timestamp of the series if the sample was
+     *         ignored as a duplicate ({@code IGNORE}).
+     * @throws IllegalArgumentException if {@code key} or {@code args} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
+     */
+    Mono<Long> tsAdd(K key, long timestamp, double value, TsAddArgs args);
+
+    /**
+     * Add samples to one or more existing time series. Unlike {@link #tsAdd(Object, long, double)}, the command does not create
+     * series.
+     * <p>
+     * The server handles each sample on its own. A rejected sample, for example a duplicate under policy {@code BLOCK} or a
+     * missing key, gives {@link Value#empty()} at its position, and the other samples are still added. To add a single sample
+     * with options, use {@link #tsAdd(Object, long, double, TsAddArgs)}.
+     * <p>
+     * In Redis Cluster, samples whose keys hash to different slots are sent as one command per slot. The split is not atomic
+     * across slots: each slot's command is applied on its own. The result keeps the order of {@code samples}.
+     *
+     * @param samples the samples, must not be {@code null} or empty and must not contain {@code null} elements.
+     * @return Long one element per sample, in the order of {@code samples}: the timestamp of the added sample, the highest
+     *         timestamp of the series if the sample was ignored as a duplicate, or {@link Value#empty()} if the server rejected
+     *         the sample.
+     * @throws IllegalArgumentException if {@code samples} is {@code null}, empty or contains {@code null} elements.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.madd/">TS.MADD</a>
+     */
+    Flux<Value<Long>> tsMAdd(List<TsMAddValue<K>> samples);
+
+    /**
+     * Increase the value of the latest sample of a time series, creating the series if it does not exist. The sample gets the
+     * current server time; if that equals the highest timestamp of the series, the latest sample is updated in place, otherwise
+     * a new sample with the increased value is added.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param addend the amount to add, must not be NaN.
+     * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
+     *         sample was ignored as a duplicate ({@code IGNORE}).
+     * @throws IllegalArgumentException if {@code key} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.incrby/">TS.INCRBY</a>
+     */
+    Mono<Long> tsIncrBy(K key, double addend);
+
+    /**
+     * Increase the value of the latest sample of a time series, with options. With {@link TsIncrByArgs#timestamp(long)}, the
+     * timestamp must be equal to or higher than the highest timestamp of the series; an equal timestamp updates the latest
+     * sample in place.
+     * <p>
+     * If the series does not exist, it is created. The series options in {@code args} apply only when the series is created;
+     * for an existing series the server ignores them.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param addend the amount to add, must not be NaN.
+     * @param args the options, must not be {@code null}.
+     * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
+     *         sample was ignored as a duplicate ({@code IGNORE}).
+     * @throws IllegalArgumentException if {@code key} or {@code args} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.incrby/">TS.INCRBY</a>
+     */
+    Mono<Long> tsIncrBy(K key, double addend, TsIncrByArgs args);
+
+    /**
+     * Decrease the value of the latest sample of a time series, creating the series if it does not exist. The sample gets the
+     * current server time; if that equals the highest timestamp of the series, the latest sample is updated in place, otherwise
+     * a new sample with the decreased value is added.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param subtrahend the amount to subtract, must not be NaN.
+     * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
+     *         sample was ignored as a duplicate ({@code IGNORE}).
+     * @throws IllegalArgumentException if {@code key} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.decrby/">TS.DECRBY</a>
+     */
+    Mono<Long> tsDecrBy(K key, double subtrahend);
+
+    /**
+     * Decrease the value of the latest sample of a time series, with options. With {@link TsIncrByArgs#timestamp(long)}, the
+     * timestamp must be equal to or higher than the highest timestamp of the series; an equal timestamp updates the latest
+     * sample in place.
+     * <p>
+     * If the series does not exist, it is created. The series options in {@code args} apply only when the series is created;
+     * for an existing series the server ignores them.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param subtrahend the amount to subtract, must not be NaN.
+     * @param args the options, must not be {@code null}.
+     * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
+     *         sample was ignored as a duplicate ({@code IGNORE}).
+     * @throws IllegalArgumentException if {@code key} or {@code args} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.decrby/">TS.DECRBY</a>
+     */
+    Mono<Long> tsDecrBy(K key, double subtrahend, TsIncrByArgs args);
 
 }
