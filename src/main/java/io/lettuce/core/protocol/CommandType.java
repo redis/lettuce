@@ -156,8 +156,8 @@ public enum CommandType implements ProtocolKeyword {
 
     // TimeSeries
     TS_ADD("TS.ADD"), TS_ALTER("TS.ALTER"), TS_CREATE("TS.CREATE"), TS_CREATERULE("TS.CREATERULE"), TS_DECRBY(
-            "TS.DECRBY"), TS_DEL(
-                    "TS.DEL"), TS_DELETERULE("TS.DELETERULE"), TS_INCRBY("TS.INCRBY"), TS_INFO("TS.INFO"), TS_MADD("TS.MADD"),
+            "TS.DECRBY"), TS_DEL("TS.DEL"), TS_DELETERULE("TS.DELETERULE"), TS_GET("TS.GET"), TS_INCRBY("TS.INCRBY"), TS_INFO(
+                    "TS.INFO"), TS_MADD("TS.MADD"), TS_RANGE("TS.RANGE"), TS_READ("TS.READ"), TS_REVRANGE("TS.REVRANGE"),
 
     // Others
 
