@@ -23,10 +23,14 @@ import java.util.function.Function;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.Range;
+import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.sync.RedisTimeSeriesCommands;
@@ -38,9 +42,12 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsReadArgs;
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
 import io.lettuce.test.resource.TestClientResources;
 import reactor.test.StepVerifier;
@@ -315,6 +322,184 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
         assertThat(redis.tsInfo(dest).getSourceKey()).isEqualTo(source);
         assertThat(redis.tsDeleteRule(source, dest)).isEqualTo("OK");
         assertThat(redis.tsInfo(source).getRules()).isEmpty();
+    }
+
+    // --- execution modes ---------------------------------------------------------------------------------------------
+
+    /**
+     * The pipelining test (L01) runs on a dedicated cluster connection.
+     */
+    @Override
+    protected Pipeline openPipeline() {
+
+        RedisClusterClient client = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.create(ClusterTestSettings.host, ClusterTestSettings.port1));
+        StatefulRedisClusterConnection<String, String> clusterConnection = client.connect();
+        return new Pipeline(clusterConnection, clusterConnection.async(), client::shutdown);
+    }
+
+    @Disabled("MULTI not available on Redis Cluster")
+    @Test
+    @Override
+    void transactionWithReads() {
+    }
+
+    @Disabled("MULTI not available on Redis Cluster")
+    @Test
+    @Override
+    void transactionWithMAddPartialFailure() {
+    }
+
+    // --- read-only routing -------------------------------------------------------------------------------------------
+
+    /**
+     * The upstream node that serves {@code key}.
+     */
+    private RedisClusterNode primaryOf(String key) {
+        return connection.getPartitions().getPartitionBySlot(SlotHash.getSlot(key));
+    }
+
+    /**
+     * A replica of the upstream node that serves {@code key}.
+     */
+    private RedisClusterNode replicaOf(String key) {
+
+        String primaryId = primaryOf(key).getNodeId();
+        for (RedisClusterNode node : connection.getPartitions()) {
+            if (node.is(RedisClusterNode.NodeFlag.REPLICA) && primaryId.equals(node.getSlaveOf())) {
+                return node;
+            }
+        }
+        throw new IllegalStateException("No replica for the primary of " + key);
+    }
+
+    private RedisClusterCommands<String, String> nodeCommands(RedisClusterNode node) {
+        return connection.getConnection(node.getNodeId()).sync();
+    }
+
+    /**
+     * Wait until the replicas of the primary that serves {@code key} have the writes made so far.
+     */
+    private void awaitReplication(String key) {
+        assertThat(nodeCommands(primaryOf(key)).waitForReplication(1, 5000)).isGreaterThanOrEqualTo(1);
+    }
+
+    /**
+     * The {@code calls} count of {@code command} (lowercase, for example {@code ts.get}) in {@code INFO commandstats} of
+     * {@code node}; 0 if the node has not run it yet.
+     */
+    private long commandCalls(RedisClusterNode node, String command) {
+
+        String marker = "cmdstat_" + command + ":calls=";
+        for (String line : nodeCommands(node).info("commandstats").split("\r?\n")) {
+            if (line.startsWith(marker)) {
+                String rest = line.substring(marker.length());
+                return Long.parseLong(rest.substring(0, rest.indexOf(',')));
+            }
+        }
+        return 0;
+    }
+
+    private StatefulRedisClusterConnection<String, String> connectReadFromReplica() {
+
+        StatefulRedisClusterConnection<String, String> replicaConnection = clusterClient.connect();
+        replicaConnection.setReadFrom(ReadFrom.REPLICA);
+        return replicaConnection;
+    }
+
+    /**
+     * Scenario K10 (GET, RANGE, REVRANGE): with {@code ReadFrom.REPLICA}, TS.GET, TS.RANGE and TS.REVRANGE run on a replica of
+     * the key's primary: the replica's {@code INFO commandstats} counts each call, the primary's does not change, and the
+     * replies hold the replicated data.
+     */
+    @Test
+    void singleKeyReadsRouteToReplica() {
+
+        simpleSeries();
+        awaitReplication(F1);
+        RedisClusterNode primary = primaryOf(F1);
+        RedisClusterNode replica = replicaOf(F1);
+
+        String[] commands = { "ts.get", "ts.range", "ts.revrange" };
+        long[] replicaBefore = new long[commands.length];
+        long[] primaryBefore = new long[commands.length];
+        for (int i = 0; i < commands.length; i++) {
+            replicaBefore[i] = commandCalls(replica, commands[i]);
+            primaryBefore[i] = commandCalls(primary, commands[i]);
+        }
+
+        try (StatefulRedisClusterConnection<String, String> replicaConnection = connectReadFromReplica()) {
+            assertThat(replicaConnection.sync().tsGet(F1)).isEqualTo(TsSample.of(3000, 3.0));
+            assertThat(replicaConnection.sync().tsRange(F1, Range.unbounded())).hasSize(3);
+            assertThat(replicaConnection.sync().tsRevRange(F1, Range.create(1000L, 2000L)))
+                    .containsExactly(TsSample.of(2000, 2.0), TsSample.of(1000, 1.0));
+        }
+
+        for (int i = 0; i < commands.length; i++) {
+            assertThat(commandCalls(replica, commands[i]) - replicaBefore[i]).as("replica " + commands[i]).isEqualTo(1);
+            assertThat(commandCalls(primary, commands[i]) - primaryBefore[i]).as("primary " + commands[i]).isZero();
+        }
+    }
+
+    /**
+     * Scenario K10 (READ, Redis 8.10+): with {@code ReadFrom.REPLICA}, TS.READ without BLOCK runs on a replica.
+     */
+    @Test
+    @EnabledOnCommand("TS.READ")
+    void readRoutesToReplica() {
+
+        simpleSeries();
+        awaitReplication(F1);
+        RedisClusterNode primary = primaryOf(F1);
+        RedisClusterNode replica = replicaOf(F1);
+        long replicaBefore = commandCalls(replica, "ts.read");
+        long primaryBefore = commandCalls(primary, "ts.read");
+
+        try (StatefulRedisClusterConnection<String, String> replicaConnection = connectReadFromReplica()) {
+            assertThat(replicaConnection.sync().tsRead(F1, TsReadOffset.from(2000))).containsExactly(TsSample.of(2000, 2.0),
+                    TsSample.of(3000, 3.0));
+        }
+
+        assertThat(commandCalls(replica, "ts.read") - replicaBefore).isEqualTo(1);
+        assertThat(commandCalls(primary, "ts.read") - primaryBefore).isZero();
+    }
+
+    /**
+     * Scenario K07 (READ, Redis 8.10+): with {@code ReadFrom.REPLICA} on a dedicated cluster connection, TS.READ BLOCK
+     * {@code newSamples()} waits on a replica and wakes up after a write on the primary. The block time is 5 s because a
+     * replica wakes only after the write has replicated (design §2.2: about 1 s on 8.12-m02); the reply arrives as soon as the
+     * sample is there.
+     */
+    @Test
+    @EnabledOnCommand("TS.READ")
+    void readBlockOnReplicaWakesAfterPrimaryWrite() throws Exception {
+
+        redis.tsCreate(KEY, new TsCreateArgs().label("t", testName));
+        redis.tsAdd(KEY, 1000L, 1.0);
+        awaitReplication(KEY);
+        RedisClusterNode replica = replicaOf(KEY);
+
+        try (StatefulRedisClusterConnection<String, String> replicaConnection = connectReadFromReplica()) {
+
+            RedisFuture<List<TsSample>> read = replicaConnection.async().tsRead(KEY, TsReadOffset.newSamples(),
+                    new TsReadArgs().block(5000, 1));
+
+            long deadline = System.currentTimeMillis() + 5000;
+            boolean blocked = false;
+            while (!blocked && System.currentTimeMillis() < deadline) {
+                for (String client : nodeCommands(replica).clientList().split("\\r?\\n")) {
+                    if (client.contains("cmd=ts.read") && client.contains("flags=b")) {
+                        blocked = true;
+                    }
+                }
+            }
+            assertThat(blocked).as("TS.READ blocked on the replica").isTrue();
+            assertThat(read.isDone()).isFalse();
+
+            redis.tsAdd(KEY, 2000L, 2.0);
+
+            assertThat(read.get(10, TimeUnit.SECONDS)).containsExactly(TsSample.of(2000, 2.0));
+        }
     }
 
 }
