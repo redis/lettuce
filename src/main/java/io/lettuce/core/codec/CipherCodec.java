@@ -28,6 +28,7 @@ import io.netty.buffer.ByteBuf;
  * This {@link RedisCodec codec} does not provide re-wrapping or key rotation features.
  *
  * @author Mark Paluch
+ * @author Armen Petrosyan
  * @since 5.2
  * @see CipherSupplier
  * @see KeyDescriptor
@@ -105,7 +106,7 @@ public abstract class CipherCodec {
             ByteBuf serialized;
             if (delegate instanceof ToByteBufEncoder) {
                 serialized = target.alloc().buffer(estimateSize(value));
-                ((ToByteBufEncoder) delegate).encodeKey(value, serialized);
+                ((ToByteBufEncoder) delegate).encodeValue(value, serialized);
             } else {
                 ByteBuffer byteBuffer = delegate.encodeValue(value);
                 serialized = target.alloc().buffer(byteBuffer.remaining());
