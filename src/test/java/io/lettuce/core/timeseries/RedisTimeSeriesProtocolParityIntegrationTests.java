@@ -123,4 +123,26 @@ public class RedisTimeSeriesProtocolParityIntegrationTests {
         assertThat(fromResp2.getKeySelfName()).isEqualTo(fromResp3.getKeySelfName()).isEqualTo("{ts}:p3");
     }
 
+    /**
+     * Scenario I01 (INFO with rules): the rules list (RESP2 list of 4-element arrays, RESP3 map destination → 3 elements) and
+     * the destination's {@code sourceKey} are equal on both protocols.
+     */
+    @Test
+    void infoWithRules() {
+
+        resp3.tsCreate("{ts}:src", new TsCreateArgs().label("t", "infoWithRules"));
+        resp3.tsCreate("{ts}:d1");
+        resp3.tsCreate("{ts}:d2");
+        resp3.tsCreateRule("{ts}:src", "{ts}:d1", TsAggregationType.AVG, 1000);
+        resp3.tsCreateRule("{ts}:src", "{ts}:d2", TsAggregationType.STD_P, 60000, 500);
+
+        TsInfoValue<String> fromResp2 = resp2.tsInfo("{ts}:src");
+        TsInfoValue<String> fromResp3 = resp3.tsInfo("{ts}:src");
+
+        assertThat(fromResp2).isEqualTo(fromResp3);
+        assertThat(fromResp2.getRules()).hasSize(2).containsExactlyInAnyOrderElementsOf(fromResp3.getRules());
+        assertThat(resp2.tsInfo("{ts}:d2")).isEqualTo(resp3.tsInfo("{ts}:d2"));
+        assertThat(resp2.tsInfo("{ts}:d2").getSourceKey()).isEqualTo("{ts}:src");
+    }
+
 }

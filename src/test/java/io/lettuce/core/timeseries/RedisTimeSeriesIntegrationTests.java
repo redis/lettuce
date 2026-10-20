@@ -55,9 +55,9 @@ import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
 
 /**
- * Integration tests for {@link RedisTimeSeriesCommands}: the series lifecycle commands (TS.CREATE, TS.ALTER, TS.DEL, TS.INFO)
- * and the write commands (TS.ADD, TS.MADD, TS.INCRBY, TS.DECRBY). The subclasses run the same tests on RESP2, through the
- * reactive API and over Redis Cluster.
+ * Integration tests for {@link RedisTimeSeriesCommands}: the series lifecycle commands (TS.CREATE, TS.ALTER, TS.DEL, TS.INFO),
+ * the write commands (TS.ADD, TS.MADD, TS.INCRBY, TS.DECRBY) and the compaction rule commands (TS.CREATERULE, TS.DELETERULE).
+ * The subclasses run the same tests on RESP2, through the reactive API and over Redis Cluster.
  * <p>
  * The read commands (TS.GET, TS.RANGE) come with a later review PR, so stored samples are read back with a raw
  * {@code TS.RANGE key - +} sent through {@code dispatch} ({@link #storedSamples(String)}).
@@ -75,6 +75,10 @@ public class RedisTimeSeriesIntegrationTests {
     protected static final String F1 = "{ts}:f1";
 
     protected static final String F2 = "{ts}:f2";
+
+    protected static final String SRC = "{ts}:src";
+
+    protected static final String DST = "{ts}:dst";
 
     /**
      * The message of a rejected duplicate under policy BLOCK, as far as it is the same on 8.0.2 and 8.10.0 (test plan B08).
@@ -151,6 +155,20 @@ public class RedisTimeSeriesIntegrationTests {
         for (int i = 0; i < values.length; i++) {
             redis.tsAdd(F2, (i + 1) * 1000L, values[i]);
         }
+    }
+
+    /**
+     * Fixture F4 {@code compactionPair}: source {@code {ts}:src} and destination {@code {ts}:dst}, rule AVG with bucket 1000,
+     * then the source samples (1000, 10), (1500, 20), (2000, 30). The closed bucket 1000 on the destination is 15; the open
+     * bucket 2000 (30) is not written yet.
+     */
+    protected void compactionPair() {
+        redis.tsCreate(SRC, new TsCreateArgs().label("t", testName));
+        redis.tsCreate(DST, new TsCreateArgs().label("t", testName));
+        assertThat(redis.tsCreateRule(SRC, DST, TsAggregationType.AVG, 1000)).isEqualTo("OK");
+        redis.tsAdd(SRC, 1000L, 10.0);
+        redis.tsAdd(SRC, 1500L, 20.0);
+        redis.tsAdd(SRC, 2000L, 30.0);
     }
 
     /**
@@ -1269,6 +1287,297 @@ public class RedisTimeSeriesIntegrationTests {
                 .hasMessageContaining("TSDB: Timestamp is older than retention");
         assertThat(madd(TsMAddValue.of(KEY, 1000L, 1.0), TsMAddValue.of(KEY, 6000L, 2.0))).containsExactly(null, 6000L);
         assertThat(storedSamples(KEY)).isEqualTo(samples(5000, 1.0, 6000, 2.0));
+    }
+
+    // --- TS.CREATERULE / TS.DELETERULE -------------------------------------------------------------------------------
+
+    /**
+     * Find the rule of {@code info} whose destination is {@code destKey}.
+     */
+    protected static TsInfoValue.Rule<String> ruleTo(TsInfoValue<String> info, String destKey) {
+        for (TsInfoValue.Rule<String> rule : info.getRules()) {
+            if (destKey.equals(rule.getDestinationKey())) {
+                return rule;
+            }
+        }
+        throw new AssertionError("No rule to " + destKey + " in " + info.getRules());
+    }
+
+    /**
+     * Scenario G03: F4. The source INFO has exactly one rule (destination {@code {ts}:dst}, bucket 1000, aggregation AVG,
+     * alignment 0) and no source key; the destination INFO has {@code sourceKey} = the source and no rules. The closed bucket
+     * 1000 on the destination holds 15 (fixture F4), read back with a raw TS.RANGE.
+     */
+    @Test
+    void createRuleInfo() {
+
+        compactionPair();
+
+        TsInfoValue<String> source = redis.tsInfo(SRC);
+        assertThat(source.getRules()).hasSize(1);
+        TsInfoValue.Rule<String> rule = source.getRules().get(0);
+        assertThat(rule.getDestinationKey()).isEqualTo(DST);
+        assertThat(rule.getBucketDuration()).isEqualTo(1000);
+        assertThat(rule.getAggregation()).isSameAs(TsAggregationType.AVG);
+        assertThat(rule.getAlignment()).isEqualTo(0);
+        assertThat(source.getSourceKey()).isNull();
+
+        TsInfoValue<String> destination = redis.tsInfo(DST);
+        assertThat(destination.getSourceKey()).isEqualTo(SRC);
+        assertThat(destination.getRules()).isEmpty();
+
+        assertThat(storedSamples(DST)).isEqualTo(samples(1000, 15.0));
+    }
+
+    /**
+     * Scenario G03: with the F4 rule in place, a sample in the next bucket closes bucket 2000, so the destination gets (2000,
+     * 30). This is the counterpart of G05, where the same write after DELETERULE adds nothing.
+     */
+    @Test
+    void createRuleCompactsClosedBuckets() {
+
+        compactionPair();
+        redis.tsAdd(SRC, 3000L, 40.0);
+
+        assertThat(storedSamples(DST)).isEqualTo(samples(1000, 15.0, 2000, 30.0));
+    }
+
+    /**
+     * Scenario G03: every aggregation of design §3.1 that the 8.0 floor supports is accepted by CREATERULE and comes back in
+     * the source INFO as the same {@link TsAggregationType} constant (TS.INFO sends the token in uppercase). One source can
+     * have several rules.
+     */
+    @Test
+    void createRuleEveryAggregationRoundTrips() {
+
+        redis.tsCreate(SRC, new TsCreateArgs().label("t", testName));
+        List<TsAggregationType> aggregations = new ArrayList<>();
+        for (TsAggregationType aggregation : TsAggregationType.values()) {
+            if (aggregation != TsAggregationType.COUNTNAN && aggregation != TsAggregationType.COUNTALL) {
+                aggregations.add(aggregation);
+            }
+        }
+        for (TsAggregationType aggregation : aggregations) {
+            String dest = "{ts}:dst:" + aggregation.name();
+            redis.tsCreate(dest, new TsCreateArgs().label("t", testName));
+            assertThat(redis.tsCreateRule(SRC, dest, aggregation, 1000)).isEqualTo("OK");
+        }
+
+        TsInfoValue<String> info = redis.tsInfo(SRC);
+        assertThat(info.getRules()).hasSize(aggregations.size());
+        for (TsAggregationType aggregation : aggregations) {
+            TsInfoValue.Rule<String> rule = ruleTo(info, "{ts}:dst:" + aggregation.name());
+            assertThat(rule.getAggregation()).as(aggregation.name()).isSameAs(aggregation);
+            assertThat(rule.getBucketDuration()).isEqualTo(1000);
+            assertThat(rule.getAlignment()).isEqualTo(0);
+        }
+    }
+
+    /**
+     * Scenario G03: the aggregations {@code countNaN} and {@code countAll} (Redis 8.6+, Javadoc of {@code tsCreateRule})
+     * round-trip through CREATERULE and INFO.
+     */
+    @Test
+    void createRuleCountNanAndCountAll() {
+
+        assumeVersion("8.6");
+
+        redis.tsCreate(SRC, new TsCreateArgs().label("t", testName));
+        redis.tsCreate("{ts}:dst:nan", new TsCreateArgs().label("t", testName));
+        redis.tsCreate("{ts}:dst:all", new TsCreateArgs().label("t", testName));
+        assertThat(redis.tsCreateRule(SRC, "{ts}:dst:nan", TsAggregationType.COUNTNAN, 1000)).isEqualTo("OK");
+        assertThat(redis.tsCreateRule(SRC, "{ts}:dst:all", TsAggregationType.COUNTALL, 1000)).isEqualTo("OK");
+
+        TsInfoValue<String> info = redis.tsInfo(SRC);
+        assertThat(ruleTo(info, "{ts}:dst:nan").getAggregation()).isSameAs(TsAggregationType.COUNTNAN);
+        assertThat(ruleTo(info, "{ts}:dst:all").getAggregation()).isSameAs(TsAggregationType.COUNTALL);
+    }
+
+    /**
+     * Scenario G04 (INFO): CREATERULE with alignTimestamp 500 → the source INFO reports alignment 500, with the given bucket
+     * and aggregation.
+     */
+    @Test
+    void createRuleWithAlignment() {
+
+        redis.tsCreate(SRC, new TsCreateArgs().label("t", testName));
+        redis.tsCreate(DST, new TsCreateArgs().label("t", testName));
+
+        assertThat(redis.tsCreateRule(SRC, DST, TsAggregationType.MIN, 1000, 500)).isEqualTo("OK");
+
+        TsInfoValue<String> info = redis.tsInfo(SRC);
+        assertThat(info.getRules()).hasSize(1);
+        TsInfoValue.Rule<String> rule = info.getRules().get(0);
+        assertThat(rule.getDestinationKey()).isEqualTo(DST);
+        assertThat(rule.getBucketDuration()).isEqualTo(1000);
+        assertThat(rule.getAggregation()).isSameAs(TsAggregationType.MIN);
+        assertThat(rule.getAlignment()).isEqualTo(500);
+        assertThat(redis.tsInfo(DST).getSourceKey()).isEqualTo(SRC);
+    }
+
+    /**
+     * Scenario G05: F4, then DELETERULE → {@code OK}; the source has no rules, the destination no source key, both series are
+     * kept, and later source samples that close bucket 2000 add nothing to the destination.
+     */
+    @Test
+    void deleteRule() {
+
+        compactionPair();
+        assertThat(storedSamples(DST)).isEqualTo(samples(1000, 15.0));
+
+        assertThat(redis.tsDeleteRule(SRC, DST)).isEqualTo("OK");
+
+        assertThat(redis.tsInfo(SRC).getRules()).isEmpty();
+        assertThat(redis.tsInfo(DST).getSourceKey()).isNull();
+        assertThat(redis.exists(SRC, DST)).isEqualTo(2);
+
+        redis.tsAdd(SRC, 3000L, 40.0);
+        redis.tsAdd(SRC, 4000L, 50.0);
+
+        assertThat(storedSamples(DST)).isEqualTo(samples(1000, 15.0));
+        assertThat(storedSamples(SRC)).isEqualTo(samples(1000, 10.0, 1500, 20.0, 2000, 30.0, 3000, 40.0, 4000, 50.0));
+    }
+
+    /**
+     * Scenario G05: after DELETERULE the destination is free again, so the same rule can be created anew.
+     */
+    @Test
+    void deleteRuleThenCreateAgain() {
+
+        compactionPair();
+        assertThat(redis.tsDeleteRule(SRC, DST)).isEqualTo("OK");
+
+        assertThat(redis.tsCreateRule(SRC, DST, TsAggregationType.SUM, 2000)).isEqualTo("OK");
+
+        TsInfoValue.Rule<String> rule = ruleTo(redis.tsInfo(SRC), DST);
+        assertThat(rule.getAggregation()).isSameAs(TsAggregationType.SUM);
+        assertThat(rule.getBucketDuration()).isEqualTo(2000);
+    }
+
+    /**
+     * Scenario G06: creating the same rule twice, or a rule to a destination that already has one (even with another
+     * aggregation), fails with {@code TSDB: the destination key already has a src rule} (server message, 8.10.0).
+     */
+    @Test
+    void createRuleDuplicate() {
+
+        compactionPair();
+
+        assertThatThrownBy(() -> redis.tsCreateRule(SRC, DST, TsAggregationType.AVG, 1000))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: the destination key already has a src rule");
+        assertThatThrownBy(() -> redis.tsCreateRule(SRC, DST, TsAggregationType.SUM, 2000))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: the destination key already has a src rule");
+        assertThat(redis.tsInfo(SRC).getRules()).hasSize(1);
+    }
+
+    /**
+     * Scenario G06: the invalid topologies of TIMESERIES-CANONICAL.md §5 are rejected with the server's messages (8.10.0):
+     * source = destination → {@code TSDB: the source key and destination key should be different}; a source that is already a
+     * destination → {@code TSDB: the source key already has a source rule}; a destination that is already a source →
+     * {@code TSDB: the destination key already has a dst rule}; a destination of another source →
+     * {@code TSDB: the destination key already has a src rule}.
+     */
+    @Test
+    void createRuleInvalidTopology() {
+
+        compactionPair();
+        redis.tsCreate("{ts}:other", new TsCreateArgs().label("t", testName));
+        redis.tsCreate("{ts}:free", new TsCreateArgs().label("t", testName));
+
+        assertThatThrownBy(() -> redis.tsCreateRule("{ts}:other", "{ts}:other", TsAggregationType.AVG, 1000))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: the source key and destination key should be different");
+        assertThatThrownBy(() -> redis.tsCreateRule(DST, "{ts}:free", TsAggregationType.AVG, 1000))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: the source key already has a source rule");
+        assertThatThrownBy(() -> redis.tsCreateRule("{ts}:other", SRC, TsAggregationType.AVG, 1000))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: the destination key already has a dst rule");
+        assertThatThrownBy(() -> redis.tsCreateRule("{ts}:other", DST, TsAggregationType.AVG, 1000))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: the destination key already has a src rule");
+    }
+
+    /**
+     * Scenario G06: arguments the server rejects are passed through: an unknown aggregation from {@code TsAggregation.of} (the
+     * Javadoc: Lettuce does not check names) → {@code TSDB: Unknown aggregation type}; bucket duration 0 →
+     * {@code TSDB: bucketDuration must be greater than zero} (server messages, 8.10.0). No rule is created.
+     */
+    @Test
+    void createRuleInvalidArguments() {
+
+        redis.tsCreate(SRC, new TsCreateArgs().label("t", testName));
+        redis.tsCreate(DST, new TsCreateArgs().label("t", testName));
+
+        assertThatThrownBy(() -> redis.tsCreateRule(SRC, DST, TsAggregation.of("median"), 1000))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("TSDB: Unknown aggregation type");
+        assertThatThrownBy(() -> redis.tsCreateRule(SRC, DST, TsAggregationType.AVG, 0))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: bucketDuration must be greater than zero");
+        assertThat(redis.tsInfo(SRC).getRules()).isEmpty();
+    }
+
+    /**
+     * Scenario G06: DELETERULE of a rule that does not exist fails with {@code TSDB: compaction rule does not exist} (server
+     * message, 8.10.0): between two series without a rule, in the reverse direction of an existing rule, and a second time
+     * after the rule was deleted. The existing rule is kept.
+     */
+    @Test
+    void deleteRuleMissingRule() {
+
+        compactionPair();
+        redis.tsCreate("{ts}:other", new TsCreateArgs().label("t", testName));
+
+        assertThatThrownBy(() -> redis.tsDeleteRule("{ts}:other", DST)).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: compaction rule does not exist");
+        assertThatThrownBy(() -> redis.tsDeleteRule(DST, SRC)).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: compaction rule does not exist");
+        assertThat(redis.tsInfo(SRC).getRules()).hasSize(1);
+
+        assertThat(redis.tsDeleteRule(SRC, DST)).isEqualTo("OK");
+        assertThatThrownBy(() -> redis.tsDeleteRule(SRC, DST)).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: compaction rule does not exist");
+    }
+
+    /**
+     * Scenario G06 / J02 (CREATERULE): CREATERULE with a missing source or a missing destination fails with
+     * {@code TSDB: the key does not exist}, and the missing key is not created. DELETERULE with a missing source fails with the
+     * same message.
+     */
+    @Test
+    void createRuleMissingKey() {
+
+        redis.tsCreate(SRC, new TsCreateArgs().label("t", testName));
+        redis.tsCreate(DST, new TsCreateArgs().label("t", testName));
+
+        assertThatThrownBy(() -> redis.tsCreateRule(MISSING, DST, TsAggregationType.AVG, 1000))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("TSDB: the key does not exist");
+        assertThatThrownBy(() -> redis.tsCreateRule(SRC, MISSING, TsAggregationType.AVG, 1000, 500))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("TSDB: the key does not exist");
+        assertThatThrownBy(() -> redis.tsDeleteRule(MISSING, DST)).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: the key does not exist");
+
+        assertThat(redis.exists(MISSING)).isEqualTo(0);
+        assertThat(redis.tsInfo(SRC).getRules()).isEmpty();
+        assertThat(redis.tsInfo(DST).getSourceKey()).isNull();
+    }
+
+    /**
+     * Scenario A18, through the API of every flavor and topology: a {@code null} key or aggregation throws
+     * {@link IllegalArgumentException} (Javadoc of {@code tsCreateRule} / {@code tsDeleteRule}).
+     */
+    @Test
+    void createRuleAndDeleteRuleRejectNullArgumentsThroughTheApi() {
+
+        assertThatThrownBy(() -> redis.tsCreateRule(null, DST, TsAggregationType.AVG, 1000))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsCreateRule(SRC, null, TsAggregationType.AVG, 1000, 0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsCreateRule(SRC, DST, null, 1000)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsDeleteRule(SRC, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsDeleteRule(null, DST)).isInstanceOf(IllegalArgumentException.class);
     }
 
     // --- errors ------------------------------------------------------------------------------------------------------
