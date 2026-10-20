@@ -80,6 +80,14 @@ optional. The two mandatory properties are the command type (see
 instances to dispatch commands more than once. Commands that were
 executed once have the completed flag set and cannot be reused.
 
+!!! NOTE
+    Lettuce uses `ProtocolKeyword.toString()` as the command name in
+    command latency metrics. A custom `ProtocolKeyword` must return the
+    same name for every instance of the same command, for example by
+    using an `enum` or overriding `toString()`. A keyword that inherits
+    `Object.toString()` and is created per dispatch produces a separate
+    metric entry for every command, which grows memory without bound.
+
 ### Arguments
 
 `CommandArgs` is a container for command arguments that follow the

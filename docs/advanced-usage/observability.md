@@ -30,6 +30,16 @@ and port or socket path) and command type level (`GET`, `SET`, …​). It is
 possible to track command latencies on a per-connection level (see
 `DefaultCommandLatencyCollectorOptions`).
 
+!!! NOTE
+    The collector keeps latency data for each distinct remote endpoint and
+    command type in memory until the metrics are published (and reset). With
+    the default settings, metrics are published and reset every 10 minutes.
+    If you disable event publishing or set `resetLatenciesAfterEvent` to
+    `false`, the collected data is retained until you call
+    `CommandLatencyCollector.retrieveMetrics()`. Custom command types
+    (`ProtocolKeyword`) must return a stable command name from `toString()`;
+    otherwise each command instance is tracked separately.
+
 Command latencies are transported using Events on the `EventBus`. The
 `EventBus` can be obtained from the [client
 resources](client-resources.md) of the client instance. Please
@@ -130,6 +140,10 @@ following tags are attached to each timer:
 - `remote`: Remote socket (`localhost/127.0.0.1:6379`)
 
 Command latencies are reported using the provided `MeterRegistry`.
+Timers are registered once per distinct combination of tags and are kept
+for the lifetime of the recorder, so the `command` tag relies on custom
+command types (`ProtocolKeyword`) returning a stable name from
+`toString()`.
 
 ``` java
 MeterRegistry meterRegistry = …;
