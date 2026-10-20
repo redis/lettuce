@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.timeseries.TsAggregation;
+import io.lettuce.core.timeseries.TsAggregationType;
 import io.lettuce.core.timeseries.TsDuplicatePolicy;
 import io.lettuce.core.timeseries.TsDuplicatePolicyType;
 import io.lettuce.core.timeseries.TsEncoding;
@@ -37,7 +39,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
- * Unit tests for {@link RedisTimeSeriesCommandBuilder}: the exact RESP encoding of the series lifecycle and write commands.
+ * Unit tests for {@link RedisTimeSeriesCommandBuilder}: the exact RESP encoding of the series lifecycle, write and compaction
+ * rule commands.
  */
 @Tag(UNIT_TEST)
 class RedisTimeSeriesCommandBuilderUnitTests {
@@ -534,6 +537,89 @@ class RedisTimeSeriesCommandBuilderUnitTests {
         assertThatThrownBy(() -> builder.tsDecrBy(null, 1.0)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsDecrBy(null, 1.0, new TsIncrByArgs())).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsDecrBy(KEY, 1.0, null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.CREATERULE / TS.DELETERULE -------------------------------------------------------------------------------
+
+    /**
+     * Scenario A18: CREATERULE without alignTimestamp sends {@code AGGREGATION aggregator bucketDuration} after both keys.
+     */
+    @Test
+    void createRuleWithoutAlignment() {
+
+        assertThat(encode(builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.AVG, 1000)))
+                .isEqualTo("*6\r\n" + "$13\r\nTS.CREATERULE\r\n" + "$8\r\n{ts}:src\r\n" + "$8\r\n{ts}:dst\r\n"
+                        + "$11\r\nAGGREGATION\r\n" + "$3\r\nAVG\r\n" + "$4\r\n1000\r\n");
+    }
+
+    /**
+     * Scenario A18: CREATERULE with alignTimestamp sends the alignment after the bucket duration.
+     */
+    @Test
+    void createRuleWithAlignmentSendsItAfterBucketDuration() {
+
+        assertThat(tokens(builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.MIN, 1000, 500)))
+                .containsExactly("TS.CREATERULE", "{ts}:src", "{ts}:dst", "AGGREGATION", "MIN", "1000", "500");
+    }
+
+    /**
+     * Scenario A18: an alignment of 0 is sent as given, so the alignment overload always sends the value.
+     */
+    @Test
+    void createRuleWithZeroAlignmentSendsIt() {
+
+        assertThat(tokens(builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.SUM, 60000, 0)))
+                .containsExactly("TS.CREATERULE", "{ts}:src", "{ts}:dst", "AGGREGATION", "SUM", "60000", "0");
+    }
+
+    /**
+     * Scenario A18 / A21: the aggregation tokens of design §3.1 ({@code STD.P}, {@code VAR.S}, {@code COUNTNAN}), and an
+     * unknown aggregation from {@code TsAggregation.of(String)} sent exactly as given.
+     */
+    @Test
+    void createRuleAggregationTokens() {
+
+        assertThat(tokens(builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.STD_P, 1000)).get(4))
+                .isEqualTo("STD.P");
+        assertThat(tokens(builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.VAR_S, 1000)).get(4))
+                .isEqualTo("VAR.S");
+        assertThat(tokens(builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.COUNTNAN, 1000)).get(4))
+                .isEqualTo("COUNTNAN");
+        assertThat(tokens(builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregation.of("median"), 1000, 7)))
+                .containsExactly("TS.CREATERULE", "{ts}:src", "{ts}:dst", "AGGREGATION", "median", "1000", "7");
+    }
+
+    /**
+     * Scenario A18: DELETERULE sends the source key, then the destination key.
+     */
+    @Test
+    void deleteRule() {
+
+        assertThat(encode(builder.tsDeleteRule("{ts}:src", "{ts}:dst")))
+                .isEqualTo("*3\r\n" + "$13\r\nTS.DELETERULE\r\n" + "$8\r\n{ts}:src\r\n" + "$8\r\n{ts}:dst\r\n");
+    }
+
+    /**
+     * Scenario A18: a {@code null} key or aggregation throws {@link IllegalArgumentException} (Javadoc of {@code tsCreateRule}
+     * / {@code tsDeleteRule}).
+     */
+    @Test
+    void createRuleAndDeleteRuleRejectNullArguments() {
+
+        assertThatThrownBy(() -> builder.tsCreateRule(null, "{ts}:dst", TsAggregationType.AVG, 1000))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsCreateRule("{ts}:src", null, TsAggregationType.AVG, 1000))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsCreateRule("{ts}:src", "{ts}:dst", null, 1000))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsCreateRule(null, "{ts}:dst", TsAggregationType.AVG, 1000, 0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsCreateRule("{ts}:src", null, TsAggregationType.AVG, 1000, 0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsCreateRule("{ts}:src", "{ts}:dst", null, 1000, 0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsDeleteRule(null, "{ts}:dst")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsDeleteRule("{ts}:src", null)).isInstanceOf(IllegalArgumentException.class);
     }
 
 }
