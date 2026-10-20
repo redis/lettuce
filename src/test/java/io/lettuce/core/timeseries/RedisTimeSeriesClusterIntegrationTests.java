@@ -26,6 +26,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.sync.RedisTimeSeriesCommands;
@@ -258,6 +259,62 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
             assertThat(binary.sync().tsMAdd(samples)).containsExactly(1000L, null, 1500L, 2000L, 2000L);
         }
         assertSplitStored(keys);
+    }
+
+    // --- TS.CREATERULE / TS.DELETERULE across slots ------------------------------------------------------------------
+
+    /**
+     * Scenario K06 (CREATERULE): CREATERULE with the source and the destination in different slots, with and without
+     * alignTimestamp, and DELETERULE across slots, fail on the node of the source key, and no rule is created.
+     * <p>
+     * The reply depends on the server version. 8.4.0, 8.6.0, 8.8.0, 8.10.0 and 8.12 reply {@code CROSSSLOT Keys in request
+     * don't hash to the same slot} (test plan K06; TIMESERIES-CANONICAL.md §8). 8.0.2 and 8.2.2 do not check the slots: the
+     * source node does not find the destination and replies {@code ERR TSDB: the key does not exist} to CREATERULE (the text
+     * the TS.CREATERULE page documents, TIMESERIES-CANONICAL.md §1) and {@code ERR TSDB: compaction rule does not exist} to
+     * DELETERULE (observed with redis-cli on {@code test-cluster}). See QA-P3 P3-D1 and P3-TP1.
+     */
+    @Test
+    void createRuleAcrossSlotsFails() {
+
+        String source = "{a}:src";
+        String dest = "{b}:dst";
+        assertThat(SlotHash.getSlot(source)).isNotEqualTo(SlotHash.getSlot(dest));
+        redis.tsCreate(source, new TsCreateArgs().label("t", testName));
+        redis.tsCreate(dest, new TsCreateArgs().label("t", testName));
+
+        boolean crossSlot = RedisConditions.of(connection).hasVersionGreaterOrEqualsTo("8.4");
+        String createError = crossSlot ? "CROSSSLOT" : "TSDB: the key does not exist";
+        String deleteError = crossSlot ? "CROSSSLOT" : "TSDB: compaction rule does not exist";
+
+        assertThatThrownBy(() -> redis.tsCreateRule(source, dest, TsAggregationType.AVG, 1000))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining(createError);
+        assertThatThrownBy(() -> redis.tsCreateRule(source, dest, TsAggregationType.AVG, 1000, 500))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining(createError);
+        assertThatThrownBy(() -> redis.tsDeleteRule(source, dest)).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining(deleteError);
+
+        assertThat(redis.tsInfo(source).getRules()).isEmpty();
+        assertThat(redis.tsInfo(dest).getSourceKey()).isNull();
+    }
+
+    /**
+     * Scenario K06 (CREATERULE), counterpart: keys with a shared hash tag in a slot other than the base suite's {@code {ts}}
+     * create and delete a rule over the cluster connection.
+     */
+    @Test
+    void createRuleWithSharedHashTag() {
+
+        String source = "{b}:src";
+        String dest = "{b}:dst";
+        redis.tsCreate(source, new TsCreateArgs().label("t", testName));
+        redis.tsCreate(dest, new TsCreateArgs().label("t", testName));
+
+        assertThat(redis.tsCreateRule(source, dest, TsAggregationType.MAX, 1000, 250)).isEqualTo("OK");
+        assertThat(redis.tsInfo(source).getRules()).hasSize(1);
+        assertThat(redis.tsInfo(source).getRules().get(0).getAlignment()).isEqualTo(250);
+        assertThat(redis.tsInfo(dest).getSourceKey()).isEqualTo(source);
+        assertThat(redis.tsDeleteRule(source, dest)).isEqualTo("OK");
+        assertThat(redis.tsInfo(source).getRules()).isEmpty();
     }
 
 }
