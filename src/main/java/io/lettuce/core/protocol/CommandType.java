@@ -154,6 +154,9 @@ public enum CommandType implements ProtocolKeyword {
                             "TDIGEST.QUANTILE"), TDIGEST_RANK("TDIGEST.RANK"), TDIGEST_RESET("TDIGEST.RESET"), TDIGEST_REVRANK(
                                     "TDIGEST.REVRANK"), TDIGEST_TRIMMED_MEAN("TDIGEST.TRIMMED_MEAN"),
 
+    // TimeSeries
+    TS_ALTER("TS.ALTER"), TS_CREATE("TS.CREATE"), TS_DEL("TS.DEL"), TS_INFO("TS.INFO"),
+
     // Others
 
     TIME, WAIT,
