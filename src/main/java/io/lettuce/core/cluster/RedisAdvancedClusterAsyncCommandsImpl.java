@@ -41,7 +41,12 @@ import java.util.stream.Collectors;
 
 import io.lettuce.core.search.HybridReply;
 import io.lettuce.core.search.arguments.hybrid.HybridArgs;
+import io.lettuce.core.timeseries.TsFilter;
 import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsMGetValue;
+import io.lettuce.core.timeseries.TsSeries;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -1164,6 +1169,116 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         RedisFuture<T> scanCursor = new PipelinedRedisFuture<>(stage);
         return mapper.map(nodeIds, currentNodeId, scanCursor);
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsFilter filter) {
+        return routeKeyless(() -> super.tsMGet(filter), conn -> conn.tsMGet(filter), CommandType.TS_MGET);
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsFilter... filters) {
+        return routeKeyless(() -> super.tsMGet(filters), conn -> conn.tsMGet(filters), CommandType.TS_MGET);
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs args, TsFilter filter) {
+        return routeKeyless(() -> super.tsMGet(args, filter), conn -> conn.tsMGet(args, filter), CommandType.TS_MGET);
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs args, TsFilter... filters) {
+        return routeKeyless(() -> super.tsMGet(args, filters), conn -> conn.tsMGet(args, filters), CommandType.TS_MGET);
+    }
+
+    @Override
+    public RedisFuture<List<K>> tsQueryIndex(TsFilter filter) {
+        return routeKeyless(() -> super.tsQueryIndex(filter), conn -> conn.tsQueryIndex(filter), CommandType.TS_QUERYINDEX);
+    }
+
+    @Override
+    public RedisFuture<List<K>> tsQueryIndex(TsFilter... filters) {
+        return routeKeyless(() -> super.tsQueryIndex(filters), conn -> conn.tsQueryIndex(filters), CommandType.TS_QUERYINDEX);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRange(Range<Long> range, TsFilter filter) {
+        return routeKeyless(() -> super.tsMRange(range, filter), conn -> conn.tsMRange(range, filter), CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRange(Range<Long> range, TsFilter... filters) {
+        return routeKeyless(() -> super.tsMRange(range, filters), conn -> conn.tsMRange(range, filters), CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter filter) {
+        return routeKeyless(() -> super.tsMRange(range, args, filter), conn -> conn.tsMRange(range, args, filter),
+                CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters) {
+        return routeKeyless(() -> super.tsMRange(range, args, filters), conn -> conn.tsMRange(range, args, filters),
+                CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsFilter filter) {
+        return routeKeyless(() -> super.tsMRevRange(range, filter), conn -> conn.tsMRevRange(range, filter),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsFilter... filters) {
+        return routeKeyless(() -> super.tsMRevRange(range, filters), conn -> conn.tsMRevRange(range, filters),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter filter) {
+        return routeKeyless(() -> super.tsMRevRange(range, args, filter), conn -> conn.tsMRevRange(range, args, filter),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters) {
+        return routeKeyless(() -> super.tsMRevRange(range, args, filters), conn -> conn.tsMRevRange(range, args, filters),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabels() {
+        return routeKeyless(() -> super.tsQueryLabels(), conn -> conn.tsQueryLabels(), CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabels(TsFilter filter) {
+        return routeKeyless(() -> super.tsQueryLabels(filter), conn -> conn.tsQueryLabels(filter), CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabels(TsFilter... filters) {
+        return routeKeyless(() -> super.tsQueryLabels(filters), conn -> conn.tsQueryLabels(filters),
+                CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabelValues(String label) {
+        return routeKeyless(() -> super.tsQueryLabelValues(label), conn -> conn.tsQueryLabelValues(label),
+                CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabelValues(String label, TsFilter filter) {
+        return routeKeyless(() -> super.tsQueryLabelValues(label, filter), conn -> conn.tsQueryLabelValues(label, filter),
+                CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabelValues(String label, TsFilter... filters) {
+        return routeKeyless(() -> super.tsQueryLabelValues(label, filters), conn -> conn.tsQueryLabelValues(label, filters),
+                CommandType.TS_QUERYLABELS);
     }
 
 }

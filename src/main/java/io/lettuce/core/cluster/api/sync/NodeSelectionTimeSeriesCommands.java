@@ -33,6 +33,10 @@ import io.lettuce.core.timeseries.arguments.TsReadArgs;
  * <p>
  * {@code tsMAdd} runs unchanged on every selected node; it is not split by slot, so the keys must hash to slots that node
  * serves.
+ * <p>
+ * The label-index commands ({@code tsMGet}, {@code tsMRange}, {@code tsMRevRange}, {@code tsQueryIndex}, {@code tsQueryLabels},
+ * {@code tsQueryLabelValues}) run on every selected node. On Redis 8.10 and later each node returns the series of every shard,
+ * so the combined results contain each series once per selected node.
  *
  * @param <K> Key type.
  * @param <V> Value type.

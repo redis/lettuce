@@ -887,7 +887,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
     suspend fun tsQueryLabels(filter: TsFilter): List<String>
 
     /**
-     * Get the names of the labels of the time series that match the filters. Requires Redis 8.10 or later. At least one filter is required; use the overload without filters to query all series.
+     * Get the names of the labels of the time series that match the filters. Requires Redis 8.10 or later. At least one filter
+     * is required; use the overload without filters to query all series.
      *
      * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
      *
@@ -946,7 +947,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
     suspend fun tsQueryLabelValues(label: String, filter: TsFilter): List<String>
 
     /**
-     * Get the values of label `label` of the time series that match the filters. Requires Redis 8.10 or later. At least one filter is required; use the overload without filters to query all series.
+     * Get the values of label `label` of the time series that match the filters. Requires Redis 8.10 or later. At least
+     * one filter is required; use the overload without filters to query all series.
      *
      * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
      *
@@ -961,7 +963,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
      *        elements.
      * @return List<String> the values; empty if no series matches or no series has the label.
-     * @throws IllegalArgumentException if `label` is `null` or empty, or `filters` is `null`, empty or contains `null` elements.
+     * @throws IllegalArgumentException if `label` is `null` or empty, or `filters` is `null`, empty or
+     *         contains `null` elements.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
      */
