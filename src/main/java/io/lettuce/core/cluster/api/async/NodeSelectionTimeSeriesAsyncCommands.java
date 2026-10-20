@@ -16,11 +16,13 @@ import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
 import io.lettuce.core.timeseries.TsReadOffset;
 import io.lettuce.core.timeseries.TsSample;
+import io.lettuce.core.timeseries.TsSeries;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 
@@ -599,5 +601,259 @@ public interface NodeSelectionTimeSeriesAsyncCommands<K, V> {
      * @see <a href="https://redis.io/commands/ts.queryindex/">TS.QUERYINDEX</a>
      */
     AsyncExecutions<List<K>> tsQueryIndex(TsFilter... filters);
+
+    /**
+     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order. No labels
+     * are returned.
+     * <p>
+     * An inclusive bound sends that timestamp, and an unbounded side sends {@code -} (earliest) or {@code +} (latest) across
+     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
+     * an exclusive lower bound {@code t} sends {@code t + 1}, an exclusive upper bound {@code t} sends {@code t - 1}.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     * <p>
+     * The whole reply is held in memory before it is returned.
+     *
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @param filter the filter, must not be {@code null}.
+     * @return List&lt;TsSeries&gt; one entry per matching series, or per group with {@code GROUPBY}; a series without samples
+     *         in the range has an empty sample list unless {@code EXCLUDEEMPTY} is set.
+     * @throws IllegalArgumentException if {@code range} is {@code null}, {@code filter} is {@code null}, or if {@code range}
+     *         has an exclusive lower bound at {@link Long#MAX_VALUE} or an exclusive upper bound at {@link Long#MIN_VALUE}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
+     */
+    AsyncExecutions<List<TsSeries<K>>> tsMRange(Range<Long> range, TsFilter filter);
+
+    /**
+     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order. No labels
+     * are returned.
+     * <p>
+     * An inclusive bound sends that timestamp, and an unbounded side sends {@code -} (earliest) or {@code +} (latest) across
+     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
+     * an exclusive lower bound {@code t} sends {@code t + 1}, an exclusive upper bound {@code t} sends {@code t - 1}.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     * <p>
+     * The whole reply is held in memory before it is returned.
+     *
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @param filters the filters, combined with AND, must not be {@code null} or empty and must not contain {@code null}
+     *        elements.
+     * @return List&lt;TsSeries&gt; one entry per matching series, or per group with {@code GROUPBY}; a series without samples
+     *         in the range has an empty sample list unless {@code EXCLUDEEMPTY} is set.
+     * @throws IllegalArgumentException if {@code range} is {@code null}, {@code filters} is {@code null}, empty or contains
+     *         {@code null} elements, or if {@code range} has an exclusive lower bound at {@link Long#MAX_VALUE} or an exclusive
+     *         upper bound at {@link Long#MIN_VALUE}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
+     */
+    AsyncExecutions<List<TsSeries<K>>> tsMRange(Range<Long> range, TsFilter... filters);
+
+    /**
+     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order, with
+     * options such as labels, aggregation and {@code GROUPBY}.
+     * <p>
+     * An inclusive bound sends that timestamp, and an unbounded side sends {@code -} (earliest) or {@code +} (latest) across
+     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
+     * an exclusive lower bound {@code t} sends {@code t + 1}, an exclusive upper bound {@code t} sends {@code t - 1}.
+     * <p>
+     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
+     * later and cannot be combined with {@code GROUPBY}. With {@code GROUPBY}, each entry is one group of series combined by
+     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     * <p>
+     * The whole reply is held in memory before it is returned.
+     *
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @param args the options, must not be {@code null}.
+     * @param filter the filter, must not be {@code null}.
+     * @return List&lt;TsSeries&gt; one entry per matching series, or per group with {@code GROUPBY}; a series without samples
+     *         in the range has an empty sample list unless {@code EXCLUDEEMPTY} is set.
+     * @throws IllegalArgumentException if {@code range} or {@code args} is {@code null}, {@code filter} is {@code null}, if
+     *         {@code range} has an exclusive lower bound at {@link Long#MAX_VALUE} or an exclusive upper bound at
+     *         {@link Long#MIN_VALUE}, or if {@code args} has conflicting options.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
+     */
+    AsyncExecutions<List<TsSeries<K>>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter filter);
+
+    /**
+     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order, with
+     * options such as labels, aggregation and {@code GROUPBY}.
+     * <p>
+     * An inclusive bound sends that timestamp, and an unbounded side sends {@code -} (earliest) or {@code +} (latest) across
+     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
+     * an exclusive lower bound {@code t} sends {@code t + 1}, an exclusive upper bound {@code t} sends {@code t - 1}.
+     * <p>
+     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
+     * later and cannot be combined with {@code GROUPBY}. With {@code GROUPBY}, each entry is one group of series combined by
+     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     * <p>
+     * The whole reply is held in memory before it is returned.
+     *
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @param args the options, must not be {@code null}.
+     * @param filters the filters, combined with AND, must not be {@code null} or empty and must not contain {@code null}
+     *        elements.
+     * @return List&lt;TsSeries&gt; one entry per matching series, or per group with {@code GROUPBY}; a series without samples
+     *         in the range has an empty sample list unless {@code EXCLUDEEMPTY} is set.
+     * @throws IllegalArgumentException if {@code range} or {@code args} is {@code null}, {@code filters} is {@code null}, empty
+     *         or contains {@code null} elements, if {@code range} has an exclusive lower bound at {@link Long#MAX_VALUE} or an
+     *         exclusive upper bound at {@link Long#MIN_VALUE}, or if {@code args} has conflicting options.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
+     */
+    AsyncExecutions<List<TsSeries<K>>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters);
+
+    /**
+     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order. No
+     * labels are returned.
+     * <p>
+     * An inclusive bound sends that timestamp, and an unbounded side sends {@code -} (earliest) or {@code +} (latest) across
+     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
+     * an exclusive lower bound {@code t} sends {@code t + 1}, an exclusive upper bound {@code t} sends {@code t - 1}.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     * <p>
+     * The whole reply is held in memory before it is returned.
+     *
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @param filter the filter, must not be {@code null}.
+     * @return List&lt;TsSeries&gt; one entry per matching series, or per group with {@code GROUPBY}; a series without samples
+     *         in the range has an empty sample list unless {@code EXCLUDEEMPTY} is set.
+     * @throws IllegalArgumentException if {@code range} is {@code null}, {@code filter} is {@code null}, or if {@code range}
+     *         has an exclusive lower bound at {@link Long#MAX_VALUE} or an exclusive upper bound at {@link Long#MIN_VALUE}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
+     */
+    AsyncExecutions<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsFilter filter);
+
+    /**
+     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order. No
+     * labels are returned.
+     * <p>
+     * An inclusive bound sends that timestamp, and an unbounded side sends {@code -} (earliest) or {@code +} (latest) across
+     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
+     * an exclusive lower bound {@code t} sends {@code t + 1}, an exclusive upper bound {@code t} sends {@code t - 1}.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     * <p>
+     * The whole reply is held in memory before it is returned.
+     *
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @param filters the filters, combined with AND, must not be {@code null} or empty and must not contain {@code null}
+     *        elements.
+     * @return List&lt;TsSeries&gt; one entry per matching series, or per group with {@code GROUPBY}; a series without samples
+     *         in the range has an empty sample list unless {@code EXCLUDEEMPTY} is set.
+     * @throws IllegalArgumentException if {@code range} is {@code null}, {@code filters} is {@code null}, empty or contains
+     *         {@code null} elements, or if {@code range} has an exclusive lower bound at {@link Long#MAX_VALUE} or an exclusive
+     *         upper bound at {@link Long#MIN_VALUE}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
+     */
+    AsyncExecutions<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsFilter... filters);
+
+    /**
+     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order, with
+     * options such as labels, aggregation and {@code GROUPBY}.
+     * <p>
+     * An inclusive bound sends that timestamp, and an unbounded side sends {@code -} (earliest) or {@code +} (latest) across
+     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
+     * an exclusive lower bound {@code t} sends {@code t + 1}, an exclusive upper bound {@code t} sends {@code t - 1}.
+     * <p>
+     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
+     * later and cannot be combined with {@code GROUPBY}. With {@code GROUPBY}, each entry is one group of series combined by
+     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     * <p>
+     * The whole reply is held in memory before it is returned.
+     *
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @param args the options, must not be {@code null}.
+     * @param filter the filter, must not be {@code null}.
+     * @return List&lt;TsSeries&gt; one entry per matching series, or per group with {@code GROUPBY}; a series without samples
+     *         in the range has an empty sample list unless {@code EXCLUDEEMPTY} is set.
+     * @throws IllegalArgumentException if {@code range} or {@code args} is {@code null}, {@code filter} is {@code null}, if
+     *         {@code range} has an exclusive lower bound at {@link Long#MAX_VALUE} or an exclusive upper bound at
+     *         {@link Long#MIN_VALUE}, or if {@code args} has conflicting options.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
+     */
+    AsyncExecutions<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter filter);
+
+    /**
+     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order, with
+     * options such as labels, aggregation and {@code GROUPBY}.
+     * <p>
+     * An inclusive bound sends that timestamp, and an unbounded side sends {@code -} (earliest) or {@code +} (latest) across
+     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
+     * an exclusive lower bound {@code t} sends {@code t + 1}, an exclusive upper bound {@code t} sends {@code t - 1}.
+     * <p>
+     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
+     * later and cannot be combined with {@code GROUPBY}. With {@code GROUPBY}, each entry is one group of series combined by
+     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     * <p>
+     * The whole reply is held in memory before it is returned.
+     *
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @param args the options, must not be {@code null}.
+     * @param filters the filters, combined with AND, must not be {@code null} or empty and must not contain {@code null}
+     *        elements.
+     * @return List&lt;TsSeries&gt; one entry per matching series, or per group with {@code GROUPBY}; a series without samples
+     *         in the range has an empty sample list unless {@code EXCLUDEEMPTY} is set.
+     * @throws IllegalArgumentException if {@code range} or {@code args} is {@code null}, {@code filters} is {@code null}, empty
+     *         or contains {@code null} elements, if {@code range} has an exclusive lower bound at {@link Long#MAX_VALUE} or an
+     *         exclusive upper bound at {@link Long#MIN_VALUE}, or if {@code args} has conflicting options.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
+     */
+    AsyncExecutions<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters);
 
 }

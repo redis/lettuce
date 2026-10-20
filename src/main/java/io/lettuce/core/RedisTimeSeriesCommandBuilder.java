@@ -19,6 +19,8 @@ import static io.lettuce.core.protocol.CommandType.TS_INCRBY;
 import static io.lettuce.core.protocol.CommandType.TS_INFO;
 import static io.lettuce.core.protocol.CommandType.TS_MADD;
 import static io.lettuce.core.protocol.CommandType.TS_MGET;
+import static io.lettuce.core.protocol.CommandType.TS_MRANGE;
+import static io.lettuce.core.protocol.CommandType.TS_MREVRANGE;
 import static io.lettuce.core.protocol.CommandType.TS_QUERYINDEX;
 import static io.lettuce.core.protocol.CommandType.TS_RANGE;
 import static io.lettuce.core.protocol.CommandType.TS_READ;
@@ -43,6 +45,7 @@ import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsFilter;
 import io.lettuce.core.timeseries.TsInfoValue;
@@ -52,11 +55,14 @@ import io.lettuce.core.timeseries.TsMGetValue;
 import io.lettuce.core.timeseries.TsMGetValueParser;
 import io.lettuce.core.timeseries.TsReadOffset;
 import io.lettuce.core.timeseries.TsSample;
+import io.lettuce.core.timeseries.TsSeries;
+import io.lettuce.core.timeseries.TsSeriesParser;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 
@@ -336,6 +342,66 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
 
     Command<K, V, List<K>> tsQueryIndex(TsFilter... filters) {
         return queryIndex(filters(filters));
+    }
+
+    Command<K, V, List<TsSeries<K>>> tsMRange(Range<Long> range, TsFilter filter) {
+        return mRange(TS_MRANGE, range, null, filters(filter));
+    }
+
+    Command<K, V, List<TsSeries<K>>> tsMRange(Range<Long> range, TsFilter... filters) {
+        return mRange(TS_MRANGE, range, null, filters(filters));
+    }
+
+    Command<K, V, List<TsSeries<K>>> tsMRange(Range<Long> range, TsMRangeArgs mRangeArgs, TsFilter filter) {
+        LettuceAssert.notNull(mRangeArgs, "TsMRangeArgs " + MUST_NOT_BE_NULL);
+
+        return mRange(TS_MRANGE, range, mRangeArgs, filters(filter));
+    }
+
+    Command<K, V, List<TsSeries<K>>> tsMRange(Range<Long> range, TsMRangeArgs mRangeArgs, TsFilter... filters) {
+        LettuceAssert.notNull(mRangeArgs, "TsMRangeArgs " + MUST_NOT_BE_NULL);
+
+        return mRange(TS_MRANGE, range, mRangeArgs, filters(filters));
+    }
+
+    Command<K, V, List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsFilter filter) {
+        return mRange(TS_MREVRANGE, range, null, filters(filter));
+    }
+
+    Command<K, V, List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsFilter... filters) {
+        return mRange(TS_MREVRANGE, range, null, filters(filters));
+    }
+
+    Command<K, V, List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsMRangeArgs mRangeArgs, TsFilter filter) {
+        LettuceAssert.notNull(mRangeArgs, "TsMRangeArgs " + MUST_NOT_BE_NULL);
+
+        return mRange(TS_MREVRANGE, range, mRangeArgs, filters(filter));
+    }
+
+    Command<K, V, List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsMRangeArgs mRangeArgs, TsFilter... filters) {
+        LettuceAssert.notNull(mRangeArgs, "TsMRangeArgs " + MUST_NOT_BE_NULL);
+
+        return mRange(TS_MREVRANGE, range, mRangeArgs, filters(filters));
+    }
+
+    private Command<K, V, List<TsSeries<K>>> mRange(CommandType type, Range<Long> range, TsMRangeArgs mRangeArgs,
+            List<TsFilter> filters) {
+        notNullRange(range);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        addRange(args, range);
+
+        TsSeriesParser<K, V> parser;
+        if (mRangeArgs == null) {
+            addFilters(args, filters);
+            parser = new TsSeriesParser<>(codec, Collections.emptyList(), false, null);
+        } else {
+            mRangeArgs.build(args, filters);
+            parser = new TsSeriesParser<>(codec, mRangeArgs.getAggregations(), mRangeArgs.getGroupByLabel() != null,
+                    mRangeArgs.getReducer());
+        }
+
+        return createCommand(type, new EncodedComplexOutput<>(codec, parser), args);
     }
 
     private Command<K, V, List<TsMGetValue<K>>> mGet(TsMGetArgs mGetArgs, List<TsFilter> filters) {

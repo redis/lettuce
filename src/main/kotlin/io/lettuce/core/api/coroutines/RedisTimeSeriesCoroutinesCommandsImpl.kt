@@ -16,11 +16,13 @@ import io.lettuce.core.timeseries.TsMAddValue
 import io.lettuce.core.timeseries.TsMGetValue
 import io.lettuce.core.timeseries.TsReadOffset
 import io.lettuce.core.timeseries.TsSample
+import io.lettuce.core.timeseries.TsSeries
 import io.lettuce.core.timeseries.arguments.TsAddArgs
 import io.lettuce.core.timeseries.arguments.TsAlterArgs
 import io.lettuce.core.timeseries.arguments.TsCreateArgs
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs
 import io.lettuce.core.timeseries.arguments.TsMGetArgs
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs
 import io.lettuce.core.timeseries.arguments.TsRangeArgs
 import io.lettuce.core.timeseries.arguments.TsReadArgs
 import kotlinx.coroutines.flow.toList
@@ -134,5 +136,29 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
 
     override suspend fun tsQueryIndex(vararg filters: TsFilter): List<K> =
         ops.tsQueryIndex(*filters).asFlow().toList()
+
+    override suspend fun tsMRange(range: Range<Long>, filter: TsFilter): List<TsSeries<K>> =
+        ops.tsMRange(range, filter).asFlow().toList()
+
+    override suspend fun tsMRange(range: Range<Long>, vararg filters: TsFilter): List<TsSeries<K>> =
+        ops.tsMRange(range, *filters).asFlow().toList()
+
+    override suspend fun tsMRange(range: Range<Long>, args: TsMRangeArgs, filter: TsFilter): List<TsSeries<K>> =
+        ops.tsMRange(range, args, filter).asFlow().toList()
+
+    override suspend fun tsMRange(range: Range<Long>, args: TsMRangeArgs, vararg filters: TsFilter): List<TsSeries<K>> =
+        ops.tsMRange(range, args, *filters).asFlow().toList()
+
+    override suspend fun tsMRevRange(range: Range<Long>, filter: TsFilter): List<TsSeries<K>> =
+        ops.tsMRevRange(range, filter).asFlow().toList()
+
+    override suspend fun tsMRevRange(range: Range<Long>, vararg filters: TsFilter): List<TsSeries<K>> =
+        ops.tsMRevRange(range, *filters).asFlow().toList()
+
+    override suspend fun tsMRevRange(range: Range<Long>, args: TsMRangeArgs, filter: TsFilter): List<TsSeries<K>> =
+        ops.tsMRevRange(range, args, filter).asFlow().toList()
+
+    override suspend fun tsMRevRange(range: Range<Long>, args: TsMRangeArgs, vararg filters: TsFilter): List<TsSeries<K>> =
+        ops.tsMRevRange(range, args, *filters).asFlow().toList()
 
 }
