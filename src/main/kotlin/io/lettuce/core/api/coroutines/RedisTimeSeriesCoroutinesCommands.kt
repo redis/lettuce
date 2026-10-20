@@ -123,9 +123,10 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @param destKey the key of the series that receives the compacted samples, must not be `null`.
      * @param aggregation the aggregation, must not be `null`. `countNaN` and `countAll` require Redis 8.6 or
      *        later.
-     * @param bucketDuration the duration of each bucket in milliseconds.
+     * @param bucketDuration the duration of each bucket in milliseconds, must be positive.
      * @return String simple-string-reply `OK` if the rule was created.
-     * @throws IllegalArgumentException if `sourceKey`, `destKey` or `aggregation` is `null`.
+     * @throws IllegalArgumentException if `sourceKey`, `destKey` or `aggregation` is `null`, or if
+     *         `bucketDuration` is not positive.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.createrule/">TS.CREATERULE</a>
      */
@@ -143,11 +144,11 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @param destKey the key of the series that receives the compacted samples, must not be `null`.
      * @param aggregation the aggregation, must not be `null`. `countNaN` and `countAll` require Redis 8.6 or
      *        later.
-     * @param bucketDuration the duration of each bucket in milliseconds.
+     * @param bucketDuration the duration of each bucket in milliseconds, must be positive.
      * @param alignTimestamp the timestamp in milliseconds at which a bucket starts, must not be negative.
      * @return String simple-string-reply `OK` if the rule was created.
-     * @throws IllegalArgumentException if `sourceKey`, `destKey` or `aggregation` is `null`, or if
-     *         `alignTimestamp` is negative.
+     * @throws IllegalArgumentException if `sourceKey`, `destKey` or `aggregation` is `null`, if
+     *         `bucketDuration` is not positive, or if `alignTimestamp` is negative.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.createrule/">TS.CREATERULE</a>
      */

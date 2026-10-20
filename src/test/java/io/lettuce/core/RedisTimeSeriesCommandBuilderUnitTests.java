@@ -590,6 +590,23 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     }
 
     /**
+     * Scenario A18: a bucket duration of 0 or less throws {@link IllegalArgumentException} before sending, with and without
+     * alignment (design §0, §2.2; Javadoc of {@code tsCreateRule}).
+     */
+    @Test
+    void createRuleRejectsNonPositiveBucketDuration() {
+
+        assertThatThrownBy(() -> builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.AVG, 0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.AVG, -1))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.AVG, 0, 0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.AVG, -1, 0))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
      * Scenario A18: DELETERULE sends the source key, then the destination key.
      */
     @Test

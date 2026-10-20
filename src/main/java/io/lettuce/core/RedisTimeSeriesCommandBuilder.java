@@ -139,6 +139,7 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         LettuceAssert.notNull(sourceKey, "Source key " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(destKey, "Destination key " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(aggregation, "Aggregation " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(bucketDuration > 0, "Bucket duration must be positive");
 
         return new CommandArgs<>(codec).addKey(sourceKey).addKey(destKey).add(CommandKeyword.AGGREGATION).add(aggregation)
                 .add(bucketDuration);

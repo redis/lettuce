@@ -1501,9 +1501,10 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Scenario G06: arguments the server rejects are passed through: an unknown aggregation from {@code TsAggregation.of} (the
-     * Javadoc: Lettuce does not check names) → {@code TSDB: Unknown aggregation type}; bucket duration 0 →
-     * {@code TSDB: bucketDuration must be greater than zero} (server messages, 8.10.0). No rule is created.
+     * Scenario G06 / A18: an unknown aggregation from {@code TsAggregation.of} (the Javadoc: Lettuce does not check names) is
+     * passed through and the server rejects it with {@code TSDB: Unknown aggregation type} (server message, 8.10.0). A bucket
+     * duration of 0 or less is rejected by the client with {@link IllegalArgumentException} before anything is sent (design
+     * §2.2, H19; test plan A18), with and without {@code alignTimestamp}. No rule is created.
      */
     @Test
     void createRuleInvalidArguments() {
@@ -1514,8 +1515,13 @@ public class RedisTimeSeriesIntegrationTests {
         assertThatThrownBy(() -> redis.tsCreateRule(SRC, DST, TsAggregation.of("median"), 1000))
                 .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("TSDB: Unknown aggregation type");
         assertThatThrownBy(() -> redis.tsCreateRule(SRC, DST, TsAggregationType.AVG, 0))
-                .isInstanceOf(RedisCommandExecutionException.class)
-                .hasMessageContaining("TSDB: bucketDuration must be greater than zero");
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsCreateRule(SRC, DST, TsAggregationType.AVG, -1))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsCreateRule(SRC, DST, TsAggregationType.AVG, 0, 0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsCreateRule(SRC, DST, TsAggregationType.AVG, -1, 0))
+                .isInstanceOf(IllegalArgumentException.class);
         assertThat(redis.tsInfo(SRC).getRules()).isEmpty();
     }
 

@@ -122,9 +122,10 @@ public interface RedisTimeSeriesCommands<K, V> {
      * @param destKey the key of the series that receives the compacted samples, must not be {@code null}.
      * @param aggregation the aggregation, must not be {@code null}. {@code countNaN} and {@code countAll} require Redis 8.6 or
      *        later.
-     * @param bucketDuration the duration of each bucket in milliseconds.
+     * @param bucketDuration the duration of each bucket in milliseconds, must be positive.
      * @return String simple-string-reply {@code OK} if the rule was created.
-     * @throws IllegalArgumentException if {@code sourceKey}, {@code destKey} or {@code aggregation} is {@code null}.
+     * @throws IllegalArgumentException if {@code sourceKey}, {@code destKey} or {@code aggregation} is {@code null}, or if
+     *         {@code bucketDuration} is not positive.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.createrule/">TS.CREATERULE</a>
      */
@@ -142,11 +143,11 @@ public interface RedisTimeSeriesCommands<K, V> {
      * @param destKey the key of the series that receives the compacted samples, must not be {@code null}.
      * @param aggregation the aggregation, must not be {@code null}. {@code countNaN} and {@code countAll} require Redis 8.6 or
      *        later.
-     * @param bucketDuration the duration of each bucket in milliseconds.
+     * @param bucketDuration the duration of each bucket in milliseconds, must be positive.
      * @param alignTimestamp the timestamp in milliseconds at which a bucket starts, must not be negative.
      * @return String simple-string-reply {@code OK} if the rule was created.
-     * @throws IllegalArgumentException if {@code sourceKey}, {@code destKey} or {@code aggregation} is {@code null}, or if
-     *         {@code alignTimestamp} is negative.
+     * @throws IllegalArgumentException if {@code sourceKey}, {@code destKey} or {@code aggregation} is {@code null}, if
+     *         {@code bucketDuration} is not positive, or if {@code alignTimestamp} is negative.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.createrule/">TS.CREATERULE</a>
      */
