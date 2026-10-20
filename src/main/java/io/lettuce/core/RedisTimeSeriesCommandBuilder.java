@@ -22,6 +22,7 @@ import static io.lettuce.core.protocol.CommandType.TS_MGET;
 import static io.lettuce.core.protocol.CommandType.TS_MRANGE;
 import static io.lettuce.core.protocol.CommandType.TS_MREVRANGE;
 import static io.lettuce.core.protocol.CommandType.TS_QUERYINDEX;
+import static io.lettuce.core.protocol.CommandType.TS_QUERYLABELS;
 import static io.lettuce.core.protocol.CommandType.TS_RANGE;
 import static io.lettuce.core.protocol.CommandType.TS_READ;
 import static io.lettuce.core.protocol.CommandType.TS_REVRANGE;
@@ -39,6 +40,7 @@ import io.lettuce.core.output.ErrorTolerantIntegerValueListOutput;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.KeyListOutput;
 import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.output.StringListOutput;
 import io.lettuce.core.output.TsSampleListOutput;
 import io.lettuce.core.output.TsSampleOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
@@ -402,6 +404,46 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         }
 
         return createCommand(type, new EncodedComplexOutput<>(codec, parser), args);
+    }
+
+    Command<K, V, List<String>> tsQueryLabels() {
+        return queryLabels(new CommandArgs<>(codec).add(CommandKeyword.LABELS), Collections.emptyList());
+    }
+
+    Command<K, V, List<String>> tsQueryLabels(TsFilter filter) {
+        return queryLabels(new CommandArgs<>(codec).add(CommandKeyword.LABELS), filters(filter));
+    }
+
+    Command<K, V, List<String>> tsQueryLabels(TsFilter... filters) {
+        return queryLabels(new CommandArgs<>(codec).add(CommandKeyword.LABELS), filters(filters));
+    }
+
+    Command<K, V, List<String>> tsQueryLabelValues(String label) {
+        return queryLabels(valuesArgs(label), Collections.emptyList());
+    }
+
+    Command<K, V, List<String>> tsQueryLabelValues(String label, TsFilter filter) {
+        return queryLabels(valuesArgs(label), filters(filter));
+    }
+
+    Command<K, V, List<String>> tsQueryLabelValues(String label, TsFilter... filters) {
+        return queryLabels(valuesArgs(label), filters(filters));
+    }
+
+    private CommandArgs<K, V> valuesArgs(String label) {
+
+        LettuceAssert.notEmpty(label, "Label " + MUST_NOT_BE_EMPTY);
+
+        return new CommandArgs<>(codec).add(CommandKeyword.VALUES).add(label);
+    }
+
+    private Command<K, V, List<String>> queryLabels(CommandArgs<K, V> args, List<TsFilter> filters) {
+
+        if (!filters.isEmpty()) {
+            addFilters(args, filters);
+        }
+
+        return createCommand(TS_QUERYLABELS, new StringListOutput<>(codec), args);
     }
 
     private Command<K, V, List<TsMGetValue<K>>> mGet(TsMGetArgs mGetArgs, List<TsFilter> filters) {

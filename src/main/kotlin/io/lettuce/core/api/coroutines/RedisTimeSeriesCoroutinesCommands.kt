@@ -598,7 +598,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
     suspend fun tsQueryIndex(vararg filters: TsFilter): List<K>
 
     /**
-     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order. No labels are returned.
+     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order. No labels
+     * are returned.
      *
      * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
      * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
@@ -615,17 +616,18 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      *
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param filter the filter, must not be `null`.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without
-     *         samples in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
-     * @throws IllegalArgumentException if `range` is `null`, `filter` is `null`, or if `range` has an exclusive lower
-     *         bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
+     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
+     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @throws IllegalArgumentException if `range` is `null`, `filter` is `null`, or if `range`
+     *         has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
      */
     suspend fun tsMRange(range: Range<Long>, filter: TsFilter): List<TsSeries<K>>
 
     /**
-     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order. No labels are returned.
+     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order. No labels
+     * are returned.
      *
      * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
      * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
@@ -643,25 +645,27 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
      *        elements.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without
-     *         samples in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
-     * @throws IllegalArgumentException if `range` is `null`, `filters` is `null`, empty or contains `null` elements, or if `range` has an exclusive lower
-     *         bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
+     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
+     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @throws IllegalArgumentException if `range` is `null`, `filters` is `null`, empty or contains
+     *         `null` elements, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive
+     *         upper bound at [Long.MIN_VALUE].
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
      */
     suspend fun tsMRange(range: Range<Long>, vararg filters: TsFilter): List<TsSeries<K>>
 
     /**
-     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order, with options such as labels, aggregation and `GROUPBY`.
+     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order, with
+     * options such as labels, aggregation and `GROUPBY`.
      *
      * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
      * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
      * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
      *
-     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8
-     * or later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined
-     * by the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later.
+     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
+     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by
+     * the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
@@ -675,26 +679,27 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param args the options, must not be `null`.
      * @param filter the filter, must not be `null`.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without
-     *         samples in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
-     * @throws IllegalArgumentException if `range` or `args` is `null`, `filter` is `null`, if `range` has an
-     *         exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if
-     *         `args` has conflicting options.
+     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
+     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @throws IllegalArgumentException if `range` or `args` is `null`, `filter` is `null`, if
+     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at
+     *         [Long.MIN_VALUE], or if `args` has conflicting options.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
      */
     suspend fun tsMRange(range: Range<Long>, args: TsMRangeArgs, filter: TsFilter): List<TsSeries<K>>
 
     /**
-     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order, with options such as labels, aggregation and `GROUPBY`.
+     * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order, with
+     * options such as labels, aggregation and `GROUPBY`.
      *
      * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
      * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
      * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
      *
-     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8
-     * or later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined
-     * by the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later.
+     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
+     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by
+     * the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
@@ -709,18 +714,19 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @param args the options, must not be `null`.
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
      *        elements.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without
-     *         samples in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
-     * @throws IllegalArgumentException if `range` or `args` is `null`, `filters` is `null`, empty or contains `null` elements, if `range` has an
-     *         exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if
-     *         `args` has conflicting options.
+     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
+     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @throws IllegalArgumentException if `range` or `args` is `null`, `filters` is `null`, empty
+     *         or contains `null` elements, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an
+     *         exclusive upper bound at [Long.MIN_VALUE], or if `args` has conflicting options.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
      */
     suspend fun tsMRange(range: Range<Long>, args: TsMRangeArgs, vararg filters: TsFilter): List<TsSeries<K>>
 
     /**
-     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order. No labels are returned.
+     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order. No
+     * labels are returned.
      *
      * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
      * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
@@ -737,17 +743,18 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      *
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param filter the filter, must not be `null`.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without
-     *         samples in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
-     * @throws IllegalArgumentException if `range` is `null`, `filter` is `null`, or if `range` has an exclusive lower
-     *         bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
+     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
+     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @throws IllegalArgumentException if `range` is `null`, `filter` is `null`, or if `range`
+     *         has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
      */
     suspend fun tsMRevRange(range: Range<Long>, filter: TsFilter): List<TsSeries<K>>
 
     /**
-     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order. No labels are returned.
+     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order. No
+     * labels are returned.
      *
      * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
      * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
@@ -765,25 +772,27 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
      *        elements.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without
-     *         samples in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
-     * @throws IllegalArgumentException if `range` is `null`, `filters` is `null`, empty or contains `null` elements, or if `range` has an exclusive lower
-     *         bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
+     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
+     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @throws IllegalArgumentException if `range` is `null`, `filters` is `null`, empty or contains
+     *         `null` elements, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive
+     *         upper bound at [Long.MIN_VALUE].
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
      */
     suspend fun tsMRevRange(range: Range<Long>, vararg filters: TsFilter): List<TsSeries<K>>
 
     /**
-     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order, with options such as labels, aggregation and `GROUPBY`.
+     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order, with
+     * options such as labels, aggregation and `GROUPBY`.
      *
      * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
      * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
      * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
      *
-     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8
-     * or later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined
-     * by the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later.
+     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
+     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by
+     * the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
@@ -797,26 +806,27 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param args the options, must not be `null`.
      * @param filter the filter, must not be `null`.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without
-     *         samples in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
-     * @throws IllegalArgumentException if `range` or `args` is `null`, `filter` is `null`, if `range` has an
-     *         exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if
-     *         `args` has conflicting options.
+     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
+     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @throws IllegalArgumentException if `range` or `args` is `null`, `filter` is `null`, if
+     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at
+     *         [Long.MIN_VALUE], or if `args` has conflicting options.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
      */
     suspend fun tsMRevRange(range: Range<Long>, args: TsMRangeArgs, filter: TsFilter): List<TsSeries<K>>
 
     /**
-     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order, with options such as labels, aggregation and `GROUPBY`.
+     * Get the samples within a range of timestamps of every time series that matches the filters, in descending order, with
+     * options such as labels, aggregation and `GROUPBY`.
      *
      * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
      * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
      * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
      *
-     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8
-     * or later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined
-     * by the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later.
+     * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
+     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by
+     * the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
@@ -831,14 +841,130 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @param args the options, must not be `null`.
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
      *        elements.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without
-     *         samples in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
-     * @throws IllegalArgumentException if `range` or `args` is `null`, `filters` is `null`, empty or contains `null` elements, if `range` has an
-     *         exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if
-     *         `args` has conflicting options.
+     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
+     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @throws IllegalArgumentException if `range` or `args` is `null`, `filters` is `null`, empty
+     *         or contains `null` elements, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an
+     *         exclusive upper bound at [Long.MIN_VALUE], or if `args` has conflicting options.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
      */
     suspend fun tsMRevRange(range: Range<Long>, args: TsMRangeArgs, vararg filters: TsFilter): List<TsSeries<K>>
+
+    /**
+     * Get the names of the labels of all indexed time series. Requires Redis 8.10 or later.
+     *
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @return List<String> the label names; empty if no series matches.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    suspend fun tsQueryLabels(): List<String>
+
+    /**
+     * Get the names of the labels of the time series that match the filters. Requires Redis 8.10 or later.
+     *
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     *
+     * The server requires at least one filter that matches a value ([TsFilter.equal] or
+     * [TsFilter.in]).
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param filter the filter, must not be `null`.
+     * @return List<String> the label names; empty if no series matches.
+     * @throws IllegalArgumentException if `filter` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    suspend fun tsQueryLabels(filter: TsFilter): List<String>
+
+    /**
+     * Get the names of the labels of the time series that match the filters. Requires Redis 8.10 or later. At least one filter is required; use the overload without filters to query all series.
+     *
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     *
+     * The server requires at least one filter that matches a value ([TsFilter.equal] or
+     * [TsFilter.in]).
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
+     *        elements.
+     * @return List<String> the label names; empty if no series matches.
+     * @throws IllegalArgumentException if `filters` is `null`, empty or contains `null` elements.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    suspend fun tsQueryLabels(vararg filters: TsFilter): List<String>
+
+    /**
+     * Get the values of label `label` across all indexed time series. Requires Redis 8.10 or later.
+     *
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param label the label name, must not be `null` or empty.
+     * @return List<String> the values; empty if no series matches or no series has the label.
+     * @throws IllegalArgumentException if `label` is `null` or empty.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    suspend fun tsQueryLabelValues(label: String): List<String>
+
+    /**
+     * Get the values of label `label` of the time series that match the filters. Requires Redis 8.10 or later.
+     *
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     *
+     * The server requires at least one filter that matches a value ([TsFilter.equal] or
+     * [TsFilter.in]).
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param label the label name, must not be `null` or empty.
+     * @param filter the filter, must not be `null`.
+     * @return List<String> the values; empty if no series matches or no series has the label.
+     * @throws IllegalArgumentException if `label` is `null` or empty, or `filter` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    suspend fun tsQueryLabelValues(label: String, filter: TsFilter): List<String>
+
+    /**
+     * Get the values of label `label` of the time series that match the filters. Requires Redis 8.10 or later. At least one filter is required; use the overload without filters to query all series.
+     *
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     *
+     * The server requires at least one filter that matches a value ([TsFilter.equal] or
+     * [TsFilter.in]).
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param label the label name, must not be `null` or empty.
+     * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
+     *        elements.
+     * @return List<String> the values; empty if no series matches or no series has the label.
+     * @throws IllegalArgumentException if `label` is `null` or empty, or `filters` is `null`, empty or contains `null` elements.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    suspend fun tsQueryLabelValues(label: String, vararg filters: TsFilter): List<String>
 
 }

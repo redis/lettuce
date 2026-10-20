@@ -5195,4 +5195,34 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRevRange(range, args, filters));
     }
 
+    @Override
+    public Flux<String> tsQueryLabels() {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabels());
+    }
+
+    @Override
+    public Flux<String> tsQueryLabels(TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabels(filter));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabels(TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabels(filters));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabelValues(label));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabelValues(label, filter));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabelValues(label, filters));
+    }
+
 }

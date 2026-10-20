@@ -856,4 +856,123 @@ public interface RedisTimeSeriesReactiveCommands<K, V> {
      */
     Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters);
 
+    /**
+     * Get the names of the labels of all indexed time series. Requires Redis 8.10 or later.
+     * <p>
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @return List&lt;String&gt; the label names; empty if no series matches.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    Flux<String> tsQueryLabels();
+
+    /**
+     * Get the names of the labels of the time series that match the filters. Requires Redis 8.10 or later.
+     * <p>
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param filter the filter, must not be {@code null}.
+     * @return List&lt;String&gt; the label names; empty if no series matches.
+     * @throws IllegalArgumentException if {@code filter} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    Flux<String> tsQueryLabels(TsFilter filter);
+
+    /**
+     * Get the names of the labels of the time series that match the filters. Requires Redis 8.10 or later. At least one filter
+     * is required; use the overload without filters to query all series.
+     * <p>
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param filters the filters, combined with AND, must not be {@code null} or empty and must not contain {@code null}
+     *        elements.
+     * @return List&lt;String&gt; the label names; empty if no series matches.
+     * @throws IllegalArgumentException if {@code filters} is {@code null}, empty or contains {@code null} elements.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    Flux<String> tsQueryLabels(TsFilter... filters);
+
+    /**
+     * Get the values of label {@code label} across all indexed time series. Requires Redis 8.10 or later.
+     * <p>
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param label the label name, must not be {@code null} or empty.
+     * @return List&lt;String&gt; the values; empty if no series matches or no series has the label.
+     * @throws IllegalArgumentException if {@code label} is {@code null} or empty.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    Flux<String> tsQueryLabelValues(String label);
+
+    /**
+     * Get the values of label {@code label} of the time series that match the filters. Requires Redis 8.10 or later.
+     * <p>
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param label the label name, must not be {@code null} or empty.
+     * @param filter the filter, must not be {@code null}.
+     * @return List&lt;String&gt; the values; empty if no series matches or no series has the label.
+     * @throws IllegalArgumentException if {@code label} is {@code null} or empty, or {@code filter} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    Flux<String> tsQueryLabelValues(String label, TsFilter filter);
+
+    /**
+     * Get the values of label {@code label} of the time series that match the filters. Requires Redis 8.10 or later. At least
+     * one filter is required; use the overload without filters to query all series.
+     * <p>
+     * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
+     * <p>
+     * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
+     * {@link TsFilter#in(String, String...)}).
+     * <p>
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * {@code TIMESERIES.REFRESHCLUSTER} has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param label the label name, must not be {@code null} or empty.
+     * @param filters the filters, combined with AND, must not be {@code null} or empty and must not contain {@code null}
+     *        elements.
+     * @return List&lt;String&gt; the values; empty if no series matches or no series has the label.
+     * @throws IllegalArgumentException if {@code label} is {@code null} or empty, or {@code filters} is {@code null}, empty or
+     *         contains {@code null} elements.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
+     */
+    Flux<String> tsQueryLabelValues(String label, TsFilter... filters);
+
 }

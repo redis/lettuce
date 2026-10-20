@@ -161,4 +161,22 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
     override suspend fun tsMRevRange(range: Range<Long>, args: TsMRangeArgs, vararg filters: TsFilter): List<TsSeries<K>> =
         ops.tsMRevRange(range, args, *filters).asFlow().toList()
 
+    override suspend fun tsQueryLabels(): List<String> =
+        ops.tsQueryLabels().asFlow().toList()
+
+    override suspend fun tsQueryLabels(filter: TsFilter): List<String> =
+        ops.tsQueryLabels(filter).asFlow().toList()
+
+    override suspend fun tsQueryLabels(vararg filters: TsFilter): List<String> =
+        ops.tsQueryLabels(*filters).asFlow().toList()
+
+    override suspend fun tsQueryLabelValues(label: String): List<String> =
+        ops.tsQueryLabelValues(label).asFlow().toList()
+
+    override suspend fun tsQueryLabelValues(label: String, filter: TsFilter): List<String> =
+        ops.tsQueryLabelValues(label, filter).asFlow().toList()
+
+    override suspend fun tsQueryLabelValues(label: String, vararg filters: TsFilter): List<String> =
+        ops.tsQueryLabelValues(label, *filters).asFlow().toList()
+
 }

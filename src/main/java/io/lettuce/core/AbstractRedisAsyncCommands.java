@@ -5097,4 +5097,34 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(timeSeriesCommandBuilder.tsMRevRange(range, args, filters));
     }
 
+    @Override
+    public RedisFuture<List<String>> tsQueryLabels() {
+        return dispatch(timeSeriesCommandBuilder.tsQueryLabels());
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabels(TsFilter filter) {
+        return dispatch(timeSeriesCommandBuilder.tsQueryLabels(filter));
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabels(TsFilter... filters) {
+        return dispatch(timeSeriesCommandBuilder.tsQueryLabels(filters));
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabelValues(String label) {
+        return dispatch(timeSeriesCommandBuilder.tsQueryLabelValues(label));
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabelValues(String label, TsFilter filter) {
+        return dispatch(timeSeriesCommandBuilder.tsQueryLabelValues(label, filter));
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabelValues(String label, TsFilter... filters) {
+        return dispatch(timeSeriesCommandBuilder.tsQueryLabelValues(label, filters));
+    }
+
 }
