@@ -14,6 +14,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.Value;
 
 /**
  * @author Mark Paluch
@@ -210,8 +211,7 @@ class MultiOutputUnitTests {
         MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
         ErrorTolerantBooleanValueListOutput<String, String> errorTolerantOutput = new ErrorTolerantBooleanValueListOutput<>(
                 StringCodec.UTF8);
-        Command<String, String, List<io.lettuce.core.Value<Boolean>>> command = new Command<>(CommandType.BF_MADD,
-                errorTolerantOutput);
+        Command<String, String, List<Value<Boolean>>> command = new Command<>(CommandType.BF_MADD, errorTolerantOutput);
 
         output.add(command);
 
@@ -225,8 +225,7 @@ class MultiOutputUnitTests {
         output.complete(1);
 
         assertThat(command.getOutput().hasError()).isFalse();
-        assertThat(command.getOutput().get()).containsExactly(io.lettuce.core.Value.fromNullable(true),
-                io.lettuce.core.Value.empty());
+        assertThat(command.getOutput().get()).containsExactly(Value.fromNullable(true), Value.empty());
         assertThat(output.hasError()).isFalse();
         assertThat(output.get()).hasSize(1);
     }
