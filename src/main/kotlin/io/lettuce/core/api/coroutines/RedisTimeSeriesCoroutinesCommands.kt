@@ -12,12 +12,14 @@ import io.lettuce.core.Range
 import io.lettuce.core.timeseries.TsAggregation
 import io.lettuce.core.timeseries.TsInfoValue
 import io.lettuce.core.timeseries.TsMAddValue
+import io.lettuce.core.timeseries.TsReadOffset
 import io.lettuce.core.timeseries.TsSample
 import io.lettuce.core.timeseries.arguments.TsAddArgs
 import io.lettuce.core.timeseries.arguments.TsAlterArgs
 import io.lettuce.core.timeseries.arguments.TsCreateArgs
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs
 import io.lettuce.core.timeseries.arguments.TsRangeArgs
+import io.lettuce.core.timeseries.arguments.TsReadArgs
 
 /**
  * Coroutine executed commands for Redis TimeSeries.
@@ -335,8 +337,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * [tsGet] with `latest` set to also get the open bucket.
      *
      * @param key the key, must not be `null`.
-     * @return TsSample the latest sample, or `null` if the series has no samples. Its value may be NaN on Redis 8.6
-     *         and later.
+     * @return TsSample the latest sample, or `null` if the series has no samples. Its value may be NaN on Redis 8.6 and
+     *         later.
      * @throws IllegalArgumentException if `key` is `null`.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.get/">TS.GET</a>
@@ -344,8 +346,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
     suspend fun tsGet(key: K): TsSample?
 
     /**
-     * Get the latest sample of a time series. With `latest` set, the command sends `LATEST`: for a compaction,
-     * the latest, possibly partial, bucket is reported. The server ignores it for a series that is not a compaction.
+     * Get the latest sample of a time series. With `latest` set, the command sends `LATEST`: for a compaction, the
+     * latest, possibly partial, bucket is reported. The server ignores it for a series that is not a compaction.
      *
      * @param key the key, must not be `null`.
      * @param latest `true` to report the latest, possibly partial, bucket of a compaction.
@@ -415,8 +417,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * aggregation. With an aggregation, each sample is one bucket and has one value per aggregation, in the order of the
      * request. Several aggregations require Redis 8.8 or later.
      *
-     * The range bounds follow the same rules as in [tsRevRange]. For a compaction, the last reported bucket
-     * may include samples newer than the upper bound, because the bound limits only the bucket start.
+     * The range bounds follow the same rules as in [tsRevRange]. For a compaction, the last reported
+     * bucket may include samples newer than the upper bound, because the bound limits only the bucket start.
      *
      * @param key the key, must not be `null`.
      * @param range the range of timestamps in milliseconds, must not be `null`.
@@ -429,5 +431,52 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/commands/ts.revrange/">TS.REVRANGE</a>
      */
     suspend fun tsRevRange(key: K, range: Range<Long>, args: TsRangeArgs): List<TsSample>
+
+    /**
+     * Read the samples of a time series from `offset` on, in ascending order, without blocking. Requires Redis 8.10 or
+     * later.
+     *
+     * Use [TsReadOffset.latest] or [TsReadOffset.newSamples] only on the first call, and continue with
+     * `TsReadOffset.from(lastTimestamp + 1)`. Without `BLOCK`, [TsReadOffset.newSamples] always returns an
+     * empty list. A key that does not exist returns an empty list.
+     *
+     * @param key the key, must not be `null`.
+     * @param offset the inclusive lower bound, must not be `null`.
+     * @return List<TsSample> the samples in ascending order; empty if there are none.
+     * @throws IllegalArgumentException if `key` or `offset` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.read/">TS.READ</a>
+     */
+    suspend fun tsRead(key: K, offset: TsReadOffset): List<TsSample>
+
+    /**
+     * Read the samples of a time series from `offset` on, in ascending order, optionally waiting for new samples.
+     * Requires Redis 8.10 or later.
+     *
+     * With [TsReadArgs.block], the command waits until enough samples exist, the block time ends, or the key
+     * is removed. A timeout returns the samples found so far. Deleting or expiring the key (DEL, UNLINK, FLUSHDB, FLUSHALL,
+     * expiry, eviction) wakes every waiter with an empty list, `BLOCK 0` included, so an empty list means either a
+     * timeout or a removed key. `BLOCK 0` waits without a time limit.
+     *
+     * While it waits, the command occupies its connection and stalls every other command sent on that connection. Use a
+     * dedicated connection whose command timeout is longer than the block time; Lettuce does not extend the timeout. In Redis
+     * Cluster, a cluster connection shares one connection per node, so a blocked TS.READ stalls every command that cluster
+     * connection sends to that node; use a dedicated `StatefulRedisClusterConnection`. With `ReadFrom` set to a
+     * replica, TS.READ runs on a replica, which wakes only after the write has replicated to it; read from the primary for
+     * low-latency tailing. The server rejects `BLOCK` inside MULTI and Lua scripts.
+     *
+     * Use [TsReadOffset.latest] or [TsReadOffset.newSamples] only on the first call, and continue with
+     * `TsReadOffset.from(lastTimestamp + 1)`.
+     *
+     * @param key the key, must not be `null`.
+     * @param offset the inclusive lower bound, must not be `null`.
+     * @param args the options, must not be `null`.
+     * @return List<TsSample> the samples in ascending order; empty on a timeout without samples or when the key was
+     *         removed.
+     * @throws IllegalArgumentException if `key`, `offset` or `args` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.read/">TS.READ</a>
+     */
+    suspend fun tsRead(key: K, offset: TsReadOffset, args: TsReadArgs): List<TsSample>
 
 }

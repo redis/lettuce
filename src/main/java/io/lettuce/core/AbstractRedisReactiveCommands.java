@@ -88,12 +88,14 @@ import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsReadOffset;
 import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.vector.RawVector;
@@ -5106,6 +5108,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<TsSample> tsRevRange(K key, Range<Long> range, TsRangeArgs args) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRevRange(key, range, args));
+    }
+
+    @Override
+    public Flux<TsSample> tsRead(K key, TsReadOffset offset) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRead(key, offset));
+    }
+
+    @Override
+    public Flux<TsSample> tsRead(K key, TsReadOffset offset, TsReadArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRead(key, offset, args));
     }
 
 }

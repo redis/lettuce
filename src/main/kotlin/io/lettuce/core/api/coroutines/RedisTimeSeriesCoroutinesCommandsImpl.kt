@@ -12,12 +12,14 @@ import io.lettuce.core.api.reactive.RedisTimeSeriesReactiveCommands
 import io.lettuce.core.timeseries.TsAggregation
 import io.lettuce.core.timeseries.TsInfoValue
 import io.lettuce.core.timeseries.TsMAddValue
+import io.lettuce.core.timeseries.TsReadOffset
 import io.lettuce.core.timeseries.TsSample
 import io.lettuce.core.timeseries.arguments.TsAddArgs
 import io.lettuce.core.timeseries.arguments.TsAlterArgs
 import io.lettuce.core.timeseries.arguments.TsCreateArgs
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs
 import io.lettuce.core.timeseries.arguments.TsRangeArgs
+import io.lettuce.core.timeseries.arguments.TsReadArgs
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -105,5 +107,11 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
 
     override suspend fun tsRevRange(key: K, range: Range<Long>, args: TsRangeArgs): List<TsSample> =
         ops.tsRevRange(key, range, args).asFlow().toList()
+
+    override suspend fun tsRead(key: K, offset: TsReadOffset): List<TsSample> =
+        ops.tsRead(key, offset).asFlow().toList()
+
+    override suspend fun tsRead(key: K, offset: TsReadOffset, args: TsReadArgs): List<TsSample> =
+        ops.tsRead(key, offset, args).asFlow().toList()
 
 }

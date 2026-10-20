@@ -19,6 +19,7 @@ import static io.lettuce.core.protocol.CommandType.TS_INCRBY;
 import static io.lettuce.core.protocol.CommandType.TS_INFO;
 import static io.lettuce.core.protocol.CommandType.TS_MADD;
 import static io.lettuce.core.protocol.CommandType.TS_RANGE;
+import static io.lettuce.core.protocol.CommandType.TS_READ;
 import static io.lettuce.core.protocol.CommandType.TS_REVRANGE;
 
 import java.util.List;
@@ -41,12 +42,14 @@ import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsInfoValueParser;
 import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsReadOffset;
 import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsReadArgs;
 
 /**
  * Implementation of the {@link BaseRedisCommandBuilder} handling Redis TimeSeries commands.
@@ -263,6 +266,26 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         LettuceAssert.notNull(rangeArgs, "TsRangeArgs " + MUST_NOT_BE_NULL);
 
         return createCommand(TS_REVRANGE, new TsSampleListOutput<>(codec), rangeArgs(key, range, rangeArgs));
+    }
+
+    Command<K, V, List<TsSample>> tsRead(K key, TsReadOffset offset) {
+        notNullKey(key);
+        LettuceAssert.notNull(offset, "TsReadOffset " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(offset.toString());
+
+        return createCommand(TS_READ, new TsSampleListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<TsSample>> tsRead(K key, TsReadOffset offset, TsReadArgs readArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(offset, "TsReadOffset " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(readArgs, "TsReadArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(offset.toString());
+        readArgs.build(args);
+
+        return createCommand(TS_READ, new TsSampleListOutput<>(codec), args);
     }
 
     private CommandArgs<K, V> rangeArgs(K key, Range<Long> range, TsRangeArgs rangeArgs) {

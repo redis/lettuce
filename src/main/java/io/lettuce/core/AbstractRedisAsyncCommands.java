@@ -88,12 +88,14 @@ import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsReadOffset;
 import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VSimScoreAttribs;
 import io.lettuce.core.vector.VectorMetadata;
@@ -5008,6 +5010,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<TsSample>> tsRevRange(K key, Range<Long> range, TsRangeArgs args) {
         return dispatch(timeSeriesCommandBuilder.tsRevRange(key, range, args));
+    }
+
+    @Override
+    public RedisFuture<List<TsSample>> tsRead(K key, TsReadOffset offset) {
+        return dispatch(timeSeriesCommandBuilder.tsRead(key, offset));
+    }
+
+    @Override
+    public RedisFuture<List<TsSample>> tsRead(K key, TsReadOffset offset, TsReadArgs args) {
+        return dispatch(timeSeriesCommandBuilder.tsRead(key, offset, args));
     }
 
 }
