@@ -282,3 +282,96 @@ List<TsSample> next = commands.tsRead("events", TsReadOffset.newSamples(), TsRea
     A blocking `tsRead` occupies its connection while it waits and stalls every other command sent on that connection, as `XREAD BLOCK` does. Use a dedicated connection whose command timeout is longer than the block time; Lettuce does not extend the timeout. In Redis Cluster, a cluster connection shares one connection per node, so a blocked `tsRead` stalls every command that cluster connection sends to that node: use a dedicated `StatefulRedisClusterConnection`.
 
 With `ReadFrom` set to a replica, `tsRead` (including `BLOCK`) runs on a replica. A replica wakes only after the write has replicated to it, so read from the primary for low-latency tailing.
+
+## Label-index reads
+
+`tsMGet`, `tsMRange`, `tsMRevRange`, `tsQueryIndex` and `tsQueryLabels`/`tsQueryLabelValues` find series by their labels instead of by key.
+
+### Filters
+
+A `TsFilter` is one filter expression. Several filters in one call are combined with AND:
+
+| Factory | Expression | Matches series that… |
+|---------|------------|----------------------|
+| `TsFilter.equal("area", "north")` | `area=north` | have `area` equal to `north` |
+| `TsFilter.notEqual("area", "north")` | `area!=north` | do not have `area` equal to `north` |
+| `TsFilter.exists("area")` | `area!=` | have the label `area` |
+| `TsFilter.notExists("area")` | `area=` | do not have the label `area` |
+| `TsFilter.in("area", "north", "south")` | `area=(north,south)` | have `area` equal to one of the values |
+| `TsFilter.notIn("area", "north", "south")` | `area!=(north,south)` | have `area` equal to none of the values |
+| `TsFilter.raw("room=\"living room\"")` | as given | for syntax the factories do not cover, such as quoted values |
+
+The server requires at least one filter that matches a value (`equal` or `in`); Lettuce does not check this. Lettuce does not quote or escape names and values.
+
+### Latest samples and keys
+
+```java
+List<TsMGetValue<String>> latest = commands.tsMGet(TsMGetArgs.Builder.withLabels(), TsFilter.equal("sensor", "temperature"));
+for (TsMGetValue<String> value : latest) {
+    TsSample sample = value.getSample();       // null if the series has no samples
+}
+
+List<String> keys = commands.tsQueryIndex(TsFilter.equal("sensor", "temperature"), TsFilter.notEqual("room", "2"));
+```
+
+`TsMGetArgs.selectedLabels(...)` returns only the given labels; a selected label that a series does not have has a `null` value. `withLabels()` and `selectedLabels(...)` cannot be combined.
+
+### Ranges across series
+
+`tsMRange` and `tsMRevRange` take a `Range<Long>` with the same bound rules as `tsRange`, filters, and optional `TsMRangeArgs`. `TsMRangeArgs` has the `TsRangeArgs` options plus labels, `GROUPBY` and `EXCLUDEEMPTY`:
+
+```java
+List<TsSeries<String>> series = commands.tsMRange(Range.unbounded(),
+        TsMRangeArgs.Builder.aggregation(Duration.ofMinutes(5), TsAggregationType.AVG).withLabels(),
+        TsFilter.equal("sensor", "temperature"));
+
+for (TsSeries<String> s : series) {
+    String key = s.getKey();
+    List<TsSample> buckets = s.getSamples();
+}
+```
+
+With `groupBy(label, reducer)`, each entry is one group of series combined by the reducer, named `label=value`:
+
+```java
+List<TsSeries<String>> perRoom = commands.tsMRange(Range.unbounded(),
+        TsMRangeArgs.Builder.groupBy("room", TsReducerType.MAX).withLabels(), TsFilter.equal("sensor", "temperature"));
+
+for (TsSeries<String> group : perRoom) {
+    String name = group.getGroup();               // for example "room=2"
+    List<String> sources = group.getSources();    // keys of the grouped series
+}
+```
+
+- `getAggregations()` and `getReducer()` come from the request, so they are the same on RESP2 and RESP3.
+- `getSources()` is always available on RESP3. On RESP2 it is available only with `withLabels()`, because the server reports the sources only as a `__source__` label; a key that contains a comma is split wrongly. The synthetic labels `__reducer__` and `__source__` are removed from `getLabels()`.
+- `GROUPBY` cannot be combined with several aggregations or with `excludeEmpty()`, and `withLabels()` cannot be combined with `selectedLabels(...)`. These combinations throw `IllegalArgumentException`.
+- By default every matching series is reported, also when it has no samples in the range. `excludeEmpty()` (Redis 8.10 and later) omits those series, even when aggregation `EMPTY` is set.
+
+!!! INFO
+    The whole `TS.MRANGE`/`TS.MREVRANGE` reply is held in memory before it is returned. For many series or long ranges, narrow the filters or the range, use `COUNT`, or aggregate.
+
+### Label names and values
+
+`tsQueryLabels` and `tsQueryLabelValues` (Redis 8.10 and later) list label names or the values of one label:
+
+```java
+List<String> names = commands.tsQueryLabels();                                  // all indexed series
+List<String> rooms = commands.tsQueryLabelValues("room", TsFilter.equal("sensor", "temperature"));
+```
+
+The overloads without a filter query all indexed series. The filter overloads require at least one filter, so an empty array throws `IllegalArgumentException` instead of querying all series. Results are unordered and contain no duplicates, on both RESP2 and RESP3, and are decoded as UTF-8 whatever codec the connection uses.
+
+### Redis Cluster
+
+In Redis Cluster, each label-index command runs on **one node**, chosen as for the Redis Query Engine (`FT.*`) commands. The commands are read-only, so the node follows `ReadFrom`. Lettuce does not send the command to every node, because the server gathers the results across shards itself.
+
+| Server | Behavior |
+|--------|----------|
+| Redis 8.10 and later | Any node, primary or replica, returns the series of every shard once. The order depends on the node. |
+| Redis 8.0 – 8.8 | A node returns only its own shard's series until the undocumented command `TIMESERIES.REFRESHCLUSTER` has run on it. Run it on every primary after the cluster is formed and after every reshard, for example with `dispatch`. |
+
+- Result order is not guaranteed; compare results without relying on order.
+- The server rejects these commands inside MULTI on a node in multi-shard mode.
+- If running the command on the chosen node fails for any reason, including a server error such as a malformed filter, Lettuce logs an ERROR ("Cluster routing failed for … - falling back to superCall") and runs the command again on the default connection. The second error is the one reported. The commands are read-only, so running them twice is safe, but expect the duplicate execution and the log entry.
+- The node-selection API (`connection.sync().nodes(...)`) runs the command on every selected node. On Redis 8.10 and later, each node returns every shard's series, so the combined results contain duplicates.
