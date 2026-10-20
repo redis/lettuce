@@ -674,7 +674,8 @@ public interface NodeSelectionTimeSeriesCommands<K, V> {
      * <p>
      * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
      * later and cannot be combined with {@code GROUPBY}. With {@code GROUPBY}, each entry is one group of series combined by
-     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later.
+     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later; earlier servers accept it and ignore it without an error,
+     * so series without samples in the range are still returned.
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
@@ -708,7 +709,8 @@ public interface NodeSelectionTimeSeriesCommands<K, V> {
      * <p>
      * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
      * later and cannot be combined with {@code GROUPBY}. With {@code GROUPBY}, each entry is one group of series combined by
-     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later.
+     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later; earlier servers accept it and ignore it without an error,
+     * so series without samples in the range are still returned.
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
@@ -801,7 +803,8 @@ public interface NodeSelectionTimeSeriesCommands<K, V> {
      * <p>
      * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
      * later and cannot be combined with {@code GROUPBY}. With {@code GROUPBY}, each entry is one group of series combined by
-     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later.
+     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later; earlier servers accept it and ignore it without an error,
+     * so series without samples in the range are still returned.
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
@@ -835,7 +838,8 @@ public interface NodeSelectionTimeSeriesCommands<K, V> {
      * <p>
      * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
      * later and cannot be combined with {@code GROUPBY}. With {@code GROUPBY}, each entry is one group of series combined by
-     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later.
+     * the reducer. {@code EXCLUDEEMPTY} requires Redis 8.10 or later; earlier servers accept it and ignore it without an error,
+     * so series without samples in the range are still returned.
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).

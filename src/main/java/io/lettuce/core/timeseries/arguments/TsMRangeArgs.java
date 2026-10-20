@@ -342,7 +342,8 @@ public class TsMRangeArgs extends BaseTsRangeArgs<TsMRangeArgs> {
 
     /**
      * Omit series that have no samples in the range ({@code EXCLUDEEMPTY}), even when aggregation {@code EMPTY} is set. A
-     * series whose only samples in the range are NaN is still reported. Requires Redis 8.10 or later.
+     * series whose only samples in the range are NaN is still reported. Requires Redis 8.10 or later; earlier servers accept it
+     * and ignore it without an error, so series without samples in the range are still returned.
      *
      * @return {@code this}.
      * @throws IllegalArgumentException if {@link #groupBy(String, TsReducer)} was set.

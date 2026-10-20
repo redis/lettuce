@@ -346,7 +346,7 @@ for (TsSeries<String> group : perRoom) {
 - `getAggregations()` and `getReducer()` come from the request, so they are the same on RESP2 and RESP3.
 - `getSources()` is always available on RESP3. On RESP2 it is available only with `withLabels()`, because the server reports the sources only as a `__source__` label; a key that contains a comma is split wrongly. The synthetic labels `__reducer__` and `__source__` are removed from `getLabels()`.
 - `GROUPBY` cannot be combined with several aggregations or with `excludeEmpty()`, and `withLabels()` cannot be combined with `selectedLabels(...)`. These combinations throw `IllegalArgumentException`.
-- By default every matching series is reported, also when it has no samples in the range. `excludeEmpty()` (Redis 8.10 and later) omits those series, even when aggregation `EMPTY` is set.
+- By default every matching series is reported, also when it has no samples in the range. `excludeEmpty()` (Redis 8.10 and later) omits those series, even when aggregation `EMPTY` is set. Servers before 8.10 accept the option and ignore it without an error, so the series without samples are still returned.
 
 !!! INFO
     The whole `TS.MRANGE`/`TS.MREVRANGE` reply is held in memory before it is returned. For many series or long ranges, narrow the filters or the range, use `COUNT`, or aggregate.
