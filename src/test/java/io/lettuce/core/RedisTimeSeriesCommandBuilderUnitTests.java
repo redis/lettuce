@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.RedisStateMachine;
 import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsAggregationType;
 import io.lettuce.core.timeseries.TsBucketTimestamp;
@@ -31,20 +32,27 @@ import io.lettuce.core.timeseries.TsDuplicatePolicy;
 import io.lettuce.core.timeseries.TsDuplicatePolicyType;
 import io.lettuce.core.timeseries.TsEncoding;
 import io.lettuce.core.timeseries.TsEncodingType;
+import io.lettuce.core.timeseries.TsFilter;
 import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsReadOffset;
+import io.lettuce.core.timeseries.TsReducerType;
+import io.lettuce.core.timeseries.TsSeries;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 
 /**
  * Unit tests for {@link RedisTimeSeriesCommandBuilder}: the exact RESP encoding of the series lifecycle, write and compaction
- * rule commands, and the single-key reads (TS.GET, TS.RANGE, TS.REVRANGE, TS.READ).
+ * rule commands, the single-key reads (TS.GET, TS.RANGE, TS.REVRANGE, TS.READ) and the label-index reads (TS.MGET, TS.MRANGE,
+ * TS.MREVRANGE, TS.QUERYINDEX, TS.QUERYLABELS).
  */
 @Tag(UNIT_TEST)
 class RedisTimeSeriesCommandBuilderUnitTests {
@@ -861,6 +869,264 @@ class RedisTimeSeriesCommandBuilderUnitTests {
         assertThatThrownBy(() -> builder.tsRead(KEY, null, new TsReadArgs())).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsRead(KEY, TsReadOffset.earliest(), null))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.MGET -----------------------------------------------------------------------------------------------------
+
+    private static final TsFilter T_X = TsFilter.equal("t", "x");
+
+    private static final TsFilter HAS_AREA = TsFilter.exists("area");
+
+    /**
+     * Scenario A09 (MGET): {@code FILTER} and the filters, in order, after the options; LATEST before the label mode.
+     */
+    @Test
+    void mgetEncoding() {
+
+        assertThat(encode(builder.tsMGet(T_X))).isEqualTo("*3\r\n$7\r\nTS.MGET\r\n$6\r\nFILTER\r\n$3\r\nt=x\r\n");
+        assertThat(tokens(builder.tsMGet(T_X, HAS_AREA))).containsExactly("TS.MGET", "FILTER", "t=x", "area!=");
+        assertThat(tokens(builder.tsMGet(new TsMGetArgs().withLabels().latest(), T_X))).containsExactly("TS.MGET", "LATEST",
+                "WITHLABELS", "FILTER", "t=x");
+        assertThat(tokens(builder.tsMGet(new TsMGetArgs().selectedLabels("area", "missing"), T_X, HAS_AREA)))
+                .containsExactly("TS.MGET", "SELECTED_LABELS", "area", "missing", "FILTER", "t=x", "area!=");
+        assertThat(tokens(builder.tsMGet(new TsMGetArgs(), T_X))).containsExactly("TS.MGET", "FILTER", "t=x");
+    }
+
+    /**
+     * Scenario A13 (MGET): no filters, a {@code null} filter, a {@code null} filter array or element, or {@code null} arguments
+     * throw {@link IllegalArgumentException}.
+     */
+    @Test
+    void mgetRejectsInvalidArguments() {
+
+        assertThatThrownBy(() -> builder.tsMGet()).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMGet((TsFilter) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMGet((TsFilter[]) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMGet(T_X, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMGet(new TsMGetArgs())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMGet(new TsMGetArgs(), (TsFilter) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMGet(null, T_X)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMGet((TsMGetArgs) null, T_X, HAS_AREA)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.QUERYINDEX -----------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario A13 / D11: QUERYINDEX sends the filters directly after the command name, without {@code FILTER}.
+     */
+    @Test
+    void queryIndexEncoding() {
+
+        assertThat(encode(builder.tsQueryIndex(T_X))).isEqualTo("*2\r\n$13\r\nTS.QUERYINDEX\r\n$3\r\nt=x\r\n");
+        assertThat(tokens(builder.tsQueryIndex(T_X, HAS_AREA, TsFilter.in("s", "a", "b")))).containsExactly("TS.QUERYINDEX",
+                "t=x", "area!=", "s=(a,b)");
+    }
+
+    /**
+     * Scenario A13 (QUERYINDEX): no filters or {@code null} filters throw {@link IllegalArgumentException}.
+     */
+    @Test
+    void queryIndexRejectsInvalidArguments() {
+
+        assertThatThrownBy(() -> builder.tsQueryIndex()).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryIndex((TsFilter) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryIndex((TsFilter[]) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryIndex(T_X, null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.MRANGE / TS.MREVRANGE ------------------------------------------------------------------------------------
+
+    /**
+     * Scenario A09: MRANGE and MREVRANGE without options send the range, {@code FILTER} and the filters; exclusive bounds as
+     * the inclusive neighbor, unbounded sides as {@code -} / {@code +}.
+     */
+    @Test
+    void mrangeWithoutOptions() {
+
+        assertThat(encode(builder.tsMRange(Range.create(1000L, 2000L), T_X)))
+                .isEqualTo("*5\r\n$9\r\nTS.MRANGE\r\n$4\r\n1000\r\n$4\r\n2000\r\n$6\r\nFILTER\r\n$3\r\nt=x\r\n");
+        assertThat(tokens(builder.tsMRevRange(Range.unbounded(), T_X, HAS_AREA))).containsExactly("TS.MREVRANGE", "-", "+",
+                "FILTER", "t=x", "area!=");
+        assertThat(tokens(builder.tsMRange(Range.from(Boundary.excluding(1000L), Boundary.excluding(3000L)), T_X)))
+                .containsExactly("TS.MRANGE", "1001", "2999", "FILTER", "t=x");
+        assertThat(tokens(builder.tsMRevRange(Range.from(Boundary.including(5L), Boundary.unbounded()), T_X)))
+                .containsExactly("TS.MREVRANGE", "5", "+", "FILTER", "t=x");
+    }
+
+    /**
+     * Scenario A09: every option except GROUPBY, for MRANGE and MREVRANGE: LATEST, FILTER_BY_TS, FILTER_BY_VALUE, WITHLABELS,
+     * COUNT, ALIGN, AGGREGATION, BUCKETTIMESTAMP, EMPTY, EXCLUDEEMPTY, FILTER f… (EXCLUDEEMPTY before FILTER, design §3.3);
+     * EXCLUDEEMPTY once.
+     */
+    @Test
+    void mrangeWithEveryOptionAndExcludeEmpty() {
+
+        TsMRangeArgs args = new TsMRangeArgs().excludeEmpty().excludeEmpty().empty().bucketTimestamp(TsBucketTimestamp.MID)
+                .aggregation(3000, TsAggregationType.AVG).alignStart().count(3).withLabels().filterByValue(4.5, 5.5)
+                .filterByTimestamps(1000, 3000).latest();
+
+        List<String> expectedOptions = Arrays.asList("1000", "8000", "LATEST", "FILTER_BY_TS", "1000", "3000",
+                "FILTER_BY_VALUE", "4.5", "5.5", "WITHLABELS", "COUNT", "3", "ALIGN", "start", "AGGREGATION", "AVG", "3000",
+                "BUCKETTIMESTAMP", "~", "EMPTY", "EXCLUDEEMPTY", "FILTER", "t=x", "area!=");
+
+        List<String> mrange = new ArrayList<>(Collections.singletonList("TS.MRANGE"));
+        mrange.addAll(expectedOptions);
+        List<String> mrevrange = new ArrayList<>(Collections.singletonList("TS.MREVRANGE"));
+        mrevrange.addAll(expectedOptions);
+
+        assertThat(tokens(builder.tsMRange(Range.create(1000L, 8000L), args, T_X, HAS_AREA))).isEqualTo(mrange);
+        assertThat(tokens(builder.tsMRevRange(Range.create(1000L, 8000L), args, T_X, HAS_AREA))).isEqualTo(mrevrange);
+    }
+
+    /**
+     * Scenario A09: SELECTED_LABELS, one aggregation and GROUPBY: GROUPBY l REDUCE r is last, after the filters, for MRANGE and
+     * MREVRANGE (single-filter overloads).
+     */
+    @Test
+    void mrangeWithGroupByLast() {
+
+        TsMRangeArgs args = new TsMRangeArgs().groupBy("grp", TsReducerType.STD_S).aggregation(1000, TsAggregationType.SUM)
+                .selectedLabels("area");
+
+        assertThat(tokens(builder.tsMRange(Range.unbounded(), args, T_X))).containsExactly("TS.MRANGE", "-", "+",
+                "SELECTED_LABELS", "area", "AGGREGATION", "SUM", "1000", "FILTER", "t=x", "GROUPBY", "grp", "REDUCE", "STD.S");
+        assertThat(tokens(builder.tsMRevRange(Range.unbounded(), args, T_X))).containsExactly("TS.MREVRANGE", "-", "+",
+                "SELECTED_LABELS", "area", "AGGREGATION", "SUM", "1000", "FILTER", "t=x", "GROUPBY", "grp", "REDUCE", "STD.S");
+        assertThat(tokens(builder.tsMRange(Range.unbounded(),
+                new TsMRangeArgs().aggregation(1000, TsAggregationType.MIN, TsAggregationType.MAX), T_X)))
+                        .containsExactly("TS.MRANGE", "-", "+", "AGGREGATION", "MIN,MAX", "1000", "FILTER", "t=x");
+    }
+
+    /**
+     * Scenario A13 / A14 (MRANGE, MREVRANGE): no filters, {@code null} filters, range or arguments, an exclusive bound at the
+     * {@code Long} edge, and ALIGN without AGGREGATION throw {@link IllegalArgumentException}.
+     */
+    @Test
+    void mrangeRejectsInvalidArguments() {
+
+        assertThatThrownBy(() -> builder.tsMRange(Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRevRange(Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRange(Range.unbounded(), new TsMRangeArgs()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRevRange(Range.unbounded(), new TsMRangeArgs()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRange(Range.unbounded(), (TsFilter) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRange(Range.unbounded(), (TsFilter[]) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRange(Range.unbounded(), T_X, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRevRange(Range.unbounded(), new TsMRangeArgs(), (TsFilter) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRange(null, T_X)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRevRange(null, T_X, HAS_AREA)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRange(Range.unbounded(), null, T_X)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRevRange(Range.unbounded(), (TsMRangeArgs) null, T_X, HAS_AREA))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRange(Range.from(Boundary.excluding(Long.MAX_VALUE), Boundary.unbounded()), T_X))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRevRange(Range.from(Boundary.unbounded(), Boundary.excluding(Long.MIN_VALUE)), T_X))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMRange(Range.unbounded(), new TsMRangeArgs().empty(), T_X))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario U10 (request context): the output of an MRANGE command parses with the request's aggregations and reducer. The
+     * reply is {@code TS.MRANGE - + FILTER t=x GROUPBY t REDUCE sum} on RESP3, captured from 8.10.0.
+     */
+    @Test
+    void mrangeOutputUsesTheRequest() {
+
+        String grouped = "%1\r\n$3\r\nt=x\r\n*4\r\n%0\r\n%1\r\n$8\r\nreducers\r\n*1\r\n$3\r\nsum\r\n"
+                + "%1\r\n$7\r\nsources\r\n*2\r\n$6\r\n{ts}:a\r\n$6\r\n{ts}:b\r\n*1\r\n*2\r\n:1000\r\n,4\r\n";
+
+        Command<String, String, List<TsSeries<String>>> command = builder.tsMRange(Range.unbounded(),
+                new TsMRangeArgs().groupBy("t", TsReducerType.SUM), T_X);
+        List<TsSeries<String>> series = decodeReply(command, grouped);
+
+        assertThat(series).hasSize(1);
+        assertThat(series.get(0).isGrouped()).isTrue();
+        assertThat(series.get(0).getGroup()).isEqualTo("t=x");
+        assertThat(series.get(0).getReducer()).isSameAs(TsReducerType.SUM);
+        assertThat(series.get(0).getSources()).containsExactly("{ts}:a", "{ts}:b");
+
+        String aggregated = "*1\r\n*3\r\n$6\r\n{ts}:a\r\n*0\r\n*1\r\n*3\r\n:0\r\n+1\r\n+2.5\r\n";
+        Command<String, String, List<TsSeries<String>>> revCommand = builder.tsMRevRange(Range.unbounded(),
+                new TsMRangeArgs().aggregation(10000, TsAggregationType.MIN, TsAggregationType.MAX), T_X);
+        List<TsSeries<String>> revSeries = decodeReply(revCommand, aggregated);
+
+        assertThat(revSeries.get(0).isGrouped()).isFalse();
+        assertThat(revSeries.get(0).getKey()).isEqualTo("{ts}:a");
+        assertThat(revSeries.get(0).getAggregations()).containsExactly(TsAggregationType.MIN, TsAggregationType.MAX);
+        assertThat(revSeries.get(0).getReducer()).isNull();
+        assertThat(revSeries.get(0).getSamples().get(0).getValues()).containsExactly(1.0, 2.5);
+    }
+
+    private static <T> T decodeReply(Command<String, String, T> command, String reply) {
+
+        RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
+        ByteBuf buffer = Unpooled.copiedBuffer(reply, StandardCharsets.UTF_8);
+        try {
+            assertThat(rsm.decode(buffer, command.getOutput())).isTrue();
+            assertThat(command.getOutput().getError()).isNull();
+            return command.getOutput().get();
+        } finally {
+            buffer.release();
+            rsm.close();
+        }
+    }
+
+    // --- TS.QUERYLABELS ----------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario A12: LABELS without filters sends no {@code FILTER}; with filters, {@code FILTER} and the filters in order.
+     */
+    @Test
+    void queryLabelsEncoding() {
+
+        assertThat(encode(builder.tsQueryLabels())).isEqualTo("*2\r\n$14\r\nTS.QUERYLABELS\r\n$6\r\nLABELS\r\n");
+        assertThat(tokens(builder.tsQueryLabels(T_X))).containsExactly("TS.QUERYLABELS", "LABELS", "FILTER", "t=x");
+        assertThat(tokens(builder.tsQueryLabels(T_X, HAS_AREA))).containsExactly("TS.QUERYLABELS", "LABELS", "FILTER", "t=x",
+                "area!=");
+    }
+
+    /**
+     * Scenario A12: VALUES sends the label as given (case kept), then optionally {@code FILTER} and the filters.
+     */
+    @Test
+    void queryLabelValuesEncoding() {
+
+        assertThat(encode(builder.tsQueryLabelValues("Sensor")))
+                .isEqualTo("*3\r\n$14\r\nTS.QUERYLABELS\r\n$6\r\nVALUES\r\n$6\r\nSensor\r\n");
+        assertThat(tokens(builder.tsQueryLabelValues("sensor", T_X))).containsExactly("TS.QUERYLABELS", "VALUES", "sensor",
+                "FILTER", "t=x");
+        assertThat(tokens(builder.tsQueryLabelValues("sensor", T_X, HAS_AREA))).containsExactly("TS.QUERYLABELS", "VALUES",
+                "sensor", "FILTER", "t=x", "area!=");
+    }
+
+    /**
+     * Scenario A13 (QUERYLABELS): an empty filter array (design §2.2: not a silent all-series query), {@code null} filters, and
+     * a {@code null} or empty label throw {@link IllegalArgumentException}.
+     */
+    @Test
+    void queryLabelsRejectsInvalidArguments() {
+
+        assertThatThrownBy(() -> builder.tsQueryLabels(new TsFilter[0])).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryLabels((TsFilter) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryLabels((TsFilter[]) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryLabels(T_X, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryLabelValues("sensor", new TsFilter[0]))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryLabelValues("sensor", (TsFilter) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryLabelValues("sensor", (TsFilter[]) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryLabelValues("sensor", T_X, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryLabelValues(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryLabelValues("")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryLabelValues(null, T_X)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsQueryLabelValues("", T_X, HAS_AREA)).isInstanceOf(IllegalArgumentException.class);
     }
 
 }

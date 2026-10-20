@@ -82,4 +82,31 @@ class TsReadOnlyCommandsUnitTests {
         assertThat(CommandType.TS_READ.toString()).isEqualTo("TS.READ");
     }
 
+    /**
+     * Scenario K10 (MGET, MRANGE, MREVRANGE, QUERYINDEX, QUERYLABELS): the label-index reads are read-only, so they follow
+     * {@code ReadFrom} in Redis Cluster (design §5.1, §5.4).
+     */
+    @Test
+    void labelIndexReadsAreReadOnly() {
+
+        for (CommandType type : new CommandType[] { CommandType.TS_MGET, CommandType.TS_MRANGE, CommandType.TS_MREVRANGE,
+                CommandType.TS_QUERYINDEX, CommandType.TS_QUERYLABELS }) {
+            assertThat(ReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+            assertThat(ClusterReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+        }
+    }
+
+    /**
+     * Scenario K10: the wire names of the label-index reads.
+     */
+    @Test
+    void labelIndexReadCommandNames() {
+
+        assertThat(CommandType.TS_MGET.toString()).isEqualTo("TS.MGET");
+        assertThat(CommandType.TS_MRANGE.toString()).isEqualTo("TS.MRANGE");
+        assertThat(CommandType.TS_MREVRANGE.toString()).isEqualTo("TS.MREVRANGE");
+        assertThat(CommandType.TS_QUERYINDEX.toString()).isEqualTo("TS.QUERYINDEX");
+        assertThat(CommandType.TS_QUERYLABELS.toString()).isEqualTo("TS.QUERYLABELS");
+    }
+
 }
