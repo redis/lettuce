@@ -12,6 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,13 +28,16 @@ import io.lettuce.core.timeseries.TsDuplicatePolicy;
 import io.lettuce.core.timeseries.TsDuplicatePolicyType;
 import io.lettuce.core.timeseries.TsEncoding;
 import io.lettuce.core.timeseries.TsEncodingType;
+import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
- * Unit tests for {@link RedisTimeSeriesCommandBuilder}: the exact RESP encoding of the series lifecycle commands.
+ * Unit tests for {@link RedisTimeSeriesCommandBuilder}: the exact RESP encoding of the series lifecycle and write commands.
  */
 @Tag(UNIT_TEST)
 class RedisTimeSeriesCommandBuilderUnitTests {
@@ -348,6 +352,188 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
         assertThatThrownBy(() -> builder.tsInfo(null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsInfo(null, true)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.ADD ------------------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario A05: {@code tsAdd(k, v)} sends {@code TS.ADD k * v}.
+     */
+    @Test
+    void addWithoutTimestampSendsStar() {
+
+        assertThat(encode(builder.tsAdd(KEY, 2.5))).isEqualTo("*4\r\n$6\r\nTS.ADD\r\n$6\r\n{ts}:k\r\n$1\r\n*\r\n$3\r\n2.5\r\n");
+        assertThat(tokens(builder.tsAdd(KEY, 2.5, new TsAddArgs().retention(10)))).containsExactly("TS.ADD", KEY, "*", "2.5",
+                "RETENTION", "10");
+    }
+
+    /**
+     * Scenario A05: {@code tsAdd(k, ts, v)} sends the timestamp; a {@code long} value is not confused with the timestamp.
+     */
+    @Test
+    void addWithTimestamp() {
+
+        assertThat(encode(builder.tsAdd(KEY, 1000L, 2.5)))
+                .isEqualTo("*4\r\n$6\r\nTS.ADD\r\n$6\r\n{ts}:k\r\n$4\r\n1000\r\n$3\r\n2.5\r\n");
+        assertThat(tokens(builder.tsAdd(KEY, 0L, 2.5))).containsExactly("TS.ADD", KEY, "0", "2.5");
+    }
+
+    /**
+     * Scenario A02b: ADD with every option emits RETENTION, ENCODING, CHUNK_SIZE, DUPLICATE_POLICY, ON_DUPLICATE, IGNORE,
+     * LABELS after the value, regardless of the setter order.
+     */
+    @Test
+    void addWithEveryOptionEmitsFixedOrderLabelsLast() {
+
+        TsAddArgs args = new TsAddArgs().labels(labels("sensor", "temp", "area", "north")).ignore(10, 0.5)
+                .onDuplicate(TsDuplicatePolicyType.MIN).duplicatePolicy(TsDuplicatePolicyType.LAST).chunkSize(128)
+                .encoding(TsEncodingType.UNCOMPRESSED).retention(5000);
+
+        assertThat(tokens(builder.tsAdd(KEY, 1000L, 2.5, args))).containsExactly("TS.ADD", KEY, "1000", "2.5", "RETENTION",
+                "5000", "ENCODING", "UNCOMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "ON_DUPLICATE", "MIN",
+                "IGNORE", "10", "0.5", "LABELS", "sensor", "temp", "area", "north");
+        assertThat(tokens(builder.tsAdd(KEY, 2.5, args))).containsExactly("TS.ADD", KEY, "*", "2.5", "RETENTION", "5000",
+                "ENCODING", "UNCOMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "ON_DUPLICATE", "MIN", "IGNORE",
+                "10", "0.5", "LABELS", "sensor", "temp", "area", "north");
+    }
+
+    /**
+     * Scenario A02b: an unknown duplicate policy is sent as given in ON_DUPLICATE; an empty label map sends a bare LABELS.
+     */
+    @Test
+    void addWithRawOnDuplicateAndBareLabels() {
+
+        assertThat(tokens(builder.tsAdd(KEY, 1L, 2.5,
+                new TsAddArgs().onDuplicate(TsDuplicatePolicy.of("keep")).labels(Collections.emptyMap()))))
+                        .containsExactly("TS.ADD", KEY, "1", "2.5", "ON_DUPLICATE", "keep", "LABELS");
+    }
+
+    /**
+     * Scenario A02b: NaN and negative values are sent as numbers the server parses.
+     */
+    @Test
+    void addSpecialValues() {
+
+        List<String> nan = tokens(builder.tsAdd(KEY, 1000L, Double.NaN));
+        assertThat(nan.subList(0, 3)).containsExactly("TS.ADD", KEY, "1000");
+        assertThat(nan.get(3)).isEqualToIgnoringCase("nan");
+
+        List<String> negative = tokens(builder.tsAdd(KEY, 1000L, -1.7e308));
+        assertThat(Double.parseDouble(negative.get(3))).isEqualTo(-1.7e308);
+    }
+
+    /**
+     * Scenario A13: any {@code null} argument of TS.ADD throws {@link IllegalArgumentException}.
+     */
+    @Test
+    void addRejectsNullArguments() {
+
+        assertThatThrownBy(() -> builder.tsAdd(null, 1.0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsAdd(null, 1.0, new TsAddArgs())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsAdd(KEY, 1.0, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsAdd(null, 1L, 1.0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsAdd(null, 1L, 1.0, new TsAddArgs())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsAdd(KEY, 1L, 1.0, null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.MADD -----------------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario A05: {@code TsMAddValue.of(k, v)} is sent as {@code k * v}; samples keep the list order, including a repeated
+     * key.
+     */
+    @Test
+    void maddSendsTriplesInOrder() {
+
+        List<TsMAddValue<String>> samples = Arrays.asList(TsMAddValue.of("{ts}:a", 1000L, 1.5), TsMAddValue.of("{ts}:b", 2.5),
+                TsMAddValue.of("{ts}:a", 2000L, 3.5));
+
+        assertThat(tokens(builder.tsMAdd(samples))).containsExactly("TS.MADD", "{ts}:a", "1000", "1.5", "{ts}:b", "*", "2.5",
+                "{ts}:a", "2000", "3.5");
+        assertThat(tokens(builder.tsMAddValues(samples))).containsExactly("TS.MADD", "{ts}:a", "1000", "1.5", "{ts}:b", "*",
+                "2.5", "{ts}:a", "2000", "3.5");
+    }
+
+    /**
+     * Scenario A05: the exact wire bytes of a one-sample TS.MADD with {@code *}.
+     */
+    @Test
+    void maddWireBytes() {
+
+        assertThat(encode(builder.tsMAdd(Collections.singletonList(TsMAddValue.of(KEY, 2.5)))))
+                .isEqualTo("*4\r\n$7\r\nTS.MADD\r\n$6\r\n{ts}:k\r\n$1\r\n*\r\n$3\r\n2.5\r\n");
+    }
+
+    /**
+     * Scenario A13 (MADD): a {@code null} or empty list, or a {@code null} element, throws {@link IllegalArgumentException}.
+     */
+    @Test
+    void maddRejectsNullAndEmpty() {
+
+        assertThatThrownBy(() -> builder.tsMAdd(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMAdd(Collections.emptyList())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMAdd(Arrays.asList(TsMAddValue.of(KEY, 1.0), null)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMAddValues(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMAddValues(Collections.emptyList())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsMAddValues(Collections.singletonList(null)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.INCRBY / TS.DECRBY ---------------------------------------------------------------------------------------
+
+    /**
+     * Scenario A02b: INCRBY and DECRBY without options send the key and the operand only (server clock).
+     */
+    @Test
+    void incrByDecrByWithoutOptions() {
+
+        assertThat(encode(builder.tsIncrBy(KEY, 2.5))).isEqualTo("*3\r\n$9\r\nTS.INCRBY\r\n$6\r\n{ts}:k\r\n$3\r\n2.5\r\n");
+        assertThat(encode(builder.tsDecrBy(KEY, 2.5))).isEqualTo("*3\r\n$9\r\nTS.DECRBY\r\n$6\r\n{ts}:k\r\n$3\r\n2.5\r\n");
+        assertThat(tokens(builder.tsIncrBy(KEY, 2.5, new TsIncrByArgs()))).containsExactly("TS.INCRBY", KEY, "2.5");
+    }
+
+    /**
+     * Scenario A02b: INCRBY and DECRBY with every option emit TIMESTAMP first and LABELS last, regardless of the setter order.
+     */
+    @Test
+    void incrByDecrByWithEveryOptionTimestampFirstLabelsLast() {
+
+        TsIncrByArgs args = new TsIncrByArgs().label("sensor", "temp").ignore(10, 0.5)
+                .duplicatePolicy(TsDuplicatePolicyType.LAST).chunkSize(128).encoding(TsEncodingType.COMPRESSED).retention(5000)
+                .timestamp(1000);
+
+        assertThat(tokens(builder.tsIncrBy(KEY, 2.5, args))).containsExactly("TS.INCRBY", KEY, "2.5", "TIMESTAMP", "1000",
+                "RETENTION", "5000", "ENCODING", "COMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "IGNORE", "10",
+                "0.5", "LABELS", "sensor", "temp");
+        assertThat(tokens(builder.tsDecrBy(KEY, 2.5, args))).containsExactly("TS.DECRBY", KEY, "2.5", "TIMESTAMP", "1000",
+                "RETENTION", "5000", "ENCODING", "COMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "IGNORE", "10",
+                "0.5", "LABELS", "sensor", "temp");
+    }
+
+    /**
+     * Scenario A02b: a negative operand is sent as given.
+     */
+    @Test
+    void incrByNegativeOperand() {
+
+        assertThat(tokens(builder.tsIncrBy(KEY, -2.5))).containsExactly("TS.INCRBY", KEY, "-2.5");
+        assertThat(tokens(builder.tsDecrBy(KEY, -2.5, TsIncrByArgs.Builder.timestamp(7)))).containsExactly("TS.DECRBY", KEY,
+                "-2.5", "TIMESTAMP", "7");
+    }
+
+    /**
+     * Scenario A13: any {@code null} argument of TS.INCRBY / TS.DECRBY throws {@link IllegalArgumentException}.
+     */
+    @Test
+    void incrByDecrByRejectNullArguments() {
+
+        assertThatThrownBy(() -> builder.tsIncrBy(null, 1.0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsIncrBy(null, 1.0, new TsIncrByArgs())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsIncrBy(KEY, 1.0, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsDecrBy(null, 1.0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsDecrBy(null, 1.0, new TsIncrByArgs())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsDecrBy(KEY, 1.0, null)).isInstanceOf(IllegalArgumentException.class);
     }
 
 }
