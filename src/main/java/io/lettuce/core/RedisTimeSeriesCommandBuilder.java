@@ -18,10 +18,14 @@ import static io.lettuce.core.protocol.CommandType.TS_GET;
 import static io.lettuce.core.protocol.CommandType.TS_INCRBY;
 import static io.lettuce.core.protocol.CommandType.TS_INFO;
 import static io.lettuce.core.protocol.CommandType.TS_MADD;
+import static io.lettuce.core.protocol.CommandType.TS_MGET;
+import static io.lettuce.core.protocol.CommandType.TS_QUERYINDEX;
 import static io.lettuce.core.protocol.CommandType.TS_RANGE;
 import static io.lettuce.core.protocol.CommandType.TS_READ;
 import static io.lettuce.core.protocol.CommandType.TS_REVRANGE;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import io.lettuce.core.Range.Boundary;
@@ -31,6 +35,7 @@ import io.lettuce.core.output.EncodedComplexOutput;
 import io.lettuce.core.output.ErrorTolerantIntegerListOutput;
 import io.lettuce.core.output.ErrorTolerantIntegerValueListOutput;
 import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.output.KeyListOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.TsSampleListOutput;
 import io.lettuce.core.output.TsSampleOutput;
@@ -39,15 +44,19 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.timeseries.TsAggregation;
+import io.lettuce.core.timeseries.TsFilter;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsInfoValueParser;
 import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsMGetValue;
+import io.lettuce.core.timeseries.TsMGetValueParser;
 import io.lettuce.core.timeseries.TsReadOffset;
 import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 
@@ -299,6 +308,79 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         }
 
         return args;
+    }
+
+    Command<K, V, List<TsMGetValue<K>>> tsMGet(TsFilter filter) {
+        return mGet(null, filters(filter));
+    }
+
+    Command<K, V, List<TsMGetValue<K>>> tsMGet(TsFilter... filters) {
+        return mGet(null, filters(filters));
+    }
+
+    Command<K, V, List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter filter) {
+        LettuceAssert.notNull(mGetArgs, "TsMGetArgs " + MUST_NOT_BE_NULL);
+
+        return mGet(mGetArgs, filters(filter));
+    }
+
+    Command<K, V, List<TsMGetValue<K>>> tsMGet(TsMGetArgs mGetArgs, TsFilter... filters) {
+        LettuceAssert.notNull(mGetArgs, "TsMGetArgs " + MUST_NOT_BE_NULL);
+
+        return mGet(mGetArgs, filters(filters));
+    }
+
+    Command<K, V, List<K>> tsQueryIndex(TsFilter filter) {
+        return queryIndex(filters(filter));
+    }
+
+    Command<K, V, List<K>> tsQueryIndex(TsFilter... filters) {
+        return queryIndex(filters(filters));
+    }
+
+    private Command<K, V, List<TsMGetValue<K>>> mGet(TsMGetArgs mGetArgs, List<TsFilter> filters) {
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        if (mGetArgs != null) {
+            mGetArgs.build(args);
+        }
+        addFilters(args, filters);
+
+        return createCommand(TS_MGET, new EncodedComplexOutput<>(codec, new TsMGetValueParser<>(codec)), args);
+    }
+
+    private Command<K, V, List<K>> queryIndex(List<TsFilter> filters) {
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        for (TsFilter filter : filters) {
+            args.add(filter.toString());
+        }
+
+        return createCommand(TS_QUERYINDEX, new KeyListOutput<>(codec), args);
+    }
+
+    private static List<TsFilter> filters(TsFilter filter) {
+
+        LettuceAssert.notNull(filter, "Filter " + MUST_NOT_BE_NULL);
+
+        return Collections.singletonList(filter);
+    }
+
+    private static List<TsFilter> filters(TsFilter... filters) {
+
+        LettuceAssert.notNull(filters, "Filters " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(filters.length > 0, "Filters " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(filters, "Filters " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        return Arrays.asList(filters);
+    }
+
+    private static void addFilters(CommandArgs<?, ?> args, List<TsFilter> filters) {
+
+        args.add(CommandKeyword.FILTER);
+        for (TsFilter filter : filters) {
+            args.add(filter.toString());
+        }
     }
 
     private CommandArgs<K, V> mAddArgs(List<TsMAddValue<K>> samples) {

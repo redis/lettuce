@@ -10,14 +10,17 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.Range
 import io.lettuce.core.api.reactive.RedisTimeSeriesReactiveCommands
 import io.lettuce.core.timeseries.TsAggregation
+import io.lettuce.core.timeseries.TsFilter
 import io.lettuce.core.timeseries.TsInfoValue
 import io.lettuce.core.timeseries.TsMAddValue
+import io.lettuce.core.timeseries.TsMGetValue
 import io.lettuce.core.timeseries.TsReadOffset
 import io.lettuce.core.timeseries.TsSample
 import io.lettuce.core.timeseries.arguments.TsAddArgs
 import io.lettuce.core.timeseries.arguments.TsAlterArgs
 import io.lettuce.core.timeseries.arguments.TsCreateArgs
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs
+import io.lettuce.core.timeseries.arguments.TsMGetArgs
 import io.lettuce.core.timeseries.arguments.TsRangeArgs
 import io.lettuce.core.timeseries.arguments.TsReadArgs
 import kotlinx.coroutines.flow.toList
@@ -113,5 +116,23 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
 
     override suspend fun tsRead(key: K, offset: TsReadOffset, args: TsReadArgs): List<TsSample> =
         ops.tsRead(key, offset, args).asFlow().toList()
+
+    override suspend fun tsMGet(filter: TsFilter): List<TsMGetValue<K>> =
+        ops.tsMGet(filter).asFlow().toList()
+
+    override suspend fun tsMGet(vararg filters: TsFilter): List<TsMGetValue<K>> =
+        ops.tsMGet(*filters).asFlow().toList()
+
+    override suspend fun tsMGet(args: TsMGetArgs, filter: TsFilter): List<TsMGetValue<K>> =
+        ops.tsMGet(args, filter).asFlow().toList()
+
+    override suspend fun tsMGet(args: TsMGetArgs, vararg filters: TsFilter): List<TsMGetValue<K>> =
+        ops.tsMGet(args, *filters).asFlow().toList()
+
+    override suspend fun tsQueryIndex(filter: TsFilter): List<K> =
+        ops.tsQueryIndex(filter).asFlow().toList()
+
+    override suspend fun tsQueryIndex(vararg filters: TsFilter): List<K> =
+        ops.tsQueryIndex(*filters).asFlow().toList()
 
 }

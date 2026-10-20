@@ -10,14 +10,17 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.Range
 import io.lettuce.core.timeseries.TsAggregation
+import io.lettuce.core.timeseries.TsFilter
 import io.lettuce.core.timeseries.TsInfoValue
 import io.lettuce.core.timeseries.TsMAddValue
+import io.lettuce.core.timeseries.TsMGetValue
 import io.lettuce.core.timeseries.TsReadOffset
 import io.lettuce.core.timeseries.TsSample
 import io.lettuce.core.timeseries.arguments.TsAddArgs
 import io.lettuce.core.timeseries.arguments.TsAlterArgs
 import io.lettuce.core.timeseries.arguments.TsCreateArgs
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs
+import io.lettuce.core.timeseries.arguments.TsMGetArgs
 import io.lettuce.core.timeseries.arguments.TsRangeArgs
 import io.lettuce.core.timeseries.arguments.TsReadArgs
 
@@ -477,5 +480,118 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/commands/ts.read/">TS.READ</a>
      */
     suspend fun tsRead(key: K, offset: TsReadOffset, args: TsReadArgs): List<TsSample>
+
+    /**
+     * Get the latest sample of every time series that matches the filters. No labels are returned.
+     *
+     * The server requires at least one filter that matches a value ([TsFilter.equal] or
+     * [TsFilter.in]).
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param filter the filter, must not be `null`.
+     * @return List<TsMGetValue> one entry per matching series; empty if no series matches.
+     * @throws IllegalArgumentException if `filter` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mget/">TS.MGET</a>
+     */
+    suspend fun tsMGet(filter: TsFilter): List<TsMGetValue<K>>
+
+    /**
+     * Get the latest sample of every time series that matches the filters. No labels are returned.
+     *
+     * The server requires at least one filter that matches a value ([TsFilter.equal] or
+     * [TsFilter.in]).
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
+     *        elements.
+     * @return List<TsMGetValue> one entry per matching series; empty if no series matches.
+     * @throws IllegalArgumentException if `filters` is `null`, empty or contains `null` elements.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mget/">TS.MGET</a>
+     */
+    suspend fun tsMGet(vararg filters: TsFilter): List<TsMGetValue<K>>
+
+    /**
+     * Get the latest sample of every time series that matches the filters, with options such as labels.
+     *
+     * The server requires at least one filter that matches a value ([TsFilter.equal] or
+     * [TsFilter.in]).
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param args the options, must not be `null`.
+     * @param filter the filter, must not be `null`.
+     * @return List<TsMGetValue> one entry per matching series; empty if no series matches.
+     * @throws IllegalArgumentException if `args` is `null`, or `filter` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mget/">TS.MGET</a>
+     */
+    suspend fun tsMGet(args: TsMGetArgs, filter: TsFilter): List<TsMGetValue<K>>
+
+    /**
+     * Get the latest sample of every time series that matches the filters, with options such as labels.
+     *
+     * The server requires at least one filter that matches a value ([TsFilter.equal] or
+     * [TsFilter.in]).
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param args the options, must not be `null`.
+     * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
+     *        elements.
+     * @return List<TsMGetValue> one entry per matching series; empty if no series matches.
+     * @throws IllegalArgumentException if `args` is `null`, or `filters` is `null`, empty or contains `null` elements.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.mget/">TS.MGET</a>
+     */
+    suspend fun tsMGet(args: TsMGetArgs, vararg filters: TsFilter): List<TsMGetValue<K>>
+
+    /**
+     * Get the keys of all time series that match the filters. The result includes series the user cannot read.
+     *
+     * The server requires at least one filter that matches a value ([TsFilter.equal] or
+     * [TsFilter.in]).
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param filter the filter, must not be `null`.
+     * @return List<K> the keys of the matching series; empty if no series matches.
+     * @throws IllegalArgumentException if `filter` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.queryindex/">TS.QUERYINDEX</a>
+     */
+    suspend fun tsQueryIndex(filter: TsFilter): List<K>
+
+    /**
+     * Get the keys of all time series that match the filters. The result includes series the user cannot read.
+     *
+     * The server requires at least one filter that matches a value ([TsFilter.equal] or
+     * [TsFilter.in]).
+     *
+     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
+     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
+     * inside MULTI on a multi-shard node.
+     *
+     * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
+     *        elements.
+     * @return List<K> the keys of the matching series; empty if no series matches.
+     * @throws IllegalArgumentException if `filters` is `null`, empty or contains `null` elements.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.queryindex/">TS.QUERYINDEX</a>
+     */
+    suspend fun tsQueryIndex(vararg filters: TsFilter): List<K>
 
 }
