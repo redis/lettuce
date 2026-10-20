@@ -118,3 +118,60 @@ for (TsInfoValue.Rule<String> rule : info.getRules()) {
 `tsInfo(key, true)` sends `DEBUG` and also fills in the data chunks (`getChunks()`) and the key name (`getKeySelfName()`); without it, both are `null`.
 
 RESP2 and RESP3 replies produce equal `TsInfoValue` instances. Fields that this Lettuce version does not model are available through `getRawInfo()`.
+
+## Writes
+
+### Add a sample
+
+`tsAdd` adds one sample and returns its timestamp. It creates the series if it does not exist; the series options in `TsAddArgs` apply only then:
+
+```java
+Long ts = commands.tsAdd("temperature:room1", 1700000000000L, 21.5);    // explicit timestamp in milliseconds
+Long now = commands.tsAdd("temperature:room1", 21.7);                   // timestamp * : the server clock sets it
+
+commands.tsAdd("temperature:room3", 1700000000000L, 19.0, TsAddArgs.Builder.retention(Duration.ofDays(7))
+        .label("sensor", "temperature")
+        .onDuplicate(TsDuplicatePolicyType.LAST));
+```
+
+!!! WARNING
+    `tsAdd(key, value)` sends the timestamp `*`. Java converts a `long` to `double` without a cast, so `tsAdd(key, timestampMillis)` compiles and stores the timestamp as the **value**. To set the timestamp, use `tsAdd(key, timestamp, value)`.
+
+`onDuplicate` overrides the duplicate policy of the series for this call only. It has no effect when the call creates the series.
+
+### Ignore near-duplicates
+
+With `ignore(maxTimeDiff, maxValDiff)` on the series, a new sample that is at most `maxTimeDiff` milliseconds after the newest sample and differs from its value by at most `maxValDiff` is not stored, and the command returns the newest existing timestamp. The server applies this only when the duplicate policy of the series is `LAST`; with any other policy the sample is stored:
+
+```java
+commands.tsCreate("power:meter1", TsCreateArgs.Builder.duplicatePolicy(TsDuplicatePolicyType.LAST).ignore(1000, 0.5));
+commands.tsAdd("power:meter1", 1000, 10.0);   // 1000
+commands.tsAdd("power:meter1", 1500, 10.2);   // 1000: ignored, within 1000 ms and 0.5
+```
+
+### Add several samples
+
+`tsMAdd` adds samples to existing series; unlike `tsAdd`, it does not create series. Each sample is a `TsMAddValue`:
+
+```java
+List<Long> result = commands.tsMAdd(Arrays.asList(
+        TsMAddValue.of("temperature:room1", 1700000001000L, 21.6),
+        TsMAddValue.of("temperature:room2", 1700000001000L, 22.1),
+        TsMAddValue.of("temperature:room1", 21.8)));                   // timestamp * : the server clock sets it
+```
+
+The server handles each sample on its own. A rejected sample (for example a duplicate under policy `BLOCK`, or a key that does not exist) gives a `null` element at its position, and the other samples are still added. The reactive API emits `Value.empty()` for a rejected sample, and the Kotlin API returns `List<Long?>`. To add a single sample with options, use `tsAdd`.
+
+In Redis Cluster, `tsMAdd` with keys in several slots is sent as one `TS.MADD` per slot, in parallel, and the results come back in the order of the samples. The split is **not atomic** across slots: each slot's command is applied on its own. If one slot's command fails as a whole (for example a connection error), the call fails, although other slots may already have added their samples. Use hash tags (`{room}:temperature`) to keep related series in one slot.
+
+### Increment and decrement
+
+`tsIncrBy` and `tsDecrBy` change the value of the latest sample and create the series if it does not exist:
+
+```java
+commands.tsIncrBy("requests:api", 1);                                                      // server clock
+commands.tsIncrBy("requests:api", 5, TsIncrByArgs.Builder.timestamp(1700000060000L));     // explicit timestamp
+commands.tsDecrBy("stock:item42", 2, TsIncrByArgs.Builder.label("warehouse", "east"));
+```
+
+If the timestamp equals the newest timestamp of the series, the latest sample is updated in place; a higher timestamp adds a new sample with the changed value. A timestamp lower than the newest one is rejected by the server.
