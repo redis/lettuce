@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.Range;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -81,6 +82,70 @@ public class RedisTimeSeriesReactiveIntegrationTests extends RedisTimeSeriesInte
 
         StepVerifier.create(reactive.tsMAdd(Arrays.asList(TsMAddValue.of(KEY, 1000L, 1.0), TsMAddValue.of(KEY, 2000L, 2.0))))
                 .expectNext(Value.just(1000L)).expectNext(Value.just(2000L)).verifyComplete();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected List<Long> maddResultInTransaction(Object element) {
+
+        List<Long> result = new ArrayList<>();
+        for (Value<Long> value : (List<Value<Long>>) element) {
+            result.add(value.getValueOrElse(null));
+        }
+        return result;
+    }
+
+    /**
+     * Scenario L03 (GET): {@code tsGet} on a series without samples completes empty (design §2.3); on F1 it emits (3000, 3.0).
+     */
+    @Test
+    void getReactiveEmptySeriesCompletesEmpty() {
+
+        redis.tsCreate(KEY, new TsCreateArgs().label("t", testName));
+        StepVerifier.create(reactive.tsGet(KEY)).verifyComplete();
+        StepVerifier.create(reactive.tsGet(KEY, true)).verifyComplete();
+
+        simpleSeries();
+        StepVerifier.create(reactive.tsGet(F1)).expectNext(TsSample.of(3000, 3.0)).verifyComplete();
+    }
+
+    /**
+     * Scenario L03 (GET): {@code tsGet} on a missing key fails with the server error.
+     */
+    @Test
+    void getReactiveMissingKeyErrors() {
+
+        StepVerifier.create(reactive.tsGet(MISSING))
+                .expectErrorSatisfies(e -> assertThat(e).hasMessageContaining("TSDB: the key does not exist")).verify();
+    }
+
+    /**
+     * Scenario L03 (RANGE): {@code tsRange} emits one element per row, in order; {@code tsRevRange} in reverse order; an empty
+     * range completes without elements.
+     */
+    @Test
+    void rangeReactiveEmitsRows() {
+
+        simpleSeries();
+
+        StepVerifier.create(reactive.tsRange(F1, Range.unbounded())).expectNext(TsSample.of(1000, 1.0))
+                .expectNext(TsSample.of(2000, 2.0)).expectNext(TsSample.of(3000, 3.0)).verifyComplete();
+        StepVerifier.create(reactive.tsRevRange(F1, Range.unbounded())).expectNext(TsSample.of(3000, 3.0))
+                .expectNext(TsSample.of(2000, 2.0)).expectNext(TsSample.of(1000, 1.0)).verifyComplete();
+        StepVerifier.create(reactive.tsRange(F1, Range.create(5000L, 6000L))).verifyComplete();
+    }
+
+    /**
+     * Scenario L03 (RANGE): an aggregated range emits one bucket per element.
+     */
+    @Test
+    void rangeReactiveEmitsBuckets() {
+
+        statsSeries();
+
+        StepVerifier.create(reactive.tsRange(F2, Range.unbounded(), agg(3000, TsAggregationType.AVG)))
+                .expectNext(TsSample.of(0, 3.0)).expectNext(TsSample.of(3000, 13.0 / 3)).expectNext(TsSample.of(6000, 7.0))
+                .verifyComplete();
     }
 
 }

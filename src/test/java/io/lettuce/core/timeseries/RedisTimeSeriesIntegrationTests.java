@@ -18,11 +18,13 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -31,10 +33,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.Range;
 import io.lettuce.core.Range.Boundary;
+import io.lettuce.core.TransactionResult;
+import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisTimeSeriesAsyncCommands;
 import io.lettuce.core.api.sync.BaseRedisCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.api.sync.RedisTimeSeriesCommands;
@@ -48,6 +54,8 @@ import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
@@ -56,11 +64,12 @@ import io.lettuce.test.settings.TestSettings;
 
 /**
  * Integration tests for {@link RedisTimeSeriesCommands}: the series lifecycle commands (TS.CREATE, TS.ALTER, TS.DEL, TS.INFO),
- * the write commands (TS.ADD, TS.MADD, TS.INCRBY, TS.DECRBY) and the compaction rule commands (TS.CREATERULE, TS.DELETERULE).
- * The subclasses run the same tests on RESP2, through the reactive API and over Redis Cluster.
+ * the write commands (TS.ADD, TS.MADD, TS.INCRBY, TS.DECRBY), the compaction rule commands (TS.CREATERULE, TS.DELETERULE) and
+ * the single-key reads (TS.GET, TS.RANGE, TS.REVRANGE, TS.READ). The subclasses run the same tests on RESP2, through the
+ * reactive API and over Redis Cluster.
  * <p>
- * The read commands (TS.GET, TS.RANGE) come with a later review PR, so stored samples are read back with a raw
- * {@code TS.RANGE key - +} sent through {@code dispatch} ({@link #storedSamples(String)}).
+ * Tests written before the read commands existed read stored samples back with a raw {@code TS.RANGE key - +} sent through
+ * {@code dispatch} ({@link #storedSamples(String)}).
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -1696,6 +1705,869 @@ public class RedisTimeSeriesIntegrationTests {
         } finally {
             client.shutdown();
         }
+    }
+
+    // --- single-key reads: helpers -----------------------------------------------------------------------------------
+
+    protected static final String EMPTY_BUCKETS = "{ts}:e";
+
+    protected static final String NAN = "{ts}:nan";
+
+    protected static final String STRING_KEY = "{ts}:string";
+
+    /**
+     * The WRONGTYPE message of a TS read on a string key (observed on 8.10.0: TS.GET, TS.RANGE and TS.REVRANGE reply
+     * {@code ERR WRONGTYPE …}, TS.READ replies {@code WRONGTYPE …}).
+     */
+    protected static final String WRONGTYPE = "WRONGTYPE Operation against a key holding the wrong kind of value";
+
+    protected static TsSample sample(long timestamp, double... values) {
+
+        List<Double> list = new ArrayList<>();
+        for (double value : values) {
+            list.add(value);
+        }
+        return TsSample.of(timestamp, list);
+    }
+
+    protected static List<TsSample> rows(TsSample... samples) {
+        return Arrays.asList(samples);
+    }
+
+    protected static List<Long> timestamps(List<TsSample> samples) {
+
+        List<Long> result = new ArrayList<>();
+        for (TsSample sample : samples) {
+            result.add(sample.getTimestamp());
+        }
+        return result;
+    }
+
+    protected static List<Double> firstValues(List<TsSample> samples) {
+
+        List<Double> result = new ArrayList<>();
+        for (TsSample sample : samples) {
+            result.add(sample.getValue());
+        }
+        return result;
+    }
+
+    /**
+     * Series {@code {ts}:e} with the samples (1000, 1) and (7000, 7), so that bucket 3000 has an empty middle bucket (test plan
+     * C10).
+     */
+    protected void emptyBucketSeries() {
+        redis.tsCreate(EMPTY_BUCKETS, new TsCreateArgs().label("t", testName));
+        redis.tsAdd(EMPTY_BUCKETS, 1000L, 1.0);
+        redis.tsAdd(EMPTY_BUCKETS, 7000L, 7.0);
+    }
+
+    /**
+     * Fixture F7 {@code nanSeries} (Redis 8.6+): {@code {ts}:nan} with the values 1, NaN, 3, NaN at 1000, 2000, 3000, 4000.
+     */
+    protected void nanSeries() {
+        redis.tsCreate(NAN, new TsCreateArgs().label("t", testName));
+        redis.tsAdd(NAN, 1000L, 1.0);
+        redis.tsAdd(NAN, 2000L, Double.NaN);
+        redis.tsAdd(NAN, 3000L, 3.0);
+        redis.tsAdd(NAN, 4000L, Double.NaN);
+    }
+
+    protected static TsRangeArgs agg(long bucket, TsAggregation... aggregations) {
+        return new TsRangeArgs().aggregation(bucket, aggregations);
+    }
+
+    /**
+     * Read the TS.MADD element of a {@link TransactionResult}. The reactive subclass overrides this, because the reactive
+     * {@code tsMAdd} produces {@code Value<Long>} elements (design §2.3).
+     */
+    @SuppressWarnings("unchecked")
+    protected List<Long> maddResultInTransaction(Object element) {
+        return (List<Long>) element;
+    }
+
+    /**
+     * A dedicated connection with its async API, for the pipelining test (L01). The subclasses open it with their protocol and
+     * topology.
+     */
+    protected static final class Pipeline implements AutoCloseable {
+
+        final StatefulConnection<String, String> connection;
+
+        final RedisTimeSeriesAsyncCommands<String, String> async;
+
+        private final Runnable shutdown;
+
+        protected Pipeline(StatefulConnection<String, String> connection, RedisTimeSeriesAsyncCommands<String, String> async,
+                Runnable shutdown) {
+            this.connection = connection;
+            this.async = async;
+            this.shutdown = shutdown;
+        }
+
+        @Override
+        public void close() {
+            connection.close();
+            shutdown.run();
+        }
+
+    }
+
+    protected Pipeline openPipeline() {
+
+        RedisClient client = RedisClient.create(TestClientResources.get(),
+                RedisURI.create(TestSettings.host(), TestSettings.port()));
+        StatefulRedisConnection<String, String> connection = client.connect();
+        return new Pipeline(connection, connection.async(), client::shutdown);
+    }
+
+    // --- TS.GET ------------------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario C01 / J02 (GET): GET on a missing key fails with {@code TSDB: the key does not exist}, with and without LATEST.
+     */
+    @Test
+    void getMissingKey() {
+
+        assertThatThrownBy(() -> redis.tsGet(MISSING)).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: the key does not exist");
+        assertThatThrownBy(() -> redis.tsGet(MISSING, true)).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: the key does not exist");
+    }
+
+    /**
+     * Scenario C01: GET on a series without samples returns {@code null}, with and without LATEST.
+     */
+    @Test
+    void getEmptySeries() {
+
+        redis.tsCreate(KEY, new TsCreateArgs().label("t", testName));
+
+        assertThat(redis.tsGet(KEY)).isNull();
+        assertThat(redis.tsGet(KEY, true)).isNull();
+        assertThat(redis.tsGet(KEY, false)).isNull();
+    }
+
+    /**
+     * Scenario C01: GET on F1 returns the latest sample (3000, 3.0); LATEST has no effect on a series that is not a compaction.
+     */
+    @Test
+    void getLatestSample() {
+
+        simpleSeries();
+
+        TsSample sample = redis.tsGet(F1);
+        assertThat(sample).isEqualTo(TsSample.of(3000, 3.0));
+        assertThat(sample.getTimestamp()).isEqualTo(3000);
+        assertThat(sample.getValue()).isEqualTo(3.0);
+        assertThat(sample.getValues()).containsExactly(3.0);
+        assertThat(redis.tsGet(F1, true)).isEqualTo(TsSample.of(3000, 3.0));
+        assertThat(redis.tsGet(F1, false)).isEqualTo(TsSample.of(3000, 3.0));
+    }
+
+    /**
+     * Scenario C02: F4. GET on the destination without LATEST → (1000, 15), the closed bucket; with LATEST → (2000, 30), the
+     * open bucket.
+     */
+    @Test
+    void getLatestOnCompaction() {
+
+        compactionPair();
+
+        assertThat(redis.tsGet(DST)).isEqualTo(TsSample.of(1000, 15.0));
+        assertThat(redis.tsGet(DST, false)).isEqualTo(TsSample.of(1000, 15.0));
+        assertThat(redis.tsGet(DST, true)).isEqualTo(TsSample.of(2000, 30.0));
+    }
+
+    /**
+     * Scenario G03b: F4. GET on the destination returns the compacted value of the closed bucket, (1000, 15).
+     */
+    @Test
+    void getCompactedValue() {
+
+        compactionPair();
+
+        assertThat(redis.tsGet(DST)).isEqualTo(TsSample.of(1000, 15.0));
+        assertThat(redis.tsGet(SRC)).isEqualTo(TsSample.of(2000, 30.0));
+    }
+
+    /**
+     * Scenario C02: F4. RANGE and REVRANGE on the destination include the open bucket only with LATEST.
+     */
+    @Test
+    void rangeLatestOnCompaction() {
+
+        compactionPair();
+
+        assertThat(redis.tsRange(DST, Range.unbounded())).containsExactly(TsSample.of(1000, 15.0));
+        assertThat(redis.tsRange(DST, Range.unbounded(), new TsRangeArgs().latest())).containsExactly(TsSample.of(1000, 15.0),
+                TsSample.of(2000, 30.0));
+        assertThat(redis.tsRevRange(DST, Range.unbounded())).containsExactly(TsSample.of(1000, 15.0));
+        assertThat(redis.tsRevRange(DST, Range.unbounded(), new TsRangeArgs().latest()))
+                .containsExactly(TsSample.of(2000, 30.0), TsSample.of(1000, 15.0));
+    }
+
+    /**
+     * Scenario G04 (values): CREATERULE AVG, bucket 1000, alignTimestamp 500 shifts the buckets to start at 500, 1500, 2500.
+     * Source samples (1000, 10), (1500, 20), (2000, 30), (3000, 40) → closed buckets (500, 10) and (1500, 25); the open bucket
+     * (2500, 40) is visible with LATEST (verified on 8.10.0 with redis-cli).
+     */
+    @Test
+    void createRuleAlignmentShiftsBuckets() {
+
+        redis.tsCreate(SRC, new TsCreateArgs().label("t", testName));
+        redis.tsCreate(DST, new TsCreateArgs().label("t", testName));
+        assertThat(redis.tsCreateRule(SRC, DST, TsAggregationType.AVG, 1000, 500)).isEqualTo("OK");
+        redis.tsAdd(SRC, 1000L, 10.0);
+        redis.tsAdd(SRC, 1500L, 20.0);
+        redis.tsAdd(SRC, 2000L, 30.0);
+        redis.tsAdd(SRC, 3000L, 40.0);
+
+        assertThat(redis.tsRange(DST, Range.unbounded())).containsExactly(TsSample.of(500, 10.0), TsSample.of(1500, 25.0));
+        assertThat(redis.tsGet(DST)).isEqualTo(TsSample.of(1500, 25.0));
+        assertThat(redis.tsGet(DST, true)).isEqualTo(TsSample.of(2500, 40.0));
+        assertThat(redis.tsRange(DST, Range.unbounded(), new TsRangeArgs().latest())).containsExactly(TsSample.of(500, 10.0),
+                TsSample.of(1500, 25.0), TsSample.of(2500, 40.0));
+    }
+
+    // --- TS.RANGE / TS.REVRANGE --------------------------------------------------------------------------------------
+
+    /**
+     * Scenario C03: F1. {@code Range.create(1000, 2000)} → 2 samples; unbounded → 3; REVRANGE returns the same samples in
+     * descending order.
+     */
+    @Test
+    void rangeInclusiveAndUnbounded() {
+
+        simpleSeries();
+
+        assertThat(redis.tsRange(F1, Range.create(1000L, 2000L))).containsExactly(TsSample.of(1000, 1.0),
+                TsSample.of(2000, 2.0));
+        assertThat(redis.tsRange(F1, Range.unbounded())).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 2.0),
+                TsSample.of(3000, 3.0));
+        assertThat(redis.tsRevRange(F1, Range.create(1000L, 2000L))).containsExactly(TsSample.of(2000, 2.0),
+                TsSample.of(1000, 1.0));
+        assertThat(redis.tsRevRange(F1, Range.unbounded())).containsExactly(TsSample.of(3000, 3.0), TsSample.of(2000, 2.0),
+                TsSample.of(1000, 1.0));
+    }
+
+    /**
+     * Scenario C03: F1. An exclusive lower bound {@code excluding(1000)..unbounded} → (2000), (3000); one inclusive side with
+     * the other unbounded.
+     */
+    @Test
+    void rangeExclusiveLowerAndHalfUnbounded() {
+
+        simpleSeries();
+
+        assertThat(redis.tsRange(F1, Range.from(Boundary.excluding(1000L), Boundary.unbounded())))
+                .containsExactly(TsSample.of(2000, 2.0), TsSample.of(3000, 3.0));
+        assertThat(redis.tsRange(F1, Range.from(Boundary.unbounded(), Boundary.including(2000L))))
+                .containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 2.0));
+        assertThat(redis.tsRevRange(F1, Range.from(Boundary.excluding(1000L), Boundary.unbounded())))
+                .containsExactly(TsSample.of(3000, 3.0), TsSample.of(2000, 2.0));
+    }
+
+    /**
+     * Scenario C03: from &gt; to, and a range without samples, return an empty list.
+     */
+    @Test
+    void rangeEmptyResults() {
+
+        simpleSeries();
+
+        assertThat(redis.tsRange(F1, Range.create(3000L, 1000L))).isEmpty();
+        assertThat(redis.tsRevRange(F1, Range.create(3000L, 1000L))).isEmpty();
+        assertThat(redis.tsRange(F1, Range.create(4000L, 5000L))).isEmpty();
+        assertThat(redis.tsRange(F1, Range.from(Boundary.excluding(1000L), Boundary.excluding(2000L)))).isEmpty();
+    }
+
+    /**
+     * Scenario C03: RANGE on a series without samples returns an empty list.
+     */
+    @Test
+    void rangeOnEmptySeries() {
+
+        redis.tsCreate(KEY, new TsCreateArgs().label("t", testName));
+
+        assertThat(redis.tsRange(KEY, Range.unbounded())).isEmpty();
+        assertThat(redis.tsRevRange(KEY, Range.unbounded())).isEmpty();
+        assertThat(redis.tsRange(KEY, Range.unbounded(), agg(1000, TsAggregationType.AVG))).isEmpty();
+    }
+
+    /**
+     * Scenario C13: F2. RANGE {@code excluding(2000)..excluding(5000)} → ts 3000, 4000; REVRANGE → 4000, 3000.
+     */
+    @Test
+    void rangeExclusiveBothBounds() {
+
+        statsSeries();
+
+        Range<Long> range = Range.from(Boundary.excluding(2000L), Boundary.excluding(5000L));
+        assertThat(redis.tsRange(F2, range)).containsExactly(TsSample.of(3000, 4.0), TsSample.of(4000, 4.0));
+        assertThat(redis.tsRevRange(F2, range)).containsExactly(TsSample.of(4000, 4.0), TsSample.of(3000, 4.0));
+    }
+
+    /**
+     * Scenario C04: F2 with COUNT 3. RANGE → ts 1000, 2000, 3000; REVRANGE → 8000, 7000, 6000.
+     */
+    @Test
+    void rangeCount() {
+
+        statsSeries();
+
+        assertThat(redis.tsRange(F2, Range.unbounded(), new TsRangeArgs().count(3))).containsExactly(TsSample.of(1000, 2.0),
+                TsSample.of(2000, 4.0), TsSample.of(3000, 4.0));
+        assertThat(redis.tsRevRange(F2, Range.unbounded(), new TsRangeArgs().count(3))).containsExactly(TsSample.of(8000, 9.0),
+                TsSample.of(7000, 7.0), TsSample.of(6000, 5.0));
+    }
+
+    /**
+     * Scenario C05: F2. FILTER_BY_TS 1000 3000 5000 → values 2, 4, 5; FILTER_BY_VALUE 4 5 → 4, 4, 4, 5, 5; both → 4, 5;
+     * fractional bounds 4.5 5.5 → 5, 5.
+     */
+    @Test
+    void rangeFilters() {
+
+        statsSeries();
+
+        assertThat(redis.tsRange(F2, Range.unbounded(), new TsRangeArgs().filterByTimestamps(1000, 3000, 5000)))
+                .containsExactly(TsSample.of(1000, 2.0), TsSample.of(3000, 4.0), TsSample.of(5000, 5.0));
+        assertThat(redis.tsRange(F2, Range.unbounded(), new TsRangeArgs().filterByValue(4, 5))).containsExactly(
+                TsSample.of(2000, 4.0), TsSample.of(3000, 4.0), TsSample.of(4000, 4.0), TsSample.of(5000, 5.0),
+                TsSample.of(6000, 5.0));
+        assertThat(redis.tsRange(F2, Range.unbounded(),
+                new TsRangeArgs().filterByTimestamps(1000, 3000, 5000).filterByValue(4, 5)))
+                        .containsExactly(TsSample.of(3000, 4.0), TsSample.of(5000, 5.0));
+        assertThat(redis.tsRange(F2, Range.unbounded(), new TsRangeArgs().filterByValue(4.5, 5.5)))
+                .containsExactly(TsSample.of(5000, 5.0), TsSample.of(6000, 5.0));
+        assertThat(redis.tsRevRange(F2, Range.unbounded(), new TsRangeArgs().filterByValue(4.5, 5.5)))
+                .containsExactly(TsSample.of(6000, 5.0), TsSample.of(5000, 5.0));
+    }
+
+    /**
+     * Scenario C06: F2, one bucket (10000, range {@code -}..{@code +}): every aggregation of the 8.0 floor gives the exact
+     * value of test plan §4 (TWA verified on 8.0.2, 8.8.0 and 8.10.0).
+     */
+    @Test
+    void rangeEveryAggregationOneBucket() {
+
+        statsSeries();
+
+        Map<TsAggregation, Double> expected = new LinkedHashMap<>();
+        expected.put(TsAggregationType.AVG, 5.0);
+        expected.put(TsAggregationType.SUM, 40.0);
+        expected.put(TsAggregationType.MIN, 2.0);
+        expected.put(TsAggregationType.MAX, 9.0);
+        expected.put(TsAggregationType.RANGE, 7.0);
+        expected.put(TsAggregationType.COUNT, 8.0);
+        expected.put(TsAggregationType.FIRST, 2.0);
+        expected.put(TsAggregationType.LAST, 9.0);
+        expected.put(TsAggregationType.STD_P, 2.0);
+        expected.put(TsAggregationType.STD_S, 2.138089935299395);
+        expected.put(TsAggregationType.VAR_P, 4.0);
+        expected.put(TsAggregationType.VAR_S, 4.571428571428571);
+        expected.put(TsAggregationType.TWA, 4.928571428571429);
+
+        for (Map.Entry<TsAggregation, Double> entry : expected.entrySet()) {
+            assertThat(redis.tsRange(F2, Range.unbounded(), agg(10000, entry.getKey()))).as(entry.getKey().toString())
+                    .containsExactly(TsSample.of(0, entry.getValue()));
+        }
+    }
+
+    /**
+     * Scenario C06: F2, bucket 3000: TWA → 3.5, 4.5, 7; avg, sum, min, max, count per bucket as in test plan §4.
+     */
+    @Test
+    void rangeAggregationsBucket3000() {
+
+        statsSeries();
+
+        assertThat(redis.tsRange(F2, Range.unbounded(), agg(3000, TsAggregationType.TWA))).containsExactly(TsSample.of(0, 3.5),
+                TsSample.of(3000, 4.5), TsSample.of(6000, 7.0));
+        assertThat(redis.tsRange(F2, Range.unbounded(), agg(3000, TsAggregationType.AVG))).containsExactly(TsSample.of(0, 3.0),
+                TsSample.of(3000, 13.0 / 3), TsSample.of(6000, 7.0));
+        assertThat(firstValues(redis.tsRange(F2, Range.unbounded(), agg(3000, TsAggregationType.SUM)))).containsExactly(6.0,
+                13.0, 21.0);
+        assertThat(firstValues(redis.tsRange(F2, Range.unbounded(), agg(3000, TsAggregationType.MIN)))).containsExactly(2.0,
+                4.0, 5.0);
+        assertThat(firstValues(redis.tsRange(F2, Range.unbounded(), agg(3000, TsAggregationType.MAX)))).containsExactly(4.0,
+                5.0, 9.0);
+        assertThat(firstValues(redis.tsRange(F2, Range.unbounded(), agg(3000, TsAggregationType.COUNT)))).containsExactly(2.0,
+                3.0, 3.0);
+    }
+
+    /**
+     * Scenario C07 (Redis 8.8+): F2, bucket 3000, {@code min,avg,max} → rows (0, [2, 3, 4]), (3000, [4, 4.333333333333333, 5]),
+     * (6000, [5, 7, 9]); {@code getValue()} is the first value; REVRANGE returns the rows reversed; an empty window returns an
+     * empty list.
+     */
+    @Test
+    void rangeSeveralAggregations() {
+
+        assumeVersion("8.8");
+        statsSeries();
+
+        TsRangeArgs args = agg(3000, TsAggregationType.MIN, TsAggregationType.AVG, TsAggregationType.MAX);
+        List<TsSample> range = redis.tsRange(F2, Range.unbounded(), args);
+
+        assertThat(range).containsExactly(sample(0, 2, 3, 4), sample(3000, 4, 4.333333333333333, 5), sample(6000, 5, 7, 9));
+        assertThat(firstValues(range)).containsExactly(2.0, 4.0, 5.0);
+        assertThat(range.get(1).getValues()).containsExactly(4.0, 4.333333333333333, 5.0);
+
+        assertThat(redis.tsRevRange(F2, Range.unbounded(),
+                agg(3000, TsAggregationType.MIN, TsAggregationType.AVG, TsAggregationType.MAX)))
+                        .containsExactly(sample(6000, 5, 7, 9), sample(3000, 4, 4.333333333333333, 5), sample(0, 2, 3, 4));
+        assertThat(redis.tsRange(F2, Range.create(10000L, 20000L),
+                agg(3000, TsAggregationType.MIN, TsAggregationType.AVG, TsAggregationType.MAX))).isEmpty();
+    }
+
+    /**
+     * Scenario C08: F2, bucket 3000, avg. Alignment 0 → ts 0, 3000, 6000; {@code alignStart()} over 1000..8000 → 1000, 4000,
+     * 7000 with avg 3.3333333333333335, 4.666666666666667, 8 (count 3/3/2); {@code alignEnd()} over 1000..8000 → 0, 2000, 5000,
+     * 8000 with avg 2, 4, 5.666666666666667, 9 (count 1/3/3/1).
+     */
+    @Test
+    void rangeAlign() {
+
+        statsSeries();
+        Range<Long> range = Range.create(1000L, 8000L);
+
+        assertThat(redis.tsRange(F2, Range.unbounded(), agg(3000, TsAggregationType.AVG).align(0)))
+                .containsExactly(TsSample.of(0, 3.0), TsSample.of(3000, 13.0 / 3), TsSample.of(6000, 7.0));
+
+        assertThat(redis.tsRange(F2, range, agg(3000, TsAggregationType.AVG).alignStart())).containsExactly(
+                TsSample.of(1000, 3.3333333333333335), TsSample.of(4000, 4.666666666666667), TsSample.of(7000, 8.0));
+        assertThat(firstValues(redis.tsRange(F2, range, agg(3000, TsAggregationType.COUNT).alignStart()))).containsExactly(3.0,
+                3.0, 2.0);
+
+        assertThat(redis.tsRange(F2, range, agg(3000, TsAggregationType.AVG).alignEnd())).containsExactly(TsSample.of(0, 2.0),
+                TsSample.of(2000, 4.0), TsSample.of(5000, 5.666666666666667), TsSample.of(8000, 9.0));
+        assertThat(firstValues(redis.tsRange(F2, range, agg(3000, TsAggregationType.COUNT).alignEnd()))).containsExactly(1.0,
+                3.0, 3.0, 1.0);
+    }
+
+    /**
+     * Scenario C08: a numeric alignment equal to the start of the range gives the same buckets as {@code alignStart()}.
+     */
+    @Test
+    void rangeAlignNumeric() {
+
+        statsSeries();
+
+        assertThat(redis.tsRange(F2, Range.create(1000L, 8000L), agg(3000, TsAggregationType.AVG).align(1000))).containsExactly(
+                TsSample.of(1000, 3.3333333333333335), TsSample.of(4000, 4.666666666666667), TsSample.of(7000, 8.0));
+    }
+
+    /**
+     * Scenario C09: F2, bucket 3000, avg: BUCKETTIMESTAMP {@code START} → 0, 3000, 6000; {@code END} → 3000, 6000, 9000;
+     * {@code MID} → 1500, 4500, 7500. The values are unchanged.
+     */
+    @Test
+    void rangeBucketTimestamp() {
+
+        statsSeries();
+
+        List<TsSample> start = redis.tsRange(F2, Range.unbounded(),
+                agg(3000, TsAggregationType.AVG).bucketTimestamp(TsBucketTimestamp.START));
+        List<TsSample> end = redis.tsRange(F2, Range.unbounded(),
+                agg(3000, TsAggregationType.AVG).bucketTimestamp(TsBucketTimestamp.END));
+        List<TsSample> mid = redis.tsRange(F2, Range.unbounded(),
+                agg(3000, TsAggregationType.AVG).bucketTimestamp(TsBucketTimestamp.MID));
+
+        assertThat(timestamps(start)).containsExactly(0L, 3000L, 6000L);
+        assertThat(timestamps(end)).containsExactly(3000L, 6000L, 9000L);
+        assertThat(timestamps(mid)).containsExactly(1500L, 4500L, 7500L);
+        assertThat(firstValues(start)).isEqualTo(firstValues(end)).isEqualTo(firstValues(mid)).containsExactly(3.0, 13.0 / 3,
+                7.0);
+    }
+
+    /**
+     * Scenario C10: samples (1000, 1) and (7000, 7), bucket 3000. Without EMPTY 2 buckets; with EMPTY 3 buckets (0, 3000,
+     * 6000): avg → 1, NaN, 7; last → 1, 1, 7; twa → 2, 4.5, 6.5; sum → 1, 0, 7; count → 1, 0, 1 (verified on 8.0.2, 8.8.0 and
+     * 8.10.0).
+     */
+    @Test
+    void rangeEmpty() {
+
+        emptyBucketSeries();
+
+        assertThat(redis.tsRange(EMPTY_BUCKETS, Range.unbounded(), agg(3000, TsAggregationType.AVG)))
+                .containsExactly(TsSample.of(0, 1.0), TsSample.of(6000, 7.0));
+
+        assertThat(redis.tsRange(EMPTY_BUCKETS, Range.unbounded(), agg(3000, TsAggregationType.AVG).empty()))
+                .containsExactly(TsSample.of(0, 1.0), TsSample.of(3000, Double.NaN), TsSample.of(6000, 7.0));
+        assertThat(redis.tsRange(EMPTY_BUCKETS, Range.unbounded(), agg(3000, TsAggregationType.LAST).empty()))
+                .containsExactly(TsSample.of(0, 1.0), TsSample.of(3000, 1.0), TsSample.of(6000, 7.0));
+        assertThat(redis.tsRange(EMPTY_BUCKETS, Range.unbounded(), agg(3000, TsAggregationType.TWA).empty()))
+                .containsExactly(TsSample.of(0, 2.0), TsSample.of(3000, 4.5), TsSample.of(6000, 6.5));
+        assertThat(redis.tsRange(EMPTY_BUCKETS, Range.unbounded(), agg(3000, TsAggregationType.SUM).empty()))
+                .containsExactly(TsSample.of(0, 1.0), TsSample.of(3000, 0.0), TsSample.of(6000, 7.0));
+        assertThat(redis.tsRange(EMPTY_BUCKETS, Range.unbounded(), agg(3000, TsAggregationType.COUNT).empty()))
+                .containsExactly(TsSample.of(0, 1.0), TsSample.of(3000, 0.0), TsSample.of(6000, 1.0));
+    }
+
+    /**
+     * Scenario C11: F2, REVRANGE with avg, bucket 3000 → (6000, 7), (3000, 4.333…), (0, 3).
+     */
+    @Test
+    void revRangeWithAggregation() {
+
+        statsSeries();
+
+        assertThat(redis.tsRevRange(F2, Range.unbounded(), agg(3000, TsAggregationType.AVG)))
+                .containsExactly(TsSample.of(6000, 7.0), TsSample.of(3000, 13.0 / 3), TsSample.of(0, 3.0));
+    }
+
+    /**
+     * Scenario C12: a series named {@code {ts}:align} (and one named exactly {@code align}, the key of RedisTimeSeries #2052),
+     * with F2's data and {@code ALIGN start} over 1000..8000: the key is not taken for an option, and the buckets are those of
+     * C08.
+     */
+    @Test
+    void rangeKeyNamedAlign() {
+
+        double[] values = { 2, 4, 4, 4, 5, 5, 7, 9 };
+        for (String key : new String[] { "{ts}:align", "align" }) {
+            redis.tsCreate(key, new TsCreateArgs().label("t", testName));
+            for (int i = 0; i < values.length; i++) {
+                redis.tsAdd(key, (i + 1) * 1000L, values[i]);
+            }
+
+            assertThat(redis.tsRange(key, Range.create(1000L, 8000L), agg(3000, TsAggregationType.AVG).alignStart())).as(key)
+                    .containsExactly(TsSample.of(1000, 3.3333333333333335), TsSample.of(4000, 4.666666666666667),
+                            TsSample.of(7000, 8.0));
+        }
+    }
+
+    /**
+     * Scenario B14 (range part): retention 1000, samples at 1000, 1500 and 3000 → RANGE returns only (3000, 3.0).
+     */
+    @Test
+    void retentionTrimmingRange() {
+
+        redis.tsCreate(KEY, new TsCreateArgs().retention(1000).label("t", testName));
+        redis.tsAdd(KEY, 1000L, 1.0);
+        redis.tsAdd(KEY, 1500L, 2.0);
+        redis.tsAdd(KEY, 3000L, 3.0);
+
+        assertThat(redis.tsRange(KEY, Range.unbounded())).containsExactly(TsSample.of(3000, 3.0));
+        assertThat(redis.tsRange(KEY, Range.create(0L, 5000L))).containsExactly(TsSample.of(3000, 3.0));
+    }
+
+    /**
+     * Scenario J02 (RANGE): RANGE and REVRANGE on a missing key fail with {@code TSDB: the key does not exist}
+     * (TIMESERIES-CANONICAL.md §5; observed on 8.10.0).
+     */
+    @Test
+    void rangeMissingKey() {
+
+        assertThatThrownBy(() -> redis.tsRange(MISSING, Range.unbounded())).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: the key does not exist");
+        assertThatThrownBy(() -> redis.tsRevRange(MISSING, Range.unbounded(), new TsRangeArgs().count(1)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("TSDB: the key does not exist");
+    }
+
+    /**
+     * Scenario J01 (RANGE): GET, RANGE and REVRANGE on a string key fail with WRONGTYPE (observed on 8.10.0:
+     * {@code ERR WRONGTYPE Operation against a key holding the wrong kind of value}).
+     */
+    @Test
+    void readsOnWrongType() {
+
+        redis.set(STRING_KEY, "x");
+
+        assertThatThrownBy(() -> redis.tsRange(STRING_KEY, Range.unbounded()))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining(WRONGTYPE);
+        assertThatThrownBy(() -> redis.tsRevRange(STRING_KEY, Range.unbounded()))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining(WRONGTYPE);
+        assertThatThrownBy(() -> redis.tsGet(STRING_KEY)).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining(WRONGTYPE);
+    }
+
+    /**
+     * Scenario A15, through the API of every flavor and topology: ALIGN, BUCKETTIMESTAMP or EMPTY without AGGREGATION throws
+     * {@link IllegalArgumentException}, not a server error, so nothing is sent.
+     */
+    @Test
+    void rangeRejectsAggregationOnlyOptionsThroughTheApi() {
+
+        simpleSeries();
+
+        assertThatThrownBy(() -> redis.tsRange(F1, Range.unbounded(), new TsRangeArgs().empty()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsRange(F1, Range.unbounded(), new TsRangeArgs().align(0)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(
+                () -> redis.tsRevRange(F1, Range.unbounded(), new TsRangeArgs().bucketTimestamp(TsBucketTimestamp.END)))
+                        .isInstanceOf(IllegalArgumentException.class);
+        assertThat(redis.tsRange(F1, Range.unbounded())).hasSize(3);
+    }
+
+    /**
+     * Scenario A08 / A19, through the API of every flavor and topology: {@code null} arguments and an exclusive bound at the
+     * {@code Long} edge throw {@link IllegalArgumentException}.
+     */
+    @Test
+    void readsRejectNullArgumentsThroughTheApi() {
+
+        assertThatThrownBy(() -> redis.tsGet(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsGet(null, true)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsRange(KEY, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsRange(KEY, Range.unbounded(), null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsRevRange(null, Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsRange(KEY, Range.from(Boundary.excluding(Long.MAX_VALUE), Boundary.unbounded())))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsRead(KEY, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsRead(KEY, TsReadOffset.earliest(), null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- NaN (Redis 8.6+) --------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario H01 (reads, Redis 8.6+): F7. GET, RANGE and REVRANGE return the stored NaN values.
+     */
+    @Test
+    void nanReads() {
+
+        assumeVersion("8.6");
+        nanSeries();
+
+        TsSample latest = redis.tsGet(NAN);
+        assertThat(latest.getTimestamp()).isEqualTo(4000);
+        assertThat(latest.getValue()).isNaN();
+        assertThat(redis.tsRange(NAN, Range.unbounded())).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, Double.NaN),
+                TsSample.of(3000, 3.0), TsSample.of(4000, Double.NaN));
+        assertThat(redis.tsRevRange(NAN, Range.unbounded())).containsExactly(TsSample.of(4000, Double.NaN),
+                TsSample.of(3000, 3.0), TsSample.of(2000, Double.NaN), TsSample.of(1000, 1.0));
+    }
+
+    /**
+     * Scenario H02 (Redis 8.6+): F7, one bucket: countNaN 2, countAll 4, count 2, avg 2, sum 4 (NaN skipped). With bucket 2000,
+     * the bucket [0, 2000) has no NaN sample and gets no countNaN row (observed on 8.8.0 and 8.10.0).
+     */
+    @Test
+    void countNanAndCountAll() {
+
+        assumeVersion("8.6");
+        nanSeries();
+
+        assertThat(redis.tsRange(NAN, Range.unbounded(), agg(10000, TsAggregationType.COUNTNAN)))
+                .containsExactly(TsSample.of(0, 2.0));
+        assertThat(redis.tsRange(NAN, Range.unbounded(), agg(10000, TsAggregationType.COUNTALL)))
+                .containsExactly(TsSample.of(0, 4.0));
+        assertThat(redis.tsRange(NAN, Range.unbounded(), agg(10000, TsAggregationType.COUNT)))
+                .containsExactly(TsSample.of(0, 2.0));
+        assertThat(redis.tsRange(NAN, Range.unbounded(), agg(10000, TsAggregationType.AVG)))
+                .containsExactly(TsSample.of(0, 2.0));
+        assertThat(redis.tsRange(NAN, Range.unbounded(), agg(10000, TsAggregationType.SUM)))
+                .containsExactly(TsSample.of(0, 4.0));
+
+        assertThat(redis.tsRange(NAN, Range.unbounded(), agg(2000, TsAggregationType.COUNTNAN)))
+                .containsExactly(TsSample.of(2000, 1.0), TsSample.of(4000, 1.0));
+    }
+
+    // --- TS.READ (non-blocking) --------------------------------------------------------------------------------------
+
+    /**
+     * Scenario F01 (Redis 8.10+): F1. {@code from(0)} → all 3; {@code from(2000)} (inclusive) → 2; {@code earliest()} → all;
+     * {@code latest()} → (3000); {@code newSamples()} without BLOCK → empty.
+     */
+    @Test
+    @EnabledOnCommand("TS.READ")
+    void readOffsets() {
+
+        simpleSeries();
+        List<TsSample> all = rows(TsSample.of(1000, 1.0), TsSample.of(2000, 2.0), TsSample.of(3000, 3.0));
+
+        assertThat(redis.tsRead(F1, TsReadOffset.from(0))).isEqualTo(all);
+        assertThat(redis.tsRead(F1, TsReadOffset.from(2000))).containsExactly(TsSample.of(2000, 2.0), TsSample.of(3000, 3.0));
+        assertThat(redis.tsRead(F1, TsReadOffset.earliest())).isEqualTo(all);
+        assertThat(redis.tsRead(F1, TsReadOffset.latest())).containsExactly(TsSample.of(3000, 3.0));
+        assertThat(redis.tsRead(F1, TsReadOffset.newSamples())).isEmpty();
+        assertThat(redis.tsRead(F1, TsReadOffset.from(0), new TsReadArgs())).isEqualTo(all);
+    }
+
+    /**
+     * Scenario F02 (Redis 8.10+): F2 with {@code maxCount(3)}, starting at {@code earliest()} and continuing with
+     * {@code from(last + 1)} → pages of 3, 3, 2, then an empty page; no gaps, no duplicates.
+     */
+    @Test
+    @EnabledOnCommand("TS.READ")
+    void readPaging() {
+
+        statsSeries();
+
+        List<List<TsSample>> pages = new ArrayList<>();
+        List<TsSample> page = redis.tsRead(F2, TsReadOffset.earliest(), new TsReadArgs().maxCount(3));
+        while (!page.isEmpty() && pages.size() < 10) {
+            pages.add(page);
+            long last = page.get(page.size() - 1).getTimestamp();
+            page = redis.tsRead(F2, TsReadOffset.from(last + 1), new TsReadArgs().maxCount(3));
+        }
+
+        assertThat(pages).hasSize(3);
+        assertThat(timestamps(pages.get(0))).containsExactly(1000L, 2000L, 3000L);
+        assertThat(timestamps(pages.get(1))).containsExactly(4000L, 5000L, 6000L);
+        assertThat(timestamps(pages.get(2))).containsExactly(7000L, 8000L);
+
+        List<TsSample> joined = new ArrayList<>();
+        pages.forEach(joined::addAll);
+        assertThat(joined).isEqualTo(redis.tsRange(F2, Range.unbounded()));
+    }
+
+    /**
+     * Scenario F03 (Redis 8.10+): reading past the newest sample, or a missing key, returns an empty list, not an error.
+     */
+    @Test
+    @EnabledOnCommand("TS.READ")
+    void readPastNewestAndMissingKey() {
+
+        statsSeries();
+
+        assertThat(redis.tsRead(F2, TsReadOffset.from(8001))).isEmpty();
+        assertThat(redis.tsRead(F2, TsReadOffset.from(9000), new TsReadArgs().maxCount(5))).isEmpty();
+        assertThat(redis.tsRead(MISSING, TsReadOffset.from(0))).isEmpty();
+        assertThat(redis.tsRead(MISSING, TsReadOffset.earliest())).isEmpty();
+        assertThat(redis.tsRead(MISSING, TsReadOffset.latest())).isEmpty();
+        assertThat(redis.tsRead(MISSING, TsReadOffset.newSamples())).isEmpty();
+        assertThat(redis.exists(MISSING)).isZero();
+    }
+
+    /**
+     * Scenario F11 (Redis 8.10+): values the client never sends are rejected by the server and passed through, sent via
+     * {@code dispatch}: a negative timestamp → {@code TSDB: invalid timestamp}; {@code min_count > MAX_COUNT} →
+     * {@code TSDB: BLOCK min_count must be <= MAX_COUNT} (observed on 8.10.0).
+     */
+    @Test
+    @EnabledOnCommand("TS.READ")
+    void readServerValidation() {
+
+        statsSeries();
+
+        CommandArgs<String, String> negative = new CommandArgs<>(StringCodec.UTF8).addKey(F2).add("-1");
+        assertThatThrownBy(() -> redis.dispatch(CommandType.TS_READ, new NestedMultiOutput<>(StringCodec.UTF8), negative))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("TSDB: invalid timestamp");
+
+        CommandArgs<String, String> counts = new CommandArgs<>(StringCodec.UTF8).addKey(F2).add("0").add("BLOCK").add("10")
+                .add("5").add("MAX_COUNT").add("3");
+        assertThatThrownBy(() -> redis.dispatch(CommandType.TS_READ, new NestedMultiOutput<>(StringCodec.UTF8), counts))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("TSDB: BLOCK min_count must be <= MAX_COUNT");
+    }
+
+    /**
+     * Scenario A11 / A17 (READ), through the API of every flavor and topology: invalid TS.READ arguments throw
+     * {@link IllegalArgumentException} before anything is sent.
+     */
+    @Test
+    void readRejectsInvalidArgumentsThroughTheApi() {
+
+        assertThatThrownBy(() -> TsReadOffset.from(-1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsReadArgs().block(100, 5).maxCount(3)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsRead(null, TsReadOffset.earliest())).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario J01 (READ, Redis 8.10+): TS.READ on a string key fails with WRONGTYPE (observed on 8.10.0:
+     * {@code WRONGTYPE Operation against a key holding the wrong kind of value}).
+     */
+    @Test
+    @EnabledOnCommand("TS.READ")
+    void readOnWrongType() {
+
+        redis.set(STRING_KEY, "x");
+
+        assertThatThrownBy(() -> redis.tsRead(STRING_KEY, TsReadOffset.from(0)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining(WRONGTYPE);
+        assertThatThrownBy(() -> redis.tsRead(STRING_KEY, TsReadOffset.earliest(), new TsReadArgs().maxCount(1)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining(WRONGTYPE);
+    }
+
+    // --- execution modes ---------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario L01: async pipeline with auto-flush off. A TS.MADD with a rejected sample, then TS.GET, TS.RANGE and TS.ADD are
+     * queued and flushed together; each future gets its own reply.
+     */
+    @Test
+    void asyncPipelineAlignment() throws Exception {
+
+        redis.tsCreate(KEY, new TsCreateArgs().label("t", testName));
+        redis.tsAdd(KEY, 1000L, 5.0);
+
+        try (Pipeline pipeline = openPipeline()) {
+
+            pipeline.connection.setAutoFlushCommands(false);
+            RedisTimeSeriesAsyncCommands<String, String> async = pipeline.async;
+
+            RedisFuture<List<Long>> madd = async
+                    .tsMAdd(Arrays.asList(TsMAddValue.of(KEY, 1000L, 9.0), TsMAddValue.of(KEY, 2000L, 2.0)));
+            RedisFuture<TsSample> get = async.tsGet(KEY);
+            RedisFuture<List<TsSample>> range = async.tsRange(KEY, Range.unbounded());
+            RedisFuture<Long> add = async.tsAdd(KEY, 3000L, 3.0);
+            RedisFuture<List<TsSample>> rangeAfter = async.tsRevRange(KEY, Range.unbounded(), new TsRangeArgs().count(1));
+
+            assertThat(madd.isDone()).isFalse();
+            pipeline.connection.flushCommands();
+
+            assertThat(madd.get(10, TimeUnit.SECONDS)).containsExactly(null, 2000L);
+            assertThat(get.get(10, TimeUnit.SECONDS)).isEqualTo(TsSample.of(2000, 2.0));
+            assertThat(range.get(10, TimeUnit.SECONDS)).containsExactly(TsSample.of(1000, 5.0), TsSample.of(2000, 2.0));
+            assertThat(add.get(10, TimeUnit.SECONDS)).isEqualTo(3000L);
+            assertThat(rangeAfter.get(10, TimeUnit.SECONDS)).containsExactly(TsSample.of(3000, 3.0));
+        }
+    }
+
+    /**
+     * Scenario L02: MULTI/EXEC on standalone. CREATE, ADD, MADD, RANGE and GET in one transaction → the
+     * {@link TransactionResult} has one entry per command, in order, with the type of each command's result.
+     */
+    @Test
+    void transactionWithReads() {
+
+        redis.multi();
+        redis.tsCreate(KEY, new TsCreateArgs().label("t", testName));
+        redis.tsAdd(KEY, 1000L, 1.0);
+        redis.tsMAdd(Arrays.asList(TsMAddValue.of(KEY, 2000L, 2.0), TsMAddValue.of(KEY, 3000L, 3.0)));
+        redis.tsRange(KEY, Range.unbounded());
+        redis.tsGet(KEY);
+        TransactionResult result = redis.exec();
+
+        assertThat(result.wasDiscarded()).isFalse();
+        assertThat(result).hasSize(5);
+        assertThat((String) result.get(0)).isEqualTo("OK");
+        assertThat((Long) result.get(1)).isEqualTo(1000L);
+        assertThat(maddResultInTransaction(result.get(2))).containsExactly(2000L, 3000L);
+        assertThat((List<?>) result.get(3)).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 2.0),
+                TsSample.of(3000, 3.0));
+        assertThat((TsSample) result.get(4)).isEqualTo(TsSample.of(3000, 3.0));
+    }
+
+    /**
+     * Scenario L02 (MADD partial failure): inside MULTI/EXEC, a TS.MADD with a sample rejected under policy BLOCK gives
+     * {@code [null, ts]} at its position, as outside a transaction (design §2.2 and H2: a {@code null} element means the server
+     * rejected that sample); the commands after it get their own replies.
+     */
+    @Test
+    void transactionWithMAddPartialFailure() {
+
+        redis.multi();
+        redis.tsCreate(KEY, new TsCreateArgs().label("t", testName));
+        redis.tsAdd(KEY, 1000L, 1.0);
+        redis.tsMAdd(Arrays.asList(TsMAddValue.of(KEY, 1000L, 2.0), TsMAddValue.of(KEY, 2000L, 3.0)));
+        redis.tsRange(KEY, Range.unbounded());
+        redis.tsGet(KEY);
+        TransactionResult result = redis.exec();
+
+        assertThat(result.wasDiscarded()).isFalse();
+        assertThat(result).hasSize(5);
+        assertThat((String) result.get(0)).isEqualTo("OK");
+        assertThat((Long) result.get(1)).isEqualTo(1000L);
+        assertThat((List<?>) result.get(3)).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 3.0));
+        assertThat((TsSample) result.get(4)).isEqualTo(TsSample.of(2000, 3.0));
+        assertThat((Object) result.get(2)).isNotInstanceOf(Throwable.class);
+        assertThat(maddResultInTransaction(result.get(2))).containsExactly(null, 2000L);
     }
 
 }
