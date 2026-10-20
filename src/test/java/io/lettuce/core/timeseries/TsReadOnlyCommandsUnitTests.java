@@ -109,4 +109,27 @@ class TsReadOnlyCommandsUnitTests {
         assertThat(CommandType.TS_QUERYLABELS.toString()).isEqualTo("TS.QUERYLABELS");
     }
 
+    /**
+     * Scenario K10 (NRANGE, NREVRANGE): the multi-key reads are read-only, so {@code ReadFrom.REPLICA} may route them to a
+     * replica (design §5.4, NF.4).
+     */
+    @Test
+    void multiKeyReadsAreReadOnly() {
+
+        for (CommandType type : new CommandType[] { CommandType.TS_NRANGE, CommandType.TS_NREVRANGE }) {
+            assertThat(ReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+            assertThat(ClusterReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+        }
+    }
+
+    /**
+     * Scenario K10: the wire names of the multi-key reads.
+     */
+    @Test
+    void multiKeyReadCommandNames() {
+
+        assertThat(CommandType.TS_NRANGE.toString()).isEqualTo("TS.NRANGE");
+        assertThat(CommandType.TS_NREVRANGE.toString()).isEqualTo("TS.NREVRANGE");
+    }
+
 }
