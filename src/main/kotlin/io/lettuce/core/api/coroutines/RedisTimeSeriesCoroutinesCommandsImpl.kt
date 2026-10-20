@@ -14,6 +14,7 @@ import io.lettuce.core.timeseries.TsFilter
 import io.lettuce.core.timeseries.TsInfoValue
 import io.lettuce.core.timeseries.TsMAddValue
 import io.lettuce.core.timeseries.TsMGetValue
+import io.lettuce.core.timeseries.TsNRangeRow
 import io.lettuce.core.timeseries.TsReadOffset
 import io.lettuce.core.timeseries.TsSample
 import io.lettuce.core.timeseries.TsSeries
@@ -23,6 +24,7 @@ import io.lettuce.core.timeseries.arguments.TsCreateArgs
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs
 import io.lettuce.core.timeseries.arguments.TsMGetArgs
 import io.lettuce.core.timeseries.arguments.TsMRangeArgs
+import io.lettuce.core.timeseries.arguments.TsNRangeArgs
 import io.lettuce.core.timeseries.arguments.TsRangeArgs
 import io.lettuce.core.timeseries.arguments.TsReadArgs
 import kotlinx.coroutines.flow.toList
@@ -178,5 +180,29 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
 
     override suspend fun tsQueryLabelValues(label: String, vararg filters: TsFilter): List<String> =
         ops.tsQueryLabelValues(label, *filters).asFlow().toList()
+
+    override suspend fun tsNRange(keys: List<K>, range: Range<Long>): List<TsNRangeRow> =
+        ops.tsNRange(keys, range).asFlow().toList()
+
+    override suspend fun tsNRange(keys: List<K>, range: Range<Long>, args: TsNRangeArgs): List<TsNRangeRow> =
+        ops.tsNRange(keys, range, args).asFlow().toList()
+
+    override suspend fun tsNRange(key1: K, key2: K, range: Range<Long>): List<TsNRangeRow> =
+        ops.tsNRange(key1, key2, range).asFlow().toList()
+
+    override suspend fun tsNRange(key1: K, key2: K, range: Range<Long>, args: TsNRangeArgs): List<TsNRangeRow> =
+        ops.tsNRange(key1, key2, range, args).asFlow().toList()
+
+    override suspend fun tsNRevRange(keys: List<K>, range: Range<Long>): List<TsNRangeRow> =
+        ops.tsNRevRange(keys, range).asFlow().toList()
+
+    override suspend fun tsNRevRange(keys: List<K>, range: Range<Long>, args: TsNRangeArgs): List<TsNRangeRow> =
+        ops.tsNRevRange(keys, range, args).asFlow().toList()
+
+    override suspend fun tsNRevRange(key1: K, key2: K, range: Range<Long>): List<TsNRangeRow> =
+        ops.tsNRevRange(key1, key2, range).asFlow().toList()
+
+    override suspend fun tsNRevRange(key1: K, key2: K, range: Range<Long>, args: TsNRangeArgs): List<TsNRangeRow> =
+        ops.tsNRevRange(key1, key2, range, args).asFlow().toList()
 
 }
