@@ -793,7 +793,9 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
      * {@code RedisTimeSeriesAsyncCommands} states, as the standalone async API does, and as the cluster {@code tsMAdd} does
      * ({@link #maddSplitRejectsNullAndEmpty()}).
      */
-    @Disabled("Defect P5-D1: cluster async keyless TS reads return a failed future instead of throwing IllegalArgumentException")
+    // routeKeyless builds the command inside thenCompose after picking a node, so the exception fails the future instead of
+    // being thrown from the call
+    @Disabled("Cluster async keyless reads report IllegalArgumentException through the future, see #3962")
     @Test
     void keylessReadsRejectInvalidArgumentsAsync() {
 
