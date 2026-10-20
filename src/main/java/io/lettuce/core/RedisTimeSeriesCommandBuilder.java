@@ -118,6 +118,8 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
     Command<K, V, String> tsCreateRule(K sourceKey, K destKey, TsAggregation aggregation, long bucketDuration,
             long alignTimestamp) {
 
+        LettuceAssert.isTrue(alignTimestamp >= 0, "Align timestamp must not be negative");
+
         CommandArgs<K, V> args = createRuleArgs(sourceKey, destKey, aggregation, bucketDuration).add(alignTimestamp);
 
         return createCommand(TS_CREATERULE, new StatusOutput<>(codec), args);

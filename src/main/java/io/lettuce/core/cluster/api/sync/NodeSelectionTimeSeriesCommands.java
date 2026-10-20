@@ -117,8 +117,9 @@ public interface NodeSelectionTimeSeriesCommands<K, V> {
      * are aggregated. Each compacted sample has the start of its bucket as timestamp; buckets start at multiples of
      * {@code bucketDuration} from the epoch.
      * <p>
-     * Both keys must hash to the same slot, for example by sharing a hash tag such as {@code {sensor1}}; in Redis Cluster the
-     * server rejects keys in different slots with {@code CROSSSLOT}.
+     * Both keys must hash to the same slot, for example by sharing a hash tag such as {@code {sensor1}}. In Redis Cluster, keys
+     * in different slots are rejected with {@code CROSSSLOT} on Redis 8.4 and later; Redis 8.0 and 8.2 reply
+     * {@code TSDB: the key does not exist} instead, even though both keys exist.
      *
      * @param sourceKey the key of the series to aggregate, must not be {@code null}.
      * @param destKey the key of the series that receives the compacted samples, must not be {@code null}.
@@ -136,17 +137,19 @@ public interface NodeSelectionTimeSeriesCommands<K, V> {
      * Create a compaction rule with aligned buckets that aggregates the samples of {@code sourceKey} into {@code destKey}. Like
      * {@link #tsCreateRule(Object, Object, TsAggregation, long)}, but a bucket starts exactly at {@code alignTimestamp}.
      * <p>
-     * Both keys must hash to the same slot, for example by sharing a hash tag such as {@code {sensor1}}; in Redis Cluster the
-     * server rejects keys in different slots with {@code CROSSSLOT}.
+     * Both keys must hash to the same slot, for example by sharing a hash tag such as {@code {sensor1}}. In Redis Cluster, keys
+     * in different slots are rejected with {@code CROSSSLOT} on Redis 8.4 and later; Redis 8.0 and 8.2 reply
+     * {@code TSDB: the key does not exist} instead, even though both keys exist.
      *
      * @param sourceKey the key of the series to aggregate, must not be {@code null}.
      * @param destKey the key of the series that receives the compacted samples, must not be {@code null}.
      * @param aggregation the aggregation, must not be {@code null}. {@code countNaN} and {@code countAll} require Redis 8.6 or
      *        later.
      * @param bucketDuration the duration of each bucket in milliseconds.
-     * @param alignTimestamp the timestamp in milliseconds at which a bucket starts.
+     * @param alignTimestamp the timestamp in milliseconds at which a bucket starts, must not be negative.
      * @return String simple-string-reply {@code OK} if the rule was created.
-     * @throws IllegalArgumentException if {@code sourceKey}, {@code destKey} or {@code aggregation} is {@code null}.
+     * @throws IllegalArgumentException if {@code sourceKey}, {@code destKey} or {@code aggregation} is {@code null}, or if
+     *         {@code alignTimestamp} is negative.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.createrule/">TS.CREATERULE</a>
      */
@@ -156,8 +159,9 @@ public interface NodeSelectionTimeSeriesCommands<K, V> {
     /**
      * Delete the compaction rule from {@code sourceKey} to {@code destKey}. Both series are kept.
      * <p>
-     * Both keys must hash to the same slot, for example by sharing a hash tag such as {@code {sensor1}}; in Redis Cluster the
-     * server rejects keys in different slots with {@code CROSSSLOT}.
+     * Both keys must hash to the same slot, for example by sharing a hash tag such as {@code {sensor1}}. In Redis Cluster, keys
+     * in different slots are rejected with {@code CROSSSLOT} on Redis 8.4 and later; Redis 8.0 and 8.2 reply
+     * {@code TSDB: compaction rule does not exist} instead, even though both keys exist.
      *
      * @param sourceKey the key of the source series, must not be {@code null}.
      * @param destKey the key of the destination series, must not be {@code null}.
