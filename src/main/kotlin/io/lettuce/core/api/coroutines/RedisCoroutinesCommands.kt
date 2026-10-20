@@ -57,6 +57,7 @@ interface RedisCoroutinesCommands<K : Any, V : Any> :
     RedisTopKCoroutinesCommands<K, V>,
     RedisCMSCoroutinesCommands<K, V>,
     RedisTDigestCoroutinesCommands<K, V>,
+    RedisTimeSeriesCoroutinesCommands<K, V>,
     RediSearchCoroutinesCommands<K> {
 
     /**
