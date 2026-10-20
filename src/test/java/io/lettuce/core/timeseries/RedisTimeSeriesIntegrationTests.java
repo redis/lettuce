@@ -1580,6 +1580,26 @@ public class RedisTimeSeriesIntegrationTests {
         assertThatThrownBy(() -> redis.tsDeleteRule(null, DST)).isInstanceOf(IllegalArgumentException.class);
     }
 
+    /**
+     * Scenario A18b, through the API of every flavor and topology: a negative alignTimestamp throws
+     * {@link IllegalArgumentException} on the client, not the server's {@code TSDB: Couldn't parse alignTimestamp}, so no
+     * command is sent and no rule is created; alignment 0 is accepted.
+     */
+    @Test
+    void createRuleRejectsNegativeAlignmentThroughTheApi() {
+
+        redis.tsCreate(SRC, new TsCreateArgs().label("t", testName));
+        redis.tsCreate(DST, new TsCreateArgs().label("t", testName));
+
+        assertThatThrownBy(() -> redis.tsCreateRule(SRC, DST, TsAggregationType.AVG, 1000, -1))
+                .isInstanceOf(IllegalArgumentException.class).isNotInstanceOf(RedisCommandExecutionException.class);
+        assertThat(redis.tsInfo(SRC).getRules()).isEmpty();
+        assertThat(redis.tsInfo(DST).getSourceKey()).isNull();
+
+        assertThat(redis.tsCreateRule(SRC, DST, TsAggregationType.AVG, 1000, 0)).isEqualTo("OK");
+        assertThat(ruleTo(redis.tsInfo(SRC), DST).getAlignment()).isEqualTo(0);
+    }
+
     // --- errors ------------------------------------------------------------------------------------------------------
 
     /**

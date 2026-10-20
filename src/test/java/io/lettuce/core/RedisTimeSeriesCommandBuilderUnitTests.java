@@ -622,4 +622,19 @@ class RedisTimeSeriesCommandBuilderUnitTests {
         assertThatThrownBy(() -> builder.tsDeleteRule("{ts}:src", null)).isInstanceOf(IllegalArgumentException.class);
     }
 
+    /**
+     * Scenario A18b: a negative alignTimestamp throws {@link IllegalArgumentException} before a command is built, and an
+     * alignment of 0 is accepted and sent (design §2.2 and §5; Javadoc of {@code tsCreateRule}).
+     */
+    @Test
+    void createRuleRejectsNegativeAlignment() {
+
+        assertThatThrownBy(() -> builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.AVG, 1000, -1))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.AVG, 1000, Long.MIN_VALUE))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(tokens(builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.AVG, 1000, 0)))
+                .containsExactly("TS.CREATERULE", "{ts}:src", "{ts}:dst", "AGGREGATION", "AVG", "1000", "0");
+    }
+
 }
