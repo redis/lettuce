@@ -9,6 +9,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.Range
 import io.lettuce.core.api.reactive.RedisTimeSeriesReactiveCommands
+import io.lettuce.core.timeseries.TsAggregation
 import io.lettuce.core.timeseries.TsInfoValue
 import io.lettuce.core.timeseries.TsMAddValue
 import io.lettuce.core.timeseries.arguments.TsAddArgs
@@ -48,6 +49,15 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
 
     override suspend fun tsInfo(key: K, debug: Boolean): TsInfoValue<K>? =
         ops.tsInfo(key, debug).awaitFirstOrNull()
+
+    override suspend fun tsCreateRule(sourceKey: K, destKey: K, aggregation: TsAggregation, bucketDuration: Long): String? =
+        ops.tsCreateRule(sourceKey, destKey, aggregation, bucketDuration).awaitFirstOrNull()
+
+    override suspend fun tsCreateRule(sourceKey: K, destKey: K, aggregation: TsAggregation, bucketDuration: Long, alignTimestamp: Long): String? =
+        ops.tsCreateRule(sourceKey, destKey, aggregation, bucketDuration, alignTimestamp).awaitFirstOrNull()
+
+    override suspend fun tsDeleteRule(sourceKey: K, destKey: K): String? =
+        ops.tsDeleteRule(sourceKey, destKey).awaitFirstOrNull()
 
     override suspend fun tsAdd(key: K, value: Double): Long? =
         ops.tsAdd(key, value).awaitFirstOrNull()

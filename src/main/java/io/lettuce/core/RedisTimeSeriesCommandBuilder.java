@@ -10,8 +10,10 @@ import static io.lettuce.core.protocol.CommandType.DEBUG;
 import static io.lettuce.core.protocol.CommandType.TS_ADD;
 import static io.lettuce.core.protocol.CommandType.TS_ALTER;
 import static io.lettuce.core.protocol.CommandType.TS_CREATE;
+import static io.lettuce.core.protocol.CommandType.TS_CREATERULE;
 import static io.lettuce.core.protocol.CommandType.TS_DECRBY;
 import static io.lettuce.core.protocol.CommandType.TS_DEL;
+import static io.lettuce.core.protocol.CommandType.TS_DELETERULE;
 import static io.lettuce.core.protocol.CommandType.TS_INCRBY;
 import static io.lettuce.core.protocol.CommandType.TS_INFO;
 import static io.lettuce.core.protocol.CommandType.TS_MADD;
@@ -29,6 +31,8 @@ import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsInfoValueParser;
 import io.lettuce.core.timeseries.TsMAddValue;
@@ -104,6 +108,38 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         }
 
         return createCommand(TS_INFO, new EncodedComplexOutput<>(codec, new TsInfoValueParser<>(codec)), args);
+    }
+
+    Command<K, V, String> tsCreateRule(K sourceKey, K destKey, TsAggregation aggregation, long bucketDuration) {
+        return createCommand(TS_CREATERULE, new StatusOutput<>(codec),
+                createRuleArgs(sourceKey, destKey, aggregation, bucketDuration));
+    }
+
+    Command<K, V, String> tsCreateRule(K sourceKey, K destKey, TsAggregation aggregation, long bucketDuration,
+            long alignTimestamp) {
+
+        CommandArgs<K, V> args = createRuleArgs(sourceKey, destKey, aggregation, bucketDuration).add(alignTimestamp);
+
+        return createCommand(TS_CREATERULE, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> tsDeleteRule(K sourceKey, K destKey) {
+        LettuceAssert.notNull(sourceKey, "Source key " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destKey, "Destination key " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(sourceKey).addKey(destKey);
+
+        return createCommand(TS_DELETERULE, new StatusOutput<>(codec), args);
+    }
+
+    private CommandArgs<K, V> createRuleArgs(K sourceKey, K destKey, TsAggregation aggregation, long bucketDuration) {
+
+        LettuceAssert.notNull(sourceKey, "Source key " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destKey, "Destination key " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(aggregation, "Aggregation " + MUST_NOT_BE_NULL);
+
+        return new CommandArgs<>(codec).addKey(sourceKey).addKey(destKey).add(CommandKeyword.AGGREGATION).add(aggregation)
+                .add(bucketDuration);
     }
 
     Command<K, V, Long> tsAdd(K key, double value) {
