@@ -88,10 +88,12 @@ import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VSimScoreAttribs;
 import io.lettuce.core.vector.VectorMetadata;
@@ -4976,6 +4978,36 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> tsDeleteRule(K sourceKey, K destKey) {
         return dispatch(timeSeriesCommandBuilder.tsDeleteRule(sourceKey, destKey));
+    }
+
+    @Override
+    public RedisFuture<TsSample> tsGet(K key) {
+        return dispatch(timeSeriesCommandBuilder.tsGet(key));
+    }
+
+    @Override
+    public RedisFuture<TsSample> tsGet(K key, boolean latest) {
+        return dispatch(timeSeriesCommandBuilder.tsGet(key, latest));
+    }
+
+    @Override
+    public RedisFuture<List<TsSample>> tsRange(K key, Range<Long> range) {
+        return dispatch(timeSeriesCommandBuilder.tsRange(key, range));
+    }
+
+    @Override
+    public RedisFuture<List<TsSample>> tsRange(K key, Range<Long> range, TsRangeArgs args) {
+        return dispatch(timeSeriesCommandBuilder.tsRange(key, range, args));
+    }
+
+    @Override
+    public RedisFuture<List<TsSample>> tsRevRange(K key, Range<Long> range) {
+        return dispatch(timeSeriesCommandBuilder.tsRevRange(key, range));
+    }
+
+    @Override
+    public RedisFuture<List<TsSample>> tsRevRange(K key, Range<Long> range, TsRangeArgs args) {
+        return dispatch(timeSeriesCommandBuilder.tsRevRange(key, range, args));
     }
 
 }

@@ -14,9 +14,12 @@ import static io.lettuce.core.protocol.CommandType.TS_CREATERULE;
 import static io.lettuce.core.protocol.CommandType.TS_DECRBY;
 import static io.lettuce.core.protocol.CommandType.TS_DEL;
 import static io.lettuce.core.protocol.CommandType.TS_DELETERULE;
+import static io.lettuce.core.protocol.CommandType.TS_GET;
 import static io.lettuce.core.protocol.CommandType.TS_INCRBY;
 import static io.lettuce.core.protocol.CommandType.TS_INFO;
 import static io.lettuce.core.protocol.CommandType.TS_MADD;
+import static io.lettuce.core.protocol.CommandType.TS_RANGE;
+import static io.lettuce.core.protocol.CommandType.TS_REVRANGE;
 
 import java.util.List;
 
@@ -28,6 +31,8 @@ import io.lettuce.core.output.ErrorTolerantIntegerListOutput;
 import io.lettuce.core.output.ErrorTolerantIntegerValueListOutput;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.output.TsSampleListOutput;
+import io.lettuce.core.output.TsSampleOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -36,10 +41,12 @@ import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsInfoValueParser;
 import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 
 /**
  * Implementation of the {@link BaseRedisCommandBuilder} handling Redis TimeSeries commands.
@@ -219,6 +226,56 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         incrByArgs.build(args);
 
         return createCommand(TS_DECRBY, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, TsSample> tsGet(K key) {
+        notNullKey(key);
+
+        return createCommand(TS_GET, new TsSampleOutput<>(codec), key);
+    }
+
+    Command<K, V, TsSample> tsGet(K key, boolean latest) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        if (latest) {
+            args.add(CommandKeyword.LATEST);
+        }
+
+        return createCommand(TS_GET, new TsSampleOutput<>(codec), args);
+    }
+
+    Command<K, V, List<TsSample>> tsRange(K key, Range<Long> range) {
+        return createCommand(TS_RANGE, new TsSampleListOutput<>(codec), rangeArgs(key, range, null));
+    }
+
+    Command<K, V, List<TsSample>> tsRange(K key, Range<Long> range, TsRangeArgs rangeArgs) {
+        LettuceAssert.notNull(rangeArgs, "TsRangeArgs " + MUST_NOT_BE_NULL);
+
+        return createCommand(TS_RANGE, new TsSampleListOutput<>(codec), rangeArgs(key, range, rangeArgs));
+    }
+
+    Command<K, V, List<TsSample>> tsRevRange(K key, Range<Long> range) {
+        return createCommand(TS_REVRANGE, new TsSampleListOutput<>(codec), rangeArgs(key, range, null));
+    }
+
+    Command<K, V, List<TsSample>> tsRevRange(K key, Range<Long> range, TsRangeArgs rangeArgs) {
+        LettuceAssert.notNull(rangeArgs, "TsRangeArgs " + MUST_NOT_BE_NULL);
+
+        return createCommand(TS_REVRANGE, new TsSampleListOutput<>(codec), rangeArgs(key, range, rangeArgs));
+    }
+
+    private CommandArgs<K, V> rangeArgs(K key, Range<Long> range, TsRangeArgs rangeArgs) {
+        notNullKey(key);
+        notNullRange(range);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        addRange(args, range);
+        if (rangeArgs != null) {
+            rangeArgs.build(args);
+        }
+
+        return args;
     }
 
     private CommandArgs<K, V> mAddArgs(List<TsMAddValue<K>> samples) {

@@ -12,10 +12,12 @@ import io.lettuce.core.Range
 import io.lettuce.core.timeseries.TsAggregation
 import io.lettuce.core.timeseries.TsInfoValue
 import io.lettuce.core.timeseries.TsMAddValue
+import io.lettuce.core.timeseries.TsSample
 import io.lettuce.core.timeseries.arguments.TsAddArgs
 import io.lettuce.core.timeseries.arguments.TsAlterArgs
 import io.lettuce.core.timeseries.arguments.TsCreateArgs
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs
+import io.lettuce.core.timeseries.arguments.TsRangeArgs
 
 /**
  * Coroutine executed commands for Redis TimeSeries.
@@ -327,5 +329,105 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/commands/ts.decrby/">TS.DECRBY</a>
      */
     suspend fun tsDecrBy(key: K, subtrahend: Double, args: TsIncrByArgs): Long?
+
+    /**
+     * Get the latest sample of a time series. For a compaction, the latest bucket is reported only once it is complete; use
+     * [tsGet] with `latest` set to also get the open bucket.
+     *
+     * @param key the key, must not be `null`.
+     * @return TsSample the latest sample, or `null` if the series has no samples. Its value may be NaN on Redis 8.6
+     *         and later.
+     * @throws IllegalArgumentException if `key` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.get/">TS.GET</a>
+     */
+    suspend fun tsGet(key: K): TsSample?
+
+    /**
+     * Get the latest sample of a time series. With `latest` set, the command sends `LATEST`: for a compaction,
+     * the latest, possibly partial, bucket is reported. The server ignores it for a series that is not a compaction.
+     *
+     * @param key the key, must not be `null`.
+     * @param latest `true` to report the latest, possibly partial, bucket of a compaction.
+     * @return TsSample the latest sample, or `null` if the series has no samples.
+     * @throws IllegalArgumentException if `key` is `null`.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.get/">TS.GET</a>
+     */
+    suspend fun tsGet(key: K, latest: Boolean): TsSample?
+
+    /**
+     * Get the samples of a time series within a range of timestamps, in ascending order.
+     *
+     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest). Because
+     * timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an exclusive lower bound
+     * `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     *
+     * @param key the key, must not be `null`.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @return List<TsSample> the samples in ascending order; empty if the range has no samples.
+     * @throws IllegalArgumentException if `key` or `range` is `null`, or if `range` has an exclusive
+     *         lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.range/">TS.RANGE</a>
+     */
+    suspend fun tsRange(key: K, range: Range<Long>): List<TsSample>
+
+    /**
+     * Get the samples of a time series within a range of timestamps, in ascending order, with filters, a limit or an
+     * aggregation. With an aggregation, each sample is one bucket and has one value per aggregation, in the order of the
+     * request. Several aggregations require Redis 8.8 or later.
+     *
+     * The range bounds follow the same rules as in [tsRange]. For a compaction, the last reported bucket
+     * may include samples newer than the upper bound, because the bound limits only the bucket start.
+     *
+     * @param key the key, must not be `null`.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @param args the options, must not be `null`.
+     * @return List<TsSample> the samples or buckets in ascending order; empty if the range has no samples.
+     * @throws IllegalArgumentException if `key`, `range` or `args` is `null`, if `range` has an
+     *         exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if
+     *         `args` sets `ALIGN`, `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.range/">TS.RANGE</a>
+     */
+    suspend fun tsRange(key: K, range: Range<Long>, args: TsRangeArgs): List<TsSample>
+
+    /**
+     * Get the samples of a time series within a range of timestamps, in descending order.
+     *
+     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest). Because
+     * timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an exclusive lower bound
+     * `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     *
+     * @param key the key, must not be `null`.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @return List<TsSample> the samples in descending order; empty if the range has no samples.
+     * @throws IllegalArgumentException if `key` or `range` is `null`, or if `range` has an exclusive
+     *         lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.revrange/">TS.REVRANGE</a>
+     */
+    suspend fun tsRevRange(key: K, range: Range<Long>): List<TsSample>
+
+    /**
+     * Get the samples of a time series within a range of timestamps, in descending order, with filters, a limit or an
+     * aggregation. With an aggregation, each sample is one bucket and has one value per aggregation, in the order of the
+     * request. Several aggregations require Redis 8.8 or later.
+     *
+     * The range bounds follow the same rules as in [tsRevRange]. For a compaction, the last reported bucket
+     * may include samples newer than the upper bound, because the bound limits only the bucket start.
+     *
+     * @param key the key, must not be `null`.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @param args the options, must not be `null`.
+     * @return List<TsSample> the samples or buckets in descending order; empty if the range has no samples.
+     * @throws IllegalArgumentException if `key`, `range` or `args` is `null`, if `range` has an
+     *         exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if
+     *         `args` sets `ALIGN`, `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.revrange/">TS.REVRANGE</a>
+     */
+    suspend fun tsRevRange(key: K, range: Range<Long>, args: TsRangeArgs): List<TsSample>
 
 }

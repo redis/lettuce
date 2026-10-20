@@ -88,10 +88,12 @@ import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.vector.RawVector;
@@ -5074,6 +5076,36 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> tsDeleteRule(K sourceKey, K destKey) {
         return createMono(() -> timeSeriesCommandBuilder.tsDeleteRule(sourceKey, destKey));
+    }
+
+    @Override
+    public Mono<TsSample> tsGet(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsGet(key));
+    }
+
+    @Override
+    public Mono<TsSample> tsGet(K key, boolean latest) {
+        return createMono(() -> timeSeriesCommandBuilder.tsGet(key, latest));
+    }
+
+    @Override
+    public Flux<TsSample> tsRange(K key, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRange(key, range));
+    }
+
+    @Override
+    public Flux<TsSample> tsRange(K key, Range<Long> range, TsRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRange(key, range, args));
+    }
+
+    @Override
+    public Flux<TsSample> tsRevRange(K key, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRevRange(key, range));
+    }
+
+    @Override
+    public Flux<TsSample> tsRevRange(K key, Range<Long> range, TsRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRevRange(key, range, args));
     }
 
 }

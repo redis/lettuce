@@ -12,10 +12,12 @@ import io.lettuce.core.api.reactive.RedisTimeSeriesReactiveCommands
 import io.lettuce.core.timeseries.TsAggregation
 import io.lettuce.core.timeseries.TsInfoValue
 import io.lettuce.core.timeseries.TsMAddValue
+import io.lettuce.core.timeseries.TsSample
 import io.lettuce.core.timeseries.arguments.TsAddArgs
 import io.lettuce.core.timeseries.arguments.TsAlterArgs
 import io.lettuce.core.timeseries.arguments.TsCreateArgs
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs
+import io.lettuce.core.timeseries.arguments.TsRangeArgs
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -85,5 +87,23 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
 
     override suspend fun tsDecrBy(key: K, subtrahend: Double, args: TsIncrByArgs): Long? =
         ops.tsDecrBy(key, subtrahend, args).awaitFirstOrNull()
+
+    override suspend fun tsGet(key: K): TsSample? =
+        ops.tsGet(key).awaitFirstOrNull()
+
+    override suspend fun tsGet(key: K, latest: Boolean): TsSample? =
+        ops.tsGet(key, latest).awaitFirstOrNull()
+
+    override suspend fun tsRange(key: K, range: Range<Long>): List<TsSample> =
+        ops.tsRange(key, range).asFlow().toList()
+
+    override suspend fun tsRange(key: K, range: Range<Long>, args: TsRangeArgs): List<TsSample> =
+        ops.tsRange(key, range, args).asFlow().toList()
+
+    override suspend fun tsRevRange(key: K, range: Range<Long>): List<TsSample> =
+        ops.tsRevRange(key, range).asFlow().toList()
+
+    override suspend fun tsRevRange(key: K, range: Range<Long>, args: TsRangeArgs): List<TsSample> =
+        ops.tsRevRange(key, range, args).asFlow().toList()
 
 }
