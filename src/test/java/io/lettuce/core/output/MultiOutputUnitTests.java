@@ -179,6 +179,31 @@ class MultiOutputUnitTests {
         assertThat(output.getError()).isEqualTo("EXECABORT");
     }
 
+    @Test
+    void shouldForwardByteBufferErrorToErrorTolerantOutput() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
+        ErrorTolerantBooleanListOutput<String, String> errorTolerantOutput = new ErrorTolerantBooleanListOutput<>(
+                StringCodec.UTF8);
+        Command<String, String, List<Boolean>> command = new Command<>(CommandType.BF_MADD, errorTolerantOutput);
+
+        output.add(command);
+
+        // Transaction header: 1 command in EXEC reply
+        output.multi(1);
+
+        // Command returns an array of 2 elements (e.g. BF.MADD: 1 success, 1 error)
+        output.multi(2);
+        output.set(1);
+        output.setError(ByteBuffer.wrap("ERR item already exists".getBytes()));
+        output.complete(1);
+
+        assertThat(command.getOutput().hasError()).isFalse();
+        assertThat(command.getOutput().get()).containsExactly(true, null);
+        assertThat(output.hasError()).isFalse();
+        assertThat(output.get()).hasSize(1);
+    }
+
     /**
      * Records the decoder callbacks it receives, so tests can assert on the exact callback instead of only the resulting value.
      */
