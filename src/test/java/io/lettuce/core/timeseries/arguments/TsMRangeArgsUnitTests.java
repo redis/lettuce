@@ -263,6 +263,30 @@ class TsMRangeArgsUnitTests {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
+    /**
+     * Scenario A17: the aggregation bucket duration must be positive. A {@code long} of 0 or less and a {@code Duration} of
+     * zero, under one millisecond (counts as 0) or negative throw {@link IllegalArgumentException} before anything is sent, on
+     * the setters and the {@code Builder} factories (design §2.2, H19).
+     */
+    @Test
+    void bucketDurationMustBePositive() {
+
+        assertThatThrownBy(() -> new TsMRangeArgs().aggregation(0, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsMRangeArgs().aggregation(-1, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsMRangeArgs().aggregation(Duration.ZERO, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsMRangeArgs().aggregation(Duration.ofNanos(999_999), TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsMRangeArgs().aggregation(Duration.ofMillis(-1), TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsMRangeArgs.Builder.aggregation(0, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsMRangeArgs.Builder.aggregation(Duration.ZERO, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     // --- getters -----------------------------------------------------------------------------------------------------
 
     /**

@@ -165,11 +165,12 @@ public class TsMRangeArgs extends BaseTsRangeArgs<TsMRangeArgs> {
         /**
          * Create new {@link TsMRangeArgs} with an aggregation ({@code AGGREGATION}) set.
          *
-         * @param bucketDuration the bucket duration in milliseconds.
+         * @param bucketDuration the bucket duration in milliseconds, must be positive.
          * @param aggregations the aggregations, must not be {@code null} or empty and must not contain {@code null} elements.
          *        Several aggregations require Redis 8.8 or later.
          * @return new {@link TsMRangeArgs}.
-         * @throws IllegalArgumentException if {@code aggregations} is {@code null}, empty or contains {@code null} elements.
+         * @throws IllegalArgumentException if {@code bucketDuration} is not positive, or if {@code aggregations} is
+         *         {@code null}, empty or contains {@code null} elements.
          * @see TsMRangeArgs#aggregation(long, TsAggregation...)
          * @since 8.0
          */
@@ -180,8 +181,7 @@ public class TsMRangeArgs extends BaseTsRangeArgs<TsMRangeArgs> {
         /**
          * Create new {@link TsMRangeArgs} with an aggregation ({@code AGGREGATION}) set.
          *
-         * @param bucketDuration the bucket duration, must not be {@code null} or negative, and must be zero or at least one
-         *        millisecond.
+         * @param bucketDuration the bucket duration, must not be {@code null} and must be at least one millisecond.
          * @param aggregations the aggregations, must not be {@code null} or empty and must not contain {@code null} elements.
          *        Several aggregations require Redis 8.8 or later.
          * @return new {@link TsMRangeArgs}.
@@ -249,11 +249,12 @@ public class TsMRangeArgs extends BaseTsRangeArgs<TsMRangeArgs> {
      * aggregation, in the given order. Several aggregations require Redis 8.8 or later and cannot be combined with
      * {@link #groupBy(String, TsReducer)}.
      *
-     * @param bucketDuration the bucket duration in milliseconds.
+     * @param bucketDuration the bucket duration in milliseconds, must be positive.
      * @param aggregations the aggregations, must not be {@code null} or empty and must not contain {@code null} elements.
      * @return {@code this}.
-     * @throws IllegalArgumentException if {@code aggregations} is {@code null}, empty or contains {@code null} elements, or if
-     *         there is more than one aggregation and {@link #groupBy(String, TsReducer)} was set.
+     * @throws IllegalArgumentException if {@code bucketDuration} is not positive, or if {@code aggregations} is {@code null},
+     *         empty or contains {@code null} elements, or if there is more than one aggregation and
+     *         {@link #groupBy(String, TsReducer)} was set.
      * @since 8.0
      */
     public TsMRangeArgs aggregation(long bucketDuration, TsAggregation... aggregations) {
@@ -269,13 +270,12 @@ public class TsMRangeArgs extends BaseTsRangeArgs<TsMRangeArgs> {
      * Aggregate the samples of each series into buckets ({@code AGGREGATION}). The duration is sent in whole milliseconds.
      * Several aggregations require Redis 8.8 or later and cannot be combined with {@link #groupBy(String, TsReducer)}.
      *
-     * @param bucketDuration the bucket duration, must not be {@code null} or negative, and must be zero or at least one
-     *        millisecond.
+     * @param bucketDuration the bucket duration, must not be {@code null} and must be at least one millisecond.
      * @param aggregations the aggregations, must not be {@code null} or empty and must not contain {@code null} elements.
      * @return {@code this}.
-     * @throws IllegalArgumentException if {@code bucketDuration} is {@code null}, negative or not zero but shorter than one
-     *         millisecond, if {@code aggregations} is {@code null}, empty or contains {@code null} elements, or if there is
-     *         more than one aggregation and {@link #groupBy(String, TsReducer)} was set.
+     * @throws IllegalArgumentException if {@code bucketDuration} is {@code null} or shorter than one millisecond, if
+     *         {@code aggregations} is {@code null}, empty or contains {@code null} elements, or if there is more than one
+     *         aggregation and {@link #groupBy(String, TsReducer)} was set.
      * @since 8.0
      */
     public TsMRangeArgs aggregation(Duration bucketDuration, TsAggregation... aggregations) {
