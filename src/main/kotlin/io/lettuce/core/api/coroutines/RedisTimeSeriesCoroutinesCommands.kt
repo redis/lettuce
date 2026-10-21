@@ -337,8 +337,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * [tsGet] with `latest` set to also get the open bucket.
      *
      * @param key the key, must not be `null`.
-     * @return TsSample the latest sample, or `null` if the series has no samples. Its value may be NaN on Redis 8.6 and
-     *         later.
+     * @return TsSample the latest sample, or `null` if the series has no samples.
      * @throws IllegalArgumentException if `key` is `null`.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.get/">TS.GET</a>

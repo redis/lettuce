@@ -340,8 +340,7 @@ public interface RedisTimeSeriesAsyncCommands<K, V> {
      * {@link #tsGet(Object, boolean)} with {@code latest} set to also get the open bucket.
      *
      * @param key the key, must not be {@code null}.
-     * @return TsSample the latest sample, or {@code null} if the series has no samples. Its value may be NaN on Redis 8.6 and
-     *         later.
+     * @return TsSample the latest sample, or {@code null} if the series has no samples.
      * @throws IllegalArgumentException if {@code key} is {@code null}.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.get/">TS.GET</a>
