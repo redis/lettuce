@@ -180,7 +180,9 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
          * @param bucketDuration the bucket duration, must not be {@code null} and must be at least one millisecond.
          * @param aggregationsPerKey one non-empty aggregation list per key, in key order, must not be {@code null} or empty.
          * @return new {@link TsNRangeArgs}.
-         * @throws IllegalArgumentException if {@code bucketDuration} or {@code aggregationsPerKey} is invalid.
+         * @throws IllegalArgumentException if {@code bucketDuration} is {@code null} or shorter than one millisecond, or if
+         *         {@code aggregationsPerKey} is {@code null} or empty, or contains a {@code null} or empty list or a
+         *         {@code null} aggregation.
          * @see TsNRangeArgs#aggregation(Duration, List)
          * @since 8.0
          */
@@ -211,7 +213,8 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
          * @param aggregations the aggregations of each key, must not be {@code null} or empty and must not contain {@code null}
          *        elements.
          * @return new {@link TsNRangeArgs}.
-         * @throws IllegalArgumentException if {@code bucketDuration} or {@code aggregations} is invalid.
+         * @throws IllegalArgumentException if {@code bucketDuration} is {@code null} or shorter than one millisecond, or if
+         *         {@code aggregations} is {@code null}, empty or contains {@code null} elements.
          * @see TsNRangeArgs#aggregationForEachKey(Duration, TsAggregation...)
          * @since 8.0
          */
@@ -261,7 +264,8 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
      * @param aggregationsPerKey one non-empty aggregation list per key, in key order, must not be {@code null} or empty.
      * @return {@code this}.
      * @throws IllegalArgumentException if {@code bucketDuration} is {@code null} or shorter than one millisecond, or if
-     *         {@code aggregationsPerKey} is invalid.
+     *         {@code aggregationsPerKey} is {@code null} or empty, or contains a {@code null} or empty list or a {@code null}
+     *         aggregation.
      * @since 8.0
      */
     public TsNRangeArgs aggregation(Duration bucketDuration, List<List<TsAggregation>> aggregationsPerKey) {
