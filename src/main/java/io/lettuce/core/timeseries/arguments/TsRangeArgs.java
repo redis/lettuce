@@ -148,11 +148,12 @@ public class TsRangeArgs extends BaseTsRangeArgs<TsRangeArgs> implements Composi
         /**
          * Create new {@link TsRangeArgs} with an aggregation ({@code AGGREGATION}) set.
          *
-         * @param bucketDuration the bucket duration in milliseconds.
+         * @param bucketDuration the bucket duration in milliseconds, must be positive.
          * @param aggregations the aggregations, must not be {@code null} or empty and must not contain {@code null} elements.
          *        Several aggregations require Redis 8.8 or later.
          * @return new {@link TsRangeArgs}.
-         * @throws IllegalArgumentException if {@code aggregations} is {@code null}, empty or contains {@code null} elements.
+         * @throws IllegalArgumentException if {@code bucketDuration} is not positive, or if {@code aggregations} is
+         *         {@code null}, empty or contains {@code null} elements.
          * @see TsRangeArgs#aggregation(long, TsAggregation...)
          * @since 8.0
          */
@@ -163,8 +164,7 @@ public class TsRangeArgs extends BaseTsRangeArgs<TsRangeArgs> implements Composi
         /**
          * Create new {@link TsRangeArgs} with an aggregation ({@code AGGREGATION}) set.
          *
-         * @param bucketDuration the bucket duration, must not be {@code null} or negative, and must be zero or at least one
-         *        millisecond.
+         * @param bucketDuration the bucket duration, must not be {@code null} and must be at least one millisecond.
          * @param aggregations the aggregations, must not be {@code null} or empty and must not contain {@code null} elements.
          *        Several aggregations require Redis 8.8 or later.
          * @return new {@link TsRangeArgs}.
@@ -182,10 +182,11 @@ public class TsRangeArgs extends BaseTsRangeArgs<TsRangeArgs> implements Composi
      * Aggregate the samples into buckets ({@code AGGREGATION}). Each reported sample has one value per aggregation, in the
      * given order. Several aggregations require Redis 8.8 or later.
      *
-     * @param bucketDuration the bucket duration in milliseconds.
+     * @param bucketDuration the bucket duration in milliseconds, must be positive.
      * @param aggregations the aggregations, must not be {@code null} or empty and must not contain {@code null} elements.
      * @return {@code this}.
-     * @throws IllegalArgumentException if {@code aggregations} is {@code null}, empty or contains {@code null} elements.
+     * @throws IllegalArgumentException if {@code bucketDuration} is not positive, or if {@code aggregations} is {@code null},
+     *         empty or contains {@code null} elements.
      * @since 8.0
      */
     public TsRangeArgs aggregation(long bucketDuration, TsAggregation... aggregations) {
@@ -197,12 +198,11 @@ public class TsRangeArgs extends BaseTsRangeArgs<TsRangeArgs> implements Composi
      * Aggregate the samples into buckets ({@code AGGREGATION}). Each reported sample has one value per aggregation, in the
      * given order. Several aggregations require Redis 8.8 or later. The duration is sent in whole milliseconds.
      *
-     * @param bucketDuration the bucket duration, must not be {@code null} or negative, and must be zero or at least one
-     *        millisecond.
+     * @param bucketDuration the bucket duration, must not be {@code null} and must be at least one millisecond.
      * @param aggregations the aggregations, must not be {@code null} or empty and must not contain {@code null} elements.
      * @return {@code this}.
-     * @throws IllegalArgumentException if {@code bucketDuration} is {@code null}, negative or not zero but shorter than one
-     *         millisecond, or if {@code aggregations} is {@code null}, empty or contains {@code null} elements.
+     * @throws IllegalArgumentException if {@code bucketDuration} is {@code null} or shorter than one millisecond, or if
+     *         {@code aggregations} is {@code null}, empty or contains {@code null} elements.
      * @since 8.0
      */
     public TsRangeArgs aggregation(Duration bucketDuration, TsAggregation... aggregations) {

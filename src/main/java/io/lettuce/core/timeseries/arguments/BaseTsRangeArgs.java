@@ -177,6 +177,7 @@ abstract class BaseTsRangeArgs<T extends BaseTsRangeArgs<T>> {
 
     void setAggregation(long bucketDuration, TsAggregation... aggregations) {
 
+        assertBucketDuration(bucketDuration);
         LettuceAssert.notEmpty(aggregations, "Aggregations must not be empty");
         LettuceAssert.noNullElements(aggregations, "Aggregations must not contain null elements");
 
@@ -184,14 +185,21 @@ abstract class BaseTsRangeArgs<T extends BaseTsRangeArgs<T>> {
         this.aggregations = Collections.unmodifiableList(new ArrayList<>(Arrays.asList(aggregations)));
     }
 
+    /**
+     * Convert a bucket duration to whole milliseconds. A duration shorter than one millisecond counts as zero and is rejected.
+     */
     static long toMillis(Duration bucket) {
 
         LettuceAssert.notNull(bucket, "Bucket duration must not be null");
-        LettuceAssert.isTrue(!bucket.isNegative(), "Bucket duration must not be negative");
-        LettuceAssert.isTrue(bucket.isZero() || bucket.toMillis() > 0,
-                "Bucket duration must be zero or at least one millisecond");
 
-        return bucket.toMillis();
+        long millis = bucket.toMillis();
+        assertBucketDuration(millis);
+
+        return millis;
+    }
+
+    static void assertBucketDuration(long bucketDuration) {
+        LettuceAssert.isTrue(bucketDuration > 0, "Bucket duration must be at least one millisecond");
     }
 
     /**

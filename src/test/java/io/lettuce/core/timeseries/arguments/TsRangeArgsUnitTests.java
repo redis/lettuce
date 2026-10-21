@@ -144,8 +144,9 @@ class TsRangeArgsUnitTests {
     }
 
     /**
-     * Scenario A07: the {@code Duration} overload sends whole milliseconds; zero is allowed, a non-zero duration under one
-     * millisecond, a negative duration and {@code null} throw (Javadoc of {@code aggregation(Duration, …)}).
+     * Scenario A07 / A17: the {@code Duration} overload sends whole milliseconds. The bucket duration must be positive:
+     * {@code Duration.ZERO}, a non-zero duration under one millisecond (counts as 0), a negative duration and {@code null}
+     * throw {@link IllegalArgumentException} (design §2.2, H19; Javadoc of {@code aggregation(Duration, …)}).
      */
     @Test
     void aggregationWithDuration() {
@@ -154,15 +155,38 @@ class TsRangeArgsUnitTests {
                 .containsExactly("AGGREGATION", "AVG", "3000");
         assertThat(tokens(new TsRangeArgs().aggregation(Duration.ofMillis(1), TsAggregationType.AVG)))
                 .containsExactly("AGGREGATION", "AVG", "1");
-        assertThat(tokens(new TsRangeArgs().aggregation(Duration.ZERO, TsAggregationType.AVG))).containsExactly("AGGREGATION",
-                "AVG", "0");
 
+        assertThatThrownBy(() -> new TsRangeArgs().aggregation(Duration.ZERO, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new TsRangeArgs().aggregation(Duration.ofNanos(1), TsAggregationType.AVG))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new TsRangeArgs().aggregation(Duration.ofMillis(-1), TsAggregationType.AVG))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new TsRangeArgs().aggregation((Duration) null, TsAggregationType.AVG))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario A17: the aggregation bucket duration must be positive. A {@code long} of 0 or less and a {@code Duration} of
+     * zero, under one millisecond (counts as 0) or negative throw {@link IllegalArgumentException} before anything is sent, on
+     * the setters and the {@code Builder} factories (design §2.2, H19).
+     */
+    @Test
+    void bucketDurationMustBePositive() {
+
+        assertThatThrownBy(() -> new TsRangeArgs().aggregation(0, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsRangeArgs().aggregation(-1, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsRangeArgs().aggregation(Duration.ZERO, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsRangeArgs().aggregation(Duration.ofNanos(999_999), TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsRangeArgs.Builder.aggregation(0, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsRangeArgs.Builder.aggregation(Duration.ZERO, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(tokens(new TsRangeArgs().aggregation(1, TsAggregationType.AVG))).containsExactly("AGGREGATION", "AVG", "1");
     }
 
     /**
