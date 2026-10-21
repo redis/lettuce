@@ -168,7 +168,8 @@ public class TsRangeArgs extends BaseTsRangeArgs<TsRangeArgs> implements Composi
          * @param aggregations the aggregations, must not be {@code null} or empty and must not contain {@code null} elements.
          *        Several aggregations require Redis 8.8 or later.
          * @return new {@link TsRangeArgs}.
-         * @throws IllegalArgumentException if {@code bucketDuration} or {@code aggregations} is invalid.
+         * @throws IllegalArgumentException if {@code bucketDuration} is {@code null} or shorter than one millisecond, or if
+         *         {@code aggregations} is {@code null}, empty or contains {@code null} elements.
          * @see TsRangeArgs#aggregation(Duration, TsAggregation...)
          * @since 8.0
          */
