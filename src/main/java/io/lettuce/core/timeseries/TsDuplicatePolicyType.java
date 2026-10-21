@@ -69,4 +69,14 @@ public enum TsDuplicatePolicyType implements TsDuplicatePolicy {
         return bytes;
     }
 
+    /**
+     * Return the wire token, for example {@code BLOCK}.
+     *
+     * @return the wire token.
+     */
+    @Override
+    public String toString() {
+        return token;
+    }
+
 }

@@ -42,6 +42,19 @@ class TsEncodingUnitTests {
     }
 
     /**
+     * Scenario U02: {@code toString()} of every constant is its wire token.
+     */
+    @Test
+    void toStringIsWireToken() {
+
+        assertThat(TsEncodingType.COMPRESSED.toString()).isEqualTo("COMPRESSED");
+        assertThat(TsEncodingType.UNCOMPRESSED.toString()).isEqualTo("UNCOMPRESSED");
+        for (TsEncodingType type : TsEncodingType.values()) {
+            assertThat(type.toString()).isEqualTo(wire(type));
+        }
+    }
+
+    /**
      * Scenario U02: lookup under the Turkish locale.
      */
     @Test

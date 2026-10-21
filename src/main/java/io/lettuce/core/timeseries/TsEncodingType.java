@@ -49,4 +49,14 @@ public enum TsEncodingType implements TsEncoding {
         return bytes;
     }
 
+    /**
+     * Return the wire token, for example {@code COMPRESSED}.
+     *
+     * @return the wire token.
+     */
+    @Override
+    public String toString() {
+        return token;
+    }
+
 }

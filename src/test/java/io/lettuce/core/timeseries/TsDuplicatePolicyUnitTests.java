@@ -55,6 +55,18 @@ class TsDuplicatePolicyUnitTests {
     }
 
     /**
+     * Scenario U02: {@code toString()} of every constant is its wire token.
+     */
+    @Test
+    void toStringIsWireToken() {
+
+        assertThat(TsDuplicatePolicyType.BLOCK.toString()).isEqualTo("BLOCK");
+        for (TsDuplicatePolicyType type : TsDuplicatePolicyType.values()) {
+            assertThat(type.toString()).isEqualTo(wire(type));
+        }
+    }
+
+    /**
      * Scenario U02: lookup under the Turkish locale.
      */
     @Test
