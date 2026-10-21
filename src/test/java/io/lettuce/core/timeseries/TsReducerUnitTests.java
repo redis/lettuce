@@ -55,6 +55,22 @@ class TsReducerUnitTests {
     }
 
     /**
+     * Scenario U02 / U02c (reducer): {@code toString()} of every constant is its wire token, not its {@code name()}.
+     */
+    @Test
+    void toStringIsWireToken() {
+
+        assertThat(TsReducerType.STD_P.toString()).isEqualTo("STD.P");
+        assertThat(TsReducerType.STD_S.toString()).isEqualTo("STD.S");
+        assertThat(TsReducerType.VAR_P.toString()).isEqualTo("VAR.P");
+        assertThat(TsReducerType.VAR_S.toString()).isEqualTo("VAR.S");
+        assertThat(TsReducerType.SUM.toString()).isEqualTo("SUM");
+        for (TsReducerType type : TsReducerType.values()) {
+            assertThat(type.toString()).isEqualTo(wire(type));
+        }
+    }
+
+    /**
      * Scenario U02c (reducer): a known name, ignoring case, returns the constant itself; lookup by wire token, never by
      * {@code name()}.
      */

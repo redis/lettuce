@@ -105,4 +105,14 @@ public enum TsReducerType implements TsReducer {
         return bytes;
     }
 
+    /**
+     * Return the wire token, for example {@code STD.P} for {@link #STD_P}.
+     *
+     * @return the wire token.
+     */
+    @Override
+    public String toString() {
+        return token;
+    }
+
 }
