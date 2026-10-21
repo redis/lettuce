@@ -65,6 +65,7 @@ import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.ConnectionIntent;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.AggregationReply.Cursor;
@@ -1011,7 +1012,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * rebuild the same invalid command and log a misleading routing error.
      */
     private static boolean isClientSideFailure(Throwable err) {
-        return reactor.core.Exceptions.unwrap(err) instanceof IllegalArgumentException;
+        return Exceptions.unwrap(err) instanceof IllegalArgumentException;
     }
 
     private static <T> Mono<T> getMono(CompletableFuture<T> future) {
