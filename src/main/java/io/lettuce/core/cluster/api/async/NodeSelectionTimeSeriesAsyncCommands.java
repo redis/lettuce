@@ -20,6 +20,9 @@ import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
  * Asynchronous executed commands on a node selection for Redis TimeSeries.
  * <p>
  * Sample values are {@code double} and labels are {@code String}, so the value type {@code V} is not used by these commands.
+ * <p>
+ * {@code tsMAdd} runs unchanged on every selected node; it is not split by slot, so the keys must hash to slots that node
+ * serves.
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -185,8 +188,9 @@ public interface NodeSelectionTimeSeriesAsyncCommands<K, V> {
      * missing key, gives a {@code null} element at its position, and the other samples are still added. To add a single sample
      * with options, use {@link #tsAdd(Object, long, double, TsAddArgs)}.
      * <p>
-     * In Redis Cluster, samples whose keys hash to different slots are sent as one command per slot. The split is not atomic
-     * across slots: each slot's command is applied on its own. The result keeps the order of {@code samples}.
+     * With the Redis Cluster API ({@code RedisAdvancedClusterCommands} and its async and reactive variants), samples whose keys
+     * hash to different slots are sent as one command per slot. The split is not atomic across slots: each slot's command is
+     * applied on its own. The result keeps the order of {@code samples}.
      *
      * @param samples the samples, must not be {@code null} or empty and must not contain {@code null} elements.
      * @return List&lt;Long&gt; one element per sample, in the order of {@code samples}: the timestamp of the added sample, the

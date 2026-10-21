@@ -184,8 +184,9 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * missing key, gives a `null` element at its position, and the other samples are still added. To add a single sample
      * with options, use [tsAdd].
      *
-     * In Redis Cluster, samples whose keys hash to different slots are sent as one command per slot. The split is not atomic
-     * across slots: each slot's command is applied on its own. The result keeps the order of `samples`.
+     * With the Redis Cluster API (`RedisAdvancedClusterCommands` and its async and reactive variants), samples whose keys
+     * hash to different slots are sent as one command per slot. The split is not atomic across slots: each slot's command is
+     * applied on its own. The result keeps the order of `samples`.
      *
      * @param samples the samples, must not be `null` or empty and must not contain `null` elements.
      * @return List<Long> one element per sample, in the order of `samples`: the timestamp of the added sample, the

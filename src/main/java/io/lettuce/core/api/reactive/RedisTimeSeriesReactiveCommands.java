@@ -189,8 +189,9 @@ public interface RedisTimeSeriesReactiveCommands<K, V> {
      * missing key, gives {@link Value#empty()} at its position, and the other samples are still added. To add a single sample
      * with options, use {@link #tsAdd(Object, long, double, TsAddArgs)}.
      * <p>
-     * In Redis Cluster, samples whose keys hash to different slots are sent as one command per slot. The split is not atomic
-     * across slots: each slot's command is applied on its own. The result keeps the order of {@code samples}.
+     * With the Redis Cluster API ({@code RedisAdvancedClusterCommands} and its async and reactive variants), samples whose keys
+     * hash to different slots are sent as one command per slot. The split is not atomic across slots: each slot's command is
+     * applied on its own. The result keeps the order of {@code samples}.
      *
      * @param samples the samples, must not be {@code null} or empty and must not contain {@code null} elements.
      * @return Long one element per sample, in the order of {@code samples}: the timestamp of the added sample, the highest
