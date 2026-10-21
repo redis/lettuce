@@ -135,6 +135,7 @@ commands.tsCreateRule("{sensor1}:raw", "{sensor1}:max-1h", TsAggregationType.MAX
 commands.tsDeleteRule("{sensor1}:raw", "{sensor1}:avg-1m");   // keeps both series
 ```
 
+- The bucket duration must be greater than 0; zero or a negative value throws `IllegalArgumentException` before the command is sent.
 - The alignment timestamp must not be negative; a negative value throws `IllegalArgumentException` before the command is sent.
 - A rule takes one aggregation. `countNaN` and `countAll` require Redis 8.6 or later. For an aggregation that this Lettuce version does not know yet, pass `TsAggregation.of("name")`.
 - Only samples added after the rule is created are aggregated. Each compacted sample has the start of its bucket as timestamp, and a bucket with no source samples gets no compacted sample.
