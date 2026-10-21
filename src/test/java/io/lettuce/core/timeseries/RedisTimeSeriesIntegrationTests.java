@@ -2539,7 +2539,7 @@ public class RedisTimeSeriesIntegrationTests {
         assertThat((String) result.get(0)).isEqualTo("OK");
         assertThat((Long) result.get(1)).isEqualTo(1000L);
         assertThat(maddResultInTransaction(result.get(2))).containsExactly(2000L, 3000L);
-        assertThat((List<?>) result.get(3)).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 2.0),
+        assertThat(result.<List<TsSample>> get(3)).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 2.0),
                 TsSample.of(3000, 3.0));
         assertThat((TsSample) result.get(4)).isEqualTo(TsSample.of(3000, 3.0));
     }
@@ -2564,7 +2564,7 @@ public class RedisTimeSeriesIntegrationTests {
         assertThat(result).hasSize(5);
         assertThat((String) result.get(0)).isEqualTo("OK");
         assertThat((Long) result.get(1)).isEqualTo(1000L);
-        assertThat((List<?>) result.get(3)).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 3.0));
+        assertThat(result.<List<TsSample>> get(3)).containsExactly(TsSample.of(1000, 1.0), TsSample.of(2000, 3.0));
         assertThat((TsSample) result.get(4)).isEqualTo(TsSample.of(2000, 3.0));
         assertThat((Object) result.get(2)).isNotInstanceOf(Throwable.class);
         assertThat(maddResultInTransaction(result.get(2))).containsExactly(null, 2000L);

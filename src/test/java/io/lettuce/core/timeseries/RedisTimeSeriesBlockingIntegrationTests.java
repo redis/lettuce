@@ -284,7 +284,7 @@ public class RedisTimeSeriesBlockingIntegrationTests {
         assertThat((Object) result.get(0)).isInstanceOf(RedisCommandExecutionException.class);
         assertThat(((RedisCommandExecutionException) result.get(0)))
                 .hasMessageContaining("TSDB: blocking TS.READ (with BLOCK) is not allowed inside MULTI");
-        assertThat((List<?>) result.get(1)).containsExactly(TsSample.of(1000, 1.0));
+        assertThat(result.<List<TsSample>> get(1)).containsExactly(TsSample.of(1000, 1.0));
 
         assertThat(sync.tsGet(KEY)).isEqualTo(TsSample.of(1000, 1.0));
     }
