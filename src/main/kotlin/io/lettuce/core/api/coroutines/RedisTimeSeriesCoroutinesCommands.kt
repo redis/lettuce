@@ -860,9 +860,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      *
      * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @return List<String> the label names; empty if no series matches.
      * @since 8.0
@@ -878,9 +877,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @param filter the filter, must not be `null`.
      * @return List<String> the label names; empty if no series matches.
@@ -899,9 +897,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
      *        elements.
@@ -917,9 +914,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      *
      * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @param label the label name, must not be `null` or empty.
      * @return List<String> the values; empty if no series matches or no series has the label.
@@ -937,9 +933,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @param label the label name, must not be `null` or empty.
      * @param filter the filter, must not be `null`.
@@ -959,9 +954,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @param label the label name, must not be `null` or empty.
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
