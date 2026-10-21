@@ -16,8 +16,8 @@ import io.lettuce.core.internal.LettuceAssert;
  * Sample of a TimeSeries: a timestamp and one or more values. A raw sample, or a bucket aggregated with one aggregation, has
  * one value. A bucket aggregated with several aggregations has one value per aggregation, in the order of the request.
  * <p>
- * Values may be NaN. Equality compares values with {@link Double#compare(double, double)} semantics, so {@code NaN} equals
- * {@code NaN}. {@link TsSample} is immutable.
+ * Values may be NaN on Redis 8.6 and later. Equality compares values with {@link Double#compare(double, double)} semantics, so
+ * {@code NaN} equals {@code NaN}. {@link TsSample} is immutable.
  *
  * @since 8.0
  */

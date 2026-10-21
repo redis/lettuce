@@ -67,7 +67,8 @@ public class TsReadArgs implements CompositeArgument {
          *        {@link Duration#ZERO} blocks without a time limit.
          * @param minCount the number of samples to wait for, must be positive.
          * @return new {@link TsReadArgs}.
-         * @throws IllegalArgumentException if {@code timeout} is invalid or {@code minCount} is not positive.
+         * @throws IllegalArgumentException if {@code timeout} is {@code null}, negative, or not zero but shorter than one
+         *         millisecond, or if {@code minCount} is not positive.
          * @see TsReadArgs#block(Duration, long)
          * @since 8.0
          */
