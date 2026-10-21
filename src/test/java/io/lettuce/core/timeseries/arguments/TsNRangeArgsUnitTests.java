@@ -190,6 +190,38 @@ class TsNRangeArgsUnitTests {
     }
 
     /**
+     * Scenario A17: the aggregation bucket duration must be positive. A {@code long} of 0 or less and a {@code Duration} of
+     * zero, under one millisecond (counts as 0) or negative throw {@link IllegalArgumentException} before anything is sent, on
+     * the setters and the {@code Builder} factories (design §2.2, H19).
+     */
+    @Test
+    void bucketDurationMustBePositive() {
+
+        assertThatThrownBy(() -> new TsNRangeArgs().aggregation(0, perKey(aggs(TsAggregationType.SUM))))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsNRangeArgs().aggregation(-1, perKey(aggs(TsAggregationType.SUM))))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsNRangeArgs().aggregation(Duration.ZERO, perKey(aggs(TsAggregationType.SUM))))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsNRangeArgs().aggregation(Duration.ofNanos(999_999), perKey(aggs(TsAggregationType.SUM))))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsNRangeArgs().aggregationForEachKey(0, TsAggregationType.SUM))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsNRangeArgs().aggregationForEachKey(-1, TsAggregationType.SUM))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsNRangeArgs().aggregationForEachKey(Duration.ZERO, TsAggregationType.SUM))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsNRangeArgs.Builder.aggregation(0, perKey(aggs(TsAggregationType.SUM))))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsNRangeArgs.Builder.aggregation(Duration.ZERO, perKey(aggs(TsAggregationType.SUM))))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsNRangeArgs.Builder.aggregationForEachKey(0, TsAggregationType.SUM))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsNRangeArgs.Builder.aggregationForEachKey(Duration.ZERO, TsAggregationType.SUM))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
      * Scenario A16: spec count ≠ key count → {@link IllegalArgumentException} when the arguments are built (design §3.3:
      * {@code build(CommandArgs, int keyCount)}).
      */

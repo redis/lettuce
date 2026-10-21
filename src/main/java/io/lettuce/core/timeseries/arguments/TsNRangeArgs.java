@@ -162,11 +162,11 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
         /**
          * Create new {@link TsNRangeArgs} with one aggregation list per key ({@code AGGREGATION}) set.
          *
-         * @param bucketDuration the bucket duration in milliseconds.
+         * @param bucketDuration the bucket duration in milliseconds, must be positive.
          * @param aggregationsPerKey one non-empty aggregation list per key, in key order, must not be {@code null} or empty.
          * @return new {@link TsNRangeArgs}.
-         * @throws IllegalArgumentException if {@code aggregationsPerKey} is {@code null} or empty, or contains a {@code null}
-         *         or empty list or a {@code null} aggregation.
+         * @throws IllegalArgumentException if {@code bucketDuration} is not positive, or if {@code aggregationsPerKey} is
+         *         {@code null} or empty, or contains a {@code null} or empty list or a {@code null} aggregation.
          * @see TsNRangeArgs#aggregation(long, List)
          * @since 8.0
          */
@@ -177,8 +177,7 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
         /**
          * Create new {@link TsNRangeArgs} with one aggregation list per key ({@code AGGREGATION}) set.
          *
-         * @param bucketDuration the bucket duration, must not be {@code null} or negative, and must be zero or at least one
-         *        millisecond.
+         * @param bucketDuration the bucket duration, must not be {@code null} and must be at least one millisecond.
          * @param aggregationsPerKey one non-empty aggregation list per key, in key order, must not be {@code null} or empty.
          * @return new {@link TsNRangeArgs}.
          * @throws IllegalArgumentException if {@code bucketDuration} or {@code aggregationsPerKey} is invalid.
@@ -192,11 +191,12 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
         /**
          * Create new {@link TsNRangeArgs} with the same aggregations for every key ({@code AGGREGATION}) set.
          *
-         * @param bucketDuration the bucket duration in milliseconds.
+         * @param bucketDuration the bucket duration in milliseconds, must be positive.
          * @param aggregations the aggregations of each key, must not be {@code null} or empty and must not contain {@code null}
          *        elements.
          * @return new {@link TsNRangeArgs}.
-         * @throws IllegalArgumentException if {@code aggregations} is {@code null}, empty or contains {@code null} elements.
+         * @throws IllegalArgumentException if {@code bucketDuration} is not positive, or if {@code aggregations} is
+         *         {@code null}, empty or contains {@code null} elements.
          * @see TsNRangeArgs#aggregationForEachKey(long, TsAggregation...)
          * @since 8.0
          */
@@ -207,8 +207,7 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
         /**
          * Create new {@link TsNRangeArgs} with the same aggregations for every key ({@code AGGREGATION}) set.
          *
-         * @param bucketDuration the bucket duration, must not be {@code null} or negative, and must be zero or at least one
-         *        millisecond.
+         * @param bucketDuration the bucket duration, must not be {@code null} and must be at least one millisecond.
          * @param aggregations the aggregations of each key, must not be {@code null} or empty and must not contain {@code null}
          *        elements.
          * @return new {@link TsNRangeArgs}.
@@ -227,15 +226,16 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
      * every key in key order, one value per aggregation of that key. The list must have exactly one entry per key of the
      * command. Replaces {@link #aggregationForEachKey(long, TsAggregation...)}.
      *
-     * @param bucketDuration the bucket duration in milliseconds, shared by all keys.
+     * @param bucketDuration the bucket duration in milliseconds, shared by all keys, must be positive.
      * @param aggregationsPerKey one non-empty aggregation list per key, in key order, must not be {@code null} or empty.
      * @return {@code this}.
-     * @throws IllegalArgumentException if {@code aggregationsPerKey} is {@code null} or empty, or contains a {@code null} or
-     *         empty list or a {@code null} aggregation.
+     * @throws IllegalArgumentException if {@code bucketDuration} is not positive, or if {@code aggregationsPerKey} is
+     *         {@code null} or empty, or contains a {@code null} or empty list or a {@code null} aggregation.
      * @since 8.0
      */
     public TsNRangeArgs aggregation(long bucketDuration, List<List<TsAggregation>> aggregationsPerKey) {
 
+        assertBucketDuration(bucketDuration);
         LettuceAssert.notNull(aggregationsPerKey, "Aggregations per key must not be null");
         LettuceAssert.isTrue(!aggregationsPerKey.isEmpty(), "Aggregations per key must not be empty");
 
@@ -257,12 +257,11 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
      * Aggregate the samples of each key into buckets with its own aggregations ({@code AGGREGATION}). The duration is sent in
      * whole milliseconds. See {@link #aggregation(long, List)}.
      *
-     * @param bucketDuration the bucket duration, must not be {@code null} or negative, and must be zero or at least one
-     *        millisecond.
+     * @param bucketDuration the bucket duration, must not be {@code null} and must be at least one millisecond.
      * @param aggregationsPerKey one non-empty aggregation list per key, in key order, must not be {@code null} or empty.
      * @return {@code this}.
-     * @throws IllegalArgumentException if {@code bucketDuration} is {@code null}, negative or not zero but shorter than one
-     *         millisecond, or if {@code aggregationsPerKey} is invalid.
+     * @throws IllegalArgumentException if {@code bucketDuration} is {@code null} or shorter than one millisecond, or if
+     *         {@code aggregationsPerKey} is invalid.
      * @since 8.0
      */
     public TsNRangeArgs aggregation(Duration bucketDuration, List<List<TsAggregation>> aggregationsPerKey) {
@@ -274,15 +273,17 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
      * sent once for every key of the command. Each row then has, for every key in key order, one value per aggregation.
      * Replaces {@link #aggregation(long, List)}.
      *
-     * @param bucketDuration the bucket duration in milliseconds.
+     * @param bucketDuration the bucket duration in milliseconds, must be positive.
      * @param aggregations the aggregations of each key, must not be {@code null} or empty and must not contain {@code null}
      *        elements.
      * @return {@code this}.
-     * @throws IllegalArgumentException if {@code aggregations} is {@code null}, empty or contains {@code null} elements.
+     * @throws IllegalArgumentException if {@code bucketDuration} is not positive, or if {@code aggregations} is {@code null},
+     *         empty or contains {@code null} elements.
      * @since 8.0
      */
     public TsNRangeArgs aggregationForEachKey(long bucketDuration, TsAggregation... aggregations) {
 
+        assertBucketDuration(bucketDuration);
         LettuceAssert.notEmpty(aggregations, "Aggregations must not be empty");
         LettuceAssert.noNullElements(aggregations, "Aggregations must not contain null elements");
 
@@ -296,13 +297,12 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
      * Aggregate the samples of every key into buckets with the same aggregations ({@code AGGREGATION}). The duration is sent in
      * whole milliseconds. See {@link #aggregationForEachKey(long, TsAggregation...)}.
      *
-     * @param bucketDuration the bucket duration, must not be {@code null} or negative, and must be zero or at least one
-     *        millisecond.
+     * @param bucketDuration the bucket duration, must not be {@code null} and must be at least one millisecond.
      * @param aggregations the aggregations of each key, must not be {@code null} or empty and must not contain {@code null}
      *        elements.
      * @return {@code this}.
-     * @throws IllegalArgumentException if {@code bucketDuration} is {@code null}, negative or not zero but shorter than one
-     *         millisecond, or if {@code aggregations} is {@code null}, empty or contains {@code null} elements.
+     * @throws IllegalArgumentException if {@code bucketDuration} is {@code null} or shorter than one millisecond, or if
+     *         {@code aggregations} is {@code null}, empty or contains {@code null} elements.
      * @since 8.0
      */
     public TsNRangeArgs aggregationForEachKey(Duration bucketDuration, TsAggregation... aggregations) {
