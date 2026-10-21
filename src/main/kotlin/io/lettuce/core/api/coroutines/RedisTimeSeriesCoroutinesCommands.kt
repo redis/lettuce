@@ -111,9 +111,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
     /**
      * Add a sample with the current server time to a time series, creating the series if it does not exist.
      *
-     * The sample gets timestamp `*`, so the server clock sets it. Java converts a `long` to `double` without
-     * a cast, so `tsAdd(key, timestampMillis)` compiles and stores the timestamp as the value. To set the timestamp, use
-     * [tsAdd].
+     * The sample gets timestamp `*`, so the server clock sets it. To set the timestamp, use
+     * `tsAdd(key, timestamp, value)`.
      *
      * @param key the key, must not be `null`.
      * @param value the value.
@@ -128,9 +127,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
     /**
      * Add a sample with the current server time to a time series, with options.
      *
-     * The sample gets timestamp `*`, so the server clock sets it. Java converts a `long` to `double` without
-     * a cast, so `tsAdd(key, timestampMillis)` compiles and stores the timestamp as the value. To set the timestamp, use
-     * [tsAdd].
+     * The sample gets timestamp `*`, so the server clock sets it. To set the timestamp, use
+     * `tsAdd(key, timestamp, value, args)`.
      *
      * If the series does not exist, it is created. The series options in `args` apply only when the series is created;
      * for an existing series the server ignores them.
