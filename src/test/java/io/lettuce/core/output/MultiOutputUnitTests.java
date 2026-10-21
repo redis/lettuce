@@ -14,6 +14,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.Value;
 
 /**
  * @author Mark Paluch
@@ -177,6 +178,56 @@ class MultiOutputUnitTests {
 
         assertThat(output.hasError()).isTrue();
         assertThat(output.getError()).isEqualTo("EXECABORT");
+    }
+
+    @Test
+    void shouldForwardByteBufferErrorToErrorTolerantOutput() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
+        ErrorTolerantBooleanListOutput<String, String> errorTolerantOutput = new ErrorTolerantBooleanListOutput<>(
+                StringCodec.UTF8);
+        Command<String, String, List<Boolean>> command = new Command<>(CommandType.BF_MADD, errorTolerantOutput);
+
+        output.add(command);
+
+        // Transaction header: 1 command in EXEC reply
+        output.multi(1);
+
+        // Command returns an array of 2 elements (e.g. BF.MADD: 1 success, 1 error)
+        output.multi(2);
+        output.set(1);
+        output.setError(ByteBuffer.wrap("ERR item already exists".getBytes()));
+        output.complete(1);
+
+        assertThat(command.getOutput().hasError()).isFalse();
+        assertThat(command.getOutput().get()).containsExactly(true, null);
+        assertThat(output.hasError()).isFalse();
+        assertThat(output.get()).hasSize(1);
+    }
+
+    @Test
+    void shouldForwardByteBufferErrorToErrorTolerantValueOutput() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
+        ErrorTolerantBooleanValueListOutput<String, String> errorTolerantOutput = new ErrorTolerantBooleanValueListOutput<>(
+                StringCodec.UTF8);
+        Command<String, String, List<Value<Boolean>>> command = new Command<>(CommandType.BF_MADD, errorTolerantOutput);
+
+        output.add(command);
+
+        // Transaction header: 1 command in EXEC reply
+        output.multi(1);
+
+        // Command returns an array of 2 elements (e.g. BF.MADD: 1 success, 1 error)
+        output.multi(2);
+        output.set(1);
+        output.setError(ByteBuffer.wrap("ERR item already exists".getBytes()));
+        output.complete(1);
+
+        assertThat(command.getOutput().hasError()).isFalse();
+        assertThat(command.getOutput().get()).containsExactly(Value.fromNullable(true), Value.empty());
+        assertThat(output.hasError()).isFalse();
+        assertThat(output.get()).hasSize(1);
     }
 
     /**
