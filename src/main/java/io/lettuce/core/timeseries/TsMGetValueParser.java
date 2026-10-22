@@ -32,6 +32,7 @@ public final class TsMGetValueParser<K, V> implements ComplexDataParser<List<TsM
      *
      * @param codec the codec of the connection, must not be {@code null}.
      * @throws IllegalArgumentException if {@code codec} is {@code null}.
+     * @since 8.0
      */
     public TsMGetValueParser(RedisCodec<K, V> codec) {
 

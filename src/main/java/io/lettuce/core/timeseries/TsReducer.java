@@ -33,6 +33,7 @@ public interface TsReducer extends ProtocolKeyword {
      * @param name the reducer name as the server spells it, must not be empty and must not contain {@code ,} or whitespace.
      * @return the reducer.
      * @throws IllegalArgumentException if {@code name} is {@code null} or empty, or contains {@code ,} or whitespace.
+     * @since 8.0
      */
     static TsReducer of(String name) {
 

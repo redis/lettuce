@@ -33,6 +33,7 @@ public interface TsEncoding extends ProtocolKeyword {
      * @param name the encoding name as the server spells it, must not be empty and must not contain {@code ,} or whitespace.
      * @return the encoding.
      * @throws IllegalArgumentException if {@code name} is {@code null} or empty, or contains {@code ,} or whitespace.
+     * @since 8.0
      */
     static TsEncoding of(String name) {
 

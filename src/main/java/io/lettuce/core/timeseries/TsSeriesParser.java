@@ -51,6 +51,7 @@ public final class TsSeriesParser<K, V> implements ComplexDataParser<List<TsSeri
      * @param grouped {@code true} if the request has {@code GROUPBY}.
      * @param reducer the reducer of the request, can be {@code null} without {@code GROUPBY}.
      * @throws IllegalArgumentException if {@code codec} or {@code aggregations} is {@code null}.
+     * @since 8.0
      */
     public TsSeriesParser(RedisCodec<K, V> codec, List<TsAggregation> aggregations, boolean grouped, TsReducer reducer) {
 

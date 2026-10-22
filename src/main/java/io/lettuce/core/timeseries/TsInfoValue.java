@@ -84,6 +84,7 @@ public class TsInfoValue<K> {
      * Get the number of samples in the series.
      *
      * @return the number of samples.
+     * @since 8.0
      */
     public long getTotalSamples() {
         return totalSamples;
@@ -93,6 +94,7 @@ public class TsInfoValue<K> {
      * Get the memory used by the series, including its configuration, rules, labels and chunks.
      *
      * @return the memory usage in bytes.
+     * @since 8.0
      */
     public long getMemoryUsage() {
         return memoryUsage;
@@ -102,6 +104,7 @@ public class TsInfoValue<K> {
      * Get the timestamp of the first sample.
      *
      * @return the first timestamp in milliseconds, {@code 0} when the series has no samples.
+     * @since 8.0
      */
     public long getFirstTimestamp() {
         return firstTimestamp;
@@ -111,6 +114,7 @@ public class TsInfoValue<K> {
      * Get the timestamp of the last sample.
      *
      * @return the last timestamp in milliseconds, {@code 0} when the series has no samples.
+     * @since 8.0
      */
     public long getLastTimestamp() {
         return lastTimestamp;
@@ -120,6 +124,7 @@ public class TsInfoValue<K> {
      * Get the retention period of the series.
      *
      * @return the retention period in milliseconds, {@code 0} when samples never expire.
+     * @since 8.0
      */
     public long getRetentionTime() {
         return retentionTime;
@@ -129,6 +134,7 @@ public class TsInfoValue<K> {
      * Get the number of data chunks of the series.
      *
      * @return the number of chunks.
+     * @since 8.0
      */
     public long getChunkCount() {
         return chunkCount;
@@ -138,6 +144,7 @@ public class TsInfoValue<K> {
      * Get the memory size of a data chunk of the series.
      *
      * @return the chunk size in bytes.
+     * @since 8.0
      */
     public long getChunkSize() {
         return chunkSize;
@@ -148,6 +155,7 @@ public class TsInfoValue<K> {
      *
      * @return the chunk encoding: a {@link TsEncodingType} constant when this Lettuce version knows the value, otherwise a
      *         {@link TsEncoding} that keeps the server's name; {@code null} if the server did not report it.
+     * @since 8.0
      */
     public TsEncoding getChunkType() {
         return chunkType;
@@ -159,6 +167,7 @@ public class TsInfoValue<K> {
      * @return the duplicate policy: a {@link TsDuplicatePolicyType} constant when this Lettuce version knows the value,
      *         otherwise a {@link TsDuplicatePolicy} that keeps the server's name; {@code null} if the series has no policy of
      *         its own.
+     * @since 8.0
      */
     public TsDuplicatePolicy getDuplicatePolicy() {
         return duplicatePolicy;
@@ -168,6 +177,7 @@ public class TsInfoValue<K> {
      * Get the labels of the series, in the order the server reported them.
      *
      * @return the labels, never {@code null}; empty when the series has no labels.
+     * @since 8.0
      */
     public Map<String, String> getLabels() {
         return labels;
@@ -177,6 +187,7 @@ public class TsInfoValue<K> {
      * Get the key of the series this series is a compaction of.
      *
      * @return the source key, or {@code null} if this series is not the destination of a compaction rule.
+     * @since 8.0
      */
     public K getSourceKey() {
         return sourceKey;
@@ -186,6 +197,7 @@ public class TsInfoValue<K> {
      * Get the compaction rules whose source is this series.
      *
      * @return the compaction rules, never {@code null}.
+     * @since 8.0
      */
     public List<Rule<K>> getRules() {
         return rules;
@@ -195,6 +207,7 @@ public class TsInfoValue<K> {
      * Get the maximum time difference under which a new sample is ignored as a duplicate ({@code IGNORE}).
      *
      * @return the maximum time difference in milliseconds, or {@code null} if the server did not report it.
+     * @since 8.0
      */
     public Long getIgnoreMaxTimeDiff() {
         return ignoreMaxTimeDiff;
@@ -204,6 +217,7 @@ public class TsInfoValue<K> {
      * Get the maximum value difference under which a new sample is ignored as a duplicate ({@code IGNORE}).
      *
      * @return the maximum value difference, or {@code null} if the server did not report it.
+     * @since 8.0
      */
     public Double getIgnoreMaxValDiff() {
         return ignoreMaxValDiff;
@@ -213,6 +227,7 @@ public class TsInfoValue<K> {
      * Get the key of the series as stored by the server. Only populated when the information was requested with {@code DEBUG}.
      *
      * @return the key, or {@code null} if the information was not requested with {@code DEBUG}.
+     * @since 8.0
      */
     public K getKeySelfName() {
         return keySelfName;
@@ -222,6 +237,7 @@ public class TsInfoValue<K> {
      * Get the data chunks of the series. Only populated when the information was requested with {@code DEBUG}.
      *
      * @return the chunks, or {@code null} if the information was not requested with {@code DEBUG}.
+     * @since 8.0
      */
     public List<Chunk> getChunks() {
         return chunks;
@@ -233,6 +249,7 @@ public class TsInfoValue<K> {
      * or {@code null}, in the shape the server sent them, so the values can differ between RESP2 and RESP3.
      *
      * @return the fields by name, never {@code null}.
+     * @since 8.0
      */
     public Map<String, Object> getRawInfo() {
         return rawInfo;
@@ -310,6 +327,7 @@ public class TsInfoValue<K> {
          * Get the key of the series that receives the compacted samples.
          *
          * @return the destination key.
+         * @since 8.0
          */
         public K getDestinationKey() {
             return destinationKey;
@@ -319,6 +337,7 @@ public class TsInfoValue<K> {
          * Get the duration of each compaction bucket.
          *
          * @return the bucket duration in milliseconds.
+         * @since 8.0
          */
         public long getBucketDuration() {
             return bucketDuration;
@@ -329,6 +348,7 @@ public class TsInfoValue<K> {
          *
          * @return the aggregation: a {@link TsAggregationType} constant when this Lettuce version knows the value, otherwise a
          *         {@link TsAggregation} that keeps the server's name.
+         * @since 8.0
          */
         public TsAggregation getAggregation() {
             return aggregation;
@@ -338,6 +358,7 @@ public class TsInfoValue<K> {
          * Get the timestamp the compaction buckets are aligned to.
          *
          * @return the alignment timestamp in milliseconds.
+         * @since 8.0
          */
         public long getAlignment() {
             return alignment;
@@ -401,6 +422,7 @@ public class TsInfoValue<K> {
          * Get the timestamp of the first sample in the chunk.
          *
          * @return the start timestamp in milliseconds.
+         * @since 8.0
          */
         public long getStartTimestamp() {
             return startTimestamp;
@@ -410,6 +432,7 @@ public class TsInfoValue<K> {
          * Get the timestamp of the last sample in the chunk.
          *
          * @return the end timestamp in milliseconds.
+         * @since 8.0
          */
         public long getEndTimestamp() {
             return endTimestamp;
@@ -419,6 +442,7 @@ public class TsInfoValue<K> {
          * Get the number of samples in the chunk.
          *
          * @return the number of samples.
+         * @since 8.0
          */
         public long getSamples() {
             return samples;
@@ -428,6 +452,7 @@ public class TsInfoValue<K> {
          * Get the size of the chunk's data, without overhead.
          *
          * @return the data size in bytes.
+         * @since 8.0
          */
         public long getSize() {
             return size;
@@ -437,6 +462,7 @@ public class TsInfoValue<K> {
          * Get the average number of bytes per sample in the chunk.
          *
          * @return the bytes per sample.
+         * @since 8.0
          */
         public double getBytesPerSample() {
             return bytesPerSample;

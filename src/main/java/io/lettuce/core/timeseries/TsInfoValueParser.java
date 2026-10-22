@@ -33,6 +33,7 @@ public final class TsInfoValueParser<K, V> implements ComplexDataParser<TsInfoVa
      *
      * @param codec the codec of the connection, must not be {@code null}.
      * @throws IllegalArgumentException if {@code codec} is {@code null}.
+     * @since 8.0
      */
     public TsInfoValueParser(RedisCodec<K, V> codec) {
 
