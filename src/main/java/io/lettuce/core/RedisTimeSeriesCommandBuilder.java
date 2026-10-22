@@ -21,6 +21,8 @@ import static io.lettuce.core.protocol.CommandType.TS_MADD;
 import static io.lettuce.core.protocol.CommandType.TS_MGET;
 import static io.lettuce.core.protocol.CommandType.TS_MRANGE;
 import static io.lettuce.core.protocol.CommandType.TS_MREVRANGE;
+import static io.lettuce.core.protocol.CommandType.TS_NRANGE;
+import static io.lettuce.core.protocol.CommandType.TS_NREVRANGE;
 import static io.lettuce.core.protocol.CommandType.TS_QUERYINDEX;
 import static io.lettuce.core.protocol.CommandType.TS_QUERYLABELS;
 import static io.lettuce.core.protocol.CommandType.TS_RANGE;
@@ -41,6 +43,7 @@ import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.KeyListOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.StringListOutput;
+import io.lettuce.core.output.TsNRangeRowListOutput;
 import io.lettuce.core.output.TsSampleListOutput;
 import io.lettuce.core.output.TsSampleOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
@@ -55,6 +58,7 @@ import io.lettuce.core.timeseries.TsInfoValueParser;
 import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
 import io.lettuce.core.timeseries.TsMGetValueParser;
+import io.lettuce.core.timeseries.TsNRangeRow;
 import io.lettuce.core.timeseries.TsReadOffset;
 import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.TsSeries;
@@ -65,6 +69,7 @@ import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsNRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 
@@ -384,6 +389,85 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         LettuceAssert.notNull(mRangeArgs, "TsMRangeArgs " + MUST_NOT_BE_NULL);
 
         return mRange(TS_MREVRANGE, range, mRangeArgs, filters(filters));
+    }
+
+    Command<K, V, List<TsNRangeRow>> tsNRange(List<K> keys, Range<Long> range) {
+        return nRange(TS_NRANGE, keys(keys), range, null);
+    }
+
+    Command<K, V, List<TsNRangeRow>> tsNRange(List<K> keys, Range<Long> range, TsNRangeArgs nRangeArgs) {
+        LettuceAssert.notNull(nRangeArgs, "TsNRangeArgs " + MUST_NOT_BE_NULL);
+
+        return nRange(TS_NRANGE, keys(keys), range, nRangeArgs);
+    }
+
+    Command<K, V, List<TsNRangeRow>> tsNRange(K key1, K key2, Range<Long> range) {
+        return nRange(TS_NRANGE, keys(key1, key2), range, null);
+    }
+
+    Command<K, V, List<TsNRangeRow>> tsNRange(K key1, K key2, Range<Long> range, TsNRangeArgs nRangeArgs) {
+        LettuceAssert.notNull(nRangeArgs, "TsNRangeArgs " + MUST_NOT_BE_NULL);
+
+        return nRange(TS_NRANGE, keys(key1, key2), range, nRangeArgs);
+    }
+
+    Command<K, V, List<TsNRangeRow>> tsNRevRange(List<K> keys, Range<Long> range) {
+        return nRange(TS_NREVRANGE, keys(keys), range, null);
+    }
+
+    Command<K, V, List<TsNRangeRow>> tsNRevRange(List<K> keys, Range<Long> range, TsNRangeArgs nRangeArgs) {
+        LettuceAssert.notNull(nRangeArgs, "TsNRangeArgs " + MUST_NOT_BE_NULL);
+
+        return nRange(TS_NREVRANGE, keys(keys), range, nRangeArgs);
+    }
+
+    Command<K, V, List<TsNRangeRow>> tsNRevRange(K key1, K key2, Range<Long> range) {
+        return nRange(TS_NREVRANGE, keys(key1, key2), range, null);
+    }
+
+    Command<K, V, List<TsNRangeRow>> tsNRevRange(K key1, K key2, Range<Long> range, TsNRangeArgs nRangeArgs) {
+        LettuceAssert.notNull(nRangeArgs, "TsNRangeArgs " + MUST_NOT_BE_NULL);
+
+        return nRange(TS_NREVRANGE, keys(key1, key2), range, nRangeArgs);
+    }
+
+    private Command<K, V, List<TsNRangeRow>> nRange(CommandType type, List<K> keys, Range<Long> range,
+            TsNRangeArgs nRangeArgs) {
+        notNullRange(range);
+
+        // numkeys, then the keys; the first key routes the command in Redis Cluster
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.size());
+        for (K key : keys) {
+            args.addKey(key);
+        }
+        addRange(args, range);
+
+        List<Integer> columnCounts;
+        if (nRangeArgs == null) {
+            columnCounts = Collections.nCopies(keys.size(), 1);
+        } else {
+            nRangeArgs.build(args, keys.size());
+            columnCounts = nRangeArgs.getColumnCounts(keys.size());
+        }
+
+        return createCommand(type, new TsNRangeRowListOutput<>(codec, columnCounts), args);
+    }
+
+    private static <K> List<K> keys(List<K> keys) {
+
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!keys.isEmpty(), "Keys " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(keys, "Keys " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        return keys;
+    }
+
+    private static <K> List<K> keys(K key1, K key2) {
+
+        LettuceAssert.notNull(key1, "Key1 " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(key2, "Key2 " + MUST_NOT_BE_NULL);
+
+        return Arrays.asList(key1, key2);
     }
 
     private Command<K, V, List<TsSeries<K>>> mRange(CommandType type, Range<Long> range, TsMRangeArgs mRangeArgs,

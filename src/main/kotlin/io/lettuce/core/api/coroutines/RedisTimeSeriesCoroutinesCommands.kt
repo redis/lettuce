@@ -14,6 +14,7 @@ import io.lettuce.core.timeseries.TsFilter
 import io.lettuce.core.timeseries.TsInfoValue
 import io.lettuce.core.timeseries.TsMAddValue
 import io.lettuce.core.timeseries.TsMGetValue
+import io.lettuce.core.timeseries.TsNRangeRow
 import io.lettuce.core.timeseries.TsReadOffset
 import io.lettuce.core.timeseries.TsSample
 import io.lettuce.core.timeseries.TsSeries
@@ -23,6 +24,7 @@ import io.lettuce.core.timeseries.arguments.TsCreateArgs
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs
 import io.lettuce.core.timeseries.arguments.TsMGetArgs
 import io.lettuce.core.timeseries.arguments.TsMRangeArgs
+import io.lettuce.core.timeseries.arguments.TsNRangeArgs
 import io.lettuce.core.timeseries.arguments.TsRangeArgs
 import io.lettuce.core.timeseries.arguments.TsReadArgs
 
@@ -967,5 +969,225 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/commands/ts.querylabels/">TS.QUERYLABELS</a>
      */
     suspend fun tsQueryLabelValues(label: String, vararg filters: TsFilter): List<String>
+
+    /**
+     * Get the samples of several time series within a range of timestamps, joined by timestamp into rows in ascending order.
+     * Each row has one value per key, in key order; a key without a sample at the timestamp has `NaN`. Requires Redis
+     * 8.10 or later.
+     *
+     * All keys must hash to the same slot; in Redis Cluster the server rejects keys in different slots with `CROSSSLOT`.
+     * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
+     * column of NaN values.
+     *
+     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
+     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
+     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     *
+     * @param keys the keys, must not be `null` or empty and must not contain `null` elements.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @return List<TsNRangeRow> the rows in ascending timestamp order, as the server sends them; empty if there are no
+     *         samples in the range.
+     * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
+     *         `range` is `null`, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an
+     *         exclusive upper bound at [Long.MIN_VALUE].
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.nrange/">TS.NRANGE</a>
+     */
+    suspend fun tsNRange(keys: List<K>, range: Range<Long>): List<TsNRangeRow>
+
+    /**
+     * Get the samples of several time series within a range of timestamps, joined by timestamp into rows in ascending order,
+     * with filters, a limit or an aggregation. Requires Redis 8.10 or later.
+     *
+     * All keys must hash to the same slot; in Redis Cluster the server rejects keys in different slots with `CROSSSLOT`.
+     * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
+     * column of NaN values.
+     *
+     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
+     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
+     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     *
+     * With an aggregation, each row is one bucket and has, for every key in key order, one value per aggregation of that key;
+     * the arguments need one aggregation list per key, or [TsNRangeArgs.aggregationForEachKey].
+     *
+     * @param keys the keys, must not be `null` or empty and must not contain `null` elements.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @param args the options, must not be `null`.
+     * @return List<TsNRangeRow> the rows in ascending timestamp order, as the server sends them; empty if there are no
+     *         samples in the range.
+     * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
+     *         `range` or `args` is `null`, if `range` has an exclusive lower bound at
+     *         [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if `args` does not match
+     *         the number of keys or sets `ALIGN`, `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.nrange/">TS.NRANGE</a>
+     */
+    suspend fun tsNRange(keys: List<K>, range: Range<Long>, args: TsNRangeArgs): List<TsNRangeRow>
+
+    /**
+     * Get the samples of several time series within a range of timestamps, joined by timestamp into rows in ascending order.
+     * Each row has one value per key, in key order; a key without a sample at the timestamp has `NaN`. Requires Redis
+     * 8.10 or later.
+     *
+     * All keys must hash to the same slot; in Redis Cluster the server rejects keys in different slots with `CROSSSLOT`.
+     * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
+     * column of NaN values.
+     *
+     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
+     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
+     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     *
+     * @param key1 the first key, must not be `null`.
+     * @param key2 the second key, must not be `null`.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @return List<TsNRangeRow> the rows in ascending timestamp order, as the server sends them; empty if there are no
+     *         samples in the range.
+     * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` is `null`, or if
+     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at
+     *         [Long.MIN_VALUE].
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.nrange/">TS.NRANGE</a>
+     */
+    suspend fun tsNRange(key1: K, key2: K, range: Range<Long>): List<TsNRangeRow>
+
+    /**
+     * Get the samples of several time series within a range of timestamps, joined by timestamp into rows in ascending order,
+     * with filters, a limit or an aggregation. Requires Redis 8.10 or later.
+     *
+     * All keys must hash to the same slot; in Redis Cluster the server rejects keys in different slots with `CROSSSLOT`.
+     * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
+     * column of NaN values.
+     *
+     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
+     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
+     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     *
+     * With an aggregation, each row is one bucket and has, for every key in key order, one value per aggregation of that key;
+     * the arguments need one aggregation list per key, or [TsNRangeArgs.aggregationForEachKey].
+     *
+     * @param key1 the first key, must not be `null`.
+     * @param key2 the second key, must not be `null`.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @param args the options, must not be `null`.
+     * @return List<TsNRangeRow> the rows in ascending timestamp order, as the server sends them; empty if there are no
+     *         samples in the range.
+     * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` or `args` is
+     *         `null`, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound
+     *         at [Long.MIN_VALUE], or if `args` does not match the number of keys or sets `ALIGN`,
+     *         `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.nrange/">TS.NRANGE</a>
+     */
+    suspend fun tsNRange(key1: K, key2: K, range: Range<Long>, args: TsNRangeArgs): List<TsNRangeRow>
+
+    /**
+     * Get the samples of several time series within a range of timestamps, joined by timestamp into rows in descending order.
+     * Each row has one value per key, in key order; a key without a sample at the timestamp has `NaN`. Requires Redis
+     * 8.10 or later.
+     *
+     * All keys must hash to the same slot; in Redis Cluster the server rejects keys in different slots with `CROSSSLOT`.
+     * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
+     * column of NaN values.
+     *
+     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
+     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
+     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     *
+     * @param keys the keys, must not be `null` or empty and must not contain `null` elements.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @return List<TsNRangeRow> the rows in descending timestamp order, as the server sends them; empty if there are no
+     *         samples in the range.
+     * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
+     *         `range` is `null`, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an
+     *         exclusive upper bound at [Long.MIN_VALUE].
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.nrevrange/">TS.NREVRANGE</a>
+     */
+    suspend fun tsNRevRange(keys: List<K>, range: Range<Long>): List<TsNRangeRow>
+
+    /**
+     * Get the samples of several time series within a range of timestamps, joined by timestamp into rows in descending order,
+     * with filters, a limit or an aggregation. Requires Redis 8.10 or later.
+     *
+     * All keys must hash to the same slot; in Redis Cluster the server rejects keys in different slots with `CROSSSLOT`.
+     * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
+     * column of NaN values.
+     *
+     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
+     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
+     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     *
+     * With an aggregation, each row is one bucket and has, for every key in key order, one value per aggregation of that key;
+     * the arguments need one aggregation list per key, or [TsNRangeArgs.aggregationForEachKey].
+     *
+     * @param keys the keys, must not be `null` or empty and must not contain `null` elements.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @param args the options, must not be `null`.
+     * @return List<TsNRangeRow> the rows in descending timestamp order, as the server sends them; empty if there are no
+     *         samples in the range.
+     * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
+     *         `range` or `args` is `null`, if `range` has an exclusive lower bound at
+     *         [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if `args` does not match
+     *         the number of keys or sets `ALIGN`, `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.nrevrange/">TS.NREVRANGE</a>
+     */
+    suspend fun tsNRevRange(keys: List<K>, range: Range<Long>, args: TsNRangeArgs): List<TsNRangeRow>
+
+    /**
+     * Get the samples of several time series within a range of timestamps, joined by timestamp into rows in descending order.
+     * Each row has one value per key, in key order; a key without a sample at the timestamp has `NaN`. Requires Redis
+     * 8.10 or later.
+     *
+     * All keys must hash to the same slot; in Redis Cluster the server rejects keys in different slots with `CROSSSLOT`.
+     * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
+     * column of NaN values.
+     *
+     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
+     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
+     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     *
+     * @param key1 the first key, must not be `null`.
+     * @param key2 the second key, must not be `null`.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @return List<TsNRangeRow> the rows in descending timestamp order, as the server sends them; empty if there are no
+     *         samples in the range.
+     * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` is `null`, or if
+     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at
+     *         [Long.MIN_VALUE].
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.nrevrange/">TS.NREVRANGE</a>
+     */
+    suspend fun tsNRevRange(key1: K, key2: K, range: Range<Long>): List<TsNRangeRow>
+
+    /**
+     * Get the samples of several time series within a range of timestamps, joined by timestamp into rows in descending order,
+     * with filters, a limit or an aggregation. Requires Redis 8.10 or later.
+     *
+     * All keys must hash to the same slot; in Redis Cluster the server rejects keys in different slots with `CROSSSLOT`.
+     * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
+     * column of NaN values.
+     *
+     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
+     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
+     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     *
+     * With an aggregation, each row is one bucket and has, for every key in key order, one value per aggregation of that key;
+     * the arguments need one aggregation list per key, or [TsNRangeArgs.aggregationForEachKey].
+     *
+     * @param key1 the first key, must not be `null`.
+     * @param key2 the second key, must not be `null`.
+     * @param range the range of timestamps in milliseconds, must not be `null`.
+     * @param args the options, must not be `null`.
+     * @return List<TsNRangeRow> the rows in descending timestamp order, as the server sends them; empty if there are no
+     *         samples in the range.
+     * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` or `args` is
+     *         `null`, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound
+     *         at [Long.MIN_VALUE], or if `args` does not match the number of keys or sets `ALIGN`,
+     *         `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.nrevrange/">TS.NREVRANGE</a>
+     */
+    suspend fun tsNRevRange(key1: K, key2: K, range: Range<Long>, args: TsNRangeArgs): List<TsNRangeRow>
 
 }

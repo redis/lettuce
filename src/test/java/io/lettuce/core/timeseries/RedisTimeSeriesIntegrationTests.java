@@ -57,6 +57,7 @@ import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsNRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.lettuce.test.LettuceExtension;
@@ -68,8 +69,9 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * Integration tests for {@link RedisTimeSeriesCommands}: the series lifecycle commands (TS.CREATE, TS.ALTER, TS.DEL, TS.INFO),
  * the write commands (TS.ADD, TS.MADD, TS.INCRBY, TS.DECRBY), the compaction rule commands (TS.CREATERULE, TS.DELETERULE) and
- * the single-key reads (TS.GET, TS.RANGE, TS.REVRANGE, TS.READ) and the label-index reads (TS.MGET, TS.MRANGE, TS.MREVRANGE,
- * TS.QUERYINDEX, TS.QUERYLABELS). The subclasses run the same tests on RESP2, through the reactive API and over Redis Cluster.
+ * the single-key reads (TS.GET, TS.RANGE, TS.REVRANGE, TS.READ), the label-index reads (TS.MGET, TS.MRANGE, TS.MREVRANGE,
+ * TS.QUERYINDEX, TS.QUERYLABELS) and the multi-key reads (TS.NRANGE, TS.NREVRANGE). The subclasses run the same tests on RESP2,
+ * through the reactive API and over Redis Cluster.
  * <p>
  * Tests written before the read commands existed read stored samples back with a raw {@code TS.RANGE key - +} sent through
  * {@code dispatch} ({@link #storedSamples(String)}).
@@ -3330,6 +3332,310 @@ public class RedisTimeSeriesIntegrationTests {
         assertThatThrownBy(() -> redis.tsQueryLabelValues("sensor", new TsFilter[0]))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> redis.tsQueryLabelValues("", isolation())).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.NRANGE / TS.NREVRANGE (Redis 8.10+) ----------------------------------------------------------------------
+
+    protected static final String N1 = "{ts}:n1";
+
+    protected static final String N2 = "{ts}:n2";
+
+    protected static final List<Integer> ONE_EACH = Arrays.asList(1, 1);
+
+    /**
+     * Fixture F6 {@code nrangeFlow}: {@code {ts}:n1} (0, 1), (5, 2), (10, 100); {@code {ts}:n2} (0, 3), (5, 27), (12, 50).
+     */
+    protected void nrangeFlow() {
+        redis.tsCreate(N1, new TsCreateArgs().label("t", testName));
+        redis.tsCreate(N2, new TsCreateArgs().label("t", testName));
+        redis.tsAdd(N1, 0L, 1.0);
+        redis.tsAdd(N1, 5L, 2.0);
+        redis.tsAdd(N1, 10L, 100.0);
+        redis.tsAdd(N2, 0L, 3.0);
+        redis.tsAdd(N2, 5L, 27.0);
+        redis.tsAdd(N2, 12L, 50.0);
+    }
+
+    protected static TsNRangeRow row(long timestamp, List<Integer> columnCounts, Double... values) {
+        return TsNRangeRow.of(timestamp, Arrays.asList(values), columnCounts);
+    }
+
+    @SafeVarargs
+    protected static List<List<TsAggregation>> perKey(List<TsAggregation>... lists) {
+        return Arrays.asList(lists);
+    }
+
+    protected static List<TsAggregation> aggs(TsAggregation... aggregations) {
+        return Arrays.asList(aggregations);
+    }
+
+    protected static List<Long> rowTimestamps(List<TsNRangeRow> rows) {
+
+        List<Long> result = new ArrayList<>();
+        for (TsNRangeRow row : rows) {
+            result.add(row.getTimestamp());
+        }
+        return result;
+    }
+
+    /**
+     * Scenario E01 (Redis 8.10+): F6 raw pivot over keys n1, n2: one row per distinct timestamp, ascending, values in key
+     * order, NaN where a key has no sample at that timestamp (verified on 8.10.0: {@code 0 [1 3], 5 [2 27], 10 [100 NaN],
+     * 12 [NaN 50]}). The list overload and the two-key overload return the same rows.
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeRawPivot() {
+
+        nrangeFlow();
+
+        List<TsNRangeRow> rows = redis.tsNRange(N1, N2, Range.unbounded());
+
+        assertThat(rows).containsExactly(row(0, ONE_EACH, 1.0, 3.0), row(5, ONE_EACH, 2.0, 27.0),
+                row(10, ONE_EACH, 100.0, Double.NaN), row(12, ONE_EACH, Double.NaN, 50.0));
+        assertThat(rows.get(2).getValues(0)).containsExactly(100.0);
+        assertThat(rows.get(2).getValues(1).get(0)).isNaN();
+        assertThat(rows.get(3).getValues(0).get(0)).isNaN();
+        assertThat(redis.tsNRange(Arrays.asList(N1, N2), Range.unbounded())).isEqualTo(rows);
+        assertThat(redis.tsNRange(Arrays.asList(N1, N2), Range.unbounded(), new TsNRangeArgs())).isEqualTo(rows);
+    }
+
+    /**
+     * Scenario E01 (Redis 8.10+): the key order sets the column order: keys n2, n1 swap the values; a single key gives
+     * one-column rows.
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeKeyOrderSetsColumnOrder() {
+
+        nrangeFlow();
+
+        assertThat(redis.tsNRange(N2, N1, Range.unbounded())).containsExactly(row(0, ONE_EACH, 3.0, 1.0),
+                row(5, ONE_EACH, 27.0, 2.0), row(10, ONE_EACH, Double.NaN, 100.0), row(12, ONE_EACH, 50.0, Double.NaN));
+
+        List<Integer> one = Collections.singletonList(1);
+        assertThat(redis.tsNRange(Collections.singletonList(N1), Range.unbounded())).containsExactly(row(0, one, 1.0),
+                row(5, one, 2.0), row(10, one, 100.0));
+    }
+
+    /**
+     * Scenario E02 (Redis 8.10+): NREVRANGE returns the rows in descending order, as the server sends them; COUNT 2 keeps the
+     * newest two rows (12, 10); with an aggregation the buckets are descending (verified on 8.10.0).
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrevrange() {
+
+        nrangeFlow();
+
+        assertThat(redis.tsNRevRange(N1, N2, Range.unbounded())).containsExactly(row(12, ONE_EACH, Double.NaN, 50.0),
+                row(10, ONE_EACH, 100.0, Double.NaN), row(5, ONE_EACH, 2.0, 27.0), row(0, ONE_EACH, 1.0, 3.0));
+        assertThat(redis.tsNRevRange(Arrays.asList(N1, N2), Range.unbounded(), new TsNRangeArgs().count(2)))
+                .containsExactly(row(12, ONE_EACH, Double.NaN, 50.0), row(10, ONE_EACH, 100.0, Double.NaN));
+
+        List<Integer> flow = Arrays.asList(1, 2);
+        assertThat(redis.tsNRevRange(N1, N2, Range.unbounded(),
+                new TsNRangeArgs().aggregation(10,
+                        perKey(aggs(TsAggregationType.SUM), aggs(TsAggregationType.SUM, TsAggregationType.COUNT)))))
+                                .containsExactly(row(10, flow, 100.0, 50.0, 1.0), row(0, flow, 3.0, 30.0, 2.0));
+        assertThat(rowTimestamps(redis.tsNRevRange(Arrays.asList(N1, N2), Range.create(1L, 11L)))).containsExactly(10L, 5L);
+    }
+
+    /**
+     * Scenario E03 (Redis 8.10+): one aggregation per key, {@code AGGREGATION sum max 10}: bucket 0 → [3 (n1 sum), 27 (n2
+     * max)], bucket 10 → [100, 50] (verified on 8.10.0).
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeOneAggregationPerKey() {
+
+        nrangeFlow();
+
+        List<TsNRangeRow> rows = redis.tsNRange(N1, N2, Range.unbounded(),
+                new TsNRangeArgs().aggregation(10, perKey(aggs(TsAggregationType.SUM), aggs(TsAggregationType.MAX))));
+
+        assertThat(rows).containsExactly(row(0, ONE_EACH, 3.0, 27.0), row(10, ONE_EACH, 100.0, 50.0));
+        assertThat(rows.get(0).getValues(0)).containsExactly(3.0);
+        assertThat(rows.get(0).getValues(1)).containsExactly(27.0);
+    }
+
+    /**
+     * Scenario E04 (Redis 8.10+): F6 {@code AGGREGATION sum sum,count 10} over n1, n2 → {@code [[0,[3,30,2]],[10,[100,50,1]]]}
+     * (verified on 8.10.0, the same on RESP2 and RESP3; this test runs on both through the RESP2 subclass);
+     * {@code getValues(1)} of row 2 = [50, 1].
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeSeveralAggregationsPerKey() {
+
+        nrangeFlow();
+        List<Integer> flow = Arrays.asList(1, 2);
+
+        List<TsNRangeRow> rows = redis.tsNRange(Arrays.asList(N1, N2), Range.unbounded(), new TsNRangeArgs().aggregation(10,
+                perKey(aggs(TsAggregationType.SUM), aggs(TsAggregationType.SUM, TsAggregationType.COUNT))));
+
+        assertThat(rows).containsExactly(row(0, flow, 3.0, 30.0, 2.0), row(10, flow, 100.0, 50.0, 1.0));
+        assertThat(rows.get(1).getValues(1)).containsExactly(50.0, 1.0);
+        assertThat(rows.get(1).getValues(0)).containsExactly(100.0);
+        assertThat(rows.get(0).getValues()).containsExactly(3.0, 30.0, 2.0);
+    }
+
+    /**
+     * Scenario E05 (Redis 8.10+): the same key twice gets separate columns: raw n1, n1 → [1, 1], [2, 2], [100, 100];
+     * {@code AGGREGATION sum max 10} over n1, n1 → bucket 0 [3, 2], bucket 10 [100, 100] (verified on 8.10.0).
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeSameKeyTwice() {
+
+        nrangeFlow();
+
+        assertThat(redis.tsNRange(N1, N1, Range.unbounded())).containsExactly(row(0, ONE_EACH, 1.0, 1.0),
+                row(5, ONE_EACH, 2.0, 2.0), row(10, ONE_EACH, 100.0, 100.0));
+
+        List<TsNRangeRow> aggregated = redis.tsNRange(Arrays.asList(N1, N1), Range.unbounded(),
+                new TsNRangeArgs().aggregation(10, perKey(aggs(TsAggregationType.SUM), aggs(TsAggregationType.MAX))));
+        assertThat(aggregated).containsExactly(row(0, ONE_EACH, 3.0, 2.0), row(10, ONE_EACH, 100.0, 100.0));
+        assertThat(aggregated.get(0).getValues(1)).containsExactly(2.0);
+    }
+
+    /**
+     * Scenario E06 (Redis 8.10+, H24): {@code aggregationForEachKey(10, sum, count)} returns the same rows as the explicitly
+     * repeated list {@code sum,count sum,count}: bucket 0 → [3, 2, 30, 2], bucket 10 → [100, 1, 50, 1] (verified on 8.10.0).
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeAggregationForEachKey() {
+
+        nrangeFlow();
+        List<Integer> twoEach = Arrays.asList(2, 2);
+
+        List<TsNRangeRow> forEach = redis.tsNRange(N1, N2, Range.unbounded(),
+                new TsNRangeArgs().aggregationForEachKey(10, TsAggregationType.SUM, TsAggregationType.COUNT));
+        List<TsNRangeRow> explicit = redis.tsNRange(N1, N2, Range.unbounded(),
+                new TsNRangeArgs().aggregation(10, perKey(aggs(TsAggregationType.SUM, TsAggregationType.COUNT),
+                        aggs(TsAggregationType.SUM, TsAggregationType.COUNT))));
+
+        assertThat(forEach).containsExactly(row(0, twoEach, 3.0, 2.0, 30.0, 2.0), row(10, twoEach, 100.0, 1.0, 50.0, 1.0));
+        assertThat(forEach).isEqualTo(explicit);
+        assertThat(forEach.get(1).getValues(1)).containsExactly(50.0, 1.0);
+    }
+
+    /**
+     * Scenario E07 (Redis 8.10+): EMPTY with several aggregations, {@code avg,max} per key and bucket 3: the empty bucket 6 has
+     * one NaN per requested slot (four); without EMPTY bucket 6 is not reported (verified on 8.10.0).
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeEmptyWithSeveralAggregations() {
+
+        nrangeFlow();
+        List<Integer> twoEach = Arrays.asList(2, 2);
+        double nan = Double.NaN;
+
+        List<TsNRangeRow> rows = redis.tsNRange(N1, N2, Range.unbounded(),
+                new TsNRangeArgs().aggregationForEachKey(3, TsAggregationType.AVG, TsAggregationType.MAX).empty());
+
+        assertThat(rows).containsExactly(row(0, twoEach, 1.0, 1.0, 3.0, 3.0), row(3, twoEach, 2.0, 2.0, 27.0, 27.0),
+                row(6, twoEach, nan, nan, nan, nan), row(9, twoEach, 100.0, 100.0, nan, nan),
+                row(12, twoEach, nan, nan, 50.0, 50.0));
+        assertThat(rows.get(2).getValues()).hasSize(4).allMatch(v -> v.isNaN());
+
+        assertThat(rowTimestamps(redis.tsNRange(N1, N2, Range.unbounded(),
+                new TsNRangeArgs().aggregationForEachKey(3, TsAggregationType.AVG, TsAggregationType.MAX)))).containsExactly(0L,
+                        3L, 9L, 12L);
+    }
+
+    /**
+     * Scenario E08 (Redis 8.10+): a key that does not exist is an error, {@code TSDB: the key does not exist}, not a NaN
+     * column, in either key position and on NREVRANGE (verified on 8.10.0).
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeMissingKey() {
+
+        nrangeFlow();
+
+        assertThatThrownBy(() -> redis.tsNRange(N1, MISSING, Range.unbounded()))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("TSDB: the key does not exist");
+        assertThatThrownBy(() -> redis.tsNRange(Arrays.asList(MISSING, N1), Range.unbounded()))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("TSDB: the key does not exist");
+        assertThatThrownBy(() -> redis.tsNRevRange(N1, MISSING, Range.unbounded(), new TsNRangeArgs().count(1)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("TSDB: the key does not exist");
+        assertThat(redis.tsNRange(N1, N2, Range.unbounded())).hasSize(4);
+    }
+
+    /**
+     * Scenario E09 (Redis 8.10+): FILTER_BY_VALUE with fractional bounds 1.5 27.5 → (0, [NaN, 3]), (5, [2, 27]); COUNT 3 after
+     * the merge → the rows 0, 5, 10; FILTER_BY_TS 0 12 → (0, [1, 3]), (12, [NaN, 50]); FILTER_BY_TS 0 12 with FILTER_BY_VALUE
+     * 2.5 60 and COUNT 1 → (0, [NaN, 3]) (verified on 8.10.0).
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeFiltersAndCount() {
+
+        nrangeFlow();
+
+        assertThat(redis.tsNRange(N1, N2, Range.unbounded(), new TsNRangeArgs().filterByValue(1.5, 27.5)))
+                .containsExactly(row(0, ONE_EACH, Double.NaN, 3.0), row(5, ONE_EACH, 2.0, 27.0));
+        assertThat(redis.tsNRange(N1, N2, Range.unbounded(), new TsNRangeArgs().count(3)))
+                .containsExactly(row(0, ONE_EACH, 1.0, 3.0), row(5, ONE_EACH, 2.0, 27.0), row(10, ONE_EACH, 100.0, Double.NaN));
+        assertThat(redis.tsNRange(N1, N2, Range.unbounded(), new TsNRangeArgs().filterByTimestamps(0, 12)))
+                .containsExactly(row(0, ONE_EACH, 1.0, 3.0), row(12, ONE_EACH, Double.NaN, 50.0));
+        assertThat(redis.tsNRange(N1, N2, Range.unbounded(),
+                new TsNRangeArgs().filterByTimestamps(0, 12).filterByValue(2.5, 60).count(1)))
+                        .containsExactly(row(0, ONE_EACH, Double.NaN, 3.0));
+    }
+
+    /**
+     * Scenario E09 (Redis 8.10+): range bounds: inclusive 1..11 → rows 5, 10; exclusive 0..12 (sent as 1 11) → the same rows;
+     * 5..+ → 5, 10, 12; a range without samples → empty list (verified on 8.10.0: {@code *0}).
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeBounds() {
+
+        nrangeFlow();
+
+        assertThat(rowTimestamps(redis.tsNRange(N1, N2, Range.create(1L, 11L)))).containsExactly(5L, 10L);
+        assertThat(rowTimestamps(redis.tsNRange(N1, N2, Range.from(Boundary.excluding(0L), Boundary.excluding(12L)))))
+                .containsExactly(5L, 10L);
+        assertThat(rowTimestamps(redis.tsNRange(N1, N2, Range.from(Boundary.including(5L), Boundary.unbounded()))))
+                .containsExactly(5L, 10L, 12L);
+        assertThat(redis.tsNRange(N1, N2, Range.create(20L, 30L))).isEmpty();
+        assertThat(redis.tsNRevRange(N1, N2, Range.create(20L, 30L))).isEmpty();
+    }
+
+    /**
+     * Scenario A13 (NRANGE) and A16, through the API of every flavor and topology: an empty key list, a {@code null} key, range
+     * or arguments, a spec count different from the key count, and EMPTY without an aggregation throw
+     * {@link IllegalArgumentException}; nothing is sent, so the test needs no server support for TS.NRANGE.
+     */
+    @Test
+    void nrangeRejectsInvalidArgumentsThroughTheApi() {
+
+        List<String> empty = Collections.emptyList();
+        TsNRangeArgs two = new TsNRangeArgs().aggregation(10, perKey(aggs(TsAggregationType.SUM), aggs(TsAggregationType.MAX)));
+
+        assertThatThrownBy(() -> redis.tsNRange(empty, Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsNRevRange(empty, Range.unbounded(), new TsNRangeArgs()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsNRange((List<String>) null, Range.unbounded()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsNRange(Arrays.asList(N1, null), Range.unbounded()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsNRange(N1, null, Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsNRevRange(null, N2, Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsNRange(N1, N2, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsNRange(N1, N2, Range.unbounded(), null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsNRange(Arrays.asList(N1, N2, N1), Range.unbounded(), two))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsNRevRange(Collections.singletonList(N1), Range.unbounded(), two))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsNRange(N1, N2, Range.unbounded(), new TsNRangeArgs().empty()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsNRange(N1, N2, Range.from(Boundary.excluding(Long.MAX_VALUE), Boundary.unbounded())))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
 }

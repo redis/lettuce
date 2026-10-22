@@ -54,6 +54,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsNRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
@@ -827,6 +828,127 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
         assertThatThrownBy(() -> connection.reactive().tsQueryLabels(new TsFilter[0]).collectList().block())
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> connection.reactive().tsQueryLabelValues(null).collectList().block())
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.NRANGE / TS.NREVRANGE ------------------------------------------------------------------------------------
+
+    /**
+     * Create {@code key} with the samples (0, 1) and (5, 2) plus {@code offset}.
+     */
+    private void nrangeSeries(String key, double offset) {
+        redis.tsCreate(key, new TsCreateArgs().label("t", testName));
+        redis.tsAdd(key, 0L, 1.0 + offset);
+        redis.tsAdd(key, 5L, 2.0 + offset);
+    }
+
+    /**
+     * Scenario K06 (NRANGE, Redis 8.10+): keys in different slots on different primaries → {@code CROSSSLOT Keys in request
+     * don't hash to the same slot}, for NRANGE and NREVRANGE, through the list and the two-key overloads (verified with
+     * redis-cli on {@code test-cluster}, 8.10.0; TIMESERIES-CANONICAL.md §8). The client passes the server error through.
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeAcrossSlotsFails() {
+
+        String a = "{a}:n";
+        String b = "{b}:n";
+        assertThat(primaryOf(a).getNodeId()).as("keys on different primaries").isNotEqualTo(primaryOf(b).getNodeId());
+        nrangeSeries(a, 0);
+        nrangeSeries(b, 10);
+
+        assertThatThrownBy(() -> redis.tsNRange(a, b, Range.unbounded())).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("CROSSSLOT");
+        assertThatThrownBy(() -> redis.tsNRange(Arrays.asList(b, a), Range.unbounded(),
+                new TsNRangeArgs().aggregationForEachKey(10, TsAggregationType.SUM)))
+                        .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("CROSSSLOT");
+        assertThatThrownBy(() -> redis.tsNRevRange(a, b, Range.unbounded())).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("CROSSSLOT");
+        assertThatThrownBy(() -> redis.tsNRevRange(Arrays.asList(a, b), Range.unbounded(), new TsNRangeArgs().count(1)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("CROSSSLOT");
+    }
+
+    /**
+     * Scenario K06 (NRANGE, Redis 8.10+), counterpart: keys with a shared hash tag on each primary ({@code {a}} and
+     * {@code {b}}) return the joined rows over the cluster connection, whichever node serves the slot.
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeWithSharedHashTagOnEachPrimary() {
+
+        List<Integer> oneEach = Arrays.asList(1, 1);
+        for (String tag : new String[] { "{a}", "{b}" }) {
+            String first = tag + ":n1";
+            String second = tag + ":n2";
+            nrangeSeries(first, 0);
+            nrangeSeries(second, 10);
+
+            assertThat(redis.tsNRange(first, second, Range.unbounded())).as(tag).containsExactly(row(0, oneEach, 1.0, 11.0),
+                    row(5, oneEach, 2.0, 12.0));
+            assertThat(redis.tsNRevRange(Arrays.asList(second, first), Range.unbounded())).as(tag)
+                    .containsExactly(row(5, oneEach, 12.0, 2.0), row(0, oneEach, 11.0, 1.0));
+        }
+    }
+
+    /**
+     * Scenario K10 (NRANGE, NREVRANGE, Redis 8.10+): with {@code ReadFrom.REPLICA}, TS.NRANGE and TS.NREVRANGE run on a replica
+     * of the primary that serves the keys' slot (the {@code {a}} slot, so not the node the cluster connection was opened on):
+     * the replica's {@code INFO commandstats} counts each call, the primary's does not change, and the replies hold the
+     * replicated data.
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void multiKeyReadsRouteToReplica() {
+
+        String first = "{a}:n1";
+        String second = "{a}:n2";
+        nrangeSeries(first, 0);
+        nrangeSeries(second, 10);
+        awaitReplication(first);
+        RedisClusterNode primary = primaryOf(first);
+        RedisClusterNode replica = replicaOf(first);
+
+        String[] commands = { "ts.nrange", "ts.nrevrange" };
+        long[] replicaBefore = new long[commands.length];
+        long[] primaryBefore = new long[commands.length];
+        for (int i = 0; i < commands.length; i++) {
+            replicaBefore[i] = commandCalls(replica, commands[i]);
+            primaryBefore[i] = commandCalls(primary, commands[i]);
+        }
+
+        List<Integer> oneEach = Arrays.asList(1, 1);
+        try (StatefulRedisClusterConnection<String, String> replicaConnection = connectReadFromReplica()) {
+            assertThat(replicaConnection.sync().tsNRange(first, second, Range.unbounded()))
+                    .containsExactly(row(0, oneEach, 1.0, 11.0), row(5, oneEach, 2.0, 12.0));
+            assertThat(replicaConnection.sync().tsNRevRange(Arrays.asList(first, second), Range.unbounded(),
+                    new TsNRangeArgs().count(1))).containsExactly(row(5, oneEach, 2.0, 12.0));
+        }
+
+        for (int i = 0; i < commands.length; i++) {
+            assertThat(commandCalls(replica, commands[i]) - replicaBefore[i]).as("replica " + commands[i]).isEqualTo(1);
+            assertThat(commandCalls(primary, commands[i]) - primaryBefore[i]).as("primary " + commands[i]).isZero();
+        }
+    }
+
+    /**
+     * Scenario A13 (NRANGE) on the cluster async and reactive APIs: an empty key list, a {@code null} key or {@code null}
+     * arguments throw {@link IllegalArgumentException} (thrown by the call, or signalled as the error on the reactive API), as
+     * the {@code @throws} clauses state. The known gap of A13 (issue #3962) concerns only the keyless reads.
+     */
+    @Test
+    void nrangeRejectsInvalidArgumentsAsyncAndReactive() {
+
+        List<String> empty = Collections.emptyList();
+
+        assertThatThrownBy(() -> connection.async().tsNRange(empty, Range.unbounded()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.async().tsNRevRange("{ts}:n1", null, Range.unbounded()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.async().tsNRange("{ts}:n1", "{ts}:n2", Range.unbounded(), null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.reactive().tsNRange(empty, Range.unbounded()).collectList().block())
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> connection.reactive().tsNRevRange("{ts}:n1", "{ts}:n2", null).collectList().block())
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

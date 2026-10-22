@@ -34,6 +34,7 @@ import io.lettuce.core.timeseries.TsEncoding;
 import io.lettuce.core.timeseries.TsEncodingType;
 import io.lettuce.core.timeseries.TsFilter;
 import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsNRangeRow;
 import io.lettuce.core.timeseries.TsReadOffset;
 import io.lettuce.core.timeseries.TsReducerType;
 import io.lettuce.core.timeseries.TsSeries;
@@ -43,6 +44,7 @@ import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsNRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.netty.buffer.ByteBuf;
@@ -51,8 +53,8 @@ import io.netty.buffer.Unpooled;
 
 /**
  * Unit tests for {@link RedisTimeSeriesCommandBuilder}: the exact RESP encoding of the series lifecycle, write and compaction
- * rule commands, the single-key reads (TS.GET, TS.RANGE, TS.REVRANGE, TS.READ) and the label-index reads (TS.MGET, TS.MRANGE,
- * TS.MREVRANGE, TS.QUERYINDEX, TS.QUERYLABELS).
+ * rule commands, the single-key reads (TS.GET, TS.RANGE, TS.REVRANGE, TS.READ), the label-index reads (TS.MGET, TS.MRANGE,
+ * TS.MREVRANGE, TS.QUERYINDEX, TS.QUERYLABELS) and the multi-key reads (TS.NRANGE, TS.NREVRANGE).
  */
 @Tag(UNIT_TEST)
 class RedisTimeSeriesCommandBuilderUnitTests {
@@ -1127,6 +1129,226 @@ class RedisTimeSeriesCommandBuilderUnitTests {
         assertThatThrownBy(() -> builder.tsQueryLabelValues("")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsQueryLabelValues(null, T_X)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsQueryLabelValues("", T_X, HAS_AREA)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.NRANGE / TS.NREVRANGE ------------------------------------------------------------------------------------
+
+    private static final String N1 = "{ts}:n1";
+
+    private static final String N2 = "{ts}:n2";
+
+    private static final String N3 = "{ts}:n3";
+
+    @SafeVarargs
+    private static List<List<TsAggregation>> perKey(List<TsAggregation>... lists) {
+        return Arrays.asList(lists);
+    }
+
+    /**
+     * Scenario A10: {@code numkeys} comes from the key list, the keys follow in order, then the range; the same for NREVRANGE
+     * and for the two-key overloads.
+     */
+    @Test
+    void nrangeWithoutOptions() {
+
+        assertThat(encode(builder.tsNRange(Arrays.asList(N1, N2), Range.unbounded())))
+                .isEqualTo("*6\r\n$9\r\nTS.NRANGE\r\n$1\r\n2\r\n$7\r\n{ts}:n1\r\n$7\r\n{ts}:n2\r\n$1\r\n-\r\n$1\r\n+\r\n");
+        assertThat(tokens(builder.tsNRange(Arrays.asList(N1, N2, N3), Range.create(0L, 12L)))).containsExactly("TS.NRANGE", "3",
+                N1, N2, N3, "0", "12");
+        assertThat(tokens(builder.tsNRange(N1, N2, Range.unbounded()))).containsExactly("TS.NRANGE", "2", N1, N2, "-", "+");
+        assertThat(tokens(builder.tsNRevRange(Arrays.asList(N1, N2), Range.unbounded()))).containsExactly("TS.NREVRANGE", "2",
+                N1, N2, "-", "+");
+        assertThat(tokens(builder.tsNRevRange(N2, N1, Range.create(0L, 12L)))).containsExactly("TS.NREVRANGE", "2", N2, N1, "0",
+                "12");
+        assertThat(tokens(builder.tsNRange(Collections.singletonList(N1), Range.unbounded()))).containsExactly("TS.NRANGE", "1",
+                N1, "-", "+");
+    }
+
+    /**
+     * Scenario A10 / E05: a key given twice is sent twice and counts twice in {@code numkeys}.
+     */
+    @Test
+    void nrangeDuplicateKeys() {
+
+        assertThat(tokens(builder.tsNRange(Arrays.asList(N1, N1), Range.unbounded()))).containsExactly("TS.NRANGE", "2", N1, N1,
+                "-", "+");
+        assertThat(tokens(builder.tsNRange(N1, N1, Range.unbounded(),
+                new TsNRangeArgs().aggregation(10,
+                        perKey(Arrays.asList(TsAggregationType.SUM), Arrays.asList(TsAggregationType.MAX))))))
+                                .containsExactly("TS.NRANGE", "2", N1, N1, "-", "+", "AGGREGATION", "SUM", "MAX", "10");
+    }
+
+    /**
+     * Scenario A10: the first key is the first key of the command (design §5: the cluster routes TS.NRANGE by its first key),
+     * not {@code numkeys}.
+     */
+    @Test
+    void nrangeFirstKeyIsTheFirstGivenKey() {
+
+        assertThat(builder.tsNRange(Arrays.asList(N2, N1), Range.unbounded()).getArgs().getFirstEncodedKey())
+                .isEqualTo(StringCodec.UTF8.encodeKey(N2));
+        assertThat(builder.tsNRevRange(N1, N2, Range.unbounded(), new TsNRangeArgs().count(1)).getArgs().getFirstEncodedKey())
+                .isEqualTo(StringCodec.UTF8.encodeKey(N1));
+    }
+
+    /**
+     * Scenario A10: one spec per key, per-key lists comma-joined ({@code min,max sum}), after the range and the other options.
+     */
+    @Test
+    void nrangePerKeyAggregations() {
+
+        TsNRangeArgs args = new TsNRangeArgs().aggregation(10,
+                perKey(Arrays.asList(TsAggregationType.MIN, TsAggregationType.MAX), Arrays.asList(TsAggregationType.SUM)));
+
+        assertThat(tokens(builder.tsNRange(Arrays.asList(N1, N2), Range.unbounded(), args))).containsExactly("TS.NRANGE", "2",
+                N1, N2, "-", "+", "AGGREGATION", "MIN,MAX", "SUM", "10");
+        assertThat(tokens(builder.tsNRevRange(N1, N2, Range.unbounded(), args))).containsExactly("TS.NREVRANGE", "2", N1, N2,
+                "-", "+", "AGGREGATION", "MIN,MAX", "SUM", "10");
+    }
+
+    /**
+     * Scenario A10 (H24): {@code aggregationForEachKey(min,max)} for 2 keys → {@code MIN,MAX MIN,MAX}; for 3 keys three times.
+     */
+    @Test
+    void nrangeAggregationForEachKey() {
+
+        TsNRangeArgs args = new TsNRangeArgs().aggregationForEachKey(1000, TsAggregationType.MIN, TsAggregationType.MAX);
+
+        assertThat(tokens(builder.tsNRange(N1, N2, Range.unbounded(), args))).containsExactly("TS.NRANGE", "2", N1, N2, "-",
+                "+", "AGGREGATION", "MIN,MAX", "MIN,MAX", "1000");
+        assertThat(tokens(builder.tsNRevRange(Arrays.asList(N1, N2, N3), Range.unbounded(), args))).containsExactly(
+                "TS.NREVRANGE", "3", N1, N2, N3, "-", "+", "AGGREGATION", "MIN,MAX", "MIN,MAX", "MIN,MAX", "1000");
+    }
+
+    /**
+     * Scenario A10: every option, in the documented order after {@code numkeys}, the keys and the range: LATEST, FILTER_BY_TS,
+     * FILTER_BY_VALUE, COUNT, ALIGN, AGGREGATION, BUCKETTIMESTAMP, EMPTY.
+     */
+    @Test
+    void nrangeWithEveryOption() {
+
+        TsNRangeArgs args = new TsNRangeArgs().empty().bucketTimestamp(TsBucketTimestamp.END)
+                .aggregationForEachKey(3, TsAggregationType.AVG).alignStart().count(3).filterByValue(1.5, 27.5)
+                .filterByTimestamps(0, 12).latest();
+
+        assertThat(tokens(builder.tsNRange(N1, N2, Range.create(0L, 12L), args))).containsExactly("TS.NRANGE", "2", N1, N2, "0",
+                "12", "LATEST", "FILTER_BY_TS", "0", "12", "FILTER_BY_VALUE", "1.5", "27.5", "COUNT", "3", "ALIGN", "start",
+                "AGGREGATION", "AVG", "AVG", "3", "BUCKETTIMESTAMP", "+", "EMPTY");
+    }
+
+    /**
+     * Scenario A10: exclusive bounds are sent as the inclusive neighbor; an exclusive bound at the {@code Long} edge throws
+     * (Javadoc of {@code tsNRange} / {@code tsNRevRange}).
+     */
+    @Test
+    void nrangeBounds() {
+
+        Range<Long> exclusive = Range.from(Boundary.excluding(0L), Boundary.excluding(12L));
+        assertThat(tokens(builder.tsNRange(N1, N2, exclusive))).containsExactly("TS.NRANGE", "2", N1, N2, "1", "11");
+        assertThat(tokens(builder.tsNRevRange(Arrays.asList(N1, N2), exclusive, new TsNRangeArgs())))
+                .containsExactly("TS.NREVRANGE", "2", N1, N2, "1", "11");
+        assertThat(tokens(builder.tsNRange(N1, N2, Range.from(Boundary.including(5L), Boundary.unbounded()))))
+                .containsExactly("TS.NRANGE", "2", N1, N2, "5", "+");
+
+        Range<Long> lowerEdge = Range.from(Boundary.excluding(Long.MAX_VALUE), Boundary.unbounded());
+        Range<Long> upperEdge = Range.from(Boundary.unbounded(), Boundary.excluding(Long.MIN_VALUE));
+        assertThatThrownBy(() -> builder.tsNRange(N1, N2, lowerEdge)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRevRange(Arrays.asList(N1, N2), upperEdge))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario A13 (NRANGE): an empty or {@code null} key list, a {@code null} key, a {@code null} range or {@code null}
+     * arguments throw {@link IllegalArgumentException}, for every overload of TS.NRANGE and TS.NREVRANGE.
+     */
+    @Test
+    void nrangeRejectsInvalidArguments() {
+
+        List<String> empty = Collections.emptyList();
+        TsNRangeArgs args = new TsNRangeArgs();
+
+        assertThatThrownBy(() -> builder.tsNRange(empty, Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRange(empty, Range.unbounded(), args)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRevRange(empty, Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRevRange(empty, Range.unbounded(), args))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRange((List<String>) null, Range.unbounded()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRange(Arrays.asList(N1, null), Range.unbounded()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRevRange(Arrays.asList(N1, null), Range.unbounded(), args))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRange(Arrays.asList(N1, N2), null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRange(Arrays.asList(N1, N2), Range.unbounded(), null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRange(null, N2, Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRange(N1, null, Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRange(N1, N2, null, args)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRange(N1, N2, Range.unbounded(), null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRevRange(null, N2, Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRevRange(N1, null, Range.unbounded(), args))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRevRange(N1, N2, Range.unbounded(), null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRevRange(Arrays.asList(N1, N2), null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario A16: a spec count different from the key count, and ALIGN, BUCKETTIMESTAMP or EMPTY without an aggregation,
+     * throw {@link IllegalArgumentException} before a command is created.
+     */
+    @Test
+    void nrangeSpecCountMustMatchKeyCount() {
+
+        TsNRangeArgs two = new TsNRangeArgs().aggregation(10,
+                perKey(Arrays.asList(TsAggregationType.SUM), Arrays.asList(TsAggregationType.MAX)));
+
+        assertThatThrownBy(() -> builder.tsNRange(Arrays.asList(N1, N2, N3), Range.unbounded(), two))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRevRange(Collections.singletonList(N1), Range.unbounded(), two))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRange(Arrays.asList(N1, N2), Range.unbounded(), new TsNRangeArgs().empty()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsNRevRange(N1, N2, Range.unbounded(), new TsNRangeArgs().alignEnd()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(
+                () -> builder.tsNRange(N1, N2, Range.unbounded(), new TsNRangeArgs().bucketTimestamp(TsBucketTimestamp.MID)))
+                        .isInstanceOf(IllegalArgumentException.class);
+        assertThat(tokens(builder.tsNRange(N1, N2, Range.unbounded(), two))).containsExactly("TS.NRANGE", "2", N1, N2, "-", "+",
+                "AGGREGATION", "SUM", "MAX", "10");
+    }
+
+    /**
+     * Scenario U05 / E04: the command's output takes the column counts from the request: the F6 flow reply
+     * {@code [[0,[3,30,2]],[10,[100,50,1]]]} (8.10.0, RESP3) for {@code AGGREGATION sum sum,count 10} gives
+     * {@code getValues(1)} of row 2 = [50, 1]; with {@code aggregationForEachKey(sum,count)} the same four values split 2 + 2;
+     * without aggregation every key has one column.
+     */
+    @Test
+    void nrangeOutputUsesTheRequest() {
+
+        String flow = "*2\r\n*2\r\n:0\r\n*3\r\n,3\r\n,30\r\n,2\r\n*2\r\n:10\r\n*3\r\n,100\r\n,50\r\n,1\r\n";
+        List<TsNRangeRow> rows = decodeReply(builder.tsNRange(N1, N2, Range.unbounded(), new TsNRangeArgs().aggregation(10,
+                perKey(Arrays.asList(TsAggregationType.SUM), Arrays.asList(TsAggregationType.SUM, TsAggregationType.COUNT)))),
+                flow);
+
+        assertThat(rows).containsExactly(TsNRangeRow.of(0, Arrays.asList(3.0, 30.0, 2.0), Arrays.asList(1, 2)),
+                TsNRangeRow.of(10, Arrays.asList(100.0, 50.0, 1.0), Arrays.asList(1, 2)));
+        assertThat(rows.get(1).getValues(1)).containsExactly(50.0, 1.0);
+        assertThat(rows.get(1).getValues(0)).containsExactly(100.0);
+
+        String forEach = "*1\r\n*2\r\n:0\r\n*4\r\n+3\r\n+2\r\n+30\r\n+2\r\n";
+        List<TsNRangeRow> forEachRows = decodeReply(builder.tsNRevRange(Arrays.asList(N1, N2), Range.unbounded(),
+                new TsNRangeArgs().aggregationForEachKey(10, TsAggregationType.SUM, TsAggregationType.COUNT)), forEach);
+        assertThat(forEachRows.get(0).getValues(0)).containsExactly(3.0, 2.0);
+        assertThat(forEachRows.get(0).getValues(1)).containsExactly(30.0, 2.0);
+
+        String raw = "*1\r\n*2\r\n:10\r\n*3\r\n+100\r\n+NaN\r\n+100\r\n";
+        List<TsNRangeRow> rawRows = decodeReply(builder.tsNRange(Arrays.asList(N1, N2, N1), Range.unbounded()), raw);
+        assertThat(rawRows)
+                .containsExactly(TsNRangeRow.of(10, Arrays.asList(100.0, Double.NaN, 100.0), Arrays.asList(1, 1, 1)));
+        assertThat(rawRows.get(0).getValues(2)).containsExactly(100.0);
     }
 
 }

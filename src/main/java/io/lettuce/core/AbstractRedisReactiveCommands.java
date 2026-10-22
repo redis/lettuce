@@ -90,6 +90,7 @@ import io.lettuce.core.timeseries.TsFilter;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.TsMGetValue;
+import io.lettuce.core.timeseries.TsNRangeRow;
 import io.lettuce.core.timeseries.TsReadOffset;
 import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.TsSeries;
@@ -99,6 +100,7 @@ import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsNRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.lettuce.core.tracing.TraceContext;
@@ -5223,6 +5225,46 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<String> tsQueryLabelValues(String label, TsFilter... filters) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabelValues(label, filters));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(List<K> keys, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(keys, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(List<K> keys, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(keys, range, args));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(K key1, K key2, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(key1, key2, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(K key1, K key2, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(key1, key2, range, args));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(List<K> keys, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(keys, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(List<K> keys, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(keys, range, args));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(K key1, K key2, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(key1, key2, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(K key1, K key2, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(key1, key2, range, args));
     }
 
 }

@@ -30,6 +30,7 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsNRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
@@ -459,6 +460,86 @@ public class RedisTimeSeriesProtocolParityIntegrationTests {
                 .containsExactlyInAnyOrder("t", "sensor", "area");
         assertThat(resp2.tsQueryLabelValues("sensor")).containsExactlyInAnyOrderElementsOf(resp3.tsQueryLabelValues("sensor"))
                 .containsExactlyInAnyOrder("temp", "hum");
+    }
+
+    // --- TS.NRANGE / TS.NREVRANGE ------------------------------------------------------------------------------------
+
+    /**
+     * Fixture F6 {@code nrangeFlow}: {@code {ts}:n1} (0, 1), (5, 2), (10, 100); {@code {ts}:n2} (0, 3), (5, 27), (12, 50).
+     */
+    private void nrangeFlow() {
+        resp3.tsAdd("{ts}:n1", 0L, 1.0);
+        resp3.tsAdd("{ts}:n1", 5L, 2.0);
+        resp3.tsAdd("{ts}:n1", 10L, 100.0);
+        resp3.tsAdd("{ts}:n2", 0L, 3.0);
+        resp3.tsAdd("{ts}:n2", 5L, 27.0);
+        resp3.tsAdd("{ts}:n2", 12L, 50.0);
+    }
+
+    /**
+     * Scenario I01 (NRANGE raw, Redis 8.10+): the raw pivot, with NaN for a missing sample, is equal on both protocols, for
+     * NRANGE and NREVRANGE.
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeRaw() {
+
+        nrangeFlow();
+
+        List<TsNRangeRow> fromResp2 = resp2.tsNRange("{ts}:n1", "{ts}:n2", Range.unbounded());
+        List<TsNRangeRow> fromResp3 = resp3.tsNRange("{ts}:n1", "{ts}:n2", Range.unbounded());
+
+        assertThat(fromResp2).isEqualTo(fromResp3).hasSize(4);
+        assertThat(fromResp2.hashCode()).isEqualTo(fromResp3.hashCode());
+        assertThat(fromResp2.get(2).getValues(1).get(0)).isNaN();
+        assertThat(resp2.tsNRevRange("{ts}:n1", "{ts}:n2", Range.unbounded()))
+                .isEqualTo(resp3.tsNRevRange("{ts}:n1", "{ts}:n2", Range.unbounded())).hasSize(4);
+    }
+
+    /**
+     * Scenario I01 / E04 (NRANGE with several aggregations per key, Redis 8.10+): the F6 flow reply
+     * {@code [[0,[3,30,2]],[10,[100,50,1]]]} is equal on both protocols, with the same per-key slices.
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeSeveralAggregations() {
+
+        nrangeFlow();
+        List<List<TsAggregation>> perKey = Arrays.asList(Arrays.asList(TsAggregationType.SUM),
+                Arrays.asList(TsAggregationType.SUM, TsAggregationType.COUNT));
+
+        List<TsNRangeRow> fromResp2 = resp2.tsNRange(Arrays.asList("{ts}:n1", "{ts}:n2"), Range.unbounded(),
+                new TsNRangeArgs().aggregation(10, perKey));
+        List<TsNRangeRow> fromResp3 = resp3.tsNRange(Arrays.asList("{ts}:n1", "{ts}:n2"), Range.unbounded(),
+                new TsNRangeArgs().aggregation(10, perKey));
+
+        assertThat(fromResp2).isEqualTo(fromResp3).hasSize(2);
+        assertThat(fromResp2.get(1).getValues(1)).isEqualTo(fromResp3.get(1).getValues(1)).containsExactly(50.0, 1.0);
+    }
+
+    /**
+     * Scenario I01 (NRANGE with EMPTY, Redis 8.10+): all-NaN empty buckets and fractional averages are equal on both protocols.
+     */
+    @Test
+    @EnabledOnCommand("TS.NRANGE")
+    void nrangeEmpty() {
+
+        nrangeFlow();
+
+        List<TsNRangeRow> fromResp2 = resp2.tsNRevRange("{ts}:n1", "{ts}:n2", Range.unbounded(),
+                new TsNRangeArgs().aggregationForEachKey(3, TsAggregationType.AVG, TsAggregationType.MAX).empty());
+        List<TsNRangeRow> fromResp3 = resp3.tsNRevRange("{ts}:n1", "{ts}:n2", Range.unbounded(),
+                new TsNRangeArgs().aggregationForEachKey(3, TsAggregationType.AVG, TsAggregationType.MAX).empty());
+
+        assertThat(fromResp2).isEqualTo(fromResp3).hasSize(5);
+        assertThat(fromResp2.get(2).getValues()).hasSize(4).allMatch(v -> v.isNaN());
+
+        List<TsNRangeRow> avgResp2 = resp2.tsNRange("{ts}:n1", "{ts}:n2", Range.unbounded(),
+                new TsNRangeArgs().aggregationForEachKey(20, TsAggregationType.AVG, TsAggregationType.STD_S));
+        assertThat(avgResp2)
+                .isEqualTo(resp3.tsNRange("{ts}:n1", "{ts}:n2", Range.unbounded(),
+                        new TsNRangeArgs().aggregationForEachKey(20, TsAggregationType.AVG, TsAggregationType.STD_S)))
+                .hasSize(1);
     }
 
 }
