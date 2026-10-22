@@ -54,7 +54,8 @@ interface RedisClusterCoroutinesCommands<K : Any, V : Any> :
     RedisCuckooFilterCoroutinesCommands<K, V>,
     RedisTopKCoroutinesCommands<K, V>,
     RedisCMSCoroutinesCommands<K, V>,
-    RedisTDigestCoroutinesCommands<K, V> {
+    RedisTDigestCoroutinesCommands<K, V>,
+    RedisTimeSeriesCoroutinesCommands<K, V> {
 
     /**
      * Authenticate to the server.

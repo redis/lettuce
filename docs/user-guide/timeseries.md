@@ -1,0 +1,120 @@
+# Redis TimeSeries support in Lettuce
+
+Lettuce supports [Redis TimeSeries](https://redis.io/docs/latest/develop/data-types/timeseries/) starting from Lettuce 8.0.
+
+A time series stores samples: a timestamp in milliseconds and a `double` value. A series can carry labels (name/value pairs) that other commands use to find it, and compaction rules that aggregate its samples into another series.
+
+The TimeSeries commands are exposed through `RedisTimeSeriesCommands`, with matching asynchronous (`RedisTimeSeriesAsyncCommands`), reactive (`RedisTimeSeriesReactiveCommands`) and Kotlin coroutine (`RedisTimeSeriesCoroutinesCommands`) flavors. Argument types live in `io.lettuce.core.timeseries.arguments`, result and value types in `io.lettuce.core.timeseries`.
+
+## Getting Started
+
+The TimeSeries command interfaces are part of the standard `RedisCommands` aggregate, so they are available directly on a connection:
+
+```java
+RedisClient redisClient = RedisClient.create("redis://localhost:6379");
+StatefulRedisConnection<String, String> connection = redisClient.connect();
+
+RedisCommands<String, String> commands = connection.sync();
+// commands is also a RedisTimeSeriesCommands
+```
+
+The examples below use the synchronous API. The asynchronous, reactive and Kotlin coroutine APIs expose the same commands with their respective return types.
+
+Sample values are `double` and labels are `String`, whatever codec the connection uses. Keys use the connection codec.
+
+## Server versions
+
+| Server | Support |
+|--------|---------|
+| Redis 8.0 and later | Supported and tested. TimeSeries ships with the server. |
+| Redis 8.6 and later | NaN sample values, and the `countNaN` / `countAll` aggregations and reducers. |
+| Redis 8.8 and later | Several aggregations in one range query (for example `min,avg,max`). |
+| Redis 8.10 and later | `TS.NRANGE`, `TS.NREVRANGE`, `TS.QUERYLABELS`, `TS.READ`, and `EXCLUDEEMPTY` on `TS.MRANGE` / `TS.MREVRANGE`. |
+
+Lettuce does not check the server version. A command or option the server does not support is sent anyway, and the server rejects it. The Javadoc of each method names the server version it needs.
+
+Older servers and the standalone RedisTimeSeries module are not blocked, but they are not tested or documented. Redis Software and Redis Cloud mark `TS.NRANGE`, `TS.NREVRANGE`, `TS.READ` and `TS.QUERYLABELS` as not supported.
+
+## Value types
+
+Aggregations (`TsAggregation`), duplicate policies (`TsDuplicatePolicy`) and chunk encodings (`TsEncoding`) are interfaces with an enum of the values this Lettuce version knows (`TsAggregationType`, `TsDuplicatePolicyType`, `TsEncodingType`). Pass an enum constant, or `of(String)` for a value that a newer server supports but Lettuce does not know yet:
+
+```java
+TsAggregation avg = TsAggregationType.AVG;
+TsAggregation same = TsAggregation.of("avg");          // returns TsAggregationType.AVG
+TsAggregation future = TsAggregation.of("median");     // sent as given; the server decides whether it is valid
+```
+
+Values the server reports, for example in `TS.INFO`, come back as the enum constant when Lettuce knows them, and as a value that keeps the server's name otherwise. A value added in a newer server version never breaks parsing.
+
+## Series lifecycle
+
+### Create a series
+
+`tsCreate` creates an empty series. Options that are not set use the server's configured defaults:
+
+```java
+commands.tsCreate("temperature:room1");
+
+commands.tsCreate("temperature:room2", TsCreateArgs.Builder.retention(Duration.ofDays(7))
+        .duplicatePolicy(TsDuplicatePolicyType.LAST)
+        .encoding(TsEncodingType.COMPRESSED)
+        .chunkSize(4096)
+        .label("sensor", "temperature")
+        .label("room", "2"));
+```
+
+| Option | Setter | Notes |
+|--------|--------|-------|
+| `RETENTION` | `retention(long millis)`, `retention(Duration)` | Maximum age of samples relative to the newest sample. `0` keeps samples forever. A `Duration` that is not zero but shorter than one millisecond is rejected. |
+| `ENCODING` | `encoding(TsEncoding)` | Chunk encoding. Not available on `TS.ALTER`. |
+| `CHUNK_SIZE` | `chunkSize(long bytes)` | Memory size of each chunk. The server requires a multiple of 8 in its supported range. |
+| `DUPLICATE_POLICY` | `duplicatePolicy(TsDuplicatePolicy)` | What happens when a sample with an existing timestamp is added. |
+| `IGNORE` | `ignore(long maxTimeDiff, double maxValDiff)` | Ignore a new sample that is close to the newest sample in time and value. The server applies it only when the duplicate policy of the series is `LAST`; with any other policy the sample is stored. |
+| `LABELS` | `label(name, value)`, `labels(Map)` | Labels are sent in insertion order. |
+
+Lettuce always sends `LABELS` last. The server stores every argument that follows `LABELS` as a label pair, so an option after it would silently become a label.
+
+### Change a series
+
+`tsAlter` changes only the options that are set. Labels replace all labels of the series, and an empty map removes them all:
+
+```java
+commands.tsAlter("temperature:room1", TsAlterArgs.Builder.retention(Duration.ofDays(30)));
+
+commands.tsAlter("temperature:room1", TsAlterArgs.Builder.labels(Collections.emptyMap())); // remove all labels
+```
+
+### Delete samples
+
+`tsDel` deletes the samples in a range of timestamps and returns how many were deleted. The range is a `Range<Long>`:
+
+```java
+Long deleted = commands.tsDel("temperature:room1", Range.create(1000L, 2000L));   // 1000..2000, inclusive
+
+commands.tsDel("temperature:room1", Range.unbounded());                           // all samples, sent as - +
+commands.tsDel("temperature:room1", Range.from(Range.Boundary.excluding(1000L),
+        Range.Boundary.including(2000L)));                                         // sent as 1001 2000
+```
+
+Timestamps are integer milliseconds, so an exclusive bound is sent as its inclusive neighbor: an exclusive lower bound `t` becomes `t + 1` and an exclusive upper bound `t` becomes `t - 1`. An exclusive lower bound at `Long.MAX_VALUE` or an exclusive upper bound at `Long.MIN_VALUE` has no neighbor and throws `IllegalArgumentException`. The same rules apply to every TimeSeries command that takes a `Range<Long>`.
+
+To delete the whole series, delete its key with `del`.
+
+### Inspect a series
+
+`tsInfo` returns a `TsInfoValue` with the series' sample count, memory use, first and last timestamp, retention, chunk settings, duplicate policy, labels, source key and compaction rules:
+
+```java
+TsInfoValue<String> info = commands.tsInfo("temperature:room1");
+
+long samples = info.getTotalSamples();
+Map<String, String> labels = info.getLabels();
+for (TsInfoValue.Rule<String> rule : info.getRules()) {
+    System.out.println(rule.getDestinationKey() + " " + rule.getAggregation() + " " + rule.getBucketDuration());
+}
+```
+
+`tsInfo(key, true)` sends `DEBUG` and also fills in the data chunks (`getChunks()`) and the key name (`getKeySelfName()`); without it, both are `null`.
+
+RESP2 and RESP3 replies produce equal `TsInfoValue` instances. Fields that this Lettuce version does not model are available through `getRawInfo()`.

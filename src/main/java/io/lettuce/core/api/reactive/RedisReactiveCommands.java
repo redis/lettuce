@@ -42,7 +42,7 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
         RedisStringReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
         RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K>, RedisArrayReactiveCommands<K, V>,
         RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>,
-        RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
+        RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V>, RedisTimeSeriesReactiveCommands<K, V> {
 
     /**
      * Authenticate to the server.

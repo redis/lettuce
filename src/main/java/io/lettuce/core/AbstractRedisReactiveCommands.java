@@ -85,6 +85,9 @@ import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
+import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.arguments.TsAlterArgs;
+import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.vector.RawVector;
@@ -137,7 +140,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
         RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K>, RedisArrayReactiveCommands<K, V>,
         RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>,
-        RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
+        RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V>, RedisTimeSeriesReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -160,6 +163,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private final RedisCMSCommandBuilder<K, V> cmsCommandBuilder;
 
     private final RedisTDigestCommandBuilder<K, V> tDigestCommandBuilder;
+
+    private final RedisTimeSeriesCommandBuilder<K, V> timeSeriesCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -221,6 +226,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
         this.cmsCommandBuilder = new RedisCMSCommandBuilder<>(codec);
         this.tDigestCommandBuilder = new RedisTDigestCommandBuilder<>(codec);
+        this.timeSeriesCommandBuilder = new RedisTimeSeriesCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -4972,6 +4978,36 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Double> tdigestTrimmedMean(K key, double lowCutQuantile, double highCutQuantile) {
         return createMono(() -> tDigestCommandBuilder.tdigestTrimmedMean(key, lowCutQuantile, highCutQuantile));
+    }
+
+    @Override
+    public Mono<String> tsCreate(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreate(key));
+    }
+
+    @Override
+    public Mono<String> tsCreate(K key, TsCreateArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreate(key, args));
+    }
+
+    @Override
+    public Mono<String> tsAlter(K key, TsAlterArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAlter(key, args));
+    }
+
+    @Override
+    public Mono<Long> tsDel(K key, Range<Long> range) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDel(key, range));
+    }
+
+    @Override
+    public Mono<TsInfoValue<K>> tsInfo(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsInfo(key));
+    }
+
+    @Override
+    public Mono<TsInfoValue<K>> tsInfo(K key, boolean debug) {
+        return createMono(() -> timeSeriesCommandBuilder.tsInfo(key, debug));
     }
 
 }

@@ -62,7 +62,8 @@ open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
     RedisCuckooFilterCoroutinesCommands<K, V> by RedisCuckooFilterCoroutinesCommandsImpl(ops),
     RedisTopKCoroutinesCommands<K, V> by RedisTopKCoroutinesCommandsImpl(ops),
     RedisCMSCoroutinesCommands<K, V> by RedisCMSCoroutinesCommandsImpl(ops),
-    RedisTDigestCoroutinesCommands<K, V> by RedisTDigestCoroutinesCommandsImpl(ops) {
+    RedisTDigestCoroutinesCommands<K, V> by RedisTDigestCoroutinesCommandsImpl(ops),
+    RedisTimeSeriesCoroutinesCommands<K, V> by RedisTimeSeriesCoroutinesCommandsImpl(ops) {
 
     /**
      * Authenticate to the server.

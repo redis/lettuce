@@ -85,6 +85,9 @@ import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
+import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.arguments.TsAlterArgs;
+import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VSimScoreAttribs;
 import io.lettuce.core.vector.VectorMetadata;
@@ -128,7 +131,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
         RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K>, RedisArrayAsyncCommands<K, V>,
         RedisBloomFilterAsyncCommands<K, V>, RedisCuckooFilterAsyncCommands<K, V>, RedisTopKAsyncCommands<K, V>,
-        RedisCMSAsyncCommands<K, V>, RedisTDigestAsyncCommands<K, V> {
+        RedisCMSAsyncCommands<K, V>, RedisTDigestAsyncCommands<K, V>, RedisTimeSeriesAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -151,6 +154,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     private final RedisCMSCommandBuilder<K, V> cmsCommandBuilder;
 
     private final RedisTDigestCommandBuilder<K, V> tDigestCommandBuilder;
+
+    private final RedisTimeSeriesCommandBuilder<K, V> timeSeriesCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -175,6 +180,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
         this.cmsCommandBuilder = new RedisCMSCommandBuilder<>(codec);
         this.tDigestCommandBuilder = new RedisTDigestCommandBuilder<>(codec);
+        this.timeSeriesCommandBuilder = new RedisTimeSeriesCommandBuilder<>(codec);
     }
 
     /**
@@ -4875,6 +4881,36 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Double> tdigestTrimmedMean(K key, double lowCutQuantile, double highCutQuantile) {
         return dispatch(tDigestCommandBuilder.tdigestTrimmedMean(key, lowCutQuantile, highCutQuantile));
+    }
+
+    @Override
+    public RedisFuture<String> tsCreate(K key) {
+        return dispatch(timeSeriesCommandBuilder.tsCreate(key));
+    }
+
+    @Override
+    public RedisFuture<String> tsCreate(K key, TsCreateArgs args) {
+        return dispatch(timeSeriesCommandBuilder.tsCreate(key, args));
+    }
+
+    @Override
+    public RedisFuture<String> tsAlter(K key, TsAlterArgs args) {
+        return dispatch(timeSeriesCommandBuilder.tsAlter(key, args));
+    }
+
+    @Override
+    public RedisFuture<Long> tsDel(K key, Range<Long> range) {
+        return dispatch(timeSeriesCommandBuilder.tsDel(key, range));
+    }
+
+    @Override
+    public RedisFuture<TsInfoValue<K>> tsInfo(K key) {
+        return dispatch(timeSeriesCommandBuilder.tsInfo(key));
+    }
+
+    @Override
+    public RedisFuture<TsInfoValue<K>> tsInfo(K key, boolean debug) {
+        return dispatch(timeSeriesCommandBuilder.tsInfo(key, debug));
     }
 
 }
