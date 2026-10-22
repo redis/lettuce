@@ -94,4 +94,16 @@ class TsEncodingUnitTests {
         assertThatThrownBy(() -> TsEncoding.of("")).isInstanceOf(IllegalArgumentException.class);
     }
 
+    /**
+     * Scenario U02c: a name with {@code ,} or whitespace → {@link IllegalArgumentException}; a known name still returns the
+     * constant.
+     */
+    @Test
+    void nameWithCommaOrWhitespaceThrows() {
+
+        assertThatThrownBy(() -> TsEncoding.of("compressed,uncompressed")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsEncoding.of("compressed ")).isInstanceOf(IllegalArgumentException.class);
+        assertThat(TsEncoding.of("COMPRESSED")).isSameAs(TsEncodingType.COMPRESSED);
+    }
+
 }

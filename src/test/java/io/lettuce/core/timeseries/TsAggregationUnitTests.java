@@ -181,4 +181,16 @@ class TsAggregationUnitTests {
         assertThatThrownBy(() -> TsAggregation.of("")).isInstanceOf(IllegalArgumentException.class);
     }
 
+    /**
+     * Scenario U02: a name with {@code ,} or whitespace → {@link IllegalArgumentException}; a known name still returns the
+     * constant.
+     */
+    @Test
+    void nameWithCommaOrWhitespaceThrows() {
+
+        assertThatThrownBy(() -> TsAggregation.of("min,max")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsAggregation.of("avg ")).isInstanceOf(IllegalArgumentException.class);
+        assertThat(TsAggregation.of("AVG")).isSameAs(TsAggregationType.AVG);
+    }
+
 }

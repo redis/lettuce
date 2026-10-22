@@ -108,4 +108,16 @@ class TsDuplicatePolicyUnitTests {
         assertThatThrownBy(() -> TsDuplicatePolicy.of("")).isInstanceOf(IllegalArgumentException.class);
     }
 
+    /**
+     * Scenario U02c: a name with {@code ,} or whitespace → {@link IllegalArgumentException}; a known name still returns the
+     * constant.
+     */
+    @Test
+    void nameWithCommaOrWhitespaceThrows() {
+
+        assertThatThrownBy(() -> TsDuplicatePolicy.of("last,first")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsDuplicatePolicy.of("last ")).isInstanceOf(IllegalArgumentException.class);
+        assertThat(TsDuplicatePolicy.of("LAST")).isSameAs(TsDuplicatePolicyType.LAST);
+    }
+
 }
