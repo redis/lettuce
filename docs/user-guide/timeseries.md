@@ -130,6 +130,7 @@ commands.tsCreate("{sensor1}:avg-1m");
 commands.tsCreateRule("{sensor1}:raw", "{sensor1}:avg-1m", TsAggregationType.AVG, 60_000);
 
 // buckets aligned to a timestamp instead of the epoch
+commands.tsCreate("{sensor1}:max-1h");
 commands.tsCreateRule("{sensor1}:raw", "{sensor1}:max-1h", TsAggregationType.MAX, 3_600_000, 1_800_000);
 
 commands.tsDeleteRule("{sensor1}:raw", "{sensor1}:avg-1m");   // keeps both series
