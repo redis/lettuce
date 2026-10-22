@@ -28,11 +28,17 @@ public class StringListOutput<K, V> extends CommandOutput<K, V, List<String>> im
 
     @Override
     public void set(ByteBuffer bytes) {
+
+        // nil results should produce an empty list
+        if (bytes == null) {
+            return;
+        }
+
         if (!initialized) {
             multi(1);
         }
 
-        subscriber.onNext(output, bytes == null ? null : decodeString(bytes));
+        subscriber.onNext(output, decodeString(bytes));
     }
 
     @Override
