@@ -308,7 +308,7 @@ class TsNRangeArgsUnitTests {
         assertThatThrownBy(() -> tokens(new TsNRangeArgs().bucketTimestamp(TsBucketTimestamp.END), 2))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> tokens(new TsNRangeArgs().empty(), 2)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> tokens(TsNRangeArgs.Builder.empty(), 2)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> tokens(TsNRangeArgs.Builder.latest().empty(), 2)).isInstanceOf(IllegalArgumentException.class);
     }
 
     /**
@@ -361,15 +361,15 @@ class TsNRangeArgsUnitTests {
                 .isEqualTo(tokens(new TsNRangeArgs().aggregationForEachKey(10, TsAggregationType.AVG), 2));
         assertThat(tokens(TsNRangeArgs.Builder.aggregationForEachKey(Duration.ofMillis(10), TsAggregationType.AVG), 2))
                 .isEqualTo(tokens(new TsNRangeArgs().aggregationForEachKey(10, TsAggregationType.AVG), 2));
-        assertThat(tokens(TsNRangeArgs.Builder.align(5).aggregation(10, lists), 2))
+        assertThat(tokens(TsNRangeArgs.Builder.aggregation(10, lists).align(5), 2))
                 .isEqualTo(tokens(new TsNRangeArgs().align(5).aggregation(10, lists), 2));
-        assertThat(tokens(TsNRangeArgs.Builder.alignStart().aggregation(10, lists), 2))
+        assertThat(tokens(TsNRangeArgs.Builder.aggregation(10, lists).alignStart(), 2))
                 .isEqualTo(tokens(new TsNRangeArgs().alignStart().aggregation(10, lists), 2));
-        assertThat(tokens(TsNRangeArgs.Builder.alignEnd().aggregation(10, lists), 2))
+        assertThat(tokens(TsNRangeArgs.Builder.aggregation(10, lists).alignEnd(), 2))
                 .isEqualTo(tokens(new TsNRangeArgs().alignEnd().aggregation(10, lists), 2));
-        assertThat(tokens(TsNRangeArgs.Builder.bucketTimestamp(TsBucketTimestamp.END).aggregation(10, lists), 2))
+        assertThat(tokens(TsNRangeArgs.Builder.aggregation(10, lists).bucketTimestamp(TsBucketTimestamp.END), 2))
                 .isEqualTo(tokens(new TsNRangeArgs().bucketTimestamp(TsBucketTimestamp.END).aggregation(10, lists), 2));
-        assertThat(tokens(TsNRangeArgs.Builder.empty().aggregation(10, lists), 2))
+        assertThat(tokens(TsNRangeArgs.Builder.aggregation(10, lists).empty(), 2))
                 .isEqualTo(tokens(new TsNRangeArgs().empty().aggregation(10, lists), 2));
     }
 

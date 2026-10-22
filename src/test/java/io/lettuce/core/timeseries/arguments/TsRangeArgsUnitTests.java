@@ -230,7 +230,7 @@ class TsRangeArgsUnitTests {
         assertThatThrownBy(() -> tokens(new TsRangeArgs().empty())).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> tokens(new TsRangeArgs().latest().count(3).empty()))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> tokens(TsRangeArgs.Builder.empty())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> tokens(TsRangeArgs.Builder.latest().empty())).isInstanceOf(IllegalArgumentException.class);
     }
 
     /**
@@ -239,7 +239,7 @@ class TsRangeArgsUnitTests {
     @Test
     void aggregationSetAfterDependentOptions() {
 
-        TsRangeArgs args = TsRangeArgs.Builder.empty().alignEnd().bucketTimestamp(TsBucketTimestamp.START).aggregation(1000,
+        TsRangeArgs args = new TsRangeArgs().empty().alignEnd().bucketTimestamp(TsBucketTimestamp.START).aggregation(1000,
                 TsAggregationType.LAST);
 
         assertThat(tokens(args)).containsExactly("ALIGN", "end", "AGGREGATION", "LAST", "1000", "BUCKETTIMESTAMP", "-",
@@ -268,7 +268,8 @@ class TsRangeArgsUnitTests {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new TsRangeArgs().bucketTimestamp(null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> TsRangeArgs.Builder.filterByTimestamps()).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> TsRangeArgs.Builder.bucketTimestamp(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsRangeArgs.Builder.latest().bucketTimestamp(null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     /**
@@ -287,16 +288,16 @@ class TsRangeArgsUnitTests {
                 .isEqualTo(tokens(new TsRangeArgs().aggregation(1000, TsAggregationType.AVG)));
         assertThat(tokens(TsRangeArgs.Builder.aggregation(Duration.ofSeconds(1), TsAggregationType.AVG)))
                 .isEqualTo(tokens(new TsRangeArgs().aggregation(1000, TsAggregationType.AVG)));
-        assertThat(tokens(TsRangeArgs.Builder.align(5).aggregation(1000, TsAggregationType.AVG)))
+        assertThat(tokens(TsRangeArgs.Builder.aggregation(1000, TsAggregationType.AVG).align(5)))
                 .isEqualTo(tokens(new TsRangeArgs().align(5).aggregation(1000, TsAggregationType.AVG)));
-        assertThat(tokens(TsRangeArgs.Builder.alignStart().aggregation(1000, TsAggregationType.AVG)))
+        assertThat(tokens(TsRangeArgs.Builder.aggregation(1000, TsAggregationType.AVG).alignStart()))
                 .isEqualTo(tokens(new TsRangeArgs().alignStart().aggregation(1000, TsAggregationType.AVG)));
-        assertThat(tokens(TsRangeArgs.Builder.alignEnd().aggregation(1000, TsAggregationType.AVG)))
+        assertThat(tokens(TsRangeArgs.Builder.aggregation(1000, TsAggregationType.AVG).alignEnd()))
                 .isEqualTo(tokens(new TsRangeArgs().alignEnd().aggregation(1000, TsAggregationType.AVG)));
-        assertThat(tokens(TsRangeArgs.Builder.bucketTimestamp(TsBucketTimestamp.MID).aggregation(1000, TsAggregationType.AVG)))
+        assertThat(tokens(TsRangeArgs.Builder.aggregation(1000, TsAggregationType.AVG).bucketTimestamp(TsBucketTimestamp.MID)))
                 .isEqualTo(tokens(
                         new TsRangeArgs().bucketTimestamp(TsBucketTimestamp.MID).aggregation(1000, TsAggregationType.AVG)));
-        assertThat(tokens(TsRangeArgs.Builder.empty().aggregation(1000, TsAggregationType.AVG)))
+        assertThat(tokens(TsRangeArgs.Builder.aggregation(1000, TsAggregationType.AVG).empty()))
                 .isEqualTo(tokens(new TsRangeArgs().empty().aggregation(1000, TsAggregationType.AVG)));
     }
 

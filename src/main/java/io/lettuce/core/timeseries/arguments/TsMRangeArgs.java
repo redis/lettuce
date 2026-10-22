@@ -105,64 +105,6 @@ public class TsMRangeArgs extends BaseTsRangeArgs<TsMRangeArgs> {
         }
 
         /**
-         * Create new {@link TsMRangeArgs} with an alignment timestamp ({@code ALIGN}) set.
-         *
-         * @param timestamp the alignment timestamp in milliseconds.
-         * @return new {@link TsMRangeArgs}.
-         * @see TsMRangeArgs#align(long)
-         * @since 8.0
-         */
-        public static TsMRangeArgs align(long timestamp) {
-            return new TsMRangeArgs().align(timestamp);
-        }
-
-        /**
-         * Create new {@link TsMRangeArgs} with {@code ALIGN start} set.
-         *
-         * @return new {@link TsMRangeArgs}.
-         * @see TsMRangeArgs#alignStart()
-         * @since 8.0
-         */
-        public static TsMRangeArgs alignStart() {
-            return new TsMRangeArgs().alignStart();
-        }
-
-        /**
-         * Create new {@link TsMRangeArgs} with {@code ALIGN end} set.
-         *
-         * @return new {@link TsMRangeArgs}.
-         * @see TsMRangeArgs#alignEnd()
-         * @since 8.0
-         */
-        public static TsMRangeArgs alignEnd() {
-            return new TsMRangeArgs().alignEnd();
-        }
-
-        /**
-         * Create new {@link TsMRangeArgs} with the reported bucket timestamp ({@code BUCKETTIMESTAMP}) set.
-         *
-         * @param bucketTimestamp the reported bucket timestamp, must not be {@code null}.
-         * @return new {@link TsMRangeArgs}.
-         * @throws IllegalArgumentException if {@code bucketTimestamp} is {@code null}.
-         * @see TsMRangeArgs#bucketTimestamp(TsBucketTimestamp)
-         * @since 8.0
-         */
-        public static TsMRangeArgs bucketTimestamp(TsBucketTimestamp bucketTimestamp) {
-            return new TsMRangeArgs().bucketTimestamp(bucketTimestamp);
-        }
-
-        /**
-         * Create new {@link TsMRangeArgs} with {@code EMPTY} set.
-         *
-         * @return new {@link TsMRangeArgs}.
-         * @see TsMRangeArgs#empty()
-         * @since 8.0
-         */
-        public static TsMRangeArgs empty() {
-            return new TsMRangeArgs().empty();
-        }
-
-        /**
          * Create new {@link TsMRangeArgs} with an aggregation ({@code AGGREGATION}) set.
          *
          * @param bucketDuration the bucket duration in milliseconds, must be positive.
