@@ -16,7 +16,6 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.timeseries.TsDuplicatePolicy;
 import io.lettuce.core.timeseries.TsDuplicatePolicyType;
-import io.lettuce.core.timeseries.TsEncoding;
 
 /**
  * Base for the TimeSeries series-option arguments. Holds the options that every series-creating or series-altering command
@@ -38,14 +37,6 @@ abstract class BaseTsSeriesArgs<T extends BaseTsSeriesArgs<T>> implements Compos
     private Double ignoreMaxValDiff;
 
     private Map<String, String> labels;
-
-    // options of the subclasses, emitted at their fixed position by build(CommandArgs)
-
-    Long timestamp;
-
-    TsEncoding encoding;
-
-    TsDuplicatePolicy onDuplicate;
 
     @SuppressWarnings("unchecked")
     final T self() {
@@ -197,16 +188,10 @@ abstract class BaseTsSeriesArgs<T extends BaseTsSeriesArgs<T>> implements Compos
     @Override
     public final <K, V> void build(CommandArgs<K, V> args) {
 
-        if (timestamp != null) {
-            args.add(CommandKeyword.TIMESTAMP).add(timestamp);
-        }
+        buildOwnArgs(args);
 
         if (retention != null) {
             args.add(CommandKeyword.RETENTION).add(retention);
-        }
-
-        if (encoding != null) {
-            args.add(CommandKeyword.ENCODING).add(encoding);
         }
 
         if (chunkSize != null) {
@@ -215,10 +200,6 @@ abstract class BaseTsSeriesArgs<T extends BaseTsSeriesArgs<T>> implements Compos
 
         if (duplicatePolicy != null) {
             args.add(CommandKeyword.DUPLICATE_POLICY).add(duplicatePolicy);
-        }
-
-        if (onDuplicate != null) {
-            args.add(CommandKeyword.ON_DUPLICATE).add(onDuplicate);
         }
 
         if (ignoreMaxTimeDiff != null) {
@@ -231,5 +212,10 @@ abstract class BaseTsSeriesArgs<T extends BaseTsSeriesArgs<T>> implements Compos
             labels.forEach((name, value) -> args.add(name).add(value));
         }
     }
+
+    /**
+     * Subclasses emit the options of their own command here, before the shared options.
+     */
+    abstract <K, V> void buildOwnArgs(CommandArgs<K, V> args);
 
 }

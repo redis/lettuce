@@ -34,8 +34,10 @@ import io.lettuce.core.api.reactive.RedisTimeSeriesReactiveCommands;
 import io.lettuce.core.api.sync.RedisTimeSeriesCommands;
 import io.lettuce.core.cluster.api.async.NodeSelectionTimeSeriesAsyncCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelectionTimeSeriesCommands;
+import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 
@@ -200,8 +202,8 @@ class TsApiConventionsUnitTests {
         Pattern publicMethod = Pattern.compile("^\\s+public\\s+(?!class|static class|interface|enum)[^=;]*\\(",
                 Pattern.MULTILINE);
 
-        for (String name : new String[] { "TsCreateArgs", "TsAlterArgs", "BaseTsSeriesArgs", "BaseTsCreateArgs", "TsAddArgs",
-                "TsIncrByArgs", "BaseTsRangeArgs", "TsRangeArgs", "TsReadArgs" }) {
+        for (String name : new String[] { "TsCreateArgs", "TsAlterArgs", "BaseTsSeriesArgs", "TsAddArgs", "TsIncrByArgs",
+                "BaseTsRangeArgs", "TsRangeArgs", "TsReadArgs" }) {
 
             Path source = MAIN_JAVA.resolve("io/lettuce/core/timeseries/arguments/" + name + ".java");
             String text = read(source);
@@ -271,14 +273,13 @@ class TsApiConventionsUnitTests {
     void argumentBasesArePackagePrivate() throws ClassNotFoundException {
 
         Class<?> seriesBase = Class.forName("io.lettuce.core.timeseries.arguments.BaseTsSeriesArgs");
-        Class<?> createBase = Class.forName("io.lettuce.core.timeseries.arguments.BaseTsCreateArgs");
 
         assertThat(Modifier.isPublic(seriesBase.getModifiers())).isFalse();
-        assertThat(Modifier.isPublic(createBase.getModifiers())).isFalse();
         assertThat(Modifier.isPublic(TsCreateArgs.class.getModifiers())).isTrue();
         assertThat(Modifier.isPublic(TsAlterArgs.class.getModifiers())).isTrue();
-        assertThat(TsCreateArgs.class.getSuperclass()).isEqualTo(createBase);
-        assertThat(createBase.getSuperclass()).isEqualTo(seriesBase);
+        assertThat(TsCreateArgs.class.getSuperclass()).isEqualTo(seriesBase);
+        assertThat(TsAddArgs.class.getSuperclass()).isEqualTo(seriesBase);
+        assertThat(TsIncrByArgs.class.getSuperclass()).isEqualTo(seriesBase);
         assertThat(TsAlterArgs.class.getSuperclass()).isEqualTo(seriesBase);
     }
 

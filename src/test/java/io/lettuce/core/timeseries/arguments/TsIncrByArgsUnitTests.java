@@ -38,7 +38,7 @@ class TsIncrByArgsUnitTests {
         TsIncrByArgs args = new TsIncrByArgs().label("a", "1").ignore(7, 0.25).duplicatePolicy(TsDuplicatePolicyType.LAST)
                 .chunkSize(512).encoding(TsEncodingType.UNCOMPRESSED).retention(100).timestamp(1000);
 
-        assertThat(tokens(args)).containsExactly("TIMESTAMP", "1000", "RETENTION", "100", "ENCODING", "UNCOMPRESSED",
+        assertThat(tokens(args)).containsExactly("TIMESTAMP", "1000", "ENCODING", "UNCOMPRESSED", "RETENTION", "100",
                 "CHUNK_SIZE", "512", "DUPLICATE_POLICY", "LAST", "IGNORE", "7", "0.25", "LABELS", "a", "1");
     }
 

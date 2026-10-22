@@ -116,8 +116,8 @@ class RedisTimeSeriesCommandBuilderUnitTests {
                 .duplicatePolicy(TsDuplicatePolicyType.LAST).chunkSize(128).encoding(TsEncodingType.UNCOMPRESSED)
                 .retention(5000);
 
-        assertThat(tokens(builder.tsCreate(KEY, args))).containsExactly("TS.CREATE", KEY, "RETENTION", "5000", "ENCODING",
-                "UNCOMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "IGNORE", "10", "0.5", "LABELS", "sensor",
+        assertThat(tokens(builder.tsCreate(KEY, args))).containsExactly("TS.CREATE", KEY, "ENCODING", "UNCOMPRESSED",
+                "RETENTION", "5000", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "IGNORE", "10", "0.5", "LABELS", "sensor",
                 "temp", "area", "north");
     }
 
@@ -131,7 +131,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
                 .duplicatePolicy(TsDuplicatePolicyType.SUM).ignore(10, 0.5).label("a", "1");
 
         assertThat(encode(builder.tsCreate(KEY, args))).isEqualTo("*16\r\n" + "$9\r\nTS.CREATE\r\n" + "$6\r\n{ts}:k\r\n"
-                + "$9\r\nRETENTION\r\n" + "$4\r\n5000\r\n" + "$8\r\nENCODING\r\n" + "$10\r\nCOMPRESSED\r\n"
+                + "$8\r\nENCODING\r\n" + "$10\r\nCOMPRESSED\r\n" + "$9\r\nRETENTION\r\n" + "$4\r\n5000\r\n"
                 + "$10\r\nCHUNK_SIZE\r\n" + "$3\r\n128\r\n" + "$16\r\nDUPLICATE_POLICY\r\n" + "$3\r\nSUM\r\n"
                 + "$6\r\nIGNORE\r\n" + "$2\r\n10\r\n" + "$3\r\n0.5\r\n" + "$6\r\nLABELS\r\n" + "$1\r\na\r\n" + "$1\r\n1\r\n");
     }
@@ -157,8 +157,8 @@ class RedisTimeSeriesCommandBuilderUnitTests {
                 .duplicatePolicy(TsDuplicatePolicyType.MAX).retention(1).retention(2).encoding(TsEncodingType.COMPRESSED)
                 .encoding(TsEncodingType.UNCOMPRESSED).chunkSize(64).chunkSize(128).ignore(1, 1.5).ignore(2, 2.5);
 
-        assertThat(tokens(builder.tsCreate(KEY, args))).containsExactly("TS.CREATE", KEY, "RETENTION", "2", "ENCODING",
-                "UNCOMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "MAX", "IGNORE", "2", "2.5");
+        assertThat(tokens(builder.tsCreate(KEY, args))).containsExactly("TS.CREATE", KEY, "ENCODING", "UNCOMPRESSED",
+                "RETENTION", "2", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "MAX", "IGNORE", "2", "2.5");
     }
 
     /**
@@ -406,12 +406,12 @@ class RedisTimeSeriesCommandBuilderUnitTests {
                 .onDuplicate(TsDuplicatePolicyType.MIN).duplicatePolicy(TsDuplicatePolicyType.LAST).chunkSize(128)
                 .encoding(TsEncodingType.UNCOMPRESSED).retention(5000);
 
-        assertThat(tokens(builder.tsAdd(KEY, 1000L, 2.5, args))).containsExactly("TS.ADD", KEY, "1000", "2.5", "RETENTION",
-                "5000", "ENCODING", "UNCOMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "ON_DUPLICATE", "MIN",
+        assertThat(tokens(builder.tsAdd(KEY, 1000L, 2.5, args))).containsExactly("TS.ADD", KEY, "1000", "2.5", "ENCODING",
+                "UNCOMPRESSED", "ON_DUPLICATE", "MIN", "RETENTION", "5000", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST",
                 "IGNORE", "10", "0.5", "LABELS", "sensor", "temp", "area", "north");
-        assertThat(tokens(builder.tsAdd(KEY, 2.5, args))).containsExactly("TS.ADD", KEY, "*", "2.5", "RETENTION", "5000",
-                "ENCODING", "UNCOMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "ON_DUPLICATE", "MIN", "IGNORE",
-                "10", "0.5", "LABELS", "sensor", "temp", "area", "north");
+        assertThat(tokens(builder.tsAdd(KEY, 2.5, args))).containsExactly("TS.ADD", KEY, "*", "2.5", "ENCODING", "UNCOMPRESSED",
+                "ON_DUPLICATE", "MIN", "RETENTION", "5000", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "IGNORE", "10",
+                "0.5", "LABELS", "sensor", "temp", "area", "north");
     }
 
     /**
@@ -521,10 +521,10 @@ class RedisTimeSeriesCommandBuilderUnitTests {
                 .timestamp(1000);
 
         assertThat(tokens(builder.tsIncrBy(KEY, 2.5, args))).containsExactly("TS.INCRBY", KEY, "2.5", "TIMESTAMP", "1000",
-                "RETENTION", "5000", "ENCODING", "COMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "IGNORE", "10",
+                "ENCODING", "COMPRESSED", "RETENTION", "5000", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "IGNORE", "10",
                 "0.5", "LABELS", "sensor", "temp");
         assertThat(tokens(builder.tsDecrBy(KEY, 2.5, args))).containsExactly("TS.DECRBY", KEY, "2.5", "TIMESTAMP", "1000",
-                "RETENTION", "5000", "ENCODING", "COMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "IGNORE", "10",
+                "ENCODING", "COMPRESSED", "RETENTION", "5000", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "IGNORE", "10",
                 "0.5", "LABELS", "sensor", "temp");
     }
 

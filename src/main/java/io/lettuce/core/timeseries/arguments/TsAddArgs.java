@@ -10,6 +10,8 @@ import java.time.Duration;
 import java.util.Map;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.timeseries.TsDuplicatePolicy;
 import io.lettuce.core.timeseries.TsEncoding;
 
@@ -23,7 +25,11 @@ import io.lettuce.core.timeseries.TsEncoding;
  *
  * @since 8.0
  */
-public class TsAddArgs extends BaseTsCreateArgs<TsAddArgs> {
+public class TsAddArgs extends BaseTsSeriesArgs<TsAddArgs> {
+
+    private TsEncoding encoding;
+
+    private TsDuplicatePolicy onDuplicate;
 
     /**
      * Builder entry points for {@link TsAddArgs}.
@@ -176,6 +182,34 @@ public class TsAddArgs extends BaseTsCreateArgs<TsAddArgs> {
 
         this.onDuplicate = policy;
         return this;
+    }
+
+    /**
+     * Set the encoding of the data chunks of the series ({@code ENCODING}).
+     *
+     * @param encoding the chunk encoding, must not be {@code null}.
+     * @return {@code this}.
+     * @throws IllegalArgumentException if {@code encoding} is {@code null}.
+     * @since 8.0
+     */
+    public TsAddArgs encoding(TsEncoding encoding) {
+
+        LettuceAssert.notNull(encoding, "Encoding must not be null");
+
+        this.encoding = encoding;
+        return this;
+    }
+
+    @Override
+    <K, V> void buildOwnArgs(CommandArgs<K, V> args) {
+
+        if (encoding != null) {
+            args.add(CommandKeyword.ENCODING).add(encoding);
+        }
+
+        if (onDuplicate != null) {
+            args.add(CommandKeyword.ON_DUPLICATE).add(onDuplicate);
+        }
     }
 
 }

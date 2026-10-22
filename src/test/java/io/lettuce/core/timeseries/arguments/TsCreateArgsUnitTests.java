@@ -39,7 +39,7 @@ class TsCreateArgsUnitTests {
         TsCreateArgs args = new TsCreateArgs().label("a", "1").ignore(7, 0.25).duplicatePolicy(TsDuplicatePolicyType.FIRST)
                 .chunkSize(512).encoding(TsEncodingType.COMPRESSED).retention(100);
 
-        assertThat(tokens(args)).containsExactly("RETENTION", "100", "ENCODING", "COMPRESSED", "CHUNK_SIZE", "512",
+        assertThat(tokens(args)).containsExactly("ENCODING", "COMPRESSED", "RETENTION", "100", "CHUNK_SIZE", "512",
                 "DUPLICATE_POLICY", "FIRST", "IGNORE", "7", "0.25", "LABELS", "a", "1");
     }
 

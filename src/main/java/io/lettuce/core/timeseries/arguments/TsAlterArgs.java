@@ -9,6 +9,7 @@ package io.lettuce.core.timeseries.arguments;
 import java.time.Duration;
 import java.util.Map;
 
+import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.timeseries.TsDuplicatePolicy;
 
 /**
@@ -129,6 +130,12 @@ public class TsAlterArgs extends BaseTsSeriesArgs<TsAlterArgs> {
             return new TsAlterArgs().label(name, value);
         }
 
+    }
+
+    @Override
+    <K, V> void buildOwnArgs(CommandArgs<K, V> args) {
+
+        // TS.ALTER has no options of its own
     }
 
 }

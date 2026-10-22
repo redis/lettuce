@@ -9,6 +9,9 @@ package io.lettuce.core.timeseries.arguments;
 import java.time.Duration;
 import java.util.Map;
 
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.timeseries.TsDuplicatePolicy;
 import io.lettuce.core.timeseries.TsEncoding;
 
@@ -20,7 +23,9 @@ import io.lettuce.core.timeseries.TsEncoding;
  *
  * @since 8.0
  */
-public class TsCreateArgs extends BaseTsCreateArgs<TsCreateArgs> {
+public class TsCreateArgs extends BaseTsSeriesArgs<TsCreateArgs> {
+
+    private TsEncoding encoding;
 
     /**
      * Builder entry points for {@link TsCreateArgs}.
@@ -143,6 +148,30 @@ public class TsCreateArgs extends BaseTsCreateArgs<TsCreateArgs> {
             return new TsCreateArgs().label(name, value);
         }
 
+    }
+
+    /**
+     * Set the encoding of the data chunks of the series ({@code ENCODING}).
+     *
+     * @param encoding the chunk encoding, must not be {@code null}.
+     * @return {@code this}.
+     * @throws IllegalArgumentException if {@code encoding} is {@code null}.
+     * @since 8.0
+     */
+    public TsCreateArgs encoding(TsEncoding encoding) {
+
+        LettuceAssert.notNull(encoding, "Encoding must not be null");
+
+        this.encoding = encoding;
+        return this;
+    }
+
+    @Override
+    <K, V> void buildOwnArgs(CommandArgs<K, V> args) {
+
+        if (encoding != null) {
+            args.add(CommandKeyword.ENCODING).add(encoding);
+        }
     }
 
 }
