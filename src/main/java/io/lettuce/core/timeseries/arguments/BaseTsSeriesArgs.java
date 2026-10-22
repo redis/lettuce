@@ -41,7 +41,11 @@ abstract class BaseTsSeriesArgs<T extends BaseTsSeriesArgs<T>> implements Compos
 
     // options of the subclasses, emitted at their fixed position by build(CommandArgs)
 
+    Long timestamp;
+
     TsEncoding encoding;
+
+    TsDuplicatePolicy onDuplicate;
 
     @SuppressWarnings("unchecked")
     final T self() {
@@ -193,6 +197,10 @@ abstract class BaseTsSeriesArgs<T extends BaseTsSeriesArgs<T>> implements Compos
     @Override
     public final <K, V> void build(CommandArgs<K, V> args) {
 
+        if (timestamp != null) {
+            args.add(CommandKeyword.TIMESTAMP).add(timestamp);
+        }
+
         if (retention != null) {
             args.add(CommandKeyword.RETENTION).add(retention);
         }
@@ -207,6 +215,10 @@ abstract class BaseTsSeriesArgs<T extends BaseTsSeriesArgs<T>> implements Compos
 
         if (duplicatePolicy != null) {
             args.add(CommandKeyword.DUPLICATE_POLICY).add(duplicatePolicy);
+        }
+
+        if (onDuplicate != null) {
+            args.add(CommandKeyword.ON_DUPLICATE).add(onDuplicate);
         }
 
         if (ignoreMaxTimeDiff != null) {

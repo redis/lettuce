@@ -86,8 +86,11 @@ import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.vector.RawVector;
@@ -5008,6 +5011,51 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<TsInfoValue<K>> tsInfo(K key, boolean debug) {
         return createMono(() -> timeSeriesCommandBuilder.tsInfo(key, debug));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, double value) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, value));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, double value, TsAddArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, value, args));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, long timestamp, double value) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, timestamp, value));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, long timestamp, double value, TsAddArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, timestamp, value, args));
+    }
+
+    @Override
+    public Flux<Value<Long>> tsMAdd(List<TsMAddValue<K>> samples) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAddValues(samples));
+    }
+
+    @Override
+    public Mono<Long> tsIncrBy(K key, double addend) {
+        return createMono(() -> timeSeriesCommandBuilder.tsIncrBy(key, addend));
+    }
+
+    @Override
+    public Mono<Long> tsIncrBy(K key, double addend, TsIncrByArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsIncrBy(key, addend, args));
+    }
+
+    @Override
+    public Mono<Long> tsDecrBy(K key, double subtrahend) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDecrBy(key, subtrahend));
+    }
+
+    @Override
+    public Mono<Long> tsDecrBy(K key, double subtrahend, TsIncrByArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDecrBy(key, subtrahend, args));
     }
 
 }

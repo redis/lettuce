@@ -155,7 +155,8 @@ public enum CommandType implements ProtocolKeyword {
                                     "TDIGEST.REVRANK"), TDIGEST_TRIMMED_MEAN("TDIGEST.TRIMMED_MEAN"),
 
     // TimeSeries
-    TS_ALTER("TS.ALTER"), TS_CREATE("TS.CREATE"), TS_DEL("TS.DEL"), TS_INFO("TS.INFO"),
+    TS_ADD("TS.ADD"), TS_ALTER("TS.ALTER"), TS_CREATE("TS.CREATE"), TS_DECRBY("TS.DECRBY"), TS_DEL("TS.DEL"), TS_INCRBY(
+            "TS.INCRBY"), TS_INFO("TS.INFO"), TS_MADD("TS.MADD"),
 
     // Others
 

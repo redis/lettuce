@@ -7,15 +7,23 @@
 package io.lettuce.core;
 
 import static io.lettuce.core.protocol.CommandType.DEBUG;
+import static io.lettuce.core.protocol.CommandType.TS_ADD;
 import static io.lettuce.core.protocol.CommandType.TS_ALTER;
 import static io.lettuce.core.protocol.CommandType.TS_CREATE;
+import static io.lettuce.core.protocol.CommandType.TS_DECRBY;
 import static io.lettuce.core.protocol.CommandType.TS_DEL;
+import static io.lettuce.core.protocol.CommandType.TS_INCRBY;
 import static io.lettuce.core.protocol.CommandType.TS_INFO;
+import static io.lettuce.core.protocol.CommandType.TS_MADD;
+
+import java.util.List;
 
 import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.EncodedComplexOutput;
+import io.lettuce.core.output.ErrorTolerantIntegerListOutput;
+import io.lettuce.core.output.ErrorTolerantIntegerValueListOutput;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
@@ -23,8 +31,11 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsInfoValueParser;
+import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
 
 /**
  * Implementation of the {@link BaseRedisCommandBuilder} handling Redis TimeSeries commands.
@@ -34,6 +45,9 @@ import io.lettuce.core.timeseries.arguments.TsCreateArgs;
  * @since 8.0
  */
 class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
+
+    // timestamp sentinel: the server clock sets the timestamp
+    private static final String SERVER_CLOCK = "*";
 
     RedisTimeSeriesCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
@@ -90,6 +104,102 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         }
 
         return createCommand(TS_INFO, new EncodedComplexOutput<>(codec, new TsInfoValueParser<>(codec)), args);
+    }
+
+    Command<K, V, Long> tsAdd(K key, double value) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(SERVER_CLOCK).add(value);
+
+        return createCommand(TS_ADD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> tsAdd(K key, double value, TsAddArgs addArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(addArgs, "TsAddArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(SERVER_CLOCK).add(value);
+        addArgs.build(args);
+
+        return createCommand(TS_ADD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> tsAdd(K key, long timestamp, double value) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp).add(value);
+
+        return createCommand(TS_ADD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> tsAdd(K key, long timestamp, double value, TsAddArgs addArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(addArgs, "TsAddArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp).add(value);
+        addArgs.build(args);
+
+        return createCommand(TS_ADD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> tsMAdd(List<TsMAddValue<K>> samples) {
+        return createCommand(TS_MADD, new ErrorTolerantIntegerListOutput<>(codec), mAddArgs(samples));
+    }
+
+    Command<K, V, List<Value<Long>>> tsMAddValues(List<TsMAddValue<K>> samples) {
+        return createCommand(TS_MADD, new ErrorTolerantIntegerValueListOutput<>(codec), mAddArgs(samples));
+    }
+
+    Command<K, V, Long> tsIncrBy(K key, double addend) {
+        notNullKey(key);
+
+        return createCommand(TS_INCRBY, new IntegerOutput<>(codec), new CommandArgs<>(codec).addKey(key).add(addend));
+    }
+
+    Command<K, V, Long> tsIncrBy(K key, double addend, TsIncrByArgs incrByArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(incrByArgs, "TsIncrByArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(addend);
+        incrByArgs.build(args);
+
+        return createCommand(TS_INCRBY, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> tsDecrBy(K key, double subtrahend) {
+        notNullKey(key);
+
+        return createCommand(TS_DECRBY, new IntegerOutput<>(codec), new CommandArgs<>(codec).addKey(key).add(subtrahend));
+    }
+
+    Command<K, V, Long> tsDecrBy(K key, double subtrahend, TsIncrByArgs incrByArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(incrByArgs, "TsIncrByArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(subtrahend);
+        incrByArgs.build(args);
+
+        return createCommand(TS_DECRBY, new IntegerOutput<>(codec), args);
+    }
+
+    private CommandArgs<K, V> mAddArgs(List<TsMAddValue<K>> samples) {
+
+        LettuceAssert.notNull(samples, "Samples " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!samples.isEmpty(), "Samples " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        for (TsMAddValue<K> sample : samples) {
+            LettuceAssert.notNull(sample, "Samples " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+            args.addKey(sample.getKey());
+            if (sample.getTimestamp() == null) {
+                args.add(SERVER_CLOCK);
+            } else {
+                args.add(sample.getTimestamp().longValue());
+            }
+            args.add(sample.getValue());
+        }
+
+        return args;
     }
 
     /**

@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import io.lettuce.core.search.HybridReply;
 import io.lettuce.core.search.arguments.hybrid.HybridArgs;
+import io.lettuce.core.timeseries.TsMAddValue;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -488,6 +489,26 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         return MultiNodeExecution.firstOfAsync(executions);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> tsMAdd(List<TsMAddValue<K>> samples) {
+
+        TimeSeriesSlotPartition<K> partition = TimeSeriesSlotPartition.of(codec, samples);
+
+        if (partition == null || !partition.isMultiSlot()) {
+            return super.tsMAdd(samples);
+        }
+
+        Map<Integer, RedisFuture<List<Long>>> executions = new HashMap<>();
+        partition.getSamplesBySlot().forEach((slot, slotSamples) -> executions.put(slot, super.tsMAdd(slotSamples)));
+
+        // restore the caller's order; a failed slot fails the whole call
+        return new PipelinedRedisFuture<>(executions, ignore -> {
+            Map<Integer, List<Long>> results = new HashMap<>();
+            executions.forEach((slot, future) -> results.put(slot, MultiNodeExecution.execute(future::get)));
+            return partition.restoreOrder(results);
+        });
     }
 
     @Override
