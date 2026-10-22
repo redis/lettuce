@@ -97,8 +97,7 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
     }
 
     /**
-     * Below 8.10, keyless commands gather across shards only after {@code TIMESERIES.REFRESHCLUSTER} ran on the answering node
-     * (test plan §3).
+     * Below 8.10, keyless commands gather across shards only after {@code TIMESERIES.REFRESHCLUSTER} ran on the answering node.
      */
     @BeforeAll
     void refreshClusterBelow810() {
@@ -284,10 +283,9 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
      * alignTimestamp, and DELETERULE across slots, fail on the node of the source key, and no rule is created.
      * <p>
      * The reply depends on the server version. 8.4.0, 8.6.0, 8.8.0, 8.10.0 and 8.12 reply {@code CROSSSLOT Keys in request
-     * don't hash to the same slot} (test plan K06; TIMESERIES-CANONICAL.md §8). 8.0.2 and 8.2.2 do not check the slots: the
-     * source node does not find the destination and replies {@code ERR TSDB: the key does not exist} to CREATERULE (the text
-     * the TS.CREATERULE page documents, TIMESERIES-CANONICAL.md §1) and {@code ERR TSDB: compaction rule does not exist} to
-     * DELETERULE (observed with redis-cli on {@code test-cluster}). See QA-P3 P3-D1 and P3-TP1.
+     * don't hash to the same slot}. 8.0.2 and 8.2.2 do not check the slots: the source node does not find the destination and
+     * replies {@code ERR TSDB: the key does not exist} to CREATERULE (the text the TS.CREATERULE page documents) and
+     * {@code ERR TSDB: compaction rule does not exist} to DELETERULE (observed with redis-cli on {@code test-cluster}).
      */
     @Test
     void createRuleAcrossSlotsFails() {
@@ -476,8 +474,8 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
     /**
      * Scenario K07 (READ, Redis 8.10+): with {@code ReadFrom.REPLICA} on a dedicated cluster connection, TS.READ BLOCK
      * {@code newSamples()} waits on a replica and wakes up after a write on the primary. The block time is 5 s because a
-     * replica wakes only after the write has replicated (design §2.2: about 1 s on 8.12-m02); the reply arrives as soon as the
-     * sample is there.
+     * replica wakes only after the write has replicated (about 1 s on 8.12-m02); the reply arrives as soon as the sample is
+     * there.
      */
     @Test
     @EnabledOnCommand("TS.READ")
@@ -679,7 +677,7 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
 
     /**
      * Scenario K08 (Redis 8.10+): {@code upstream().commands().tsQueryIndex(…)} runs on every primary, and each primary returns
-     * the full set, so the results contain each series once per node (design §5.1).
+     * the full set, so the results contain each series once per node.
      */
     @Test
     void nodeSelectionReturnsFullSetPerNode() {
@@ -702,8 +700,8 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
 
     /**
      * Scenario K09: a keyless TS command inside MULTI on a node connection of a node in multi-shard mode is rejected by the
-     * server ({@code Can not run multi sharded command inside a multi exec, lua, or when blocking is not allowed},
-     * TIMESERIES-CANONICAL.md §8), and Lettuce passes the error through as the command's result.
+     * server ({@code Can not run multi sharded command inside a multi exec, lua, or when blocking is not allowed}), and Lettuce
+     * passes the error through as the command's result.
      */
     @Test
     void keylessCommandInsideMultiOnNodeConnection() throws Exception {
@@ -845,7 +843,7 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
     /**
      * Scenario K06 (NRANGE, Redis 8.10+): keys in different slots on different primaries → {@code CROSSSLOT Keys in request
      * don't hash to the same slot}, for NRANGE and NREVRANGE, through the list and the two-key overloads (verified with
-     * redis-cli on {@code test-cluster}, 8.10.0; TIMESERIES-CANONICAL.md §8). The client passes the server error through.
+     * redis-cli on {@code test-cluster}, 8.10.0). The client passes the server error through.
      */
     @Test
     @EnabledOnCommand("TS.NRANGE")

@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link TsReadArgs}: {@code BLOCK ms min} and {@code MAX_COUNT n}, and their validation (design §3.3).
+ * Unit tests for {@link TsReadArgs}: {@code BLOCK ms min} and {@code MAX_COUNT n}, and their validation.
  */
 @Tag(UNIT_TEST)
 class TsReadArgsUnitTests {

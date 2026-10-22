@@ -98,7 +98,7 @@ class TsIncrByArgsUnitTests {
     }
 
     /**
-     * Design §3.2: {@code timestamp(long)} must be ≥ 0; the other setters validate as on CREATE.
+     * {@code timestamp(long)} must be ≥ 0; the other setters validate as on CREATE.
      */
     @Test
     void setterValidation() {

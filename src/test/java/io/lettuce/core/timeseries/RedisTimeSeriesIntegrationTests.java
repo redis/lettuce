@@ -95,7 +95,7 @@ public class RedisTimeSeriesIntegrationTests {
     protected static final String DST = "{ts}:dst";
 
     /**
-     * The message of a rejected duplicate under policy BLOCK, as far as it is the same on 8.0.2 and 8.10.0 (test plan B08).
+     * The message of a rejected duplicate under policy BLOCK, as far as it is the same on 8.0.2 and 8.10.0 (scenario B08).
      */
     protected static final String BLOCK_DUPLICATE = "TSDB: Error at upsert, update is not supported when DUPLICATE_POLICY is set to BLOCK mode";
 
@@ -352,7 +352,7 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Scenario B04 (CREATE): non-ASCII label names and values are stored and returned exactly (design §3.5: UTF-8).
+     * Scenario B04 (CREATE): non-ASCII label names and values are stored and returned exactly (UTF-8).
      */
     @Test
     void createStoresUtf8Labels() {
@@ -793,8 +793,7 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Scenario B11: the IGNORE settings also apply to TS.MADD (TIMESTAMP-CANONICAL §2.3): the suppressed sample returns the
-     * highest timestamp.
+     * Scenario B11: the IGNORE settings also apply to TS.MADD: the suppressed sample returns the highest timestamp.
      */
     @Test
     void ignoreSuppressionInMAdd() {
@@ -1357,9 +1356,8 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Scenario G03: every aggregation of design §3.1 that the 8.0 floor supports is accepted by CREATERULE and comes back in
-     * the source INFO as the same {@link TsAggregationType} constant (TS.INFO sends the token in uppercase). One source can
-     * have several rules.
+     * Scenario G03: every aggregation that the 8.0 floor supports is accepted by CREATERULE and comes back in the source INFO
+     * as the same {@link TsAggregationType} constant (TS.INFO sends the token in uppercase). One source can have several rules.
      */
     @Test
     void createRuleEveryAggregationRoundTrips() {
@@ -1487,9 +1485,9 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Scenario G06: the invalid topologies of TIMESERIES-CANONICAL.md §5 are rejected with the server's messages (8.10.0):
-     * source = destination → {@code TSDB: the source key and destination key should be different}; a source that is already a
-     * destination → {@code TSDB: the source key already has a source rule}; a destination that is already a source →
+     * Scenario G06: invalid rule topologies are rejected with the server's messages (8.10.0): source = destination →
+     * {@code TSDB: the source key and destination key should be different}; a source that is already a destination →
+     * {@code TSDB: the source key already has a source rule}; a destination that is already a source →
      * {@code TSDB: the destination key already has a dst rule}; a destination of another source →
      * {@code TSDB: the destination key already has a src rule}.
      */
@@ -1517,8 +1515,8 @@ public class RedisTimeSeriesIntegrationTests {
     /**
      * Scenario G06 / A18: an unknown aggregation from {@code TsAggregation.of} (the Javadoc: Lettuce does not check names) is
      * passed through and the server rejects it with {@code TSDB: Unknown aggregation type} (server message, 8.10.0). A bucket
-     * duration of 0 or less is rejected by the client with {@link IllegalArgumentException} before anything is sent (design
-     * §2.2, H19; test plan A18), with and without {@code alignTimestamp}. No rule is created.
+     * duration of 0 or less is rejected by the client with {@link IllegalArgumentException} before anything is sent (scenario
+     * A18), with and without {@code alignTimestamp}. No rule is created.
      */
     @Test
     void createRuleInvalidArguments() {
@@ -1758,7 +1756,7 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Series {@code {ts}:e} with the samples (1000, 1) and (7000, 7), so that bucket 3000 has an empty middle bucket (test plan
+     * Series {@code {ts}:e} with the samples (1000, 1) and (7000, 7), so that bucket 3000 has an empty middle bucket (scenario
      * C10).
      */
     protected void emptyBucketSeries() {
@@ -1784,7 +1782,7 @@ public class RedisTimeSeriesIntegrationTests {
 
     /**
      * Read the TS.MADD element of a {@link TransactionResult}. The reactive subclass overrides this, because the reactive
-     * {@code tsMAdd} produces {@code Value<Long>} elements (design §2.3).
+     * {@code tsMAdd} produces {@code Value<Long>} elements.
      */
     @SuppressWarnings("unchecked")
     protected List<Long> maddResultInTransaction(Object element) {
@@ -2052,7 +2050,7 @@ public class RedisTimeSeriesIntegrationTests {
 
     /**
      * Scenario C06: F2, one bucket (10000, range {@code -}..{@code +}): every aggregation of the 8.0 floor gives the exact
-     * value of test plan §4 (TWA verified on 8.0.2, 8.8.0 and 8.10.0).
+     * expected value (TWA verified on 8.0.2, 8.8.0 and 8.10.0).
      */
     @Test
     void rangeEveryAggregationOneBucket() {
@@ -2081,7 +2079,7 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Scenario C06: F2, bucket 3000: TWA → 3.5, 4.5, 7; avg, sum, min, max, count per bucket as in test plan §4.
+     * Scenario C06: F2, bucket 3000: TWA → 3.5, 4.5, 7; avg, sum, min, max, count per bucket.
      */
     @Test
     void rangeAggregationsBucket3000() {
@@ -2261,8 +2259,8 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Scenario J02 (RANGE): RANGE and REVRANGE on a missing key fail with {@code TSDB: the key does not exist}
-     * (TIMESERIES-CANONICAL.md §5; observed on 8.10.0).
+     * Scenario J02 (RANGE): RANGE and REVRANGE on a missing key fail with {@code TSDB: the key does not exist} (observed on
+     * 8.10.0).
      */
     @Test
     void rangeMissingKey() {
@@ -2551,8 +2549,8 @@ public class RedisTimeSeriesIntegrationTests {
 
     /**
      * Scenario L02 (MADD partial failure): inside MULTI/EXEC, a TS.MADD with a sample rejected under policy BLOCK gives
-     * {@code [null, ts]} at its position, as outside a transaction (design §2.2 and H2: a {@code null} element means the server
-     * rejected that sample); the commands after it get their own replies.
+     * {@code [null, ts]} at its position, as outside a transaction (a {@code null} element means the server rejected that
+     * sample); the commands after it get their own replies.
      */
     @Test
     void transactionWithMAddPartialFailure() {
@@ -2588,14 +2586,14 @@ public class RedisTimeSeriesIntegrationTests {
     protected static final String NAN_COMPANION = "{ts}:nan2";
 
     /**
-     * The isolation filter {@code t=<testMethodName>} (test plan §3).
+     * The isolation filter {@code t=<testMethodName>}.
      */
     protected TsFilter isolation() {
         return TsFilter.equal("t", testName);
     }
 
     /**
-     * Series {@code {ts}:f1b} with labels {@code t=<test>, sensor=hum, area=south} (test plan D03) and samples (1000, 10),
+     * Series {@code {ts}:f1b} with labels {@code t=<test>, sensor=hum, area=south} (scenario D03) and samples (1000, 10),
      * (2000, 20).
      */
     protected void secondSeries() {
@@ -2901,8 +2899,8 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Scenario D04: one aggregation, bucket 3000 avg: F2 → (0, 3), (3000, 13/3), (6000, 7) (test plan §4); F1 → (0, 1.5),
-     * (3000, 3); MREVRANGE reversed; {@code getAggregations()} = [AVG].
+     * Scenario D04: one aggregation, bucket 3000 avg: F2 → (0, 3), (3000, 13/3), (6000, 7); F1 → (0, 1.5), (3000, 3); MREVRANGE
+     * reversed; {@code getAggregations()} = [AVG].
      */
     @Test
     void mrangeAggregation() {
@@ -2984,8 +2982,8 @@ public class RedisTimeSeriesIntegrationTests {
     // --- GROUPBY -----------------------------------------------------------------------------------------------------
 
     /**
-     * Scenario D06: F3 GROUPBY grp with every reducer, exact values per timestamp 1000 / 2000 / 3000 (test plan §4): sum 4/6/8,
-     * min 1/2/3, max 3/4/5, avg 2/3/4, range 2/2/2, count 2/2/2, std.p 1, var.p 1, std.s √2, var.s 2.
+     * Scenario D06: F3 GROUPBY grp with every reducer, exact values per timestamp 1000 / 2000 / 3000: sum 4/6/8, min 1/2/3, max
+     * 3/4/5, avg 2/3/4, range 2/2/2, count 2/2/2, std.p 1, var.p 1, std.s √2, var.s 2.
      */
     @Test
     void groupByEveryReducer() {
@@ -3110,7 +3108,7 @@ public class RedisTimeSeriesIntegrationTests {
 
     /**
      * Scenario D08: GROUPBY sources. Without WITHLABELS the sources come only on RESP3 ({@code {g1, g2}}); the RESP2 subclass
-     * overrides this test ({@code null}, design §3.5, H7). With WITHLABELS they are {@code {g1, g2}} on both protocols.
+     * overrides this test ({@code null}). With WITHLABELS they are {@code {g1, g2}} on both protocols.
      */
     @Test
     void groupBySources() {
@@ -3193,8 +3191,8 @@ public class RedisTimeSeriesIntegrationTests {
 
     /**
      * Scenario J04 (Redis 8.10+): a raw {@code TS.MRANGE - + EXCLUDEEMPTY FILTER t=<test> GROUPBY t REDUCE sum} sent with
-     * {@code dispatch} surfaces the server error unchanged: {@code TSDB: EXCLUDEEMPTY is not allowed with GROUPBY}
-     * (TIMESERIES-CANONICAL.md §8). Through the API the same combination is rejected before sending (A14).
+     * {@code dispatch} surfaces the server error unchanged: {@code TSDB: EXCLUDEEMPTY is not allowed with GROUPBY}. Through the
+     * API the same combination is rejected before sending (A14).
      */
     @Test
     void excludeEmptyWithGroupByRawPassthrough() {
@@ -3500,7 +3498,7 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Scenario E06 (Redis 8.10+, H24): {@code aggregationForEachKey(10, sum, count)} returns the same rows as the explicitly
+     * Scenario E06 (Redis 8.10+): {@code aggregationForEachKey(10, sum, count)} returns the same rows as the explicitly
      * repeated list {@code sum,count sum,count}: bucket 0 → [3, 2, 30, 2], bucket 10 → [100, 1, 50, 1] (verified on 8.10.0).
      */
     @Test

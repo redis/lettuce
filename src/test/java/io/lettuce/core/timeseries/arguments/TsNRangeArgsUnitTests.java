@@ -27,7 +27,7 @@ import io.lettuce.core.timeseries.TsBucketTimestamp;
 
 /**
  * Unit tests for {@link TsNRangeArgs}: one aggregation argument per key, {@code aggregationForEachKey}, the key-count check,
- * the option order (design §3.3) and the per-key column counts the reply output uses.
+ * the option order and the per-key column counts the reply output uses.
  */
 @Tag(UNIT_TEST)
 class TsNRangeArgsUnitTests {
@@ -79,7 +79,7 @@ class TsNRangeArgsUnitTests {
     }
 
     /**
-     * Scenario A10 / E04: the server HLD's flow case {@code AGGREGATION sum sum,count 10} for two keys.
+     * Scenario A10 / E04: the documented example {@code AGGREGATION sum sum,count 10} for two keys.
      */
     @Test
     void flowCaseSumThenSumCount() {
@@ -91,8 +91,8 @@ class TsNRangeArgsUnitTests {
     }
 
     /**
-     * Scenario A10 (H24): {@code aggregationForEachKey(min,max)} for 2 keys → {@code MIN,MAX MIN,MAX}; for 3 keys three times.
-     * The server never broadcasts one spec to every key.
+     * Scenario A10: {@code aggregationForEachKey(min,max)} for 2 keys → {@code MIN,MAX MIN,MAX}; for 3 keys three times. The
+     * server never broadcasts one spec to every key.
      */
     @Test
     void aggregationForEachKeyRepeatsTheSpecPerKey() {
@@ -106,7 +106,7 @@ class TsNRangeArgsUnitTests {
     }
 
     /**
-     * Scenario E06 (H24): {@code aggregationForEachKey} sends the same tokens as the explicitly repeated list.
+     * Scenario E06: {@code aggregationForEachKey} sends the same tokens as the explicitly repeated list.
      */
     @Test
     void aggregationForEachKeyEqualsTheRepeatedList() {
@@ -120,7 +120,7 @@ class TsNRangeArgsUnitTests {
     }
 
     /**
-     * Scenario A10: the tokens of design §3.1 and a raw value from {@code TsAggregation.of}, sent exactly as given.
+     * Scenario A10: the aggregation tokens and a raw value from {@code TsAggregation.of}, sent exactly as given.
      */
     @Test
     void aggregationTokens() {
@@ -134,8 +134,7 @@ class TsNRangeArgsUnitTests {
 
     /**
      * Scenario A10: every option, set in reverse order, is sent in the documented order LATEST, FILTER_BY_TS, FILTER_BY_VALUE,
-     * COUNT, ALIGN, AGGREGATION (one argument per key, then the bucket), BUCKETTIMESTAMP, EMPTY (design §3.3; Javadoc of
-     * {@code build}).
+     * COUNT, ALIGN, AGGREGATION (one argument per key, then the bucket), BUCKETTIMESTAMP, EMPTY (Javadoc of {@code build}).
      */
     @Test
     void everyOptionInDocumentedOrder() {
@@ -197,7 +196,7 @@ class TsNRangeArgsUnitTests {
     /**
      * Scenario A17: the aggregation bucket duration must be positive. A {@code long} of 0 or less and a {@code Duration} of
      * zero, under one millisecond (counts as 0) or negative throw {@link IllegalArgumentException} before anything is sent, on
-     * the setters and the {@code Builder} factories (design §2.2, H19).
+     * the setters and the {@code Builder} factories.
      */
     @Test
     void bucketDurationMustBePositive() {
@@ -227,8 +226,8 @@ class TsNRangeArgsUnitTests {
     }
 
     /**
-     * Scenario A16: spec count ≠ key count → {@link IllegalArgumentException} when the arguments are built (design §3.3:
-     * {@code build(CommandArgs, int keyCount)}).
+     * Scenario A16: spec count ≠ key count → {@link IllegalArgumentException} when the arguments are built
+     * ({@code build(CommandArgs, int keyCount)}).
      */
     @Test
     void specCountMustMatchKeyCount() {
@@ -297,7 +296,7 @@ class TsNRangeArgsUnitTests {
     }
 
     /**
-     * Scenario A16 (H14): ALIGN, BUCKETTIMESTAMP or EMPTY without AGGREGATION throws {@link IllegalArgumentException} when the
+     * Scenario A16: ALIGN, BUCKETTIMESTAMP or EMPTY without AGGREGATION throws {@link IllegalArgumentException} when the
      * arguments are built.
      */
     @Test

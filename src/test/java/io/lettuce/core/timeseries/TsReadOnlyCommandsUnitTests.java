@@ -17,7 +17,7 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ReadOnlyCommands;
 
 /**
- * Read-only registration of the TimeSeries commands (design §5.4, NF.4).
+ * Read-only registration of the TimeSeries commands.
  */
 @Tag(UNIT_TEST)
 class TsReadOnlyCommandsUnitTests {
@@ -58,7 +58,7 @@ class TsReadOnlyCommandsUnitTests {
 
     /**
      * Scenario K10 (GET, RANGE, REVRANGE, READ): the single-key reads are read-only, so {@code ReadFrom.REPLICA} may route them
-     * to a replica (design §5.4, NF.4).
+     * to a replica.
      */
     @Test
     void singleKeyReadsAreReadOnly() {
@@ -84,7 +84,7 @@ class TsReadOnlyCommandsUnitTests {
 
     /**
      * Scenario K10 (MGET, MRANGE, MREVRANGE, QUERYINDEX, QUERYLABELS): the label-index reads are read-only, so they follow
-     * {@code ReadFrom} in Redis Cluster (design §5.1, §5.4).
+     * {@code ReadFrom} in Redis Cluster.
      */
     @Test
     void labelIndexReadsAreReadOnly() {
@@ -111,7 +111,7 @@ class TsReadOnlyCommandsUnitTests {
 
     /**
      * Scenario K10 (NRANGE, NREVRANGE): the multi-key reads are read-only, so {@code ReadFrom.REPLICA} may route them to a
-     * replica (design §5.4, NF.4).
+     * replica.
      */
     @Test
     void multiKeyReadsAreReadOnly() {

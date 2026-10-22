@@ -22,7 +22,7 @@ import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
 
 /**
- * Unit tests for {@link TsMGetValueParser} (design §4, shape P7). The replies are the bytes captured from Redis 8.10.0
+ * Unit tests for {@link TsMGetValueParser}. The replies are the bytes captured from Redis 8.10.0
  * (redislabs/client-libs-test:8.10.0, 2026-10-20) after {@code TS.CREATE {ts}:a LABELS t x sensor temp area north},
  * {@code TS.CREATE {ts}:b LABELS t x sensor hum}, {@code TS.CREATE {ts}:e LABELS t x}, {@code TS.ADD {ts}:a 1000 1},
  * {@code TS.ADD {ts}:a 2000 2.5}, {@code TS.ADD {ts}:b 1000 3}.
@@ -137,7 +137,7 @@ class TsMGetValueParserUnitTests {
     }
 
     /**
-     * Scenario U12 (MGET): each RESP2/RESP3 pair gives equal models with equal hash codes (NF.1).
+     * Scenario U12 (MGET): each RESP2/RESP3 pair gives equal models with equal hash codes.
      */
     @Test
     void resp2AndResp3Equal() {
@@ -164,8 +164,8 @@ class TsMGetValueParserUnitTests {
     }
 
     /**
-     * Scenario U08 with values outside the captured set (NF.9): NaN and Infinity samples on both protocols, and a UTF-8 label.
-     * Keys are decoded with the connection codec, labels as UTF-8 regardless of the codec (design §3.5).
+     * Scenario U08 with values outside the captured set: NaN and Infinity samples on both protocols, and a UTF-8 label. Keys
+     * are decoded with the connection codec, labels as UTF-8 regardless of the codec.
      */
     @Test
     void specialValuesAndCodec() {

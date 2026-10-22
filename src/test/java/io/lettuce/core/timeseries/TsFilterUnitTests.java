@@ -15,8 +15,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link TsFilter}: the expression of every factory (TIMESERIES-CANONICAL.md §2.6, design §3.3) and argument
- * validation.
+ * Unit tests for {@link TsFilter}: the expression of every factory and argument validation.
  */
 @Tag(UNIT_TEST)
 class TsFilterUnitTests {

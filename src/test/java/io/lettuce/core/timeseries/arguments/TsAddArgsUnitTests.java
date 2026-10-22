@@ -31,8 +31,8 @@ import io.lettuce.core.timeseries.TsEncodingType;
 class TsAddArgsUnitTests {
 
     /**
-     * Scenario A02b: every option, set in reverse order, is emitted in the documented order (design §3.2: RETENTION, ENCODING,
-     * CHUNK_SIZE, DUPLICATE_POLICY, ON_DUPLICATE, IGNORE, LABELS) with LABELS last.
+     * Scenario A02b: every option, set in reverse order, is emitted in the documented order (RETENTION, ENCODING, CHUNK_SIZE,
+     * DUPLICATE_POLICY, ON_DUPLICATE, IGNORE, LABELS) with LABELS last.
      */
     @Test
     void everyOptionInFixedOrder() {
@@ -105,7 +105,7 @@ class TsAddArgsUnitTests {
     }
 
     /**
-     * Design §3.2: an empty label map sends a bare LABELS; labels keep insertion order and are copied.
+     * An empty label map sends a bare LABELS; labels keep insertion order and are copied.
      */
     @Test
     void labels() {
@@ -124,7 +124,7 @@ class TsAddArgsUnitTests {
     }
 
     /**
-     * Design §3.2: setter validation from the Javadoc.
+     * Setter validation from the Javadoc.
      */
     @Test
     void setterValidation() {

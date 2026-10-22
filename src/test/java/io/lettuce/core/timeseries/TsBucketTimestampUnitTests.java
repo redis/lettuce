@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
- * Unit tests for {@link TsBucketTimestamp}, the plain enum for BUCKETTIMESTAMP (design §3.1).
+ * Unit tests for {@link TsBucketTimestamp}, the plain enum for BUCKETTIMESTAMP.
  */
 @Tag(UNIT_TEST)
 class TsBucketTimestampUnitTests {
@@ -38,7 +38,7 @@ class TsBucketTimestampUnitTests {
     }
 
     /**
-     * Scenario C09: the enum is closed and has exactly the three constants of design §3.1.
+     * Scenario C09: the enum is closed and has exactly the three constants.
      */
     @Test
     void constants() {

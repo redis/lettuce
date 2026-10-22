@@ -39,10 +39,10 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
- * TS.READ with BLOCK (Redis 8.10+, test plan F04–F10). Every test opens its own reader connection and, where a write must wake
- * the reader, a second producer connection, and closes both at the end (test plan §3). The producer waits until the server
- * reports the reader as blocked ({@code CLIENT LIST}, flag {@code b}) before it writes, so no test relies on a sleep. Block
- * times are at most 1 s, except F10.
+ * TS.READ with BLOCK (Redis 8.10+, scenarios F04–F10). Every test opens its own reader connection and, where a write must wake
+ * the reader, a second producer connection, and closes both at the end. The producer waits until the server reports the reader
+ * as blocked ({@code CLIENT LIST}, flag {@code b}) before it writes, so no test relies on a sleep. Block times are at most 1 s,
+ * except F10.
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -178,7 +178,7 @@ public class RedisTimeSeriesBlockingIntegrationTests {
     }
 
     /**
-     * Scenario F06: TS.INCRBY also wakes a blocked reader (TIMESERIES-CANONICAL.md, TS.READ: writes that unblock).
+     * Scenario F06: TS.INCRBY also wakes a blocked reader.
      */
     @Test
     @EnabledOnCommand("TS.READ")

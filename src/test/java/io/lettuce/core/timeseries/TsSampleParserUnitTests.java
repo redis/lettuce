@@ -24,7 +24,7 @@ import io.lettuce.core.output.TsSampleOutput;
 /**
  * Unit tests for {@link TsSampleParser}, the sample decoder of the complex replies (MGET, MRANGE, MREVRANGE). Scenario U13: the
  * reply cases of the dedicated outputs (U03, U04; wire bytes observed on 8.10.0) are fed to both decoders, which must give
- * equal samples (design §4).
+ * equal samples.
  */
 @Tag(UNIT_TEST)
 class TsSampleParserUnitTests {

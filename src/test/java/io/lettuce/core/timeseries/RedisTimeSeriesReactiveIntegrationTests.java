@@ -29,8 +29,8 @@ import reactor.test.StepVerifier;
 /**
  * Runs {@link RedisTimeSeriesIntegrationTests} through the reactive API.
  * <p>
- * The reactive {@code tsMAdd} emits {@code Value<Long>}, with {@link Value#empty()} for a rejected sample (design §2.3), so the
- * base suite's TS.MADD calls are unwrapped into nullable elements, and the reactive shape has its own tests.
+ * The reactive {@code tsMAdd} emits {@code Value<Long>}, with {@link Value#empty()} for a rejected sample, so the base suite's
+ * TS.MADD calls are unwrapped into nullable elements, and the reactive shape has its own tests.
  */
 @Tag(INTEGRATION_TEST)
 public class RedisTimeSeriesReactiveIntegrationTests extends RedisTimeSeriesIntegrationTests {
@@ -96,7 +96,7 @@ public class RedisTimeSeriesReactiveIntegrationTests extends RedisTimeSeriesInte
     }
 
     /**
-     * Scenario L03 (GET): {@code tsGet} on a series without samples completes empty (design §2.3); on F1 it emits (3000, 3.0).
+     * Scenario L03 (GET): {@code tsGet} on a series without samples completes empty; on F1 it emits (3000, 3.0).
      */
     @Test
     void getReactiveEmptySeriesCompletesEmpty() {

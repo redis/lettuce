@@ -116,7 +116,7 @@ class TsInfoValueParserUnitTests {
     // --- derived replies ---------------------------------------------------------------------------------------------
 
     /**
-     * {@link #RESP2_DEFAULT} with a nil duplicate policy, as older servers report it (TIMESERIES-CANONICAL.md §3, §9).
+     * {@link #RESP2_DEFAULT} with a nil duplicate policy, as older servers report it.
      */
     static final String RESP2_NIL_POLICY = RESP2_DEFAULT.replace("+duplicatePolicy\r\n+block\r\n",
             "+duplicatePolicy\r\n$-1\r\n");
@@ -278,7 +278,7 @@ class TsInfoValueParserUnitTests {
     }
 
     /**
-     * Scenario U11: nil labels give an empty map (design §3.5: "non-null (empty when nil)").
+     * Scenario U11: nil labels give an empty map, never {@code null}.
      */
     @Test
     void nilLabelsAreEmpty() {
@@ -310,8 +310,8 @@ class TsInfoValueParserUnitTests {
     }
 
     /**
-     * Scenario U11: {@code bytesPerSample} is documented as {@code "inf"} for a chunk with no samples (TIMESERIES-CANONICAL.md
-     * §3, TS.INFO); RESP3 sends it as a double.
+     * Scenario U11: the TS.INFO page documents {@code bytesPerSample} as {@code "inf"} for a chunk with no samples; RESP3 sends
+     * it as a double.
      */
     @Test
     void bytesPerSampleInfinity() {
@@ -413,7 +413,7 @@ class TsInfoValueParserUnitTests {
     }
 
     /**
-     * Design §3.5: labels are decoded as UTF-8 independent of the codec; keys are decoded with the codec.
+     * Labels are decoded as UTF-8 independent of the codec; keys are decoded with the codec.
      */
     @Test
     void labelsAreUtf8KeysUseCodec() {

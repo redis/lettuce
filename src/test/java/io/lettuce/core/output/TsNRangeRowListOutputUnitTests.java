@@ -27,10 +27,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
- * Unit tests for {@link TsNRangeRowListOutput}, the TS.NRANGE / TS.NREVRANGE output (design §4, shape P6): rows
- * {@code [ts, [v…]]} with one more nesting level than TS.RANGE. The replies are the wire bytes observed on 8.10.0 for fixture
- * F6 ({@code {ts}:n1} (0, 1), (5, 2), (10, 100); {@code {ts}:n2} (0, 3), (5, 27), (12, 50)), fed through
- * {@link RedisStateMachine}.
+ * Unit tests for {@link TsNRangeRowListOutput}, the TS.NRANGE / TS.NREVRANGE output: rows {@code [ts, [v…]]} with one more
+ * nesting level than TS.RANGE. The replies are the wire bytes observed on 8.10.0 for fixture F6 ({@code {ts}:n1} (0, 1), (5,
+ * 2), (10, 100); {@code {ts}:n2} (0, 3), (5, 27), (12, 50)), fed through {@link RedisStateMachine}.
  */
 @Tag(UNIT_TEST)
 class TsNRangeRowListOutputUnitTests {
@@ -171,8 +170,8 @@ class TsNRangeRowListOutputUnitTests {
     }
 
     /**
-     * Scenario U05: RESP2 spells infinities {@code Infinity} / {@code -Infinity}, RESP3 sends {@code inf} / {@code -inf}
-     * (TIMESERIES-CANONICAL.md §8); both decode to the Java infinities.
+     * Scenario U05: RESP2 spells infinities {@code Infinity} / {@code -Infinity}, RESP3 sends {@code inf} / {@code -inf}; both
+     * decode to the Java infinities.
      */
     @Test
     void infinities() {
@@ -206,9 +205,8 @@ class TsNRangeRowListOutputUnitTests {
     }
 
     /**
-     * Scenario U05: rows are streamed to a subscriber one by one, each as soon as it is complete (design §4: "Each row is
-     * emitted to the subscriber as soon as it is decoded"). The reply is fed in two parts; after the first part, the subscriber
-     * has seen exactly the first row.
+     * Scenario U05: rows are streamed to a subscriber one by one, each as soon as it is complete. The reply is fed in two
+     * parts; after the first part, the subscriber has seen exactly the first row.
      */
     @Test
     void rowsStreamedOneByOne() {

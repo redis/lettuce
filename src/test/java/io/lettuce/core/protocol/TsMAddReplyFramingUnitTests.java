@@ -32,7 +32,7 @@ import io.netty.buffer.Unpooled;
 class TsMAddReplyFramingUnitTests {
 
     /**
-     * The TS.MADD partial-failure reply verified on 8.10.0 (TIMESERIES-CANONICAL.md §8).
+     * The TS.MADD partial-failure reply verified on 8.10.0.
      */
     private static final String MADD_REPLY = "*2\r\n"
             + "-ERR TSDB: Error at upsert, update is not supported when DUPLICATE_POLICY is set to BLOCK mode, or either current or new value is NaN and DUPLICATE_POLICY is MAX/MIN/SUM\r\n"

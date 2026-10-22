@@ -23,9 +23,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
- * Unit tests for {@link TsSampleOutput}, the TS.GET output (design §4, shape P4). The replies are the wire bytes observed on
- * 8.10.0: RESP2 sends values as simple strings ({@code +1}, {@code +NaN}, {@code +Infinity}), RESP3 as doubles ({@code ,1},
- * {@code ,nan}, {@code ,inf}). They are fed through {@link RedisStateMachine}, which drives the output with
+ * Unit tests for {@link TsSampleOutput}, the TS.GET output. The replies are the wire bytes observed on 8.10.0: RESP2 sends
+ * values as simple strings ({@code +1}, {@code +NaN}, {@code +Infinity}), RESP3 as doubles ({@code ,1}, {@code ,nan},
+ * {@code ,inf}). They are fed through {@link RedisStateMachine}, which drives the output with
  * {@code multi}/{@code set}/{@code complete} as on a real connection; a second set of tests calls the output methods directly,
  * in the order the state machine calls them (each element is followed by {@code complete(depth)}).
  */
@@ -68,8 +68,7 @@ class TsSampleOutputUnitTests {
     }
 
     /**
-     * Scenario U03: RESP2 {@code NaN}, {@code Infinity} and {@code -Infinity} (spellings observed on the server,
-     * TIMESERIES-CANONICAL.md §8).
+     * Scenario U03: RESP2 {@code NaN}, {@code Infinity} and {@code -Infinity} (spellings observed on the server).
      */
     @Test
     void resp2SpecialValues() {
@@ -95,7 +94,7 @@ class TsSampleOutputUnitTests {
     }
 
     /**
-     * Scenario U03: the RESP2 and RESP3 forms of the same sample are equal (NF.1).
+     * Scenario U03: the RESP2 and RESP3 forms of the same sample are equal.
      */
     @Test
     void resp2AndResp3Equal() {

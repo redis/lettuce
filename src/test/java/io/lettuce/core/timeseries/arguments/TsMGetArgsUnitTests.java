@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link TsMGetArgs}: option order, the label-mode conflict and validation (design §3.3).
+ * Unit tests for {@link TsMGetArgs}: option order, the label-mode conflict and validation.
  */
 @Tag(UNIT_TEST)
 class TsMGetArgsUnitTests {

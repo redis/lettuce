@@ -26,9 +26,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
- * Unit tests for {@link TsSampleListOutput}, the TS.RANGE / TS.REVRANGE / TS.READ output (design §4, shape P5). The replies are
- * the wire bytes observed on 8.10.0, fed through {@link RedisStateMachine}; some tests drive the output methods directly, in
- * the order the state machine calls them.
+ * Unit tests for {@link TsSampleListOutput}, the TS.RANGE / TS.REVRANGE / TS.READ output. The replies are the wire bytes
+ * observed on 8.10.0, fed through {@link RedisStateMachine}; some tests drive the output methods directly, in the order the
+ * state machine calls them.
  */
 @Tag(UNIT_TEST)
 class TsSampleListOutputUnitTests {

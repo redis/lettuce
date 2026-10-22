@@ -73,7 +73,7 @@ class TsAggregationUnitTests {
     }
 
     /**
-     * Scenario U02: the wire tokens of design §3.1.
+     * Scenario U02: the wire tokens.
      */
     @Test
     void wireTokens() {

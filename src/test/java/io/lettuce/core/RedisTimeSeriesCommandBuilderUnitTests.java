@@ -587,8 +587,8 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario A18 / A21: the aggregation tokens of design §3.1 ({@code STD.P}, {@code VAR.S}, {@code COUNTNAN}), and an
-     * unknown aggregation from {@code TsAggregation.of(String)} sent exactly as given.
+     * Scenario A18 / A21: the aggregation tokens ({@code STD.P}, {@code VAR.S}, {@code COUNTNAN}), and an unknown aggregation
+     * from {@code TsAggregation.of(String)} sent exactly as given.
      */
     @Test
     void createRuleAggregationTokens() {
@@ -605,7 +605,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
     /**
      * Scenario A18: a bucket duration of 0 or less throws {@link IllegalArgumentException} before sending, with and without
-     * alignment (design §0, §2.2; Javadoc of {@code tsCreateRule}).
+     * alignment (Javadoc of {@code tsCreateRule}).
      */
     @Test
     void createRuleRejectsNonPositiveBucketDuration() {
@@ -655,7 +655,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
     /**
      * Scenario A18b: a negative alignTimestamp throws {@link IllegalArgumentException} before a command is built, and an
-     * alignment of 0 is accepted and sent (design §2.2 and §5; Javadoc of {@code tsCreateRule}).
+     * alignment of 0 is accepted and sent (Javadoc of {@code tsCreateRule}).
      */
     @Test
     void createRuleRejectsNegativeAlignment() {
@@ -707,8 +707,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario A08: unbounded sides send {@code -} and {@code +}; REVRANGE keeps the {@code from}/{@code to} order of RANGE
-     * (design §2.2).
+     * Scenario A08: unbounded sides send {@code -} and {@code +}; REVRANGE keeps the {@code from}/{@code to} order of RANGE.
      */
     @Test
     void rangeUnboundedSides() {
@@ -958,8 +957,8 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
     /**
      * Scenario A09: every option except GROUPBY, for MRANGE and MREVRANGE: LATEST, FILTER_BY_TS, FILTER_BY_VALUE, WITHLABELS,
-     * COUNT, ALIGN, AGGREGATION, BUCKETTIMESTAMP, EMPTY, EXCLUDEEMPTY, FILTER f… (EXCLUDEEMPTY before FILTER, design §3.3);
-     * EXCLUDEEMPTY once.
+     * COUNT, ALIGN, AGGREGATION, BUCKETTIMESTAMP, EMPTY, EXCLUDEEMPTY, FILTER f… (EXCLUDEEMPTY before FILTER); EXCLUDEEMPTY
+     * once.
      */
     @Test
     void mrangeWithEveryOptionAndExcludeEmpty() {
@@ -1108,8 +1107,8 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario A13 (QUERYLABELS): an empty filter array (design §2.2: not a silent all-series query), {@code null} filters, and
-     * a {@code null} or empty label throw {@link IllegalArgumentException}.
+     * Scenario A13 (QUERYLABELS): an empty filter array (not a silent all-series query), {@code null} filters, and a
+     * {@code null} or empty label throw {@link IllegalArgumentException}.
      */
     @Test
     void queryLabelsRejectsInvalidArguments() {
@@ -1179,8 +1178,8 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario A10: the first key is the first key of the command (design §5: the cluster routes TS.NRANGE by its first key),
-     * not {@code numkeys}.
+     * Scenario A10: the first key is the first key of the command (the cluster routes TS.NRANGE by its first key), not
+     * {@code numkeys}.
      */
     @Test
     void nrangeFirstKeyIsTheFirstGivenKey() {
@@ -1207,7 +1206,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario A10 (H24): {@code aggregationForEachKey(min,max)} for 2 keys → {@code MIN,MAX MIN,MAX}; for 3 keys three times.
+     * Scenario A10: {@code aggregationForEachKey(min,max)} for 2 keys → {@code MIN,MAX MIN,MAX}; for 3 keys three times.
      */
     @Test
     void nrangeAggregationForEachKey() {

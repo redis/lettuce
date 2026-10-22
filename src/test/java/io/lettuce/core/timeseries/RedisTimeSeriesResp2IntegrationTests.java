@@ -56,7 +56,7 @@ public class RedisTimeSeriesResp2IntegrationTests extends RedisTimeSeriesIntegra
 
     /**
      * Scenario D08 (RESP2): without WITHLABELS a RESP2 GROUPBY reply has no source information, so {@code getSources()} is
-     * {@code null} (design §3.5, H7); with WITHLABELS the sources come from {@code __source__}: {g1, g2}.
+     * {@code null}; with WITHLABELS the sources come from {@code __source__}: {g1, g2}.
      */
     @Test
     @Override

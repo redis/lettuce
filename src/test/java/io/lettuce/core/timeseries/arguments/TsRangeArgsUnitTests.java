@@ -22,7 +22,7 @@ import io.lettuce.core.timeseries.TsBucketTimestamp;
 
 /**
  * Unit tests for {@link TsRangeArgs}: option order, the aggregation token, the options that require an aggregation, and setter
- * validation (design §3.3).
+ * validation.
  */
 @Tag(UNIT_TEST)
 class TsRangeArgsUnitTests {
@@ -83,7 +83,7 @@ class TsRangeArgsUnitTests {
 
     /**
      * Scenario A08: the ALIGN forms. {@code align(n)} sends the number, {@code alignStart()} and {@code alignEnd()} the bare
-     * words {@code start} and {@code end} (design §3.4); the last call wins.
+     * words {@code start} and {@code end}; the last call wins.
      */
     @Test
     void alignForms() {
@@ -99,7 +99,7 @@ class TsRangeArgsUnitTests {
     }
 
     /**
-     * Scenario A08 / C09: the BUCKETTIMESTAMP tokens {@code -}, {@code +}, {@code ~} (design §3.1).
+     * Scenario A08 / C09: the BUCKETTIMESTAMP tokens {@code -}, {@code +}, {@code ~}.
      */
     @Test
     void bucketTimestampTokens() {
@@ -125,8 +125,8 @@ class TsRangeArgsUnitTests {
     }
 
     /**
-     * Scenario A07: the tokens of design §3.1 ({@code STD.P}, {@code VAR.S}, {@code COUNTNAN}, {@code COUNTALL}, {@code TWA}),
-     * and a raw value from {@code TsAggregation.of} sent exactly as given.
+     * Scenario A07: the tokens ({@code STD.P}, {@code VAR.S}, {@code COUNTNAN}, {@code COUNTALL}, {@code TWA}), and a raw value
+     * from {@code TsAggregation.of} sent exactly as given.
      */
     @Test
     void aggregationTokens() {
@@ -146,7 +146,7 @@ class TsRangeArgsUnitTests {
     /**
      * Scenario A07 / A17: the {@code Duration} overload sends whole milliseconds. The bucket duration must be positive:
      * {@code Duration.ZERO}, a non-zero duration under one millisecond (counts as 0), a negative duration and {@code null}
-     * throw {@link IllegalArgumentException} (design §2.2, H19; Javadoc of {@code aggregation(Duration, …)}).
+     * throw {@link IllegalArgumentException} (Javadoc of {@code aggregation(Duration, …)}).
      */
     @Test
     void aggregationWithDuration() {
@@ -169,7 +169,7 @@ class TsRangeArgsUnitTests {
     /**
      * Scenario A17: the aggregation bucket duration must be positive. A {@code long} of 0 or less and a {@code Duration} of
      * zero, under one millisecond (counts as 0) or negative throw {@link IllegalArgumentException} before anything is sent, on
-     * the setters and the {@code Builder} factories (design §2.2, H19).
+     * the setters and the {@code Builder} factories.
      */
     @Test
     void bucketDurationMustBePositive() {
@@ -217,7 +217,7 @@ class TsRangeArgsUnitTests {
 
     /**
      * Scenario A15: ALIGN, BUCKETTIMESTAMP or EMPTY without AGGREGATION throws {@link IllegalArgumentException} when the
-     * arguments are built (design §3.3).
+     * arguments are built.
      */
     @Test
     void aggregationOnlyOptionsWithoutAggregation() {

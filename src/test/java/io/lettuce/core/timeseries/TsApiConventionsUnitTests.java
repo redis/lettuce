@@ -194,7 +194,7 @@ class TsApiConventionsUnitTests {
     }
 
     /**
-     * Scenario M02: every public setter and builder factory of the argument types has {@code @since 8.0} (design §3.2).
+     * Scenario M02: every public setter and builder factory of the argument types has {@code @since 8.0}.
      */
     @Test
     void everyArgumentSetterHasSince80() throws IOException {

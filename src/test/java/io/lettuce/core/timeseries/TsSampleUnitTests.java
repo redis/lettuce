@@ -19,8 +19,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link TsSample}: equality with {@code Double.compare} semantics, single- and multi-value samples (design
- * §3.5).
+ * Unit tests for {@link TsSample}: equality with {@code Double.compare} semantics, single- and multi-value samples.
  */
 @Tag(UNIT_TEST)
 class TsSampleUnitTests {
@@ -105,7 +104,7 @@ class TsSampleUnitTests {
 
     /**
      * Scenario U01: the sample is immutable. The values list cannot be modified, and a later change to the list passed to
-     * {@code of} does not change the sample (design §3.5: all result types are immutable).
+     * {@code of} does not change the sample (all result types are immutable).
      */
     @Test
     void immutable() {

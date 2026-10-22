@@ -38,7 +38,7 @@ import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
 
 /**
- * Protocol parity (NF.1): the same series read on a RESP2 and a RESP3 connection produce equal result models.
+ * Protocol parity: the same series read on a RESP2 and a RESP3 connection produce equal result models.
  */
 @Tag(INTEGRATION_TEST)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -411,7 +411,7 @@ public class RedisTimeSeriesProtocolParityIntegrationTests {
 
     /**
      * Scenario I02: GROUPBY without WITHLABELS: everything is equal on both protocols except {@code getSources()}, which is
-     * {@code null} on RESP2 (design §3.5, H7).
+     * {@code null} on RESP2.
      */
     @Test
     void mrangeGroupByWithoutLabelsDiffersOnlyInSources() {

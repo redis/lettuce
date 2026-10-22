@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.timeseries.TsReadOffset;
 
 /**
- * Unit tests for {@link TsReadOffset}: the server sentinels and literal timestamps (design §3.3, H18).
+ * Unit tests for {@link TsReadOffset}: the server sentinels and literal timestamps.
  */
 @Tag(UNIT_TEST)
 class TsReadOffsetUnitTests {

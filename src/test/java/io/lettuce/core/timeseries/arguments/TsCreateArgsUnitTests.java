@@ -90,7 +90,7 @@ class TsCreateArgsUnitTests {
     }
 
     /**
-     * Design §3.2: labels keep the insertion order of the given map and are copied, so later changes to the map do not leak.
+     * Labels keep the insertion order of the given map and are copied, so later changes to the map do not leak.
      */
     @Test
     void labelsKeepOrderAndAreCopied() {
@@ -158,7 +158,7 @@ class TsCreateArgsUnitTests {
     }
 
     /**
-     * Design §3.2: setter validation from the Javadoc.
+     * Setter validation from the Javadoc.
      */
     @Test
     void setterValidation() {
@@ -183,7 +183,7 @@ class TsCreateArgsUnitTests {
     }
 
     /**
-     * Design §3.2: zero thresholds for IGNORE are allowed.
+     * Zero thresholds for IGNORE are allowed.
      */
     @Test
     void ignoreZeroAllowed() {

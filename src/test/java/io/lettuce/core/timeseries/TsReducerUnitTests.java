@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link TsReducer} and {@link TsReducerType} (design §3.1).
+ * Unit tests for {@link TsReducer} and {@link TsReducerType}.
  */
 @Tag(UNIT_TEST)
 class TsReducerUnitTests {
@@ -27,7 +27,7 @@ class TsReducerUnitTests {
     }
 
     /**
-     * Scenario U02c (reducer): the constants of design §3.1, and no FIRST, LAST or TWA.
+     * Scenario U02c (reducer): the constants, and no FIRST, LAST or TWA.
      */
     @Test
     void constants() {

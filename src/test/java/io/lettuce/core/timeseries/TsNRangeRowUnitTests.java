@@ -19,8 +19,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link TsNRangeRow}: equality with {@code Double.compare} semantics (test plan §3 "Value equality"), the
- * per-key slices of {@code getValues(int)} (design §3.5, H17) and the validation of {@code of}.
+ * Unit tests for {@link TsNRangeRow}: equality with {@code Double.compare} semantics, the per-key slices of
+ * {@code getValues(int)} and the validation of {@code of}.
  */
 @Tag(UNIT_TEST)
 class TsNRangeRowUnitTests {
@@ -30,8 +30,8 @@ class TsNRangeRowUnitTests {
     }
 
     /**
-     * Scenario U05 (equality, test plan §3): NaN equals NaN, with the same hash code, so a row with a missing key compares
-     * equal to the same row decoded from the other protocol.
+     * Scenario U05 (equality): NaN equals NaN, with the same hash code, so a row with a missing key compares equal to the same
+     * row decoded from the other protocol.
      */
     @Test
     void nanEqualsNan() {

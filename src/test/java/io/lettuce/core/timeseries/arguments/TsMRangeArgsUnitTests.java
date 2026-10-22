@@ -28,8 +28,8 @@ import io.lettuce.core.timeseries.TsReducer;
 import io.lettuce.core.timeseries.TsReducerType;
 
 /**
- * Unit tests for {@link TsMRangeArgs}: option order with the filters and GROUPBY (design §3.3), conflicts, validation and the
- * getters the reply parser uses.
+ * Unit tests for {@link TsMRangeArgs}: option order with the filters and GROUPBY, conflicts, validation and the getters the
+ * reply parser uses.
  */
 @Tag(UNIT_TEST)
 class TsMRangeArgsUnitTests {
@@ -63,7 +63,7 @@ class TsMRangeArgsUnitTests {
     /**
      * Scenario A09: every option except GROUPBY, set in reverse order, is sent in the documented order: LATEST, FILTER_BY_TS,
      * FILTER_BY_VALUE, WITHLABELS, COUNT, ALIGN, AGGREGATION, BUCKETTIMESTAMP, EMPTY, EXCLUDEEMPTY, then FILTER (EXCLUDEEMPTY
-     * before FILTER, design §3.3).
+     * before FILTER).
      */
     @Test
     void everyOptionWithExcludeEmptyInDocumentedOrder() {
@@ -266,7 +266,7 @@ class TsMRangeArgsUnitTests {
     /**
      * Scenario A17: the aggregation bucket duration must be positive. A {@code long} of 0 or less and a {@code Duration} of
      * zero, under one millisecond (counts as 0) or negative throw {@link IllegalArgumentException} before anything is sent, on
-     * the setters and the {@code Builder} factories (design §2.2, H19).
+     * the setters and the {@code Builder} factories.
      */
     @Test
     void bucketDurationMustBePositive() {
@@ -290,7 +290,7 @@ class TsMRangeArgsUnitTests {
     // --- getters -----------------------------------------------------------------------------------------------------
 
     /**
-     * Design §3.3: the getters return the request's aggregations, group label and reducer; empty / {@code null} when unset.
+     * The getters return the request's aggregations, group label and reducer; empty / {@code null} when unset.
      */
     @Test
     void getters() {

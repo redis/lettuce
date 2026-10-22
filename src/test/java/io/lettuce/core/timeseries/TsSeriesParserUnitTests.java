@@ -24,7 +24,7 @@ import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
 
 /**
- * Unit tests for {@link TsSeriesParser} (design §4, shape P8). The replies are the bytes captured from Redis 8.10.0
+ * Unit tests for {@link TsSeriesParser}. The replies are the bytes captured from Redis 8.10.0
  * (redislabs/client-libs-test:8.10.0, 2026-10-20) after {@code TS.CREATE {ts}:a LABELS t x sensor temp area north},
  * {@code TS.CREATE {ts}:b LABELS t x sensor hum}, {@code TS.CREATE {ts}:e LABELS t x}, {@code TS.ADD {ts}:a 1000 1},
  * {@code TS.ADD {ts}:a 2000 2.5}, {@code TS.ADD {ts}:b 1000 3}. The variants with unknown metadata are derived from them.
@@ -200,8 +200,8 @@ class TsSeriesParserUnitTests {
     }
 
     /**
-     * Scenario U09 / NF.9: an unknown aggregation name in the request is kept as given in {@code getAggregations()}; the
-     * metadata the server sends does not change it.
+     * Scenario U09: an unknown aggregation name in the request is kept as given in {@code getAggregations()}; the metadata the
+     * server sends does not change it.
      */
     @Test
     void aggregationsComeFromTheRequest() {
@@ -288,8 +288,8 @@ class TsSeriesParserUnitTests {
     }
 
     /**
-     * Scenario U10 / NF.9: an unknown RESP3 metadata map between the labels and the samples is skipped, both without and with
-     * GROUPBY; an unknown reducer in the request is reported as given.
+     * Scenario U10: an unknown RESP3 metadata map between the labels and the samples is skipped, both without and with GROUPBY;
+     * an unknown reducer in the request is reported as given.
      */
     @Test
     void unknownMetadataIsSkipped() {
@@ -310,7 +310,7 @@ class TsSeriesParserUnitTests {
     // --- U12 ---------------------------------------------------------------------------------------------------------
 
     /**
-     * Scenario U12 (MRANGE): each RESP2/RESP3 pair gives equal models with equal hash codes (NF.1).
+     * Scenario U12 (MRANGE): each RESP2/RESP3 pair gives equal models with equal hash codes.
      */
     @Test
     void resp2AndResp3Equal() {
@@ -324,8 +324,8 @@ class TsSeriesParserUnitTests {
     }
 
     /**
-     * Scenario U12 (the documented exception, H7): GROUPBY without WITHLABELS (no labels, or SELECTED_LABELS) differs between
-     * RESP2 and RESP3 only in {@code getSources()}.
+     * Scenario U12 (the documented exception): GROUPBY without WITHLABELS (no labels, or SELECTED_LABELS) differs between RESP2
+     * and RESP3 only in {@code getSources()}.
      */
     @Test
     void groupWithoutLabelsDiffersOnlyInSources() {
@@ -357,7 +357,7 @@ class TsSeriesParserUnitTests {
     // --- codec and empty replies -------------------------------------------------------------------------------------
 
     /**
-     * Scenario U09: keys and sources are decoded with the connection codec; the group name and labels as UTF-8 (design §3.5).
+     * Scenario U09: keys and sources are decoded with the connection codec; the group name and labels as UTF-8.
      */
     @Test
     void byteArrayCodec() {

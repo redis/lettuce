@@ -77,7 +77,7 @@ class TsMAddValueUnitTests {
     }
 
     /**
-     * Design §3.2: {@link TsMAddValue} is an immutable value; equal inputs give equal values.
+     * {@link TsMAddValue} is an immutable value; equal inputs give equal values.
      */
     @Test
     void valueEquality() {
