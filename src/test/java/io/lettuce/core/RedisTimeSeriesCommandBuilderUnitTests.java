@@ -396,7 +396,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario A02b: ADD with every option emits RETENTION, ENCODING, CHUNK_SIZE, DUPLICATE_POLICY, ON_DUPLICATE, IGNORE,
+     * Scenario A02b: ADD with every option emits ENCODING, ON_DUPLICATE, RETENTION, CHUNK_SIZE, DUPLICATE_POLICY, IGNORE,
      * LABELS after the value, regardless of the setter order.
      */
     @Test

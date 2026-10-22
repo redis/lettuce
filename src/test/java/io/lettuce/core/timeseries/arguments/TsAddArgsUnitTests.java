@@ -31,8 +31,8 @@ import io.lettuce.core.timeseries.TsEncodingType;
 class TsAddArgsUnitTests {
 
     /**
-     * Scenario A02b: every option, set in reverse order, is emitted in the documented order (RETENTION, ENCODING, CHUNK_SIZE,
-     * DUPLICATE_POLICY, ON_DUPLICATE, IGNORE, LABELS) with LABELS last.
+     * Scenario A02b: every option, set in reverse order, is emitted in the documented order (ENCODING, ON_DUPLICATE, RETENTION,
+     * CHUNK_SIZE, DUPLICATE_POLICY, IGNORE, LABELS) with LABELS last.
      */
     @Test
     void everyOptionInFixedOrder() {
