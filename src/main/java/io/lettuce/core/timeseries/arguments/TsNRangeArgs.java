@@ -313,20 +313,7 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
         return aggregationForEachKey(toMillis(bucketDuration), aggregations);
     }
 
-    /**
-     * Get the number of values per key in each row: {@code 1} for every key without an aggregation, otherwise the number of
-     * aggregations of that key.
-     *
-     * @param keyCount the number of keys of the command, must be positive.
-     * @return the value count of each key, in key order.
-     * @throws IllegalArgumentException if {@code keyCount} is not positive, or if the per-key aggregation lists do not match
-     *         {@code keyCount}.
-     * @since 8.0
-     */
-    public List<Integer> getColumnCounts(int keyCount) {
-
-        LettuceAssert.isTrue(keyCount > 0, "Key count must be positive");
-        assertKeyCount(keyCount);
+    private List<Integer> columnCounts(int keyCount) {
 
         List<Integer> counts = new ArrayList<>(keyCount);
         for (int i = 0; i < keyCount; i++) {
@@ -356,11 +343,13 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
      * @param keyCount the number of keys of the command, must be positive.
      * @param <K> Key type.
      * @param <V> Value type.
+     * @return the number of values per key in each row, in key order: {@code 1} for every key without an aggregation, otherwise
+     *         the number of aggregations of that key. The list is unmodifiable.
      * @throws IllegalArgumentException if {@code keyCount} is not positive, if the per-key aggregation lists do not match
      *         {@code keyCount}, or if {@code ALIGN}, {@code BUCKETTIMESTAMP} or {@code EMPTY} is set without an aggregation.
      * @since 8.0
      */
-    public <K, V> void build(CommandArgs<K, V> args, int keyCount) {
+    public <K, V> List<Integer> build(CommandArgs<K, V> args, int keyCount) {
 
         LettuceAssert.isTrue(keyCount > 0, "Key count must be positive");
         assertKeyCount(keyCount);
@@ -378,6 +367,8 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
         }
 
         buildBucketOptions(args);
+
+        return Collections.unmodifiableList(columnCounts(keyCount));
     }
 
     private void assertKeyCount(int keyCount) {

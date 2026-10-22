@@ -446,8 +446,7 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         if (nRangeArgs == null) {
             columnCounts = Collections.nCopies(keys.size(), 1);
         } else {
-            nRangeArgs.build(args, keys.size());
-            columnCounts = nRangeArgs.getColumnCounts(keys.size());
+            columnCounts = nRangeArgs.build(args, keys.size());
         }
 
         return createCommand(type, new TsNRangeRowListOutput<>(codec, columnCounts), args);

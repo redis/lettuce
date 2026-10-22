@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.CompositeArgument;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsAggregationType;
@@ -41,6 +42,10 @@ class TsNRangeArgsUnitTests {
             }
 
         });
+    }
+
+    private static List<Integer> columnCounts(TsNRangeArgs args, int keyCount) {
+        return args.build(new CommandArgs<>(StringCodec.UTF8), keyCount);
     }
 
     @SafeVarargs
@@ -111,7 +116,7 @@ class TsNRangeArgsUnitTests {
                 aggs(TsAggregationType.SUM, TsAggregationType.COUNT)));
 
         assertThat(tokens(forEach, 2)).isEqualTo(tokens(explicit, 2));
-        assertThat(forEach.getColumnCounts(2)).isEqualTo(explicit.getColumnCounts(2)).containsExactly(2, 2);
+        assertThat(columnCounts(forEach, 2)).isEqualTo(columnCounts(explicit, 2)).containsExactly(2, 2);
     }
 
     /**
@@ -232,7 +237,7 @@ class TsNRangeArgsUnitTests {
 
         assertThatThrownBy(() -> tokens(two, 1)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> tokens(two, 3)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> two.getColumnCounts(3)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> columnCounts(two, 3)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> tokens(new TsNRangeArgs().aggregation(10, perKey(aggs(TsAggregationType.SUM))), 2))
                 .isInstanceOf(IllegalArgumentException.class);
     }
@@ -307,15 +312,14 @@ class TsNRangeArgsUnitTests {
     }
 
     /**
-     * Scenario A16: a key count that is not positive → {@link IllegalArgumentException} (Javadoc of {@code build} and
-     * {@code getColumnCounts}).
+     * Scenario A16: a key count that is not positive → {@link IllegalArgumentException} (Javadoc of {@code build}).
      */
     @Test
     void keyCountMustBePositive() {
 
         assertThatThrownBy(() -> tokens(new TsNRangeArgs(), 0)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new TsNRangeArgs().getColumnCounts(0)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new TsNRangeArgs().getColumnCounts(-1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> columnCounts(new TsNRangeArgs(), 0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> columnCounts(new TsNRangeArgs(), -1)).isInstanceOf(IllegalArgumentException.class);
     }
 
     /**
@@ -325,14 +329,14 @@ class TsNRangeArgsUnitTests {
     @Test
     void columnCounts() {
 
-        assertThat(new TsNRangeArgs().getColumnCounts(3)).containsExactly(1, 1, 1);
-        assertThat(new TsNRangeArgs().latest().count(2).getColumnCounts(2)).containsExactly(1, 1);
-        assertThat(new TsNRangeArgs()
-                .aggregation(10, perKey(aggs(TsAggregationType.SUM), aggs(TsAggregationType.SUM, TsAggregationType.COUNT)))
-                .getColumnCounts(2)).containsExactly(1, 2);
-        assertThat(new TsNRangeArgs()
-                .aggregationForEachKey(10, TsAggregationType.MIN, TsAggregationType.AVG, TsAggregationType.MAX)
-                .getColumnCounts(2)).containsExactly(3, 3);
+        assertThat(columnCounts(new TsNRangeArgs(), 3)).containsExactly(1, 1, 1);
+        assertThatThrownBy(() -> columnCounts(new TsNRangeArgs(), 1).add(2)).isInstanceOf(UnsupportedOperationException.class);
+        assertThat(columnCounts(new TsNRangeArgs().latest().count(2), 2)).containsExactly(1, 1);
+        assertThat(columnCounts(new TsNRangeArgs().aggregation(10,
+                perKey(aggs(TsAggregationType.SUM), aggs(TsAggregationType.SUM, TsAggregationType.COUNT))), 2))
+                        .containsExactly(1, 2);
+        assertThat(columnCounts(new TsNRangeArgs().aggregationForEachKey(10, TsAggregationType.MIN, TsAggregationType.AVG,
+                TsAggregationType.MAX), 2)).containsExactly(3, 3);
     }
 
     /**
