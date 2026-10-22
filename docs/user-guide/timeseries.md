@@ -301,7 +301,7 @@ A `TsFilter` is one filter expression. Several filters in one call are combined 
 | `TsFilter.notIn("area", "north", "south")` | `area!=(north,south)` | have `area` equal to none of the values |
 | `TsFilter.raw("room=\"living room\"")` | as given | for syntax the factories do not cover, such as quoted values |
 
-The server requires at least one filter that matches a value (`equal` or `in`); Lettuce does not check this. Lettuce does not quote or escape names and values.
+The server requires at least one filter that matches a value (`equal` or `in`); Lettuce does not check this. The factories do not quote or escape: a label name or value that contains whitespace, `=`, `!`, `(`, `)`, `,` or a quote is rejected with `IllegalArgumentException`. Write such filters with `TsFilter.raw(...)`.
 
 ### Latest samples and keys
 

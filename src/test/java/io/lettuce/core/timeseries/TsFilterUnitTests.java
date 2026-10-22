@@ -10,6 +10,7 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -114,6 +115,70 @@ class TsFilterUnitTests {
         assertThatThrownBy(() -> TsFilter.notIn("", "1")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> TsFilter.raw(null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> TsFilter.raw("")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario A20: label names and values without filter syntax are accepted as given.
+     */
+    @Test
+    void namesAndValuesWithoutSyntaxAreAccepted() {
+
+        assertThat(TsFilter.equal("room_1", "north-2.5:x")).hasToString("room_1=north-2.5:x");
+        assertThat(TsFilter.notEqual("room_1", "north-2.5:x")).hasToString("room_1!=north-2.5:x");
+        assertThat(TsFilter.exists("room_1")).hasToString("room_1!=");
+        assertThat(TsFilter.notExists("room_1")).hasToString("room_1=");
+        assertThat(TsFilter.in("room_1", "north-2.5:x", "s")).hasToString("room_1=(north-2.5:x,s)");
+        assertThat(TsFilter.notIn("room_1", "north-2.5:x", "s")).hasToString("room_1!=(north-2.5:x,s)");
+    }
+
+    /**
+     * Scenario A20: every factory rejects a label name with whitespace, {@code =}, {@code !}, {@code (}, {@code )}, {@code ,}
+     * or a quote, and points to {@code raw(String)}.
+     */
+    @Test
+    void labelWithFilterSyntaxIsRejected() {
+
+        for (String bad : SYNTAX) {
+            String label = "a" + bad + "b";
+            assertRejected(() -> TsFilter.equal(label, "1"));
+            assertRejected(() -> TsFilter.notEqual(label, "1"));
+            assertRejected(() -> TsFilter.exists(label));
+            assertRejected(() -> TsFilter.notExists(label));
+            assertRejected(() -> TsFilter.in(label, "1"));
+            assertRejected(() -> TsFilter.notIn(label, "1"));
+        }
+    }
+
+    /**
+     * Scenario A20: {@code equal}, {@code notEqual}, {@code in} and {@code notIn} reject a value with whitespace, {@code =},
+     * {@code !}, {@code (}, {@code )}, {@code ,} or a quote, and point to {@code raw(String)}.
+     */
+    @Test
+    void valueWithFilterSyntaxIsRejected() {
+
+        for (String bad : SYNTAX) {
+            String value = "v" + bad + "w";
+            assertRejected(() -> TsFilter.equal("a", value));
+            assertRejected(() -> TsFilter.notEqual("a", value));
+            assertRejected(() -> TsFilter.in("a", "1", value));
+            assertRejected(() -> TsFilter.notIn("a", "1", value));
+        }
+    }
+
+    /**
+     * Scenario A20: {@code raw(String)} still accepts any expression, including quotes, spaces and lists.
+     */
+    @Test
+    void rawAcceptsFilterSyntax() {
+
+        assertThat(TsFilter.raw("room=\"living room\"")).hasToString("room=\"living room\"");
+        assertThat(TsFilter.raw("a!=(x,'y z')")).hasToString("a!=(x,'y z')");
+    }
+
+    private static final String[] SYNTAX = { " ", "\t", "=", "!", "(", ")", ",", "\"", "'" };
+
+    private static void assertRejected(ThrowingCallable call) {
+        assertThatThrownBy(call).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("TsFilter.raw(String)");
     }
 
     /**
