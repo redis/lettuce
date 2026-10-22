@@ -64,6 +64,8 @@ import reactor.test.StepVerifier;
 /**
  * Runs {@link RedisTimeSeriesIntegrationTests} over Redis Cluster ({@code test-cluster}), with the hash-tagged keys of the base
  * suite.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(INTEGRATION_TEST)
 public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesIntegrationTests {

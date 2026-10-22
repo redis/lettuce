@@ -18,6 +18,8 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
  * Unit tests for {@link TsBucketTimestamp}, the plain enum for BUCKETTIMESTAMP.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsBucketTimestampUnitTests {

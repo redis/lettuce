@@ -13,6 +13,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 /**
  * Timestamp reported for an aggregated bucket ({@code BUCKETTIMESTAMP}).
  *
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public enum TsBucketTimestamp implements ProtocolKeyword {

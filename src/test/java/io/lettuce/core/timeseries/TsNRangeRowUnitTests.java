@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests for {@link TsNRangeRow}: equality with {@code Double.compare} semantics, the per-key slices of
  * {@code getValues(int)} and the validation of {@code of}.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsNRangeRowUnitTests {

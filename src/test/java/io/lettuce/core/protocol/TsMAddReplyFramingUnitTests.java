@@ -27,6 +27,8 @@ import io.netty.buffer.Unpooled;
  * Scenario U07: TS.MADD reply framing. {@link RedisStateMachine} is fed the bytes of two pipelined replies, a TS.MADD reply
  * with an error element followed by the reply of the next command. The error element must not end the TS.MADD reply early, so
  * the next command gets its own reply.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsMAddReplyFramingUnitTests {

@@ -31,6 +31,8 @@ import reactor.test.StepVerifier;
  * <p>
  * The reactive {@code tsMAdd} emits {@code Value<Long>}, with {@link Value#empty()} for a rejected sample, so the base suite's
  * TS.MADD calls are unwrapped into nullable elements, and the reactive shape has its own tests.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(INTEGRATION_TEST)
 public class RedisTimeSeriesReactiveIntegrationTests extends RedisTimeSeriesIntegrationTests {

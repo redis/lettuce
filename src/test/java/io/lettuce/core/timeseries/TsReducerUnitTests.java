@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link TsReducer} and {@link TsReducerType}.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsReducerUnitTests {

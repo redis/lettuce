@@ -39,6 +39,7 @@ import reactor.core.publisher.Mono;
  *
  * @param <K> Key type.
  * @param <V> Value type.
+ * @author Aleksandar Todorov
  * @see <a href="https://redis.io/docs/latest/develop/data-types/timeseries/">Redis TimeSeries</a>
  * @since 8.0
  */

@@ -24,6 +24,8 @@ import javax.inject.Inject
 
 /**
  * Integration tests for the Kotlin coroutines TimeSeries write commands.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(TestTags.INTEGRATION_TEST)
 @ExtendWith(LettuceExtension::class)

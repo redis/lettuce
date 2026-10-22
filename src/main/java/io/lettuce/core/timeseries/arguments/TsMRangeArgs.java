@@ -28,6 +28,7 @@ import io.lettuce.core.timeseries.TsReducer;
  * <p>
  * {@link TsMRangeArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public class TsMRangeArgs extends BaseTsRangeArgs<TsMRangeArgs> {

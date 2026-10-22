@@ -21,6 +21,7 @@ import io.lettuce.core.output.ComplexDataParser;
  *
  * @param <K> Key type.
  * @param <V> Value type.
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public final class TsMGetValueParser<K, V> implements ComplexDataParser<List<TsMGetValue<K>>> {

@@ -19,6 +19,7 @@ import java.util.Objects;
  * {@link #getRawInfo()}.
  *
  * @param <K> Key type.
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public class TsInfoValue<K> {

@@ -21,6 +21,8 @@ import io.lettuce.core.codec.StringCodec;
 /**
  * Unit tests for {@link ErrorTolerantIntegerListOutput}, the TS.MADD output of the sync and async API: an error element of the
  * reply array becomes {@code null}, an error before the array fails the command.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class ErrorTolerantIntegerListOutputUnitTests {

@@ -21,6 +21,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * for example {@code TsFilter.raw("room=\"living room\"")}. The {@link #toString()} form is the expression sent to the server.
  * {@link TsFilter} is immutable.
  *
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public final class TsFilter {

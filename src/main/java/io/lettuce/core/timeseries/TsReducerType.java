@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
  * Reducers known to this Lettuce version. {@code FIRST}, {@code LAST} and {@code TWA} are not reducers; the server rejects
  * them.
  *
+ * @author Aleksandar Todorov
  * @see TsReducer#of(String)
  * @since 8.0
  */

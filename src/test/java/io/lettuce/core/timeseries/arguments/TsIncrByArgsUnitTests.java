@@ -24,6 +24,8 @@ import io.lettuce.core.timeseries.TsEncodingType;
 
 /**
  * Unit tests for {@link TsIncrByArgs}: validation and serialization.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsIncrByArgsUnitTests {

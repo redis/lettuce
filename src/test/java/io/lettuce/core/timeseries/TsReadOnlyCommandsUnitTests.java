@@ -18,6 +18,8 @@ import io.lettuce.core.protocol.ReadOnlyCommands;
 
 /**
  * Read-only registration of the TimeSeries commands.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsReadOnlyCommandsUnitTests {

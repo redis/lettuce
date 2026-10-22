@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link TsMAddValue}: factories, validation and the server-clock marker.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsMAddValueUnitTests {

@@ -22,6 +22,7 @@ import io.lettuce.core.timeseries.TsNRangeRow;
  *
  * @param <K> Key type.
  * @param <V> Value type.
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public class TsNRangeRowListOutput<K, V> extends CommandOutput<K, V, List<TsNRangeRow>>

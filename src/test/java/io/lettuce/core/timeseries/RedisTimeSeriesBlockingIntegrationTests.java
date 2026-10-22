@@ -43,6 +43,8 @@ import io.lettuce.test.condition.EnabledOnCommand;
  * the reader, a second producer connection, and closes both at the end. The producer waits until the server reports the reader
  * as blocked ({@code CLIENT LIST}, flag {@code b}) before it writes, so no test relies on a sleep. Block times are at most 1 s,
  * except F10.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)

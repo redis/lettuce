@@ -17,6 +17,7 @@ import io.lettuce.core.output.ComplexData;
  * {@code [timestamp, value1, …, valueN]}; RESP2 sends the values as strings ({@code NaN}, {@code Infinity}, {@code -Infinity}
  * included), RESP3 as doubles. Decodes the same cases as the dedicated sample outputs.
  *
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 final class TsSampleParser {

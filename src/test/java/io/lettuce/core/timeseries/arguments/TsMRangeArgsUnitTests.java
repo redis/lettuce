@@ -30,6 +30,8 @@ import io.lettuce.core.timeseries.TsReducerType;
 /**
  * Unit tests for {@link TsMRangeArgs}: option order with the filters and GROUPBY, conflicts, validation and the getters the
  * reply parser uses.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsMRangeArgsUnitTests {

@@ -44,6 +44,8 @@ import io.lettuce.core.timeseries.arguments.TsReadArgs;
 /**
  * Cross-cutting checks of the TimeSeries public API: {@code @since 8.0} and no {@code @Experimental} (M02), Reactor stays
  * optional (M03), package-private argument bases (M04).
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsApiConventionsUnitTests {

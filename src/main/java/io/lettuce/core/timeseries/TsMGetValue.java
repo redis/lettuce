@@ -15,6 +15,7 @@ import java.util.Objects;
  * with its labels if they were requested. RESP2 and RESP3 replies produce equal values. {@link TsMGetValue} is immutable.
  *
  * @param <K> Key type.
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public final class TsMGetValue<K> {

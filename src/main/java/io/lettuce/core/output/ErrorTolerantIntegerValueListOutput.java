@@ -21,6 +21,7 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @param <K> Key type.
  * @param <V> Value type.
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public class ErrorTolerantIntegerValueListOutput<K, V> extends CommandOutput<K, V, List<Value<Long>>>

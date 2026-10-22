@@ -22,6 +22,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * Equality compares values with {@link Double#compare(double, double)} semantics, so {@code NaN} equals {@code NaN}.
  * {@link TsNRangeRow} is immutable.
  *
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public final class TsNRangeRow {

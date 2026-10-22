@@ -17,6 +17,8 @@ import io.lettuce.core.timeseries.TsReadOffset;
 
 /**
  * Unit tests for {@link TsReadOffset}: the server sentinels and literal timestamps.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsReadOffsetUnitTests {

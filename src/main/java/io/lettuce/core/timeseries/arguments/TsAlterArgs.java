@@ -22,6 +22,7 @@ import io.lettuce.core.timeseries.TsDuplicatePolicy;
  * <p>
  * {@link TsAlterArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public class TsAlterArgs extends BaseTsSeriesArgs<TsAlterArgs> {

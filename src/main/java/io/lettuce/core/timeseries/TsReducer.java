@@ -19,6 +19,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * This interface is implemented by Lettuce: by the constants of {@link TsReducerType} and by the values that
  * {@link #of(String)} returns. It is not meant to be implemented by applications.
  *
+ * @author Aleksandar Todorov
  * @see TsReducerType
  * @since 8.0
  */

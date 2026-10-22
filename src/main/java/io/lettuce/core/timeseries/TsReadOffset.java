@@ -17,6 +17,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * {@code from(lastTimestamp + 1)}, where {@code lastTimestamp} is the timestamp of the last sample returned. The
  * {@link #toString()} form is the argument sent to the server. {@link TsReadOffset} is immutable.
  *
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public final class TsReadOffset {

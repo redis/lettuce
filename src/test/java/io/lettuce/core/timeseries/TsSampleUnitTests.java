@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link TsSample}: equality with {@code Double.compare} semantics, single- and multi-value samples.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsSampleUnitTests {

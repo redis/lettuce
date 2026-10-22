@@ -39,6 +39,8 @@ import io.lettuce.test.settings.TestSettings;
 
 /**
  * Protocol parity: the same series read on a RESP2 and a RESP3 connection produce equal result models.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(INTEGRATION_TEST)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

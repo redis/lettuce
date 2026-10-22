@@ -19,6 +19,7 @@ import io.lettuce.core.timeseries.TsMAddValue;
  * several times with different timestamps.
  *
  * @param <K> Key type.
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 final class TimeSeriesSlotPartition<K> {

@@ -21,6 +21,7 @@ import io.lettuce.core.timeseries.TsBucketTimestamp;
  * <p>
  * {@link TsRangeArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public class TsRangeArgs extends BaseTsRangeArgs<TsRangeArgs> implements CompositeArgument {

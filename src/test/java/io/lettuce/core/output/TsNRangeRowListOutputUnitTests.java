@@ -30,6 +30,8 @@ import io.netty.buffer.Unpooled;
  * Unit tests for {@link TsNRangeRowListOutput}, the TS.NRANGE / TS.NREVRANGE output: rows {@code [ts, [v…]]} with one more
  * nesting level than TS.RANGE. The replies are the wire bytes observed on 8.10.0 for fixture F6 ({@code {ts}:n1} (0, 1), (5,
  * 2), (10, 100); {@code {ts}:n2} (0, 3), (5, 27), (12, 50)), fed through {@link RedisStateMachine}.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsNRangeRowListOutputUnitTests {

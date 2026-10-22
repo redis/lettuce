@@ -25,6 +25,7 @@ import io.lettuce.core.timeseries.TsBucketTimestamp;
  * arguments are built.
  *
  * @param <T> the concrete subtype, for fluent method chaining.
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 abstract class BaseTsRangeArgs<T extends BaseTsRangeArgs<T>> {

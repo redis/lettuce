@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * A {@link TsEncoding} with a name that is not a {@link TsEncodingType} constant. The name is sent to the server as given.
+ *
+ * @author Aleksandar Todorov
  */
 final class RawTsEncoding implements TsEncoding {
 

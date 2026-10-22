@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link TsReadArgs}: {@code BLOCK ms min} and {@code MAX_COUNT n}, and their validation.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsReadArgsUnitTests {

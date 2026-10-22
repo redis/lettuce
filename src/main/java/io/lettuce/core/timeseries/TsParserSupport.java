@@ -23,6 +23,8 @@ import io.lettuce.core.output.ComplexData;
 /**
  * Decoding helpers shared by the TimeSeries reply parsers. Values come from an {@code EncodedComplexOutput}, so strings arrive
  * as {@link ByteBuffer}, integers as {@link Long}, RESP3 doubles as {@link Double} and aggregates as {@link ComplexData}.
+ *
+ * @author Aleksandar Todorov
  */
 final class TsParserSupport {
 

@@ -23,6 +23,8 @@ import io.netty.buffer.Unpooled;
 
 /**
  * Unit tests for {@link TsAggregation} and {@link TsAggregationType}.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsAggregationUnitTests {

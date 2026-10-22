@@ -21,6 +21,7 @@ import java.util.Objects;
  * {@code WITHLABELS}. {@link TsSeries} is immutable.
  *
  * @param <K> Key type.
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public final class TsSeries<K> {

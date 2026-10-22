@@ -75,6 +75,8 @@ import io.lettuce.test.settings.TestSettings;
  * <p>
  * Tests written before the read commands existed read stored samples back with a raw {@code TS.RANGE key - +} sent through
  * {@code dispatch} ({@link #storedSamples(String)}).
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)

@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * Duplicate policies known to this Lettuce version.
  *
+ * @author Aleksandar Todorov
  * @see TsDuplicatePolicy#of(String)
  * @since 8.0
  */

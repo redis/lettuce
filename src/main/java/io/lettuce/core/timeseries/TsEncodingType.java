@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * Chunk encodings known to this Lettuce version.
  *
+ * @author Aleksandar Todorov
  * @see TsEncoding#of(String)
  * @since 8.0
  */

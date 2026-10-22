@@ -23,6 +23,7 @@ import io.lettuce.core.timeseries.TsEncoding;
  * <p>
  * {@link TsIncrByArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public class TsIncrByArgs extends BaseTsSeriesArgs<TsIncrByArgs> {

@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link TsFilter}: the expression of every factory and argument validation.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsFilterUnitTests {

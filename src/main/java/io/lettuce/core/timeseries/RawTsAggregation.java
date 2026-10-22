@@ -11,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 /**
  * A {@link TsAggregation} with a name that is not a {@link TsAggregationType} constant. The name is sent to the server as
  * given.
+ *
+ * @author Aleksandar Todorov
  */
 final class RawTsAggregation implements TsAggregation {
 

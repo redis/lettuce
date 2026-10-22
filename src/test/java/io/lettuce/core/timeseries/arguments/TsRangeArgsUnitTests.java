@@ -23,6 +23,8 @@ import io.lettuce.core.timeseries.TsBucketTimestamp;
 /**
  * Unit tests for {@link TsRangeArgs}: option order, the aggregation token, the options that require an aggregation, and setter
  * validation.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsRangeArgsUnitTests {

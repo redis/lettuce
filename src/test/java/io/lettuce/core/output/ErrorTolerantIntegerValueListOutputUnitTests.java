@@ -23,6 +23,8 @@ import io.lettuce.core.codec.StringCodec;
 /**
  * Unit tests for {@link ErrorTolerantIntegerValueListOutput}, the TS.MADD output of the reactive API: an error element of the
  * reply array becomes {@link Value#empty()}, an error before the array fails the command.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class ErrorTolerantIntegerValueListOutputUnitTests {

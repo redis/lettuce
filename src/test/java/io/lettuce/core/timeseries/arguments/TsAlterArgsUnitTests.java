@@ -22,6 +22,8 @@ import io.lettuce.core.timeseries.TsDuplicatePolicyType;
 
 /**
  * Unit tests for {@link TsAlterArgs}: validation and serialization.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsAlterArgsUnitTests {

@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link TsEncoding} and {@link TsEncodingType}.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsEncodingUnitTests {

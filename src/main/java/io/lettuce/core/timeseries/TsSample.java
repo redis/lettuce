@@ -19,6 +19,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * Values may be NaN on Redis 8.6 and later. Equality compares values with {@link Double#compare(double, double)} semantics, so
  * {@code NaN} equals {@code NaN}. {@link TsSample} is immutable.
  *
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public final class TsSample {

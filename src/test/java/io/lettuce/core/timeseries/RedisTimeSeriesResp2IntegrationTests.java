@@ -27,6 +27,8 @@ import io.lettuce.test.settings.TestSettings;
 
 /**
  * Runs {@link RedisTimeSeriesIntegrationTests} on a RESP2 connection.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(INTEGRATION_TEST)
 public class RedisTimeSeriesResp2IntegrationTests extends RedisTimeSeriesIntegrationTests {

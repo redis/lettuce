@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * A {@link TsReducer} with a name that is not a {@link TsReducerType} constant. The name is sent to the server as given.
+ *
+ * @author Aleksandar Todorov
  */
 final class RawTsReducer implements TsReducer {
 

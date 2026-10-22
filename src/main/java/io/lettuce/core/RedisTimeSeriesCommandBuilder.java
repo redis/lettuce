@@ -78,6 +78,7 @@ import io.lettuce.core.timeseries.arguments.TsReadArgs;
  *
  * @param <K> Key type.
  * @param <V> Value type.
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {

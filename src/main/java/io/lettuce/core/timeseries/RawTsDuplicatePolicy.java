@@ -11,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 /**
  * A {@link TsDuplicatePolicy} with a name that is not a {@link TsDuplicatePolicyType} constant. The name is sent to the server
  * as given.
+ *
+ * @author Aleksandar Todorov
  */
 final class RawTsDuplicatePolicy implements TsDuplicatePolicy {
 

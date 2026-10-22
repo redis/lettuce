@@ -18,6 +18,7 @@ import io.lettuce.core.timeseries.TsSample;
  * Decodes one TimeSeries sample row {@code [timestamp, value1, …, valueN]}. RESP2 sends the values as simple strings
  * ({@code 4.5}, {@code NaN}, {@code Infinity}, {@code -Infinity}), RESP3 as doubles.
  *
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 final class TsSampleRowDecoder {

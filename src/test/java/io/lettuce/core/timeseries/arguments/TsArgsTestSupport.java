@@ -20,6 +20,8 @@ import io.netty.buffer.Unpooled;
 
 /**
  * Helpers for the TimeSeries argument unit tests.
+ *
+ * @author Aleksandar Todorov
  */
 final class TsArgsTestSupport {
 

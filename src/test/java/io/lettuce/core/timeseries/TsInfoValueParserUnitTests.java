@@ -28,6 +28,8 @@ import io.netty.buffer.Unpooled;
  * Unit tests for {@link TsInfoValueParser}. The RESP2 and RESP3 replies below are the bytes captured from Redis 8.10.0
  * (redislabs/client-libs-test:8.10.0, 2026-10-20) for the commands named in each fixture; the variants with unknown or nil
  * values are derived from them.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsInfoValueParserUnitTests {

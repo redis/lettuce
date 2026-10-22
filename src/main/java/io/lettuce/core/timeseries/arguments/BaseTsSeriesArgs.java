@@ -22,6 +22,7 @@ import io.lettuce.core.timeseries.TsDuplicatePolicyType;
  * accepts and emits all options in one fixed order, with {@code LABELS} last.
  *
  * @param <T> the concrete subtype, for fluent method chaining.
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 abstract class BaseTsSeriesArgs<T extends BaseTsSeriesArgs<T>> implements CompositeArgument {

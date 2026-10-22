@@ -22,6 +22,8 @@ import io.netty.buffer.Unpooled;
 /**
  * Helpers for the TimeSeries parser unit tests: feed the bytes of one reply through {@link RedisStateMachine}, as on a real
  * connection.
+ *
+ * @author Aleksandar Todorov
  */
 final class TsReplyTestSupport {
 

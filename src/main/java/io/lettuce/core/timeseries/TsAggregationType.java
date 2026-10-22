@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * Aggregation functions known to this Lettuce version.
  *
+ * @author Aleksandar Todorov
  * @see TsAggregation#of(String)
  * @since 8.0
  */

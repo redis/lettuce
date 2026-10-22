@@ -28,6 +28,8 @@ import io.lettuce.core.timeseries.TsBucketTimestamp;
 /**
  * Unit tests for {@link TsNRangeArgs}: one aggregation argument per key, {@code aggregationForEachKey}, the key-count check,
  * the option order and the per-key column counts the reply output uses.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsNRangeArgsUnitTests {

@@ -28,6 +28,8 @@ import io.netty.buffer.Unpooled;
  * {@code ,inf}). They are fed through {@link RedisStateMachine}, which drives the output with
  * {@code multi}/{@code set}/{@code complete} as on a real connection; a second set of tests calls the output methods directly,
  * in the order the state machine calls them (each element is followed by {@code complete(depth)}).
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsSampleOutputUnitTests {

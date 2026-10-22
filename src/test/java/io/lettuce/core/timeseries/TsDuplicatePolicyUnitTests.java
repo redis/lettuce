@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link TsDuplicatePolicy} and {@link TsDuplicatePolicyType}.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsDuplicatePolicyUnitTests {

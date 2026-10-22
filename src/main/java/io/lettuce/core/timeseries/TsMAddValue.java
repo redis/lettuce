@@ -17,6 +17,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * {@link TsMAddValue} is immutable.
  *
  * @param <K> Key type.
+ * @author Aleksandar Todorov
  * @since 8.0
  */
 public final class TsMAddValue<K> {

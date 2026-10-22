@@ -55,6 +55,8 @@ import io.netty.buffer.Unpooled;
  * Unit tests for {@link RedisTimeSeriesCommandBuilder}: the exact RESP encoding of the series lifecycle, write and compaction
  * rule commands, the single-key reads (TS.GET, TS.RANGE, TS.REVRANGE, TS.READ), the label-index reads (TS.MGET, TS.MRANGE,
  * TS.MREVRANGE, TS.QUERYINDEX, TS.QUERYLABELS) and the multi-key reads (TS.NRANGE, TS.NREVRANGE).
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class RedisTimeSeriesCommandBuilderUnitTests {

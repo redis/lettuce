@@ -26,6 +26,8 @@ import io.lettuce.core.codec.StringCodec;
  * (redislabs/client-libs-test:8.10.0, 2026-10-20) after {@code TS.CREATE {ts}:a LABELS t x sensor temp area north},
  * {@code TS.CREATE {ts}:b LABELS t x sensor hum}, {@code TS.CREATE {ts}:e LABELS t x}, {@code TS.ADD {ts}:a 1000 1},
  * {@code TS.ADD {ts}:a 2000 2.5}, {@code TS.ADD {ts}:b 1000 3}.
+ *
+ * @author Aleksandar Todorov
  */
 @Tag(UNIT_TEST)
 class TsMGetValueParserUnitTests {
