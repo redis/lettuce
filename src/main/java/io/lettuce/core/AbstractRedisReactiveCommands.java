@@ -85,6 +85,7 @@ import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
+import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsMAddValue;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
@@ -5056,6 +5057,23 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Long> tsDecrBy(K key, double subtrahend, TsIncrByArgs args) {
         return createMono(() -> timeSeriesCommandBuilder.tsDecrBy(key, subtrahend, args));
+    }
+
+    @Override
+    public Mono<String> tsCreateRule(K sourceKey, K destKey, TsAggregation aggregation, long bucketDuration) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreateRule(sourceKey, destKey, aggregation, bucketDuration));
+    }
+
+    @Override
+    public Mono<String> tsCreateRule(K sourceKey, K destKey, TsAggregation aggregation, long bucketDuration,
+            long alignTimestamp) {
+        return createMono(
+                () -> timeSeriesCommandBuilder.tsCreateRule(sourceKey, destKey, aggregation, bucketDuration, alignTimestamp));
+    }
+
+    @Override
+    public Mono<String> tsDeleteRule(K sourceKey, K destKey) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDeleteRule(sourceKey, destKey));
     }
 
 }

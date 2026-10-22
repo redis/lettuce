@@ -119,6 +119,32 @@ for (TsInfoValue.Rule<String> rule : info.getRules()) {
 
 RESP2 and RESP3 replies produce equal `TsInfoValue` instances. Fields that this Lettuce version does not model are available through `getRawInfo()`.
 
+## Compaction rules
+
+A compaction rule aggregates the samples of a source series into buckets and writes one sample per bucket to a destination series. Both series must exist before the rule is created:
+
+```java
+commands.tsCreate("{sensor1}:raw");
+commands.tsCreate("{sensor1}:avg-1m");
+
+commands.tsCreateRule("{sensor1}:raw", "{sensor1}:avg-1m", TsAggregationType.AVG, 60_000);
+
+// buckets aligned to a timestamp instead of the epoch
+commands.tsCreateRule("{sensor1}:raw", "{sensor1}:max-1h", TsAggregationType.MAX, 3_600_000, 1_800_000);
+
+commands.tsDeleteRule("{sensor1}:raw", "{sensor1}:avg-1m");   // keeps both series
+```
+
+- The bucket duration must be greater than 0; zero or a negative value throws `IllegalArgumentException` before the command is sent.
+- The alignment timestamp must not be negative; a negative value throws `IllegalArgumentException` before the command is sent.
+- A rule takes one aggregation. `countNaN` and `countAll` require Redis 8.6 or later. For an aggregation that this Lettuce version does not know yet, pass `TsAggregation.of("name")`.
+- Only samples added after the rule is created are aggregated. Each compacted sample has the start of its bucket as timestamp, and a bucket with no source samples gets no compacted sample.
+- A destination series cannot be the source or destination of another rule. Deleting the destination key also deletes the rule.
+- `tsInfo` on the source lists its rules (`getRules()`, with destination, bucket duration, aggregation and alignment); `tsInfo` on the destination reports the source (`getSourceKey()`).
+
+!!! INFO
+    In Redis Cluster, the source and destination keys must hash to the same slot. Use a shared hash tag such as `{sensor1}`. For keys in different slots, Redis 8.4 and later reply `CROSSSLOT`. Redis 8.0 and 8.2 reply `TSDB: the key does not exist` (`tsCreateRule`) or `TSDB: compaction rule does not exist` (`tsDeleteRule`) instead, even though both keys exist. Lettuce passes the server's reply through.
+
 ## Writes
 
 ### Add a sample
