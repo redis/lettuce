@@ -26,21 +26,25 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsAggregationType;
+import io.lettuce.core.timeseries.TsBucketTimestamp;
 import io.lettuce.core.timeseries.TsDuplicatePolicy;
 import io.lettuce.core.timeseries.TsDuplicatePolicyType;
 import io.lettuce.core.timeseries.TsEncoding;
 import io.lettuce.core.timeseries.TsEncodingType;
 import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsReadOffset;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
  * Unit tests for {@link RedisTimeSeriesCommandBuilder}: the exact RESP encoding of the series lifecycle, write and compaction
- * rule commands.
+ * rule commands, and the single-key reads (TS.GET, TS.RANGE, TS.REVRANGE, TS.READ).
  */
 @Tag(UNIT_TEST)
 class RedisTimeSeriesCommandBuilderUnitTests {
@@ -652,6 +656,211 @@ class RedisTimeSeriesCommandBuilderUnitTests {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(tokens(builder.tsCreateRule("{ts}:src", "{ts}:dst", TsAggregationType.AVG, 1000, 0)))
                 .containsExactly("TS.CREATERULE", "{ts}:src", "{ts}:dst", "AGGREGATION", "AVG", "1000", "0");
+    }
+
+    // --- TS.GET ------------------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario A19 (GET): {@code tsGet(k)} and {@code tsGet(k, false)} send {@code TS.GET k}; {@code tsGet(k, true)} sends
+     * {@code TS.GET k LATEST}.
+     */
+    @Test
+    void getLatestFlag() {
+
+        assertThat(encode(builder.tsGet(KEY))).isEqualTo("*2\r\n$6\r\nTS.GET\r\n$6\r\n{ts}:k\r\n");
+        assertThat(tokens(builder.tsGet(KEY, false))).containsExactly("TS.GET", KEY);
+        assertThat(encode(builder.tsGet(KEY, true))).isEqualTo("*3\r\n$6\r\nTS.GET\r\n$6\r\n{ts}:k\r\n$6\r\nLATEST\r\n");
+    }
+
+    /**
+     * Scenario A19 (GET): a {@code null} key throws {@link IllegalArgumentException} (Javadoc of {@code tsGet}).
+     */
+    @Test
+    void getRejectsNullKey() {
+
+        assertThatThrownBy(() -> builder.tsGet(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsGet(null, true)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.RANGE / TS.REVRANGE --------------------------------------------------------------------------------------
+
+    /**
+     * Scenario A08: RANGE and REVRANGE without options send the key and both bounds; inclusive bounds send the timestamps.
+     */
+    @Test
+    void rangeWithoutOptions() {
+
+        assertThat(encode(builder.tsRange(KEY, Range.create(1000L, 2000L))))
+                .isEqualTo("*4\r\n$8\r\nTS.RANGE\r\n$6\r\n{ts}:k\r\n$4\r\n1000\r\n$4\r\n2000\r\n");
+        assertThat(encode(builder.tsRevRange(KEY, Range.create(1000L, 2000L))))
+                .isEqualTo("*4\r\n$11\r\nTS.REVRANGE\r\n$6\r\n{ts}:k\r\n$4\r\n1000\r\n$4\r\n2000\r\n");
+    }
+
+    /**
+     * Scenario A08: unbounded sides send {@code -} and {@code +}; REVRANGE keeps the {@code from}/{@code to} order of RANGE
+     * (design §2.2).
+     */
+    @Test
+    void rangeUnboundedSides() {
+
+        assertThat(tokens(builder.tsRange(KEY, Range.unbounded()))).containsExactly("TS.RANGE", KEY, "-", "+");
+        assertThat(tokens(builder.tsRevRange(KEY, Range.unbounded()))).containsExactly("TS.REVRANGE", KEY, "-", "+");
+        assertThat(tokens(builder.tsRange(KEY, Range.from(Boundary.including(1000L), Boundary.unbounded()))))
+                .containsExactly("TS.RANGE", KEY, "1000", "+");
+        assertThat(tokens(builder.tsRevRange(KEY, Range.from(Boundary.unbounded(), Boundary.including(2000L)))))
+                .containsExactly("TS.REVRANGE", KEY, "-", "2000");
+    }
+
+    /**
+     * Scenario A08 / C13: exclusive bounds are sent as the inclusive neighbor on RANGE and REVRANGE.
+     */
+    @Test
+    void rangeExclusiveBounds() {
+
+        Range<Long> range = Range.from(Boundary.excluding(2000L), Boundary.excluding(5000L));
+
+        assertThat(tokens(builder.tsRange(KEY, range))).containsExactly("TS.RANGE", KEY, "2001", "4999");
+        assertThat(tokens(builder.tsRevRange(KEY, range))).containsExactly("TS.REVRANGE", KEY, "2001", "4999");
+        assertThat(tokens(builder.tsRange(KEY, Range.from(Boundary.excluding(1000L), Boundary.unbounded()), new TsRangeArgs())))
+                .containsExactly("TS.RANGE", KEY, "1001", "+");
+    }
+
+    /**
+     * Scenario A08: an exclusive bound at the {@code Long} edge throws before any command is created (Javadoc of
+     * {@code tsRange} / {@code tsRevRange}).
+     */
+    @Test
+    void rangeExclusiveBoundAtLongEdgeThrows() {
+
+        Range<Long> lowerEdge = Range.from(Boundary.excluding(Long.MAX_VALUE), Boundary.unbounded());
+        Range<Long> upperEdge = Range.from(Boundary.unbounded(), Boundary.excluding(Long.MIN_VALUE));
+
+        assertThatThrownBy(() -> builder.tsRange(KEY, lowerEdge)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRange(KEY, upperEdge)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRevRange(KEY, lowerEdge)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRevRange(KEY, upperEdge, new TsRangeArgs()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario A08: the options follow the range, in the documented order LATEST, FILTER_BY_TS, FILTER_BY_VALUE, COUNT, ALIGN,
+     * AGGREGATION, BUCKETTIMESTAMP, EMPTY, for both RANGE and REVRANGE.
+     */
+    @Test
+    void rangeWithEveryOption() {
+
+        TsRangeArgs args = new TsRangeArgs().empty().bucketTimestamp(TsBucketTimestamp.END)
+                .aggregation(3000, TsAggregationType.AVG).alignStart().count(3).filterByValue(4.5, 5.5)
+                .filterByTimestamps(1000, 3000).latest();
+
+        assertThat(tokens(builder.tsRange(KEY, Range.create(1000L, 8000L), args))).containsExactly("TS.RANGE", KEY, "1000",
+                "8000", "LATEST", "FILTER_BY_TS", "1000", "3000", "FILTER_BY_VALUE", "4.5", "5.5", "COUNT", "3", "ALIGN",
+                "start", "AGGREGATION", "AVG", "3000", "BUCKETTIMESTAMP", "+", "EMPTY");
+        assertThat(tokens(builder.tsRevRange(KEY, Range.create(1000L, 8000L), args))).containsExactly("TS.REVRANGE", KEY,
+                "1000", "8000", "LATEST", "FILTER_BY_TS", "1000", "3000", "FILTER_BY_VALUE", "4.5", "5.5", "COUNT", "3",
+                "ALIGN", "start", "AGGREGATION", "AVG", "3000", "BUCKETTIMESTAMP", "+", "EMPTY");
+    }
+
+    /**
+     * Scenario A07: several aggregations are one comma-joined argument without spaces.
+     */
+    @Test
+    void rangeWithSeveralAggregations() {
+
+        TsRangeArgs args = new TsRangeArgs().aggregation(1000, TsAggregationType.MIN, TsAggregationType.AVG,
+                TsAggregationType.MAX);
+
+        assertThat(encode(builder.tsRange(KEY, Range.unbounded(), args)))
+                .isEqualTo("*7\r\n$8\r\nTS.RANGE\r\n$6\r\n{ts}:k\r\n$1\r\n-\r\n$1\r\n+\r\n$11\r\nAGGREGATION\r\n"
+                        + "$11\r\nMIN,AVG,MAX\r\n$4\r\n1000\r\n");
+        assertThat(tokens(builder.tsRange(KEY, Range.unbounded(),
+                new TsRangeArgs().aggregation(1000, TsAggregationType.STD_P, TsAggregationType.COUNTNAN))))
+                        .containsExactly("TS.RANGE", KEY, "-", "+", "AGGREGATION", "STD.P,COUNTNAN", "1000");
+    }
+
+    /**
+     * Scenario A15: ALIGN, BUCKETTIMESTAMP or EMPTY without AGGREGATION throws {@link IllegalArgumentException} before a
+     * command is created (Javadoc of {@code tsRange} / {@code tsRevRange}).
+     */
+    @Test
+    void rangeAggregationOnlyOptionsWithoutAggregation() {
+
+        assertThatThrownBy(() -> builder.tsRange(KEY, Range.unbounded(), new TsRangeArgs().align(0)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRange(KEY, Range.unbounded(), new TsRangeArgs().empty()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(
+                () -> builder.tsRevRange(KEY, Range.unbounded(), new TsRangeArgs().bucketTimestamp(TsBucketTimestamp.MID)))
+                        .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRevRange(KEY, Range.unbounded(), new TsRangeArgs().alignEnd()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario A08: {@code null} key, range or arguments throw {@link IllegalArgumentException} (Javadoc of {@code tsRange} /
+     * {@code tsRevRange}).
+     */
+    @Test
+    void rangeRejectsNullArguments() {
+
+        assertThatThrownBy(() -> builder.tsRange(null, Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRange(KEY, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRange(null, Range.unbounded(), new TsRangeArgs()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRange(KEY, null, new TsRangeArgs())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRange(KEY, Range.unbounded(), null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRevRange(null, Range.unbounded())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRevRange(KEY, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRevRange(null, Range.unbounded(), new TsRangeArgs()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRevRange(KEY, null, new TsRangeArgs())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRevRange(KEY, Range.unbounded(), null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- TS.READ -----------------------------------------------------------------------------------------------------
+
+    /**
+     * Scenario A11: the offsets {@code -}, {@code +}, {@code $} and a literal {@code 0} are sent after the key.
+     */
+    @Test
+    void readOffsets() {
+
+        assertThat(encode(builder.tsRead(KEY, TsReadOffset.earliest())))
+                .isEqualTo("*3\r\n$7\r\nTS.READ\r\n$6\r\n{ts}:k\r\n$1\r\n-\r\n");
+        assertThat(tokens(builder.tsRead(KEY, TsReadOffset.latest()))).containsExactly("TS.READ", KEY, "+");
+        assertThat(tokens(builder.tsRead(KEY, TsReadOffset.newSamples()))).containsExactly("TS.READ", KEY, "$");
+        assertThat(tokens(builder.tsRead(KEY, TsReadOffset.from(0)))).containsExactly("TS.READ", KEY, "0");
+        assertThat(tokens(builder.tsRead(KEY, TsReadOffset.from(2001)))).containsExactly("TS.READ", KEY, "2001");
+    }
+
+    /**
+     * Scenario A11: {@code BLOCK ms min} is sent before {@code MAX_COUNT n}, after the offset, regardless of the setter order.
+     */
+    @Test
+    void readBlockBeforeMaxCount() {
+
+        assertThat(tokens(builder.tsRead(KEY, TsReadOffset.newSamples(), new TsReadArgs().maxCount(3).block(300, 2))))
+                .containsExactly("TS.READ", KEY, "$", "BLOCK", "300", "2", "MAX_COUNT", "3");
+        assertThat(encode(builder.tsRead(KEY, TsReadOffset.from(0), new TsReadArgs().block(0, 1))))
+                .isEqualTo("*6\r\n$7\r\nTS.READ\r\n$6\r\n{ts}:k\r\n$1\r\n0\r\n$5\r\nBLOCK\r\n$1\r\n0\r\n$1\r\n1\r\n");
+        assertThat(tokens(builder.tsRead(KEY, TsReadOffset.earliest(), new TsReadArgs().maxCount(5))))
+                .containsExactly("TS.READ", KEY, "-", "MAX_COUNT", "5");
+        assertThat(tokens(builder.tsRead(KEY, TsReadOffset.earliest(), new TsReadArgs()))).containsExactly("TS.READ", KEY, "-");
+    }
+
+    /**
+     * Scenario A11: {@code null} key, offset or arguments throw {@link IllegalArgumentException} (Javadoc of {@code tsRead}).
+     */
+    @Test
+    void readRejectsNullArguments() {
+
+        assertThatThrownBy(() -> builder.tsRead(null, TsReadOffset.earliest())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRead(KEY, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRead(null, TsReadOffset.earliest(), new TsReadArgs()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRead(KEY, null, new TsReadArgs())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsRead(KEY, TsReadOffset.earliest(), null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
 }

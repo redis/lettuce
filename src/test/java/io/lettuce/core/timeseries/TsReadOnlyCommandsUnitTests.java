@@ -56,4 +56,30 @@ class TsReadOnlyCommandsUnitTests {
         assertThat(CommandType.TS_INFO.toString()).isEqualTo("TS.INFO");
     }
 
+    /**
+     * Scenario K10 (GET, RANGE, REVRANGE, READ): the single-key reads are read-only, so {@code ReadFrom.REPLICA} may route them
+     * to a replica (design §5.4, NF.4).
+     */
+    @Test
+    void singleKeyReadsAreReadOnly() {
+
+        for (CommandType type : new CommandType[] { CommandType.TS_GET, CommandType.TS_RANGE, CommandType.TS_REVRANGE,
+                CommandType.TS_READ }) {
+            assertThat(ReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+            assertThat(ClusterReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+        }
+    }
+
+    /**
+     * Scenario K10: the wire names of the single-key reads.
+     */
+    @Test
+    void singleKeyReadCommandNames() {
+
+        assertThat(CommandType.TS_GET.toString()).isEqualTo("TS.GET");
+        assertThat(CommandType.TS_RANGE.toString()).isEqualTo("TS.RANGE");
+        assertThat(CommandType.TS_REVRANGE.toString()).isEqualTo("TS.REVRANGE");
+        assertThat(CommandType.TS_READ.toString()).isEqualTo("TS.READ");
+    }
+
 }

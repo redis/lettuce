@@ -201,3 +201,84 @@ commands.tsDecrBy("stock:item42", 2, TsIncrByArgs.Builder.label("warehouse", "ea
 ```
 
 If the timestamp equals the newest timestamp of the series, the latest sample is updated in place; a higher timestamp adds a new sample with the changed value. A timestamp lower than the newest one is rejected by the server.
+
+## Single-key reads
+
+Samples are returned as `TsSample`: a timestamp and one or more `double` values. `getValue()` returns the first value, `getValues()` all of them. RESP2 and RESP3 replies produce equal samples, and NaN values compare equal.
+
+### Latest sample
+
+```java
+TsSample latest = commands.tsGet("temperature:room1");          // null if the series has no samples
+
+TsSample open = commands.tsGet("{sensor1}:avg-1m", true);       // LATEST: also the open bucket of a compaction
+```
+
+The reactive `tsGet` completes empty when the series has no samples.
+
+### Ranges
+
+`tsRange` returns the samples within a `Range<Long>` in ascending order, `tsRevRange` in descending order. The bounds work as for `tsDel`: an unbounded side is sent as `-` or `+`, and an exclusive bound is sent as its inclusive neighbor (`t + 1` for a lower bound, `t - 1` for an upper bound):
+
+```java
+List<TsSample> all = commands.tsRange("temperature:room1", Range.unbounded());
+List<TsSample> window = commands.tsRange("temperature:room1", Range.create(1700000000000L, 1700003600000L));
+List<TsSample> newest = commands.tsRevRange("temperature:room1", Range.unbounded(), TsRangeArgs.Builder.count(10));
+```
+
+`TsRangeArgs` adds filters and aggregation:
+
+| Option | Setter | Notes |
+|--------|--------|-------|
+| `LATEST` | `latest()` | Also report the open bucket of a compaction. |
+| `FILTER_BY_TS` | `filterByTimestamps(long...)` | Keep only the listed timestamps. Applies before aggregation. |
+| `FILTER_BY_VALUE` | `filterByValue(min, max)` | Keep only values in `[min, max]`. Applies before aggregation. |
+| `COUNT` | `count(n)` | At most `n` samples, or `n` buckets with an aggregation. |
+| `ALIGN` | `align(ts)`, `alignStart()`, `alignEnd()` | Bucket alignment. Requires an aggregation; `alignStart()` needs a bounded lower end and `alignEnd()` a bounded upper end. |
+| `AGGREGATION` | `aggregation(bucket, TsAggregation...)` | Bucket duration as milliseconds or `Duration`. Several aggregations require Redis 8.8 or later. |
+| `BUCKETTIMESTAMP` | `bucketTimestamp(TsBucketTimestamp)` | Report the `START` (default), `END` or `MID` of each bucket. Requires an aggregation. |
+| `EMPTY` | `empty()` | Also report empty buckets. Requires an aggregation. |
+
+```java
+List<TsSample> hourly = commands.tsRange("temperature:room1", Range.unbounded(),
+        TsRangeArgs.Builder.aggregation(Duration.ofHours(1), TsAggregationType.MIN, TsAggregationType.AVG, TsAggregationType.MAX)
+                .bucketTimestamp(TsBucketTimestamp.MID)
+                .empty());
+
+for (TsSample bucket : hourly) {
+    double min = bucket.getValues().get(0);
+    double avg = bucket.getValues().get(1);
+    double max = bucket.getValues().get(2);
+}
+```
+
+With several aggregations, each sample has one value per aggregation, in the order of the request. `ALIGN`, `BUCKETTIMESTAMP` and `EMPTY` without an aggregation throw `IllegalArgumentException` when the command is built: the server rejects `ALIGN` but silently ignores the other two.
+
+For a compaction, the last reported bucket may include samples newer than the upper bound, because the bound limits only the bucket start.
+
+### Tail a series with TS.READ
+
+`tsRead` (Redis 8.10 and later) reads the samples from a starting point on, in ascending order. `TsReadOffset` sets the starting point: `earliest()` (`-`), `latest()` (`+`, inclusive), `newSamples()` (`$`, only samples added later) or `from(timestamp)`:
+
+```java
+List<TsSample> batch = commands.tsRead("events", TsReadOffset.earliest(), TsReadArgs.Builder.maxCount(100));
+long next = batch.get(batch.size() - 1).getTimestamp() + 1;
+batch = commands.tsRead("events", TsReadOffset.from(next), TsReadArgs.Builder.maxCount(100));
+```
+
+Use `latest()` and `newSamples()` only on the first call; later calls continue with `from(lastTimestamp + 1)`. Without `BLOCK`, `newSamples()` always returns an empty list.
+
+`TsReadArgs.block(millis, minCount)` waits until at least `minCount` samples exist, the block time ends, or the key is removed:
+
+```java
+List<TsSample> next = commands.tsRead("events", TsReadOffset.newSamples(), TsReadArgs.Builder.block(Duration.ofSeconds(5), 1));
+```
+
+- A timeout returns the samples found so far, possibly none. `BLOCK 0` waits without a time limit.
+- Deleting or expiring the key (DEL, UNLINK, FLUSHDB, FLUSHALL, expiry, eviction) wakes every waiter with an empty list, so an empty list means either a timeout or a removed key.
+- The server rejects `BLOCK` inside MULTI and Lua scripts.
+
+!!! WARNING
+    A blocking `tsRead` occupies its connection while it waits and stalls every other command sent on that connection, as `XREAD BLOCK` does. Use a dedicated connection whose command timeout is longer than the block time; Lettuce does not extend the timeout. In Redis Cluster, a cluster connection shares one connection per node, so a blocked `tsRead` stalls every command that cluster connection sends to that node: use a dedicated `StatefulRedisClusterConnection`.
+
+With `ReadFrom` set to a replica, `tsRead` (including `BLOCK`) runs on a replica. A replica wakes only after the write has replicated to it, so read from the primary for low-latency tailing.

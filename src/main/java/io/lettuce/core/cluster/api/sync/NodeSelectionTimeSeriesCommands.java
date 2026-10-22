@@ -12,10 +12,14 @@ import io.lettuce.core.Range;
 import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsInfoValue;
 import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsReadOffset;
+import io.lettuce.core.timeseries.TsSample;
 import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsReadArgs;
 
 /**
  * Synchronous executed commands on a node selection for Redis TimeSeries.
@@ -332,5 +336,151 @@ public interface NodeSelectionTimeSeriesCommands<K, V> {
      * @see <a href="https://redis.io/commands/ts.decrby/">TS.DECRBY</a>
      */
     Executions<Long> tsDecrBy(K key, double subtrahend, TsIncrByArgs args);
+
+    /**
+     * Get the latest sample of a time series. For a compaction, the latest bucket is reported only once it is complete; use
+     * {@link #tsGet(Object, boolean)} with {@code latest} set to also get the open bucket.
+     *
+     * @param key the key, must not be {@code null}.
+     * @return TsSample the latest sample, or {@code null} if the series has no samples.
+     * @throws IllegalArgumentException if {@code key} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.get/">TS.GET</a>
+     */
+    Executions<TsSample> tsGet(K key);
+
+    /**
+     * Get the latest sample of a time series. With {@code latest} set, the command sends {@code LATEST}: for a compaction, the
+     * latest, possibly partial, bucket is reported. The server ignores it for a series that is not a compaction.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param latest {@code true} to report the latest, possibly partial, bucket of a compaction.
+     * @return TsSample the latest sample, or {@code null} if the series has no samples.
+     * @throws IllegalArgumentException if {@code key} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.get/">TS.GET</a>
+     */
+    Executions<TsSample> tsGet(K key, boolean latest);
+
+    /**
+     * Get the samples of a time series within a range of timestamps, in ascending order.
+     * <p>
+     * An inclusive bound sends that timestamp, and an unbounded side sends {@code -} (earliest) or {@code +} (latest). Because
+     * timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an exclusive lower bound
+     * {@code t} sends {@code t + 1}, an exclusive upper bound {@code t} sends {@code t - 1}.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @return List&lt;TsSample&gt; the samples in ascending order; empty if the range has no samples.
+     * @throws IllegalArgumentException if {@code key} or {@code range} is {@code null}, or if {@code range} has an exclusive
+     *         lower bound at {@link Long#MAX_VALUE} or an exclusive upper bound at {@link Long#MIN_VALUE}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.range/">TS.RANGE</a>
+     */
+    Executions<List<TsSample>> tsRange(K key, Range<Long> range);
+
+    /**
+     * Get the samples of a time series within a range of timestamps, in ascending order, with filters, a limit or an
+     * aggregation. With an aggregation, each sample is one bucket and has one value per aggregation, in the order of the
+     * request. Several aggregations require Redis 8.8 or later.
+     * <p>
+     * The range bounds follow the same rules as in {@link #tsRange(Object, Range)}. For a compaction, the last reported bucket
+     * may include samples newer than the upper bound, because the bound limits only the bucket start.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @param args the options, must not be {@code null}.
+     * @return List&lt;TsSample&gt; the samples or buckets in ascending order; empty if the range has no samples.
+     * @throws IllegalArgumentException if {@code key}, {@code range} or {@code args} is {@code null}, if {@code range} has an
+     *         exclusive lower bound at {@link Long#MAX_VALUE} or an exclusive upper bound at {@link Long#MIN_VALUE}, or if
+     *         {@code args} sets {@code ALIGN}, {@code BUCKETTIMESTAMP} or {@code EMPTY} without an aggregation.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.range/">TS.RANGE</a>
+     */
+    Executions<List<TsSample>> tsRange(K key, Range<Long> range, TsRangeArgs args);
+
+    /**
+     * Get the samples of a time series within a range of timestamps, in descending order.
+     * <p>
+     * An inclusive bound sends that timestamp, and an unbounded side sends {@code -} (earliest) or {@code +} (latest). Because
+     * timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an exclusive lower bound
+     * {@code t} sends {@code t + 1}, an exclusive upper bound {@code t} sends {@code t - 1}.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @return List&lt;TsSample&gt; the samples in descending order; empty if the range has no samples.
+     * @throws IllegalArgumentException if {@code key} or {@code range} is {@code null}, or if {@code range} has an exclusive
+     *         lower bound at {@link Long#MAX_VALUE} or an exclusive upper bound at {@link Long#MIN_VALUE}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.revrange/">TS.REVRANGE</a>
+     */
+    Executions<List<TsSample>> tsRevRange(K key, Range<Long> range);
+
+    /**
+     * Get the samples of a time series within a range of timestamps, in descending order, with filters, a limit or an
+     * aggregation. With an aggregation, each sample is one bucket and has one value per aggregation, in the order of the
+     * request. Several aggregations require Redis 8.8 or later.
+     * <p>
+     * The range bounds follow the same rules as in {@link #tsRevRange(Object, Range)}. For a compaction, the last reported
+     * bucket may include samples newer than the upper bound, because the bound limits only the bucket start.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param range the range of timestamps in milliseconds, must not be {@code null}.
+     * @param args the options, must not be {@code null}.
+     * @return List&lt;TsSample&gt; the samples or buckets in descending order; empty if the range has no samples.
+     * @throws IllegalArgumentException if {@code key}, {@code range} or {@code args} is {@code null}, if {@code range} has an
+     *         exclusive lower bound at {@link Long#MAX_VALUE} or an exclusive upper bound at {@link Long#MIN_VALUE}, or if
+     *         {@code args} sets {@code ALIGN}, {@code BUCKETTIMESTAMP} or {@code EMPTY} without an aggregation.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.revrange/">TS.REVRANGE</a>
+     */
+    Executions<List<TsSample>> tsRevRange(K key, Range<Long> range, TsRangeArgs args);
+
+    /**
+     * Read the samples of a time series from {@code offset} on, in ascending order, without blocking. Requires Redis 8.10 or
+     * later.
+     * <p>
+     * Use {@link TsReadOffset#latest()} or {@link TsReadOffset#newSamples()} only on the first call, and continue with
+     * {@code TsReadOffset.from(lastTimestamp + 1)}. Without {@code BLOCK}, {@link TsReadOffset#newSamples()} always returns an
+     * empty list. A key that does not exist returns an empty list.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param offset the inclusive lower bound, must not be {@code null}.
+     * @return List&lt;TsSample&gt; the samples in ascending order; empty if there are none.
+     * @throws IllegalArgumentException if {@code key} or {@code offset} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.read/">TS.READ</a>
+     */
+    Executions<List<TsSample>> tsRead(K key, TsReadOffset offset);
+
+    /**
+     * Read the samples of a time series from {@code offset} on, in ascending order, optionally waiting for new samples.
+     * Requires Redis 8.10 or later.
+     * <p>
+     * With {@link TsReadArgs#block(long, long)}, the command waits until enough samples exist, the block time ends, or the key
+     * is removed. A timeout returns the samples found so far. Deleting or expiring the key (DEL, UNLINK, FLUSHDB, FLUSHALL,
+     * expiry, eviction) wakes every waiter with an empty list, {@code BLOCK 0} included, so an empty list means either a
+     * timeout or a removed key. {@code BLOCK 0} waits without a time limit.
+     * <p>
+     * While it waits, the command occupies its connection and stalls every other command sent on that connection. Use a
+     * dedicated connection whose command timeout is longer than the block time; Lettuce does not extend the timeout. In Redis
+     * Cluster, a cluster connection shares one connection per node, so a blocked TS.READ stalls every command that cluster
+     * connection sends to that node; use a dedicated {@code StatefulRedisClusterConnection}. With {@code ReadFrom} set to a
+     * replica, TS.READ runs on a replica, which wakes only after the write has replicated to it; read from the primary for
+     * low-latency tailing. The server rejects {@code BLOCK} inside MULTI and Lua scripts.
+     * <p>
+     * Use {@link TsReadOffset#latest()} or {@link TsReadOffset#newSamples()} only on the first call, and continue with
+     * {@code TsReadOffset.from(lastTimestamp + 1)}.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param offset the inclusive lower bound, must not be {@code null}.
+     * @param args the options, must not be {@code null}.
+     * @return List&lt;TsSample&gt; the samples in ascending order; empty on a timeout without samples or when the key was
+     *         removed.
+     * @throws IllegalArgumentException if {@code key}, {@code offset} or {@code args} is {@code null}.
+     * @since 8.0
+     * @see <a href="https://redis.io/commands/ts.read/">TS.READ</a>
+     */
+    Executions<List<TsSample>> tsRead(K key, TsReadOffset offset, TsReadArgs args);
 
 }
