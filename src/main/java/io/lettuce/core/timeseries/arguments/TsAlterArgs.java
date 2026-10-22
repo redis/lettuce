@@ -14,7 +14,11 @@ import io.lettuce.core.timeseries.TsDuplicatePolicy;
 
 /**
  * Argument list builder for the Redis <a href="https://redis.io/commands/ts.alter/">TS.ALTER</a> command. Only the options that
- * are set are changed. {@link #labels(Map)} replaces all labels of the series; an empty map removes all labels.
+ * are set are changed.
+ * <p>
+ * Labels are the exception: on TS.ALTER, {@link #labels(Map)} and {@link #label(String, String)} both send the complete label
+ * set of the series. Every label that is not listed is removed from the series, and an empty map removes all labels. To add a
+ * label, list the existing labels too.
  * <p>
  * {@link TsAlterArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
@@ -104,7 +108,8 @@ public class TsAlterArgs extends BaseTsSeriesArgs<TsAlterArgs> {
         }
 
         /**
-         * Create new {@link TsAlterArgs} with the labels ({@code LABELS}) set.
+         * Create new {@link TsAlterArgs} with the labels ({@code LABELS}) set. TS.ALTER replaces the complete label set of the
+         * series: labels not listed in {@code labels} are removed.
          *
          * @param labels the label names and values, must not be {@code null} and must not contain {@code null} names or values.
          * @return new {@link TsAlterArgs}.
@@ -117,7 +122,8 @@ public class TsAlterArgs extends BaseTsSeriesArgs<TsAlterArgs> {
         }
 
         /**
-         * Create new {@link TsAlterArgs} with one label ({@code LABELS}) set.
+         * Create new {@link TsAlterArgs} with one label ({@code LABELS}) set. TS.ALTER replaces the complete label set of the
+         * series: this label becomes the only label, and all other labels are removed.
          *
          * @param name the label name, must not be {@code null}.
          * @param value the label value, must not be {@code null}.
