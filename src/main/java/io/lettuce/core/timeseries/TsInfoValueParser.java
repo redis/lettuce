@@ -44,14 +44,15 @@ public final class TsInfoValueParser<K, V> implements ComplexDataParser<TsInfoVa
     /**
      * Parse a TS.INFO reply.
      *
-     * @param data the reply, must not be {@code null}.
-     * @return the parsed information.
-     * @throws IllegalArgumentException if {@code data} is {@code null}.
+     * @param data the reply, may be {@code null}, for example for a command in a transaction that was discarded.
+     * @return the parsed information, or {@code null} if {@code data} is {@code null}.
      */
     @Override
     public TsInfoValue<K> parse(ComplexData data) {
 
-        LettuceAssert.notNull(data, "Failed parsing TS.INFO: data must not be null");
+        if (data == null) {
+            return null;
+        }
 
         Map<String, Object> fields = TsParserSupport.fields(data);
 

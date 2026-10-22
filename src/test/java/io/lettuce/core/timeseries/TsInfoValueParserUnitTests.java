@@ -434,10 +434,9 @@ class TsInfoValueParserUnitTests {
     }
 
     @Test
-    void nullDataThrows() {
+    void nullDataGivesNull() {
 
-        assertThatThrownBy(() -> new TsInfoValueParser<>(StringCodec.UTF8).parse(null))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(new TsInfoValueParser<>(StringCodec.UTF8).parse(null)).isNull();
         assertThatThrownBy(() -> new TsInfoValueParser<>(null)).isInstanceOf(IllegalArgumentException.class);
     }
 
