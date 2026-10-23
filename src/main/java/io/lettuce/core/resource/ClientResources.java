@@ -148,9 +148,9 @@ public interface ClientResources {
         /**
          * Sets the {@link EventPublisherOptions} to publish command latency metrics using the {@link EventBus} if the
          * {@link CommandLatencyRecorder} is an instance of {@link CommandLatencyCollector} that allows latency metric
-         * retrieval. Publishing retrieves and, by default, resets the collected metrics. If publishing is disabled, the
-         * collector retains its metrics until {@link CommandLatencyCollector#retrieveMetrics()} is called, so the application
-         * must retrieve them periodically to bound memory usage.
+         * retrieval. If publishing is disabled and {@code resetLatenciesAfterEvent} is enabled, the collector keeps its metrics
+         * until {@link CommandLatencyCollector#retrieveMetrics()} is called, so the application must retrieve them
+         * periodically.
          *
          * @param commandLatencyPublisherOptions the {@link EventPublisherOptions} to publish command latency metrics using the
          *        {@link EventBus}, must not be {@code null}.

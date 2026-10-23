@@ -15,10 +15,8 @@ public interface ProtocolKeyword {
     byte[] getBytes();
 
     /**
-     * Return the name of the command. The name identifies the command type in command latency metrics, so implementations must
-     * return the same value for every instance representing the same command, typically the command name such as {@code GET}.
-     * Relying on {@link Object#toString()} yields a distinct name per instance, which makes latency recorders retain a separate
-     * metric for every command instance.
+     * Return the command name, such as {@code GET}. Metrics and tracing use this name, so it must be the same for every
+     * instance of the same command.
      *
      * @return name of the command.
      */

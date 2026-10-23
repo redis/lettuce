@@ -82,7 +82,7 @@ executed once have the completed flag set and cannot be reused.
 
 !!! NOTE
     Lettuce uses `ProtocolKeyword.toString()` as the command name in
-    command latency metrics. A custom `ProtocolKeyword` must return the
+    metrics and tracing. A custom `ProtocolKeyword` must return the
     same name for every instance of the same command, for example by
     using an `enum` or overriding `toString()`. A keyword that inherits
     `Object.toString()` and is created per dispatch produces a separate

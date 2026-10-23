@@ -34,11 +34,13 @@ possible to track command latencies on a per-connection level (see
     The collector keeps latency data for each distinct remote endpoint and
     command type in memory until the metrics are published (and reset). With
     the default settings, metrics are published and reset every 10 minutes.
-    If you disable event publishing or set `resetLatenciesAfterEvent` to
-    `false`, the collected data is retained until you call
-    `CommandLatencyCollector.retrieveMetrics()`. Custom command types
-    (`ProtocolKeyword`) must return a stable command name from `toString()`;
-    otherwise each command instance is tracked separately.
+    If you disable event publishing, the collected data is retained until
+    you call `CommandLatencyCollector.retrieveMetrics()`. If you set
+    `resetLatenciesAfterEvent` to `false`, retrieving metrics does not reset
+    them, and the collected data is retained until the collector is shut
+    down. Custom command types (`ProtocolKeyword`) must return a stable
+    command name from `toString()`; otherwise each command instance is
+    tracked separately.
 
 Command latencies are transported using Events on the `EventBus`. The
 `EventBus` can be obtained from the [client
