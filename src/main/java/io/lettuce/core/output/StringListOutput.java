@@ -29,8 +29,19 @@ public class StringListOutput<K, V> extends CommandOutput<K, V, List<String>> im
     @Override
     public void set(ByteBuffer bytes) {
 
-        // nil results should produce an empty list
         if (bytes == null) {
+            // A nil reply for the whole list (e.g. a missing key) reaches this
+            // method before the list is initialized. Forwarding null to the
+            // subscriber makes the reactive RedisSubscription fail with
+            // "Data must not be null", so the command errors instead of
+            // completing empty. We therefore skip it and let the reply stay an
+            // empty list.
+            // Once the list is initialized (multi() was called to allocate the
+            // array), a nil element is a real list member and must keep its
+            // null slot so that length and element positions are preserved.
+            if (initialized) {
+                subscriber.onNext(output, null);
+            }
             return;
         }
 
