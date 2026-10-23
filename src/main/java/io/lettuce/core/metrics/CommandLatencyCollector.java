@@ -17,7 +17,8 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * The collector retains latency data for each distinct remote address and command type until {@link #retrieveMetrics()} is
  * called with {@link CommandLatencyCollectorOptions#resetLatenciesAfterEvent()} enabled, or until {@link #shutdown()}. Memory
  * usage therefore grows with the number of distinct remote addresses and command names (see {@link ProtocolKeyword#toString()})
- * observed between two retrievals.
+ * observed between two retrievals when {@link CommandLatencyCollectorOptions#resetLatenciesAfterEvent()} is enabled, or over
+ * the lifetime of the collector when it is disabled.
  *
  * @author Mark Paluch
  * @author Sharior Hossain Farhan
