@@ -30,19 +30,25 @@ public class StringListOutput<K, V> extends CommandOutput<K, V, List<String>> im
     public void set(ByteBuffer bytes) {
 
         if (bytes == null) {
-            // A null reply can reach this method either as the whole result
-            // (e.g. a missing key on JSON.GET / jsonGetRaw) or as a nil element
-            // inside an array. The default ListSubscriber simply collects into
-            // the output list, so forwarding null preserves the slot (or keeps
-            // the result as a single null) and is safe. Reactive subscribers
-            // (RedisPublisher) reject null with "Data must not be null" and
-            // would abort decoding, so null is skipped for those subscribers
-            // instead of being forwarded.
+
+            // A nil reply can be the whole result (for example a missing key on
+            // JSON.GET) or a nil element inside an array. The null must be kept in
+            // the collected output so that positional results (jsonGetRaw,
+            // jsonMGetRaw, jsonArrpopRaw) and MULTI/EXEC TransactionResult keep
+            // their slots. It must however never be forwarded to a reactive
+            // subscriber, because RedisPublisher rejects null with "Data must not
+            // be null". Inside MULTI the subscriber is a CompositeSubscriber that
+            // fans out to both the reactive and the collecting subscriber, so the
+            // collector is fed through the output directly while the reactive
+            // delegate is skipped.
+            if (!initialized) {
+                multi(1);
+            }
+
             if (subscriber instanceof ListSubscriber) {
-                if (!initialized) {
-                    multi(1);
-                }
                 subscriber.onNext(output, null);
+            } else {
+                output.add(null);
             }
             return;
         }
