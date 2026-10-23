@@ -20,18 +20,22 @@ import io.lettuce.core.output.StreamingOutput.Subscriber;
 class StringListOutputUnitTests {
 
     @Test
-    void wholeNilReplyProducesEmptyList() {
+    void wholeNilReplyKeepsNullSlotWithDefaultSubscriber() {
 
-        // A missing key yields a nil reply before the list is initialized.
+        // With the default ListSubscriber a missing key yields a single null
+        // slot (collection behavior is unchanged from before the reactive fix).
         StringListOutput<String, String> output = new StringListOutput<>(StringCodec.UTF8);
         output.set((ByteBuffer) null);
 
-        assertThat(output.get()).isEmpty();
+        assertThat(output.get()).hasSize(1);
+        assertThat(output.get().get(0)).isNull();
     }
 
     @Test
-    void wholeNilReplyDoesNotNotifySubscriber() {
+    void wholeNilReplyIsSkippedForReactiveSubscriber() {
 
+        // A reactive (non ListSubscriber) subscriber must not receive null,
+        // otherwise decoding aborts with "Data must not be null".
         StringListOutput<String, String> output = new StringListOutput<>(StringCodec.UTF8);
         AtomicInteger notifications = new AtomicInteger();
         output.setSubscriber(new Subscriber<String>() {
@@ -43,7 +47,6 @@ class StringListOutputUnitTests {
 
         });
 
-        // Not yet initialized -> nil reply for the whole list.
         output.set((ByteBuffer) null);
 
         assertThat(notifications.get()).isZero();
@@ -65,7 +68,7 @@ class StringListOutputUnitTests {
     }
 
     @Test
-    void nilElementInListNotifiesSubscriber() {
+    void nilElementInListIsSkippedForReactiveSubscriber() {
 
         StringListOutput<String, String> output = new StringListOutput<>(StringCodec.UTF8);
         AtomicInteger notifications = new AtomicInteger();
@@ -82,7 +85,8 @@ class StringListOutputUnitTests {
         output.set(ByteBuffer.wrap("one".getBytes(StandardCharsets.UTF_8)));
         output.set((ByteBuffer) null);
 
-        assertThat(notifications.get()).isEqualTo(2);
+        assertThat(notifications.get()).isEqualTo(1);
+        assertThat(output.get()).isEmpty();
     }
 
     @Test
