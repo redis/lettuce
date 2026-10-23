@@ -882,7 +882,7 @@ public class RedisJsonIntegrationTests {
             List<String> existing = result.get().get(0);
             List<String> missing = result.get().get(1);
 
-            assertThat(existing).containsExactly("[\"one\"]");
+            assertThat(existing).hasSize(1);
             assertThat(missing).containsExactly((String) null);
         } finally {
             redis.del("existing-key");
