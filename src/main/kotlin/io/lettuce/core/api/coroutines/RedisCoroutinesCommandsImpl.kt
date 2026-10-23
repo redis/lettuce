@@ -63,7 +63,7 @@ open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
     RedisTopKCoroutinesCommands<K, V> by RedisTopKCoroutinesCommandsImpl(ops),
     RedisCMSCoroutinesCommands<K, V> by RedisCMSCoroutinesCommandsImpl(ops),
     RedisTDigestCoroutinesCommands<K, V> by RedisTDigestCoroutinesCommandsImpl(ops),
-    RedisTimeSeriesCoroutinesCommands<K, V> by RedisTimeSeriesCoroutinesCommandsImpl(ops) {
+    RedisTimeSeriesCoroutinesCommands<K> by RedisTimeSeriesCoroutinesCommandsImpl(ops) {
 
     /**
      * Authenticate to the server.

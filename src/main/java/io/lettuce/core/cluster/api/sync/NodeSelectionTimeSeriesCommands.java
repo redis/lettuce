@@ -31,7 +31,7 @@ import io.lettuce.core.timeseries.arguments.TsReadArgs;
 /**
  * Synchronous executed commands on a node selection for Redis TimeSeries.
  * <p>
- * Sample values are {@code double} and labels are {@code String}, so the value type {@code V} is not used by these commands.
+ * Sample values are {@code double} and labels are {@code String}; only keys use the connection codec.
  * <p>
  * {@code tsMAdd} runs unchanged on every selected node; it is not split by slot, so the keys must hash to slots that node
  * serves.
@@ -41,12 +41,11 @@ import io.lettuce.core.timeseries.arguments.TsReadArgs;
  * so the combined results contain each series once per selected node.
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @see <a href="https://redis.io/docs/latest/develop/data-types/timeseries/">Redis TimeSeries</a>
  * @since 8.0
  */
-public interface NodeSelectionTimeSeriesCommands<K, V> {
+public interface NodeSelectionTimeSeriesCommands<K> {
 
     /**
      * Create a new time series with the server's default options.

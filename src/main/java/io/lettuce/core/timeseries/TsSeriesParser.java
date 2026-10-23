@@ -26,17 +26,16 @@ import io.lettuce.core.output.ComplexDataParser;
  * protocols. Create one parser per command.
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @since 8.0
  */
-public final class TsSeriesParser<K, V> implements ComplexDataParser<List<TsSeries<K>>> {
+public final class TsSeriesParser<K> implements ComplexDataParser<List<TsSeries<K>>> {
 
     private static final String REDUCER_LABEL = "__reducer__";
 
     private static final String SOURCE_LABEL = "__source__";
 
-    private final RedisCodec<K, V> codec;
+    private final RedisCodec<K, ?> codec;
 
     private final List<TsAggregation> aggregations;
 
@@ -54,7 +53,7 @@ public final class TsSeriesParser<K, V> implements ComplexDataParser<List<TsSeri
      * @throws IllegalArgumentException if {@code codec} or {@code aggregations} is {@code null}.
      * @since 8.0
      */
-    public TsSeriesParser(RedisCodec<K, V> codec, List<TsAggregation> aggregations, boolean grouped, TsReducer reducer) {
+    public TsSeriesParser(RedisCodec<K, ?> codec, List<TsAggregation> aggregations, boolean grouped, TsReducer reducer) {
 
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
         LettuceAssert.notNull(aggregations, "Aggregations must not be null");

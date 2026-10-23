@@ -35,14 +35,13 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  * Coroutine executed commands (based on reactive commands) for Redis TimeSeries.
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @since 8.0
  */
 @ExperimentalLettuceCoroutinesApi
-internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any, V : Any>(
-    internal val ops: RedisTimeSeriesReactiveCommands<K, V>
-) : RedisTimeSeriesCoroutinesCommands<K, V> {
+internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any>(
+    internal val ops: RedisTimeSeriesReactiveCommands<K>
+) : RedisTimeSeriesCoroutinesCommands<K> {
 
     override suspend fun tsCreate(key: K): String? =
         ops.tsCreate(key).awaitFirstOrNull()

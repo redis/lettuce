@@ -477,7 +477,7 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         addRange(args, range);
 
-        TsSeriesParser<K, V> parser;
+        TsSeriesParser<K> parser;
         if (mRangeArgs == null) {
             addFilters(args, filters);
             parser = new TsSeriesParser<>(codec, Collections.emptyList(), false, null);

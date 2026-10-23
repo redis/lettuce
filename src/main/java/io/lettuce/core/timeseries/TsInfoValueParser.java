@@ -21,13 +21,12 @@ import io.lettuce.core.output.ComplexDataParser;
  * {@code DEBUG}. RESP2 and RESP3 replies produce equal {@link TsInfoValue} instances.
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @since 8.0
  */
-public final class TsInfoValueParser<K, V> implements ComplexDataParser<TsInfoValue<K>> {
+public final class TsInfoValueParser<K> implements ComplexDataParser<TsInfoValue<K>> {
 
-    private final RedisCodec<K, V> codec;
+    private final RedisCodec<K, ?> codec;
 
     /**
      * Create a new parser that decodes keys with {@code codec}.
@@ -36,7 +35,7 @@ public final class TsInfoValueParser<K, V> implements ComplexDataParser<TsInfoVa
      * @throws IllegalArgumentException if {@code codec} is {@code null}.
      * @since 8.0
      */
-    public TsInfoValueParser(RedisCodec<K, V> codec) {
+    public TsInfoValueParser(RedisCodec<K, ?> codec) {
 
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
 

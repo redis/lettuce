@@ -141,7 +141,7 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
      * Run {@code action} on a dedicated cluster connection authenticated as {@code user}.
      */
     @Override
-    protected void runAs(String user, Function<RedisTimeSeriesCommands<String, String>, Void> action) {
+    protected void runAs(String user, Function<RedisTimeSeriesCommands<String>, Void> action) {
 
         RedisURI uri = RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port1)
                 .withAuthentication(user, "unused").build();
@@ -545,7 +545,7 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
     /**
      * Assert that every keyless read of {@code commands} returns all of {@code keys} once, in any order.
      */
-    private void assertKeylessReadsReturnAll(RedisTimeSeriesCommands<String, String> commands, List<String> keys) {
+    private void assertKeylessReadsReturnAll(RedisTimeSeriesCommands<String> commands, List<String> keys) {
 
         assertThat(keys(commands.tsMGet(isolation()))).containsExactlyInAnyOrderElementsOf(keys);
         assertThat(keys(commands.tsMGet(new TsMGetArgs().withLabels(), isolation()))).containsExactlyInAnyOrderElementsOf(keys);
@@ -743,7 +743,7 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
         }
 
         try (StatefulRedisClusterConnection<String, String> replicaConnection = connectReadFromReplica()) {
-            RedisTimeSeriesCommands<String, String> replicaCommands = replicaConnection.sync();
+            RedisTimeSeriesCommands<String> replicaCommands = replicaConnection.sync();
             for (String command : commands) {
                 long replicasBefore = callsOn(RedisClusterNode.NodeFlag.REPLICA, command);
                 long primariesBefore = callsOn(RedisClusterNode.NodeFlag.UPSTREAM, command);

@@ -1700,7 +1700,7 @@ public class RedisTimeSeriesIntegrationTests {
     /**
      * Run {@code action} on a dedicated connection authenticated as {@code user}.
      */
-    protected void runAs(String user, Function<RedisTimeSeriesCommands<String, String>, Void> action) {
+    protected void runAs(String user, Function<RedisTimeSeriesCommands<String>, Void> action) {
 
         RedisURI uri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).withAuthentication(user, "unused")
                 .build();
@@ -1799,11 +1799,11 @@ public class RedisTimeSeriesIntegrationTests {
 
         final StatefulConnection<String, String> connection;
 
-        final RedisTimeSeriesAsyncCommands<String, String> async;
+        final RedisTimeSeriesAsyncCommands<String> async;
 
         private final Runnable shutdown;
 
-        protected Pipeline(StatefulConnection<String, String> connection, RedisTimeSeriesAsyncCommands<String, String> async,
+        protected Pipeline(StatefulConnection<String, String> connection, RedisTimeSeriesAsyncCommands<String> async,
                 Runnable shutdown) {
             this.connection = connection;
             this.async = async;
@@ -2504,7 +2504,7 @@ public class RedisTimeSeriesIntegrationTests {
         try (Pipeline pipeline = openPipeline()) {
 
             pipeline.connection.setAutoFlushCommands(false);
-            RedisTimeSeriesAsyncCommands<String, String> async = pipeline.async;
+            RedisTimeSeriesAsyncCommands<String> async = pipeline.async;
 
             RedisFuture<List<Long>> madd = async
                     .tsMAdd(Arrays.asList(TsMAddValue.of(KEY, 1000L, 9.0), TsMAddValue.of(KEY, 2000L, 2.0)));

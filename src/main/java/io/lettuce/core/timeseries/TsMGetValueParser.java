@@ -20,13 +20,12 @@ import io.lettuce.core.output.ComplexDataParser;
  * in the order of the reply.
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @since 8.0
  */
-public final class TsMGetValueParser<K, V> implements ComplexDataParser<List<TsMGetValue<K>>> {
+public final class TsMGetValueParser<K> implements ComplexDataParser<List<TsMGetValue<K>>> {
 
-    private final RedisCodec<K, V> codec;
+    private final RedisCodec<K, ?> codec;
 
     /**
      * Create a new parser that decodes keys with {@code codec}.
@@ -35,7 +34,7 @@ public final class TsMGetValueParser<K, V> implements ComplexDataParser<List<TsM
      * @throws IllegalArgumentException if {@code codec} is {@code null}.
      * @since 8.0
      */
-    public TsMGetValueParser(RedisCodec<K, V> codec) {
+    public TsMGetValueParser(RedisCodec<K, ?> codec) {
 
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
 

@@ -32,15 +32,14 @@ import io.lettuce.core.timeseries.arguments.TsReadArgs;
 /**
  * Asynchronous executed commands for Redis TimeSeries.
  * <p>
- * Sample values are {@code double} and labels are {@code String}, so the value type {@code V} is not used by these commands.
+ * Sample values are {@code double} and labels are {@code String}; only keys use the connection codec.
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @see <a href="https://redis.io/docs/latest/develop/data-types/timeseries/">Redis TimeSeries</a>
  * @since 8.0
  */
-public interface RedisTimeSeriesAsyncCommands<K, V> {
+public interface RedisTimeSeriesAsyncCommands<K> {
 
     /**
      * Create a new time series with the server's default options.

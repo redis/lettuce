@@ -31,16 +31,15 @@ import io.lettuce.core.timeseries.arguments.TsReadArgs
 /**
  * Coroutine executed commands for Redis TimeSeries.
  *
- * Sample values are `double` and labels are `String`, so the value type `V` is not used by these commands.
+ * Sample values are `double` and labels are `String`; only keys use the connection codec.
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Aleksandar Todorov
  * @see <a href="https://redis.io/docs/latest/develop/data-types/timeseries/">Redis TimeSeries</a>
  * @since 8.0
  */
 @ExperimentalLettuceCoroutinesApi
-interface RedisTimeSeriesCoroutinesCommands<K : Any, V : Any> {
+interface RedisTimeSeriesCoroutinesCommands<K : Any> {
 
     /**
      * Create a new time series with the server's default options.
