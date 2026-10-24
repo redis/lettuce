@@ -31,7 +31,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -1013,6 +1015,9 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         CompletableFuture<R> future = getRandomStatefulConnection(intent).thenApply(StatefulRedisConnection::async)
                 .thenCompose(routedCall).handle((res, err) -> {
                     if (err != null) {
+                        if (isClientSideFailure(err)) {
+                            return RedisAdvancedClusterAsyncCommandsImpl.<R> failedFuture(err);
+                        }
                         logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
                         return superCall.get().toCompletableFuture();
                     }
@@ -1045,6 +1050,9 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             return async.clusterMyId().toCompletableFuture().thenCompose(nodeId -> routedCall.apply(nodeId, async));
         }).handle((res, err) -> {
             if (err != null) {
+                if (isClientSideFailure(err)) {
+                    return RedisAdvancedClusterAsyncCommandsImpl.<R> failedFuture(err);
+                }
                 logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
                 return superCall.get().toCompletableFuture();
             }
@@ -1118,6 +1126,27 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         return null;
+    }
+
+    /**
+     * Command arguments are validated while the command is built inside {@code routedCall}, so an
+     * {@link IllegalArgumentException} reaches the future instead of the caller. That is a client side error, not a routing
+     * failure: retrying through the fallback would rebuild the same invalid command and log a misleading routing error.
+     */
+    private static boolean isClientSideFailure(Throwable err) {
+
+        Throwable cause = err;
+        while ((cause instanceof CompletionException || cause instanceof ExecutionException) && cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause instanceof IllegalArgumentException;
+    }
+
+    private static <T> CompletableFuture<T> failedFuture(Throwable err) {
+
+        CompletableFuture<T> future = new CompletableFuture<>();
+        future.completeExceptionally(err);
+        return future;
     }
 
     private AsyncClusterConnectionProvider getConnectionProvider() {
