@@ -276,7 +276,11 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         @Override
         public void onNext(T t) {
 
-            LettuceAssert.notNull(t, "Data must not be null");
+            // A nil reply (for example a missing key on JSON.GET) is kept for collecting subscribers,
+            // but it cannot be emitted: reactive streams reject null.
+            if (t == null) {
+                return;
+            }
 
             State state = state();
 
