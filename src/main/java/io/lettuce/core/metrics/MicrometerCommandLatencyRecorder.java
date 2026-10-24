@@ -49,6 +49,8 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
 
     static final String METRIC_FIRST_RESPONSE = "lettuce.command.firstresponse";
 
+    static final String METRIC_QUEUEING = "lettuce.command.queueing";
+
     private final MeterRegistry meterRegistry;
 
     private final MicrometerOptions options;
@@ -56,6 +58,8 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
     private final Map<CommandLatencyId, Timer> completionTimers = new ConcurrentHashMap<>();
 
     private final Map<CommandLatencyId, Timer> firstResponseTimers = new ConcurrentHashMap<>();
+
+    private final Map<CommandLatencyId, Timer> queueingTimers = new ConcurrentHashMap<>();
 
     /**
      * Create a new {@link MicrometerCommandLatencyRecorder} instance given {@link MeterRegistry} and {@link MicrometerOptions}.
@@ -82,6 +86,18 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
     }
 
     @Override
+    public void recordCommandQueueLatency(SocketAddress local, SocketAddress remote, RedisCommand<?, ?, ?> command,
+            long queueLatency) {
+
+        if (!isQueueLatencyEnabled() || !isCommandEnabled(command)) {
+            return;
+        }
+
+        CommandLatencyId id = createId(local, remote, command.getType());
+        queueingTimers.computeIfAbsent(id, this::queueingTimer).record(queueLatency, TimeUnit.NANOSECONDS);
+    }
+
+    @Override
     public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
             long firstResponseLatency, long completionLatency) {
 
@@ -103,12 +119,40 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
         return options.isEnabled();
     }
 
+    @Override
+    public boolean isQueueLatencyEnabled() {
+        return isEnabled() && options.isQueueLatencyEnabled();
+    }
+
     private boolean isCommandEnabled(RedisCommand<?, ?, ?> redisCommand) {
         return options.getMetricsFilter().test(redisCommand);
     }
 
     private CommandLatencyId createId(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType) {
         return CommandLatencyId.create(options.localDistinction() ? local : LocalAddress.ANY, remote, commandType);
+    }
+
+    /**
+     * Create a timer for the queueing duration of a command attempt.
+     *
+     * @param commandLatencyId the command latency identifier
+     * @return the timer
+     * @since 7.9
+     */
+    protected Timer queueingTimer(CommandLatencyId commandLatencyId) {
+
+        Timer.Builder timer = Timer.builder(METRIC_QUEUEING)
+                .description("Latency between endpoint acceptance and command dispatch")
+                .tag(LABEL_COMMAND, commandLatencyId.commandType().toString())
+                .tag(LABEL_LOCAL, commandLatencyId.localAddress().toString())
+                .tag(LABEL_REMOTE, commandLatencyId.remoteAddress().toString()).tags(options.tags());
+
+        if (options.isHistogram()) {
+            timer.publishPercentileHistogram().publishPercentiles(options.targetPercentiles())
+                    .minimumExpectedValue(options.minLatency()).maximumExpectedValue(options.maxLatency());
+        }
+
+        return timer.register(meterRegistry);
     }
 
     protected Timer completionTimer(CommandLatencyId commandLatencyId) {

@@ -6,15 +6,26 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.nio.channels.ClosedChannelException;
+import java.util.ArrayDeque;
+import java.util.AbstractCollection;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -34,9 +45,11 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.ConnectionTestUtil;
@@ -123,6 +136,963 @@ class DefaultEndpointUnitTests {
 
         sut = new DefaultEndpoint(ClientOptions.create(), clientResources);
         sut.setConnectionFacade(connectionFacade);
+    }
+
+    @Test
+    void queueingTimestampIsConsumedOnceAndResetOnNewAcceptance() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        RedisCommand<String, String, String> queued = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        endpoint.write(queued);
+        assertThat(endpoint.takeQueueLatencyStart(queued)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(queued)).isNull();
+
+        // A redirected attempt passes through write() again and gets a new start time.
+        endpoint.write(queued);
+        assertThat(endpoint.takeQueueLatencyStart(queued)).isNotNull();
+    }
+
+    @Test
+    void failedBatchAdmissionIterationReleasesWriterCount() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        AtomicInteger iterations = new AtomicInteger();
+        Collection<RedisCommand<String, String, ?>> batch = new AbstractCollection<RedisCommand<String, String, ?>>() {
+
+            @Override
+            public Iterator<RedisCommand<String, String, ?>> iterator() {
+                // The first pass checks duplicate command identities. Fail during the
+                // later admission-lock lookup, before any command can be written.
+                if (iterations.incrementAndGet() == 2) {
+                    throw new IllegalStateException("Could not iterate batch");
+                }
+                return Arrays.<RedisCommand<String, String, ?>> asList(first, second).iterator();
+            }
+
+            @Override
+            public int size() {
+                return 2;
+            }
+
+        };
+
+        assertThatThrownBy(() -> endpoint.write(batch)).isInstanceOf(IllegalStateException.class)
+                .hasMessage("Could not iterate batch");
+        SharedLock lock = ReflectionTestUtils.getField(endpoint, "sharedLock");
+        Long writers = ReflectionTestUtils.getField(lock, "writers");
+        assertThat(writers).isZero();
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).isEmpty();
+    }
+
+    @Test
+    void simultaneousWritersOfSameCommandCannotInvertEnqueueOrder() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        CountDownLatch firstWriterPaused = new CountDownLatch(1);
+        CountDownLatch releaseFirstWriter = new CountDownLatch(1);
+        CountDownLatch secondWriterStarted = new CountDownLatch(1);
+        AtomicInteger filterCalls = new AtomicInteger();
+        AtomicBoolean secondWriterOvertookFirst = new AtomicBoolean();
+        ClientOptions options = ClientOptions.builder().replayFilter(cmd -> {
+            int visit = filterCalls.incrementAndGet();
+            if (visit == 1) {
+                firstWriterPaused.countDown();
+                try {
+                    if (!releaseFirstWriter.await(5, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("Timed out waiting for the first writer");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+            } else if (releaseFirstWriter.getCount() != 0) {
+                secondWriterOvertookFirst.set(true);
+            }
+            return false;
+        }).build();
+        DefaultEndpoint endpoint = new DefaultEndpoint(options, clientResources);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
+
+        try {
+            CompletableFuture<Void> first = CompletableFuture.runAsync(() -> endpoint.write(reused), executor);
+            assertThat(firstWriterPaused.await(5, TimeUnit.SECONDS)).isTrue();
+
+            CompletableFuture<Void> second = CompletableFuture.runAsync(() -> {
+                secondWriterStarted.countDown();
+                endpoint.write(reused);
+            }, executor);
+            assertThat(secondWriterStarted.await(5, TimeUnit.SECONDS)).isTrue();
+
+            // The second submission cannot pass the first in its acceptance/enqueue phase.
+            Thread.sleep(100);
+            assertThat(filterCalls.get()).isEqualTo(1);
+            releaseFirstWriter.countDown();
+            CompletableFuture.allOf(first, second).get(5, TimeUnit.SECONDS);
+
+            assertThat(secondWriterOvertookFirst.get()).isFalse();
+            assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(reused, reused);
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+        } finally {
+            releaseFirstWriter.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void waitingForAdmissionCannotBlockReentrantExclusiveOperation() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        CountDownLatch firstInFilter = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        AtomicInteger filterCalls = new AtomicInteger();
+        AtomicReference<DefaultEndpoint> endpointRef = new AtomicReference<>();
+        ClientOptions options = ClientOptions.builder().replayFilter(command -> {
+            if (filterCalls.incrementAndGet() == 1) {
+                firstInFilter.countDown();
+                try {
+                    if (!secondStarted.await(5, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("The second writer did not start");
+                    }
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+                // The contending writer must suspend its writer count before waiting
+                // on this command's admission lock, or doExclusive cannot progress.
+                assertThat(endpointRef.get().doExclusive(() -> "exclusive")).isEqualTo("exclusive");
+            }
+            return false;
+        }).build();
+        DefaultEndpoint endpoint = new DefaultEndpoint(options, clientResources);
+        endpointRef.set(endpoint);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
+
+        try {
+            CompletableFuture<Void> first = CompletableFuture.runAsync(() -> endpoint.write(reused), executor);
+            assertThat(firstInFilter.await(5, TimeUnit.SECONDS)).isTrue();
+            CompletableFuture<Void> second = CompletableFuture.runAsync(() -> {
+                secondStarted.countDown();
+                endpoint.write(reused);
+            }, executor);
+            CompletableFuture.allOf(first, second).get(5, TimeUnit.SECONDS);
+            assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(reused, reused);
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void separateWritesOfSameCommandKeepBothQueueTimestampsInOrder() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        // Both attempts are buffered before either reaches the CommandHandler.
+        endpoint.write(reused);
+        Thread.sleep(2);
+        endpoint.write(reused);
+
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(reused, reused);
+        Long first = endpoint.takeQueueLatencyStart(reused);
+        Long second = endpoint.takeQueueLatencyStart(reused);
+        assertThat(first).isNotNull();
+        assertThat(second).isNotNull().isGreaterThan(first);
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+    }
+
+    @Test
+    void rejectingLaterAttemptPreservesEarlierAcceptedTimestamp() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        AtomicLong attempts = new AtomicLong();
+        ClientOptions options = ClientOptions.builder().replayFilter(command -> attempts.incrementAndGet() == 2).build();
+        DefaultEndpoint endpoint = new DefaultEndpoint(options, clientResources);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        endpoint.write(reused);
+        endpoint.write(reused); // The replay filter rejects this later attempt.
+
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(reused);
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+    }
+
+    @Test
+    void separateManualFlushWritesKeepBothQueueTimestamps() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setAutoFlushCommands(false);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        endpoint.write(reused);
+        endpoint.write(reused);
+
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+    }
+
+    @Test
+    void separateConnectedWritesKeepBothQueueTimestamps() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+        when(channel.isActive()).thenReturn(true);
+        endpoint.notifyChannelActive(channel);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        endpoint.write(reused);
+        endpoint.write(reused);
+
+        verify(channel, times(2)).writeAndFlush(reused);
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+    }
+
+    @Test
+    void olderAttemptCompletionCannotRemoveNewAcceptanceTimestamp() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        DelayedCompletionCommand queued = new DelayedCompletionCommand();
+
+        endpoint.write(queued);
+        endpoint.write(queued);
+
+        queued.done = true;
+        queued.completeListener(0);
+
+        // The first acceptance's completion callback must not clear the second timestamp.
+        assertThat(endpoint.takeQueueLatencyStart(queued)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(queued)).isNull();
+    }
+
+    @Test
+    void innerCompletionDoesNotRemovePendingRedirectTimestamp() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        DelayedCompletionCommand queued = new DelayedCompletionCommand();
+
+        endpoint.write(queued);
+        queued.completeListener(0);
+
+        // Like ClusterCommand, the outer command remains writable during an inner completion.
+        assertThat(endpoint.takeQueueLatencyStart(queued)).isNotNull();
+
+        endpoint.write(queued);
+        queued.done = true;
+        queued.completeListener(1);
+        assertThat(endpoint.takeQueueLatencyStart(queued)).isNull();
+    }
+
+    private static final class DelayedCompletionCommand extends CommandWrapper<String, String, String> {
+
+        private final List<BiConsumer<? super String, Throwable>> listeners = new ArrayList<>();
+
+        private boolean done;
+
+        DelayedCompletionCommand() {
+            super(new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+        }
+
+        @Override
+        public void onComplete(BiConsumer<? super String, Throwable> action) {
+            listeners.add(action);
+        }
+
+        @Override
+        public boolean isDone() {
+            return done;
+        }
+
+        void completeListener(int index) {
+            listeners.get(index).accept(null, null);
+        }
+
+    }
+
+    @Test
+    void queueingBatchUsesSameAcceptanceTimeAndDisabledHasNoStamp() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint enabled = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        RedisCommand<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        enabled.write(Arrays.asList(first, second));
+        Long firstStamp = enabled.takeQueueLatencyStart(first);
+        assertThat(firstStamp).isNotNull().isEqualTo(enabled.takeQueueLatencyStart(second));
+
+        when(recorder.isQueueLatencyEnabled()).thenReturn(false);
+        DefaultEndpoint disabled = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        disabled.write(new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+        assertThat(disabled.takeQueueLatencyStart(first)).isNull();
+    }
+
+    @Test
+    void queueingTimestampsUseCommandIdentityRatherThanWrapperEquality() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        RedisCommand<String, String, String> original = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> wrapper = new LatencyMeteredCommand<>(original);
+
+        endpoint.write(original);
+        assertThat(endpoint.takeQueueLatencyStart(wrapper)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(original)).isNotNull();
+
+        // A later acceptance of the original must not be consumed by an earlier wrapper.
+        endpoint.write(original);
+        assertThat(endpoint.takeQueueLatencyStart(wrapper)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(original)).isNotNull();
+
+        endpoint.write(wrapper);
+        assertThat(endpoint.takeQueueLatencyStart(original)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(wrapper)).isNotNull();
+    }
+
+    @Test
+    void closingEndpointClearsAdmissionLocksAndDoesNotRecreateThem() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        Command<String, String, String> accepted = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        endpoint.write(accepted);
+
+        Map<?, ?> locks = ReflectionTestUtils.getField(endpoint, "queueingAdmissionLocks");
+        assertThat(locks).hasSize(1);
+
+        endpoint.closeAsync().join();
+        assertThat(locks).isEmpty();
+
+        Command<String, String, String> rejected = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(rejected);
+
+        assertThat(rejected.exception).isInstanceOf(RedisException.class).hasMessage("Connection is closed");
+        assertThat(locks).isEmpty();
+    }
+
+    @Test
+    void closingConnectionPreservesTimestampsForPendingEventLoopWrites() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+
+        when(channel.isActive()).thenReturn(true);
+        DefaultChannelPromise closePromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        when(channel.close()).thenReturn(closePromise);
+        endpoint.notifyChannelActive(channel);
+
+        RedisCommand<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        RedisCommand<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(first);
+        endpoint.write(second);
+
+        endpoint.closeAsync();
+
+        // The channel has not closed yet; an outbound event-loop task can still dispatch.
+        assertThat(endpoint.takeQueueLatencyStart(first)).isNotNull();
+
+        closePromise.setSuccess();
+        assertThat(endpoint.takeQueueLatencyStart(second)).isNull();
+    }
+
+    @Test
+    void cancelledBufferedAsyncCommandReleasesTimestampWithoutDispatch() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        AsyncCommand<String, String, String> future = new AsyncCommand<>(
+                new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+
+        endpoint.write(future);
+        future.cancel();
+
+        assertThat(endpoint.takeQueueLatencyStart(future)).isNull();
+    }
+
+    @Test
+    void failedBufferedAsyncCommandReleasesTimestampWithoutDispatch() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        AsyncCommand<String, String, String> future = new AsyncCommand<>(
+                new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+
+        endpoint.write(future);
+        future.completeExceptionally(new IllegalStateException("timed out before send"));
+
+        assertThat(endpoint.takeQueueLatencyStart(future)).isNull();
+    }
+
+    @Test
+    void cancelledInnerClusterStyleCommandIsRemovedFromBuffer() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        AsyncCommand<String, String, String> inner = new AsyncCommand<>(
+                new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+        // A ClusterCommand reports outer completion separately from its inner future.
+        CommandWrapper<String, String, String> outer = new CommandWrapper<String, String, String>(inner) {
+
+            @Override
+            public boolean isDone() {
+                return false;
+            }
+
+        };
+
+        endpoint.write(outer);
+        inner.cancel();
+
+        assertThat(outer.isDone()).isFalse();
+        assertThat(outer.isCancelled()).isTrue();
+        assertThat(endpoint.takeQueueLatencyStart(outer)).isNull();
+        assertThat(endpoint.drainCommands()).doesNotContain(outer);
+    }
+
+    @Test
+    void cancelledBufferedDecoratedCommandReleasesTimestampWithoutDispatch() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        CommandWrapper<String, String, String> decorated = new CommandWrapper<>(
+                new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8)));
+
+        endpoint.write(decorated);
+        decorated.cancel();
+
+        assertThat(endpoint.takeQueueLatencyStart(decorated)).isNull();
+    }
+
+    @Test
+    void protectedModeFailureReleasesBufferedPlainCommandTimestamp() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+
+        Command<String, String, String> buffered = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(buffered);
+        RedisConnectionException error = new RedisConnectionException("DENIED Redis is running in protected mode");
+
+        endpoint.notifyException(error);
+
+        assertThat(buffered.exception).isSameAs(error);
+        assertThat(endpoint.takeQueueLatencyStart(buffered)).isNull();
+        assertThat(endpoint.drainCommands()).isEmpty();
+    }
+
+    @Test
+    void disconnectedBufferOvercommitReleasesOnlyRejectedCommandTimestamps() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(1).build(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+
+        // Retain a tracked command that the requeue will accept.
+        Command<String, String, String> retained = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.setAutoFlushCommands(false);
+        endpoint.write(retained);
+        // The transfer queue must accept both drained buffers. Only the destination
+        // disconnected buffer is bounded, so the overcommit happens in addAll().
+        Queue<RedisCommand<?, ?, ?>> queued = new ArrayDeque<>();
+        queued.addAll(endpoint.drainCommands());
+
+        // Put a second tracked command in the disconnected buffer. Moving both into a
+        // capacity-one buffer accepts the queued command but rejects this second command.
+        endpoint.setAutoFlushCommands(true);
+        Command<String, String, String> rejected = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(rejected);
+
+        endpoint.notifyDrainQueuedCommands(() -> queued);
+
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).contains(retained).doesNotContain(rejected);
+        assertThat(retained.exception).isNull();
+        assertThat(rejected.exception).isInstanceOf(IllegalStateException.class);
+        assertThat(endpoint.takeQueueLatencyStart(rejected)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(retained)).isNotNull();
+    }
+
+    @Test
+    void partiallyRequeuedRepeatedCommandKeepsOnlyAcceptedTimestamp() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(2).build(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+        endpoint.setAutoFlushCommands(false);
+
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(reused);
+        endpoint.write(reused);
+
+        // The bounded disconnected buffer accepts the filler and the first attempt
+        // of reused, but rejects its second occurrence in the same drained batch.
+        RedisCommand<String, String, String> filler = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Queue<RedisCommand<?, ?, ?>> queued = new ArrayDeque<>();
+        queued.add(filler);
+        queued.addAll(endpoint.drainCommands());
+
+        endpoint.notifyDrainQueuedCommands(() -> queued);
+
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(filler, reused);
+        assertThat(reused.exception).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+    }
+
+    @Test
+    void concurrentDisconnectedEnqueueFailureDropsOnlyRejectedStamp() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(1).build(), clientResources);
+        Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
+
+        try {
+            CompletableFuture<Void> a = CompletableFuture.runAsync(() -> endpoint.write(first), executor);
+            CompletableFuture<Void> b = CompletableFuture.runAsync(() -> endpoint.write(second), executor);
+            CompletableFuture.allOf(a.handle((result, failure) -> null), b.handle((result, failure) -> null)).get(10,
+                    TimeUnit.SECONDS);
+
+            Queue<Object> buffer = ConnectionTestUtil.getDisconnectedBuffer(endpoint);
+            assertThat(buffer).hasSize(1);
+            RedisCommand<?, ?, ?> accepted = (RedisCommand<?, ?, ?>) buffer.peek();
+            RedisCommand<?, ?, ?> rejected = accepted == first ? second : first;
+            assertThat(endpoint.takeQueueLatencyStart(accepted)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(rejected)).isNull();
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void concurrentManualFlushEnqueueFailureDropsOnlyRejectedStamp() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(1).build(), clientResources);
+        endpoint.setAutoFlushCommands(false);
+        Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> second = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
+
+        try {
+            CompletableFuture<Void> a = CompletableFuture.runAsync(() -> endpoint.write(first), executor);
+            CompletableFuture<Void> b = CompletableFuture.runAsync(() -> endpoint.write(second), executor);
+            CompletableFuture.allOf(a.handle((result, failure) -> null), b.handle((result, failure) -> null)).get(10,
+                    TimeUnit.SECONDS);
+
+            Queue<RedisCommand<?, ?, ?>> buffer = ReflectionTestUtils.getField(endpoint, "commandBuffer");
+            assertThat(buffer).hasSize(1);
+            RedisCommand<?, ?, ?> accepted = buffer.peek();
+            RedisCommand<?, ?, ?> rejected = accepted == first ? second : first;
+            assertThat(endpoint.takeQueueLatencyStart(accepted)).isNotNull();
+            assertThat(endpoint.takeQueueLatencyStart(rejected)).isNull();
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void resumedBatchAdmissionAfterCloseRejectsUnrelatedCommand() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> unrelated = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        CountDownLatch firstWriteEntered = new CountDownLatch(1);
+        CountDownLatch releaseFirstWrite = new CountDownLatch(1);
+        CountDownLatch secondAdmissionEntered = new CountDownLatch(1);
+        AtomicBoolean firstWrite = new AtomicBoolean();
+
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources) {
+
+            @Override
+            protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
+                if (command == reused && firstWrite.compareAndSet(false, true)) {
+                    firstWriteEntered.countDown();
+                    awaitConcurrentQueueLatencyGate(releaseFirstWrite);
+                }
+                super.writeToBuffer(command);
+            }
+
+        };
+        endpoint.setAutoFlushCommands(false);
+
+        // Iteration 1: duplicate scan before validateWrite. Iteration 2: admission
+        // lock lookup after validateWrite and after incrementing the writer count.
+        Collection<RedisCommand<String, String, ?>> overlapping = new AbstractCollection<RedisCommand<String, String, ?>>() {
+
+            private final List<RedisCommand<String, String, ?>> values = Arrays.asList(reused, unrelated);
+
+            private final AtomicInteger traversals = new AtomicInteger();
+
+            @Override
+            public Iterator<RedisCommand<String, String, ?>> iterator() {
+                if (traversals.incrementAndGet() == 2) {
+                    secondAdmissionEntered.countDown();
+                }
+                return values.iterator();
+            }
+
+            @Override
+            public int size() {
+                return values.size();
+            }
+
+        };
+
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(3));
+        try {
+            CompletableFuture<Void> first = CompletableFuture.runAsync(() -> endpoint.write(reused), executor);
+            assertThat(firstWriteEntered.await(5, TimeUnit.SECONDS)).isTrue();
+
+            CompletableFuture<Void> second = CompletableFuture.runAsync(() -> endpoint.write(overlapping), executor);
+            assertThat(secondAdmissionEntered.await(5, TimeUnit.SECONDS)).isTrue();
+
+            // closeAsync marks the endpoint closed before waiting for the first writer.
+            // The second writer drops its writer reservation while the admission lock is held.
+            CompletableFuture<Void> closing = CompletableFuture.runAsync(() -> endpoint.closeAsync(), executor);
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (!endpoint.isClosed() && System.nanoTime() < deadline) {
+                Thread.yield();
+            }
+            assertThat(endpoint.isClosed()).isTrue();
+
+            releaseFirstWrite.countDown();
+            CompletableFuture.allOf(first, second, closing).get(10, TimeUnit.SECONDS);
+
+            assertThat(unrelated.exception).isInstanceOf(RedisException.class).hasMessage("Connection is closed");
+            assertThat(endpoint.drainCommands()).isEmpty();
+            assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).isEmpty();
+        } finally {
+            releaseFirstWrite.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void concurrentManualFlushWritesOfOneCommandKeepStampOrder() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        CountDownLatch firstEnqueue = new CountDownLatch(1);
+        CountDownLatch secondEnqueue = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        AtomicInteger enqueues = new AtomicInteger();
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources) {
+
+            @Override
+            protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
+                if (enqueues.incrementAndGet() == 1) {
+                    firstEnqueue.countDown();
+                    awaitConcurrentQueueLatencyGate(releaseFirst);
+                } else {
+                    secondEnqueue.countDown();
+                }
+                super.writeToBuffer(command);
+            }
+
+        };
+        endpoint.setAutoFlushCommands(false);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
+
+        try {
+            CompletableFuture<Void> a = CompletableFuture.runAsync(() -> endpoint.write(reused), executor);
+            assertThat(firstEnqueue.await(5, TimeUnit.SECONDS)).isTrue();
+            CountDownLatch secondStarted = new CountDownLatch(1);
+            CompletableFuture<Void> b = CompletableFuture.runAsync(() -> {
+                secondStarted.countDown();
+                endpoint.write(reused);
+            }, executor);
+            assertThat(secondStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(secondEnqueue.await(200, TimeUnit.MILLISECONDS)).isFalse();
+
+            releaseFirst.countDown();
+            CompletableFuture.allOf(a, b).get(10, TimeUnit.SECONDS);
+            assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).isEmpty();
+            Queue<RedisCommand<?, ?, ?>> buffer = ReflectionTestUtils.getField(endpoint, "commandBuffer");
+            assertThat(buffer).containsExactly(reused, reused);
+            Long first = endpoint.takeQueueLatencyStart(reused);
+            Long second = endpoint.takeQueueLatencyStart(reused);
+            assertThat(first).isNotNull();
+            assertThat(second).isGreaterThan(first);
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+        } finally {
+            releaseFirst.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void concurrentConnectedWritesOfOneCommandKeepStampOrder() throws Exception {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        CountDownLatch firstEnqueue = new CountDownLatch(1);
+        CountDownLatch secondEnqueue = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        AtomicInteger enqueues = new AtomicInteger();
+        when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
+            if (enqueues.incrementAndGet() == 1) {
+                firstEnqueue.countDown();
+                awaitConcurrentQueueLatencyGate(releaseFirst);
+            } else {
+                secondEnqueue.countDown();
+            }
+            queue.add(invocation.getArgument(0));
+            return promise;
+        });
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+        when(channel.isActive()).thenReturn(true);
+        endpoint.notifyChannelActive(channel);
+        Command<String, String, String> reused = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2));
+
+        try {
+            CompletableFuture<Void> a = CompletableFuture.runAsync(() -> endpoint.write(reused), executor);
+            assertThat(firstEnqueue.await(5, TimeUnit.SECONDS)).isTrue();
+            CountDownLatch secondStarted = new CountDownLatch(1);
+            CompletableFuture<Void> b = CompletableFuture.runAsync(() -> {
+                secondStarted.countDown();
+                endpoint.write(reused);
+            }, executor);
+            assertThat(secondStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(secondEnqueue.await(200, TimeUnit.MILLISECONDS)).isFalse();
+
+            releaseFirst.countDown();
+            CompletableFuture.allOf(a, b).get(10, TimeUnit.SECONDS);
+            verify(channel, times(2)).writeAndFlush(reused);
+            Long first = endpoint.takeQueueLatencyStart(reused);
+            Long second = endpoint.takeQueueLatencyStart(reused);
+            assertThat(first).isNotNull();
+            assertThat(second).isGreaterThan(first);
+            assertThat(endpoint.takeQueueLatencyStart(reused)).isNull();
+        } finally {
+            releaseFirst.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    private static void awaitConcurrentQueueLatencyGate(CountDownLatch latch) {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Timed out waiting for queue latency regression gate");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Test
+    void unvisitedDisconnectedBatchCommandsHaveNoQueueTimestampsAfterPartialEnqueueFailure() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+
+        Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> failing = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> unvisited = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> competingOne = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> competingTwo = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        AtomicReference<Queue<Object>> bufferRef = new AtomicReference<>();
+        ClientOptions options = ClientOptions.builder().requestQueueSize(3).replayFilter(cmd -> {
+            if (cmd == failing) {
+                // Simulate two concurrent enqueues after the batch's validation.
+                bufferRef.get().add(competingOne);
+                bufferRef.get().add(competingTwo);
+            }
+            return false;
+        }).build();
+        DefaultEndpoint endpoint = new DefaultEndpoint(options, clientResources);
+        Queue<Object> buffer = ConnectionTestUtil.getDisconnectedBuffer(endpoint);
+        bufferRef.set(buffer);
+
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(first, failing, unvisited)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(buffer).contains(first, competingOne, competingTwo).doesNotContain(failing, unvisited);
+        assertThat(endpoint.takeQueueLatencyStart(first)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(failing)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(unvisited)).isNull();
+    }
+
+    @Test
+    void unvisitedManualFlushBatchCommandsHaveNoQueueTimestampsAfterPartialEnqueueFailure() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+
+        Command<String, String, String> first = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> failing = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> unvisited = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> competingOne = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> competingTwo = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().requestQueueSize(3).build(), clientResources) {
+
+            @Override
+            protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
+                if (command == failing) {
+                    Queue<RedisCommand<?, ?, ?>> buffer = ReflectionTestUtils.getField(this, "commandBuffer");
+                    buffer.add(competingOne);
+                    buffer.add(competingTwo);
+                }
+                super.writeToBuffer(command);
+            }
+
+        };
+        endpoint.setAutoFlushCommands(false);
+
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(first, failing, unvisited)))
+                .isInstanceOf(IllegalStateException.class);
+
+        Queue<RedisCommand<?, ?, ?>> buffer = ReflectionTestUtils.getField(endpoint, "commandBuffer");
+        assertThat(buffer).contains(first, competingOne, competingTwo).doesNotContain(failing, unvisited);
+        assertThat(endpoint.takeQueueLatencyStart(first)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(failing)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(unvisited)).isNull();
+    }
+
+    @Test
+    void duplicateInstancesRejectEntireConnectedBatchWithoutCompletingCommands() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+        when(channel.isActive()).thenReturn(true);
+        endpoint.notifyChannelActive(channel);
+
+        Command<String, String, String> duplicate = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
+
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(duplicate, other, duplicate))).isInstanceOf(RedisException.class)
+                .hasMessageContaining("repeated command instance");
+
+        assertThat(duplicate.exception).isNull();
+        assertThat(other.exception).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(duplicate)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(other)).isNull();
+        verify(channel, never()).write(duplicate);
+        verify(channel, never()).write(other);
+    }
+
+    @Test
+    void duplicateInstancesRejectEntireDisconnectedBatchWithoutCompletingCommands() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        Command<String, String, String> duplicate = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
+
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(duplicate, other, duplicate))).isInstanceOf(RedisException.class)
+                .hasMessageContaining("repeated command instance");
+
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).isEmpty();
+        assertThat(duplicate.exception).isNull();
+        assertThat(other.exception).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(duplicate)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(other)).isNull();
+    }
+
+    @Test
+    void rejectingDuplicateBatchPreservesEarlierBufferedCommandAttempt() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        Command<String, String, String> prior = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(prior);
+
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(prior, other, prior))).isInstanceOf(RedisException.class)
+                .hasMessageContaining("repeated command instance");
+
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(endpoint)).containsExactly(prior);
+        assertThat(prior.exception).isNull();
+        assertThat(other.exception).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(prior)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(prior)).isNull();
+        assertThat(endpoint.takeQueueLatencyStart(other)).isNull();
+    }
+
+    @Test
+    void rejectingDuplicateBatchPreservesEarlierInFlightCommandAttempt() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.create(), clientResources);
+        endpoint.setConnectionFacade(connectionFacade);
+        when(channel.isActive()).thenReturn(true);
+        endpoint.notifyChannelActive(channel);
+
+        Command<String, String, String> prior = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+        Command<String, String, String> other = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
+        endpoint.write(prior);
+
+        assertThatThrownBy(() -> endpoint.write(Arrays.asList(prior, other, prior))).isInstanceOf(RedisException.class)
+                .hasMessageContaining("repeated command instance");
+
+        assertThat(prior.exception).isNull();
+        assertThat(other.exception).isNull();
+        verify(channel).writeAndFlush(prior);
+        verify(channel, never()).write(other);
+        assertThat(endpoint.takeQueueLatencyStart(prior)).isNotNull();
+        assertThat(endpoint.takeQueueLatencyStart(other)).isNull();
     }
 
     @Test
