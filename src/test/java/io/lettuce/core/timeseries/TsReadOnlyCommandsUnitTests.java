@@ -1,0 +1,137 @@
+/*
+ * Copyright (c) 2026-Present, Redis Ltd.
+ * All rights reserved.
+ *
+ * SPDX-License-Identifier: MIT
+ */
+package io.lettuce.core.timeseries;
+
+import static io.lettuce.TestTags.UNIT_TEST;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import io.lettuce.core.cluster.ClusterReadOnlyCommands;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ReadOnlyCommands;
+
+/**
+ * Read-only registration of the TimeSeries commands.
+ *
+ * @author Aleksandar Todorov
+ */
+@Tag(UNIT_TEST)
+class TsReadOnlyCommandsUnitTests {
+
+    /**
+     * Scenario K10 (TS.INFO): TS.INFO is read-only, so {@code ReadFrom.REPLICA} may route it to a replica.
+     */
+    @Test
+    void infoIsReadOnly() {
+
+        assertThat(ReadOnlyCommands.isReadOnlyCommand(CommandType.TS_INFO)).isTrue();
+        assertThat(ClusterReadOnlyCommands.isReadOnlyCommand(CommandType.TS_INFO)).isTrue();
+    }
+
+    /**
+     * Scenario K10: the writing lifecycle commands are not read-only.
+     */
+    @Test
+    void writesAreNotReadOnly() {
+
+        for (CommandType type : new CommandType[] { CommandType.TS_CREATE, CommandType.TS_ALTER, CommandType.TS_DEL }) {
+            assertThat(ReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isFalse();
+            assertThat(ClusterReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isFalse();
+        }
+    }
+
+    /**
+     * Scenario K10: the wire names of the lifecycle commands.
+     */
+    @Test
+    void commandNames() {
+
+        assertThat(CommandType.TS_CREATE.toString()).isEqualTo("TS.CREATE");
+        assertThat(CommandType.TS_ALTER.toString()).isEqualTo("TS.ALTER");
+        assertThat(CommandType.TS_DEL.toString()).isEqualTo("TS.DEL");
+        assertThat(CommandType.TS_INFO.toString()).isEqualTo("TS.INFO");
+    }
+
+    /**
+     * Scenario K10 (GET, RANGE, REVRANGE, READ): the single-key reads are read-only, so {@code ReadFrom.REPLICA} may route them
+     * to a replica.
+     */
+    @Test
+    void singleKeyReadsAreReadOnly() {
+
+        for (CommandType type : new CommandType[] { CommandType.TS_GET, CommandType.TS_RANGE, CommandType.TS_REVRANGE,
+                CommandType.TS_READ }) {
+            assertThat(ReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+            assertThat(ClusterReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+        }
+    }
+
+    /**
+     * Scenario K10: the wire names of the single-key reads.
+     */
+    @Test
+    void singleKeyReadCommandNames() {
+
+        assertThat(CommandType.TS_GET.toString()).isEqualTo("TS.GET");
+        assertThat(CommandType.TS_RANGE.toString()).isEqualTo("TS.RANGE");
+        assertThat(CommandType.TS_REVRANGE.toString()).isEqualTo("TS.REVRANGE");
+        assertThat(CommandType.TS_READ.toString()).isEqualTo("TS.READ");
+    }
+
+    /**
+     * Scenario K10 (MGET, MRANGE, MREVRANGE, QUERYINDEX, QUERYLABELS): the label-index reads are read-only, so they follow
+     * {@code ReadFrom} in Redis Cluster.
+     */
+    @Test
+    void labelIndexReadsAreReadOnly() {
+
+        for (CommandType type : new CommandType[] { CommandType.TS_MGET, CommandType.TS_MRANGE, CommandType.TS_MREVRANGE,
+                CommandType.TS_QUERYINDEX, CommandType.TS_QUERYLABELS }) {
+            assertThat(ReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+            assertThat(ClusterReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+        }
+    }
+
+    /**
+     * Scenario K10: the wire names of the label-index reads.
+     */
+    @Test
+    void labelIndexReadCommandNames() {
+
+        assertThat(CommandType.TS_MGET.toString()).isEqualTo("TS.MGET");
+        assertThat(CommandType.TS_MRANGE.toString()).isEqualTo("TS.MRANGE");
+        assertThat(CommandType.TS_MREVRANGE.toString()).isEqualTo("TS.MREVRANGE");
+        assertThat(CommandType.TS_QUERYINDEX.toString()).isEqualTo("TS.QUERYINDEX");
+        assertThat(CommandType.TS_QUERYLABELS.toString()).isEqualTo("TS.QUERYLABELS");
+    }
+
+    /**
+     * Scenario K10 (NRANGE, NREVRANGE): the multi-key reads are read-only, so {@code ReadFrom.REPLICA} may route them to a
+     * replica.
+     */
+    @Test
+    void multiKeyReadsAreReadOnly() {
+
+        for (CommandType type : new CommandType[] { CommandType.TS_NRANGE, CommandType.TS_NREVRANGE }) {
+            assertThat(ReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+            assertThat(ClusterReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isTrue();
+        }
+    }
+
+    /**
+     * Scenario K10: the wire names of the multi-key reads.
+     */
+    @Test
+    void multiKeyReadCommandNames() {
+
+        assertThat(CommandType.TS_NRANGE.toString()).isEqualTo("TS.NRANGE");
+        assertThat(CommandType.TS_NREVRANGE.toString()).isEqualTo("TS.NREVRANGE");
+    }
+
+}
