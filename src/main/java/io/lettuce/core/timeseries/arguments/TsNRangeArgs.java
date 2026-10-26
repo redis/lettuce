@@ -32,7 +32,23 @@ import io.lettuce.core.timeseries.TsBucketTimestamp;
  * @author Aleksandar Todorov
  * @since 8.0
  */
-public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
+public class TsNRangeArgs {
+
+    private boolean latest;
+
+    private long[] filterByTimestamps;
+
+    private Double filterByValueMin;
+
+    private Double filterByValueMax;
+
+    private Long count;
+
+    private String align;
+
+    private TsBucketTimestamp bucketTimestamp;
+
+    private boolean empty;
 
     private Long nBucketDuration;
 
@@ -168,6 +184,98 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
     }
 
     /**
+     * Also report the latest, possibly partial, bucket of a compaction ({@code LATEST}). The server ignores it for a series
+     * that is not a compaction.
+     *
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsNRangeArgs latest() {
+        this.latest = true;
+        return this;
+    }
+
+    /**
+     * Keep only samples whose timestamp is one of {@code timestamps} ({@code FILTER_BY_TS}). The filter applies before
+     * aggregation.
+     *
+     * @param timestamps the timestamps in milliseconds, must not be {@code null} or empty.
+     * @return {@code this}.
+     * @throws IllegalArgumentException if {@code timestamps} is {@code null} or empty.
+     * @since 8.0
+     */
+    public TsNRangeArgs filterByTimestamps(long... timestamps) {
+
+        LettuceAssert.notEmpty(timestamps, "Timestamps must not be empty");
+
+        this.filterByTimestamps = timestamps.clone();
+        return this;
+    }
+
+    /**
+     * Keep only samples whose value is between {@code min} and {@code max}, inclusive ({@code FILTER_BY_VALUE}). The filter
+     * applies before aggregation. The server rejects NaN bounds.
+     *
+     * @param min the lowest value.
+     * @param max the highest value.
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsNRangeArgs filterByValue(double min, double max) {
+        this.filterByValueMin = min;
+        this.filterByValueMax = max;
+        return this;
+    }
+
+    /**
+     * Limit the number of reported samples, or of buckets with an aggregation ({@code COUNT}).
+     *
+     * @param count the maximum number of samples or buckets.
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsNRangeArgs count(long count) {
+        this.count = count;
+        return this;
+    }
+
+    /**
+     * Align the aggregation buckets to {@code timestamp} ({@code ALIGN}). Requires an aggregation.
+     *
+     * @param timestamp the alignment timestamp in milliseconds.
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsNRangeArgs align(long timestamp) {
+        this.align = Long.toString(timestamp);
+        return this;
+    }
+
+    /**
+     * Align the aggregation buckets to the start of the range ({@code ALIGN start}). Requires an aggregation and a bounded
+     * lower end of the range.
+     *
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsNRangeArgs alignStart() {
+        this.align = "start";
+        return this;
+    }
+
+    /**
+     * Align the aggregation buckets to the end of the range ({@code ALIGN end}). Requires an aggregation and a bounded upper
+     * end of the range.
+     *
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsNRangeArgs alignEnd() {
+        this.align = "end";
+        return this;
+    }
+
+    /**
      * Aggregate the samples of each key into buckets with its own aggregations ({@code AGGREGATION}). Each row then has, for
      * every key in key order, one value per aggregation of that key. The list must have exactly one entry per key of the
      * command. Replaces {@link #aggregationForEachKey(long, TsAggregation...)}.
@@ -181,7 +289,7 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
      */
     public TsNRangeArgs aggregation(long bucketDuration, List<List<TsAggregation>> aggregationsPerKey) {
 
-        assertBucketDuration(bucketDuration);
+        TsArgsSupport.bucketDuration(bucketDuration);
         LettuceAssert.notNull(aggregationsPerKey, "Aggregations per key must not be null");
         LettuceAssert.isTrue(!aggregationsPerKey.isEmpty(), "Aggregations per key must not be empty");
 
@@ -212,7 +320,7 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
      * @since 8.0
      */
     public TsNRangeArgs aggregation(Duration bucketDuration, List<List<TsAggregation>> aggregationsPerKey) {
-        return aggregation(toMillis(bucketDuration), aggregationsPerKey);
+        return aggregation(TsArgsSupport.bucketMillis(bucketDuration), aggregationsPerKey);
     }
 
     /**
@@ -230,7 +338,7 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
      */
     public TsNRangeArgs aggregationForEachKey(long bucketDuration, TsAggregation... aggregations) {
 
-        assertBucketDuration(bucketDuration);
+        TsArgsSupport.bucketDuration(bucketDuration);
         LettuceAssert.notEmpty(aggregations, "Aggregations must not be empty");
         LettuceAssert.noNullElements(aggregations, "Aggregations must not contain null elements");
 
@@ -253,28 +361,34 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
      * @since 8.0
      */
     public TsNRangeArgs aggregationForEachKey(Duration bucketDuration, TsAggregation... aggregations) {
-        return aggregationForEachKey(toMillis(bucketDuration), aggregations);
+        return aggregationForEachKey(TsArgsSupport.bucketMillis(bucketDuration), aggregations);
     }
 
-    private List<Integer> columnCounts(int keyCount) {
+    /**
+     * Set which timestamp is reported for each bucket ({@code BUCKETTIMESTAMP}). Requires an aggregation.
+     *
+     * @param bucketTimestamp the reported bucket timestamp, must not be {@code null}.
+     * @return {@code this}.
+     * @throws IllegalArgumentException if {@code bucketTimestamp} is {@code null}.
+     * @since 8.0
+     */
+    public TsNRangeArgs bucketTimestamp(TsBucketTimestamp bucketTimestamp) {
 
-        List<Integer> counts = new ArrayList<>(keyCount);
-        for (int i = 0; i < keyCount; i++) {
-            if (aggregationsPerKey != null) {
-                counts.add(aggregationsPerKey.get(i).size());
-            } else if (aggregationsForEachKey != null) {
-                counts.add(aggregationsForEachKey.size());
-            } else {
-                counts.add(1);
-            }
-        }
+        LettuceAssert.notNull(bucketTimestamp, "Bucket timestamp must not be null");
 
-        return counts;
+        this.bucketTimestamp = bucketTimestamp;
+        return this;
     }
 
-    @Override
-    boolean hasAggregation() {
-        return nBucketDuration != null;
+    /**
+     * Also report empty buckets ({@code EMPTY}). Requires an aggregation.
+     *
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsNRangeArgs empty() {
+        this.empty = true;
+        return this;
     }
 
     /**
@@ -296,22 +410,65 @@ public class TsNRangeArgs extends BaseTsRangeArgs<TsNRangeArgs> {
 
         LettuceAssert.isTrue(keyCount > 0, "Key count must be positive");
         assertKeyCount(keyCount);
-        validate();
+        TsArgsSupport.assertAggregationOptions(nBucketDuration != null, align, bucketTimestamp, empty);
 
-        buildFilters(args);
-        buildCountAndAlign(args);
+        if (latest) {
+            args.add(CommandKeyword.LATEST);
+        }
+
+        if (filterByTimestamps != null) {
+            args.add(CommandKeyword.FILTER_BY_TS);
+            for (long timestamp : filterByTimestamps) {
+                args.add(timestamp);
+            }
+        }
+
+        if (filterByValueMin != null) {
+            args.add(CommandKeyword.FILTER_BY_VALUE).add(filterByValueMin).add(filterByValueMax);
+        }
+
+        if (count != null) {
+            args.add(CommandKeyword.COUNT).add(count);
+        }
+
+        if (align != null) {
+            args.add(CommandKeyword.ALIGN).add(align);
+        }
 
         if (nBucketDuration != null) {
             args.add(CommandKeyword.AGGREGATION);
             for (int i = 0; i < keyCount; i++) {
-                args.add(aggregationToken(aggregationsPerKey != null ? aggregationsPerKey.get(i) : aggregationsForEachKey));
+                args.add(TsArgsSupport
+                        .aggregationToken(aggregationsPerKey != null ? aggregationsPerKey.get(i) : aggregationsForEachKey));
             }
             args.add(nBucketDuration);
         }
 
-        buildBucketOptions(args);
+        if (bucketTimestamp != null) {
+            args.add(CommandKeyword.BUCKETTIMESTAMP).add(bucketTimestamp);
+        }
+
+        if (empty) {
+            args.add(CommandKeyword.EMPTY);
+        }
 
         return Collections.unmodifiableList(columnCounts(keyCount));
+    }
+
+    private List<Integer> columnCounts(int keyCount) {
+
+        List<Integer> counts = new ArrayList<>(keyCount);
+        for (int i = 0; i < keyCount; i++) {
+            if (aggregationsPerKey != null) {
+                counts.add(aggregationsPerKey.get(i).size());
+            } else if (aggregationsForEachKey != null) {
+                counts.add(aggregationsForEachKey.size());
+            } else {
+                counts.add(1);
+            }
+        }
+
+        return counts;
     }
 
     private void assertKeyCount(int keyCount) {

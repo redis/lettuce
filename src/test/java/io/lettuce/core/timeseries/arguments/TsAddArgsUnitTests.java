@@ -33,8 +33,8 @@ import io.lettuce.core.timeseries.TsEncodingType;
 class TsAddArgsUnitTests {
 
     /**
-     * Scenario A02b: every option, set in reverse order, is emitted in the documented order (ENCODING, ON_DUPLICATE, RETENTION,
-     * CHUNK_SIZE, DUPLICATE_POLICY, IGNORE, LABELS) with LABELS last.
+     * Scenario A02b: every option, set in reverse order, is emitted in the documented order (RETENTION, ENCODING, CHUNK_SIZE,
+     * DUPLICATE_POLICY, ON_DUPLICATE, IGNORE, LABELS) with LABELS last.
      */
     @Test
     void everyOptionInFixedOrder() {
@@ -43,8 +43,8 @@ class TsAddArgsUnitTests {
                 .duplicatePolicy(TsDuplicatePolicyType.FIRST).chunkSize(512).encoding(TsEncodingType.UNCOMPRESSED)
                 .retention(100);
 
-        assertThat(tokens(args)).containsExactly("ENCODING", "UNCOMPRESSED", "ON_DUPLICATE", "SUM", "RETENTION", "100",
-                "CHUNK_SIZE", "512", "DUPLICATE_POLICY", "FIRST", "IGNORE", "7", "0.25", "LABELS", "a", "1");
+        assertThat(tokens(args)).containsExactly("RETENTION", "100", "ENCODING", "UNCOMPRESSED", "CHUNK_SIZE", "512",
+                "DUPLICATE_POLICY", "FIRST", "ON_DUPLICATE", "SUM", "IGNORE", "7", "0.25", "LABELS", "a", "1");
     }
 
     /**
@@ -75,7 +75,7 @@ class TsAddArgsUnitTests {
                 .duplicatePolicy(TsDuplicatePolicyType.BLOCK).duplicatePolicy(TsDuplicatePolicyType.MAX).retention(1)
                 .retention(2);
 
-        assertThat(tokens(args)).containsExactly("ON_DUPLICATE", "LAST", "RETENTION", "2", "DUPLICATE_POLICY", "MAX");
+        assertThat(tokens(args)).containsExactly("RETENTION", "2", "DUPLICATE_POLICY", "MAX", "ON_DUPLICATE", "LAST");
     }
 
     /**

@@ -179,6 +179,20 @@ class TsMRangeArgsUnitTests {
     }
 
     /**
+     * Scenario A17: a rejected {@code aggregation(...)} leaves the previous aggregation unchanged.
+     */
+    @Test
+    void rejectedAggregationKeepsPreviousOptions() {
+
+        TsMRangeArgs args = new TsMRangeArgs().aggregation(10, TsAggregationType.MIN);
+
+        assertThatThrownBy(() -> args.aggregation(20)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> args.aggregation(0, TsAggregationType.MAX)).isInstanceOf(IllegalArgumentException.class);
+        assertThat(tokens(args)).containsExactly("AGGREGATION", "MIN", "10", "FILTER", "t=x", "area!=");
+        assertThat(args.getAggregations()).containsExactly(TsAggregationType.MIN);
+    }
+
+    /**
      * Scenario A14: GROUPBY together with several aggregations → {@link IllegalArgumentException}, in both setter orders; one
      * aggregation is allowed.
      */

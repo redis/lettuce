@@ -7,9 +7,13 @@
 package io.lettuce.core.timeseries.arguments;
 
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 
 import io.lettuce.core.CompositeArgument;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.timeseries.TsAggregation;
 import io.lettuce.core.timeseries.TsBucketTimestamp;
 
@@ -24,7 +28,27 @@ import io.lettuce.core.timeseries.TsBucketTimestamp;
  * @author Aleksandar Todorov
  * @since 8.0
  */
-public class TsRangeArgs extends BaseTsRangeArgs<TsRangeArgs> implements CompositeArgument {
+public class TsRangeArgs implements CompositeArgument {
+
+    private boolean latest;
+
+    private long[] filterByTimestamps;
+
+    private Double filterByValueMin;
+
+    private Double filterByValueMax;
+
+    private Long count;
+
+    private String align;
+
+    private TsBucketTimestamp bucketTimestamp;
+
+    private boolean empty;
+
+    private Long bucketDuration;
+
+    private List<TsAggregation> aggregations = Collections.emptyList();
 
     /**
      * Builder entry points for {@link TsRangeArgs}.
@@ -123,6 +147,98 @@ public class TsRangeArgs extends BaseTsRangeArgs<TsRangeArgs> implements Composi
     }
 
     /**
+     * Also report the latest, possibly partial, bucket of a compaction ({@code LATEST}). The server ignores it for a series
+     * that is not a compaction.
+     *
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsRangeArgs latest() {
+        this.latest = true;
+        return this;
+    }
+
+    /**
+     * Keep only samples whose timestamp is one of {@code timestamps} ({@code FILTER_BY_TS}). The filter applies before
+     * aggregation.
+     *
+     * @param timestamps the timestamps in milliseconds, must not be {@code null} or empty.
+     * @return {@code this}.
+     * @throws IllegalArgumentException if {@code timestamps} is {@code null} or empty.
+     * @since 8.0
+     */
+    public TsRangeArgs filterByTimestamps(long... timestamps) {
+
+        LettuceAssert.notEmpty(timestamps, "Timestamps must not be empty");
+
+        this.filterByTimestamps = timestamps.clone();
+        return this;
+    }
+
+    /**
+     * Keep only samples whose value is between {@code min} and {@code max}, inclusive ({@code FILTER_BY_VALUE}). The filter
+     * applies before aggregation. The server rejects NaN bounds.
+     *
+     * @param min the lowest value.
+     * @param max the highest value.
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsRangeArgs filterByValue(double min, double max) {
+        this.filterByValueMin = min;
+        this.filterByValueMax = max;
+        return this;
+    }
+
+    /**
+     * Limit the number of reported samples, or of buckets with an aggregation ({@code COUNT}).
+     *
+     * @param count the maximum number of samples or buckets.
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsRangeArgs count(long count) {
+        this.count = count;
+        return this;
+    }
+
+    /**
+     * Align the aggregation buckets to {@code timestamp} ({@code ALIGN}). Requires an aggregation.
+     *
+     * @param timestamp the alignment timestamp in milliseconds.
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsRangeArgs align(long timestamp) {
+        this.align = Long.toString(timestamp);
+        return this;
+    }
+
+    /**
+     * Align the aggregation buckets to the start of the range ({@code ALIGN start}). Requires an aggregation and a bounded
+     * lower end of the range.
+     *
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsRangeArgs alignStart() {
+        this.align = "start";
+        return this;
+    }
+
+    /**
+     * Align the aggregation buckets to the end of the range ({@code ALIGN end}). Requires an aggregation and a bounded upper
+     * end of the range.
+     *
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsRangeArgs alignEnd() {
+        this.align = "end";
+        return this;
+    }
+
+    /**
      * Aggregate the samples into buckets ({@code AGGREGATION}). Each reported sample has one value per aggregation, in the
      * given order. Several aggregations require Redis 8.8 or later.
      *
@@ -134,7 +250,12 @@ public class TsRangeArgs extends BaseTsRangeArgs<TsRangeArgs> implements Composi
      * @since 8.0
      */
     public TsRangeArgs aggregation(long bucketDuration, TsAggregation... aggregations) {
-        setAggregation(bucketDuration, aggregations);
+
+        long checkedBucketDuration = TsArgsSupport.bucketDuration(bucketDuration);
+        List<TsAggregation> checkedAggregations = TsArgsSupport.aggregations(aggregations);
+
+        this.bucketDuration = checkedBucketDuration;
+        this.aggregations = checkedAggregations;
         return this;
     }
 
@@ -150,7 +271,34 @@ public class TsRangeArgs extends BaseTsRangeArgs<TsRangeArgs> implements Composi
      * @since 8.0
      */
     public TsRangeArgs aggregation(Duration bucketDuration, TsAggregation... aggregations) {
-        return aggregation(toMillis(bucketDuration), aggregations);
+        return aggregation(TsArgsSupport.bucketMillis(bucketDuration), aggregations);
+    }
+
+    /**
+     * Set which timestamp is reported for each bucket ({@code BUCKETTIMESTAMP}). Requires an aggregation.
+     *
+     * @param bucketTimestamp the reported bucket timestamp, must not be {@code null}.
+     * @return {@code this}.
+     * @throws IllegalArgumentException if {@code bucketTimestamp} is {@code null}.
+     * @since 8.0
+     */
+    public TsRangeArgs bucketTimestamp(TsBucketTimestamp bucketTimestamp) {
+
+        LettuceAssert.notNull(bucketTimestamp, "Bucket timestamp must not be null");
+
+        this.bucketTimestamp = bucketTimestamp;
+        return this;
+    }
+
+    /**
+     * Also report empty buckets ({@code EMPTY}). Requires an aggregation.
+     *
+     * @return {@code this}.
+     * @since 8.0
+     */
+    public TsRangeArgs empty() {
+        this.empty = true;
+        return this;
     }
 
     /**
@@ -164,12 +312,42 @@ public class TsRangeArgs extends BaseTsRangeArgs<TsRangeArgs> implements Composi
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
-        validate();
+        TsArgsSupport.assertAggregationOptions(bucketDuration != null, align, bucketTimestamp, empty);
 
-        buildFilters(args);
-        buildCountAndAlign(args);
-        buildAggregation(args);
-        buildBucketOptions(args);
+        if (latest) {
+            args.add(CommandKeyword.LATEST);
+        }
+
+        if (filterByTimestamps != null) {
+            args.add(CommandKeyword.FILTER_BY_TS);
+            for (long timestamp : filterByTimestamps) {
+                args.add(timestamp);
+            }
+        }
+
+        if (filterByValueMin != null) {
+            args.add(CommandKeyword.FILTER_BY_VALUE).add(filterByValueMin).add(filterByValueMax);
+        }
+
+        if (count != null) {
+            args.add(CommandKeyword.COUNT).add(count);
+        }
+
+        if (align != null) {
+            args.add(CommandKeyword.ALIGN).add(align);
+        }
+
+        if (bucketDuration != null) {
+            args.add(CommandKeyword.AGGREGATION).add(TsArgsSupport.aggregationToken(aggregations)).add(bucketDuration);
+        }
+
+        if (bucketTimestamp != null) {
+            args.add(CommandKeyword.BUCKETTIMESTAMP).add(bucketTimestamp);
+        }
+
+        if (empty) {
+            args.add(CommandKeyword.EMPTY);
+        }
     }
 
 }

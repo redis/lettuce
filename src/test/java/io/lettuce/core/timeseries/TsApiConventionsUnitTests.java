@@ -38,6 +38,8 @@ import io.lettuce.core.timeseries.arguments.TsAddArgs;
 import io.lettuce.core.timeseries.arguments.TsAlterArgs;
 import io.lettuce.core.timeseries.arguments.TsCreateArgs;
 import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsNRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsRangeArgs;
 import io.lettuce.core.timeseries.arguments.TsReadArgs;
 
@@ -204,8 +206,8 @@ class TsApiConventionsUnitTests {
         Pattern publicMethod = Pattern.compile("^\\s+public\\s+(?!class|static class|interface|enum)[^=;]*\\(",
                 Pattern.MULTILINE);
 
-        for (String name : new String[] { "TsCreateArgs", "TsAlterArgs", "BaseTsSeriesArgs", "TsAddArgs", "TsIncrByArgs",
-                "BaseTsRangeArgs", "TsRangeArgs", "TsReadArgs" }) {
+        for (String name : new String[] { "TsCreateArgs", "TsAlterArgs", "TsAddArgs", "TsIncrByArgs", "TsRangeArgs",
+                "TsMRangeArgs", "TsNRangeArgs", "TsReadArgs" }) {
 
             Path source = MAIN_JAVA.resolve("io/lettuce/core/timeseries/arguments/" + name + ".java");
             String text = read(source);
@@ -269,35 +271,27 @@ class TsApiConventionsUnitTests {
     }
 
     /**
-     * Scenario M04: the argument base classes are package-private; the concrete argument classes are public.
+     * Scenario M04: the series argument classes are public and stand alone, without a TimeSeries superclass.
      */
     @Test
-    void argumentBasesArePackagePrivate() throws ClassNotFoundException {
+    void seriesArgumentsHaveNoTimeSeriesSuperclass() {
 
-        Class<?> seriesBase = Class.forName("io.lettuce.core.timeseries.arguments.BaseTsSeriesArgs");
-
-        assertThat(Modifier.isPublic(seriesBase.getModifiers())).isFalse();
-        assertThat(Modifier.isPublic(TsCreateArgs.class.getModifiers())).isTrue();
-        assertThat(Modifier.isPublic(TsAlterArgs.class.getModifiers())).isTrue();
-        assertThat(TsCreateArgs.class.getSuperclass()).isEqualTo(seriesBase);
-        assertThat(TsAddArgs.class.getSuperclass()).isEqualTo(seriesBase);
-        assertThat(TsIncrByArgs.class.getSuperclass()).isEqualTo(seriesBase);
-        assertThat(TsAlterArgs.class.getSuperclass()).isEqualTo(seriesBase);
+        for (Class<?> type : new Class<?>[] { TsCreateArgs.class, TsAlterArgs.class, TsAddArgs.class, TsIncrByArgs.class }) {
+            assertThat(Modifier.isPublic(type.getModifiers())).as(type.getSimpleName()).isTrue();
+            assertThat(type.getSuperclass()).as(type.getSimpleName()).isEqualTo(Object.class);
+        }
     }
 
     /**
-     * Scenario M04 (range layer): {@code BaseTsRangeArgs} is package-private; {@code TsRangeArgs} and {@code TsReadArgs} are
-     * public, and {@code TsRangeArgs} extends the range base.
+     * Scenario M04 (range layer): the range argument classes are public and stand alone, without a TimeSeries superclass.
      */
     @Test
-    void rangeArgumentBaseIsPackagePrivate() throws ClassNotFoundException {
+    void rangeArgumentsHaveNoTimeSeriesSuperclass() {
 
-        Class<?> rangeBase = Class.forName("io.lettuce.core.timeseries.arguments.BaseTsRangeArgs");
-
-        assertThat(Modifier.isPublic(rangeBase.getModifiers())).isFalse();
-        assertThat(Modifier.isPublic(TsRangeArgs.class.getModifiers())).isTrue();
-        assertThat(Modifier.isPublic(TsReadArgs.class.getModifiers())).isTrue();
-        assertThat(TsRangeArgs.class.getSuperclass()).isEqualTo(rangeBase);
+        for (Class<?> type : new Class<?>[] { TsRangeArgs.class, TsMRangeArgs.class, TsNRangeArgs.class, TsReadArgs.class }) {
+            assertThat(Modifier.isPublic(type.getModifiers())).as(type.getSimpleName()).isTrue();
+            assertThat(type.getSuperclass()).as(type.getSimpleName()).isEqualTo(Object.class);
+        }
     }
 
     /**

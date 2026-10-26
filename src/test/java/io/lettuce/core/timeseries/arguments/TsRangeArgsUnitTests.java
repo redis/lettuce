@@ -206,6 +206,19 @@ class TsRangeArgsUnitTests {
     }
 
     /**
+     * Scenario A17: a rejected {@code aggregation(...)} leaves the previous aggregation unchanged.
+     */
+    @Test
+    void rejectedAggregationKeepsPreviousOptions() {
+
+        TsRangeArgs args = new TsRangeArgs().aggregation(10, TsAggregationType.MIN);
+
+        assertThatThrownBy(() -> args.aggregation(20)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> args.aggregation(0, TsAggregationType.MAX)).isInstanceOf(IllegalArgumentException.class);
+        assertThat(tokens(args)).containsExactly("AGGREGATION", "MIN", "10");
+    }
+
+    /**
      * Scenario A07: a second {@code aggregation} call replaces the first; AGGREGATION is sent once.
      */
     @Test
