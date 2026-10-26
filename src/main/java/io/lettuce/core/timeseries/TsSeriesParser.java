@@ -47,19 +47,23 @@ public final class TsSeriesParser<K> implements ComplexDataParser<List<TsSeries<
      * Create a new parser.
      *
      * @param codec the codec of the connection, must not be {@code null}.
-     * @param aggregations the aggregations of the request, must not be {@code null}; empty without an aggregation.
+     * @param aggregations the aggregations of the request, must not be {@code null}; empty without an aggregation. The parser
+     *        keeps a copy.
      * @param grouped {@code true} if the request has {@code GROUPBY}.
-     * @param reducer the reducer of the request, can be {@code null} without {@code GROUPBY}.
-     * @throws IllegalArgumentException if {@code codec} or {@code aggregations} is {@code null}.
+     * @param reducer the reducer of the request, must not be {@code null} if {@code grouped} is {@code true}; ignored
+     *        otherwise.
+     * @throws IllegalArgumentException if {@code codec} or {@code aggregations} is {@code null}, or if {@code grouped} is
+     *         {@code true} and {@code reducer} is {@code null}.
      * @since 8.0
      */
     public TsSeriesParser(RedisCodec<K, ?> codec, List<TsAggregation> aggregations, boolean grouped, TsReducer reducer) {
 
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
         LettuceAssert.notNull(aggregations, "Aggregations must not be null");
+        LettuceAssert.isTrue(!grouped || reducer != null, "Reducer must not be null for a grouped reply");
 
         this.codec = codec;
-        this.aggregations = aggregations;
+        this.aggregations = Collections.unmodifiableList(new ArrayList<>(aggregations));
         this.grouped = grouped;
         this.reducer = grouped ? reducer : null;
     }

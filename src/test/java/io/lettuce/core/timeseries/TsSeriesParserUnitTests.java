@@ -13,6 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -425,6 +426,32 @@ class TsSeriesParserUnitTests {
         assertThatThrownBy(() -> new TsSeriesParser<>(null, NONE, false, null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new TsSeriesParser<>(StringCodec.UTF8, null, false, null))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario U10: a grouped parser needs a reducer; an ungrouped one ignores it.
+     */
+    @Test
+    void groupedWithoutReducerThrows() {
+
+        assertThatThrownBy(() -> new TsSeriesParser<>(StringCodec.UTF8, NONE, true, null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(parseRaw(RESP2_RAW)).hasSize(3);
+    }
+
+    /**
+     * Scenario U09: the parser copies the aggregation list; changing the caller's list later doesn't change parsed results.
+     */
+    @Test
+    void aggregationListIsCopied() {
+
+        List<TsAggregation> aggregations = new ArrayList<>(Collections.singletonList(TsAggregationType.AVG));
+        TsSeriesParser<String> parser = new TsSeriesParser<>(StringCodec.UTF8, aggregations, false, null);
+        aggregations.set(0, TsAggregationType.MAX);
+        aggregations.add(TsAggregationType.MIN);
+
+        List<TsSeries<String>> series = parse(RESP2_AVG, StringCodec.UTF8, parser);
+        assertThat(series.get(0).getAggregations()).containsExactly(TsAggregationType.AVG);
     }
 
 }
