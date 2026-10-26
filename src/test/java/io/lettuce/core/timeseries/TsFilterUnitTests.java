@@ -97,6 +97,19 @@ class TsFilterUnitTests {
     }
 
     /**
+     * Scenario A20: an empty value in {@code in} / {@code notIn}, alone or among other values, →
+     * {@link IllegalArgumentException}, as for {@code equal}.
+     */
+    @Test
+    void emptyValueInListThrows() {
+
+        assertThatThrownBy(() -> TsFilter.in("area", "")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsFilter.in("area", "north", "")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsFilter.notIn("area", "")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsFilter.notIn("area", "", "south")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
      * Scenario A13 (filters): a {@code null} or empty label, value or expression → {@link IllegalArgumentException}, per the
      * Javadoc of each factory.
      */

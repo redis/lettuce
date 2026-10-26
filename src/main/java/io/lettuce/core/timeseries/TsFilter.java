@@ -98,11 +98,11 @@ public final class TsFilter {
      * Match series whose label {@code label} equals one of {@code values} ({@code label=(v1,v2)}).
      *
      * @param label the label name, must not be {@code null} or empty and must not contain filter syntax characters.
-     * @param values the values, must not be {@code null} or empty, must not contain {@code null} elements, and no value may
-     *        contain filter syntax characters.
+     * @param values the values, must not be {@code null} or empty, must not contain {@code null} or empty elements, and no
+     *        value may contain filter syntax characters.
      * @return the filter.
      * @throws IllegalArgumentException if {@code label} or {@code values} is {@code null} or empty, {@code values} contains
-     *         {@code null} elements, or {@code label} or a value contains whitespace, {@code =}, {@code !}, {@code (},
+     *         {@code null} or empty elements, or {@code label} or a value contains whitespace, {@code =}, {@code !}, {@code (},
      *         {@code )}, {@code ,} or a quote.
      * @since 8.0
      */
@@ -115,11 +115,11 @@ public final class TsFilter {
      * ({@code label!=(v1,v2)}).
      *
      * @param label the label name, must not be {@code null} or empty and must not contain filter syntax characters.
-     * @param values the values, must not be {@code null} or empty, must not contain {@code null} elements, and no value may
-     *        contain filter syntax characters.
+     * @param values the values, must not be {@code null} or empty, must not contain {@code null} or empty elements, and no
+     *        value may contain filter syntax characters.
      * @return the filter.
      * @throws IllegalArgumentException if {@code label} or {@code values} is {@code null} or empty, {@code values} contains
-     *         {@code null} elements, or {@code label} or a value contains whitespace, {@code =}, {@code !}, {@code (},
+     *         {@code null} or empty elements, or {@code label} or a value contains whitespace, {@code =}, {@code !}, {@code (},
      *         {@code )}, {@code ,} or a quote.
      * @since 8.0
      */
@@ -164,7 +164,7 @@ public final class TsFilter {
         LettuceAssert.notEmpty(values, "Values must not be empty");
         LettuceAssert.noNullElements(values, "Values must not contain null elements");
         for (String value : values) {
-            assertNoSyntax(value, "Value");
+            value(value);
         }
 
         return String.join(",", values);
