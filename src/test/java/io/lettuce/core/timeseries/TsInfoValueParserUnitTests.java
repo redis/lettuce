@@ -137,6 +137,18 @@ class TsInfoValueParserUnitTests {
             .replace("+compressed\r\n", "+zstd\r\n").replace("+duplicatePolicy\r\n+block\r\n", "+duplicatePolicy\r\n+keep\r\n")
             .replace("+keySelfName\r\n", "+newField\r\n:42\r\n+keySelfName\r\n");
 
+    /**
+     * {@link #RESP2_SOURCE_DEBUG} with names that the public {@code of(String)} factories reject: rule aggregator
+     * {@code avg,max}, chunk type {@code z std} and duplicate policy {@code keep,last}.
+     */
+    static final String RESP2_SYNTAX = RESP2_SOURCE_DEBUG.replace("+AVG\r\n", "+avg,max\r\n")
+            .replace("+compressed\r\n", "+z std\r\n")
+            .replace("+duplicatePolicy\r\n+block\r\n", "+duplicatePolicy\r\n+keep,last\r\n");
+
+    static final String RESP3_SYNTAX = RESP3_SOURCE_DEBUG.replace("+AVG\r\n", "+avg,max\r\n")
+            .replace("+compressed\r\n", "+z std\r\n")
+            .replace("+duplicatePolicy\r\n+block\r\n", "+duplicatePolicy\r\n+keep,last\r\n");
+
     private static TsInfoValue<String> parse(String resp) {
 
         RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
@@ -346,6 +358,24 @@ class TsInfoValueParserUnitTests {
             TsAggregation aggregation = info.getRules().get(0).getAggregation();
             assertThat(aggregation).isNotInstanceOf(TsAggregationType.class).isEqualTo(TsAggregation.of("MEDIAN"));
             assertThat(aggregation.toString()).isEqualTo("MEDIAN");
+        }
+    }
+
+    /**
+     * Scenario U11b: a server name with a comma or a space doesn't fail decoding; it becomes a raw value kept as given.
+     */
+    @Test
+    void serverNamesWithCommaOrSpaceAreKept() {
+
+        for (String resp : new String[] { RESP2_SYNTAX, RESP3_SYNTAX }) {
+
+            TsInfoValue<String> info = parse(resp);
+
+            assertThat(info.getChunkType()).isNotInstanceOf(TsEncodingType.class);
+            assertThat(info.getChunkType().toString()).isEqualTo("z std");
+            assertThat(info.getDuplicatePolicy()).isNotInstanceOf(TsDuplicatePolicyType.class);
+            assertThat(info.getDuplicatePolicy().toString()).isEqualTo("keep,last");
+            assertThat(info.getRules().get(0).getAggregation().toString()).isEqualTo("avg,max");
         }
     }
 

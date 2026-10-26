@@ -44,13 +44,7 @@ public interface TsAggregation extends ProtocolKeyword {
             LettuceAssert.isTrue(c != ',' && !Character.isWhitespace(c), "Name must not contain ',' or whitespace");
         }
 
-        for (TsAggregationType type : TsAggregationType.values()) {
-            if (type.getToken().equalsIgnoreCase(name)) {
-                return type;
-            }
-        }
-
-        return new RawTsAggregation(name);
+        return TsValueTypes.aggregation(name);
     }
 
 }

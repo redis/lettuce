@@ -68,10 +68,10 @@ public final class TsInfoValueParser<K> implements ComplexDataParser<TsInfoValue
                 TsParserSupport.longOrZero(fields.get("memoryUsage")), TsParserSupport.longOrZero(fields.get("firstTimestamp")),
                 TsParserSupport.longOrZero(fields.get("lastTimestamp")),
                 TsParserSupport.longOrZero(fields.get("retentionTime")), TsParserSupport.longOrZero(fields.get("chunkCount")),
-                TsParserSupport.longOrZero(fields.get("chunkSize")), isEmpty(chunkType) ? null : TsEncoding.of(chunkType),
-                isEmpty(duplicatePolicy) ? null : TsDuplicatePolicy.of(duplicatePolicy),
-                TsParserSupport.labels(fields.get("labels")), TsParserSupport.key(codec, fields.get("sourceKey")),
-                rules(fields.get("rules")), TsParserSupport.longValue(fields.get("ignoreMaxTimeDiff")),
+                TsParserSupport.longOrZero(fields.get("chunkSize")), TsValueTypes.encoding(chunkType),
+                TsValueTypes.duplicatePolicy(duplicatePolicy), TsParserSupport.labels(fields.get("labels")),
+                TsParserSupport.key(codec, fields.get("sourceKey")), rules(fields.get("rules")),
+                TsParserSupport.longValue(fields.get("ignoreMaxTimeDiff")),
                 TsParserSupport.doubleValue(fields.get("ignoreMaxValDiff")),
                 TsParserSupport.key(codec, fields.get("keySelfName")), chunks(chunks), rawInfo);
     }
@@ -106,7 +106,7 @@ public final class TsInfoValueParser<K> implements ComplexDataParser<TsInfoValue
 
     private TsInfoValue.Rule<K> rule(Object destination, Object bucketDuration, Object aggregation, Object alignment) {
         return new TsInfoValue.Rule<>(TsParserSupport.key(codec, destination), TsParserSupport.longOrZero(bucketDuration),
-                TsAggregation.of(TsParserSupport.string(aggregation)), TsParserSupport.longOrZero(alignment));
+                TsValueTypes.aggregation(TsParserSupport.string(aggregation)), TsParserSupport.longOrZero(alignment));
     }
 
     // RESP2: array of flat name/value arrays; RESP3: array of maps
@@ -129,10 +129,6 @@ public final class TsInfoValueParser<K> implements ComplexDataParser<TsInfoValue
         }
 
         return chunks;
-    }
-
-    private static boolean isEmpty(String value) {
-        return value == null || value.isEmpty();
     }
 
 }

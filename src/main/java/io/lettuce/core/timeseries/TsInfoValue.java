@@ -348,7 +348,7 @@ public final class TsInfoValue<K> {
          * Get the aggregation of the rule.
          *
          * @return the aggregation: a {@link TsAggregationType} constant when this Lettuce version knows the value, otherwise a
-         *         {@link TsAggregation} that keeps the server's name.
+         *         {@link TsAggregation} that keeps the server's name; {@code null} if the server sent no aggregation name.
          * @since 8.0
          */
         public TsAggregation getAggregation() {

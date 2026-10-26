@@ -44,13 +44,7 @@ public interface TsEncoding extends ProtocolKeyword {
             LettuceAssert.isTrue(c != ',' && !Character.isWhitespace(c), "Name must not contain ',' or whitespace");
         }
 
-        for (TsEncodingType type : TsEncodingType.values()) {
-            if (type.getToken().equalsIgnoreCase(name)) {
-                return type;
-            }
-        }
-
-        return new RawTsEncoding(name);
+        return TsValueTypes.encoding(name);
     }
 
 }

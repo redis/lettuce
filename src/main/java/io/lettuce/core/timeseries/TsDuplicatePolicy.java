@@ -44,13 +44,7 @@ public interface TsDuplicatePolicy extends ProtocolKeyword {
             LettuceAssert.isTrue(c != ',' && !Character.isWhitespace(c), "Name must not contain ',' or whitespace");
         }
 
-        for (TsDuplicatePolicyType type : TsDuplicatePolicyType.values()) {
-            if (type.getToken().equalsIgnoreCase(name)) {
-                return type;
-            }
-        }
-
-        return new RawTsDuplicatePolicy(name);
+        return TsValueTypes.duplicatePolicy(name);
     }
 
 }
