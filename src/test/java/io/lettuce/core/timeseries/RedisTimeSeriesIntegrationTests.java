@@ -2650,9 +2650,27 @@ public class RedisTimeSeriesIntegrationTests {
         redis.tsCreate(EMPTY_SERIES, new TsCreateArgs().labels(labels("t", testName, "sensor", "temp")));
     }
 
+    /**
+     * Results keyed by series key. {@link #get(Object)} of a missing key fails with that key and the keys found, instead of
+     * returning {@code null} and failing later with a {@link NullPointerException}.
+     */
+    protected static class ResultsByKey<T> extends LinkedHashMap<String, T> {
+
+        @Override
+        public T get(Object key) {
+
+            if (!containsKey(key)) {
+                throw new AssertionError("No result for key " + key + "; keys found: " + keySet());
+            }
+
+            return super.get(key);
+        }
+
+    }
+
     protected static Map<String, TsMGetValue<String>> mgetByKey(List<TsMGetValue<String>> values) {
 
-        Map<String, TsMGetValue<String>> result = new LinkedHashMap<>();
+        Map<String, TsMGetValue<String>> result = new ResultsByKey<>();
         for (TsMGetValue<String> value : values) {
             assertThat(result.put(value.getKey(), value)).as("duplicate key " + value.getKey()).isNull();
         }
@@ -2661,7 +2679,7 @@ public class RedisTimeSeriesIntegrationTests {
 
     protected static Map<String, TsSeries<String>> seriesByKey(List<TsSeries<String>> series) {
 
-        Map<String, TsSeries<String>> result = new LinkedHashMap<>();
+        Map<String, TsSeries<String>> result = new ResultsByKey<>();
         for (TsSeries<String> entry : series) {
             assertThat(entry.isGrouped()).isFalse();
             assertThat(result.put(entry.getKey(), entry)).as("duplicate key " + entry.getKey()).isNull();
@@ -3063,14 +3081,18 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Scenario D06 (Redis 8.6+): countNaN and countAll with F7 ({@code {ts}:nan}: 1, NaN, 3, NaN at 1000 … 4000) grouped with a
+     * Scenario D06 (Redis 8.8+): countNaN and countAll with F7 ({@code {ts}:nan}: 1, NaN, 3, NaN at 1000 … 4000) grouped with a
      * companion series {@code {ts}:nan2} (10, 20, 30, 40) by {@code t}, so every timestamp has a non-NaN input: countNaN
      * 0/1/0/1, countAll 2/2/2/2, count 2/1/2/1.
+     * <p>
+     * Redis 8.6.x (checked 8.6.0 and 8.6.2) returns COUNT's numbers for the COUNTNAN and COUNTALL reducers, so this test needs
+     * 8.8 or later. The countNaN/countAll aggregations are correct on 8.6.
      */
     @Test
     void groupByCountNanAndCountAll() {
 
-        assumeVersion("8.6");
+        // Redis 8.6.x (checked 8.6.0 and 8.6.2) returns COUNT's numbers for the COUNTNAN and COUNTALL reducers
+        assumeVersion("8.8");
         nanSeries();
         redis.tsCreate(NAN_COMPANION, new TsCreateArgs().label("t", testName));
         for (int i = 1; i <= 4; i++) {

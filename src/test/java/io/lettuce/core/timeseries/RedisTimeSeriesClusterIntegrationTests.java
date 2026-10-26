@@ -538,6 +538,9 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
                         blocked = true;
                     }
                 }
+                if (!blocked) {
+                    Thread.sleep(10);
+                }
             }
             assertThat(blocked).as("TS.READ blocked on the replica").isTrue();
             assertThat(read.isDone()).isFalse();

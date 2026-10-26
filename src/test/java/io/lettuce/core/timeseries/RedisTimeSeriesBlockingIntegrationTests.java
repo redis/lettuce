@@ -41,8 +41,9 @@ import io.lettuce.test.condition.EnabledOnCommand;
 /**
  * TS.READ with BLOCK (Redis 8.10+, scenarios F04–F10). Every test opens its own reader connection and, where a write must wake
  * the reader, a second producer connection, and closes both at the end. The producer waits until the server reports the reader
- * as blocked ({@code CLIENT LIST}, flag {@code b}) before it writes, so no test relies on a sleep. Block times are at most 1 s,
- * except F10.
+ * as blocked ({@code CLIENT LIST}, flag {@code b}) before it writes, so no test relies on a sleep. A block that a write or a
+ * delete must end early lasts 3 s, and the test expects the reply within 2 s, so a slow machine can't turn the wake-up into a
+ * timeout. Other block times are at most 1 s, except F10.
  *
  * @author Aleksandar Todorov
  */
@@ -80,9 +81,9 @@ public class RedisTimeSeriesBlockingIntegrationTests {
 
     /**
      * Wait until the server reports the client {@code clientId} as blocked in TS.READ. Polls {@code CLIENT LIST} on the
-     * producer connection; fails after 5 s.
+     * producer connection every 10 ms; fails after 5 s.
      */
-    private void awaitBlocked(long clientId) {
+    private void awaitBlocked(long clientId) throws InterruptedException {
 
         long deadline = System.currentTimeMillis() + 5000;
         while (System.currentTimeMillis() < deadline) {
@@ -93,6 +94,7 @@ public class RedisTimeSeriesBlockingIntegrationTests {
                     return;
                 }
             }
+            Thread.sleep(10);
         }
         throw new AssertionError("Reader " + clientId + " did not block in TS.READ");
     }
@@ -145,8 +147,8 @@ public class RedisTimeSeriesBlockingIntegrationTests {
         List<TsSample> all = Arrays.asList(TsSample.of(1000, 1.0), TsSample.of(2000, 2.0), TsSample.of(3000, 3.0));
 
         long start = System.nanoTime();
-        assertThat(reader.sync().tsRead(KEY, TsReadOffset.from(0), new TsReadArgs().block(1000, 2))).isEqualTo(all);
-        assertThat(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)).isLessThan(1000);
+        assertThat(reader.sync().tsRead(KEY, TsReadOffset.from(0), new TsReadArgs().block(3000, 2))).isEqualTo(all);
+        assertThat(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)).isLessThan(2000);
 
         reader.setTimeout(Duration.ofSeconds(5));
         assertThat(reader.sync().tsRead(KEY, TsReadOffset.earliest(), new TsReadArgs().block(0, 3))).isEqualTo(all);
@@ -167,7 +169,7 @@ public class RedisTimeSeriesBlockingIntegrationTests {
 
         CountDownLatch done = new CountDownLatch(1);
         RedisFuture<List<TsSample>> read = reader.async().tsRead(KEY, TsReadOffset.newSamples(),
-                new TsReadArgs().block(1000, 1));
+                new TsReadArgs().block(3000, 1));
         read.thenRun(done::countDown);
 
         awaitBlocked(readerId);
@@ -175,7 +177,7 @@ public class RedisTimeSeriesBlockingIntegrationTests {
         sync.tsAdd(KEY, 5000L, 5.0);
 
         assertThat(done.await(5, TimeUnit.SECONDS)).isTrue();
-        assertThat(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - written)).isLessThan(900);
+        assertThat(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - written)).isLessThan(2000);
         assertThat(read.get()).containsExactly(TsSample.of(5000, 5.0));
     }
 
@@ -192,7 +194,7 @@ public class RedisTimeSeriesBlockingIntegrationTests {
         long readerId = reader.sync().clientId();
 
         RedisFuture<List<TsSample>> read = reader.async().tsRead(KEY, TsReadOffset.newSamples(),
-                new TsReadArgs().block(1000, 1));
+                new TsReadArgs().block(3000, 1));
         awaitBlocked(readerId);
         sync.tsIncrBy(KEY, 2.0, new TsIncrByArgs().timestamp(2000));
 
@@ -212,7 +214,7 @@ public class RedisTimeSeriesBlockingIntegrationTests {
         long readerId = reader.sync().clientId();
 
         RedisFuture<List<TsSample>> read = reader.async().tsRead(KEY, TsReadOffset.newSamples(),
-                new TsReadArgs().block(1000, 1).maxCount(3));
+                new TsReadArgs().block(3000, 1).maxCount(3));
         awaitBlocked(readerId);
         assertThat(sync.tsMAdd(Arrays.asList(TsMAddValue.of(KEY, 1000L, 1.0), TsMAddValue.of(KEY, 2000L, 2.0),
                 TsMAddValue.of(KEY, 3000L, 3.0), TsMAddValue.of(KEY, 4000L, 4.0), TsMAddValue.of(KEY, 5000L, 5.0))))
@@ -235,13 +237,13 @@ public class RedisTimeSeriesBlockingIntegrationTests {
         long readerId = reader.sync().clientId();
 
         RedisFuture<List<TsSample>> read = reader.async().tsRead(KEY, TsReadOffset.newSamples(),
-                new TsReadArgs().block(1000, 5));
+                new TsReadArgs().block(3000, 5));
         awaitBlocked(readerId);
         long deleted = System.nanoTime();
         assertThat(sync.del(KEY)).isEqualTo(1);
 
         assertThat(read.get(5, TimeUnit.SECONDS)).isEmpty();
-        assertThat(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - deleted)).isLessThan(900);
+        assertThat(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - deleted)).isLessThan(2000);
     }
 
     /**

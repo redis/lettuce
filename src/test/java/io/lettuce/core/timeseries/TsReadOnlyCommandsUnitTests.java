@@ -35,12 +35,15 @@ class TsReadOnlyCommandsUnitTests {
     }
 
     /**
-     * Scenario K10: the writing lifecycle commands are not read-only.
+     * Scenario K10: all 9 writing commands (CREATE, ALTER, ADD, MADD, INCRBY, DECRBY, DEL, CREATERULE, DELETERULE) are not
+     * read-only.
      */
     @Test
     void writesAreNotReadOnly() {
 
-        for (CommandType type : new CommandType[] { CommandType.TS_CREATE, CommandType.TS_ALTER, CommandType.TS_DEL }) {
+        for (CommandType type : new CommandType[] { CommandType.TS_CREATE, CommandType.TS_ALTER, CommandType.TS_ADD,
+                CommandType.TS_MADD, CommandType.TS_INCRBY, CommandType.TS_DECRBY, CommandType.TS_DEL,
+                CommandType.TS_CREATERULE, CommandType.TS_DELETERULE }) {
             assertThat(ReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isFalse();
             assertThat(ClusterReadOnlyCommands.isReadOnlyCommand(type)).as(type.toString()).isFalse();
         }

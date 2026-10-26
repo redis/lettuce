@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -41,6 +42,14 @@ public class RedisTimeSeriesResp2IntegrationTests extends RedisTimeSeriesIntegra
     private static RedisCommands<String, String> connectWithResp2(RedisClient client) {
         client.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build());
         return client.connect().sync();
+    }
+
+    /**
+     * Close the RESP2 connection that the constructor opened.
+     */
+    @AfterAll
+    void closeResp2Connection() {
+        redis.getStatefulConnection().close();
     }
 
     /**
