@@ -120,6 +120,19 @@ class TsSeriesParserUnitTests {
             + "*1\r\n$3\r\nmax\r\n%1\r\n$7\r\nsources\r\n*3\r\n$6\r\n{ts}:a\r\n$6\r\n{ts}:b\r\n$6\r\n{ts}:e\r\n"
             + "*2\r\n*2\r\n:1000\r\n,3\r\n*2\r\n:2000\r\n,2.5\r\n";
 
+    /**
+     * {@code TS.MRANGE - + WITHLABELS FILTER t=x} on RESP2, for a series whose own labels are named {@code __reducer__} and
+     * {@code __source__}.
+     */
+    static final String RESP2_RESERVED_LABELS = "*1\r\n*3\r\n$6\r\n{ts}:a\r\n*2\r\n*2\r\n$11\r\n__reducer__\r\n$4\r\nmine\r\n"
+            + "*2\r\n$10\r\n__source__\r\n$6\r\nsensor\r\n*1\r\n*2\r\n:1000\r\n+1\r\n";
+
+    /**
+     * Same as {@link #RESP2_RESERVED_LABELS} on RESP3.
+     */
+    static final String RESP3_RESERVED_LABELS = "%1\r\n$6\r\n{ts}:a\r\n*3\r\n%2\r\n$11\r\n__reducer__\r\n$4\r\nmine\r\n"
+            + "$10\r\n__source__\r\n$6\r\nsensor\r\n%1\r\n$11\r\naggregators\r\n*0\r\n*1\r\n*2\r\n:1000\r\n,1\r\n";
+
     private static final List<TsAggregation> NONE = Collections.emptyList();
 
     private static List<TsSeries<String>> parseRaw(String resp) {
@@ -258,6 +271,22 @@ class TsSeriesParserUnitTests {
         assertThat(group.getSources()).containsExactly("{ts}:a", "{ts}:b", "{ts}:e");
         assertThat(group.getLabels()).containsExactly(entry("t", "x"));
         assertThat(group.getSamples()).containsExactly(TsSample.of(1000, 4.0), TsSample.of(2000, 2.5));
+    }
+
+    /**
+     * Scenario U10: without GROUPBY, a series keeps its own labels named {@code __reducer__} and {@code __source__}, on RESP2
+     * and RESP3.
+     */
+    @Test
+    void ungroupedKeepsReducerAndSourceLabels() {
+
+        for (String resp : new String[] { RESP2_RESERVED_LABELS, RESP3_RESERVED_LABELS }) {
+            TsSeries<String> series = parseRaw(resp).get(0);
+            assertThat(series.isGrouped()).isFalse();
+            assertThat(series.getLabels()).containsExactly(entry("__reducer__", "mine"), entry("__source__", "sensor"));
+            assertThat(series.getSources()).isNull();
+            assertThat(series.getSamples()).containsExactly(TsSample.of(1000, 1.0));
+        }
     }
 
     /**

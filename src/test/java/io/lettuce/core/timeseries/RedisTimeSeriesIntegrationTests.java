@@ -2863,6 +2863,26 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
+     * Scenario D04: without GROUPBY, WITHLABELS returns a series' own labels named {@code __reducer__} and {@code __source__}.
+     */
+    @Test
+    void mrangeKeepsReducerAndSourceLabelsWithoutGroupBy() {
+
+        Map<String, String> labels = new LinkedHashMap<>();
+        labels.put("t", testName);
+        labels.put("__reducer__", "mine");
+        labels.put("__source__", "sensor");
+        redis.tsCreate(F1, new TsCreateArgs().labels(labels));
+        redis.tsAdd(F1, 1000L, 1.0);
+
+        Map<String, TsSeries<String>> series = seriesByKey(
+                redis.tsMRange(Range.unbounded(), new TsMRangeArgs().withLabels(), isolation()));
+        assertThat(series).containsKey(F1);
+        assertThat(series.get(F1).getLabels()).containsExactly(entry("t", testName), entry("__reducer__", "mine"),
+                entry("__source__", "sensor"));
+    }
+
+    /**
      * Scenario D04: COUNT limits the samples per series: MRANGE COUNT 2 → the two oldest per series, MREVRANGE COUNT 2 → the
      * two newest.
      */

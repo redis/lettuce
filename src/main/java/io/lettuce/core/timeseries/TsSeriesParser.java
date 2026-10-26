@@ -136,8 +136,11 @@ public final class TsSeriesParser<K> implements ComplexDataParser<List<TsSeries<
     private TsSeries<K> series(Object name, Object labels, List<K> sources, Object samples) {
 
         Map<String, String> decodedLabels = TsParserSupport.labels(labels);
-        decodedLabels.remove(REDUCER_LABEL);
-        decodedLabels.remove(SOURCE_LABEL);
+        // only a grouped RESP2 reply carries the reducer and the sources as labels; an ungrouped series keeps them
+        if (grouped) {
+            decodedLabels.remove(REDUCER_LABEL);
+            decodedLabels.remove(SOURCE_LABEL);
+        }
 
         K key = grouped ? null : TsParserSupport.key(codec, name);
         String group = grouped ? TsParserSupport.string(name) : null;
