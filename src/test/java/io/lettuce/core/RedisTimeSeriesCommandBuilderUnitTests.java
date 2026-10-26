@@ -342,8 +342,44 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
         assertThat(tokens(builder.tsDel(KEY, Range.from(Boundary.excluding(Long.MAX_VALUE - 1), Boundary.unbounded()))))
                 .containsExactly("TS.DEL", KEY, Long.toString(Long.MAX_VALUE), "+");
-        assertThat(tokens(builder.tsDel(KEY, Range.from(Boundary.unbounded(), Boundary.excluding(Long.MIN_VALUE + 1)))))
-                .containsExactly("TS.DEL", KEY, "-", Long.toString(Long.MIN_VALUE));
+        assertThatThrownBy(() -> builder.tsDel(KEY, Range.from(Boundary.unbounded(), Boundary.excluding(Long.MIN_VALUE + 1))))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario A06c: a range that ends before timestamp 0 (an exclusive upper bound 0, an inclusive upper bound -1, or
+     * {@code 5..excluding(0)}) throws {@link IllegalArgumentException} on every command that takes a range, before any command
+     * is created; an exclusive upper bound 1 and an upper bound of exactly 0 are sent as {@code 0}.
+     */
+    @Test
+    void rangeEndingBeforeZeroThrows() {
+
+        List<Range<Long>> beforeZero = Arrays.asList(Range.from(Boundary.unbounded(), Boundary.excluding(0L)),
+                Range.from(Boundary.unbounded(), Boundary.including(-1L)),
+                Range.from(Boundary.including(5L), Boundary.excluding(0L)));
+
+        for (Range<Long> range : beforeZero) {
+            assertThatThrownBy(() -> builder.tsDel(KEY, range)).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("before timestamp 0");
+            assertThatThrownBy(() -> builder.tsRange(KEY, range)).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(
+                    () -> builder.tsRevRange(KEY, range, new TsRangeArgs().aggregation(100, TsAggregationType.AVG).empty()))
+                            .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> builder.tsMRange(range, T_X)).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> builder.tsMRevRange(range, T_X)).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> builder.tsNRange(N1, N2, range)).isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> builder.tsNRevRange(Arrays.asList(N1, N2), range))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        assertThat(tokens(builder.tsDel(KEY, Range.from(Boundary.unbounded(), Boundary.including(0L)))))
+                .containsExactly("TS.DEL", KEY, "-", "0");
+        assertThat(tokens(builder.tsRange(KEY, Range.from(Boundary.unbounded(), Boundary.excluding(1L)))))
+                .containsExactly("TS.RANGE", KEY, "-", "0");
+        assertThat(tokens(builder.tsMRange(Range.from(Boundary.unbounded(), Boundary.excluding(1L)), T_X)))
+                .containsExactly("TS.MRANGE", "-", "0", "FILTER", "t=x");
+        assertThat(tokens(builder.tsNRange(N1, N2, Range.from(Boundary.unbounded(), Boundary.including(0L)))))
+                .containsExactly("TS.NRANGE", "2", N1, N2, "-", "0");
     }
 
     @Test

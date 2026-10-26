@@ -597,32 +597,44 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
 
     /**
      * Add the {@code from} and {@code to} timestamps of {@code range}. Unbounded sides become {@code -} and {@code +}. Because
-     * timestamps are integer milliseconds, an exclusive bound becomes its inclusive neighbor.
+     * timestamps are integer milliseconds, an exclusive bound becomes its inclusive neighbor. An upper bound below 0 is
+     * rejected: the range contains no samples.
      */
     private static void addRange(CommandArgs<?, ?> args, Range<Long> range) {
 
         Boundary<Long> lower = range.getLower();
         Boundary<Long> upper = range.getUpper();
 
-        if (lower.isUnbounded() || lower.getValue() == null) {
-            args.add("-");
-        } else {
-            long from = lower.getValue();
+        Long from = null;
+        if (!lower.isUnbounded() && lower.getValue() != null) {
+            from = lower.getValue();
             if (!lower.isIncluding()) {
                 LettuceAssert.isTrue(from != Long.MAX_VALUE, "Exclusive lower bound must be less than Long.MAX_VALUE");
                 from++;
             }
-            args.add(from);
         }
 
-        if (upper.isUnbounded() || upper.getValue() == null) {
-            args.add("+");
-        } else {
-            long to = upper.getValue();
+        Long to = null;
+        if (!upper.isUnbounded() && upper.getValue() != null) {
+            to = upper.getValue();
             if (!upper.isIncluding()) {
                 LettuceAssert.isTrue(to != Long.MIN_VALUE, "Exclusive upper bound must be greater than Long.MIN_VALUE");
                 to--;
             }
+        }
+
+        // not sent as an inverted interval: with AGGREGATION ... EMPTY the server still fills a bucket for it
+        LettuceAssert.isTrue(to == null || to >= 0, "Range ends before timestamp 0 and contains no samples");
+
+        if (from == null) {
+            args.add("-");
+        } else {
+            args.add(from);
+        }
+
+        if (to == null) {
+            args.add("+");
+        } else {
             args.add(to);
         }
     }

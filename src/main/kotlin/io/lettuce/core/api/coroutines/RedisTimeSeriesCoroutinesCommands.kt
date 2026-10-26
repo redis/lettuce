@@ -88,7 +88,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @return Long integer-reply the number of deleted samples.
      * @throws IllegalArgumentException if `key` or `range` is `null`, or if `range` has an exclusive
-     *         lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
+     *         lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0).
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.del/">TS.DEL</a>
      */
@@ -375,7 +376,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @return List<TsSample> the samples in ascending order; empty if the range has no samples.
      * @throws IllegalArgumentException if `key` or `range` is `null`, or if `range` has an exclusive
-     *         lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
+     *         lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0).
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.range/">TS.RANGE</a>
      */
@@ -394,7 +396,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @param args the options, must not be `null`.
      * @return List<TsSample> the samples or buckets in ascending order; empty if the range has no samples.
      * @throws IllegalArgumentException if `key`, `range` or `args` is `null`, if `range` has an
-     *         exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if
+     *         exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if
      *         `args` sets `ALIGN`, `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.range/">TS.RANGE</a>
@@ -412,7 +415,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @return List<TsSample> the samples in descending order; empty if the range has no samples.
      * @throws IllegalArgumentException if `key` or `range` is `null`, or if `range` has an exclusive
-     *         lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
+     *         lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0).
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.revrange/">TS.REVRANGE</a>
      */
@@ -431,7 +435,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @param args the options, must not be `null`.
      * @return List<TsSample> the samples or buckets in descending order; empty if the range has no samples.
      * @throws IllegalArgumentException if `key`, `range` or `args` is `null`, if `range` has an
-     *         exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if
+     *         exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if
      *         `args` sets `ALIGN`, `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.revrange/">TS.REVRANGE</a>
@@ -621,7 +626,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
      *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
      * @throws IllegalArgumentException if `range` is `null`, `filter` is `null`, or if `range`
-     *         has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
+     *         has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0).
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
      */
@@ -650,8 +656,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
      *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
      * @throws IllegalArgumentException if `range` is `null`, `filters` is `null`, empty or contains
-     *         `null` elements, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive
-     *         upper bound at [Long.MIN_VALUE].
+     *         `null` elements, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0).
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
      */
@@ -685,8 +691,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
      *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
      * @throws IllegalArgumentException if `range` or `args` is `null`, `filter` is `null`, if
-     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at
-     *         [Long.MIN_VALUE], or if `args` has conflicting options.
+     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if `args` has conflicting options.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
      */
@@ -721,8 +727,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
      *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
      * @throws IllegalArgumentException if `range` or `args` is `null`, `filters` is `null`, empty
-     *         or contains `null` elements, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an
-     *         exclusive upper bound at [Long.MIN_VALUE], or if `args` has conflicting options.
+     *         or contains `null` elements, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if `args` has conflicting options.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrange/">TS.MRANGE</a>
      */
@@ -750,7 +756,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
      *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
      * @throws IllegalArgumentException if `range` is `null`, `filter` is `null`, or if `range`
-     *         has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE].
+     *         has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0).
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
      */
@@ -779,8 +786,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
      *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
      * @throws IllegalArgumentException if `range` is `null`, `filters` is `null`, empty or contains
-     *         `null` elements, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive
-     *         upper bound at [Long.MIN_VALUE].
+     *         `null` elements, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0).
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
      */
@@ -814,8 +821,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
      *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
      * @throws IllegalArgumentException if `range` or `args` is `null`, `filter` is `null`, if
-     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at
-     *         [Long.MIN_VALUE], or if `args` has conflicting options.
+     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if `args` has conflicting options.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
      */
@@ -850,8 +857,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
      *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
      * @throws IllegalArgumentException if `range` or `args` is `null`, `filters` is `null`, empty
-     *         or contains `null` elements, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an
-     *         exclusive upper bound at [Long.MIN_VALUE], or if `args` has conflicting options.
+     *         or contains `null` elements, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if `args` has conflicting options.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a>
      */
@@ -988,8 +995,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsNRangeRow> the rows in ascending timestamp order, as the server sends them; empty if there are no
      *         samples in the range.
      * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
-     *         `range` is `null`, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an
-     *         exclusive upper bound at [Long.MIN_VALUE].
+     *         `range` is `null`, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0).
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.nrange/">TS.NRANGE</a>
      */
@@ -1017,7 +1024,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      *         samples in the range.
      * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
      *         `range` or `args` is `null`, if `range` has an exclusive lower bound at
-     *         [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if `args` does not match
+     *         [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if `args` does not match
      *         the number of keys or sets `ALIGN`, `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.nrange/">TS.NRANGE</a>
@@ -1043,8 +1051,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsNRangeRow> the rows in ascending timestamp order, as the server sends them; empty if there are no
      *         samples in the range.
      * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` is `null`, or if
-     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at
-     *         [Long.MIN_VALUE].
+     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0).
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.nrange/">TS.NRANGE</a>
      */
@@ -1072,8 +1080,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsNRangeRow> the rows in ascending timestamp order, as the server sends them; empty if there are no
      *         samples in the range.
      * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` or `args` is
-     *         `null`, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound
-     *         at [Long.MIN_VALUE], or if `args` does not match the number of keys or sets `ALIGN`,
+     *         `null`, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if `args` does not match the number of keys or sets `ALIGN`,
      *         `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.nrange/">TS.NRANGE</a>
@@ -1098,8 +1106,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsNRangeRow> the rows in descending timestamp order, as the server sends them; empty if there are no
      *         samples in the range.
      * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
-     *         `range` is `null`, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an
-     *         exclusive upper bound at [Long.MIN_VALUE].
+     *         `range` is `null`, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0).
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.nrevrange/">TS.NREVRANGE</a>
      */
@@ -1127,7 +1135,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      *         samples in the range.
      * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
      *         `range` or `args` is `null`, if `range` has an exclusive lower bound at
-     *         [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE], or if `args` does not match
+     *         [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if `args` does not match
      *         the number of keys or sets `ALIGN`, `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.nrevrange/">TS.NREVRANGE</a>
@@ -1153,8 +1162,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsNRangeRow> the rows in descending timestamp order, as the server sends them; empty if there are no
      *         samples in the range.
      * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` is `null`, or if
-     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at
-     *         [Long.MIN_VALUE].
+     *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0).
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.nrevrange/">TS.NREVRANGE</a>
      */
@@ -1182,8 +1191,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @return List<TsNRangeRow> the rows in descending timestamp order, as the server sends them; empty if there are no
      *         samples in the range.
      * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` or `args` is
-     *         `null`, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound
-     *         at [Long.MIN_VALUE], or if `args` does not match the number of keys or sets `ALIGN`,
+     *         `null`, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
+     *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if `args` does not match the number of keys or sets `ALIGN`,
      *         `BUCKETTIMESTAMP` or `EMPTY` without an aggregation.
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.nrevrange/">TS.NREVRANGE</a>

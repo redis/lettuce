@@ -97,7 +97,7 @@ commands.tsDel("temperature:room1", Range.from(Range.Boundary.excluding(1000L),
         Range.Boundary.including(2000L)));                                         // sent as 1001 2000
 ```
 
-Timestamps are integer milliseconds, so an exclusive bound is sent as its inclusive neighbor: an exclusive lower bound `t` becomes `t + 1` and an exclusive upper bound `t` becomes `t - 1`. An exclusive lower bound at `Long.MAX_VALUE` or an exclusive upper bound at `Long.MIN_VALUE` has no neighbor and throws `IllegalArgumentException`. The same rules apply to every TimeSeries command that takes a `Range<Long>`.
+Timestamps are integer milliseconds, so an exclusive bound is sent as its inclusive neighbor: an exclusive lower bound `t` becomes `t + 1` and an exclusive upper bound `t` becomes `t - 1`. An exclusive lower bound at `Long.MAX_VALUE` or an exclusive upper bound at `Long.MIN_VALUE` has no neighbor and throws `IllegalArgumentException`. A range that ends before timestamp 0, such as one with an exclusive upper bound 0, contains no samples and also throws `IllegalArgumentException`; nothing is sent. The same rules apply to every TimeSeries command that takes a `Range<Long>`.
 
 To delete the whole series, delete its key with `del`.
 

@@ -1105,6 +1105,27 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
+     * Scenario B19: a range ending before 0 (exclusive upper bound 0) throws {@link IllegalArgumentException} on the client for
+     * RANGE, REVRANGE (also with {@code AGGREGATION ... EMPTY}) and DEL; nothing is sent, so the sample at timestamp 0 is still
+     * there.
+     */
+    @Test
+    void rangeEndingBeforeZeroIsRejected() {
+
+        redis.tsAdd(F1, 0L, 5.0);
+        redis.tsAdd(F1, 1000L, 1.0);
+        Range<Long> beforeZero = Range.from(Boundary.unbounded(), Boundary.excluding(0L));
+
+        assertThatThrownBy(() -> redis.tsRange(F1, beforeZero)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(
+                () -> redis.tsRange(F1, beforeZero, new TsRangeArgs().aggregation(100, TsAggregationType.AVG).empty()))
+                        .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsRevRange(F1, beforeZero)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsDel(F1, beforeZero)).isInstanceOf(IllegalArgumentException.class);
+        assertThat(redis.tsRange(F1, Range.unbounded())).containsExactly(TsSample.of(0, 5.0), TsSample.of(1000, 1.0));
+    }
+
+    /**
      * Scenario B19: an exclusive lower bound {@code excluding(2000)..4000} deletes 2 samples (3000, 4000).
      */
     @Test
