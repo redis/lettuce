@@ -37,9 +37,9 @@ public enum TsEncodingType implements TsEncoding {
     }
 
     /**
-     * Return the token sent to the server.
+     * Return the name sent to the server.
      *
-     * @return the wire token.
+     * @return the name sent to the server.
      */
     String getToken() {
         return token;
@@ -51,9 +51,9 @@ public enum TsEncodingType implements TsEncoding {
     }
 
     /**
-     * Return the wire token, for example {@code COMPRESSED}.
+     * Return the name sent to the server, for example {@code COMPRESSED}.
      *
-     * @return the wire token.
+     * @return the name sent to the server.
      */
     @Override
     public String toString() {

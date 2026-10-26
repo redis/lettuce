@@ -403,12 +403,12 @@ public class TsNRangeArgs {
     /**
      * Emit the options in the documented order: {@code LATEST}, {@code FILTER_BY_TS}, {@code FILTER_BY_VALUE}, {@code COUNT},
      * {@code ALIGN}, {@code AGGREGATION} with one aggregation argument per key and the bucket duration,
-     * {@code BUCKETTIMESTAMP}, {@code EMPTY}. The command builder emits {@code numkeys}, the keys and the range first.
+     * {@code BUCKETTIMESTAMP}, {@code EMPTY}.
      *
-     * @param args the command arguments to append to, must not be {@code null}.
-     * @param keyCount the number of keys of the command, must be positive.
      * @param <K> Key type.
      * @param <V> Value type.
+     * @param args the command arguments to append to, must not be {@code null}.
+     * @param keyCount the number of keys of the command, must be positive.
      * @return the number of values per key in each row, in key order: {@code 1} for every key without an aggregation, otherwise
      *         the number of aggregations of that key. The list is unmodifiable.
      * @throws IllegalArgumentException if {@code keyCount} is not positive, if the per-key aggregation lists do not match

@@ -27,6 +27,7 @@ public class TsSampleOutput<K, V> extends CommandOutput<K, V, TsSample> {
      * Create a new output.
      *
      * @param codec the codec, must not be {@code null}.
+     * @since 8.0
      */
     public TsSampleOutput(RedisCodec<K, V> codec) {
         super(codec, null);

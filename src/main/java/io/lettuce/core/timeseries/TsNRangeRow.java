@@ -48,7 +48,9 @@ public final class TsNRangeRow {
      * @param columnCounts the number of values of each key, in key order, must not be {@code null} or empty, must contain only
      *        positive counts, and must add up to the number of values.
      * @return the row.
-     * @throws IllegalArgumentException if an argument is invalid.
+     * @throws IllegalArgumentException if {@code values} or {@code columnCounts} is {@code null}, if {@code values} contains
+     *         {@code null} elements, if {@code columnCounts} is empty or contains a {@code null} or non-positive count, or if
+     *         the counts do not add up to the number of values.
      * @since 8.0
      */
     public static TsNRangeRow of(long timestamp, List<Double> values, List<Integer> columnCounts) {

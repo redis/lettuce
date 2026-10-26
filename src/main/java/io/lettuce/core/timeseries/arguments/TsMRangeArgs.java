@@ -413,8 +413,7 @@ public class TsMRangeArgs {
 
     /**
      * Omit series that have no samples in the range ({@code EXCLUDEEMPTY}), even when aggregation {@code EMPTY} is set. A
-     * series whose only samples in the range are NaN is still reported. Requires Redis 8.10 or later; earlier servers accept it
-     * and ignore it without an error, so series without samples in the range are still returned.
+     * series whose only samples in the range are NaN is still reported. Requires Redis 8.10 or later.
      *
      * @return {@code this}.
      * @throws IllegalArgumentException if {@link #groupBy(String, TsReducer)} was set.
@@ -433,7 +432,8 @@ public class TsMRangeArgs {
      * ({@code GROUPBY label REDUCE reducer}). Each grouped series is named {@code label=value}.
      *
      * @param label the label to group by, must not be {@code null} or empty.
-     * @param reducer the reducer, must not be {@code null}. {@code countNaN} and {@code countAll} require Redis 8.6 or later.
+     * @param reducer the reducer, must not be {@code null}. {@link io.lettuce.core.timeseries.TsReducerType#COUNTNAN} and
+     *        {@link io.lettuce.core.timeseries.TsReducerType#COUNTALL} require Redis 8.6 or later.
      * @return {@code this}.
      * @throws IllegalArgumentException if {@code label} is {@code null} or empty, {@code reducer} is {@code null}, more than
      *         one aggregation was set, or {@link #excludeEmpty()} was set.
@@ -486,10 +486,10 @@ public class TsMRangeArgs {
      * {@code WITHLABELS} or {@code SELECTED_LABELS}, {@code COUNT}, {@code ALIGN}, {@code AGGREGATION},
      * {@code BUCKETTIMESTAMP}, {@code EMPTY}, {@code EXCLUDEEMPTY}, {@code FILTER}, {@code GROUPBY ... REDUCE}.
      *
-     * @param args the command arguments to append to, must not be {@code null}.
-     * @param filters the filters, must not be {@code null} or empty and must not contain {@code null} elements.
      * @param <K> Key type.
      * @param <V> Value type.
+     * @param args the command arguments to append to, must not be {@code null}.
+     * @param filters the filters, must not be {@code null} or empty and must not contain {@code null} elements.
      * @throws IllegalArgumentException if {@code filters} is {@code null}, empty or contains {@code null} elements, or if the
      *         options conflict.
      * @since 8.0

@@ -37,10 +37,10 @@ public final class TsMAddValue<K> {
     /**
      * Create a sample with an explicit timestamp.
      *
+     * @param <K> Key type.
      * @param key the key of the series, must not be {@code null}.
      * @param timestamp the timestamp in milliseconds, must not be negative.
      * @param value the value.
-     * @param <K> Key type.
      * @return the sample.
      * @throws IllegalArgumentException if {@code key} is {@code null} or {@code timestamp} is negative.
      * @since 8.0
@@ -56,9 +56,9 @@ public final class TsMAddValue<K> {
     /**
      * Create a sample whose timestamp is set by the server clock. The sample is sent with timestamp {@code *}.
      *
+     * @param <K> Key type.
      * @param key the key of the series, must not be {@code null}.
      * @param value the value.
-     * @param <K> Key type.
      * @return the sample.
      * @throws IllegalArgumentException if {@code key} is {@code null}.
      * @since 8.0

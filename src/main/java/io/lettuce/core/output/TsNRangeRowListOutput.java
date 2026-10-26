@@ -43,6 +43,7 @@ public class TsNRangeRowListOutput<K, V> extends CommandOutput<K, V, List<TsNRan
      *
      * @param codec the codec, must not be {@code null}.
      * @param columnCounts the number of values of each key, in key order, must not be {@code null} or empty.
+     * @since 8.0
      */
     public TsNRangeRowListOutput(RedisCodec<K, V> codec, List<Integer> columnCounts) {
 

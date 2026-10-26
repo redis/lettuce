@@ -73,7 +73,7 @@ commands.tsCreate("temperature:room2", TsCreateArgs.Builder.retention(Duration.o
 | `IGNORE` | `ignore(long maxTimeDiff, double maxValDiff)` | Ignore a new sample that is close to the newest sample in time and value. The server applies it only when the duplicate policy of the series is `LAST`; with any other policy the sample is stored. |
 | `LABELS` | `label(name, value)`, `labels(Map)` | Labels are sent in insertion order. |
 
-Lettuce always sends `LABELS` last. The server stores every argument that follows `LABELS` as a label pair, so an option after it would silently become a label.
+Lettuce always sends `LABELS` last.
 
 ### Change a series
 
@@ -97,7 +97,7 @@ commands.tsDel("temperature:room1", Range.from(Range.Boundary.excluding(1000L),
         Range.Boundary.including(2000L)));                                         // sent as 1001 2000
 ```
 
-Timestamps are integer milliseconds, so an exclusive bound is sent as its inclusive neighbor: an exclusive lower bound `t` becomes `t + 1` and an exclusive upper bound `t` becomes `t - 1`. An exclusive lower bound at `Long.MAX_VALUE` or an exclusive upper bound at `Long.MIN_VALUE` has no neighbor and throws `IllegalArgumentException`. A range that ends before timestamp 0, such as one with an exclusive upper bound 0, contains no samples and also throws `IllegalArgumentException`; nothing is sent. The same rules apply to every TimeSeries command that takes a `Range<Long>`.
+An unbounded side means the earliest or the latest sample. Timestamps are integer milliseconds, so an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t - 1`. An exclusive lower bound at `Long.MAX_VALUE` or an exclusive upper bound at `Long.MIN_VALUE` has no inclusive equivalent and throws `IllegalArgumentException`. A range that ends before timestamp 0, such as one with an exclusive upper bound 0, contains no samples and also throws `IllegalArgumentException`; nothing is sent. The same rules apply to every TimeSeries command that takes a `Range<Long>`.
 
 To delete the whole series, delete its key with `del`.
 
@@ -144,7 +144,7 @@ commands.tsDeleteRule("{sensor1}:raw", "{sensor1}:avg-1m");   // keeps both seri
 - `tsInfo` on the source lists its rules (`getRules()`, with destination, bucket duration, aggregation and alignment); `tsInfo` on the destination reports the source (`getSourceKey()`).
 
 !!! INFO
-    In Redis Cluster, the source and destination keys must hash to the same slot. Use a shared hash tag such as `{sensor1}`. For keys in different slots, Redis 8.4 and later reply `CROSSSLOT`. Redis 8.0 and 8.2 reply `TSDB: the key does not exist` (`tsCreateRule`) or `TSDB: compaction rule does not exist` (`tsDeleteRule`) instead, even though both keys exist. Lettuce passes the server's reply through.
+    In Redis Cluster, the source and destination keys must hash to the same slot. Use a shared hash tag such as `{sensor1}`; the server rejects keys in different slots.
 
 ## Writes
 
@@ -216,7 +216,7 @@ The reactive `tsGet` completes empty when the series has no samples.
 
 ### Ranges
 
-`tsRange` returns the samples within a `Range<Long>` in ascending order, `tsRevRange` in descending order. The bounds work as for `tsDel`: an unbounded side is sent as `-` or `+`, and an exclusive bound is sent as its inclusive neighbor (`t + 1` for a lower bound, `t - 1` for an upper bound):
+`tsRange` returns the samples within a `Range<Long>` in ascending order, `tsRevRange` in descending order. The bounds work as for `tsDel`: an unbounded side means the earliest or the latest sample, and an exclusive bound `t` is the same as the inclusive bound `t + 1` (lower bound) or `t - 1` (upper bound):
 
 ```java
 List<TsSample> all = commands.tsRange("temperature:room1", Range.unbounded());
@@ -250,7 +250,7 @@ for (TsSample bucket : hourly) {
 }
 ```
 
-With several aggregations, each sample has one value per aggregation, in the order of the request. `ALIGN`, `BUCKETTIMESTAMP` and `EMPTY` without an aggregation throw `IllegalArgumentException` when the command is built: the server rejects `ALIGN` but silently ignores the other two.
+With several aggregations, each sample has one value per aggregation, in the order of the request. `ALIGN`, `BUCKETTIMESTAMP` and `EMPTY` without an aggregation throw `IllegalArgumentException` when the command is built.
 
 For a compaction, the last reported bucket may include samples newer than the upper bound, because the bound limits only the bucket start.
 
@@ -274,10 +274,12 @@ List<TsSample> next = commands.tsRead("events", TsReadOffset.newSamples(), TsRea
 
 - A timeout returns the samples found so far, possibly none. `BLOCK 0` waits without a time limit.
 - Deleting or expiring the key (DEL, UNLINK, FLUSHDB, FLUSHALL, expiry, eviction) wakes every waiter with an empty list, so an empty list means either a timeout or a removed key.
-- The server rejects `BLOCK` inside MULTI and Lua scripts.
+- Inside MULTI and Lua scripts, the server rejects only a `BLOCK` that would wait. If fewer than `minCount` samples exist from the offset on (always with `newSamples()`), the command fails with an error; otherwise it returns the samples at once.
 
 !!! WARNING
     A blocking `tsRead` occupies its connection while it waits and stalls every other command sent on that connection, as `XREAD BLOCK` does. Use a dedicated connection whose command timeout is longer than the block time; Lettuce does not extend the timeout. In Redis Cluster, a cluster connection shares one connection per node, so a blocked `tsRead` stalls every command that cluster connection sends to that node: use a dedicated `StatefulRedisClusterConnection`.
+
+    With the reactive API, cancelling the subscription doesn't cancel the command on the server. With `BLOCK 0`, the connection stays blocked until enough samples arrive (`minCount`) or the key is removed, and later commands on that connection wait behind it. Use a finite `BLOCK` timeout or a dedicated connection for tailing. To abandon a dedicated reader that is still blocked, close its connection.
 
 With `ReadFrom` set to a replica, `tsRead` (including `BLOCK`) runs on a replica. A replica wakes only after the write has replicated to it, so read from the primary for low-latency tailing.
 
@@ -341,10 +343,10 @@ for (TsSeries<String> group : perRoom) {
 }
 ```
 
-- `getAggregations()` and `getReducer()` come from the request, so they are the same on RESP2 and RESP3.
-- `getSources()` is always available on RESP3. On RESP2 it is available only with `withLabels()`, because the server reports the sources only as a `__source__` label; a key that contains a comma is split wrongly. The synthetic labels `__reducer__` and `__source__` are removed from `getLabels()`.
+- `getAggregations()` and `getReducer()` reflect the request.
+- `getSources()` is always available on RESP3. On RESP2 it is available only with `withLabels()`, because the server reports the sources only as a `__source__` label. On RESP2, a source key that contains a comma is not reported correctly. The synthetic labels `__reducer__` and `__source__` are removed from `getLabels()`.
 - `GROUPBY` cannot be combined with several aggregations or with `excludeEmpty()`, and `withLabels()` cannot be combined with `selectedLabels(...)`. These combinations throw `IllegalArgumentException`.
-- By default every matching series is reported, also when it has no samples in the range. `excludeEmpty()` (Redis 8.10 and later) omits those series, even when aggregation `EMPTY` is set. Servers before 8.10 accept the option and ignore it without an error, so the series without samples are still returned.
+- By default every matching series is reported, also when it has no samples in the range. `excludeEmpty()` (Redis 8.10 and later) omits those series, even when aggregation `EMPTY` is set.
 
 !!! INFO
     The whole `TS.MRANGE`/`TS.MREVRANGE` reply is held in memory before it is returned. For many series or long ranges, narrow the filters or the range, use `COUNT`, or aggregate.
@@ -362,16 +364,13 @@ The overloads without a filter query all indexed series. The filter overloads re
 
 ### Redis Cluster
 
-In Redis Cluster, each label-index command runs on **one node**, chosen as for the Redis Query Engine (`FT.*`) commands. The commands are read-only, so the node follows `ReadFrom`. Lettuce does not send the command to every node, because the server gathers the results across shards itself.
+Each label-index command runs on one node and follows `ReadFrom`.
 
-| Server | Behavior |
-|--------|----------|
-| Redis 8.10 and later | Any node, primary or replica, returns the series of every shard once. The order depends on the node. |
-| Redis 8.0 – 8.8 | A node returns only its own shard's series until the undocumented command `TIMESERIES.REFRESHCLUSTER` has run on it. Run it on every primary after the cluster is formed and after every reshard, for example with `dispatch`. |
+On Redis 8.10 and later, any node, primary or replica, returns the series of every shard once. On Redis versions before 8.10, a cluster node may return only the series of its own shard.
 
 - Result order is not guaranteed; compare results without relying on order.
 - The server rejects these commands inside MULTI on a node in multi-shard mode.
-- If running the command on the chosen node fails for any reason, including a server error such as a malformed filter, Lettuce logs an ERROR ("Cluster routing failed for … - falling back to superCall") and runs the command again on the default connection. The second error is the one reported. The commands are read-only, so running them twice is safe, but expect the duplicate execution and the log entry.
+- If the command fails on the chosen node, Lettuce runs it once more on the default connection and reports the second error. The commands are read-only, so running them twice is safe.
 - The node-selection API (`connection.sync().nodes(...)`) runs the command on every selected node. On Redis 8.10 and later, each node returns every shard's series, so the combined results contain duplicates.
 
 ## Multi-key reads

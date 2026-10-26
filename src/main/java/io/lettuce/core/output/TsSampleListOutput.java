@@ -35,6 +35,7 @@ public class TsSampleListOutput<K, V> extends CommandOutput<K, V, List<TsSample>
      * Create a new output.
      *
      * @param codec the codec, must not be {@code null}.
+     * @since 8.0
      */
     public TsSampleListOutput(RedisCodec<K, V> codec) {
         super(codec, Collections.emptyList());

@@ -100,9 +100,9 @@ public final class TsReadOffset {
     }
 
     /**
-     * Return the argument sent to the server: {@code -}, {@code +}, {@code $} or the timestamp.
+     * Return the value sent to the server, for example {@code -}, {@code +}, {@code $} or the timestamp.
      *
-     * @return the wire form.
+     * @return the value sent to the server.
      */
     @Override
     public String toString() {

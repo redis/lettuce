@@ -80,9 +80,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
     /**
      * Delete all samples of a time series within a range of timestamps.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest). Because
-     * timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an exclusive lower bound
-     * `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample. Timestamps are integer milliseconds, so an exclusive lower
+     * bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t - 1`.
      *
      * @param key the key, must not be `null`.
      * @param range the range of timestamps in milliseconds, must not be `null`.
@@ -108,9 +107,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
     suspend fun tsInfo(key: K): TsInfoValue<K>?
 
     /**
-     * Get information about a time series, optionally including debug information. With `debug` set, the command sends
-     * `DEBUG` and the result includes the data chunks ([TsInfoValue.getChunks]) and the key name
-     * ([TsInfoValue.getKeySelfName]).
+     * Get information about a time series, optionally including debug information. With `debug` set, the result also includes
+     * the data chunks ([TsInfoValue.getChunks]) and the key name ([TsInfoValue.getKeySelfName]).
      *
      * @param key the key, must not be `null`.
      * @param debug `true` to request debug information.
@@ -127,14 +125,12 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * are aggregated. Each compacted sample has the start of its bucket as timestamp; buckets start at multiples of
      * `bucketDuration` from the epoch.
      *
-     * Both keys must hash to the same slot, for example by sharing a hash tag such as `{sensor1}`. In Redis Cluster, keys
-     * in different slots are rejected with `CROSSSLOT` on Redis 8.4 and later; Redis 8.0 and 8.2 reply
-     * `TSDB: the key does not exist` instead, even though both keys exist.
+     * Both keys must hash to the same slot, for example by sharing a hash tag such as `{sensor1}`. In Redis Cluster, the server
+     * rejects keys in different slots.
      *
      * @param sourceKey the key of the series to aggregate, must not be `null`.
      * @param destKey the key of the series that receives the compacted samples, must not be `null`.
-     * @param aggregation the aggregation, must not be `null`. `countNaN` and `countAll` require Redis 8.6 or
-     *        later.
+     * @param aggregation the aggregation, must not be `null`. `COUNTNAN` and `COUNTALL` require Redis 8.6 or later.
      * @param bucketDuration the duration of each bucket in milliseconds, must be positive.
      * @return String simple-string-reply `OK` if the rule was created.
      * @throws IllegalArgumentException if `sourceKey`, `destKey` or `aggregation` is `null`, or if
@@ -148,14 +144,12 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * Create a compaction rule with aligned buckets that aggregates the samples of `sourceKey` into `destKey`. Like
      * [tsCreateRule], but a bucket starts exactly at `alignTimestamp`.
      *
-     * Both keys must hash to the same slot, for example by sharing a hash tag such as `{sensor1}`. In Redis Cluster, keys
-     * in different slots are rejected with `CROSSSLOT` on Redis 8.4 and later; Redis 8.0 and 8.2 reply
-     * `TSDB: the key does not exist` instead, even though both keys exist.
+     * Both keys must hash to the same slot, for example by sharing a hash tag such as `{sensor1}`. In Redis Cluster, the server
+     * rejects keys in different slots.
      *
      * @param sourceKey the key of the series to aggregate, must not be `null`.
      * @param destKey the key of the series that receives the compacted samples, must not be `null`.
-     * @param aggregation the aggregation, must not be `null`. `countNaN` and `countAll` require Redis 8.6 or
-     *        later.
+     * @param aggregation the aggregation, must not be `null`. `COUNTNAN` and `COUNTALL` require Redis 8.6 or later.
      * @param bucketDuration the duration of each bucket in milliseconds, must be positive.
      * @param alignTimestamp the timestamp in milliseconds at which a bucket starts, must not be negative.
      * @return String simple-string-reply `OK` if the rule was created.
@@ -169,9 +163,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
     /**
      * Delete the compaction rule from `sourceKey` to `destKey`. Both series are kept.
      *
-     * Both keys must hash to the same slot, for example by sharing a hash tag such as `{sensor1}`. In Redis Cluster, keys
-     * in different slots are rejected with `CROSSSLOT` on Redis 8.4 and later; Redis 8.0 and 8.2 reply
-     * `TSDB: compaction rule does not exist` instead, even though both keys exist.
+     * Both keys must hash to the same slot, for example by sharing a hash tag such as `{sensor1}`. In Redis Cluster, the server
+     * rejects keys in different slots.
      *
      * @param sourceKey the key of the source series, must not be `null`.
      * @param destKey the key of the destination series, must not be `null`.
@@ -185,11 +178,10 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
     /**
      * Add a sample with the current server time to a time series, creating the series if it does not exist.
      *
-     * The sample gets timestamp `*`, so the server clock sets it. To set the timestamp, use
-     * `tsAdd(key, timestamp, value)`.
+     * The server clock sets the timestamp. To set the timestamp, use `tsAdd(key, timestamp, value)`.
      *
      * @param key the key, must not be `null`.
-     * @param value the value.
+     * @param value the value. NaN requires Redis 8.6 or later.
      * @return Long integer-reply the timestamp of the added sample, or the highest timestamp of the series if the sample was
      *         ignored as a duplicate (`IGNORE`).
      * @throws IllegalArgumentException if `key` is `null`.
@@ -201,14 +193,13 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
     /**
      * Add a sample with the current server time to a time series, with options.
      *
-     * The sample gets timestamp `*`, so the server clock sets it. To set the timestamp, use
-     * `tsAdd(key, timestamp, value, args)`.
+     * The server clock sets the timestamp. To set the timestamp, use `tsAdd(key, timestamp, value, args)`.
      *
      * If the series does not exist, it is created. The series options in `args` apply only when the series is created;
      * for an existing series the server ignores them.
      *
      * @param key the key, must not be `null`.
-     * @param value the value.
+     * @param value the value. NaN requires Redis 8.6 or later.
      * @param args the options, must not be `null`.
      * @return Long integer-reply the timestamp of the added sample, or the highest timestamp of the series if the sample was
      *         ignored as a duplicate (`IGNORE`).
@@ -278,7 +269,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * a new sample with the increased value is added.
      *
      * @param key the key, must not be `null`.
-     * @param addend the amount to add, must not be NaN.
+     * @param addend the amount to add. The server rejects NaN.
      * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
      *         sample was ignored as a duplicate (`IGNORE`).
      * @throws IllegalArgumentException if `key` is `null`.
@@ -296,7 +287,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * for an existing series the server ignores them.
      *
      * @param key the key, must not be `null`.
-     * @param addend the amount to add, must not be NaN.
+     * @param addend the amount to add. The server rejects NaN.
      * @param args the options, must not be `null`.
      * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
      *         sample was ignored as a duplicate (`IGNORE`).
@@ -312,7 +303,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * a new sample with the decreased value is added.
      *
      * @param key the key, must not be `null`.
-     * @param subtrahend the amount to subtract, must not be NaN.
+     * @param subtrahend the amount to subtract. The server rejects NaN.
      * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
      *         sample was ignored as a duplicate (`IGNORE`).
      * @throws IllegalArgumentException if `key` is `null`.
@@ -330,7 +321,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * for an existing series the server ignores them.
      *
      * @param key the key, must not be `null`.
-     * @param subtrahend the amount to subtract, must not be NaN.
+     * @param subtrahend the amount to subtract. The server rejects NaN.
      * @param args the options, must not be `null`.
      * @return Long integer-reply the timestamp of the updated or added sample, or the highest timestamp of the series if the
      *         sample was ignored as a duplicate (`IGNORE`).
@@ -353,8 +344,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
     suspend fun tsGet(key: K): TsSample?
 
     /**
-     * Get the latest sample of a time series. With `latest` set, the command sends `LATEST`: for a compaction, the
-     * latest, possibly partial, bucket is reported. The server ignores it for a series that is not a compaction.
+     * Get the latest sample of a time series. With `latest` set, the latest, possibly partial, bucket of a compaction is
+     * reported; for a series that is not a compaction, `latest` has no effect.
      *
      * @param key the key, must not be `null`.
      * @param latest `true` to report the latest, possibly partial, bucket of a compaction.
@@ -368,9 +359,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
     /**
      * Get the samples of a time series within a range of timestamps, in ascending order.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest). Because
-     * timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an exclusive lower bound
-     * `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample. Timestamps are integer milliseconds, so an exclusive lower
+     * bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t - 1`.
      *
      * @param key the key, must not be `null`.
      * @param range the range of timestamps in milliseconds, must not be `null`.
@@ -407,9 +397,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
     /**
      * Get the samples of a time series within a range of timestamps, in descending order.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest). Because
-     * timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an exclusive lower bound
-     * `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample. Timestamps are integer milliseconds, so an exclusive lower
+     * bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t - 1`.
      *
      * @param key the key, must not be `null`.
      * @param range the range of timestamps in milliseconds, must not be `null`.
@@ -464,17 +453,19 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * Read the samples of a time series from `offset` on, in ascending order, optionally waiting for new samples.
      * Requires Redis 8.10 or later.
      *
-     * With [TsReadArgs.block], the command waits until enough samples exist, the block time ends, or the key
-     * is removed. A timeout returns the samples found so far. Deleting or expiring the key (DEL, UNLINK, FLUSHDB, FLUSHALL,
-     * expiry, eviction) wakes every waiter with an empty list, `BLOCK 0` included, so an empty list means either a
-     * timeout or a removed key. `BLOCK 0` waits without a time limit.
+     * With [TsReadArgs.block], the command waits until enough samples exist, the block time ends, or the key is removed. A
+     * timeout returns the samples found so far. Deleting or expiring the key (`DEL`, `UNLINK`, `FLUSHDB`, `FLUSHALL`, expiry,
+     * eviction) wakes every waiter with an empty list, `BLOCK 0` included, so an empty list means either a timeout or a removed
+     * key. `BLOCK 0` waits without a time limit.
      *
      * While it waits, the command occupies its connection and stalls every other command sent on that connection. Use a
      * dedicated connection whose command timeout is longer than the block time; Lettuce does not extend the timeout. In Redis
      * Cluster, a cluster connection shares one connection per node, so a blocked TS.READ stalls every command that cluster
      * connection sends to that node; use a dedicated `StatefulRedisClusterConnection`. With `ReadFrom` set to a
      * replica, TS.READ runs on a replica, which wakes only after the write has replicated to it; read from the primary for
-     * low-latency tailing. The server rejects `BLOCK` inside MULTI and Lua scripts.
+     * low-latency tailing. Inside MULTI and Lua scripts, the server rejects only a `BLOCK` that would wait: if fewer than
+     * `minCount` samples exist from the offset on (always with [TsReadOffset.newSamples]), the command fails with an error;
+     * otherwise it returns the samples at once.
      *
      * Use [TsReadOffset.newest] or [TsReadOffset.newSamples] only on the first call, and continue with
      * `TsReadOffset.from(lastTimestamp + 1)`.
@@ -496,9 +487,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @param filter the filter, must not be `null`.
      * @return List<TsMGetValue> one entry per matching series; empty if no series matches.
@@ -514,9 +504,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
      *        elements.
@@ -533,9 +522,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @param args the options, must not be `null`.
      * @param filter the filter, must not be `null`.
@@ -552,9 +540,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @param args the options, must not be `null`.
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
@@ -573,9 +560,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @param filter the filter, must not be `null`.
      * @return List<K> the keys of the matching series; empty if no series matches.
@@ -591,9 +577,8 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
      *        elements.
@@ -608,23 +593,21 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order. No labels
      * are returned.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
-     * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the matching series. Timestamps are integer
+     * milliseconds, so an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t`
+     * the same as `t - 1`.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * The whole reply is held in memory before it is returned.
      *
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param filter the filter, must not be `null`.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
-     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @return List<TsSeries> one entry per matching series; a series without samples in the range has an empty sample list.
      * @throws IllegalArgumentException if `range` is `null`, `filter` is `null`, or if `range`
      *         has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
      *         or ends before timestamp 0 (for example an exclusive upper bound 0).
@@ -637,24 +620,22 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order. No labels
      * are returned.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
-     * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the matching series. Timestamps are integer
+     * milliseconds, so an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t`
+     * the same as `t - 1`.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * The whole reply is held in memory before it is returned.
      *
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
      *        elements.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
-     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @return List<TsSeries> one entry per matching series; a series without samples in the range has an empty sample list.
      * @throws IllegalArgumentException if `range` is `null`, `filters` is `null`, empty or contains
      *         `null` elements, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
      *         or ends before timestamp 0 (for example an exclusive upper bound 0).
@@ -667,21 +648,19 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order, with
      * options such as labels, aggregation and `GROUPBY`.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
-     * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the matching series. Timestamps are integer
+     * milliseconds, so an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t`
+     * the same as `t - 1`.
      *
      * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
-     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by
-     * the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later; earlier servers accept it and ignore it without an error,
-     * so series without samples in the range are still returned.
+     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by the reducer.
+     * `EXCLUDEEMPTY` requires Redis 8.10 or later.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * The whole reply is held in memory before it is returned.
      *
@@ -702,21 +681,19 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * Get the samples within a range of timestamps of every time series that matches the filters, in ascending order, with
      * options such as labels, aggregation and `GROUPBY`.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
-     * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the matching series. Timestamps are integer
+     * milliseconds, so an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t`
+     * the same as `t - 1`.
      *
      * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
-     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by
-     * the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later; earlier servers accept it and ignore it without an error,
-     * so series without samples in the range are still returned.
+     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by the reducer.
+     * `EXCLUDEEMPTY` requires Redis 8.10 or later.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * The whole reply is held in memory before it is returned.
      *
@@ -738,23 +715,21 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * Get the samples within a range of timestamps of every time series that matches the filters, in descending order. No
      * labels are returned.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
-     * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the matching series. Timestamps are integer
+     * milliseconds, so an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t`
+     * the same as `t - 1`.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * The whole reply is held in memory before it is returned.
      *
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param filter the filter, must not be `null`.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
-     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @return List<TsSeries> one entry per matching series; a series without samples in the range has an empty sample list.
      * @throws IllegalArgumentException if `range` is `null`, `filter` is `null`, or if `range`
      *         has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
      *         or ends before timestamp 0 (for example an exclusive upper bound 0).
@@ -767,24 +742,22 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * Get the samples within a range of timestamps of every time series that matches the filters, in descending order. No
      * labels are returned.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
-     * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the matching series. Timestamps are integer
+     * milliseconds, so an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t`
+     * the same as `t - 1`.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * The whole reply is held in memory before it is returned.
      *
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param filters the filters, combined with AND, must not be `null` or empty and must not contain `null`
      *        elements.
-     * @return List<TsSeries> one entry per matching series, or per group with `GROUPBY`; a series without samples
-     *         in the range has an empty sample list unless `EXCLUDEEMPTY` is set.
+     * @return List<TsSeries> one entry per matching series; a series without samples in the range has an empty sample list.
      * @throws IllegalArgumentException if `range` is `null`, `filters` is `null`, empty or contains
      *         `null` elements, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
      *         or ends before timestamp 0 (for example an exclusive upper bound 0).
@@ -797,21 +770,19 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * Get the samples within a range of timestamps of every time series that matches the filters, in descending order, with
      * options such as labels, aggregation and `GROUPBY`.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
-     * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the matching series. Timestamps are integer
+     * milliseconds, so an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t`
+     * the same as `t - 1`.
      *
      * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
-     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by
-     * the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later; earlier servers accept it and ignore it without an error,
-     * so series without samples in the range are still returned.
+     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by the reducer.
+     * `EXCLUDEEMPTY` requires Redis 8.10 or later.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * The whole reply is held in memory before it is returned.
      *
@@ -832,21 +803,19 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * Get the samples within a range of timestamps of every time series that matches the filters, in descending order, with
      * options such as labels, aggregation and `GROUPBY`.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the matching series. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor:
-     * an exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the matching series. Timestamps are integer
+     * milliseconds, so an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t`
+     * the same as `t - 1`.
      *
      * With an aggregation, each sample is one bucket with one value per aggregation; several aggregations require Redis 8.8 or
-     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by
-     * the reducer. `EXCLUDEEMPTY` requires Redis 8.10 or later; earlier servers accept it and ignore it without an error,
-     * so series without samples in the range are still returned.
+     * later and cannot be combined with `GROUPBY`. With `GROUPBY`, each entry is one group of series combined by the reducer.
+     * `EXCLUDEEMPTY` requires Redis 8.10 or later.
      *
      * The server requires at least one filter that matches a value ([TsFilter.equal] or
      * [TsFilter.in]).
      *
-     * In Redis Cluster the command runs on one node. On Redis 8.0–8.8, results include every shard only after
-     * `TIMESERIES.REFRESHCLUSTER` has run on that node. Result order is not guaranteed. The server rejects the command
-     * inside MULTI on a multi-shard node.
+     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
+     * MULTI on a multi-shard node.
      *
      * The whole reply is held in memory before it is returned.
      *
@@ -986,14 +955,13 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
      * column of NaN values.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
-     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the given keys. Timestamps are integer milliseconds, so
+     * an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t -
+     * 1`.
      *
      * @param keys the keys, must not be `null` or empty and must not contain `null` elements.
      * @param range the range of timestamps in milliseconds, must not be `null`.
-     * @return List<TsNRangeRow> the rows in ascending timestamp order, as the server sends them; empty if there are no
-     *         samples in the range.
+     * @return List<TsNRangeRow> the rows in ascending timestamp order; empty if there are no samples in the range.
      * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
      *         `range` is `null`, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
      *         or ends before timestamp 0 (for example an exclusive upper bound 0).
@@ -1010,9 +978,9 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
      * column of NaN values.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
-     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the given keys. Timestamps are integer milliseconds, so
+     * an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t -
+     * 1`.
      *
      * With an aggregation, each row is one bucket and has, for every key in key order, one value per aggregation of that key;
      * the arguments need one aggregation list per key, or [TsNRangeArgs.aggregationForEachKey].
@@ -1020,8 +988,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @param keys the keys, must not be `null` or empty and must not contain `null` elements.
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param args the options, must not be `null`.
-     * @return List<TsNRangeRow> the rows in ascending timestamp order, as the server sends them; empty if there are no
-     *         samples in the range.
+     * @return List<TsNRangeRow> the rows in ascending timestamp order; empty if there are no samples in the range.
      * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
      *         `range` or `args` is `null`, if `range` has an exclusive lower bound at
      *         [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
@@ -1041,15 +1008,14 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
      * column of NaN values.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
-     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the given keys. Timestamps are integer milliseconds, so
+     * an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t -
+     * 1`.
      *
      * @param key1 the first key, must not be `null`.
      * @param key2 the second key, must not be `null`.
      * @param range the range of timestamps in milliseconds, must not be `null`.
-     * @return List<TsNRangeRow> the rows in ascending timestamp order, as the server sends them; empty if there are no
-     *         samples in the range.
+     * @return List<TsNRangeRow> the rows in ascending timestamp order; empty if there are no samples in the range.
      * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` is `null`, or if
      *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
      *         or ends before timestamp 0 (for example an exclusive upper bound 0).
@@ -1066,9 +1032,9 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
      * column of NaN values.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
-     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the given keys. Timestamps are integer milliseconds, so
+     * an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t -
+     * 1`.
      *
      * With an aggregation, each row is one bucket and has, for every key in key order, one value per aggregation of that key;
      * the arguments need one aggregation list per key, or [TsNRangeArgs.aggregationForEachKey].
@@ -1077,8 +1043,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @param key2 the second key, must not be `null`.
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param args the options, must not be `null`.
-     * @return List<TsNRangeRow> the rows in ascending timestamp order, as the server sends them; empty if there are no
-     *         samples in the range.
+     * @return List<TsNRangeRow> the rows in ascending timestamp order; empty if there are no samples in the range.
      * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` or `args` is
      *         `null`, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
      *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if `args` does not match the number of keys or sets `ALIGN`,
@@ -1097,14 +1062,13 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
      * column of NaN values.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
-     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the given keys. Timestamps are integer milliseconds, so
+     * an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t -
+     * 1`.
      *
      * @param keys the keys, must not be `null` or empty and must not contain `null` elements.
      * @param range the range of timestamps in milliseconds, must not be `null`.
-     * @return List<TsNRangeRow> the rows in descending timestamp order, as the server sends them; empty if there are no
-     *         samples in the range.
+     * @return List<TsNRangeRow> the rows in descending timestamp order; empty if there are no samples in the range.
      * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
      *         `range` is `null`, or if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
      *         or ends before timestamp 0 (for example an exclusive upper bound 0).
@@ -1121,9 +1085,9 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
      * column of NaN values.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
-     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the given keys. Timestamps are integer milliseconds, so
+     * an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t -
+     * 1`.
      *
      * With an aggregation, each row is one bucket and has, for every key in key order, one value per aggregation of that key;
      * the arguments need one aggregation list per key, or [TsNRangeArgs.aggregationForEachKey].
@@ -1131,8 +1095,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @param keys the keys, must not be `null` or empty and must not contain `null` elements.
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param args the options, must not be `null`.
-     * @return List<TsNRangeRow> the rows in descending timestamp order, as the server sends them; empty if there are no
-     *         samples in the range.
+     * @return List<TsNRangeRow> the rows in descending timestamp order; empty if there are no samples in the range.
      * @throws IllegalArgumentException if `keys` is `null`, empty or contains `null` elements, if
      *         `range` or `args` is `null`, if `range` has an exclusive lower bound at
      *         [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
@@ -1152,15 +1115,14 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
      * column of NaN values.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
-     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the given keys. Timestamps are integer milliseconds, so
+     * an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t -
+     * 1`.
      *
      * @param key1 the first key, must not be `null`.
      * @param key2 the second key, must not be `null`.
      * @param range the range of timestamps in milliseconds, must not be `null`.
-     * @return List<TsNRangeRow> the rows in descending timestamp order, as the server sends them; empty if there are no
-     *         samples in the range.
+     * @return List<TsNRangeRow> the rows in descending timestamp order; empty if there are no samples in the range.
      * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` is `null`, or if
      *         `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
      *         or ends before timestamp 0 (for example an exclusive upper bound 0).
@@ -1177,9 +1139,9 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * A key given twice gets two columns. A key that does not exist is an error (`TSDB: the key does not exist`), not a
      * column of NaN values.
      *
-     * An inclusive bound sends that timestamp, and an unbounded side sends `-` (earliest) or `+` (latest) across
-     * the given keys. Because timestamps are integer milliseconds, an exclusive bound is sent as its inclusive neighbor: an
-     * exclusive lower bound `t` sends `t + 1`, an exclusive upper bound `t` sends `t - 1`.
+     * An unbounded side means the earliest or the latest sample across the given keys. Timestamps are integer milliseconds, so
+     * an exclusive lower bound `t` is the same as an inclusive bound `t + 1`, and an exclusive upper bound `t` the same as `t -
+     * 1`.
      *
      * With an aggregation, each row is one bucket and has, for every key in key order, one value per aggregation of that key;
      * the arguments need one aggregation list per key, or [TsNRangeArgs.aggregationForEachKey].
@@ -1188,8 +1150,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @param key2 the second key, must not be `null`.
      * @param range the range of timestamps in milliseconds, must not be `null`.
      * @param args the options, must not be `null`.
-     * @return List<TsNRangeRow> the rows in descending timestamp order, as the server sends them; empty if there are no
-     *         samples in the range.
+     * @return List<TsNRangeRow> the rows in descending timestamp order; empty if there are no samples in the range.
      * @throws IllegalArgumentException if `key1` or `key2` is `null`, if `range` or `args` is
      *         `null`, if `range` has an exclusive lower bound at [Long.MAX_VALUE] or an exclusive upper bound at [Long.MIN_VALUE],
      *         or ends before timestamp 0 (for example an exclusive upper bound 0), or if `args` does not match the number of keys or sets `ALIGN`,

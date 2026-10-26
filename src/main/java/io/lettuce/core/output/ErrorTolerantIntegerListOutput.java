@@ -32,6 +32,7 @@ public class ErrorTolerantIntegerListOutput<K, V> extends CommandOutput<K, V, Li
      * Create a new output.
      *
      * @param codec the codec, must not be {@code null}.
+     * @since 8.0
      */
     public ErrorTolerantIntegerListOutput(RedisCodec<K, V> codec) {
         super(codec, Collections.emptyList());

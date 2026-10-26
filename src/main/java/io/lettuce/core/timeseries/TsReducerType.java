@@ -93,9 +93,9 @@ public enum TsReducerType implements TsReducer {
     }
 
     /**
-     * Return the token sent to the server.
+     * Return the name sent to the server.
      *
-     * @return the wire token.
+     * @return the name sent to the server.
      */
     String getToken() {
         return token;
@@ -107,9 +107,9 @@ public enum TsReducerType implements TsReducer {
     }
 
     /**
-     * Return the wire token, for example {@code STD.P} for {@link #STD_P}.
+     * Return the name sent to the server, for example {@code STD.P} for {@link #STD_P}.
      *
-     * @return the wire token.
+     * @return the name sent to the server.
      */
     @Override
     public String toString() {

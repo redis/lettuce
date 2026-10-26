@@ -57,9 +57,9 @@ public enum TsDuplicatePolicyType implements TsDuplicatePolicy {
     }
 
     /**
-     * Return the token sent to the server.
+     * Return the name sent to the server.
      *
-     * @return the wire token.
+     * @return the name sent to the server.
      */
     String getToken() {
         return token;
@@ -71,9 +71,9 @@ public enum TsDuplicatePolicyType implements TsDuplicatePolicy {
     }
 
     /**
-     * Return the wire token, for example {@code BLOCK}.
+     * Return the name sent to the server, for example {@code BLOCK}.
      *
-     * @return the wire token.
+     * @return the name sent to the server.
      */
     @Override
     public String toString() {

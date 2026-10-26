@@ -16,9 +16,9 @@ import java.util.Objects;
  * <a href="https://redis.io/commands/ts.mrevrange/">TS.MREVRANGE</a> reply: a matching series, or with {@code GROUPBY} one
  * group of series combined by the reducer.
  * <p>
- * {@link #getAggregations()} and {@link #getReducer()} come from the request, so they are the same on RESP2 and RESP3. RESP2
- * and RESP3 replies produce equal values, except {@link #getSources()}: on RESP2 it is only available when the request has
- * {@code WITHLABELS}. {@link TsSeries} is immutable.
+ * {@link #getAggregations()} and {@link #getReducer()} reflect the request. RESP2 and RESP3 replies produce equal values,
+ * except {@link #getSources()}: on RESP2 it is only available when the request has {@code WITHLABELS}. {@link TsSeries} is
+ * immutable.
  *
  * @param <K> Key type.
  * @author Aleksandar Todorov
@@ -52,7 +52,7 @@ public final class TsSeries<K> {
     }
 
     /**
-     * Whether this entry is a group of series ({@code GROUPBY}).
+     * Return whether this entry is a group of series ({@code GROUPBY}).
      *
      * @return {@code true} if the request had {@code GROUPBY}.
      * @since 8.0
@@ -115,8 +115,8 @@ public final class TsSeries<K> {
 
     /**
      * Get the keys of the series combined into this group. On RESP3 they are always available for a group. On RESP2 they are
-     * only available when the request has {@code WITHLABELS}; they are read from the {@code __source__} label, so a key that
-     * contains a comma is split wrongly.
+     * only available when the request has {@code WITHLABELS}. On RESP2, a source key that contains a comma is not reported
+     * correctly.
      *
      * @return the source keys, or {@code null} if this entry is not a group or the keys are not available.
      * @since 8.0

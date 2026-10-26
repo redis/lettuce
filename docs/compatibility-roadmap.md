@@ -50,24 +50,21 @@ Lettuce provides native support for Redis core data types and select Redis modul
 ### Example: Using Custom Commands for Unsupported Modules
 
 ```java
-// Define a custom interface for RedisTimeSeries commands
-interface TimeSeriesCommands extends Commands {
+// Define a custom interface for RedisGraph commands
+interface GraphCommands extends Commands {
 
-    @Command("TS.CREATE")
-    String tsCreate(String key);
+    @Command("GRAPH.QUERY")
+    List<Object> graphQuery(String graph, String query);
 
-    @Command("TS.ADD")
-    Long tsAdd(String key, long timestamp, double value);
-
-    @Command("TS.GET")
-    List<Object> tsGet(String key);
+    @Command("GRAPH.DELETE")
+    String graphDelete(String graph);
 }
 
 // Use the custom commands
 RedisCommandFactory factory = new RedisCommandFactory(connection);
-TimeSeriesCommands ts = factory.getCommands(TimeSeriesCommands.class);
-ts.tsCreate("sensor:temperature");
-ts.tsAdd("sensor:temperature", System.currentTimeMillis(), 23.5);
+GraphCommands graph = factory.getCommands(GraphCommands.class);
+graph.graphQuery("social", "CREATE (:Person {name: 'Alice'})");
+graph.graphDelete("social");
 ```
 
 
