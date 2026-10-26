@@ -254,10 +254,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * The server handles each sample on its own. A rejected sample, for example a duplicate under policy {@code BLOCK} or a
      * missing key, gives a {@code null} element at its position, and the other samples are still added. To add a single sample
      * with options, use {@link #tsAdd(Object, long, double, TsAddArgs)}.
-     * <p>
-     * With the Redis Cluster API ({@code RedisAdvancedClusterCommands} and its async and reactive variants), samples whose keys
-     * hash to different slots are sent as one command per slot. The split is not atomic across slots: each slot's command is
-     * applied on its own. The result keeps the order of {@code samples}.
      *
      * @param samples the samples, must not be {@code null} or empty and must not contain {@code null} elements.
      * @return List&lt;Long&gt; one element per sample, in the order of {@code samples}: the timestamp of the added sample, the
@@ -494,9 +490,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @param filter the filter, must not be {@code null}.
      * @return List&lt;TsMGetValue&gt; one entry per matching series; empty if no series matches.
@@ -511,9 +504,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @param filters the filters, combined with AND, must not be {@code null} or empty and must not contain {@code null}
      *        elements.
@@ -529,9 +519,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @param args the options, must not be {@code null}.
      * @param filter the filter, must not be {@code null}.
@@ -547,9 +534,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @param args the options, must not be {@code null}.
      * @param filters the filters, combined with AND, must not be {@code null} or empty and must not contain {@code null}
@@ -567,9 +551,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @param filter the filter, must not be {@code null}.
      * @return List&lt;K&gt; the keys of the matching series; empty if no series matches.
@@ -584,9 +565,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @param filters the filters, combined with AND, must not be {@code null} or empty and must not contain {@code null}
      *        elements.
@@ -607,9 +585,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      * <p>
      * The whole reply is held in memory before it is returned.
      *
@@ -635,9 +610,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      * <p>
      * The whole reply is held in memory before it is returned.
      *
@@ -668,9 +640,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      * <p>
      * The whole reply is held in memory before it is returned.
      *
@@ -703,9 +672,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
      * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
-     * <p>
      * The whole reply is held in memory before it is returned.
      *
      * @param range the range of timestamps in milliseconds, must not be {@code null}.
@@ -734,9 +700,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
      * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
-     * <p>
      * The whole reply is held in memory before it is returned.
      *
      * @param range the range of timestamps in milliseconds, must not be {@code null}.
@@ -761,9 +724,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      * <p>
      * The whole reply is held in memory before it is returned.
      *
@@ -794,9 +754,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      * <p>
      * The whole reply is held in memory before it is returned.
      *
@@ -829,9 +786,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
      * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
-     * <p>
      * The whole reply is held in memory before it is returned.
      *
      * @param range the range of timestamps in milliseconds, must not be {@code null}.
@@ -853,9 +807,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * Get the names of the labels of all indexed time series. Requires Redis 8.10 or later.
      * <p>
      * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @return List&lt;String&gt; the label names; empty if no series matches.
      * @since 8.0
@@ -870,9 +821,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @param filter the filter, must not be {@code null}.
      * @return List&lt;String&gt; the label names; empty if no series matches.
@@ -890,9 +838,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @param filters the filters, combined with AND, must not be {@code null} or empty and must not contain {@code null}
      *        elements.
@@ -907,9 +852,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * Get the values of label {@code label} across all indexed time series. Requires Redis 8.10 or later.
      * <p>
      * Results are unordered and contain no duplicates. Labels are decoded as UTF-8, whatever codec the connection uses.
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @param label the label name, must not be {@code null} or empty.
      * @return List&lt;String&gt; the values; empty if no series matches or no series has the label.
@@ -926,9 +868,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @param label the label name, must not be {@code null} or empty.
      * @param filter the filter, must not be {@code null}.
@@ -947,9 +886,6 @@ public interface RedisTimeSeriesAsyncCommands<K> {
      * <p>
      * The server requires at least one filter that matches a value ({@link TsFilter#equal(String, String)} or
      * {@link TsFilter#in(String, String...)}).
-     * <p>
-     * In Redis Cluster the command runs on one node. Result order is not guaranteed. The server rejects the command inside
-     * MULTI on a multi-shard node.
      *
      * @param label the label name, must not be {@code null} or empty.
      * @param filters the filters, combined with AND, must not be {@code null} or empty and must not contain {@code null}
