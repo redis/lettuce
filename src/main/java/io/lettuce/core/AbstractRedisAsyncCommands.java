@@ -4929,13 +4929,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Long> tsAdd(K key, double value) {
-        return dispatch(timeSeriesCommandBuilder.tsAdd(key, value));
+    public RedisFuture<Long> tsAddNow(K key, double value) {
+        return dispatch(timeSeriesCommandBuilder.tsAddNow(key, value));
     }
 
     @Override
-    public RedisFuture<Long> tsAdd(K key, double value, TsAddArgs args) {
-        return dispatch(timeSeriesCommandBuilder.tsAdd(key, value, args));
+    public RedisFuture<Long> tsAddNow(K key, double value, TsAddArgs args) {
+        return dispatch(timeSeriesCommandBuilder.tsAddNow(key, value, args));
     }
 
     @Override

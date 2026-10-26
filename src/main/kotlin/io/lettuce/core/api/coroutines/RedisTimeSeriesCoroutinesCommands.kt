@@ -195,7 +195,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
      */
-    suspend fun tsAdd(key: K, value: Double): Long?
+    suspend fun tsAddNow(key: K, value: Double): Long?
 
     /**
      * Add a sample with the current server time to a time series, with options.
@@ -215,7 +215,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
      */
-    suspend fun tsAdd(key: K, value: Double, args: TsAddArgs): Long?
+    suspend fun tsAddNow(key: K, value: Double, args: TsAddArgs): Long?
 
     /**
      * Add a sample to a time series, creating the series if it does not exist.

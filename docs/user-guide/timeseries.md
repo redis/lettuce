@@ -150,19 +150,16 @@ commands.tsDeleteRule("{sensor1}:raw", "{sensor1}:avg-1m");   // keeps both seri
 
 ### Add a sample
 
-`tsAdd` adds one sample and returns its timestamp. It creates the series if it does not exist; the series options in `TsAddArgs` apply only then:
+`tsAdd` adds one sample with a timestamp and returns the timestamp. `tsAddNow` adds one sample with the timestamp `*`, so the server clock sets it. Both create the series if it does not exist; the series options in `TsAddArgs` apply only then:
 
 ```java
 Long ts = commands.tsAdd("temperature:room1", 1700000000000L, 21.5);    // explicit timestamp in milliseconds
-Long now = commands.tsAdd("temperature:room1", 21.7);                   // timestamp * : the server clock sets it
+Long now = commands.tsAddNow("temperature:room1", 21.7);                // timestamp * : the server clock sets it
 
 commands.tsAdd("temperature:room3", 1700000000000L, 19.0, TsAddArgs.Builder.retention(Duration.ofDays(7))
         .label("sensor", "temperature")
         .onDuplicate(TsDuplicatePolicyType.LAST));
 ```
-
-!!! WARNING
-    `tsAdd(key, value)` sends the timestamp `*`. Java converts a `long` to `double` without a cast, so `tsAdd(key, timestampMillis)` compiles and stores the timestamp as the **value**. To set the timestamp, use `tsAdd(key, timestamp, value)`.
 
 `onDuplicate` overrides the duplicate policy of the series for this call only. It has no effect when the call creates the series.
 
@@ -184,7 +181,7 @@ commands.tsAdd("power:meter1", 1500, 10.2);   // 1000: ignored, within 1000 ms a
 List<Long> result = commands.tsMAdd(Arrays.asList(
         TsMAddValue.of("temperature:room1", 1700000001000L, 21.6),
         TsMAddValue.of("temperature:room2", 1700000001000L, 22.1),
-        TsMAddValue.of("temperature:room1", 21.8)));                   // timestamp * : the server clock sets it
+        TsMAddValue.now("temperature:room1", 21.8)));                  // timestamp * : the server clock sets it
 ```
 
 The server handles each sample on its own. A rejected sample (for example a duplicate under policy `BLOCK`, or a key that does not exist) gives a `null` element at its position, and the other samples are still added. The reactive API emits `Value.empty()` for a rejected sample, and the Kotlin API returns `List<Long?>`. To add a single sample with options, use `tsAdd`.

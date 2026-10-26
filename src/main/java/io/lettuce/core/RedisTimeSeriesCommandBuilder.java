@@ -178,7 +178,7 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
                 .add(bucketDuration);
     }
 
-    Command<K, V, Long> tsAdd(K key, double value) {
+    Command<K, V, Long> tsAddNow(K key, double value) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(SERVER_CLOCK).add(value);
@@ -186,7 +186,7 @@ class RedisTimeSeriesCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> 
         return createCommand(TS_ADD, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, Long> tsAdd(K key, double value, TsAddArgs addArgs) {
+    Command<K, V, Long> tsAddNow(K key, double value, TsAddArgs addArgs) {
         notNullKey(key);
         LettuceAssert.notNull(addArgs, "TsAddArgs " + MUST_NOT_BE_NULL);
 

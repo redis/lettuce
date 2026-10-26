@@ -376,13 +376,14 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     // --- TS.ADD ------------------------------------------------------------------------------------------------------
 
     /**
-     * Scenario A05: {@code tsAdd(k, v)} sends {@code TS.ADD k * v}.
+     * Scenario A05: {@code tsAddNow(k, v)} sends {@code TS.ADD k * v}.
      */
     @Test
     void addWithoutTimestampSendsStar() {
 
-        assertThat(encode(builder.tsAdd(KEY, 2.5))).isEqualTo("*4\r\n$6\r\nTS.ADD\r\n$6\r\n{ts}:k\r\n$1\r\n*\r\n$3\r\n2.5\r\n");
-        assertThat(tokens(builder.tsAdd(KEY, 2.5, new TsAddArgs().retention(10)))).containsExactly("TS.ADD", KEY, "*", "2.5",
+        assertThat(encode(builder.tsAddNow(KEY, 2.5)))
+                .isEqualTo("*4\r\n$6\r\nTS.ADD\r\n$6\r\n{ts}:k\r\n$1\r\n*\r\n$3\r\n2.5\r\n");
+        assertThat(tokens(builder.tsAddNow(KEY, 2.5, new TsAddArgs().retention(10)))).containsExactly("TS.ADD", KEY, "*", "2.5",
                 "RETENTION", "10");
     }
 
@@ -411,7 +412,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
         assertThat(tokens(builder.tsAdd(KEY, 1000L, 2.5, args))).containsExactly("TS.ADD", KEY, "1000", "2.5", "RETENTION",
                 "5000", "ENCODING", "UNCOMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "ON_DUPLICATE", "MIN",
                 "IGNORE", "10", "0.5", "LABELS", "sensor", "temp", "area", "north");
-        assertThat(tokens(builder.tsAdd(KEY, 2.5, args))).containsExactly("TS.ADD", KEY, "*", "2.5", "RETENTION", "5000",
+        assertThat(tokens(builder.tsAddNow(KEY, 2.5, args))).containsExactly("TS.ADD", KEY, "*", "2.5", "RETENTION", "5000",
                 "ENCODING", "UNCOMPRESSED", "CHUNK_SIZE", "128", "DUPLICATE_POLICY", "LAST", "ON_DUPLICATE", "MIN", "IGNORE",
                 "10", "0.5", "LABELS", "sensor", "temp", "area", "north");
     }
@@ -447,9 +448,9 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     @Test
     void addRejectsNullArguments() {
 
-        assertThatThrownBy(() -> builder.tsAdd(null, 1.0)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> builder.tsAdd(null, 1.0, new TsAddArgs())).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> builder.tsAdd(KEY, 1.0, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsAddNow(null, 1.0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsAddNow(null, 1.0, new TsAddArgs())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> builder.tsAddNow(KEY, 1.0, null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsAdd(null, 1L, 1.0)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsAdd(null, 1L, 1.0, new TsAddArgs())).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsAdd(KEY, 1L, 1.0, null)).isInstanceOf(IllegalArgumentException.class);
@@ -458,13 +459,13 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     // --- TS.MADD -----------------------------------------------------------------------------------------------------
 
     /**
-     * Scenario A05: {@code TsMAddValue.of(k, v)} is sent as {@code k * v}; samples keep the list order, including a repeated
+     * Scenario A05: {@code TsMAddValue.now(k, v)} is sent as {@code k * v}; samples keep the list order, including a repeated
      * key.
      */
     @Test
     void maddSendsTriplesInOrder() {
 
-        List<TsMAddValue<String>> samples = Arrays.asList(TsMAddValue.of("{ts}:a", 1000L, 1.5), TsMAddValue.of("{ts}:b", 2.5),
+        List<TsMAddValue<String>> samples = Arrays.asList(TsMAddValue.of("{ts}:a", 1000L, 1.5), TsMAddValue.now("{ts}:b", 2.5),
                 TsMAddValue.of("{ts}:a", 2000L, 3.5));
 
         assertThat(tokens(builder.tsMAdd(samples))).containsExactly("TS.MADD", "{ts}:a", "1000", "1.5", "{ts}:b", "*", "2.5",
@@ -479,7 +480,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
     @Test
     void maddWireBytes() {
 
-        assertThat(encode(builder.tsMAdd(Collections.singletonList(TsMAddValue.of(KEY, 2.5)))))
+        assertThat(encode(builder.tsMAdd(Collections.singletonList(TsMAddValue.now(KEY, 2.5)))))
                 .isEqualTo("*4\r\n$7\r\nTS.MADD\r\n$6\r\n{ts}:k\r\n$1\r\n*\r\n$3\r\n2.5\r\n");
     }
 
@@ -491,7 +492,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
         assertThatThrownBy(() -> builder.tsMAdd(null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsMAdd(Collections.emptyList())).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> builder.tsMAdd(Arrays.asList(TsMAddValue.of(KEY, 1.0), null)))
+        assertThatThrownBy(() -> builder.tsMAdd(Arrays.asList(TsMAddValue.now(KEY, 1.0), null)))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsMAddValues(null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> builder.tsMAddValues(Collections.emptyList())).isInstanceOf(IllegalArgumentException.class);

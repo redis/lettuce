@@ -46,12 +46,12 @@ class TsMAddValueUnitTests {
     }
 
     /**
-     * Scenario U14: {@code of(key, value)} carries the server-clock marker: no timestamp ({@code null}), sent as {@code *}.
+     * Scenario U14: {@code now(key, value)} carries the server-clock marker: no timestamp ({@code null}), sent as {@code *}.
      */
     @Test
     void ofWithoutTimestampHasServerClockMarker() {
 
-        TsMAddValue<String> sample = TsMAddValue.of("{ts}:a", 3.0);
+        TsMAddValue<String> sample = TsMAddValue.now("{ts}:a", 3.0);
 
         assertThat(sample.getKey()).isEqualTo("{ts}:a");
         assertThat(sample.getTimestamp()).isNull();
@@ -65,7 +65,7 @@ class TsMAddValueUnitTests {
     void nullKeyThrows() {
 
         assertThatThrownBy(() -> TsMAddValue.of(null, 1000L, 1.0)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> TsMAddValue.of(null, 1.0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsMAddValue.now(null, 1.0)).isInstanceOf(IllegalArgumentException.class);
     }
 
     /**
@@ -86,8 +86,8 @@ class TsMAddValueUnitTests {
 
         assertThat(TsMAddValue.of("k", 1L, 2.0)).isEqualTo(TsMAddValue.of("k", 1L, 2.0))
                 .hasSameHashCodeAs(TsMAddValue.of("k", 1L, 2.0));
-        assertThat(TsMAddValue.of("k", 2.0)).isEqualTo(TsMAddValue.of("k", 2.0));
-        assertThat(TsMAddValue.of("k", 1L, 2.0)).isNotEqualTo(TsMAddValue.of("k", 2.0))
+        assertThat(TsMAddValue.now("k", 2.0)).isEqualTo(TsMAddValue.now("k", 2.0));
+        assertThat(TsMAddValue.of("k", 1L, 2.0)).isNotEqualTo(TsMAddValue.now("k", 2.0))
                 .isNotEqualTo(TsMAddValue.of("k", 1L, 3.0)).isNotEqualTo(TsMAddValue.of("j", 1L, 2.0));
     }
 

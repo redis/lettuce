@@ -183,8 +183,7 @@ public interface RedisTimeSeriesCommands<K> {
     /**
      * Add a sample with the current server time to a time series, creating the series if it does not exist.
      * <p>
-     * The sample gets timestamp {@code *}, so the server clock sets it. Java converts a {@code long} to {@code double} without
-     * a cast, so {@code tsAdd(key, timestampMillis)} compiles and stores the timestamp as the value. To set the timestamp, use
+     * The sample gets timestamp {@code *}, so the server clock sets it. To set the timestamp, use
      * {@link #tsAdd(Object, long, double)}.
      *
      * @param key the key, must not be {@code null}.
@@ -195,14 +194,13 @@ public interface RedisTimeSeriesCommands<K> {
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
      */
-    Long tsAdd(K key, double value);
+    Long tsAddNow(K key, double value);
 
     /**
      * Add a sample with the current server time to a time series, with options.
      * <p>
-     * The sample gets timestamp {@code *}, so the server clock sets it. Java converts a {@code long} to {@code double} without
-     * a cast, so {@code tsAdd(key, timestampMillis)} compiles and stores the timestamp as the value. To set the timestamp, use
-     * {@link #tsAdd(Object, long, double)}.
+     * The sample gets timestamp {@code *}, so the server clock sets it. To set the timestamp, use
+     * {@link #tsAdd(Object, long, double, TsAddArgs)}.
      * <p>
      * If the series does not exist, it is created. The series options in {@code args} apply only when the series is created;
      * for an existing series the server ignores them.
@@ -216,7 +214,7 @@ public interface RedisTimeSeriesCommands<K> {
      * @since 8.0
      * @see <a href="https://redis.io/commands/ts.add/">TS.ADD</a>
      */
-    Long tsAdd(K key, double value, TsAddArgs args);
+    Long tsAddNow(K key, double value, TsAddArgs args);
 
     /**
      * Add a sample to a time series, creating the series if it does not exist.

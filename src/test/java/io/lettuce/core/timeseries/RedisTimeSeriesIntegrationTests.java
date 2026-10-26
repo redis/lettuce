@@ -832,10 +832,10 @@ public class RedisTimeSeriesIntegrationTests {
 
         long start = serverClockMillis();
 
-        Long first = redis.tsAdd(KEY, 7.0);
+        Long first = redis.tsAddNow(KEY, 7.0);
         assertThat(first).isGreaterThanOrEqualTo(start);
 
-        Long second = redis.tsAdd("{ts}:k2", 8.0, new TsAddArgs().labels(labels("t", testName)));
+        Long second = redis.tsAddNow("{ts}:k2", 8.0, new TsAddArgs().labels(labels("t", testName)));
         assertThat(second).isGreaterThanOrEqualTo(start);
 
         assertThat(storedSamples(KEY)).isEqualTo(samples(first, 7.0));
@@ -844,7 +844,7 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
-     * Scenario B13: {@code TsMAddValue.of(k, v)} returns a timestamp ≥ the server clock read before the call.
+     * Scenario B13: {@code TsMAddValue.now(k, v)} returns a timestamp ≥ the server clock read before the call.
      */
     @Test
     void maddWithServerClock() {
@@ -852,7 +852,7 @@ public class RedisTimeSeriesIntegrationTests {
         redis.tsCreate(KEY, new TsCreateArgs().label("t", testName));
         long start = serverClockMillis();
 
-        List<Long> result = madd(TsMAddValue.of(KEY, 4.0));
+        List<Long> result = madd(TsMAddValue.now(KEY, 4.0));
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0)).isNotNull().isGreaterThanOrEqualTo(start);
@@ -954,7 +954,7 @@ public class RedisTimeSeriesIntegrationTests {
         assertThatThrownBy(() -> madd(Collections.emptyList())).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> madd(Arrays.asList(TsMAddValue.of(KEY, 1000L, 1.0), null)))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> madd(Arrays.asList(TsMAddValue.of("{a}:k", 1000L, 1.0), null, TsMAddValue.of("{b}:k", 1.0))))
+        assertThatThrownBy(() -> madd(Arrays.asList(TsMAddValue.of("{a}:k", 1000L, 1.0), null, TsMAddValue.now("{b}:k", 1.0))))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(redis.exists(KEY)).isEqualTo(0);
     }
@@ -965,7 +965,7 @@ public class RedisTimeSeriesIntegrationTests {
     @Test
     void writesRejectNullArgumentsThroughTheApi() {
 
-        assertThatThrownBy(() -> redis.tsAdd(null, 1.0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.tsAddNow(null, 1.0)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> redis.tsAdd(KEY, 1000L, 1.0, null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> redis.tsIncrBy(null, 1.0)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> redis.tsDecrBy(KEY, 1.0, null)).isInstanceOf(IllegalArgumentException.class);

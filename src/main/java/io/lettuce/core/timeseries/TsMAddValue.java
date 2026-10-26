@@ -63,7 +63,7 @@ public final class TsMAddValue<K> {
      * @throws IllegalArgumentException if {@code key} is {@code null}.
      * @since 8.0
      */
-    public static <K> TsMAddValue<K> of(K key, double value) {
+    public static <K> TsMAddValue<K> now(K key, double value) {
 
         LettuceAssert.notNull(key, "Key must not be null");
 

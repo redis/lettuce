@@ -5026,13 +5026,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Long> tsAdd(K key, double value) {
-        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, value));
+    public Mono<Long> tsAddNow(K key, double value) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAddNow(key, value));
     }
 
     @Override
-    public Mono<Long> tsAdd(K key, double value, TsAddArgs args) {
-        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, value, args));
+    public Mono<Long> tsAddNow(K key, double value, TsAddArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAddNow(key, value, args));
     }
 
     @Override

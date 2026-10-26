@@ -70,11 +70,11 @@ internal class RedisTimeSeriesCoroutinesCommandsImpl<K : Any>(
     override suspend fun tsDeleteRule(sourceKey: K, destKey: K): String? =
         ops.tsDeleteRule(sourceKey, destKey).awaitFirstOrNull()
 
-    override suspend fun tsAdd(key: K, value: Double): Long? =
-        ops.tsAdd(key, value).awaitFirstOrNull()
+    override suspend fun tsAddNow(key: K, value: Double): Long? =
+        ops.tsAddNow(key, value).awaitFirstOrNull()
 
-    override suspend fun tsAdd(key: K, value: Double, args: TsAddArgs): Long? =
-        ops.tsAdd(key, value, args).awaitFirstOrNull()
+    override suspend fun tsAddNow(key: K, value: Double, args: TsAddArgs): Long? =
+        ops.tsAddNow(key, value, args).awaitFirstOrNull()
 
     override suspend fun tsAdd(key: K, timestamp: Long, value: Double): Long? =
         ops.tsAdd(key, timestamp, value).awaitFirstOrNull()
