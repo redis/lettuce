@@ -130,7 +130,8 @@ public class TsNRangeArgs {
          * @see TsNRangeArgs#aggregation(long, List)
          * @since 8.0
          */
-        public static TsNRangeArgs aggregation(long bucketDuration, List<List<TsAggregation>> aggregationsPerKey) {
+        public static TsNRangeArgs aggregation(long bucketDuration,
+                List<? extends List<? extends TsAggregation>> aggregationsPerKey) {
             return new TsNRangeArgs().aggregation(bucketDuration, aggregationsPerKey);
         }
 
@@ -146,7 +147,8 @@ public class TsNRangeArgs {
          * @see TsNRangeArgs#aggregation(Duration, List)
          * @since 8.0
          */
-        public static TsNRangeArgs aggregation(Duration bucketDuration, List<List<TsAggregation>> aggregationsPerKey) {
+        public static TsNRangeArgs aggregation(Duration bucketDuration,
+                List<? extends List<? extends TsAggregation>> aggregationsPerKey) {
             return new TsNRangeArgs().aggregation(bucketDuration, aggregationsPerKey);
         }
 
@@ -293,14 +295,14 @@ public class TsNRangeArgs {
      *         {@code null} or empty, or contains a {@code null} or empty list or a {@code null} aggregation.
      * @since 8.0
      */
-    public TsNRangeArgs aggregation(long bucketDuration, List<List<TsAggregation>> aggregationsPerKey) {
+    public TsNRangeArgs aggregation(long bucketDuration, List<? extends List<? extends TsAggregation>> aggregationsPerKey) {
 
         TsArgsSupport.bucketDuration(bucketDuration);
         LettuceAssert.notNull(aggregationsPerKey, "Aggregations per key must not be null");
         LettuceAssert.isTrue(!aggregationsPerKey.isEmpty(), "Aggregations per key must not be empty");
 
         List<List<TsAggregation>> copy = new ArrayList<>(aggregationsPerKey.size());
-        for (List<TsAggregation> aggregations : aggregationsPerKey) {
+        for (List<? extends TsAggregation> aggregations : aggregationsPerKey) {
             LettuceAssert.notNull(aggregations, "Aggregations of a key must not be null");
             LettuceAssert.isTrue(!aggregations.isEmpty(), "Aggregations of a key must not be empty");
             LettuceAssert.noNullElements(aggregations, "Aggregations must not contain null elements");
@@ -325,7 +327,7 @@ public class TsNRangeArgs {
      *         {@code null} or empty list or a {@code null} aggregation.
      * @since 8.0
      */
-    public TsNRangeArgs aggregation(Duration bucketDuration, List<List<TsAggregation>> aggregationsPerKey) {
+    public TsNRangeArgs aggregation(Duration bucketDuration, List<? extends List<? extends TsAggregation>> aggregationsPerKey) {
         return aggregation(TsArgsSupport.bucketMillis(bucketDuration), aggregationsPerKey);
     }
 

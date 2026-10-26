@@ -408,4 +408,23 @@ class TsNRangeArgsUnitTests {
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("too large");
     }
 
+    /**
+     * Scenario A16: a prebuilt {@code List<List<TsAggregationType>>} is accepted by the setters and the builder factories.
+     */
+    @Test
+    void perKeyListAcceptsEnumLists() {
+
+        List<List<TsAggregationType>> perKey = Arrays.asList(Arrays.asList(TsAggregationType.MIN, TsAggregationType.MAX),
+                Collections.singletonList(TsAggregationType.SUM));
+
+        assertThat(tokens(new TsNRangeArgs().aggregation(10, perKey), 2)).containsExactly("AGGREGATION", "MIN,MAX", "SUM",
+                "10");
+        assertThat(tokens(new TsNRangeArgs().aggregation(Duration.ofMillis(10), perKey), 2)).containsExactly("AGGREGATION",
+                "MIN,MAX", "SUM", "10");
+        assertThat(tokens(TsNRangeArgs.Builder.aggregation(10, perKey), 2)).containsExactly("AGGREGATION", "MIN,MAX", "SUM",
+                "10");
+        assertThat(tokens(TsNRangeArgs.Builder.aggregation(Duration.ofMillis(10), perKey), 2)).containsExactly("AGGREGATION",
+                "MIN,MAX", "SUM", "10");
+    }
+
 }
