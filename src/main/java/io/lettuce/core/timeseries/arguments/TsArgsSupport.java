@@ -82,13 +82,21 @@ final class TsArgsSupport {
     /**
      * Convert a bucket duration to whole milliseconds. A duration shorter than one millisecond counts as zero and is rejected.
      *
-     * @throws IllegalArgumentException if {@code bucket} is {@code null} or shorter than one millisecond.
+     * @throws IllegalArgumentException if {@code bucket} is {@code null}, shorter than one millisecond or longer than
+     *         {@code Long.MAX_VALUE} milliseconds.
      */
     static long bucketMillis(Duration bucket) {
 
         LettuceAssert.notNull(bucket, "Bucket duration must not be null");
 
-        return bucketDuration(bucket.toMillis());
+        long millis;
+        try {
+            millis = bucket.toMillis();
+        } catch (ArithmeticException e) {
+            throw new IllegalArgumentException("Bucket duration is too large", e);
+        }
+
+        return bucketDuration(millis);
     }
 
     /**

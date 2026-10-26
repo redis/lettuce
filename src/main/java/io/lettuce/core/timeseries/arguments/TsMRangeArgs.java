@@ -117,8 +117,9 @@ public class TsMRangeArgs {
         /**
          * Create new {@link TsMRangeArgs} with a limit ({@code COUNT}) set.
          *
-         * @param count the maximum number of samples or buckets.
+         * @param count the maximum number of samples or buckets, must be positive.
          * @return new {@link TsMRangeArgs}.
+         * @throws IllegalArgumentException if {@code count} is not positive.
          * @see TsMRangeArgs#count(long)
          * @since 8.0
          */
@@ -149,8 +150,9 @@ public class TsMRangeArgs {
          * @param aggregations the aggregations, must not be {@code null} or empty and must not contain {@code null} elements.
          *        Several aggregations require Redis 8.8 or later.
          * @return new {@link TsMRangeArgs}.
-         * @throws IllegalArgumentException if {@code bucketDuration} is {@code null} or shorter than one millisecond, or if
-         *         {@code aggregations} is {@code null}, empty or contains {@code null} elements.
+         * @throws IllegalArgumentException if {@code bucketDuration} is {@code null}, shorter than one millisecond or longer
+         *         than {@code Long.MAX_VALUE} milliseconds, or if {@code aggregations} is {@code null}, empty or contains
+         *         {@code null} elements.
          * @see TsMRangeArgs#aggregation(Duration, TsAggregation...)
          * @since 8.0
          */
@@ -291,11 +293,15 @@ public class TsMRangeArgs {
     /**
      * Limit the number of reported samples, or of buckets with an aggregation ({@code COUNT}).
      *
-     * @param count the maximum number of samples or buckets.
+     * @param count the maximum number of samples or buckets, must be positive.
      * @return {@code this}.
+     * @throws IllegalArgumentException if {@code count} is not positive.
      * @since 8.0
      */
     public TsMRangeArgs count(long count) {
+
+        LettuceAssert.isTrue(count > 0, "Count must be positive");
+
         this.count = count;
         return this;
     }
@@ -369,9 +375,9 @@ public class TsMRangeArgs {
      * @param bucketDuration the bucket duration, must not be {@code null} and must be at least one millisecond.
      * @param aggregations the aggregations, must not be {@code null} or empty and must not contain {@code null} elements.
      * @return {@code this}.
-     * @throws IllegalArgumentException if {@code bucketDuration} is {@code null} or shorter than one millisecond, if
-     *         {@code aggregations} is {@code null}, empty or contains {@code null} elements, or if there is more than one
-     *         aggregation and {@link #groupBy(String, TsReducer)} was set.
+     * @throws IllegalArgumentException if {@code bucketDuration} is {@code null}, shorter than one millisecond or longer than
+     *         {@code Long.MAX_VALUE} milliseconds, if {@code aggregations} is {@code null}, empty or contains {@code null}
+     *         elements, or if there is more than one aggregation and {@link #groupBy(String, TsReducer)} was set.
      * @since 8.0
      */
     public TsMRangeArgs aggregation(Duration bucketDuration, TsAggregation... aggregations) {

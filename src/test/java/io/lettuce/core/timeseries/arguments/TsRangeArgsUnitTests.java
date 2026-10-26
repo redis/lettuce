@@ -316,4 +316,32 @@ class TsRangeArgsUnitTests {
                 .isEqualTo(tokens(new TsRangeArgs().empty().aggregation(1000, TsAggregationType.AVG)));
     }
 
+    /**
+     * Scenario A08: {@code count} must be positive; 0 and negative values throw {@link IllegalArgumentException}, from the
+     * setter and from the builder factory.
+     */
+    @Test
+    void countMustBePositive() {
+
+        assertThat(tokens(new TsRangeArgs().count(1))).containsSubsequence("COUNT", "1");
+        assertThatThrownBy(() -> new TsRangeArgs().count(0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsRangeArgs().count(-1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsRangeArgs.Builder.count(0)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario A17: a bucket {@code Duration} longer than {@code Long.MAX_VALUE} milliseconds throws
+     * {@link IllegalArgumentException}, not {@link ArithmeticException}.
+     */
+    @Test
+    void hugeBucketDurationIsRejected() {
+
+        Duration huge = Duration.ofSeconds(Long.MAX_VALUE);
+
+        assertThatThrownBy(() -> new TsRangeArgs().aggregation(huge, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("too large");
+        assertThatThrownBy(() -> TsRangeArgs.Builder.aggregation(huge, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("too large");
+    }
+
 }

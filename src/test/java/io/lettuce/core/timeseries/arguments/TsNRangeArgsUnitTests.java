@@ -374,4 +374,38 @@ class TsNRangeArgsUnitTests {
                 .isEqualTo(tokens(new TsNRangeArgs().empty().aggregation(10, lists), 2));
     }
 
+    /**
+     * Scenario A08: {@code count} must be positive; 0 and negative values throw {@link IllegalArgumentException}, from the
+     * setter and from the builder factory.
+     */
+    @Test
+    void countMustBePositive() {
+
+        assertThat(tokens(new TsNRangeArgs().count(1), 1)).containsSubsequence("COUNT", "1");
+        assertThatThrownBy(() -> new TsNRangeArgs().count(0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TsNRangeArgs().count(-1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TsNRangeArgs.Builder.count(0)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Scenario A17: a bucket {@code Duration} longer than {@code Long.MAX_VALUE} milliseconds throws
+     * {@link IllegalArgumentException}, not {@link ArithmeticException}.
+     */
+    @Test
+    void hugeBucketDurationIsRejected() {
+
+        Duration huge = Duration.ofSeconds(Long.MAX_VALUE);
+
+        assertThatThrownBy(() -> new TsNRangeArgs().aggregationForEachKey(huge, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("too large");
+        assertThatThrownBy(() -> new TsNRangeArgs().aggregation(huge,
+                perKey(Collections.<TsAggregation> singletonList(TsAggregationType.AVG))))
+                        .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("too large");
+        assertThatThrownBy(() -> TsNRangeArgs.Builder.aggregation(huge,
+                perKey(Collections.<TsAggregation> singletonList(TsAggregationType.AVG))))
+                        .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("too large");
+        assertThatThrownBy(() -> TsNRangeArgs.Builder.aggregationForEachKey(huge, TsAggregationType.AVG))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("too large");
+    }
+
 }

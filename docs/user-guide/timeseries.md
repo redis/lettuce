@@ -234,7 +234,7 @@ List<TsSample> newest = commands.tsRevRange("temperature:room1", Range.unbounded
 | `LATEST` | `latest()` | Also report the open bucket of a compaction. |
 | `FILTER_BY_TS` | `filterByTimestamps(long...)` | Keep only the listed timestamps. Applies before aggregation. |
 | `FILTER_BY_VALUE` | `filterByValue(min, max)` | Keep only values in `[min, max]`. Applies before aggregation. |
-| `COUNT` | `count(n)` | At most `n` samples, or `n` buckets with an aggregation. |
+| `COUNT` | `count(n)` | At most `n` samples, or `n` buckets with an aggregation. `n` must be positive; otherwise `IllegalArgumentException`. |
 | `ALIGN` | `align(ts)`, `alignStart()`, `alignEnd()` | Bucket alignment. Requires an aggregation; `alignStart()` needs a bounded lower end and `alignEnd()` a bounded upper end. |
 | `AGGREGATION` | `aggregation(bucket, TsAggregation...)` | Bucket duration as milliseconds or `Duration`. Several aggregations require Redis 8.8 or later. |
 | `BUCKETTIMESTAMP` | `bucketTimestamp(TsBucketTimestamp)` | Report the `START` (default), `END` or `MID` of each bucket. Requires an aggregation. |
