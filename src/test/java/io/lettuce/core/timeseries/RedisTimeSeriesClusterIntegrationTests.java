@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -223,6 +224,42 @@ public class RedisTimeSeriesClusterIntegrationTests extends RedisTimeSeriesInteg
                 .expectNext(Value.empty()).expectNext(Value.just(1500L)).expectNext(Value.just(2000L))
                 .expectNext(Value.just(2000L)).verifyComplete();
         assertSplitStored(keys);
+    }
+
+    /**
+     * Scenario K05: with auto-flush off, one {@code flushCommands()} sends the MADD of every slot, also above 256 slots; all
+     * 300 results come back in the caller's order (reactive API).
+     */
+    @Test
+    void maddReactiveManualFlushAbove256Slots() throws Exception {
+
+        List<String> keys = new ArrayList<>();
+        Set<Integer> slots = new HashSet<>();
+        for (int i = 0; keys.size() < 300; i++) {
+            String key = "madd:" + i;
+            if (slots.add(SlotHash.getSlot(key))) {
+                keys.add(key);
+            }
+        }
+
+        List<TsMAddValue<String>> samples = new ArrayList<>();
+        List<Value<Long>> expected = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i++) {
+            samples.add(TsMAddValue.of(keys.get(i), 1000L + i, i));
+            expected.add(Value.just(1000L + i));
+        }
+
+        try (StatefulRedisClusterConnection<String, String> dedicated = clusterClient.connect()) {
+            for (String key : keys) {
+                dedicated.sync().tsCreate(key);
+            }
+
+            dedicated.setAutoFlushCommands(false);
+            CompletableFuture<List<Value<Long>>> result = dedicated.reactive().tsMAdd(samples).collectList().toFuture();
+            dedicated.flushCommands();
+
+            assertThat(result.get(10, TimeUnit.SECONDS)).isEqualTo(expected);
+        }
     }
 
     /**

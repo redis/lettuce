@@ -86,6 +86,7 @@ import io.lettuce.core.timeseries.TsSeries;
 import io.lettuce.core.timeseries.arguments.TsMGetArgs;
 import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
 import reactor.core.publisher.Mono;
+import reactor.util.concurrent.Queues;
 
 import java.util.Optional;
 
@@ -365,8 +366,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             publishers.add(super.tsMAdd(partition.getSamplesBySlot().get(slot)).collectList());
         }
 
-        // run the slots in parallel, then restore the caller's order; a failed slot fails the whole call
-        return Flux.mergeSequential(publishers).collectList().map(perSlot -> {
+        // run the slots in parallel, then restore the caller's order; a failed slot fails the whole call. Subscribe to every
+        // slot at once, so that all commands are written before a manual flushCommands() (the default limit is 256)
+        return Flux.mergeSequential(publishers, publishers.size(), Queues.XS_BUFFER_SIZE).collectList().map(perSlot -> {
             Map<Integer, List<Value<Long>>> results = new HashMap<>();
             for (int i = 0; i < slots.size(); i++) {
                 results.put(slots.get(i), perSlot.get(i));
