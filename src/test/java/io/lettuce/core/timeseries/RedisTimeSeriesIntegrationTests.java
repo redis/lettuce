@@ -2770,6 +2770,21 @@ public class RedisTimeSeriesIntegrationTests {
     }
 
     /**
+     * Scenario D03: a label value with a space matches through {@code raw("room=living room")}, because each filter is one RESP
+     * argument; a quoted value is taken literally and matches nothing. {@code equal} rejects the space on the client.
+     */
+    @Test
+    void rawFilterWithSpaceInValue() {
+
+        redis.tsCreate(F1, new TsCreateArgs().label("t", testName).label("room", "living room"));
+
+        assertThat(redis.tsQueryIndex(isolation(), TsFilter.raw("room=living room"))).containsExactly(F1);
+        assertThat(keys(redis.tsMGet(isolation(), TsFilter.raw("room=living room")))).containsExactly(F1);
+        assertThat(redis.tsQueryIndex(isolation(), TsFilter.raw("room=\"living room\""))).isEmpty();
+        assertThatThrownBy(() -> TsFilter.equal("room", "living room")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
      * Scenario D03: the filter grammar via {@link TsFilter}, on F1 + {@code {ts}:f1b}, through TS.QUERYINDEX and TS.MGET:
      * {@code equal(sensor,temp)} → f1; {@code notEqual(sensor,temp)} → f1b; {@code exists(area)} → both;
      * {@code notExists(area)} → none; {@code in(area,north,south)} → both; {@code notIn(area,north)} → f1b;

@@ -15,11 +15,12 @@ import io.lettuce.core.internal.LettuceAssert;
  * The server requires at least one filter that matches a value ({@link #equal(String, String)} or
  * {@link #in(String, String...)}); Lettuce does not check this.
  * <p>
- * The factories do not quote or escape: label names and values must not contain whitespace, {@code =}, {@code !}, {@code (},
- * {@code )}, {@code ,} or a quote ({@code "} or {@code '}), because the server would read them as filter syntax. The factories
- * reject such names and values with {@link IllegalArgumentException}. For them, write the expression with {@link #raw(String)},
- * for example {@code TsFilter.raw("room=\"living room\"")}. The {@link #toString()} form is the expression sent to the server.
- * {@link TsFilter} is immutable.
+ * The factories do not quote or escape. Label names and values must not contain {@code =}, {@code !}, {@code (}, {@code )} or
+ * {@code ,}, which are filter syntax, and the factories also reject whitespace and quotes ({@code "} or {@code '}) to keep the
+ * expression unambiguous. Such names and values throw {@link IllegalArgumentException}. For them, write the expression with
+ * {@link #raw(String)}, which sends it as given, for example {@code TsFilter.raw("room=living room")}. Each filter is sent as
+ * one RESP argument, so a space needs no quotes, and quotes are taken literally as part of the name or value. The
+ * {@link #toString()} form is the expression sent to the server. {@link TsFilter} is immutable.
  *
  * @author Aleksandar Todorov
  * @since 8.0
@@ -127,7 +128,8 @@ public final class TsFilter {
     }
 
     /**
-     * Use {@code expression} as given, for syntax the other factories do not cover (for example quoted values).
+     * Use {@code expression} as given, for names and values the other factories reject, for example a value with a space:
+     * {@code raw("room=living room")}. The expression is sent as one RESP argument, so quotes in it are taken literally.
      *
      * @param expression the filter expression, must not be {@code null} or empty.
      * @return the filter.

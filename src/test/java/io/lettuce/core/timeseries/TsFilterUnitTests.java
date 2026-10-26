@@ -77,6 +77,7 @@ class TsFilterUnitTests {
     @Test
     void raw() {
         assertThat(TsFilter.raw("x=y")).hasToString("x=y");
+        assertThat(TsFilter.raw("room=living room")).hasToString("room=living room");
         assertThat(TsFilter.raw("room=\"living room\"")).hasToString("room=\"living room\"");
         assertThat(TsFilter.raw("sensor=(temp,hum)")).hasToString("sensor=(temp,hum)");
     }
