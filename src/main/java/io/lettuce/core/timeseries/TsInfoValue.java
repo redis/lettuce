@@ -22,7 +22,7 @@ import java.util.Objects;
  * @author Aleksandar Todorov
  * @since 8.0
  */
-public class TsInfoValue<K> {
+public final class TsInfoValue<K> {
 
     private final long totalSamples;
 
@@ -307,7 +307,7 @@ public class TsInfoValue<K> {
      * @param <K> Key type.
      * @since 8.0
      */
-    public static class Rule<K> {
+    public static final class Rule<K> {
 
         private final K destinationKey;
 
@@ -399,7 +399,7 @@ public class TsInfoValue<K> {
      *
      * @since 8.0
      */
-    public static class Chunk {
+    public static final class Chunk {
 
         private final long startTimestamp;
 

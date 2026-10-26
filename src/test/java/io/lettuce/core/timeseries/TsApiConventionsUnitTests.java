@@ -295,6 +295,17 @@ class TsApiConventionsUnitTests {
     }
 
     /**
+     * Scenario M04: the TS.INFO result types are final; their constructors are package-private.
+     */
+    @Test
+    void infoResultTypesAreFinal() {
+
+        for (Class<?> type : new Class<?>[] { TsInfoValue.class, TsInfoValue.Rule.class, TsInfoValue.Chunk.class }) {
+            assertThat(Modifier.isFinal(type.getModifiers())).as(type.getSimpleName()).isTrue();
+        }
+    }
+
+    /**
      * Scenario M04: the raw value-type implementations are not public; the interfaces and enums are.
      */
     @Test
