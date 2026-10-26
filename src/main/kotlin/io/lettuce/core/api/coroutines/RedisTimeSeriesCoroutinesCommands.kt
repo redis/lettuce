@@ -442,7 +442,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * Read the samples of a time series from `offset` on, in ascending order, without blocking. Requires Redis 8.10 or
      * later.
      *
-     * Use [TsReadOffset.latest] or [TsReadOffset.newSamples] only on the first call, and continue with
+     * Use [TsReadOffset.newest] or [TsReadOffset.newSamples] only on the first call, and continue with
      * `TsReadOffset.from(lastTimestamp + 1)`. Without `BLOCK`, [TsReadOffset.newSamples] always returns an
      * empty list. A key that does not exist returns an empty list.
      *
@@ -471,7 +471,7 @@ interface RedisTimeSeriesCoroutinesCommands<K : Any> {
      * replica, TS.READ runs on a replica, which wakes only after the write has replicated to it; read from the primary for
      * low-latency tailing. The server rejects `BLOCK` inside MULTI and Lua scripts.
      *
-     * Use [TsReadOffset.latest] or [TsReadOffset.newSamples] only on the first call, and continue with
+     * Use [TsReadOffset.newest] or [TsReadOffset.newSamples] only on the first call, and continue with
      * `TsReadOffset.from(lastTimestamp + 1)`.
      *
      * @param key the key, must not be `null`.

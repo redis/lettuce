@@ -10,10 +10,10 @@ import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Starting point of a <a href="https://redis.io/commands/ts.read/">TS.READ</a> call: the inclusive lower bound of the returned
- * samples. The server resolves {@link #earliest()}, {@link #latest()} and {@link #newSamples()} once, when it receives the
+ * samples. The server resolves {@link #earliest()}, {@link #newest()} and {@link #newSamples()} once, when it receives the
  * command.
  * <p>
- * Use {@link #latest()} or {@link #newSamples()} only on the first call. On later calls, continue with
+ * Use {@link #newest()} or {@link #newSamples()} only on the first call. On later calls, continue with
  * {@code from(lastTimestamp + 1)}, where {@code lastTimestamp} is the timestamp of the last sample returned. The
  * {@link #toString()} form is the argument sent to the server. {@link TsReadOffset} is immutable.
  *
@@ -24,7 +24,7 @@ public final class TsReadOffset {
 
     private static final TsReadOffset EARLIEST = new TsReadOffset("-");
 
-    private static final TsReadOffset LATEST = new TsReadOffset("+");
+    private static final TsReadOffset NEWEST = new TsReadOffset("+");
 
     private static final TsReadOffset NEW_SAMPLES = new TsReadOffset("$");
 
@@ -45,17 +45,17 @@ public final class TsReadOffset {
     }
 
     /**
-     * Start at the latest sample of the series, inclusive ({@code +}). Use it only on the first call.
+     * Start at the newest sample of the series, inclusive ({@code +}). Use it only on the first call.
      *
      * @return the offset.
      * @since 8.0
      */
-    public static TsReadOffset latest() {
-        return LATEST;
+    public static TsReadOffset newest() {
+        return NEWEST;
     }
 
     /**
-     * Start after the latest sample of the series, so that only samples added later are returned ({@code $}). Use it only on
+     * Start after the newest sample of the series, so that only samples added later are returned ({@code $}). Use it only on
      * the first call, together with {@code BLOCK}: without {@code BLOCK} the call always returns an empty list.
      *
      * @return the offset.

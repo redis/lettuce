@@ -839,7 +839,7 @@ class RedisTimeSeriesCommandBuilderUnitTests {
 
         assertThat(encode(builder.tsRead(KEY, TsReadOffset.earliest())))
                 .isEqualTo("*3\r\n$7\r\nTS.READ\r\n$6\r\n{ts}:k\r\n$1\r\n-\r\n");
-        assertThat(tokens(builder.tsRead(KEY, TsReadOffset.latest()))).containsExactly("TS.READ", KEY, "+");
+        assertThat(tokens(builder.tsRead(KEY, TsReadOffset.newest()))).containsExactly("TS.READ", KEY, "+");
         assertThat(tokens(builder.tsRead(KEY, TsReadOffset.newSamples()))).containsExactly("TS.READ", KEY, "$");
         assertThat(tokens(builder.tsRead(KEY, TsReadOffset.from(0)))).containsExactly("TS.READ", KEY, "0");
         assertThat(tokens(builder.tsRead(KEY, TsReadOffset.from(2001)))).containsExactly("TS.READ", KEY, "2001");

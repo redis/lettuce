@@ -256,7 +256,7 @@ For a compaction, the last reported bucket may include samples newer than the up
 
 ### Tail a series with TS.READ
 
-`tsRead` (Redis 8.10 and later) reads the samples from a starting point on, in ascending order. `TsReadOffset` sets the starting point: `earliest()` (`-`), `latest()` (`+`, inclusive), `newSamples()` (`$`, only samples added later) or `from(timestamp)`:
+`tsRead` (Redis 8.10 and later) reads the samples from a starting point on, in ascending order. `TsReadOffset` sets the starting point: `earliest()` (`-`), `newest()` (`+`, inclusive), `newSamples()` (`$`, only samples added later) or `from(timestamp)`:
 
 ```java
 List<TsSample> batch = commands.tsRead("events", TsReadOffset.earliest(), TsReadArgs.Builder.maxCount(100));
@@ -264,7 +264,7 @@ long next = batch.get(batch.size() - 1).getTimestamp() + 1;
 batch = commands.tsRead("events", TsReadOffset.from(next), TsReadArgs.Builder.maxCount(100));
 ```
 
-Use `latest()` and `newSamples()` only on the first call; later calls continue with `from(lastTimestamp + 1)`. Without `BLOCK`, `newSamples()` always returns an empty list.
+Use `newest()` and `newSamples()` only on the first call; later calls continue with `from(lastTimestamp + 1)`. Without `BLOCK`, `newSamples()` always returns an empty list.
 
 `TsReadArgs.block(millis, minCount)` waits until at least `minCount` samples exist, the block time ends, or the key is removed:
 

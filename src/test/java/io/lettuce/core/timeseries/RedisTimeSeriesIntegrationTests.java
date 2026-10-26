@@ -2388,7 +2388,7 @@ public class RedisTimeSeriesIntegrationTests {
         assertThat(redis.tsRead(F1, TsReadOffset.from(0))).isEqualTo(all);
         assertThat(redis.tsRead(F1, TsReadOffset.from(2000))).containsExactly(TsSample.of(2000, 2.0), TsSample.of(3000, 3.0));
         assertThat(redis.tsRead(F1, TsReadOffset.earliest())).isEqualTo(all);
-        assertThat(redis.tsRead(F1, TsReadOffset.latest())).containsExactly(TsSample.of(3000, 3.0));
+        assertThat(redis.tsRead(F1, TsReadOffset.newest())).containsExactly(TsSample.of(3000, 3.0));
         assertThat(redis.tsRead(F1, TsReadOffset.newSamples())).isEmpty();
         assertThat(redis.tsRead(F1, TsReadOffset.from(0), new TsReadArgs())).isEqualTo(all);
     }
@@ -2434,7 +2434,7 @@ public class RedisTimeSeriesIntegrationTests {
         assertThat(redis.tsRead(F2, TsReadOffset.from(9000), new TsReadArgs().maxCount(5))).isEmpty();
         assertThat(redis.tsRead(MISSING, TsReadOffset.from(0))).isEmpty();
         assertThat(redis.tsRead(MISSING, TsReadOffset.earliest())).isEmpty();
-        assertThat(redis.tsRead(MISSING, TsReadOffset.latest())).isEmpty();
+        assertThat(redis.tsRead(MISSING, TsReadOffset.newest())).isEmpty();
         assertThat(redis.tsRead(MISSING, TsReadOffset.newSamples())).isEmpty();
         assertThat(redis.exists(MISSING)).isZero();
     }

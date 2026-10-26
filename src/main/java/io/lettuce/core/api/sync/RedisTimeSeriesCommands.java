@@ -441,7 +441,7 @@ public interface RedisTimeSeriesCommands<K> {
      * Read the samples of a time series from {@code offset} on, in ascending order, without blocking. Requires Redis 8.10 or
      * later.
      * <p>
-     * Use {@link TsReadOffset#latest()} or {@link TsReadOffset#newSamples()} only on the first call, and continue with
+     * Use {@link TsReadOffset#newest()} or {@link TsReadOffset#newSamples()} only on the first call, and continue with
      * {@code TsReadOffset.from(lastTimestamp + 1)}. Without {@code BLOCK}, {@link TsReadOffset#newSamples()} always returns an
      * empty list. A key that does not exist returns an empty list.
      *
@@ -470,7 +470,7 @@ public interface RedisTimeSeriesCommands<K> {
      * replica, TS.READ runs on a replica, which wakes only after the write has replicated to it; read from the primary for
      * low-latency tailing. The server rejects {@code BLOCK} inside MULTI and Lua scripts.
      * <p>
-     * Use {@link TsReadOffset#latest()} or {@link TsReadOffset#newSamples()} only on the first call, and continue with
+     * Use {@link TsReadOffset#newest()} or {@link TsReadOffset#newSamples()} only on the first call, and continue with
      * {@code TsReadOffset.from(lastTimestamp + 1)}.
      *
      * @param key the key, must not be {@code null}.
