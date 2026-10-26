@@ -36,12 +36,12 @@ Lettuce provides native support for Redis core data types and select Redis modul
 | [ACL](https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/) | Supported | 6.0 | Full ACL command support |
 | [Client Tracking](https://redis.io/docs/latest/develop/use/client-side-caching/) | Supported | 6.5 | `CLIENT TRACKING` command |
 | [Probabilistic (RedisBloom)](https://redis.io/docs/latest/develop/data-types/probabilistic/) | Supported | 7.7 | [Probabilistic Data Structures Guide](user-guide/probabilistic.md) — Bloom Filter, Cuckoo Filter, Top-K, Count-Min Sketch, T-Digest |
+| [RedisTimeSeries](https://redis.io/docs/latest/develop/data-types/timeseries/) | Supported | 8.0 | [Redis TimeSeries Guide](user-guide/timeseries.md) |
 
 ### Unsupported Redis Modules
 
 | Module | Support Status | Notes |
 |--------|---------------|-------|
-| [RedisTimeSeries](https://redis.io/docs/latest/develop/data-types/timeseries/) | Not Supported | Use [Redis Command Interfaces](redis-command-interfaces.md) for custom commands |
 | [RedisGraph](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/deprecated-features/graph/) | Not Supported | Deprecated by Redis; use [Redis Command Interfaces](redis-command-interfaces.md) |
 | [Triggers and Functions](https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/deprecated-features/triggers-and-functions/) | Not Supported | Use [Redis Command Interfaces](redis-command-interfaces.md) for custom commands |
 
@@ -50,24 +50,21 @@ Lettuce provides native support for Redis core data types and select Redis modul
 ### Example: Using Custom Commands for Unsupported Modules
 
 ```java
-// Define a custom interface for RedisTimeSeries commands
-interface TimeSeriesCommands extends Commands {
+// Define a custom interface for RedisGraph commands
+interface GraphCommands extends Commands {
 
-    @Command("TS.CREATE")
-    String tsCreate(String key);
+    @Command("GRAPH.QUERY")
+    List<Object> graphQuery(String graph, String query);
 
-    @Command("TS.ADD")
-    Long tsAdd(String key, long timestamp, double value);
-
-    @Command("TS.GET")
-    List<Object> tsGet(String key);
+    @Command("GRAPH.DELETE")
+    String graphDelete(String graph);
 }
 
 // Use the custom commands
 RedisCommandFactory factory = new RedisCommandFactory(connection);
-TimeSeriesCommands ts = factory.getCommands(TimeSeriesCommands.class);
-ts.tsCreate("sensor:temperature");
-ts.tsAdd("sensor:temperature", System.currentTimeMillis(), 23.5);
+GraphCommands graph = factory.getCommands(GraphCommands.class);
+graph.graphQuery("social", "CREATE (:Person {name: 'Alice'})");
+graph.graphDelete("social");
 ```
 
 

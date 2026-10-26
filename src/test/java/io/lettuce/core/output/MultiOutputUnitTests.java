@@ -4,6 +4,7 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,8 +13,15 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisStateMachine;
+import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsInfoValueParser;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.lettuce.core.Value;
 
 /**
@@ -167,6 +175,29 @@ class MultiOutputUnitTests {
 
         assertThat(output.hasError()).isTrue();
         assertThat(output.getError()).isEqualTo("EXECABORT");
+    }
+
+    @Test
+    void shouldCompleteTsInfoInDiscardedTransaction() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
+        AsyncCommand<String, String, TsInfoValue<String>> command = new AsyncCommand<>(new Command<>(CommandType.TS_INFO,
+                new EncodedComplexOutput<>(StringCodec.UTF8, new TsInfoValueParser<>(StringCodec.UTF8))));
+        output.add(command);
+
+        RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
+        ByteBuf buffer = Unpooled.copiedBuffer("*-1\r\n", StandardCharsets.US_ASCII);
+        try {
+            assertThat(rsm.decode(buffer, output)).isTrue();
+        } finally {
+            buffer.release();
+            rsm.close();
+        }
+
+        assertThat(output.get().wasDiscarded()).isTrue();
+        assertThat(command.isDone()).isTrue();
+        assertThat(command.isCompletedExceptionally()).isFalse();
+        assertThat(command.join()).isNull();
     }
 
     @Test
