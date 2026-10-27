@@ -138,9 +138,14 @@ wipes the work dir before a run.
 
 ## 3. How tests discover servers
 
-There is no endpoints registry file; tests read fixed connection coordinates from
-helper classes under `src/test/java/io/lettuce/test/settings/`, every value
-overridable with a system property (`-D…`):
+Endpoints come from a JSON registry read by `io.lettuce.test.env.Endpoints`: the
+file named by the `REDIS_ENDPOINTS_CONFIG_PATH` environment variable or, when it is
+unset, the bundled `src/test/resources/endpoints.json` describing the local Docker
+environment (ids `standalone` → `localhost:6479`, `standalone-modules` →
+`127.0.0.1:16379`, `cluster` → `127.0.0.1:7379`). The helper classes under
+`src/test/java/io/lettuce/test/settings/` resolve connection coordinates from it,
+fall back to the defaults below, and let a system property (`-D…`) override every
+value:
 
 | Setting         | Accessor (`TestSettings`)         | Default                             | Property                            |
 |-----------------|-----------------------------------|-------------------------------------|-------------------------------------|

@@ -1,7 +1,9 @@
 ---
 name: extend-commands-api
-description: Add or extend Redis commands in the Lettuce client API end-to-end — a new core command, a family of new commands, an extension to an existing command's options, or a module/area command (Search/JSON/Bloom/VectorSet). Gathers evidence first (HLD document, the server-side PR in the repo owning the command family, live verification against the Dockerized test environment with redis-cli), plans the full implementation matrix in plan mode, then implements across all API flavors with unit and integration tests. Trigger on "add support for the <X> command", "implement <REDIS COMMAND> in Lettuce", "extend <command> with <option>", or adding a new argument/overload to an existing command.
+description: Add or extend Redis commands in the Lettuce client API end-to-end — a new core command, a family of new commands, an extension to an existing command's options, or a module/area command (Search/JSON/Bloom/VectorSet). Gathers evidence first (HLD document, the server-side PR in the repo owning the command family, live verification with redis-cli), plans the full implementation matrix, then implements across all API flavors with unit and integration tests. Runs supervised (Dockerized test environment, plan mode, user approval) by default, or unattended for automation such as the RedisClientsBot parity pipeline (provided servers, no questions). Trigger on "add support for the <X> command", "implement <REDIS COMMAND> in Lettuce", "extend <command> with <option>", or adding a new argument/overload to an existing command.
 allowed-tools: Bash(mvn *), Bash(make *), Bash(redis-cli *), Bash(gh *)
+metadata:
+  modes: supervised, unattended
 ---
 
 # Extend the Lettuce Commands API
@@ -20,6 +22,81 @@ test suite** (see [.agents/docs/api-consistency.md](../../../.agents/docs/api-co
 > template source files. Those files **no longer exist**; do not recreate them. The
 > flavor interfaces are now edited directly.
 
+## Modes — read this first
+
+This skill runs in one of two modes. The engineering rules in every section below
+are identical in both; only who answers questions, who approves the plan, and
+which servers the tests run against differ.
+
+- **Supervised** (default): a human is in the session. Ask the questions, start
+  the Docker environment, present the plan in plan mode and wait for approval, as
+  written below.
+- **Unattended**: no human will answer or approve anything, so never stop to wait.
+  Use it ONLY when the invoking prompt says `Mode: unattended` or the environment
+  has `CLIENT_SKILL_MODE=unattended`. Never switch to it on your own.
+
+In unattended mode the automation supplies the inputs a human would give: the HLD
+at `./HLD.md`, the server PR reference (`tracks:` in the prompt), and the test
+command. The sandbox has JDK + Maven and `redis-cli`, but **no Docker**. Instead it
+runs two `redislabs/client-libs-test` servers, password-protected, no TLS:
+
+- a standalone Redis with the modules: `REDIS_URL` (`redis://default:<pw>@host:6379`),
+  `REDIS_STANDALONE_HOST`, `REDIS_STANDALONE_PORT`, `REDIS_STANDALONE_PASSWORD`
+  (`foobared`, the `TestSettings.password()` default);
+- a 6-node OSS cluster (3 masters + 3 replicas): `REDIS_CLUSTER_HOST`,
+  `REDIS_CLUSTER_START_PORT` (7000), `REDIS_CLUSTER_NODES` (6),
+  `REDIS_CLUSTER_PASSWORD` (`cluster`), `REDIS_CLUSTER_URLS` (comma list, with
+  credentials);
+- `REDIS_VERSION`, and `REDIS_ENDPOINTS_CONFIG_PATH` pointing at an endpoints file
+  with the ids `standalone`, `standalone-modules` (the same standalone) and
+  `cluster`, each carrying its `password` (the cluster entry lists all six node
+  URIs). `DefaultRedisClient` and `DefaultRedisClusterClient` authenticate with
+  those passwords. Lettuce's test harness (`io.lettuce.test.env.Endpoints` →
+  `TestSettings`, `DefaultRedisClient`, `DefaultRedisClusterClient`) reads this
+  file directly, so the integration tests target these servers with no extra
+  setup.
+
+Wherever a step below has an **Unattended:** note, follow the note:
+
+| Step | Supervised | Unattended |
+|---|---|---|
+| Phase 0.1 HLD | ask the user for the path | read `./HLD.md` (or the path the prompt gives) fully |
+| Phase 0.2 `gh` access | `gh auth status`; ask to run `gh` outside the sandbox | do not ask; use the `tracks:` PR and the HLD's facts, else the unauthenticated GitHub REST API |
+| Phase 0.3 environment | `make start version=…`, probe `localhost:6479` | no `make`/Docker: probe `$REDIS_URL` and the cluster |
+| Phase 0.3 missing command / image tag | ask for a `client-libs-test` tag, `make stop` + restart; maybe bump `.env.vX.XX` | no question, no restart, no `.env` bump: continue with gated tests and say so in the report |
+| Phase 0.4 redis-cli showcase | scratch file against `localhost:6479` | run against `$REDIS_URL` (and the cluster when routing matters); carry the transcripts into the report, not the change |
+| Phase 0 "only stop is plan approval" | surface ambiguous design choices in the plan | no stop at all; see "open design question" below |
+| Phase 1 plan + approval | plan mode, ask before editing | write the plan into the final report, then implement it in the same session |
+| Phase 1 signatures deviate during implementation | stop and re-confirm before mirroring | don't stop; record the deviation and why in the report |
+| Phase 1 omitted overload sign-off | justify it in the plan for the maintainer | justify it in the report and list it as an open question |
+| Running tests | `TEST_WORK_FOLDER=… mvn … verify -Pci` against the Docker env | unit tests + targeted ITs against BOTH the provided standalone and cluster (see "Running the tests") |
+| Teardown | `make stop` | nothing to stop; skip |
+| PR description | draft it; the human opens the PR | put its content in the final report; the automation opens the PR |
+| An open design question | ask the user (in the plan) | take the HLD's choice (else the most consistent existing Lettuce convention) and list it as an open question in the report |
+
+Unattended runs also follow these rules:
+- **Change files.** A run that ends without changes has failed. Stop without
+  editing only when implementing is impossible, and say exactly why in the report.
+- **Don't commit, push, or open a PR.** The automation that invoked you does that.
+  Don't edit `.github/` workflows, release/version files, `pom.xml` versions, or
+  the `src/test/resources/docker-env/.env*` image pins.
+- **Leave the endpoint configuration as given.** Keep `REDIS_ENDPOINTS_CONFIG_PATH`
+  as set; do NOT set `TEST_ENV_PROVIDER` (`re` switches on Redis Enterprise
+  fail-fast and `@DisabledOnProvider` skips), `RE_DB_NAME`, `TEST_WORK_FOLDER`, or
+  `-Dhost`/`-Dport` overrides, and don't edit the bundled
+  `src/test/resources/endpoints.json`.
+- **Finish with a report** covering, in plain text with no placeholders:
+  - what was implemented
+  - the decision-tree class (A–D) and the plan
+  - design decisions, and which layers intentionally did NOT change and why
+  - unit and integration tests run, with pass/fail/skip counts per topology
+    (standalone, cluster) and the integration test classes run
+  - integration tests left gated (`@EnabledOnCommand`) or not run, and why
+  - steps skipped because they need a human or Docker
+  - open questions for maintainers
+
+  This feeds the PR description (see the PR hygiene checklist).
+
 ## Phase 0 — Gather evidence BEFORE planning
 
 Do all of the following before writing any plan or code:
@@ -28,6 +105,8 @@ Do all of the following before writing any plan or code:
    containing the High-Level Design for the command(s) (or confirm none exists). If
    a path is given, read it fully — it is the primary source for syntax, semantics,
    reply shape per RESP2/RESP3, and edge cases.
+   **Unattended:** don't ask; read `./HLD.md` (or the path the invoking prompt
+   gives) fully.
 
 2. **Find the server-side PR in the repo that owns the command.** Route the
    search by command family — module command families are developed in their
@@ -64,6 +143,12 @@ Do all of the following before writing any plan or code:
    the reactive `Mono`/`Flux` mapping), error conditions, and the **first server
    version carrying the feature** (drives `@EnabledOnCommand` gating and the test
    env version). Note whether the server marks the feature *experimental/preview*.
+
+   **Unattended:** don't ask for permission to leave the sandbox. Use the server
+   PR the invoking prompt names (`tracks:`); the HLD usually quotes the syntax,
+   the reply shapes and the first version. Fill any gaps from the unauthenticated
+   GitHub REST API (e.g.
+   `https://api.github.com/repos/<owning-repo>/pulls/<num>/files`).
 
 3. **Verify the command exists on the "next" Redis OSS version.** Start the
    integration environment using the **highest** version the Makefile supports
@@ -102,6 +187,19 @@ Do all of the following before writing any plan or code:
    it and proceed: implementation continues, integration tests stay gated until an
    image ships the change. Keep the environment running for later test runs.
 
+   **Unattended:** no `make start`/`make stop`, no Docker, no image-tag question,
+   no `.env.vX.XX` bump. The provided servers already run the target image; probe
+   them with the same checks:
+   ```bash
+   redis-cli -u "$REDIS_URL" INFO server | grep redis_version
+   redis-cli -u "$REDIS_URL" COMMAND INFO <COMMAND>
+   redis-cli -u "$REDIS_URL" COMMAND DOCS <COMMAND>
+   redis-cli -h "$REDIS_CLUSTER_HOST" -p "$REDIS_CLUSTER_START_PORT" -a "$REDIS_CLUSTER_PASSWORD" --no-auth-warning CLUSTER INFO   # cluster_state:ok
+   ```
+   If the command/option is missing there, continue anyway: write the
+   integration tests with `@EnabledOnCommand` gating (they will be skipped), and
+   say in the report which image would need to ship the change.
+
 4. **Create redis-cli showcase test cases.** Once the command is available, derive
    a small set of redis-cli scenarios from the HLD and the server PR and run them.
    These serve two purposes:
@@ -119,6 +217,15 @@ Do all of the following before writing any plan or code:
    test assertions, and the PR description. If the command could not be made
    available on any image, still write the scenarios as *expected* transcripts and
    mark them unverified.
+   **Unattended:** run the scenarios against `$REDIS_URL` (add `-3` for RESP3), and
+   through the cluster when routing matters. Always pass the Redis command as
+   arguments: a bare `redis-cli` waits on stdin and hangs a headless run.
+   ```bash
+   redis-cli -u "$REDIS_URL" <COMMAND> <args...>
+   redis-cli -c -h "$REDIS_CLUSTER_HOST" -p "$REDIS_CLUSTER_START_PORT" \
+     -a "$REDIS_CLUSTER_PASSWORD" --no-auth-warning <COMMAND> <args...>
+   ```
+   Keep the scratch file out of the change; carry the transcripts into the report.
 
 5. **Read the testing and consistency docs**:
    [.agents/docs/integration-testing.md](../../../.agents/docs/integration-testing.md)
@@ -162,10 +269,18 @@ drive the work — do not paste it back to the maintainer or pause for "spec
 approval." The only stop for the maintainer is the Phase 1 plan approval; surface
 genuinely ambiguous design choices *there*, with the proposed sync signatures,
 rather than interrupting earlier.
+**Unattended:** there is no stop at all — settle genuinely ambiguous choices by
+the HLD, else by the most consistent existing Lettuce convention, and list each
+as an open question in the final report.
 
-## Phase 1 — Plan mode, then explicit approval
+## Phase 1 — Plan, then approval (supervised) or straight to implementation (unattended)
 
-Enter **plan mode**. Using the evidence, classify the change with the decision tree
+**Supervised:** enter **plan mode**. **Unattended:** don't enter plan mode and
+don't wait — the automation's approval was the merged HLD; write the plan below
+into the final report, then implement it right away, following the whole matrix
+exactly as a supervised run would.
+
+Using the evidence, classify the change with the decision tree
 below and enumerate the exact file-by-file touch list, the test matrix, and the
 gating annotations. The plan must contain:
 
@@ -176,18 +291,23 @@ gating annotations. The plan must contain:
   from it and it is costly to change once mirrored. Plan approval is the
   maintainer's sign-off on that contract — if the signatures must deviate later
   during implementation, stop and re-confirm before mirroring.
+  **Unattended:** don't stop; make the change consistently across all flavors
+  and record the deviation and its reason in the report.
 - **The complete overload set, enumerated.** For every varargs parameter, list
   the matching single-argument overload; for a multi-key command with an `*Args`
   object, use the `List<K>` shape (no varargs) and list the fixed-arity
   convenience overloads instead — both house rules live in "Types & args
   conventions". Justify any overload you omit so the maintainer signs off on the
   exception. An overload discovered missing in review means reworking all six
-  flavors.
+  flavors. **Unattended:** put the justification in the report and list the
+  omission as an open question.
 
-Present the plan and **explicitly ask permission to execute** before implementing.
-Do not start editing files until the user approves.
+**Supervised:** present the plan and **explicitly ask permission to execute**
+before implementing. Do not start editing files until the user approves.
+**Unattended:** don't ask; the plan goes into the final report and you start
+implementing immediately.
 
-Once approved, copy this checklist into your working notes and tick items off:
+Once approved (unattended: once the plan is written), copy this checklist into your working notes and tick items off:
 
 ```
 Extend-commands progress:
@@ -201,6 +321,7 @@ Extend-commands progress:
 - [ ] 6. Tests: args/builder/output unit tests + integration base/overloads
 - [ ] 7. Docs: entry in the current-release section of docs/new-features.md
 - [ ] 8. Verify: mvn clean test + a single integration test run; then make stop
+       (unattended: targeted ITs on standalone AND cluster; no make stop)
 ```
 
 ## Decision tree — what kind of change is this?
@@ -354,7 +475,8 @@ scan-family commands).
   parsers in an area package (e.g. `core/search/arguments/`).
 - Module commands still gate on server capability, not version:
   `@EnabledOnCommand("FT.CREATE")`-style probes; integration tests target the
-  stack node.
+  stack node. (Unattended: `standalone-modules` is the provided standalone, which
+  loads the modules; see "Running the tests".)
 
 ## Types & args conventions
 
@@ -462,6 +584,39 @@ local-gotchas section of
   so: the integration tests will be skipped by `@EnabledOnCommand` (expected and
   acceptable), but they must still be written and compile.
 
+**Unattended:** there is no Docker environment and no `make`; the provided
+servers are already up and `REDIS_ENDPOINTS_CONFIG_PATH` already points Lettuce's
+test harness at them. Use the JDK the sandbox provides (the Java 8 pin in the
+integration-testing notes is a local-machine workaround). Then:
+
+1. `mvn formatter:format` first — `verify` runs `formatter:validate`.
+2. Unit tests: `mvn clean test` (or the test command the invoking prompt gives),
+   including the consistency suite above.
+3. Integration tests covering the change, against BOTH topologies in one run —
+   the group's standalone base and its overloads (RESP2/reactive/Tx where they
+   exist) for `standalone`, and the group's cluster overload (e.g.
+   `StringClusterCommandIntegrationTests`, built on
+   `ClusterTestUtil.redisCommandsOverCluster`) for `cluster`:
+   ```bash
+   mvn -DskipITs=false -DskipUnitTests=true \
+     -Dit.test='<Group>CommandIntegrationTests,<Group>ClusterCommandIntegrationTests' verify -Pci
+   ```
+   Add `-Dmaven.gitcommitid.skip=true` only if the checkout is a git worktree.
+   If the group has no cluster overload and routing matters for the command,
+   create one (see the test matrix) so cluster coverage actually runs. Module
+   command tests resolve `standalone-modules`, the provided standalone with the
+   modules loaded: run them, and if `COMMAND INFO <MODULE CMD>` is empty on
+   `$REDIS_URL`, list them as not run.
+4. Read the Failsafe summary (`target/failsafe-reports/`) and report, per
+   topology, the classes run and their tests/failures/errors/skipped counts.
+   Skips from `@EnabledOnCommand` are expected when the server lacks the
+   command — say so.
+
+Out of scope unattended — list them as not run, don't try to make them work:
+integration tests that need sentinel, TLS/mTLS, ACL users other than `default`,
+modules on cluster, Unix sockets, Toxiproxy, or the fixed 7379–7385 `ClusterTestSettings`
+cluster layout.
+
 **Tear the environment down when you are done.** The Docker topology started in
 Phase 0 keeps running (and holds the test ports) until stopped. After the final
 verification run — and equally when the task is aborted or fails partway — run:
@@ -469,6 +624,8 @@ verification run — and equally when the task is aborted or fails partway — r
 ```bash
 make stop
 ```
+
+**Unattended:** skip this — there is nothing to stop.
 
 ## PR hygiene checklist (verify before finishing)
 
@@ -495,12 +652,15 @@ make stop
       (follow its existing "Support for [`X`](redis.io link) …" pattern), plus
       any feature page the change affects.
 - [ ] `.env.vX.XX` image pin bumped if the feature needed a newer server build.
+      (**Unattended:** don't bump it; name the needed image in the report.)
 - [ ] PR description states: server PR link, HLD link, gating choice and why,
       behavior against older servers, and includes a showcase transcript. (Draft
       with the [draft-pr-description](../draft-pr-description/SKILL.md) skill;
       remember the guardrail — the agent never creates the PR itself.)
+      (**Unattended:** put these in the final report; the automation builds the
+      PR description from it.)
 - [ ] Docker test environment stopped (`make stop`) after the final verification
-      run.
+      run. (**Unattended:** not applicable.)
 
 ## Top pitfalls
 
