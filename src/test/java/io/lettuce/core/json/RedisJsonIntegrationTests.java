@@ -889,4 +889,26 @@ public class RedisJsonIntegrationTests {
         }
     }
 
+    @Test
+    void jsonMGetRawOmitsMissingKeysFromReactiveFlux() throws Exception {
+
+        redis.jsonSet("existing-key", JsonPath.ROOT_PATH, redis.getJsonParser().createJsonValue("[\"one\"]"));
+
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+
+            // A Flux cannot emit null, so a missing key is omitted from the reactive stream.
+            StepVerifier.create(connection.reactive().jsonMGetRaw(JsonPath.ROOT_PATH, "existing-key", "missing-key"))
+                    .expectNextCount(1).verifyComplete();
+
+            // The async API keeps one element per key, which is what callers need when the
+            // correspondence between keys and values matters.
+            List<String> values = connection.async().jsonMGetRaw(JsonPath.ROOT_PATH, "existing-key", "missing-key").get();
+
+            assertThat(values).hasSize(2).containsNull();
+            assertThat(values.get(1)).isNull();
+        } finally {
+            redis.del("existing-key");
+        }
+    }
+
 }
