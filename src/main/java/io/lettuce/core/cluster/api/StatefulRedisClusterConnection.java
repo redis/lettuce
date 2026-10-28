@@ -75,7 +75,9 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      *             instead; scheduled for removal in a future major release.
      */
     @Deprecated
-    RedisAdvancedClusterReactiveCommands<K, V> reactive();
+    default RedisAdvancedClusterReactiveCommands<K, V> reactive() {
+        return commands(RedisAdvancedClusterReactiveCommands.factory());
+    }
 
     /**
      * Retrieve a connection to the specified cluster node using the {@code nodeId} suitable for {@link ConnectionIntent#WRITE
@@ -304,12 +306,8 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * @param factory the command API factory, must not be {@code null}
      * @param <T> the command API type
      * @return the command API bound to this connection
-     * @throws UnsupportedOperationException if the connection implementation does not override this method. The default is
-     *         provided only for source compatibility in Lettuce 7.x and becomes an abstract method in Lettuce 8.0.
      * @since 7.8
      */
-    default <T> T commands(CommandsFactory<StatefulRedisClusterConnection<K, V>, T> factory) {
-        throw new UnsupportedOperationException("commands(CommandsFactory) is not implemented by this connection");
-    }
+    <T> T commands(CommandsFactory<StatefulRedisClusterConnection<K, V>, T> factory);
 
 }

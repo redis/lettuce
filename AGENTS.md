@@ -186,5 +186,6 @@ before doing that type of work.
 | Skill | When to use |
 |-------|-------------|
 | `extend-commands-api` | Add or extend a Redis command (or overload) end-to-end, evidence-first: HLD + server PR + live redis-cli verification, plan-mode approval, then all API interface flavors, builder, async/reactive/Kotlin impls, and tests |
+| `create-implementation-plan-for-redis-api-change` | Turn a shared client HLD into Lettuce's reviewed implementation plan (API, files per flavor, ordered steps, test matrix) without touching sources; read-only, writes one plan file; conventions come from `extend-commands-api` |
 | `writing-javadoc` | Write or fix Javadoc for public API following Lettuce house conventions |
 | `draft-pr-description` | Generate a GitHub PR title and description from the diff between two local branches |

@@ -85,6 +85,8 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
 
+    private final StatefulRedisClusterConnection<String, String> connection;
+
     private final RedisAdvancedClusterReactiveCommands<String, String> commands;
 
     private final RedisAdvancedClusterCommands<String, String> syncCommands;
@@ -93,6 +95,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     AdvancedClusterReactiveIntegrationTests(RedisClusterClient clusterClient,
             StatefulRedisClusterConnection<String, String> connection) {
         this.clusterClient = clusterClient;
+        this.connection = connection;
         this.commands = connection.reactive();
         this.syncCommands = connection.sync();
     }
@@ -100,6 +103,17 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     @BeforeEach
     void setUp() {
         syncCommands.flushall();
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void commandsAccessorReturnsWorkingReactiveApi() {
+
+        RedisAdvancedClusterReactiveCommands<String, String> reactive = connection
+                .commands(RedisAdvancedClusterReactiveCommands.factory());
+
+        StepVerifier.create(reactive.ping()).expectNext("PONG").verifyComplete();
+        assertThat(reactive).isSameAs(connection.reactive());
     }
 
     @Test

@@ -8,7 +8,7 @@
 package io.lettuce.core.output;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -27,7 +27,7 @@ class MapComplexData extends ComplexData {
     private Object key;
 
     public MapComplexData(int count) {
-        data = new HashMap<>(count);
+        data = new LinkedHashMap<>(count);
     }
 
     @Override

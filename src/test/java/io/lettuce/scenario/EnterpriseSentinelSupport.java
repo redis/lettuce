@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.Subscription;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.connection.ConnectionActivatedEvent;
 import io.lettuce.core.event.connection.DisconnectedEvent;
@@ -24,7 +25,6 @@ import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.test.env.Endpoints;
-import reactor.core.Disposable;
 
 /**
  * Shared plumbing for the Redis Enterprise discovery-service (Sentinel-compatible API) scenario tests.
@@ -340,10 +340,10 @@ final class EnterpriseSentinelSupport {
 
         private final List<String> disconnects = new CopyOnWriteArrayList<>();
 
-        private final Disposable subscription;
+        private final Subscription subscription;
 
         ConnectionEventCapture(RedisClient client) {
-            this.subscription = client.getResources().eventBus().get().subscribe(event -> {
+            this.subscription = client.getResources().eventBus().subscribe(event -> {
                 if (event instanceof ConnectionActivatedEvent) {
                     String remote = format(((ConnectionActivatedEvent) event).remoteAddress());
                     log.info("Connection activated: {}", remote);
@@ -394,7 +394,7 @@ final class EnterpriseSentinelSupport {
 
         @Override
         public void close() {
-            subscription.dispose();
+            subscription.close();
         }
 
     }

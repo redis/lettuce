@@ -98,7 +98,7 @@ public class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubRea
                 predicate);
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,
-                RedisPubSubReactiveCommands.class, REACTIVE);
+                RedisPubSubReactiveCommands.class, REACTIVE, RedisPubSubReactiveCommands.factory());
         return (PubSubReactiveNodeSelection<K, V>) Proxy.newProxyInstance(NodeSelectionSupport.class.getClassLoader(),
                 new Class<?>[] { NodeSelectionPubSubReactiveCommands.class, PubSubReactiveNodeSelection.class }, h);
     }
@@ -121,7 +121,7 @@ public class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubRea
 
         @Override
         protected CompletableFuture<RedisPubSubReactiveCommands<K, V>> getApi(RedisClusterNode redisClusterNode) {
-            return getConnection(redisClusterNode).thenApply(StatefulRedisPubSubConnection::reactive);
+            return getConnection(redisClusterNode).thenApply(c -> c.commands(RedisPubSubReactiveCommands.factory()));
         }
 
         protected List<RedisClusterNode> nodes() {

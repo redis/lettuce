@@ -86,6 +86,24 @@ import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
+import io.lettuce.core.timeseries.TsAggregation;
+import io.lettuce.core.timeseries.TsFilter;
+import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsMGetValue;
+import io.lettuce.core.timeseries.TsNRangeRow;
+import io.lettuce.core.timeseries.TsReadOffset;
+import io.lettuce.core.timeseries.TsSample;
+import io.lettuce.core.timeseries.TsSeries;
+import io.lettuce.core.timeseries.arguments.TsAddArgs;
+import io.lettuce.core.timeseries.arguments.TsAlterArgs;
+import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsNRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.vector.RawVector;
@@ -96,9 +114,11 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
+import reactor.util.context.ContextView;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.AbstractMap;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -136,7 +156,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
         RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K>, RedisArrayReactiveCommands<K, V>,
         RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>,
-        RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V> {
+        RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V>, RedisTimeSeriesReactiveCommands<K> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -160,6 +180,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     private final RedisTDigestCommandBuilder<K, V> tDigestCommandBuilder;
 
+    private final RedisTimeSeriesCommandBuilder<K, V> timeSeriesCommandBuilder;
+
     private final Supplier<JsonParser> parser;
 
     private final ClientResources clientResources;
@@ -167,6 +189,37 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private final boolean tracingEnabled;
 
     private volatile EventExecutorGroup scheduler;
+
+    /**
+     * Read-only {@link Map} view of a Reactor {@link ContextView}, used to pass the subscriber context to
+     * {@link TraceContextProvider#getTraceContextAsync(Map)}. Lookups delegate to the {@link ContextView} without copying;
+     * {@link #entrySet()} is not supported.
+     */
+    static class ContextViewMapAdapter extends AbstractMap<Object, Object> {
+
+        private final ContextView ctx;
+
+        public ContextViewMapAdapter(ContextView ctx) {
+            this.ctx = ctx;
+        }
+
+        @Override
+        public Object get(Object key) {
+            return ctx.hasKey(key) ? ctx.get(key) : null;
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return ctx.hasKey(key);
+        }
+
+        @Override
+        public Set<Entry<Object, Object>> entrySet() {
+            // no need to implement, just for the sake of AbstractMap contract
+            throw new UnsupportedOperationException();
+        }
+
+    }
 
     /**
      * Initialize a new instance.
@@ -189,6 +242,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
         this.cmsCommandBuilder = new RedisCMSCommandBuilder<>(codec);
         this.tDigestCommandBuilder = new RedisTDigestCommandBuilder<>(codec);
+        this.timeSeriesCommandBuilder = new RedisTimeSeriesCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -802,7 +856,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
         return ReactorTraceContext.getContext()
                 .switchIfEmpty(Mono.fromSupplier(() -> clientResources.tracing().initialTraceContextProvider()))
-                .flatMap(TraceContextProvider::getTraceContextLater).defaultIfEmpty(TraceContext.EMPTY);
+                .flatMap(p -> Mono
+                        .deferContextual(ctx -> Mono.justOrEmpty(p.getTraceContextAsync(new ContextViewMapAdapter(ctx)).get())))
+                .defaultIfEmpty(TraceContext.EMPTY);
     }
 
     /**
@@ -4948,6 +5004,278 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Double> tdigestTrimmedMean(K key, double lowCutQuantile, double highCutQuantile) {
         return createMono(() -> tDigestCommandBuilder.tdigestTrimmedMean(key, lowCutQuantile, highCutQuantile));
+    }
+
+    @Override
+    public Mono<String> tsCreate(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreate(key));
+    }
+
+    @Override
+    public Mono<String> tsCreate(K key, TsCreateArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreate(key, args));
+    }
+
+    @Override
+    public Mono<String> tsAlter(K key, TsAlterArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAlter(key, args));
+    }
+
+    @Override
+    public Mono<Long> tsDel(K key, Range<Long> range) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDel(key, range));
+    }
+
+    @Override
+    public Mono<TsInfoValue<K>> tsInfo(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsInfo(key));
+    }
+
+    @Override
+    public Mono<TsInfoValue<K>> tsInfo(K key, boolean debug) {
+        return createMono(() -> timeSeriesCommandBuilder.tsInfo(key, debug));
+    }
+
+    @Override
+    public Mono<Long> tsAddNow(K key, double value) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAddNow(key, value));
+    }
+
+    @Override
+    public Mono<Long> tsAddNow(K key, double value, TsAddArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAddNow(key, value, args));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, long timestamp, double value) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, timestamp, value));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, long timestamp, double value, TsAddArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, timestamp, value, args));
+    }
+
+    @Override
+    public Flux<Value<Long>> tsMAdd(List<TsMAddValue<K>> samples) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAddValues(samples));
+    }
+
+    @Override
+    public Mono<Long> tsIncrBy(K key, double addend) {
+        return createMono(() -> timeSeriesCommandBuilder.tsIncrBy(key, addend));
+    }
+
+    @Override
+    public Mono<Long> tsIncrBy(K key, double addend, TsIncrByArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsIncrBy(key, addend, args));
+    }
+
+    @Override
+    public Mono<Long> tsDecrBy(K key, double subtrahend) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDecrBy(key, subtrahend));
+    }
+
+    @Override
+    public Mono<Long> tsDecrBy(K key, double subtrahend, TsIncrByArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDecrBy(key, subtrahend, args));
+    }
+
+    @Override
+    public Mono<String> tsCreateRule(K sourceKey, K destKey, TsAggregation aggregation, long bucketDuration) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreateRule(sourceKey, destKey, aggregation, bucketDuration));
+    }
+
+    @Override
+    public Mono<String> tsCreateRule(K sourceKey, K destKey, TsAggregation aggregation, long bucketDuration,
+            long alignTimestamp) {
+        return createMono(
+                () -> timeSeriesCommandBuilder.tsCreateRule(sourceKey, destKey, aggregation, bucketDuration, alignTimestamp));
+    }
+
+    @Override
+    public Mono<String> tsDeleteRule(K sourceKey, K destKey) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDeleteRule(sourceKey, destKey));
+    }
+
+    @Override
+    public Mono<TsSample> tsGet(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsGet(key));
+    }
+
+    @Override
+    public Mono<TsSample> tsGet(K key, boolean latest) {
+        return createMono(() -> timeSeriesCommandBuilder.tsGet(key, latest));
+    }
+
+    @Override
+    public Flux<TsSample> tsRange(K key, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRange(key, range));
+    }
+
+    @Override
+    public Flux<TsSample> tsRange(K key, Range<Long> range, TsRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRange(key, range, args));
+    }
+
+    @Override
+    public Flux<TsSample> tsRevRange(K key, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRevRange(key, range));
+    }
+
+    @Override
+    public Flux<TsSample> tsRevRange(K key, Range<Long> range, TsRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRevRange(key, range, args));
+    }
+
+    @Override
+    public Flux<TsSample> tsRead(K key, TsReadOffset offset) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRead(key, offset));
+    }
+
+    @Override
+    public Flux<TsSample> tsRead(K key, TsReadOffset offset, TsReadArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRead(key, offset, args));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(filter));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(filters));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs args, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(args, filter));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs args, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(args, filters));
+    }
+
+    @Override
+    public Flux<K> tsQueryIndex(TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryIndex(filter));
+    }
+
+    @Override
+    public Flux<K> tsQueryIndex(TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryIndex(filters));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRange(range, filter));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRange(range, filters));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRange(range, args, filter));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRange(range, args, filters));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRevRange(range, filter));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRevRange(range, filters));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRevRange(range, args, filter));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRevRange(range, args, filters));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabels() {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabels());
+    }
+
+    @Override
+    public Flux<String> tsQueryLabels(TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabels(filter));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabels(TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabels(filters));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabelValues(label));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabelValues(label, filter));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabelValues(label, filters));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(List<K> keys, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(keys, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(List<K> keys, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(keys, range, args));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(K key1, K key2, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(key1, key2, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(K key1, K key2, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(key1, key2, range, args));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(List<K> keys, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(keys, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(List<K> keys, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(keys, range, args));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(K key1, K key2, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(key1, key2, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(K key1, K key2, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(key1, key2, range, args));
     }
 
 }
