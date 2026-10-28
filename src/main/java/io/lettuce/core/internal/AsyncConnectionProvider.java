@@ -142,11 +142,14 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        forEach((connectionKey, closeable) -> {
-
-            futures.add(closeable.closeAsync());
-            connections.remove(connectionKey);
-        });
+        for (K k : connections.keySet()) {
+            Sync<K, T, F> remove = connections.remove(k);
+            if (remove != null) {
+                CompletionStage<Void> closeFuture = remove.future.thenAccept(AsyncCloseable::closeAsync);
+                // always synchronously add the future, made it immutably in Futures.allOf()
+                futures.add(closeFuture.toCompletableFuture());
+            }
+        }
 
         return Futures.allOf(futures);
     }
@@ -160,9 +163,8 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
 
         LettuceAssert.notNull(key, "ConnectionKey must not be null!");
 
-        Sync<K, T, F> sync = connections.get(key);
+        Sync<K, T, F> sync = connections.remove(key);
         if (sync != null) {
-            connections.remove(key);
             sync.doWithConnection(AsyncCloseable::closeAsync);
         }
     }
@@ -217,7 +219,6 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
 
         @SuppressWarnings("unchecked")
         public Sync(K key, F future) {
-
             this.key = key;
             this.future = (F) future.whenComplete((connection, throwable) -> {
 
