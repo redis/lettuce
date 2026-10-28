@@ -155,6 +155,7 @@ public class DatabaseConfig {
     public Builder mutate() {
         Builder builder = new Builder(this.redisURI);
         builder.weight = this.weight;
+        builder.clientOptions = this.clientOptions;
         builder.circuitBreakerConfig = this.circuitBreakerConfig;
         builder.healthCheckStrategySupplier = this.healthCheckStrategySupplier;
         return builder;
