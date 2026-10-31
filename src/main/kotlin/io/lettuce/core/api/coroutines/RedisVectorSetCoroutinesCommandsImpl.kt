@@ -25,6 +25,7 @@ import kotlinx.coroutines.reactive.asFlow
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Tihomir Mateev
+ * @author hutiefang76
  * @since 6.7
  */
 @ExperimentalLettuceCoroutinesApi
@@ -61,9 +62,10 @@ internal class RedisVectorSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override suspend fun vinfo(key: K): VectorMetadata? = ops.vinfo(key).awaitFirstOrNull()
 
-    override suspend fun vlinks(key: K, element: V): List<V> = ops.vlinks(key, element).asFlow().toList()
+    override suspend fun vlinks(key: K, element: V): List<List<V>> = ops.vlinks(key, element).asFlow().toList()
 
-    override suspend fun vlinksWithScores(key: K, element: V): Map<V, Double>? = ops.vlinksWithScores(key, element).awaitFirstOrNull()
+    override suspend fun vlinksWithScores(key: K, element: V): List<Map<V, Double>> =
+        ops.vlinksWithScores(key, element).asFlow().toList()
 
     override suspend fun vrandmember(key: K): V? = ops.vrandmember(key).awaitFirstOrNull()
 

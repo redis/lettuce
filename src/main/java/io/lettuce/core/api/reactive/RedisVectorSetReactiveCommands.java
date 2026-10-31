@@ -7,6 +7,7 @@
 package io.lettuce.core.api.reactive;
 
 import java.util.Map;
+import java.util.List;
 import io.lettuce.core.VAddArgs;
 import io.lettuce.core.VSimArgs;
 import io.lettuce.core.annotations.Experimental;
@@ -29,6 +30,7 @@ import reactor.core.publisher.Mono;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Tihomir Mateev
+ * @author hutiefang76
  * @see <a href="https://redis.io/docs/latest/develop/data-types/vector-sets/">Redis Vector Sets</a>
  * @since 6.7
  */
@@ -252,13 +254,13 @@ public interface RedisVectorSetReactiveCommands<K, V> {
      *
      * @param key the key of the vector set
      * @param element the name of the element in the vector set
-     * @return a list of elements that are linked to the specified element, or an empty list if the key or element does not
-     *         exist
+     * @return a Flux emitting one list of linked elements per HNSW graph layer, including empty layers; an empty Flux if the
+     *         key or element does not exist
      * @since 6.7
      * @see <a href="https://redis.io/docs/latest/commands/vlinks/">Redis Documentation: VLINKS</a>
      */
     @Experimental
-    Flux<V> vlinks(K key, V element);
+    Flux<List<V>> vlinks(K key, V element);
 
     /**
      * Returns the neighbors of the specified {@code element} in the HNSW graph along with their scores.
@@ -269,12 +271,13 @@ public interface RedisVectorSetReactiveCommands<K, V> {
      *
      * @param key the key of the vector set
      * @param element the name of the element in the vector set
-     * @return a list of elements with their similarity scores, or an empty list if the key or element does not exist
+     * @return a Flux emitting one map of linked elements and their scores per HNSW graph layer, including empty layers; an
+     *         empty Flux if the key or element does not exist
      * @since 6.7
      * @see <a href="https://redis.io/docs/latest/commands/vlinks/">Redis Documentation: VLINKS</a>
      */
     @Experimental
-    Mono<Map<V, Double>> vlinksWithScores(K key, V element);
+    Flux<Map<V, Double>> vlinksWithScores(K key, V element);
 
     /**
      * Returns a random element from the vector set stored at {@code key}. This command is useful for sampling elements for
