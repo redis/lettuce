@@ -65,6 +65,7 @@ import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.ConnectionIntent;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.AggregationReply.Cursor;
@@ -833,6 +834,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         return getStatefulConnection(intent).map(c -> c.commands(RedisReactiveCommands.factory())).flatMap(routedCall)
                 .onErrorResume(err -> {
+                    if (isClientSideFailure(err)) {
+                        return Mono.error(err);
+                    }
                     logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
                     return superCall.get();
                 });
@@ -850,6 +854,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         return getStatefulConnection(intent).map(c -> c.commands(RedisReactiveCommands.factory())).flatMapMany(routedCall)
                 .onErrorResume(err -> {
+                    if (isClientSideFailure(err)) {
+                        return Flux.error(err);
+                    }
                     logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
                     return superCall.get();
                 });
@@ -867,6 +874,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         return getStatefulConnection(intent).map(c -> c.commands(RedisReactiveCommands.factory()))
                 .flatMap(conn -> conn.clusterMyId().flatMap(nodeId -> routedCall.apply(nodeId, conn))).onErrorResume(err -> {
+                    if (isClientSideFailure(err)) {
+                        return Mono.error(err);
+                    }
                     logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
                     return superCall.get();
                 });
@@ -1027,6 +1037,15 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
                     streamScanCursor -> ClusterScanSupport.toClusterStreamScanCursor(nodeIds, currentNodeId, streamScanCursor));
         }
 
+    }
+
+    /**
+     * Command arguments are validated while the command is built inside {@code routedCall}. Such an
+     * {@link IllegalArgumentException} is a client side error, not a routing failure: retrying through the fallback would
+     * rebuild the same invalid command and log a misleading routing error.
+     */
+    private static boolean isClientSideFailure(Throwable err) {
+        return Exceptions.unwrap(err) instanceof IllegalArgumentException;
     }
 
     private static <T> Mono<T> getMono(CompletableFuture<T> future) {
