@@ -11,6 +11,7 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -39,7 +40,10 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -836,6 +840,75 @@ public class RedisJsonIntegrationTests {
         List<String> result = redis.jsonArrpopRaw("myKey");
         assertThat(result.toString()).isEqualTo("[\"one\"]");
         assertThat(redis.jsonGetRaw("myKey").get(0)).isEqualTo("[]");
+    }
+
+    @Test
+    void jsonGetRawOnMissingKeyCompletesWithReactiveCommands() {
+
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+
+            RedisReactiveCommands<String, String> reactive = connection.reactive();
+
+            StepVerifier.create(reactive.jsonGetRaw("missing-key", JsonPath.ROOT_PATH)).verifyComplete();
+        }
+    }
+
+    @Test
+    void jsonMGetRawInReactiveTransactionKeepsResponseForMissingKey() throws Exception {
+
+        redis.jsonSet("existing-key", JsonPath.ROOT_PATH, redis.getJsonParser().createJsonValue("[\"one\"]"));
+
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+
+            RedisReactiveCommands<String, String> reactive = connection.reactive();
+
+            AtomicReference<TransactionResult> result = new AtomicReference<>();
+            CountDownLatch completed = new CountDownLatch(1);
+
+            // Commands issued inside MULTI are dispatched through a CompositeSubscriber that feeds both
+            // the reactive subscriber and the collecting one.
+            reactive.multi().subscribe(ok -> {
+                reactive.jsonMGetRaw(JsonPath.ROOT_PATH, "existing-key").subscribe(it -> {
+                });
+                reactive.jsonMGetRaw(JsonPath.ROOT_PATH, "missing-key").subscribe(it -> {
+                });
+                reactive.exec().subscribe(result::set, it -> completed.countDown(), completed::countDown);
+            });
+
+            assertThat(completed.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(result.get()).isNotNull();
+            assertThat(result.get().size()).isEqualTo(2);
+
+            List<String> existing = result.get().get(0);
+            List<String> missing = result.get().get(1);
+
+            assertThat(existing).hasSize(1);
+            assertThat(missing).containsExactly((String) null);
+        } finally {
+            redis.del("existing-key");
+        }
+    }
+
+    @Test
+    void jsonMGetRawOmitsMissingKeysFromReactiveFlux() throws Exception {
+
+        redis.jsonSet("existing-key", JsonPath.ROOT_PATH, redis.getJsonParser().createJsonValue("[\"one\"]"));
+
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+
+            // A Flux cannot emit null, so a missing key is omitted from the reactive stream.
+            StepVerifier.create(connection.reactive().jsonMGetRaw(JsonPath.ROOT_PATH, "existing-key", "missing-key"))
+                    .expectNextCount(1).verifyComplete();
+
+            // The async API keeps one element per key, which is what callers need when the
+            // correspondence between keys and values matters.
+            List<String> values = connection.async().jsonMGetRaw(JsonPath.ROOT_PATH, "existing-key", "missing-key").get();
+
+            assertThat(values).hasSize(2).containsNull();
+            assertThat(values.get(1)).isNull();
+        } finally {
+            redis.del("existing-key");
+        }
     }
 
 }
