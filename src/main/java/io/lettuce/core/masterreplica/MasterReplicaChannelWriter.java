@@ -20,6 +20,9 @@
 package io.lettuce.core.masterreplica;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.ClientOptions;
@@ -28,6 +31,7 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.ProtocolKeyword;
@@ -118,6 +122,18 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
 
         if (closed) {
             throw new RedisException("Connection is closed");
+        }
+
+        // Reject an invalid batch before asynchronous routing. Its dispatch catch
+        // completes every command, including one already accepted by an earlier write.
+        CommandLatencyRecorder recorder = clientResources.commandLatencyRecorder();
+        if (recorder != null && recorder.isQueueLatencyEnabled() && commands.size() > 1) {
+            Set<RedisCommand<?, ?, ?>> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+            for (RedisCommand<K, V, ?> command : commands) {
+                if (!seen.add(command)) {
+                    throw new RedisException("Batch contains repeated command instance: " + command);
+                }
+            }
         }
 
         for (RedisCommand<K, V, ?> command : commands) {

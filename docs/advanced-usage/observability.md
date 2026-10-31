@@ -119,8 +119,20 @@ The following settings are available to configure from
 ## Micrometer
 
 Commands are tracked by using two Micrometer `Timer`s:
-`lettuce.command.firstresponse` and `lettuce.command.completion`. The
-following tags are attached to each timer:
+`lettuce.command.firstresponse` and `lettuce.command.completion`. Optionally,
+`lettuce.command.queueing` measures the time from acceptance by
+`DefaultEndpoint.write()` to dispatch by `CommandHandler`. Enable it using
+`MicrometerOptions.builder().queueLatency(true).build()`; it is off by default.
+
+Queueing is recorded **once per send attempt**, when the command is dispatched,
+including attempts that later time out or are cancelled. Commands cancelled or
+timed out before dispatch are not sampled. Each MOVED/ASK redirect starts a new
+attempt and is tagged with its destination node. In-flight replay after reconnect
+does not add a second sample unless the command is accepted again by an endpoint.
+Caller-side end-to-end latency is outside this metric. The existing first-response
+and completion timers are unchanged.
+
+The following tags are attached to each timer:
 
 - `command`: Name of the command (`GET`, `SET`, …​)
 
