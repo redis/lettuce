@@ -136,7 +136,9 @@ class ScanStreamIntegrationTests extends TestSupport {
 
         StepVerifier.create(ScanStream.zscan(reactive, key, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
                 .verifyComplete();
-        StepVerifier.create(ScanStream.zscan(reactive, key)).expectNextCount(1000).verifyComplete();
+        // ZSCAN may return a member more than once, which the btree encoding of Redis 8.12 does even without writes
+        StepVerifier.create(ScanStream.zscan(reactive, key).map(ScoredValue::getValue).distinct()).expectNextCount(1000)
+                .verifyComplete();
     }
 
     @Test
