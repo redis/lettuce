@@ -40,8 +40,8 @@ interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
     /**
      * Increases the count of several items by their given increments in a single call. A negative increment decrements the
      * count of its item; the server applies it only if every counter cell of the item holds at least that amount, otherwise
-     * the command fails with a `CMS: INCRBY underflow` error. Items preceding the failing pair are still applied.
-     * Negative increments require Redis 8.12 or later.
+     * the command fails with a `CMS: INCRBY underflow` error. The other pairs in the call, before and after the failing
+     * one, are still applied. Negative increments require Redis 8.12 or later.
      *
      * @param key the key.
      * @param pairs the items paired with the increment to add to each item's count.

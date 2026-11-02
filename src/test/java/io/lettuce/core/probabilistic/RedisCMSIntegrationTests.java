@@ -129,6 +129,18 @@ public class RedisCMSIntegrationTests {
     }
 
     @Test
+    void cmsIncrByNegativeBelowZeroStillAppliesOtherPairs() {
+        assumeCellSizeSupported();
+        redis.cmsInitByDim(MY_KEY, 2000, 5);
+        redis.cmsIncrBy(MY_KEY, IncrementPair.of(MY_ITEM, 5));
+
+        assertThatThrownBy(() -> redis.cmsIncrBy(MY_KEY, IncrementPair.of("before", 3), IncrementPair.of(MY_ITEM, -10),
+                IncrementPair.of("after", 2))).isInstanceOf(RedisCommandExecutionException.class)
+                        .hasMessageContaining("underflow");
+        assertThat(redis.cmsQuery(MY_KEY, "before", MY_ITEM, "after")).containsExactly(3L, 5L, 2L);
+    }
+
+    @Test
     void cmsIncrByOverflowOnSmallCellFails() {
         assumeCellSizeSupported();
         redis.cmsInitByDim(MY_KEY, 2000, 5, CmsCellSize.ONE_BYTE);
