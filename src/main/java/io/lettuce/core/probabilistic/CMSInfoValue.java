@@ -36,16 +36,7 @@ public class CMSInfoValue {
         this.width = (Long) rawInfo.get("width");
         this.depth = (Long) rawInfo.get("depth");
         this.count = (Long) rawInfo.get("count");
-        this.cellSize = readCellSize(rawInfo);
-    }
-
-    private static Long readCellSize(Map<String, Object> rawInfo) {
-
-        Object value = rawInfo.get("cell_size");
-        if (value == null) {
-            value = rawInfo.get("cell size");
-        }
-        return (Long) value;
+        this.cellSize = (Long) rawInfo.get("cell_size");
     }
 
     /**

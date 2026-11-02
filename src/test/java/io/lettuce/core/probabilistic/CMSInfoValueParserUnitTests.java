@@ -72,13 +72,6 @@ class CMSInfoValueParserUnitTests {
     }
 
     @Test
-    void parseCellSizeWithSpaceSeparatedKey() {
-        ComplexData data = buildMapData(buf("width"), 1L, buf("depth"), 2L, buf("count"), 0L, buf("cell size"), 2L);
-
-        assertThat(parser.parse(data).getCellSize()).isEqualTo(2L);
-    }
-
-    @Test
     void cellSizeIsNullOnOlderServers() {
         ComplexData data = buildMapData(buf("width"), 2000L, buf("depth"), 5L, buf("count"), 5L);
 
