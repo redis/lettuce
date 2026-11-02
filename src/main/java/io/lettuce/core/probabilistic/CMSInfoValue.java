@@ -89,7 +89,7 @@ public class CMSInfoValue {
      *
      * @return the number of bytes per counter cell ({@code 1}, {@code 2}, {@code 4} or {@code 8}), or {@code null} when the
      *         server predates the {@code CELL_SIZE} option and does not report it.
-     * @since 7.8
+     * @since 8.0
      */
     public Long getCellSize() {
         return cellSize;

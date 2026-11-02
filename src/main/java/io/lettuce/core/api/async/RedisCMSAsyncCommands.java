@@ -77,7 +77,7 @@ public interface RedisCMSAsyncCommands<K, V> {
      *        {@link CmsCellSize#FOUR_BYTES}.
      * @return String simple-string-reply {@code OK} if {@code CMS.INITBYDIM} was executed correctly.
      * @throws IllegalArgumentException if {@code cellSize} is {@code null}.
-     * @since 7.8
+     * @since 8.0
      */
     RedisFuture<String> cmsInitByDim(K key, long width, long depth, CmsCellSize cellSize);
 
@@ -102,7 +102,7 @@ public interface RedisCMSAsyncCommands<K, V> {
      *        {@link CmsCellSize#FOUR_BYTES}.
      * @return String simple-string-reply {@code OK} if {@code CMS.INITBYPROB} was executed correctly.
      * @throws IllegalArgumentException if {@code cellSize} is {@code null}.
-     * @since 7.8
+     * @since 8.0
      */
     RedisFuture<String> cmsInitByProb(K key, double error, double probability, CmsCellSize cellSize);
 

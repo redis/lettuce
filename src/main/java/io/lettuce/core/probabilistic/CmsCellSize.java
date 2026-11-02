@@ -15,7 +15,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * {@code CMS.INITBYPROB}. Smaller cells reduce the memory footprint of the sketch but lower the maximum count a cell can hold.
  * The server default is {@link #FOUR_BYTES}. Requires Redis 8.12 or later.
  *
- * @since 7.8
+ * @since 8.0
  */
 public enum CmsCellSize implements ProtocolKeyword {
 

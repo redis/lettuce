@@ -77,7 +77,7 @@ interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
      * @param cellSize the number of bytes per counter cell (`CELL_SIZE`). Smaller cells reduce the memory footprint but
      *        lower the maximum count a cell can hold. The server default is [CmsCellSize.FOUR_BYTES].
      * @return String simple-string-reply `OK` if `CMS.INITBYDIM` was executed correctly.
-     * @since 7.8
+     * @since 8.0
      */
     suspend fun cmsInitByDim(key: K, width: Long, depth: Long, cellSize: CmsCellSize): String?
 
@@ -100,7 +100,7 @@ interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
      * @param cellSize the number of bytes per counter cell (`CELL_SIZE`). Smaller cells reduce the memory footprint but
      *        lower the maximum count a cell can hold. The server default is [CmsCellSize.FOUR_BYTES].
      * @return String simple-string-reply `OK` if `CMS.INITBYPROB` was executed correctly.
-     * @since 7.8
+     * @since 8.0
      */
     suspend fun cmsInitByProb(key: K, error: Double, probability: Double, cellSize: CmsCellSize): String?
 
