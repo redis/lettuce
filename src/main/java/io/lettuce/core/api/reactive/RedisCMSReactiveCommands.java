@@ -107,8 +107,8 @@ public interface RedisCMSReactiveCommands<K, V> {
     Mono<String> cmsInitByProb(K key, double error, double probability, CmsCellSize cellSize);
 
     /**
-     * Merges a single source sketch into a destination sketch. All sketches must have identical width and depth, and the
-     * destination must already exist.
+     * Merges a single source sketch into a destination sketch. All sketches must have identical width, depth and cell size, and
+     * the destination must already exist.
      *
      * @param destination the name of destination sketch. Must be initialized.
      * @param source the name of the source sketch to merge into {@code destination}.
@@ -117,8 +117,8 @@ public interface RedisCMSReactiveCommands<K, V> {
     Mono<String> cmsMerge(K destination, K source);
 
     /**
-     * Merges several source sketches into a single destination sketch. All sketches must have identical width and depth, and
-     * the destination must already exist.
+     * Merges several source sketches into a single destination sketch. All sketches must have identical width, depth and cell
+     * size, and the destination must already exist.
      *
      * @param destination the name of destination sketch. Must be initialized.
      * @param sources the names of the source sketches to merge into {@code destination}.
@@ -128,7 +128,7 @@ public interface RedisCMSReactiveCommands<K, V> {
 
     /**
      * Merges a single source sketch into a destination sketch, scaling its contribution by the weight paired with it. All
-     * sketches must have identical width and depth, and the destination must already exist.
+     * sketches must have identical width, depth and cell size, and the destination must already exist.
      *
      * @param destination the name of destination sketch. Must be initialized.
      * @param pair the source sketch to merge into {@code destination}, paired with the multiplication factor applied to it
@@ -139,7 +139,7 @@ public interface RedisCMSReactiveCommands<K, V> {
 
     /**
      * Merges several source sketches into a single destination sketch, scaling each source's contribution by the weight paired
-     * with it. All sketches must have identical width and depth, and the destination must already exist.
+     * with it. All sketches must have identical width, depth and cell size, and the destination must already exist.
      *
      * @param destination the name of destination sketch. Must be initialized.
      * @param sources the source sketches to merge into {@code destination}, each paired with the multiplication factor applied

@@ -105,8 +105,8 @@ interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
     suspend fun cmsInitByProb(key: K, error: Double, probability: Double, cellSize: CmsCellSize): String?
 
     /**
-     * Merges a single source sketch into a destination sketch. All sketches must have identical width and depth, and the
-     * destination must already exist.
+     * Merges a single source sketch into a destination sketch. All sketches must have identical width, depth and cell
+     * size, and the destination must already exist.
      *
      * @param destination the name of destination sketch. Must be initialized.
      * @param source the name of the source sketch to merge into `destination`.
@@ -115,8 +115,8 @@ interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
     suspend fun cmsMerge(destination: K, source: K): String?
 
     /**
-     * Merges several source sketches into a single destination sketch. All sketches must have identical width and depth, and
-     * the destination must already exist.
+     * Merges several source sketches into a single destination sketch. All sketches must have identical width, depth and
+     * cell size, and the destination must already exist.
      *
      * @param destination the name of destination sketch. Must be initialized.
      * @param sources the names of the source sketches to merge into `destination`.
@@ -126,7 +126,7 @@ interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Merges a single source sketch into a destination sketch, scaling its contribution by the weight paired with it. All
-     * sketches must have identical width and depth, and the destination must already exist.
+     * sketches must have identical width, depth and cell size, and the destination must already exist.
      *
      * @param destination the name of destination sketch. Must be initialized.
      * @param pair the source sketch to merge into `destination`, paired with the multiplication factor applied to it
@@ -137,7 +137,7 @@ interface RedisCMSCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Merges several source sketches into a single destination sketch, scaling each source's contribution by the weight paired
-     * with it. All sketches must have identical width and depth, and the destination must already exist.
+     * with it. All sketches must have identical width, depth and cell size, and the destination must already exist.
      *
      * @param destination the name of destination sketch. Must be initialized.
      * @param sources the source sketches to merge into `destination`, each paired with the multiplication factor applied
