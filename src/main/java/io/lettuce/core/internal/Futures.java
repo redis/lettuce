@@ -1,11 +1,18 @@
 package io.lettuce.core.internal;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.ChannelFuture;
+import io.netty.util.Timeout;
 
 /**
  * Utility methods for {@link java.util.concurrent.Future} handling. This class is part of the internal API and may change
@@ -262,6 +269,146 @@ public abstract class Futures {
         } catch (Exception e) {
             throw Exceptions.bubble(e);
         }
+    }
+
+    /**
+     * Return a {@link CompletableFuture} that mirrors {@code source} but completes exceptionally with {@link TimeoutException}
+     * if {@code source} does not complete within {@code duration}. The timeout is scheduled on the
+     * {@link ClientResources#timer()} and cancelled upon source completion. Timing out does not cancel {@code source}. If
+     * {@code source} is already done, or {@code duration} is {@link Duration#ZERO} (no timeout), {@code source} itself is
+     * returned.
+     *
+     * @param source the source future, must not be {@code null}.
+     * @param duration timeout duration, must not be {@code null} or negative. {@link Duration#ZERO} means "do not time out".
+     * @param resources client resources providing the timer, must not be {@code null}.
+     * @param taskName short description of the awaited operation, used in the {@link TimeoutException} message; must not be
+     *        {@code null}.
+     * @param <T> the result type.
+     * @return a {@link CompletableFuture} completing with the same result as {@code source} or with a {@link TimeoutException}.
+     * @since 8.0
+     */
+    public static <T> CompletableFuture<T> withTimeout(CompletableFuture<T> source, Duration duration,
+            ClientResources resources, String taskName) {
+
+        LettuceAssert.notNull(source, "Source future must not be null");
+        LettuceAssert.notNull(duration, "Duration must not be null");
+        LettuceAssert.isTrue(!duration.isNegative(), "Duration must not be negative");
+        LettuceAssert.notNull(resources, "ClientResources must not be null");
+        LettuceAssert.notNull(taskName, "Task name must not be null");
+
+        if (source.isDone() || duration.isZero()) {
+            return source;
+        }
+
+        CompletableFuture<T> result = new CompletableFuture<>();
+        Timeout scheduled = resources.timer().newTimeout(
+                t -> result.completeExceptionally(
+                        new TimeoutException(taskName + " timed out after " + duration.toMillis() + "ms")),
+                duration.toNanos(), TimeUnit.NANOSECONDS);
+
+        source.whenComplete((value, err) -> {
+            scheduled.cancel();
+            if (err != null) {
+                result.completeExceptionally(err);
+            } else {
+                result.complete(value);
+            }
+        });
+
+        return result;
+    }
+
+    /**
+     * Try {@code attempts} in order, completing with the result of the first one that succeeds. Each attempt is invoked lazily:
+     * the first attempt starts immediately, and each subsequent attempt starts only after the previous one fails. Every attempt
+     * is invoked through this method, so a synchronous throw from a supplier is captured as a failure rather than propagated to
+     * the caller. If all attempts fail, {@code onAllFailed} receives the failures in the order they occurred and returns the
+     * throwable to complete with. If {@code onAllFailed} throws or returns {@code null}, the result completes with that throw
+     * or with the last failure instead, so it always completes.
+     *
+     * @param attempts the attempts to try in order, must not be {@code null} or empty.
+     * @param onAllFailed builds the throwable to propagate from all collected failures, invoked only when every attempt fails.
+     * @param <T> the result type.
+     * @return a {@link CompletableFuture} completing with the first successful attempt, or with {@code onAllFailed} applied to
+     *         all failures.
+     * @since 8.0
+     */
+    public static <T> CompletableFuture<T> withFallback(List<Supplier<CompletionStage<T>>> attempts,
+            Function<List<Throwable>, Throwable> onAllFailed) {
+
+        LettuceAssert.isTrue(attempts != null && !attempts.isEmpty(), "Attempts must not be empty");
+        LettuceAssert.notNull(onAllFailed, "Error handler must not be null");
+
+        List<Throwable> failures = Collections.synchronizedList(new ArrayList<>(attempts.size()));
+
+        CompletableFuture<T> chain = attempt(attempts.get(0), failures);
+        for (int i = 1; i < attempts.size(); i++) {
+            chain = fallbackTo(chain, attempts.get(i), failures);
+        }
+
+        CompletableFuture<T> result = new CompletableFuture<>();
+        chain.whenComplete((value, error) -> {
+            if (error == null) {
+                result.complete(value);
+            } else {
+                Throwable aggregate;
+                try {
+                    aggregate = onAllFailed.apply(failures);
+                } catch (Throwable t) {
+                    aggregate = t;
+                }
+                result.completeExceptionally(aggregate != null ? aggregate : error);
+            }
+        });
+        return result;
+    }
+
+    private static <T> CompletableFuture<T> fallbackTo(CompletableFuture<T> current, Supplier<CompletionStage<T>> next,
+            List<Throwable> failures) {
+
+        CompletableFuture<T> result = new CompletableFuture<>();
+        current.whenComplete((value, error) -> {
+            if (error == null) {
+                result.complete(value);
+            } else {
+                attempt(next, failures).whenComplete((fallbackValue, fallbackError) -> {
+                    if (fallbackError != null) {
+                        result.completeExceptionally(fallbackError);
+                    } else {
+                        result.complete(fallbackValue);
+                    }
+                });
+            }
+        });
+        return result;
+    }
+
+    private static <T> CompletableFuture<T> attempt(Supplier<? extends CompletionStage<T>> supplier, List<Throwable> failures) {
+
+        CompletableFuture<T> future = new CompletableFuture<>();
+
+        CompletionStage<T> stage;
+        try {
+            stage = supplier.get();
+        } catch (Throwable t) {
+            failures.add(t);
+            future.completeExceptionally(t);
+            return future;
+        }
+
+        stage.whenComplete((value, error) -> {
+            if (error == null) {
+                future.complete(value);
+            } else {
+                Throwable cause = Exceptions.unwrap(error);
+                if (cause == null) {
+                    cause = error;
+                }
+                failures.add(cause);
+                future.completeExceptionally(cause);
+            }
+        });
+        return future;
     }
 
 }

@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Tag;
@@ -87,6 +88,38 @@ class RedisURIUnitTests {
     }
 
     @Test
+    void toStringShouldUnwrapCredentialsProviderFailure() {
+
+        RedisException cause = new RedisException("auth failed");
+        CredentialsProvider failing = () -> {
+            CompletableFuture<RedisCredentials> f = new CompletableFuture<>();
+            f.completeExceptionally(cause);
+            return f;
+        };
+
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        redisURI.setCredentialsProvider(failing);
+
+        assertThatThrownBy(redisURI::toString).isSameAs(cause).isNotInstanceOf(CompletionException.class);
+    }
+
+    @Test
+    void toStringShouldUnwrapCredentialsProviderRuntimeFailure() {
+
+        IllegalStateException cause = new IllegalStateException("boom");
+        CredentialsProvider failing = () -> {
+            CompletableFuture<RedisCredentials> f = new CompletableFuture<>();
+            f.completeExceptionally(cause);
+            return f;
+        };
+
+        RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
+        redisURI.setCredentialsProvider(failing);
+
+        assertThatThrownBy(redisURI::toString).isSameAs(cause).isNotInstanceOf(CompletionException.class);
+    }
+
+    @Test
     void shouldNotBlockOnReactiveThreadForToString() {
 
         RedisURI redisURI = RedisURI.create("redis://user:secret@localhost:1234/5");
@@ -118,7 +151,8 @@ class RedisURIUnitTests {
     void shouldMaskCredentialsForNonImmediateProvider() {
 
         RedisURI redisURI = RedisURI.create("redis://localhost:1234/5");
-        redisURI.setCredentialsProvider(() -> Mono.fromCallable(() -> RedisCredentials.just("alice", "secret".toCharArray())));
+        redisURI.setCredentialsProvider(
+                () -> CompletableFuture.completedFuture(RedisCredentials.just("alice", "secret".toCharArray())));
 
         assertThat(redisURI).hasToString("redis://alice:******@localhost:1234/5");
     }
@@ -406,8 +440,8 @@ class RedisURIUnitTests {
             assertThat(credentials.getPassword()).isEqualTo("bar".toCharArray());
         }).verifyComplete();
 
-        RedisCredentialsProvider provider = () -> Mono
-                .just(RedisCredentials.just("suppliedUsername", "suppliedPassword".toCharArray()));
+        CredentialsProvider provider = () -> CompletableFuture
+                .completedFuture(RedisCredentials.just("suppliedUsername", "suppliedPassword".toCharArray()));
 
         RedisURI sourceCp = new RedisURI();
         sourceCp.setCredentialsProvider(provider);
@@ -645,6 +679,28 @@ class RedisURIUnitTests {
         });
 
         assertThat(redisURI.toString()).contains("alice:******@");
+    }
+
+    @Test
+    void copyingAuthenticationShouldUseOverriddenCredentialsProviderAccessor() {
+
+        CredentialsProvider exposed = () -> CompletableFuture
+                .completedFuture(RedisCredentials.just("exposed", "secret".toCharArray()));
+        RedisURI source = new RedisURI() {
+
+            @Override
+            public CredentialsProvider getCredentialsProviderAsync() {
+                return exposed;
+            }
+
+        };
+
+        RedisURI target = RedisURI.create("localhost", 6379);
+        target.applyAuthentication(source);
+        assertThat(target.getCredentialsProviderAsync()).isSameAs(exposed);
+
+        RedisURI built = RedisURI.builder().withHost("localhost").withAuthentication(source).build();
+        assertThat(built.getCredentialsProviderAsync()).isSameAs(exposed);
     }
 
     /**

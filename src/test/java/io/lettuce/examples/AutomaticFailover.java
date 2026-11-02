@@ -58,7 +58,7 @@ public class AutomaticFailover {
         MultiDbClient multiDbClient = MultiDbClient.create(databaseConfigs);
 
         // Listen to database switch events
-        multiDbClient.getResources().eventBus().get().subscribe(event -> {
+        multiDbClient.getResources().eventBus().subscribe(event -> {
             if (event instanceof DatabaseSwitchEvent) {
                 DatabaseSwitchEvent switchEvent = (DatabaseSwitchEvent) event;
                 log.info("Database switch from {} to {} (reason: {})", switchEvent.getFromDb(), switchEvent.getToDb(),

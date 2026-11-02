@@ -40,14 +40,17 @@ on the event type if you’re interested only in particular event types.
 RedisClient client = RedisClient.create();
 EventBus eventBus = client.getResources().eventBus();
 
-Subscription subscription = eventBus.get()
-                .filter(redisEvent -> redisEvent instanceof CommandLatencyEvent)
-                .cast(CommandLatencyEvent.class)
-                .subscribe(e -> System.out.println(e.getLatencies()));
+Subscription subscription = eventBus.subscribe(CommandLatencyEvent.class,
+        e -> System.out.println(e.getLatencies()));
+
+...
+subscription.close();
 ```
 
-The `EventBus` uses Reactor Processors to publish events. This example
-prints the received latencies to `stdout`. The interval and the
+`subscribe(Class, Consumer)` delivers only events of the given type;
+close the returned `Subscription` to stop receiving them (see
+[Events](events.md)). This example prints the received latencies to
+`stdout`. The interval and the
 collection of command latency metrics can be configured in the
 `ClientResources`.
 

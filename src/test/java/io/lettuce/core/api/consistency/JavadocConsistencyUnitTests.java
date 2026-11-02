@@ -23,7 +23,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import com.github.javaparser.JavaParser;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.comments.JavadocComment;
@@ -71,7 +71,7 @@ class JavadocConsistencyUnitTests {
             TreeSet<String> annotationWithoutTag = new TreeSet<>();
             TreeSet<String> tagWithoutAnnotation = new TreeSet<>();
 
-            JavaParser.parse(source).accept(new VoidVisitorAdapter<Void>() {
+            StaticJavaParser.parse(source).accept(new VoidVisitorAdapter<Void>() {
 
                 @Override
                 public void visit(MethodDeclaration method, Void arg) {
@@ -314,7 +314,7 @@ class JavadocConsistencyUnitTests {
 
         Map<String, MethodDoc> methods = new LinkedHashMap<>();
 
-        JavaParser.parse(source).accept(new VoidVisitorAdapter<Void>() {
+        StaticJavaParser.parse(source).accept(new VoidVisitorAdapter<Void>() {
 
             @Override
             public void visit(MethodDeclaration method, Void arg) {

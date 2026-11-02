@@ -713,15 +713,21 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         void onError(RedisSubscription<?> subscription, Throwable t) {
 
             State state;
-            while ((state = subscription.state()) != COMPLETED && subscription.changeState(state, COMPLETED)) {
+            while ((state = subscription.state()) != COMPLETED) {
+
+                // The subscribing thread may move the state (e.g. DEMAND -> READING -> DEMAND) between the read above and
+                // the CAS. Retry instead of dropping the error, otherwise the subscriber is never terminated.
+                if (!subscription.changeState(state, COMPLETED)) {
+                    continue;
+                }
 
                 readData(subscription);
 
                 Subscriber<?> subscriber = subscription.subscriber;
                 if (subscriber != null) {
                     subscriber.onError(t);
-                    return;
                 }
+                return;
             }
         }
 

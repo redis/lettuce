@@ -23,6 +23,8 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Map;
+
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +36,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Will Glozer
@@ -164,6 +167,21 @@ public class TransactionCommandIntegrationTests extends TestSupport {
         assertThat(redis.get(key)).isEqualTo(null);
         TransactionResult values = redis.exec();
         assertThat(values.wasDiscarded()).isFalse();
+    }
+
+    @Test
+    @EnabledOnCommand("HELLO")
+    void execWithResp3MapReply() {
+
+        String script = "return {map={name='lettuce'}}";
+        Object outsideTransaction = redis.eval(script, ScriptOutputType.OBJECT);
+
+        redis.multi();
+        redis.eval(script, ScriptOutputType.OBJECT);
+        TransactionResult result = redis.exec();
+
+        assertThat(outsideTransaction).isInstanceOf(Map.class);
+        assertThat((Object) result.get(0)).isEqualTo(outsideTransaction);
     }
 
     @Test
