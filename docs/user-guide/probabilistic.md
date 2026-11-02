@@ -135,9 +135,10 @@ Long cellSize = commands.cmsInfo("req:1m").getCellSize(); // 1
 Since Redis 8.12, `CMS.INCRBY` also accepts negative increments, so a count that was added
 earlier can be taken back again (for example when an event leaves a sliding window). The
 server only applies a decrement if every counter cell of the item holds at least that
-amount; otherwise the command fails with `CMS: INCRBY underflow` and the sketch is left
-unchanged. Never decrement an item that was not added before — that would corrupt the
-sketch.
+amount; otherwise the command fails with `CMS: INCRBY underflow` and that item's count is
+left unchanged. When a single call passes several pairs, the other pairs are still applied,
+before and after the failing one, even though the call throws. Never decrement an item that
+was not added before — that would corrupt the sketch.
 
 ```java
 commands.cmsIncrBy("req:1m", IncrementPair.of("/login", 5));   // [5]
