@@ -580,26 +580,24 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Mono<KeyScanCursor<K>> blessScan(BlessFlag flag) {
-        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.blessScan(flag),
-                reactiveClusterKeyScanCursorMapper());
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.blessScan(flag), keyScanCursorMapper());
     }
 
     @Override
     public Mono<KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs) {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.blessScan(flag, scanArgs),
-                reactiveClusterKeyScanCursorMapper());
+                keyScanCursorMapper());
     }
 
     @Override
     public Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag) {
-        return clusterScan(scanCursor, (connection, cursor) -> connection.blessScan(cursor, flag),
-                reactiveClusterKeyScanCursorMapper());
+        return clusterScan(scanCursor, (connection, cursor) -> connection.blessScan(cursor, flag), keyScanCursorMapper());
     }
 
     @Override
     public Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.blessScan(cursor, flag, scanArgs),
-                reactiveClusterKeyScanCursorMapper());
+                keyScanCursorMapper());
     }
 
     @Override
