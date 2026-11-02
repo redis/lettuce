@@ -27,7 +27,9 @@ public interface RedisCMSReactiveCommands<K, V> {
     /**
      * Increases the count of an item by the given increment. A negative increment decrements the count; the server applies it
      * only if every counter cell of the item holds at least that amount, otherwise the command fails with a
-     * {@code CMS: INCRBY underflow} error and the sketch is left unchanged. Negative increments require Redis 8.12 or later.
+     * {@code CMS: INCRBY underflow} error and the sketch is left unchanged. Negative increments require Redis 8.12 or later. An
+     * increment that would take a counter cell past the maximum of its {@link CmsCellSize} fails with a
+     * {@code CMS: INCRBY overflow} error and also leaves the sketch unchanged.
      *
      * @param key the key.
      * @param pair the item paired with the increment to add to its count.
@@ -38,8 +40,9 @@ public interface RedisCMSReactiveCommands<K, V> {
     /**
      * Increases the count of several items by their given increments in a single call. A negative increment decrements the
      * count of its item; the server applies it only if every counter cell of the item holds at least that amount, otherwise the
-     * command fails with a {@code CMS: INCRBY underflow} error. The other pairs in the call, before and after the failing one,
-     * are still applied. Negative increments require Redis 8.12 or later.
+     * command fails with a {@code CMS: INCRBY underflow} error. An increment that would take a counter cell past the maximum of
+     * its {@link CmsCellSize} fails the same way with a {@code CMS: INCRBY overflow} error. The other pairs in the call, before
+     * and after the failing one, are still applied. Negative increments require Redis 8.12 or later.
      *
      * @param key the key.
      * @param pairs the items paired with the increment to add to each item's count.

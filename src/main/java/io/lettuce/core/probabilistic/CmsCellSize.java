@@ -35,7 +35,7 @@ public enum CmsCellSize implements ProtocolKeyword {
     FOUR_BYTES(4),
 
     /**
-     * 8-byte counter cells, holding counts up to {@code 2^64 - 1}.
+     * 8-byte counter cells, holding counts up to {@code 9223372036854775807} ({@link Long#MAX_VALUE}).
      */
     EIGHT_BYTES(8);
 
