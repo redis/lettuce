@@ -113,7 +113,8 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
             }
 
             assertThat(ScanFlow.zscan(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
-            assertThat(ScanFlow.zscan(this, key).count()).isEqualTo(iterations)
+            // ZSCAN may return a member more than once, which the btree encoding of Redis 8.12 does even without writes
+            assertThat(ScanFlow.zscan(this, key).toList().map { it.value }.distinct()).hasSize(iterations)
         }
     }
 }
