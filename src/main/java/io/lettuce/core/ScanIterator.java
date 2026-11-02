@@ -99,7 +99,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link ScanIterator}.
-     * @since 7.9
+     * @since 8.0
      */
     public static <K, V> ScanIterator<K> blessScan(RedisKeyCommands<K, V> commands, BlessFlag flag) {
         return blessScan(commands, flag, Optional.empty());
@@ -115,7 +115,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link ScanIterator}.
-     * @since 7.9
+     * @since 8.0
      */
     public static <K, V> ScanIterator<K> blessScan(RedisKeyCommands<K, V> commands, BlessFlag flag, BlessScanArgs scanArgs) {
 

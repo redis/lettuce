@@ -16,7 +16,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * <p>
  * {@link BlessScanArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
- * @since 7.9
+ * @since 8.0
  */
 public class BlessScanArgs implements CompositeArgument {
 
@@ -25,7 +25,7 @@ public class BlessScanArgs implements CompositeArgument {
     /**
      * Builder entry points for {@link BlessScanArgs}.
      *
-     * @since 7.9
+     * @since 8.0
      */
     public static class Builder {
 
@@ -40,7 +40,7 @@ public class BlessScanArgs implements CompositeArgument {
          *
          * @param count hint for the number of index entries to visit per call, must be greater than zero.
          * @return new {@link BlessScanArgs} with {@literal COUNT} set.
-         * @since 7.9
+         * @since 8.0
          * @see BlessScanArgs#count(long)
          */
         public static BlessScanArgs count(long count) {
@@ -55,7 +55,7 @@ public class BlessScanArgs implements CompositeArgument {
      *
      * @param count hint for the number of index entries to visit per call, must be greater than zero.
      * @return {@literal this} {@link BlessScanArgs}.
-     * @since 7.9
+     * @since 8.0
      */
     public BlessScanArgs count(long count) {
 

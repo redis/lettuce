@@ -433,7 +433,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      *
      * @param flag the blessing flag to filter on, must not be {@code null}.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @since 7.9
+     * @since 8.0
      * @see RedisKeyAsyncCommands#blessScan(BlessFlag)
      */
     RedisFuture<KeyScanCursor<K>> blessScan(BlessFlag flag);
@@ -444,7 +444,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @param flag the blessing flag to filter on, must not be {@code null}.
      * @param scanArgs scan arguments, can be {@code null}.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @since 7.9
+     * @since 8.0
      * @see RedisKeyAsyncCommands#blessScan(BlessFlag, BlessScanArgs)
      */
     RedisFuture<KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs);
@@ -456,7 +456,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      *        {@link #blessScan(BlessFlag)} call.
      * @param flag the blessing flag to filter on, must not be {@code null}.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @since 7.9
+     * @since 8.0
      * @see RedisKeyAsyncCommands#blessScan(ScanCursor, BlessFlag)
      */
     RedisFuture<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag);
@@ -469,7 +469,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @param flag the blessing flag to filter on, must not be {@code null}.
      * @param scanArgs scan arguments, can be {@code null}.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @since 7.9
+     * @since 8.0
      * @see RedisKeyAsyncCommands#blessScan(ScanCursor, BlessFlag, BlessScanArgs)
      */
     RedisFuture<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs);

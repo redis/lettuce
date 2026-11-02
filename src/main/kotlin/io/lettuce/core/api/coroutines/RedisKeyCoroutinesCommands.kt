@@ -633,7 +633,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param flag the blessing flag to turn on, must not be `null`.
      * @return `true` if the flag was turned on, `false` if it was already set on `key`.
      * @throws IllegalArgumentException if `key` or `flag` is `null`.
-     * @since 7.9
+     * @since 8.0
      */
     suspend fun blessSet(key: K, flag: BlessFlag): Boolean?
 
@@ -645,7 +645,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param flag the blessing flag to turn off, must not be `null`.
      * @return `true` if the flag was turned off, `false` if it was not set on `key`.
      * @throws IllegalArgumentException if `key` or `flag` is `null`.
-     * @since 7.9
+     * @since 8.0
      */
     suspend fun blessClear(key: K, flag: BlessFlag): Boolean?
 
@@ -655,7 +655,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param key the key, must not be `null`.
      * @return List<BlessFlag> array-reply the active blessing flags of `key`, empty if the key is not blessed.
      * @throws IllegalArgumentException if `key` is `null`.
-     * @since 7.9
+     * @since 8.0
      */
     suspend fun blessGet(key: K): List<BlessFlag>
 
@@ -666,7 +666,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param flag the blessing flag to filter on, must not be `null`.
      * @return KeyScanCursor<K> scan cursor.
      * @throws IllegalArgumentException if `flag` is `null`.
-     * @since 7.9
+     * @since 8.0
      */
     suspend fun blessScan(flag: BlessFlag): KeyScanCursor<K>?
 
@@ -678,7 +678,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param scanArgs scan arguments, can be `null`.
      * @return KeyScanCursor<K> scan cursor.
      * @throws IllegalArgumentException if `flag` is `null`.
-     * @since 7.9
+     * @since 8.0
      * @see [BlessScanArgs]
      */
     suspend fun blessScan(flag: BlessFlag, scanArgs: BlessScanArgs): KeyScanCursor<K>?
@@ -690,7 +690,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param flag the blessing flag to filter on, must not be `null`.
      * @return KeyScanCursor<K> scan cursor.
      * @throws IllegalArgumentException if `scanCursor` or `flag` is `null`, or if `scanCursor` is finished.
-     * @since 7.9
+     * @since 8.0
      */
     suspend fun blessScan(scanCursor: ScanCursor, flag: BlessFlag): KeyScanCursor<K>?
 
@@ -703,7 +703,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param scanArgs scan arguments, can be `null`.
      * @return KeyScanCursor<K> scan cursor.
      * @throws IllegalArgumentException if `scanCursor` or `flag` is `null`, or if `scanCursor` is finished.
-     * @since 7.9
+     * @since 8.0
      * @see [BlessScanArgs]
      */
     suspend fun blessScan(scanCursor: ScanCursor, flag: BlessFlag, scanArgs: BlessScanArgs): KeyScanCursor<K>?

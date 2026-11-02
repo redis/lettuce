@@ -330,7 +330,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      *
      * @param flag the blessing flag to filter on, must not be {@code null}.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @since 7.9
+     * @since 8.0
      * @see RedisKeyReactiveCommands#blessScan(BlessFlag)
      */
     Mono<KeyScanCursor<K>> blessScan(BlessFlag flag);
@@ -341,7 +341,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param flag the blessing flag to filter on, must not be {@code null}.
      * @param scanArgs scan arguments, can be {@code null}.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @since 7.9
+     * @since 8.0
      * @see RedisKeyReactiveCommands#blessScan(BlessFlag, BlessScanArgs)
      */
     Mono<KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs);
@@ -353,7 +353,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      *        {@link #blessScan(BlessFlag)} call.
      * @param flag the blessing flag to filter on, must not be {@code null}.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @since 7.9
+     * @since 8.0
      * @see RedisKeyReactiveCommands#blessScan(ScanCursor, BlessFlag)
      */
     Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag);
@@ -366,7 +366,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param flag the blessing flag to filter on, must not be {@code null}.
      * @param scanArgs scan arguments, can be {@code null}.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
-     * @since 7.9
+     * @since 8.0
      * @see RedisKeyReactiveCommands#blessScan(ScanCursor, BlessFlag, BlessScanArgs)
      */
     Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs);

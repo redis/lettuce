@@ -726,7 +726,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param flag the blessing flag to turn on, must not be {@code null}.
      * @return {@code true} if the flag was turned on, {@code false} if it was already set on {@code key}.
      * @throws IllegalArgumentException if {@code key} or {@code flag} is {@code null}.
-     * @since 7.9
+     * @since 8.0
      */
     RedisFuture<Boolean> blessSet(K key, BlessFlag flag);
 
@@ -738,7 +738,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param flag the blessing flag to turn off, must not be {@code null}.
      * @return {@code true} if the flag was turned off, {@code false} if it was not set on {@code key}.
      * @throws IllegalArgumentException if {@code key} or {@code flag} is {@code null}.
-     * @since 7.9
+     * @since 8.0
      */
     RedisFuture<Boolean> blessClear(K key, BlessFlag flag);
 
@@ -748,7 +748,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param key the key, must not be {@code null}.
      * @return List&lt;BlessFlag&gt; array-reply the active blessing flags of {@code key}, empty if the key is not blessed.
      * @throws IllegalArgumentException if {@code key} is {@code null}.
-     * @since 7.9
+     * @since 8.0
      */
     RedisFuture<List<BlessFlag>> blessGet(K key);
 
@@ -759,7 +759,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param flag the blessing flag to filter on, must not be {@code null}.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @throws IllegalArgumentException if {@code flag} is {@code null}.
-     * @since 7.9
+     * @since 8.0
      */
     RedisFuture<KeyScanCursor<K>> blessScan(BlessFlag flag);
 
@@ -771,7 +771,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @param scanArgs scan arguments, can be {@code null}.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @throws IllegalArgumentException if {@code flag} is {@code null}.
-     * @since 7.9
+     * @since 8.0
      * @see BlessScanArgs
      */
     RedisFuture<KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs);
@@ -784,7 +784,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @throws IllegalArgumentException if {@code scanCursor} or {@code flag} is {@code null}, or if {@code scanCursor} is
      *         finished.
-     * @since 7.9
+     * @since 8.0
      */
     RedisFuture<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag);
 
@@ -798,7 +798,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @throws IllegalArgumentException if {@code scanCursor} or {@code flag} is {@code null}, or if {@code scanCursor} is
      *         finished.
-     * @since 7.9
+     * @since 8.0
      * @see BlessScanArgs
      */
     RedisFuture<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs);

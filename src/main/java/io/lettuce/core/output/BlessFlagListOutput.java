@@ -20,7 +20,7 @@ import io.lettuce.core.internal.LettuceAssert;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @since 7.9
+ * @since 8.0
  */
 public class BlessFlagListOutput<K, V> extends CommandOutput<K, V, List<BlessFlag>> implements StreamingOutput<BlessFlag> {
 
@@ -32,7 +32,7 @@ public class BlessFlagListOutput<K, V> extends CommandOutput<K, V, List<BlessFla
      * Create a new {@link BlessFlagListOutput}.
      *
      * @param codec the codec used to decode the reply, must not be {@code null}.
-     * @since 7.9
+     * @since 8.0
      */
     public BlessFlagListOutput(RedisCodec<K, V> codec) {
         super(codec, Collections.emptyList());

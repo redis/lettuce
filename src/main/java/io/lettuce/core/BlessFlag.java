@@ -19,14 +19,14 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * verbatim to the server so that flags introduced by newer servers can be used without a client upgrade. Unknown tokens are
  * rejected by the server with a syntax error.
  *
- * @since 7.9
+ * @since 8.0
  */
 public final class BlessFlag implements ProtocolKeyword {
 
     /**
      * Protect the key against {@literal maxmemory} eviction under any eviction policy. Wire token {@literal NO-EVICT}.
      *
-     * @since 7.9
+     * @since 8.0
      */
     public static final BlessFlag NO_EVICT = new BlessFlag("NO-EVICT");
 
@@ -46,7 +46,7 @@ public final class BlessFlag implements ProtocolKeyword {
      * @param token the flag token as understood by the server, must not be {@code null} or empty.
      * @return the {@link BlessFlag} for {@code token}.
      * @throws IllegalArgumentException if {@code token} is {@code null} or empty.
-     * @since 7.9
+     * @since 8.0
      */
     public static BlessFlag of(String token) {
 
@@ -61,7 +61,7 @@ public final class BlessFlag implements ProtocolKeyword {
 
     /**
      * @return the wire token of this flag, for example {@literal NO-EVICT}.
-     * @since 7.9
+     * @since 8.0
      */
     public String getToken() {
         return token;

@@ -61,7 +61,7 @@ object ScanFlow {
      * @param flag the blessing flag to filter on.
      * @param scanArgs scan arguments.
      * @return `Flow<K>` flow of keys.
-     * @since 7.9
+     * @since 8.0
      */
     fun <K : Any, V : Any> blessScan(commands: RedisKeyCoroutinesCommands<K, V>, flag: BlessFlag, scanArgs: BlessScanArgs? = null): Flow<K> {
         val ops = when (commands) {
