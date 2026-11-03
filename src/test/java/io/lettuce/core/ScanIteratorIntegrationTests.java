@@ -25,8 +25,10 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -286,12 +288,13 @@ class ScanIteratorIntegrationTests extends TestSupport {
         assertThat(scan.hasNext()).isTrue();
         assertThat(scan.hasNext()).isTrue();
 
-        for (int i = 0; i < 11; i++) {
-            assertThat(scan.hasNext()).isTrue();
-            assertThat(scan.next()).isNotNull();
+        // ZSCAN may return a member more than once, which the btree encoding of Redis 8.12 does even without writes
+        Set<String> values = new HashSet<>();
+        while (scan.hasNext()) {
+            values.add(scan.next().getValue());
         }
 
-        assertThat(scan.hasNext()).isFalse();
+        assertThat(values).hasSize(11);
     }
 
     @Test
@@ -308,7 +311,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         List<ScoredValue<String>> values = scan.stream().collect(Collectors.toList());
 
-        assertThat(values).containsAll(values);
+        assertThat(values).containsAll(expected);
     }
 
 }
