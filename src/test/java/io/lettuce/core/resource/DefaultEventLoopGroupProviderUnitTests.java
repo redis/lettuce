@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.test.TestFutures;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.Future;
 
@@ -22,7 +23,7 @@ class DefaultEventLoopGroupProviderUnitTests {
     void shutdownTerminatedEventLoopGroup() {
         DefaultEventLoopGroupProvider sut = new DefaultEventLoopGroupProvider(1);
 
-        NioEventLoopGroup eventLoopGroup = sut.allocate(NioEventLoopGroup.class);
+        EventLoopGroup eventLoopGroup = sut.allocate(NioEventLoopGroup.class);
 
         Future<Boolean> shutdown = sut.release(eventLoopGroup, 10, 10, TimeUnit.MILLISECONDS);
         TestFutures.awaitOrTimeout(shutdown);

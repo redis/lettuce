@@ -25,11 +25,13 @@ import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Mark Paluch
  */
 @Tag(INTEGRATION_TEST)
+@DisabledOnProvider("re")
 class ClusterPartiallyDownIntegrationTests extends TestSupport {
 
     private static ClientResources clientResources;

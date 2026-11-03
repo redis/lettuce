@@ -1,9 +1,39 @@
 x-client-libs-image: &client-libs-image
-  image: "redislabs/client-libs-test:${REDIS_VERSION:-8.2.1pre}"
+  image: "${CLIENT_LIBS_TEST_IMAGE:-redislabs/client-libs-test}:${CLIENT_LIBS_TEST_IMAGE_TAG:-${REDIS_VERSION:-8.8.0}}"
 x-client-libs-stack-image: &client-libs-stack-image
-  image: "redislabs/client-libs-test:${REDIS_STACK_VERSION:-8.2.1-pre}"
+  image: "${CLIENT_LIBS_TEST_IMAGE:-redislabs/client-libs-test}:${CLIENT_LIBS_TEST_IMAGE_TAG:-${REDIS_STACK_VERSION:-${REDIS_VERSION:-8.8.0}}}"
 
 services:
+  # Test infrastructure used for simulating network issues to test multi-db client failover
+  # includes standalone redis instances with toxiproxy in front of them allowing enabling/disabling
+  # access to the redis instances
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.8.0
+    ports:
+      - "8474:8474"   # Admin API
+      - "9479:9479"   # Proxy port for redis instance 1
+      - "9480:9480"   # Proxy port for redis instance 2
+      - "9481:9481"   # Proxy port for redis instance 3
+    networks:
+      - redis-network
+
+  redis-standalone-multi:
+    <<: *client-libs-image
+    container_name: redis-failover
+    environment:
+      - PORT=6487
+      - NODES=5
+    volumes:
+      - ${REDIS_ENV_WORK_DIR}/redis-standalone-multi/work:/redis/work:rw
+    ports:
+      - "6487:6487"
+      - "6488:6488"
+      - "6489:6489"
+      - "6490:6490"
+      - "6491:6491"
+    networks:
+      - redis-network
+
   # Standalone Redis Servers
   redis-standalone-0:
     <<: *client-libs-image
@@ -119,17 +149,23 @@ services:
     ports:
       - "36379-36381:36379-36381"
 
+  # TLS Cluster with native Redis TLS and client certificate authentication (mTLS)
   ssl-test-cluster:
     <<: *client-libs-image
     container_name: ssl-test-cluster
     environment:
       - REDIS_CLUSTER=yes
+      - TLS_ENABLED=yes
     volumes:
       - ./ssl-test-cluster/config:/redis/config:r
+      - ${REDIS_ENV_WORK_DIR}/ssl-test-cluster/work:/redis/work:rw
     ports:
       - "7479:7479"
       - "7480:7480"
       - "7481:7481"
+      - "7443:7443"   # TLS port node 1
+      - "7444:7444"   # TLS port node 2
+      - "7445:7445"   # TLS port node 3
     networks:
       - redis-network
 
@@ -152,6 +188,15 @@ services:
       - "7582:7582"
     networks:
       - redis-network
+
+  # Cleanup workdir using container uid/gid to avoid host permission issues.
+  cleanup:
+    <<: *client-libs-image
+    volumes:
+      - ${REDIS_ENV_WORK_DIR}:/work:rw
+    entrypoint: find /work -mindepth 1 -delete
+    profiles:
+      - cleanup
 
 networks:
   redis-network:

@@ -30,10 +30,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
@@ -42,7 +43,6 @@ import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.output.MultiOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
-import reactor.core.publisher.Mono;
 
 /**
  * A thread-safe connection to a Redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
@@ -61,8 +61,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     protected final RedisCommands<K, V> sync;
 
     protected final RedisAsyncCommandsImpl<K, V> async;
-
-    protected final RedisReactiveCommandsImpl<K, V> reactive;
 
     private final ConnectionState state = new ConnectionState();
 
@@ -106,11 +104,17 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         this.parser = parser;
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
-        this.reactive = newRedisReactiveCommandsImpl();
     }
 
+    @Override
     public RedisCodec<K, V> getCodec() {
         return codec;
+    }
+
+    @Override
+    public <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> f) {
+        LettuceAssert.notNull(f, "CommandsFactory must not be null");
+        return store.compute(f.key(), () -> f.apply(this));
     }
 
     @Override
@@ -119,7 +123,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     /**
-     * Create a new instance of {@link RedisCommands}. Can be overriden to extend.
+     * Create a new instance of {@link RedisCommands}. Can be overridden to extend.
      *
      * @return a new instance
      */
@@ -128,26 +132,12 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     /**
-     * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overriden to extend.
+     * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overridden to extend.
      *
      * @return a new instance
      */
     protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
         return new RedisAsyncCommandsImpl<>(this, codec, parser);
-    }
-
-    @Override
-    public RedisReactiveCommands<K, V> reactive() {
-        return reactive;
-    }
-
-    /**
-     * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
-     *
-     * @return a new instance
-     */
-    protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
-        return new RedisReactiveCommandsImpl<>(this, codec, parser);
     }
 
     @Override
@@ -287,6 +277,10 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
                 multiOutput = new MultiOutput<>(codec);
             }
             local.setOutput((MultiOutput) multiOutput);
+        }
+
+        if (multi != null && commandType.equals(HIMPORT.name())) {
+            throw new UnsupportedOperationException("HIMPORT is not supported within a MULTI transaction");
         }
 
         if (multi != null && !commandType.equals(MULTI.name()) && !commandType.equals(WATCH.name())) {

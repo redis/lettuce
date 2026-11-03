@@ -19,7 +19,6 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.ClusterScanSupport.*;
 import static io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag.*;
 
 import java.util.ArrayList;
@@ -35,12 +34,25 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.api.reactive.RediSearchReactiveCommands;
+import io.lettuce.core.search.HybridReply;
+import io.lettuce.core.search.arguments.hybrid.HybridArgs;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.protocol.Command;
+
+import io.lettuce.core.protocol.RedisCommand;
+
 import io.lettuce.core.json.JsonParser;
 import org.reactivestreams.Publisher;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -54,7 +66,29 @@ import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.ConnectionIntent;
 import reactor.core.publisher.Flux;
+import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.AggregationReply.Cursor;
+
+import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.SpellCheckResult;
+import io.lettuce.core.search.arguments.AggregateArgs;
+import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
+import io.lettuce.core.search.arguments.CreateArgs;
+import io.lettuce.core.search.arguments.FieldArgs;
+
+import io.lettuce.core.search.arguments.SpellCheckArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
+import io.lettuce.core.timeseries.TsFilter;
+import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsMGetValue;
+import io.lettuce.core.timeseries.TsSeries;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
 import reactor.core.publisher.Mono;
+import reactor.util.concurrent.Queues;
+
+import java.util.Optional;
 
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.
@@ -67,6 +101,9 @@ import reactor.core.publisher.Mono;
  */
 public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V>
         implements RedisAdvancedClusterReactiveCommands<K, V> {
+
+    private static final InternalLogger logger = InternalLoggerFactory
+            .getInstance(RedisAdvancedClusterReactiveCommandsImpl.class);
 
     private static final Predicate<RedisClusterNode> ALL_NODES = node -> true;
 
@@ -136,23 +173,23 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
 
-            Mono<RedisClusterReactiveCommands<K, V>> byNodeId = getConnectionReactive(redisClusterNode.getNodeId());
+            Mono<StatefulRedisConnection<K, V>> byNodeId = getStatefulConnection(redisClusterNode.getNodeId());
 
             publishers.add(byNodeId.flatMap(conn -> {
 
                 if (conn.isOpen()) {
-                    return conn.clientSetname(name);
+                    return conn.commands(RedisReactiveCommands.factory()).clientSetname(name);
                 }
                 return Mono.empty();
             }));
 
-            Mono<RedisClusterReactiveCommands<K, V>> byHost = getConnectionReactive(redisClusterNode.getUri().getHost(),
+            Mono<StatefulRedisConnection<K, V>> byHost = getStatefulConnection(redisClusterNode.getUri().getHost(),
                     redisClusterNode.getUri().getPort());
 
             publishers.add(byHost.flatMap(conn -> {
 
                 if (conn.isOpen()) {
-                    return conn.clientSetname(name);
+                    return conn.commands(RedisReactiveCommands.factory()).clientSetname(name);
                 }
                 return Mono.empty();
             }));
@@ -265,16 +302,47 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Flux<K> keys(K pattern) {
+    public Flux<K> keys(String pattern) {
 
         Map<String, Publisher<K>> publishers = executeOnUpstream(commands -> commands.keys(pattern));
         return Flux.merge(publishers.values());
     }
 
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return K array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
     @Override
-    public Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+    public Flux<K> keysLegacy(K pattern) {
+
+        Map<String, Publisher<K>> publishers = executeOnUpstream(commands -> commands.keysLegacy(pattern));
+        return Flux.merge(publishers.values());
+    }
+
+    @Override
+    public Mono<Long> keys(KeyStreamingChannel<K> channel, String pattern) {
 
         Map<String, Publisher<Long>> publishers = executeOnUpstream(commands -> commands.keys(channel, pattern));
+        return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
+    }
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    @Override
+    public Mono<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern) {
+
+        Map<String, Publisher<Long>> publishers = executeOnUpstream(commands -> commands.keysLegacy(channel, pattern));
         return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
     }
 
@@ -283,7 +351,32 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return mget(Arrays.asList(keys));
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Override
+    public Flux<Value<Long>> tsMAdd(List<TsMAddValue<K>> samples) {
+
+        TimeSeriesSlotPartition<K> partition = TimeSeriesSlotPartition.of(codec, samples);
+
+        if (partition == null || !partition.isMultiSlot()) {
+            return super.tsMAdd(samples);
+        }
+
+        List<Integer> slots = new ArrayList<>(partition.getSamplesBySlot().keySet());
+        List<Mono<List<Value<Long>>>> publishers = new ArrayList<>(slots.size());
+        for (Integer slot : slots) {
+            publishers.add(super.tsMAdd(partition.getSamplesBySlot().get(slot)).collectList());
+        }
+
+        // run the slots in parallel, then restore the caller's order; a failed slot fails the whole call. Subscribe to every
+        // slot at once, so that all commands are written before a manual flushCommands() (the default limit is 256)
+        return Flux.mergeSequential(publishers, publishers.size(), Queues.XS_BUFFER_SIZE).collectList().map(perSlot -> {
+            Map<Integer, List<Value<Long>>> results = new HashMap<>();
+            for (int i = 0; i < slots.size(); i++) {
+                results.put(slots.get(i), perSlot.get(i));
+            }
+            return partition.restoreOrder(results);
+        }).flatMapMany(Flux::fromIterable);
+    }
+
     public Flux<KeyValue<K, V>> mget(Iterable<K> keys) {
         List<K> keyList = LettuceLists.newList(keys);
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keyList);
@@ -292,24 +385,26 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             return super.mget(keyList);
         }
 
-        List<Publisher<KeyValue<K, V>>> publishers = partitioned.values().stream().map(super::mget)
-                .collect(Collectors.toList());
+        // Maps each key to its position within the flattened, partition-ordered result list for O(1) lookups below
+        Map<K, Integer> keyToResultIndex = new HashMap<>(keyList.size());
+        List<Publisher<KeyValue<K, V>>> publishers = new ArrayList<>(partitioned.size());
+        int offset = 0;
+
+        for (List<K> partitionKeys : partitioned.values()) {
+            publishers.add(super.mget(partitionKeys));
+            for (int i = 0; i < partitionKeys.size(); i++) {
+                keyToResultIndex.put(partitionKeys.get(i), offset + i);
+            }
+            offset += partitionKeys.size();
+        }
 
         return Flux.mergeSequential(publishers).collectList().map(results -> {
-            KeyValue<K, V>[] values = new KeyValue[keyList.size()];
-            int offset = 0;
-
-            for (List<K> partitionKeys : partitioned.values()) {
-                for (int i = 0; i < keyList.size(); i++) {
-                    int index = partitionKeys.indexOf(keyList.get(i));
-                    if (index != -1) {
-                        values[i] = results.get(offset + index);
-                    }
-                }
-                offset += partitionKeys.size();
+            List<KeyValue<K, V>> orderedResults = new ArrayList<>(keyList.size());
+            for (K key : keyList) {
+                orderedResults.add(results.get(keyToResultIndex.get(key)));
             }
 
-            return Arrays.asList(values);
+            return orderedResults;
         }).flatMapMany(Flux::fromIterable);
     }
 
@@ -349,6 +444,12 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public Mono<String> mset(Map<K, V> map) {
         return pipeliningWithMap(map, kvMap -> RedisAdvancedClusterReactiveCommandsImpl.super.mset(kvMap).flux(),
                 booleanFlux -> booleanFlux).last();
+    }
+
+    @Override
+    public Mono<Boolean> msetex(Map<K, V> map, MSetExArgs args) {
+        return pipeliningWithMap(map, kvMap -> RedisAdvancedClusterReactiveCommandsImpl.super.msetex(kvMap, args).flux(),
+                booleanFlux -> booleanFlux).reduce((accu, next) -> accu && next);
     }
 
     @Override
@@ -438,22 +539,30 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public RedisClusterReactiveCommands<K, V> getConnection(String nodeId) {
-        return getStatefulConnection().getConnection(nodeId).reactive();
+        return getStatefulConnection().getConnection(nodeId).commands(RedisReactiveCommands.factory());
+    }
+
+    private Mono<StatefulRedisConnection<K, V>> getStatefulConnection(String nodeId) {
+        return getMono(getConnectionProvider().getConnectionAsync(ConnectionIntent.WRITE, nodeId));
     }
 
     private Mono<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String nodeId) {
         return getMono(getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, nodeId))
-                .map(StatefulRedisConnection::reactive);
+                .map(c -> c.commands(RedisReactiveCommands.factory()));
     }
 
     @Override
     public RedisClusterReactiveCommands<K, V> getConnection(String host, int port) {
-        return getStatefulConnection().getConnection(host, port).reactive();
+        return getStatefulConnection().getConnection(host, port).commands(RedisReactiveCommands.factory());
     }
 
     private Mono<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String host, int port) {
         return getMono(getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, host, port))
-                .map(StatefulRedisConnection::reactive);
+                .map(c -> c.commands(RedisReactiveCommands.factory()));
+    }
+
+    private Mono<StatefulRedisConnection<K, V>> getStatefulConnection(String host, int port) {
+        return getMono(getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, host, port));
     }
 
     @Override
@@ -461,50 +570,318 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return (StatefulRedisClusterConnection<K, V>) super.getConnection();
     }
 
+    /**
+     * Obtain a node-scoped connection for the given intent (READ/WRITE). Selection honors the current ReadFrom policy via the
+     * cluster connection provider.
+     */
+    private Mono<StatefulRedisConnection<K, V>> getStatefulConnection(ConnectionIntent intent) {
+        return getMono(getConnectionProvider().getRandomConnectionAsync(intent));
+    }
+
     @Override
     public Mono<KeyScanCursor<K>> scan() {
-        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(), reactiveClusterKeyScanCursorMapper());
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(), keyScanCursorMapper());
     }
 
     @Override
     public Mono<KeyScanCursor<K>> scan(ScanArgs scanArgs) {
-        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(scanArgs),
-                reactiveClusterKeyScanCursorMapper());
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(scanArgs), keyScanCursorMapper());
     }
 
     @Override
     public Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs) {
-        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor, scanArgs),
-                reactiveClusterKeyScanCursorMapper());
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(cursor, scanArgs), keyScanCursorMapper());
     }
 
     @Override
     public Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor) {
-        return clusterScan(scanCursor, RedisKeyReactiveCommands::scan, reactiveClusterKeyScanCursorMapper());
+        return clusterScan(scanCursor, RedisKeyReactiveCommands::scan, keyScanCursorMapper());
     }
 
     @Override
     public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel) {
-        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel),
-                reactiveClusterStreamScanCursorMapper());
+        return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel), streamScanCursorMapper());
     }
 
     @Override
     public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs) {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(channel, scanArgs),
-                reactiveClusterStreamScanCursorMapper());
+                streamScanCursorMapper());
     }
 
     @Override
     public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor, scanArgs),
-                reactiveClusterStreamScanCursorMapper());
+                streamScanCursorMapper());
     }
 
     @Override
     public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
-        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor),
-                reactiveClusterStreamScanCursorMapper());
+        return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor), streamScanCursorMapper());
+    }
+
+    @Override
+    public Mono<AggregationReply<K>> ftAggregate(String index, String query, AggregateArgs args) {
+        return routeKeyless(() -> super.ftAggregate(index, query, args),
+                (nodeId, conn) -> conn.ftAggregate(index, query, args).mapNotNull(reply -> {
+                    if (reply != null) {
+                        reply.getCursor().filter(c -> c.getCursorId() > 0).ifPresent(c -> c.setNodeId(nodeId));
+                    }
+                    return reply;
+                }), CommandType.FT_AGGREGATE);
+    }
+
+    @Override
+    public Mono<AggregationReply<K>> ftAggregate(String index, String query) {
+        return ftAggregate(index, query, null);
+    }
+
+    @Override
+    public Mono<SearchReply<K>> ftSearch(String index, String query, SearchArgs<K> args) {
+        return routeKeyless(() -> super.ftSearch(index, query, args), conn -> conn.ftSearch(index, query, args),
+                CommandType.FT_SEARCH);
+    }
+
+    @Override
+    public Mono<SearchReply<K>> ftSearch(String index, String query) {
+        return ftSearch(index, query, SearchArgs.<K> builder().build());
+    }
+
+    @Override
+    public Mono<HybridReply<K>> ftHybrid(String index, HybridArgs args) {
+        return routeKeyless(() -> super.ftHybrid(index, args), conn -> conn.ftHybrid(index, args), CommandType.FT_HYBRID);
+    }
+
+    @Override
+    public Mono<String> ftExplain(String index, String query) {
+        return routeKeyless(() -> super.ftExplain(index, query), conn -> conn.ftExplain(index, query), CommandType.FT_EXPLAIN);
+    }
+
+    @Override
+    public Mono<String> ftExplain(String index, String query, ExplainArgs args) {
+        return routeKeyless(() -> super.ftExplain(index, query, args), conn -> conn.ftExplain(index, query, args),
+                CommandType.FT_EXPLAIN);
+    }
+
+    @Override
+    public Flux<String> ftTagvals(String index, String fieldName) {
+        return routeKeylessMany(() -> super.ftTagvals(index, fieldName), conn -> conn.ftTagvals(index, fieldName),
+                CommandType.FT_TAGVALS);
+    }
+
+    @Override
+    public Mono<SpellCheckResult> ftSpellcheck(String index, String query) {
+        return routeKeyless(() -> super.ftSpellcheck(index, query), conn -> conn.ftSpellcheck(index, query),
+                CommandType.FT_SPELLCHECK);
+    }
+
+    @Override
+    public Mono<SpellCheckResult> ftSpellcheck(String index, String query, SpellCheckArgs args) {
+        return routeKeyless(() -> super.ftSpellcheck(index, query, args), conn -> conn.ftSpellcheck(index, query, args),
+                CommandType.FT_SPELLCHECK);
+    }
+
+    @Override
+    public Mono<Long> ftDictadd(String dict, String... terms) {
+        return routeKeyless(() -> super.ftDictadd(dict, terms), conn -> conn.ftDictadd(dict, terms), CommandType.FT_DICTADD);
+    }
+
+    @Override
+    public Mono<Long> ftDictdel(String dict, String... terms) {
+        return routeKeyless(() -> super.ftDictdel(dict, terms), conn -> conn.ftDictdel(dict, terms), CommandType.FT_DICTDEL);
+    }
+
+    @Override
+    public Flux<String> ftDictdump(String dict) {
+        return routeKeylessMany(() -> super.ftDictdump(dict), conn -> conn.ftDictdump(dict), CommandType.FT_DICTDUMP);
+    }
+
+    @Override
+    public Mono<String> ftAliasadd(String alias, String index) {
+        return routeKeyless(() -> super.ftAliasadd(alias, index), conn -> conn.ftAliasadd(alias, index),
+                CommandType.FT_ALIASADD);
+    }
+
+    @Override
+    public Mono<String> ftAliasupdate(String alias, String index) {
+        return routeKeyless(() -> super.ftAliasupdate(alias, index), conn -> conn.ftAliasupdate(alias, index),
+                CommandType.FT_ALIASUPDATE);
+    }
+
+    @Override
+    public Mono<String> ftAliasdel(String alias) {
+        return routeKeyless(() -> super.ftAliasdel(alias), conn -> conn.ftAliasdel(alias), CommandType.FT_ALIASDEL);
+    }
+
+    @Override
+    public Flux<String> ftAliaslist(String index) {
+        return routeKeylessMany(() -> super.ftAliaslist(index), conn -> conn.ftAliaslist(index), CommandType.FT_ALIASLIST);
+    }
+
+    @Override
+    public Mono<String> ftCreate(String index, List<FieldArgs> fieldArgs) {
+        return routeKeyless(() -> super.ftCreate(index, fieldArgs), conn -> conn.ftCreate(index, fieldArgs),
+                CommandType.FT_CREATE);
+    }
+
+    @Override
+    public Mono<String> ftCreate(String index, CreateArgs arguments, List<FieldArgs> fieldArgs) {
+        return routeKeyless(() -> super.ftCreate(index, arguments, fieldArgs),
+                conn -> conn.ftCreate(index, arguments, fieldArgs), CommandType.FT_CREATE);
+    }
+
+    @Override
+    public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs) {
+        return routeKeyless(() -> super.ftAlter(index, skipInitialScan, fieldArgs),
+                conn -> conn.ftAlter(index, skipInitialScan, fieldArgs), CommandType.FT_ALTER);
+    }
+
+    @Override
+    public Mono<String> ftAlter(String index, List<FieldArgs> fieldArgs) {
+        return routeKeyless(() -> super.ftAlter(index, fieldArgs), conn -> conn.ftAlter(index, fieldArgs),
+                CommandType.FT_ALTER);
+    }
+
+    @Override
+    public Mono<String> ftDropindex(String index, boolean deleteDocumentKeys) {
+        return routeKeyless(() -> super.ftDropindex(index, deleteDocumentKeys),
+                conn -> conn.ftDropindex(index, deleteDocumentKeys), CommandType.FT_DROPINDEX);
+    }
+
+    @Override
+    public Mono<String> ftDropindex(String index) {
+        return routeKeyless(() -> super.ftDropindex(index), conn -> conn.ftDropindex(index), CommandType.FT_DROPINDEX);
+    }
+
+    @Override
+    public Mono<Map<String, List<String>>> ftSyndump(String index) {
+        return routeKeyless(() -> super.ftSyndump(index), conn -> conn.ftSyndump(index), CommandType.FT_SYNDUMP);
+    }
+
+    @Override
+    public Mono<String> ftSynupdate(String index, String synonymGroupId, String... terms) {
+        return routeKeyless(() -> super.ftSynupdate(index, synonymGroupId, terms),
+                conn -> conn.ftSynupdate(index, synonymGroupId, terms), CommandType.FT_SYNUPDATE);
+    }
+
+    @Override
+    public Mono<String> ftSynupdate(String index, String synonymGroupId, SynUpdateArgs args, String... terms) {
+        return routeKeyless(() -> super.ftSynupdate(index, synonymGroupId, args, terms),
+                conn -> conn.ftSynupdate(index, synonymGroupId, args, terms), CommandType.FT_SYNUPDATE);
+    }
+
+    @Override
+    public Flux<String> ftList() {
+        return routeKeylessMany(super::ftList, RediSearchReactiveCommands::ftList, CommandType.FT_LIST);
+    }
+
+    @Override
+    public Mono<AggregationReply<K>> ftCursorread(String index, Cursor cursor, int count) {
+        if (cursor == null) {
+            return Mono.error(new IllegalArgumentException("cursor must not be null"));
+        }
+        long cursorId = cursor.getCursorId();
+        if (cursorId <= 0) {
+            return Mono.just(new AggregationReply<>());
+        }
+        Optional<String> nodeIdOpt = cursor.getNodeId();
+        if (!nodeIdOpt.isPresent()) {
+            return Mono.error(new IllegalArgumentException("Cursor missing nodeId; cannot route cursor READ in cluster mode"));
+        }
+        String nodeId = nodeIdOpt.get();
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
+        return byNode.commands(RedisReactiveCommands.factory()).ftCursorread(index, cursor, count).map(reply -> {
+            if (reply != null) {
+                reply.getCursor().ifPresent(c -> c.setNodeId(nodeId));
+            }
+            return reply;
+        });
+    }
+
+    @Override
+    public Mono<AggregationReply<K>> ftCursorread(String index, Cursor cursor) {
+        return ftCursorread(index, cursor, -1);
+    }
+
+    @Override
+    public Mono<String> ftCursordel(String index, Cursor cursor) {
+        if (cursor == null) {
+            return Mono.error(new IllegalArgumentException("cursor must not be null"));
+        }
+        long cursorId = cursor.getCursorId();
+        if (cursorId <= 0) {
+            return Mono.just("OK");
+        }
+        Optional<String> nodeIdOpt = cursor.getNodeId();
+        if (!nodeIdOpt.isPresent()) {
+            return Mono.error(new IllegalArgumentException("Cursor missing nodeId; cannot route cursor DEL in cluster mode"));
+        }
+        String nodeId = nodeIdOpt.get();
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
+        return byNode.commands(RedisReactiveCommands.factory()).ftCursordel(index, cursor);
+    }
+
+    /**
+     * Route a keyless RediSearch command using cluster-aware connection selection. Honors the current ReadFrom policy and the
+     * READ/WRITE intent derived from {@code commandType}. Falls back to {@code superCall} on failure to preserve existing
+     * behavior.
+     */
+    <R> Mono<R> routeKeyless(Supplier<Mono<R>> superCall, Function<RedisClusterReactiveCommands<K, V>, Mono<R>> routedCall,
+            ProtocolKeyword commandType) {
+
+        ConnectionIntent intent = getConnectionIntent(commandType);
+
+        return getStatefulConnection(intent).map(c -> c.commands(RedisReactiveCommands.factory())).flatMap(routedCall)
+                .onErrorResume(err -> {
+                    logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
+                    return superCall.get();
+                });
+    }
+
+    /**
+     * Route a keyless RediSearch command producing a stream (Flux) using cluster-aware selection. Honors the current ReadFrom
+     * policy and the READ/WRITE intent derived from {@code commandType}. Falls back to {@code superCall} on failure to preserve
+     * existing behavior.
+     */
+    <R> Flux<R> routeKeylessMany(Supplier<Flux<R>> superCall, Function<RedisClusterReactiveCommands<K, V>, Flux<R>> routedCall,
+            ProtocolKeyword commandType) {
+
+        ConnectionIntent intent = getConnectionIntent(commandType);
+
+        return getStatefulConnection(intent).map(c -> c.commands(RedisReactiveCommands.factory())).flatMapMany(routedCall)
+                .onErrorResume(err -> {
+                    logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
+                    return superCall.get();
+                });
+    }
+
+    /**
+     * Route a keyless RediSearch command with node context. Obtains the executing node id via CLUSTER MYID and passes it to
+     * {@code routedCall} so replies can be stamped (e.g., cursor.nodeId). Honors ReadFrom and READ/WRITE intent. Falls back to
+     * {@code superCall} on failure.
+     */
+    <R> Mono<R> routeKeyless(Supplier<Mono<R>> superCall,
+            BiFunction<String, RedisClusterReactiveCommands<K, V>, Mono<R>> routedCall, ProtocolKeyword commandType) {
+
+        ConnectionIntent intent = getConnectionIntent(commandType);
+
+        return getStatefulConnection(intent).map(c -> c.commands(RedisReactiveCommands.factory()))
+                .flatMap(conn -> conn.clusterMyId().flatMap(nodeId -> routedCall.apply(nodeId, conn))).onErrorResume(err -> {
+                    logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
+                    return superCall.get();
+                });
+    }
+
+    /** Determine READ vs WRITE intent for routing by probing command read-only status. */
+    private ConnectionIntent getConnectionIntent(ProtocolKeyword commandType) {
+        try {
+            RedisCommand probe = new Command(commandType, null);
+            boolean isReadOnly = getStatefulConnection().getOptions().getReadOnlyCommands().isReadOnly(probe);
+            return isReadOnly ? ConnectionIntent.READ : ConnectionIntent.WRITE;
+        } catch (Exception e) {
+            logger.error("Error while determining connection intent for " + commandType, e);
+            return ConnectionIntent.WRITE;
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -603,12 +980,171 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         ScanCursor continuationCursor = ClusterScanSupport.getContinuationCursor(cursor);
 
         Mono<T> scanCursor = getMono(connectionProvider.<K, V> getConnectionAsync(ConnectionIntent.WRITE, currentNodeId))
-                .flatMap(conn -> scanFunction.apply(conn.reactive(), continuationCursor));
+                .flatMap(conn -> scanFunction.apply(conn.commands(RedisReactiveCommands.factory()), continuationCursor));
         return mapper.map(nodeIds, currentNodeId, scanCursor);
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static <K> ClusterScanSupport.ScanCursorMapper<Mono<KeyScanCursor<K>>> keyScanCursorMapper() {
+        return (ClusterScanSupport.ScanCursorMapper) KeyScanCursorMapper.INSTANCE;
+    }
+
+    private static ClusterScanSupport.ScanCursorMapper<Mono<StreamScanCursor>> streamScanCursorMapper() {
+        return StreamScanCursorMapper.INSTANCE;
+    }
+
+    /**
+     * Map a {@link Mono} of {@link KeyScanCursor} to a {@link Mono} of a cluster-aware {@link KeyScanCursor}. Kept here rather
+     * than in {@link ClusterScanSupport} so that the shared scan support used by the sync/async API does not depend on Reactor.
+     * <p>
+     * The scan cursor mappers are nested classes rather than lambdas held in static or instance fields: GraalVM native image
+     * analysis reaches the static initializer and the constructors of all command implementations through
+     * {@code commands(CommandsFactory)} even if the reactive API is never used, and a {@link Mono}-typed lambda there breaks
+     * native images built without Reactor. The nested classes are only reached through the reactive scan methods.
+     */
+    private static final class KeyScanCursorMapper implements ClusterScanSupport.ScanCursorMapper<Mono<KeyScanCursor<?>>> {
+
+        static final KeyScanCursorMapper INSTANCE = new KeyScanCursorMapper();
+
+        @Override
+        public Mono<KeyScanCursor<?>> map(List<String> nodeIds, String currentNodeId, Mono<KeyScanCursor<?>> cursor) {
+            return cursor
+                    .map(keyScanCursor -> ClusterScanSupport.toClusterKeyScanCursor(nodeIds, currentNodeId, keyScanCursor));
+        }
+
+    }
+
+    /**
+     * Map a {@link Mono} of {@link StreamScanCursor} to a {@link Mono} of a cluster-aware {@link StreamScanCursor}.
+     */
+    private static final class StreamScanCursorMapper implements ClusterScanSupport.ScanCursorMapper<Mono<StreamScanCursor>> {
+
+        static final StreamScanCursorMapper INSTANCE = new StreamScanCursorMapper();
+
+        @Override
+        public Mono<StreamScanCursor> map(List<String> nodeIds, String currentNodeId, Mono<StreamScanCursor> cursor) {
+            return cursor.map(
+                    streamScanCursor -> ClusterScanSupport.toClusterStreamScanCursor(nodeIds, currentNodeId, streamScanCursor));
+        }
+
     }
 
     private static <T> Mono<T> getMono(CompletableFuture<T> future) {
         return Mono.fromCompletionStage(future);
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsFilter filter) {
+        return routeKeylessMany(() -> super.tsMGet(filter), conn -> conn.tsMGet(filter), CommandType.TS_MGET);
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsFilter... filters) {
+        return routeKeylessMany(() -> super.tsMGet(filters), conn -> conn.tsMGet(filters), CommandType.TS_MGET);
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs args, TsFilter filter) {
+        return routeKeylessMany(() -> super.tsMGet(args, filter), conn -> conn.tsMGet(args, filter), CommandType.TS_MGET);
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs args, TsFilter... filters) {
+        return routeKeylessMany(() -> super.tsMGet(args, filters), conn -> conn.tsMGet(args, filters), CommandType.TS_MGET);
+    }
+
+    @Override
+    public Flux<K> tsQueryIndex(TsFilter filter) {
+        return routeKeylessMany(() -> super.tsQueryIndex(filter), conn -> conn.tsQueryIndex(filter), CommandType.TS_QUERYINDEX);
+    }
+
+    @Override
+    public Flux<K> tsQueryIndex(TsFilter... filters) {
+        return routeKeylessMany(() -> super.tsQueryIndex(filters), conn -> conn.tsQueryIndex(filters),
+                CommandType.TS_QUERYINDEX);
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsFilter filter) {
+        return routeKeylessMany(() -> super.tsMRange(range, filter), conn -> conn.tsMRange(range, filter),
+                CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsFilter... filters) {
+        return routeKeylessMany(() -> super.tsMRange(range, filters), conn -> conn.tsMRange(range, filters),
+                CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter filter) {
+        return routeKeylessMany(() -> super.tsMRange(range, args, filter), conn -> conn.tsMRange(range, args, filter),
+                CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters) {
+        return routeKeylessMany(() -> super.tsMRange(range, args, filters), conn -> conn.tsMRange(range, args, filters),
+                CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsFilter filter) {
+        return routeKeylessMany(() -> super.tsMRevRange(range, filter), conn -> conn.tsMRevRange(range, filter),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsFilter... filters) {
+        return routeKeylessMany(() -> super.tsMRevRange(range, filters), conn -> conn.tsMRevRange(range, filters),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter filter) {
+        return routeKeylessMany(() -> super.tsMRevRange(range, args, filter), conn -> conn.tsMRevRange(range, args, filter),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters) {
+        return routeKeylessMany(() -> super.tsMRevRange(range, args, filters), conn -> conn.tsMRevRange(range, args, filters),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public Flux<String> tsQueryLabels() {
+        return routeKeylessMany(() -> super.tsQueryLabels(), conn -> conn.tsQueryLabels(), CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public Flux<String> tsQueryLabels(TsFilter filter) {
+        return routeKeylessMany(() -> super.tsQueryLabels(filter), conn -> conn.tsQueryLabels(filter),
+                CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public Flux<String> tsQueryLabels(TsFilter... filters) {
+        return routeKeylessMany(() -> super.tsQueryLabels(filters), conn -> conn.tsQueryLabels(filters),
+                CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label) {
+        return routeKeylessMany(() -> super.tsQueryLabelValues(label), conn -> conn.tsQueryLabelValues(label),
+                CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label, TsFilter filter) {
+        return routeKeylessMany(() -> super.tsQueryLabelValues(label, filter), conn -> conn.tsQueryLabelValues(label, filter),
+                CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label, TsFilter... filters) {
+        return routeKeylessMany(() -> super.tsQueryLabelValues(label, filters), conn -> conn.tsQueryLabelValues(label, filters),
+                CommandType.TS_QUERYLABELS);
     }
 
 }

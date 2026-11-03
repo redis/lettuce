@@ -103,6 +103,63 @@ class RedisURIBuilderUnitTests {
     }
 
     @Test
+    void redisWithDriverInfo() {
+        DriverInfo driverInfo = DriverInfo.builder().addUpstreamDriver("spring-data-redis", "3.2.0").build();
+        RedisURI result = RedisURI.Builder.redis("localhost").withDriverInfo(driverInfo).build();
+
+        assertThat(result.getLibraryName()).isEqualTo("Lettuce(spring-data-redis_v3.2.0)");
+    }
+
+    @Test
+    void redisWithDriverInfoMultipleDrivers() {
+        DriverInfo driverInfo = DriverInfo.builder().addUpstreamDriver("spring-data-redis", "3.2.0")
+                .addUpstreamDriver("spring-boot", "3.3.0").build();
+        RedisURI result = RedisURI.Builder.redis("localhost").withDriverInfo(driverInfo).build();
+
+        // Most recently added driver should appear first (prepend behavior)
+        assertThat(result.getLibraryName()).isEqualTo("Lettuce(spring-boot_v3.3.0;spring-data-redis_v3.2.0)");
+    }
+
+    @Test
+    void redisWithDriverInfoCustomName() {
+        DriverInfo driverInfo = DriverInfo.builder().name("my-custom-lib").addUpstreamDriver("spring-data-redis", "3.2.0")
+                .build();
+        RedisURI result = RedisURI.Builder.redis("localhost").withDriverInfo(driverInfo).build();
+
+        assertThat(result.getLibraryName()).isEqualTo("my-custom-lib(spring-data-redis_v3.2.0)");
+    }
+
+    @Test
+    void redisWithDriverInfoNullShouldFail() {
+        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withDriverInfo(null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void withAuthenticationNullCredentialsProviderShouldFail() {
+        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withAuthentication((CredentialsProvider) null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void redisWithLibraryNameThenDriverInfo() {
+        // Last call wins: withDriverInfo overwrites previous withLibraryName
+        DriverInfo driverInfo = DriverInfo.builder().addUpstreamDriver("spring-data-redis", "3.2.0").build();
+        RedisURI result = RedisURI.Builder.redis("localhost").withLibraryName("my-lib").withDriverInfo(driverInfo).build();
+
+        assertThat(result.getLibraryName()).isEqualTo("Lettuce(spring-data-redis_v3.2.0)");
+    }
+
+    @Test
+    void redisWithDriverInfoThenLibraryName() {
+        // Last call wins: withLibraryName overwrites previous withDriverInfo
+        DriverInfo driverInfo = DriverInfo.builder().addUpstreamDriver("spring-data-redis", "3.2.0").build();
+        RedisURI result = RedisURI.Builder.redis("localhost").withDriverInfo(driverInfo).withLibraryName("my-lib").build();
+
+        assertThat(result.getLibraryName()).isEqualTo("my-lib");
+    }
+
+    @Test
     void redisHostAndPortWithInvalidPort() {
         assertThatThrownBy(() -> RedisURI.Builder.redis("localhost", -1)).isInstanceOf(IllegalArgumentException.class);
     }
@@ -307,6 +364,24 @@ class RedisURIBuilderUnitTests {
                     assertThat(credentials.getUsername()).isNull();
                     assertThat(credentials.getPassword()).isEqualTo("baz".toCharArray());
                 }).verifyComplete();
+    }
+
+    @Test
+    void shouldMaskCredentialsForBuilderWithAuthentication() {
+
+        RedisURI result = RedisURI.Builder.redis("localhost", 1234).withAuthentication("alice", "secret").withDatabase(5)
+                .build();
+
+        assertThat(result).hasToString("redis://alice:******@localhost:1234/5");
+    }
+
+    @Test
+    void shouldMaskCredentialsForBuilderWithPassword() {
+
+        RedisURI result = RedisURI.Builder.redis("localhost", 1234).withPassword("secret".toCharArray()).withDatabase(5)
+                .build();
+
+        assertThat(result).hasToString("redis://******@localhost:1234/5");
     }
 
     @Test

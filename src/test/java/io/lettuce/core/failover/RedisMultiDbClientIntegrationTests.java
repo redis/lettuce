@@ -1,0 +1,286 @@
+package io.lettuce.core.failover;
+
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisConnectionStateListener;
+import io.lettuce.core.TestSupport;
+import io.lettuce.core.TimeoutOptions;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.event.command.CommandFailedEvent;
+import io.lettuce.core.event.command.CommandListener;
+import io.lettuce.core.event.command.CommandStartedEvent;
+import io.lettuce.core.event.command.CommandSucceededEvent;
+import io.lettuce.core.failover.api.DatabaseConfig;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.DefaultClientResources;
+import io.lettuce.core.resource.DefaultEventLoopGroupProvider;
+import io.lettuce.test.ReflectionTestUtils;
+import io.lettuce.test.TestFutures;
+import io.lettuce.test.Wait;
+import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.test.resource.TestClientResources;
+import io.netty.util.concurrent.EventExecutorGroup;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Field;
+import java.net.SocketAddress;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Integration tests for {@link MultiDbClient}.
+ *
+ * @author Ali Takavci
+ * @since 7.1
+ */
+@Tag(INTEGRATION_TEST)
+class RedisMultiDbClientIntegrationTests extends TestSupport {
+
+    private final ClientResources clientResources = TestClientResources.get();
+
+    @Test
+    void shouldNotifyConnectionListener() {
+
+        TestConnectionListener listener = new TestConnectionListener();
+
+        MultiDbClient client = MultiDbClient.create(clientResources, MultiDbTestSupport.DBs);
+
+        client.addListener(listener);
+
+        assertThat(listener.onConnected).isNull();
+        assertThat(listener.onDisconnected).isNull();
+        assertThat(listener.onException).isNull();
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+
+        Wait.untilTrue(() -> listener.onConnected != null).waitOrTimeout();
+        assertThat(listener.onConnectedSocketAddress).isNotNull();
+
+        // assertThat(listener.onConnected).isEqualTo(connection);
+        assertThat(listener.onDisconnected).isNull();
+
+        connection.sync().set(key, value);
+        connection.close();
+
+        Wait.untilTrue(() -> listener.onDisconnected != null).waitOrTimeout();
+
+        // assertThat(listener.onConnected).isEqualTo(connection);
+        // assertThat(listener.onDisconnected).isEqualTo(connection);
+
+        FastShutdown.shutdown(client);
+    }
+
+    @Test
+    void shouldNotNotifyListenerAfterRemoval() {
+
+        final TestConnectionListener removedListener = new TestConnectionListener();
+        final TestConnectionListener retainedListener = new TestConnectionListener();
+
+        MultiDbClient client = MultiDbClient.create(clientResources, MultiDbTestSupport.DBs);
+        client.addListener(removedListener);
+        client.addListener(retainedListener);
+        client.removeListener(removedListener);
+
+        // that's the sut call
+        client.connect().close();
+
+        Wait.untilTrue(() -> retainedListener.onConnected != null).waitOrTimeout();
+
+        assertThat(retainedListener.onConnected).isNotNull();
+
+        assertThat(removedListener.onConnected).isNull();
+        assertThat(removedListener.onConnectedSocketAddress).isNull();
+        assertThat(removedListener.onDisconnected).isNull();
+        assertThat(removedListener.onException).isNull();
+
+        FastShutdown.shutdown(client);
+    }
+
+    @Test
+    void reuseClientConnections() throws Exception {
+
+        // given
+        DefaultClientResources clientResources = DefaultClientResources.create();
+        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = getExecutors(clientResources);
+
+        MultiDbClient redisFailoverClient1 = newClient(clientResources);
+        MultiDbClient redisFailoverClient2 = newClient(clientResources);
+        connectAndClose(redisFailoverClient1);
+        connectAndClose(redisFailoverClient2);
+
+        // when
+        EventExecutorGroup executor = eventLoopGroups.values().iterator().next();
+        redisFailoverClient1.shutdown(0, 0, TimeUnit.MILLISECONDS);
+
+        // then
+        connectAndClose(redisFailoverClient2);
+
+        TestFutures.awaitOrTimeout(clientResources.shutdown(0, 0, TimeUnit.MILLISECONDS));
+
+        assertThat(eventLoopGroups).isEmpty();
+        assertThat(executor.isShuttingDown()).isTrue();
+        assertThat(clientResources.eventExecutorGroup().isShuttingDown()).isTrue();
+    }
+
+    @Test
+    void shouldPropagateCommandTimeoutToCommandListener() throws InterruptedException {
+
+        TestCommandListener commandListener = new TestCommandListener();
+
+        ClientOptions options = ClientOptions.builder().timeoutOptions(TimeoutOptions.enabled()).build();
+
+        List<DatabaseConfig> databaseConfigs = MultiDbTestSupport.DBs.stream()
+                .map(databaseConfig -> databaseConfig.mutate().clientOptions(options).build()).collect(Collectors.toList());
+
+        MultiDbClient client = MultiDbClient.create(clientResources, databaseConfigs);
+        client.addListener(commandListener);
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+        connection.setTimeout(Duration.ofMillis(1));
+
+        assertThat(connection.async().blpop(100, key).await(100, TimeUnit.SECONDS)).isTrue();
+
+        assertThat(commandListener.started).hasSize(1);
+        assertThat(commandListener.succeeded).isEmpty();
+
+        Wait.untilTrue(() -> commandListener.failed.size() == 1);
+        Wait.untilTrue(() -> commandListener.failed.stream()
+                .anyMatch(command -> command.getCommand().getType().equals(CommandType.BLPOP)));
+
+        FastShutdown.shutdown(client);
+    }
+
+    @Test
+    void reuseClientConnectionsShutdownTwoClients() throws Exception {
+
+        // given
+        DefaultClientResources clientResources = DefaultClientResources.create();
+        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = getExecutors(clientResources);
+
+        MultiDbClient redisFailoverClient1 = newClient(clientResources);
+        MultiDbClient redisFailoverClient2 = newClient(clientResources);
+        connectAndClose(redisFailoverClient1);
+        connectAndClose(redisFailoverClient2);
+
+        // when
+        EventExecutorGroup executor = eventLoopGroups.values().iterator().next();
+
+        redisFailoverClient1.shutdown(0, 0, TimeUnit.MILLISECONDS);
+        assertThat(executor.isShutdown()).isFalse();
+        connectAndClose(redisFailoverClient2);
+        redisFailoverClient2.shutdown(0, 0, TimeUnit.MILLISECONDS);
+
+        // then
+        assertThat(eventLoopGroups).isEmpty();
+        assertThat(executor.isShutdown()).isTrue();
+        assertThat(clientResources.eventExecutorGroup().isShuttingDown()).isFalse();
+
+        // cleanup
+        TestFutures.awaitOrTimeout(clientResources.shutdown(0, 0, TimeUnit.MILLISECONDS));
+        assertThat(clientResources.eventExecutorGroup().isShuttingDown()).isTrue();
+    }
+
+    @Test
+    void managedClientResources() throws Exception {
+
+        // given
+        MultiDbClient redisFailoverClient1 = MultiDbClient.create(MultiDbTestSupport.DBs);
+        ClientResources clientResources = ReflectionTestUtils.getField(redisFailoverClient1, "clientResources");
+        Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = getExecutors(clientResources);
+        connectAndClose(redisFailoverClient1);
+
+        // when
+        EventExecutorGroup executor = eventLoopGroups.values().iterator().next();
+
+        redisFailoverClient1.shutdown(0, 0, TimeUnit.MILLISECONDS);
+
+        // then
+        assertThat(eventLoopGroups).isEmpty();
+        assertThat(executor.isShuttingDown()).isTrue();
+        assertThat(clientResources.eventExecutorGroup().isShuttingDown()).isTrue();
+    }
+
+    private void connectAndClose(MultiDbClient client) {
+        client.connect().close();
+    }
+
+    private MultiDbClient newClient(DefaultClientResources clientResources) {
+        return MultiDbClient.create(clientResources, MultiDbTestSupport.DBs);
+    }
+
+    private Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> getExecutors(ClientResources clientResources)
+            throws Exception {
+        Field eventLoopGroupsField = DefaultEventLoopGroupProvider.class.getDeclaredField("eventLoopGroups");
+        eventLoopGroupsField.setAccessible(true);
+        return (Map) eventLoopGroupsField.get(clientResources.eventLoopGroupProvider());
+    }
+
+    private class TestConnectionListener implements RedisConnectionStateListener {
+
+        volatile SocketAddress onConnectedSocketAddress;
+
+        volatile RedisChannelHandler<?, ?> onConnected;
+
+        volatile RedisChannelHandler<?, ?> onDisconnected;
+
+        volatile RedisChannelHandler<?, ?> onException;
+
+        @Override
+        public void onRedisConnected(RedisChannelHandler<?, ?> connection, SocketAddress socketAddress) {
+            onConnected = connection;
+            onConnectedSocketAddress = socketAddress;
+        }
+
+        @Override
+        public void onRedisDisconnected(RedisChannelHandler<?, ?> connection) {
+            onDisconnected = connection;
+        }
+
+        @Override
+        public void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause) {
+            onException = connection;
+        }
+
+    }
+
+    static class TestCommandListener implements CommandListener {
+
+        final List<CommandStartedEvent> started = new ArrayList<>();
+
+        final List<CommandSucceededEvent> succeeded = new ArrayList<>();
+
+        final List<CommandFailedEvent> failed = new ArrayList<>();
+
+        @Override
+        public void commandStarted(CommandStartedEvent event) {
+            synchronized (started) {
+                started.add(event);
+            }
+        }
+
+        @Override
+        public void commandSucceeded(CommandSucceededEvent event) {
+            synchronized (succeeded) {
+                succeeded.add(event);
+            }
+        }
+
+        @Override
+        public void commandFailed(CommandFailedEvent event) {
+            synchronized (failed) {
+                failed.add(event);
+            }
+        }
+
+    }
+
+}

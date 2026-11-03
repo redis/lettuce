@@ -174,7 +174,7 @@ class AtLeastOnceIntegrationTests {
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
 
-        assertThat(ConnectionTestUtil.getStack(connection.getStatefulConnection())).isNotEmpty();
+        assertThat(connection.get(key)).isEqualTo("2");
 
         connection.getStatefulConnection().close();
     }

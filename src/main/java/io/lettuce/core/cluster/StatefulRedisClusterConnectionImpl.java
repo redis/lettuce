@@ -42,11 +42,11 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
-import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.NodeSelection;
 import io.lettuce.core.cluster.api.sync.NodeSelectionCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
@@ -60,7 +60,6 @@ import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisCommand;
-import reactor.core.publisher.Mono;
 
 /**
  * A thread-safe connection to a Redis Cluster. Multiple threads may share one {@link StatefulRedisClusterConnectionImpl}
@@ -83,8 +82,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     protected final RedisAdvancedClusterCommands<K, V> sync;
 
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
-
-    protected final RedisAdvancedClusterReactiveCommandsImpl<K, V> reactive;
 
     private final ClusterConnectionState connectionState = new ClusterConnectionState();
 
@@ -123,11 +120,17 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
         this.async = newRedisAdvancedClusterAsyncCommandsImpl();
         this.sync = newRedisAdvancedClusterCommandsImpl();
-        this.reactive = newRedisAdvancedClusterReactiveCommandsImpl();
     }
 
-    protected RedisAdvancedClusterReactiveCommandsImpl<K, V> newRedisAdvancedClusterReactiveCommandsImpl() {
-        return new RedisAdvancedClusterReactiveCommandsImpl<>((StatefulRedisClusterConnection<K, V>) this, codec, parser);
+    @Override
+    public RedisCodec<K, V> getCodec() {
+        return codec;
+    }
+
+    @Override
+    public <T> T commands(CommandsFactory<StatefulRedisClusterConnection<K, V>, T> f) {
+        LettuceAssert.notNull(f, "CommandsFactory must not be null");
+        return store.compute(f.key(), () -> f.apply(this));
     }
 
     protected RedisAdvancedClusterCommands<K, V> newRedisAdvancedClusterCommandsImpl() {
@@ -155,11 +158,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     @Override
     public RedisAdvancedClusterAsyncCommands<K, V> async() {
         return async;
-    }
-
-    @Override
-    public RedisAdvancedClusterReactiveCommands<K, V> reactive() {
-        return reactive;
     }
 
     @Override

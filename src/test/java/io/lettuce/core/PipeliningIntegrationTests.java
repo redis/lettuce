@@ -41,7 +41,7 @@ class PipeliningIntegrationTests extends TestSupport {
 
     @BeforeEach
     void setUp() {
-        this.connection.async().flushall();
+        this.connection.sync().flushall();
     }
 
     @Test

@@ -1,0 +1,242 @@
+/*
+ * Copyright 2025, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
+
+package io.lettuce.core.search.arguments.hybrid;
+
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Argument list builder for the Redis {@code FT.HYBRID} command. Combines text search and vector similarity search with
+ * configurable combination strategies and post-processing operations.
+ *
+ * <h3>Basic Usage:</h3>
+ *
+ * <pre>
+ *
+ * {
+ *     &#64;code
+ *     HybridArgs args = HybridArgs
+ *             .builder().search(HybridSearchArgs.builder().query("comfortable shoes").build()).vectorSearch(HybridVectorArgs
+ *                     .builder().field("@embedding").vector("$vec").method(HybridVectorArgs.Knn.of(10)).build())
+ *             .combine(Combiners.rrf().window(20).constant(60)).param("vec", vectorBlob).build();
+ * }
+ * </pre>
+ *
+ * @author Aleksandar Todorov
+ * @since 7.2
+ * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
+ * @see HybridSearchArgs
+ * @see HybridVectorArgs
+ * @see Combiner
+ * @see Combiners
+ * @see PostProcessingArgs
+ */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+public class HybridArgs {
+
+    private final List<HybridSearchArgs> searchArgs = new ArrayList<>();
+
+    private final List<HybridVectorArgs> vectorArgs = new ArrayList<>();
+
+    private Optional<Combiner> combiner = Optional.empty();
+
+    private Optional<PostProcessingArgs> postProcessingArgs = Optional.empty();
+
+    private final Map<String, Object> params = new HashMap<>();
+
+    private Optional<Duration> timeout = Optional.empty();
+
+    /**
+     * @return a new {@link Builder} for {@link HybridArgs}.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Builder for {@link HybridArgs}.
+     */
+    public static class Builder {
+
+        private final HybridArgs instance = new HybridArgs();
+
+        /**
+         * Build the {@link HybridArgs} instance.
+         *
+         * @return the configured arguments
+         */
+        public HybridArgs build() {
+            return instance;
+        }
+
+        /**
+         * Configure the SEARCH clause using {@link HybridSearchArgs}.
+         *
+         * @param searchArgs the search arguments
+         * @return this builder
+         */
+        public Builder search(HybridSearchArgs searchArgs) {
+            LettuceAssert.notNull(searchArgs, "Search args must not be null");
+            instance.searchArgs.add(searchArgs);
+            return this;
+        }
+
+        /**
+         * Configure the VSIM clause using {@link HybridVectorArgs}.
+         *
+         * @param vectorArgs the vector search arguments
+         * @return this builder
+         */
+        public Builder vectorSearch(HybridVectorArgs vectorArgs) {
+            LettuceAssert.notNull(vectorArgs, "Vector args must not be null");
+            instance.vectorArgs.add(vectorArgs);
+            return this;
+        }
+
+        /**
+         * Configure the COMBINE clause using a {@link Combiner}.
+         * <p>
+         * Use {@link Combiners#rrf()} or {@link Combiners#linear()} to create combiners.
+         * </p>
+         *
+         * @param combiner the combiner (use {@link Combiners} factory)
+         * @return this builder
+         * @see Combiners
+         */
+        public Builder combine(Combiner combiner) {
+            LettuceAssert.notNull(combiner, "Combiner must not be null");
+            instance.combiner = Optional.of(combiner);
+            return this;
+        }
+
+        /**
+         * Set the post-processing arguments.
+         *
+         * @param postProcessingArgs the post-processing configuration
+         * @return this builder
+         */
+        public Builder postProcessing(PostProcessingArgs postProcessingArgs) {
+            LettuceAssert.notNull(postProcessingArgs, "PostProcessingArgs must not be null");
+            instance.postProcessingArgs = Optional.of(postProcessingArgs);
+            return this;
+        }
+
+        /**
+         * Add a query parameter. The query references it as {@code $name} and the server substitutes the value wherever that
+         * reference appears, so values need no escaping and cannot alter the query structure, for example
+         * {@code param("category", "electronics")} with the query {@code @category:{$category}}. The value is sent as UTF-8
+         * text. Adding a parameter with the same name again replaces its value.
+         * <p>
+         * {@code FT.HYBRID} always accepts parameters; the query vector of the {@code VSIM} clause is passed this way, as
+         * {@code vector("$vec")} together with {@code param("vec", blob)}.
+         *
+         * @param name the parameter name, referenced as {@code $name} in the query, must not be {@code null}
+         * @param value the parameter value, must not be {@code null}
+         * @return this builder
+         */
+        public Builder param(String name, String value) {
+            LettuceAssert.notNull(name, "Parameter name must not be null");
+            LettuceAssert.notNull(value, "Parameter value must not be null");
+            instance.params.put(name, value);
+            return this;
+        }
+
+        /**
+         * Add a binary query parameter, for example the query vector of a KNN clause ({@code *=>[KNN 10 @embedding $vec]}). The
+         * bytes are sent exactly as given, which the {@link String} overload cannot do for arbitrary binary data. The query
+         * references the parameter as {@code $name}; adding a parameter with the same name again replaces its value.
+         * <p>
+         * {@code FT.HYBRID} always accepts parameters; the query vector of the {@code VSIM} clause is passed this way, as
+         * {@code vector("$vec")} together with {@code param("vec", blob)}.
+         *
+         * @param name the parameter name, referenced as {@code $name} in the query, must not be {@code null}
+         * @param value the binary parameter value, sent as-is, must not be {@code null}
+         * @return this builder
+         * @since 7.8
+         */
+        public Builder param(String name, byte[] value) {
+            LettuceAssert.notNull(name, "Parameter name must not be null");
+            LettuceAssert.notNull(value, "Parameter value must not be null");
+            instance.params.put(name, value);
+            return this;
+        }
+
+        /**
+         * Set the maximum time to wait for the query to complete.
+         *
+         * @param timeout the timeout duration (with millisecond resolution)
+         * @return this builder
+         */
+        public Builder timeout(Duration timeout) {
+            LettuceAssert.notNull(timeout, "Timeout must not be null");
+            instance.timeout = Optional.of(timeout);
+            return this;
+        }
+
+    }
+
+    /**
+     * Build the command arguments for the configured {@link HybridArgs}.
+     * <p>
+     * Command structure: SEARCH [SCORER] [YIELD_SCORE_AS] VSIM [KNN/RANGE] [FILTER]* [YIELD_DISTANCE_AS] [COMBINE]
+     * [YIELD_SCORE_AS] [SORTBY] [FILTER]* [LIMIT] [RETURN] [LOAD] [PARAMS]
+     * </p>
+     *
+     * @param args the {@link CommandArgs} to append to
+     */
+    public void build(CommandArgs<?, ?> args) {
+        // Both SEARCH and VSIM must be configured (per PRD)
+        LettuceAssert.notNull(searchArgs, "SEARCH clause is required - use search() or search(HybridSearchArgs)");
+        LettuceAssert.notNull(vectorArgs, "VSIM clause is required - use vectorSearch() or vectorSearch(HybridVectorArgs)");
+
+        // SEARCH clause
+        searchArgs.forEach(searchArg -> searchArg.build(args));
+
+        // VSIM clause
+        vectorArgs.forEach(vectorArg -> vectorArg.build(args));
+
+        // COMBINE clause
+        if (combiner.isPresent()) {
+            args.add(CommandKeyword.COMBINE);
+            combiner.get().build(args);
+        }
+
+        // Post-processing operations (LOAD, GROUPBY, APPLY, SORTBY, FILTER, LIMIT)
+        postProcessingArgs.ifPresent(postProcessing -> postProcessing.build(args));
+
+        // PARAMS clause
+        if (!params.isEmpty()) {
+            args.add(CommandKeyword.PARAMS);
+            args.add(params.size() * 2L);
+            params.forEach((name, value) -> {
+                args.add(name);
+                if (value instanceof byte[]) {
+                    args.add((byte[]) value);
+                } else {
+                    args.add((String) value);
+                }
+            });
+        }
+
+        // TIMEOUT clause
+        timeout.ifPresent(t -> {
+            args.add(CommandKeyword.TIMEOUT);
+            args.add(t.toMillis());
+        });
+
+    }
+
+}

@@ -66,6 +66,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @param <V> Value type.
  * @author Mark Paluch
  * @author Tihomir Mateev
+ * @author dae won
  * @since 3.0
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -98,11 +99,11 @@ class PooledClusterConnectionProvider<K, V>
 
     private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, ConnectionFuture<StatefulRedisConnection<K, V>>> connectionProvider;
 
-    private Partitions partitions;
+    private volatile Partitions partitions;
 
     private boolean autoFlushCommands = true;
 
-    private ReadFrom readFrom;
+    private volatile ReadFrom readFrom;
 
     public PooledClusterConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
             RedisCodec<K, V> redisCodec, ClusterEventListener clusterEventListener) {
@@ -153,6 +154,30 @@ class PooledClusterConnectionProvider<K, V>
         }
 
         return getWriteConnection(slot).toCompletableFuture();
+    }
+
+    @Override
+    public CompletableFuture<StatefulRedisConnection<K, V>> getRandomConnectionAsync(ConnectionIntent connectionIntent) {
+
+        if (debugEnabled) {
+            logger.debug("getConnection(" + connectionIntent + ")");
+        }
+
+        // Choose a random master shard first to ensure even distribution across partitions,
+        // then delegate to the slot-based selection to reuse ReadFrom/intent logic and caching.
+        List<RedisClusterNode> masters = partitions.stream()
+                .filter(n -> n.is(RedisClusterNode.NodeFlag.UPSTREAM) && !n.hasNoSlots()).collect(Collectors.toList());
+
+        if (masters.isEmpty()) {
+            int slot = ThreadLocalRandom.current().nextInt(SlotHash.SLOT_COUNT);
+            return getConnectionAsync(connectionIntent, slot);
+        }
+
+        RedisClusterNode master = masters.get(ThreadLocalRandom.current().nextInt(masters.size()));
+        List<Integer> masterSlots = master.getSlots();
+        int slot = masterSlots.get(ThreadLocalRandom.current().nextInt(masterSlots.size()));
+
+        return getConnectionAsync(connectionIntent, slot);
     }
 
     private CompletableFuture<StatefulRedisConnection<K, V>> getWriteConnection(int slot) {

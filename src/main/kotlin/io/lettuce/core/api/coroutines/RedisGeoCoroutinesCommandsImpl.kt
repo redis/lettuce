@@ -80,36 +80,9 @@ internal class RedisGeoCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override fun geohash(key: K, vararg members: V): Flow<Value<String>> =
         ops.geohash(key, *members).asFlow()
 
-    override fun georadius(
-        key: K,
-        longitude: Double,
-        latitude: Double,
-        distance: Double,
-        unit: GeoArgs.Unit
-    ): Flow<V> = ops.georadius(key, longitude, latitude, distance, unit).asFlow()
-
-    override fun georadius(
-        key: K,
-        longitude: Double,
-        latitude: Double,
-        distance: Double,
-        unit: GeoArgs.Unit,
-        geoArgs: GeoArgs
-    ): Flow<GeoWithin<V>> =
-        ops.georadius(key, longitude, latitude, distance, unit, geoArgs).asFlow()
-
-    override suspend fun georadius(key: K, longitude: Double, latitude: Double, distance: Double, unit: GeoArgs.Unit, geoRadiusStoreArgs: GeoRadiusStoreArgs<K>): Long? = ops.georadius(key, longitude, latitude, distance, unit, geoRadiusStoreArgs).awaitFirstOrNull()
-
-    override fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit): Flow<V> = ops.georadiusbymember(key, member, distance, unit).asFlow()
-
-    override fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoArgs: GeoArgs): Flow<GeoWithin<V>> = ops.georadiusbymember(key, member, distance, unit, geoArgs).asFlow()
-
-    override suspend fun georadiusbymember(key: K, member: V, distance: Double, unit: GeoArgs.Unit, geoRadiusStoreArgs: GeoRadiusStoreArgs<K>): Long? = ops.georadiusbymember(key, member, distance, unit, geoRadiusStoreArgs).awaitFirstOrNull()
-
     override fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate): Flow<V> = ops.geosearch(key, reference, predicate).asFlow()
 
     override fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs): Flow<GeoWithin<V>>  = ops.geosearch(key, reference, predicate, geoArgs).asFlow()
 
     override suspend fun geosearchstore(destination: K, key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs, storeDist: Boolean): Long? = ops.geosearchstore(destination, key, reference, predicate, geoArgs, storeDist).awaitFirstOrNull()
 }
-

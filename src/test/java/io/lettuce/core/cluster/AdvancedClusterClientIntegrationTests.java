@@ -22,6 +22,7 @@ package io.lettuce.core.cluster;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.test.LettuceExtension.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +31,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.DefaultClientResources;
+import io.lettuce.core.resource.DefaultEventLoopGroupProvider;
 
 import javax.enterprise.inject.New;
 import javax.inject.Inject;
@@ -60,16 +68,18 @@ import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Integration tests for {@link StatefulRedisClusterConnection}.
  *
  * @author Mark Paluch
  * @author Jon Chambers
+ * @author Hari Mani
  */
 @Tag(INTEGRATION_TEST)
-@SuppressWarnings("rawtypes")
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class AdvancedClusterClientIntegrationTests extends TestSupport {
 
     private static final String KEY_ON_NODE_1 = "a";
@@ -88,7 +98,6 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     AdvancedClusterClientIntegrationTests(RedisClusterClient clusterClient,
             StatefulRedisClusterConnection<String, String> clusterConnection) {
         this.clusterClient = clusterClient;
-
         this.clusterConnection = clusterConnection;
         this.async = clusterConnection.async();
         this.sync = clusterConnection.sync();
@@ -125,7 +134,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void partitions() {
 
-        Partitions partitions = async.getStatefulConnection().getPartitions();
+        Partitions partitions = clusterConnection.getPartitions();
         assertThat(partitions).hasSize(4);
     }
 
@@ -140,17 +149,16 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
 
-        StatefulRedisClusterConnection<String, String> statefulConnection = async.getStatefulConnection();
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
 
-            StatefulRedisConnection<String, String> nodeId = statefulConnection.getConnection(redisClusterNode.getNodeId());
-            StatefulRedisConnection<String, String> hostAndPort = statefulConnection
+            StatefulRedisConnection<String, String> nodeId = clusterConnection.getConnection(redisClusterNode.getNodeId());
+            StatefulRedisConnection<String, String> hostAndPort = clusterConnection
                     .getConnection(redisClusterNode.getUri().getHost(), redisClusterNode.getUri().getPort());
 
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
 
-        RedisAdvancedClusterCommands<String, String> sync = statefulConnection.sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
 
             RedisClusterCommands<String, String> nodeId = sync.getConnection(redisClusterNode.getNodeId());
@@ -160,7 +168,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
 
-        RedisAdvancedClusterReactiveCommands<String, String> rx = statefulConnection.reactive();
+        RedisAdvancedClusterReactiveCommands<String, String> rx = clusterConnection.reactive();
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
 
             RedisClusterReactiveCommands<String, String> nodeId = rx.getConnection(redisClusterNode.getNodeId());
@@ -235,7 +243,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
             expectation.add(kv(key, "value-" + key));
         }
 
-        List<KeyValue<String, String>> result = sync.mget(keys.toArray(new String[keys.size()]));
+        List<KeyValue<String, String>> result = sync.mget(keys.toArray(new String[0]));
 
         assertThat(result).hasSize(keys.size());
         assertThat(result).isEqualTo(expectation);
@@ -257,7 +265,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
         List<String> keys = prepareKeys();
 
-        Long result = sync.del(keys.toArray(new String[keys.size()]));
+        Long result = sync.del(keys.toArray(new String[0]));
 
         assertThat(result).isEqualTo(25);
 
@@ -284,7 +292,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
         List<String> keys = prepareKeys();
 
-        Long result = sync.unlink(keys.toArray(new String[keys.size()]));
+        Long result = sync.unlink(keys.toArray(new String[0]));
 
         assertThat(result).isEqualTo(25);
 
@@ -315,7 +323,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
         sync.clientSetname(name);
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            RedisClusterCommands<String, String> nodeConnection = async.getStatefulConnection().sync()
+            RedisClusterCommands<String, String> nodeConnection = clusterConnection.sync()
                     .getConnection(redisClusterNode.getNodeId());
             assertThat(nodeConnection.clientList()).contains(name);
         }
@@ -424,9 +432,28 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void randomKey() {
 
-        writeKeysToTwoNodes();
+        // RedisAdvancedClusterCommands#randomkey() queries one randomly picked partition. Seed every master partition
+        // so any random pick (or its replica) lands on a non-empty keyspace.
+        Set<String> writtenKeys = new HashSet<>();
+        for (RedisClusterNode partition : clusterClient.getPartitions()) {
+            if (partition.getSlots().isEmpty()) {
+                continue; // replicas have no owned slots
+            }
+            String partitionKey = keyForSlot(partition.getSlots().get(0));
+            sync.set(partitionKey, value);
+            writtenKeys.add(partitionKey);
+        }
 
-        assertThat(sync.randomkey()).isIn(KEY_ON_NODE_1, KEY_ON_NODE_2);
+        assertThat(sync.randomkey()).isIn(writtenKeys);
+    }
+
+    private static String keyForSlot(int targetSlot) {
+        for (int j = 0;; j++) {
+            String k = "rk:{rk-" + j + "}";
+            if (SlotHash.getSlot(k) == targetSlot) {
+                return k;
+            }
+        }
     }
 
     @Test
@@ -464,15 +491,13 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void testSync() {
 
-        RedisAdvancedClusterCommands<String, String> sync = async.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.set(key, value);
         assertThat(sync.get(key)).isEqualTo(value);
 
         RedisClusterCommands<String, String> node2Connection = sync.getConnection(ClusterTestSettings.host,
                 ClusterTestSettings.port2);
         assertThat(node2Connection.get(key)).isEqualTo(value);
-
-        assertThat(sync.getStatefulConnection()).isSameAs(async.getStatefulConnection());
     }
 
     @Test
@@ -555,7 +580,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
         TestFutures.awaitOrTimeout(async.get(key(0)));
 
         int iterations = 1000;
-        async.setAutoFlushCommands(false);
+        connectionUnderTest.setAutoFlushCommands(false);
         List<RedisFuture<?>> futures = new ArrayList<>();
         for (int i = 0; i < iterations; i++) {
             futures.add(async.set(key(i), value(i)));
@@ -565,7 +590,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
             assertThat(this.sync.get(key(i))).as("Key " + key(i) + " must be null").isNull();
         }
 
-        async.flushCommands();
+        connectionUnderTest.flushCommands();
 
         boolean result = TestFutures.awaitOrTimeout(futures);
         assertThat(result).isTrue();
@@ -578,7 +603,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void clusterScan() {
 
-        RedisAdvancedClusterCommands<String, String> sync = async.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         Set<String> allKeys = new HashSet<>();
@@ -600,7 +625,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void clusterScanWithArgs() {
 
-        RedisAdvancedClusterCommands<String, String> sync = async.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         Set<String> allKeys = new HashSet<>();
@@ -623,7 +648,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void clusterScanStreaming() {
 
-        RedisAdvancedClusterCommands<String, String> sync = async.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
@@ -645,7 +670,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void clusterScanStreamingWithArgs() {
 
-        RedisAdvancedClusterCommands<String, String> sync = async.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
@@ -667,6 +692,49 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void clusterScanCursorFinished() {
         assertThatThrownBy(() -> sync.scan(ScanCursor.FINISHED)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void clusterScanAsyncSingleIoThread() {
+
+        // Create a dedicated client with a single IO thread to stress async chaining
+        ClientResources resources = DefaultClientResources.builder()
+                .eventLoopGroupProvider(new DefaultEventLoopGroupProvider(1)).build();
+        RedisClusterClient singleThreadClient = RedisClusterClient.create(resources,
+                RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port1).build());
+        StatefulRedisClusterConnection<String, String> conn = singleThreadClient.connect();
+
+        // Seed keys across the cluster
+        conn.sync().mset(KeysAndValues.MAP);
+
+        Set<String> allKeys = new HashSet<>();
+        ScanArgs args = ScanArgs.Builder.limit(200);
+
+        boolean timedOut = false;
+        try {
+            scanDatabase(conn, ScanCursor.INITIAL, args, keys -> {
+                allKeys.addAll(keys);
+                return CompletableFuture.completedFuture(null);
+            }).get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            timedOut = true;
+        }
+
+        assertFalse(timedOut);
+        assertThat(allKeys).containsAll(KeysAndValues.KEYS);
+    }
+
+    private CompletableFuture<Void> scanDatabase(StatefulRedisClusterConnection<String, String> connection, ScanCursor cursor,
+            ScanArgs scanArgs, Function<List<String>, CompletableFuture<?>> keysProcessor) {
+
+        RedisAdvancedClusterAsyncCommands<String, String> asyncCommands = connection.async();
+        RedisFuture<KeyScanCursor<String>> res = asyncCommands.scan(cursor, scanArgs);
+        return res.thenCompose(newCursor -> keysProcessor.apply(newCursor.getKeys()).thenCompose(ignore -> {
+            if (newCursor.isFinished()) {
+                return CompletableFuture.completedFuture(null);
+            }
+            return scanDatabase(connection, newCursor, scanArgs, keysProcessor);
+        })).toCompletableFuture();
     }
 
     @Test

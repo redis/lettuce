@@ -25,10 +25,12 @@ import java.util.concurrent.ThreadFactory;
 import io.lettuce.core.internal.LettuceAssert;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.kqueue.KQueue;
 import io.netty.channel.kqueue.KQueueDatagramChannel;
 import io.netty.channel.kqueue.KQueueDomainSocketChannel;
 import io.netty.channel.kqueue.KQueueEventLoopGroup;
+import io.netty.channel.kqueue.KQueueIoHandler;
 import io.netty.channel.kqueue.KQueueSocketChannel;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.unix.DomainSocketAddress;
@@ -182,7 +184,8 @@ public class KqueueProvider {
 
             LettuceAssert.notNull(type, "EventLoopGroup type must not be null");
 
-            return type.equals(eventLoopGroupClass());
+            // Support both old deprecated KQueueEventLoopGroup and new MultiThreadIoEventLoopGroup
+            return type.equals(KQueueEventLoopGroup.class) || type.equals(MultiThreadIoEventLoopGroup.class);
         }
 
         @Override
@@ -190,7 +193,8 @@ public class KqueueProvider {
 
             checkForKqueueLibrary();
 
-            return KQueueEventLoopGroup.class;
+            // Return the new recommended class, but keep backward compatibility
+            return MultiThreadIoEventLoopGroup.class;
         }
 
         @Override
@@ -198,7 +202,8 @@ public class KqueueProvider {
 
             checkForKqueueLibrary();
 
-            return new KQueueEventLoopGroup(nThreads, threadFactory);
+            // Use the new Netty 4.2 approach with IoHandlerFactory
+            return new MultiThreadIoEventLoopGroup(nThreads, threadFactory, KQueueIoHandler.newFactory());
         }
 
         @Override

@@ -1,5 +1,6 @@
 package io.lettuce.core.pubsub;
 
+import io.lettuce.core.api.PubSubCommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
@@ -24,6 +25,9 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
 
     /**
      * Returns the {@link RedisPubSubCommands} API for the current connection. Does not create a new connection.
+     * <p>
+     * Note: this accessor is scheduled for removal in a future major release; a {@code commands(...)}-based replacement is
+     * planned.
      *
      * @return the synchronous API for the underlying connection.
      */
@@ -31,6 +35,9 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
 
     /**
      * Returns the {@link RedisPubSubAsyncCommands} API for the current connection. Does not create a new connection.
+     * <p>
+     * Note: this accessor is scheduled for removal in a future major release; a {@code commands(...)}-based replacement is
+     * planned.
      *
      * @return the asynchronous API for the underlying connection.
      */
@@ -40,8 +47,13 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
      * Returns the {@link RedisPubSubReactiveCommands} API for the current connection. Does not create a new connection.
      *
      * @return the reactive API for the underlying connection.
+     * @deprecated since 7.8, use {@link #commands(PubSubCommandsFactory)} with {@link RedisPubSubReactiveCommands#factory()}
+     *             instead; scheduled for removal in a future major release.
      */
-    RedisPubSubReactiveCommands<K, V> reactive();
+    @Deprecated
+    default RedisPubSubReactiveCommands<K, V> reactive() {
+        return commands(RedisPubSubReactiveCommands.factory());
+    }
 
     /**
      * Add a new {@link RedisPubSubListener listener}.
@@ -56,5 +68,18 @@ public interface StatefulRedisPubSubConnection<K, V> extends StatefulRedisConnec
      * @param listener the listener, must not be {@code null}.
      */
     void removeListener(RedisPubSubListener<K, V> listener);
+
+    /**
+     * Returns the command API created by {@code factory}, bound to this connection. Does not create a new connection.
+     * <p>
+     * The command API is created once per connection and cached; calling this method again with the same {@code factory}
+     * returns the same instance.
+     *
+     * @param factory the command API factory, must not be {@code null}
+     * @param <T> the command API type
+     * @return the command API bound to this connection
+     * @since 7.8
+     */
+    <T> T commands(PubSubCommandsFactory<StatefulRedisPubSubConnection<K, V>, T> factory);
 
 }

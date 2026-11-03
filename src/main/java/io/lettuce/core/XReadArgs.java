@@ -21,7 +21,13 @@ public class XReadArgs implements CompositeArgument {
 
     private Long count;
 
+    private Long maxCount;
+
+    private Long maxSize;
+
     private boolean noack;
+
+    private Long claimMinIdleTime;
 
     /**
      * Builder entry points for {@link XReadArgs}.
@@ -70,6 +76,30 @@ public class XReadArgs implements CompositeArgument {
         }
 
         /**
+         * Create a new {@link XReadArgs} and set {@literal MAXCOUNT}.
+         *
+         * @param maxCount cumulative cap on the number of returned entries across all streams, must be positive.
+         * @return new {@link XReadArgs} with {@literal MAXCOUNT} set.
+         * @see XReadArgs#maxCount(long)
+         * @since 7.7
+         */
+        public static XReadArgs maxCount(long maxCount) {
+            return new XReadArgs().maxCount(maxCount);
+        }
+
+        /**
+         * Create a new {@link XReadArgs} and set {@literal MAXSIZE}.
+         *
+         * @param maxSize soft cumulative cap on the reply size in bytes across all streams, must be positive.
+         * @return new {@link XReadArgs} with {@literal MAXSIZE} set.
+         * @see XReadArgs#maxSize(long)
+         * @since 7.7
+         */
+        public static XReadArgs maxSize(long maxSize) {
+            return new XReadArgs().maxSize(maxSize);
+        }
+
+        /**
          * Create a new {@link XReadArgs} and set {@literal NOACK}.
          *
          * @return new {@link XReadArgs} with {@literal NOACK} set.
@@ -88,6 +118,31 @@ public class XReadArgs implements CompositeArgument {
          */
         public static XReadArgs noack(boolean noack) {
             return new XReadArgs().noack(noack);
+        }
+
+        /**
+         * Create a new {@link XReadArgs} and set CLAIM min-idle-time.
+         * 
+         * @implNote Only valid for XREADGROUP.
+         * @param milliseconds minimum idle time.
+         * @return new {@link XReadArgs} with CLAIM set
+         * @since 7.1
+         */
+        public static XReadArgs claim(long milliseconds) {
+            return new XReadArgs().claim(milliseconds);
+        }
+
+        /**
+         * Create a new {@link XReadArgs} and set CLAIM min-idle-time.
+         * 
+         * @implNote Only valid for XREADGROUP.
+         * @param timeout minimum idle time.
+         * @return new {@link XReadArgs} with CLAIM set
+         * @since 7.1
+         */
+        public static XReadArgs claim(Duration timeout) {
+            LettuceAssert.notNull(timeout, "Claim timeout must not be null");
+            return claim(timeout.toMillis());
         }
 
     }
@@ -130,6 +185,38 @@ public class XReadArgs implements CompositeArgument {
     }
 
     /**
+     * Limit the cumulative number of returned entries across all streams to {@code maxCount}. Unlike {@literal COUNT}, which is
+     * a per-stream limit, {@literal MAXCOUNT} caps the whole command reply. Once the cap is reached, remaining streams are
+     * skipped. Defaults to unlimited when not set. When used together with {@literal COUNT}, {@code maxCount} must be greater
+     * than or equal to the count.
+     *
+     * @param maxCount cumulative cap on the number of returned entries across all streams, must be positive.
+     * @return {@code this}.
+     * @since 7.7
+     */
+    public XReadArgs maxCount(long maxCount) {
+
+        this.maxCount = maxCount;
+        return this;
+    }
+
+    /**
+     * Apply a soft cap of {@code maxSize} bytes to the cumulative reply size across all streams. The server measures the
+     * serialized reply including protocol overhead, so this is not an exact payload-size guarantee: the first available entry
+     * is returned even when it alone exceeds the cap, and emission stops before the next entry once the budget is reached. Once
+     * the cap is reached, remaining streams are skipped. Defaults to unlimited when not set.
+     *
+     * @param maxSize soft cumulative cap on the reply size in bytes across all streams, must be positive.
+     * @return {@code this}.
+     * @since 7.7
+     */
+    public XReadArgs maxSize(long maxSize) {
+
+        this.maxSize = maxSize;
+        return this;
+    }
+
+    /**
      * Use NOACK option to disable auto-acknowledgement. Only valid for {@literal XREADGROUP}.
      *
      * @param noack {@code true} to disable auto-ack.
@@ -139,6 +226,35 @@ public class XReadArgs implements CompositeArgument {
 
         this.noack = noack;
         return this;
+    }
+
+    /**
+     * Claim idle pending messages first with a minimum idle time (milliseconds).
+     * 
+     * @implNote Only valid for XREADGROUP.
+     * @param milliseconds minimum idle time.
+     * @return {@code this}.
+     * @since 7.1
+     */
+    public XReadArgs claim(long milliseconds) {
+
+        this.claimMinIdleTime = milliseconds;
+        return this;
+    }
+
+    /**
+     * Claim idle pending messages first with a minimum idle time (milliseconds).
+     * 
+     * @implNote Only valid for XREADGROUP.
+     * @param timeout minimum idle time.
+     * @return {@code this}.
+     * @since 7.1
+     */
+    public XReadArgs claim(Duration timeout) {
+
+        LettuceAssert.notNull(timeout, "Claim timeout must not be null");
+
+        return claim(timeout.toMillis());
     }
 
     public <K, V> void build(CommandArgs<K, V> args) {
@@ -151,8 +267,20 @@ public class XReadArgs implements CompositeArgument {
             args.add(CommandKeyword.COUNT).add(count);
         }
 
+        if (maxCount != null) {
+            args.add(CommandKeyword.MAXCOUNT).add(maxCount);
+        }
+
+        if (maxSize != null) {
+            args.add(CommandKeyword.MAXSIZE).add(maxSize);
+        }
+
         if (noack) {
             args.add(CommandKeyword.NOACK);
+        }
+
+        if (claimMinIdleTime != null) {
+            args.add(CommandKeyword.CLAIM).add(claimMinIdleTime);
         }
     }
 

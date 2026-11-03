@@ -73,17 +73,31 @@ If you have a question, then check one of the following places first as GitHub i
 
 Lettuce source can be built from the command line using Maven on JDK 1.8 or above.
 
-The project can be built from the root directory using the standard Maven command:
+A plain build, running only the unit tests, needs no Redis:
 
 ```bash
 	$ mvn clean test
 ```
 
-You can run a full build including integration tests using the `make` command:
+### Testing
+
+Lettuce runs its integration tests against real Redis servers started in Docker.
+The full testing infrastructure — the test container, how environments are
+started, how tests discover their servers, where to place unit vs. integration
+tests, and how this maps to CI — is documented in
+**[docs/integration-testing.md](../docs/integration-testing.md)**.
+
+Quick start:
 
 ```bash
-	$ make test
+	$ make start version=8.6   # bring up the Redis test environment for a given version
+	$ make test                # run the full build including integration tests
+	$ make stop                # tear the environment down
 ```
+
+When adding tests, please follow the unit vs. integration conventions described
+in the guide: unit tests are named `*UnitTests` (no running server), integration
+tests are named `*IntegrationTests`.
 
 ## Conventions
 

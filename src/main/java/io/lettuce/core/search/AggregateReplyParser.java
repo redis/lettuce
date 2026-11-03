@@ -7,6 +7,8 @@
 package io.lettuce.core.search;
 
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.search.AggregationReply.Cursor;
+
 import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
 import io.netty.util.internal.logging.InternalLogger;
@@ -23,21 +25,20 @@ import java.util.List;
  * <p>
  *
  * @param <K> Key type.
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  * @see SearchReplyParser
  * @see SearchReply
  */
-public class AggregateReplyParser<K, V> implements ComplexDataParser<AggregationReply<K, V>> {
+public class AggregateReplyParser<K> implements ComplexDataParser<AggregationReply<K>> {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(AggregateReplyParser.class);
 
-    private final SearchReplyParser<K, V> searchReplyParser;
+    private final SearchReplyParser<K> searchReplyParser;
 
     private final boolean withCursor;
 
-    public AggregateReplyParser(RedisCodec<K, V> codec, boolean withCursor) {
+    public AggregateReplyParser(RedisCodec<K, ?> codec, boolean withCursor) {
         this.searchReplyParser = new SearchReplyParser<>(codec);
         this.withCursor = withCursor;
     }
@@ -52,8 +53,8 @@ public class AggregateReplyParser<K, V> implements ComplexDataParser<Aggregation
      * @return a list of SearchReply objects, one for each aggregation result
      */
     @Override
-    public AggregationReply<K, V> parse(ComplexData data) {
-        AggregationReply<K, V> reply = new AggregationReply<>();
+    public AggregationReply<K> parse(ComplexData data) {
+        AggregationReply<K> reply = new AggregationReply<>();
 
         if (data == null) {
             return reply;
@@ -61,7 +62,7 @@ public class AggregateReplyParser<K, V> implements ComplexDataParser<Aggregation
 
         try {
             if (!withCursor) {
-                SearchReply<K, V> searchReply = searchReplyParser.parse(data);
+                SearchReply<K> searchReply = searchReplyParser.parse(data);
                 reply.addSearchReply(searchReply);
                 return reply;
             }
@@ -76,13 +77,14 @@ public class AggregateReplyParser<K, V> implements ComplexDataParser<Aggregation
             for (Object aggregateResult : aggregateResults) {
                 if (aggregateResult instanceof Number) {
                     if (replyRead) {
-                        reply.setCursorId(((Number) aggregateResult).longValue());
+                        long id = ((Number) aggregateResult).longValue();
+                        reply.setCursor(Cursor.of(id, null));
                     } else {
                         reply.setGroupCount(((Number) aggregateResult).longValue());
                     }
                 } else if (aggregateResult instanceof ComplexData) {
                     // Each element should be a ComplexData that can be parsed by SearchReplyParser
-                    SearchReply<K, V> searchReply = searchReplyParser.parse((ComplexData) aggregateResult);
+                    SearchReply<K> searchReply = searchReplyParser.parse((ComplexData) aggregateResult);
                     reply.addSearchReply(searchReply);
                     replyRead = true;
                 }

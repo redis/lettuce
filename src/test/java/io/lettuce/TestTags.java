@@ -23,13 +23,6 @@ public class TestTags {
     public static final String INTEGRATION_TEST = "integration";
 
     /**
-     * Tag for tests that generate the different types of APIs.
-     * 
-     * @see io.lettuce.apigenerator
-     */
-    public static final String API_GENERATOR = "api_generator";
-
-    /**
      * Tag for EntraId integration tests (require a running environment with configured microsoft EntraId authentication)
      */
     public static final String ENTRA_ID = "entraid";

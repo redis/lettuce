@@ -22,8 +22,6 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.RedisCommand;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
 
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,9 +45,9 @@ public class RedisAuthenticationHandler<K, V> {
 
     private final StatefulRedisConnectionImpl<K, V> connection;
 
-    private final RedisCredentialsProvider credentialsProvider;
+    private final CredentialsProvider credentialsProvider;
 
-    private final AtomicReference<Disposable> credentialsSubscription = new AtomicReference<>();
+    private final AtomicReference<Subscription> credentialsSubscription = new AtomicReference<>();
 
     private final Boolean isPubSubConnection;
 
@@ -63,11 +61,12 @@ public class RedisAuthenticationHandler<K, V> {
      * Creates a new {@link RedisAuthenticationHandler}.
      *
      * @param connection the connection to authenticate
-     * @param credentialsProvider the implementation of {@link RedisCredentialsProvider} to use
+     * @param credentialsProvider the implementation of {@link CredentialsProvider} to use
      * @param isPubSubConnection {@code true} if the connection is a pub/sub connection
+     * @since 7.9
      */
-    public RedisAuthenticationHandler(StatefulRedisConnectionImpl<K, V> connection,
-            RedisCredentialsProvider credentialsProvider, Boolean isPubSubConnection) {
+    public RedisAuthenticationHandler(StatefulRedisConnectionImpl<K, V> connection, CredentialsProvider credentialsProvider,
+            Boolean isPubSubConnection) {
         this.connection = connection;
         this.credentialsProvider = credentialsProvider;
         this.isPubSubConnection = isPubSubConnection;
@@ -77,16 +76,16 @@ public class RedisAuthenticationHandler<K, V> {
      * Creates a new {@link RedisAuthenticationHandler} if the connection supports re-authentication.
      *
      * @param connection the connection to authenticate
-     * @param credentialsProvider the implementation of {@link RedisCredentialsProvider} to use
+     * @param credentialsProvider the implementation of {@link CredentialsProvider} to use
      * @param isPubSubConnection {@code true} if the connection is a pub/sub connection
      * @param options the {@link ClientOptions} to use
      * @return a new {@link RedisAuthenticationHandler} if the connection supports re-authentication, otherwise an
      *         implementation of the {@link RedisAuthenticationHandler} that does nothing
-     * @since 6.6.0
-     * @see RedisCredentialsProvider
+     * @since 7.9
+     * @see CredentialsProvider
      */
     public static <K, V> RedisAuthenticationHandler<K, V> createHandler(StatefulRedisConnectionImpl<K, V> connection,
-            RedisCredentialsProvider credentialsProvider, Boolean isPubSubConnection, ClientOptions options) {
+            CredentialsProvider credentialsProvider, Boolean isPubSubConnection, ClientOptions options) {
 
         if (isSupported(options)) {
 
@@ -108,7 +107,7 @@ public class RedisAuthenticationHandler<K, V> {
      *
      * @return a new {@link RedisAuthenticationHandler}
      * @since 6.6.0
-     * @see RedisCredentialsProvider
+     * @see CredentialsProvider
      */
     public static <K, V> RedisAuthenticationHandler<K, V> createDefaultAuthenticationHandler() {
         return new DisabledAuthenticationHandler<>();
@@ -129,13 +128,15 @@ public class RedisAuthenticationHandler<K, V> {
             return;
         }
 
-        Flux<RedisCredentials> credentialsFlux = credentialsProvider.credentials();
+        Subscription credentialsSub = credentialsProvider.subscribeToCredentials(this::reauthenticate, this::onError);
 
-        Disposable subscription = credentialsFlux.subscribe(this::onNext, this::onError, this::complete);
-
-        Disposable oldSubscription = credentialsSubscription.getAndSet(subscription);
-        if (oldSubscription != null && !oldSubscription.isDisposed()) {
-            oldSubscription.dispose();
+        Subscription oldSub = credentialsSubscription.getAndSet(credentialsSub);
+        if (oldSub != null) {
+            try {
+                oldSub.close();
+            } catch (Exception e) {
+                log.warn("Failed to close old credentials subscription", e);
+            }
         }
     }
 
@@ -143,23 +144,14 @@ public class RedisAuthenticationHandler<K, V> {
      * Unsubscribes from the current credentials stream.
      */
     public void unsubscribe() {
-        Disposable subscription = credentialsSubscription.getAndSet(null);
-        if (subscription != null && !subscription.isDisposed()) {
-            subscription.dispose();
+        Subscription sub = credentialsSubscription.getAndSet(null);
+        if (sub != null) {
+            try {
+                sub.close();
+            } catch (Exception e) {
+                log.warn("Failed to close subscription", e);
+            }
         }
-    }
-
-    protected void complete() {
-        log.debug("Credentials stream completed");
-    }
-
-    protected void onNext(RedisCredentials credentials) {
-        reauthenticate(credentials);
-    }
-
-    protected void onError(Throwable e) {
-        log.error("Credentials renew failed.", e);
-        publishReauthFailedEvent(e);
     }
 
     /**
@@ -169,6 +161,16 @@ public class RedisAuthenticationHandler<K, V> {
      */
     protected void reauthenticate(RedisCredentials credentials) {
         setCredentials(credentials);
+    }
+
+    /**
+     * Handles errors observed by the underlying {@link CredentialsProvider} while producing credentials.
+     *
+     * @param e the error reported by the credentials provider
+     */
+    protected void onError(Throwable e) {
+        log.error("Credentials renew failed.", e);
+        publishReauthFailedEvent(e);
     }
 
     boolean isSupportedConnection() {
@@ -358,7 +360,7 @@ public class RedisAuthenticationHandler<K, V> {
     private static final class DisabledAuthenticationHandler<K, V> extends RedisAuthenticationHandler<K, V> {
 
         public DisabledAuthenticationHandler(StatefulRedisConnectionImpl<K, V> connection,
-                RedisCredentialsProvider credentialsProvider, Boolean isPubSubConnection) {
+                CredentialsProvider credentialsProvider, Boolean isPubSubConnection) {
             super(null, null, null);
         }
 

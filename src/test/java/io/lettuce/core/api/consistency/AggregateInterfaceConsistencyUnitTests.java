@@ -1,0 +1,174 @@
+/*
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
+package io.lettuce.core.api.consistency;
+
+import static io.lettuce.TestTags.UNIT_TEST;
+
+import java.lang.reflect.Method;
+import java.util.EnumSet;
+import java.util.Set;
+
+import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.cluster.api.async.NodeSelectionAsyncCommands;
+import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
+import io.lettuce.core.cluster.api.sync.NodeSelectionCommands;
+import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+
+/**
+ * Verify that the aggregate command interfaces extend the per-group interface of every command group they are supposed to
+ * cover, so that a newly registered command group cannot be forgotten on the umbrella interfaces — and that the methods
+ * declared directly on the aggregates ({@code auth}, {@code select}, the {@code CLUSTER} commands, the PubSub subscriptions, …)
+ * stay in lockstep across the sync, async and reactive flavors.
+ * <p>
+ * The Kotlin coroutine aggregates are covered by {@code KotlinCoroutinesConsistencyUnitTests} so that these Java test sources
+ * stay free of compile-time references to Kotlin types.
+ *
+ * @see AggregateInterfaces
+ */
+@Tag(UNIT_TEST)
+class AggregateInterfaceConsistencyUnitTests {
+
+    private static final Set<CommandInterfaces> STANDALONE_GROUPS = EnumSet
+            .complementOf(EnumSet.of(CommandInterfaces.SENTINEL));
+
+    private static final Set<CommandInterfaces> CLUSTER_GROUPS = EnumSet
+            .complementOf(EnumSet.of(CommandInterfaces.SENTINEL, CommandInterfaces.TRANSACTIONAL));
+
+    @Test
+    void standaloneAggregatesCoverAllGroups() {
+
+        SoftAssertions softly = new SoftAssertions();
+
+        for (CommandInterfaces group : STANDALONE_GROUPS) {
+            assertExtends(softly, RedisCommands.class, group.sync());
+            assertExtends(softly, RedisAsyncCommands.class, group.async());
+            assertExtends(softly, RedisReactiveCommands.class, group.reactive());
+        }
+
+        softly.assertAll();
+    }
+
+    @Test
+    void clusterAggregatesCoverAllClusterGroups() {
+
+        SoftAssertions softly = new SoftAssertions();
+
+        for (CommandInterfaces group : CLUSTER_GROUPS) {
+            assertExtends(softly, RedisClusterCommands.class, group.sync());
+            assertExtends(softly, RedisClusterAsyncCommands.class, group.async());
+            assertExtends(softly, RedisClusterReactiveCommands.class, group.reactive());
+        }
+
+        softly.assertAll();
+    }
+
+    @Test
+    void nodeSelectionAggregatesCoverAllNodeSelectionGroups() {
+
+        SoftAssertions softly = new SoftAssertions();
+
+        for (CommandInterfaces group : CLUSTER_GROUPS) {
+            if (!group.hasNodeSelection() || KnownApiDeviations.NODE_SELECTION_AGGREGATE_PENDING.contains(group.name())) {
+                continue;
+            }
+            assertExtends(softly, NodeSelectionCommands.class, group.nodeSelectionSync());
+            assertExtends(softly, NodeSelectionAsyncCommands.class, group.nodeSelectionAsync());
+        }
+
+        softly.assertAll();
+    }
+
+    private static void assertExtends(SoftAssertions softly, Class<?> aggregate, Class<?> groupInterface) {
+        softly.assertThat(groupInterface.isAssignableFrom(aggregate))
+                .as("%s must extend %s", aggregate.getSimpleName(), groupInterface.getSimpleName()).isTrue();
+    }
+
+    @Test
+    void aggregateDeclaredMethodsExistOnAsyncAndReactiveAggregates() {
+
+        SoftAssertions softly = new SoftAssertions();
+
+        for (AggregateInterfaces aggregate : AggregateInterfaces.values()) {
+            Class<?> sync = aggregate.sync();
+
+            for (Method syncMethod : TypeSignatures.apiMethods(sync)) {
+
+                boolean syncDeprecated = syncMethod.isAnnotationPresent(Deprecated.class);
+
+                assertCounterpart(softly, sync, syncMethod, aggregate.async(),
+                        TypeSignatures.expectedAsyncReturnType(syncMethod, sync), syncDeprecated);
+
+                if (!KnownApiDeviations.contains(KnownApiDeviations.NOT_ON_REACTIVE_AGGREGATE, syncMethod, sync)) {
+                    // as on the per-group interfaces, streaming-channel variants are deprecated on the reactive API in
+                    // favor of consuming the Publisher
+                    boolean reactiveDeprecated = syncDeprecated || TypeSignatures.isStreamingChannelMethod(syncMethod)
+                            || KnownApiDeviations.contains(KnownApiDeviations.REACTIVE_EXTRA_DEPRECATED, syncMethod, sync);
+                    assertCounterpart(softly, sync, syncMethod, aggregate.reactive(),
+                            TypeSignatures.expectedReactiveReturnType(syncMethod, sync), reactiveDeprecated);
+                }
+            }
+        }
+
+        softly.assertAll();
+    }
+
+    @Test
+    void asyncAndReactiveAggregateDeclaredMethodsExistOnSyncAggregate() {
+
+        SoftAssertions softly = new SoftAssertions();
+
+        for (AggregateInterfaces aggregate : AggregateInterfaces.values()) {
+            Class<?> sync = aggregate.sync();
+
+            for (Class<?> flavor : new Class<?>[] { aggregate.async(), aggregate.reactive() }) {
+                for (Method method : TypeSignatures.apiMethods(flavor)) {
+                    if (KnownApiDeviations.contains(KnownApiDeviations.NOT_ON_SYNC_API, method, sync)
+                            || KnownApiDeviations.contains(KnownApiDeviations.REACTIVE_ONLY, method, sync)) {
+                        continue;
+                    }
+                    if (TypeSignatures.findCounterpart(sync, method) == null) {
+                        softly.fail("%s is missing on %s", TypeSignatures.describe(flavor, method), sync.getSimpleName());
+                    }
+                }
+            }
+        }
+
+        softly.assertAll();
+    }
+
+    private void assertCounterpart(SoftAssertions softly, Class<?> sync, Method syncMethod, Class<?> target,
+            String expectedReturnType, boolean expectDeprecated) {
+
+        Method counterpart = TypeSignatures.findCounterpart(target, syncMethod);
+        if (counterpart == null) {
+            softly.fail("%s is missing on %s", TypeSignatures.describe(sync, syncMethod), target.getSimpleName());
+            return;
+        }
+
+        softly.assertThat(TypeSignatures.parameterSignature(counterpart))
+                .as("parameter types of %s", TypeSignatures.describe(target, counterpart))
+                .isEqualTo(TypeSignatures.parameterSignature(syncMethod));
+
+        softly.assertThat(counterpart.isAnnotationPresent(Deprecated.class))
+                .as("@Deprecated parity of %s", TypeSignatures.describe(target, counterpart)).isEqualTo(expectDeprecated);
+
+        if (KnownApiDeviations.contains(KnownApiDeviations.AGGREGATE_FLAVOR_SPECIFIC_RETURN, syncMethod, sync)) {
+            return;
+        }
+
+        softly.assertThat(TypeSignatures.normalize(counterpart.getGenericReturnType()))
+                .as("return type of %s", TypeSignatures.describe(target, counterpart)).isEqualTo(expectedReturnType);
+    }
+
+}

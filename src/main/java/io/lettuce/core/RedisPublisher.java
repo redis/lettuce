@@ -59,6 +59,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * are emitted as they are decoded. Otherwise, results are processed at command completion.
  *
  * @author Mark Paluch
+ * @author Tihomir Mateev
  * @since 5.0
  */
 class RedisPublisher<K, V, T> implements Publisher<T> {
@@ -293,7 +294,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                     try {
                         DEMAND.decrementAndGet(this);
                         this.subscriber.onNext(t);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         onError(e);
                     }
                     return;
@@ -544,7 +545,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                         try {
                             subscription.checkCommandDispatch();
-                        } catch (Exception ex) {
+                        } catch (Throwable ex) {
                             subscription.onError(ex);
                         }
                         subscription.checkOnDataAvailable();
@@ -575,7 +576,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                             return;
                         }
                     } while (subscription.hasDemand());
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     subscription.onError(e);
                 }
             }
@@ -712,15 +713,21 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         void onError(RedisSubscription<?> subscription, Throwable t) {
 
             State state;
-            while ((state = subscription.state()) != COMPLETED && subscription.changeState(state, COMPLETED)) {
+            while ((state = subscription.state()) != COMPLETED) {
+
+                // The subscribing thread may move the state (e.g. DEMAND -> READING -> DEMAND) between the read above and
+                // the CAS. Retry instead of dropping the error, otherwise the subscriber is never terminated.
+                if (!subscription.changeState(state, COMPLETED)) {
+                    continue;
+                }
 
                 readData(subscription);
 
                 Subscriber<?> subscriber = subscription.subscriber;
                 if (subscriber != null) {
                     subscriber.onError(t);
-                    return;
                 }
+                return;
             }
         }
 
@@ -760,12 +767,12 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             if (getOutput() != null) {
 
-                Object result = getOutput().get();
-
                 if (getOutput().hasError()) {
                     onError(ExceptionFactory.createExecutionException(getOutput().getError()));
                     return;
                 }
+
+                Object result = getOutput().get();
 
                 if (!(getOutput() instanceof StreamingOutput<?>) && result != null) {
 

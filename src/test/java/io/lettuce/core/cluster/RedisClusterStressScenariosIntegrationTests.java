@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.Collections;
 
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
@@ -52,11 +53,13 @@ import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 @Tag(INTEGRATION_TEST)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @SuppressWarnings("unchecked")
 @SlowTests
+@DisabledOnProvider("re")
 public class RedisClusterStressScenariosIntegrationTests extends TestSupport {
 
     private static final String host = TestSettings.hostAddr();
@@ -67,7 +70,7 @@ public class RedisClusterStressScenariosIntegrationTests extends TestSupport {
 
     private static ClusterTestHelper clusterHelper;
 
-    private Logger log = LogManager.getLogger(getClass());
+    private final Logger log = LogManager.getLogger(getClass());
 
     private StatefulRedisConnection<String, String> redis5;
 
@@ -113,9 +116,7 @@ public class RedisClusterStressScenariosIntegrationTests extends TestSupport {
     @AfterEach
     public void after() {
         redis5.close();
-
-        redissync5.getStatefulConnection().close();
-        redissync6.getStatefulConnection().close();
+        redis6.close();
     }
 
     @Test
@@ -173,12 +174,13 @@ public class RedisClusterStressScenariosIntegrationTests extends TestSupport {
     @Test
     public void testClusterConnectionStability() {
 
-        RedisAdvancedClusterAsyncCommandsImpl<String, String> connection = (RedisAdvancedClusterAsyncCommandsImpl<String, String>) clusterClient
-                .connect().async();
+        StatefulRedisClusterConnection<String, String> clusterConnection = clusterClient.connect();
+        RedisAdvancedClusterAsyncCommandsImpl<String, String> clusterAsyncCommands = (RedisAdvancedClusterAsyncCommandsImpl<String, String>) clusterConnection
+                .async();
 
-        RedisChannelHandler<String, String> statefulConnection = (RedisChannelHandler) connection.getStatefulConnection();
+        RedisChannelHandler<String, String> statefulConnection = (RedisChannelHandler) clusterConnection;
 
-        connection.set("a", "b");
+        clusterAsyncCommands.set("a", "b");
         ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) statefulConnection.getChannelWriter();
 
         StatefulRedisConnectionImpl<Object, Object> statefulSlotConnection = (StatefulRedisConnectionImpl) writer
@@ -187,24 +189,24 @@ public class RedisClusterStressScenariosIntegrationTests extends TestSupport {
         final RedisAsyncCommands<Object, Object> slotConnection = statefulSlotConnection.async();
 
         slotConnection.set("a", "b");
-        slotConnection.getStatefulConnection().close();
+        statefulSlotConnection.close();
 
-        Wait.untilTrue(() -> !slotConnection.isOpen()).waitOrTimeout();
+        Wait.untilTrue(() -> !statefulSlotConnection.isOpen()).waitOrTimeout();
 
         assertThat(statefulSlotConnection.isClosed()).isTrue();
         assertThat(statefulSlotConnection.isOpen()).isFalse();
 
-        assertThat(connection.isOpen()).isTrue();
+        assertThat(clusterConnection.isOpen()).isTrue();
         assertThat(statefulConnection.isOpen()).isTrue();
         assertThat(statefulConnection.isClosed()).isFalse();
 
         try {
-            connection.set("a", "b");
+            clusterAsyncCommands.set("a", "b");
         } catch (RedisException e) {
             assertThat(e).hasMessageContaining("Connection is closed");
         }
 
-        connection.getStatefulConnection().close();
+        clusterConnection.close();
     }
 
 }

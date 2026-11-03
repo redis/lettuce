@@ -42,7 +42,7 @@ Lettuce is a scalable thread-safe Redis client based on
 
 ## Requirements
 
-Lettuce 6.x binaries require JDK level 8.0 and above.
+Lettuce 7.x binaries require JDK level 8.0 and above.
 
 In terms of [Redis](https://redis.io/), at least 2.6.
 
@@ -57,12 +57,12 @@ In terms of [Redis](https://redis.io/), at least 2.6.
 - In order to dig deeper into the core features of Reactor:
 
   - If you’re looking for client configuration options, performance
-    related behavior and how to use various transports, go to [Advanced usage](advanced-usage.md).
+    related behavior and how to use various transports, go to Advanced usage (see [Client Resources](advanced-usage/client-resources.md), [Client Options](advanced-usage/client-options.md), [Native Transports](advanced-usage/native-transports.md)).
 
   - See [Integration and Extension](integration-extension.md) for
     extending Lettuce with codecs or integrate it in your CDI/Spring
     application.
 
   - You want to know more about **at-least-once** and **at-most-once**?
-    Take a look into [Command execution reliability](advanced-usage.md#command-execution-reliability).
+    Take a look into [Command execution reliability](advanced-usage/command-execution-reliability.md).
 

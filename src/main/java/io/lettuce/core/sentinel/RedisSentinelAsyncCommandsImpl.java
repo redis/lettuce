@@ -196,15 +196,6 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
         return asyncCommand;
     }
 
-    public void close() {
-        connection.close();
-    }
-
-    @Override
-    public boolean isOpen() {
-        return connection.isOpen();
-    }
-
     @Override
     public StatefulRedisSentinelConnection<K, V> getStatefulConnection() {
         return (StatefulRedisSentinelConnection<K, V>) connection;

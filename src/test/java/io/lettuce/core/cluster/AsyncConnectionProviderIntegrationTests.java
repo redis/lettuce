@@ -28,6 +28,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -40,7 +41,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import reactor.core.publisher.Mono;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
@@ -53,14 +53,17 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
+import io.lettuce.test.condition.DisabledOnProvider;
 import io.lettuce.test.settings.TestSettings;
-import io.netty.channel.ConnectTimeoutException;
 
 /**
  * @author Mark Paluch
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+// Assumes TestSettings.host() is the local machine: connects it to a local ServerSocket and blocks in accept().
+// On an externally provisioned environment the connection never arrives and the test hangs forever.
+@DisabledOnProvider("re")
 class AsyncConnectionProviderIntegrationTests {
 
     private final ClientResources resources;
@@ -94,7 +97,8 @@ class AsyncConnectionProviderIntegrationTests {
                 redisURI.setTimeout(Duration.ofSeconds(5));
 
                 ConnectionFuture<StatefulRedisConnection<String, String>> future = client.connectToNodeAsync(StringCodec.UTF8,
-                        "", null, Mono.just(new InetSocketAddress(connectionKey.host, serverSocket.getLocalPort())));
+                        "", null, () -> CompletableFuture
+                                .completedFuture(new InetSocketAddress(connectionKey.host, serverSocket.getLocalPort())));
 
                 connectInitiated.countDown();
 

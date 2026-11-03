@@ -29,17 +29,24 @@ import java.util.concurrent.CompletionStage;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceStrings;
+import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ConnectionInitializer;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.netty.channel.Channel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import static io.lettuce.core.protocol.CommandKeyword.MAINT_NOTIFICATIONS;
+import static io.lettuce.core.protocol.CommandType.CLIENT;
 
 /**
  * Redis RESP2/RESP3 handshake using the configured {@link ProtocolVersion} and other options for connection initialization and
@@ -63,8 +70,12 @@ class RedisHandshake implements ConnectionInitializer {
 
     private volatile ProtocolVersion negotiatedProtocolVersion;
 
-    RedisHandshake(ProtocolVersion requestedProtocolVersion, boolean pingOnConnect, ConnectionState connectionState) {
+    private final EndpointTypeSource endpointTypeSource;
 
+    RedisHandshake(ProtocolVersion requestedProtocolVersion, boolean pingOnConnect, ConnectionState connectionState,
+            EndpointTypeSource endpointTypeSource) {
+
+        this.endpointTypeSource = endpointTypeSource;
         this.requestedProtocolVersion = requestedProtocolVersion;
         this.pingOnConnect = pingOnConnect;
         this.connectionState = connectionState;
@@ -108,13 +119,15 @@ class RedisHandshake implements ConnectionInitializer {
                 // post-handshake commands, executed in a 'fire and forget' manner, to avoid having to react to different
                 // implementations or versions of the server runtime, and whose execution result (whether a success or a
                 // failure ) should not alter the outcome of the connection attempt
-                .thenCompose(ignore -> applyConnectionMetadataSafely(channel));
+                .thenCompose(ignore -> applyConnectionMetadataSafely(channel))
+                .thenCompose(ignore -> enableMaintNotifications(channel));
     }
 
     private CompletionStage<?> tryHandshakeResp3(Channel channel) {
 
         CompletableFuture<?> handshake = new CompletableFuture<>();
-        CompletionStage<Map<String, Object>> hello = initiateHandshakeResp3(channel, connectionState.getCredentialsProvider());
+        CompletionStage<Map<String, Object>> hello = initiateHandshakeResp3(channel,
+                connectionState.getCredentialsProviderAsync());
 
         hello.whenComplete((settings, throwable) -> {
 
@@ -160,7 +173,7 @@ class RedisHandshake implements ConnectionInitializer {
 
     private CompletableFuture<?> initializeResp2(Channel channel) {
 
-        return initiateHandshakeResp2(channel, connectionState.getCredentialsProvider()).thenRun(() -> {
+        return initiateHandshakeResp2(channel, connectionState.getCredentialsProviderAsync()).thenRun(() -> {
             negotiatedProtocolVersion = ProtocolVersion.RESP2;
 
             connectionState.setHandshakeResponse(
@@ -169,7 +182,7 @@ class RedisHandshake implements ConnectionInitializer {
     }
 
     private CompletionStage<Void> initializeResp3(Channel channel) {
-        return initiateHandshakeResp3(channel, connectionState.getCredentialsProvider()).thenAccept(this::onHelloResponse);
+        return initiateHandshakeResp3(channel, connectionState.getCredentialsProviderAsync()).thenAccept(this::onHelloResponse);
     }
 
     private void onHelloResponse(Map<String, Object> response) {
@@ -192,16 +205,20 @@ class RedisHandshake implements ConnectionInitializer {
      * @param credentialsProvider
      * @return
      */
-    private CompletableFuture<?> initiateHandshakeResp2(Channel channel, RedisCredentialsProvider credentialsProvider) {
+    private CompletableFuture<?> initiateHandshakeResp2(Channel channel, CredentialsProvider credentialsProvider) {
 
         if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
             return dispatchAuthOrPing(channel,
                     ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider).resolveCredentialsNow());
         }
 
-        CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toFuture();
+        if (credentialsProvider instanceof CredentialsProvider.ImmediateCredentialsProvider) {
+            return dispatchAuthOrPing(channel,
+                    ((CredentialsProvider.ImmediateCredentialsProvider) credentialsProvider).resolveCredentialsNow());
+        }
 
-        return credentialsFuture.thenComposeAsync(credentials -> dispatchAuthOrPing(channel, credentials));
+        return Futures.unwrapExceptions(credentialsProvider.resolveCredentialsAsync())
+                .thenComposeAsync(credentials -> dispatchAuthOrPing(channel, credentials));
     }
 
     private CompletableFuture<String> dispatchAuthOrPing(Channel channel, RedisCredentials credentials) {
@@ -225,16 +242,20 @@ class RedisHandshake implements ConnectionInitializer {
      * @return
      */
     private CompletionStage<Map<String, Object>> initiateHandshakeResp3(Channel channel,
-            RedisCredentialsProvider credentialsProvider) {
+            CredentialsProvider credentialsProvider) {
 
         if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
             return dispatchHello(channel,
                     ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider).resolveCredentialsNow());
         }
 
-        CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toFuture();
+        if (credentialsProvider instanceof CredentialsProvider.ImmediateCredentialsProvider) {
+            return dispatchHello(channel,
+                    ((CredentialsProvider.ImmediateCredentialsProvider) credentialsProvider).resolveCredentialsNow());
+        }
 
-        return credentialsFuture.thenComposeAsync(credentials -> dispatchHello(channel, credentials));
+        return Futures.unwrapExceptions(credentialsProvider.resolveCredentialsAsync())
+                .thenComposeAsync(credentials -> dispatchHello(channel, credentials));
     }
 
     private AsyncCommand<String, String, Map<String, Object>> dispatchHello(Channel channel, RedisCredentials credentials) {
@@ -266,6 +287,30 @@ class RedisHandshake implements ConnectionInitializer {
         }
 
         return dispatch(channel, postHandshake);
+    }
+
+    private String movingEndpointType(Channel channel, ConnectionState state, EndpointTypeSource endpointTypeSource) {
+        MaintNotificationsConfig.EndpointType endpointType = endpointTypeSource.getEndpointType(channel.remoteAddress(),
+                state.getConnectionMetadata().isSslEnabled());
+
+        if (endpointType == null) {
+            return null;
+        }
+
+        switch (endpointType) {
+            case INTERNAL_IP:
+                return "internal-ip";
+            case INTERNAL_FQDN:
+                return "internal-fqdn";
+            case EXTERNAL_IP:
+                return "external-ip";
+            case EXTERNAL_FQDN:
+                return "external-fqdn";
+            case NONE:
+                return "none";
+            default:
+                throw new IllegalArgumentException("Unknown moving endpoint address type:" + endpointType);
+        }
     }
 
     private CompletionStage<Void> applyConnectionMetadataSafely(Channel channel) {
@@ -303,6 +348,40 @@ class RedisHandshake implements ConnectionInitializer {
         return dispatch(channel, postHandshake);
     }
 
+    private CompletionStage<Void> enableMaintNotifications(Channel channel) {
+        return sendMaintenanceNotificationsOn(channel).handle((result, error) -> {
+            if (error != null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Maintenance events not enabled", error);
+                }
+            }
+            return null;
+        });
+    }
+
+    private CompletionStage<Void> sendMaintenanceNotificationsOn(Channel channel) {
+        List<AsyncCommand<?, ?, ?>> postHandshake = new ArrayList<>();
+
+        if (endpointTypeSource != null) {
+            CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(MAINT_NOTIFICATIONS).add("on");
+            String endpointType = movingEndpointType(channel, connectionState, endpointTypeSource);
+
+            if (endpointType != null) {
+                args.add("moving-endpoint-type").add(endpointType);
+            }
+
+            Command<String, String, String> maintNotificationsOn = new Command<>(CLIENT, new StatusOutput<>(StringCodec.UTF8),
+                    args);
+            postHandshake.add(new AsyncCommand<>(maintNotificationsOn));
+        }
+
+        if (postHandshake.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        return dispatch(channel, postHandshake);
+    }
+
     private CompletableFuture<Void> dispatch(Channel channel, List<AsyncCommand<?, ?, ?>> commands) {
 
         CompletionStage<Void> writeFuture = Futures.toCompletionStage(channel.writeAndFlush(commands));
@@ -324,8 +403,7 @@ class RedisHandshake implements ConnectionInitializer {
     }
 
     private static boolean isUnknownCommand(Throwable error) {
-        return error instanceof RedisException && LettuceStrings.isNotEmpty(error.getMessage())
-                && ((error.getMessage().startsWith("ERR") && error.getMessage().contains("unknown")));
+        return ExceptionFactory.isUnknownCommandError(error);
     }
 
     private static boolean isNoProto(Throwable error) {

@@ -52,6 +52,7 @@ import io.lettuce.core.models.role.RoleParser;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.DisabledOnProvider;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 
@@ -68,9 +69,11 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * @author Mark Paluch
  * @author Zhang Jessey
  * @author dengliming
+ * @author dae won
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ServerCommandIntegrationTests extends TestSupport {
 
@@ -265,6 +268,14 @@ public class ServerCommandIntegrationTests extends TestSupport {
     void clientNoEvict() {
         assertThat(redis.clientNoEvict(true)).isEqualTo("OK");
         assertThat(redis.clientNoEvict(false)).isEqualTo("OK");
+    }
+
+    @Test
+    @EnabledOnCommand("WAITAOF")
+    // Redis 7.2
+    void clientNoTouch() {
+        assertThat(redis.clientNoTouch(true)).isEqualTo("OK");
+        assertThat(redis.clientNoTouch(false)).isEqualTo("OK");
     }
 
     @Test
@@ -641,6 +652,15 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("WAITAOF")
+    // Redis 7.2
+    void clientSetinfoWithUpstreamDriver() {
+        redis.clientSetinfo("lib-name", "lettuce(spring-data-redis_v1.0.0)");
+
+        assertThat(redis.clientInfo().contains("lib-name=lettuce(spring-data-redis_v1.0.0)")).isTrue();
+    }
+
+    @Test
     void testReadOnlyCommands() {
         for (ProtocolKeyword readOnlyCommand : ClusterReadOnlyCommands.getReadOnlyCommands()) {
             assertThat(isCommandReadOnly(readOnlyCommand.toString())).isTrue();
@@ -656,14 +676,10 @@ public class ServerCommandIntegrationTests extends TestSupport {
 
     private boolean isCommandReadOnly(String commandName) {
         List<Object> commandInfo = redis.commandInfo(commandName);
-        if (commandInfo == null || commandInfo.isEmpty()) {
-            throw new IllegalArgumentException("Command not found: " + commandName);
-        }
+        assumeTrue(commandInfo == null || commandInfo.isEmpty(), "Command " + commandName + " not found");
 
         List<CommandDetail> details = CommandDetailParser.parse(commandInfo);
-        if (details.isEmpty()) {
-            throw new IllegalArgumentException("Command details could not be parsed: " + commandName);
-        }
+        assumeTrue(details.isEmpty(), "Command details could not be parsed: " + commandName);
 
         CommandDetail detail = details.get(0);
         return !detail.getFlags().contains(CommandDetail.Flag.WRITE);

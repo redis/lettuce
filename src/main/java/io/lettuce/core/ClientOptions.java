@@ -37,7 +37,6 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
-import reactor.core.publisher.Mono;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
@@ -45,11 +44,17 @@ import reactor.core.publisher.Mono;
  * @author Mark Paluch
  * @author Gavin Cook
  * @author Jim Brunner
+ * @author Vaibhav Vashisht
  */
 @SuppressWarnings("serial")
 public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
+
+    public static final MaintNotificationsConfig DEFAULT_MAINT_NOTIFICATIONS_CONFIG = MaintNotificationsConfig.enabled();
+
+    protected static final MaintNotificationsConfig MAINT_NOTIFICATIONS_CONFIG_INITIAL = MaintNotificationsConfig
+            .copyOf(DEFAULT_MAINT_NOTIFICATIONS_CONFIG);
 
     public static final Predicate<RedisCommand<?, ?, ?>> DEFAULT_REPLAY_FILTER = (cmd) -> false;
 
@@ -93,6 +98,8 @@ public class ClientOptions implements Serializable {
 
     private final boolean autoReconnect;
 
+    private final MaintNotificationsConfig maintNotificationsConfig;
+
     private final Predicate<RedisCommand<?, ?, ?>> replayFilter;
 
     private final DecodeBufferPolicy decodeBufferPolicy;
@@ -127,6 +134,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
+        this.maintNotificationsConfig = builder.maintNotificationsConfig;
         this.replayFilter = builder.replayFilter;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
         this.disconnectedBehavior = builder.disconnectedBehavior;
@@ -147,6 +155,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(ClientOptions original) {
         this.autoReconnect = original.isAutoReconnect();
+        this.maintNotificationsConfig = original.getMaintNotificationsConfig();
         this.replayFilter = original.getReplayFilter();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
@@ -200,6 +209,8 @@ public class ClientOptions implements Serializable {
 
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
 
+        private MaintNotificationsConfig maintNotificationsConfig = MAINT_NOTIFICATIONS_CONFIG_INITIAL;
+
         private Predicate<RedisCommand<?, ?, ?>> replayFilter = DEFAULT_REPLAY_FILTER;
 
         private DecodeBufferPolicy decodeBufferPolicy = DecodeBufferPolicies.ratio(DEFAULT_BUFFER_USAGE_RATIO);
@@ -244,6 +255,21 @@ public class ClientOptions implements Serializable {
          */
         public Builder autoReconnect(boolean autoReconnect) {
             this.autoReconnect = autoReconnect;
+            return this;
+        }
+
+        /**
+         * Configure whether the driver should listen for server events that notify on current maintenance activities. When
+         * enabled, this option will help with the connection handover and reduce the number of failed commands. This feature
+         * requires the server to support maintenance events. Defaults to {@code false}. See
+         * {@link #DEFAULT_MAINT_NOTIFICATIONS_CONFIG}.
+         *
+         * @param maintNotificationsConfig true/false
+         * @return {@code this}
+         * @since 7.0
+         */
+        public Builder maintNotificationsConfig(MaintNotificationsConfig maintNotificationsConfig) {
+            this.maintNotificationsConfig = maintNotificationsConfig;
             return this;
         }
 
@@ -300,7 +326,7 @@ public class ClientOptions implements Serializable {
          */
         public Builder reauthenticateBehavior(ReauthenticateBehavior reauthenticateBehavior) {
 
-            LettuceAssert.notNull(reauthenticateBehavior, "ReuthenticatBehavior must not be null");
+            LettuceAssert.notNull(reauthenticateBehavior, "ReauthenticateBehavior must not be null");
             this.reauthenticateBehavior = reauthenticateBehavior;
             return this;
         }
@@ -339,8 +365,8 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Use a dedicated {@link reactor.core.scheduler.Scheduler} to emit reactive data signals. Enabling this option can be
-         * useful for reactive sequences that require a significant amount of processing with a single/a few Redis connections.
+         * Use a dedicated scheduler to emit reactive data signals. Enabling this option can be useful for reactive sequences
+         * that require a significant amount of processing with a single/a few Redis connections.
          * <p>
          * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
          * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
@@ -349,7 +375,6 @@ public class ClientOptions implements Serializable {
          *
          * @param publishOnScheduler true/false
          * @return {@code this}
-         * @see org.reactivestreams.Subscriber#onNext(Object)
          * @see ClientResources#eventExecutorGroup()
          * @since 5.2
          */
@@ -406,7 +431,7 @@ public class ClientOptions implements Serializable {
         /**
          * Set a custom implementation for the {@link JsonParser} to use.
          *
-         * @param parser a {@link Mono} that emits the {@link JsonParser} to use.
+         * @param parser a {@link Supplier} that emits the {@link JsonParser} to use.
          * @return {@code this}
          * @see JsonParser
          * @since 6.5
@@ -507,7 +532,8 @@ public class ClientOptions implements Serializable {
     public ClientOptions.Builder mutate() {
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).replayFilter(getReplayFilter()).decodeBufferPolicy(getDecodeBufferPolicy())
+        builder.autoReconnect(isAutoReconnect()).maintNotificationsConfig(getMaintNotificationsConfig())
+                .replayFilter(getReplayFilter()).decodeBufferPolicy(getDecodeBufferPolicy())
                 .disconnectedBehavior(getDisconnectedBehavior()).reauthenticateBehavior(getReauthenticateBehaviour())
                 .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
                 .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
@@ -529,6 +555,18 @@ public class ClientOptions implements Serializable {
      */
     public boolean isAutoReconnect() {
         return autoReconnect;
+    }
+
+    /**
+     * Returns the {@link MaintNotificationsConfig} to listen for server events that notify on current maintenance activities.
+     *
+     * @return {@link MaintNotificationsConfig}
+     * @since 7.0
+     * @see #DEFAULT_MAINT_NOTIFICATIONS_CONFIG
+     * @see #getMaintNotificationsConfig()
+     */
+    public MaintNotificationsConfig getMaintNotificationsConfig() {
+        return maintNotificationsConfig;
     }
 
     /**
@@ -562,7 +600,27 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Behavior for re-authentication when the {@link RedisCredentialsProvider} emits new credentials. Defaults to
+     * Whether commands should be rejected while the underlying connection is not currently connected, derived from
+     * {@link #getDisconnectedBehavior()} and {@link #isAutoReconnect()}.
+     *
+     * @return {@code true} if commands should be rejected while disconnected.
+     * @since 7.7.0
+     */
+    public boolean isRejectCommandsWhileDisconnected() {
+
+        switch (disconnectedBehavior) {
+            case REJECT_COMMANDS:
+                return true;
+            case ACCEPT_COMMANDS:
+                return false;
+            case DEFAULT:
+            default:
+                return !autoReconnect;
+        }
+    }
+
+    /**
+     * Behavior for re-authentication when the {@link CredentialsProvider} emits new credentials. Defaults to
      * {@link ReauthenticateBehavior#DEFAULT}.
      *
      * @return the currently set {@link ReauthenticateBehavior}.
@@ -629,15 +687,15 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Use a dedicated {@link reactor.core.scheduler.Scheduler} to emit reactive data signals. Enabling this option can be
-     * useful for reactive sequences that require a significant amount of processing with a single/a few Redis connections.
+     * Use a dedicated scheduler to emit reactive data signals. Enabling this option can be useful for reactive sequences that
+     * require a significant amount of processing with a single/a few Redis connections.
      * <p>
      * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
      * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
      * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false} , see
      * {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
      *
-     * @return {@code true} to use a dedicated {@link reactor.core.scheduler.Scheduler}
+     * @return {@code true} to use a dedicated scheduler
      * @since 5.2
      */
     public boolean isPublishOnScheduler() {
@@ -705,33 +763,34 @@ public class ClientOptions implements Serializable {
     /**
      * Defines the re-authentication behavior of the Redis client.
      * <p/>
-     * Certain implementations of the {@link RedisCredentialsProvider} could emit new credentials at runtime. This setting
-     * controls how the driver reacts to these newly emitted credentials.
+     * Certain implementations of the {@link CredentialsProvider} could emit new credentials at runtime. This setting controls
+     * how the driver reacts to these newly emitted credentials.
      */
     public enum ReauthenticateBehavior {
 
         /**
          * This is the default behavior. The client will fetch current credentials from the underlying
-         * {@link RedisCredentialsProvider} only when the driver needs to, e.g. when the connection is first established or when
-         * it is re-established after a disconnect.
+         * {@link CredentialsProvider} only when the driver needs to, e.g. when the connection is first established or when it
+         * is re-established after a disconnect.
          * <p/>
          * <p>
-         * No re-authentication is performed when new credentials are emitted by a {@link RedisCredentialsProvider} that
-         * supports streaming. The client does not subscribe to or react to any updates in the credential stream provided by
-         * {@link RedisCredentialsProvider#credentials()}.
+         * No re-authentication is performed when new credentials are emitted by a {@link CredentialsProvider} that supports
+         * streaming. The client does not subscribe to or react to any updates published by
+         * {@link CredentialsProvider#subscribeToCredentials(java.util.function.Consumer, java.util.function.Consumer)}.
          * </p>
          */
         DEFAULT,
 
         /**
-         * Automatically triggers re-authentication whenever new credentials are emitted by a {@link RedisCredentialsProvider}
-         * that supports streaming, as indicated by {@link RedisCredentialsProvider#supportsStreaming()}.
+         * Automatically triggers re-authentication whenever new credentials are emitted by a {@link CredentialsProvider} that
+         * supports streaming, as indicated by {@link CredentialsProvider#supportsStreaming()}.
          *
          * <p>
-         * When this behavior is enabled, the client subscribes to the credential stream provided by
-         * {@link RedisCredentialsProvider#credentials()} and issues an {@code AUTH} command to the Redis server each time new
-         * credentials are received. This behavior supports dynamic credential scenarios, such as token-based authentication, or
-         * credential rotation where credentials are refreshed periodically to maintain access.
+         * When this behavior is enabled, the client subscribes to credential updates via
+         * {@link CredentialsProvider#subscribeToCredentials(java.util.function.Consumer, java.util.function.Consumer)} and
+         * issues an {@code AUTH} command to the Redis server each time new credentials are received. This behavior supports
+         * dynamic credential scenarios, such as token-based authentication, or credential rotation where credentials are
+         * refreshed periodically to maintain access.
          * </p>
          *
          * <p>

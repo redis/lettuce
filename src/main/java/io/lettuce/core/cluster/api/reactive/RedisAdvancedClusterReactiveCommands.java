@@ -21,6 +21,8 @@ package io.lettuce.core.cluster.api.reactive;
 
 import java.util.Map;
 
+import io.lettuce.core.MSetExArgs;
+import io.lettuce.core.SetArgs;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.KeyScanCursor;
@@ -31,8 +33,10 @@ import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
+import io.lettuce.core.cluster.RedisAdvancedClusterReactiveCommandsImpl;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.output.KeyStreamingChannel;
 
@@ -69,7 +73,8 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
 
     /**
      * @return the underlying connection.
-     * @since 6.2, will be removed with Lettuce 7 to avoid exposing the underlying connection.
+     * @deprecated since 6.2, there is no replacement — the underlying connection is not meant to be reached through the command
+     *             interfaces; scheduled for removal in a future major release.
      */
     @Deprecated
     StatefulRedisClusterConnection<K, V> getStatefulConnection();
@@ -135,6 +140,17 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     Mono<Boolean> msetnx(Map<K, V> map);
 
     /**
+     * Set multiple keys to multiple values with optional conditions and expiration. Emits: numkeys, pairs, then [NX|XX] and one
+     * of [EX|PX|EXAT|PXAT|KEEPTTL]. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param map the map of keys and values.
+     * @param args the {@link MSetExArgs} specifying NX/XX and expiration.
+     * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
+     * @since 7.1
+     */
+    Mono<Boolean> msetex(Map<K, V> map, MSetExArgs args);
+
+    /**
      * Set the current connection name on all cluster nodes with pipelining.
      *
      * @param name the client name
@@ -179,11 +195,20 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     /**
      * Find all keys matching the given pattern on all cluster masters.
      *
-     * @param pattern the pattern type: patternkey (pattern)
-     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyReactiveCommands#keys(Object)
+     * @param pattern the pattern type
+     * @return Flux&lt;K&gt; flux of keys matching {@code pattern}.
      */
-    Flux<K> keys(K pattern);
+    Flux<K> keys(String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return K array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    Flux<K> keysLegacy(K pattern);
 
     /**
      * Find all keys matching the given pattern on all cluster masters.
@@ -191,9 +216,23 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param channel the channel
      * @param pattern the pattern
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyReactiveCommands#keys(KeyStreamingChannel, Object)
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #keys(String)}.
      */
-    Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern);
+    @Deprecated
+    Mono<Long> keys(KeyStreamingChannel<K> channel, String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    @Override
+    Mono<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern);
 
     /**
      * Return a random key from the keyspace on a random master.
@@ -242,6 +281,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      *
      * @param save {@code true} force save operation
      * @see RedisServerReactiveCommands#shutdown(boolean)
+     * @return Mono&lt;Void&gt; the server does not reply before shutting down.
      */
     Mono<Void> shutdown(boolean save);
 
@@ -289,7 +329,10 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param channel streaming channel that receives a call for every key
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(KeyStreamingChannel)
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
@@ -299,7 +342,10 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(KeyStreamingChannel, ScanArgs)
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
@@ -311,7 +357,10 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param scanArgs scan arguments
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
@@ -322,7 +371,10 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      *        {@link #scan()} call.
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyReactiveCommands#scan(ScanCursor, ScanArgs)
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
+    @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 
     /**
@@ -333,5 +385,55 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return Long integer-reply the number of found keys.
      */
     Mono<Long> touch(K... keys);
+
+    /**
+     * Returns the {@link CommandsFactory} that creates {@link RedisAdvancedClusterReactiveCommands}, for use with
+     * {@link io.lettuce.core.cluster.api.StatefulRedisClusterConnection#commands(CommandsFactory)}:
+     *
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     RedisAdvancedClusterReactiveCommands<K, V> reactive = connection
+     *             .commands(RedisAdvancedClusterReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return the factory that creates {@link RedisAdvancedClusterReactiveCommands}
+     * @since 7.8
+     */
+    @SuppressWarnings("unchecked")
+    static <K, V> CommandsFactory<StatefulRedisClusterConnection<K, V>, RedisAdvancedClusterReactiveCommands<K, V>> factory() {
+        return FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton factory so {@link #factory()} returns one shared instance (no per-call allocation); {@code factory()}
+     * re-applies {@code <K, V>}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings("rawtypes")
+        private static final CommandsFactory INSTANCE = newFactory();
+
+        /**
+         * Create the shared factory. Separate from {@code INSTANCE} so that a GraalVM native image substitution can replace it,
+         * keeping the Reactor-based implementation out of images built without Reactor.
+         *
+         * @return the factory creating {@link RedisAdvancedClusterReactiveCommands} instances.
+         */
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static CommandsFactory newFactory() {
+            return CommandsFactory.of(RedisAdvancedClusterReactiveCommands.class,
+                    (StatefulRedisClusterConnection c) -> new RedisAdvancedClusterReactiveCommandsImpl(c, c.getCodec(),
+                            () -> c.getOptions().getJsonParser().get()));
+        }
+
+    }
 
 }

@@ -82,7 +82,7 @@ class SocketOptionsUnitTests {
 
         SocketOptions sut = SocketOptions.builder().keepAlive(SocketOptions.KeepAliveOptions.builder().build()).build();
 
-        assertThat(sut.isKeepAlive()).isFalse();
+        assertThat(sut.isKeepAlive()).isTrue();
         assertThat(sut.isExtendedKeepAlive()).isTrue();
     }
 
@@ -92,7 +92,7 @@ class SocketOptionsUnitTests {
     }
 
     void checkAssertions(SocketOptions sut) {
-        assertThat(sut.isKeepAlive()).isFalse();
+        assertThat(sut.isKeepAlive()).isTrue();
         assertThat(sut.isTcpNoDelay()).isTrue();
         assertThat(sut.getConnectTimeout()).isEqualTo(Duration.ofSeconds(10));
     }

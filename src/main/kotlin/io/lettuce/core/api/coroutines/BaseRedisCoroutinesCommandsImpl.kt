@@ -80,11 +80,5 @@ internal class BaseRedisCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override fun <T : Any> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): Flow<T> = ops.dispatch<T>(type, output, args).asFlow()
 
-    override fun isOpen(): Boolean = ops.isOpen
-
-    override fun setAutoFlushCommands(autoFlush: Boolean) = ops.setAutoFlushCommands(autoFlush)
-
-    override fun flushCommands() = ops.flushCommands()
-
 }
 

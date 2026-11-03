@@ -20,6 +20,7 @@
 package io.lettuce.core.protocol;
 
 import static io.lettuce.core.protocol.CommandHandler.*;
+import static io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE;
 
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
@@ -61,6 +62,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Default {@link Endpoint} implementation.
  *
  * @author Mark Paluch
+ * @author Vaibhav Vashisht
  */
 public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandler {
 
@@ -137,7 +139,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     public DefaultEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
 
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
-        LettuceAssert.notNull(clientOptions, "ClientResources must not be null");
+        LettuceAssert.notNull(clientResources, "ClientResources must not be null");
 
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;
@@ -146,7 +148,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
-        this.rejectCommandsWhileDisconnected = isRejectCommand(clientOptions);
+        this.rejectCommandsWhileDisconnected = clientOptions.isRejectCommandsWhileDisconnected();
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
     }
 
@@ -790,7 +792,16 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     }
 
     private boolean isConnected(Channel channel) {
-        return channel != null && channel.isActive();
+
+        if (channel == null || !channel.isActive()) {
+            return false;
+        }
+
+        if (channel.hasAttr(REBIND_ATTRIBUTE)) {
+            return channel.attr(REBIND_ATTRIBUTE).get() != RebindState.STARTED;
+        }
+
+        return true;
     }
 
     protected String logPrefix() {
@@ -810,25 +821,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     @Override
     public String getId() {
         return cachedEndpointId;
-    }
-
-    private static boolean isRejectCommand(ClientOptions clientOptions) {
-
-        switch (clientOptions.getDisconnectedBehavior()) {
-            case REJECT_COMMANDS:
-                return true;
-
-            case ACCEPT_COMMANDS:
-                return false;
-
-            default:
-            case DEFAULT:
-                if (!clientOptions.isAutoReconnect()) {
-                    return true;
-                }
-
-                return false;
-        }
     }
 
     static class ListenerSupport {
@@ -997,7 +989,12 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             // Capture values before recycler clears these.
             RedisCommand<?, ?, ?> sentCommand = this.sentCommand;
             Collection<? extends RedisCommand<?, ?, ?>> sentCommands = this.sentCommands;
-            potentiallyRequeueCommands(channel, sentCommand, sentCommands);
+
+            if (endpoint.rejectCommandsWhileDisconnected) {
+                complete(new RedisException("Currently not connected. Commands are rejected."));
+            } else {
+                potentiallyRequeueCommands(channel, sentCommand, sentCommands);
+            }
 
             if (!(cause instanceof ClosedChannelException)) {
 
@@ -1032,20 +1029,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 return;
             }
 
-            if (sentCommands != null) {
-
-                boolean foundToSend = false;
-
-                for (RedisCommand<?, ?, ?> command : sentCommands) {
-                    if (!command.isDone()) {
-                        foundToSend = true;
-                        break;
-                    }
-                }
-
-                if (!foundToSend) {
-                    return;
-                }
+            if (sentCommands != null && sentCommands.stream().allMatch(RedisCommand::isDone)) {
+                return;
             }
 
             if (channel != null) {

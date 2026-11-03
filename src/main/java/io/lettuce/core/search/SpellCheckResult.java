@@ -17,13 +17,12 @@ import java.util.Objects;
  * their order of appearance in the query.
  * </p>
  *
- * @param <V> Value type.
  * @author Tihomir Mateev
  * @since 6.8
  */
-public class SpellCheckResult<V> {
+public class SpellCheckResult {
 
-    private final List<MisspelledTerm<V>> misspelledTerms = new ArrayList<>();
+    private final List<MisspelledTerm> misspelledTerms = new ArrayList<>();
 
     public SpellCheckResult() {
     }
@@ -33,7 +32,7 @@ public class SpellCheckResult<V> {
      *
      * @return the list of misspelled terms
      */
-    public List<MisspelledTerm<V>> getMisspelledTerms() {
+    public List<MisspelledTerm> getMisspelledTerms() {
         return misspelledTerms;
     }
 
@@ -61,7 +60,7 @@ public class SpellCheckResult<V> {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        SpellCheckResult<?> that = (SpellCheckResult<?>) o;
+        SpellCheckResult that = (SpellCheckResult) o;
         return Objects.equals(misspelledTerms, that.misspelledTerms);
     }
 
@@ -75,20 +74,18 @@ public class SpellCheckResult<V> {
         return "SpellCheckResult{" + "misspelledTerms=" + misspelledTerms + '}';
     }
 
-    void addMisspelledTerm(MisspelledTerm<V> vMisspelledTerm) {
-        misspelledTerms.add(vMisspelledTerm);
+    void addMisspelledTerm(MisspelledTerm misspelledTerm) {
+        misspelledTerms.add(misspelledTerm);
     }
 
     /**
      * Represents a misspelled term and its spelling suggestions.
-     *
-     * @param <V> Value type.
      */
-    public static class MisspelledTerm<V> {
+    public static class MisspelledTerm {
 
-        private final V term;
+        private final String term;
 
-        private final List<Suggestion<V>> suggestions;
+        private final List<Suggestion> suggestions;
 
         /**
          * Create a new misspelled term.
@@ -96,7 +93,7 @@ public class SpellCheckResult<V> {
          * @param term the misspelled term
          * @param suggestions the list of spelling suggestions
          */
-        public MisspelledTerm(V term, List<Suggestion<V>> suggestions) {
+        public MisspelledTerm(String term, List<Suggestion> suggestions) {
             this.term = term;
             this.suggestions = suggestions;
         }
@@ -106,7 +103,7 @@ public class SpellCheckResult<V> {
          *
          * @return the misspelled term
          */
-        public V getTerm() {
+        public String getTerm() {
             return term;
         }
 
@@ -115,7 +112,7 @@ public class SpellCheckResult<V> {
          *
          * @return the list of suggestions
          */
-        public List<Suggestion<V>> getSuggestions() {
+        public List<Suggestion> getSuggestions() {
             return suggestions;
         }
 
@@ -143,7 +140,7 @@ public class SpellCheckResult<V> {
                 return true;
             if (o == null || getClass() != o.getClass())
                 return false;
-            MisspelledTerm<?> that = (MisspelledTerm<?>) o;
+            MisspelledTerm that = (MisspelledTerm) o;
             return Objects.equals(term, that.term) && Objects.equals(suggestions, that.suggestions);
         }
 
@@ -161,14 +158,12 @@ public class SpellCheckResult<V> {
 
     /**
      * Represents a spelling suggestion with its score.
-     *
-     * @param <V> Value type.
      */
-    public static class Suggestion<V> {
+    public static class Suggestion {
 
         private final double score;
 
-        private final V suggestion;
+        private final String suggestion;
 
         /**
          * Create a new spelling suggestion.
@@ -176,7 +171,7 @@ public class SpellCheckResult<V> {
          * @param score the suggestion score
          * @param suggestion the suggested term
          */
-        public Suggestion(double score, V suggestion) {
+        public Suggestion(double score, String suggestion) {
             this.score = score;
             this.suggestion = suggestion;
         }
@@ -199,7 +194,7 @@ public class SpellCheckResult<V> {
          *
          * @return the suggested term
          */
-        public V getSuggestion() {
+        public String getSuggestion() {
             return suggestion;
         }
 
@@ -209,7 +204,7 @@ public class SpellCheckResult<V> {
                 return true;
             if (o == null || getClass() != o.getClass())
                 return false;
-            Suggestion<?> that = (Suggestion<?>) o;
+            Suggestion that = (Suggestion) o;
             return Double.compare(that.score, score) == 0 && Objects.equals(suggestion, that.suggestion);
         }
 

@@ -2,8 +2,8 @@ package io.lettuce.core;
 
 import java.time.Duration;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
@@ -11,6 +11,7 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.codec.RedisCodec;
 
 /**
  * @author Mark Paluch
@@ -45,6 +46,11 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
     }
 
     @Override
+    public Object commands(CommandsFactory factory) {
+        return null;
+    }
+
+    @Override
     public void close() {
     }
 
@@ -55,6 +61,11 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
 
     @Override
     public ClientOptions getOptions() {
+        return null;
+    }
+
+    @Override
+    public RedisCodec getCodec() {
         return null;
     }
 

@@ -7,10 +7,13 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisConnectionStateListener;
+import io.lettuce.core.api.CommandsFactory;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
@@ -52,11 +55,6 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     @Override
     public RedisAsyncCommands<K, V> async() {
         return delegate.async();
-    }
-
-    @Override
-    public RedisReactiveCommands<K, V> reactive() {
-        return delegate.reactive();
     }
 
     @Override
@@ -132,6 +130,16 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     @Override
     public void flushCommands() {
         delegate.flushCommands();
+    }
+
+    @Override
+    public <T> T commands(CommandsFactory<StatefulRedisConnection<K, V>, T> f) {
+        return delegate.commands(f);
+    }
+
+    @Override
+    public RedisCodec<K, V> getCodec() {
+        return delegate.getCodec();
     }
 
 }

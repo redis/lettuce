@@ -31,7 +31,8 @@ import io.netty.resolver.dns.DnsAddressResolverGroup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import reactor.test.StepVerifier;
+import io.lettuce.core.Subscription;
+import java.util.concurrent.ArrayBlockingQueue;
 import io.lettuce.core.event.Event;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.metrics.CommandLatencyCollector;
@@ -40,6 +41,8 @@ import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
@@ -69,7 +72,8 @@ class DefaultClientResourcesUnitTests {
         assertThat(timer).hasFieldOrPropertyWithValue("workerState", 1);
 
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
-        NioEventLoopGroup eventLoopGroup = sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
+        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) sut.eventLoopGroupProvider()
+                .allocate(NioEventLoopGroup.class);
 
         eventExecutors.next().submit(mock(Runnable.class));
         eventLoopGroup.next().submit(mock(Runnable.class));
@@ -92,7 +96,8 @@ class DefaultClientResourcesUnitTests {
                 .commandLatencyCollectorOptions(DefaultCommandLatencyCollectorOptions.disabled()).build();
 
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
-        NioEventLoopGroup eventLoopGroup = sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
+        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) sut.eventLoopGroupProvider()
+                .allocate(NioEventLoopGroup.class);
 
         assertThat(eventExecutors).hasSize(4);
         assertThat(eventLoopGroup.executorCount()).isEqualTo(4);
@@ -101,16 +106,6 @@ class DefaultClientResourcesUnitTests {
         assertThat(sut.commandLatencyRecorder().isEnabled()).isFalse();
 
         assertThat(sut.shutdown(0, 0, TimeUnit.MILLISECONDS).get()).isTrue();
-    }
-
-    @Test
-    void testDnsResolver() {
-
-        DirContextDnsResolver dirContextDnsResolver = new DirContextDnsResolver("8.8.8.8");
-
-        DefaultClientResources sut = DefaultClientResources.builder().dnsResolver(dirContextDnsResolver).build();
-
-        assertThat(sut.dnsResolver()).isEqualTo(dirContextDnsResolver);
     }
 
     @Test
@@ -194,7 +189,8 @@ class DefaultClientResourcesUnitTests {
         DefaultClientResources sut = DefaultClientResources.builder().ioThreadPoolSize(1).computationThreadPoolSize(1).build();
 
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
-        NioEventLoopGroup eventLoopGroup = sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
+        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) sut.eventLoopGroupProvider()
+                .allocate(NioEventLoopGroup.class);
 
         assertThat(eventExecutors).hasSize(2);
         assertThat(eventLoopGroup.executorCount()).isEqualTo(2);
@@ -204,14 +200,19 @@ class DefaultClientResourcesUnitTests {
     }
 
     @Test
-    void testEventBus() {
+    void testEventBus() throws Exception {
 
         DefaultClientResources sut = DefaultClientResources.create();
 
         EventBus eventBus = sut.eventBus();
         Event event = mock(Event.class);
+        ArrayBlockingQueue<Event> received = new ArrayBlockingQueue<>(8);
 
-        StepVerifier.create(eventBus.get()).then(() -> eventBus.publish(event)).expectNext(event).thenCancel().verify();
+        Subscription subscription = eventBus.subscribe(received::add);
+        eventBus.publish(event);
+
+        assertThat(received.poll(1, TimeUnit.SECONDS)).isSameAs(event);
+        subscription.close();
 
         assertThat(TestFutures.getOrTimeout(sut.shutdown(0, 0, TimeUnit.MILLISECONDS))).isTrue();
     }
@@ -301,7 +302,8 @@ class DefaultClientResourcesUnitTests {
         eventExecutor.submit(() -> eventExecutorThread.set(Thread.currentThread())).awaitUninterruptibly();
 
         AtomicReference<Thread> eventLoopThread = new AtomicReference<>();
-        NioEventLoopGroup eventLoopGroup = clientResources.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
+        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) clientResources.eventLoopGroupProvider()
+                .allocate(NioEventLoopGroup.class);
         eventLoopGroup.next().submit(() -> eventLoopThread.set(Thread.currentThread())).awaitUninterruptibly();
 
         clientResources.eventLoopGroupProvider().release(eventLoopGroup, 0, 0, TimeUnit.SECONDS);

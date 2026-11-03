@@ -24,7 +24,6 @@ import java.util.concurrent.ThreadFactory;
 
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.util.concurrent.EventExecutorGroup;
 
@@ -51,7 +50,7 @@ public interface EventLoopResources {
     Class<? extends EventLoopGroup> eventLoopGroupClass();
 
     /**
-     * Create a new {@link EpollEventLoopGroup}.
+     * Create a new {@link EventLoopGroup}.
      *
      * @param nThreads number of threads.
      * @param threadFactory the {@link ThreadFactory}.

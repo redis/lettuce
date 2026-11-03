@@ -1,11 +1,8 @@
 # Security Policy
 
-## Supported Versions
-
-Currently maintained 
-
-Information about supported Lettuce versions can be found on the [Lettuce version support page](https://github.com/lettuce-io/lettuce-core/wiki/Lettuce-Versions) in the [Lettuce wiki](https://github.com/lettuce-io/lettuce-core/wiki).
-
 ## Reporting a Vulnerability
 
-Please open an issue, without details. We will contact you then.
+If you believe you have found a security vulnerability, to ensure proper review and assessment, we kindly ask
+vulnerability reports be submitted through the
+[Redis Vulnerability Disclosure Program](https://redis.io/redis-responsible-vulnerability-disclosure/).
+Alternatively reach out via email to security@redis.com.

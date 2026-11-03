@@ -665,7 +665,7 @@ public class HashCommandIntegrationTests extends TestSupport {
         Map<String, String> expect = new LinkedHashMap<>();
         setup100KeyValues(expect);
 
-        MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.limit(100).match("key1*"));
+        MapScanCursor<String, String> cursor = redis.hscan(key, ScanArgs.Builder.limit(100).match(key + "1*"));
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
@@ -681,7 +681,7 @@ public class HashCommandIntegrationTests extends TestSupport {
         Map<String, String> expect = new LinkedHashMap<>();
         setup100KeyValues(expect);
 
-        KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanArgs.Builder.limit(100).match("key1*"));
+        KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanArgs.Builder.limit(100).match(key + "1*"));
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();

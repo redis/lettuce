@@ -34,15 +34,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import io.lettuce.core.internal.Exceptions;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.internal.LettuceStrings;
-import reactor.core.publisher.Mono;
 
 /**
  * Redis URI. Contains connection details for the Redis/Sentinel connections. You can provide the database, client name,
@@ -158,6 +160,7 @@ import reactor.core.publisher.Mono;
  * @author Jacob Halsey
  * @author Tihomir Mateev
  * @author Kim Sung Hyun
+ * @author PreAgile
  * @since 3.0
  */
 public class RedisURI implements Serializable, ConnectionPoint {
@@ -237,11 +240,11 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     private String clientName;
 
-    private String libraryName = LettuceVersion.getName();
+    private DriverInfo driverInfo = DriverInfo.builder().build();
 
     private String libraryVersion = LettuceVersion.getVersion();
 
-    private RedisCredentialsProvider credentialsProvider = new StaticCredentialsProvider(null, null);;
+    private CredentialsProvider credentialsProvider = new StaticCredentialsProvider(null, null);
 
     private boolean ssl = false;
 
@@ -275,6 +278,30 @@ public class RedisURI implements Serializable, ConnectionPoint {
         setHost(host);
         setPort(port);
         setTimeout(timeout);
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param source the source {@link RedisURI} to copy from.
+     */
+    protected RedisURI(RedisURI source) {
+        this.host = source.host;
+        this.socket = source.socket;
+        this.sentinelMasterId = source.sentinelMasterId;
+        this.port = source.port;
+        this.database = source.database;
+        this.clientName = source.clientName;
+        this.driverInfo = source.driverInfo;
+        this.libraryVersion = source.libraryVersion;
+        this.credentialsProvider = source.credentialsProvider;
+        this.ssl = source.ssl;
+        this.verifyMode = source.verifyMode;
+        this.startTls = source.startTls;
+        this.timeout = source.timeout;
+        for (RedisURI sentinel : source.sentinels) {
+            this.sentinels.add(new RedisURI(sentinel));
+        }
     }
 
     /**
@@ -445,7 +472,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         LettuceAssert.notNull(source, "Source RedisURI must not be null");
 
         if (source.credentialsProvider != null) {
-            setCredentialsProvider(source.getCredentialsProvider());
+            setCredentialsProvider(source.getCredentialsProviderAsync());
         }
     }
 
@@ -456,7 +483,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * username and the provided password.
      *
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(CharSequence password) {
@@ -472,7 +499,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * username and the provided password.
      *
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(char[] password) {
@@ -489,13 +516,13 @@ public class RedisURI implements Serializable, ConnectionPoint {
      *
      * @param username the username to use to authenticate Redis connections.
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(String username, char[] password) {
         LettuceAssert.notNull(password, "Password must not be null");
 
-        this.setCredentialsProvider(() -> Mono.just(RedisCredentials.just(username, password)));
+        this.setCredentialsProvider(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
     }
 
     /**
@@ -506,13 +533,13 @@ public class RedisURI implements Serializable, ConnectionPoint {
      *
      * @param username the username to use to authenticate Redis connections.
      * @param password the password to use to authenticate Redis connections.
-     * @see #setCredentialsProvider(RedisCredentialsProvider)
+     * @see #setCredentialsProvider(CredentialsProvider)
      * @since 7.0
      */
     public void setAuthentication(String username, CharSequence password) {
         LettuceAssert.notNull(password, "Password must not be null");
 
-        this.setCredentialsProvider(() -> Mono.just(RedisCredentials.just(username, password)));
+        this.setCredentialsProvider(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
     }
 
     /**
@@ -521,8 +548,26 @@ public class RedisURI implements Serializable, ConnectionPoint {
      *
      * @return the {@link RedisCredentialsProvider} to use to authenticate Redis connections
      * @since 6.2
+     * @deprecated since 7.9, use {@link #getCredentialsProviderAsync()} instead; scheduled for removal in a future major
+     *             release.
      */
+    @Deprecated
     public RedisCredentialsProvider getCredentialsProvider() {
+        if (this.credentialsProvider instanceof RedisCredentialsProvider) {
+            return (RedisCredentialsProvider) this.credentialsProvider;
+        }
+        return AsyncCredentialsProviderAdapter.of(this.credentialsProvider);
+    }
+
+    /**
+     * Returns the reactor-free {@link CredentialsProvider} configured on this URI. In contrast to
+     * {@link #getCredentialsProvider()}, the provider is returned as-is without adapting it to the deprecated reactive
+     * {@link RedisCredentialsProvider}; this is the accessor used on the driver's reactor-free authentication path.
+     *
+     * @return the {@link CredentialsProvider} to use to authenticate Redis connections.
+     * @since 7.9
+     */
+    public CredentialsProvider getCredentialsProviderAsync() {
         return this.credentialsProvider;
     }
 
@@ -532,10 +577,28 @@ public class RedisURI implements Serializable, ConnectionPoint {
      *
      * @param credentialsProvider the credentials provider to use when authenticating a Redis connection.
      * @since 6.2
+     * @deprecated since 7.9, use {@link #setCredentialsProvider(CredentialsProvider)} instead; scheduled for removal in a
+     *             future major release.
      */
+    @Deprecated
     public void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
 
         LettuceAssert.notNull(credentialsProvider, "RedisCredentialsProvider must not be null");
+
+        this.credentialsProvider = credentialsProvider;
+    }
+
+    /**
+     * Sets the {@link CredentialsProvider}. Configuring a credentials provider resets the configured static username/password.
+     * This is the reactor-free replacement for {@link #setCredentialsProvider(RedisCredentialsProvider)};
+     * {@link #getCredentialsProvider()} keeps returning a {@link RedisCredentialsProvider} view for backward compatibility.
+     *
+     * @param credentialsProvider the credentials provider to use when authenticating a Redis connection.
+     * @since 7.9
+     */
+    public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
+
+        LettuceAssert.notNull(credentialsProvider, "CredentialsProvider must not be null");
 
         this.credentialsProvider = credentialsProvider;
     }
@@ -606,26 +669,35 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Returns the library name.
+     * Returns the library name to be sent via {@code CLIENT SETINFO}.
+     * <p>
+     * If upstream drivers have been added via {@link DriverInfo}, the returned value will include them in the format:
+     * {@code libraryName(driver1_v1.0.0;driver2_v2.0.0)}. Otherwise, returns just the library name.
      *
-     * @return the library name.
+     * @return the library name, potentially including upstream driver information.
      * @since 6.3
+     * @see #getDriverInfo()
+     * @see DriverInfo#getFormattedName()
      */
     public String getLibraryName() {
-        return libraryName;
+        return driverInfo.getFormattedName();
     }
 
     /**
      * Sets the library name to be applied on Redis connections.
+     * <p>
+     * This method creates a new {@link DriverInfo} with only the specified name, clearing any previously set upstream drivers.
+     * If you want to preserve upstream drivers, use {@link #setDriverInfo(DriverInfo)} instead.
      *
-     * @param libraryName the library name.
+     * @param libraryName the library name, must not contain spaces.
      * @since 6.3
+     * @see #setDriverInfo(DriverInfo)
      */
     public void setLibraryName(String libraryName) {
         if (libraryName != null && libraryName.indexOf(' ') != -1) {
             throw new IllegalArgumentException("Library name must not contain spaces");
         }
-        this.libraryName = libraryName;
+        this.driverInfo = DriverInfo.builder().name(libraryName).build();
     }
 
     /**
@@ -636,6 +708,32 @@ public class RedisURI implements Serializable, ConnectionPoint {
      */
     public String getLibraryVersion() {
         return libraryVersion;
+    }
+
+    /**
+     * Returns the driver information containing the library name and upstream drivers.
+     *
+     * @return the driver information, never {@code null}
+     * @since 6.5
+     * @see DriverInfo
+     */
+    public DriverInfo getDriverInfo() {
+        return driverInfo;
+    }
+
+    /**
+     * Sets the driver information containing the library name and upstream drivers.
+     * <p>
+     * This method replaces any previously set driver information or library name. Use this method when you want structured
+     * control over the library identification sent via {@code CLIENT SETINFO}.
+     *
+     * @param driverInfo the driver information to set
+     * @since 6.5
+     * @see DriverInfo
+     * @see #setLibraryName(String)
+     */
+    public void setDriverInfo(DriverInfo driverInfo) {
+        this.driverInfo = driverInfo;
     }
 
     /**
@@ -913,7 +1011,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 // compatibility with versions before 7.0 - in previous versions of the Lettuce driver there was an option to
                 // have a username and password pair as part of the RedisURI; in these cases when we were masking credentials we
                 // would get asterix for each character of the password.
-                RedisCredentials creds = credentialsProvider.resolveCredentials().block();
+                RedisCredentials creds;
+                try {
+                    creds = Futures.unwrapExceptions(credentialsProvider.resolveCredentialsAsync()).join();
+                } catch (Exception e) {
+                    throw Exceptions.bubble(e);
+                }
                 if (creds != null) {
                     String credentials = "";
 
@@ -947,8 +1050,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
             queryPairs.add(PARAMETER_NAME_CLIENT_NAME + "=" + urlEncode(clientName));
         }
 
-        if (libraryName != null && !libraryName.equals(LettuceVersion.getName())) {
-            queryPairs.add(PARAMETER_NAME_LIBRARY_NAME + "=" + urlEncode(libraryName));
+        if (driverInfo.getName() != null && !driverInfo.getName().equals(LettuceVersion.getName())) {
+            queryPairs.add(PARAMETER_NAME_LIBRARY_NAME + "=" + urlEncode(driverInfo.getName()));
         }
 
         if (libraryVersion != null && !libraryVersion.equals(LettuceVersion.getVersion())) {
@@ -1291,11 +1394,11 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         private String clientName;
 
-        private String libraryName = LettuceVersion.getName();
-
         private String libraryVersion = LettuceVersion.getVersion();
 
-        private RedisCredentialsProvider credentialsProvider;
+        private DriverInfo driverInfo = DriverInfo.builder().build();
+
+        private CredentialsProvider credentialsProvider;
 
         private boolean ssl = false;
 
@@ -1625,8 +1728,35 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 throw new IllegalArgumentException("Library name must not contain spaces");
             }
 
-            this.libraryName = libraryName;
+            this.driverInfo = DriverInfo.builder().name(libraryName).build();
             this.sentinels.forEach(it -> it.setLibraryName(libraryName));
+            return this;
+        }
+
+        /**
+         * Configures driver information containing the library name and upstream drivers.
+         * <p>
+         * This method allows upstream libraries (e.g., Spring Data Redis) that use Lettuce as their Redis driver to identify
+         * themselves. The driver information is sent via the {@code CLIENT SETINFO} command.
+         * <p>
+         * If both {@link #withLibraryName(String)} and this method are called, the last call wins. When {@code driverInfo} is
+         * set, it takes precedence over {@code libraryName} in the built {@link RedisURI}.
+         * <p>
+         * Also sets driver info for already configured Redis Sentinel nodes.
+         *
+         * @param driverInfo the driver information, must not be {@code null}
+         * @return the builder
+         * @throws IllegalArgumentException if driverInfo is {@code null}
+         * @see DriverInfo
+         * @see <a href="https://redis.io/docs/latest/commands/client-setinfo/">CLIENT SETINFO</a>
+         * @since 6.5
+         */
+        public Builder withDriverInfo(DriverInfo driverInfo) {
+
+            LettuceAssert.notNull(driverInfo, "DriverInfo must not be null");
+
+            this.driverInfo = driverInfo;
+            this.sentinels.forEach(it -> it.setDriverInfo(driverInfo));
             return this;
         }
 
@@ -1663,7 +1793,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             LettuceAssert.notNull(username, "User name must not be null");
             LettuceAssert.notNull(password, "Password must not be null");
 
-            return withAuthentication(() -> Mono.just(RedisCredentials.just(username, password)));
+            return withAuthentication(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
         }
 
         /**
@@ -1677,7 +1807,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             LettuceAssert.notNull(source, "Source RedisURI must not be null");
 
-            return withAuthentication(source.getCredentialsProvider());
+            return withAuthentication(source.getCredentialsProviderAsync());
         }
 
         /**
@@ -1693,7 +1823,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             LettuceAssert.notNull(username, "User name must not be null");
             LettuceAssert.notNull(password, "Password must not be null");
 
-            return withAuthentication(() -> Mono.just(RedisCredentials.just(username, password)));
+            return withAuthentication(() -> CompletableFuture.completedFuture(RedisCredentials.just(username, password)));
         }
 
         /**
@@ -1701,8 +1831,25 @@ public class RedisURI implements Serializable, ConnectionPoint {
          *
          * @param credentialsProvider the credentials provider to use
          * @since 6.2
+         * @deprecated since 7.9, use {@link #withAuthentication(CredentialsProvider)} instead; scheduled for removal in a
+         *             future major release.
          */
+        @Deprecated
         public Builder withAuthentication(RedisCredentialsProvider credentialsProvider) {
+            this.credentialsProvider = credentialsProvider;
+            return this;
+        }
+
+        /**
+         * Configures authentication using a reactor-free {@link CredentialsProvider}.
+         *
+         * @param credentialsProvider the credentials provider to use
+         * @since 7.9
+         */
+        public Builder withAuthentication(CredentialsProvider credentialsProvider) {
+
+            LettuceAssert.notNull(credentialsProvider, "CredentialsProvider must not be null");
+
             this.credentialsProvider = credentialsProvider;
             return this;
         }
@@ -1734,7 +1881,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
          * @since 4.4
          */
         public Builder withPassword(char[] password) {
-            return withAuthentication(() -> Mono.just(RedisCredentials.just(null, password)));
+            return withAuthentication(() -> CompletableFuture.completedFuture(RedisCredentials.just(null, password)));
         }
 
         /**
@@ -1746,7 +1893,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         public Builder withTimeout(Duration timeout) {
 
             LettuceAssert.notNull(timeout, "Timeout must not be null");
-            LettuceAssert.notNull(!timeout.isNegative(), "Timeout must be greater or equal 0");
+            LettuceAssert.isTrue(!timeout.isNegative(), "Timeout must be greater or equal 0");
 
             this.timeout = timeout;
             return this;
@@ -1788,7 +1935,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             redisURI.setDatabase(database);
             redisURI.setClientName(clientName);
-            redisURI.setLibraryName(libraryName);
+            redisURI.setDriverInfo(driverInfo);
             redisURI.setLibraryVersion(libraryVersion);
 
             redisURI.setSentinelMasterId(sentinelMasterId);

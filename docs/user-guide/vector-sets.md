@@ -121,9 +121,46 @@ VSimArgs simArgs = VSimArgs.Builder
     .build();
 
 Map<String, Double> resultsWithScores = vectorSet.vsimWithScore("points", simArgs, 0.9, 0.1);
-resultsWithScores.forEach((element, score) -> 
+resultsWithScores.forEach((element, score) ->
     System.out.println(element + ": " + score));
 ```
+
+### Similarity Cutoff with EPSILON
+
+Use EPSILON to apply a maximum distance cutoff so that only sufficiently similar results are returned.
+The cutoff is defined as a distance threshold epsilon in [0.0, 1.0]; results must have similarity ≥ 1 − epsilon.
+Smaller epsilon values yield fewer, more similar results.
+
+```java
+VSimArgs simArgs = VSimArgs.Builder
+    .count(10)
+    .epsilon(0.2)            // distance cutoff; results have similarity >= 0.8
+    .build();
+
+Map<String, Double> results = vectorSet.vsimWithScore("points", simArgs, 0.9, 0.1);
+```
+
+
+### Including Attributes in Results with WITHATTRIBS
+
+Attributes are included by using the API variant that emits WITHATTRIBS. Use vsimWithScoreWithAttribs(...) to obtain scores and attributes per element.
+
+```java
+VSimArgs args = VSimArgs.Builder
+    .count(10)
+    .epsilon(0.2)
+    .build();
+
+Map<String, VSimScoreAttribs> results = vectorSet.vsimWithScoreWithAttribs("points", args, 0.9, 0.1);
+results.forEach((element, sa) -> {
+    double score = sa.getScore();
+    String attrs = sa.getAttributes();
+    System.out.println(element + ": score=" + score + ", attrs=" + attrs);
+});
+```
+
+Note: WITHATTRIBS requires a Redis version that supports returning attributes (Redis 8.2+). Methods are marked @Experimental and subject to change.
+
 
 ## Element Attributes and Filtering
 

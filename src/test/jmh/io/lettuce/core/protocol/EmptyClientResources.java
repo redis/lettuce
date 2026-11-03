@@ -105,11 +105,6 @@ public class EmptyClientResources implements ClientResources {
     }
 
     @Override
-    public DnsResolver dnsResolver() {
-        return null;
-    }
-
-    @Override
     public SocketAddressResolver socketAddressResolver() {
         return null;
     }

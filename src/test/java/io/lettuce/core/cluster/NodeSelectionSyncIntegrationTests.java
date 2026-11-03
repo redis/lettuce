@@ -29,12 +29,14 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * @author Mark Paluch
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class NodeSelectionSyncIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
@@ -182,8 +184,10 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
 
     @Test
     void testReplicasWithReadOnly() {
+        // Use KEY_A which is known to hash to a slot owned by port4's master
+        String testKey = ClusterTestSettings.KEY_A;
 
-        int slot = SlotHash.getSlot(key);
+        int slot = SlotHash.getSlot(testKey);
         Optional<RedisClusterNode> master = clusterClient.getPartitions().getPartitions().stream()
                 .filter(redisClusterNode -> redisClusterNode.hasSlot(slot)).findFirst();
 
@@ -193,10 +197,10 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
 
         assertThat(nodes.size()).isEqualTo(1);
 
-        commands.set(key, value);
-        waitForReplication(key, ClusterTestSettings.port4);
+        commands.set(testKey, value);
+        waitForReplication(testKey, ClusterTestSettings.port4);
 
-        Executions<String> keys = nodes.commands().get(key);
+        Executions<String> keys = nodes.commands().get(testKey);
         assertThat(keys).hasSize(1).contains(value);
     }
 

@@ -14,6 +14,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.resource.DnsResolvers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,7 @@ class SentinelSslIntegrationTests extends TestSupport {
     SentinelSslIntegrationTests(ClientResources clientResources) {
 
         this.clientResources = clientResources.mutate()
-                .socketAddressResolver(MappingSocketAddressResolver.create(DnsResolver.jvmDefault(), hostAndPort -> {
+                .socketAddressResolver(MappingSocketAddressResolver.create(DnsResolvers.UNRESOLVED, hostAndPort -> {
                     int port = hostAndPort.getPort();
                     if (portMap.containsKey(port)) {
                         return HostAndPort.of(hostAndPort.getHostText(), portMap.get(port));

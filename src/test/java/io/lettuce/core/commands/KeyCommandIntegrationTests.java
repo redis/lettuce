@@ -33,10 +33,10 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.CompareCondition;
 import io.lettuce.core.CopyArgs;
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.KeyScanArgs;
@@ -44,11 +44,13 @@ import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RestoreArgs;
 import io.lettuce.core.ScanCursor;
+import io.lettuce.core.SetArgs;
 import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
+import io.lettuce.test.condition.DisabledOnProvider;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
@@ -115,6 +117,8 @@ public class KeyCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("COPY")
+    // Redis Enterprise does not support multiple databases
+    @DisabledOnProvider("re")
     void copyWithDestinationDb() {
         redis.set(key, value);
         redis.copy(key, key, CopyArgs.Builder.destinationDb(2));
@@ -227,6 +231,8 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Redis Enterprise does not support multiple databases and blocks MOVE
+    @DisabledOnProvider("re")
     public void move() {
         redis.set(key, value);
         redis.move(key, 1);
@@ -244,6 +250,8 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Redis Enterprise does not expose maxmemory-policy via CONFIG GET/SET
+    @DisabledOnProvider("re")
     void objectFreq() {
         String maxmemoryPolicy = redis.configGet("maxmemory-policy").get("maxmemory-policy");
         try {
@@ -304,11 +312,14 @@ public class KeyCommandIntegrationTests extends TestSupport {
 
     @Test
     void pexpireat() {
-        Date expiration = new Date(System.currentTimeMillis() + 5000);
+        long expiryMillis = System.currentTimeMillis() + 5000;
+        Date expiration = new Date(expiryMillis);
         assertThat(redis.pexpireat(key, expiration)).isFalse();
         redis.set(key, value);
         assertThat(redis.pexpireat(key, expiration)).isTrue();
-        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(5000);
+        long clockSkewToleranceMs = 50;
+        long upperBound = expiryMillis - System.currentTimeMillis() + clockSkewToleranceMs;
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(upperBound);
 
         assertThat(redis.pexpireat(key, Instant.now().plusSeconds(15))).isTrue();
         assertThat(redis.ttl(key)).isBetween(10L, 20L);
@@ -401,10 +412,12 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(1000);
 
         redis.del(key);
-        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(System.currentTimeMillis() + 3000).replace().absttl()))
-                .isEqualTo("OK");
+        long expiryMillis = System.currentTimeMillis() + 5000;
+        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(expiryMillis).replace().absttl())).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
-        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(3000);
+        long clockSkewToleranceMs = 50;
+        long upperBound = expiryMillis - System.currentTimeMillis() + clockSkewToleranceMs;
+        assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(upperBound);
     }
 
     @Test
@@ -597,7 +610,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         Set<String> expect = new HashSet<>();
         setup100KeyValues(expect);
 
-        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(200).match("key1*"));
+        KeyScanCursor<String> cursor = redis.scan(KeyScanArgs.Builder.limit(200).match(key + "1*"));
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
@@ -610,6 +623,94 @@ public class KeyCommandIntegrationTests extends TestSupport {
             redis.set(key + i, value + i);
             expect.add(key + i);
         }
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void set_ex_ifeq_then_delex() {
+        String k = "k:set-ex-ifeq";
+        // Initial set with EX
+        assertThat(redis.set(k, "v1", SetArgs.Builder.ex(100))).isEqualTo("OK");
+        assertThat(redis.ttl(k)).isGreaterThan(0);
+
+        // Conditional update with IFEQ + EX
+        assertThat(redis.set(k, "v2", SetArgs.Builder.ex(200).compareCondition(CompareCondition.valueEq("v1"))))
+                .isEqualTo("OK");
+        assertThat(redis.get(k)).isEqualTo("v2");
+        assertThat(redis.ttl(k)).isGreaterThan(100);
+
+        // Delete with DELEX using value condition
+        assertThat(redis.delex(k, CompareCondition.valueEq("wrong"))).isEqualTo(0);
+        assertThat(redis.delex(k, CompareCondition.valueEq("v2"))).isEqualTo(1);
+        assertThat(redis.exists(k)).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void set_exAt_ifne_then_delex() {
+        String k = "k:set-exat-ifne";
+        long expiryTimestamp = Instant.now().plusSeconds(300).getEpochSecond();
+
+        // Initial set
+        redis.set(k, "v1");
+
+        // Conditional update with IFNE + EXAT
+        assertThat(redis.set(k, "v2", SetArgs.Builder.exAt(expiryTimestamp).compareCondition(CompareCondition.valueNe("v2"))))
+                .isEqualTo("OK");
+        assertThat(redis.get(k)).isEqualTo("v2");
+        assertThat(redis.ttl(k)).isGreaterThan(200);
+
+        // Delete with DELEX using value condition
+        assertThat(redis.delex(k, CompareCondition.valueNe("v2"))).isEqualTo(0);
+        assertThat(redis.delex(k, CompareCondition.valueNe("wrong"))).isEqualTo(1);
+        assertThat(redis.exists(k)).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void setGet_px_ifdne_then_delex() {
+        String k = "k:setget-px-ifdne";
+        String wrongKey = "wrong";
+        // Initial set
+        redis.set(k, "A");
+        redis.set(wrongKey, "wrong");
+        String digestBefore = redis.digestKey(k);
+        String digestWrong = redis.digestKey(wrongKey); // digest for non-existing value
+
+        // Conditional setGet with IFDNE + PX (digest not equal)
+        assertThat(redis.setGet(k, "B", SetArgs.Builder.px(100000).compareCondition(CompareCondition.digestNe(digestWrong))))
+                .isEqualTo("A");
+        assertThat(redis.get(k)).isEqualTo("B");
+        assertThat(redis.pttl(k)).isGreaterThan(90000);
+
+        // Delete with DELEX using digest condition
+        String digestAfter = redis.digestKey(k);
+        assertThat(redis.delex(k, CompareCondition.digestNe(digestAfter))).isEqualTo(0);
+        assertThat(redis.delex(k, CompareCondition.digestNe(digestBefore))).isEqualTo(1);
+        assertThat(redis.exists(k)).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void setGet_pxAt_ifdeq_then_delex() {
+        String k = "k:setget-pxat-ifdeq";
+        long expiryTimestampMs = Instant.now().plusSeconds(300).toEpochMilli();
+
+        // Initial set
+        redis.set(k, "X");
+        String digestX = redis.digestKey(k);
+
+        // Conditional setGet with IFDEQ + PXAT (digest equal)
+        assertThat(redis.setGet(k, "Y",
+                SetArgs.Builder.pxAt(expiryTimestampMs).compareCondition(CompareCondition.digestEq(digestX)))).isEqualTo("X");
+        assertThat(redis.get(k)).isEqualTo("Y");
+        assertThat(redis.pttl(k)).isGreaterThan(200000);
+
+        // Delete with DELEX using digest condition
+        String digestY = redis.digestKey(k);
+        assertThat(redis.delex(k, CompareCondition.digestEq(digestX))).isEqualTo(0);
+        assertThat(redis.delex(k, CompareCondition.digestEq(digestY))).isEqualTo(1);
+        assertThat(redis.exists(k)).isEqualTo(0);
     }
 
 }

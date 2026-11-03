@@ -25,30 +25,28 @@ import static io.lettuce.core.StringMatchResult.Position;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
-import org.junit.jupiter.api.Assumptions;
+import io.lettuce.core.cluster.SlotHash;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
 import io.lettuce.core.*;
-import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.dynamic.Commands;
-import io.lettuce.core.dynamic.RedisCommandFactory;
-import io.lettuce.core.dynamic.annotation.Command;
-import io.lettuce.core.dynamic.annotation.Param;
 import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
@@ -142,7 +140,7 @@ public class StringCommandIntegrationTests extends TestSupport {
     }
 
     protected void setupMget() {
-        assertThat(redis.mget(key)).isEqualTo(list(KeyValue.empty("key")));
+        assertThat(redis.mget(key)).isEqualTo(list(KeyValue.empty(key)));
         redis.set("one", "1");
         redis.set("two", "2");
     }
@@ -178,6 +176,51 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.del("one");
         assertThat(redis.msetnx(map)).isTrue();
         assertThat(redis.get("two")).isEqualTo("2");
+    }
+
+    @ParameterizedTest(name = "MSETEX NX + {0} with cross-slot keys")
+    @MethodSource("msetexNxArgsProvider")
+    @EnabledOnCommand("MSETEX")
+    protected void msetexNxWithCrossSlotKeys_parametrized(String optionLabel, MSetExArgs args) {
+
+        // Build 16 keys with distinct hash tags so they map across 16 evenly-partitioned buckets over 16000 slots
+        final int buckets = 16;
+        Map<String, String> map = new LinkedHashMap<>();
+
+        for (int b = 0; b < buckets; b++) {
+            for (int j = 0;; j++) { // find a tag that lands in bucket b
+                String k = "msetex:{t" + b + '-' + j + "}"; // only the tag influences the slot
+                int slot = SlotHash.getSlot(k);
+                int bucket = Math.min(slot / 1000, buckets - 1);
+                if (bucket == b) {
+                    map.put(k, "v" + b);
+                    break;
+                }
+            }
+        }
+
+        // Execute MSETEX with NX + the provided option
+        Boolean result = redis.msetex(map, args);
+        assertThat(result).isTrue();
+
+        // Verify TTL semantics depending on option
+        String anyKey = map.keySet().iterator().next();
+        long ttl = redis.ttl(anyKey);
+        if ("KEEPTTL".equals(optionLabel)) {
+            // KEEPTTL with NX on new keys -> no expiration should be set
+            assertThat(ttl).isEqualTo(-1);
+        } else {
+            // Expiring variants (EX/PX/EXAT/PXAT): TTL should be > 0 shortly after
+            assertThat(ttl).isGreaterThan(0L);
+        }
+    }
+
+    static Stream<Arguments> msetexNxArgsProvider() {
+        return Stream.of(Arguments.of("EX", MSetExArgs.Builder.nx().ex(Duration.ofSeconds(5))),
+                Arguments.of("PX", MSetExArgs.Builder.nx().px(Duration.ofMillis(5000))),
+                Arguments.of("EXAT", MSetExArgs.Builder.nx().exAt(Instant.now().plusSeconds(5))),
+                Arguments.of("PXAT", MSetExArgs.Builder.nx().pxAt(Instant.now().plusSeconds(5))),
+                Arguments.of("KEEPTTL", MSetExArgs.Builder.nx().keepttl()));
     }
 
     @Test
@@ -390,11 +433,36 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.set(KEY_2, "mynewtext");
 
         // > LCS key1 key2
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2));
+        assertThat(redis.lcs(KEY_1, KEY_2)).isEqualTo("mytext");
+
+        StringMatchResult matchResult = redis.lcs(KEY_1, KEY_2, new LcsArgs());
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
         assertThat(matchResult.getMatches().size()).isEqualTo(0);
         assertThat(matchResult.getLen()).isEqualTo(0);
+    }
 
+    @Test
+    @EnabledOnCommand("LCS")
+    void lcsNoCommonSubstring() {
+        redis.set(KEY_1, "abc");
+        redis.set(KEY_2, "xyz");
+
+        // > LCS key1 key2
+        assertThat(redis.lcs(KEY_1, KEY_2)).isEmpty();
+        assertThat(redis.lcs(KEY_1, "missing{k}")).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("LCS")
+    @SuppressWarnings("deprecation")
+    void lcsDeprecatedKeysInArgs() {
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
+
+        // > LCS key1 key2 IDX
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).withIdx());
+        assertThat(matchResult.getMatches().size()).isEqualTo(2);
+        assertThat(matchResult.getLen()).isEqualTo(6);
     }
 
     @Test
@@ -403,7 +471,7 @@ public class StringCommandIntegrationTests extends TestSupport {
 
         // > LCS a b IDX MINMATCHLEN 4 WITHMATCHLEN
         // Keys don't exist.
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys("a{k}", "b{k}").minMatchLen(4).withMatchLen());
+        StringMatchResult matchResult = redis.lcs("a{k}", "b{k}", LcsArgs.Builder.minMatchLen(4).withMatchLen());
         assertThat(matchResult.getMatchString()).isNullOrEmpty();
         assertThat(matchResult.getMatches()).isNullOrEmpty();
         assertThat(matchResult.getLen()).isEqualTo(0);
@@ -416,7 +484,7 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.set(KEY_2, "mynewtext");
 
         // > LCS key1 key2 LEN
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).justLen());
+        StringMatchResult matchResult = redis.lcs(KEY_1, KEY_2, LcsArgs.Builder.justLen());
         assertThat(matchResult.getLen()).isEqualTo(6);
         assertThat(matchResult.getMatchString()).isNullOrEmpty();
         assertThat(matchResult.getMatches()).isNullOrEmpty();
@@ -429,7 +497,7 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.set(KEY_2, "mynewtext");
 
         // > LCS key1 key2 IDX
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).withIdx());
+        StringMatchResult matchResult = redis.lcs(KEY_1, KEY_2, LcsArgs.Builder.withIdx());
 
         assertThat(matchResult.getMatches().size()).isEqualTo(2);
         assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
@@ -454,7 +522,7 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.set(KEY_2, "mynewtext");
 
         // > LCS key1 key2 IDX MINMATCHLEN 4
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).withIdx().minMatchLen(4));
+        StringMatchResult matchResult = redis.lcs(KEY_1, KEY_2, LcsArgs.Builder.withIdx().minMatchLen(4));
 
         assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
         assertThat(matchResult.getMatches().get(0).getA().getEnd()).isEqualTo(7);
@@ -473,7 +541,7 @@ public class StringCommandIntegrationTests extends TestSupport {
         redis.set(KEY_2, "mynewtext");
 
         // > LCS key1 key2 IDX MINMATCHLEN 4 WITHMATCHLEN
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).minMatchLen(4).withMatchLen().withIdx());
+        StringMatchResult matchResult = redis.lcs(KEY_1, KEY_2, LcsArgs.Builder.minMatchLen(4).withMatchLen().withIdx());
 
         assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
         assertThat(matchResult.getMatches().get(0).getA().getEnd()).isEqualTo(7);
@@ -485,6 +553,157 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(matchResult.getLen()).isEqualTo(6);
 
         assertThat(matchResult.getMatchString()).isNullOrEmpty();
+    }
+
+    // ── INCREX ──────────────────────────────────────────
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxBasic() {
+        IncrexValue<Long> res = redis.increx(key);
+        assertThat(res.getValue()).isEqualTo(1L);
+        assertThat(res.getIncrement()).isEqualTo(1L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxByIntWithBoundsAndExpiry() {
+        redis.set(key, "10");
+        IncrexArgs args = IncrexArgs.Builder.lbound(0).ubound(20).ex(60);
+        IncrexValue<Long> res = redis.increx(key, 2, args);
+        assertThat(res.getValue()).isEqualTo(12L);
+        assertThat(res.getIncrement()).isEqualTo(2L);
+        assertThat(redis.ttl(key)).isGreaterThan(0);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxByFloatWithBoundsAndExpiry() {
+        redis.set(key, "3.25");
+        IncrexFloatArgs args = IncrexFloatArgs.Builder.lbound(-1.5).ubound(9.5).ex(60);
+        IncrexValue<Double> res = redis.increx(key, 1.25, args);
+        assertThat(res.getValue()).isEqualTo(4.5);
+        assertThat(res.getIncrement()).isEqualTo(1.25);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxNegativeIncrement() {
+        redis.set(key, "10");
+        IncrexArgs args = new IncrexArgs();
+        IncrexValue<Long> res = redis.increx(key, -3, args);
+        assertThat(res.getValue()).isEqualTo(7L);
+        assertThat(res.getIncrement()).isEqualTo(-3L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxDefaultRejectSilent() {
+        redis.set(key, "0");
+        IncrexArgs args = IncrexArgs.Builder.ubound(5);
+        IncrexValue<Long> res = redis.increx(key, 10, args);
+        assertThat(res.getValue()).isEqualTo(0L);
+        assertThat(res.getIncrement()).isEqualTo(0L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxSaturateUbound() {
+        redis.set(key, "0");
+        IncrexArgs args = IncrexArgs.Builder.ubound(5).saturate();
+        IncrexValue<Long> res = redis.increx(key, 10, args);
+        assertThat(res.getValue()).isEqualTo(5L);
+        assertThat(res.getIncrement()).isEqualTo(5L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxSaturateLbound() {
+        redis.set(key, "5");
+        IncrexArgs args = IncrexArgs.Builder.lbound(0).saturate();
+        IncrexValue<Long> res = redis.increx(key, -100, args);
+        assertThat(res.getValue()).isEqualTo(0L);
+        assertThat(res.getIncrement()).isEqualTo(-5L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxSaturateStillAppliesExpiry() {
+        redis.set(key, "5");
+        IncrexArgs args = IncrexArgs.Builder.ubound(5).saturate().ex(60);
+        IncrexValue<Long> res = redis.increx(key, 1, args);
+        assertThat(res.getValue()).isEqualTo(5L);
+        assertThat(res.getIncrement()).isEqualTo(0L);
+        assertThat(redis.ttl(key)).isGreaterThan(0);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxPersist() {
+        redis.set(key, "5");
+        redis.expire(key, 300);
+        IncrexArgs args = IncrexArgs.Builder.persist();
+        IncrexValue<Long> res = redis.increx(key, 2, args);
+        assertThat(res.getValue()).isEqualTo(7L);
+        assertThat(res.getIncrement()).isEqualTo(2L);
+        assertThat(redis.ttl(key)).isEqualTo(-1);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxEnxNoExistingTtl() {
+        redis.set(key, "5");
+        IncrexArgs args = IncrexArgs.Builder.ex(60).enx();
+        IncrexValue<Long> res = redis.increx(key, 1, args);
+        assertThat(res.getValue()).isEqualTo(6L);
+        assertThat(redis.ttl(key)).isGreaterThan(0);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxEnxWithExistingTtl() {
+        redis.set(key, "5");
+        redis.expire(key, 300);
+        long ttlBefore = redis.ttl(key);
+        IncrexArgs args = IncrexArgs.Builder.ex(60).enx();
+        redis.increx(key, 1, args);
+        long ttlAfter = redis.ttl(key);
+        assertThat(ttlAfter).isGreaterThan(60);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxNonExistentKey() {
+        IncrexArgs args = new IncrexArgs();
+        IncrexValue<Long> res = redis.increx(key, 5, args);
+        assertThat(res.getValue()).isEqualTo(5L);
+        assertThat(res.getIncrement()).isEqualTo(5L);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxNonNumericKey() {
+        redis.set(key, "hello");
+        IncrexArgs args = new IncrexArgs();
+        assertThatThrownBy(() -> redis.increx(key, 1, args)).isInstanceOf(RedisCommandExecutionException.class);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxSaturateFloat() {
+        redis.set(key, "0.0");
+        IncrexFloatArgs args = IncrexFloatArgs.Builder.ubound(5.0).saturate();
+        IncrexValue<Double> res = redis.increx(key, 10.0, args);
+        assertThat(res.getValue()).isEqualTo(5.0);
+        assertThat(res.getIncrement()).isEqualTo(5.0);
+    }
+
+    @Test
+    @EnabledOnCommand("INCREX")
+    void increxFloatThenIntFails() {
+        redis.set(key, "1.5");
+        IncrexArgs args = new IncrexArgs();
+        assertThatThrownBy(() -> redis.increx(key, 1, args)).isInstanceOf(RedisCommandExecutionException.class);
     }
 
 }

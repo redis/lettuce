@@ -28,6 +28,9 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import io.lettuce.core.AbstractRedisReactiveCommands.ReactorTraceContext;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.MaintNotificationsConfig;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,6 +67,8 @@ class BraveTracingIntegrationTests extends TestSupport {
 
     private static ClientResources clientResources;
 
+    private static ClientOptions clientOptions;
+
     private static RedisClient client;
 
     private static Tracing clientTracing;
@@ -77,8 +82,10 @@ class BraveTracingIntegrationTests extends TestSupport {
                 .currentTraceContext(CurrentTraceContext.Default.create()).spanReporter(spans::add).build();
 
         clientResources = DefaultClientResources.builder().tracing(BraveTracing.create(clientTracing)).build();
+        clientOptions = ClientOptions.builder().maintNotificationsConfig(MaintNotificationsConfig.disabled()).build();
         client = RedisClient.create(clientResources,
                 RedisURI.Builder.redis(host, port).withLibraryVersion("").withLibraryName("").build());
+        client.setOptions(clientOptions);
     }
 
     @BeforeEach
@@ -150,6 +157,7 @@ class BraveTracingIntegrationTests extends TestSupport {
                 .tracing(BraveTracing.builder().tracing(clientTracing).excludeCommandArgsFromSpanTags().build()).build();
         RedisClient client = RedisClient.create(clientResources,
                 RedisURI.Builder.redis(host, port).withLibraryName("").withLibraryVersion("").build());
+        client.setOptions(ClientOptions.builder().maintNotificationsConfig(MaintNotificationsConfig.disabled()).build());
 
         ScopedSpan trace = clientTracing.tracer().startScopedSpan("foo");
 
@@ -236,7 +244,7 @@ class BraveTracingIntegrationTests extends TestSupport {
 
         StatefulRedisConnection<String, String> connect = client.connect();
         connect.reactive().set("foo", "bar").then(connect.reactive().get("foo"))
-                .contextWrite(io.lettuce.core.tracing.Tracing
+                .contextWrite(ReactorTraceContext
                         .withTraceContextProvider(() -> BraveTracing.BraveTraceContext.create(trace.context()))) //
                 .as(StepVerifier::create) //
                 .expectNext("bar").verifyComplete();

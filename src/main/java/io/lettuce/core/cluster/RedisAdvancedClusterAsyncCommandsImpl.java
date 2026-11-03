@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadLocalRandom;
@@ -37,6 +38,17 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import io.lettuce.core.search.HybridReply;
+import io.lettuce.core.search.arguments.hybrid.HybridArgs;
+import io.lettuce.core.timeseries.TsFilter;
+import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsMGetValue;
+import io.lettuce.core.timeseries.TsSeries;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -64,6 +76,20 @@ import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionIntent;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.AggregationReply.Cursor;
+
+import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.SpellCheckResult;
+import io.lettuce.core.search.arguments.AggregateArgs;
+import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
+import io.lettuce.core.search.arguments.CreateArgs;
+import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.SpellCheckArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
@@ -78,6 +104,8 @@ import io.lettuce.core.protocol.ConnectionIntent;
 @SuppressWarnings("unchecked")
 public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V>
         implements RedisAdvancedClusterAsyncCommands<K, V> {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisAdvancedClusterAsyncCommandsImpl.class);
 
     private final RedisCodec<K, V> codec;
 
@@ -148,22 +176,22 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
             RedisURI uri = redisClusterNode.getUri();
 
-            CompletableFuture<RedisClusterAsyncCommands<K, V>> byNodeId = getConnectionAsync(redisClusterNode.getNodeId());
+            CompletableFuture<StatefulRedisConnection<K, V>> byNodeId = getStatefulConnection(redisClusterNode.getNodeId());
 
             executions.put("NodeId: " + redisClusterNode.getNodeId(), byNodeId.thenCompose(c -> {
 
                 if (c.isOpen()) {
-                    return c.clientSetname(name);
+                    return c.async().clientSetname(name);
                 }
                 return ok;
             }));
 
-            CompletableFuture<RedisClusterAsyncCommands<K, V>> byHost = getConnectionAsync(uri.getHost(), uri.getPort());
+            CompletableFuture<StatefulRedisConnection<K, V>> byHost = getStatefulConnection(uri.getHost(), uri.getPort());
 
             executions.put("HostAndPort: " + redisClusterNode.getNodeId(), byHost.thenCompose(c -> {
 
                 if (c.isOpen()) {
-                    return c.clientSetname(name);
+                    return c.async().clientSetname(name);
                 }
                 return ok;
             }));
@@ -276,7 +304,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<List<K>> keys(K pattern) {
+    public RedisFuture<List<K>> keys(String pattern) {
 
         Map<String, CompletableFuture<List<K>>> executions = executeOnUpstream(commands -> commands.keys(pattern));
 
@@ -289,10 +317,49 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         });
     }
 
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
     @Override
-    public RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+    public RedisFuture<List<K>> keysLegacy(K pattern) {
+
+        Map<String, CompletableFuture<List<K>>> executions = executeOnUpstream(commands -> commands.keysLegacy(pattern));
+
+        return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
+            List<K> result = new ArrayList<>();
+            for (CompletableFuture<List<K>> future : executions.values()) {
+                result.addAll(MultiNodeExecution.execute(future::get));
+            }
+            return result;
+        });
+    }
+
+    @Override
+    public RedisFuture<Long> keys(KeyStreamingChannel<K> channel, String pattern) {
 
         Map<String, CompletableFuture<Long>> executions = executeOnUpstream(commands -> commands.keys(channel, pattern));
+        return MultiNodeExecution.aggregateAsync(executions);
+    }
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
+     *             version.
+     */
+    @Deprecated
+    @Override
+    public RedisFuture<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern) {
+
+        Map<String, CompletableFuture<Long>> executions = executeOnUpstream(commands -> commands.keysLegacy(channel, pattern));
         return MultiNodeExecution.aggregateAsync(executions);
     }
 
@@ -430,6 +497,26 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
+    public RedisFuture<List<Long>> tsMAdd(List<TsMAddValue<K>> samples) {
+
+        TimeSeriesSlotPartition<K> partition = TimeSeriesSlotPartition.of(codec, samples);
+
+        if (partition == null || !partition.isMultiSlot()) {
+            return super.tsMAdd(samples);
+        }
+
+        Map<Integer, RedisFuture<List<Long>>> executions = new HashMap<>();
+        partition.getSamplesBySlot().forEach((slot, slotSamples) -> executions.put(slot, super.tsMAdd(slotSamples)));
+
+        // restore the caller's order; a failed slot fails the whole call
+        return new PipelinedRedisFuture<>(executions, ignore -> {
+            Map<Integer, List<Long>> results = new HashMap<>();
+            executions.forEach((slot, future) -> results.put(slot, MultiNodeExecution.execute(future::get)));
+            return partition.restoreOrder(results);
+        });
+    }
+
+    @Override
     public RedisFuture<String> mset(Map<K, V> map) {
 
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
@@ -454,11 +541,20 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<Boolean> msetnx(Map<K, V> map) {
+        return executePartitionedBoolean(map, super::msetnx);
+    }
+
+    @Override
+    public RedisFuture<Boolean> msetex(Map<K, V> map, MSetExArgs args) {
+        return executePartitionedBoolean(map, op -> super.msetex(op, args));
+    }
+
+    private RedisFuture<Boolean> executePartitionedBoolean(Map<K, V> map, Function<Map<K, V>, RedisFuture<Boolean>> operation) {
 
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
 
         if (partitioned.size() < 2) {
-            return super.msetnx(map);
+            return operation.apply(map);
         }
 
         Map<Integer, RedisFuture<Boolean>> executions = new HashMap<>();
@@ -468,14 +564,14 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             Map<K, V> op = new HashMap<>();
             entry.getValue().forEach(k -> op.put(k, map.get(k)));
 
-            RedisFuture<Boolean> msetnx = super.msetnx(op);
-            executions.put(entry.getKey(), msetnx);
+            RedisFuture<Boolean> future = operation.apply(op);
+            executions.put(entry.getKey(), future);
         }
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
 
-            for (RedisFuture<Boolean> listRedisFuture : executions.values()) {
-                Boolean b = MultiNodeExecution.execute(() -> listRedisFuture.get());
+            for (RedisFuture<Boolean> f : executions.values()) {
+                Boolean b = MultiNodeExecution.execute(f::get);
                 if (b == null || !b) {
                     return false;
                 }
@@ -596,9 +692,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return getStatefulConnection().getConnection(host, port).async();
     }
 
-    private CompletableFuture<RedisClusterAsyncCommands<K, V>> getConnectionAsync(String nodeId) {
-        return getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, nodeId)
-                .thenApply(StatefulRedisConnection::async);
+    private CompletableFuture<StatefulRedisConnection<K, V>> getStatefulConnection(String nodeId) {
+        return getConnectionProvider().getConnectionAsync(ConnectionIntent.WRITE, nodeId);
+    }
+
+    private CompletableFuture<StatefulRedisConnection<K, V>> getStatefulConnection(String host, int port) {
+        return getConnectionProvider().getConnectionAsync(ConnectionIntent.WRITE, host, port);
     }
 
     private CompletableFuture<RedisClusterAsyncCommands<K, V>> getConnectionAsync(String host, int port) {
@@ -609,6 +708,14 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
         return (StatefulRedisClusterConnection<K, V>) super.getConnection();
+    }
+
+    /**
+     * Obtain a random node-scoped connection for the given intent (READ/WRITE). Selection honors the current ReadFrom policy
+     * via the cluster connection provider.
+     */
+    private CompletableFuture<StatefulRedisConnection<K, V>> getRandomStatefulConnection(ConnectionIntent intent) {
+        return getConnectionProvider().getRandomConnectionAsync(intent);
     }
 
     @Override
@@ -693,6 +800,297 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
                 asyncClusterStreamScanCursorMapper());
     }
 
+    @Override
+    public RedisFuture<AggregationReply<K>> ftAggregate(String index, String query, AggregateArgs args) {
+        return routeKeyless(() -> super.ftAggregate(index, query, args),
+                (nodeId, conn) -> conn.ftAggregate(index, query, args).thenApply(reply -> {
+                    if (reply != null) {
+                        reply.getCursor().filter(c -> c.getCursorId() > 0).ifPresent(c -> c.setNodeId(nodeId));
+                    }
+                    return reply;
+                }), CommandType.FT_AGGREGATE);
+    }
+
+    @Override
+    public RedisFuture<AggregationReply<K>> ftAggregate(String index, String query) {
+        return ftAggregate(index, query, null);
+    }
+
+    @Override
+    public RedisFuture<SearchReply<K>> ftSearch(String index, String query, SearchArgs<K> args) {
+        return routeKeyless(() -> super.ftSearch(index, query, args), (conn) -> conn.ftSearch(index, query, args),
+                CommandType.FT_SEARCH);
+    }
+
+    @Override
+    public RedisFuture<SearchReply<K>> ftSearch(String index, String query) {
+        return ftSearch(index, query, SearchArgs.<K> builder().build());
+    }
+
+    @Override
+    public RedisFuture<HybridReply<K>> ftHybrid(String index, HybridArgs args) {
+        return routeKeyless(() -> super.ftHybrid(index, args), (conn) -> conn.ftHybrid(index, args), CommandType.FT_HYBRID);
+    }
+
+    @Override
+    public RedisFuture<String> ftExplain(String index, String query) {
+        return routeKeyless(() -> super.ftExplain(index, query), (conn) -> conn.ftExplain(index, query),
+                CommandType.FT_EXPLAIN);
+    }
+
+    @Override
+    public RedisFuture<String> ftExplain(String index, String query, ExplainArgs args) {
+        return routeKeyless(() -> super.ftExplain(index, query, args), (conn) -> conn.ftExplain(index, query, args),
+                CommandType.FT_EXPLAIN);
+    }
+
+    @Override
+    public RedisFuture<List<String>> ftTagvals(String index, String fieldName) {
+        return routeKeyless(() -> super.ftTagvals(index, fieldName), (conn) -> conn.ftTagvals(index, fieldName),
+                CommandType.FT_TAGVALS);
+    }
+
+    @Override
+    public RedisFuture<SpellCheckResult> ftSpellcheck(String index, String query) {
+        return routeKeyless(() -> super.ftSpellcheck(index, query), (conn) -> conn.ftSpellcheck(index, query),
+                CommandType.FT_SPELLCHECK);
+    }
+
+    @Override
+    public RedisFuture<SpellCheckResult> ftSpellcheck(String index, String query, SpellCheckArgs args) {
+        return routeKeyless(() -> super.ftSpellcheck(index, query, args), (conn) -> conn.ftSpellcheck(index, query, args),
+                CommandType.FT_SPELLCHECK);
+    }
+
+    @Override
+    public RedisFuture<Long> ftDictadd(String dict, String... terms) {
+        return routeKeyless(() -> super.ftDictadd(dict, terms), (conn) -> conn.ftDictadd(dict, terms), CommandType.FT_DICTADD);
+    }
+
+    @Override
+    public RedisFuture<Long> ftDictdel(String dict, String... terms) {
+        return routeKeyless(() -> super.ftDictdel(dict, terms), (conn) -> conn.ftDictdel(dict, terms), CommandType.FT_DICTDEL);
+    }
+
+    @Override
+    public RedisFuture<List<String>> ftDictdump(String dict) {
+        return routeKeyless(() -> super.ftDictdump(dict), (conn) -> conn.ftDictdump(dict), CommandType.FT_DICTDUMP);
+    }
+
+    @Override
+    public RedisFuture<String> ftAliasadd(String alias, String index) {
+        return routeKeyless(() -> super.ftAliasadd(alias, index), (conn) -> conn.ftAliasadd(alias, index),
+                CommandType.FT_ALIASADD);
+    }
+
+    @Override
+    public RedisFuture<String> ftAliasupdate(String alias, String index) {
+        return routeKeyless(() -> super.ftAliasupdate(alias, index), (conn) -> conn.ftAliasupdate(alias, index),
+                CommandType.FT_ALIASUPDATE);
+    }
+
+    @Override
+    public RedisFuture<String> ftAliasdel(String alias) {
+        return routeKeyless(() -> super.ftAliasdel(alias), (conn) -> conn.ftAliasdel(alias), CommandType.FT_ALIASDEL);
+    }
+
+    @Override
+    public RedisFuture<List<String>> ftAliaslist(String index) {
+        return routeKeyless(() -> super.ftAliaslist(index), (conn) -> conn.ftAliaslist(index), CommandType.FT_ALIASLIST);
+    }
+
+    @Override
+    public RedisFuture<List<String>> ftList() {
+        return routeKeyless(super::ftList, (conn) -> conn.ftList(), CommandType.FT_LIST);
+    }
+
+    @Override
+    public RedisFuture<String> ftCreate(String index, List<FieldArgs> fieldArgs) {
+        return routeKeyless(() -> super.ftCreate(index, fieldArgs), (conn) -> conn.ftCreate(index, fieldArgs),
+                CommandType.FT_CREATE);
+    }
+
+    @Override
+    public RedisFuture<String> ftCreate(String index, CreateArgs arguments, List<FieldArgs> fieldArgs) {
+        return routeKeyless(() -> super.ftCreate(index, arguments, fieldArgs),
+                (conn) -> conn.ftCreate(index, arguments, fieldArgs), CommandType.FT_CREATE);
+    }
+
+    @Override
+    public RedisFuture<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs) {
+        return routeKeyless(() -> super.ftAlter(index, skipInitialScan, fieldArgs),
+                (conn) -> conn.ftAlter(index, skipInitialScan, fieldArgs), CommandType.FT_ALTER);
+    }
+
+    @Override
+    public RedisFuture<String> ftAlter(String index, List<FieldArgs> fieldArgs) {
+        return routeKeyless(() -> super.ftAlter(index, fieldArgs), (conn) -> conn.ftAlter(index, fieldArgs),
+                CommandType.FT_ALTER);
+    }
+
+    @Override
+    public RedisFuture<String> ftDropindex(String index, boolean deleteDocumentKeys) {
+        return routeKeyless(() -> super.ftDropindex(index, deleteDocumentKeys),
+                (conn) -> conn.ftDropindex(index, deleteDocumentKeys), CommandType.FT_DROPINDEX);
+    }
+
+    @Override
+    public RedisFuture<String> ftDropindex(String index) {
+        return routeKeyless(() -> super.ftDropindex(index), (conn) -> conn.ftDropindex(index), CommandType.FT_DROPINDEX);
+    }
+
+    @Override
+    public RedisFuture<Map<String, List<String>>> ftSyndump(String index) {
+        return routeKeyless(() -> super.ftSyndump(index), (conn) -> conn.ftSyndump(index), CommandType.FT_SYNDUMP);
+    }
+
+    @Override
+    public RedisFuture<String> ftSynupdate(String index, String synonymGroupId, String... terms) {
+        return routeKeyless(() -> super.ftSynupdate(index, synonymGroupId, terms),
+                (conn) -> conn.ftSynupdate(index, synonymGroupId, terms), CommandType.FT_SYNUPDATE);
+    }
+
+    @Override
+    public RedisFuture<String> ftSynupdate(String index, String synonymGroupId, SynUpdateArgs args, String... terms) {
+        return routeKeyless(() -> super.ftSynupdate(index, synonymGroupId, args, terms),
+                (conn) -> conn.ftSynupdate(index, synonymGroupId, args, terms), CommandType.FT_SYNUPDATE);
+    }
+
+    @Override
+    public RedisFuture<AggregationReply<K>> ftCursorread(String index, Cursor cursor, int count) {
+        if (cursor == null) {
+            CompletableFuture<AggregationReply<K>> failed = new CompletableFuture<>();
+            failed.completeExceptionally(new IllegalArgumentException("cursor must not be null"));
+            return new PipelinedRedisFuture<>(failed);
+        }
+        long cursorId = cursor.getCursorId();
+        if (cursorId <= 0) {
+            return new PipelinedRedisFuture<>(CompletableFuture.completedFuture(new AggregationReply<>()));
+        }
+        Optional<String> nodeIdOpt = cursor.getNodeId();
+        if (!nodeIdOpt.isPresent()) {
+            CompletableFuture<AggregationReply<K>> failed = new CompletableFuture<>();
+            failed.completeExceptionally(
+                    new IllegalArgumentException("Cursor missing nodeId; cannot route cursor READ in cluster mode"));
+            return new PipelinedRedisFuture<>(failed);
+        }
+        String nodeId = nodeIdOpt.get();
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.READ);
+        RedisFuture<AggregationReply<K>> f = byNode.async().ftCursorread(index, cursor, count);
+        CompletableFuture<AggregationReply<K>> mapped = new CompletableFuture<>();
+        f.whenComplete((reply, err) -> {
+            if (err != null) {
+                mapped.completeExceptionally(err);
+                return;
+            }
+            if (reply != null) {
+                reply.getCursor().ifPresent(c -> c.setNodeId(nodeId));
+            }
+            mapped.complete(reply);
+        });
+        return new PipelinedRedisFuture<>(mapped);
+    }
+
+    @Override
+    public RedisFuture<AggregationReply<K>> ftCursorread(String index, Cursor cursor) {
+        return ftCursorread(index, cursor, -1);
+    }
+
+    @Override
+    public RedisFuture<String> ftCursordel(String index, Cursor cursor) {
+        if (cursor == null) {
+            CompletableFuture<String> failed = new CompletableFuture<>();
+            failed.completeExceptionally(new IllegalArgumentException("cursor must not be null"));
+            return new PipelinedRedisFuture<>(failed);
+        }
+        long cursorId = cursor.getCursorId();
+        if (cursorId <= 0) {
+            return new PipelinedRedisFuture<>(CompletableFuture.completedFuture("OK"));
+        }
+        Optional<String> nodeIdOpt = cursor.getNodeId();
+        if (!nodeIdOpt.isPresent()) {
+            CompletableFuture<String> failed = new CompletableFuture<>();
+            failed.completeExceptionally(
+                    new IllegalArgumentException("Cursor missing nodeId; cannot route cursor DEL in cluster mode"));
+            return new PipelinedRedisFuture<>(failed);
+        }
+        String nodeId = nodeIdOpt.get();
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
+        return byNode.async().ftCursordel(index, cursor);
+    }
+
+    /**
+     * Route a keyless RediSearch command using cluster-aware connection selection.
+     * <p>
+     * Honors the current ReadFrom policy and the READ/WRITE intent derived from {@code commandType}. If routing fails, falls
+     * back to {@code superCall} to preserve existing behavior.
+     *
+     * @param superCall supplier of the superclass implementation used as a fallback
+     * @param routedCall function invoked with a node-scoped async connection to execute the command
+     * @param commandType protocol command used to classify READ vs WRITE intent
+     * @param <R> result type
+     * @return RedisFuture wrapping the routed execution
+     */
+    <R> RedisFuture<R> routeKeyless(Supplier<RedisFuture<R>> superCall,
+            Function<RedisAsyncCommands<K, V>, CompletionStage<R>> routedCall, ProtocolKeyword commandType) {
+
+        ConnectionIntent intent = getConnectionIntent(commandType);
+
+        CompletableFuture<R> future = getRandomStatefulConnection(intent).thenApply(StatefulRedisConnection::async)
+                .thenCompose(routedCall).handle((res, err) -> {
+                    if (err != null) {
+                        logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
+                        return superCall.get().toCompletableFuture();
+                    }
+                    return CompletableFuture.completedFuture(res);
+                }).thenCompose(Function.identity());
+
+        return new PipelinedRedisFuture<>(future);
+    }
+
+    /**
+     * Route a keyless RediSearch command with node context.
+     * <p>
+     * Obtains the executing node id via CLUSTER MYID on the selected node and passes it to {@code routedCall}, allowing reply
+     * stamping (e.g., cursor.nodeId). Honors ReadFrom and READ/WRITE intent. If routing fails, falls back to {@code superCall}
+     * to preserve existing behavior.
+     *
+     * @param superCall supplier of the superclass implementation used as a fallback
+     * @param routedCall bi-function receiving {@code nodeId} and a node-scoped cluster async connection
+     * @param commandType protocol command used to classify READ vs WRITE intent
+     * @param <R> result type
+     * @return RedisFuture wrapping the routed execution
+     */
+    <R> RedisFuture<R> routeKeyless(Supplier<RedisFuture<R>> superCall,
+            BiFunction<String, RedisClusterAsyncCommands<K, V>, CompletionStage<R>> routedCall, ProtocolKeyword commandType) {
+
+        ConnectionIntent intent = getConnectionIntent(commandType);
+
+        CompletableFuture<R> future = getRandomStatefulConnection(intent).thenCompose(conn -> {
+            RedisClusterAsyncCommands<K, V> async = conn.async();
+            return async.clusterMyId().toCompletableFuture().thenCompose(nodeId -> routedCall.apply(nodeId, async));
+        }).handle((res, err) -> {
+            if (err != null) {
+                logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
+                return superCall.get().toCompletableFuture();
+            }
+            return CompletableFuture.completedFuture(res);
+        }).thenCompose(Function.identity());
+
+        return new PipelinedRedisFuture<>(future);
+    }
+
+    private ConnectionIntent getConnectionIntent(ProtocolKeyword commandType) {
+        try {
+            RedisCommand probe = new Command(commandType, null);
+            boolean isReadOnly = getStatefulConnection().getOptions().getReadOnlyCommands().isReadOnly(probe);
+            return isReadOnly ? ConnectionIntent.READ : ConnectionIntent.WRITE;
+        } catch (Exception e) {
+            logger.error("Error while determining connection intent for " + commandType, e);
+            return ConnectionIntent.WRITE;
+        }
+    }
+
     private <T extends ScanCursor> RedisFuture<T> clusterScan(ScanCursor cursor,
             BiFunction<RedisKeyAsyncCommands<K, V>, ScanCursor, RedisFuture<T>> scanFunction,
             ScanCursorMapper<RedisFuture<T>> resultMapper) {
@@ -766,8 +1164,121 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         String currentNodeId = ClusterScanSupport.getCurrentNodeId(cursor, nodeIds);
         ScanCursor continuationCursor = ClusterScanSupport.getContinuationCursor(cursor);
 
-        RedisFuture<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).async(), continuationCursor);
+        CompletionStage<T> stage = connection.getConnectionAsync(currentNodeId)
+                .thenCompose(conn -> scanFunction.apply(conn.async(), continuationCursor).toCompletableFuture());
+
+        RedisFuture<T> scanCursor = new PipelinedRedisFuture<>(stage);
         return mapper.map(nodeIds, currentNodeId, scanCursor);
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsFilter filter) {
+        return routeKeyless(() -> super.tsMGet(filter), conn -> conn.tsMGet(filter), CommandType.TS_MGET);
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsFilter... filters) {
+        return routeKeyless(() -> super.tsMGet(filters), conn -> conn.tsMGet(filters), CommandType.TS_MGET);
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs args, TsFilter filter) {
+        return routeKeyless(() -> super.tsMGet(args, filter), conn -> conn.tsMGet(args, filter), CommandType.TS_MGET);
+    }
+
+    @Override
+    public RedisFuture<List<TsMGetValue<K>>> tsMGet(TsMGetArgs args, TsFilter... filters) {
+        return routeKeyless(() -> super.tsMGet(args, filters), conn -> conn.tsMGet(args, filters), CommandType.TS_MGET);
+    }
+
+    @Override
+    public RedisFuture<List<K>> tsQueryIndex(TsFilter filter) {
+        return routeKeyless(() -> super.tsQueryIndex(filter), conn -> conn.tsQueryIndex(filter), CommandType.TS_QUERYINDEX);
+    }
+
+    @Override
+    public RedisFuture<List<K>> tsQueryIndex(TsFilter... filters) {
+        return routeKeyless(() -> super.tsQueryIndex(filters), conn -> conn.tsQueryIndex(filters), CommandType.TS_QUERYINDEX);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRange(Range<Long> range, TsFilter filter) {
+        return routeKeyless(() -> super.tsMRange(range, filter), conn -> conn.tsMRange(range, filter), CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRange(Range<Long> range, TsFilter... filters) {
+        return routeKeyless(() -> super.tsMRange(range, filters), conn -> conn.tsMRange(range, filters), CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter filter) {
+        return routeKeyless(() -> super.tsMRange(range, args, filter), conn -> conn.tsMRange(range, args, filter),
+                CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters) {
+        return routeKeyless(() -> super.tsMRange(range, args, filters), conn -> conn.tsMRange(range, args, filters),
+                CommandType.TS_MRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsFilter filter) {
+        return routeKeyless(() -> super.tsMRevRange(range, filter), conn -> conn.tsMRevRange(range, filter),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsFilter... filters) {
+        return routeKeyless(() -> super.tsMRevRange(range, filters), conn -> conn.tsMRevRange(range, filters),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter filter) {
+        return routeKeyless(() -> super.tsMRevRange(range, args, filter), conn -> conn.tsMRevRange(range, args, filter),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<TsSeries<K>>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters) {
+        return routeKeyless(() -> super.tsMRevRange(range, args, filters), conn -> conn.tsMRevRange(range, args, filters),
+                CommandType.TS_MREVRANGE);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabels() {
+        return routeKeyless(() -> super.tsQueryLabels(), conn -> conn.tsQueryLabels(), CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabels(TsFilter filter) {
+        return routeKeyless(() -> super.tsQueryLabels(filter), conn -> conn.tsQueryLabels(filter), CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabels(TsFilter... filters) {
+        return routeKeyless(() -> super.tsQueryLabels(filters), conn -> conn.tsQueryLabels(filters),
+                CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabelValues(String label) {
+        return routeKeyless(() -> super.tsQueryLabelValues(label), conn -> conn.tsQueryLabelValues(label),
+                CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabelValues(String label, TsFilter filter) {
+        return routeKeyless(() -> super.tsQueryLabelValues(label, filter), conn -> conn.tsQueryLabelValues(label, filter),
+                CommandType.TS_QUERYLABELS);
+    }
+
+    @Override
+    public RedisFuture<List<String>> tsQueryLabelValues(String label, TsFilter... filters) {
+        return routeKeyless(() -> super.tsQueryLabelValues(label, filters), conn -> conn.tsQueryLabelValues(label, filters),
+                CommandType.TS_QUERYLABELS);
     }
 
 }

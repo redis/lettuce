@@ -28,6 +28,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.Delegating;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.ExceptionFactory;
@@ -45,7 +46,7 @@ import io.netty.util.Timer;
  * @since 5.1
  * @see io.lettuce.core.TimeoutOptions
  */
-public class CommandExpiryWriter implements RedisChannelWriter {
+public class CommandExpiryWriter implements RedisChannelWriter, Delegating<RedisChannelWriter> {
 
     private final RedisChannelWriter delegate;
 
@@ -59,7 +60,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     private final boolean applyConnectionTimeout;
 
-    private volatile long timeout = -1;
+    volatile long timeout = -1;
 
     /**
      * Create a new {@link CommandExpiryWriter}.
@@ -81,6 +82,25 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         this.timeUnit = source.getTimeUnit();
         this.executorService = clientResources.eventExecutorGroup();
         this.timer = clientResources.timer();
+    }
+
+    /**
+     * Create a new {@link CommandExpiryWriter} or {@link MaintenanceAwareExpiryWriter} depending on the {@link ClientOptions}
+     * configuration.
+     *
+     * @param delegate must not be {@code null}.
+     * @param clientOptions must not be {@code null}.
+     * @param clientResources must not be {@code null}.
+     * @return the {@link CommandExpiryWriter} or {@link MaintenanceAwareExpiryWriter}.
+     * @since 7.0
+     */
+    public static RedisChannelWriter buildCommandExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions,
+            ClientResources clientResources) {
+        if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
+            return new MaintenanceAwareExpiryWriter(delegate, clientOptions, clientResources);
+        } else {
+            return new CommandExpiryWriter(delegate, clientOptions, clientResources);
+        }
     }
 
     /**

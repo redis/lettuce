@@ -11,6 +11,7 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
 import java.util.Optional;
+import java.util.OptionalDouble;
 
 /**
  * Argument list builder for the Redis <a href="https://redis.io/docs/latest/commands/vsim/">VSIM</a> command. Static import the
@@ -35,6 +36,8 @@ public class VSimArgs implements CompositeArgument {
     private Optional<Boolean> truth = Optional.empty();
 
     private Optional<Boolean> noThread = Optional.empty();
+
+    private Optional<Double> epsilon = Optional.empty();
 
     /**
      * Builder entry points for {@link VSimArgs}.
@@ -266,9 +269,27 @@ public class VSimArgs implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Sets the EPSILON distance cutoff for approximate vector similarity matching; results must have similarity ≥ 1 − epsilon.
+     * In other words, this is a maximum distance threshold used to filter VSIM results.
+     *
+     * @param delta the similarity threshold delta value, must be within [0.0, 1.0] inclusive
+     * @return {@code this}
+     * @throws IllegalArgumentException if delta is outside the valid range [0.0, 1.0]
+     */
+    public VSimArgs epsilon(double delta) {
+        if (delta < 0.0 || delta > 1.0) {
+            throw new IllegalArgumentException("EPSILON must be in range [0.0, 1.0], got: " + delta);
+        }
+        this.epsilon = Optional.of(delta);
+        return this;
+    }
+
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
         count.ifPresent(Long -> args.add(CommandKeyword.COUNT).add(Long));
+
+        epsilon.ifPresent(d -> args.add(CommandKeyword.EPSILON).add(d));
 
         explorationFactor.ifPresent(Long -> args.add(CommandKeyword.EF).add(Long));
 

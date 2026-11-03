@@ -26,9 +26,11 @@ import io.lettuce.core.TransactionResult
  * Allows to create transaction DSL block with [RedisCoroutinesCommands].
  *
  * @author Mikhael Sokolov
+ * @author Euiyoung Nam
  * @since 6.0
  * @deprecated since 6.1.6
  */
+@Deprecated("since 6.1.6, coroutine transaction DSL commands complete only after EXEC")
 @ExperimentalLettuceCoroutinesApi
 suspend inline fun <K : Any, V : Any> RedisCoroutinesCommands<K, V>.multi(action: RedisCoroutinesCommands<K, V>.() -> Unit): TransactionResult? = try {
     multi()

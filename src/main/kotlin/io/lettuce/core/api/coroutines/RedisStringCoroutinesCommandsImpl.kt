@@ -63,6 +63,18 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun bitopXor(destination: K, vararg keys: K): Long? =
         ops.bitopXor(destination, *keys).awaitFirstOrNull()
 
+    override suspend fun bitopDiff(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopDiff(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopDiff1(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopDiff1(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopAndor(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopAndor(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopOne(destination: K, vararg keys: K): Long? =
+        ops.bitopOne(destination, *keys).awaitFirstOrNull()
+
     override suspend fun decr(key: K): Long? = ops.decr(key).awaitFirstOrNull()
 
     override suspend fun decrby(key: K, amount: Long): Long? =
@@ -81,9 +93,6 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun getrange(key: K, start: Long, end: Long): V? =
         ops.getrange(key, start, end).awaitFirstOrNull()
 
-    override suspend fun getset(key: K, value: V): V? =
-        ops.getset(key, value).awaitFirstOrNull()
-
     override suspend fun incr(key: K): Long? = ops.incr(key).awaitFirstOrNull()
 
     override suspend fun incrby(key: K, amount: Long): Long? =
@@ -92,11 +101,22 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun incrbyfloat(key: K, amount: Double): Double? =
         ops.incrbyfloat(key, amount).awaitFirstOrNull()
 
+    override suspend fun increx(key: K): IncrexValue<Long>? =
+        ops.increx(key).awaitFirstOrNull()
+
+    override suspend fun increx(key: K, amount: Long, increxArgs: IncrexArgs): IncrexValue<Long>? =
+        ops.increx(key, amount, increxArgs).awaitFirstOrNull()
+
+    override suspend fun increx(key: K, amount: Double, increxArgs: IncrexFloatArgs): IncrexValue<Double>? =
+        ops.increx(key, amount, increxArgs).awaitFirstOrNull()
+
     override fun mget(vararg keys: K): Flow<KeyValue<K, V>> = ops.mget(*keys).asFlow()
 
     override suspend fun mset(map: Map<K, V>): String? = ops.mset(map).awaitFirstOrNull()
 
     override suspend fun msetnx(map: Map<K, V>): Boolean? = ops.msetnx(map).awaitFirstOrNull()
+
+    override suspend fun msetex(map: Map<K, V>, args: MSetExArgs): Boolean? = ops.msetex(map, args).awaitFirstOrNull()
 
     override suspend fun set(key: K, value: V): String? = ops.set(key, value).awaitFirstOrNull()
 
@@ -108,15 +128,15 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun setbit(key: K, offset: Long, value: Int): Long? = ops.setbit(key, offset, value).awaitFirstOrNull()
 
-    override suspend fun setex(key: K, seconds: Long, value: V): String? = ops.setex(key, seconds, value).awaitFirstOrNull()
-
-    override suspend fun psetex(key: K, milliseconds: Long, value: V): String? = ops.psetex(key, milliseconds, value).awaitFirstOrNull()
-
-    override suspend fun setnx(key: K, value: V): Boolean? = ops.setnx(key, value).awaitFirstOrNull()
-
     override suspend fun setrange(key: K, offset: Long, value: V): Long? = ops.setrange(key, offset, value).awaitFirstOrNull()
 
+    @Suppress("DEPRECATION")
     override suspend fun lcs(lcsArgs: LcsArgs): StringMatchResult? = ops.lcs(lcsArgs).awaitFirstOrNull()
+
+    override suspend fun lcs(key1: K, key2: K): V? = ops.lcs(key1, key2).awaitFirstOrNull()
+
+    override suspend fun lcs(key1: K, key2: K, lcsArgs: LcsArgs): StringMatchResult? =
+        ops.lcs(key1, key2, lcsArgs).awaitFirstOrNull()
 
     override suspend fun strlen(key: K): Long? = ops.strlen(key).awaitFirstOrNull()
 

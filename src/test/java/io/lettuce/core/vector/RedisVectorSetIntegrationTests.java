@@ -35,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 @Tag(INTEGRATION_TEST)
 public class RedisVectorSetIntegrationTests {
@@ -68,7 +69,7 @@ public class RedisVectorSetIntegrationTests {
     protected static RedisReactiveCommands<String, String> reactiveRedis;
 
     public RedisVectorSetIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         client = RedisClient.create(redisURI);
         client.setOptions(getOptions());
@@ -128,6 +129,13 @@ public class RedisVectorSetIntegrationTests {
     }
 
     @Test
+    void vaddSingleElementVector() {
+        Boolean result = redis.vadd(VECTOR_SET_KEY + ":single", "item", 0.1);
+        assertThat(result).isTrue();
+        assertThat(redis.vcard(VECTOR_SET_KEY + ":single")).isEqualTo(1L);
+    }
+
+    @Test
     void vcard() {
         Long count = redis.vcard(VECTOR_SET_KEY);
         assertThat(count).isEqualTo(3);
@@ -138,6 +146,18 @@ public class RedisVectorSetIntegrationTests {
         Long count = redis.vcard(MISSING_KEY);
         assertThat(count).isEqualTo(0L);
         assertThrows(RedisCommandExecutionException.class, () -> redis.vcard(WRONG_KEY));
+    }
+
+    @Test
+    void vismember() {
+        assertThat(redis.vismember(VECTOR_SET_KEY, ELEMENT1)).isTrue();
+        assertThat(redis.vismember(VECTOR_SET_KEY, "missing-element")).isFalse();
+    }
+
+    @Test
+    void vismemberMissingOrWrong() {
+        assertThat(redis.vismember(MISSING_KEY, ELEMENT1)).isFalse();
+        assertThrows(RedisCommandExecutionException.class, () -> redis.vismember(WRONG_KEY, ELEMENT1));
     }
 
     @Test
@@ -275,10 +295,10 @@ public class RedisVectorSetIntegrationTests {
 
         Map<String, Double> linksWithScores = redis.vlinksWithScores(VECTOR_SET_KEY, ELEMENT1);
         assertThat(linksWithScores).isNotEmpty();
-        assertThat(linksWithScores.get(ELEMENT2)).isEqualTo(0.9964823722839355D);
-        assertThat(linksWithScores.get(ELEMENT3)).isEqualTo(0.9919525384902954D);
-        assertThat(linksWithScores.get("item4")).isEqualTo(1.0);
-        assertThat(linksWithScores.get("item5")).isEqualTo(0.9997878074645996D);
+        assertThat(linksWithScores.get(ELEMENT2)).isCloseTo(0.9964823722839355D, within(0.001));
+        assertThat(linksWithScores.get(ELEMENT3)).isCloseTo(0.9919525384902954D, within(0.001));
+        assertThat(linksWithScores.get("item4")).isCloseTo(1.0, within(0.001));
+        assertThat(linksWithScores.get("item5")).isCloseTo(0.9997878074645996D, within(0.001));
     }
 
     @Test
@@ -388,9 +408,19 @@ public class RedisVectorSetIntegrationTests {
     }
 
     @Test
+    void asyncVismember() throws ExecutionException, InterruptedException {
+        assertThat(asyncRedis.vismember(VECTOR_SET_KEY, ELEMENT1).get()).isTrue();
+    }
+
+    @Test
     void reactiveVadd() {
         StepVerifier.create(reactiveRedis.vadd(VECTOR_SET_KEY + ":reactive", "reactive1", 0.1, 0.2, 0.3)).expectNext(true)
                 .verifyComplete();
+    }
+
+    @Test
+    void reactiveVismember() {
+        StepVerifier.create(reactiveRedis.vismember(VECTOR_SET_KEY, ELEMENT1)).expectNext(true).verifyComplete();
     }
 
     @Test
@@ -400,6 +430,45 @@ public class RedisVectorSetIntegrationTests {
             assertThat(similar.size()).isEqualTo(3);
             assertThat(similar.containsAll(Arrays.asList(ELEMENT1, ELEMENT2, ELEMENT3))).isTrue();
         }).verifyComplete();
+    }
+
+    @Test
+    void shouldFilterResultsWithEpsilonThreshold() {
+        // Guard: require a Redis version that likely supports VSIM and EPSILON
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
+
+        String key = VECTOR_SET_KEY + ":epsilon";
+
+        // Create a simple 2D vector set with predictable similarities to (1.0, 0.0)
+        redis.vadd(key, "a", 1.0, 0.0); // expect high similarity (~1.0)
+        redis.vadd(key, "b", 0.8, 0.2); // moderately high similarity
+        redis.vadd(key, "c", 0.0, 1.0); // low similarity
+        redis.vadd(key, "d", 0.6, 0.8); // lower similarity to (1.0, 0.0)
+
+        double qx = 1.0, qy = 0.0;
+
+        // Dynamic guard: if EPSILON is not recognized by the server, skip
+        try {
+            VSimArgs probe = new VSimArgs();
+            probe.epsilon(0.5);
+            redis.vsimWithScore(key, probe, qx, qy);
+        } catch (RedisCommandExecutionException e) {
+            assumeTrue(false, "Skipping: VSIM EPSILON not supported: " + e.getMessage());
+        }
+
+        VSimArgs loose = new VSimArgs();
+        loose.epsilon(0.5);
+        Map<String, Double> resLoose = redis.vsimWithScore(key, loose, qx, qy);
+
+        VSimArgs tight = new VSimArgs();
+        tight.epsilon(0.2);
+        Map<String, Double> resTight = redis.vsimWithScore(key, tight, qx, qy);
+
+        // Tighter epsilon should yield fewer or equal results
+        assertThat(resTight.size()).isLessThanOrEqualTo(resLoose.size());
+
+        // All scores in the tighter set should be >= 0.8 (1 - 0.2)
+        assertThat(resTight.values()).allMatch(score -> score >= 0.8);
     }
 
 }

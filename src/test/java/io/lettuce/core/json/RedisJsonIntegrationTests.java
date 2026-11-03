@@ -19,10 +19,14 @@ import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
+import io.lettuce.core.json.arguments.JsonSetArgs;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import reactor.test.StepVerifier;
@@ -39,8 +43,12 @@ import java.util.concurrent.ExecutionException;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import io.lettuce.test.resource.ModulesTestUri;
 
 @Tag(INTEGRATION_TEST)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RedisJsonIntegrationTests {
 
     private static final String BIKES_INVENTORY = "bikes:inventory";
@@ -58,10 +66,15 @@ public class RedisJsonIntegrationTests {
     protected static RedisCommands<String, String> redis;
 
     public RedisJsonIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         client = RedisClient.create(redisURI);
+        client.setOptions(getOptions());
         redis = client.connect().sync();
+    }
+
+    protected ClientOptions getOptions() {
+        return ClientOptions.builder().build();
     }
 
     @BeforeEach
@@ -73,6 +86,11 @@ public class RedisJsonIntegrationTests {
         JsonValue value = redis.getJsonParser().createJsonValue(read);
 
         redis.jsonSet("bikes:inventory", JsonPath.ROOT_PATH, value);
+    }
+
+    @AfterEach
+    public void cleanup() {
+        redis.flushall();
     }
 
     @AfterAll
@@ -92,6 +110,31 @@ public class RedisJsonIntegrationTests {
         List<Long> appendedElements = redis.jsonArrappend(BIKES_INVENTORY, myPath, element);
         assertThat(appendedElements).hasSize(1);
         assertThat(appendedElements.get(0)).isEqualTo(4);
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { MOUNTAIN_BIKES_V1, MOUNTAIN_BIKES_V2 })
+    void jsonArrappendStringOverload(String path) {
+        JsonPath myPath = JsonPath.of(path);
+
+        List<Long> appendedElements = redis.jsonArrappend(BIKES_INVENTORY, myPath, "\"{id:bike7}\"");
+        assertThat(appendedElements).hasSize(1);
+        assertThat(appendedElements.get(0)).isEqualTo(4);
+
+        // Verify appended content
+        List<JsonValue> value = redis.jsonGet(BIKES_INVENTORY, myPath);
+        assertThat(value).hasSize(1);
+        if (path.startsWith("$")) {
+            JsonArray matches = value.get(0).asJsonArray();
+            assertThat(matches.size()).isEqualTo(1);
+            JsonArray arr = matches.get(0).asJsonArray();
+            String last = arr.get(arr.size() - 1).toString();
+            assertThat(last).isEqualTo("\"{id:bike7}\"");
+        } else {
+            JsonArray arr = value.get(0).asJsonArray();
+            String last = arr.get(arr.size() - 1).toString();
+            assertThat(last).isEqualTo("\"{id:bike7}\"");
+        }
     }
 
     @ParameterizedTest(name = "With {0} as path")
@@ -386,6 +429,26 @@ public class RedisJsonIntegrationTests {
         assertThat(value.get(0).longValue()).isEqualTo(1933L);
     }
 
+    @Test
+    void jsonNumincrbyMultiplePaths() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[*].price");
+
+        List<Number> value = redis.jsonNumincrby(BIKES_INVENTORY, myPath, 0.5);
+        assertThat(value).hasSize(3);
+        assertThat(value.get(0).doubleValue()).isEqualTo(1928.5);
+        assertThat(value.get(1).doubleValue()).isEqualTo(2072.5);
+        assertThat(value.get(2).doubleValue()).isEqualTo(3264.5);
+    }
+
+    @Test
+    void jsonNumincrbyNonNumericPath() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[0].model");
+
+        List<Number> value = redis.jsonNumincrby(BIKES_INVENTORY, myPath, 5L);
+        assertThat(value).hasSize(1);
+        assertThat(value.get(0)).isNull();
+    }
+
     @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { MOUNTAIN_BIKES_V1 + "[1]", MOUNTAIN_BIKES_V2 + "[1]" })
     void jsonObjkeys(String path) {
@@ -433,6 +496,78 @@ public class RedisJsonIntegrationTests {
 
         String result = redis.jsonSet(BIKES_INVENTORY, myPath, bikeRecord);
         assertThat(result).isEqualTo("OK");
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { MOUNTAIN_BIKES_V1, MOUNTAIN_BIKES_V2 })
+    void jsonSetStringAndGet(String path) {
+        JsonPath myPath = JsonPath.of(path);
+
+        // Set using String overload, then get and verify
+        String payload = "{\"id\":\"bike:99\",\"model\":\"Stringy\"}";
+        String res = redis.jsonSet(BIKES_INVENTORY, myPath, payload);
+        assertThat(res).isEqualTo("OK");
+
+        List<JsonValue> got = redis.jsonGet(BIKES_INVENTORY, myPath);
+        assertThat(got).hasSize(1);
+        // For $-prefixed paths, RedisJSON returns arrays of matches
+        if (path.startsWith("$")) {
+            assertThat(got.get(0).isJsonArray()).isTrue();
+            assertThat(got.get(0).asJsonArray().size()).isEqualTo(1);
+            assertThat(got.get(0).asJsonArray().get(0).isJsonObject()).isTrue();
+            assertThat(got.get(0).asJsonArray().get(0).asJsonObject().get("id").asString()).isEqualTo("bike:99");
+            assertThat(got.get(0).asJsonArray().get(0).asJsonObject().get("model").asString()).isEqualTo("Stringy");
+        } else {
+            assertThat(got.get(0).isJsonObject()).isTrue();
+            assertThat(got.get(0).asJsonObject().get("id").asString()).isEqualTo("bike:99");
+            assertThat(got.get(0).asJsonObject().get("model").asString()).isEqualTo("Stringy");
+        }
+    }
+
+    @Test
+    void jsonSetWithFphaFp32() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.8"));
+        JsonParser parser = redis.getJsonParser();
+        JsonValue numericArray = parser.createJsonValue("[1.0, 2.0, 3.0]");
+        JsonSetArgs args = JsonSetArgs.Builder.fpha(JsonSetArgs.FphaType.FP32);
+
+        String result = redis.jsonSet("fpha:test", JsonPath.ROOT_PATH, numericArray, args);
+        assertThat(result).isEqualTo("OK");
+
+        List<JsonValue> fetched = redis.jsonGet("fpha:test", JsonPath.ROOT_PATH);
+        assertNotNull(fetched.get(0).asJsonArray());
+        assertThat(fetched.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("[1.0,2.0,3.0]");
+    }
+
+    @Test
+    void jsonSetWithNxAndFpha() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.8"));
+        JsonParser parser = redis.getJsonParser();
+        JsonValue numericArray = parser.createJsonValue("[4.0, 5.0, 6.0]");
+        JsonSetArgs args = JsonSetArgs.Builder.nx().fpha(JsonSetArgs.FphaType.FP64);
+
+        String result = redis.jsonSet("fpha:nxtest", JsonPath.ROOT_PATH, numericArray, args);
+        assertThat(result).isEqualTo("OK");
+
+        List<JsonValue> fetched = redis.jsonGet("fpha:nxtest", JsonPath.ROOT_PATH);
+        assertNotNull(fetched.get(0).asJsonArray());
+        assertThat(fetched.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("[4.0,5.0,6.0]");
+
+        // Second set with NX should return null since key already exists
+        String result2 = redis.jsonSet("fpha:nxtest", JsonPath.ROOT_PATH, numericArray, args);
+        assertThat(result2).isNull();
+    }
+
+    @Test
+    void jsonSetStringWithFpha() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.8"));
+        JsonSetArgs args = JsonSetArgs.Builder.fpha(JsonSetArgs.FphaType.BF16);
+        String result = redis.jsonSet("fpha:strtest", JsonPath.ROOT_PATH, "[1.5, 2.5, 3.5]", args);
+        assertThat(result).isEqualTo("OK");
+
+        List<JsonValue> fetched = redis.jsonGet("fpha:strtest", JsonPath.ROOT_PATH);
+        assertNotNull(fetched.get(0).asJsonArray());
+        assertThat(fetched.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("[1.5,2.5,3.5]");
     }
 
     @ParameterizedTest(name = "With {0} as path")
@@ -614,7 +749,7 @@ public class RedisJsonIntegrationTests {
 
     @Test
     void withCustomParser() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+        RedisURI redisURI = ModulesTestUri.create();
 
         try (RedisClient client = RedisClient.create(redisURI)) {
             client.setOptions(ClientOptions.builder().jsonParser(CustomParser::new).build());
@@ -656,6 +791,51 @@ public class RedisJsonIntegrationTests {
             return null;
         }
 
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { "..mountain_bikes[0:2].model", "$..mountain_bikes[0:2].model" })
+    void jsonGetRaw(String path) {
+        JsonPath myPath = JsonPath.of(path);
+        List<String> value = redis.jsonGetRaw(BIKES_INVENTORY, myPath);
+        assertThat(value).hasSize(1);
+        if (path.startsWith("$")) {
+            assertThat(value.get(0)).isEqualTo("[\"Phoebe\",\"Quaoar\"]");
+        } else {
+            assertThat(value.get(0)).isEqualTo("\"Phoebe\"");
+        }
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { "..model", "$..model" })
+    void jsonMGetRaw(String path) {
+        JsonPath myPath = JsonPath.of(path);
+        List<String> value = redis.jsonMGetRaw(myPath, BIKES_INVENTORY);
+        assertThat(value).hasSize(1);
+        if (path.startsWith("$")) {
+            assertThat(value.get(0)).isEqualTo("[\"Phoebe\",\"Quaoar\",\"Weywot\"]");
+        } else {
+            assertThat(value.get(0)).isEqualTo("\"Phoebe\"");
+        }
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { MOUNTAIN_BIKES_V1, MOUNTAIN_BIKES_V2 })
+    void jsonArrpopRaw(String path) {
+        JsonPath myPath = JsonPath.of(path);
+        List<String> poppedJson = redis.jsonArrpopRaw(BIKES_INVENTORY, myPath);
+        assertThat(poppedJson).hasSize(1);
+        assertThat(poppedJson.get(0)).contains(
+                "{\"id\":\"bike:3\",\"model\":\"Weywot\",\"description\":\"This bike gives kids aged six years and old");
+    }
+
+    @Test
+    public void jsonArrpopRawEmptyArray() {
+        JsonValue value = redis.getJsonParser().createJsonValue("[\"one\"]");
+        redis.jsonSet("myKey", JsonPath.ROOT_PATH, value);
+        List<String> result = redis.jsonArrpopRaw("myKey");
+        assertThat(result.toString()).isEqualTo("[\"one\"]");
+        assertThat(redis.jsonGetRaw("myKey").get(0)).isEqualTo("[]");
     }
 
 }
