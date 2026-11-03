@@ -142,8 +142,9 @@ following tags are attached to each timer:
 - `remote`: Remote socket (`localhost/127.0.0.1:6379`)
 
 Command latencies are reported using the provided `MeterRegistry`.
-Timers are registered once per distinct combination of tags and are kept
-for the lifetime of the recorder, so the `command` tag relies on custom
+Timers are registered once per distinct combination of tags and stay in
+the `MeterRegistry` until they are removed from it, even after the
+recorder is no longer used. The `command` tag therefore relies on custom
 command types (`ProtocolKeyword`) returning a stable name from
 `toString()`.
 
