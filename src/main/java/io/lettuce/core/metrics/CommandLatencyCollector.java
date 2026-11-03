@@ -18,7 +18,8 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * called with {@link CommandLatencyCollectorOptions#resetLatenciesAfterEvent()} enabled, or until {@link #shutdown()}. Memory
  * usage therefore grows with the number of distinct remote addresses and command names (see {@link ProtocolKeyword#toString()})
  * observed between two retrievals when {@link CommandLatencyCollectorOptions#resetLatenciesAfterEvent()} is enabled, or over
- * the lifetime of the collector when it is disabled.
+ * the lifetime of the collector when it is disabled. With {@link CommandLatencyCollectorOptions#localDistinction()} enabled,
+ * latency data is also kept per local address, so each new local port adds entries.
  *
  * @author Mark Paluch
  * @author Sharior Hossain Farhan
