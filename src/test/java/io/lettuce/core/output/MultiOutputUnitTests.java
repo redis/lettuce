@@ -4,6 +4,7 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,8 +13,16 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisStateMachine;
+import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsInfoValueParser;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
+import io.lettuce.core.Value;
 
 /**
  * @author Mark Paluch
@@ -169,6 +178,29 @@ class MultiOutputUnitTests {
     }
 
     @Test
+    void shouldCompleteTsInfoInDiscardedTransaction() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
+        AsyncCommand<String, String, TsInfoValue<String>> command = new AsyncCommand<>(new Command<>(CommandType.TS_INFO,
+                new EncodedComplexOutput<>(StringCodec.UTF8, new TsInfoValueParser<>(StringCodec.UTF8))));
+        output.add(command);
+
+        RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
+        ByteBuf buffer = Unpooled.copiedBuffer("*-1\r\n", StandardCharsets.US_ASCII);
+        try {
+            assertThat(rsm.decode(buffer, output)).isTrue();
+        } finally {
+            buffer.release();
+            rsm.close();
+        }
+
+        assertThat(output.get().wasDiscarded()).isTrue();
+        assertThat(command.isDone()).isTrue();
+        assertThat(command.isCompletedExceptionally()).isFalse();
+        assertThat(command.join()).isNull();
+    }
+
+    @Test
     void shouldKeepTransactionLevelStringError() {
 
         MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
@@ -177,6 +209,56 @@ class MultiOutputUnitTests {
 
         assertThat(output.hasError()).isTrue();
         assertThat(output.getError()).isEqualTo("EXECABORT");
+    }
+
+    @Test
+    void shouldForwardByteBufferErrorToErrorTolerantOutput() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
+        ErrorTolerantBooleanListOutput<String, String> errorTolerantOutput = new ErrorTolerantBooleanListOutput<>(
+                StringCodec.UTF8);
+        Command<String, String, List<Boolean>> command = new Command<>(CommandType.BF_MADD, errorTolerantOutput);
+
+        output.add(command);
+
+        // Transaction header: 1 command in EXEC reply
+        output.multi(1);
+
+        // Command returns an array of 2 elements (e.g. BF.MADD: 1 success, 1 error)
+        output.multi(2);
+        output.set(1);
+        output.setError(ByteBuffer.wrap("ERR item already exists".getBytes()));
+        output.complete(1);
+
+        assertThat(command.getOutput().hasError()).isFalse();
+        assertThat(command.getOutput().get()).containsExactly(true, null);
+        assertThat(output.hasError()).isFalse();
+        assertThat(output.get()).hasSize(1);
+    }
+
+    @Test
+    void shouldForwardByteBufferErrorToErrorTolerantValueOutput() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(StringCodec.UTF8);
+        ErrorTolerantBooleanValueListOutput<String, String> errorTolerantOutput = new ErrorTolerantBooleanValueListOutput<>(
+                StringCodec.UTF8);
+        Command<String, String, List<Value<Boolean>>> command = new Command<>(CommandType.BF_MADD, errorTolerantOutput);
+
+        output.add(command);
+
+        // Transaction header: 1 command in EXEC reply
+        output.multi(1);
+
+        // Command returns an array of 2 elements (e.g. BF.MADD: 1 success, 1 error)
+        output.multi(2);
+        output.set(1);
+        output.setError(ByteBuffer.wrap("ERR item already exists".getBytes()));
+        output.complete(1);
+
+        assertThat(command.getOutput().hasError()).isFalse();
+        assertThat(command.getOutput().get()).containsExactly(Value.fromNullable(true), Value.empty());
+        assertThat(output.hasError()).isFalse();
+        assertThat(output.get()).hasSize(1);
     }
 
     /**

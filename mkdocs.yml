@@ -62,6 +62,7 @@ nav:
       - Redis JSON: user-guide/redis-json.md
       - Redis Vector Sets: user-guide/vector-sets.md
       - Probabilistic Data Structures: user-guide/probabilistic.md
+      - Redis TimeSeries: user-guide/timeseries.md
       - Redis programmability:
           - LUA Scripting: user-guide/lua-scripting.md
           - Redis Functions: user-guide/redis-functions.md

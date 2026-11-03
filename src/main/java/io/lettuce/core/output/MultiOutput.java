@@ -140,7 +140,7 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
             return;
         }
 
-        queue.peek().getOutput().setError(decodeString(error));
+        queue.peek().getOutput().setError(error);
     }
 
     @Override
