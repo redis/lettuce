@@ -775,6 +775,17 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
+     * Scenario BRIA-C09a: {@code ZEROS} on a missing key returns an empty list in both units.
+     */
+    @Test
+    @EnabledOnCommand("BITRANGEINTARRAY")
+    void bitrangeintarrayZerosMissingKey() {
+        assertThat(redis.bitrangeintarray("bria:missing", 0, -1, BitRangeIntArrayArgs.Builder.zeros())).isNotNull().isEmpty();
+        assertThat(redis.bitrangeintarray("bria:missing", 0, -1, BitRangeIntArrayArgs.Builder.bit().zeros())).isNotNull()
+                .isEmpty();
+    }
+
+    /**
      * Scenario BRIA-C10: the number of offsets equals {@code BITCOUNT} over the same range.
      */
     @Test
