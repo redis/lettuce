@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.lettuce.core.failover.health.HealthStatusListener;
 import org.junit.jupiter.api.BeforeEach;
@@ -1348,6 +1349,9 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @Mock
         private ScheduledFuture<Object> retryFuture;
 
+        @Mock
+        private ScheduledFuture<Object> successorRetryFuture;
+
         private final Duration retryDelay = Duration.ofMillis(100);
 
         private final MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false)
@@ -1414,6 +1418,35 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
                     .onStatusChange(new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY, HealthStatus.UNHEALTHY));
 
             verify(retryFuture).cancel(false);
+        }
+
+        @Test
+        @DisplayName("Should cancel the successor retry when a retry runs before its own future is stored")
+        void shouldCancelSuccessorRetryWhenRetryRunsBeforeItsFutureIsStored() {
+            StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options);
+
+            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
+            verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
+
+            // the first retry runs on the executor before schedule() returns to its caller, and schedules a successor
+            AtomicInteger scheduleCalls = new AtomicInteger();
+            doAnswer(invocation -> {
+                if (scheduleCalls.incrementAndGet() == 1) {
+                    invocation.<Runnable> getArgument(0).run();
+                    return retryFuture;
+                }
+                return successorRetryFuture;
+            }).when(eventExecutorGroup).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+
+            makeAllDatabasesUnhealthy();
+            listenerCaptor.getValue()
+                    .onStatusChange(new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY, HealthStatus.UNHEALTHY));
+            assertThat(scheduleCalls.get()).isEqualTo(2);
+
+            connection.close();
+
+            verify(successorRetryFuture).cancel(false);
         }
 
         @Test

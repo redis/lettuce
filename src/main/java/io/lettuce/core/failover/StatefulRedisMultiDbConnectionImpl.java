@@ -1123,9 +1123,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
         private final AtomicInteger attempts = new AtomicInteger(0);
 
-        private final AtomicReference<Runnable> scheduledTask = new AtomicReference<>();
-
-        private volatile ScheduledFuture<?> scheduledFuture;
+        private final AtomicReference<RetryTask> scheduledTask = new AtomicReference<>();
 
         /**
          * Attempts to schedule a retry task after the given delay.
@@ -1148,10 +1146,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
          */
         void tryScheduleRetry(Runnable retryAction, Duration delay, ScheduledExecutorService executor) {
             // Create the task - clears the scheduled task when it starts, allowing next retry to be scheduled
-            Runnable task = () -> {
-                scheduledTask.set(null);
-                retryAction.run();
-            };
+            RetryTask task = new RetryTask(retryAction);
 
             if (closed) {
                 return;
@@ -1162,11 +1157,10 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 try {
                     int attemptCount = attempts.incrementAndGet();
                     publishAllDatabasesUnhealthyEvent(attemptCount);
-                    ScheduledFuture<?> future = executor.schedule(task, delay.toMillis(), TimeUnit.MILLISECONDS);
-                    scheduledFuture = future;
+                    task.future = executor.schedule(task, delay.toMillis(), TimeUnit.MILLISECONDS);
                     // close() may have run between the closed check above and storing the future
                     if (closed) {
-                        future.cancel(false);
+                        task.cancel();
                     }
                 } catch (RuntimeException e) {
                     logger.error("Failed to schedule failover retry task", e);
@@ -1181,9 +1175,9 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
          * Cancels the pending retry task, if any. Called when the connection is closed.
          */
         void cancel() {
-            ScheduledFuture<?> future = scheduledFuture;
-            if (future != null) {
-                future.cancel(false);
+            RetryTask task = scheduledTask.get();
+            if (task != null) {
+                task.cancel();
             }
         }
 
@@ -1192,6 +1186,35 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
          */
         void resetAttempts() {
             attempts.set(0);
+        }
+
+        /**
+         * A scheduled retry together with its own future, so that a retry scheduled by a running retry never shares or
+         * overwrites the future of its predecessor.
+         */
+        private class RetryTask implements Runnable {
+
+            private final Runnable retryAction;
+
+            private volatile ScheduledFuture<?> future;
+
+            RetryTask(Runnable retryAction) {
+                this.retryAction = retryAction;
+            }
+
+            @Override
+            public void run() {
+                scheduledTask.set(null);
+                retryAction.run();
+            }
+
+            void cancel() {
+                ScheduledFuture<?> scheduled = future;
+                if (scheduled != null) {
+                    scheduled.cancel(false);
+                }
+            }
+
         }
 
     }
