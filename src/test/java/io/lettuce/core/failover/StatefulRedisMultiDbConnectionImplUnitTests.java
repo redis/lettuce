@@ -1395,6 +1395,28 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         }
 
         @Test
+        @DisplayName("Should cancel failover retry when close races with scheduling it")
+        void shouldCancelFailoverRetryWhenCloseRacesWithScheduling() {
+            StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options);
+
+            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
+            verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
+
+            // close() runs while the retry is being scheduled, before its future is stored
+            doAnswer(invocation -> {
+                connection.close();
+                return retryFuture;
+            }).when(eventExecutorGroup).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+
+            makeAllDatabasesUnhealthy();
+            listenerCaptor.getValue()
+                    .onStatusChange(new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY, HealthStatus.UNHEALTHY));
+
+            verify(retryFuture).cancel(false);
+        }
+
+        @Test
         @DisplayName("Should cancel failover retry scheduled by the constructor when no healthy database is available")
         void shouldCancelFailoverRetryWhenConstructorFails() {
             makeAllDatabasesUnhealthy();
