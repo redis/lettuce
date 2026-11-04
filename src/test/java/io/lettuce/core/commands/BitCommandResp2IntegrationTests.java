@@ -84,7 +84,7 @@ class BitCommandResp2IntegrationTests extends BitCommandIntegrationTests {
     }
 
     /**
-     * Scenario P01: the whole value, a missing key and limited pages return identical results on RESP2 and RESP3.
+     * Scenario BRIA-P01: the whole value, a missing key and limited pages return identical results on RESP2 and RESP3.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")

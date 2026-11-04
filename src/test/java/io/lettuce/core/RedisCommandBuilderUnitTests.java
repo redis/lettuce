@@ -1653,7 +1653,7 @@ class RedisCommandBuilderUnitTests {
 
     };
     /**
-     * Scenario B01: the three-argument form sends {@code BITRANGEINTARRAY key start end}.
+     * Scenario BRIA-B01: the three-argument form sends {@code BITRANGEINTARRAY key start end}.
      */
     @Test
     void shouldCorrectlyConstructBitrangeintarray() {
@@ -1667,7 +1667,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario B02: the args form sends the range followed by the unit, {@code LIMIT count} and {@code ZEROS}.
+     * Scenario BRIA-B02: the args form sends the range followed by the unit, {@code LIMIT count} and {@code ZEROS}.
      */
     @Test
     void shouldCorrectlyConstructBitrangeintarrayWithArgs() {
@@ -1683,7 +1683,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario B03: a {@code null} key is rejected with {@link IllegalArgumentException}.
+     * Scenario BRIA-B03: a {@code null} key is rejected with {@link IllegalArgumentException}.
      */
     @Test
     void bitrangeintarrayShouldRejectNullKey() {
@@ -1694,7 +1694,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario B04: {@code null} args are rejected with {@link IllegalArgumentException}.
+     * Scenario BRIA-B04: {@code null} args are rejected with {@link IllegalArgumentException}.
      */
     @Test
     void bitrangeintarrayShouldRejectNullArgs() {
@@ -1703,7 +1703,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario B06: the extreme {@code long} values of the range are sent unchanged.
+     * Scenario BRIA-B06: the extreme {@code long} values of the range are sent unchanged.
      */
     @Test
     void bitrangeintarrayShouldSendExtremeRangeUnchanged() {

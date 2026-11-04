@@ -62,8 +62,8 @@ class StringClusterCommandIntegrationTests extends StringCommandIntegrationTests
     }
 
     /**
-     * Scenario E05: in a cluster the command is routed by its key and returns the set bit offsets, and an empty list with a
-     * limit of 0.
+     * Scenario BRIA-E05: in a cluster the command is routed by its key and returns the set bit offsets, and an empty list with
+     * a limit of 0.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
