@@ -14,6 +14,7 @@
 - `connectAsync(...)` failures now report the original cause and message, as `connect(...)` does. Previously the asynchronous path could surface a `RedisConnectionException` with a `null` message that wrapped a `CompletionException`.
 - RESP3 replies are now decoded the same way inside transactions and on Pub/Sub connections as on regular connections. On a Pub/Sub connection, a command that returns a RESP3 boolean no longer fails with `UnsupportedOperationException`. Some RESP3 map and set replies whose first element is `message` or `pmessage` are no longer mistaken for Pub/Sub messages. Before, such a reply went to the Pub/Sub listeners and the command never completed.
 - Support for the `CELL_SIZE` option on [`CMS.INITBYDIM`](https://redis.io/docs/latest/commands/cms.initbydim/) and [`CMS.INITBYPROB`](https://redis.io/docs/latest/commands/cms.initbyprob/) via a `CmsCellSize` overload of `cmsInitByDim`/`cmsInitByProb`, the `cell_size` field of [`CMS.INFO`](https://redis.io/docs/latest/commands/cms.info/) through `CMSInfoValue.getCellSize()`, and negative increments on [`CMS.INCRBY`](https://redis.io/docs/latest/commands/cms.incrby/) (Redis 8.12) — see [Probabilistic data structures](user-guide/probabilistic.md#count-min-sketch)
+- **`BITRANGEINTARRAY`.** `bitrangeintarray` returns the offsets of the set bits, or with `BitRangeIntArrayArgs.zeros()` the clear bits, in a range of a string or native bitmap, with `LIMIT` paging; Redis 8.12 and later.
 
 ### Breaking changes
 
