@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.failover.health.HealthStatusListener;
@@ -119,6 +120,9 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
     @Mock
     private EventExecutorGroup eventExecutorGroup;
 
+    @Mock
+    private ScheduledFuture<?> scheduledRetry;
+
     private RedisCodec<String, String> codec;
 
     private RedisURI uri1;
@@ -208,6 +212,50 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(null, databases, clientResources, codec,
                     connectionFactory, null, null)).isInstanceOf(IllegalArgumentException.class)
                             .hasMessageContaining("healthStatusManager must not be null");
+        }
+
+        @Test
+        @DisplayName("Should cancel retry and unregister listeners when no healthy database is available")
+        void shouldCleanUpWhenNoHealthyDatabaseIsAvailable() {
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false)
+                    .delayInBetweenFailoverAttempts(Duration.ofMillis(100)).build();
+            doAnswer(invocation -> {
+                when(healthCheck1.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck2.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                when(healthCheck3.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+                return null;
+            }).when(healthStatusManager).registerListener(any(RedisURI.class), any(HealthStatusListener.class));
+            when(eventExecutorGroup.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
+                    .thenReturn(scheduledRetry);
+
+            assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(null, databases, clientResources, codec,
+                    connectionFactory, healthStatusManager, null, options)).isInstanceOf(IllegalStateException.class)
+                            .hasMessage("No healthy database available");
+
+            ArgumentCaptor<Runnable> retryCaptor = ArgumentCaptor.forClass(Runnable.class);
+            verify(eventExecutorGroup).schedule(retryCaptor.capture(), eq(100L), eq(TimeUnit.MILLISECONDS));
+            verify(scheduledRetry).cancel(false);
+
+            ArgumentCaptor<HealthStatusListener> healthListenerCaptor = ArgumentCaptor
+                    .forClass(HealthStatusListener.class);
+            verify(healthStatusManager, times(3)).registerListener(any(RedisURI.class), healthListenerCaptor.capture());
+            HealthStatusListener healthListener = healthListenerCaptor.getValue();
+            verify(healthStatusManager).unregisterListener(uri1, healthListener);
+            verify(healthStatusManager).unregisterListener(uri2, healthListener);
+            verify(healthStatusManager).unregisterListener(uri3, healthListener);
+
+            ArgumentCaptor<CircuitBreakerStateListener> circuitBreakerListenerCaptor = ArgumentCaptor
+                    .forClass(CircuitBreakerStateListener.class);
+            verify(circuitBreaker1).addListener(circuitBreakerListenerCaptor.capture());
+            CircuitBreakerStateListener circuitBreakerListener = circuitBreakerListenerCaptor.getValue();
+            verify(circuitBreaker1).removeListener(circuitBreakerListener);
+            verify(circuitBreaker2).removeListener(circuitBreakerListener);
+            verify(circuitBreaker3).removeListener(circuitBreakerListener);
+
+            clearInvocations(eventExecutorGroup, eventBus);
+            retryCaptor.getValue().run();
+            verify(eventExecutorGroup, never()).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+            verify(eventBus, never()).publish(any(AllDatabasesUnhealthyEvent.class));
         }
 
         @Test
@@ -781,10 +829,18 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         void shouldRemoveDatabase() {
             connection.switchTo(uri1); // Make sure we're not on uri2
 
+            ArgumentCaptor<HealthStatusListener> healthListenerCaptor = ArgumentCaptor
+                    .forClass(HealthStatusListener.class);
+            verify(healthStatusManager).registerListener(eq(uri2), healthListenerCaptor.capture());
+            ArgumentCaptor<CircuitBreakerStateListener> circuitBreakerListenerCaptor = ArgumentCaptor
+                    .forClass(CircuitBreakerStateListener.class);
+            verify(circuitBreaker2).addListener(circuitBreakerListenerCaptor.capture());
+
             connection.removeDatabase(uri2);
 
             assertThat(connection.getEndpoints()).doesNotContain(uri2);
-            verify(healthStatusManager).unregisterListener(eq(uri2), any());
+            verify(healthStatusManager).unregisterListener(eq(uri2), same(healthListenerCaptor.getValue()));
+            verify(circuitBreaker2).removeListener(same(circuitBreakerListenerCaptor.getValue()));
             verify(healthStatusManager).remove(uri2);
             verify(connection2).closeAsync();
         }
@@ -1172,6 +1228,42 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
                 assertThat(events.get(0).getFailedAttempts()).isEqualTo(1);
                 assertThat(events.get(1).getFailedAttempts()).isEqualTo(2);
             }
+        }
+
+        @Test
+        @DisplayName("Should not retry or publish after the connection is closed")
+        void shouldNotRetryAfterClose() {
+            Duration retryDelay = Duration.ofMillis(100);
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false)
+                    .delayInBetweenFailoverAttempts(retryDelay).build();
+            when(eventExecutorGroup.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class)))
+                    .thenReturn(scheduledRetry);
+
+            StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection =
+                    new StatefulRedisMultiDbConnectionImpl<>(null, databases, clientResources, codec, connectionFactory,
+                            healthStatusManager, null, options);
+
+            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
+            verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
+
+            when(healthCheck1.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+            when(healthCheck2.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+            when(healthCheck3.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+            listenerCaptor.getValue().onStatusChange(
+                    new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY, HealthStatus.UNHEALTHY));
+
+            ArgumentCaptor<Runnable> retryCaptor = ArgumentCaptor.forClass(Runnable.class);
+            verify(eventExecutorGroup).schedule(retryCaptor.capture(), eq(retryDelay.toMillis()),
+                    eq(TimeUnit.MILLISECONDS));
+
+            connection.close();
+            verify(scheduledRetry).cancel(false);
+            clearInvocations(eventExecutorGroup, eventBus);
+
+            retryCaptor.getValue().run();
+
+            verify(eventExecutorGroup, never()).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+            verify(eventBus, never()).publish(any(AllDatabasesUnhealthyEvent.class));
         }
 
         @Test
