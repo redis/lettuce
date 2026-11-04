@@ -21,12 +21,17 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.ExpireArgs
+import io.lettuce.core.SAddExArgs
 import io.lettuce.core.SDiffCardArgs
 import io.lettuce.core.SUnionCardArgs
 import io.lettuce.core.ScanArgs
 import io.lettuce.core.ScanCursor
 import io.lettuce.core.ValueScanCursor
 import kotlinx.coroutines.flow.Flow
+import java.time.Duration
+import java.time.Instant
+import java.util.Date
 
 /**
  * Coroutine executed commands for Sets.
@@ -336,5 +341,812 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      */
     suspend fun sscan(key: K, scanCursor: ScanCursor): ValueScanCursor<V>?
 
-}
+    /**
+     * Set the time to live, in seconds, of one or more members of the set stored at `key`. A time to live of `0` is already
+     * in the past and deletes the members.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param seconds the time to live in seconds, must not be negative.
+     * @param members the members to set the time to live for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpire(key: K, seconds: Long, vararg members: V): List<Long>
 
+    /**
+     * Set the time to live, in seconds, of a single member of the set stored at `key`. A time to live of `0` is already in
+     * the past and deletes the member.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param seconds the time to live in seconds, must not be negative.
+     * @param member the member to set the time to live for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpire(key: K, seconds: Long, member: V): List<Long>
+
+    /**
+     * Set the time to live, in seconds, of one or more members of the set stored at `key`, applying the [ExpireArgs]
+     * condition (`NX`, `XX`, `GT` or `LT`) to each member. A member without an expiration is treated as having an infinite
+     * one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param seconds the time to live in seconds, must not be negative.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param members the members to set the time to live for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpire(key: K, seconds: Long, expireArgs: ExpireArgs, vararg members: V): List<Long>
+
+    /**
+     * Set the time to live, in seconds, of a single member of the set stored at `key`, applying the [ExpireArgs] condition
+     * (`NX`, `XX`, `GT` or `LT`) to each member. A member without an expiration is treated as having an infinite one: `LT`
+     * succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param seconds the time to live in seconds, must not be negative.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param member the member to set the time to live for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpire(key: K, seconds: Long, expireArgs: ExpireArgs, member: V): List<Long>
+
+    /**
+     * Set the time to live of one or more members of the set stored at `key`. The [Duration] is truncated to whole seconds;
+     * a duration under one second becomes `0`, which is already in the past and deletes the members.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param seconds the time to live, must not be `null`; truncated to whole seconds.
+     * @param members the members to set the time to live for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpire(key: K, seconds: Duration, vararg members: V): List<Long>
+
+    /**
+     * Set the time to live of a single member of the set stored at `key`. The [Duration] is truncated to whole seconds; a
+     * duration under one second becomes `0`, which is already in the past and deletes the member.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param seconds the time to live, must not be `null`; truncated to whole seconds.
+     * @param member the member to set the time to live for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpire(key: K, seconds: Duration, member: V): List<Long>
+
+    /**
+     * Set the time to live of one or more members of the set stored at `key`, applying the [ExpireArgs] condition (`NX`,
+     * `XX`, `GT` or `LT`) to each member. The [Duration] is truncated to whole seconds; a duration under one second becomes
+     * `0`, which is already in the past and deletes the members. A member without an expiration is treated as having an
+     * infinite one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param seconds the time to live, must not be `null`; truncated to whole seconds.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param members the members to set the time to live for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpire(key: K, seconds: Duration, expireArgs: ExpireArgs, vararg members: V): List<Long>
+
+    /**
+     * Set the time to live of a single member of the set stored at `key`, applying the [ExpireArgs] condition (`NX`, `XX`,
+     * `GT` or `LT`) to each member. The [Duration] is truncated to whole seconds; a duration under one second becomes `0`,
+     * which is already in the past and deletes the member. A member without an expiration is treated as having an infinite
+     * one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param seconds the time to live, must not be `null`; truncated to whole seconds.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param member the member to set the time to live for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpire(key: K, seconds: Duration, expireArgs: ExpireArgs, member: V): List<Long>
+
+    /**
+     * Set the time to live, in milliseconds, of one or more members of the set stored at `key`. A time to live of `0` is
+     * already in the past and deletes the members.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param milliseconds the time to live in milliseconds, must not be negative.
+     * @param members the members to set the time to live for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpire(key: K, milliseconds: Long, vararg members: V): List<Long>
+
+    /**
+     * Set the time to live, in milliseconds, of a single member of the set stored at `key`. A time to live of `0` is already
+     * in the past and deletes the member.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param milliseconds the time to live in milliseconds, must not be negative.
+     * @param member the member to set the time to live for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpire(key: K, milliseconds: Long, member: V): List<Long>
+
+    /**
+     * Set the time to live, in milliseconds, of one or more members of the set stored at `key`, applying the [ExpireArgs]
+     * condition (`NX`, `XX`, `GT` or `LT`) to each member. A member without an expiration is treated as having an infinite
+     * one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param milliseconds the time to live in milliseconds, must not be negative.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param members the members to set the time to live for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpire(key: K, milliseconds: Long, expireArgs: ExpireArgs, vararg members: V): List<Long>
+
+    /**
+     * Set the time to live, in milliseconds, of a single member of the set stored at `key`, applying the [ExpireArgs]
+     * condition (`NX`, `XX`, `GT` or `LT`) to each member. A member without an expiration is treated as having an infinite
+     * one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param milliseconds the time to live in milliseconds, must not be negative.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param member the member to set the time to live for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpire(key: K, milliseconds: Long, expireArgs: ExpireArgs, member: V): List<Long>
+
+    /**
+     * Set the time to live of one or more members of the set stored at `key`. The [Duration] is truncated to whole
+     * milliseconds; a duration under one millisecond becomes `0`, which is already in the past and deletes the members.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param milliseconds the time to live, must not be `null`; truncated to whole milliseconds.
+     * @param members the members to set the time to live for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpire(key: K, milliseconds: Duration, vararg members: V): List<Long>
+
+    /**
+     * Set the time to live of a single member of the set stored at `key`. The [Duration] is truncated to whole milliseconds;
+     * a duration under one millisecond becomes `0`, which is already in the past and deletes the member.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param milliseconds the time to live, must not be `null`; truncated to whole milliseconds.
+     * @param member the member to set the time to live for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpire(key: K, milliseconds: Duration, member: V): List<Long>
+
+    /**
+     * Set the time to live of one or more members of the set stored at `key`, applying the [ExpireArgs] condition (`NX`,
+     * `XX`, `GT` or `LT`) to each member. The [Duration] is truncated to whole milliseconds; a duration under one
+     * millisecond becomes `0`, which is already in the past and deletes the members. A member without an expiration is
+     * treated as having an infinite one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param milliseconds the time to live, must not be `null`; truncated to whole milliseconds.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param members the members to set the time to live for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpire(key: K, milliseconds: Duration, expireArgs: ExpireArgs, vararg members: V): List<Long>
+
+    /**
+     * Set the time to live of a single member of the set stored at `key`, applying the [ExpireArgs] condition (`NX`, `XX`,
+     * `GT` or `LT`) to each member. The [Duration] is truncated to whole milliseconds; a duration under one millisecond
+     * becomes `0`, which is already in the past and deletes the member. A member without an expiration is treated as having
+     * an infinite one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param milliseconds the time to live, must not be `null`; truncated to whole milliseconds.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param member the member to set the time to live for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpire(key: K, milliseconds: Duration, expireArgs: ExpireArgs, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute Unix time in seconds. A time in
+     * the past deletes the members.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Long, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute Unix time in seconds. A time in the
+     * past deletes the member.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Long, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute Unix time in seconds, applying the
+     * [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes the members. A member
+     * without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute Unix time in seconds, applying the
+     * [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes the member. A member
+     * without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with second
+     * precision. A time in the past deletes the members.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Date, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute point in time, with second precision.
+     * A time in the past deletes the member.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Date, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with second
+     * precision, applying the [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes
+     * the members. A member without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX`
+     * fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute point in time, with second precision,
+     * applying the [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes the member.
+     * A member without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with second
+     * precision. A time in the past deletes the members.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Instant, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute point in time, with second precision.
+     * A time in the past deletes the member.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Instant, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with second
+     * precision, applying the [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes
+     * the members. A member without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX`
+     * fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute point in time, with second precision,
+     * applying the [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes the member.
+     * A member without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute Unix time in milliseconds. A time
+     * in the past deletes the members.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Long, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute Unix time in milliseconds. A time in
+     * the past deletes the member.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Long, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute Unix time in milliseconds,
+     * applying the [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes the members.
+     * A member without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute Unix time in milliseconds, applying
+     * the [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes the member. A member
+     * without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX` fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with millisecond
+     * precision. A time in the past deletes the members.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Date, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute point in time, with millisecond
+     * precision. A time in the past deletes the member.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Date, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with millisecond
+     * precision, applying the [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes
+     * the members. A member without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX`
+     * fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute point in time, with millisecond
+     * precision, applying the [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes
+     * the member. A member without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX`
+     * fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with millisecond
+     * precision. A time in the past deletes the members.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Instant, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute point in time, with millisecond
+     * precision. A time in the past deletes the member.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Instant, member: V): List<Long>
+
+    /**
+     * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with millisecond
+     * precision, applying the [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes
+     * the members. A member without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX`
+     * fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param members the members to set the expiration for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `2` if the member was deleted because
+     *         the expiration is in the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT`
+     *         condition was not met; `-2` if the member does not exist (a logically expired member does not exist) or `key`
+     *         does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, vararg members: V): List<Long>
+
+    /**
+     * Set the expiration of a single member of the set stored at `key` to an absolute point in time, with millisecond
+     * precision, applying the [ExpireArgs] condition (`NX`, `XX`, `GT` or `LT`) to each member. A time in the past deletes
+     * the member. A member without an expiration is treated as having an infinite one: `LT` succeeds on it, `GT` and `XX`
+     * fail.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param timestamp the point in time at which the members expire, must not be `null`.
+     * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
+     * @param member the member to set the expiration for.
+     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
+     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
+     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, member: V): List<Long>
+
+    /**
+     * Get the remaining time to live, in seconds, of one or more members of the set stored at `key`. The value is rounded up
+     * to the next second, so a live member never returns `0`.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param members the members to get the time to live for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: the remaining time to live in seconds,
+     *         rounded up to the next second; `-1` if the member exists but has no expiration; `-2` if the member does not
+     *         exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sttl(key: K, vararg members: V): List<Long>
+
+    /**
+     * Get the remaining time to live, in seconds, of a single member of the set stored at `key`. The value is rounded up to
+     * the next second, so a live member never returns `0`.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param member the member to get the time to live for.
+     * @return a list with a single [Long] for `member`: the remaining time to live in seconds, rounded up to the
+     *         next second; `-1` if the member exists but has no expiration; `-2` if the member does not exist (a logically
+     *         expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sttl(key: K, member: V): List<Long>
+
+    /**
+     * Get the remaining time to live, in milliseconds, of one or more members of the set stored at `key`.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param members the members to get the time to live for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: the remaining time to live in
+     *         milliseconds, `0` if the member is expiring now; `-1` if the member exists but has no expiration; `-2` if the
+     *         member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spttl(key: K, vararg members: V): List<Long>
+
+    /**
+     * Get the remaining time to live, in milliseconds, of a single member of the set stored at `key`.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param member the member to get the time to live for.
+     * @return a list with a single [Long] for `member`: the remaining time to live in milliseconds, `0` if the
+     *         member is expiring now; `-1` if the member exists but has no expiration; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spttl(key: K, member: V): List<Long>
+
+    /**
+     * Get the absolute Unix time, in seconds, at which one or more members of the set stored at `key` expire. The value is
+     * rounded up to the next second.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param members the members to get the expiration time for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: the Unix time in seconds at which the
+     *         member expires, rounded up to the next second; `-1` if the member exists but has no expiration; `-2` if the
+     *         member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpiretime(key: K, vararg members: V): List<Long>
+
+    /**
+     * Get the absolute Unix time, in seconds, at which a single member of the set stored at `key` expire. The value is
+     * rounded up to the next second.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param member the member to get the expiration time for.
+     * @return a list with a single [Long] for `member`: the Unix time in seconds at which the member expires,
+     *         rounded up to the next second; `-1` if the member exists but has no expiration; `-2` if the member does not
+     *         exist (a logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun sexpiretime(key: K, member: V): List<Long>
+
+    /**
+     * Get the absolute Unix time, in milliseconds, at which one or more members of the set stored at `key` expire.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param members the members to get the expiration time for, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: the Unix time in milliseconds at which
+     *         the member expires; `-1` if the member exists but has no expiration; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpiretime(key: K, vararg members: V): List<Long>
+
+    /**
+     * Get the absolute Unix time, in milliseconds, at which a single member of the set stored at `key` expire.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param member the member to get the expiration time for.
+     * @return a list with a single [Long] for `member`: the Unix time in milliseconds at which the member expires;
+     *         `-1` if the member exists but has no expiration; `-2` if the member does not exist (a logically expired member
+     *         does not exist) or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spexpiretime(key: K, member: V): List<Long>
+
+    /**
+     * Remove the expiration of one or more members of the set stored at `key`.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param members the members to remove the expiration from, must not be `null` or empty.
+     * @return a list with one [Long] per member, in the order of `members`: `1` if the expiration was removed; `-1`
+     *         if the member exists but has no expiration; `-2` if the member does not exist or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spersist(key: K, vararg members: V): List<Long>
+
+    /**
+     * Remove the expiration of a single member of the set stored at `key`.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param member the member to remove the expiration from.
+     * @return a list with a single [Long] for `member`: `1` if the expiration was removed; `-1` if the member exists
+     *         but has no expiration; `-2` if the member does not exist or `key` does not exist.
+     * @since 8.0
+     */
+    suspend fun spersist(key: K, member: V): List<Long>
+
+    /**
+     * Add one or more members to the set stored at `key`, creating it when it does not exist. Unlike [sadd], a member that
+     * already exists is not skipped: its expiration is discarded. Without [SAddExArgs] the command behaves like `SADD` for
+     * members without an expiration.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param members the members to add, must not be `null` or empty.
+     * @return `1` if at least one member was added, updated or deleted; `0` if nothing changed.
+     * @since 8.0
+     */
+    suspend fun saddex(key: K, vararg members: V): Long?
+
+    /**
+     * Add a single member to the set stored at `key`, creating it when it does not exist. Unlike [sadd], a member that
+     * already exists is not skipped: its expiration is discarded. Without [SAddExArgs] the command behaves like `SADD` for
+     * members without an expiration.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param member the member to add.
+     * @return `1` if at least one member was added, updated or deleted; `0` if nothing changed.
+     * @since 8.0
+     */
+    suspend fun saddex(key: K, member: V): Long?
+
+    /**
+     * Add one or more members to the set stored at `key` and set their expiration, applying [SAddExArgs]. `MNX` adds only if
+     * none of the members exists, `MXX` only if all of them exist; both apply to the whole command. `EX`, `PX`, `EXAT` or
+     * `PXAT` set the expiration of every member in the command, `KEEPTTL` keeps the expiration a member already has; without
+     * any of them an existing member loses its expiration. An expiration in the past deletes the members that exist and adds
+     * none.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param sAddExArgs the command arguments, must not be `null`.
+     * @param members the members to add, must not be `null` or empty.
+     * @return `1` if at least one member was added, updated or deleted; `0` if the `MNX` or `MXX` condition was not
+     *         met, or nothing changed.
+     * @since 8.0
+     */
+    suspend fun saddex(key: K, sAddExArgs: SAddExArgs, vararg members: V): Long?
+
+    /**
+     * Add a single member to the set stored at `key` and set its expiration, applying [SAddExArgs]. `MNX` adds only if none
+     * of the members exists, `MXX` only if all of them exist; both apply to the whole command. `EX`, `PX`, `EXAT` or `PXAT`
+     * set the expiration of every member in the command, `KEEPTTL` keeps the expiration a member already has; without any of
+     * them an existing member loses its expiration. An expiration in the past deletes the member if it exists and adds
+     * nothing.
+     *
+     * @param key the key of the set, must not be `null`.
+     * @param sAddExArgs the command arguments, must not be `null`.
+     * @param member the member to add.
+     * @return `1` if at least one member was added, updated or deleted; `0` if the `MNX` or `MXX` condition was not
+     *         met, or nothing changed.
+     * @since 8.0
+     */
+    suspend fun saddex(key: K, sAddExArgs: SAddExArgs, member: V): Long?
+
+}

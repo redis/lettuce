@@ -1,6 +1,7 @@
 package io.lettuce.core;
 
 import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.stream.StreamEntryDeletionResult;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
@@ -11,6 +12,7 @@ import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -1297,5 +1299,254 @@ class RedisCommandBuilderUnitTests {
         assertThatThrownBy(() -> sut.geodist("key", null, "to", GeoArgs.Unit.m)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("From must not be null");
     }
+
+    // Set member expiration (Redis 8.12)
+
+    @Test
+    void shouldCorrectlyConstructSexpire() {
+
+        Command<String, String, ?> command = sut.sexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$7\r\n" + "SEXPIRE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "1\r\n" + "$2\r\n" + "NX\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "3\r\n" + "$7\r\n"
+                + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSexpireWithoutArgs() {
+
+        Command<String, String, ?> command = sut.sexpire(MY_KEY, 1, null, MY_FIELD1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$7\r\n" + "SEXPIRE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "1\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$7\r\n" + "hField1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSpexpire() {
+
+        Command<String, String, ?> command = sut.spexpire(MY_KEY, 1, ExpireArgs.Builder.gt(), MY_FIELD1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$8\r\n" + "SPEXPIRE\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n"
+                        + "GT\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$7\r\n" + "hField1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSexpireat() {
+
+        Command<String, String, ?> command = sut.sexpireat(MY_KEY, 1, ExpireArgs.Builder.xx(), MY_FIELD1, MY_FIELD2);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$9\r\n" + "SEXPIREAT\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n" + "XX\r\n"
+                        + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "2\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSpexpireat() {
+
+        Command<String, String, ?> command = sut.spexpireat(MY_KEY, 1, ExpireArgs.Builder.lt(), MY_FIELD1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$10\r\n" + "SPEXPIREAT\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n"
+                        + "LT\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$7\r\n" + "hField1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSttl() {
+
+        Command<String, String, ?> command = sut.sttl(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$4\r\n" + "STTL\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n"
+                        + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSpttl() {
+
+        Command<String, String, ?> command = sut.spttl(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "SPTTL\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n"
+                        + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSexpiretime() {
+
+        Command<String, String, ?> command = sut.sexpiretime(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$11\r\n" + "SEXPIRETIME\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "MEMBERS\r\n"
+                        + "$1\r\n" + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSpexpiretime() {
+
+        Command<String, String, ?> command = sut.spexpiretime(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$12\r\n" + "SPEXPIRETIME\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "MEMBERS\r\n"
+                        + "$1\r\n" + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSpersist() {
+
+        Command<String, String, ?> command = sut.spersist(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$8\r\n" + "SPERSIST\r\n" + "$4\r\n" + "hKey\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n"
+                        + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSaddex() {
+
+        Command<String, String, ?> command = sut.saddex(MY_KEY, MY_FIELD1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "SADDEX\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$7\r\n" + "hField1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSaddexWithArgs() {
+
+        Command<String, String, ?> command = sut.saddex(MY_KEY, SAddExArgs.Builder.ex(Duration.ofSeconds(10)).mnx(), MY_FIELD1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$6\r\n" + "SADDEX\r\n" + "$4\r\n" + "hKey\r\n" + "$3\r\n" + "MNX\r\n" + "$2\r\n" + "EX\r\n"
+                        + "$2\r\n" + "10\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$7\r\n" + "hField1\r\n");
+    }
+
+    @Test
+    void shouldRejectMissingKeyOrMembersForSetMemberExpiration() {
+
+        assertThatThrownBy(() -> sut.sexpire(null, 1, null, MY_FIELD1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sexpire(MY_KEY, 1, null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sexpire(MY_KEY, 1, null, (String[]) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.sttl(MY_KEY)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.spersist(MY_KEY)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.saddex(MY_KEY)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.saddex(MY_KEY, (SAddExArgs) null, MY_FIELD1)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldRejectArgumentObjectPassedAsSingleSetMember() {
+
+        RedisCommandBuilder<String, Object> objectBuilder = new RedisCommandBuilder<>(OBJECT_VALUE_CODEC);
+
+        assertThatThrownBy(() -> objectBuilder.sexpire(MY_KEY, 1, null, (Object) ExpireArgs.Builder.nx()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ExpireArgs")
+                .hasMessageContaining("pass the arguments before the members");
+        assertThatThrownBy(() -> objectBuilder.sttl(MY_KEY, (Object) ExpireArgs.Builder.nx()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ExpireArgs");
+        assertThatThrownBy(() -> objectBuilder.saddex(MY_KEY, (Object) SAddExArgs.Builder.mnx()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("SAddExArgs");
+
+        // the same guard on the varargs path, given a one-element array
+        assertThatThrownBy(() -> objectBuilder.sttl(MY_KEY, new Object[] { ExpireArgs.Builder.nx() }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ExpireArgs");
+        assertThatThrownBy(() -> objectBuilder.sexpire(MY_KEY, 1, null, new Object[] { ExpireArgs.Builder.nx() }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ExpireArgs");
+    }
+
+    @Test
+    void shouldEncodeSingleSetMemberWithoutAnArray() {
+
+        // single-member overloads resolve to the fixed-arity builder methods and encode the same bytes as a one-element varargs
+        // call
+        Command<String, String, ?> single = sut.sexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), MY_FIELD1);
+        Command<String, String, ?> varargs = sut.sexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), new String[] { MY_FIELD1 });
+        assertThat(encode(single)).isEqualTo(encode(varargs));
+
+        single = sut.spersist(MY_KEY, MY_FIELD1);
+        varargs = sut.spersist(MY_KEY, new String[] { MY_FIELD1 });
+        assertThat(encode(single)).isEqualTo(encode(varargs));
+
+        single = sut.saddex(MY_KEY, SAddExArgs.Builder.keepttl(), MY_FIELD1);
+        varargs = sut.saddex(MY_KEY, SAddExArgs.Builder.keepttl(), new String[] { MY_FIELD1 });
+        assertThat(encode(single)).isEqualTo(encode(varargs));
+
+        assertThatThrownBy(() -> sut.sexpire(null, 1, null, MY_FIELD1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.saddex(MY_KEY, (SAddExArgs) null, MY_FIELD1)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private static String encode(Command<String, String, ?> command) {
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+        return buf.toString(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void shouldEncodeSetMembersOfAnObjectValueCodec() {
+
+        RedisCommandBuilder<String, Object> objectBuilder = new RedisCommandBuilder<>(OBJECT_VALUE_CODEC);
+
+        Command<String, Object, ?> command = objectBuilder.sexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), "m1");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$7\r\n" + "SEXPIRE\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n"
+                        + "NX\r\n" + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n" + "m1\r\n");
+
+        command = objectBuilder.saddex(MY_KEY, "m1", "m2");
+        buf = Unpooled.directBuffer();
+        command.encode(buf);
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "SADDEX\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$7\r\n" + "MEMBERS\r\n" + "$1\r\n" + "2\r\n" + "$2\r\n" + "m1\r\n" + "$2\r\n" + "m2\r\n");
+    }
+
+    /**
+     * A value codec whose value type is {@code Object}, as serialization codecs declare it; keys and values are UTF-8 strings.
+     */
+    private static final RedisCodec<String, Object> OBJECT_VALUE_CODEC = new RedisCodec<String, Object>() {
+
+        @Override
+        public String decodeKey(ByteBuffer bytes) {
+            return StringCodec.UTF8.decodeKey(bytes);
+        }
+
+        @Override
+        public Object decodeValue(ByteBuffer bytes) {
+            return StringCodec.UTF8.decodeValue(bytes);
+        }
+
+        @Override
+        public ByteBuffer encodeKey(String key) {
+            return StringCodec.UTF8.encodeKey(key);
+        }
+
+        @Override
+        public ByteBuffer encodeValue(Object value) {
+            return StringCodec.UTF8.encodeValue(String.valueOf(value));
+        }
+
+    };
 
 }

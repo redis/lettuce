@@ -21,6 +21,8 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.ExpireArgs
+import io.lettuce.core.SAddExArgs
 import io.lettuce.core.SDiffCardArgs
 import io.lettuce.core.SUnionCardArgs
 import io.lettuce.core.ScanArgs
@@ -28,9 +30,13 @@ import io.lettuce.core.ScanCursor
 import io.lettuce.core.ValueScanCursor
 import io.lettuce.core.api.reactive.RedisSetReactiveCommands
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.toSet
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import java.time.Duration
+import java.time.Instant
+import java.util.Date
 
 
 /**
@@ -112,5 +118,166 @@ internal class RedisSetCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override suspend fun sscan(key: K, scanCursor: ScanCursor): ValueScanCursor<V>? = ops.sscan(key, scanCursor).awaitFirstOrNull()
 
-}
+    override suspend fun sexpire(key: K, seconds: Long, vararg members: V): List<Long> =
+        ops.sexpire(key, seconds, *members).asFlow().toList()
 
+    override suspend fun sexpire(key: K, seconds: Long, member: V): List<Long> =
+        ops.sexpire(key, seconds, member).asFlow().toList()
+
+    override suspend fun sexpire(key: K, seconds: Long, expireArgs: ExpireArgs, vararg members: V): List<Long> =
+        ops.sexpire(key, seconds, expireArgs, *members).asFlow().toList()
+
+    override suspend fun sexpire(key: K, seconds: Long, expireArgs: ExpireArgs, member: V): List<Long> =
+        ops.sexpire(key, seconds, expireArgs, member).asFlow().toList()
+
+    override suspend fun sexpire(key: K, seconds: Duration, vararg members: V): List<Long> =
+        ops.sexpire(key, seconds, *members).asFlow().toList()
+
+    override suspend fun sexpire(key: K, seconds: Duration, member: V): List<Long> =
+        ops.sexpire(key, seconds, member).asFlow().toList()
+
+    override suspend fun sexpire(key: K, seconds: Duration, expireArgs: ExpireArgs, vararg members: V): List<Long> =
+        ops.sexpire(key, seconds, expireArgs, *members).asFlow().toList()
+
+    override suspend fun sexpire(key: K, seconds: Duration, expireArgs: ExpireArgs, member: V): List<Long> =
+        ops.sexpire(key, seconds, expireArgs, member).asFlow().toList()
+
+    override suspend fun spexpire(key: K, milliseconds: Long, vararg members: V): List<Long> =
+        ops.spexpire(key, milliseconds, *members).asFlow().toList()
+
+    override suspend fun spexpire(key: K, milliseconds: Long, member: V): List<Long> =
+        ops.spexpire(key, milliseconds, member).asFlow().toList()
+
+    override suspend fun spexpire(key: K, milliseconds: Long, expireArgs: ExpireArgs, vararg members: V): List<Long> =
+        ops.spexpire(key, milliseconds, expireArgs, *members).asFlow().toList()
+
+    override suspend fun spexpire(key: K, milliseconds: Long, expireArgs: ExpireArgs, member: V): List<Long> =
+        ops.spexpire(key, milliseconds, expireArgs, member).asFlow().toList()
+
+    override suspend fun spexpire(key: K, milliseconds: Duration, vararg members: V): List<Long> =
+        ops.spexpire(key, milliseconds, *members).asFlow().toList()
+
+    override suspend fun spexpire(key: K, milliseconds: Duration, member: V): List<Long> =
+        ops.spexpire(key, milliseconds, member).asFlow().toList()
+
+    override suspend fun spexpire(key: K, milliseconds: Duration, expireArgs: ExpireArgs, vararg members: V): List<Long> =
+        ops.spexpire(key, milliseconds, expireArgs, *members).asFlow().toList()
+
+    override suspend fun spexpire(key: K, milliseconds: Duration, expireArgs: ExpireArgs, member: V): List<Long> =
+        ops.spexpire(key, milliseconds, expireArgs, member).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Long, vararg members: V): List<Long> =
+        ops.sexpireat(key, timestamp, *members).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Long, member: V): List<Long> =
+        ops.sexpireat(key, timestamp, member).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, vararg members: V): List<Long> =
+        ops.sexpireat(key, timestamp, expireArgs, *members).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, member: V): List<Long> =
+        ops.sexpireat(key, timestamp, expireArgs, member).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Date, vararg members: V): List<Long> =
+        ops.sexpireat(key, timestamp, *members).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Date, member: V): List<Long> =
+        ops.sexpireat(key, timestamp, member).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, vararg members: V): List<Long> =
+        ops.sexpireat(key, timestamp, expireArgs, *members).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, member: V): List<Long> =
+        ops.sexpireat(key, timestamp, expireArgs, member).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Instant, vararg members: V): List<Long> =
+        ops.sexpireat(key, timestamp, *members).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Instant, member: V): List<Long> =
+        ops.sexpireat(key, timestamp, member).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, vararg members: V): List<Long> =
+        ops.sexpireat(key, timestamp, expireArgs, *members).asFlow().toList()
+
+    override suspend fun sexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, member: V): List<Long> =
+        ops.sexpireat(key, timestamp, expireArgs, member).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Long, vararg members: V): List<Long> =
+        ops.spexpireat(key, timestamp, *members).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Long, member: V): List<Long> =
+        ops.spexpireat(key, timestamp, member).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, vararg members: V): List<Long> =
+        ops.spexpireat(key, timestamp, expireArgs, *members).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, member: V): List<Long> =
+        ops.spexpireat(key, timestamp, expireArgs, member).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Date, vararg members: V): List<Long> =
+        ops.spexpireat(key, timestamp, *members).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Date, member: V): List<Long> =
+        ops.spexpireat(key, timestamp, member).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, vararg members: V): List<Long> =
+        ops.spexpireat(key, timestamp, expireArgs, *members).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, member: V): List<Long> =
+        ops.spexpireat(key, timestamp, expireArgs, member).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Instant, vararg members: V): List<Long> =
+        ops.spexpireat(key, timestamp, *members).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Instant, member: V): List<Long> =
+        ops.spexpireat(key, timestamp, member).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, vararg members: V): List<Long> =
+        ops.spexpireat(key, timestamp, expireArgs, *members).asFlow().toList()
+
+    override suspend fun spexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, member: V): List<Long> =
+        ops.spexpireat(key, timestamp, expireArgs, member).asFlow().toList()
+
+    override suspend fun sttl(key: K, vararg members: V): List<Long> =
+        ops.sttl(key, *members).asFlow().toList()
+
+    override suspend fun sttl(key: K, member: V): List<Long> =
+        ops.sttl(key, member).asFlow().toList()
+
+    override suspend fun spttl(key: K, vararg members: V): List<Long> =
+        ops.spttl(key, *members).asFlow().toList()
+
+    override suspend fun spttl(key: K, member: V): List<Long> =
+        ops.spttl(key, member).asFlow().toList()
+
+    override suspend fun sexpiretime(key: K, vararg members: V): List<Long> =
+        ops.sexpiretime(key, *members).asFlow().toList()
+
+    override suspend fun sexpiretime(key: K, member: V): List<Long> =
+        ops.sexpiretime(key, member).asFlow().toList()
+
+    override suspend fun spexpiretime(key: K, vararg members: V): List<Long> =
+        ops.spexpiretime(key, *members).asFlow().toList()
+
+    override suspend fun spexpiretime(key: K, member: V): List<Long> =
+        ops.spexpiretime(key, member).asFlow().toList()
+
+    override suspend fun spersist(key: K, vararg members: V): List<Long> =
+        ops.spersist(key, *members).asFlow().toList()
+
+    override suspend fun spersist(key: K, member: V): List<Long> =
+        ops.spersist(key, member).asFlow().toList()
+
+    override suspend fun saddex(key: K, vararg members: V): Long? =
+        ops.saddex(key, *members).awaitFirstOrNull()
+
+    override suspend fun saddex(key: K, member: V): Long? =
+        ops.saddex(key, member).awaitFirstOrNull()
+
+    override suspend fun saddex(key: K, sAddExArgs: SAddExArgs, vararg members: V): Long? =
+        ops.saddex(key, sAddExArgs, *members).awaitFirstOrNull()
+
+    override suspend fun saddex(key: K, sAddExArgs: SAddExArgs, member: V): Long? =
+        ops.saddex(key, sAddExArgs, member).awaitFirstOrNull()
+
+}
