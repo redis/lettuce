@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.lettuce.core.BitFieldArgs;
+import io.lettuce.core.BitRangeIntArrayArgs;
 import io.lettuce.core.GetExArgs;
 import io.lettuce.core.IncrexArgs;
 import io.lettuce.core.IncrexFloatArgs;
@@ -145,6 +146,41 @@ public interface NodeSelectionStringCommands<K, V> {
      *         returns -1 as the user specified a clear range and there are no 0 bits in that range.
      */
     Executions<Long> bitpos(K key, boolean state, long start, long end);
+
+    /**
+     * Return the offsets of the set bits in a range of a bitmap, in ascending order.
+     * <p>
+     * The range is interpreted as in {@code BITCOUNT}: inclusive, in bytes, with negative indexes counted from the end. The
+     * offsets are bit offsets. Works on string and native bitmaps.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param start the first byte of the range, inclusive; negative values count from the end.
+     * @param end the last byte of the range, inclusive; negative values count from the end.
+     * @return the bit offsets, possibly empty, never {@code null}.
+     * @throws IllegalArgumentException if {@code key} is {@code null}.
+     * @since 8.0
+     */
+    Executions<List<Long>> bitrangeintarray(K key, long start, long end);
+
+    /**
+     * Return the offsets of the set bits, or of the clear bits with {@link BitRangeIntArrayArgs#zeros()}, in a range of a
+     * bitmap, in ascending order.
+     * <p>
+     * With {@link BitRangeIntArrayArgs#limit(long)}, the lowest {@code count} offsets are returned. In byte units the server
+     * completes the byte that holds the last of them, so a page can hold up to 7 offsets more than {@code count}; the next page
+     * starts at byte {@code last / 8 + 1}. In bit units ({@link BitRangeIntArrayArgs#bit()}) a page holds at most {@code count}
+     * offsets and the next starts at {@code last + 1}. A shorter page ends the scan. Pages are separate commands and share no
+     * snapshot.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param start the first index of the range, inclusive, in the unit of {@code args}; negative values count from the end.
+     * @param end the last index of the range, inclusive, in the unit of {@code args}; negative values count from the end.
+     * @param args the unit, limit and clear-bit options, must not be {@code null}.
+     * @return the bit offsets, possibly empty, never {@code null}.
+     * @throws IllegalArgumentException if {@code key} or {@code args} is {@code null}.
+     * @since 8.0
+     */
+    Executions<List<Long>> bitrangeintarray(K key, long start, long end, BitRangeIntArrayArgs args);
 
     /**
      * Perform bitwise AND between strings.
