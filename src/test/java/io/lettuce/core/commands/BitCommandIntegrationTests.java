@@ -657,7 +657,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C01: the whole value returns the set bit offsets in ascending order.
+     * Scenario BRIA-C01: the whole value returns the set bit offsets in ascending order.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -668,7 +668,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C02: byte ranges are inclusive, count negative indexes from the end and clamp to the value.
+     * Scenario BRIA-C02: byte ranges are inclusive, count negative indexes from the end and clamp to the value.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -685,7 +685,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C03: bit ranges are inclusive, count negative indexes from the end and clamp to the value.
+     * Scenario BRIA-C03: bit ranges are inclusive, count negative indexes from the end and clamp to the value.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -701,7 +701,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C04: the offsets are bit offsets in both units.
+     * Scenario BRIA-C04: the offsets are bit offsets in both units.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -713,7 +713,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C05: a missing key returns an empty list, not {@code null}.
+     * Scenario BRIA-C05: a missing key returns an empty list, not {@code null}.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -724,7 +724,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C06: an empty string returns an empty list.
+     * Scenario BRIA-C06: an empty string returns an empty list.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -735,7 +735,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C07: a limit of 0 returns an empty list.
+     * Scenario BRIA-C07: a limit of 0 returns an empty list.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -746,7 +746,8 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C08: a byte page completes the byte of its last offset and is returned whole; a bit page stops at the count.
+     * Scenario BRIA-C08: a byte page completes the byte of its last offset and is returned whole; a bit page stops at the
+     * count.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -761,7 +762,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C09: {@code ZEROS} returns the clear bits inside the value only.
+     * Scenario BRIA-C09: {@code ZEROS} returns the clear bits inside the value only.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -774,7 +775,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C10: the number of offsets equals {@code BITCOUNT} over the same range.
+     * Scenario BRIA-C10: the number of offsets equals {@code BITCOUNT} over the same range.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -786,7 +787,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C11: paging in bit units with a limit of 9, the next start being the last offset plus 1.
+     * Scenario BRIA-C11: paging in bit units with a limit of 9, the next start being the last offset plus 1.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -799,7 +800,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C11a: paging in byte units with a limit of 9, the next start being the byte of the last offset plus 1.
+     * Scenario BRIA-C11a: paging in byte units with a limit of 9, the next start being the byte of the last offset plus 1.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -813,7 +814,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C11b: the joined pages of both units hold the same 27 offsets, each once, equal to the whole value.
+     * Scenario BRIA-C11b: the joined pages of both units hold the same 27 offsets, each once, equal to the whole value.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -833,7 +834,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C12: a native bitmap returns its set bit offsets.
+     * Scenario BRIA-C12: a native bitmap returns its set bit offsets.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -855,7 +856,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario C13: an offset above 2^32 is returned as a 64-bit value.
+     * Scenario BRIA-C13: an offset above 2^32 is returned as a 64-bit value.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -877,7 +878,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario D01: a key of another type raises a {@code WRONGTYPE} error.
+     * Scenario BRIA-D01: a key of another type raises a {@code WRONGTYPE} error.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -889,7 +890,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario D02: an inverted range is sent as given and returns an empty list.
+     * Scenario BRIA-D02: an inverted range is sent as given and returns an empty list.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
@@ -900,7 +901,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario D03: on a server without the command, the unknown-command error reaches the caller.
+     * Scenario BRIA-D03: on a server without the command, the unknown-command error reaches the caller.
      */
     @Test
     public void bitrangeintarrayUnknownCommand() {
@@ -911,7 +912,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario E01: the async API completes with the set bit offsets.
+     * Scenario BRIA-E01: the async API completes with the set bit offsets.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")

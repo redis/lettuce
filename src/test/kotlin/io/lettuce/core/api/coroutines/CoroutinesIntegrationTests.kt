@@ -169,7 +169,7 @@ class CoroutinesIntegrationTests : TestSupport() {
     }
 
     /**
-     * Scenario E03: the coroutines API returns the set bit offsets.
+     * Scenario BRIA-E03: the coroutines API returns the set bit offsets.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")

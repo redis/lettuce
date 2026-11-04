@@ -40,7 +40,7 @@ class BitTxCommandIntegrationTests extends BitCommandIntegrationTests {
     }
 
     /**
-     * Scenario E04: inside {@code MULTI}/{@code EXEC} the reply is one transaction entry holding the bit offsets.
+     * Scenario BRIA-E04: inside {@code MULTI}/{@code EXEC} the reply is one transaction entry holding the bit offsets.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")

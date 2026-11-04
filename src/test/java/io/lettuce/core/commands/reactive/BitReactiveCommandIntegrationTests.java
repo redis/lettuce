@@ -112,7 +112,7 @@ class BitReactiveCommandIntegrationTests extends BitCommandIntegrationTests {
     }
 
     /**
-     * Scenario E02: the reactive API emits the set bit offsets in order, and completes empty for a missing key.
+     * Scenario BRIA-E02: the reactive API emits the set bit offsets in order, and completes empty for a missing key.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
