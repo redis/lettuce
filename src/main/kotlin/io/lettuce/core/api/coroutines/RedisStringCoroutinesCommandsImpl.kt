@@ -54,6 +54,12 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun bitpos(key: K, state: Boolean, start: Long, end: Long): Long? = ops.bitpos(key, state, start, end).awaitFirstOrNull()
 
+    override suspend fun bitrangeintarray(key: K, start: Long, end: Long): List<Long> =
+        ops.bitrangeintarray(key, start, end).asFlow().toList()
+
+    override suspend fun bitrangeintarray(key: K, start: Long, end: Long, args: BitRangeIntArrayArgs): List<Long> =
+        ops.bitrangeintarray(key, start, end, args).asFlow().toList()
+
     override suspend fun bitopAnd(destination: K, vararg keys: K): Long? = ops.bitopAnd(destination, *keys).awaitFirstOrNull()
 
     override suspend fun bitopNot(destination: K, source: K): Long? = ops.bitopNot(destination, source).awaitFirstOrNull()
