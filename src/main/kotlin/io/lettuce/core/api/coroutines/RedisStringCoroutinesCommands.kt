@@ -139,7 +139,8 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * Return the offsets of the set bits in a range of a bitmap, in ascending order.
      *
      * The range is interpreted as in `BITCOUNT`: inclusive, in bytes, with negative indexes counted from the end. The
-     * offsets are bit offsets. Works on string and native bitmaps.
+     * range is clamped to the value: an end past the last byte stops there, and an inverted range or one past the end returns
+     * an empty list. The offsets are bit offsets. Works on string and native bitmaps.
      *
      * @param key the key.
      * @param start the first byte of the range, inclusive; negative values count from the end.
@@ -157,6 +158,10 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * byte that holds the last of them, so a page can hold up to 7 offsets more than `count`; the next page starts at byte
      * `last / 8 + 1`. In bit units ([BitRangeIntArrayArgs.bit]) a page holds at most `count` offsets and the next starts at
      * `last + 1`. A shorter page ends the scan. Pages are separate commands and share no snapshot.
+     *
+     * The range is clamped to the value, in the unit of `args`. With [BitRangeIntArrayArgs.zeros], only the clear bits
+     * inside the value are returned, never bits past its end: a missing key, an empty value or a range past the end returns
+     * an empty list.
      *
      * @param key the key.
      * @param start the first index of the range, inclusive, in the unit of `args`; negative values count from the end.
