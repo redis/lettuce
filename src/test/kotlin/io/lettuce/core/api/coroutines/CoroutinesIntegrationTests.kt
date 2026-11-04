@@ -1,6 +1,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.TestTags
+import io.lettuce.core.BitFieldArgs
 import io.lettuce.core.Consumer
 import io.lettuce.core.KeyValue
 import io.lettuce.core.RedisClient
@@ -165,5 +166,25 @@ class CoroutinesIntegrationTests : TestSupport() {
         }
 
         connection.close()
+    }
+
+    /**
+     * Scenario E03: the coroutines API returns the set bit offsets.
+     */
+    @Test
+    @EnabledOnCommand("BITRANGEINTARRAY")
+    @Inject
+    internal fun shouldInvokeBitrangeintarrayCoroutines(connection: StatefulRedisConnection<String, String>) {
+
+        runBlocking {
+
+            val api = connection.coroutines()
+            api.del("bria:f1")
+            api.bitfield("bria:f1", BitFieldArgs.Builder.set(BitFieldArgs.unsigned(32), 0, 2172748161L))
+
+            assertThat(api.bitrangeintarray("bria:f1", 0, -1)).isEqualTo(listOf(0L, 7L, 8L, 15L, 16L, 23L, 24L, 31L))
+
+            api.del("bria:f1")
+        }
     }
 }

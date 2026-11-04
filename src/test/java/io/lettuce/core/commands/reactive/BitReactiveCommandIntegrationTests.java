@@ -4,6 +4,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.core.BitFieldArgs.offset;
 import static io.lettuce.core.BitFieldArgs.signed;
 import static io.lettuce.core.BitFieldArgs.typeWidthBasedOffset;
+import static io.lettuce.core.BitFieldArgs.unsigned;
 import static io.lettuce.core.BitFieldArgs.OverflowType.FAIL;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,6 +21,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.commands.BitCommandIntegrationTests;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Mark Paluch
@@ -107,6 +109,21 @@ class BitReactiveCommandIntegrationTests extends BitCommandIntegrationTests {
 
         StepVerifier.create(reactive.bitfield(key, bitFieldArgs)).expectNext(Value.just(0L)).expectNext(Value.empty())
                 .verifyComplete();
+    }
+
+    /**
+     * Scenario E02: the reactive API emits the set bit offsets in order, and completes empty for a missing key.
+     */
+    @Test
+    @EnabledOnCommand("BITRANGEINTARRAY")
+    void bitrangeintarrayReactive() {
+
+        reactive.bitfield("bria:f1", BitFieldArgs.Builder.set(unsigned(32), 0, 2172748161L)).then().block();
+
+        StepVerifier.create(reactive.bitrangeintarray("bria:f1", 0, -1)).expectNext(0L, 7L, 8L, 15L, 16L, 23L, 24L, 31L)
+                .verifyComplete();
+
+        StepVerifier.create(reactive.bitrangeintarray("bria:missing", 0, -1)).verifyComplete();
     }
 
 }
