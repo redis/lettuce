@@ -52,11 +52,13 @@ import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.ScheduledFuture;
 
 /**
  * Unit tests for {@link StatefulRedisMultiDbConnectionImpl}.
  *
  * @author Ali Takavci
+ * @author Shin seongsu
  * @since 7.4
  */
 @ExtendWith(MockitoExtension.class)
@@ -1334,6 +1336,120 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
                         .collect(java.util.stream.Collectors.toList());
                 assertThat(hostPorts).containsExactlyInAnyOrder("localhost:6379", "localhost:6380", "localhost:6381");
             }
+        }
+
+    }
+
+    @Nested
+    @Tag(UNIT_TEST)
+    @DisplayName("Cleanup After Close Tests")
+    class CleanupAfterCloseTests {
+
+        @Mock
+        private ScheduledFuture<Object> retryFuture;
+
+        private final Duration retryDelay = Duration.ofMillis(100);
+
+        private final MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false)
+                .delayInBetweenFailoverAttempts(retryDelay).build();
+
+        @BeforeEach
+        void setUp() {
+            doReturn(retryFuture).when(eventExecutorGroup).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+        }
+
+        private void makeAllDatabasesUnhealthy() {
+            when(healthCheck1.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+            when(healthCheck2.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+            when(healthCheck3.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+        }
+
+        @Test
+        @DisplayName("Should cancel pending failover retry on close and not reschedule it")
+        void shouldNotRescheduleFailoverRetryAfterClose() {
+            StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options);
+
+            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
+            verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
+
+            makeAllDatabasesUnhealthy();
+            listenerCaptor.getValue()
+                    .onStatusChange(new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY, HealthStatus.UNHEALTHY));
+
+            ArgumentCaptor<Runnable> retryTaskCaptor = ArgumentCaptor.forClass(Runnable.class);
+            verify(eventExecutorGroup).schedule(retryTaskCaptor.capture(), eq(retryDelay.toMillis()),
+                    eq(TimeUnit.MILLISECONDS));
+
+            connection.close();
+
+            verify(retryFuture).cancel(false);
+
+            clearInvocations(eventExecutorGroup, eventBus);
+
+            // the retry task may already be running when close() is called
+            retryTaskCaptor.getValue().run();
+
+            verify(eventExecutorGroup, never()).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+            verify(eventBus, never()).publish(any(AllDatabasesUnhealthyEvent.class));
+        }
+
+        @Test
+        @DisplayName("Should cancel failover retry scheduled by the constructor when no healthy database is available")
+        void shouldCancelFailoverRetryWhenConstructorFails() {
+            makeAllDatabasesUnhealthy();
+
+            assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(db1, databases, clientResources, codec,
+                    connectionFactory, healthStatusManager, null, options)).isInstanceOf(IllegalStateException.class)
+                            .hasMessageContaining("No healthy database available");
+
+            ArgumentCaptor<Runnable> retryTaskCaptor = ArgumentCaptor.forClass(Runnable.class);
+            verify(eventExecutorGroup).schedule(retryTaskCaptor.capture(), eq(retryDelay.toMillis()),
+                    eq(TimeUnit.MILLISECONDS));
+            verify(retryFuture).cancel(false);
+
+            clearInvocations(eventExecutorGroup, eventBus);
+
+            retryTaskCaptor.getValue().run();
+
+            verify(eventExecutorGroup, never()).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+            verify(eventBus, never()).publish(any(AllDatabasesUnhealthyEvent.class));
+        }
+
+        @Test
+        @DisplayName("Should unregister the same listener instances when the constructor fails")
+        void shouldUnregisterRegisteredListenersWhenConstructorFails() {
+            makeAllDatabasesUnhealthy();
+
+            assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(db1, databases, clientResources, codec,
+                    connectionFactory, healthStatusManager, null, options)).isInstanceOf(IllegalStateException.class);
+
+            ArgumentCaptor<HealthStatusListener> registeredHealthListener = ArgumentCaptor.forClass(HealthStatusListener.class);
+            verify(healthStatusManager).registerListener(eq(uri1), registeredHealthListener.capture());
+            verify(healthStatusManager).unregisterListener(uri1, registeredHealthListener.getValue());
+
+            ArgumentCaptor<CircuitBreakerStateListener> registeredCircuitBreakerListener = ArgumentCaptor
+                    .forClass(CircuitBreakerStateListener.class);
+            verify(circuitBreaker1).addListener(registeredCircuitBreakerListener.capture());
+            verify(circuitBreaker1).removeListener(registeredCircuitBreakerListener.getValue());
+        }
+
+        @Test
+        @DisplayName("Should unregister the same listener instances when a database is removed")
+        void shouldUnregisterRegisteredListenersWhenDatabaseIsRemoved() {
+            StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options);
+
+            connection.removeDatabase(uri2);
+
+            ArgumentCaptor<HealthStatusListener> registeredHealthListener = ArgumentCaptor.forClass(HealthStatusListener.class);
+            verify(healthStatusManager).registerListener(eq(uri2), registeredHealthListener.capture());
+            verify(healthStatusManager).unregisterListener(uri2, registeredHealthListener.getValue());
+
+            ArgumentCaptor<CircuitBreakerStateListener> registeredCircuitBreakerListener = ArgumentCaptor
+                    .forClass(CircuitBreakerStateListener.class);
+            verify(circuitBreaker2).addListener(registeredCircuitBreakerListener.capture());
+            verify(circuitBreaker2).removeListener(registeredCircuitBreakerListener.getValue());
         }
 
     }
