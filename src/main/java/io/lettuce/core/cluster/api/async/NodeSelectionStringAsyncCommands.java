@@ -151,7 +151,8 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * Return the offsets of the set bits in a range of a bitmap, in ascending order.
      * <p>
      * The range is interpreted as in {@code BITCOUNT}: inclusive, in bytes, with negative indexes counted from the end. The
-     * offsets are bit offsets. Works on string and native bitmaps.
+     * range is clamped to the value: an end past the last byte stops there, and an inverted range or one past the end returns
+     * an empty list. The offsets are bit offsets. Works on string and native bitmaps.
      *
      * @param key the key, must not be {@code null}.
      * @param start the first byte of the range, inclusive; negative values count from the end.
@@ -171,6 +172,10 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * starts at byte {@code last / 8 + 1}. In bit units ({@link BitRangeIntArrayArgs#bit()}) a page holds at most {@code count}
      * offsets and the next starts at {@code last + 1}. A shorter page ends the scan. Pages are separate commands and share no
      * snapshot.
+     * <p>
+     * The range is clamped to the value, in the unit of {@code args}. With {@link BitRangeIntArrayArgs#zeros()}, only the clear
+     * bits inside the value are returned, never bits past its end: a missing key, an empty value or a range past the end
+     * returns an empty list.
      *
      * @param key the key, must not be {@code null}.
      * @param start the first index of the range, inclusive, in the unit of {@code args}; negative values count from the end.
