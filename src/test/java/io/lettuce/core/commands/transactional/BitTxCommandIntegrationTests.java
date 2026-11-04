@@ -34,7 +34,7 @@ class BitTxCommandIntegrationTests extends BitCommandIntegrationTests {
         this.connection = connection;
     }
 
-    @Disabled
+    @Disabled("The transactional wrapper queues the call in MULTI, so the unknown-command error does not come from the call itself")
     @Override
     public void bitrangeintarrayUnknownCommand() {
     }
