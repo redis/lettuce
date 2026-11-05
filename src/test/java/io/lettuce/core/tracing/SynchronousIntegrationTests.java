@@ -76,7 +76,8 @@ public class SynchronousIntegrationTests extends SampleTestRunner {
             for (FinishedSpan finishedSpan : tracer.getFinishedSpans()) {
                 assertThat(finishedSpan.getTags()).containsEntry("db.system", "redis")
                         .containsEntry("net.sock.peer.addr", TestSettings.host())
-                        .containsEntry("net.sock.peer.port", "" + TestSettings.port());
+                        .containsEntry("net.sock.peer.port", "" + TestSettings.port())
+                        .containsEntry("db.redis.database_index", "0");
                 assertThat(finishedSpan.getTags()).containsKeys("db.operation");
             }
 

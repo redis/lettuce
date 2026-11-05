@@ -123,6 +123,8 @@ class BraveTracingIntegrationTests extends TestSupport {
         assertThat(spans.get(0).remoteEndpoint()).isNotNull();
         assertThat(spans.get(1).name()).isEqualTo("ping");
         assertThat(spans.get(1).remoteEndpoint().port()).isEqualTo(port);
+        assertThat(spans.get(0).tags()).containsEntry("db.redis.database_index", "0");
+        assertThat(spans.get(1).tags()).containsEntry("db.redis.database_index", "0").containsKey("db.connection_string");
     }
 
     @Test

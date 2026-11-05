@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 
 import brave.Span;
 import brave.propagation.TraceContextOrSamplingFlags;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.RedisCommand;
@@ -255,6 +256,15 @@ public class BraveTracing implements Tracing {
 
     @Override
     public Endpoint createEndpoint(SocketAddress socketAddress) {
+        return new BraveEndpoint(createZipkinEndpoint(socketAddress));
+    }
+
+    @Override
+    public Endpoint createEndpoint(SocketAddress socketAddress, RedisURI redisURI) {
+        return new BraveEndpoint(createZipkinEndpoint(socketAddress), RedisUriDetails.from(redisURI));
+    }
+
+    private zipkin2.Endpoint createZipkinEndpoint(SocketAddress socketAddress) {
 
         zipkin2.Endpoint.Builder builder = zipkin2.Endpoint.newBuilder().serviceName(tracingOptions.serviceName);
 
@@ -262,14 +272,10 @@ public class BraveTracing implements Tracing {
 
             InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
             builder.ip(inetSocketAddress.getAddress()).port(inetSocketAddress.getPort());
-
-            tracingOptions.customizeEndpoint(builder);
-
-            return new BraveEndpoint(builder.build());
         }
 
         tracingOptions.customizeEndpoint(builder);
-        return new BraveEndpoint(builder.build());
+        return builder.build();
     }
 
     /**
@@ -411,7 +417,8 @@ public class BraveTracing implements Tracing {
         @Override
         public BraveSpan remoteEndpoint(Endpoint endpoint) {
 
-            zipkin2.Endpoint zkEndpoint = BraveEndpoint.class.cast(endpoint).endpoint;
+            BraveEndpoint braveEndpoint = BraveEndpoint.class.cast(endpoint);
+            zipkin2.Endpoint zkEndpoint = braveEndpoint.endpoint;
 
             if (zkEndpoint.serviceName() != null) {
                 span.remoteServiceName(zkEndpoint.serviceName());
@@ -419,6 +426,21 @@ public class BraveTracing implements Tracing {
 
             String ip = zkEndpoint.ipv6() != null ? zkEndpoint.ipv6() : zkEndpoint.ipv4();
             span.remoteIpAndPort(ip, zkEndpoint.portAsInt());
+
+            RedisUriDetails details = braveEndpoint.redisUriDetails;
+
+            if (details != null) {
+
+                span.tag("db.redis.database_index", details.getDatabase());
+
+                if (details.getUsername() != null) {
+                    span.tag("db.user", details.getUsername());
+                }
+
+                if (details.getUrl() != null) {
+                    span.tag("db.connection_string", details.getUrl());
+                }
+            }
 
             return this;
         }
@@ -442,8 +464,15 @@ public class BraveTracing implements Tracing {
 
         final zipkin2.Endpoint endpoint;
 
+        final RedisUriDetails redisUriDetails;
+
         public BraveEndpoint(zipkin2.Endpoint endpoint) {
+            this(endpoint, null);
+        }
+
+        BraveEndpoint(zipkin2.Endpoint endpoint, RedisUriDetails redisUriDetails) {
             this.endpoint = endpoint;
+            this.redisUriDetails = redisUriDetails;
         }
 
     }

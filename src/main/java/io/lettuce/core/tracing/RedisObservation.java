@@ -130,18 +130,6 @@ enum RedisObservation implements ObservationDocumentation {
         },
 
         /**
-         * Redis user.
-         */
-        DB_USER {
-
-            @Override
-            public String asString() {
-                return "db.user";
-            }
-
-        },
-
-        /**
          * Redis database index.
          */
         DB_INDEX {
@@ -192,6 +180,30 @@ enum RedisObservation implements ObservationDocumentation {
             @Override
             public String asString() {
                 return "lettuce.command.error";
+            }
+
+        },
+
+        /**
+         * Redis user.
+         */
+        DB_USER {
+
+            @Override
+            public String asString() {
+                return "db.user";
+            }
+
+        },
+
+        /**
+         * Redis URI without credentials.
+         */
+        DB_CONNECTION_STRING {
+
+            @Override
+            public String asString() {
+                return "db.connection_string";
             }
 
         }

@@ -203,6 +203,23 @@ mandatory tracing library dependencies. Lettuce ships integrations with
 [Brave](https://github.com/openzipkin/brave) which can be configured
 through [client resources](client-resources.md).
 
+Both integrations attach connection details taken from the `RedisURI`
+that was used to open the connection. The details are computed once per
+connection:
+
+- `db.redis.database_index`: the database number configured in the
+  `RedisURI`. A database changed later with `SELECT` is not reflected.
+
+- `db.user`: the username, if the credentials provider has the
+  credentials available without waiting (for example static
+  credentials).
+
+- `db.connection_string`: the `RedisURI` without credentials.
+
+With Micrometer, `db.redis.database_index` is a low cardinality key
+value, `db.user` and `db.connection_string` are high cardinality key
+values.
+
 ### Micrometer Tracing
 
 With Micrometer tracing enabled, Lettuce creates an observation for each

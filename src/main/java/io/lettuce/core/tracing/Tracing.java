@@ -21,6 +21,8 @@ package io.lettuce.core.tracing;
 
 import java.net.SocketAddress;
 
+import io.lettuce.core.RedisURI;
+
 /**
  * Interface declaring methods to trace Redis commands. This interface contains declarations of basic required interfaces and
  * value objects to represent traces, spans and metadata in an dependency-agnostic manner.
@@ -65,6 +67,21 @@ public interface Tracing {
      * @return the {@link Endpoint} for {@link SocketAddress}.
      */
     Endpoint createEndpoint(SocketAddress socketAddress);
+
+    /**
+     * Create an {@link Endpoint} given {@link SocketAddress} and the {@link RedisURI} that was used to create the connection.
+     * Implementations can use the {@link RedisURI} to report connection details such as the database number, the username and
+     * the URI itself. The endpoint is created once per connection and should not perform blocking calls. The default
+     * implementation delegates to {@link #createEndpoint(SocketAddress)}.
+     *
+     * @param socketAddress the remote address.
+     * @param redisURI the {@link RedisURI} used to create the connection.
+     * @return the {@link Endpoint} for {@link SocketAddress} and {@link RedisURI}.
+     * @since 8.0
+     */
+    default Endpoint createEndpoint(SocketAddress socketAddress, RedisURI redisURI) {
+        return createEndpoint(socketAddress);
+    }
 
     /**
      * Returns a {@link TracerProvider} that is disabled.

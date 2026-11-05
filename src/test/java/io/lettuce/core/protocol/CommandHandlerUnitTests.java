@@ -56,8 +56,10 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.StringCodec;
@@ -66,6 +68,9 @@ import io.lettuce.core.output.KeyValueListOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.tracing.TraceContextProvider;
+import io.lettuce.core.tracing.Tracer;
+import io.lettuce.core.tracing.TracerProvider;
 import io.lettuce.core.tracing.Tracing;
 import io.lettuce.test.Delay;
 import io.lettuce.test.ReflectionTestUtils;
@@ -79,6 +84,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.EventLoop;
+import io.netty.util.Attribute;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 
 /**
@@ -186,6 +192,55 @@ class CommandHandlerUnitTests {
 
         sut.channelActive(context);
         sut.exceptionCaught(context, new IOException("Connection timed out"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldCreateTracingEndpointWithRedisUriOnChannelActive() throws Exception {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost/3");
+        Attribute<RedisURI> attribute = mock(Attribute.class);
+        when(attribute.get()).thenReturn(redisURI);
+        when(channel.hasAttr(ConnectionBuilder.REDIS_URI_INSTANCE)).thenReturn(true);
+        when(channel.attr(ConnectionBuilder.REDIS_URI_INSTANCE)).thenReturn(attribute);
+
+        Tracing tracing = mock(Tracing.class);
+        when(clientResources.tracing()).thenReturn(tracing);
+
+        CommandHandler commandHandler = new CommandHandler(ClientOptions.create(), clientResources, endpoint);
+        commandHandler.channelActive(context);
+
+        verify(tracing).createEndpoint(channel.remoteAddress(), redisURI);
+        verify(tracing, never()).createEndpoint(channel.remoteAddress());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldCreateTracingEndpointOnceForCommandsBeforeChannelActive() throws Exception {
+
+        RedisURI redisURI = RedisURI.create("redis://localhost/3");
+        Attribute<RedisURI> attribute = mock(Attribute.class);
+        when(attribute.get()).thenReturn(redisURI);
+        when(channel.hasAttr(ConnectionBuilder.REDIS_URI_INSTANCE)).thenReturn(true);
+        when(channel.attr(ConnectionBuilder.REDIS_URI_INSTANCE)).thenReturn(attribute);
+
+        Tracing tracing = mock(Tracing.class);
+        TracerProvider tracerProvider = mock(TracerProvider.class);
+        Tracer tracer = mock(Tracer.class);
+        when(tracing.isEnabled()).thenReturn(true);
+        when(tracing.initialTraceContextProvider()).thenReturn(mock(TraceContextProvider.class));
+        when(tracing.getTracerProvider()).thenReturn(tracerProvider);
+        when(tracerProvider.getTracer()).thenReturn(tracer);
+        when(tracer.nextSpan(any())).thenReturn(mock(Tracer.Span.class, RETURNS_SELF));
+        when(tracing.createEndpoint(channel.remoteAddress(), redisURI)).thenReturn(mock(Tracing.Endpoint.class));
+        when(clientResources.tracing()).thenReturn(tracing);
+        when(promise.isVoid()).thenReturn(true);
+
+        CommandHandler commandHandler = new CommandHandler(ClientOptions.create(), clientResources, endpoint);
+        commandHandler.write(context, new AsyncCommand<>(new Command<>(CommandType.HELLO, null)), promise);
+        commandHandler.write(context, new AsyncCommand<>(new Command<>(CommandType.CLIENT, null)), promise);
+
+        verify(tracing, times(1)).createEndpoint(channel.remoteAddress(), redisURI);
     }
 
     @Test
