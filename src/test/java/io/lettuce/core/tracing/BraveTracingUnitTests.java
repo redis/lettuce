@@ -134,7 +134,8 @@ class BraveTracingUnitTests extends TestSupport {
 
         assertThat(tags).contains("db.redis.database_index", "3", "db.user", "alice", "db.connection_string",
                 "redis://localhost/3");
-        assertThat(tags).doesNotContain("redis://alice:******@localhost/3");
+        assertThat(tags).noneMatch(tag -> String.valueOf(tag).contains("secret") || String.valueOf(tag).contains("@")
+                || String.valueOf(tag).contains("credentialsProvider"));
     }
 
     @Test

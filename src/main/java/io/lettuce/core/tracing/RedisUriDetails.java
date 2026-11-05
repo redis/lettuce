@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.CredentialsProvider;
 import io.lettuce.core.RedisCredentials;
+import io.lettuce.core.RedisCredentialsProvider;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.internal.LettuceStrings;
 
@@ -72,21 +73,28 @@ final class RedisUriDetails {
 
         CredentialsProvider credentialsProvider = redisURI.getCredentialsProviderAsync();
 
-        if (credentialsProvider == null) {
-            return null;
-        }
-
         RedisCredentials credentials;
 
         try {
-            // only use credentials that are available right away, don't wait for asynchronous providers
-            CompletableFuture<RedisCredentials> future = credentialsProvider.resolveCredentialsAsync().toCompletableFuture();
-
-            if (!future.isDone() || future.isCompletedExceptionally()) {
+            if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
+                credentials = ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider)
+                        .resolveCredentialsNow();
+            } else if (credentialsProvider instanceof CredentialsProvider.ImmediateCredentialsProvider) {
+                credentials = ((CredentialsProvider.ImmediateCredentialsProvider) credentialsProvider).resolveCredentialsNow();
+            } else if (credentialsProvider == null || credentialsProvider instanceof RedisCredentialsProvider) {
+                // resolving a reactive provider subscribes to its Mono, which can block the event loop
                 return null;
-            }
+            } else {
+                // only use credentials that are available right away, don't wait for asynchronous providers
+                CompletableFuture<RedisCredentials> future = credentialsProvider.resolveCredentialsAsync()
+                        .toCompletableFuture();
 
-            credentials = future.getNow(null);
+                if (!future.isDone() || future.isCompletedExceptionally()) {
+                    return null;
+                }
+
+                credentials = future.getNow(null);
+            }
         } catch (RuntimeException e) {
             return null;
         }
@@ -107,7 +115,7 @@ final class RedisUriDetails {
             return null;
         }
 
-        // remove the user info part, credentials must not end up in traces
+        // toURI() renders a credentials provider placeholder as user info, remove the user info part
         int authorityStart = uri.indexOf("://");
         if (authorityStart == -1) {
             return uri;

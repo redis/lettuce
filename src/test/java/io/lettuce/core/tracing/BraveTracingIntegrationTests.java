@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import io.lettuce.core.AbstractRedisReactiveCommands.ReactorTraceContext;
 import io.lettuce.core.ClientOptions;
@@ -46,11 +47,17 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.cluster.ClusterTestSettings;
+import io.lettuce.core.cluster.RedisClusterClient;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.lettuce.test.Wait;
+import io.lettuce.test.WithPassword;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.test.settings.TestSettings;
 import reactor.test.StepVerifier;
 import zipkin2.Span;
 
@@ -125,6 +132,58 @@ class BraveTracingIntegrationTests extends TestSupport {
         assertThat(spans.get(1).remoteEndpoint().port()).isEqualTo(port);
         assertThat(spans.get(0).tags()).containsEntry("db.redis.database_index", "0");
         assertThat(spans.get(1).tags()).containsEntry("db.redis.database_index", "0").containsKey("db.connection_string");
+    }
+
+    @Test
+    @EnabledOnCommand("ACL")
+    void shouldReportConnectionDetails() {
+
+        WithPassword.run(client, () -> {
+
+            RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(1)
+                    .withAuthentication(TestSettings.aclUsername(), TestSettings.aclPassword()).build();
+
+            try (StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {
+                connection.sync().ping();
+            }
+
+            Wait.untilTrue(
+                    () -> spans.stream().anyMatch(span -> span.name().equals("ping") && span.tags().containsKey("db.user")))
+                    .waitOrTimeout();
+        });
+
+        List<Span> connectionSpans = spans.stream().filter(span -> span.tags().containsKey("db.user"))
+                .collect(Collectors.toList());
+
+        assertThat(connectionSpans).extracting(Span::name).contains("hello", "ping");
+        assertThat(connectionSpans).allSatisfy(span -> {
+            assertThat(span.tags()).containsEntry("db.redis.database_index", "1")
+                    .containsEntry("db.user", TestSettings.aclUsername())
+                    .containsEntry("db.connection_string", "redis://" + host + ":" + port + "/1");
+            assertThat(span.tags().get("db.connection_string")).doesNotContain(TestSettings.aclPassword());
+        });
+    }
+
+    @Test
+    void shouldReportClusterNodeUri() {
+
+        RedisClusterClient clusterClient = RedisClusterClient.create(clientResources,
+                RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port1).build());
+
+        try (StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
+            for (RedisClusterNode node : connection.getPartitions()) {
+                connection.getConnection(node.getNodeId()).sync().ping();
+            }
+        } finally {
+            FastShutdown.shutdown(clusterClient);
+        }
+
+        List<Span> pingSpans = spans.stream().filter(span -> span.name().equals("ping")).collect(Collectors.toList());
+
+        assertThat(pingSpans).hasSizeGreaterThan(1);
+        assertThat(pingSpans).allSatisfy(span -> assertThat(span.tags()).containsEntry("db.connection_string",
+                "redis://" + span.remoteEndpoint().ipv4() + ":" + span.remoteEndpoint().port()));
+        assertThat(pingSpans).extracting(span -> span.tags().get("db.connection_string")).doesNotHaveDuplicates();
     }
 
     @Test

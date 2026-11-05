@@ -75,7 +75,7 @@ public interface Tracing {
      * implementation delegates to {@link #createEndpoint(SocketAddress)}.
      *
      * @param socketAddress the remote address.
-     * @param redisURI the {@link RedisURI} used to create the connection.
+     * @param redisURI the {@link RedisURI} used to create the connection, must not be {@code null}.
      * @return the {@link Endpoint} for {@link SocketAddress} and {@link RedisURI}.
      * @since 8.0
      */

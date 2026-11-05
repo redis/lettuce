@@ -116,7 +116,16 @@ public class MicrometerTracing implements Tracing {
 
     @Override
     public Endpoint createEndpoint(SocketAddress socketAddress, RedisURI redisURI) {
-        return new SocketAddressEndpoint(socketAddress, RedisUriDetails.from(redisURI));
+
+        // keep endpoints created by subclasses overriding createEndpoint(SocketAddress)
+        Endpoint endpoint = createEndpoint(socketAddress);
+
+        if (endpoint instanceof SocketAddressEndpoint) {
+            return new SocketAddressEndpoint(((SocketAddressEndpoint) endpoint).getSocketAddress(),
+                    RedisUriDetails.from(redisURI));
+        }
+
+        return endpoint;
     }
 
     /**

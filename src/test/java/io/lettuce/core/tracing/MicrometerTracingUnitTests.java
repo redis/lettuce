@@ -10,6 +10,7 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.Tag;
@@ -83,6 +84,24 @@ class MicrometerTracingUnitTests {
 
         assertThat(keys(convention.getLowCardinalityKeyValues(context))).doesNotContain("db.redis.database_index");
         assertThat(keys(convention.getHighCardinalityKeyValues(context))).doesNotContain("db.user", "db.connection_string");
+    }
+
+    @Test
+    void shouldUseEndpointCreatedBySubclass() {
+
+        Tracing.Endpoint custom = new Tracing.Endpoint() {
+        };
+        MicrometerTracing tracing = new MicrometerTracing(ObservationRegistry.create(), "Redis", false) {
+
+            @Override
+            public Endpoint createEndpoint(SocketAddress socketAddress) {
+                return custom;
+            }
+
+        };
+
+        assertThat(tracing.createEndpoint(new InetSocketAddress("127.0.0.1", 6379), RedisURI.create("redis://localhost")))
+                .isSameAs(custom);
     }
 
     private static LettuceObservationContext createContext(Tracing.Endpoint endpoint) {

@@ -10,13 +10,17 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.CredentialsProvider;
 import io.lettuce.core.RedisCredentials;
+import io.lettuce.core.RedisCredentialsProvider;
 import io.lettuce.core.RedisURI;
+import reactor.core.publisher.Mono;
 
 /**
  * Unit tests for {@link RedisUriDetails}.
@@ -72,6 +76,42 @@ class RedisUriDetailsUnitTests {
                         .isNull();
         assertThat(RedisUriDetails.from(RedisURI.builder().withHost("localhost").withAuthentication(throwing).build())
                 .getUsername()).isNull();
+    }
+
+    @Test
+    void shouldUseImmediateCredentialsProviderWithoutFuture() {
+
+        CredentialsProvider.ImmediateCredentialsProvider provider = new CredentialsProvider.ImmediateCredentialsProvider() {
+
+            @Override
+            public RedisCredentials resolveCredentialsNow() {
+                return RedisCredentials.just("alice", "secret");
+            }
+
+            @Override
+            public CompletionStage<RedisCredentials> resolveCredentialsAsync() {
+                throw new AssertionError("resolveCredentialsAsync must not be called");
+            }
+
+        };
+
+        assertThat(RedisUriDetails.from(RedisURI.builder().withHost("localhost").withAuthentication(provider).build())
+                .getUsername()).isEqualTo("alice");
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void shouldNotSubscribeToReactiveCredentialsProvider() {
+
+        AtomicInteger subscriptions = new AtomicInteger();
+        RedisCredentialsProvider provider = () -> Mono.fromCallable(() -> {
+            subscriptions.incrementAndGet();
+            return RedisCredentials.just("alice", "secret");
+        });
+
+        assertThat(RedisUriDetails.from(RedisURI.builder().withHost("localhost").withAuthentication(provider).build())
+                .getUsername()).isNull();
+        assertThat(subscriptions).hasValue(0);
     }
 
 }

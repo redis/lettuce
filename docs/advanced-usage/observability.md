@@ -212,13 +212,23 @@ connection:
 
 - `db.user`: the username, if the credentials provider has the
   credentials available without waiting (for example static
-  credentials).
+  credentials). Lettuce asks the credentials provider once per
+  connection for this and does not wait for the result. A deprecated
+  `RedisCredentialsProvider` is not asked, unless it is an
+  `ImmediateRedisCredentialsProvider`.
 
 - `db.connection_string`: the `RedisURI` without credentials.
 
+For Redis Cluster, the `RedisURI` of a node connection is the seed
+`RedisURI` with the host and port of the connected node. For Redis
+Sentinel, it is the Sentinel `RedisURI` that was used to look up the
+master or replica.
+
 With Micrometer, `db.redis.database_index` is a low cardinality key
 value, `db.user` and `db.connection_string` are high cardinality key
-values.
+values. Low cardinality key values are also added as tags to meters
+created from observations, so `db.redis.database_index` adds a tag to
+existing Redis command metrics.
 
 ### Micrometer Tracing
 
