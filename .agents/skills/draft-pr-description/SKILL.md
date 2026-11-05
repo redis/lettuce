@@ -21,11 +21,13 @@ An empty value means "not provided" — default it per the resolution below (a m
 
 ## 1. Resolve branches
 
-- Both named → use as given.
-- Only one named → it's the **base**; target defaults to current branch.
-- None named → base defaults to `main`, then `master` if `main` doesn't exist (`git branch --list`). **Only check these two names — no scanning other branches, no guessing.** If neither exists, stop and ask. Target defaults to current branch (`git branch --show-current`).
+**"Current branch" always means the branch checked out in the working directory at the moment the skill runs: run `git branch --show-current` every time and use its output.** Never take it from memory, an earlier git status snapshot, the conversation, or the IDE — it may have changed since.
 
-State the resolved base/target before proceeding.
+- Both named → use as given.
+- Only one named → it's the **base**; target defaults to the current branch.
+- None named → base defaults to `main`, then `master` if `main` doesn't exist (`git branch --list`). **Only check these two names — no scanning other branches, no guessing.** If neither exists, stop and ask. Target defaults to the current branch. If `git branch --show-current` prints nothing (detached HEAD), stop and ask.
+
+State the resolved base/target before proceeding, quoting the `git branch --show-current` output for a defaulted target.
 
 ## 2. Diff
 
@@ -41,7 +43,7 @@ Skip routine stuff (formatting, trivial renames). No file/line enumeration — w
 
 ## 4. Output structure
 
-Write to `prDescription.md` (repo root, overwrite if exists):
+Write to `prDescription.md` (repo root, overwrite if exists). If the file already exists, read its title line first and repeat it in the confirmation (step 5) as the draft that was replaced, so a description for another branch is never lost silently:
 
 ```markdown
 # <Title — imperative, <70 chars>
