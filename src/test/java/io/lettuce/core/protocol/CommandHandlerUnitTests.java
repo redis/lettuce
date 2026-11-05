@@ -216,7 +216,7 @@ class CommandHandlerUnitTests {
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldCreateTracingEndpointOnceForCommandsBeforeChannelActive() throws Exception {
+    void shouldReuseTracingEndpointCreatedBeforeChannelActive() throws Exception {
 
         RedisURI redisURI = RedisURI.create("redis://localhost/3");
         Attribute<RedisURI> attribute = mock(Attribute.class);
@@ -239,6 +239,7 @@ class CommandHandlerUnitTests {
         CommandHandler commandHandler = new CommandHandler(ClientOptions.create(), clientResources, endpoint);
         commandHandler.write(context, new AsyncCommand<>(new Command<>(CommandType.HELLO, null)), promise);
         commandHandler.write(context, new AsyncCommand<>(new Command<>(CommandType.CLIENT, null)), promise);
+        commandHandler.channelActive(context);
 
         verify(tracing, times(1)).createEndpoint(channel.remoteAddress(), redisURI);
     }

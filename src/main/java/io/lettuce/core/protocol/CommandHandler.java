@@ -328,7 +328,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         setState(LifecycleState.CONNECTED);
 
-        tracedEndpoint = createTracedEndpoint(ctx.channel());
+        if (tracedEndpoint == null) {
+            tracedEndpoint = createTracedEndpoint(ctx.channel());
+        }
 
         endpoint.notifyChannelActive(ctx.channel());
         super.channelActive(ctx);
