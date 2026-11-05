@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.CircuitBreakerConfig;
 import io.lettuce.core.failover.api.DatabaseConfig;
@@ -269,6 +270,22 @@ class DatabaseConfigBuilderUnitTests {
             assertThat(mutated.getWeight()).isEqualTo(original.getWeight());
             assertThat(mutated.getCircuitBreakerConfig()).isEqualTo(original.getCircuitBreakerConfig());
             assertThat(mutated.getHealthCheckStrategySupplier()).isEqualTo(original.getHealthCheckStrategySupplier());
+        }
+
+        @Test
+        @DisplayName("Should preserve custom clientOptions when mutating")
+        void shouldPreserveClientOptionsWhenMutating() {
+            // Given: Existing config with custom client options
+            ClientOptions clientOptions = ClientOptions.builder().autoReconnect(false).build();
+            DatabaseConfig original = DatabaseConfig.builder(TEST_URI).clientOptions(clientOptions).build();
+
+            // When: Mutate without changes
+            DatabaseConfig mutated = original.mutate().build();
+
+            // Then: Client options should be preserved
+            assertThat(mutated.getClientOptions()).isSameAs(original.getClientOptions());
+            assertThat(mutated.getClientOptions().isAutoReconnect()).isFalse();
+            assertThat(mutated).isEqualTo(original);
         }
 
     }
