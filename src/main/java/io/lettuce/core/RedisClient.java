@@ -334,7 +334,7 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.commandHandler(commandHandlerSupplier).endpoint(endpoint);
 
         connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(), redisURI);
-        connectionBuilder.connectionInitializer(createHandshake(state, clientOptions));
+         connectionBuilder.connectionInitializer(createHandshake(state));
 
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 
@@ -606,8 +606,8 @@ public class RedisClient extends AbstractRedisClient {
             state.apply(redisURI);
             state.apply(metadata);
 
-            connectionBuilder.connectionInitializer(createHandshake(state, clientOptions));
-
+            connectionBuilder.connectionInitializer(createHandshake(state));
+            
             logger.debug("Connecting to Redis Sentinel, address: " + redisURI);
 
             connectionBuilder.endpoint(endpoint)
@@ -638,6 +638,16 @@ public class RedisClient extends AbstractRedisClient {
     @Override
     public void setOptions(ClientOptions clientOptions) {
         super.setOptions(clientOptions);
+    }
+
+    
+    @Override
+    protected RedisHandshake createHandshake(ConnectionState state) {
+        ClientOptions clientOptions = clientOptionsThreadLocal.get();
+        if (clientOptions == null) {
+            clientOptions = getOptions();
+        }
+        return super.createHandshake(state, clientOptions);
     }
 
     // -------------------------------------------------------------------------
