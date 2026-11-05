@@ -37,6 +37,36 @@ class SearchTestSupport {
     }
 
     /**
+     * Run {@code FT.SEARCH} until the reply reports exactly {@code expectedCount} results and return that reply. FT.INFO
+     * {@code num_docs} can already report all documents while the inverted index is still being built, so a query issued right
+     * after {@link #awaitIndexReady} may still see fewer hits. Gives up after the default {@link Wait} period and returns the
+     * last reply, so the caller's assertion reports the actual count.
+     */
+    static SearchReply<String> searchUntilCount(RedisCommands<String, String> redis, String index, String query,
+            long expectedCount) {
+        awaitQuietly(Wait.untilEquals(expectedCount, () -> redis.ftSearch(index, query).getCount()));
+        return redis.ftSearch(index, query);
+    }
+
+    /**
+     * Run {@code FT.SEARCH} until the reply reports at least {@code minCount} results and return that reply. See
+     * {@link #searchUntilCount} for the rationale and the timeout behavior.
+     */
+    static SearchReply<String> searchUntilAtLeast(RedisCommands<String, String> redis, String index, String query,
+            long minCount) {
+        awaitQuietly(Wait.untilTrue(() -> redis.ftSearch(index, query).getCount() >= minCount));
+        return redis.ftSearch(index, query);
+    }
+
+    private static void awaitQuietly(Wait.WaitBuilder<?> wait) {
+        try {
+            wait.waitOrTimeout();
+        } catch (IllegalStateException e) {
+            // Condition not reached within the timeout; the caller asserts on the returned reply and reports the actual value.
+        }
+    }
+
+    /**
      * FT.INFO is not exposed by Lettuce's {@code RediSearchCommands} API, so we issue it as a raw command via
      * {@link io.lettuce.core.api.sync.BaseRedisCommands#dispatch dispatch()} and read the {@code num_docs} field. This mirrors
      * how the Jedis and NRedisStack helpers assert the index size (via FT.INFO {@code num_docs}) instead of an FT.SEARCH count.
