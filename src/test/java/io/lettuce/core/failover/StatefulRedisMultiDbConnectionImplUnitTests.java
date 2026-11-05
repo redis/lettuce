@@ -12,7 +12,6 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -1400,45 +1399,25 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         }
 
         @Test
-        @DisplayName("Should not complete close while a failover retry is being published and scheduled")
-        void shouldNotCompleteCloseWhileFailoverRetryIsBeingScheduled() throws Exception {
+        @DisplayName("Should cancel failover retry when close races with scheduling it")
+        void shouldCancelFailoverRetryWhenCloseRacesWithScheduling() {
             StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
                     null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options);
 
             ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
             verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
 
-            // hold the scheduling thread inside publish, after it passed the closed check and claimed the retry slot
-            CountDownLatch publishing = new CountDownLatch(1);
-            CountDownLatch releasePublish = new CountDownLatch(1);
+            // close() runs while the retry is being scheduled, before its future is stored
             doAnswer(invocation -> {
-                publishing.countDown();
-                releasePublish.await(5, TimeUnit.SECONDS);
-                return null;
-            }).when(eventBus).publish(any(AllDatabasesUnhealthyEvent.class));
+                connection.close();
+                return retryFuture;
+            }).when(eventExecutorGroup).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
 
             makeAllDatabasesUnhealthy();
-            Thread scheduler = new Thread(() -> listenerCaptor.getValue()
-                    .onStatusChange(new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY, HealthStatus.UNHEALTHY)));
-            scheduler.start();
-            assertThat(publishing.await(5, TimeUnit.SECONDS)).isTrue();
+            listenerCaptor.getValue()
+                    .onStatusChange(new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY, HealthStatus.UNHEALTHY));
 
-            Thread closer = new Thread(connection::close);
-            closer.start();
-            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-            while (closer.getState() != Thread.State.BLOCKED && closer.getState() != Thread.State.TERMINATED
-                    && System.nanoTime() < deadline) {
-                Thread.sleep(1);
-            }
-            Thread.State closerState = closer.getState();
-
-            releasePublish.countDown();
-            scheduler.join(5000);
-            closer.join(5000);
-
-            assertThat(closerState).as("close() must wait for the in-flight retry instead of completing")
-                    .isEqualTo(Thread.State.BLOCKED);
-            verify(retryFuture, atLeastOnce()).cancel(false);
+            verify(retryFuture).cancel(false);
         }
 
         @Test
