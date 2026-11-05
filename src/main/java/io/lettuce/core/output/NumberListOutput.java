@@ -11,8 +11,6 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +26,8 @@ public class NumberListOutput<K, V> extends CommandOutput<K, V, List<Number>> {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(NumberListOutput.class);
 
+    private static final String NULL_LITERAL = "null";
+
     private boolean initialized;
 
     public NumberListOutput(RedisCodec<K, V> codec) {
@@ -36,7 +36,20 @@ public class NumberListOutput<K, V> extends CommandOutput<K, V, List<Number>> {
 
     @Override
     public void set(ByteBuffer bytes) {
-        output.add(bytes != null ? parseNumber(bytes) : null);
+
+        if (bytes == null) {
+            output.add(null);
+            return;
+        }
+
+        String value = decodeString(bytes).trim();
+
+        if (isJsonArray(value)) {
+            addJsonArray(value);
+            return;
+        }
+
+        output.add(parseNumber(value));
     }
 
     @Override
@@ -51,7 +64,7 @@ public class NumberListOutput<K, V> extends CommandOutput<K, V, List<Number>> {
 
     @Override
     public void setBigNumber(ByteBuffer bytes) {
-        output.add(bytes != null ? parseNumber(bytes) : null);
+        output.add(bytes != null ? parseNumber(decodeString(bytes).trim()) : null);
     }
 
     @Override
@@ -62,15 +75,44 @@ public class NumberListOutput<K, V> extends CommandOutput<K, V, List<Number>> {
         }
     }
 
-    private Number parseNumber(ByteBuffer bytes) {
-        Number result = 0;
-        try {
-            result = NumberFormat.getNumberInstance().parse(decodeString(bytes));
-        } catch (ParseException e) {
-            LOG.warn("Failed to parse " + bytes, e);
+    private static boolean isJsonArray(String value) {
+        return value.length() >= 2 && value.charAt(0) == '[' && value.charAt(value.length() - 1) == ']';
+    }
+
+    private void addJsonArray(String value) {
+
+        String body = value.substring(1, value.length() - 1).trim();
+
+        if (body.isEmpty()) {
+            return;
         }
 
-        return result;
+        for (String element : body.split(",")) {
+
+            String trimmed = element.trim();
+
+            if (NULL_LITERAL.equals(trimmed)) {
+                output.add(null);
+            } else {
+                output.add(parseNumber(trimmed));
+            }
+        }
+    }
+
+    private Number parseNumber(String value) {
+
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException ignore) {
+            // fall through to floating point parsing
+        }
+
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            LOG.warn("Failed to parse " + value, e);
+            return 0;
+        }
     }
 
 }

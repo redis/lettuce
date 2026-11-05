@@ -3,7 +3,7 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>7.7.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
@@ -16,8 +16,8 @@
     <url>https://github.com/redis/lettuce</url>
 
     <organization>
-        <name>lettuce.io</name>
-        <url>https://lettuce.io</url>
+        <name>Redis</name>
+        <url>https://redis.io</url>
     </organization>
 
     <licenses>
@@ -37,6 +37,10 @@
         <developer>
             <id>tishun</id>
             <name>Tihomir Mateev</name>
+        </developer>
+        <developer>
+            <id>a-TODO-rov</id>
+            <name>Aleksandar Todorov</name>
         </developer>
         <developer>
             <id>mp911de</id>
@@ -68,9 +72,9 @@
         <micrometer.version>1.14.2</micrometer.version>
         <micrometer-tracing.version>1.2.4</micrometer-tracing.version>
         <mockito.version>4.9.0</mockito.version>
-        <netty.version>4.2.13.Final</netty.version>
+        <netty.version>4.2.17.Final</netty.version>
         <openwebbeans.version>2.0.27</openwebbeans.version>
-        <reactor.version>3.6.6</reactor.version>
+        <reactor.version>3.8.7</reactor.version>
         <rxjava.version>1.3.8</rxjava.version>
         <rxjava-reactive-streams.version>1.2.1</rxjava-reactive-streams.version>
         <rxjava2.version>2.2.21</rxjava2.version>
@@ -185,12 +189,12 @@
         <dependency>
             <groupId>redis.clients.authentication</groupId>
             <artifactId>redis-authx-core</artifactId>
-            <version>0.1.1-beta2</version>
+            <version>0.2.0</version>
         </dependency>
         <dependency>
             <groupId>redis.clients.authentication</groupId>
             <artifactId>redis-authx-entraid</artifactId>
-            <version>0.1.1-beta2</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <!-- Start of core dependencies -->
@@ -426,6 +430,13 @@
         </dependency>
 
         <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.3.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
             <version>${hamcrest-library.version}</version>
@@ -442,7 +453,7 @@
         <dependency>
             <groupId>com.github.javaparser</groupId>
             <artifactId>javaparser-core</artifactId>
-            <version>3.6.3</version>
+            <version>3.28.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -492,6 +503,12 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -932,7 +949,6 @@
                     <directories>
                         <directory>${project.build.sourceDirectory}</directory>
                         <directory>${project.build.testSourceDirectory}</directory>
-                        <directory>${project.basedir}/src/main/templates</directory>
                     </directories>
                     <configFile>formatting.xml</configFile>
                 </configuration>

@@ -63,6 +63,18 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun bitopXor(destination: K, vararg keys: K): Long? =
         ops.bitopXor(destination, *keys).awaitFirstOrNull()
 
+    override suspend fun bitopDiff(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopDiff(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopDiff1(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopDiff1(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopAndor(destination: K, sourceKey: K, vararg keys: K): Long? =
+        ops.bitopAndor(destination, sourceKey, *keys).awaitFirstOrNull()
+
+    override suspend fun bitopOne(destination: K, vararg keys: K): Long? =
+        ops.bitopOne(destination, *keys).awaitFirstOrNull()
+
     override suspend fun decr(key: K): Long? = ops.decr(key).awaitFirstOrNull()
 
     override suspend fun decrby(key: K, amount: Long): Long? =
@@ -118,7 +130,13 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun setrange(key: K, offset: Long, value: V): Long? = ops.setrange(key, offset, value).awaitFirstOrNull()
 
+    @Suppress("DEPRECATION")
     override suspend fun lcs(lcsArgs: LcsArgs): StringMatchResult? = ops.lcs(lcsArgs).awaitFirstOrNull()
+
+    override suspend fun lcs(key1: K, key2: K): V? = ops.lcs(key1, key2).awaitFirstOrNull()
+
+    override suspend fun lcs(key1: K, key2: K, lcsArgs: LcsArgs): StringMatchResult? =
+        ops.lcs(key1, key2, lcsArgs).awaitFirstOrNull()
 
     override suspend fun strlen(key: K): Long? = ops.strlen(key).awaitFirstOrNull()
 

@@ -38,6 +38,7 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.condition.DisabledOnProvider;
 
 /**
  * Integration tests for Cluster Pub/Sub.
@@ -46,6 +47,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;

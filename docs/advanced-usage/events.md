@@ -60,24 +60,44 @@ Following events are sent by the client:
 
 ### Subscribing to events
 
-The simple-most approach to subscribing to the client events is
-obtaining the event bus from the client’s client resources.
+The simplest approach to subscribing to the client events is obtaining
+the event bus from the client’s client resources and registering a
+callback listener (since 7.8).
 
 ``` java
-RedisClient client = RedisClient.create()
+RedisClient client = RedisClient.create();
 EventBus eventBus = client.getResources().eventBus();
 
-eventBus.get().subscribe(e -> System.out.println(event));
+Subscription subscription = eventBus.subscribe(event -> System.out.println(event));
 
 ...
+subscription.close();
 client.shutdown();
 ```
 
-Calls to the `subscribe()` method will return a `Subscription`. If you
-plan to unsubscribe from the event stream, you can do so by calling the
-`Subscription.unsubscribe()` method. The event bus utilizes
-[RxJava](http://reactivex.io) and the {reactive-api} to transport events
-from the publisher to its subscribers.
+`subscribe(Consumer)` invokes the listener for every event until you
+close the returned `Subscription`. To receive only events of a specific
+type, use `subscribe(Class, Consumer)`:
+
+``` java
+Subscription subscription = eventBus.subscribe(ConnectedEvent.class,
+        event -> System.out.println("connected"));
+```
+
+An exception thrown by a listener is caught and logged; it does not
+cancel the subscription or affect delivery to other subscribers.
+
+**Removed in 8.0:** `EventBus.get()`, which returned a Project Reactor
+`Flux<Event>`, was deprecated in 7.8 and has been removed in favor of the
+callback-based `subscribe(...)` methods, so that consuming events no
+longer requires Reactor. If you still need a `Flux`, bridge it yourself:
+
+``` java
+Flux.create(sink -> {
+    Subscription s = eventBus.subscribe(sink::next);
+    sink.onDispose(s::close);
+}, FluxSink.OverflowStrategy.DROP);
+```
 
 A thread of the computation thread pool (can be configured using [client
 resources](client-resources.md)) transports the events.

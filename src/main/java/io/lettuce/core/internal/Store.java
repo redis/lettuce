@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  * given factory key yields a single instance per connection.
  *
  * @author Aleksandar Todorov
- * @since 7.7
+ * @since 7.8
  */
 public final class Store {
 

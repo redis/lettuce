@@ -24,22 +24,21 @@ import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.SslConnectionBuilder;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
+import io.lettuce.core.internal.Pair;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
-import io.netty.util.Timer;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -58,27 +57,21 @@ class ReconnectionHandler {
 
     private final Bootstrap bootstrap;
 
-    protected Mono<SocketAddress> socketAddressSupplier;
-
-    private final ConnectionFacade connectionFacade;
+    protected Supplier<CompletionStage<SocketAddress>> socketAddressSupplierAsync;
 
     private volatile CompletableFuture<Channel> currentFuture;
 
     private volatile boolean reconnectSuspended;
 
-    ReconnectionHandler(ClientOptions clientOptions, Bootstrap bootstrap, Mono<SocketAddress> socketAddressSupplier,
-            Timer timer, ExecutorService reconnectWorkers, ConnectionFacade connectionFacade) {
+    ReconnectionHandler(ClientOptions clientOptions, Bootstrap bootstrap,
+            Supplier<CompletionStage<SocketAddress>> socketAddressSupplierAsync) {
 
-        LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
+        LettuceAssert.notNull(socketAddressSupplierAsync, "SocketAddressSupplier must not be null");
         LettuceAssert.notNull(bootstrap, "Bootstrap must not be null");
-        LettuceAssert.notNull(timer, "Timer must not be null");
-        LettuceAssert.notNull(reconnectWorkers, "ExecutorService must not be null");
-        LettuceAssert.notNull(connectionFacade, "ConnectionFacade must not be null");
 
-        this.socketAddressSupplier = socketAddressSupplier;
+        this.socketAddressSupplierAsync = socketAddressSupplierAsync;
         this.bootstrap = bootstrap;
         this.clientOptions = clientOptions;
-        this.connectionFacade = connectionFacade;
     }
 
     /**
@@ -88,30 +81,30 @@ class ReconnectionHandler {
      *
      * @return reconnect {@link ChannelFuture}.
      */
-    protected Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> reconnect() {
+    protected Pair<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> reconnect() {
 
         CompletableFuture<Channel> future = new CompletableFuture<>();
         CompletableFuture<SocketAddress> address = new CompletableFuture<>();
 
-        socketAddressSupplier.subscribe(remoteAddress -> {
-
-            address.complete(remoteAddress);
-
-            if (future.isCancelled()) {
-                return;
-            }
-
-            reconnect0(future, remoteAddress);
-
-        }, ex -> {
-            if (!address.isDone()) {
-                address.completeExceptionally(ex);
-            }
-            future.completeExceptionally(ex);
-        });
+        // handle synchronous exceptions during get(), before obtaining the CompletionStage
+        try {
+            Futures.unwrapExceptions(socketAddressSupplierAsync.get().thenAccept(remoteAddress -> {
+                address.complete(remoteAddress);
+                if (!future.isCancelled()) {
+                    reconnect0(future, remoteAddress);
+                }
+            })).exceptionally(error -> {
+                address.completeExceptionally(error);
+                future.completeExceptionally(error);
+                return null;
+            });
+        } catch (Exception e) {
+            address.completeExceptionally(e);
+            future.completeExceptionally(e);
+        }
 
         this.currentFuture = future;
-        return Tuples.of(future, address);
+        return Pair.of(future, address);
     }
 
     private void reconnect0(CompletableFuture<Channel> result, SocketAddress remoteAddress) {

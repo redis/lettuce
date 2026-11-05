@@ -50,6 +50,7 @@ import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
+import io.lettuce.test.condition.DisabledOnProvider;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
@@ -116,6 +117,8 @@ public class KeyCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("COPY")
+    // Redis Enterprise does not support multiple databases
+    @DisabledOnProvider("re")
     void copyWithDestinationDb() {
         redis.set(key, value);
         redis.copy(key, key, CopyArgs.Builder.destinationDb(2));
@@ -228,6 +231,8 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Redis Enterprise does not support multiple databases and blocks MOVE
+    @DisabledOnProvider("re")
     public void move() {
         redis.set(key, value);
         redis.move(key, 1);
@@ -245,6 +250,8 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    // Redis Enterprise does not expose maxmemory-policy via CONFIG GET/SET
+    @DisabledOnProvider("re")
     void objectFreq() {
         String maxmemoryPolicy = redis.configGet("maxmemory-policy").get("maxmemory-policy");
         try {

@@ -5,17 +5,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.CredentialsProvider;
 import io.lettuce.core.DriverInfo;
 import io.lettuce.core.RedisCredentialsProvider;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SslVerifyMode;
-import io.lettuce.core.annotations.Experimental;
 
 /**
  * An immutable implementation of {@link RedisURI} that prevents any modifications after construction. All setter methods throw
  * {@link UnsupportedOperationException}.
  */
-@Experimental
 public class ImmutableRedisURI extends RedisURI {
 
     private List<RedisURI> sentinels;
@@ -72,7 +71,13 @@ public class ImmutableRedisURI extends RedisURI {
     }
 
     @Override
+    @Deprecated
     public void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setCredentialsProvider(CredentialsProvider credentialsProvider) {
         throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
     }
 

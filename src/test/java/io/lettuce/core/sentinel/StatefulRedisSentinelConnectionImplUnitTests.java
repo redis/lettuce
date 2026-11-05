@@ -63,4 +63,16 @@ class StatefulRedisSentinelConnectionImplUnitTests {
                 .isSameAs(connection.reactive().getClass());
     }
 
+    @Test
+    @SuppressWarnings("deprecation")
+    void reactiveDelegatesToCommandsAccessor() {
+        assertThat(connection.reactive()).isSameAs(connection.commands(RedisSentinelReactiveCommands.factory()));
+    }
+
+    @Test
+    void factoryProducesReactiveCommands() {
+        assertThat(connection.commands(RedisSentinelReactiveCommands.factory()))
+                .isInstanceOf(RedisSentinelReactiveCommandsImpl.class);
+    }
+
 }

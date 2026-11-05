@@ -7,8 +7,10 @@
 package io.lettuce.core.probabilistic;
 
 import javax.inject.Inject;
+import java.time.Duration;
 import java.util.List;
 
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -136,6 +138,18 @@ public class RedisCuckooFilterReactiveIntegrationTests extends RedisCuckooFilter
         for (int i = 2; i < result.size(); i++) {
             assertThat(result.get(i)).as("result[%d] must be false (filter full)", i).isEqualTo(Boolean.FALSE);
         }
+    }
+
+    /**
+     * Reproduces the reactive hang on server errors: {@code RedisPublisher.SubscriptionCommand#doOnComplete()} used to call
+     * {@code getOutput().get()} before checking {@code getOutput().hasError()}, so a {@link CfInfoValueParser#parse} failure on
+     * a {@code null} payload (server error, no data) threw before the error signal could reach the subscriber, leaving the
+     * {@code Mono} hanging forever instead of erroring.
+     */
+    @Test
+    void cfInfoOnMissingKeyErrorsInsteadOfHanging() {
+        StepVerifier.create(reactive.cfInfo("does-not-exist-key")).expectError(RedisCommandExecutionException.class)
+                .verify(Duration.ofSeconds(5));
     }
 
 }

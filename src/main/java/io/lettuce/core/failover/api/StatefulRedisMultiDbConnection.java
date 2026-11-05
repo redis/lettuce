@@ -1,6 +1,5 @@
 package io.lettuce.core.failover.api;
 
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.StatefulRedisConnection;
 
 /**
@@ -13,7 +12,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 public interface StatefulRedisMultiDbConnection<K, V> extends StatefulRedisConnection<K, V>, BaseRedisMultiDbConnection {
 
 }

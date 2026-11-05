@@ -32,7 +32,7 @@ public interface Endpoint extends PushHandler {
     void notifyChannelInactive(Channel channel);
 
     /**
-     * Notify about an exception occured in channel/command processing
+     * Notify about an exception occurred in channel/command processing
      *
      * @param t the Exception
      */

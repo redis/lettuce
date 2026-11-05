@@ -3,13 +3,11 @@ package io.lettuce.core.failover.api;
 import java.io.Closeable;
 
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
 
 /**
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 public interface BaseRedisMultiDbConnection extends Closeable {
 
     /**
