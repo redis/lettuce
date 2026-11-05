@@ -1166,6 +1166,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                         int attemptCount = attempts.incrementAndGet();
                         publishAllDatabasesUnhealthyEvent(attemptCount);
                         task.future = executor.schedule(task, delay.toMillis(), TimeUnit.MILLISECONDS);
+                        // the lock is reentrant: an event subscriber on this thread may have closed the connection during
+                        // publication, when cancel() could not see the future yet
+                        if (closed) {
+                            task.cancel();
+                        }
                     } catch (RuntimeException e) {
                         logger.error("Failed to schedule failover retry task", e);
                         // highly unlikely to happen, but if it does, we need to clear the scheduled task so that next retry

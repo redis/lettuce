@@ -1438,6 +1438,28 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
             assertThat(closerState).as("close() must wait for the in-flight retry instead of completing")
                     .isEqualTo(Thread.State.BLOCKED);
+            verify(retryFuture, atLeastOnce()).cancel(false);
+        }
+
+        @Test
+        @DisplayName("Should cancel failover retry when an event subscriber closes the connection on the publishing thread")
+        void shouldCancelFailoverRetryWhenSubscriberClosesConnectionDuringPublication() {
+            StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options);
+
+            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
+            verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
+
+            // a synchronous event bus delivers the event on the scheduling thread, before the retry future exists
+            doAnswer(invocation -> {
+                connection.close();
+                return null;
+            }).when(eventBus).publish(any(AllDatabasesUnhealthyEvent.class));
+
+            makeAllDatabasesUnhealthy();
+            listenerCaptor.getValue()
+                    .onStatusChange(new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY, HealthStatus.UNHEALTHY));
+
             verify(retryFuture).cancel(false);
         }
 
