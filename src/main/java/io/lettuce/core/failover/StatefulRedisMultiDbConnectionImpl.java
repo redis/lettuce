@@ -1117,13 +1117,20 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     /**
      * Thread-safe holder for failover retry state. Manages the scheduled retry task and tracks consecutive failed attempts.
-     * Uses a lock-free approach to ensure only one retry task is scheduled at a time.
+     * Ensures only one retry task is scheduled at a time, and that no retry is published or scheduled once the connection is
+     * closed.
      */
     private class FailoverRetryState {
 
         private final AtomicInteger attempts = new AtomicInteger(0);
 
         private final AtomicReference<RetryTask> scheduledTask = new AtomicReference<>();
+
+        /**
+         * Guards scheduling against {@link #cancel()}: close must not complete while a retry is between the {@code closed}
+         * check and storing its future, otherwise that retry is published and scheduled after close has returned.
+         */
+        private final Object scheduleLock = new Object();
 
         /**
          * Attempts to schedule a retry task after the given delay.
@@ -1148,25 +1155,23 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             // Create the task - clears the scheduled task when it starts, allowing next retry to be scheduled
             RetryTask task = new RetryTask(retryAction);
 
-            if (closed) {
-                return;
-            }
+            synchronized (scheduleLock) {
+                if (closed) {
+                    return;
+                }
 
-            // Try to claim the slot atomically; only schedule if we successfully claimed it
-            if (scheduledTask.compareAndSet(null, task)) {
-                try {
-                    int attemptCount = attempts.incrementAndGet();
-                    publishAllDatabasesUnhealthyEvent(attemptCount);
-                    task.future = executor.schedule(task, delay.toMillis(), TimeUnit.MILLISECONDS);
-                    // close() may have run between the closed check above and storing the future
-                    if (closed) {
-                        task.cancel();
+                // Try to claim the slot atomically; only schedule if we successfully claimed it
+                if (scheduledTask.compareAndSet(null, task)) {
+                    try {
+                        int attemptCount = attempts.incrementAndGet();
+                        publishAllDatabasesUnhealthyEvent(attemptCount);
+                        task.future = executor.schedule(task, delay.toMillis(), TimeUnit.MILLISECONDS);
+                    } catch (RuntimeException e) {
+                        logger.error("Failed to schedule failover retry task", e);
+                        // highly unlikely to happen, but if it does, we need to clear the scheduled task so that next retry
+                        // can be scheduled.
+                        scheduledTask.compareAndSet(task, null);
                     }
-                } catch (RuntimeException e) {
-                    logger.error("Failed to schedule failover retry task", e);
-                    // highly unlikely to happen, but if it does, we need to clear the scheduled task so that next retry can be
-                    // scheduled.
-                    scheduledTask.compareAndSet(task, null);
                 }
             }
         }
@@ -1175,9 +1180,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
          * Cancels the pending retry task, if any. Called when the connection is closed.
          */
         void cancel() {
-            RetryTask task = scheduledTask.get();
-            if (task != null) {
-                task.cancel();
+            synchronized (scheduleLock) {
+                RetryTask task = scheduledTask.get();
+                if (task != null) {
+                    task.cancel();
+                }
             }
         }
 
