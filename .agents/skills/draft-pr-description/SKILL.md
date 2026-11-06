@@ -25,7 +25,7 @@ An empty value means "not provided" — default it per the resolution below (a m
 
 - Both named → use as given.
 - Only one named → it's the **base**; target defaults to the current branch.
-- None named → base defaults to `main`, then `master` if `main` doesn't exist (`git branch --list`). **Only check these two names — no scanning other branches, no guessing.** If neither exists, stop and ask. Target defaults to the current branch. If `git branch --show-current` prints nothing (detached HEAD), stop and ask.
+- None named → base defaults to `main`, then `master` if `main` doesn't exist (`git branch --list`). **Only check these two names — no scanning other branches, no guessing.** If neither exists, stop and ask. Target defaults to the current branch.
 
 State the resolved base/target before proceeding, quoting the `git branch --show-current` output for a defaulted target.
 
