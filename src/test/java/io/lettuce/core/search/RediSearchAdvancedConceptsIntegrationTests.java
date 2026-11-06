@@ -668,11 +668,11 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("person:5", "name", "Jonson");
 
         // Search for "Smith" should find phonetically similar names
-        SearchReply<String> results = redis.ftSearch("phonetic-en-idx", "@name:Smith");
+        SearchReply<String> results = SearchTestSupport.searchUntilAtLeast(redis, "phonetic-en-idx", "@name:Smith", 2);
         assertThat(results.getCount()).isGreaterThanOrEqualTo(2); // Should find Smith and Smyth at minimum
 
         // Search for "Johnson" should find phonetically similar names
-        results = redis.ftSearch("phonetic-en-idx", "@name:Johnson");
+        results = SearchTestSupport.searchUntilAtLeast(redis, "phonetic-en-idx", "@name:Johnson", 2);
         assertThat(results.getCount()).isGreaterThanOrEqualTo(2); // Should find Johnson and Jonson at minimum
 
         redis.ftDropindex("phonetic-en-idx");
@@ -691,10 +691,10 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("personne:4", "nom", "Dupond");
 
         // Search should find phonetically similar French names
-        results = redis.ftSearch("phonetic-fr-idx", "@nom:Martin");
+        results = SearchTestSupport.searchUntilAtLeast(redis, "phonetic-fr-idx", "@nom:Martin", 1);
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
-        results = redis.ftSearch("phonetic-fr-idx", "@nom:Dupont");
+        results = SearchTestSupport.searchUntilAtLeast(redis, "phonetic-fr-idx", "@nom:Dupont", 1);
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         redis.ftDropindex("phonetic-fr-idx");
@@ -714,7 +714,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("persona:4", "nombre", "Rodriguez");
 
         // Search should handle accent variations
-        results = redis.ftSearch("phonetic-es-idx", "@nombre:Garcia");
+        results = SearchTestSupport.searchUntilAtLeast(redis, "phonetic-es-idx", "@nombre:Garcia", 1);
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         redis.ftDropindex("phonetic-es-idx");
@@ -734,7 +734,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("pessoa:4", "nome", "Santtos");
 
         // Search should find phonetically similar Portuguese names
-        results = redis.ftSearch("phonetic-pt-idx", "@nome:Silva");
+        results = SearchTestSupport.searchUntilAtLeast(redis, "phonetic-pt-idx", "@nome:Silva", 1);
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         redis.ftDropindex("phonetic-pt-idx");
@@ -846,7 +846,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         SearchTestSupport.awaitIndexReady(redis, "normal-idx", 4);
 
         // Basic search should work
-        SearchReply<String> results = redis.ftSearch("normal-idx", "@title:Java*");
+        SearchReply<String> results = SearchTestSupport.searchUntilCount(redis, "normal-idx", "@title:Java*", 2);
         assertThat(results.getCount()).isEqualTo(2); // JavaScript and Java
 
         redis.ftDropindex("normal-idx");
@@ -870,19 +870,19 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         SearchTestSupport.awaitIndexReady(redis, "suffix-idx", 6);
 
         // Test prefix matching with suffix trie
-        results = redis.ftSearch("suffix-idx", "@title:Java*");
+        results = SearchTestSupport.searchUntilCount(redis, "suffix-idx", "@title:Java*", 3);
         assertThat(results.getCount()).isEqualTo(3); // JavaScript, Java, Advanced JavaScript
 
         // Test suffix matching (should be more efficient with suffix trie)
-        results = redis.ftSearch("suffix-idx", "@title:*Script*");
+        results = SearchTestSupport.searchUntilCount(redis, "suffix-idx", "@title:*Script*", 4);
         assertThat(results.getCount()).isEqualTo(4); // JavaScript, Python Scripting, Advanced JavaScript, Script Writing
 
         // Test infix matching
-        results = redis.ftSearch("suffix-idx", "@title:*gram*");
+        results = SearchTestSupport.searchUntilCount(redis, "suffix-idx", "@title:*gram*", 2);
         assertThat(results.getCount()).isEqualTo(2); // JavaScript Programming, Programming Languages
 
         // Test exact word matching
-        results = redis.ftSearch("suffix-idx", "@title:Programming");
+        results = SearchTestSupport.searchUntilCount(redis, "suffix-idx", "@title:Programming", 2);
         assertThat(results.getCount()).isEqualTo(2); // JavaScript Programming, Programming Languages
 
         redis.ftDropindex("suffix-idx");
@@ -906,23 +906,23 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         SearchTestSupport.awaitIndexReady(redis, "autocomplete-idx", 6);
 
         // Autocomplete for "iP" should find iPhone and iPad products
-        results = redis.ftSearch("autocomplete-idx", "@product_name:iP*");
+        results = SearchTestSupport.searchUntilCount(redis, "autocomplete-idx", "@product_name:iP*", 4);
         assertThat(results.getCount()).isEqualTo(4); // All iPhone and iPad products
 
         // Autocomplete for "iPhone" should find iPhone products
-        results = redis.ftSearch("autocomplete-idx", "@product_name:iPhone*");
+        results = SearchTestSupport.searchUntilCount(redis, "autocomplete-idx", "@product_name:iPhone*", 2);
         assertThat(results.getCount()).isEqualTo(2); // iPhone 15 Pro and Pro Max
 
         // Autocomplete for "Mac" should find MacBook products
-        results = redis.ftSearch("autocomplete-idx", "@product_name:Mac*");
+        results = SearchTestSupport.searchUntilCount(redis, "autocomplete-idx", "@product_name:Mac*", 2);
         assertThat(results.getCount()).isEqualTo(2); // MacBook Pro and Air
 
         // Search for products ending with "Pro"
-        results = redis.ftSearch("autocomplete-idx", "@product_name:*Pro");
+        results = SearchTestSupport.searchUntilCount(redis, "autocomplete-idx", "@product_name:*Pro", 4);
         assertThat(results.getCount()).isEqualTo(4); // iPhone 15 Pro, iPad Pro, MacBook Pro, iPhone 15 Pro Max
 
         // Search for products containing "Air"
-        results = redis.ftSearch("autocomplete-idx", "@product_name:*Air*");
+        results = SearchTestSupport.searchUntilCount(redis, "autocomplete-idx", "@product_name:*Air*", 2);
         assertThat(results.getCount()).isEqualTo(2); // iPad Air, MacBook Air
 
         redis.ftDropindex("autocomplete-idx");
@@ -945,13 +945,13 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         SearchTestSupport.awaitIndexReady(redis, "performance-idx", 5);
 
         // Complex wildcard queries that benefit from suffix trie
-        results = redis.ftSearch("performance-idx", "@description:*perform*");
+        results = SearchTestSupport.searchUntilCount(redis, "performance-idx", "@description:*perform*", 5);
         assertThat(results.getCount()).isEqualTo(5); // All documents contain "perform"
 
-        results = redis.ftSearch("performance-idx", "@description:*algorithm*");
+        results = SearchTestSupport.searchUntilCount(redis, "performance-idx", "@description:*algorithm*", 1);
         assertThat(results.getCount()).isEqualTo(1); // High-performance computing
 
-        results = redis.ftSearch("performance-idx", "@description:*optim*");
+        results = SearchTestSupport.searchUntilCount(redis, "performance-idx", "@description:*optim*", 1);
         assertThat(results.getCount()).isEqualTo(1); // Machine learning optimization
 
         redis.ftDropindex("performance-idx");
