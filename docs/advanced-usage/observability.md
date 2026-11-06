@@ -217,12 +217,12 @@ connection:
   `RedisCredentialsProvider` is not asked, unless it is an
   `ImmediateRedisCredentialsProvider`.
 
-- `db.connection_string`: the `RedisURI` without credentials.
-
-For Redis Cluster, the `RedisURI` of a node connection is the seed
-`RedisURI` with the host and port of the connected node. For Redis
-Sentinel, it is the Sentinel `RedisURI` that was used to look up the
-master or replica.
+- `db.connection_string`: the `RedisURI` without credentials. For a
+  TCP connection, the host and port are those of the connected server.
+  For Redis Cluster and Redis Sentinel, this is the node, master or
+  replica the connection is connected to, not the seed or Sentinel
+  `RedisURI`. For a Unix domain socket connection, the `RedisURI` is
+  used as is.
 
 With Micrometer, `db.redis.database_index` is a low cardinality key
 value, `db.user` and `db.connection_string` are high cardinality key

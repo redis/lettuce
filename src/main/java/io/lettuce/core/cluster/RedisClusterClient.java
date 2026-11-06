@@ -20,7 +20,6 @@
 package io.lettuce.core.cluster;
 
 import java.io.Closeable;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.time.Duration;
@@ -907,31 +906,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         connectionBuilder(socketAddressSupplier, connectionBuilder, connection.getConnectionEvents(), connectionSettings);
 
-        // connectionSettings is the seed URI, report the node that is actually connected
-        connectionBuilder.socketAddressSupplier(() -> socketAddressSupplier.get().thenApply(socketAddress -> {
-            connectionBuilder.bootstrap().attr(ConnectionBuilder.REDIS_URI_INSTANCE,
-                    getNodeUri(connectionSettings, socketAddress));
-            return socketAddress;
-        }));
-
         return connectionBuilder;
-    }
-
-    /**
-     * Create the {@link RedisURI} of a cluster node from the seed {@link RedisURI} and the node address.
-     *
-     * @param connectionSettings the seed {@link RedisURI}, must not be {@code null}.
-     * @param socketAddress the node address, can be {@code null}.
-     * @return the {@link RedisURI} of the node.
-     */
-    static RedisURI getNodeUri(RedisURI connectionSettings, SocketAddress socketAddress) {
-
-        if (!(socketAddress instanceof InetSocketAddress)) {
-            return connectionSettings;
-        }
-
-        InetSocketAddress address = (InetSocketAddress) socketAddress;
-        return RedisURI.builder(connectionSettings).withHost(address.getHostString()).withPort(address.getPort()).build();
     }
 
     /**

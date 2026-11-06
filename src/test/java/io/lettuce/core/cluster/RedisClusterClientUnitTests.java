@@ -4,7 +4,6 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,22 +34,6 @@ import io.lettuce.test.resource.TestClientResources;
  */
 @Tag(UNIT_TEST)
 class RedisClusterClientUnitTests {
-
-    @Test
-    void shouldCreateNodeUriFromSeedUri() {
-
-        RedisURI seed = RedisURI.Builder.redis("seed", 7000).withSsl(true).withAuthentication("alice", "secret")
-                .withClientName("my-client").build();
-
-        RedisURI nodeUri = RedisClusterClient.getNodeUri(seed, InetSocketAddress.createUnresolved("10.0.0.5", 7002));
-
-        assertThat(nodeUri.getHost()).isEqualTo("10.0.0.5");
-        assertThat(nodeUri.getPort()).isEqualTo(7002);
-        assertThat(nodeUri.isSsl()).isTrue();
-        assertThat(nodeUri.getClientName()).isEqualTo("my-client");
-        assertThat(nodeUri.getCredentialsProviderAsync()).isSameAs(seed.getCredentialsProviderAsync());
-        assertThat(RedisClusterClient.getNodeUri(seed, null)).isSameAs(seed);
-    }
 
     @Test
     void connectAsyncShouldNotWrapConnectFailureInCompletionException() {

@@ -45,7 +45,7 @@ class MicrometerTracingUnitTests {
 
         assertThat(convention.getLowCardinalityKeyValues(context)).contains(KeyValue.of("db.redis.database_index", "3"));
         assertThat(convention.getHighCardinalityKeyValues(context)).contains(KeyValue.of("db.user", "alice"),
-                KeyValue.of("db.connection_string", "redis://localhost/3"));
+                KeyValue.of("db.connection_string", "redis://127.0.0.1/3"));
     }
 
     @Test
@@ -60,7 +60,7 @@ class MicrometerTracingUnitTests {
         assertThat(convention.getLowCardinalityKeyValues(context)).contains(KeyValue.of("db.redis.database_index", "0"));
         assertThat(keys(convention.getHighCardinalityKeyValues(context))).doesNotContain("db.user");
         assertThat(convention.getHighCardinalityKeyValues(context))
-                .contains(KeyValue.of("db.connection_string", "redis://localhost"));
+                .contains(KeyValue.of("db.connection_string", "redis://127.0.0.1"));
     }
 
     @Test
@@ -74,7 +74,7 @@ class MicrometerTracingUnitTests {
 
         assertThat(keys(convention.getHighCardinalityKeyValues(context))).doesNotContain("db.user");
         assertThat(convention.getHighCardinalityKeyValues(context))
-                .contains(KeyValue.of("db.connection_string", "redis://localhost:6380?clientName=my-client"));
+                .contains(KeyValue.of("db.connection_string", "redis://127.0.0.1:6380?clientName=my-client"));
     }
 
     @Test

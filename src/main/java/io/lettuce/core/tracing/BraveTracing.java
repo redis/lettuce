@@ -261,7 +261,7 @@ public class BraveTracing implements Tracing {
 
     @Override
     public Endpoint createEndpoint(SocketAddress socketAddress, RedisURI redisURI) {
-        return new BraveEndpoint(createZipkinEndpoint(socketAddress), RedisUriDetails.from(redisURI));
+        return new BraveEndpoint(createZipkinEndpoint(socketAddress), RedisUriDetails.from(redisURI, socketAddress));
     }
 
     private zipkin2.Endpoint createZipkinEndpoint(SocketAddress socketAddress) {

@@ -9,6 +9,7 @@ package io.lettuce.core.tracing;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,6 +21,7 @@ import io.lettuce.core.CredentialsProvider;
 import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisCredentialsProvider;
 import io.lettuce.core.RedisURI;
+import io.netty.channel.unix.DomainSocketAddress;
 import reactor.core.publisher.Mono;
 
 /**
@@ -112,6 +114,50 @@ class RedisUriDetailsUnitTests {
         assertThat(RedisUriDetails.from(RedisURI.builder().withHost("localhost").withAuthentication(provider).build())
                 .getUsername()).isNull();
         assertThat(subscriptions).hasValue(0);
+    }
+
+    @Test
+    void shouldRenderRemoteAddressOfClusterNode() {
+
+        RedisURI seed = RedisURI.Builder.redis("seed", 7000).withSsl(true).withAuthentication("alice", "secret")
+                .withClientName("my-client").build();
+
+        RedisUriDetails details = RedisUriDetails.from(seed, InetSocketAddress.createUnresolved("10.0.0.5", 7002));
+
+        assertThat(details.getUsername()).isEqualTo("alice");
+        assertThat(details.getUrl()).isEqualTo("rediss://10.0.0.5:7002?clientName=my-client");
+    }
+
+    @Test
+    void shouldRenderRemoteAddressInsteadOfUnixSocket() {
+
+        RedisURI redisURI = RedisURI.Builder.socket("/tmp/redis.sock").withDatabase(2).build();
+
+        assertThat(RedisUriDetails.from(redisURI, InetSocketAddress.createUnresolved("10.0.0.5", 6379)).getUrl())
+                .isEqualTo("redis://10.0.0.5/2");
+        assertThat(RedisUriDetails.from(redisURI, new DomainSocketAddress("/tmp/redis.sock")).getUrl())
+                .isEqualTo("redis-socket:///tmp/redis.sock?database=2");
+    }
+
+    @Test
+    void shouldRenderRemoteAddressInsteadOfSentinels() {
+
+        RedisURI redisURI = RedisURI.Builder.sentinel("host1", 26379, "mymaster").withSentinel("host2", 26380).withDatabase(1)
+                .build();
+
+        assertThat(RedisUriDetails.from(redisURI, InetSocketAddress.createUnresolved("10.0.0.5", 6380)).getUrl())
+                .isEqualTo("redis://10.0.0.5:6380/1");
+    }
+
+    @Test
+    void shouldRenderIpv6RemoteAddress() {
+
+        RedisURI redisURI = RedisURI.Builder.redis("localhost").withAuthentication("alice", "secret").build();
+
+        assertThat(RedisUriDetails.from(redisURI, InetSocketAddress.createUnresolved("::1", 7000)).getUrl())
+                .isEqualTo("redis://[::1]:7000");
+        assertThat(RedisUriDetails.from(redisURI, InetSocketAddress.createUnresolved("fe80::1%eth0", 7000)).getUrl())
+                .isEqualTo("redis://[fe80::1%25eth0]:7000");
     }
 
 }

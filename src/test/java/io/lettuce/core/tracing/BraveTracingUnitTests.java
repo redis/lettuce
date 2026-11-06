@@ -133,7 +133,7 @@ class BraveTracingUnitTests extends TestSupport {
         Object[] tags = ReflectionTestUtils.getField(braveSpan, "tags");
 
         assertThat(tags).contains("db.redis.database_index", "3", "db.user", "alice", "db.connection_string",
-                "redis://localhost/3");
+                "redis://127.0.0.1/3");
         assertThat(tags).noneMatch(tag -> String.valueOf(tag).contains("secret") || String.valueOf(tag).contains("@")
                 || String.valueOf(tag).contains("credentialsProvider"));
     }

@@ -122,7 +122,7 @@ public class MicrometerTracing implements Tracing {
 
         if (endpoint instanceof SocketAddressEndpoint) {
             return new SocketAddressEndpoint(((SocketAddressEndpoint) endpoint).getSocketAddress(),
-                    RedisUriDetails.from(redisURI));
+                    RedisUriDetails.from(redisURI, socketAddress));
         }
 
         return endpoint;

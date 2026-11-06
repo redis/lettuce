@@ -6,6 +6,8 @@
  */
 package io.lettuce.core.tracing;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.CredentialsProvider;
@@ -40,12 +42,25 @@ final class RedisUriDetails {
      * @return the {@link RedisUriDetails} or {@code null} if {@code redisURI} is {@code null}.
      */
     static RedisUriDetails from(RedisURI redisURI) {
+        return from(redisURI, null);
+    }
+
+    /**
+     * Create {@link RedisUriDetails} from a {@link RedisURI} and the remote address of the connection. If the remote address is
+     * an {@link InetSocketAddress}, the URI is rendered with its host and port.
+     *
+     * @param redisURI the {@link RedisURI}, can be {@code null}.
+     * @param remoteAddress the remote address of the connection, can be {@code null}.
+     * @return the {@link RedisUriDetails} or {@code null} if {@code redisURI} is {@code null}.
+     */
+    static RedisUriDetails from(RedisURI redisURI, SocketAddress remoteAddress) {
 
         if (redisURI == null) {
             return null;
         }
 
-        return new RedisUriDetails(Integer.toString(redisURI.getDatabase()), getUsername(redisURI), getUrl(redisURI));
+        return new RedisUriDetails(Integer.toString(redisURI.getDatabase()), getUsername(redisURI),
+                getUrl(redisURI, remoteAddress));
     }
 
     /**
@@ -106,11 +121,23 @@ final class RedisUriDetails {
         return credentials.getUsername();
     }
 
-    private static String getUrl(RedisURI redisURI) {
+    private static String getUrl(RedisURI redisURI, SocketAddress remoteAddress) {
 
+        String host = null;
         String uri;
         try {
-            uri = redisURI.toURI().toString();
+            if (remoteAddress instanceof InetSocketAddress) {
+
+                // the URI can point to a cluster seed node, Sentinel or Unix domain socket, report the connected node
+                InetSocketAddress address = (InetSocketAddress) remoteAddress;
+                host = address.getHostString();
+
+                RedisURI nodeUri = RedisURI.builder(redisURI).withHost(host).withPort(address.getPort()).build();
+                nodeUri.setSocket(null);
+                uri = nodeUri.toURI().toString();
+            } else {
+                uri = redisURI.toURI().toString();
+            }
         } catch (RuntimeException e) {
             return null;
         }
@@ -131,11 +158,21 @@ final class RedisUriDetails {
         }
 
         int userInfoEnd = uri.lastIndexOf('@', authorityEnd - 1);
-        if (userInfoEnd < authorityStart) {
-            return uri;
+        if (userInfoEnd >= authorityStart) {
+            uri = uri.substring(0, authorityStart) + uri.substring(userInfoEnd + 1);
         }
 
-        return uri.substring(0, authorityStart) + uri.substring(userInfoEnd + 1);
+        if (host != null && host.indexOf(':') != -1) {
+
+            // toURI() encodes the colons of an IPv6 address, use the bracketed form instead
+            String encodedHost = host.replace("%", "%25").replace(":", "%3A");
+            if (uri.startsWith(encodedHost, authorityStart)) {
+                uri = uri.substring(0, authorityStart) + "[" + host.replace("%", "%25") + "]"
+                        + uri.substring(authorityStart + encodedHost.length());
+            }
+        }
+
+        return uri;
     }
 
 }
