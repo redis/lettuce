@@ -21,7 +21,7 @@ An empty value means "not provided" — default it per the resolution below (a m
 
 ## 1. Resolve branches
 
-**"Current branch" always means the branch checked out in the working directory at the moment the skill runs: run `git branch --show-current` every time and use its output.** Never take it from memory, an earlier git status snapshot, the conversation, or the IDE — it may have changed since.
+**"Current branch" always means the branch checked out in the working directory at the moment the skill runs: run `git branch --show-current` every time and use its output.** Never take it from memory, an earlier git status snapshot, the conversation, or the IDE — it may have changed since. If it prints nothing (detached HEAD) and the target would default to it, stop and ask for the target.
 
 - Both named → use as given.
 - Only one named → it's the **base**; target defaults to the current branch.
