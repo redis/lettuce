@@ -2710,6 +2710,56 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
     }
 
+    Command<K, V, Boolean> blessSet(K key, BlessFlag flag) {
+        notNullKey(key);
+        LettuceAssert.notNull(flag, "BlessFlag " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.SET).addKey(key).add(flag.getToken());
+        return createCommand(BLESS, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, Boolean> blessClear(K key, BlessFlag flag) {
+        notNullKey(key);
+        LettuceAssert.notNull(flag, "BlessFlag " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CLEAR).addKey(key).add(flag.getToken());
+        return createCommand(BLESS, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, List<BlessFlag>> blessGet(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.GET).addKey(key);
+        return createCommand(BLESS, new BlessFlagListOutput<>(codec), args);
+    }
+
+    Command<K, V, KeyScanCursor<K>> blessScan(BlessFlag flag) {
+        return blessScan(ScanCursor.INITIAL, flag, null);
+    }
+
+    Command<K, V, KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs) {
+        return blessScan(ScanCursor.INITIAL, flag, scanArgs);
+    }
+
+    Command<K, V, KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag) {
+        return blessScan(scanCursor, flag, null);
+    }
+
+    Command<K, V, KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs) {
+        LettuceAssert.notNull(scanCursor, "ScanCursor " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!scanCursor.isFinished(), "ScanCursor must not be finished");
+        LettuceAssert.notNull(flag, "BlessFlag " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.SCAN).add(scanCursor.getCursor())
+                .add(flag.getToken());
+
+        if (scanArgs != null) {
+            scanArgs.build(args);
+        }
+
+        return createCommand(BLESS, new KeyScanOutput<>(codec), args);
+    }
+
     Command<K, V, StreamScanCursor> scanStreaming(KeyStreamingChannel<K> channel) {
         notNull(channel);
         LettuceAssert.notNull(channel, "KeyStreamingChannel " + MUST_NOT_BE_NULL);
