@@ -11,11 +11,14 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.BitFieldArgs;
+import io.lettuce.core.BitRangeIntArrayArgs;
 import io.lettuce.core.cluster.ClusterTestUtil;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.commands.StringCommandIntegrationTests;
 import io.lettuce.test.KeyValueStreamingAdapter;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisStringCommands} using Redis Cluster.
@@ -56,6 +59,20 @@ class StringClusterCommandIntegrationTests extends StringCommandIntegrationTests
         assertThat(streamingAdapter.getMap()).containsEntry("one", "1").containsEntry("two", "2");
 
         assertThat(count.intValue()).isEqualTo(2);
+    }
+
+    /**
+     * Scenario BRIA-E05: in a cluster the command is routed by its key and returns the set bit offsets, and an empty list with
+     * a limit of 0.
+     */
+    @Test
+    @EnabledOnCommand("BITRANGEINTARRAY")
+    void bitrangeintarray() {
+        String key = "{bria}:f1";
+        redis.bitfield(key, BitFieldArgs.Builder.set(BitFieldArgs.unsigned(32), 0, 2172748161L));
+
+        assertThat(redis.bitrangeintarray(key, 0, -1)).containsExactly(0L, 7L, 8L, 15L, 16L, 23L, 24L, 31L);
+        assertThat(redis.bitrangeintarray(key, 0, -1, BitRangeIntArrayArgs.Builder.limit(0))).isNotNull().isEmpty();
     }
 
 }
