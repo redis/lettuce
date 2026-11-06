@@ -5284,8 +5284,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sexpire(K key, long seconds, V member) {
-        return createDissolvingFlux(() -> commandBuilder.sexpire(key, seconds, null, member));
+    public Mono<Long> sexpire(K key, long seconds, V member) {
+        return createMono(() -> commandBuilder.sexpire(key, seconds, null, member));
     }
 
     @Override
@@ -5295,9 +5295,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V member) {
+    public Mono<Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
-        return createDissolvingFlux(() -> commandBuilder.sexpire(key, seconds, expireArgs, member));
+        return createMono(() -> commandBuilder.sexpire(key, seconds, expireArgs, member));
     }
 
     @Override
@@ -5307,7 +5307,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sexpire(K key, Duration seconds, V member) {
+    public Mono<Long> sexpire(K key, Duration seconds, V member) {
         LettuceAssert.notNull(seconds, "Timeout must not be null");
         return sexpire(key, seconds.toMillis() / 1000, member);
     }
@@ -5319,7 +5319,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V member) {
+    public Mono<Long> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(seconds, "Timeout must not be null");
         return sexpire(key, seconds.toMillis() / 1000, expireArgs, member);
     }
@@ -5330,8 +5330,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spexpire(K key, long milliseconds, V member) {
-        return createDissolvingFlux(() -> commandBuilder.spexpire(key, milliseconds, null, member));
+    public Mono<Long> spexpire(K key, long milliseconds, V member) {
+        return createMono(() -> commandBuilder.spexpire(key, milliseconds, null, member));
     }
 
     @Override
@@ -5341,9 +5341,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member) {
+    public Mono<Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
-        return createDissolvingFlux(() -> commandBuilder.spexpire(key, milliseconds, expireArgs, member));
+        return createMono(() -> commandBuilder.spexpire(key, milliseconds, expireArgs, member));
     }
 
     @Override
@@ -5353,7 +5353,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spexpire(K key, Duration milliseconds, V member) {
+    public Mono<Long> spexpire(K key, Duration milliseconds, V member) {
         LettuceAssert.notNull(milliseconds, "Timeout must not be null");
         return spexpire(key, milliseconds.toMillis(), member);
     }
@@ -5365,7 +5365,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V member) {
+    public Mono<Long> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(milliseconds, "Timeout must not be null");
         return spexpire(key, milliseconds.toMillis(), expireArgs, member);
     }
@@ -5376,8 +5376,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sexpireat(K key, long timestamp, V member) {
-        return createDissolvingFlux(() -> commandBuilder.sexpireat(key, timestamp, null, member));
+    public Mono<Long> sexpireat(K key, long timestamp, V member) {
+        return createMono(() -> commandBuilder.sexpireat(key, timestamp, null, member));
     }
 
     @Override
@@ -5387,9 +5387,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+    public Mono<Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
-        return createDissolvingFlux(() -> commandBuilder.sexpireat(key, timestamp, expireArgs, member));
+        return createMono(() -> commandBuilder.sexpireat(key, timestamp, expireArgs, member));
     }
 
     @Override
@@ -5399,7 +5399,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sexpireat(K key, Date timestamp, V member) {
+    public Mono<Long> sexpireat(K key, Date timestamp, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return sexpireat(key, timestamp.getTime() / 1000, member);
     }
@@ -5411,7 +5411,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
+    public Mono<Long> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return sexpireat(key, timestamp.getTime() / 1000, expireArgs, member);
     }
@@ -5423,7 +5423,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sexpireat(K key, Instant timestamp, V member) {
+    public Mono<Long> sexpireat(K key, Instant timestamp, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return sexpireat(key, timestamp.toEpochMilli() / 1000, member);
     }
@@ -5435,7 +5435,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
+    public Mono<Long> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return sexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, member);
     }
@@ -5446,8 +5446,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spexpireat(K key, long timestamp, V member) {
-        return createDissolvingFlux(() -> commandBuilder.spexpireat(key, timestamp, null, member));
+    public Mono<Long> spexpireat(K key, long timestamp, V member) {
+        return createMono(() -> commandBuilder.spexpireat(key, timestamp, null, member));
     }
 
     @Override
@@ -5457,9 +5457,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+    public Mono<Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
-        return createDissolvingFlux(() -> commandBuilder.spexpireat(key, timestamp, expireArgs, member));
+        return createMono(() -> commandBuilder.spexpireat(key, timestamp, expireArgs, member));
     }
 
     @Override
@@ -5469,7 +5469,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spexpireat(K key, Date timestamp, V member) {
+    public Mono<Long> spexpireat(K key, Date timestamp, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return spexpireat(key, timestamp.getTime(), member);
     }
@@ -5481,7 +5481,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
+    public Mono<Long> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return spexpireat(key, timestamp.getTime(), expireArgs, member);
     }
@@ -5493,7 +5493,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spexpireat(K key, Instant timestamp, V member) {
+    public Mono<Long> spexpireat(K key, Instant timestamp, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return spexpireat(key, timestamp.toEpochMilli(), member);
     }
@@ -5505,7 +5505,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
+    public Mono<Long> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return spexpireat(key, timestamp.toEpochMilli(), expireArgs, member);
     }
@@ -5516,8 +5516,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sttl(K key, V member) {
-        return createDissolvingFlux(() -> commandBuilder.sttl(key, member));
+    public Mono<Long> sttl(K key, V member) {
+        return createMono(() -> commandBuilder.sttl(key, member));
     }
 
     @Override
@@ -5526,8 +5526,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spttl(K key, V member) {
-        return createDissolvingFlux(() -> commandBuilder.spttl(key, member));
+    public Mono<Long> spttl(K key, V member) {
+        return createMono(() -> commandBuilder.spttl(key, member));
     }
 
     @Override
@@ -5536,8 +5536,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> sexpiretime(K key, V member) {
-        return createDissolvingFlux(() -> commandBuilder.sexpiretime(key, member));
+    public Mono<Long> sexpiretime(K key, V member) {
+        return createMono(() -> commandBuilder.sexpiretime(key, member));
     }
 
     @Override
@@ -5546,8 +5546,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spexpiretime(K key, V member) {
-        return createDissolvingFlux(() -> commandBuilder.spexpiretime(key, member));
+    public Mono<Long> spexpiretime(K key, V member) {
+        return createMono(() -> commandBuilder.spexpiretime(key, member));
     }
 
     @Override
@@ -5556,8 +5556,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Long> spersist(K key, V member) {
-        return createDissolvingFlux(() -> commandBuilder.spersist(key, member));
+    public Mono<Long> spersist(K key, V member) {
+        return createMono(() -> commandBuilder.spersist(key, member));
     }
 
     @Override

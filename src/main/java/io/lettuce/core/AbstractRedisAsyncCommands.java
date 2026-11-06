@@ -5186,7 +5186,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sexpire(K key, long seconds, V member) {
+    public RedisFuture<Long> sexpire(K key, long seconds, V member) {
         return dispatch(commandBuilder.sexpire(key, seconds, null, member));
     }
 
@@ -5197,7 +5197,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sexpire(K key, long seconds, ExpireArgs expireArgs, V member) {
+    public RedisFuture<Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
         return dispatch(commandBuilder.sexpire(key, seconds, expireArgs, member));
     }
@@ -5209,7 +5209,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sexpire(K key, Duration seconds, V member) {
+    public RedisFuture<Long> sexpire(K key, Duration seconds, V member) {
         LettuceAssert.notNull(seconds, "Timeout must not be null");
         return sexpire(key, seconds.toMillis() / 1000, member);
     }
@@ -5221,7 +5221,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V member) {
+    public RedisFuture<Long> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(seconds, "Timeout must not be null");
         return sexpire(key, seconds.toMillis() / 1000, expireArgs, member);
     }
@@ -5232,7 +5232,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spexpire(K key, long milliseconds, V member) {
+    public RedisFuture<Long> spexpire(K key, long milliseconds, V member) {
         return dispatch(commandBuilder.spexpire(key, milliseconds, null, member));
     }
 
@@ -5243,7 +5243,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member) {
+    public RedisFuture<Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
         return dispatch(commandBuilder.spexpire(key, milliseconds, expireArgs, member));
     }
@@ -5255,7 +5255,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spexpire(K key, Duration milliseconds, V member) {
+    public RedisFuture<Long> spexpire(K key, Duration milliseconds, V member) {
         LettuceAssert.notNull(milliseconds, "Timeout must not be null");
         return spexpire(key, milliseconds.toMillis(), member);
     }
@@ -5267,7 +5267,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V member) {
+    public RedisFuture<Long> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(milliseconds, "Timeout must not be null");
         return spexpire(key, milliseconds.toMillis(), expireArgs, member);
     }
@@ -5278,7 +5278,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sexpireat(K key, long timestamp, V member) {
+    public RedisFuture<Long> sexpireat(K key, long timestamp, V member) {
         return dispatch(commandBuilder.sexpireat(key, timestamp, null, member));
     }
 
@@ -5289,7 +5289,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+    public RedisFuture<Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
         return dispatch(commandBuilder.sexpireat(key, timestamp, expireArgs, member));
     }
@@ -5301,7 +5301,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sexpireat(K key, Date timestamp, V member) {
+    public RedisFuture<Long> sexpireat(K key, Date timestamp, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return sexpireat(key, timestamp.getTime() / 1000, member);
     }
@@ -5313,7 +5313,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
+    public RedisFuture<Long> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return sexpireat(key, timestamp.getTime() / 1000, expireArgs, member);
     }
@@ -5325,7 +5325,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sexpireat(K key, Instant timestamp, V member) {
+    public RedisFuture<Long> sexpireat(K key, Instant timestamp, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return sexpireat(key, timestamp.toEpochMilli() / 1000, member);
     }
@@ -5337,7 +5337,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
+    public RedisFuture<Long> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return sexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, member);
     }
@@ -5348,7 +5348,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spexpireat(K key, long timestamp, V member) {
+    public RedisFuture<Long> spexpireat(K key, long timestamp, V member) {
         return dispatch(commandBuilder.spexpireat(key, timestamp, null, member));
     }
 
@@ -5359,7 +5359,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+    public RedisFuture<Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
         return dispatch(commandBuilder.spexpireat(key, timestamp, expireArgs, member));
     }
@@ -5371,7 +5371,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spexpireat(K key, Date timestamp, V member) {
+    public RedisFuture<Long> spexpireat(K key, Date timestamp, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return spexpireat(key, timestamp.getTime(), member);
     }
@@ -5383,7 +5383,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
+    public RedisFuture<Long> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return spexpireat(key, timestamp.getTime(), expireArgs, member);
     }
@@ -5395,7 +5395,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spexpireat(K key, Instant timestamp, V member) {
+    public RedisFuture<Long> spexpireat(K key, Instant timestamp, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return spexpireat(key, timestamp.toEpochMilli(), member);
     }
@@ -5407,7 +5407,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
+    public RedisFuture<Long> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return spexpireat(key, timestamp.toEpochMilli(), expireArgs, member);
     }
@@ -5418,7 +5418,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sttl(K key, V member) {
+    public RedisFuture<Long> sttl(K key, V member) {
         return dispatch(commandBuilder.sttl(key, member));
     }
 
@@ -5428,7 +5428,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spttl(K key, V member) {
+    public RedisFuture<Long> spttl(K key, V member) {
         return dispatch(commandBuilder.spttl(key, member));
     }
 
@@ -5438,7 +5438,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> sexpiretime(K key, V member) {
+    public RedisFuture<Long> sexpiretime(K key, V member) {
         return dispatch(commandBuilder.sexpiretime(key, member));
     }
 
@@ -5448,7 +5448,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spexpiretime(K key, V member) {
+    public RedisFuture<Long> spexpiretime(K key, V member) {
         return dispatch(commandBuilder.spexpiretime(key, member));
     }
 
@@ -5458,7 +5458,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> spersist(K key, V member) {
+    public RedisFuture<Long> spersist(K key, V member) {
         return dispatch(commandBuilder.spersist(key, member));
     }
 

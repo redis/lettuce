@@ -363,12 +363,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key of the set, must not be `null`.
      * @param seconds the time to live in seconds, must not be negative.
      * @param member the member to set the time to live for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun sexpire(key: K, seconds: Long, member: V): List<Long>
+    suspend fun sexpire(key: K, seconds: Long, member: V): Long?
 
     /**
      * Set the time to live, in seconds, of one or more members of the set stored at `key`, applying the [ExpireArgs]
@@ -396,12 +396,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param seconds the time to live in seconds, must not be negative.
      * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
      * @param member the member to set the time to live for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun sexpire(key: K, seconds: Long, expireArgs: ExpireArgs, member: V): List<Long>
+    suspend fun sexpire(key: K, seconds: Long, expireArgs: ExpireArgs, member: V): Long?
 
     /**
      * Set the time to live of one or more members of the set stored at `key`. The [Duration] is truncated to whole seconds;
@@ -425,12 +425,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key of the set, must not be `null`.
      * @param seconds the time to live, must not be `null`; truncated to whole seconds.
      * @param member the member to set the time to live for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun sexpire(key: K, seconds: Duration, member: V): List<Long>
+    suspend fun sexpire(key: K, seconds: Duration, member: V): Long?
 
     /**
      * Set the time to live of one or more members of the set stored at `key`, applying the [ExpireArgs] condition (`NX`,
@@ -460,12 +460,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param seconds the time to live, must not be `null`; truncated to whole seconds.
      * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
      * @param member the member to set the time to live for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun sexpire(key: K, seconds: Duration, expireArgs: ExpireArgs, member: V): List<Long>
+    suspend fun sexpire(key: K, seconds: Duration, expireArgs: ExpireArgs, member: V): Long?
 
     /**
      * Set the time to live, in milliseconds, of one or more members of the set stored at `key`. A time to live of `0` is
@@ -489,12 +489,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key of the set, must not be `null`.
      * @param milliseconds the time to live in milliseconds, must not be negative.
      * @param member the member to set the time to live for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun spexpire(key: K, milliseconds: Long, member: V): List<Long>
+    suspend fun spexpire(key: K, milliseconds: Long, member: V): Long?
 
     /**
      * Set the time to live, in milliseconds, of one or more members of the set stored at `key`, applying the [ExpireArgs]
@@ -522,12 +522,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param milliseconds the time to live in milliseconds, must not be negative.
      * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
      * @param member the member to set the time to live for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun spexpire(key: K, milliseconds: Long, expireArgs: ExpireArgs, member: V): List<Long>
+    suspend fun spexpire(key: K, milliseconds: Long, expireArgs: ExpireArgs, member: V): Long?
 
     /**
      * Set the time to live of one or more members of the set stored at `key`. The [Duration] is truncated to whole
@@ -551,12 +551,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key of the set, must not be `null`.
      * @param milliseconds the time to live, must not be `null`; truncated to whole milliseconds.
      * @param member the member to set the time to live for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun spexpire(key: K, milliseconds: Duration, member: V): List<Long>
+    suspend fun spexpire(key: K, milliseconds: Duration, member: V): Long?
 
     /**
      * Set the time to live of one or more members of the set stored at `key`, applying the [ExpireArgs] condition (`NX`,
@@ -586,12 +586,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param milliseconds the time to live, must not be `null`; truncated to whole milliseconds.
      * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
      * @param member the member to set the time to live for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun spexpire(key: K, milliseconds: Duration, expireArgs: ExpireArgs, member: V): List<Long>
+    suspend fun spexpire(key: K, milliseconds: Duration, expireArgs: ExpireArgs, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute Unix time in seconds. A time in
@@ -615,12 +615,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key of the set, must not be `null`.
      * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun sexpireat(key: K, timestamp: Long, member: V): List<Long>
+    suspend fun sexpireat(key: K, timestamp: Long, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute Unix time in seconds, applying the
@@ -648,12 +648,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
      * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun sexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, member: V): List<Long>
+    suspend fun sexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with second
@@ -677,12 +677,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key of the set, must not be `null`.
      * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun sexpireat(key: K, timestamp: Date, member: V): List<Long>
+    suspend fun sexpireat(key: K, timestamp: Date, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with second
@@ -711,12 +711,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
      * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun sexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, member: V): List<Long>
+    suspend fun sexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with second
@@ -740,12 +740,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key of the set, must not be `null`.
      * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun sexpireat(key: K, timestamp: Instant, member: V): List<Long>
+    suspend fun sexpireat(key: K, timestamp: Instant, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with second
@@ -774,12 +774,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the point in time at which the members expire, must not be `null`; truncated to whole seconds.
      * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun sexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, member: V): List<Long>
+    suspend fun sexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute Unix time in milliseconds. A time
@@ -803,12 +803,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key of the set, must not be `null`.
      * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun spexpireat(key: K, timestamp: Long, member: V): List<Long>
+    suspend fun spexpireat(key: K, timestamp: Long, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute Unix time in milliseconds,
@@ -836,12 +836,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
      * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun spexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, member: V): List<Long>
+    suspend fun spexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with millisecond
@@ -865,12 +865,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key of the set, must not be `null`.
      * @param timestamp the point in time at which the members expire, must not be `null`.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun spexpireat(key: K, timestamp: Date, member: V): List<Long>
+    suspend fun spexpireat(key: K, timestamp: Date, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with millisecond
@@ -900,12 +900,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the point in time at which the members expire, must not be `null`.
      * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun spexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, member: V): List<Long>
+    suspend fun spexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with millisecond
@@ -929,12 +929,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key of the set, must not be `null`.
      * @param timestamp the point in time at which the members expire, must not be `null`.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun spexpireat(key: K, timestamp: Instant, member: V): List<Long>
+    suspend fun spexpireat(key: K, timestamp: Instant, member: V): Long?
 
     /**
      * Set the expiration of one or more members of the set stored at `key` to an absolute point in time, with millisecond
@@ -964,12 +964,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the point in time at which the members expire, must not be `null`.
      * @param expireArgs the condition (`NX`, `XX`, `GT` or `LT`), must not be `null`.
      * @param member the member to set the expiration for.
-     * @return a list with a single [Long] for `member`: `2` if the member was deleted because the expiration is in
-     *         the past; `1` if the expiration was set or updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met;
-     *         `-2` if the member does not exist (a logically expired member does not exist) or `key` does not exist.
+     * @return `2` if the member was deleted because the expiration is in the past; `1` if the expiration was set or
+     *         updated; `0` if a `NX`, `XX`, `GT` or `LT` condition was not met; `-2` if the member does not exist (a
+     *         logically expired member does not exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun spexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, member: V): List<Long>
+    suspend fun spexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, member: V): Long?
 
     /**
      * Get the remaining time to live, in seconds, of one or more members of the set stored at `key`. The value is rounded up
@@ -990,12 +990,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key of the set, must not be `null`.
      * @param member the member to get the time to live for.
-     * @return a list with a single [Long] for `member`: the remaining time to live in seconds, rounded up to the
-     *         next second; `-1` if the member exists but has no expiration; `-2` if the member does not exist (a logically
-     *         expired member does not exist) or `key` does not exist.
+     * @return the remaining time to live in seconds, rounded up to the next second; `-1` if the member exists but
+     *         has no expiration; `-2` if the member does not exist (a logically expired member does not exist) or `key` does
+     *         not exist.
      * @since 8.0
      */
-    suspend fun sttl(key: K, member: V): List<Long>
+    suspend fun sttl(key: K, member: V): Long?
 
     /**
      * Get the remaining time to live, in milliseconds, of one or more members of the set stored at `key`.
@@ -1014,12 +1014,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key of the set, must not be `null`.
      * @param member the member to get the time to live for.
-     * @return a list with a single [Long] for `member`: the remaining time to live in milliseconds, `0` if the
-     *         member is expiring now; `-1` if the member exists but has no expiration; `-2` if the member does not exist (a
-     *         logically expired member does not exist) or `key` does not exist.
+     * @return the remaining time to live in milliseconds, `0` if the member is expiring now; `-1` if the member
+     *         exists but has no expiration; `-2` if the member does not exist (a logically expired member does not exist) or
+     *         `key` does not exist.
      * @since 8.0
      */
-    suspend fun spttl(key: K, member: V): List<Long>
+    suspend fun spttl(key: K, member: V): Long?
 
     /**
      * Get the absolute Unix time, in seconds, at which one or more members of the set stored at `key` expire. The value is
@@ -1040,12 +1040,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key of the set, must not be `null`.
      * @param member the member to get the expiration time for.
-     * @return a list with a single [Long] for `member`: the Unix time in seconds at which the member expires,
-     *         rounded up to the next second; `-1` if the member exists but has no expiration; `-2` if the member does not
-     *         exist (a logically expired member does not exist) or `key` does not exist.
+     * @return the Unix time in seconds at which the member expires, rounded up to the next second; `-1` if the
+     *         member exists but has no expiration; `-2` if the member does not exist (a logically expired member does not
+     *         exist) or `key` does not exist.
      * @since 8.0
      */
-    suspend fun sexpiretime(key: K, member: V): List<Long>
+    suspend fun sexpiretime(key: K, member: V): Long?
 
     /**
      * Get the absolute Unix time, in milliseconds, at which one or more members of the set stored at `key` expire.
@@ -1064,12 +1064,12 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key of the set, must not be `null`.
      * @param member the member to get the expiration time for.
-     * @return a list with a single [Long] for `member`: the Unix time in milliseconds at which the member expires;
-     *         `-1` if the member exists but has no expiration; `-2` if the member does not exist (a logically expired member
-     *         does not exist) or `key` does not exist.
+     * @return the Unix time in milliseconds at which the member expires; `-1` if the member exists but has no
+     *         expiration; `-2` if the member does not exist (a logically expired member does not exist) or `key` does not
+     *         exist.
      * @since 8.0
      */
-    suspend fun spexpiretime(key: K, member: V): List<Long>
+    suspend fun spexpiretime(key: K, member: V): Long?
 
     /**
      * Remove the expiration of one or more members of the set stored at `key`.
@@ -1087,11 +1087,11 @@ interface RedisSetCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key of the set, must not be `null`.
      * @param member the member to remove the expiration from.
-     * @return a list with a single [Long] for `member`: `1` if the expiration was removed; `-1` if the member exists
-     *         but has no expiration; `-2` if the member does not exist or `key` does not exist.
+     * @return `1` if the expiration was removed; `-1` if the member exists but has no expiration; `-2` if the member
+     *         does not exist or `key` does not exist.
      * @since 8.0
      */
-    suspend fun spersist(key: K, member: V): List<Long>
+    suspend fun spersist(key: K, member: V): Long?
 
     /**
      * Add one or more members to the set stored at `key`, creating it when it does not exist. Unlike [sadd], a member that

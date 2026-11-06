@@ -468,8 +468,8 @@ public class SetCommandIntegrationTests extends TestSupport {
     void sexpire() {
         redis.sadd(key, "a", "b");
         assertThat(redis.sexpire(key, 60, "a", "nosuch")).containsExactly(1L, -2L);
-        assertThat(redis.sexpire("nokey", 60, "a")).containsExactly(-2L);
-        assertThat(redis.sexpire(key, 0, "b")).containsExactly(2L);
+        assertThat(redis.sexpire("nokey", 60, "a")).isEqualTo(-2L);
+        assertThat(redis.sexpire(key, 0, "b")).isEqualTo(2L);
         assertThat(redis.sismember(key, "b")).isFalse();
     }
 
@@ -477,8 +477,8 @@ public class SetCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("SEXPIRE")
     void sexpireDuration() {
         redis.sadd(key, "a");
-        assertThat(redis.sexpire(key, Duration.ofSeconds(60), "a")).containsExactly(1L);
-        assertThat(redis.sttl(key, "a").get(0)).isBetween(55L, 60L);
+        assertThat(redis.sexpire(key, Duration.ofSeconds(60), "a")).isEqualTo(1L);
+        assertThat(redis.sttl(key, "a")).isBetween(55L, 60L);
     }
 
     @Test
@@ -488,37 +488,37 @@ public class SetCommandIntegrationTests extends TestSupport {
         redis.sadd(key, "b");
         assertThat(redis.sexpire(key, 50, ExpireArgs.Builder.nx(), "a", "b", "nosuch")).containsExactly(0L, 1L, -2L);
         assertThat(redis.sexpire(key, 50, ExpireArgs.Builder.xx(), "a", "b")).containsExactly(1L, 1L);
-        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.gt(), "a")).containsExactly(0L);
-        assertThat(redis.sexpire(key, Duration.ofSeconds(10), ExpireArgs.Builder.lt(), "a")).containsExactly(1L);
+        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.gt(), "a")).isEqualTo(0L);
+        assertThat(redis.sexpire(key, Duration.ofSeconds(10), ExpireArgs.Builder.lt(), "a")).isEqualTo(1L);
         assertThat(redis.sttl(key, "a", "b")).containsExactly(10L, 50L);
-        assertThat(redis.spersist(key, "b")).containsExactly(1L);
-        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.xx(), "b")).containsExactly(0L);
-        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.gt(), "b")).containsExactly(0L);
-        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.lt(), "b")).containsExactly(1L);
+        assertThat(redis.spersist(key, "b")).isEqualTo(1L);
+        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.xx(), "b")).isEqualTo(0L);
+        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.gt(), "b")).isEqualTo(0L);
+        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.lt(), "b")).isEqualTo(1L);
     }
 
     @Test
     @EnabledOnCommand("SPEXPIRE")
     void spexpire() {
         redis.sadd(key, "a", "b");
-        assertThat(redis.spexpire(key, 60_000, "a")).containsExactly(1L);
-        assertThat(redis.spttl(key, "a").get(0)).isBetween(55_000L, 60_000L);
+        assertThat(redis.spexpire(key, 60_000, "a")).isEqualTo(1L);
+        assertThat(redis.spttl(key, "a")).isBetween(55_000L, 60_000L);
         assertThat(redis.spexpire(key, Duration.ofSeconds(120), ExpireArgs.Builder.gt(), "a", "b")).containsExactly(1L, 0L);
-        assertThat(redis.spttl(key, "a").get(0)).isBetween(115_000L, 120_000L);
+        assertThat(redis.spttl(key, "a")).isBetween(115_000L, 120_000L);
     }
 
     @Test
     @EnabledOnCommand("SEXPIREAT")
     void sexpireat() {
         redis.sadd(key, "a", "b", "c");
-        assertThat(redis.sexpireat(key, Instant.now().plusSeconds(60), "a")).containsExactly(1L);
+        assertThat(redis.sexpireat(key, Instant.now().plusSeconds(60), "a")).isEqualTo(1L);
         assertThat(redis.sexpireat(key, new Date(System.currentTimeMillis() + 120_000), ExpireArgs.Builder.xx(), "a", "b"))
                 .containsExactly(1L, 0L);
-        assertThat(redis.sttl(key, "a").get(0)).isBetween(115L, 120L);
-        assertThat(redis.sexpireat(key, 1, "b")).containsExactly(2L);
-        assertThat(redis.sexpireat(key, Instant.now().minusSeconds(1), "c")).containsExactly(2L);
+        assertThat(redis.sttl(key, "a")).isBetween(115L, 120L);
+        assertThat(redis.sexpireat(key, 1, "b")).isEqualTo(2L);
+        assertThat(redis.sexpireat(key, Instant.now().minusSeconds(1), "c")).isEqualTo(2L);
         assertThat(redis.smembers(key)).isEqualTo(set("a"));
-        assertThat(redis.sexpireat("nokey", 1, "a")).containsExactly(-2L);
+        assertThat(redis.sexpireat("nokey", 1, "a")).isEqualTo(-2L);
     }
 
     @Test
@@ -526,12 +526,12 @@ public class SetCommandIntegrationTests extends TestSupport {
     void spexpireat() {
         redis.sadd(key, "a", "b");
         long base = System.currentTimeMillis() + 60_000;
-        assertThat(redis.spexpireat(key, base, "a")).containsExactly(1L);
-        assertThat(redis.spexpiretime(key, "a")).containsExactly(base);
-        assertThat(redis.spexpireat(key, Instant.ofEpochMilli(base + 1000), ExpireArgs.Builder.gt(), "a")).containsExactly(1L);
-        assertThat(redis.spexpireat(key, new Date(base + 2000), ExpireArgs.Builder.lt(), "a")).containsExactly(0L);
-        assertThat(redis.spexpiretime(key, "a")).containsExactly(base + 1000);
-        assertThat(redis.spexpireat(key, 1L, "b")).containsExactly(2L);
+        assertThat(redis.spexpireat(key, base, "a")).isEqualTo(1L);
+        assertThat(redis.spexpiretime(key, "a")).isEqualTo(base);
+        assertThat(redis.spexpireat(key, Instant.ofEpochMilli(base + 1000), ExpireArgs.Builder.gt(), "a")).isEqualTo(1L);
+        assertThat(redis.spexpireat(key, new Date(base + 2000), ExpireArgs.Builder.lt(), "a")).isEqualTo(0L);
+        assertThat(redis.spexpiretime(key, "a")).isEqualTo(base + 1000);
+        assertThat(redis.spexpireat(key, 1L, "b")).isEqualTo(2L);
     }
 
     @Test
@@ -544,7 +544,7 @@ public class SetCommandIntegrationTests extends TestSupport {
         assertThat(ttl.get(0)).isBetween(55L, 60L);
         assertThat(ttl.get(1)).isEqualTo(-1L);
         assertThat(ttl.get(2)).isEqualTo(-2L);
-        assertThat(redis.sttl("nokey", "a")).containsExactly(-2L);
+        assertThat(redis.sttl("nokey", "a")).isEqualTo(-2L);
     }
 
     @Test
@@ -567,7 +567,7 @@ public class SetCommandIntegrationTests extends TestSupport {
         redis.spexpireat(key, base, "a");
         assertThat(redis.sexpiretime(key, "a", "b", "nosuch")).containsExactly(base / 1000, -1L, -2L);
         assertThat(redis.spexpiretime(key, "a", "b", "nosuch")).containsExactly(base, -1L, -2L);
-        assertThat(redis.sexpiretime("nokey", "a")).containsExactly(-2L);
+        assertThat(redis.sexpiretime("nokey", "a")).isEqualTo(-2L);
     }
 
     @Test
@@ -576,8 +576,8 @@ public class SetCommandIntegrationTests extends TestSupport {
         redis.sadd(key, "a", "b");
         redis.sexpire(key, 60, "a");
         assertThat(redis.spersist(key, "a", "b", "nosuch")).containsExactly(1L, -1L, -2L);
-        assertThat(redis.sttl(key, "a")).containsExactly(-1L);
-        assertThat(redis.spersist("nokey", "a")).containsExactly(-2L);
+        assertThat(redis.sttl(key, "a")).isEqualTo(-1L);
+        assertThat(redis.spersist("nokey", "a")).isEqualTo(-2L);
     }
 
     @Test
@@ -594,18 +594,18 @@ public class SetCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("SADDEX")
     void saddexWithExpiration() {
         assertThat(redis.saddex(key, SAddExArgs.Builder.ex(Duration.ofSeconds(60)), "a")).isEqualTo(1L);
-        assertThat(redis.sttl(key, "a").get(0)).isBetween(55L, 60L);
+        assertThat(redis.sttl(key, "a")).isBetween(55L, 60L);
         redis.saddex(key, SAddExArgs.Builder.keepttl(), "a");
-        assertThat(redis.sttl(key, "a").get(0)).isBetween(55L, 60L);
+        assertThat(redis.sttl(key, "a")).isBetween(55L, 60L);
         assertThat(redis.saddex(key, "a")).isEqualTo(1L);
-        assertThat(redis.sttl(key, "a")).containsExactly(-1L);
+        assertThat(redis.sttl(key, "a")).isEqualTo(-1L);
         assertThat(redis.saddex(key, SAddExArgs.Builder.px(Duration.ofSeconds(60)), "a")).isEqualTo(1L);
-        assertThat(redis.spttl(key, "a").get(0)).isBetween(55_000L, 60_000L);
+        assertThat(redis.spttl(key, "a")).isBetween(55_000L, 60_000L);
         long base = (System.currentTimeMillis() / 1000) * 1000 + 120_000;
         assertThat(redis.saddex(key, SAddExArgs.Builder.exAt(Instant.ofEpochMilli(base)), "a")).isEqualTo(1L);
-        assertThat(redis.sexpiretime(key, "a")).containsExactly(base / 1000);
+        assertThat(redis.sexpiretime(key, "a")).isEqualTo(base / 1000);
         assertThat(redis.saddex(key, SAddExArgs.Builder.pxAt(Instant.ofEpochMilli(base + 500)), "a")).isEqualTo(1L);
-        assertThat(redis.spexpiretime(key, "a")).containsExactly(base + 500);
+        assertThat(redis.spexpiretime(key, "a")).isEqualTo(base + 500);
     }
 
     @Test
@@ -618,7 +618,7 @@ public class SetCommandIntegrationTests extends TestSupport {
         assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c"));
         assertThat(redis.saddex(key, SAddExArgs.Builder.mxx(), "a", "nosuch")).isEqualTo(0L);
         assertThat(redis.saddex(key, SAddExArgs.Builder.mxx().ex(Duration.ofSeconds(120)), "a", "b")).isEqualTo(1L);
-        assertThat(redis.sttl(key, "a").get(0)).isBetween(115L, 120L);
+        assertThat(redis.sttl(key, "a")).isBetween(115L, 120L);
         assertThat(redis.saddex("nokey", SAddExArgs.Builder.mxx(), "a")).isEqualTo(0L);
         assertThat(redis.exists("nokey")).isEqualTo(0L);
     }
@@ -654,10 +654,10 @@ public class SetCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("SPEXPIRE")
     void sexpireLogicallyExpiredMemberIsAbsent() {
         redis.sadd(key, "a", "b");
-        assertThat(redis.spexpire(key, 1, "a")).containsExactly(1L);
-        await().until(() -> redis.sttl(key, "a").equals(list(-2L)));
+        assertThat(redis.spexpire(key, 1, "a")).isEqualTo(1L);
+        await().until(() -> redis.sttl(key, "a") == -2L);
         assertThat(redis.sismember(key, "a")).isFalse();
-        assertThat(redis.spersist(key, "a")).containsExactly(-2L);
+        assertThat(redis.spersist(key, "a")).isEqualTo(-2L);
         assertThat(redis.smembers(key)).isEqualTo(set("b"));
     }
 
@@ -674,14 +674,14 @@ public class SetCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("SEXPIRE")
     void sexpireSingleMember() {
         redis.sadd(key, "a", "z");
-        assertThat(redis.sexpire(key, 60, "a")).containsExactly(1L);
-        assertThat(redis.sexpire(key, Duration.ofSeconds(120), ExpireArgs.Builder.gt(), "a")).containsExactly(1L);
-        assertThat(redis.sttl(key, "a").get(0)).isBetween(115L, 120L);
-        assertThat(redis.spexpireat(key, Instant.now().plusSeconds(300), "a")).containsExactly(1L);
-        assertThat(redis.spttl(key, "a").get(0)).isBetween(295_000L, 300_000L);
-        assertThat(redis.spersist(key, "a")).containsExactly(1L);
+        assertThat(redis.sexpire(key, 60, "a")).isEqualTo(1L);
+        assertThat(redis.sexpire(key, Duration.ofSeconds(120), ExpireArgs.Builder.gt(), "a")).isEqualTo(1L);
+        assertThat(redis.sttl(key, "a")).isBetween(115L, 120L);
+        assertThat(redis.spexpireat(key, Instant.now().plusSeconds(300), "a")).isEqualTo(1L);
+        assertThat(redis.spttl(key, "a")).isBetween(295_000L, 300_000L);
+        assertThat(redis.spersist(key, "a")).isEqualTo(1L);
         assertThat(redis.saddex(key, SAddExArgs.Builder.ex(Duration.ofSeconds(60)), "z")).isEqualTo(1L);
-        assertThat(redis.sexpiretime(key, "z")).hasSize(1);
+        assertThat(redis.sexpiretime(key, "z")).isGreaterThan(0L);
         assertThat(redis.saddex(key, "y")).isEqualTo(1L);
     }
 

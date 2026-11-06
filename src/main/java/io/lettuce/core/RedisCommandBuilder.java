@@ -5195,7 +5195,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SADDEX, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> sexpire(K key, long seconds, ExpireArgs expireArgs, V member) {
+    Command<K, V, Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V member) {
         keyAndMemberProvided(key, member);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
@@ -5206,10 +5206,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(MEMBERS).add(1).addValue(member);
 
-        return createCommand(SEXPIRE, new IntegerListOutput<>(codec), args);
+        return createCommand(SEXPIRE, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member) {
+    Command<K, V, Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member) {
         keyAndMemberProvided(key, member);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(milliseconds);
@@ -5220,10 +5220,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(MEMBERS).add(1).addValue(member);
 
-        return createCommand(SPEXPIRE, new IntegerListOutput<>(codec), args);
+        return createCommand(SPEXPIRE, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+    Command<K, V, Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
         keyAndMemberProvided(key, member);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
@@ -5234,10 +5234,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(MEMBERS).add(1).addValue(member);
 
-        return createCommand(SEXPIREAT, new IntegerListOutput<>(codec), args);
+        return createCommand(SEXPIREAT, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+    Command<K, V, Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
         keyAndMemberProvided(key, member);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
@@ -5248,52 +5248,52 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(MEMBERS).add(1).addValue(member);
 
-        return createCommand(SPEXPIREAT, new IntegerListOutput<>(codec), args);
+        return createCommand(SPEXPIREAT, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> sttl(K key, V member) {
+    Command<K, V, Long> sttl(K key, V member) {
         keyAndMemberProvided(key, member);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         args.add(MEMBERS).add(1).addValue(member);
 
-        return createCommand(STTL, new IntegerListOutput<>(codec), args);
+        return createCommand(STTL, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> spttl(K key, V member) {
+    Command<K, V, Long> spttl(K key, V member) {
         keyAndMemberProvided(key, member);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         args.add(MEMBERS).add(1).addValue(member);
 
-        return createCommand(SPTTL, new IntegerListOutput<>(codec), args);
+        return createCommand(SPTTL, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> sexpiretime(K key, V member) {
+    Command<K, V, Long> sexpiretime(K key, V member) {
         keyAndMemberProvided(key, member);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         args.add(MEMBERS).add(1).addValue(member);
 
-        return createCommand(SEXPIRETIME, new IntegerListOutput<>(codec), args);
+        return createCommand(SEXPIRETIME, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> spexpiretime(K key, V member) {
+    Command<K, V, Long> spexpiretime(K key, V member) {
         keyAndMemberProvided(key, member);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         args.add(MEMBERS).add(1).addValue(member);
 
-        return createCommand(SPEXPIRETIME, new IntegerListOutput<>(codec), args);
+        return createCommand(SPEXPIRETIME, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> spersist(K key, V member) {
+    Command<K, V, Long> spersist(K key, V member) {
         keyAndMemberProvided(key, member);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         args.add(MEMBERS).add(1).addValue(member);
 
-        return createCommand(SPERSIST, new IntegerListOutput<>(codec), args);
+        return createCommand(SPERSIST, new IntegerOutput<>(codec), args);
     }
 
 }

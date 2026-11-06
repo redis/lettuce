@@ -475,15 +475,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param key the key of the set, must not be {@code null}.
      * @param seconds the time to live in seconds, must not be negative.
      * @param member the member to set the time to live for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
      *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sexpire(K key, long seconds, V member);
+    RedisFuture<Long> sexpire(K key, long seconds, V member);
 
     /**
      * Set the time to live, in seconds, of one or more members of the set stored at {@code key}, applying the
@@ -513,15 +512,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param seconds the time to live in seconds, must not be negative.
      * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
      * @param member the member to set the time to live for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code member} is an argument
      *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sexpire(K key, long seconds, ExpireArgs expireArgs, V member);
+    RedisFuture<Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V member);
 
     /**
      * Set the time to live of one or more members of the set stored at {@code key}. The {@link Duration} is truncated to whole
@@ -547,15 +545,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param key the key of the set, must not be {@code null}.
      * @param seconds the time to live, must not be {@code null}; truncated to whole seconds.
      * @param member the member to set the time to live for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} or {@code seconds} is {@code null}, or {@code member} is an argument
      *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sexpire(K key, Duration seconds, V member);
+    RedisFuture<Long> sexpire(K key, Duration seconds, V member);
 
     /**
      * Set the time to live of one or more members of the set stored at {@code key}, applying the {@link ExpireArgs} condition
@@ -588,16 +585,15 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param seconds the time to live, must not be {@code null}; truncated to whole seconds.
      * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
      * @param member the member to set the time to live for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key}, {@code seconds} or {@code expireArgs} is {@code null}, or {@code member}
      *         is an argument object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the
      *         members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V member);
+    RedisFuture<Long> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V member);
 
     /**
      * Set the time to live, in milliseconds, of one or more members of the set stored at {@code key}. A time to live of
@@ -623,15 +619,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param key the key of the set, must not be {@code null}.
      * @param milliseconds the time to live in milliseconds, must not be negative.
      * @param member the member to set the time to live for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
      *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spexpire(K key, long milliseconds, V member);
+    RedisFuture<Long> spexpire(K key, long milliseconds, V member);
 
     /**
      * Set the time to live, in milliseconds, of one or more members of the set stored at {@code key}, applying the
@@ -661,15 +656,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param milliseconds the time to live in milliseconds, must not be negative.
      * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
      * @param member the member to set the time to live for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code member} is an argument
      *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member);
+    RedisFuture<Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member);
 
     /**
      * Set the time to live of one or more members of the set stored at {@code key}. The {@link Duration} is truncated to whole
@@ -696,15 +690,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param key the key of the set, must not be {@code null}.
      * @param milliseconds the time to live, must not be {@code null}; truncated to whole milliseconds.
      * @param member the member to set the time to live for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} or {@code milliseconds} is {@code null}, or {@code member} is an argument
      *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spexpire(K key, Duration milliseconds, V member);
+    RedisFuture<Long> spexpire(K key, Duration milliseconds, V member);
 
     /**
      * Set the time to live of one or more members of the set stored at {@code key}, applying the {@link ExpireArgs} condition
@@ -739,16 +732,15 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param milliseconds the time to live, must not be {@code null}; truncated to whole milliseconds.
      * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
      * @param member the member to set the time to live for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key}, {@code milliseconds} or {@code expireArgs} is {@code null}, or
      *         {@code member} is an argument object such as {@link ExpireArgs} passed in place of the members (pass the
      *         arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V member);
+    RedisFuture<Long> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute Unix time in seconds. A time in
@@ -774,15 +766,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param key the key of the set, must not be {@code null}.
      * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
      *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sexpireat(K key, long timestamp, V member);
+    RedisFuture<Long> sexpireat(K key, long timestamp, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute Unix time in seconds, applying
@@ -814,15 +805,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
      * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code member} is an argument
      *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member);
+    RedisFuture<Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with second
@@ -848,15 +838,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param key the key of the set, must not be {@code null}.
      * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code member} is an argument
      *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sexpireat(K key, Date timestamp, V member);
+    RedisFuture<Long> sexpireat(K key, Date timestamp, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with second
@@ -889,16 +878,15 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
      * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
      *         {@code member} is an argument object such as {@link ExpireArgs} passed in place of the members (pass the
      *         arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member);
+    RedisFuture<Long> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with second
@@ -924,15 +912,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param key the key of the set, must not be {@code null}.
      * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code member} is an argument
      *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sexpireat(K key, Instant timestamp, V member);
+    RedisFuture<Long> sexpireat(K key, Instant timestamp, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with second
@@ -965,16 +952,15 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
      * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
      *         {@code member} is an argument object such as {@link ExpireArgs} passed in place of the members (pass the
      *         arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member);
+    RedisFuture<Long> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute Unix time in milliseconds. A
@@ -1000,15 +986,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param key the key of the set, must not be {@code null}.
      * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
      *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spexpireat(K key, long timestamp, V member);
+    RedisFuture<Long> spexpireat(K key, long timestamp, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute Unix time in milliseconds,
@@ -1040,15 +1025,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
      * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code member} is an argument
      *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member);
+    RedisFuture<Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with millisecond
@@ -1074,15 +1058,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param key the key of the set, must not be {@code null}.
      * @param timestamp the point in time at which the members expire, must not be {@code null}.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code member} is an argument
      *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spexpireat(K key, Date timestamp, V member);
+    RedisFuture<Long> spexpireat(K key, Date timestamp, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with millisecond
@@ -1115,16 +1098,15 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param timestamp the point in time at which the members expire, must not be {@code null}.
      * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
      *         {@code member} is an argument object such as {@link ExpireArgs} passed in place of the members (pass the
      *         arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member);
+    RedisFuture<Long> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with millisecond
@@ -1150,15 +1132,14 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param key the key of the set, must not be {@code null}.
      * @param timestamp the point in time at which the members expire, must not be {@code null}.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code member} is an argument
      *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spexpireat(K key, Instant timestamp, V member);
+    RedisFuture<Long> spexpireat(K key, Instant timestamp, V member);
 
     /**
      * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with millisecond
@@ -1191,16 +1172,15 @@ public interface RedisSetAsyncCommands<K, V> {
      * @param timestamp the point in time at which the members expire, must not be {@code null}.
      * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
      * @param member the member to set the expiration for.
-     * @return a list with a single {@link Long} for {@code member}: {@code 2} if the member was deleted because the expiration
-     *         is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT}
-     *         or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically expired member does not
-     *         exist) or {@code key} does not exist.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
      *         {@code member} is an argument object such as {@link ExpireArgs} passed in place of the members (pass the
      *         arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member);
+    RedisFuture<Long> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member);
 
     /**
      * Get the remaining time to live, in seconds, of one or more members of the set stored at {@code key}. The value is rounded
@@ -1223,14 +1203,14 @@ public interface RedisSetAsyncCommands<K, V> {
      *
      * @param key the key of the set, must not be {@code null}.
      * @param member the member to get the time to live for.
-     * @return a list with a single {@link Long} for {@code member}: the remaining time to live in seconds, rounded up to the
-     *         next second; {@code -1} if the member exists but has no expiration; {@code -2} if the member does not exist (a
-     *         logically expired member does not exist) or {@code key} does not exist.
+     * @return the remaining time to live in seconds, rounded up to the next second; {@code -1} if the member exists but has no
+     *         expiration; {@code -2} if the member does not exist (a logically expired member does not exist) or {@code key}
+     *         does not exist.
      * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
      *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sttl(K key, V member);
+    RedisFuture<Long> sttl(K key, V member);
 
     /**
      * Get the remaining time to live, in milliseconds, of one or more members of the set stored at {@code key}.
@@ -1252,14 +1232,14 @@ public interface RedisSetAsyncCommands<K, V> {
      *
      * @param key the key of the set, must not be {@code null}.
      * @param member the member to get the time to live for.
-     * @return a list with a single {@link Long} for {@code member}: the remaining time to live in milliseconds, {@code 0} if
-     *         the member is expiring now; {@code -1} if the member exists but has no expiration; {@code -2} if the member does
-     *         not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @return the remaining time to live in milliseconds, {@code 0} if the member is expiring now; {@code -1} if the member
+     *         exists but has no expiration; {@code -2} if the member does not exist (a logically expired member does not exist)
+     *         or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
      *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spttl(K key, V member);
+    RedisFuture<Long> spttl(K key, V member);
 
     /**
      * Get the absolute Unix time, in seconds, at which one or more members of the set stored at {@code key} expire. The value
@@ -1282,14 +1262,14 @@ public interface RedisSetAsyncCommands<K, V> {
      *
      * @param key the key of the set, must not be {@code null}.
      * @param member the member to get the expiration time for.
-     * @return a list with a single {@link Long} for {@code member}: the Unix time in seconds at which the member expires,
-     *         rounded up to the next second; {@code -1} if the member exists but has no expiration; {@code -2} if the member
-     *         does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @return the Unix time in seconds at which the member expires, rounded up to the next second; {@code -1} if the member
+     *         exists but has no expiration; {@code -2} if the member does not exist (a logically expired member does not exist)
+     *         or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
      *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> sexpiretime(K key, V member);
+    RedisFuture<Long> sexpiretime(K key, V member);
 
     /**
      * Get the absolute Unix time, in milliseconds, at which one or more members of the set stored at {@code key} expire.
@@ -1310,14 +1290,14 @@ public interface RedisSetAsyncCommands<K, V> {
      *
      * @param key the key of the set, must not be {@code null}.
      * @param member the member to get the expiration time for.
-     * @return a list with a single {@link Long} for {@code member}: the Unix time in milliseconds at which the member expires;
-     *         {@code -1} if the member exists but has no expiration; {@code -2} if the member does not exist (a logically
-     *         expired member does not exist) or {@code key} does not exist.
+     * @return the Unix time in milliseconds at which the member expires; {@code -1} if the member exists but has no expiration;
+     *         {@code -2} if the member does not exist (a logically expired member does not exist) or {@code key} does not
+     *         exist.
      * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
      *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spexpiretime(K key, V member);
+    RedisFuture<Long> spexpiretime(K key, V member);
 
     /**
      * Remove the expiration of one or more members of the set stored at {@code key}.
@@ -1338,13 +1318,13 @@ public interface RedisSetAsyncCommands<K, V> {
      *
      * @param key the key of the set, must not be {@code null}.
      * @param member the member to remove the expiration from.
-     * @return a list with a single {@link Long} for {@code member}: {@code 1} if the expiration was removed; {@code -1} if the
-     *         member exists but has no expiration; {@code -2} if the member does not exist or {@code key} does not exist.
+     * @return {@code 1} if the expiration was removed; {@code -1} if the member exists but has no expiration; {@code -2} if the
+     *         member does not exist or {@code key} does not exist.
      * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
      *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
      * @since 8.0
      */
-    RedisFuture<List<Long>> spersist(K key, V member);
+    RedisFuture<Long> spersist(K key, V member);
 
     /**
      * Add one or more members to the set stored at {@code key}, creating it when it does not exist. Unlike

@@ -1497,6 +1497,21 @@ class RedisCommandBuilderUnitTests {
         assertThatThrownBy(() -> sut.saddex(MY_KEY, (SAddExArgs) null, MY_FIELD1)).isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test
+    void shouldDecodeSingleSetMemberReplyAsLong() {
+
+        // the server replies with a one-element array; the single-member overloads surface the element itself
+        Command<String, String, Long> command = sut.sttl(MY_KEY, MY_FIELD1);
+        command.getOutput().multi(1);
+        command.getOutput().set(42L);
+        assertThat(command.getOutput().get()).isEqualTo(42L);
+
+        command = sut.sexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), MY_FIELD1);
+        command.getOutput().multi(1);
+        command.getOutput().set(-2L);
+        assertThat(command.getOutput().get()).isEqualTo(-2L);
+    }
+
     private static String encode(Command<String, String, ?> command) {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
