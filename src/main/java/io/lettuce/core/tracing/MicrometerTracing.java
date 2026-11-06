@@ -5,6 +5,8 @@ import static io.lettuce.core.tracing.RedisObservation.*;
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -167,6 +169,12 @@ public class MicrometerTracing implements Tracing {
 
         private Observation observation;
 
+        private final AtomicReference<CommandCompletion> commandCompletion = new AtomicReference<>();
+
+        private final AtomicBoolean observationStarted = new AtomicBoolean();
+
+        private final AtomicBoolean completionProcessed = new AtomicBoolean();
+
         public MicrometerSpan(String serviceName, Function<LettuceObservationContext, Observation> observationFactory) {
             this.context = new LettuceObservationContext(serviceName);
             this.observationFactory = observationFactory;
@@ -186,18 +194,8 @@ public class MicrometerTracing implements Tracing {
                 CompleteableCommand<?> completeableCommand = (CompleteableCommand<?>) command;
 
                 completeableCommand.onComplete((o, throwable) -> {
-
-                    if (command.getOutput() != null) {
-
-                        String error = command.getOutput().getError();
-                        if (error != null) {
-                            this.observation.highCardinalityKeyValue(HighCardinalityCommandKeyNames.ERROR.withValue(error));
-                        } else if (throwable != null) {
-                            error(throwable);
-                        }
-                    }
-
-                    finish();
+                    this.commandCompletion.compareAndSet(null, new CommandCompletion(throwable));
+                    finishIfReady(command);
                 });
             } else {
                 throw new IllegalArgumentException("Command " + command
@@ -205,7 +203,39 @@ public class MicrometerTracing implements Tracing {
             }
 
             this.observation.start();
+            this.observationStarted.set(true);
+            finishIfReady(command);
             return this;
+        }
+
+        private void finishIfReady(RedisCommand<?, ?, ?> command) {
+
+            CommandCompletion completion = this.commandCompletion.get();
+            if (!this.observationStarted.get() || completion == null || !this.completionProcessed.compareAndSet(false, true)) {
+                return;
+            }
+
+            if (command.getOutput() != null) {
+
+                String error = command.getOutput().getError();
+                if (error != null) {
+                    this.observation.highCardinalityKeyValue(HighCardinalityCommandKeyNames.ERROR.withValue(error));
+                } else if (completion.throwable != null) {
+                    error(completion.throwable);
+                }
+            }
+
+            finish();
+        }
+
+        private static class CommandCompletion {
+
+            private final Throwable throwable;
+
+            CommandCompletion(Throwable throwable) {
+                this.throwable = throwable;
+            }
+
         }
 
         @Override
