@@ -33,6 +33,23 @@ class BlessFlagUnitTests {
     }
 
     @Test
+    void ofReturnsConstantForKnownTokenInAnyCase() {
+
+        assertThat(BlessFlag.of("no-evict")).isSameAs(BlessFlag.NO_EVICT);
+        assertThat(BlessFlag.of("No-Evict")).isSameAs(BlessFlag.NO_EVICT);
+    }
+
+    @Test
+    void ofKeepsUnknownTokenCaseButComparesIgnoringCase() {
+
+        BlessFlag flag = BlessFlag.of("future-flag");
+
+        assertThat(flag.getToken()).isEqualTo("future-flag");
+        assertThat(flag).isEqualTo(BlessFlag.of("FUTURE-FLAG"));
+        assertThat(flag.hashCode()).isEqualTo(BlessFlag.of("FUTURE-FLAG").hashCode());
+    }
+
+    @Test
     void ofPassesUnknownTokenVerbatim() {
 
         BlessFlag flag = BlessFlag.of("FUTURE-FLAG");

@@ -7,6 +7,7 @@
 package io.lettuce.core;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ProtocolKeyword;
@@ -18,6 +19,8 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * The set of flags is open: {@link #NO_EVICT} is the only flag known today, and {@link #of(String)} passes any other token
  * verbatim to the server so that flags introduced by newer servers can be used without a client upgrade. Unknown tokens are
  * rejected by the server with a syntax error.
+ * <p>
+ * Like the server, {@link BlessFlag} ignores case: flags are equal when their tokens are equal ignoring case.
  *
  * @since 8.0
  */
@@ -40,8 +43,8 @@ public final class BlessFlag implements ProtocolKeyword {
     }
 
     /**
-     * Create a {@link BlessFlag} from its wire token. Returns the {@link #NO_EVICT} constant for its token; any other token is
-     * passed to the server as-is.
+     * Create a {@link BlessFlag} from its wire token. Returns the {@link #NO_EVICT} constant for its token in any case, for
+     * example {@literal no-evict}; any other token is passed to the server as-is.
      *
      * @param token the flag token as understood by the server, must not be {@code null} or empty.
      * @return the {@link BlessFlag} for {@code token}.
@@ -52,7 +55,7 @@ public final class BlessFlag implements ProtocolKeyword {
 
         LettuceAssert.notEmpty(token, "Token must not be null or empty");
 
-        if (NO_EVICT.token.equals(token)) {
+        if (NO_EVICT.token.equalsIgnoreCase(token)) {
             return NO_EVICT;
         }
 
@@ -83,12 +86,12 @@ public final class BlessFlag implements ProtocolKeyword {
             return false;
         }
 
-        return token.equals(((BlessFlag) o).token);
+        return token.equalsIgnoreCase(((BlessFlag) o).token);
     }
 
     @Override
     public int hashCode() {
-        return token.hashCode();
+        return token.toUpperCase(Locale.ROOT).hashCode();
     }
 
     @Override
