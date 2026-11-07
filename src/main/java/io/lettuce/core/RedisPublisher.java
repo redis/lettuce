@@ -276,7 +276,11 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         @Override
         public void onNext(T t) {
 
-            LettuceAssert.notNull(t, "Data must not be null");
+            // Reactive streams reject null: skip a nil reply here. Collecting subscribers still
+            // receive it through CompositeSubscriber, so list slots are preserved.
+            if (t == null) {
+                return;
+            }
 
             State state = state();
 
