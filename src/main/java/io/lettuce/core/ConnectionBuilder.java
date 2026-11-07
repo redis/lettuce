@@ -62,6 +62,13 @@ public class ConnectionBuilder {
 
     public static final AttributeKey<String> REDIS_URI = AttributeKey.valueOf("RedisURI");
 
+    /**
+     * The {@link RedisURI} used to create the connection.
+     *
+     * @since 8.0
+     */
+    public static final AttributeKey<RedisURI> REDIS_URI_INSTANCE = AttributeKey.valueOf("RedisURIInstance");
+
     public static final AttributeKey<Throwable> INIT_FAILURE = AttributeKey.valueOf("ConnectionBuilder.INIT_FAILURE");
 
     private Supplier<CompletionStage<SocketAddress>> socketAddressSupplier;
@@ -106,6 +113,7 @@ public class ConnectionBuilder {
         timeout(redisURI.getTimeout());
 
         bootstrap.attr(REDIS_URI, redisURI.toString());
+        bootstrap.attr(REDIS_URI_INSTANCE, redisURI);
     }
 
     protected List<ChannelHandler> buildHandlers() {

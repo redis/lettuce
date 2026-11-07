@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.RedisCommand;
@@ -111,6 +112,20 @@ public class MicrometerTracing implements Tracing {
     @Override
     public Endpoint createEndpoint(SocketAddress socketAddress) {
         return new SocketAddressEndpoint(socketAddress);
+    }
+
+    @Override
+    public Endpoint createEndpoint(SocketAddress socketAddress, RedisURI redisURI) {
+
+        // keep endpoints created by subclasses overriding createEndpoint(SocketAddress)
+        Endpoint endpoint = createEndpoint(socketAddress);
+
+        if (endpoint instanceof SocketAddressEndpoint) {
+            return new SocketAddressEndpoint(((SocketAddressEndpoint) endpoint).getSocketAddress(),
+                    RedisUriDetails.from(redisURI, socketAddress));
+        }
+
+        return endpoint;
     }
 
     /**
