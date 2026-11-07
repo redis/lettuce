@@ -66,6 +66,7 @@ import io.lettuce.core.resource.ClientResources;
  * Unit tests for {@link PooledClusterConnectionProvider}.
  *
  * @author Mark Paluch
+ * @author Sankalp Shukla
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
@@ -459,6 +460,55 @@ class PooledClusterConnectionProviderUnitTests {
 
         assertThat(future).isCompletedExceptionally();
         verify(clusterEventListener).onUncoveredSlot(anyInt());
+    }
+
+    @Test
+    void lateReplicaHandshakeCannotRepopulateCacheAfterReadPolicyChange() {
+
+        when(nodeConnectionMock.isOpen()).thenReturn(true);
+        StatefulRedisConnection<String, String> upstream = mock(StatefulRedisConnection.class);
+        when(upstream.isOpen()).thenReturn(true);
+        when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:2"), any(), any()))
+                .thenReturn(ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
+        when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any()))
+                .thenReturn(ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(upstream)));
+
+        AsyncCommand<String, String, String> gated = new AsyncCommand<>(new Command<>(CommandType.READONLY, null, null));
+        when(asyncCommandsMock.readOnly()).thenReturn(gated);
+
+        sut.setReadFrom(ReadFrom.REPLICA);
+        CompletableFuture<StatefulRedisConnection<String, String>> oldRead = sut.getConnectionAsync(ConnectionIntent.READ, 1);
+        assertThat(oldRead).isNotDone();
+
+        sut.setReadFrom(ReadFrom.UPSTREAM_PREFERRED);
+        gated.complete("OK");
+        assertThat(oldRead.join()).isSameAs(nodeConnectionMock);
+
+        assertThat(sut.getConnectionAsync(ConnectionIntent.READ, 1).join()).isSameAs(upstream);
+    }
+
+    @Test
+    void lateReplicaHandshakeCannotRestoreRemovedReplicaAfterTopologyRefresh() {
+
+        when(nodeConnectionMock.isOpen()).thenReturn(true);
+        when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:2"), any(), any()))
+                .thenReturn(ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
+        AsyncCommand<String, String, String> gated = new AsyncCommand<>(new Command<>(CommandType.READONLY, null, null));
+        when(asyncCommandsMock.readOnly()).thenReturn(gated);
+
+        sut.setReadFrom(ReadFrom.REPLICA);
+        CompletableFuture<StatefulRedisConnection<String, String>> oldRead = sut.getConnectionAsync(ConnectionIntent.READ, 1);
+        assertThat(oldRead).isNotDone();
+
+        Partitions replacement = new Partitions();
+        replacement.add(new RedisClusterNode(RedisURI.create("localhost", 1), "1", true, null, 0, 0, 0,
+                IntStream.range(0, SlotHash.SLOT_COUNT).boxed().collect(Collectors.toList()),
+                Collections.singleton(RedisClusterNode.NodeFlag.UPSTREAM)));
+        sut.setPartitions(replacement);
+        gated.complete("OK");
+
+        assertThat(oldRead.join()).isSameAs(nodeConnectionMock);
+        assertThatThrownBy(() -> sut.getConnection(ConnectionIntent.READ, 1)).isInstanceOf(PartitionSelectorException.class);
     }
 
 }
