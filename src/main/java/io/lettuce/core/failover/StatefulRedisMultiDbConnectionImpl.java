@@ -38,6 +38,7 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.CircuitBreakerStateChangeEvent;
+import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.api.DatabaseConfig;
 import io.lettuce.core.failover.api.ImmutableRedisURI;
 import io.lettuce.core.failover.api.MultiDbOptions;
@@ -47,6 +48,7 @@ import io.lettuce.core.failover.event.AllDatabasesUnhealthyEvent;
 import io.lettuce.core.failover.event.DatabaseSwitchEvent;
 import io.lettuce.core.failover.event.SwitchReason;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
+import io.lettuce.core.failover.health.HealthStatusListener;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.Exceptions;
@@ -63,6 +65,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * they remain valid across switches.
  *
  * @author Ali Takavci
+ * @author Shin seongsu
  * @since 7.4
  */
 class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
@@ -112,6 +115,12 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * counting, and event publishing with a lock-free, thread-safe interface.
      */
     private final FailoverRetryState failoverRetryState = new FailoverRetryState();
+
+    private final HealthStatusListener healthStatusListener = this::onHealthStatusChange;
+
+    private final CircuitBreakerStateListener circuitBreakerStateListener = this::onCircuitBreakerStateChange;
+
+    private volatile boolean closed;
 
     /**
      * Creates a new multi-database connection with default options.
@@ -174,8 +183,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         LettuceAssert.notNull(current, "InitialDatabase must not be null");
 
         // Now register listeners - they can safely access current
-        databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
-        databases.values().forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
+        databases.values().forEach(db -> db.getCircuitBreaker().addListener(circuitBreakerStateListener));
+        databases.values().forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), healthStatusListener));
 
         // Re-validate that current is still healthy after registering listeners
         // This handles the case where the initial database became unhealthy between selection and listener registration
@@ -184,10 +193,12 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             failoverFrom(instance, SwitchReason.FORCED);
             // if still unhealthy after failoverFrom, lets stop here
             if (!current.isHealthy()) {
-                // remove listeners as we are going to throw an exception
-                databases.values().forEach(db -> db.getCircuitBreaker().removeListener(this::onCircuitBreakerStateChange));
+                // stop pending failover retries and remove listeners as we are going to throw an exception
+                closed = true;
+                failoverRetryState.cancel();
+                databases.values().forEach(db -> db.getCircuitBreaker().removeListener(circuitBreakerStateListener));
                 databases.values()
-                        .forEach(db -> healthStatusManager.unregisterListener(db.getRedisURI(), this::onHealthStatusChange));
+                        .forEach(db -> healthStatusManager.unregisterListener(db.getRedisURI(), healthStatusListener));
                 throw new IllegalStateException("No healthy database available");
             }
         }
@@ -285,6 +296,9 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     private static final int MAX_FAILOVER_RECURSION = 10;
 
     private void failoverFrom(RedisDatabaseImpl<C> fromDb, SwitchReason reason) {
+        if (closed) {
+            return;
+        }
         failoverFromRecursive(fromDb, reason, 0);
     }
 
@@ -580,6 +594,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      */
     @Override
     public CompletableFuture<Void> closeAsync() {
+        closed = true;
+        failoverRetryState.cancel();
         if (failbackTask != null) {
             failbackTask.cancel(false);
         }
@@ -1032,7 +1048,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 throw new IllegalArgumentException("Database already exists: " + redisURI);
             }
 
-            healthStatusManager.registerListener(redisURI, this::onHealthStatusChange);
+            healthStatusManager.registerListener(redisURI, healthStatusListener);
 
             // Create new database connection using the factory
             CompletableFuture<RedisDatabaseImpl<C>> databaseFuture = connectionFactory.createDatabaseAsync(databaseConfig,
@@ -1043,7 +1059,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
                 // Add listeners to the new connection if it's the current one
                 // (though it won't be current initially since we're just adding it)
-                database.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange);
+                database.getCircuitBreaker().addListener(circuitBreakerStateListener);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw RedisConnectionException.create(e);
@@ -1076,8 +1092,9 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 throw new UnsupportedOperationException("Cannot remove the currently active database: " + current.getId());
             }
 
-            healthStatusManager.unregisterListener(redisURI, this::onHealthStatusChange);
+            healthStatusManager.unregisterListener(redisURI, healthStatusListener);
             healthStatusManager.remove(redisURI);
+            database.getCircuitBreaker().removeListener(circuitBreakerStateListener);
 
             // Remove the database and close its connection
             databases.remove(redisURI);
@@ -1100,13 +1117,14 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     /**
      * Thread-safe holder for failover retry state. Manages the scheduled retry task and tracks consecutive failed attempts.
-     * Uses a lock-free approach to ensure only one retry task is scheduled at a time.
+     * Ensures only one retry task is scheduled at a time, and that a retry scheduled concurrently with close is cancelled. No
+     * lock is held while publishing events, so an event subscriber may close the connection from any thread.
      */
     private class FailoverRetryState {
 
         private final AtomicInteger attempts = new AtomicInteger(0);
 
-        private final AtomicReference<Runnable> scheduledTask = new AtomicReference<>();
+        private final AtomicReference<RetryTask> scheduledTask = new AtomicReference<>();
 
         /**
          * Attempts to schedule a retry task after the given delay.
@@ -1129,17 +1147,24 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
          */
         void tryScheduleRetry(Runnable retryAction, Duration delay, ScheduledExecutorService executor) {
             // Create the task - clears the scheduled task when it starts, allowing next retry to be scheduled
-            Runnable task = () -> {
-                scheduledTask.set(null);
-                retryAction.run();
-            };
+            RetryTask task = new RetryTask(retryAction);
+
+            if (closed) {
+                return;
+            }
 
             // Try to claim the slot atomically; only schedule if we successfully claimed it
             if (scheduledTask.compareAndSet(null, task)) {
                 try {
                     int attemptCount = attempts.incrementAndGet();
                     publishAllDatabasesUnhealthyEvent(attemptCount);
-                    executor.schedule(task, delay.toMillis(), TimeUnit.MILLISECONDS);
+                    task.future = executor.schedule(task, delay.toMillis(), TimeUnit.MILLISECONDS);
+                    // close() may have run since the closed check above - possibly from an event subscriber - and found no
+                    // future to cancel. closeAsync() writes closed before reading the future, and this thread writes the
+                    // future before reading closed, so at least one side sees the other and the retry is always cancelled.
+                    if (closed) {
+                        task.cancel();
+                    }
                 } catch (RuntimeException e) {
                     logger.error("Failed to schedule failover retry task", e);
                     // highly unlikely to happen, but if it does, we need to clear the scheduled task so that next retry can be
@@ -1150,10 +1175,49 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         }
 
         /**
+         * Cancels the pending retry task, if any. Called when the connection is closed.
+         */
+        void cancel() {
+            RetryTask task = scheduledTask.get();
+            if (task != null) {
+                task.cancel();
+            }
+        }
+
+        /**
          * Resets the attempt counter to zero. Called when a successful failover occurs.
          */
         void resetAttempts() {
             attempts.set(0);
+        }
+
+        /**
+         * A scheduled retry together with its own future, so that a retry scheduled by a running retry never shares or
+         * overwrites the future of its predecessor.
+         */
+        private class RetryTask implements Runnable {
+
+            private final Runnable retryAction;
+
+            private volatile ScheduledFuture<?> future;
+
+            RetryTask(Runnable retryAction) {
+                this.retryAction = retryAction;
+            }
+
+            @Override
+            public void run() {
+                scheduledTask.set(null);
+                retryAction.run();
+            }
+
+            void cancel() {
+                ScheduledFuture<?> scheduled = future;
+                if (scheduled != null) {
+                    scheduled.cancel(false);
+                }
+            }
+
         }
 
     }
