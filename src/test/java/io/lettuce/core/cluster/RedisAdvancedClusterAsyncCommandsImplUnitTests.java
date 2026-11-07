@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import static io.lettuce.TestTags.UNIT_TEST;
@@ -222,6 +223,48 @@ class RedisAdvancedClusterAsyncCommandsImplUnitTests {
             boolean logged = logs.messages().stream()
                     .anyMatch(m -> m.contains("Cluster routing failed for FT.EXPLAIN - falling back to superCall"));
             assertThat(logged).isTrue();
+        }
+    }
+
+    @Test
+    void routeKeyless_function_argumentFailure_doesNotFallbackAndDoesNotLogRoutingError() {
+        try (LoggingTestUtils.CapturingAppender logs = LoggingTestUtils
+                .attachAppenderFor(RedisAdvancedClusterAsyncCommandsImpl.class, Level.ERROR)) {
+
+            AtomicBoolean fallback = new AtomicBoolean();
+
+            RedisFuture<String> future = async.routeKeyless(() -> {
+                fallback.set(true);
+                return new PipelinedRedisFuture<>(CompletableFuture.completedFuture("SUPER"));
+            }, (RedisAsyncCommands<String, String> c) -> {
+                throw new IllegalArgumentException("index must not be null");
+            }, CommandType.FT_SEARCH);
+
+            assertThatThrownBy(() -> future.toCompletableFuture().join())
+                    .hasRootCauseInstanceOf(IllegalArgumentException.class);
+            assertThat(fallback).isFalse();
+            assertThat(logs.messages()).noneMatch(m -> m.contains("Cluster routing failed"));
+        }
+    }
+
+    @Test
+    void routeKeyless_biFunction_argumentFailure_doesNotFallbackAndDoesNotLogRoutingError() {
+        try (LoggingTestUtils.CapturingAppender logs = LoggingTestUtils
+                .attachAppenderFor(RedisAdvancedClusterAsyncCommandsImpl.class, Level.ERROR)) {
+
+            AtomicBoolean fallback = new AtomicBoolean();
+
+            RedisFuture<String> future = async.routeKeyless(() -> {
+                fallback.set(true);
+                return new PipelinedRedisFuture<>(CompletableFuture.completedFuture("SUPER"));
+            }, (String nodeId, RedisClusterAsyncCommands<String, String> c) -> {
+                throw new IllegalArgumentException("index must not be null");
+            }, CommandType.FT_SEARCH);
+
+            assertThatThrownBy(() -> future.toCompletableFuture().join())
+                    .hasRootCauseInstanceOf(IllegalArgumentException.class);
+            assertThat(fallback).isFalse();
+            assertThat(logs.messages()).noneMatch(m -> m.contains("Cluster routing failed"));
         }
     }
 
