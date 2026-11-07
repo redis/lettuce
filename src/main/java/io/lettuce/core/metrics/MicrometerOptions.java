@@ -43,6 +43,13 @@ public class MicrometerOptions {
 
     public static final boolean DEFAULT_HISTOGRAM = false;
 
+    /**
+     * Default for per-attempt command queueing latency metrics.
+     *
+     * @since 7.9
+     */
+    public static final boolean DEFAULT_QUEUE_LATENCY = false;
+
     public static final boolean DEFAULT_LOCAL_DISTINCTION = false;
 
     public static final Duration DEFAULT_MAX_LATENCY = Duration.ofMinutes(5L);
@@ -58,6 +65,8 @@ public class MicrometerOptions {
     private final boolean enabled;
 
     private final boolean histogram;
+
+    private final boolean queueLatency;
 
     private final boolean localDistinction;
 
@@ -76,6 +85,7 @@ public class MicrometerOptions {
         this.builder = builder;
         this.enabled = builder.enabled;
         this.histogram = builder.histogram;
+        this.queueLatency = builder.queueLatency;
         this.localDistinction = builder.localDistinction;
         this.metricsFilter = builder.metricsFilter;
         this.maxLatency = builder.maxLatency;
@@ -131,6 +141,8 @@ public class MicrometerOptions {
 
         private boolean histogram = DEFAULT_HISTOGRAM;
 
+        private boolean queueLatency = DEFAULT_QUEUE_LATENCY;
+
         private boolean localDistinction = DEFAULT_LOCAL_DISTINCTION;
 
         private Predicate<RedisCommand<?, ?, ?>> metricsFilter = command -> true;
@@ -175,6 +187,19 @@ public class MicrometerOptions {
          */
         public Builder histogram(boolean histogram) {
             this.histogram = histogram;
+            return this;
+        }
+
+        /**
+         * Enable per-attempt command queueing latency measurement (endpoint acceptance to command dispatch). The metric is
+         * disabled by default.
+         *
+         * @param queueLatency whether to record queueing latency
+         * @return this {@link Builder}.
+         * @since 7.9
+         */
+        public Builder queueLatency(boolean queueLatency) {
+            this.queueLatency = queueLatency;
             return this;
         }
 
@@ -302,6 +327,14 @@ public class MicrometerOptions {
 
     public boolean isHistogram() {
         return histogram;
+    }
+
+    /**
+     * @return whether per-attempt queueing latency metrics are configured
+     * @since 7.9
+     */
+    public boolean isQueueLatencyEnabled() {
+        return queueLatency;
     }
 
     public boolean localDistinction() {
