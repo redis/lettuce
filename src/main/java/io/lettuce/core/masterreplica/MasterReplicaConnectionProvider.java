@@ -17,7 +17,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.OrderingReadFromAccessor;
 import io.lettuce.core.ReadFrom;
@@ -61,12 +60,12 @@ class MasterReplicaConnectionProvider<K, V> {
     private ReadFrom readFrom;
 
     MasterReplicaConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisURI initialRedisUri,
-            Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections, ClientOptions clientOptions) {
+            Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections) {
 
         this.initialRedisUri = initialRedisUri;
 
         Function<ConnectionKey, CompletionStage<StatefulRedisConnection<K, V>>> connectionFactory = new DefaultConnectionFactory(
-                redisClient, redisCodec, clientOptions);
+                redisClient, redisCodec);
 
         this.connectionProvider = new AsyncConnectionProvider<>(connectionFactory);
 
@@ -383,12 +382,9 @@ class MasterReplicaConnectionProvider<K, V> {
 
         private final RedisCodec<K, V> redisCodec;
 
-        private final ClientOptions clientOptions;
-
-        DefaultConnectionFactory(RedisClient redisClient, RedisCodec<K, V> redisCodec, ClientOptions clientOptions) {
+        DefaultConnectionFactory(RedisClient redisClient, RedisCodec<K, V> redisCodec) {
             this.redisClient = redisClient;
             this.redisCodec = redisCodec;
-            this.clientOptions = clientOptions;
         }
 
         @Override
@@ -397,7 +393,7 @@ class MasterReplicaConnectionProvider<K, V> {
             RedisURI.Builder builder = RedisURI.builder(initialRedisUri).withHost(key.host).withPort(key.port);
 
             ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = redisClient.connectAsync(redisCodec,
-                    builder.build(), clientOptions);
+                    builder.build());
 
             connectionFuture.thenAccept(connection -> {
                 stateLock.lock();

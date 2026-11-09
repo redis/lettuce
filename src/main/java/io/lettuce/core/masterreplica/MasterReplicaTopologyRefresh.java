@@ -5,7 +5,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
@@ -34,9 +33,8 @@ class MasterReplicaTopologyRefresh {
 
     private final ScheduledExecutorService eventExecutors;
 
-    MasterReplicaTopologyRefresh(RedisClient client, TopologyProvider topologyProvider, ClientOptions clientOptions) {
-        this(new RedisClientNodeConnectionFactory(client, clientOptions), client.getResources().eventExecutorGroup(),
-                topologyProvider);
+    MasterReplicaTopologyRefresh(RedisClient client, TopologyProvider topologyProvider) {
+        this(new RedisClientNodeConnectionFactory(client), client.getResources().eventExecutorGroup(), topologyProvider);
     }
 
     MasterReplicaTopologyRefresh(NodeConnectionFactory nodeConnectionFactory, ScheduledExecutorService eventExecutors,

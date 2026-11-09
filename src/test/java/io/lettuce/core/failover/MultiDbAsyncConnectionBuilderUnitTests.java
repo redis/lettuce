@@ -141,13 +141,12 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             ConnectionFuture<StatefulRedisConnection<String, String>> mockFuture = ConnectionFuture
                     .from(new InetSocketAddress("localhost", 6379), CompletableFuture.completedFuture(mockConnection1));
 
-            when(client.connectAsync(codec, uri1, config1.getClientOptions())).thenReturn(mockFuture);
+            when(client.connectAsync(codec, uri1)).thenReturn(mockFuture);
 
-            ConnectionFuture<StatefulRedisConnection<String, String>> result = regularBuilder.connectAsync(codec, uri1,
-                    config1.getClientOptions());
+            ConnectionFuture<StatefulRedisConnection<String, String>> result = regularBuilder.connectAsync(codec, uri1);
 
             assertThat((Object) result).isSameAs(mockFuture);
-            verify(client).connectAsync(codec, uri1, config1.getClientOptions());
+            verify(client).connectAsync(codec, uri1);
         }
 
         @Test
@@ -156,13 +155,12 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             ConnectionFuture<StatefulRedisPubSubConnection<String, String>> mockFuture = ConnectionFuture
                     .from(new InetSocketAddress("localhost", 6379), CompletableFuture.completedFuture(mockPubSubConnection1));
 
-            when(client.connectPubSubAsync(codec, uri1, config1.getClientOptions())).thenReturn(mockFuture);
+            when(client.connectPubSubAsync(codec, uri1)).thenReturn(mockFuture);
 
-            ConnectionFuture<StatefulRedisPubSubConnection<String, String>> result = pubSubBuilder.connectAsync(codec, uri1,
-                    config1.getClientOptions());
+            ConnectionFuture<StatefulRedisPubSubConnection<String, String>> result = pubSubBuilder.connectAsync(codec, uri1);
 
             assertThat((Object) result).isSameAs(mockFuture);
-            verify(client).connectPubSubAsync(codec, uri1, config1.getClientOptions());
+            verify(client).connectPubSubAsync(codec, uri1);
         }
 
         @Test
@@ -707,14 +705,13 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             ConnectionFuture<StatefulRedisConnection<String, String>> mockFuture = ConnectionFuture
                     .from(new InetSocketAddress("localhost", 6379), CompletableFuture.completedFuture(mockConnection1));
 
-            when(client.connectAsync(codec, uri1, config1.getClientOptions())).thenReturn(mockFuture);
+            when(client.connectAsync(codec, uri1)).thenReturn(mockFuture);
 
-            ConnectionFuture<StatefulRedisConnection<String, String>> result = regularBuilder.connectAsync(codec, uri1,
-                    config1.getClientOptions());
+            ConnectionFuture<StatefulRedisConnection<String, String>> result = regularBuilder.connectAsync(codec, uri1);
 
             assertThat((Object) result).isNotNull();
             assertThat((Object) result).isSameAs(mockFuture);
-            verify(client).connectAsync(codec, uri1, config1.getClientOptions());
+            verify(client).connectAsync(codec, uri1);
         }
 
     }
@@ -732,14 +729,13 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             ConnectionFuture<StatefulRedisPubSubConnection<String, String>> mockFuture = ConnectionFuture
                     .from(new InetSocketAddress("localhost", 6379), CompletableFuture.completedFuture(mockPubSubConnection1));
 
-            when(client.connectPubSubAsync(codec, uri1, config1.getClientOptions())).thenReturn(mockFuture);
+            when(client.connectPubSubAsync(codec, uri1)).thenReturn(mockFuture);
 
-            ConnectionFuture<StatefulRedisPubSubConnection<String, String>> result = pubSubBuilder.connectAsync(codec, uri1,
-                    config1.getClientOptions());
+            ConnectionFuture<StatefulRedisPubSubConnection<String, String>> result = pubSubBuilder.connectAsync(codec, uri1);
 
             assertThat((Object) result).isNotNull();
             assertThat((Object) result).isSameAs(mockFuture);
-            verify(client).connectPubSubAsync(codec, uri1, config1.getClientOptions());
+            verify(client).connectPubSubAsync(codec, uri1);
         }
 
     }

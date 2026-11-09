@@ -40,6 +40,8 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     private final Map<RedisURI, DatabaseConfig> databaseConfigMap;
 
+    private final ThreadLocal<ClientOptions> localClientOptions = new ThreadLocal<>();
+
     private final MultiDbOptions multiDbOptions;
 
     MultiDbClientImpl(Collection<DatabaseConfig> databaseConfigs, MultiDbOptions multiDbOptions) {
@@ -65,6 +67,28 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
     @Override
     public Collection<RedisURI> getRedisURIs() {
         return databaseConfigMap.keySet();
+    }
+
+    @Override
+    public ClientOptions getOptions() {
+        ClientOptions options = localClientOptions.get();
+        if (options == null) {
+            throw new IllegalStateException("ClientOptions not set!");
+        }
+        return options;
+    }
+
+    @Override
+    public void setOptions(ClientOptions clientOptions) {
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+        localClientOptions.set(clientOptions);
+    }
+
+    /**
+     * Resets the thread-local client options to use the default options.
+     */
+    void resetOptions() {
+        localClientOptions.remove();
     }
 
     /**
@@ -230,18 +254,14 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         return new MultiDbAsyncPubSubConnectionBuilder<>(this, getResources(), codec, closeableResources, multiDbOptions);
     }
 
-    StatefulRedisConnection<String, String> connectRaw(RedisURI redisURI, ClientOptions clientOptions) {
-        return getConnection(connectAsync(newStringStringCodec(), redisURI, clientOptions));
+    @Override
+    protected DefaultEndpoint createEndpoint() {
+        return new DatabaseEndpointImpl(getOptions(), getResources());
     }
 
     @Override
-    protected DefaultEndpoint createEndpoint(ClientOptions clientOptions) {
-        return new DatabaseEndpointImpl(clientOptions, getResources());
-    }
-
-    @Override
-    protected <K, V> PubSubEndpoint<K, V> createPubSubEndpoint(ClientOptions clientOptions) {
-        return new DatabasePubSubEndpointImpl<>(clientOptions, getResources());
+    protected <K, V> PubSubEndpoint<K, V> createPubSubEndpoint() {
+        return new DatabasePubSubEndpointImpl<>(getOptions(), getResources());
     }
 
 }

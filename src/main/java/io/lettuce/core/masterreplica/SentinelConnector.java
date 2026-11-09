@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
@@ -60,15 +59,13 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
     @Override
     public CompletableFuture<StatefulRedisMasterReplicaConnection<K, V>> connectAsync() {
 
-        ClientOptions clientOptions = redisClient.getOptions();
-        TopologyProvider topologyProvider = new SentinelTopologyProvider(redisURI.getSentinelMasterId(), redisClient, redisURI,
-                clientOptions);
+        TopologyProvider topologyProvider = new SentinelTopologyProvider(redisURI.getSentinelMasterId(), redisClient, redisURI);
         SentinelTopologyRefresh sentinelTopologyRefresh = new SentinelTopologyRefresh(redisClient,
-                redisURI.getSentinelMasterId(), redisURI.getSentinels(), clientOptions);
+                redisURI.getSentinelMasterId(), redisURI.getSentinels());
 
-        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider, clientOptions);
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
         MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<>(redisClient, codec,
-                redisURI, Collections.emptyMap(), clientOptions);
+                redisURI, Collections.emptyMap());
 
         Runnable runnable = getTopologyRefreshRunnable(refresh, connectionProvider);
 
@@ -78,18 +75,18 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
                 throw new RedisException(String.format("Cannot determine topology from %s", redisURI));
             }
 
-            return initializeConnection(codec, sentinelTopologyRefresh, connectionProvider, runnable, nodes, clientOptions);
+            return initializeConnection(codec, sentinelTopologyRefresh, connectionProvider, runnable, nodes);
         }));
     }
 
     private CompletionStage<StatefulRedisMasterReplicaConnection<K, V>> initializeConnection(RedisCodec<K, V> codec,
             SentinelTopologyRefresh sentinelTopologyRefresh, MasterReplicaConnectionProvider<K, V> connectionProvider,
-            Runnable runnable, List<RedisNodeDescription> nodes, ClientOptions clientOptions) {
+            Runnable runnable, List<RedisNodeDescription> nodes) {
 
         connectionProvider.setKnownNodes(nodes);
 
         MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
-                redisClient.getResources(), clientOptions) {
+                redisClient.getResources(), redisClient.getOptions()) {
 
             @Override
             public CompletableFuture<Void> closeAsync() {
@@ -99,8 +96,8 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
         };
 
         StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
-                channelWriter, codec, redisURI.getTimeout(), clientOptions.getJsonParser());
-        connection.setOptions(clientOptions);
+                channelWriter, codec, redisURI.getTimeout(), redisClient.getOptions().getJsonParser());
+        connection.setOptions(redisClient.getOptions());
 
         CompletionStage<Void> bind = sentinelTopologyRefresh.bind(runnable);
 

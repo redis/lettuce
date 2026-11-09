@@ -13,12 +13,8 @@ options when resolving the master, including lookups triggered by a reconnect.
 Calling `setOptions` during initialization applies the new options to subsequent
 connections. Cluster node connections capture their own options when they are
 created, including nodes opened later by an existing cluster connection.
-Master/Replica connections retain the options captured before topology discovery
-for their command writer, command APIs, topology probes, and all underlying node
-connections, including nodes opened later after a topology change. Sentinel
-discovery and Pub/Sub connections use the same captured options.
-MultiDbClient passes each database's options to its application and health-check
-connections.
+Master/Replica connections open each node connection through `RedisClient`, so
+every node connection captures the options current at the time it is opened.
 
 The `RedisClient.connectAsync`, `connectPubSubAsync`, and `connectSentinelAsync`
 overloads accepting `ClientOptions` create connections with the supplied options

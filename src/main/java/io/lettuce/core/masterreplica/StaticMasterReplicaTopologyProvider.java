@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
@@ -34,10 +33,7 @@ class StaticMasterReplicaTopologyProvider implements TopologyProvider {
 
     private final Iterable<RedisURI> redisURIs;
 
-    private final ClientOptions clientOptions;
-
-    public StaticMasterReplicaTopologyProvider(RedisClient redisClient, Iterable<RedisURI> redisURIs,
-            ClientOptions clientOptions) {
+    public StaticMasterReplicaTopologyProvider(RedisClient redisClient, Iterable<RedisURI> redisURIs) {
 
         LettuceAssert.notNull(redisClient, "RedisClient must not be null");
         LettuceAssert.notNull(redisURIs, "RedisURIs must not be null");
@@ -45,7 +41,6 @@ class StaticMasterReplicaTopologyProvider implements TopologyProvider {
 
         this.redisClient = redisClient;
         this.redisURIs = redisURIs;
-        this.clientOptions = clientOptions;
     }
 
     @Override
@@ -101,18 +96,17 @@ class StaticMasterReplicaTopologyProvider implements TopologyProvider {
 
     private CompletableFuture<RedisNodeDescription> getNodeDescription(RedisURI uri) {
 
-        return redisClient.connectAsync(StringCodec.UTF8, uri, clientOptions).toCompletableFuture()
-                .handle((connection, error) -> {
+        return redisClient.connectAsync(StringCodec.UTF8, uri).toCompletableFuture().handle((connection, error) -> {
 
-                    if (error != null) {
-                        logger.warn("Cannot connect to {}", uri, error);
-                        return CompletableFuture.<RedisNodeDescription> completedFuture(null);
-                    }
+            if (error != null) {
+                logger.warn("Cannot connect to {}", uri, error);
+                return CompletableFuture.<RedisNodeDescription> completedFuture(null);
+            }
 
-                    return CompletableFuture.completedFuture(connection).thenCompose(c -> getNodeDescription(uri, c))
-                            .whenComplete((nd, t) -> closeSilently(connection));
+            return CompletableFuture.completedFuture(connection).thenCompose(c -> getNodeDescription(uri, c))
+                    .whenComplete((nd, t) -> closeSilently(connection));
 
-                }).thenCompose(f -> f);
+        }).thenCompose(f -> f);
     }
 
     private static CompletableFuture<RedisNodeDescription> getNodeDescription(RedisURI uri,

@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.Delegating;
 import io.lettuce.core.RedisChannelWriter;
@@ -85,14 +84,14 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
     }
 
     /**
-     * Create a standalone connection to a single Redis database with the supplied client options.
+     * Creates a standalone connection to a single Redis database. Subclasses implement this to provide either regular or PubSub
+     * connections.
      *
-     * @param codec the codec for encoding/decoding, must not be {@code null}.
-     * @param uri the Redis URI to connect to, must not be {@code null}.
-     * @param clientOptions the options for this connection, must not be {@code null}.
-     * @return a future that completes with the connection or exceptionally if connecting fails.
+     * @param codec the codec for encoding/decoding
+     * @param uri the Redis URI to connect to
+     * @return a future that completes with the connection
      */
-    protected abstract ConnectionFuture<SC> connectAsync(RedisCodec<K, V> codec, RedisURI uri, ClientOptions clientOptions);
+    protected abstract ConnectionFuture<SC> connectAsync(RedisCodec<K, V> codec, RedisURI uri);
 
     /**
      * Creates a multi-database connection wrapper. Subclasses implement this to provide either regular or PubSub multi-database
@@ -349,8 +348,13 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
             HealthStatusManager healthStatusManager) {
 
         RedisURI uri = config.getRedisURI();
+        client.setOptions(config.getClientOptions());
+
         try {
-            ConnectionFuture<SC> connectionFuture = connectAsync(codec, uri, config.getClientOptions());
+            // Use the async connect method
+            ConnectionFuture<SC> connectionFuture = connectAsync(codec, uri);
+            // Reset options immediately after connectAsync() call
+            client.resetOptions();
 
             return connectionFuture.toCompletableFuture().thenApply(connection -> {
                 try {
@@ -383,6 +387,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                 throw new CompletionException(throwable);
             });
         } catch (Exception e) {
+            client.resetOptions();
             logger.error("Failed to initiate database connection for {}: {}", uri, e.getMessage(), e);
             CompletableFuture<RedisDatabaseImpl<SC>> failedFuture = new CompletableFuture<>();
             failedFuture.completeExceptionally(e);

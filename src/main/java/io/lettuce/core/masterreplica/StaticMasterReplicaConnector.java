@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
@@ -59,16 +58,15 @@ class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V>
     @Override
     public CompletableFuture<StatefulRedisMasterReplicaConnection<K, V>> connectAsync() {
 
-        ClientOptions clientOptions = redisClient.getOptions();
         Map<RedisURI, StatefulRedisConnection<K, V>> initialConnections = new HashMap<>();
 
-        TopologyProvider topologyProvider = new StaticMasterReplicaTopologyProvider(redisClient, redisURIs, clientOptions);
+        TopologyProvider topologyProvider = new StaticMasterReplicaTopologyProvider(redisClient, redisURIs);
 
         RedisURI seedNode = redisURIs.iterator().next();
 
-        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider, clientOptions);
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
         MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<>(redisClient, codec,
-                seedNode, initialConnections, clientOptions);
+                seedNode, initialConnections);
 
         return Futures.unwrapExceptions(refresh.getNodesAsync(seedNode).thenApply(nodes -> {
 
@@ -78,22 +76,21 @@ class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V>
                 throw new RedisException(String.format("Cannot determine topology from %s", redisURIs));
             }
 
-            return initializeConnection(codec, seedNode, connectionProvider, nodes, clientOptions);
+            return initializeConnection(codec, seedNode, connectionProvider, nodes);
         }));
     }
 
     private StatefulRedisMasterReplicaConnection<K, V> initializeConnection(RedisCodec<K, V> codec, RedisURI seedNode,
-            MasterReplicaConnectionProvider<K, V> connectionProvider, List<RedisNodeDescription> nodes,
-            ClientOptions clientOptions) {
+            MasterReplicaConnectionProvider<K, V> connectionProvider, List<RedisNodeDescription> nodes) {
 
         connectionProvider.setKnownNodes(nodes);
 
         MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
-                redisClient.getResources(), clientOptions);
+                redisClient.getResources(), redisClient.getOptions());
 
         StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
-                channelWriter, codec, seedNode.getTimeout(), clientOptions.getJsonParser());
-        connection.setOptions(clientOptions);
+                channelWriter, codec, seedNode.getTimeout(), redisClient.getOptions().getJsonParser());
+        connection.setOptions(redisClient.getOptions());
 
         return connection;
     }

@@ -27,7 +27,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -65,9 +64,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
     @Override
     public CompletableFuture<StatefulRedisMasterReplicaConnection<K, V>> connectAsync() {
 
-        ClientOptions clientOptions = redisClient.getOptions();
-        ConnectionFuture<StatefulRedisConnection<K, V>> initialConnection = redisClient.connectAsync(codec, redisURI,
-                clientOptions);
+        ConnectionFuture<StatefulRedisConnection<K, V>> initialConnection = redisClient.connectAsync(codec, redisURI);
 
         ConnectionFuture<StatefulRedisMasterReplicaConnection<K, V>> connect1 = initialConnection
                 .thenCompose(nodeConnection -> {
@@ -77,10 +74,10 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
                     TopologyProvider topologyProvider = new ReplicaTopologyProvider(nodeConnection, redisURI);
 
                     return topologyProvider.getNodesAsync().thenCompose(nodes -> {
-                        return getMasterConnectionAndUriAsync(nodes, Pair.of(redisURI, nodeConnection), codec, clientOptions);
+                        return getMasterConnectionAndUriAsync(nodes, Pair.of(redisURI, nodeConnection), codec);
                     });
                 }).thenCompose(connectionAndUri -> {
-                    return initializeConnection(codec, connectionAndUri, clientOptions);
+                    return initializeConnection(codec, connectionAndUri);
                 });
 
         return Futures.unwrapExceptions(connect1.whenComplete((val, error) -> {
@@ -94,15 +91,14 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
     private CompletionStage<Pair<RedisURI, StatefulRedisConnection<K, V>>> getMasterConnectionAndUriAsync(
             List<RedisNodeDescription> nodes, Pair<RedisURI, StatefulRedisConnection<K, V>> connectionPair,
-            RedisCodec<K, V> codec, ClientOptions clientOptions) {
+            RedisCodec<K, V> codec) {
 
         RedisNodeDescription node = getConnectedNode(redisURI, nodes);
 
         if (!node.getRole().isUpstream()) {
 
             RedisNodeDescription master = lookupMaster(nodes);
-            ConnectionFuture<StatefulRedisConnection<K, V>> masterConnection = redisClient.connectAsync(codec, master.getUri(),
-                    clientOptions);
+            ConnectionFuture<StatefulRedisConnection<K, V>> masterConnection = redisClient.connectAsync(codec, master.getUri());
 
             return masterConnection.thenApply(conn -> {
                 initialConnections.put(master.getUri(), conn);
@@ -114,14 +110,14 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
     }
 
     private CompletionStage<StatefulRedisMasterReplicaConnection<K, V>> initializeConnection(RedisCodec<K, V> codec,
-            Pair<RedisURI, StatefulRedisConnection<K, V>> connectionAndUri, ClientOptions clientOptions) {
+            Pair<RedisURI, StatefulRedisConnection<K, V>> connectionAndUri) {
 
         ReplicaTopologyProvider topologyProvider = new ReplicaTopologyProvider(connectionAndUri.getT2(),
                 connectionAndUri.getT1());
 
-        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider, clientOptions);
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(redisClient, topologyProvider);
         MasterReplicaConnectionProvider<K, V> connectionProvider = new MasterReplicaConnectionProvider<K, V>(redisClient, codec,
-                redisURI, initialConnections, clientOptions);
+                redisURI, initialConnections);
 
         CompletionStage<List<RedisNodeDescription>> refreshFuture = refresh.getNodesAsync(redisURI);
 
@@ -132,12 +128,12 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
             connectionProvider.setKnownNodes(nodes);
 
             MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
-                    redisClient.getResources(), clientOptions);
+                    redisClient.getResources(), redisClient.getOptions());
 
             StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
-                    channelWriter, codec, redisURI.getTimeout(), clientOptions.getJsonParser());
+                    channelWriter, codec, redisURI.getTimeout(), redisClient.getOptions().getJsonParser());
 
-            connection.setOptions(clientOptions);
+            connection.setOptions(redisClient.getOptions());
 
             return connection;
         });

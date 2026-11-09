@@ -33,7 +33,12 @@ class RawConnectionFactoryImpl implements RawConnectionFactory {
 
     @Override
     public StatefulRedisConnection<?, ?> create(RedisURI endpoint) {
-        return client.connectRaw(endpoint, clientOptions);
+        client.setOptions(clientOptions);
+        try {
+            return client.connect(endpoint);
+        } finally {
+            client.resetOptions();
+        }
     }
 
 }
