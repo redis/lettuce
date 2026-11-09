@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -41,6 +42,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.BitFieldArgs;
+import io.lettuce.core.BitRangeIntArrayArgs;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -557,6 +559,62 @@ public class BitCommandIntegrationTests extends TestSupport {
 
         assertThat(redis.setbit(key, 0, 1)).isEqualTo(0);
         assertThat(redis.setbit(key, 0, 0)).isEqualTo(1);
+    }
+
+    private static final List<Long> SET_BITS = Arrays.asList(0L, 7L, 8L, 15L, 16L, 23L, 24L, 31L);
+
+    private void setBits() {
+        for (long offset : SET_BITS) {
+            redis.setbit(key, offset, 1);
+        }
+    }
+
+    /**
+     * The range forms, in bytes with and without a unit, and in bits.
+     */
+    @Test
+    @EnabledOnCommand("BITRANGEINTARRAY")
+    void bitrangeintarrayRanges() {
+        setBits();
+
+        assertThat(redis.bitrangeintarray(key, 0, -1)).isEqualTo(SET_BITS);
+        assertThat(redis.bitrangeintarray(key, 1, 2)).containsExactly(8L, 15L, 16L, 23L);
+        assertThat(redis.bitrangeintarray(key, -1, -1)).containsExactly(24L, 31L);
+        assertThat(redis.bitrangeintarray(key, 3, 1)).isEmpty();
+        assertThat(redis.bitrangeintarray(key, 1, 2, BitRangeIntArrayArgs.Builder.byteUnit())).containsExactly(8L, 15L, 16L,
+                23L);
+        assertThat(redis.bitrangeintarray(key, 7, 8, BitRangeIntArrayArgs.Builder.bit())).containsExactly(7L, 8L);
+        assertThat(redis.bitrangeintarray(key, -8, -1, BitRangeIntArrayArgs.Builder.bit())).containsExactly(24L, 31L);
+    }
+
+    /**
+     * A missing key, an empty string and a limit of 0 return an empty list, never {@code null}.
+     */
+    @Test
+    @EnabledOnCommand("BITRANGEINTARRAY")
+    void bitrangeintarrayEmptyReplies() {
+        assertThat(redis.bitrangeintarray("missing", 0, -1)).isNotNull().isEmpty();
+
+        redis.set("empty", "");
+        assertThat(redis.bitrangeintarray("empty", 0, -1)).isNotNull().isEmpty();
+        assertThat(redis.bitrangeintarray("empty", 0, -1, BitRangeIntArrayArgs.Builder.bit().zeros())).isNotNull().isEmpty();
+
+        setBits();
+        assertThat(redis.bitrangeintarray(key, 0, -1, BitRangeIntArrayArgs.Builder.limit(0))).isNotNull().isEmpty();
+        assertThat(redis.bitrangeintarray(key, 0, -1, BitRangeIntArrayArgs.Builder.byteUnit().limit(0))).isNotNull().isEmpty();
+        assertThat(redis.bitrangeintarray(key, 0, -1, BitRangeIntArrayArgs.Builder.bit().limit(0))).isNotNull().isEmpty();
+    }
+
+    /**
+     * The unit, {@code LIMIT} and {@code ZEROS} together.
+     */
+    @Test
+    @EnabledOnCommand("BITRANGEINTARRAY")
+    void bitrangeintarrayAllOptions() {
+        setBits();
+
+        assertThat(redis.bitrangeintarray(key, 0, -1, BitRangeIntArrayArgs.Builder.bit().limit(3).zeros())).containsExactly(1L,
+                2L, 3L);
     }
 
 }

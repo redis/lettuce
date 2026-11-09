@@ -1653,4 +1653,68 @@ class RedisCommandBuilderUnitTests {
 
     };
 
+    /**
+     * The three-argument form sends {@code BITRANGEINTARRAY key start end}.
+     */
+    @Test
+    void shouldCorrectlyConstructBitrangeintarray() {
+
+        Command<String, String, ?> command = sut.bitrangeintarray("key", 0, -1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$16\r\n" + "BITRANGEINTARRAY\r\n" + "$3\r\n"
+                + "key\r\n" + "$1\r\n" + "0\r\n" + "$2\r\n" + "-1\r\n");
+    }
+
+    /**
+     * The args form sends the range followed by the unit, {@code LIMIT count} and {@code ZEROS}.
+     */
+    @Test
+    void shouldCorrectlyConstructBitrangeintarrayWithArgs() {
+
+        Command<String, String, ?> command = sut.bitrangeintarray("key", 1, 2,
+                BitRangeIntArrayArgs.Builder.bit().limit(3).zeros());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$16\r\n" + "BITRANGEINTARRAY\r\n" + "$3\r\n" + "key\r\n" + "$1\r\n" + "1\r\n" + "$1\r\n" + "2\r\n"
+                        + "$3\r\n" + "BIT\r\n" + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "3\r\n" + "$5\r\n" + "ZEROS\r\n");
+    }
+
+    /**
+     * A {@code null} key is rejected with {@link IllegalArgumentException}.
+     */
+    @Test
+    void bitrangeintarrayShouldRejectNullKey() {
+
+        assertThatThrownBy(() -> sut.bitrangeintarray(null, 0, -1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.bitrangeintarray(null, 0, -1, BitRangeIntArrayArgs.Builder.empty()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * {@code null} args are rejected with {@link IllegalArgumentException}.
+     */
+    @Test
+    void bitrangeintarrayShouldRejectNullArgs() {
+
+        assertThatThrownBy(() -> sut.bitrangeintarray("key", 0, -1, null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * The extreme {@code long} values of the range are sent unchanged.
+     */
+    @Test
+    void bitrangeintarrayShouldSendExtremeRangeUnchanged() {
+
+        Command<String, String, ?> command = sut.bitrangeintarray("key", Long.MIN_VALUE, Long.MAX_VALUE);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$16\r\n" + "BITRANGEINTARRAY\r\n" + "$3\r\n"
+                + "key\r\n" + "$20\r\n" + "-9223372036854775808\r\n" + "$19\r\n" + "9223372036854775807\r\n");
+    }
+
 }

@@ -464,6 +464,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Flux<Long> bitrangeintarray(K key, long start, long end) {
+        return createDissolvingFlux(() -> commandBuilder.bitrangeintarray(key, start, end));
+    }
+
+    @Override
+    public Flux<Long> bitrangeintarray(K key, long start, long end, BitRangeIntArrayArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.bitrangeintarray(key, start, end, args));
+    }
+
+    @Override
     public Mono<V> blmove(K source, K destination, LMoveArgs args, long timeout) {
         return createMono(() -> commandBuilder.blmove(source, destination, args, timeout));
     }

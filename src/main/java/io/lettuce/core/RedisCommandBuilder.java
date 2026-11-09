@@ -389,6 +389,24 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BITPOS, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, List<Long>> bitrangeintarray(K key, long start, long end) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key).add(start).add(end);
+        return createCommand(BITRANGEINTARRAY, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> bitrangeintarray(K key, long start, long end, BitRangeIntArrayArgs bitRangeIntArrayArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(bitRangeIntArrayArgs, "BitRangeIntArrayArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key).add(start).add(end);
+        bitRangeIntArrayArgs.build(args);
+        return createCommand(BITRANGEINTARRAY, new IntegerListOutput<>(codec), args);
+    }
+
     Command<K, V, V> blmove(K source, K destination, LMoveArgs lMoveArgs, long timeout) {
         LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);

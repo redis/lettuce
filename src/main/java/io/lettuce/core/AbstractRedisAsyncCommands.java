@@ -412,6 +412,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<Long>> bitrangeintarray(K key, long start, long end) {
+        return dispatch(commandBuilder.bitrangeintarray(key, start, end));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> bitrangeintarray(K key, long start, long end, BitRangeIntArrayArgs args) {
+        return dispatch(commandBuilder.bitrangeintarray(key, start, end, args));
+    }
+
+    @Override
     public RedisFuture<V> blmove(K source, K destination, LMoveArgs args, long timeout) {
         return dispatch(commandBuilder.blmove(source, destination, args, timeout));
     }
