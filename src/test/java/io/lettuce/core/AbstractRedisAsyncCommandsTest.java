@@ -14,6 +14,7 @@ import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.test.ListStreamingAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.*;
  * Unit tests for {@link AbstractRedisAsyncCommands}.
  *
  * @author Aleksandar Todorov
+ * @author Taewoong Kim
  */
 @Tag(UNIT_TEST)
 class AbstractRedisAsyncCommandsTest {
@@ -41,6 +43,17 @@ class AbstractRedisAsyncCommandsTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    void sortStreamingWithArgsUsesSort() {
+        RedisAdvancedClusterAsyncCommandsImpl<String, String> commands = new RedisAdvancedClusterAsyncCommandsImpl<>(connection,
+                StringCodec.UTF8);
+
+        commands.sort(new ListStreamingAdapter<>(), "numbers", SortArgs.Builder.desc());
+
+        verify(connection)
+                .dispatch(argThat((RedisCommand<String, String, Long> command) -> command.getType() == CommandType.SORT));
     }
 
     @Test
