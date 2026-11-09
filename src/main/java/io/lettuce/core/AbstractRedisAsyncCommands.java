@@ -138,6 +138,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author SeugnSu Kim
  * @author Yordan Tsintsov
  * @author dae won
+ * @author Taewoong Kim
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
@@ -3096,7 +3097,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
-        return dispatch(commandBuilder.sortReadOnly(channel, key, sortArgs));
+        return dispatch(commandBuilder.sort(channel, key, sortArgs));
     }
 
     @Override
