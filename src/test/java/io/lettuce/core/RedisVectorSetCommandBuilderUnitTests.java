@@ -11,6 +11,7 @@ import io.lettuce.core.json.DefaultJsonParser;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.RedisStateMachine;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VSimScoreAttribs;
 import io.lettuce.core.vector.VectorMetadata;
@@ -21,6 +22,9 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Unit tests for {@link RedisVectorSetCommandBuilder}.
  *
  * @author Tihomir Mateev
+ * @author hutiefang76
  */
 @Tag(UNIT_TEST)
 class RedisVectorSetCommandBuilderUnitTests {
@@ -184,7 +189,7 @@ class RedisVectorSetCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructVlinks() {
-        Command<String, String, List<String>> command = builder.vlinks(KEY, ELEMENT);
+        Command<String, String, List<List<String>>> command = builder.vlinks(KEY, ELEMENT);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -194,12 +199,82 @@ class RedisVectorSetCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructVlinksWithScores() {
-        Command<String, String, Map<String, Double>> command = builder.vlinksWithScores(KEY, ELEMENT);
+        Command<String, String, List<Map<String, Double>>> command = builder.vlinksWithScores(KEY, ELEMENT);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$6\r\n" + "VLINKS\r\n" + "$10\r\n"
                 + "vector:set\r\n" + "$8\r\n" + "element1\r\n" + "$10\r\n" + "WITHSCORES\r\n");
+    }
+
+    @Test
+    void shouldDecodeVlinksByGraphLayer() {
+        Command<String, String, List<List<String>>> command = builder.vlinks(KEY, ELEMENT);
+        ByteBuf response = Unpooled.copiedBuffer("*2\r\n*0\r\n*2\r\n$8\r\nelement2\r\n$8\r\nelement3\r\n",
+                StandardCharsets.UTF_8);
+        RedisStateMachine stateMachine = new RedisStateMachine();
+
+        try {
+            assertThat(stateMachine.decode(response, command.getOutput())).isTrue();
+            assertThat(command.getOutput().get())
+                    .isEqualTo(Arrays.asList(Collections.emptyList(), Arrays.asList("element2", "element3")));
+        } finally {
+            response.release();
+            stateMachine.close();
+        }
+    }
+
+    @Test
+    void shouldDecodeVlinksWithScoresByGraphLayer() {
+        Command<String, String, List<Map<String, Double>>> command = builder.vlinksWithScores(KEY, ELEMENT);
+        ByteBuf response = Unpooled.copiedBuffer(
+                "*2\r\n*0\r\n*4\r\n$8\r\nelement2\r\n$3\r\n0.5\r\n$8\r\nelement3\r\n$4\r\n0.25\r\n", StandardCharsets.UTF_8);
+        RedisStateMachine stateMachine = new RedisStateMachine();
+        Map<String, Double> level = new LinkedHashMap<>();
+        level.put("element2", 0.5);
+        level.put("element3", 0.25);
+
+        try {
+            assertThat(stateMachine.decode(response, command.getOutput())).isTrue();
+            assertThat(command.getOutput().get()).isEqualTo(Arrays.asList(Collections.emptyMap(), level));
+        } finally {
+            response.release();
+            stateMachine.close();
+        }
+    }
+
+    @Test
+    void shouldDecodeVlinksWithScoresFromResp3Maps() {
+        Command<String, String, List<Map<String, Double>>> command = builder.vlinksWithScores(KEY, ELEMENT);
+        ByteBuf response = Unpooled.copiedBuffer("*2\r\n%0\r\n%2\r\n+element2\r\n,0.5\r\n+element3\r\n,0.25\r\n",
+                StandardCharsets.UTF_8);
+        RedisStateMachine stateMachine = new RedisStateMachine();
+        Map<String, Double> level = new LinkedHashMap<>();
+        level.put("element2", 0.5);
+        level.put("element3", 0.25);
+
+        try {
+            assertThat(stateMachine.decode(response, command.getOutput())).isTrue();
+            assertThat(command.getOutput().get()).isEqualTo(Arrays.asList(Collections.emptyMap(), level));
+        } finally {
+            response.release();
+            stateMachine.close();
+        }
+    }
+
+    @Test
+    void shouldDiscardVlinksLevelWithInvalidScore() {
+        Command<String, String, List<Map<String, Double>>> command = builder.vlinksWithScores(KEY, ELEMENT);
+        ByteBuf response = Unpooled.copiedBuffer("*1\r\n*2\r\n$8\r\nelement2\r\n$7\r\ninvalid\r\n", StandardCharsets.UTF_8);
+        RedisStateMachine stateMachine = new RedisStateMachine();
+
+        try {
+            assertThat(stateMachine.decode(response, command.getOutput())).isTrue();
+            assertThat(command.getOutput().get()).containsExactly(Collections.emptyMap());
+        } finally {
+            response.release();
+            stateMachine.close();
+        }
     }
 
     @Test
