@@ -36,7 +36,7 @@ class ClusterReadOnlyCommandsUnitTests {
     }
 
     /**
-     * Scenario BRIA-B05: {@code BITRANGEINTARRAY} is a read-only command, standalone and in the cluster read-only set.
+     * {@code BITRANGEINTARRAY} is a read-only command, standalone and in the cluster read-only set.
      */
     @Test
     void bitrangeintarrayIsReadOnly() {

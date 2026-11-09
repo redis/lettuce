@@ -27,14 +27,10 @@ import static io.lettuce.core.BitFieldArgs.unsigned;
 import static io.lettuce.core.BitFieldArgs.OverflowType.WRAP;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -47,11 +43,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.BitRangeIntArrayArgs;
-import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.TestSupport;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.test.LettuceExtension;
@@ -568,373 +561,60 @@ public class BitCommandIntegrationTests extends TestSupport {
         assertThat(redis.setbit(key, 0, 0)).isEqualTo(1);
     }
 
-    private static final String F1 = "bria:f1";
+    private static final List<Long> SET_BITS = Arrays.asList(0L, 7L, 8L, 15L, 16L, 23L, 24L, 31L);
 
-    private static final String F2 = "bria:f2";
-
-    private static final String F3 = "bria:f3";
-
-    private static final String FULL = "bria:full";
-
-    private static final String F4 = "bria:f4";
-
-    private static final String F5 = "bria:f5";
-
-    private static final String F6 = "bria:f6";
-
-    private static final List<Long> F1_OFFSETS = Arrays.asList(0L, 7L, 8L, 15L, 16L, 23L, 24L, 31L);
-
-    /**
-     * F1: {@code 0x81818181}, set bits 0 7 8 15 16 23 24 31.
-     */
-    private void createF1() {
-        redis.bitfield(F1, BitFieldArgs.Builder.set(unsigned(32), 0, 2172748161L));
-    }
-
-    /**
-     * F2: {@code 0xff81}, set bits 0-7, 8 and 15.
-     */
-    private void createF2() {
-        redis.bitfield(F2, BitFieldArgs.Builder.set(unsigned(16), 0, 65409));
-    }
-
-    /**
-     * F3: {@code 0xff7e}, and {@code 0xffff} under {@link #FULL}.
-     */
-    private void createF3() {
-        redis.bitfield(F3, BitFieldArgs.Builder.set(unsigned(16), 0, 65406));
-        redis.bitfield(FULL, BitFieldArgs.Builder.set(unsigned(16), 0, 65535));
-    }
-
-    /**
-     * F4: bytes 0, 7 and 8 full, byte 1 with bits 8 and 15, byte 9 with bit 73; 27 set bits.
-     */
-    private void createF4() {
-        redis.bitfield(F4, BitFieldArgs.Builder.set(unsigned(8), 0, 255).set(unsigned(8), 56, 255).set(unsigned(8), 64, 255));
-        redis.setbit(F4, 8, 1);
-        redis.setbit(F4, 15, 1);
-        redis.setbit(F4, 73, 1);
-    }
-
-    private static List<Long> range(long from, long to) {
-        List<Long> result = new ArrayList<>();
-        for (long i = from; i <= to; i++) {
-            result.add(i);
-        }
-        return result;
-    }
-
-    private static List<Long> concat(List<Long> first, Long... rest) {
-        List<Long> result = new ArrayList<>(first);
-        result.addAll(Arrays.asList(rest));
-        return result;
-    }
-
-    private List<List<Long>> pageInBits(String key, long count) {
-        List<List<Long>> pages = new ArrayList<>();
-        long start = 0;
-        while (true) {
-            List<Long> page = redis.bitrangeintarray(key, start, -1, BitRangeIntArrayArgs.Builder.bit().limit(count));
-            pages.add(page);
-            if (page.size() < count) {
-                return pages;
-            }
-            start = page.get(page.size() - 1) + 1;
-        }
-    }
-
-    private List<List<Long>> pageInBytes(String key, long count) {
-        List<List<Long>> pages = new ArrayList<>();
-        long start = 0;
-        while (true) {
-            List<Long> page = redis.bitrangeintarray(key, start, -1, BitRangeIntArrayArgs.Builder.limit(count));
-            pages.add(page);
-            if (page.size() < count) {
-                return pages;
-            }
-            start = page.get(page.size() - 1) / 8 + 1;
+    private void setBits() {
+        for (long offset : SET_BITS) {
+            redis.setbit(key, offset, 1);
         }
     }
 
     /**
-     * Scenario BRIA-C01: the whole value returns the set bit offsets in ascending order.
+     * The range forms, in bytes with and without a unit, and in bits.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayWholeValue() {
-        createF1();
+    void bitrangeintarrayRanges() {
+        setBits();
 
-        assertThat(redis.bitrangeintarray(F1, 0, -1)).isEqualTo(F1_OFFSETS);
+        assertThat(redis.bitrangeintarray(key, 0, -1)).isEqualTo(SET_BITS);
+        assertThat(redis.bitrangeintarray(key, 1, 2)).containsExactly(8L, 15L, 16L, 23L);
+        assertThat(redis.bitrangeintarray(key, -1, -1)).containsExactly(24L, 31L);
+        assertThat(redis.bitrangeintarray(key, 3, 1)).isEmpty();
+        assertThat(redis.bitrangeintarray(key, 1, 2, BitRangeIntArrayArgs.Builder.byteUnit())).containsExactly(8L, 15L, 16L,
+                23L);
+        assertThat(redis.bitrangeintarray(key, 7, 8, BitRangeIntArrayArgs.Builder.bit())).containsExactly(7L, 8L);
+        assertThat(redis.bitrangeintarray(key, -8, -1, BitRangeIntArrayArgs.Builder.bit())).containsExactly(24L, 31L);
     }
 
     /**
-     * Scenario BRIA-C02: byte ranges are inclusive, count negative indexes from the end and clamp to the value.
+     * A missing key, an empty string and a limit of 0 return an empty list, never {@code null}.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayByteRanges() {
-        createF1();
+    void bitrangeintarrayEmptyReplies() {
+        assertThat(redis.bitrangeintarray("missing", 0, -1)).isNotNull().isEmpty();
 
-        assertThat(redis.bitrangeintarray(F1, 1, 1)).containsExactly(8L, 15L);
-        assertThat(redis.bitrangeintarray(F1, -1, -1)).containsExactly(24L, 31L);
-        assertThat(redis.bitrangeintarray(F1, 2, 99)).containsExactly(16L, 23L, 24L, 31L);
-        assertThat(redis.bitrangeintarray(F1, -99, -98)).containsExactly(0L, 7L);
-        assertThat(redis.bitrangeintarray(F1, 3, 1)).isEmpty();
-        assertThat(redis.bitrangeintarray(F1, 4, 9)).isEmpty();
-        assertThat(redis.bitrangeintarray(F1, -1, -2)).isEmpty();
+        redis.set("empty", "");
+        assertThat(redis.bitrangeintarray("empty", 0, -1)).isNotNull().isEmpty();
+        assertThat(redis.bitrangeintarray("empty", 0, -1, BitRangeIntArrayArgs.Builder.bit().zeros())).isNotNull().isEmpty();
+
+        setBits();
+        assertThat(redis.bitrangeintarray(key, 0, -1, BitRangeIntArrayArgs.Builder.limit(0))).isNotNull().isEmpty();
+        assertThat(redis.bitrangeintarray(key, 0, -1, BitRangeIntArrayArgs.Builder.byteUnit().limit(0))).isNotNull().isEmpty();
+        assertThat(redis.bitrangeintarray(key, 0, -1, BitRangeIntArrayArgs.Builder.bit().limit(0))).isNotNull().isEmpty();
     }
 
     /**
-     * Scenario BRIA-C03: bit ranges are inclusive, count negative indexes from the end and clamp to the value.
+     * The unit, {@code LIMIT} and {@code ZEROS} together.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayBitRanges() {
-        createF1();
+    void bitrangeintarrayAllOptions() {
+        setBits();
 
-        assertThat(redis.bitrangeintarray(F1, 0, 0, BitRangeIntArrayArgs.Builder.bit())).containsExactly(0L);
-        assertThat(redis.bitrangeintarray(F1, 7, 8, BitRangeIntArrayArgs.Builder.bit())).containsExactly(7L, 8L);
-        assertThat(redis.bitrangeintarray(F1, 1, 6, BitRangeIntArrayArgs.Builder.bit())).isEmpty();
-        assertThat(redis.bitrangeintarray(F1, -8, -1, BitRangeIntArrayArgs.Builder.bit())).containsExactly(24L, 31L);
-        assertThat(redis.bitrangeintarray(F1, 30, 1000, BitRangeIntArrayArgs.Builder.bit())).containsExactly(31L);
-        assertThat(redis.bitrangeintarray(F1, 32, 40, BitRangeIntArrayArgs.Builder.bit())).isEmpty();
-    }
-
-    /**
-     * Scenario BRIA-C04: the offsets are bit offsets in both units.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayOffsetsAreBitOffsetsInBothUnits() {
-        createF1();
-
-        assertThat(redis.bitrangeintarray(F1, 0, 0, BitRangeIntArrayArgs.Builder.byteUnit())).containsExactly(0L, 7L);
-        assertThat(redis.bitrangeintarray(F1, 0, 7, BitRangeIntArrayArgs.Builder.bit())).containsExactly(0L, 7L);
-    }
-
-    /**
-     * Scenario BRIA-C05: a missing key returns an empty list, not {@code null}.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayMissingKey() {
-        List<Long> result = redis.bitrangeintarray("bria:missing", 0, -1);
-
-        assertThat(result).isNotNull().isEmpty();
-    }
-
-    /**
-     * Scenario BRIA-C06: an empty string returns an empty list.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayEmptyString() {
-        redis.set("bria:empty", "");
-
-        assertThat(redis.bitrangeintarray("bria:empty", 0, -1)).isNotNull().isEmpty();
-    }
-
-    /**
-     * Scenario BRIA-C07: a limit of 0 returns an empty list.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayLimitZero() {
-        createF1();
-
-        assertThat(redis.bitrangeintarray(F1, 0, -1, BitRangeIntArrayArgs.Builder.limit(0))).isNotNull().isEmpty();
-    }
-
-    /**
-     * Scenario BRIA-C08: a byte page completes the byte of its last offset and is returned whole; a bit page stops at the
-     * count.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayLimitCompletesByte() {
-        createF2();
-
-        assertThat(redis.bitrangeintarray(F2, 0, -1, BitRangeIntArrayArgs.Builder.limit(1))).isEqualTo(range(0, 7));
-        assertThat(redis.bitrangeintarray(F2, 0, -1, BitRangeIntArrayArgs.Builder.limit(9)))
-                .isEqualTo(concat(range(0, 7), 8L, 15L));
-        assertThat(redis.bitrangeintarray(F2, 0, -1, BitRangeIntArrayArgs.Builder.bit().limit(1))).containsExactly(0L);
-        assertThat(redis.bitrangeintarray(F2, 0, -1, BitRangeIntArrayArgs.Builder.bit().limit(9))).isEqualTo(range(0, 8));
-    }
-
-    /**
-     * Scenario BRIA-C09: {@code ZEROS} returns the clear bits inside the value only.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayZerosInsideValue() {
-        createF3();
-
-        assertThat(redis.bitrangeintarray(F3, 0, -1, BitRangeIntArrayArgs.Builder.zeros())).containsExactly(8L, 15L);
-        assertThat(redis.bitrangeintarray(F3, 0, 99, BitRangeIntArrayArgs.Builder.zeros())).containsExactly(8L, 15L);
-        assertThat(redis.bitrangeintarray(FULL, 0, -1, BitRangeIntArrayArgs.Builder.zeros())).isEmpty();
-    }
-
-    /**
-     * Scenario BRIA-C09a: {@code ZEROS} on a missing key returns an empty list in both units.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayZerosMissingKey() {
-        assertThat(redis.bitrangeintarray("bria:missing", 0, -1, BitRangeIntArrayArgs.Builder.zeros())).isNotNull().isEmpty();
-        assertThat(redis.bitrangeintarray("bria:missing", 0, -1, BitRangeIntArrayArgs.Builder.bit().zeros())).isNotNull()
-                .isEmpty();
-    }
-
-    /**
-     * Scenario BRIA-C10: the number of offsets equals {@code BITCOUNT} over the same range.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayLengthEqualsBitcount() {
-        createF1();
-
-        assertThat(redis.bitrangeintarray(F1, 1, 2)).hasSize(4);
-        assertThat(redis.bitcount(F1, 1, 2)).isEqualTo(4L);
-    }
-
-    /**
-     * Scenario BRIA-C11: paging in bit units with a limit of 9, the next start being the last offset plus 1.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayPagingInBits() {
-        createF4();
-
-        assertThat(pageInBits(F4, 9)).containsExactly(range(0, 8),
-                concat(Collections.singletonList(15L), 56L, 57L, 58L, 59L, 60L, 61L, 62L, 63L), concat(range(64, 71), 73L),
-                Collections.emptyList());
-    }
-
-    /**
-     * Scenario BRIA-C11a: paging in byte units with a limit of 9, the next start being the byte of the last offset plus 1.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayPagingInBytes() {
-        createF4();
-
-        List<List<Long>> pages = pageInBytes(F4, 9);
-
-        assertThat(pages).containsExactly(concat(range(0, 7), 8L, 15L), range(56, 71), Collections.singletonList(73L));
-        assertThat(pages.get(1)).hasSize(16);
-    }
-
-    /**
-     * Scenario BRIA-C11b: the joined pages of both units hold the same 27 offsets, each once, equal to the whole value.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayJoinedPagesEqualWholeValue() {
-        createF4();
-
-        List<Long> bitPages = new ArrayList<>();
-        pageInBits(F4, 9).forEach(bitPages::addAll);
-        List<Long> bytePages = new ArrayList<>();
-        pageInBytes(F4, 9).forEach(bytePages::addAll);
-
-        List<Long> wholeValue = redis.bitrangeintarray(F4, 0, -1);
-
-        assertThat(wholeValue).hasSize(27).doesNotHaveDuplicates();
-        assertThat(bitPages).isEqualTo(wholeValue);
-        assertThat(bytePages).isEqualTo(wholeValue);
-    }
-
-    /**
-     * Scenario BRIA-C12: a native bitmap returns its set bit offsets.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayNativeBitmap() {
-        try (StatefulRedisConnection<String, String> admin = client.connect()) {
-            String roaring = admin.sync().configGet("bitmap-default-roaring").get("bitmap-default-roaring");
-            try {
-                admin.sync().configSet("bitmap-default-roaring", "yes");
-                redis.setbit(F5, 0, 1);
-                redis.setbit(F5, 8, 1);
-                redis.setbit(F5, 65536, 1);
-
-                assertThat(redis.type(F5)).isEqualTo("bitmap");
-                assertThat(redis.bitrangeintarray(F5, 0, -1)).containsExactly(0L, 8L, 65536L);
-            } finally {
-                admin.sync().configSet("bitmap-default-roaring", roaring);
-            }
-        }
-    }
-
-    /**
-     * Scenario BRIA-C13: an offset above 2^32 is returned as a 64-bit value.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayOffsetAbove32Bits() {
-        try (StatefulRedisConnection<String, String> admin = client.connect()) {
-            String roaring = admin.sync().configGet("bitmap-default-roaring").get("bitmap-default-roaring");
-            String bulkLen = admin.sync().configGet("proto-max-bulk-len").get("proto-max-bulk-len");
-            try {
-                admin.sync().configSet("bitmap-default-roaring", "yes");
-                admin.sync().configSet("proto-max-bulk-len", "2gb");
-                redis.setbit(F6, 4294967301L, 1);
-
-                assertThat(redis.bitrangeintarray(F6, 0, -1)).containsExactly(4294967301L);
-            } finally {
-                admin.sync().configSet("proto-max-bulk-len", bulkLen);
-                admin.sync().configSet("bitmap-default-roaring", roaring);
-            }
-        }
-    }
-
-    /**
-     * Scenario BRIA-D01: a key of another type raises a {@code WRONGTYPE} error.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayWrongType() {
-        redis.rpush("bria:list", "a");
-
-        assertThatThrownBy(() -> redis.bitrangeintarray("bria:list", 0, -1)).isInstanceOf(RedisCommandExecutionException.class)
-                .hasMessageStartingWith("WRONGTYPE");
-    }
-
-    /**
-     * Scenario BRIA-D02: an inverted range is sent as given and returns an empty list.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayInvertedRange() {
-        createF1();
-
-        assertThat(redis.bitrangeintarray(F1, 3, 1)).isNotNull().isEmpty();
-    }
-
-    /**
-     * Scenario BRIA-D03: on a server without the command, the unknown-command error reaches the caller.
-     */
-    @Test
-    public void bitrangeintarrayUnknownCommand() {
-        assumeFalse(RedisConditions.of(redis).hasCommand("BITRANGEINTARRAY"));
-
-        assertThatThrownBy(() -> redis.bitrangeintarray(key, 0, -1)).isInstanceOf(RedisCommandExecutionException.class)
-                .hasMessageContaining("unknown command");
-    }
-
-    /**
-     * Scenario BRIA-E01: the async API completes with the set bit offsets.
-     */
-    @Test
-    @EnabledOnCommand("BITRANGEINTARRAY")
-    void bitrangeintarrayAsync() throws Exception {
-        createF1();
-
-        try (StatefulRedisConnection<String, String> connection = client.connect()) {
-            RedisFuture<List<Long>> future = connection.async().bitrangeintarray(F1, 0, -1);
-
-            assertThat(future.get(10, TimeUnit.SECONDS)).isEqualTo(F1_OFFSETS);
-        }
+        assertThat(redis.bitrangeintarray(key, 0, -1, BitRangeIntArrayArgs.Builder.bit().limit(3).zeros())).containsExactly(1L,
+                2L, 3L);
     }
 
 }

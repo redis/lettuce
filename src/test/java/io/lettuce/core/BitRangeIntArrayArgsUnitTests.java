@@ -33,7 +33,7 @@ class BitRangeIntArrayArgsUnitTests {
     }
 
     /**
-     * Scenario BRIA-A01: empty args emit no tokens.
+     * Empty args emit no tokens.
      */
     @Test
     void emptyEmitsNoTokens() {
@@ -45,7 +45,7 @@ class BitRangeIntArrayArgsUnitTests {
     }
 
     /**
-     * Scenario BRIA-A02: {@code bit()} emits {@code BIT}.
+     * {@code bit()} emits {@code BIT}.
      */
     @Test
     void bitEmitsBit() {
@@ -54,7 +54,7 @@ class BitRangeIntArrayArgsUnitTests {
     }
 
     /**
-     * Scenario BRIA-A03: {@code byteUnit()} emits {@code BYTE}.
+     * {@code byteUnit()} emits {@code BYTE}.
      */
     @Test
     void byteUnitEmitsByte() {
@@ -63,7 +63,7 @@ class BitRangeIntArrayArgsUnitTests {
     }
 
     /**
-     * Scenario BRIA-A04: {@code limit(5)} emits {@code LIMIT 5}.
+     * {@code limit(5)} emits {@code LIMIT 5}.
      */
     @Test
     void limitEmitsLimitAndCount() {
@@ -72,7 +72,7 @@ class BitRangeIntArrayArgsUnitTests {
     }
 
     /**
-     * Scenario BRIA-A05: {@code limit(0)} emits {@code LIMIT 0}, not "no limit".
+     * {@code limit(0)} emits {@code LIMIT 0}, not "no limit".
      */
     @Test
     void limitZeroEmitsLimitZero() {
@@ -81,7 +81,7 @@ class BitRangeIntArrayArgsUnitTests {
     }
 
     /**
-     * Scenario BRIA-A06: a negative limit is rejected with {@link IllegalArgumentException} and nothing is built.
+     * A negative limit is rejected with {@link IllegalArgumentException} and nothing is built.
      */
     @Test
     void negativeLimitIsRejected() {
@@ -93,7 +93,7 @@ class BitRangeIntArrayArgsUnitTests {
     }
 
     /**
-     * Scenario BRIA-A07: {@code limit(Long.MAX_VALUE)} emits the value unchanged.
+     * {@code limit(Long.MAX_VALUE)} emits the value unchanged.
      */
     @Test
     void limitMaxValueEmitsValueUnchanged() {
@@ -101,7 +101,7 @@ class BitRangeIntArrayArgsUnitTests {
     }
 
     /**
-     * Scenario BRIA-A08: {@code zeros()} called twice emits one {@code ZEROS}.
+     * {@code zeros()} called twice emits one {@code ZEROS}.
      */
     @Test
     void zerosTwiceEmitsOneZeros() {
@@ -109,7 +109,7 @@ class BitRangeIntArrayArgsUnitTests {
     }
 
     /**
-     * Scenario BRIA-A09: the options are emitted in the order unit, {@code LIMIT}, {@code ZEROS}.
+     * The options are emitted in the order unit, {@code LIMIT}, {@code ZEROS}.
      */
     @Test
     void optionsAreEmittedInSyntaxOrder() {
@@ -118,7 +118,7 @@ class BitRangeIntArrayArgsUnitTests {
     }
 
     /**
-     * Scenario BRIA-A10: {@code bit().byteUnit()} emits one unit token, {@code BYTE}.
+     * {@code bit().byteUnit()} emits one unit token, {@code BYTE}.
      */
     @Test
     void lastUnitWinsAndIsEmittedOnce() {
@@ -126,7 +126,7 @@ class BitRangeIntArrayArgsUnitTests {
     }
 
     /**
-     * Scenario BRIA-A11: every emitted token is uppercase ASCII on the wire.
+     * Every emitted token is uppercase ASCII on the wire.
      */
     @Test
     void tokensAreUppercaseAscii() {

@@ -62,13 +62,12 @@ class StringClusterCommandIntegrationTests extends StringCommandIntegrationTests
     }
 
     /**
-     * Scenario BRIA-E05: in a cluster the command is routed by its key and returns the set bit offsets, and an empty list with
-     * a limit of 0.
+     * In a cluster the command is routed by its key and returns the set bit offsets, and an empty list with a limit of 0.
      */
     @Test
     @EnabledOnCommand("BITRANGEINTARRAY")
     void bitrangeintarray() {
-        String key = "{bria}:f1";
+        String key = "{bitrangeintarray}:key";
         redis.bitfield(key, BitFieldArgs.Builder.set(BitFieldArgs.unsigned(32), 0, 2172748161L));
 
         assertThat(redis.bitrangeintarray(key, 0, -1)).containsExactly(0L, 7L, 8L, 15L, 16L, 23L, 24L, 31L);
