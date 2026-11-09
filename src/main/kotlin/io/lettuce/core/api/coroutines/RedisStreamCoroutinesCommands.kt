@@ -45,7 +45,7 @@ interface RedisStreamCoroutinesCommands<K : Any, V : Any> {
      * @param key the stream key.
      * @param group name of the consumer group.
      * @param messageIds message Id's to acknowledge.
-     * @return simple-reply the lenght of acknowledged messages.
+     * @return simple-reply the length of acknowledged messages.
      */
     suspend fun xack(key: K, group: K, vararg messageIds: String): Long?
 
@@ -306,7 +306,7 @@ interface RedisStreamCoroutinesCommands<K : Any, V : Any> {
      * Get the length of a steam.
      *
      * @param key the stream key.
-     * @return simple-reply the lenght of the stream.
+     * @return simple-reply the length of the stream.
      */
     suspend fun xlen(key: K): Long?
 

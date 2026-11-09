@@ -3,6 +3,7 @@
 
 ## What's new in Lettuce 8.0
 
+- **Redis TimeSeries support.** All 21 `TS.*` commands are available through `RedisTimeSeriesCommands` and its asynchronous, reactive, Kotlin coroutine and node-selection flavors, on Redis 8.0 and later. This includes multiple aggregations per range query, `GROUPBY` with reducers, `TS.READ` with `BLOCK`, `TS.QUERYLABELS` and the multi-key `TS.NRANGE`/`TS.NREVRANGE`; several aggregations in one range query need Redis 8.8, and `TS.READ`, `TS.QUERYLABELS`, `TS.NRANGE` and `TS.NREVRANGE` need Redis 8.10. In Redis Cluster, `TS.MADD` is split by slot and the label-index commands run on one node. See [Redis TimeSeries](user-guide/timeseries.md).
 - **Project Reactor is no longer needed for the synchronous and asynchronous APIs.** `reactor-core` is still a dependency of `lettuce-core`, but applications that use only `sync()`/`async()` can exclude it. The parts that still need Reactor are:
   - the reactive API (`reactive()`, `commands(...ReactiveCommands.factory())`);
   - the Kotlin coroutines API;
@@ -11,7 +12,10 @@
   Internally, connection setup, reconnection, Sentinel and Master/Replica topology discovery, the event bus and trace-context propagation no longer use Reactor.
   When compiling without Reactor on the classpath, pass a typed `CredentialsProvider` to `RedisURI.setCredentialsProvider(...)` and `RedisURI.Builder.withAuthentication(...)`, for example a variable, a cast, `CredentialsProvider.from(...)` or `StaticCredentialsProvider`. A bare lambda doesn't compile, because the compiler needs Reactor to choose between those methods' two overloads.
 - `connectAsync(...)` failures now report the original cause and message, as `connect(...)` does. Previously the asynchronous path could surface a `RedisConnectionException` with a `null` message that wrapped a `CompletionException`.
-- Connections capture the client's `ClientOptions` when they are initiated and use that snapshot throughout initialization, including asynchronous retries, Sentinel lookups and Master/Replica topology discovery, so a concurrent `setOptions(...)` no longer mixes configurations within one connection. `RedisClient` gained `connectAsync`, `connectPubSubAsync` and `connectSentinelAsync` overloads that accept explicit `ClientOptions`, and the connection factory hooks on `AbstractRedisClient`, `RedisClient` and `RedisClusterClient` have options-aware overloads; the previous hooks are deprecated. See [Client Options](advanced-usage/client-options.md#custom-connection-factories).
+- `RedisClient` and `RedisClusterClient` connections capture the client's `ClientOptions` when they are initiated and use that snapshot throughout initialization, including asynchronous retries and Sentinel lookups, so a concurrent `setOptions(...)` no longer mixes configurations within one connection. `RedisClient` gained `connectAsync`, `connectPubSubAsync` and `connectSentinelAsync` overloads that accept explicit `ClientOptions`, and the connection factory hooks on `AbstractRedisClient`, `RedisClient` and `RedisClusterClient` have options-aware overloads; the previous hooks are deprecated. See [Client Options](advanced-usage/client-options.md#custom-connection-factories).
+- RESP3 replies are now decoded the same way inside transactions and on Pub/Sub connections as on regular connections. On a Pub/Sub connection, a command that returns a RESP3 boolean no longer fails with `UnsupportedOperationException`. Some RESP3 map and set replies whose first element is `message` or `pmessage` are no longer mistaken for Pub/Sub messages. Before, such a reply went to the Pub/Sub listeners and the command never completed.
+- Support for the `CELL_SIZE` option on [`CMS.INITBYDIM`](https://redis.io/docs/latest/commands/cms.initbydim/) and [`CMS.INITBYPROB`](https://redis.io/docs/latest/commands/cms.initbyprob/) via a `CmsCellSize` overload of `cmsInitByDim`/`cmsInitByProb`, the `cell_size` field of [`CMS.INFO`](https://redis.io/docs/latest/commands/cms.info/) through `CMSInfoValue.getCellSize()`, and negative increments on [`CMS.INCRBY`](https://redis.io/docs/latest/commands/cms.incrby/) (Redis 8.12) — see [Probabilistic data structures](user-guide/probabilistic.md#count-min-sketch)
+- Support for the [`BLESS`](https://redis.io/docs/latest/commands/bless-set/) command family (Redis 8.12) that protects keys from `maxmemory` eviction, through `blessSet`, `blessClear`, `blessGet` and `blessScan` on the sync, async, reactive, cluster node-selection and Kotlin APIs. `BlessFlag` models the blessing flags as an open set (`BlessFlag.NO_EVICT`, plus `BlessFlag.of(...)` for flags added by newer servers), `BlessScanArgs` carries the `COUNT` hint, and `ScanIterator.blessScan`, `ScanStream.blessScan` and `ScanFlow.blessScan` iterate blessed keys with the same cursor handling as `SCAN`, including per-node iteration on Redis Cluster
 
 ### Breaking changes
 
@@ -46,6 +50,7 @@ Lettuce 8.0 removes the Reactor-based APIs deprecated in 7.8 and 7.9, and change
   - the `ConnectionWatchdog` and `MaintenanceAwareConnectionWatchdog` constructors and their `wrapSocketAddressSupplier(...)`.
 
   The watchdog constructors also no longer take a `ConnectionFacade`.
+- **RESP3 map replies in transactions:** inside `MULTI`/`EXEC` on a RESP3 connection, commands whose result is built from the RESP3 reply types now return a RESP3 map reply as a `Map`, the same as outside a transaction. Before, they returned a flat `List` of keys and values. This affects `EVAL`, `EVALSHA` and `FCALL` (and their read-only variants) with `ScriptOutputType.OBJECT`, `FUNCTION LIST`, `CLUSTER LINKS`, and `dispatch(...)` with an `ObjectOutput`. Code that casts these `TransactionResult` entries to `List` must handle a `Map` instead. RESP2 connections are not affected.
 
 ## What's new in Lettuce 7.9
 
@@ -288,5 +293,5 @@ Lettuce 8.0 removes the Reactor-based APIs deprecated in 7.8 and 7.9, and change
 - Java 9 compatibility.
 
 - HTML and PDF reference documentation along with a new project website:
-  <https://lettuce.io>.
+  <https://redis.github.io/lettuce/>.
 
