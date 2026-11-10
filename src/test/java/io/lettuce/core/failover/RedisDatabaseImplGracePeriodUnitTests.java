@@ -8,7 +8,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -224,9 +223,37 @@ class RedisDatabaseImplGracePeriodUnitTests {
         @Test
         @DisplayName("Should keep a grace period started while an expired one is being cleared")
         void shouldKeepGracePeriodStartedWhileExpiredOneIsCleared() {
-            AtomicBoolean startGracePeriodOnNextRead = new AtomicBoolean();
-            AtomicReference<RedisDatabaseImpl<StatefulRedisConnection<String, String>>> racingDatabase = new AtomicReference<>();
-            Clock racingClock = new Clock() {
+            AtomicReference<Runnable> onNextClockRead = new AtomicReference<>();
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> database = databaseWithClockHook(onNextClockRead);
+            database.startGracePeriod(Durations.ONE_HUNDRED_MILLISECONDS);
+            clock.tick(Duration.ofMillis(150));
+            circuitBreaker.transitionTo(CircuitBreaker.State.OPEN);
+
+            onNextClockRead.set(() -> database.startGracePeriod(Durations.TEN_SECONDS));
+
+            assertThat(database.isInGracePeriod()).isTrue();
+            assertThat(database.isInGracePeriod()).isTrue();
+            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+        }
+
+        @Test
+        @DisplayName("Should end an expired grace period that another caller cleared concurrently")
+        void shouldEndExpiredGracePeriodClearedConcurrently() {
+            AtomicReference<Runnable> onNextClockRead = new AtomicReference<>();
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> database = databaseWithClockHook(onNextClockRead);
+            database.startGracePeriod(Durations.ONE_HUNDRED_MILLISECONDS);
+            clock.tick(Duration.ofMillis(150));
+            circuitBreaker.transitionTo(CircuitBreaker.State.OPEN);
+
+            onNextClockRead.set(database::isInGracePeriod);
+
+            assertThat(database.isInGracePeriod()).isFalse();
+            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
+        }
+
+        private RedisDatabaseImpl<StatefulRedisConnection<String, String>> databaseWithClockHook(
+                AtomicReference<Runnable> onNextClockRead) {
+            Clock hookedClock = new Clock() {
 
                 @Override
                 public ZoneId getZone() {
@@ -240,25 +267,16 @@ class RedisDatabaseImplGracePeriodUnitTests {
 
                 @Override
                 public Instant instant() {
-                    if (startGracePeriodOnNextRead.compareAndSet(true, false)) {
-                        racingDatabase.get().startGracePeriod(Durations.TEN_SECONDS);
+                    Runnable hook = onNextClockRead.getAndSet(null);
+                    if (hook != null) {
+                        hook.run();
                     }
                     return clock.instant();
                 }
 
             };
-            racingDatabase.set(new RedisDatabaseImpl<>(DatabaseConfig.builder(uri).weight(1.0f).build(), connection, endpoint,
-                    circuitBreaker, healthCheck, racingClock));
-            RedisDatabaseImpl<StatefulRedisConnection<String, String>> database = racingDatabase.get();
-
-            database.startGracePeriod(Durations.ONE_HUNDRED_MILLISECONDS);
-            clock.tick(Duration.ofMillis(150));
-            circuitBreaker.transitionTo(CircuitBreaker.State.OPEN);
-            startGracePeriodOnNextRead.set(true);
-
-            assertThat(database.isInGracePeriod()).isTrue();
-            assertThat(database.isInGracePeriod()).isTrue();
-            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+            return new RedisDatabaseImpl<>(DatabaseConfig.builder(uri).weight(1.0f).build(), connection, endpoint,
+                    circuitBreaker, healthCheck, hookedClock);
         }
 
         @Test
