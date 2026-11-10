@@ -32,6 +32,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * {@link XPendingArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author dengliming
+ * @author Taewoong Kim
  * @since 6.1
  */
 public class XPendingArgs<K> implements CompositeArgument {
@@ -157,12 +158,16 @@ public class XPendingArgs<K> implements CompositeArgument {
 
         if (range.getLower().equals(Range.Boundary.unbounded())) {
             args.add("-");
+        } else if (!range.getLower().isIncluding()) {
+            args.add("(" + range.getLower().getValue());
         } else {
             args.add(range.getLower().getValue());
         }
 
         if (range.getUpper().equals(Range.Boundary.unbounded())) {
             args.add("+");
+        } else if (!range.getUpper().isIncluding()) {
+            args.add("(" + range.getUpper().getValue());
         } else {
             args.add(range.getUpper().getValue());
         }
