@@ -296,13 +296,13 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     private static final int MAX_FAILOVER_RECURSION = 10;
 
     private void failoverFrom(RedisDatabaseImpl<C> fromDb, SwitchReason reason) {
-        if (closed) {
-            return;
-        }
         failoverFromRecursive(fromDb, reason, 0);
     }
 
     private void failoverFromRecursive(RedisDatabaseImpl<C> fromDb, SwitchReason reason, int recursionAttempt) {
+        if (closed) {
+            return;
+        }
         if (MAX_FAILOVER_RECURSION <= recursionAttempt++) {
             logger.warn("Max failover attempts ({}) reached, staying on current database {}", MAX_FAILOVER_RECURSION,
                     current.getId());
@@ -741,7 +741,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      *
      * @param redisURI the database URI, must not be {@code null}.
      * @throws IllegalArgumentException if the endpoint is unknown.
-     * @throws IllegalStateException if the switch fails or target is unhealthy.
+     * @throws IllegalStateException if the switch fails, target is unhealthy or the connection is closed.
      */
     @Override
     public void switchTo(RedisURI redisURI) {
@@ -799,6 +799,14 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         SwitchContext switchContext = new SwitchContext();
 
         doByExclusiveLock(() -> {
+            if (closed) {
+                if (internalCall) {
+                    logger.info("Skipping switch to database {}, connection is closed", database.getId());
+                    return;
+                }
+                throw new IllegalStateException("Cannot switch database, connection is closed");
+            }
+
             RedisDatabaseImpl<C> fromDb = current;
             RedisDatabaseImpl<C> toDb = databases.get(database.getRedisURI());
 
@@ -1030,6 +1038,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * @param databaseConfig the database configuration, must not be {@code null}.
      * @throws UnsupportedOperationException if created without a DatabaseFactory.
      * @throws IllegalArgumentException if the database already exists.
+     * @throws IllegalStateException if the connection is closed.
      * @throws RedisConnectionException if connection fails.
      */
     @Override
@@ -1044,6 +1053,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         RedisURI redisURI = databaseConfig.getRedisURI();
 
         doByExclusiveLock(() -> {
+            assertNotClosed("add");
+
             if (databases.containsKey(redisURI)) {
                 throw new IllegalArgumentException("Database already exists: " + redisURI);
             }
@@ -1076,12 +1087,15 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * @param redisURI the database URI, must not be {@code null}.
      * @throws IllegalArgumentException if the database is not found.
      * @throws UnsupportedOperationException if removing the current database.
+     * @throws IllegalStateException if the connection is closed.
      */
     @Override
     public void removeDatabase(RedisURI redisURI) {
         LettuceAssert.notNull(redisURI, "RedisURI must not be null");
 
         doByExclusiveLock(() -> {
+            assertNotClosed("remove");
+
             RedisDatabaseImpl<C> database = null;
             database = databases.get(redisURI);
             if (database == null) {
@@ -1100,6 +1114,12 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             databases.remove(redisURI);
             database.closeAsync().join();
         });
+    }
+
+    private void assertNotClosed(String operation) {
+        if (closed) {
+            throw new IllegalStateException("Cannot " + operation + " database, connection is closed");
+        }
     }
 
     /**

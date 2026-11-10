@@ -1529,6 +1529,49 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             verify(circuitBreaker2).removeListener(registeredCircuitBreakerListener.getValue());
         }
 
+        @Test
+        @DisplayName("Should reject switching database after close")
+        void shouldRejectSwitchAfterClose() {
+            StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    db1, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options);
+            connection.close();
+
+            assertThatThrownBy(() -> connection.switchTo(uri2)).isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("connection is closed");
+
+            assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
+            verify(eventBus, never()).publish(any(DatabaseSwitchEvent.class));
+        }
+
+        @Test
+        @DisplayName("Should reject adding a database after close without creating a connection")
+        void shouldRejectAddDatabaseAfterClose() {
+            StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    db1, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options);
+            connection.close();
+
+            RedisURI newUri = RedisURI.create("redis://localhost:6382");
+            assertThatThrownBy(() -> connection.addDatabase(newUri, 1.0f)).isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("connection is closed");
+
+            verify(connectionFactory, never()).createDatabaseAsync(any(), any());
+            verify(healthStatusManager, never()).registerListener(eq(newUri), any());
+        }
+
+        @Test
+        @DisplayName("Should reject removing a database after close")
+        void shouldRejectRemoveDatabaseAfterClose() {
+            StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    db1, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options);
+            connection.close();
+
+            assertThatThrownBy(() -> connection.removeDatabase(uri2)).isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("connection is closed");
+
+            verify(healthStatusManager, never()).remove(uri2);
+            verify(healthStatusManager, never()).unregisterListener(eq(uri2), any());
+        }
+
     }
 
     @Nested
