@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * @author Mark Paluch
  * @author dae won
+ * @author Taewoong Kim
  */
 @Tag(UNIT_TEST)
 class RedisCommandBuilderUnitTests {
@@ -338,6 +339,25 @@ class RedisCommandBuilderUnitTests {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> sut.zrange((ValueStreamingChannel<String>) null, MY_KEY, ZRange.byIndex(0, 1)))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructXpendingWithExclusiveRange() {
+
+        Command<String, String, ?> command = sut.xpending("stream",
+                XPendingArgs.Builder.xpending("group", Range.<String> unbounded().gt("1-0").lt("3-0"), Limit.from(10)));
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<stream> key<group> (1-0 (3-0 10");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXpendingWithExclusiveRangeAndIdle() {
+
+        Command<String, String, ?> command = sut.xpending("stream", XPendingArgs.Builder
+                .xpending(Consumer.from("group", "consumer"), Range.<String> unbounded().gt("1-0").lt("3-0"), Limit.from(1))
+                .idle(0));
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<stream> key<group> IDLE 0 (1-0 (3-0 1 key<consumer>");
     }
 
     @Test
