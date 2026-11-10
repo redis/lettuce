@@ -354,7 +354,9 @@ public class RediSearchVectorIntegrationTests {
             SearchArgs<ByteBuffer> searchArgs = SearchArgs.<ByteBuffer> builder().param(blobKey, queryVector.array()).build();
 
             String queryString = "*=>[KNN 3 @embedding $query_vec]";
-            SearchReply<ByteBuffer> searchResult = redisBinary.ftSearch(indexName, queryString, searchArgs);
+            // num_docs can report every document before the vector index returns all of them, so poll the KNN query
+            SearchReply<ByteBuffer> searchResult = SearchTestSupport
+                    .searchUntilCount(() -> redisBinary.ftSearch(indexName, queryString, searchArgs), 3);
 
             // Verify we get results
             assertThat(searchResult.getCount()).isEqualTo(3);
@@ -725,7 +727,9 @@ public class RediSearchVectorIntegrationTests {
                     .limit(0, 2).build();
 
             String queryString = "*=>[KNN 2 @embedding $BLOB AS distance]";
-            SearchReply<ByteBuffer> results = redisBinary.ftSearch(indexName, queryString, searchArgs);
+            // Poll the KNN query until the notification-driven indexer has caught up with both documents
+            SearchReply<ByteBuffer> results = SearchTestSupport
+                    .searchUntilCount(() -> redisBinary.ftSearch(indexName, queryString, searchArgs), 2);
 
             assertThat(results.getCount()).isEqualTo(2);
             assertThat(results.getResults()).hasSize(2);

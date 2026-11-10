@@ -115,6 +115,10 @@ public class RediSearchStructuredKeyCodecSafetyIntegrationTests {
 
         String jsonDoc = "{\"title\":\"Redis search guide\",\"body\":\"" + BODY_TEXT + "\",\"category\":\"tutorial\"}";
         redis.jsonSet(field(JSON_DOC_ID), JsonPath.ROOT_PATH, jsonDoc);
+
+        // Let the notification-driven indexer catch up before the tests query either index
+        SearchTestSupport.searchUntilCount(() -> redis.ftSearch(HASH_INDEX, "search"), 1);
+        SearchTestSupport.searchUntilCount(() -> redis.ftSearch(JSON_INDEX, "search"), 1);
     }
 
     @AfterAll

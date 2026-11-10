@@ -9,6 +9,7 @@ package io.lettuce.core.search;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
 
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
@@ -44,8 +45,16 @@ class SearchTestSupport {
      */
     static SearchReply<String> searchUntilCount(RedisCommands<String, String> redis, String index, String query,
             long expectedCount) {
-        awaitQuietly(Wait.untilEquals(expectedCount, () -> redis.ftSearch(index, query).getCount()));
-        return redis.ftSearch(index, query);
+        return searchUntilCount(() -> redis.ftSearch(index, query), expectedCount);
+    }
+
+    /**
+     * Variant of {@link #searchUntilCount(RedisCommands, String, String, long)} for any connection codec and any search
+     * arguments: {@code search} issues the query and is called until its reply reports exactly {@code expectedCount} results.
+     */
+    static <K> SearchReply<K> searchUntilCount(Supplier<SearchReply<K>> search, long expectedCount) {
+        awaitQuietly(Wait.untilEquals(expectedCount, () -> search.get().getCount()));
+        return search.get();
     }
 
     /**
@@ -54,8 +63,16 @@ class SearchTestSupport {
      */
     static SearchReply<String> searchUntilAtLeast(RedisCommands<String, String> redis, String index, String query,
             long minCount) {
-        awaitQuietly(Wait.untilTrue(() -> redis.ftSearch(index, query).getCount() >= minCount));
-        return redis.ftSearch(index, query);
+        return searchUntilAtLeast(() -> redis.ftSearch(index, query), minCount);
+    }
+
+    /**
+     * Variant of {@link #searchUntilAtLeast(RedisCommands, String, String, long)} for any connection codec and any search
+     * arguments: {@code search} issues the query and is called until its reply reports at least {@code minCount} results.
+     */
+    static <K> SearchReply<K> searchUntilAtLeast(Supplier<SearchReply<K>> search, long minCount) {
+        awaitQuietly(Wait.untilTrue(() -> search.get().getCount() >= minCount));
+        return search.get();
     }
 
     private static void awaitQuietly(Wait.WaitBuilder<?> wait) {
