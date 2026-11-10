@@ -159,12 +159,10 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
      * @param durationMillis the duration of the grace period in milliseconds
      */
     void startGracePeriod(Duration durationMillis) {
-        if (durationMillis.toMillis() > 0) {
-            long endTime = clock.millis() + durationMillis.toMillis();
-            // this is against a possible overflow
-            this.gracePeriodEndTime = endTime < 0 ? Long.MAX_VALUE : endTime;
-            logger.info("Started grace period of {}ms for database {}", durationMillis, getId());
-        }
+        long endTime = clock.millis() + Math.max(durationMillis.toMillis(), 0);
+        // this is against a possible overflow
+        this.gracePeriodEndTime = endTime < 0 ? Long.MAX_VALUE : endTime;
+        logger.info("Started grace period of {}ms for database {}", durationMillis, getId());
     }
 
     /**
@@ -174,12 +172,16 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
      */
     boolean isInGracePeriod() {
         long endTime = this.gracePeriodEndTime;
-        if (endTime != 0 && clock.millis() < endTime) {
-            return true;
+        if (endTime == 0) {
+            return false;
         }
-        clearGracePeriod();
-        circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
-        return false;
+        boolean inGracePeriod = clock.millis() < endTime;
+        if (!inGracePeriod) {
+            // Grace period has ended, reset the end time
+            clearGracePeriod();
+            circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
+        }
+        return inGracePeriod;
     }
 
     /**

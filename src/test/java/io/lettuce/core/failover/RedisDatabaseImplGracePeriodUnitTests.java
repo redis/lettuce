@@ -217,6 +217,25 @@ class RedisDatabaseImplGracePeriodUnitTests {
         }
 
         @Test
+        @DisplayName("Should keep a newly opened circuit breaker open until a grace period is started")
+        void shouldKeepNewlyOpenedCircuitBreakerOpenUntilGracePeriodStarts() {
+            circuitBreaker.transitionTo(CircuitBreaker.State.OPEN);
+
+            assertThat(database.isHealthy()).isFalse();
+            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+        }
+
+        @Test
+        @DisplayName("Should close an open circuit breaker when grace period is negative")
+        void shouldCloseOpenCircuitBreakerWhenGracePeriodNegative() {
+            circuitBreaker.transitionTo(CircuitBreaker.State.OPEN);
+            database.startGracePeriod(Duration.ofMillis(-1000L));
+
+            assertThat(database.isInGracePeriod()).isFalse();
+            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
+        }
+
+        @Test
         @DisplayName("Should not fire a state change when circuit breaker is already closed")
         void shouldNotFireStateChangeWhenCircuitBreakerAlreadyClosed() {
             CircuitBreakerStateListener listener = mock(CircuitBreakerStateListener.class);
@@ -319,12 +338,11 @@ class RedisDatabaseImplGracePeriodUnitTests {
             // Then: Should not be healthy
             assertThat(database.isHealthy()).isFalse();
 
-            // When: Health check becomes healthy but circuit breaker opens without a grace period
+            // When: Health check becomes healthy but circuit breaker opens
             when(healthCheck.getStatus()).thenReturn(HealthStatus.HEALTHY);
             circuitBreaker.transitionTo(CircuitBreaker.State.OPEN);
-            // Then: Circuit breaker is closed since no grace period holds it open
-            assertThat(database.isHealthy()).isTrue();
-            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
+            // Then: Should not be healthy
+            assertThat(database.isHealthy()).isFalse();
         }
 
     }
