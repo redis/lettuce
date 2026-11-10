@@ -25,6 +25,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * @param <C> Connection type.
  *
  * @author Ali Takavci
+ * @author Mosiur Zzaman
  * @since 7.4
  */
 class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements RedisDatabase, AsyncCloseable {
@@ -173,16 +174,12 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
      */
     boolean isInGracePeriod() {
         long endTime = this.gracePeriodEndTime;
-        if (endTime == 0) {
-            return false;
+        if (endTime != 0 && clock.millis() < endTime) {
+            return true;
         }
-        boolean inGracePeriod = clock.millis() < endTime;
-        if (!inGracePeriod) {
-            // Grace period has ended, reset the end time
-            clearGracePeriod();
-            circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
-        }
-        return inGracePeriod;
+        clearGracePeriod();
+        circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
+        return false;
     }
 
     /**
