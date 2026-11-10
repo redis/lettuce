@@ -174,13 +174,16 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
      * @return {@code true} if the database is in a grace period, {@code false} otherwise
      */
     boolean isInGracePeriod() {
-        long endTime;
-        do {
-            endTime = this.gracePeriodEndTime.get();
-            if (endTime != 0 && clock.millis() < endTime) {
+        long endTime = this.gracePeriodEndTime.get();
+        while (endTime != 0) {
+            if (clock.millis() < endTime) {
                 return true;
             }
-        } while (!this.gracePeriodEndTime.compareAndSet(endTime, 0));
+            if (this.gracePeriodEndTime.compareAndSet(endTime, 0)) {
+                break;
+            }
+            endTime = this.gracePeriodEndTime.get();
+        }
         circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
         return false;
     }
