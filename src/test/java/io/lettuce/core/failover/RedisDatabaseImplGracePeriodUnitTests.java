@@ -4,7 +4,12 @@ import static org.assertj.core.api.Assertions.*;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.mockito.Mockito.*;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -214,6 +219,46 @@ class RedisDatabaseImplGracePeriodUnitTests {
             database.startGracePeriod(Duration.ZERO);
 
             assertThat(database.isHealthy()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Should keep a grace period started while an expired one is being cleared")
+        void shouldKeepGracePeriodStartedWhileExpiredOneIsCleared() {
+            AtomicBoolean startGracePeriodOnNextRead = new AtomicBoolean();
+            AtomicReference<RedisDatabaseImpl<StatefulRedisConnection<String, String>>> racingDatabase = new AtomicReference<>();
+            Clock racingClock = new Clock() {
+
+                @Override
+                public ZoneId getZone() {
+                    return clock.getZone();
+                }
+
+                @Override
+                public Clock withZone(ZoneId zone) {
+                    return this;
+                }
+
+                @Override
+                public Instant instant() {
+                    if (startGracePeriodOnNextRead.compareAndSet(true, false)) {
+                        racingDatabase.get().startGracePeriod(Durations.TEN_SECONDS);
+                    }
+                    return clock.instant();
+                }
+
+            };
+            racingDatabase.set(new RedisDatabaseImpl<>(DatabaseConfig.builder(uri).weight(1.0f).build(), connection, endpoint,
+                    circuitBreaker, healthCheck, racingClock));
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> database = racingDatabase.get();
+
+            database.startGracePeriod(Durations.ONE_HUNDRED_MILLISECONDS);
+            clock.tick(Duration.ofMillis(150));
+            circuitBreaker.transitionTo(CircuitBreaker.State.OPEN);
+            startGracePeriodOnNextRead.set(true);
+
+            assertThat(database.isInGracePeriod()).isTrue();
+            assertThat(database.isInGracePeriod()).isTrue();
+            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
         }
 
         @Test
