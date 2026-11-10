@@ -52,8 +52,11 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;;
 @DisplayName("HealthCheck Integration Tests")
 public class HealthCheckIntegrationTests extends MultiDbTestSupport {
 
-    /** Default timeout for await() calls in this test - 500ms for fast test execution */
-    private static final Duration AWAIT_TIMEOUT = Duration.ofMillis(500);
+    /**
+     * Default timeout for await() calls in this test. Every await polls until its condition holds, so a passing test does not
+     * wait this long; the limit only has to cover a slow CI runner scheduling the health check threads.
+     */
+    private static final Duration AWAIT_TIMEOUT = Duration.ofSeconds(5);
 
     /** Poll interval for await() calls - 2ms for responsive polling */
     private static final Duration POLL_INTERVAL = Duration.ofMillis(2);
