@@ -55,7 +55,6 @@ import io.netty.util.concurrent.PromiseCombiner;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.scheduler.Schedulers;
 
 /**
  * Default instance of the client resources.
@@ -222,7 +221,7 @@ public class DefaultClientResources implements ClientResources {
         }
 
         if (builder.eventBus == null) {
-            eventBus = new DefaultEventBus(Schedulers.fromExecutorService(eventExecutorGroup, "lettuce-event-bus"));
+            eventBus = new DefaultEventBus(eventExecutorGroup);
         } else {
             eventBus = builder.eventBus;
         }
@@ -373,7 +372,10 @@ public class DefaultClientResources implements ClientResources {
         /**
          * Sets the {@link EventPublisherOptions} to publish command latency metrics using the {@link EventBus} if the
          * {@link CommandLatencyRecorder} is an instance of {@link CommandLatencyCollector} that allows latency metric
-         * retrieval.
+         * retrieval. Publishing retrieves and, by default, resets the collected metrics. If publishing is disabled and
+         * {@link CommandLatencyCollectorOptions#resetLatenciesAfterEvent()} is enabled, the collector retains its metrics until
+         * {@link CommandLatencyCollector#retrieveMetrics()} is called, so the application must retrieve them periodically to
+         * bound memory usage.
          *
          * @param commandLatencyPublisherOptions the {@link EventPublisherOptions} to publish command latency metrics using the
          *        {@link EventBus}, must not be {@code null}.

@@ -22,7 +22,9 @@ package io.lettuce.core.cluster;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -32,11 +34,15 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.BlessFlag;
 import io.lettuce.core.ReadFrom;
+import io.lettuce.core.ScanIterator;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.DisabledOnProvider;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Mark Paluch
@@ -45,6 +51,7 @@ import io.lettuce.test.LettuceExtension;
 @Tag(INTEGRATION_TEST)
 @SuppressWarnings("unchecked")
 @ExtendWith(LettuceExtension.class)
+@DisabledOnProvider("re")
 class RedisClusterReadFromIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
@@ -101,6 +108,21 @@ class RedisClusterReadFromIntegrationTests extends TestSupport {
 
         connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port2).sync().waitForReplication(1, 1000);
         assertThat(sync.get(key)).isEqualTo("value1");
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessScanReadFromReplica() {
+
+        connection.setReadFrom(ReadFrom.REPLICA);
+
+        sync.set(key, value);
+        assertThat(sync.blessSet(key, BlessFlag.NO_EVICT)).isTrue();
+
+        connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port2).sync().waitForReplication(1, 1000);
+
+        List<String> keys = ScanIterator.blessScan(sync, BlessFlag.NO_EVICT).stream().collect(Collectors.toList());
+        assertThat(keys).contains(key);
     }
 
     @Test

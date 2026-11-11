@@ -28,6 +28,10 @@ import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.arguments.BfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.BfReserveArgs;
 import io.lettuce.core.probabilistic.CfInfoValue;
+import io.lettuce.core.probabilistic.CMSInfoValue;
+import io.lettuce.core.probabilistic.CmsCellSize;
+import io.lettuce.core.probabilistic.MergePair;
+import io.lettuce.core.probabilistic.TDigestInfoValue;
 import io.lettuce.core.probabilistic.ScanDumpValue;
 import io.lettuce.core.probabilistic.arguments.CfInsertArgs;
 import io.lettuce.core.probabilistic.arguments.CfReserveArgs;
@@ -56,6 +60,7 @@ import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.probabilistic.TopKInfoValue;
 import io.lettuce.core.probabilistic.TopKListValue;
+import io.lettuce.core.probabilistic.arguments.TDigestMergeArgs;
 import io.lettuce.core.probabilistic.arguments.TopKReserveArgs;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -81,6 +86,24 @@ import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
+import io.lettuce.core.timeseries.TsAggregation;
+import io.lettuce.core.timeseries.TsFilter;
+import io.lettuce.core.timeseries.TsInfoValue;
+import io.lettuce.core.timeseries.TsMAddValue;
+import io.lettuce.core.timeseries.TsMGetValue;
+import io.lettuce.core.timeseries.TsNRangeRow;
+import io.lettuce.core.timeseries.TsReadOffset;
+import io.lettuce.core.timeseries.TsSample;
+import io.lettuce.core.timeseries.TsSeries;
+import io.lettuce.core.timeseries.arguments.TsAddArgs;
+import io.lettuce.core.timeseries.arguments.TsAlterArgs;
+import io.lettuce.core.timeseries.arguments.TsCreateArgs;
+import io.lettuce.core.timeseries.arguments.TsIncrByArgs;
+import io.lettuce.core.timeseries.arguments.TsMGetArgs;
+import io.lettuce.core.timeseries.arguments.TsMRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsNRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsRangeArgs;
+import io.lettuce.core.timeseries.arguments.TsReadArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.vector.RawVector;
@@ -91,9 +114,11 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
+import reactor.util.context.ContextView;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.AbstractMap;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -129,8 +154,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
         RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
         RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
-        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>,
-        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V> {
+        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K>, RedisArrayReactiveCommands<K, V>,
+        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>,
+        RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V>, RedisTimeSeriesReactiveCommands<K> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -150,6 +176,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     private final RedisTopKCommandBuilder<K, V> topKCommandBuilder;
 
+    private final RedisCMSCommandBuilder<K, V> cmsCommandBuilder;
+
+    private final RedisTDigestCommandBuilder<K, V> tDigestCommandBuilder;
+
+    private final RedisTimeSeriesCommandBuilder<K, V> timeSeriesCommandBuilder;
+
     private final Supplier<JsonParser> parser;
 
     private final ClientResources clientResources;
@@ -157,6 +189,37 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     private final boolean tracingEnabled;
 
     private volatile EventExecutorGroup scheduler;
+
+    /**
+     * Read-only {@link Map} view of a Reactor {@link ContextView}, used to pass the subscriber context to
+     * {@link TraceContextProvider#getTraceContextAsync(Map)}. Lookups delegate to the {@link ContextView} without copying;
+     * {@link #entrySet()} is not supported.
+     */
+    static class ContextViewMapAdapter extends AbstractMap<Object, Object> {
+
+        private final ContextView ctx;
+
+        public ContextViewMapAdapter(ContextView ctx) {
+            this.ctx = ctx;
+        }
+
+        @Override
+        public Object get(Object key) {
+            return ctx.hasKey(key) ? ctx.get(key) : null;
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return ctx.hasKey(key);
+        }
+
+        @Override
+        public Set<Entry<Object, Object>> entrySet() {
+            // no need to implement, just for the sake of AbstractMap contract
+            throw new UnsupportedOperationException();
+        }
+
+    }
 
     /**
      * Initialize a new instance.
@@ -177,6 +240,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         this.bloomFilterCommandBuilder = new RedisBloomFilterCommandBuilder<>(codec);
         this.cuckooFilterCommandBuilder = new RedisCuckooFilterCommandBuilder<>(codec);
         this.topKCommandBuilder = new RedisTopKCommandBuilder<>(codec);
+        this.cmsCommandBuilder = new RedisCMSCommandBuilder<>(codec);
+        this.tDigestCommandBuilder = new RedisTDigestCommandBuilder<>(codec);
+        this.timeSeriesCommandBuilder = new RedisTimeSeriesCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -395,6 +461,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Long> bitpos(K key, boolean state, long start, long end) {
         return createMono(() -> commandBuilder.bitpos(key, state, start, end));
+    }
+
+    @Override
+    public Flux<Long> bitrangeintarray(K key, long start, long end) {
+        return createDissolvingFlux(() -> commandBuilder.bitrangeintarray(key, start, end));
+    }
+
+    @Override
+    public Flux<Long> bitrangeintarray(K key, long start, long end, BitRangeIntArrayArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.bitrangeintarray(key, start, end, args));
     }
 
     @Override
@@ -790,14 +866,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
         return ReactorTraceContext.getContext()
                 .switchIfEmpty(Mono.fromSupplier(() -> clientResources.tracing().initialTraceContextProvider()))
-                .flatMap(TraceContextProvider::getTraceContextLater).defaultIfEmpty(TraceContext.EMPTY);
+                .flatMap(p -> Mono
+                        .deferContextual(ctx -> Mono.justOrEmpty(p.getTraceContextAsync(new ContextViewMapAdapter(ctx)).get())))
+                .defaultIfEmpty(TraceContext.EMPTY);
     }
 
     /**
      * Helpers for propagating a {@link TraceContextProvider} through a Reactor {@link Context} on the reactive command path.
      *
      * @author Aleksandar Todorov
-     * @since 7.7
+     * @since 7.8
      */
     public static final class ReactorTraceContext {
 
@@ -1680,6 +1758,26 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> himportSet(K key, HashImport<K> fieldset, V... values) {
+
+        return Mono.defer(() -> {
+
+            HashImportSetCommand<K, V> set;
+            try {
+                set = commandBuilder.himportSet(key, fieldset, values);
+            } catch (RuntimeException e) {
+                return Mono.error(e);
+            }
+
+            if (!fieldset.retain()) {
+                return Mono.error(new IllegalStateException("HashImport has been discarded and must not be reused"));
+            }
+
+            return createMono(() -> set).doFinally(signal -> fieldset.release());
+        });
+    }
+
+    @Override
     public Mono<Long> hsetex(K key, Map<K, V> map) {
         return createMono(() -> commandBuilder.hsetex(key, map));
     }
@@ -1775,12 +1873,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftCreate(String index, CreateArgs<K, V> options, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftCreate(String index, CreateArgs options, List<FieldArgs> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftCreate(index, options, fieldArgs));
     }
 
     @Override
-    public Mono<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftCreate(String index, List<FieldArgs> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftCreate(index, null, fieldArgs));
     }
 
@@ -1805,92 +1903,92 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
     }
 
     @Override
-    public Flux<V> ftTagvals(String index, String fieldName) {
+    public Flux<String> ftTagvals(String index, String fieldName) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftTagvals(index, fieldName));
     }
 
     @Override
-    public Mono<SpellCheckResult<V>> ftSpellcheck(String index, V query) {
+    public Mono<SpellCheckResult> ftSpellcheck(String index, String query) {
         return createMono(() -> searchCommandBuilder.ftSpellcheck(index, query));
     }
 
     @Override
-    public Mono<SpellCheckResult<V>> ftSpellcheck(String index, V query, SpellCheckArgs<K, V> args) {
+    public Mono<SpellCheckResult> ftSpellcheck(String index, String query, SpellCheckArgs args) {
         return createMono(() -> searchCommandBuilder.ftSpellcheck(index, query, args));
     }
 
     @Override
-    public Mono<Long> ftDictadd(String dict, V... terms) {
+    public Mono<Long> ftDictadd(String dict, String... terms) {
         return createMono(() -> searchCommandBuilder.ftDictadd(dict, terms));
     }
 
     @Override
-    public Mono<Long> ftDictdel(String dict, V... terms) {
+    public Mono<Long> ftDictdel(String dict, String... terms) {
         return createMono(() -> searchCommandBuilder.ftDictdel(dict, terms));
     }
 
     @Override
-    public Flux<V> ftDictdump(String dict) {
+    public Flux<String> ftDictdump(String dict) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftDictdump(dict));
     }
 
     @Override
-    public Mono<String> ftExplain(String index, V query) {
+    public Mono<String> ftExplain(String index, String query) {
         return createMono(() -> searchCommandBuilder.ftExplain(index, query));
     }
 
     @Override
-    public Mono<String> ftExplain(String index, V query, ExplainArgs<K, V> args) {
+    public Mono<String> ftExplain(String index, String query, ExplainArgs args) {
         return createMono(() -> searchCommandBuilder.ftExplain(index, query, args));
     }
 
     @Override
-    public Flux<V> ftList() {
+    public Flux<String> ftList() {
         return createDissolvingFlux(() -> searchCommandBuilder.ftList());
     }
 
     @Override
-    public Mono<Map<V, List<V>>> ftSyndump(String index) {
+    public Mono<Map<String, List<String>>> ftSyndump(String index) {
         return createMono(() -> searchCommandBuilder.ftSyndump(index));
     }
 
     @Override
-    public Mono<String> ftSynupdate(String index, V synonymGroupId, V... terms) {
+    public Mono<String> ftSynupdate(String index, String synonymGroupId, String... terms) {
         return createMono(() -> searchCommandBuilder.ftSynupdate(index, synonymGroupId, terms));
     }
 
     @Override
-    public Mono<String> ftSynupdate(String index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+    public Mono<String> ftSynupdate(String index, String synonymGroupId, SynUpdateArgs args, String... terms) {
         return createMono(() -> searchCommandBuilder.ftSynupdate(index, synonymGroupId, args, terms));
     }
 
     @Override
-    public Mono<Long> ftSugadd(K key, V string, double score) {
-        return createMono(() -> searchCommandBuilder.ftSugadd(key, string, score));
+    public Mono<Long> ftSugadd(K key, String suggestion, double score) {
+        return createMono(() -> searchCommandBuilder.ftSugadd(key, suggestion, score));
     }
 
     @Override
-    public Mono<Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
-        return createMono(() -> searchCommandBuilder.ftSugadd(key, string, score, args));
+    public Mono<Long> ftSugadd(K key, String suggestion, double score, SugAddArgs args) {
+        return createMono(() -> searchCommandBuilder.ftSugadd(key, suggestion, score, args));
     }
 
     @Override
-    public Mono<Boolean> ftSugdel(K key, V string) {
-        return createMono(() -> searchCommandBuilder.ftSugdel(key, string));
+    public Mono<Boolean> ftSugdel(K key, String suggestion) {
+        return createMono(() -> searchCommandBuilder.ftSugdel(key, suggestion));
     }
 
     @Override
-    public Flux<Suggestion<V>> ftSugget(K key, V prefix) {
+    public Flux<Suggestion> ftSugget(K key, String prefix) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftSugget(key, prefix));
     }
 
     @Override
-    public Flux<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
+    public Flux<Suggestion> ftSugget(K key, String prefix, SugGetArgs args) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftSugget(key, prefix, args));
     }
 
@@ -1900,7 +1998,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftAlter(String index, List<FieldArgs> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftAlter(index, false, fieldArgs));
     }
 
@@ -1926,32 +2024,32 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(String index, V query, SearchArgs<K, V> args) {
+    public Mono<SearchReply<K>> ftSearch(String index, String query, SearchArgs<K> args) {
         return createMono(() -> searchCommandBuilder.ftSearch(index, query, args));
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(String index, V query) {
-        return createMono(() -> searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
+    public Mono<SearchReply<K>> ftSearch(String index, String query) {
+        return createMono(() -> searchCommandBuilder.ftSearch(index, query, SearchArgs.<K> builder().build()));
     }
 
     @Override
-    public Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args) {
+    public Mono<HybridReply<K>> ftHybrid(String index, HybridArgs args) {
         return createMono(() -> searchCommandBuilder.ftHybrid(index, args));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args) {
+    public Mono<AggregationReply<K>> ftAggregate(String index, String query, AggregateArgs args) {
         return createMono(() -> searchCommandBuilder.ftAggregate(index, query, args));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query) {
+    public Mono<AggregationReply<K>> ftAggregate(String index, String query) {
         return createMono(() -> searchCommandBuilder.ftAggregate(index, query, null));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
+    public Mono<AggregationReply<K>> ftCursorread(String index, Cursor cursor, int count) {
         return createMono(() -> {
             if (cursor == null) {
                 throw new IllegalArgumentException("cursor must not be null");
@@ -1962,7 +2060,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
+    public Mono<AggregationReply<K>> ftCursorread(String index, Cursor cursor) {
         return ftCursorread(index, cursor, -1);
     }
 
@@ -2844,6 +2942,41 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Boolean> blessSet(K key, BlessFlag flag) {
+        return createMono(() -> commandBuilder.blessSet(key, flag));
+    }
+
+    @Override
+    public Mono<Boolean> blessClear(K key, BlessFlag flag) {
+        return createMono(() -> commandBuilder.blessClear(key, flag));
+    }
+
+    @Override
+    public Flux<BlessFlag> blessGet(K key) {
+        return createDissolvingFlux(() -> commandBuilder.blessGet(key));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> blessScan(BlessFlag flag) {
+        return createMono(() -> commandBuilder.blessScan(flag));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.blessScan(flag, scanArgs));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag) {
+        return createMono(() -> commandBuilder.blessScan(scanCursor, flag));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.blessScan(scanCursor, flag, scanArgs));
+    }
+
+    @Override
     public Mono<KeyScanCursor<K>> scan() {
         return createMono(commandBuilder::scan);
     }
@@ -3225,8 +3358,19 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    @Deprecated
     public Mono<StringMatchResult> lcs(LcsArgs lcsArgs) {
         return createMono(() -> commandBuilder.lcs(lcsArgs));
+    }
+
+    @Override
+    public Mono<V> lcs(K key1, K key2) {
+        return createMono(() -> commandBuilder.lcs(key1, key2));
+    }
+
+    @Override
+    public Mono<StringMatchResult> lcs(K key1, K key2, LcsArgs lcsArgs) {
+        return createMono(() -> commandBuilder.lcs(key1, key2, lcsArgs));
     }
 
     @Override
@@ -3777,142 +3921,195 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Flux<V> zrange(K key, ZRange.ByIndex range) {
+        return createDissolvingFlux(() -> commandBuilder.zrange(key, range));
+    }
+
+    @Override
+    public Flux<V> zrange(K key, ZRange.ByScore range) {
+        return createDissolvingFlux(() -> commandBuilder.zrange(key, range));
+    }
+
+    @Override
+    public Flux<V> zrange(K key, ZRange.ByLex<? extends V> range) {
+        return createDissolvingFlux(() -> commandBuilder.zrange(key, range));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zrangeWithScores(K key, ZRange.ByIndex range) {
+        return createDissolvingFlux(() -> commandBuilder.zrangeWithScores(key, range));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zrangeWithScores(K key, ZRange.ByScore range) {
+        return createDissolvingFlux(() -> commandBuilder.zrangeWithScores(key, range));
+    }
+
+    @Deprecated
+    @Override
     public Flux<V> zrangebylex(K key, String min, String max) {
         return createDissolvingFlux(() -> commandBuilder.zrangebylex(key, min, max));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrangebylex(K key, Range<? extends V> range) {
         return createDissolvingFlux(() -> commandBuilder.zrangebylex(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrangebylex(K key, String min, String max, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrangebylex(key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrangebylex(K key, Range<? extends V> range, Limit limit) {
         return createDissolvingFlux(() -> commandBuilder.zrangebylex(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrangebyscore(K key, double min, double max) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, min, max));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrangebyscore(K key, String min, String max) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, min, max));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrangebyscore(K key, double min, double max, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrangebyscore(K key, String min, String max, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrangebyscore(K key, Range<? extends Number> range) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrangebyscore(K key, Range<? extends Number> range, Limit limit) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscore(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max) {
         return createMono(() -> commandBuilder.zrangebyscore(channel, key, min, max));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max) {
         return createMono(() -> commandBuilder.zrangebyscore(channel, key, min, max));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count) {
         return createMono(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
         return createMono(() -> commandBuilder.zrangebyscore(channel, key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count) {
         return createMono(() -> commandBuilder.zrangebyscore(channel, key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
         return createMono(() -> commandBuilder.zrangebyscore(channel, key, range, limit));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, min, max));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, min, max));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, double min, double max, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, String min, String max, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
         return createDissolvingFlux(() -> commandBuilder.zrangebyscoreWithScores(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max) {
         return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max) {
         return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
         return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
             long offset, long count) {
         return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
             long offset, long count) {
         return createMono(() -> commandBuilder.zrangebyscoreWithScores(channel, key, min, max, offset, count));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
             Limit limit) {
@@ -3979,155 +4176,185 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> commandBuilder.zremrangebyscore(key, range));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrevrange(K key, long start, long stop) {
         return createDissolvingFlux(() -> commandBuilder.zrevrange(key, start, stop));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop) {
         return createMono(() -> commandBuilder.zrevrange(channel, key, start, stop));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrevrangeWithScores(K key, long start, long stop) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangeWithScores(key, start, stop));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
         return createMono(() -> commandBuilder.zrevrangeWithScores(channel, key, start, stop));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrevrangebylex(K key, Range<? extends V> range) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebylex(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrevrangebylex(K key, Range<? extends V> range, Limit limit) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebylex(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrevrangebyscore(K key, double max, double min) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, max, min));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrevrangebyscore(K key, String max, String min) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, max, min));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrevrangebyscore(K key, Range<? extends Number> range) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrevrangebyscore(K key, double max, double min, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrevrangebyscore(K key, String max, String min, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public Flux<V> zrevrangebyscore(K key, Range<? extends Number> range, Limit limit) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscore(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min) {
         return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min) {
         return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
         return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
             long count) {
         return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
             long count) {
         return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit) {
         return createMono(() -> commandBuilder.zrevrangebyscore(channel, key, range, limit));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, double max, double min, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, String max, String min, long offset, long count) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public Flux<ScoredValue<V>> zrevrangebyscoreWithScores(K key, Range<? extends Number> range, Limit limit) {
         return createDissolvingFlux(() -> commandBuilder.zrevrangebyscoreWithScores(key, range, limit));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min) {
         return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min) {
         return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range) {
         return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, range, Limit.unlimited()));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
             long offset, long count) {
         return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
             long offset, long count) {
         return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, max, min, offset, count));
     }
 
+    @Deprecated
     @Override
     public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
             Limit limit) {
@@ -4628,6 +4855,776 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> topKReserve(K key, long k, TopKReserveArgs args) {
         return createMono(() -> topKCommandBuilder.topKReserve(key, k, args));
+    }
+
+    // --- Redis CMS Commands ---
+
+    @Override
+    public Flux<Long> cmsIncrBy(K key, IncrementPair<V> pair) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsIncrBy(key, pair));
+    }
+
+    @Override
+    public Flux<Long> cmsIncrBy(K key, IncrementPair<V>... pairs) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsIncrBy(key, pairs));
+    }
+
+    @Override
+    public Mono<CMSInfoValue> cmsInfo(K key) {
+        return createMono(() -> cmsCommandBuilder.cmsInfo(key));
+    }
+
+    @Override
+    public Mono<String> cmsInitByDim(K key, long width, long depth) {
+        return createMono(() -> cmsCommandBuilder.cmsInitByDim(key, width, depth));
+    }
+
+    @Override
+    public Mono<String> cmsInitByDim(K key, long width, long depth, CmsCellSize cellSize) {
+        return createMono(() -> cmsCommandBuilder.cmsInitByDim(key, width, depth, cellSize));
+    }
+
+    @Override
+    public Mono<String> cmsInitByProb(K key, double error, double probability) {
+        return createMono(() -> cmsCommandBuilder.cmsInitByProb(key, error, probability));
+    }
+
+    @Override
+    public Mono<String> cmsInitByProb(K key, double error, double probability, CmsCellSize cellSize) {
+        return createMono(() -> cmsCommandBuilder.cmsInitByProb(key, error, probability, cellSize));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, K source) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, source));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, K... sources) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, sources));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, MergePair<K> pair) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, pair));
+    }
+
+    @Override
+    public Mono<String> cmsMerge(K destination, MergePair<K>... sources) {
+        return createMono(() -> cmsCommandBuilder.cmsMerge(destination, sources));
+    }
+
+    @Override
+    public Flux<Long> cmsQuery(K key, V value) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsQuery(key, value));
+    }
+
+    @Override
+    public Flux<Long> cmsQuery(K key, V... values) {
+        return createDissolvingFlux(() -> cmsCommandBuilder.cmsQuery(key, values));
+    }
+
+    // --- Redis T-Digest Commands ---
+
+    @Override
+    public Mono<String> tdigestAdd(K key, double value) {
+        return createMono(() -> tDigestCommandBuilder.tdigestAdd(key, value));
+    }
+
+    @Override
+    public Mono<String> tdigestAdd(K key, double... values) {
+        return createMono(() -> tDigestCommandBuilder.tdigestAdd(key, values));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRank(K key, long rank) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRank(key, rank));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRank(K key, long... ranks) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRank(key, ranks));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRevRank(K key, long reverseRank) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRevRank(key, reverseRank));
+    }
+
+    @Override
+    public Flux<Double> tdigestByRevRank(K key, long... reverseRanks) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestByRevRank(key, reverseRanks));
+    }
+
+    @Override
+    public Flux<Double> tdigestCDF(K key, double value) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestCDF(key, value));
+    }
+
+    @Override
+    public Flux<Double> tdigestCDF(K key, double... values) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestCDF(key, values));
+    }
+
+    @Override
+    public Mono<String> tdigestCreate(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestCreate(key));
+    }
+
+    @Override
+    public Mono<String> tdigestCreate(K key, long compression) {
+        return createMono(() -> tDigestCommandBuilder.tdigestCreate(key, compression));
+    }
+
+    @Override
+    public Mono<TDigestInfoValue> tdigestInfo(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestInfo(key));
+    }
+
+    @Override
+    public Mono<Double> tdigestMax(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMax(key));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, K sourceKey) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, K sourceKey, TDigestMergeArgs mergeArgs) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKey, mergeArgs));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, K... sourceKeys) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, sourceKeys));
+    }
+
+    @Override
+    public Mono<String> tdigestMerge(K destination, TDigestMergeArgs mergeArgs, K... sourceKeys) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMerge(destination, mergeArgs, sourceKeys));
+    }
+
+    @Override
+    public Mono<Double> tdigestMin(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestMin(key));
+    }
+
+    @Override
+    public Flux<Double> tdigestQuantile(K key, double quantile) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestQuantile(key, quantile));
+    }
+
+    @Override
+    public Flux<Double> tdigestQuantile(K key, double... quantiles) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestQuantile(key, quantiles));
+    }
+
+    @Override
+    public Flux<Long> tdigestRank(K key, double value) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRank(key, value));
+    }
+
+    @Override
+    public Flux<Long> tdigestRank(K key, double... values) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRank(key, values));
+    }
+
+    @Override
+    public Mono<String> tdigestReset(K key) {
+        return createMono(() -> tDigestCommandBuilder.tdigestReset(key));
+    }
+
+    @Override
+    public Flux<Long> tdigestRevRank(K key, double value) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRevRank(key, value));
+    }
+
+    @Override
+    public Flux<Long> tdigestRevRank(K key, double... values) {
+        return createDissolvingFlux(() -> tDigestCommandBuilder.tdigestRevRank(key, values));
+    }
+
+    @Override
+    public Mono<Double> tdigestTrimmedMean(K key, double lowCutQuantile, double highCutQuantile) {
+        return createMono(() -> tDigestCommandBuilder.tdigestTrimmedMean(key, lowCutQuantile, highCutQuantile));
+    }
+
+    @Override
+    public Mono<String> tsCreate(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreate(key));
+    }
+
+    @Override
+    public Mono<String> tsCreate(K key, TsCreateArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreate(key, args));
+    }
+
+    @Override
+    public Mono<String> tsAlter(K key, TsAlterArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAlter(key, args));
+    }
+
+    @Override
+    public Mono<Long> tsDel(K key, Range<Long> range) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDel(key, range));
+    }
+
+    @Override
+    public Mono<TsInfoValue<K>> tsInfo(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsInfo(key));
+    }
+
+    @Override
+    public Mono<TsInfoValue<K>> tsInfo(K key, boolean debug) {
+        return createMono(() -> timeSeriesCommandBuilder.tsInfo(key, debug));
+    }
+
+    @Override
+    public Mono<Long> tsAddNow(K key, double value) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAddNow(key, value));
+    }
+
+    @Override
+    public Mono<Long> tsAddNow(K key, double value, TsAddArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAddNow(key, value, args));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, long timestamp, double value) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, timestamp, value));
+    }
+
+    @Override
+    public Mono<Long> tsAdd(K key, long timestamp, double value, TsAddArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsAdd(key, timestamp, value, args));
+    }
+
+    @Override
+    public Flux<Value<Long>> tsMAdd(List<TsMAddValue<K>> samples) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMAddValues(samples));
+    }
+
+    @Override
+    public Mono<Long> tsIncrBy(K key, double addend) {
+        return createMono(() -> timeSeriesCommandBuilder.tsIncrBy(key, addend));
+    }
+
+    @Override
+    public Mono<Long> tsIncrBy(K key, double addend, TsIncrByArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsIncrBy(key, addend, args));
+    }
+
+    @Override
+    public Mono<Long> tsDecrBy(K key, double subtrahend) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDecrBy(key, subtrahend));
+    }
+
+    @Override
+    public Mono<Long> tsDecrBy(K key, double subtrahend, TsIncrByArgs args) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDecrBy(key, subtrahend, args));
+    }
+
+    @Override
+    public Mono<String> tsCreateRule(K sourceKey, K destKey, TsAggregation aggregation, long bucketDuration) {
+        return createMono(() -> timeSeriesCommandBuilder.tsCreateRule(sourceKey, destKey, aggregation, bucketDuration));
+    }
+
+    @Override
+    public Mono<String> tsCreateRule(K sourceKey, K destKey, TsAggregation aggregation, long bucketDuration,
+            long alignTimestamp) {
+        return createMono(
+                () -> timeSeriesCommandBuilder.tsCreateRule(sourceKey, destKey, aggregation, bucketDuration, alignTimestamp));
+    }
+
+    @Override
+    public Mono<String> tsDeleteRule(K sourceKey, K destKey) {
+        return createMono(() -> timeSeriesCommandBuilder.tsDeleteRule(sourceKey, destKey));
+    }
+
+    @Override
+    public Mono<TsSample> tsGet(K key) {
+        return createMono(() -> timeSeriesCommandBuilder.tsGet(key));
+    }
+
+    @Override
+    public Mono<TsSample> tsGet(K key, boolean latest) {
+        return createMono(() -> timeSeriesCommandBuilder.tsGet(key, latest));
+    }
+
+    @Override
+    public Flux<TsSample> tsRange(K key, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRange(key, range));
+    }
+
+    @Override
+    public Flux<TsSample> tsRange(K key, Range<Long> range, TsRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRange(key, range, args));
+    }
+
+    @Override
+    public Flux<TsSample> tsRevRange(K key, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRevRange(key, range));
+    }
+
+    @Override
+    public Flux<TsSample> tsRevRange(K key, Range<Long> range, TsRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRevRange(key, range, args));
+    }
+
+    @Override
+    public Flux<TsSample> tsRead(K key, TsReadOffset offset) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRead(key, offset));
+    }
+
+    @Override
+    public Flux<TsSample> tsRead(K key, TsReadOffset offset, TsReadArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsRead(key, offset, args));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(filter));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(filters));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs args, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(args, filter));
+    }
+
+    @Override
+    public Flux<TsMGetValue<K>> tsMGet(TsMGetArgs args, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMGet(args, filters));
+    }
+
+    @Override
+    public Flux<K> tsQueryIndex(TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryIndex(filter));
+    }
+
+    @Override
+    public Flux<K> tsQueryIndex(TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryIndex(filters));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRange(range, filter));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRange(range, filters));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRange(range, args, filter));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRange(range, args, filters));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRevRange(range, filter));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRevRange(range, filters));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRevRange(range, args, filter));
+    }
+
+    @Override
+    public Flux<TsSeries<K>> tsMRevRange(Range<Long> range, TsMRangeArgs args, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsMRevRange(range, args, filters));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabels() {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabels());
+    }
+
+    @Override
+    public Flux<String> tsQueryLabels(TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabels(filter));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabels(TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabels(filters));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabelValues(label));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label, TsFilter filter) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabelValues(label, filter));
+    }
+
+    @Override
+    public Flux<String> tsQueryLabelValues(String label, TsFilter... filters) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsQueryLabelValues(label, filters));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(List<K> keys, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(keys, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(List<K> keys, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(keys, range, args));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(K key1, K key2, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(key1, key2, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRange(K key1, K key2, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRange(key1, key2, range, args));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(List<K> keys, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(keys, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(List<K> keys, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(keys, range, args));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(K key1, K key2, Range<Long> range) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(key1, key2, range));
+    }
+
+    @Override
+    public Flux<TsNRangeRow> tsNRevRange(K key1, K key2, Range<Long> range, TsNRangeArgs args) {
+        return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(key1, key2, range, args));
+    }
+
+    @Override
+    public Flux<Long> sexpire(K key, long seconds, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.sexpire(key, seconds, null, members));
+    }
+
+    @Override
+    public Mono<Long> sexpire(K key, long seconds, V member) {
+        return createMono(() -> commandBuilder.sexpire(key, seconds, null, member));
+    }
+
+    @Override
+    public Flux<Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createDissolvingFlux(() -> commandBuilder.sexpire(key, seconds, expireArgs, members));
+    }
+
+    @Override
+    public Mono<Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createMono(() -> commandBuilder.sexpire(key, seconds, expireArgs, member));
+    }
+
+    @Override
+    public Flux<Long> sexpire(K key, Duration seconds, V... members) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, members);
+    }
+
+    @Override
+    public Mono<Long> sexpire(K key, Duration seconds, V member) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, member);
+    }
+
+    @Override
+    public Flux<Long> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> spexpire(K key, long milliseconds, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.spexpire(key, milliseconds, null, members));
+    }
+
+    @Override
+    public Mono<Long> spexpire(K key, long milliseconds, V member) {
+        return createMono(() -> commandBuilder.spexpire(key, milliseconds, null, member));
+    }
+
+    @Override
+    public Flux<Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createDissolvingFlux(() -> commandBuilder.spexpire(key, milliseconds, expireArgs, members));
+    }
+
+    @Override
+    public Mono<Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createMono(() -> commandBuilder.spexpire(key, milliseconds, expireArgs, member));
+    }
+
+    @Override
+    public Flux<Long> spexpire(K key, Duration milliseconds, V... members) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), members);
+    }
+
+    @Override
+    public Mono<Long> spexpire(K key, Duration milliseconds, V member) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), member);
+    }
+
+    @Override
+    public Flux<Long> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, long timestamp, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.sexpireat(key, timestamp, null, members));
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, long timestamp, V member) {
+        return createMono(() -> commandBuilder.sexpireat(key, timestamp, null, member));
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createDissolvingFlux(() -> commandBuilder.sexpireat(key, timestamp, expireArgs, members));
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createMono(() -> commandBuilder.sexpireat(key, timestamp, expireArgs, member));
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, Date timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, members);
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, Date timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, member);
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, Instant timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, members);
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, Instant timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, member);
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, long timestamp, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.spexpireat(key, timestamp, null, members));
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, long timestamp, V member) {
+        return createMono(() -> commandBuilder.spexpireat(key, timestamp, null, member));
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createDissolvingFlux(() -> commandBuilder.spexpireat(key, timestamp, expireArgs, members));
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createMono(() -> commandBuilder.spexpireat(key, timestamp, expireArgs, member));
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, Date timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), members);
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, Date timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), member);
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, Instant timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), members);
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, Instant timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), member);
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> sttl(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.sttl(key, members));
+    }
+
+    @Override
+    public Mono<Long> sttl(K key, V member) {
+        return createMono(() -> commandBuilder.sttl(key, member));
+    }
+
+    @Override
+    public Flux<Long> spttl(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.spttl(key, members));
+    }
+
+    @Override
+    public Mono<Long> spttl(K key, V member) {
+        return createMono(() -> commandBuilder.spttl(key, member));
+    }
+
+    @Override
+    public Flux<Long> sexpiretime(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.sexpiretime(key, members));
+    }
+
+    @Override
+    public Mono<Long> sexpiretime(K key, V member) {
+        return createMono(() -> commandBuilder.sexpiretime(key, member));
+    }
+
+    @Override
+    public Flux<Long> spexpiretime(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.spexpiretime(key, members));
+    }
+
+    @Override
+    public Mono<Long> spexpiretime(K key, V member) {
+        return createMono(() -> commandBuilder.spexpiretime(key, member));
+    }
+
+    @Override
+    public Flux<Long> spersist(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.spersist(key, members));
+    }
+
+    @Override
+    public Mono<Long> spersist(K key, V member) {
+        return createMono(() -> commandBuilder.spersist(key, member));
+    }
+
+    @Override
+    public Mono<Long> saddex(K key, V... members) {
+        return createMono(() -> commandBuilder.saddex(key, members));
+    }
+
+    @Override
+    public Mono<Long> saddex(K key, V member) {
+        return createMono(() -> commandBuilder.saddex(key, member));
+    }
+
+    @Override
+    public Mono<Long> saddex(K key, SAddExArgs sAddExArgs, V... members) {
+        LettuceAssert.notNull(sAddExArgs, "SAddExArgs must not be null");
+        return createMono(() -> commandBuilder.saddex(key, sAddExArgs, members));
+    }
+
+    @Override
+    public Mono<Long> saddex(K key, SAddExArgs sAddExArgs, V member) {
+        LettuceAssert.notNull(sAddExArgs, "SAddExArgs must not be null");
+        return createMono(() -> commandBuilder.saddex(key, sAddExArgs, member));
     }
 
 }

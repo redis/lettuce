@@ -136,6 +136,43 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
     suspend fun bitpos(key: K, state: Boolean, start: Long, end: Long): Long?
 
     /**
+     * Return the offsets of the set bits in a range of a bitmap, in ascending order.
+     *
+     * The range is interpreted as in `BITCOUNT`: inclusive, in bytes, with negative indexes counted from the end. The
+     * range is clamped to the value: an end past the last byte stops there, and an inverted range or one past the end returns
+     * an empty list. The offsets are bit offsets. Works on string and native bitmaps.
+     *
+     * @param key the key.
+     * @param start the first byte of the range, inclusive; negative values count from the end.
+     * @param end the last byte of the range, inclusive; negative values count from the end.
+     * @return the bit offsets, possibly empty.
+     * @since 8.0
+     */
+    suspend fun bitrangeintarray(key: K, start: Long, end: Long): List<Long>
+
+    /**
+     * Return the offsets of the set bits, or of the clear bits with [BitRangeIntArrayArgs.zeros], in a range of a bitmap,
+     * in ascending order.
+     *
+     * With [BitRangeIntArrayArgs.limit], the lowest `count` offsets are returned. In byte units the server completes the
+     * byte that holds the last of them, so a page can hold up to 7 offsets more than `count`; the next page starts at byte
+     * `last / 8 + 1`. In bit units ([BitRangeIntArrayArgs.bit]) a page holds at most `count` offsets and the next starts at
+     * `last + 1`. A shorter page ends the scan. Pages are separate commands and share no snapshot.
+     *
+     * The range is clamped to the value, in the unit of `args`. With [BitRangeIntArrayArgs.zeros], only the clear bits
+     * inside the value are returned, never bits past its end: a missing key, an empty value or a range past the end returns
+     * an empty list.
+     *
+     * @param key the key.
+     * @param start the first index of the range, inclusive, in the unit of `args`; negative values count from the end.
+     * @param end the last index of the range, inclusive, in the unit of `args`; negative values count from the end.
+     * @param args the unit, limit and clear-bit options.
+     * @return the bit offsets, possibly empty.
+     * @since 8.0
+     */
+    suspend fun bitrangeintarray(key: K, start: Long, end: Long, args: BitRangeIntArrayArgs): List<Long>
+
+    /**
      * Perform bitwise AND between strings.
      *
      * @param destination result key of the operation.
@@ -454,12 +491,50 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * WITHMATCHLEN] is given each array representing a match will also have the length of the match.</li>
      * </ul>
      *
-     * @param lcsArgs command arguments supplied by the [LcsArgs].
+     * @param lcsArgs command arguments supplied by the [LcsArgs], including the keys set through [LcsArgs.Builder.keys].
      * @return StringMatchResult
-     * @see <a href="https://redis.io/commands/lcs">LCS command refference</a>
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
      * @since 6.6
      */
+    @Deprecated(
+        "Use [lcs(key1, key2)] or [lcs(key1, key2, lcsArgs)] instead and pass the keys directly, " +
+            "e.g. lcs(k1, k2, LcsArgs.Builder.withIdx()) instead of lcs(LcsArgs.Builder.keys(k1, k2).withIdx()). " +
+            "The keys carried by [LcsArgs] are encoded as plain strings and not through the key codec."
+    )
     suspend fun lcs(lcsArgs: LcsArgs): StringMatchResult?
+
+    /**
+     * Return the longest common substring of the values stored at `key1` and `key2`.
+     *
+     * @param key1 the first key.
+     * @param key2 the second key.
+     * @return V bulk-string-reply the longest common substring, or an empty value when the values have no common substring or
+     *         one of the keys does not exist.
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
+     * @since 7.8
+     */
+    suspend fun lcs(key1: K, key2: K): V?
+
+    /**
+     * The LCS command implements the longest common subsequence algorithm on the values stored at `key1` and `key2`.
+     *
+     * <ul>
+     * <li>Without modifiers, the string representing the longest common substring is returned.</li>
+     * <li>When [LcsArgs#justLen LEN] is given the command returns the length of the longest common substring.</li>
+     * <li>When [LcsArgs#withIdx IDX] is given the command returns an array with the LCS length and all the ranges in
+     * both the strings, start and end offset for each string, where there are matches. When [LcsArgs#withMatchLen
+     * WITHMATCHLEN] is given each array representing a match will also have the length of the match.</li>
+     * </ul>
+     *
+     * @param key1 the first key.
+     * @param key2 the second key.
+     * @param lcsArgs command arguments supplied by the [LcsArgs], must not carry keys set through the deprecated
+     *        [LcsArgs.Builder.keys].
+     * @return StringMatchResult
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
+     * @since 7.8
+     */
+    suspend fun lcs(key1: K, key2: K, lcsArgs: LcsArgs): StringMatchResult?
 
     /**
      * Get the length of the value stored in a key.

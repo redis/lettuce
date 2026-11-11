@@ -34,6 +34,7 @@ import io.lettuce.test.TestFutures;
  * Unit tests for {@link ClusterNodeEndpoint}.
  *
  * @author Mark Paluch
+ * @author Vaibhav Vashisht
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
@@ -60,7 +61,7 @@ class ClusterNodeEndpointUnitTests {
 
         when(clientOptions.getReplayFilter()).thenReturn((cmd) -> false);
         when(clientOptions.getRequestQueueSize()).thenReturn(1000);
-        when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.DEFAULT);
+        when(clientOptions.isRejectCommandsWhileDisconnected()).thenReturn(true);
 
         prepareNewEndpoint();
     }
@@ -109,7 +110,7 @@ class ClusterNodeEndpointUnitTests {
     @Test
     void closeWithBufferedCommands() {
 
-        when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
+        when(clientOptions.isRejectCommandsWhileDisconnected()).thenReturn(false);
         prepareNewEndpoint();
 
         sut.write(command);
@@ -122,7 +123,7 @@ class ClusterNodeEndpointUnitTests {
     @Test
     void closeWithCancelledBufferedCommands() {
 
-        when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
+        when(clientOptions.isRejectCommandsWhileDisconnected()).thenReturn(false);
         prepareNewEndpoint();
 
         sut.write(command);
@@ -136,7 +137,7 @@ class ClusterNodeEndpointUnitTests {
     @Test
     void closeWithBufferedCommandsFails() {
 
-        when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS);
+        when(clientOptions.isRejectCommandsWhileDisconnected()).thenReturn(false);
         prepareNewEndpoint();
 
         sut.write(command);

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.lettuce.core.BitFieldArgs;
+import io.lettuce.core.BitRangeIntArrayArgs;
 import io.lettuce.core.GetExArgs;
 import io.lettuce.core.IncrexArgs;
 import io.lettuce.core.IncrexFloatArgs;
@@ -145,6 +146,46 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      *         returns -1 as the user specified a clear range and there are no 0 bits in that range.
      */
     AsyncExecutions<Long> bitpos(K key, boolean state, long start, long end);
+
+    /**
+     * Return the offsets of the set bits in a range of a bitmap, in ascending order.
+     * <p>
+     * The range is interpreted as in {@code BITCOUNT}: inclusive, in bytes, with negative indexes counted from the end. The
+     * range is clamped to the value: an end past the last byte stops there, and an inverted range or one past the end returns
+     * an empty list. The offsets are bit offsets. Works on string and native bitmaps.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param start the first byte of the range, inclusive; negative values count from the end.
+     * @param end the last byte of the range, inclusive; negative values count from the end.
+     * @return the bit offsets, possibly empty, never {@code null}.
+     * @throws IllegalArgumentException if {@code key} is {@code null}.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> bitrangeintarray(K key, long start, long end);
+
+    /**
+     * Return the offsets of the set bits, or of the clear bits with {@link BitRangeIntArrayArgs#zeros()}, in a range of a
+     * bitmap, in ascending order.
+     * <p>
+     * With {@link BitRangeIntArrayArgs#limit(long)}, the lowest {@code count} offsets are returned. In byte units the server
+     * completes the byte that holds the last of them, so a page can hold up to 7 offsets more than {@code count}; the next page
+     * starts at byte {@code last / 8 + 1}. In bit units ({@link BitRangeIntArrayArgs#bit()}) a page holds at most {@code count}
+     * offsets and the next starts at {@code last + 1}. A shorter page ends the scan. Pages are separate commands and share no
+     * snapshot.
+     * <p>
+     * The range is clamped to the value, in the unit of {@code args}. With {@link BitRangeIntArrayArgs#zeros()}, only the clear
+     * bits inside the value are returned, never bits past its end: a missing key, an empty value or a range past the end
+     * returns an empty list.
+     *
+     * @param key the key, must not be {@code null}.
+     * @param start the first index of the range, inclusive, in the unit of {@code args}; negative values count from the end.
+     * @param end the last index of the range, inclusive, in the unit of {@code args}; negative values count from the end.
+     * @param args the unit, limit and clear-bit options, must not be {@code null}.
+     * @return the bit offsets, possibly empty, never {@code null}.
+     * @throws IllegalArgumentException if {@code key} or {@code args} is {@code null}.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> bitrangeintarray(K key, long start, long end, BitRangeIntArrayArgs args);
 
     /**
      * Perform bitwise AND between strings.
@@ -525,7 +566,7 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      *
      * @param strAlgoArgs command arguments.
      * @return StringMatchResult.
-     * @deprecated since 6.6 in favor of {@link #lcs(LcsArgs)}.
+     * @deprecated since 6.6 in favor of {@link #lcs(K, K, LcsArgs)}.
      * @since 6.0
      */
     @Deprecated
@@ -542,12 +583,52 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * WITHMATCHLEN} is given each array representing a match will also have the length of the match.</li>
      * </ul>
      *
-     * @param lcsArgs command arguments supplied by the {@link LcsArgs}.
+     * @param lcsArgs command arguments supplied by the {@link LcsArgs}, including the keys set through
+     *        {@link LcsArgs.Builder#keys(String...)}.
      * @return StringMatchResult
-     * @see <a href="https://redis.io/commands/lcs">LCS command refference</a>
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
      * @since 6.6
+     * @deprecated since 7.8, use {@link #lcs(K, K)} or {@link #lcs(K, K, LcsArgs)} instead; scheduled for removal in a future
+     *             major release. The keys carried by {@link LcsArgs} are encoded as plain strings and not through the key
+     *             codec, so this method neither works with non-{@code String} key codecs nor participates in Redis Cluster slot
+     *             routing.
      */
+    @Deprecated
     AsyncExecutions<StringMatchResult> lcs(LcsArgs lcsArgs);
+
+    /**
+     * Return the longest common substring of the values stored at {@code key1} and {@code key2}.
+     *
+     * @param key1 the first key, must not be {@code null}.
+     * @param key2 the second key, must not be {@code null}.
+     * @return V bulk-string-reply the longest common substring, or an empty value when the values have no common substring or
+     *         one of the keys does not exist.
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
+     * @since 7.8
+     */
+    AsyncExecutions<V> lcs(K key1, K key2);
+
+    /**
+     * The LCS command implements the longest common subsequence algorithm on the values stored at {@code key1} and
+     * {@code key2}.
+     *
+     * <ul>
+     * <li>Without modifiers, the string representing the longest common substring is returned.</li>
+     * <li>When {@link LcsArgs#justLen() LEN} is given the command returns the length of the longest common substring.</li>
+     * <li>When {@link LcsArgs#withIdx() IDX} is given the command returns an array with the LCS length and all the ranges in
+     * both the strings, start and end offset for each string, where there are matches. When {@link LcsArgs#withMatchLen()
+     * WITHMATCHLEN} is given each array representing a match will also have the length of the match.</li>
+     * </ul>
+     *
+     * @param key1 the first key, must not be {@code null}.
+     * @param key2 the second key, must not be {@code null}.
+     * @param lcsArgs command arguments supplied by the {@link LcsArgs}, must not be {@code null} and must not carry keys set
+     *        through the deprecated {@link LcsArgs.Builder#keys(String...)}.
+     * @return StringMatchResult
+     * @see <a href="https://redis.io/commands/lcs">LCS command reference</a>
+     * @since 7.8
+     */
+    AsyncExecutions<StringMatchResult> lcs(K key1, K key2, LcsArgs lcsArgs);
 
     /**
      * Get the length of the value stored in a key.

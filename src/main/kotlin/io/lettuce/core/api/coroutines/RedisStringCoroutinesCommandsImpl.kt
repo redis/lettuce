@@ -54,6 +54,12 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun bitpos(key: K, state: Boolean, start: Long, end: Long): Long? = ops.bitpos(key, state, start, end).awaitFirstOrNull()
 
+    override suspend fun bitrangeintarray(key: K, start: Long, end: Long): List<Long> =
+        ops.bitrangeintarray(key, start, end).asFlow().toList()
+
+    override suspend fun bitrangeintarray(key: K, start: Long, end: Long, args: BitRangeIntArrayArgs): List<Long> =
+        ops.bitrangeintarray(key, start, end, args).asFlow().toList()
+
     override suspend fun bitopAnd(destination: K, vararg keys: K): Long? = ops.bitopAnd(destination, *keys).awaitFirstOrNull()
 
     override suspend fun bitopNot(destination: K, source: K): Long? = ops.bitopNot(destination, source).awaitFirstOrNull()
@@ -130,7 +136,13 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun setrange(key: K, offset: Long, value: V): Long? = ops.setrange(key, offset, value).awaitFirstOrNull()
 
+    @Suppress("DEPRECATION")
     override suspend fun lcs(lcsArgs: LcsArgs): StringMatchResult? = ops.lcs(lcsArgs).awaitFirstOrNull()
+
+    override suspend fun lcs(key1: K, key2: K): V? = ops.lcs(key1, key2).awaitFirstOrNull()
+
+    override suspend fun lcs(key1: K, key2: K, lcsArgs: LcsArgs): StringMatchResult? =
+        ops.lcs(key1, key2, lcsArgs).awaitFirstOrNull()
 
     override suspend fun strlen(key: K): Long? = ops.strlen(key).awaitFirstOrNull()
 

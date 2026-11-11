@@ -1,7 +1,6 @@
 package io.lettuce.core.failover.api;
 
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.StatefulRedisConnection;
 
 /**
@@ -11,7 +10,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
  * @author Ivo Gaydazhiev
  * @since 7.4
  */
-@Experimental
 @FunctionalInterface
 public interface RawConnectionFactory {
 

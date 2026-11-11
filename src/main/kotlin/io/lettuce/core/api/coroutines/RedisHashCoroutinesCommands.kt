@@ -20,9 +20,12 @@
 
 package io.lettuce.core.api.coroutines
 
+import io.lettuce.core.annotations.Experimental
+
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.ExpireArgs
 import kotlinx.coroutines.flow.Flow
+import io.lettuce.core.HashImport
 import io.lettuce.core.KeyScanCursor
 import io.lettuce.core.KeyValue
 import io.lettuce.core.MapScanCursor
@@ -697,5 +700,27 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      */
     suspend fun hpttl(key: K, vararg fields: K): List<Long>
 
+    /**
+     * Create the hash stored at `key` from `fieldset`, sending only the values, positionally paired to the fieldset's field
+     * names. The created key is an ordinary hash.
+     *
+     * The field names are declared to the server once per connection on first use, and re-declared transparently across
+     * reconnects, pooled connections, and new cluster nodes, so each import carries values only. [HashImport.close] the
+     * fieldset when the import is finished to release its server-side state.
+     *
+     * Not supported inside a `MULTI` transaction.
+     *
+     * @param key the key of the hash to create, must not be `null`.
+     * @param fieldset the field names to import into, must not be `null` and must not be closed.
+     * @param values the values in fieldset order, must not be `null` and must contain exactly [HashImport.size] elements.
+     * @return String simple-string-reply `OK`.
+     * @throws IllegalArgumentException if `key`, `fieldset`, or `values` is `null`, or if the number of `values` does not match
+     *         [HashImport.size].
+     * @throws IllegalStateException if `fieldset` has been closed.
+     * @throws UnsupportedOperationException if invoked within a `MULTI` transaction.
+     * @since 7.7
+     */
+    @Experimental
+    suspend fun himportSet(key: K, fieldset: HashImport<K>, vararg values: V): String?
 }
 

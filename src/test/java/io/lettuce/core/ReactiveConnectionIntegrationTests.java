@@ -94,6 +94,16 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    void commandsAccessorReturnsWorkingReactiveApi() {
+
+        RedisReactiveCommands<String, String> commands = connection.commands(RedisReactiveCommands.factory());
+
+        StepVerifier.create(commands.ping()).expectNext("PONG").verifyComplete();
+        assertThat(commands).isSameAs(connection.reactive());
+    }
+
+    @Test
     void fireCommandAfterObserve() {
         StepVerifier.create(reactive.set(key, value)).expectNext("OK").verifyComplete();
         assertThat(redis.get(key)).isEqualTo(value);

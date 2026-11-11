@@ -40,8 +40,9 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
         RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
         RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>,
         RedisStringReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
-        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V>, RedisArrayReactiveCommands<K, V>,
-        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V> {
+        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K>, RedisArrayReactiveCommands<K, V>,
+        RedisBloomFilterReactiveCommands<K, V>, RedisCuckooFilterReactiveCommands<K, V>, RedisTopKReactiveCommands<K, V>,
+        RedisCMSReactiveCommands<K, V>, RedisTDigestReactiveCommands<K, V>, RedisTimeSeriesReactiveCommands<K> {
 
     /**
      * Authenticate to the server.
@@ -102,11 +103,11 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
      * @param <K> Key type
      * @param <V> Value type
      * @return the factory that creates {@link RedisReactiveCommands}
-     * @since 7.7
+     * @since 7.8
      */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings("unchecked")
     static <K, V> CommandsFactory<StatefulRedisConnection<K, V>, RedisReactiveCommands<K, V>> factory() {
-        return (CommandsFactory) FactoryHolder.INSTANCE;
+        return FactoryHolder.INSTANCE;
     }
 
     /**
@@ -118,10 +119,21 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
         private FactoryHolder() {
         }
 
+        @SuppressWarnings("rawtypes")
+        private static final CommandsFactory INSTANCE = newFactory();
+
+        /**
+         * Create the shared factory. Separate from {@code INSTANCE} so that a GraalVM native image substitution can replace it,
+         * keeping the Reactor-based implementation out of images built without Reactor.
+         *
+         * @return the factory creating {@link RedisReactiveCommands} instances.
+         */
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        private static final CommandsFactory INSTANCE = CommandsFactory.of(RedisReactiveCommands.class,
-                (StatefulRedisConnection c) -> new RedisReactiveCommandsImpl(c, c.getCodec(),
-                        () -> c.getOptions().getJsonParser().get()));
+        private static CommandsFactory newFactory() {
+            return CommandsFactory.of(RedisReactiveCommands.class,
+                    (StatefulRedisConnection c) -> new RedisReactiveCommandsImpl(c, c.getCodec(),
+                            () -> c.getOptions().getJsonParser().get()));
+        }
 
     }
 
