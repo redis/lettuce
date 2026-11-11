@@ -464,6 +464,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Flux<Long> bitrangeintarray(K key, long start, long end) {
+        return createDissolvingFlux(() -> commandBuilder.bitrangeintarray(key, start, end));
+    }
+
+    @Override
+    public Flux<Long> bitrangeintarray(K key, long start, long end, BitRangeIntArrayArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.bitrangeintarray(key, start, end, args));
+    }
+
+    @Override
     public Mono<V> blmove(K source, K destination, LMoveArgs args, long timeout) {
         return createMono(() -> commandBuilder.blmove(source, destination, args, timeout));
     }
@@ -5311,6 +5321,310 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<TsNRangeRow> tsNRevRange(K key1, K key2, Range<Long> range, TsNRangeArgs args) {
         return createDissolvingFlux(() -> timeSeriesCommandBuilder.tsNRevRange(key1, key2, range, args));
+    }
+
+    @Override
+    public Flux<Long> sexpire(K key, long seconds, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.sexpire(key, seconds, null, members));
+    }
+
+    @Override
+    public Mono<Long> sexpire(K key, long seconds, V member) {
+        return createMono(() -> commandBuilder.sexpire(key, seconds, null, member));
+    }
+
+    @Override
+    public Flux<Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createDissolvingFlux(() -> commandBuilder.sexpire(key, seconds, expireArgs, members));
+    }
+
+    @Override
+    public Mono<Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createMono(() -> commandBuilder.sexpire(key, seconds, expireArgs, member));
+    }
+
+    @Override
+    public Flux<Long> sexpire(K key, Duration seconds, V... members) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, members);
+    }
+
+    @Override
+    public Mono<Long> sexpire(K key, Duration seconds, V member) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, member);
+    }
+
+    @Override
+    public Flux<Long> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> spexpire(K key, long milliseconds, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.spexpire(key, milliseconds, null, members));
+    }
+
+    @Override
+    public Mono<Long> spexpire(K key, long milliseconds, V member) {
+        return createMono(() -> commandBuilder.spexpire(key, milliseconds, null, member));
+    }
+
+    @Override
+    public Flux<Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createDissolvingFlux(() -> commandBuilder.spexpire(key, milliseconds, expireArgs, members));
+    }
+
+    @Override
+    public Mono<Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createMono(() -> commandBuilder.spexpire(key, milliseconds, expireArgs, member));
+    }
+
+    @Override
+    public Flux<Long> spexpire(K key, Duration milliseconds, V... members) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), members);
+    }
+
+    @Override
+    public Mono<Long> spexpire(K key, Duration milliseconds, V member) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), member);
+    }
+
+    @Override
+    public Flux<Long> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, long timestamp, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.sexpireat(key, timestamp, null, members));
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, long timestamp, V member) {
+        return createMono(() -> commandBuilder.sexpireat(key, timestamp, null, member));
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createDissolvingFlux(() -> commandBuilder.sexpireat(key, timestamp, expireArgs, members));
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createMono(() -> commandBuilder.sexpireat(key, timestamp, expireArgs, member));
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, Date timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, members);
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, Date timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, member);
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, Instant timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, members);
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, Instant timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, member);
+    }
+
+    @Override
+    public Flux<Long> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, long timestamp, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.spexpireat(key, timestamp, null, members));
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, long timestamp, V member) {
+        return createMono(() -> commandBuilder.spexpireat(key, timestamp, null, member));
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createDissolvingFlux(() -> commandBuilder.spexpireat(key, timestamp, expireArgs, members));
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return createMono(() -> commandBuilder.spexpireat(key, timestamp, expireArgs, member));
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, Date timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), members);
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, Date timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), member);
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, Instant timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), members);
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, Instant timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), member);
+    }
+
+    @Override
+    public Flux<Long> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), expireArgs, members);
+    }
+
+    @Override
+    public Mono<Long> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), expireArgs, member);
+    }
+
+    @Override
+    public Flux<Long> sttl(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.sttl(key, members));
+    }
+
+    @Override
+    public Mono<Long> sttl(K key, V member) {
+        return createMono(() -> commandBuilder.sttl(key, member));
+    }
+
+    @Override
+    public Flux<Long> spttl(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.spttl(key, members));
+    }
+
+    @Override
+    public Mono<Long> spttl(K key, V member) {
+        return createMono(() -> commandBuilder.spttl(key, member));
+    }
+
+    @Override
+    public Flux<Long> sexpiretime(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.sexpiretime(key, members));
+    }
+
+    @Override
+    public Mono<Long> sexpiretime(K key, V member) {
+        return createMono(() -> commandBuilder.sexpiretime(key, member));
+    }
+
+    @Override
+    public Flux<Long> spexpiretime(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.spexpiretime(key, members));
+    }
+
+    @Override
+    public Mono<Long> spexpiretime(K key, V member) {
+        return createMono(() -> commandBuilder.spexpiretime(key, member));
+    }
+
+    @Override
+    public Flux<Long> spersist(K key, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.spersist(key, members));
+    }
+
+    @Override
+    public Mono<Long> spersist(K key, V member) {
+        return createMono(() -> commandBuilder.spersist(key, member));
+    }
+
+    @Override
+    public Mono<Long> saddex(K key, V... members) {
+        return createMono(() -> commandBuilder.saddex(key, members));
+    }
+
+    @Override
+    public Mono<Long> saddex(K key, V member) {
+        return createMono(() -> commandBuilder.saddex(key, member));
+    }
+
+    @Override
+    public Mono<Long> saddex(K key, SAddExArgs sAddExArgs, V... members) {
+        LettuceAssert.notNull(sAddExArgs, "SAddExArgs must not be null");
+        return createMono(() -> commandBuilder.saddex(key, sAddExArgs, members));
+    }
+
+    @Override
+    public Mono<Long> saddex(K key, SAddExArgs sAddExArgs, V member) {
+        LettuceAssert.notNull(sAddExArgs, "SAddExArgs must not be null");
+        return createMono(() -> commandBuilder.saddex(key, sAddExArgs, member));
     }
 
 }

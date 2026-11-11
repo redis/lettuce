@@ -138,6 +138,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author SeugnSu Kim
  * @author Yordan Tsintsov
  * @author dae won
+ * @author Taewoong Kim
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
@@ -408,6 +409,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Long> bitpos(K key, boolean state, long start, long end) {
         return dispatch(commandBuilder.bitpos(key, state, start, end));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> bitrangeintarray(K key, long start, long end) {
+        return dispatch(commandBuilder.bitrangeintarray(key, start, end));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> bitrangeintarray(K key, long start, long end, BitRangeIntArrayArgs args) {
+        return dispatch(commandBuilder.bitrangeintarray(key, start, end, args));
     }
 
     @Override
@@ -3096,7 +3107,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
-        return dispatch(commandBuilder.sortReadOnly(channel, key, sortArgs));
+        return dispatch(commandBuilder.sort(channel, key, sortArgs));
     }
 
     @Override
@@ -5213,6 +5224,310 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<TsNRangeRow>> tsNRevRange(K key1, K key2, Range<Long> range, TsNRangeArgs args) {
         return dispatch(timeSeriesCommandBuilder.tsNRevRange(key1, key2, range, args));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sexpire(K key, long seconds, V... members) {
+        return dispatch(commandBuilder.sexpire(key, seconds, null, members));
+    }
+
+    @Override
+    public RedisFuture<Long> sexpire(K key, long seconds, V member) {
+        return dispatch(commandBuilder.sexpire(key, seconds, null, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sexpire(K key, long seconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return dispatch(commandBuilder.sexpire(key, seconds, expireArgs, members));
+    }
+
+    @Override
+    public RedisFuture<Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return dispatch(commandBuilder.sexpire(key, seconds, expireArgs, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sexpire(K key, Duration seconds, V... members) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, members);
+    }
+
+    @Override
+    public RedisFuture<Long> sexpire(K key, Duration seconds, V member) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, expireArgs, members);
+    }
+
+    @Override
+    public RedisFuture<Long> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return sexpire(key, seconds.toMillis() / 1000, expireArgs, member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spexpire(K key, long milliseconds, V... members) {
+        return dispatch(commandBuilder.spexpire(key, milliseconds, null, members));
+    }
+
+    @Override
+    public RedisFuture<Long> spexpire(K key, long milliseconds, V member) {
+        return dispatch(commandBuilder.spexpire(key, milliseconds, null, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return dispatch(commandBuilder.spexpire(key, milliseconds, expireArgs, members));
+    }
+
+    @Override
+    public RedisFuture<Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return dispatch(commandBuilder.spexpire(key, milliseconds, expireArgs, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spexpire(K key, Duration milliseconds, V... members) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), members);
+    }
+
+    @Override
+    public RedisFuture<Long> spexpire(K key, Duration milliseconds, V member) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), expireArgs, members);
+    }
+
+    @Override
+    public RedisFuture<Long> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return spexpire(key, milliseconds.toMillis(), expireArgs, member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sexpireat(K key, long timestamp, V... members) {
+        return dispatch(commandBuilder.sexpireat(key, timestamp, null, members));
+    }
+
+    @Override
+    public RedisFuture<Long> sexpireat(K key, long timestamp, V member) {
+        return dispatch(commandBuilder.sexpireat(key, timestamp, null, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return dispatch(commandBuilder.sexpireat(key, timestamp, expireArgs, members));
+    }
+
+    @Override
+    public RedisFuture<Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return dispatch(commandBuilder.sexpireat(key, timestamp, expireArgs, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sexpireat(K key, Date timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, members);
+    }
+
+    @Override
+    public RedisFuture<Long> sexpireat(K key, Date timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, expireArgs, members);
+    }
+
+    @Override
+    public RedisFuture<Long> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.getTime() / 1000, expireArgs, member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sexpireat(K key, Instant timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, members);
+    }
+
+    @Override
+    public RedisFuture<Long> sexpireat(K key, Instant timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, members);
+    }
+
+    @Override
+    public RedisFuture<Long> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return sexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spexpireat(K key, long timestamp, V... members) {
+        return dispatch(commandBuilder.spexpireat(key, timestamp, null, members));
+    }
+
+    @Override
+    public RedisFuture<Long> spexpireat(K key, long timestamp, V member) {
+        return dispatch(commandBuilder.spexpireat(key, timestamp, null, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return dispatch(commandBuilder.spexpireat(key, timestamp, expireArgs, members));
+    }
+
+    @Override
+    public RedisFuture<Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(expireArgs, "ExpireArgs must not be null");
+        return dispatch(commandBuilder.spexpireat(key, timestamp, expireArgs, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spexpireat(K key, Date timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), members);
+    }
+
+    @Override
+    public RedisFuture<Long> spexpireat(K key, Date timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), expireArgs, members);
+    }
+
+    @Override
+    public RedisFuture<Long> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.getTime(), expireArgs, member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spexpireat(K key, Instant timestamp, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), members);
+    }
+
+    @Override
+    public RedisFuture<Long> spexpireat(K key, Instant timestamp, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V... members) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), expireArgs, members);
+    }
+
+    @Override
+    public RedisFuture<Long> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return spexpireat(key, timestamp.toEpochMilli(), expireArgs, member);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sttl(K key, V... members) {
+        return dispatch(commandBuilder.sttl(key, members));
+    }
+
+    @Override
+    public RedisFuture<Long> sttl(K key, V member) {
+        return dispatch(commandBuilder.sttl(key, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spttl(K key, V... members) {
+        return dispatch(commandBuilder.spttl(key, members));
+    }
+
+    @Override
+    public RedisFuture<Long> spttl(K key, V member) {
+        return dispatch(commandBuilder.spttl(key, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> sexpiretime(K key, V... members) {
+        return dispatch(commandBuilder.sexpiretime(key, members));
+    }
+
+    @Override
+    public RedisFuture<Long> sexpiretime(K key, V member) {
+        return dispatch(commandBuilder.sexpiretime(key, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spexpiretime(K key, V... members) {
+        return dispatch(commandBuilder.spexpiretime(key, members));
+    }
+
+    @Override
+    public RedisFuture<Long> spexpiretime(K key, V member) {
+        return dispatch(commandBuilder.spexpiretime(key, member));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> spersist(K key, V... members) {
+        return dispatch(commandBuilder.spersist(key, members));
+    }
+
+    @Override
+    public RedisFuture<Long> spersist(K key, V member) {
+        return dispatch(commandBuilder.spersist(key, member));
+    }
+
+    @Override
+    public RedisFuture<Long> saddex(K key, V... members) {
+        return dispatch(commandBuilder.saddex(key, members));
+    }
+
+    @Override
+    public RedisFuture<Long> saddex(K key, V member) {
+        return dispatch(commandBuilder.saddex(key, member));
+    }
+
+    @Override
+    public RedisFuture<Long> saddex(K key, SAddExArgs sAddExArgs, V... members) {
+        LettuceAssert.notNull(sAddExArgs, "SAddExArgs must not be null");
+        return dispatch(commandBuilder.saddex(key, sAddExArgs, members));
+    }
+
+    @Override
+    public RedisFuture<Long> saddex(K key, SAddExArgs sAddExArgs, V member) {
+        LettuceAssert.notNull(sAddExArgs, "SAddExArgs must not be null");
+        return dispatch(commandBuilder.saddex(key, sAddExArgs, member));
     }
 
 }

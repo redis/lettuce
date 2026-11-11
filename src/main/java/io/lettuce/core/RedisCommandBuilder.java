@@ -389,6 +389,24 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BITPOS, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, List<Long>> bitrangeintarray(K key, long start, long end) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key).add(start).add(end);
+        return createCommand(BITRANGEINTARRAY, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> bitrangeintarray(K key, long start, long end, BitRangeIntArrayArgs bitRangeIntArrayArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(bitRangeIntArrayArgs, "BitRangeIntArrayArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key).add(start).add(end);
+        bitRangeIntArrayArgs.build(args);
+        return createCommand(BITRANGEINTARRAY, new IntegerListOutput<>(codec), args);
+    }
+
     Command<K, V, V> blmove(K source, K destination, LMoveArgs lMoveArgs, long timeout) {
         LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
@@ -5073,6 +5091,277 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             return encodeKey(value);
         }
 
+    }
+
+    /**
+     * Precondition shared by the set-member-expiration commands: {@code key} present, at least one member, and the single
+     * member not being an argument object. With a {@code RedisCodec<K, Object>} a call that omits the members, such as
+     * {@code sexpire(key, 10, expireArgs)}, resolves to the single-member overload and the {@link CompositeArgument} would
+     * otherwise travel to the server as the member.
+     */
+    private static void keyAndMembersProvided(Object key, Object[] members) {
+        notNullKey(key);
+        LettuceAssert.notEmpty(members, "Members " + MUST_NOT_BE_EMPTY);
+        if (members.length == 1) {
+            notArgumentObject(members[0]);
+        }
+    }
+
+    /**
+     * Precondition shared by the single-member set-member-expiration commands: {@code key} present and the member not being an
+     * argument object (see {@link #keyAndMembersProvided(Object, Object[])}). No array is created for the member.
+     */
+    private static void keyAndMemberProvided(Object key, Object member) {
+        notNullKey(key);
+        notArgumentObject(member);
+    }
+
+    private static void notArgumentObject(Object member) {
+        LettuceAssert.isTrue(!(member instanceof CompositeArgument),
+                () -> "Members must not be a " + member.getClass().getSimpleName()
+                        + "; pass the arguments before the members, e.g. sexpire(key, seconds, expireArgs, member)");
+    }
+
+    Command<K, V, Long> saddex(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SADDEX, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> saddex(K key, SAddExArgs sAddExArgs, V... members) {
+        keyAndMembersProvided(key, members);
+        LettuceAssert.notNull(sAddExArgs, "SAddExArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        sAddExArgs.build(args);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SADDEX, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> sexpire(K key, long seconds, ExpireArgs expireArgs, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SEXPIRE, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(milliseconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SPEXPIRE, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SEXPIREAT, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SPEXPIREAT, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> sttl(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(STTL, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> spttl(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SPTTL, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> sexpiretime(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SEXPIRETIME, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> spexpiretime(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SPEXPIRETIME, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> spersist(K key, V... members) {
+        keyAndMembersProvided(key, members);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(members.length).addValues(members);
+
+        return createCommand(SPERSIST, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> saddex(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SADDEX, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> saddex(K key, SAddExArgs sAddExArgs, V member) {
+        keyAndMemberProvided(key, member);
+        LettuceAssert.notNull(sAddExArgs, "SAddExArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        sAddExArgs.build(args);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SADDEX, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SEXPIRE, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(milliseconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SPEXPIRE, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SEXPIREAT, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SPEXPIREAT, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sttl(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(STTL, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spttl(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SPTTL, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sexpiretime(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SEXPIRETIME, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spexpiretime(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SPEXPIRETIME, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spersist(K key, V member) {
+        keyAndMemberProvided(key, member);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(MEMBERS).add(1).addValue(member);
+
+        return createCommand(SPERSIST, new IntegerOutput<>(codec), args);
     }
 
 }

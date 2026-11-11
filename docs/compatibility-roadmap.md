@@ -13,7 +13,7 @@ Lettuce provides native support for Redis core data types and select Redis modul
 | [Strings](https://redis.io/docs/latest/develop/data-types/strings/) | Supported | 1.0 | Full support including `SET`, `GET`, `MSET`, `MGET`, etc. |
 | [Hashes](https://redis.io/docs/latest/develop/data-types/hashes/) | Supported | 1.0 | Full support including Hash Field Expiration (6.4+) |
 | [Lists](https://redis.io/docs/latest/develop/data-types/lists/) | Supported | 1.0 | Full support including blocking operations |
-| [Sets](https://redis.io/docs/latest/develop/data-types/sets/) | Supported | 1.0 | Full support |
+| [Sets](https://redis.io/docs/latest/develop/data-types/sets/) | Supported | 1.0 | Full support including Set Member Expiration (8.0+) |
 | [Sorted Sets](https://redis.io/docs/latest/develop/data-types/sorted-sets/) | Supported | 1.0 | Full support |
 | [Streams](https://redis.io/docs/latest/develop/data-types/streams/) | Supported | 5.1 | Full support for `XADD`, `XREAD`, `XREADGROUP`, etc. |
 | [HyperLogLog](https://redis.io/docs/latest/develop/data-types/hyperloglogs/) | Supported | 1.0 | Full support |
