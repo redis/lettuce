@@ -38,14 +38,8 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
      * @param redisCodec must not be {@code null}.
      * @param notificationTarget must not be {@code null}.
      * @param clusterEventListener must not be {@code null}.
+     * @param clientOptions must not be {@code null}.
      */
-    ClusterPubSubConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
-            RedisCodec<K, V> redisCodec, RedisClusterPubSubListener<K, V> notificationTarget,
-            ClusterEventListener clusterEventListener) {
-        this(redisClusterClient, clusterWriter, redisCodec, notificationTarget, clusterEventListener,
-                redisClusterClient.getClusterClientOptions());
-    }
-
     ClusterPubSubConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
             RedisCodec<K, V> redisCodec, RedisClusterPubSubListener<K, V> notificationTarget,
             ClusterEventListener clusterEventListener, ClusterClientOptions clientOptions) {

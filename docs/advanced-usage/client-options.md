@@ -6,19 +6,15 @@ ClientOptions are immutable. Connections inherit the current options at
 the moment the connection is created. Changes to options will not affect
 existing connections.
 
-RedisClient and RedisClusterClient capture options when starting a connection and
-use them throughout its initialization, including asynchronous connection retries.
-Sentinel address lookups for standalone and Pub/Sub connections retain those
-options when resolving the master, including lookups triggered by a reconnect.
-Calling `setOptions` during initialization applies the new options to subsequent
-connections. Cluster node connections capture their own options when they are
-created, including nodes opened later by an existing cluster connection.
-Master/Replica connections open each node connection through `RedisClient`, so
-every node connection captures the options current at the time it is opened.
-
-The `RedisClient.connectAsync`, `connectPubSubAsync`, and `connectSentinelAsync`
-overloads accepting `ClientOptions` create connections with the supplied options
-without changing the client's configuration.
+A connection reads the options once, when its endpoint is created, and uses
+that instance for the rest of its initialization. Calling `setOptions` while a
+connection is being set up only affects connections created afterwards. Every
+connection takes its own options, including the node connections a Redis
+Cluster connection opens later on and the Sentinel connections used to look up
+the master address. Subclasses that override `RedisClient.createEndpoint()` or
+`createPubSubEndpoint()` determine the options of the connection through the
+`ClientOptions` passed to the endpoint; `DefaultEndpoint.getClientOptions()`
+returns them.
 
 ``` java
 client.setOptions(ClientOptions.builder()
@@ -26,33 +22,6 @@ client.setOptions(ClientOptions.builder()
                        .pingBeforeActivateConnection(true)
                        .build());
 ```
-
-### Custom connection factories
-
-Since 8.0, subclasses can override the connection factories that accept
-`ClientOptions` to receive the options captured for the connection. Use that
-argument to construct custom components:
-
-```java
-@Override
-protected DefaultEndpoint createEndpoint(ClientOptions clientOptions) {
-    return new DefaultEndpoint(clientOptions, getResources());
-}
-```
-
-The same convention applies to the connection and Pub/Sub endpoint factories,
-and to `getSocketAddress(RedisURI, ClientOptions)` for address resolution.
-RedisClusterClient's connection factories take `ClientOptions` as their first
-argument. The shared `createHandshake(ConnectionState, ClientOptions)` hook
-returns `ConnectionInitializer`, so subclasses outside the core package can
-customize initialization as well.
-
-The previous factory overloads are deprecated. Overloads already used during
-connection initialization remain in the call path for compatibility. Delegating to
-the default implementation preserves the captured options for that connection.
-Custom overrides that read `getOptions()` must migrate to the overloads
-accepting options: `getOptions()` still returns the client's current configuration,
-which can change during connection initialization.
 
 <table style="width:97%;">
 <colgroup>
