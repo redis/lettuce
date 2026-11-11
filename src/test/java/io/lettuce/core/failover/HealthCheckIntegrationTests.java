@@ -493,7 +493,9 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                     assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
-                // And: Verify current endpoint is uri1 (higher weight)
+                // And: Start from uri1. connect() picks whichever healthy database is ready first, and failback to the
+                // higher weight only runs every 120 s by default, so switch explicitly.
+                connection.switchTo(uri1);
                 assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
 
                 // And: Verify we're connected to uri1 by comparing run_id
@@ -553,15 +555,17 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                 // Wait for all 3 endpoints to be available
                 waitForEndpoints(connection, 3, 2);
 
-                // Then: Verify current endpoint is uri1 (highest weight)
-                assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
-
                 // And: Verify health status for all endpoints to be HEALTHY
                 awaitAtMost().untilAsserted(() -> {
                     assertThat(connection.isHealthy(uri1)).isTrue();
                     assertThat(connection.isHealthy(uri2)).isTrue();
                     assertThat(connection.isHealthy(uri3)).isTrue();
                 });
+
+                // Then: Start from uri1. connect() picks whichever healthy database is ready first, and failback to the
+                // highest weight only runs every 120 s by default, so switch explicitly.
+                connection.switchTo(uri1);
+                assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
 
                 // When: Mark uri2 as UNHEALTHY (second highest weight)
                 testStrategy.setHealthStatus(uri2, HealthStatus.UNHEALTHY);
@@ -633,7 +637,9 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                     assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
-                // And: Verify current endpoint is uri1 (higher weight)
+                // And: Start from uri1. connect() picks whichever healthy database is ready first, and failback to the
+                // higher weight only runs every 120 s by default, so switch explicitly.
+                connection.switchTo(uri1);
                 assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
 
                 // And: Verify we're connected to uri1 by comparing run_id
