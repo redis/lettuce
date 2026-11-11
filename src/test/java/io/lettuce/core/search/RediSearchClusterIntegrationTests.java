@@ -19,7 +19,9 @@ import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.lettuce.test.condition.RedisConditions;
+import io.lettuce.test.settings.TestSettings;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -59,8 +61,10 @@ public class RediSearchClusterIntegrationTests {
 
     protected static RedisAdvancedClusterCommands<String, String> redis;
 
-    public RediSearchClusterIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(36379).build();
+    @BeforeAll
+    static void setup() {
+        RedisURI redisURI = RedisURI.Builder.redis(TestSettings.host()).withPort(TestSettings.moduleClusterPort()).build();
+
         client = RedisClusterClient.create(redisURI);
         redis = client.connect().sync();
     }
