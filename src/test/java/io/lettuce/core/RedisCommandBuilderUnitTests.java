@@ -252,6 +252,24 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructZcountWithExclusiveInfiniteBoundaries() {
+
+        Command<String, String, ?> command = sut.zcount(MY_KEY,
+                Range.<Double> unbounded().gt(Double.NEGATIVE_INFINITY).lt(Double.POSITIVE_INFINITY));
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<hKey> (-inf (+inf");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZrangeByScoreRevWithExclusiveInfiniteBoundaries() {
+
+        Command<String, String, ?> command = sut.zrange(MY_KEY,
+                ZRange.byScore(Range.<Double> unbounded().gt(Double.NEGATIVE_INFINITY).lt(Double.POSITIVE_INFINITY)).rev());
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<hKey> (+inf (-inf BYSCORE REV");
+    }
+
+    @Test
     void shouldCorrectlyConstructZrangeByLexWithLimit() {
 
         Command<String, String, ?> command = sut.zrange(MY_KEY, ZRange.byLex(Range.create("banana", "date")).limit(1, 2));

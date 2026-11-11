@@ -54,6 +54,7 @@ import io.lettuce.test.condition.RedisConditions;
  * @author dengliming
  * @author Mikhael Sokolov
  * @author Yordan Tsintsov
+ * @author Taewoong Kim
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -217,6 +218,18 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
 
         assertThat(redis.zcount(key, Range.from(Boundary.excluding(1.0), including(3.0)))).isEqualTo(2);
         assertThat(redis.zcount(key, Range.unbounded())).isEqualTo(3);
+    }
+
+    @Test
+    void zcountWithInfiniteBoundaries() {
+
+        redis.zadd(key, NEGATIVE_INFINITY, "a", 0.0, "b", POSITIVE_INFINITY, "c");
+
+        assertThat(redis.zcount(key, Range.unbounded())).isEqualTo(3);
+        assertThat(redis.zcount(key, Range.create(NEGATIVE_INFINITY, POSITIVE_INFINITY))).isEqualTo(3);
+        assertThat(redis.zcount(key, Range.<Double> unbounded().gt(NEGATIVE_INFINITY))).isEqualTo(2);
+        assertThat(redis.zcount(key, Range.<Double> unbounded().lt(POSITIVE_INFINITY))).isEqualTo(2);
+        assertThat(redis.zcount(key, Range.<Double> unbounded().gt(NEGATIVE_INFINITY).lt(POSITIVE_INFINITY))).isEqualTo(1);
     }
 
     @Test
@@ -529,6 +542,16 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void zrangebyscoreWithExclusiveInfiniteBoundaries() {
+
+        redis.zadd(key, NEGATIVE_INFINITY, "a", 0.0, "b", POSITIVE_INFINITY, "c");
+        Range<Double> range = Range.<Double> unbounded().gt(NEGATIVE_INFINITY).lt(POSITIVE_INFINITY);
+
+        assertThat(redis.zrangebyscore(key, range)).containsExactly("b");
+        assertThat(redis.zrevrangebyscore(key, range)).containsExactly("b");
+    }
+
+    @Test
     void zrangebyscoreStreaming() {
         redis.zadd(key, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "d");
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
@@ -686,6 +709,16 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
         setup();
         assertThat(redis.zremrangebyscore(key, Range.from(Boundary.excluding(1.0), Boundary.excluding(3.0)))).isEqualTo(1);
         assertThat(redis.zrange(key, 0, -1)).isEqualTo(list("a", "c"));
+    }
+
+    @Test
+    void zremrangebyscoreWithExclusiveInfiniteBoundaries() {
+
+        redis.zadd(key, NEGATIVE_INFINITY, "a", 0.0, "b", POSITIVE_INFINITY, "c");
+        Range<Double> range = Range.<Double> unbounded().gt(NEGATIVE_INFINITY).lt(POSITIVE_INFINITY);
+
+        assertThat(redis.zremrangebyscore(key, range)).isEqualTo(1);
+        assertThat(redis.zrange(key, 0, -1)).containsExactly("a", "c");
     }
 
     @Test
