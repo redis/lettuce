@@ -36,7 +36,8 @@ class HealthCheckImplRetryLogicUnitTests {
     @Test
     void testSuccessOnFirstAttempt() throws InterruptedException {
         AtomicInteger callCount = new AtomicInteger(0);
-        TestHealthCheckStrategy strategy = new TestHealthCheckStrategy(HealthCheckStrategy.Config.builder().interval(100)
+        // Long interval so only the first round runs before the call count is asserted
+        TestHealthCheckStrategy strategy = new TestHealthCheckStrategy(HealthCheckStrategy.Config.builder().interval(5000)
                 .timeout(50).numProbes(2).policy(ProbingPolicy.BuiltIn.ANY_SUCCESS).delayInBetweenProbes(10).build(), e -> {
                     callCount.incrementAndGet();
                     return HealthStatus.HEALTHY; // Always succeeds
@@ -61,7 +62,8 @@ class HealthCheckImplRetryLogicUnitTests {
     @Test
     void testSuccessOnSecondAttempt() throws InterruptedException {
         AtomicInteger callCount = new AtomicInteger(0);
-        TestHealthCheckStrategy strategy = new TestHealthCheckStrategy(HealthCheckStrategy.Config.builder().interval(100)
+        // Long interval so only the first round runs before the call count is asserted
+        TestHealthCheckStrategy strategy = new TestHealthCheckStrategy(HealthCheckStrategy.Config.builder().interval(5000)
                 .timeout(50).numProbes(2).policy(ProbingPolicy.BuiltIn.ANY_SUCCESS).delayInBetweenProbes(10).build(), e -> {
                     int attempt = callCount.incrementAndGet();
                     if (attempt == 1) {
@@ -93,7 +95,8 @@ class HealthCheckImplRetryLogicUnitTests {
     @Test
     void testExhaustAllProbesAndFailWithAnySuccessPolicy() throws InterruptedException {
         AtomicInteger callCount = new AtomicInteger(0);
-        TestHealthCheckStrategy strategy = new TestHealthCheckStrategy(HealthCheckStrategy.Config.builder().interval(100)
+        // Long interval so only the first round runs before the call count is asserted
+        TestHealthCheckStrategy strategy = new TestHealthCheckStrategy(HealthCheckStrategy.Config.builder().interval(5000)
                 .timeout(50).numProbes(3).policy(ProbingPolicy.BuiltIn.ANY_SUCCESS).delayInBetweenProbes(10).build(), e -> {
                     callCount.incrementAndGet();
                     throw new RuntimeException("Always fails");

@@ -546,25 +546,25 @@ public class RediSearchAdvancedConceptsIntegrationTests {
 
         // Test stemming: searching for "run" should find all variations
         // FIXME Seems like a bug in the server, "runner" needs to also be stemmed, but it is not
-        SearchReply<String> results = redis.ftSearch(STEMMING_INDEX, "run");
+        SearchReply<String> results = SearchTestSupport.searchUntilCount(redis, STEMMING_INDEX, "run", 3);
         assertThat(results.getCount()).isEqualTo(3); // All forms should be found due to stemming
 
         // Test stemming: searching for "running" should also find all variations
         // FIXME Seems like a bug in the server, "runner" needs to also be stemmed, but it is not
-        results = redis.ftSearch(STEMMING_INDEX, "running");
+        results = SearchTestSupport.searchUntilCount(redis, STEMMING_INDEX, "running", 3);
         assertThat(results.getCount()).isEqualTo(3);
 
         // Test VERBATIM search (disable stemming)
         SearchArgs<String> verbatimArgs = SearchArgs.<String> builder().verbatim().build();
-        results = redis.ftSearch(STEMMING_INDEX, "run", verbatimArgs);
+        results = SearchTestSupport.searchUntilCount(() -> redis.ftSearch(STEMMING_INDEX, "run", verbatimArgs), 1);
         assertThat(results.getCount()).isEqualTo(1); // Only exact match
 
-        results = redis.ftSearch(STEMMING_INDEX, "running", verbatimArgs);
+        results = SearchTestSupport.searchUntilCount(() -> redis.ftSearch(STEMMING_INDEX, "running", verbatimArgs), 1);
         assertThat(results.getCount()).isEqualTo(1); // Only exact match
 
         // Test with language parameter in search (should override index language)
         SearchArgs<String> languageArgs = SearchArgs.<String> builder().language(DocumentLanguage.GERMAN).build();
-        results = redis.ftSearch(STEMMING_INDEX, "run", languageArgs);
+        results = SearchTestSupport.searchUntilAtLeast(() -> redis.ftSearch(STEMMING_INDEX, "run", languageArgs), 1);
         // German stemming rules would be different, but for this test we just verify it works
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
@@ -586,7 +586,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("wort:4", "wort", "stucke");
 
         // Search for "stuck" should find all variations due to German stemming
-        results = redis.ftSearch("idx:german", "@wort:(stuck)");
+        results = SearchTestSupport.searchUntilCount(redis, "idx:german", "@wort:(stuck)", 4);
         assertThat(results.getCount()).isEqualTo(4);
 
         // Cleanup
@@ -619,7 +619,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Searching the root should find at least the exact match; with Malay stemming enabled it additionally groups the
         // derived forms. We assert the lower bound to verify the language is accepted end-to-end without coupling to the
         // exact server-side stemmer data.
-        SearchReply<String> results = redis.ftSearch("idx:malay", "@perkataan:(masak)");
+        SearchReply<String> results = SearchTestSupport.searchUntilAtLeast(redis, "idx:malay", "@perkataan:(masak)", 1);
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         redis.ftDropindex("idx:malay");
@@ -640,7 +640,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
 
         // As with Malay, assert the lower bound to verify the language is accepted end-to-end without overfitting to the
         // exact stemmer output.
-        results = redis.ftSearch("idx:tagalog", "@salita:(luto)");
+        results = SearchTestSupport.searchUntilAtLeast(redis, "idx:tagalog", "@salita:(luto)", 1);
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         redis.ftDropindex("idx:tagalog");

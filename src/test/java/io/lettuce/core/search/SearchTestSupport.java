@@ -9,6 +9,10 @@ package io.lettuce.core.search;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.LongPredicate;
+import java.util.function.Supplier;
 
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
@@ -44,8 +48,15 @@ class SearchTestSupport {
      */
     static SearchReply<String> searchUntilCount(RedisCommands<String, String> redis, String index, String query,
             long expectedCount) {
-        awaitQuietly(Wait.untilEquals(expectedCount, () -> redis.ftSearch(index, query).getCount()));
-        return redis.ftSearch(index, query);
+        return searchUntilCount(() -> redis.ftSearch(index, query), expectedCount);
+    }
+
+    /**
+     * Variant of {@link #searchUntilCount(RedisCommands, String, String, long)} for any connection codec and any search
+     * arguments: {@code search} issues the query and is called until its reply reports exactly {@code expectedCount} results.
+     */
+    static <K> SearchReply<K> searchUntilCount(Supplier<SearchReply<K>> search, long expectedCount) {
+        return searchUntil(search, count -> count == expectedCount);
     }
 
     /**
@@ -54,16 +65,35 @@ class SearchTestSupport {
      */
     static SearchReply<String> searchUntilAtLeast(RedisCommands<String, String> redis, String index, String query,
             long minCount) {
-        awaitQuietly(Wait.untilTrue(() -> redis.ftSearch(index, query).getCount() >= minCount));
-        return redis.ftSearch(index, query);
+        return searchUntilAtLeast(() -> redis.ftSearch(index, query), minCount);
     }
 
-    private static void awaitQuietly(Wait.WaitBuilder<?> wait) {
+    /**
+     * Variant of {@link #searchUntilAtLeast(RedisCommands, String, String, long)} for any connection codec and any search
+     * arguments: {@code search} issues the query and is called until its reply reports at least {@code minCount} results.
+     */
+    static <K> SearchReply<K> searchUntilAtLeast(Supplier<SearchReply<K>> search, long minCount) {
+        return searchUntil(search, count -> count >= minCount);
+    }
+
+    /**
+     * Call {@code search} until {@code done} accepts the reply's count and return that same reply, so the caller asserts on the
+     * reply that met the condition and not on a later query. On timeout, returns the last reply so the caller's assertion
+     * reports the actual count. Any other failure, such as an error reply from the server, is rethrown.
+     */
+    private static <K> SearchReply<K> searchUntil(Supplier<SearchReply<K>> search, LongPredicate done) {
+        AtomicReference<SearchReply<K>> last = new AtomicReference<>();
         try {
-            wait.waitOrTimeout();
+            Wait.untilTrue(() -> {
+                last.set(search.get());
+                return done.test(last.get().getCount());
+            }).waitOrTimeout();
         } catch (IllegalStateException e) {
-            // Condition not reached within the timeout; the caller asserts on the returned reply and reports the actual value.
+            if (!(e.getCause() instanceof TimeoutException)) {
+                throw e;
+            }
         }
+        return last.get();
     }
 
     /**

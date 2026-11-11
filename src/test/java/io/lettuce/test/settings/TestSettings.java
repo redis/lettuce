@@ -302,6 +302,15 @@ public class TestSettings {
 
     /**
      *
+     * @return port of the modules-enabled (JSON, Search, TimeSeries, Bloom) Redis Cluster (clustered-stack), on
+     *         {@link #host()}. Defaults to {@literal 36379}. Can be overridden with {@code -Dmodule.cluster.port=1234}
+     */
+    public static int moduleClusterPort() {
+        return Integer.parseInt(System.getProperty("module.cluster.port", "36379"));
+    }
+
+    /**
+     *
      * @return {@code true} if connections to the default test database require TLS. Resolved from the endpoint configuration,
      *         defaults to {@code false}. Can be overridden with {@code -Dtls=true}
      */
