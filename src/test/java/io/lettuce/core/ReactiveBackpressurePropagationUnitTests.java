@@ -65,7 +65,7 @@ class ReactiveBackpressurePropagationUnitTests {
 
         when(clientResources.commandLatencyRecorder()).thenReturn(latencyCollector);
         when(clientResources.tracing()).thenReturn(Tracing.disabled());
-        when(statefulConnection.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
+        lenient().when(statefulConnection.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
 
             RedisCommand command = (RedisCommand) invocation.getArguments()[0];
             embeddedChannel.writeOutbound(command);
@@ -203,7 +203,8 @@ class ReactiveBackpressurePropagationUnitTests {
 
         subscription.subscriber = subscriber;
         RedisPublisher.RedisSubscription.DEMAND.set(subscription, 2);
-        subscription.changeState(RedisPublisher.State.NO_DEMAND, RedisPublisher.State.DEMAND);
+        assertThat(subscription.changeState(RedisPublisher.State.UNSUBSCRIBED, RedisPublisher.State.NO_DEMAND)).isTrue();
+        assertThat(subscription.changeState(RedisPublisher.State.NO_DEMAND, RedisPublisher.State.DEMAND)).isTrue();
         subscription.data.offer("value");
 
         DemandAware.Sink sink = (DemandAware.Sink) ReflectionTestUtils.getField(subscription, "subscriptionCommand");
@@ -211,6 +212,7 @@ class ReactiveBackpressurePropagationUnitTests {
 
         RedisPublisher.State.DEMAND.onDataAvailable(subscription);
 
+        assertThat(subscription.state()).isEqualTo(RedisPublisher.State.DEMAND);
         verify(subscriber).onNext("value");
         verify(source).requestMore();
     }
