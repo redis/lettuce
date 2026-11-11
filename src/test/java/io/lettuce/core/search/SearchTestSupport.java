@@ -9,6 +9,9 @@ package io.lettuce.core.search;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.LongPredicate;
 import java.util.function.Supplier;
 
 import io.lettuce.core.api.sync.RedisCommands;
@@ -53,8 +56,7 @@ class SearchTestSupport {
      * arguments: {@code search} issues the query and is called until its reply reports exactly {@code expectedCount} results.
      */
     static <K> SearchReply<K> searchUntilCount(Supplier<SearchReply<K>> search, long expectedCount) {
-        awaitQuietly(Wait.untilEquals(expectedCount, () -> search.get().getCount()));
-        return search.get();
+        return searchUntil(search, count -> count == expectedCount);
     }
 
     /**
@@ -71,16 +73,27 @@ class SearchTestSupport {
      * arguments: {@code search} issues the query and is called until its reply reports at least {@code minCount} results.
      */
     static <K> SearchReply<K> searchUntilAtLeast(Supplier<SearchReply<K>> search, long minCount) {
-        awaitQuietly(Wait.untilTrue(() -> search.get().getCount() >= minCount));
-        return search.get();
+        return searchUntil(search, count -> count >= minCount);
     }
 
-    private static void awaitQuietly(Wait.WaitBuilder<?> wait) {
+    /**
+     * Call {@code search} until {@code done} accepts the reply's count and return that same reply, so the caller asserts on the
+     * reply that met the condition and not on a later query. On timeout, returns the last reply so the caller's assertion
+     * reports the actual count. Any other failure, such as an error reply from the server, is rethrown.
+     */
+    private static <K> SearchReply<K> searchUntil(Supplier<SearchReply<K>> search, LongPredicate done) {
+        AtomicReference<SearchReply<K>> last = new AtomicReference<>();
         try {
-            wait.waitOrTimeout();
+            Wait.untilTrue(() -> {
+                last.set(search.get());
+                return done.test(last.get().getCount());
+            }).waitOrTimeout();
         } catch (IllegalStateException e) {
-            // Condition not reached within the timeout; the caller asserts on the returned reply and reports the actual value.
+            if (!(e.getCause() instanceof TimeoutException)) {
+                throw e;
+            }
         }
+        return last.get();
     }
 
     /**

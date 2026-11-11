@@ -389,8 +389,13 @@ public class RediSearchVectorIntegrationTests {
     /**
      * Helper method to store hash document using binary codec.
      */
+    /**
+     * Write all fields of the document with a single HSET, so RediSearch indexes the document once instead of re-indexing it
+     * after every field.
+     */
     private void storeHashDocument(String key, Map<String, Object> fields) {
         ByteBuffer keyBuffer = ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8));
+        Map<ByteBuffer, ByteBuffer> hash = new HashMap<>();
         for (Map.Entry<String, Object> entry : fields.entrySet()) {
             ByteBuffer fieldKey = ByteBuffer.wrap(entry.getKey().getBytes(StandardCharsets.UTF_8));
             ByteBuffer fieldValue;
@@ -401,8 +406,9 @@ public class RediSearchVectorIntegrationTests {
             } else {
                 fieldValue = ByteBuffer.wrap(entry.getValue().toString().getBytes(StandardCharsets.UTF_8));
             }
-            redisBinary.hset(keyBuffer, fieldKey, fieldValue);
+            hash.put(fieldKey, fieldValue);
         }
+        redisBinary.hset(keyBuffer, hash);
     }
 
     /**
