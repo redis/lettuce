@@ -345,6 +345,7 @@ Built-in parameter types:
   commands. Numerical commands are converted to numerical boundaries
   (`` inf`, `(1.0`, `[1.0`). Value-typed `Range` parameters are encoded to their value boundary representation (` ``,
   `-`, `[value`, `(value`).
+  Exclusive score boundaries also apply to positive and negative infinity.
 
 Command methods accept other, special parameter types such as `Timeout`
 or `FlushMode` that control [execution-model

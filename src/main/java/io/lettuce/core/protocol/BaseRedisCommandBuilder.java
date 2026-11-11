@@ -17,6 +17,7 @@ import static io.lettuce.core.protocol.CommandKeyword.LIMIT;
  *
  * @author Mark Paluch
  * @author Tihomir Mateev
+ * @author Taewoong Kim
  * @since 3.0
  */
 public class BaseRedisCommandBuilder<K, V> {
@@ -158,9 +159,12 @@ public class BaseRedisCommandBuilder<K, V> {
 
         Range.Boundary<? extends Number> upper = range.getUpper();
 
-        if (upper.getValue() == null
-                || upper.getValue() instanceof Double && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
+        if (upper.getValue() == null) {
             return "+inf";
+        }
+
+        if (upper.getValue() instanceof Double && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
+            return upper.isIncluding() ? "+inf" : "(+inf";
         }
 
         if (!upper.isIncluding()) {
@@ -174,9 +178,12 @@ public class BaseRedisCommandBuilder<K, V> {
 
         Range.Boundary<? extends Number> lower = range.getLower();
 
-        if (lower.getValue() == null
-                || lower.getValue() instanceof Double && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
+        if (lower.getValue() == null) {
             return "-inf";
+        }
+
+        if (lower.getValue() instanceof Double && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
+            return lower.isIncluding() ? "-inf" : "(-inf";
         }
 
         if (!lower.isIncluding()) {
