@@ -16,7 +16,6 @@ import io.lettuce.core.tracing.Tracer.Span;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor;
-import reactor.core.publisher.Mono;
 
 /**
  * {@link Tracing} adapter using Micrometer's {@link Observation}. This adapter integrates with Micrometer to propagate
@@ -268,26 +267,6 @@ public class MicrometerTracing implements Tracing {
             }
 
             return new MicrometerTraceContext(observation);
-        }
-
-        @Override
-        public Mono<TraceContext> getTraceContextLater() {
-
-            return Mono.deferContextual(Mono::justOrEmpty).filter((it) -> {
-                return it.hasKey(TraceContext.class) || it.hasKey(Observation.class)
-                        || it.hasKey(ObservationThreadLocalAccessor.KEY);
-            }).map((it) -> {
-
-                if (it.hasKey(Observation.class)) {
-                    return new MicrometerTraceContext(it.get(Observation.class));
-                }
-
-                if (it.hasKey(TraceContext.class)) {
-                    return it.get(TraceContext.class);
-                }
-
-                return new MicrometerTraceContext(it.get(ObservationThreadLocalAccessor.KEY));
-            });
         }
 
         @Override

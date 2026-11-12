@@ -22,8 +22,12 @@ package io.lettuce.core.commands;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -83,13 +87,13 @@ public class SetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void sdiff() {
+    public void sdiff() {
         setupSet();
         assertThat(redis.sdiff("key1", "key2", "key3")).isEqualTo(set("b", "d"));
     }
 
     @Test
-    void sdiffStreaming() {
+    public void sdiffStreaming() {
         setupSet();
 
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
@@ -100,28 +104,47 @@ public class SetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void sdiffstore() {
+    @EnabledOnCommand("SDIFFCARD") // Redis 8.10
+    public void sdiffcard() {
+        setupSet();
+        assertThat(redis.sdiffcard("key1", "key3")).isEqualTo(2);
+        assertThat(redis.sdiffcard(list("key1", "key2", "key3"))).isEqualTo(2);
+        assertThat(redis.sdiffcard("missing", "key1")).isEqualTo(0);
+        assertThat(redis.sdiffcard("key1", "missing")).isEqualTo(4);
+    }
+
+    @Test
+    @EnabledOnCommand("SDIFFCARD") // Redis 8.10
+    public void sdiffcardWithLimit() {
+        setupSet();
+        assertThat(redis.sdiffcard("key1", "key3", SDiffCardArgs.Builder.limit(1))).isEqualTo(1);
+        assertThat(redis.sdiffcard("key1", "key3", SDiffCardArgs.Builder.limit(100))).isEqualTo(2);
+        assertThat(redis.sdiffcard("key1", "key3", SDiffCardArgs.Builder.limit(0))).isEqualTo(2);
+    }
+
+    @Test
+    public void sdiffstore() {
         setupSet();
         assertThat(redis.sdiffstore("newset", "key1", "key2", "key3")).isEqualTo(2);
         assertThat(redis.smembers("newset")).containsOnly("b", "d");
     }
 
     @Test
-    void sinter() {
+    public void sinter() {
         setupSet();
         assertThat(redis.sinter("key1", "key2", "key3")).isEqualTo(set("c"));
     }
 
     @Test
     @EnabledOnCommand("SINTERCARD") // Redis 7.0
-    void sintercard() {
+    public void sintercard() {
         setupSet();
         assertThat(redis.sintercard("key1", "key3")).isEqualTo(2);
         assertThat(redis.sintercard(1, "key1", "key3")).isEqualTo(1);
     }
 
     @Test
-    void sinterStreaming() {
+    public void sinterStreaming() {
         setupSet();
 
         ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
@@ -132,7 +155,7 @@ public class SetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void sinterstore() {
+    public void sinterstore() {
         setupSet();
         assertThat(redis.sinterstore("newset", "key1", "key2", "key3")).isEqualTo(1);
         assertThat(redis.smembers("newset")).containsExactly("c");
@@ -146,7 +169,7 @@ public class SetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void smove() {
+    public void smove() {
         redis.sadd(key, "a", "b", "c");
         assertThat(redis.smove(key, "key1", "d")).isFalse();
         assertThat(redis.smove(key, "key1", "a")).isTrue();
@@ -248,7 +271,7 @@ public class SetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void sunion() {
+    public void sunion() {
         setupSet();
         assertThat(redis.sunion("key1", "key2", "key3")).isEqualTo(set("a", "b", "c", "d", "e"));
     }
@@ -259,7 +282,7 @@ public class SetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void sunionStreaming() {
+    public void sunionStreaming() {
         setupSet();
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
@@ -272,7 +295,33 @@ public class SetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void sunionstore() {
+    @EnabledOnCommand("SUNIONCARD") // Redis 8.10
+    public void sunioncard() {
+        setupSet();
+        assertThat(redis.sunioncard("key1", "key3")).isEqualTo(5);
+        assertThat(redis.sunioncard(list("key1", "key2", "key3"))).isEqualTo(5);
+        assertThat(redis.sunioncard("key1", "missing")).isEqualTo(4);
+    }
+
+    @Test
+    @EnabledOnCommand("SUNIONCARD") // Redis 8.10
+    public void sunioncardApprox() {
+        setupSet();
+        assertThat(redis.sunioncard("key1", "key3", SUnionCardArgs.Builder.approx())).isEqualTo(5);
+        assertThat(redis.sunioncard("key1", "key3", SUnionCardArgs.Builder.approx().limit(3))).isLessThanOrEqualTo(3);
+    }
+
+    @Test
+    @EnabledOnCommand("SUNIONCARD") // Redis 8.10
+    public void sunioncardWithLimit() {
+        setupSet();
+        assertThat(redis.sunioncard("key1", "key3", SUnionCardArgs.Builder.limit(3))).isEqualTo(3);
+        assertThat(redis.sunioncard("key1", "key3", SUnionCardArgs.Builder.limit(100))).isEqualTo(5);
+        assertThat(redis.sunioncard("key1", "key3", SUnionCardArgs.Builder.limit(0))).isEqualTo(5);
+    }
+
+    @Test
+    public void sunionstore() {
         setupSet();
         assertThat(redis.sunionstore("newset", "key1", "key2", "key3")).isEqualTo(5);
         assertThat(redis.smembers("newset")).isEqualTo(set("a", "b", "c", "d", "e"));
@@ -410,6 +459,230 @@ public class SetCommandIntegrationTests extends TestSupport {
         redis.sadd("key1", "a", "b", "c", "d");
         redis.sadd("key2", "c");
         redis.sadd("key3", "a", "c", "e");
+    }
+
+    // Set member expiration (Redis 8.12)
+
+    @Test
+    @EnabledOnCommand("SEXPIRE")
+    void sexpire() {
+        redis.sadd(key, "a", "b");
+        assertThat(redis.sexpire(key, 60, "a", "nosuch")).containsExactly(1L, -2L);
+        assertThat(redis.sexpire("nokey", 60, "a")).isEqualTo(-2L);
+        assertThat(redis.sexpire(key, 0, "b")).isEqualTo(2L);
+        assertThat(redis.sismember(key, "b")).isFalse();
+    }
+
+    @Test
+    @EnabledOnCommand("SEXPIRE")
+    void sexpireDuration() {
+        redis.sadd(key, "a");
+        assertThat(redis.sexpire(key, Duration.ofSeconds(60), "a")).isEqualTo(1L);
+        assertThat(redis.sttl(key, "a")).isBetween(55L, 60L);
+    }
+
+    @Test
+    @EnabledOnCommand("SEXPIRE")
+    void sexpireExpireArgs() {
+        assertThat(redis.saddex(key, SAddExArgs.Builder.ex(Duration.ofSeconds(100)), "a")).isEqualTo(1L);
+        redis.sadd(key, "b");
+        assertThat(redis.sexpire(key, 50, ExpireArgs.Builder.nx(), "a", "b", "nosuch")).containsExactly(0L, 1L, -2L);
+        assertThat(redis.sexpire(key, 50, ExpireArgs.Builder.xx(), "a", "b")).containsExactly(1L, 1L);
+        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.gt(), "a")).isEqualTo(0L);
+        assertThat(redis.sexpire(key, Duration.ofSeconds(10), ExpireArgs.Builder.lt(), "a")).isEqualTo(1L);
+        assertThat(redis.sttl(key, "a", "b")).containsExactly(10L, 50L);
+        assertThat(redis.spersist(key, "b")).isEqualTo(1L);
+        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.xx(), "b")).isEqualTo(0L);
+        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.gt(), "b")).isEqualTo(0L);
+        assertThat(redis.sexpire(key, 10, ExpireArgs.Builder.lt(), "b")).isEqualTo(1L);
+    }
+
+    @Test
+    @EnabledOnCommand("SPEXPIRE")
+    void spexpire() {
+        redis.sadd(key, "a", "b");
+        assertThat(redis.spexpire(key, 60_000, "a")).isEqualTo(1L);
+        assertThat(redis.spttl(key, "a")).isBetween(55_000L, 60_000L);
+        assertThat(redis.spexpire(key, Duration.ofSeconds(120), ExpireArgs.Builder.gt(), "a", "b")).containsExactly(1L, 0L);
+        assertThat(redis.spttl(key, "a")).isBetween(115_000L, 120_000L);
+    }
+
+    @Test
+    @EnabledOnCommand("SEXPIREAT")
+    void sexpireat() {
+        redis.sadd(key, "a", "b", "c");
+        assertThat(redis.sexpireat(key, Instant.now().plusSeconds(60), "a")).isEqualTo(1L);
+        assertThat(redis.sexpireat(key, new Date(System.currentTimeMillis() + 120_000), ExpireArgs.Builder.xx(), "a", "b"))
+                .containsExactly(1L, 0L);
+        assertThat(redis.sttl(key, "a")).isBetween(115L, 120L);
+        assertThat(redis.sexpireat(key, 1, "b")).isEqualTo(2L);
+        assertThat(redis.sexpireat(key, Instant.now().minusSeconds(1), "c")).isEqualTo(2L);
+        assertThat(redis.smembers(key)).isEqualTo(set("a"));
+        assertThat(redis.sexpireat("nokey", 1, "a")).isEqualTo(-2L);
+    }
+
+    @Test
+    @EnabledOnCommand("SPEXPIREAT")
+    void spexpireat() {
+        redis.sadd(key, "a", "b");
+        long base = System.currentTimeMillis() + 60_000;
+        assertThat(redis.spexpireat(key, base, "a")).isEqualTo(1L);
+        assertThat(redis.spexpiretime(key, "a")).isEqualTo(base);
+        assertThat(redis.spexpireat(key, Instant.ofEpochMilli(base + 1000), ExpireArgs.Builder.gt(), "a")).isEqualTo(1L);
+        assertThat(redis.spexpireat(key, new Date(base + 2000), ExpireArgs.Builder.lt(), "a")).isEqualTo(0L);
+        assertThat(redis.spexpiretime(key, "a")).isEqualTo(base + 1000);
+        assertThat(redis.spexpireat(key, 1L, "b")).isEqualTo(2L);
+    }
+
+    @Test
+    @EnabledOnCommand("STTL")
+    void sttl() {
+        redis.sadd(key, "a", "b");
+        redis.sexpire(key, 60, "a");
+        List<Long> ttl = redis.sttl(key, "a", "b", "nosuch");
+        assertThat(ttl).hasSize(3);
+        assertThat(ttl.get(0)).isBetween(55L, 60L);
+        assertThat(ttl.get(1)).isEqualTo(-1L);
+        assertThat(ttl.get(2)).isEqualTo(-2L);
+        assertThat(redis.sttl("nokey", "a")).isEqualTo(-2L);
+    }
+
+    @Test
+    @EnabledOnCommand("SPTTL")
+    void spttl() {
+        redis.sadd(key, "a", "b");
+        redis.spexpire(key, 60_000, "a");
+        List<Long> pttl = redis.spttl(key, "a", "b", "nosuch");
+        assertThat(pttl).hasSize(3);
+        assertThat(pttl.get(0)).isBetween(55_000L, 60_000L);
+        assertThat(pttl.get(1)).isEqualTo(-1L);
+        assertThat(pttl.get(2)).isEqualTo(-2L);
+    }
+
+    @Test
+    @EnabledOnCommand("SEXPIRETIME")
+    void sexpiretime() {
+        redis.sadd(key, "a", "b");
+        long base = (System.currentTimeMillis() / 1000) * 1000 + 60_000;
+        redis.spexpireat(key, base, "a");
+        assertThat(redis.sexpiretime(key, "a", "b", "nosuch")).containsExactly(base / 1000, -1L, -2L);
+        assertThat(redis.spexpiretime(key, "a", "b", "nosuch")).containsExactly(base, -1L, -2L);
+        assertThat(redis.sexpiretime("nokey", "a")).isEqualTo(-2L);
+    }
+
+    @Test
+    @EnabledOnCommand("SPERSIST")
+    void spersist() {
+        redis.sadd(key, "a", "b");
+        redis.sexpire(key, 60, "a");
+        assertThat(redis.spersist(key, "a", "b", "nosuch")).containsExactly(1L, -1L, -2L);
+        assertThat(redis.sttl(key, "a")).isEqualTo(-1L);
+        assertThat(redis.spersist("nokey", "a")).isEqualTo(-2L);
+    }
+
+    @Test
+    @EnabledOnCommand("SADDEX")
+    void saddex() {
+        assertThat(redis.saddex(key, "a", "b")).isEqualTo(1L);
+        assertThat(redis.smembers(key)).isEqualTo(set("a", "b"));
+        assertThat(redis.sttl(key, "a", "b")).containsExactly(-1L, -1L);
+        assertThat(redis.saddex(key, "a", "b")).isEqualTo(0L);
+        assertThat(redis.saddex(key, "c")).isEqualTo(1L);
+    }
+
+    @Test
+    @EnabledOnCommand("SADDEX")
+    void saddexWithExpiration() {
+        assertThat(redis.saddex(key, SAddExArgs.Builder.ex(Duration.ofSeconds(60)), "a")).isEqualTo(1L);
+        assertThat(redis.sttl(key, "a")).isBetween(55L, 60L);
+        redis.saddex(key, SAddExArgs.Builder.keepttl(), "a");
+        assertThat(redis.sttl(key, "a")).isBetween(55L, 60L);
+        assertThat(redis.saddex(key, "a")).isEqualTo(1L);
+        assertThat(redis.sttl(key, "a")).isEqualTo(-1L);
+        assertThat(redis.saddex(key, SAddExArgs.Builder.px(Duration.ofSeconds(60)), "a")).isEqualTo(1L);
+        assertThat(redis.spttl(key, "a")).isBetween(55_000L, 60_000L);
+        long base = (System.currentTimeMillis() / 1000) * 1000 + 120_000;
+        assertThat(redis.saddex(key, SAddExArgs.Builder.exAt(Instant.ofEpochMilli(base)), "a")).isEqualTo(1L);
+        assertThat(redis.sexpiretime(key, "a")).isEqualTo(base / 1000);
+        assertThat(redis.saddex(key, SAddExArgs.Builder.pxAt(Instant.ofEpochMilli(base + 500)), "a")).isEqualTo(1L);
+        assertThat(redis.spexpiretime(key, "a")).isEqualTo(base + 500);
+    }
+
+    @Test
+    @EnabledOnCommand("SADDEX")
+    void saddexConditions() {
+        redis.sadd(key, "a");
+        assertThat(redis.saddex(key, SAddExArgs.Builder.mnx(), "a", "b")).isEqualTo(0L);
+        assertThat(redis.smembers(key)).isEqualTo(set("a"));
+        assertThat(redis.saddex(key, SAddExArgs.Builder.mnx().ex(Duration.ofSeconds(60)), "b", "c")).isEqualTo(1L);
+        assertThat(redis.smembers(key)).isEqualTo(set("a", "b", "c"));
+        assertThat(redis.saddex(key, SAddExArgs.Builder.mxx(), "a", "nosuch")).isEqualTo(0L);
+        assertThat(redis.saddex(key, SAddExArgs.Builder.mxx().ex(Duration.ofSeconds(120)), "a", "b")).isEqualTo(1L);
+        assertThat(redis.sttl(key, "a")).isBetween(115L, 120L);
+        assertThat(redis.saddex("nokey", SAddExArgs.Builder.mxx(), "a")).isEqualTo(0L);
+        assertThat(redis.exists("nokey")).isEqualTo(0L);
+    }
+
+    @Test
+    @EnabledOnCommand("SADDEX")
+    void saddexPastExpirationDeletes() {
+        redis.sadd(key, "a");
+        assertThat(redis.saddex(key, SAddExArgs.Builder.pxAt(Instant.ofEpochMilli(1)), "a", "new")).isEqualTo(1L);
+        assertThat(redis.smembers(key)).isEmpty();
+        assertThat(redis.saddex(key, SAddExArgs.Builder.pxAt(Instant.ofEpochMilli(1)), "a", "new")).isEqualTo(0L);
+    }
+
+    @Test
+    @EnabledOnCommand("SADDEX")
+    void saddexConflictingOptions() {
+        assertThatThrownBy(() -> redis.saddex(key, SAddExArgs.Builder.ex(Duration.ofSeconds(1)).px(Duration.ofSeconds(1)), "a"))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageStartingWith("ERR Only one of EX, PX, EXAT, PXAT or KEEPTTL");
+        assertThatThrownBy(() -> redis.saddex(key, SAddExArgs.Builder.mnx().mxx(), "a"))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageStartingWith("ERR Only one of MXX or MNX");
+    }
+
+    @Test
+    @EnabledOnCommand("SEXPIRE")
+    void sexpireWrongType() {
+        redis.set(key, value);
+        assertThatThrownBy(() -> redis.sexpire(key, 60, "a")).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("WRONGTYPE");
+    }
+
+    @Test
+    @EnabledOnCommand("SPEXPIRE")
+    void sexpireLogicallyExpiredMemberIsAbsent() {
+        redis.sadd(key, "a", "b");
+        assertThat(redis.spexpire(key, 1, "a")).isEqualTo(1L);
+        await().until(() -> redis.sttl(key, "a") == -2L);
+        assertThat(redis.sismember(key, "a")).isFalse();
+        assertThat(redis.spersist(key, "a")).isEqualTo(-2L);
+        assertThat(redis.smembers(key)).isEqualTo(set("b"));
+    }
+
+    @Test
+    void sexpireEmptyMembers() {
+        assertThatThrownBy(() -> redis.sexpire(key, 60)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.sexpire(key, 60, (ExpireArgs) null, "a")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.sttl(key)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.saddex(key)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> redis.saddex(key, (SAddExArgs) null, "a")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @EnabledOnCommand("SEXPIRE")
+    void sexpireSingleMember() {
+        redis.sadd(key, "a", "z");
+        assertThat(redis.sexpire(key, 60, "a")).isEqualTo(1L);
+        assertThat(redis.sexpire(key, Duration.ofSeconds(120), ExpireArgs.Builder.gt(), "a")).isEqualTo(1L);
+        assertThat(redis.sttl(key, "a")).isBetween(115L, 120L);
+        assertThat(redis.spexpireat(key, Instant.now().plusSeconds(300), "a")).isEqualTo(1L);
+        assertThat(redis.spttl(key, "a")).isBetween(295_000L, 300_000L);
+        assertThat(redis.spersist(key, "a")).isEqualTo(1L);
+        assertThat(redis.saddex(key, SAddExArgs.Builder.ex(Duration.ofSeconds(60)), "z")).isEqualTo(1L);
+        assertThat(redis.sexpiretime(key, "z")).isGreaterThan(0L);
+        assertThat(redis.saddex(key, "y")).isEqualTo(1L);
     }
 
 }

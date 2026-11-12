@@ -1,7 +1,6 @@
 package io.lettuce.core.failover.api;
 
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.CircuitBreaker;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
@@ -12,7 +11,6 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 public interface RedisDatabase {
 
     /**

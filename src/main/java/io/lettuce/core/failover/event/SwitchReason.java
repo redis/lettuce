@@ -1,7 +1,5 @@
 package io.lettuce.core.failover.event;
 
-import io.lettuce.core.annotations.Experimental;
-
 /**
  * Reasons for database switch.
  *
@@ -9,7 +7,6 @@ import io.lettuce.core.annotations.Experimental;
  * @author Ivo Gaydajiev
  * @since 7.4
  */
-@Experimental
 public enum SwitchReason {
     /**
      * Switch was triggered by health check.

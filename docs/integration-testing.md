@@ -222,7 +222,6 @@ src/test/java/io/lettuce/
 ├── scenario/          # long-running scenario tests (dedicated profile)
 ├── category/          # JUnit category markers (e.g. SlowTests)
 ├── examples/          # runnable examples — not part of the normal test run
-├── apigenerator/      # API code generation
 └── codec/
 io/redis/examples/                # doctest-style async/reactive examples
 biz/paluch/redis/extensibility/   # legacy extensibility demos/tests

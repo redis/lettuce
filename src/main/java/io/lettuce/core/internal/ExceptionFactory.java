@@ -24,10 +24,12 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.Locale;
 
 import io.lettuce.core.RedisBusyException;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisCommandTimeoutException;
+import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisLoadingException;
 import io.lettuce.core.RedisNoScriptException;
 import io.lettuce.core.RedisReadOnlyException;
@@ -153,6 +155,31 @@ public abstract class ExceptionFactory {
         }
 
         return new RedisCommandExecutionException(cause);
+    }
+
+    /**
+     * Check whether an error reply indicates that the server does not know the command or subcommand that was sent.
+     * <p>
+     * Matches the shapes Redis and Redis-compatible servers use for this condition, which differ in wording and word order:
+     * {@code ERR unknown command 'CLIENT', with args beginning with: ...},
+     * {@code ERR Unknown subcommand or wrong number of arguments for 'MYID'} and the Redis Enterprise discovery service's
+     * {@code ERR sentinel unknown command}. The words are therefore not required to be adjacent, and {@code unknown} is matched
+     * case-insensitively. The {@code ERR} prefix is not, since Redis error codes are uppercase by convention.
+     *
+     * @param error the error to inspect, may be {@code null}.
+     * @return {@code true} if {@code error} is a Redis error reply reporting an unknown command or subcommand.
+     * @since 7.8
+     */
+    public static boolean isUnknownCommandError(Throwable error) {
+
+        if (!(error instanceof RedisException)) {
+            return false;
+        }
+
+        String message = error.getMessage();
+
+        return LettuceStrings.isNotEmpty(message) && message.startsWith("ERR")
+                && message.toLowerCase(Locale.ROOT).contains("unknown");
     }
 
 }

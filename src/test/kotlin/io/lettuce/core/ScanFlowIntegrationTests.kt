@@ -113,7 +113,25 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
             }
 
             assertThat(ScanFlow.zscan(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
-            assertThat(ScanFlow.zscan(this, key).count()).isEqualTo(iterations)
+            // ZSCAN may return a member more than once, which the btree encoding of Redis 8.12 does even without writes
+            assertThat(ScanFlow.zscan(this, key).toList().map { it.value }.distinct()).hasSize(iterations)
         }
     }
+
+    @Test
+    fun `should blessScan iteratively`() = runBlocking<Unit> {
+        assumeTrue(RedisConditions.of(connection).hasCommand("BLESS"))
+
+        with(connection.coroutines()) {
+            repeat(iterations) {
+                set("key-$it", value)
+                blessSet("key-$it", BlessFlag.NO_EVICT)
+            }
+            set("unblessed", value)
+
+            assertThat(ScanFlow.blessScan(this, BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(50)).take(100).toList()).hasSize(100)
+            assertThat(ScanFlow.blessScan(this, BlessFlag.NO_EVICT).count()).isEqualTo(iterations)
+        }
+    }
+
 }

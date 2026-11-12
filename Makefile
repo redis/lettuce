@@ -2,7 +2,7 @@ SHELL := /bin/bash
 PATH := ./work/redis-git/src:${PATH}
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 PROFILE ?= ci
-SUPPORTED_TEST_ENV_VERSIONS := 8.10 8.8 8.6 8.4 8.2 8.0 7.4 7.2
+SUPPORTED_TEST_ENV_VERSIONS := 8.12 8.10 8.8 8.6 8.4 8.2 8.0 7.4 7.2
 DEFAULT_TEST_ENV_VERSION := 8.10
 export REDIS_ENV_WORK_DIR := $(or ${REDIS_ENV_WORK_DIR},$(ROOT_DIR)/work)
 MVN_SOCKET_ARGS := -Ddomainsocket="$(REDIS_ENV_WORK_DIR)/socket-6482" -Dsentineldomainsocket="$(REDIS_ENV_WORK_DIR)/socket-26379"
@@ -39,9 +39,16 @@ start:
 	@$(COMPOSE_ENV) \
 	echo "Environment work directory: $(REDIS_ENV_WORK_DIR)"; \
 	mkdir -pm 777 "$$REDIS_ENV_WORK_DIR"; \
-	$$compose_cmd run --rm --quiet-pull cleanup; \
-	$$compose_cmd --parallel 1 up -d --wait --quiet-pull; \
-	echo "Started test environment with Redis $$display_version.";
+	for attempt in 1 2 3; do \
+		$$compose_cmd run --rm --quiet-pull cleanup && \
+		$$compose_cmd --parallel 1 up -d --wait --quiet-pull && \
+		{ echo "Started test environment with Redis $$display_version."; exit 0; }; \
+		echo "Attempt $$attempt to start the test environment failed."; \
+		$$compose_cmd down; \
+		sleep 5; \
+	done; \
+	echo "Error: Could not start the test environment with Redis $$display_version."; \
+	exit 1
 
 test:
 	TEST_WORK_FOLDER=$(REDIS_ENV_WORK_DIR) mvn -DskipITs=false $(MVN_SOCKET_ARGS) $(MVN_EXTRA_ARGS) clean compile verify -P$(PROFILE)

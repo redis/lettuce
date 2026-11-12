@@ -11,10 +11,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.BlessFlag;
+import io.lettuce.core.BlessScanArgs;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.ScanIterator;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.ClusterTestUtil;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import java.util.Set;
+import java.util.HashSet;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 
@@ -90,6 +96,52 @@ class KeyClusterCommandIntegrationTests extends TestSupport {
 
         assertThat(redis.unlink(key, "a", "b")).isEqualTo(3);
         assertThat(redis.exists(key)).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessSetGetClearRoutedBySlot() {
+
+        redis.set(key, "value");
+        redis.set("a", "value");
+        redis.set("b", "value");
+
+        assertThat(redis.blessSet(key, BlessFlag.NO_EVICT)).isTrue();
+        assertThat(redis.blessSet("a", BlessFlag.NO_EVICT)).isTrue();
+
+        assertThat(redis.blessGet(key)).containsExactly(BlessFlag.NO_EVICT);
+        assertThat(redis.blessGet("a")).containsExactly(BlessFlag.NO_EVICT);
+        assertThat(redis.blessGet("b")).isEmpty();
+
+        assertThat(redis.blessClear("a", BlessFlag.NO_EVICT)).isTrue();
+        assertThat(redis.blessGet("a")).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void blessScanIteratesAllMasters() {
+
+        Set<String> expected = new HashSet<>();
+        for (int i = 0; i < 20; i++) {
+            String k = "bless-" + i;
+            redis.set(k, "value");
+            redis.blessSet(k, BlessFlag.NO_EVICT);
+            expected.add(k);
+        }
+        redis.set("unblessed", "value");
+
+        Set<String> seen = new HashSet<>();
+        KeyScanCursor<String> cursor = redis.blessScan(BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(3));
+        seen.addAll(cursor.getKeys());
+        while (!cursor.isFinished()) {
+            cursor = redis.blessScan(cursor, BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(3));
+            seen.addAll(cursor.getKeys());
+        }
+        assertThat(seen).containsExactlyInAnyOrderElementsOf(expected);
+
+        Set<String> iterated = new HashSet<>();
+        ScanIterator.blessScan(redis, BlessFlag.NO_EVICT).forEachRemaining(iterated::add);
+        assertThat(iterated).containsExactlyInAnyOrderElementsOf(expected);
     }
 
 }

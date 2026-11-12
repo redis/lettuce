@@ -43,7 +43,6 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.*;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 
 /**
@@ -182,6 +181,50 @@ class RedisStateMachineResp3UnitTests {
         ByteBuf buffer = buffer("%1\r\n$3\r\nfoo\r\n$2\r\nok\r\n");
         assertThat(rsm.decode(buffer, output)).isTrue();
         assertThat(output.get()).containsEntry("foo", "ok");
+    }
+
+    @Test
+    void execWithBooleanReplies() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(codec);
+        Command<String, String, Boolean> added = new Command<>(CommandType.EXISTS, new BooleanOutput<>(codec));
+        Command<String, String, Boolean> exists = new Command<>(CommandType.EXISTS, new BooleanOutput<>(codec));
+        output.add(added);
+        output.add(exists);
+
+        ByteBuf buffer = buffer("*2\r\n#t\r\n#f\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(added.getOutput().get()).isTrue();
+        assertThat(exists.getOutput().get()).isFalse();
+        assertThat(output.get()).containsExactly(true, false);
+    }
+
+    @Test
+    void execWithMapReply() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(codec);
+        Command<String, String, Object> eval = new Command<>(CommandType.EVAL, new ObjectOutput<>(codec));
+        output.add(eval);
+
+        ByteBuf buffer = buffer("*1\r\n%1\r\n$4\r\nname\r\n$7\r\nlettuce\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(eval.getOutput().get()).isEqualTo(Collections.singletonMap("name", "lettuce"));
+        assertThat((Object) output.get().get(0)).isEqualTo(Collections.singletonMap("name", "lettuce"));
+    }
+
+    @Test
+    void execWithMapNestedInArrayReply() {
+
+        MultiOutput<String, String> output = new MultiOutput<>(codec);
+        Command<String, String, Object> eval = new Command<>(CommandType.EVAL, new ObjectOutput<>(codec));
+        Command<String, String, Boolean> exists = new Command<>(CommandType.EXISTS, new BooleanOutput<>(codec));
+        output.add(eval);
+        output.add(exists);
+
+        ByteBuf buffer = buffer("*2\r\n*2\r\n%1\r\n$4\r\nname\r\n$7\r\nlettuce\r\n$3\r\nfoo\r\n#t\r\n");
+        assertThat(rsm.decode(buffer, output)).isTrue();
+        assertThat(eval.getOutput().get()).isEqualTo(Arrays.asList(Collections.singletonMap("name", "lettuce"), "foo"));
+        assertThat(exists.getOutput().get()).isTrue();
     }
 
     @Test

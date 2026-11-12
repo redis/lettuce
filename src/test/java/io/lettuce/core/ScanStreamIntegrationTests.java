@@ -28,6 +28,7 @@ import java.util.stream.IntStream;
 
 import javax.inject.Inject;
 
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -136,7 +137,9 @@ class ScanStreamIntegrationTests extends TestSupport {
 
         StepVerifier.create(ScanStream.zscan(reactive, key, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
                 .verifyComplete();
-        StepVerifier.create(ScanStream.zscan(reactive, key)).expectNextCount(1000).verifyComplete();
+        // ZSCAN may return a member more than once, which the btree encoding of Redis 8.12 does even without writes
+        StepVerifier.create(ScanStream.zscan(reactive, key).map(ScoredValue::getValue).distinct()).expectNextCount(1000)
+                .verifyComplete();
     }
 
     @Test
@@ -185,6 +188,24 @@ class ScanStreamIntegrationTests extends TestSupport {
                 .verifyComplete();
 
         assertThat(redis.scard(targetKey)).isEqualTo(5_000);
+    }
+
+    @Test
+    @EnabledOnCommand("BLESS")
+    void shouldBlessScanIteratively() {
+
+        for (int i = 0; i < 100; i++) {
+            redis.set("key-" + i, value);
+            redis.blessSet("key-" + i, BlessFlag.NO_EVICT);
+        }
+        redis.set("unblessed", value);
+
+        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
+
+        StepVerifier.create(ScanStream.blessScan(reactive, BlessFlag.NO_EVICT, BlessScanArgs.Builder.count(10)).take(50))
+                .expectNextCount(50).verifyComplete();
+        StepVerifier.create(ScanStream.blessScan(reactive, BlessFlag.NO_EVICT).collectList())
+                .assertNext(keys -> assertThat(keys).hasSize(100).doesNotContain("unblessed")).verifyComplete();
     }
 
 }
