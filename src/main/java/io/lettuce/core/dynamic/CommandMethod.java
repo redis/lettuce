@@ -62,8 +62,7 @@ public interface CommandMethod {
     boolean isFutureExecution();
 
     /**
-     * @return {@code true} if the method uses reactive execution declaring {@link org.reactivestreams.Publisher} as result
-     *         type.
+     * @return {@code true} if the method uses reactive execution declaring a Reactive Streams {@code Publisher} as result type.
      */
     boolean isReactiveExecution();
 

@@ -25,6 +25,8 @@ import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.SetArgs;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.BlessFlag;
+import io.lettuce.core.BlessScanArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.ScanArgs;
@@ -33,8 +35,10 @@ import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
+import io.lettuce.core.api.CommandsFactory;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
+import io.lettuce.core.cluster.RedisAdvancedClusterReactiveCommandsImpl;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.output.KeyStreamingChannel;
 
@@ -322,6 +326,52 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     Mono<KeyScanCursor<K>> scan(ScanCursor scanCursor);
 
     /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 8.0
+     * @see RedisKeyReactiveCommands#blessScan(BlessFlag)
+     */
+    Mono<KeyScanCursor<K>> blessScan(BlessFlag flag);
+
+    /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @param scanArgs scan arguments, can be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 8.0
+     * @see RedisKeyReactiveCommands#blessScan(BlessFlag, BlessScanArgs)
+     */
+    Mono<KeyScanCursor<K>> blessScan(BlessFlag flag, BlessScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
+     *        {@link #blessScan(BlessFlag)} call.
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 8.0
+     * @see RedisKeyReactiveCommands#blessScan(ScanCursor, BlessFlag)
+     */
+    Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag);
+
+    /**
+     * Incrementally iterate the keys that are blessed with {@code flag} over the whole Cluster.
+     *
+     * @param scanCursor cursor to resume the scan. It's required to reuse the {@code scanCursor} instance from the previous
+     *        {@link #blessScan(BlessFlag)} call.
+     * @param flag the blessing flag to filter on, must not be {@code null}.
+     * @param scanArgs scan arguments, can be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; scan cursor.
+     * @since 8.0
+     * @see RedisKeyReactiveCommands#blessScan(ScanCursor, BlessFlag, BlessScanArgs)
+     */
+    Mono<KeyScanCursor<K>> blessScan(ScanCursor scanCursor, BlessFlag flag, BlessScanArgs scanArgs);
+
+    /**
      * Incrementally iterate the keys space over the whole Cluster.
      *
      * @param channel streaming channel that receives a call for every key
@@ -383,5 +433,55 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return Long integer-reply the number of found keys.
      */
     Mono<Long> touch(K... keys);
+
+    /**
+     * Returns the {@link CommandsFactory} that creates {@link RedisAdvancedClusterReactiveCommands}, for use with
+     * {@link io.lettuce.core.cluster.api.StatefulRedisClusterConnection#commands(CommandsFactory)}:
+     *
+     * <pre>
+     * 
+     * {
+     *     &#64;code
+     *     RedisAdvancedClusterReactiveCommands<K, V> reactive = connection
+     *             .commands(RedisAdvancedClusterReactiveCommands.factory());
+     * }
+     * </pre>
+     *
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return the factory that creates {@link RedisAdvancedClusterReactiveCommands}
+     * @since 7.8
+     */
+    @SuppressWarnings("unchecked")
+    static <K, V> CommandsFactory<StatefulRedisClusterConnection<K, V>, RedisAdvancedClusterReactiveCommands<K, V>> factory() {
+        return FactoryHolder.INSTANCE;
+    }
+
+    /**
+     * Holds the singleton factory so {@link #factory()} returns one shared instance (no per-call allocation); {@code factory()}
+     * re-applies {@code <K, V>}.
+     */
+    final class FactoryHolder {
+
+        private FactoryHolder() {
+        }
+
+        @SuppressWarnings("rawtypes")
+        private static final CommandsFactory INSTANCE = newFactory();
+
+        /**
+         * Create the shared factory. Separate from {@code INSTANCE} so that a GraalVM native image substitution can replace it,
+         * keeping the Reactor-based implementation out of images built without Reactor.
+         *
+         * @return the factory creating {@link RedisAdvancedClusterReactiveCommands} instances.
+         */
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static CommandsFactory newFactory() {
+            return CommandsFactory.of(RedisAdvancedClusterReactiveCommands.class,
+                    (StatefulRedisClusterConnection c) -> new RedisAdvancedClusterReactiveCommandsImpl(c, c.getCodec(),
+                            () -> c.getOptions().getJsonParser().get()));
+        }
+
+    }
 
 }

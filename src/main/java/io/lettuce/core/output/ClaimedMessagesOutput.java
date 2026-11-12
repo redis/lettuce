@@ -50,6 +50,8 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
 
     private boolean hasId;
 
+    private int topLevelIndex;
+
     private K key;
 
     private boolean hasKey;
@@ -60,10 +62,13 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
 
     private final List<StreamMessage<K, V>> messages;
 
+    private final List<String> deletedIds;
+
     public ClaimedMessagesOutput(RedisCodec<K, V> codec, K stream, boolean justId) {
         super(codec, null);
         this.stream = stream;
         this.messages = new ArrayList<>();
+        this.deletedIds = new ArrayList<>();
         this.justId = justId;
     }
 
@@ -107,27 +112,48 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
     @Override
     public void complete(int depth) {
 
-        if (depth == 3 && bodyReceived) {
-            messages.add(new StreamMessage<>(stream, id, body == null ? Collections.emptyMap() : body));
-            bodyReceived = false;
-            key = null;
-            hasKey = false;
-            body = null;
-            id = null;
-            hasId = false;
+        if (depth == 1 && topLevelIndex < 3) {
+            topLevelIndex++;
+            return;
         }
 
-        if (depth == 2 && justId) {
-            messages.add(new StreamMessage<>(stream, id, null));
-            key = null;
-            hasKey = false;
-            body = null;
+        if (topLevelIndex == 1) {
+
+            if (depth == 3 && bodyReceived) {
+                // claimed entry with body (non-JUSTID)
+                messages.add(new StreamMessage<>(stream, id, body == null ? Collections.emptyMap() : body));
+                bodyReceived = false;
+                key = null;
+                hasKey = false;
+                body = null;
+                id = null;
+                hasId = false;
+                return;
+            }
+
+            if (depth == 2 && justId) {
+                // claimed entry with JUSTID: only the entry ID
+                messages.add(new StreamMessage<>(stream, id, null));
+                key = null;
+                hasKey = false;
+                body = null;
+                id = null;
+                hasId = false;
+                return;
+            }
+        }
+
+        if (topLevelIndex == 2 && depth == 2 && id != null) {
+            // deleted PEL entry IDs (third reply element since Redis 7.0)
+            deletedIds.add(id);
             id = null;
             hasId = false;
+            return;
         }
 
         if (depth == 0) {
-            output = new ClaimedMessages<>(startId, Collections.unmodifiableList(messages));
+            output = new ClaimedMessages<>(startId, Collections.unmodifiableList(messages),
+                    Collections.unmodifiableList(deletedIds));
         }
     }
 

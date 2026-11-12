@@ -1,7 +1,5 @@
 package io.lettuce.core.failover.metrics;
 
-import io.lettuce.core.annotations.Experimental;
-
 /**
  * Represents the state of success and failure counts within a specific time window.
  *
@@ -12,7 +10,6 @@ import io.lettuce.core.annotations.Experimental;
  * @author Ali Takavci
  * @since 7.4
  */
-@Experimental
 public interface MetricsSnapshot {
 
     /**

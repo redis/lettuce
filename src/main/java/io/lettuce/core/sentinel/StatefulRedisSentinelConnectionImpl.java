@@ -31,9 +31,10 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
+import io.lettuce.core.api.CommandsFactory;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
-import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
 
 import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
@@ -49,8 +50,6 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     protected final RedisSentinelCommands<K, V> sync;
 
     protected final RedisSentinelAsyncCommands<K, V> async;
-
-    protected final RedisSentinelReactiveCommands<K, V> reactive;
 
     private final SentinelConnectionState connectionState = new SentinelConnectionState();
 
@@ -81,7 +80,6 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
         this.codec = codec;
         this.async = new RedisSentinelAsyncCommandsImpl<>(this, codec);
         this.sync = syncHandler(async, RedisSentinelCommands.class);
-        this.reactive = new RedisSentinelReactiveCommandsImpl<>(this, codec, parser);
     }
 
     @Override
@@ -102,11 +100,6 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     @Override
     public RedisSentinelAsyncCommands<K, V> async() {
         return async;
-    }
-
-    @Override
-    public RedisSentinelReactiveCommands<K, V> reactive() {
-        return reactive;
     }
 
     /**
@@ -131,6 +124,12 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     @Override
     public RedisCodec<K, V> getCodec() {
         return codec;
+    }
+
+    @Override
+    public <T> T commands(CommandsFactory<StatefulRedisSentinelConnection<K, V>, T> f) {
+        LettuceAssert.notNull(f, "CommandsFactory must not be null");
+        return store.compute(f.key(), () -> f.apply(this));
     }
 
     static class SentinelConnectionState extends ConnectionState {

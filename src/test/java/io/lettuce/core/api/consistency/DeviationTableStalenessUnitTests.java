@@ -57,6 +57,8 @@ class DeviationTableStalenessUnitTests {
 
         NOT_ON_SYNC_API(KnownApiDeviations.NOT_ON_SYNC_API, Scope.ASYNC, Scope.REACTIVE),
 
+        NOT_ON_REACTIVE(KnownApiDeviations.NOT_ON_REACTIVE, Scope.SYNC),
+
         KEEP_SYNC_RESULT_TYPE_ASYNC(KnownApiDeviations.KEEP_SYNC_RESULT_TYPE_ASYNC, Scope.SYNC),
 
         KEEP_SYNC_RESULT_TYPE_REACTIVE(KnownApiDeviations.KEEP_SYNC_RESULT_TYPE_REACTIVE, Scope.SYNC),

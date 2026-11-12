@@ -17,8 +17,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.OrderingReadFromAccessor;
 import io.lettuce.core.ReadFrom;
@@ -31,6 +29,7 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
 import io.lettuce.core.internal.Exceptions;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.netty.util.internal.logging.InternalLogger;
@@ -137,26 +136,89 @@ class MasterReplicaConnectionProvider<K, V> {
 
             try {
 
-                Flux<StatefulRedisConnection<K, V>> connections = Flux.empty();
-
+                List<CompletableFuture<StatefulRedisConnection<K, V>>> connections = new ArrayList<>(selection.size());
                 for (RedisNodeDescription node : selection) {
-                    connections = connections.concatWith(Mono.fromFuture(getConnection(node)));
+                    connections.add(getConnection(node));
                 }
 
                 if (OrderingReadFromAccessor.isOrderSensitive(readFrom)) {
-                    return connections.filter(StatefulConnection::isOpen).next().switchIfEmpty(connections.next()).toFuture();
+                    return firstOpenInOrderOrFallback(connections);
                 }
 
-                return connections.filter(StatefulConnection::isOpen).collectList().filter(it -> !it.isEmpty()).map(it -> {
-                    int index = ThreadLocalRandom.current().nextInt(it.size());
-                    return it.get(index);
-                }).switchIfEmpty(connections.next()).toFuture();
+                return randomOpenOrFallback(connections);
             } catch (RuntimeException e) {
                 throw Exceptions.bubble(e);
             }
         }
 
         return getConnection(getMaster());
+    }
+
+    /**
+     * Walk {@code connections} in order and return the first connection that is open. Candidates that failed to connect are
+     * skipped. If none is open, fall back to the first connection that could be established. The result fails only if no
+     * candidate could be connected.
+     */
+    private CompletableFuture<StatefulRedisConnection<K, V>> firstOpenInOrderOrFallback(
+            List<CompletableFuture<StatefulRedisConnection<K, V>>> connections) {
+
+        CompletableFuture<StatefulRedisConnection<K, V>> chain = CompletableFuture.completedFuture(null);
+        for (CompletableFuture<StatefulRedisConnection<K, V>> nextOne : connections) {
+            chain = chain.thenCompose(found -> {
+                if (found == null) {
+                    return nextOne.handle((c, t) -> t == null && c.isOpen() ? c : null);
+                }
+                return CompletableFuture.completedFuture(found);
+            });
+        }
+        return Futures.unwrapExceptions(chain.thenCompose(
+                found -> found != null ? CompletableFuture.completedFuture(found) : firstConnectedOrFailure(connections)));
+    }
+
+    /**
+     * Wait for all {@code connections} and return one open connection chosen uniformly at random. Candidates that failed to
+     * connect are skipped. If none is open, fall back to the first connection that could be established. The result fails only
+     * if no candidate could be connected.
+     */
+    private CompletableFuture<StatefulRedisConnection<K, V>> randomOpenOrFallback(
+            List<CompletableFuture<StatefulRedisConnection<K, V>>> connections) {
+
+        CompletableFuture<?>[] settled = new CompletableFuture[connections.size()];
+        for (int i = 0; i < settled.length; i++) {
+            settled[i] = connections.get(i).handle((c, t) -> null);
+        }
+
+        return Futures.unwrapExceptions(CompletableFuture.allOf(settled).thenCompose(v -> {
+            List<StatefulRedisConnection<K, V>> open = new ArrayList<>(connections.size());
+            for (CompletableFuture<StatefulRedisConnection<K, V>> connection : connections) {
+                if (connection.isCompletedExceptionally()) {
+                    continue;
+                }
+                StatefulRedisConnection<K, V> c = connection.join();
+                if (c.isOpen()) {
+                    open.add(c);
+                }
+            }
+            if (open.isEmpty()) {
+                return firstConnectedOrFailure(connections);
+            }
+            return CompletableFuture.completedFuture(open.get(ThreadLocalRandom.current().nextInt(open.size())));
+        }));
+    }
+
+    /**
+     * Return the first candidate that connected successfully, or the first candidate if all of them failed so that its failure
+     * is propagated. Must be called once all {@code connections} have completed.
+     */
+    private static <K, V> CompletableFuture<StatefulRedisConnection<K, V>> firstConnectedOrFailure(
+            List<CompletableFuture<StatefulRedisConnection<K, V>>> connections) {
+
+        for (CompletableFuture<StatefulRedisConnection<K, V>> connection : connections) {
+            if (!connection.isCompletedExceptionally()) {
+                return connection;
+            }
+        }
+        return connections.get(0);
     }
 
     protected CompletableFuture<StatefulRedisConnection<K, V>> getConnection(RedisNodeDescription redisNodeDescription) {
