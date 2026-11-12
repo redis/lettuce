@@ -64,6 +64,7 @@ import static io.lettuce.core.protocol.CommandType.SAVE;
  * @author Seonghwan Lee
  * @author dae won
  * @author Yordan Tsintsov
+ * @author Taewoong Kim
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -1469,7 +1470,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEORADIUSBYMEMBER, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, Set<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate) {
+    Command<K, V, Set<V>> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate) {
         notNullKey(key);
         LettuceAssert.notNull(reference, "GeoRef " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(predicate, "GeoPredicate " + MUST_NOT_BE_NULL);
@@ -1482,7 +1483,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(GEOSEARCH, new ValueSetOutput<>(codec), args);
     }
 
-    Command<K, V, List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+    Command<K, V, List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate,
             GeoArgs geoArgs) {
         notNullKey(key);
         LettuceAssert.notNull(reference, "GeoRef " + MUST_NOT_BE_NULL);
@@ -1499,7 +1500,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
                 args);
     }
 
-    Command<K, V, Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+    Command<K, V, Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate,
             GeoArgs geoArgs, boolean storeDist) {
         notNullKey(key);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);

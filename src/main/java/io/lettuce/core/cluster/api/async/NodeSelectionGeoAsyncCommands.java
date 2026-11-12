@@ -35,6 +35,7 @@ import io.lettuce.core.Value;
  * Asynchronous executed commands on a node selection for the Geo-API.
  *
  * @author Mark Paluch
+ * @author Taewoong Kim
  * @since 4.0
  */
 public interface NodeSelectionGeoAsyncCommands<K, V> {
@@ -249,7 +250,7 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      * @return bulk reply.
      * @since 6.1
      */
-    AsyncExecutions<Set<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate);
+    AsyncExecutions<Set<V>> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate);
 
     /**
      * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
@@ -262,7 +263,7 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}.
      * @since 6.1
      */
-    AsyncExecutions<List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+    AsyncExecutions<List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate,
             GeoArgs geoArgs);
 
     /**
@@ -279,7 +280,7 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      * @return Long integer-reply the number of elements in the result.
      * @since 6.1
      */
-    AsyncExecutions<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+    AsyncExecutions<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate,
             GeoArgs geoArgs, boolean storeDist);
 
 }

@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -23,10 +24,12 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.*;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Taewoong Kim
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -171,6 +174,65 @@ class CustomCodecIntegrationTests extends TestSupport {
         assertThat(connection.get(key)).isInstanceOf(Person.class);
 
         connection.getStatefulConnection().close();
+    }
+
+    @Test
+    @EnabledOnCommand("GEOSEARCH")
+    void geosearchUsesValueCodec() {
+
+        RedisCodec<String, String> codec = RedisCodec.of(StringCodec.UTF8, new StringCodec(StandardCharsets.UTF_16BE));
+
+        try (StatefulRedisConnection<String, String> connection = client.connect(codec)) {
+            RedisCommands<String, String> commands = connection.sync();
+            commands.del(key, "destination");
+            commands.geoadd(key, 13.361389, 38.115556, "Palermo");
+
+            GeoSearch.GeoRef<String> reference = GeoSearch.fromMember("Palermo");
+            GeoSearch.GeoPredicate predicate = GeoSearch.byRadius(1, GeoArgs.Unit.km);
+
+            assertThat(commands.geosearch(key, reference, predicate)).containsExactly("Palermo");
+            assertThat(commands.geosearch(key, reference, predicate, new GeoArgs().withDistance()))
+                    .extracting(GeoWithin::getMember).containsExactly("Palermo");
+            assertThat(commands.geosearchstore("destination", key, reference, predicate, new GeoArgs(), false)).isEqualTo(1);
+            assertThat(commands.zrange("destination", 0, -1)).containsExactly("Palermo");
+        }
+    }
+
+    @Test
+    @EnabledOnCommand("GEOSEARCH")
+    void geosearchWithDifferentKeyAndValueTypes() throws Exception {
+
+        RedisCodec<String, byte[]> codec = RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE);
+        byte[] member = "Palermo".getBytes(StandardCharsets.UTF_8);
+
+        try (StatefulRedisConnection<String, byte[]> connection = client.connect(codec)) {
+            RedisCommands<String, byte[]> commands = connection.sync();
+            commands.del(key, "destination");
+            commands.geoadd(key, 13.361389, 38.115556, member);
+
+            GeoSearch.GeoRef<byte[]> reference = GeoSearch.fromMember(member);
+            GeoSearch.GeoPredicate predicate = GeoSearch.byRadius(1, GeoArgs.Unit.km);
+
+            assertThat(commands.geosearch(key, GeoSearch.fromCoordinates(13.361389, 38.115556), predicate))
+                    .containsExactly(member);
+            assertThat(connection.async().geosearch(key, reference, predicate).get(10, TimeUnit.SECONDS))
+                    .containsExactly(member);
+            assertThat(connection.async().geosearch(key, reference, predicate, new GeoArgs().withDistance()).get(10,
+                    TimeUnit.SECONDS)).extracting(GeoWithin::getMember).containsExactly(member);
+            assertThat(connection.async().geosearchstore("destination", key, reference, predicate, new GeoArgs(), false).get(10,
+                    TimeUnit.SECONDS)).isEqualTo(1);
+            assertThat(commands.zrange("destination", 0, -1)).containsExactly(member);
+
+            StepVerifier.create(connection.reactive().geosearch(key, reference, predicate))
+                    .assertNext(value -> assertThat(value).isEqualTo(member)).verifyComplete();
+            StepVerifier.create(connection.reactive().geosearch(key, reference, predicate, new GeoArgs().withDistance()))
+                    .assertNext(value -> assertThat(value.getMember()).isEqualTo(member)).verifyComplete();
+            assertThat(commands.del("destination")).isEqualTo(1);
+            StepVerifier.create(
+                    connection.reactive().geosearchstore("destination", key, reference, predicate, new GeoArgs(), false))
+                    .expectNext(1L).verifyComplete();
+            assertThat(commands.zrange("destination", 0, -1)).containsExactly(member);
+        }
     }
 
     class SerializedObjectCodec implements RedisCodec<String, Object> {
