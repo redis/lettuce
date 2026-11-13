@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,6 +19,7 @@ import io.netty.buffer.Unpooled;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
 import reactor.netty.http.client.HttpClient;
+import reactor.util.retry.Retry;
 
 /**
  * Async Fault Injection Client using reactor.netty.http.client.HttpClient.
@@ -91,6 +93,108 @@ public class FaultInjectionClient {
     }
 
     /**
+     * Outcome of a fault-injection action as reported by the {@code /action/{id}} endpoint.
+     */
+    static class ActionStatus {
+
+        private final String status;
+
+        private final String error;
+
+        ActionStatus(String status, String error) {
+            this.status = status;
+            this.error = error;
+        }
+
+        /**
+         * @return {@code true} when the fault injector reports the action as finished successfully.
+         */
+        boolean isSuccess() {
+            return "success".equals(status) || "completed".equals(status);
+        }
+
+        /**
+         * @return {@code true} when the fault injector reports the action as failed. Polling further cannot change that.
+         */
+        boolean isFailure() {
+            return "failed".equals(status) || error != null;
+        }
+
+        String getStatus() {
+            return status;
+        }
+
+        String getError() {
+            return error;
+        }
+
+        @Override
+        public String toString() {
+            return "ActionStatus{status=" + status + ", error=" + error + "}";
+        }
+
+    }
+
+    /**
+     * Raised when the fault injector reports an action as failed. Tells a terminal failure apart from "not finished yet" and
+     * from transport errors while talking to the fault injector.
+     */
+    public static class ActionFailedException extends RuntimeException {
+
+        private static final long serialVersionUID = 1L;
+
+        private final String actionId;
+
+        private final String status;
+
+        private final String error;
+
+        ActionFailedException(String actionId, ActionStatus actionStatus) {
+            super("Fault injection action " + actionId + " failed: status=" + actionStatus.getStatus() + ", error="
+                    + actionStatus.getError());
+            this.actionId = actionId;
+            this.status = actionStatus.getStatus();
+            this.error = actionStatus.getError();
+        }
+
+        public String getActionId() {
+            return actionId;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+    }
+
+    /**
+     * Parses the body of a {@code /action/{id}} response. A body that is not a JSON object yields a status that is neither
+     * success nor failure, so the caller keeps polling instead of giving up on a transient glitch.
+     *
+     * @param body the raw response body
+     * @return the parsed status
+     */
+    ActionStatus parseActionStatus(String body) {
+        try {
+            JsonNode node = objectMapper.readTree(body);
+            if (node == null || !node.isObject()) {
+                log.warn("Unexpected action status response, will keep polling: '{}'", body);
+                return new ActionStatus(null, null);
+            }
+            String status = node.hasNonNull("status") ? node.get("status").asText() : null;
+            String error = node.hasNonNull("error") ? node.get("error").asText() : null;
+            return new ActionStatus(status, error);
+        } catch (Exception e) {
+            log.warn("Could not parse action status response '{}', will keep polling: {}", body, e.getMessage());
+            return new ActionStatus(null, null);
+        }
+    }
+
+    /**
      * Triggers an action with the specified type and parameters.
      *
      * @param actionType the type of action to trigger
@@ -130,24 +234,34 @@ public class FaultInjectionClient {
      * Checks the status of an action.
      *
      * @param actionId the ID of the action to check
-     * @return Mono that emits true if the action is completed, empty if still in progress
+     * @return Mono that emits true if the action is completed, empty if still in progress, and errors with
+     *         {@link ActionFailedException} if the fault injector reports the action as failed
      */
     private Mono<Boolean> checkActionStatus(String actionId) {
         return httpClient.get().uri(BASE_URL + "/action/" + actionId).responseSingle((response, body) -> body.asString())
                 .flatMap(result -> {
                     log.info("Action status: {}", result);
-                    if (result.contains("success")) {
+                    ActionStatus status = parseActionStatus(result);
+                    if (status.isSuccess()) {
                         return Mono.just(true);
                     }
-                    // Return empty to trigger retry
+                    if (status.isFailure()) {
+                        log.error("Action {} failed: {}", actionId, status);
+                        return Mono.error(new ActionFailedException(actionId, status));
+                    }
+                    // Queued or still running: return empty to trigger the next poll
                     return Mono.empty();
                 })
-                .retryWhen(reactor.util.retry.Retry.backoff(3, Duration.ofMillis(300)).maxBackoff(RETRY_MAX_BACKOFF)
-                        .filter(throwable -> !(throwable instanceof RuntimeException && throwable.getMessage() != null
-                                && throwable.getMessage().contains("Fault injection proxy error")))
+                .retryWhen(Retry.backoff(3, Duration.ofMillis(300)).maxBackoff(RETRY_MAX_BACKOFF)
+                        .filter(throwable -> !(throwable instanceof ActionFailedException)
+                                && !(throwable instanceof RuntimeException && throwable.getMessage() != null
+                                        && throwable.getMessage().contains("Fault injection proxy error")))
                         .doBeforeRetry(retrySignal -> log.warn("Retrying action status check after error, attempt: {}",
                                 retrySignal.totalRetries() + 1)))
                 .onErrorResume(e -> {
+                    if (e instanceof ActionFailedException) {
+                        return Mono.error(e);
+                    }
                     log.error("Fault injection proxy error after retries", e);
                     return Mono.error(new RuntimeException("Fault injection proxy error", e));
                 });
@@ -161,7 +275,8 @@ public class FaultInjectionClient {
      * @param checkInterval interval between status checks
      * @param delayAfter delay after completion before returning true
      * @param timeout maximum time to wait for completion
-     * @return Mono that completes with true when the action is completed and the delay has passed
+     * @return Mono that completes with true when the action is completed and the delay has passed, or errors with
+     *         {@link ActionFailedException} as soon as the fault injector reports the action as failed
      */
     public Mono<Boolean> waitForCompletion(String actionId, Duration checkInterval, Duration delayAfter, Duration timeout) {
         return Mono.defer(() -> checkActionStatus(actionId)).flatMap(completed -> {
@@ -173,8 +288,8 @@ public class FaultInjectionClient {
                 return Mono.just(true);
             }
             return Mono.just(false);
-        }).repeatWhenEmpty(repeat -> repeat.delayElements(checkInterval)).timeout(timeout)
-                .doOnError(e -> log.error("Timeout waiting for action to complete", e));
+        }).repeatWhenEmpty(repeat -> repeat.delayElements(checkInterval)).timeout(timeout).doOnError(TimeoutException.class,
+                e -> log.error("Timeout waiting for action {} to complete", actionId, e));
     }
 
     /**
@@ -299,7 +414,7 @@ public class FaultInjectionClient {
                         return Mono.error(new RuntimeException("Failed to parse action status: " + e.getMessage()));
                     }
                 })
-                .retryWhen(reactor.util.retry.Retry.backoff(5, Duration.ofMillis(500)).maxBackoff(RETRY_MAX_BACKOFF)
+                .retryWhen(Retry.backoff(5, Duration.ofMillis(500)).maxBackoff(RETRY_MAX_BACKOFF)
                         .filter(throwable -> !(throwable instanceof RuntimeException && throwable.getMessage() != null
                                 && throwable.getMessage().contains("failed")))
                         .doBeforeRetry(retrySignal -> log.debug("Retrying rladmin status check for '{}', attempt: {}",
@@ -767,7 +882,7 @@ public class FaultInjectionClient {
                         return Mono.error(new RuntimeException("Failed to parse action status: " + e.getMessage()));
                     }
                 })
-                .retryWhen(reactor.util.retry.Retry.backoff(5, Duration.ofMillis(500)).maxBackoff(RETRY_MAX_BACKOFF)
+                .retryWhen(Retry.backoff(5, Duration.ofMillis(500)).maxBackoff(RETRY_MAX_BACKOFF)
                         .filter(throwable -> !(throwable instanceof RuntimeException && throwable.getMessage() != null
                                 && throwable.getMessage().contains("failed")))
                         .doBeforeRetry(retrySignal -> log.debug("Retrying rladmin output capture for '{}', attempt: {}",
