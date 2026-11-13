@@ -102,7 +102,7 @@ public class BZMoveArgs implements CompositeArgument {
     }
 
     /**
-     * Move up to {@code count} members. The value is sent as given.
+     * Move up to {@code count} members. The value is sent as given. Without a count, one member is moved.
      *
      * @param count the maximum number of members to move.
      * @return {@code this} {@link BZMoveArgs}.

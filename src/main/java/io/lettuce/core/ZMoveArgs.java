@@ -88,7 +88,8 @@ public class ZMoveArgs implements CompositeArgument {
     }
 
     /**
-     * Move up to {@code count} members. The value is sent as given.
+     * Move up to {@code count} members. The value is sent as given. Without a count, {@link Builder#min()} and
+     * {@link Builder#max()} move one member and {@link Builder#byScore(Range)} moves every member in the range.
      *
      * @param count the maximum number of members to move.
      * @return {@code this} {@link ZMoveArgs}.
