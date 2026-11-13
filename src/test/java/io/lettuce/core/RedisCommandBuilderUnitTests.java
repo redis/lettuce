@@ -1355,7 +1355,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A11: none of the three commands is registered as read-only.
+     * None of the three commands is registered as read-only.
      */
     @Test
     void sortedSetMoveCommandsAreNotReadOnly() {
@@ -1384,7 +1384,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A07: the members follow {@code MEMBERS} and their number; a condition comes before {@code MEMBERS}.
+     * The members follow {@code MEMBERS} and their number; a condition comes before {@code MEMBERS}.
      */
     @Test
     void zmovememberWritesMembersAfterNumberAndConditionBefore() {
@@ -1399,8 +1399,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A07b: members are data: keyword names, repeats and order are written as given, a member with a space stays
-     * one argument.
+     * Members are data: keyword names, repeats and order are written as given, a member with a space stays one argument.
      */
     @Test
     void zmovememberWritesMembersAsGiven() {
@@ -1413,8 +1412,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A08: an empty member list is written as {@code MEMBERS 0}, with and without a condition, without an
-     * exception.
+     * An empty member list is written as {@code MEMBERS 0}, with and without a condition, without an exception.
      */
     @Test
     void zmovememberWritesEmptyMemberList() {
@@ -1425,7 +1423,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario ZMOV-SV03: an empty member list is sent, never rejected by the client.
+     * An empty member list is sent, never rejected by the client.
      */
     @Test
     void zmovememberEmptyMemberListIsSent() {
@@ -1435,7 +1433,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario ZMOV-SA26: NX with XX can't be produced through the API, so the command never carries both conditions.
+     * NX with XX can't be produced through the API, so the command never carries both conditions.
      */
     @Test
     void zmovememberNeverCarriesBothConditions() {
@@ -1447,8 +1445,8 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A09: {@code null} keys, args, member arrays and score ranges are rejected with
-     * {@link IllegalArgumentException} before a command is built.
+     * {@code null} keys, args, member arrays and score ranges are rejected with {@link IllegalArgumentException} before a
+     * command is built.
      */
     @Test
     void moveCommandsRejectNulls() {
@@ -1478,7 +1476,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A12: an argument object passed in place of a member is rejected before a command is built.
+     * An argument object passed in place of a member is rejected before a command is built.
      */
     @Test
     void zmovememberRejectsArgumentObjectPassedAsMember() {
@@ -1499,7 +1497,7 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A10: each command has its own type, with the source as the first key and the destination as the second.
+     * Each command has its own type, with the source as the first key and the destination as the second.
      */
     @Test
     void moveCommandsCarrySourceThenDestination() {

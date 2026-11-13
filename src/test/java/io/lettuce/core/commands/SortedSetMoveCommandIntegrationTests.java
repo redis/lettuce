@@ -74,8 +74,8 @@ class SortedSetMoveCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-C01: through the asynchronous API a missing source completes the future with {@code null}; moving the two
-     * lowest members completes it with them in ascending order.
+     * Through the asynchronous API a missing source completes the future with {@code null}; moving the two lowest members
+     * completes it with them in ascending order.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -91,8 +91,8 @@ class SortedSetMoveCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-C05: in a transaction each move's result is in the transaction result, {@code null} for the move that
-     * selected nothing, on a RESP3 and on a RESP2 connection.
+     * In a transaction each move's result is in the transaction result, {@code null} for the move that selected nothing, on a
+     * RESP3 and on a RESP2 connection.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -141,7 +141,7 @@ class SortedSetMoveCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-C06: pipelined moves complete in order, the last one with {@code null} once the source is gone.
+     * Pipelined moves complete in order, the last one with {@code null} once the source is gone.
      */
     @Test
     @EnabledOnCommand("ZMOVE")

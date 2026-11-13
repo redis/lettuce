@@ -69,7 +69,7 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     // Nothing moved arrives as an empty Flux: these override the base tests that expect null.
 
     /**
-     * Scenario ZMOV-SA08: a score range that selects nothing completes without an element, and creates no destination.
+     * A score range that selects nothing completes without an element, and creates no destination.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -83,8 +83,7 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     }
 
     /**
-     * Scenario ZMOV-SA09: a missing source completes without an element for a move and a member move, also when the destination
-     * holds a string.
+     * A missing source completes without an element for a move and a member move, also when the destination holds a string.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -101,8 +100,8 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     }
 
     /**
-     * Scenario ZMOV-SA10: a source that is also the destination completes without an element for each command, and keeps its
-     * member; a blocking move on a missing key to itself completes without an element.
+     * A source that is also the destination completes without an element for each command, and keeps its member; a blocking
+     * move on a missing key to itself completes without an element.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -121,8 +120,7 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     }
 
     /**
-     * Scenario ZMOV-SA17: XX with a missing destination completes without an element, creates no destination and leaves the
-     * source.
+     * XX with a missing destination completes without an element, creates no destination and leaves the source.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -137,7 +135,7 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     }
 
     /**
-     * Scenario ZMOV-SA22: a NaN bound errors with the server's message; an inverted range completes without an element.
+     * A NaN bound errors with the server's message; an inverted range completes without an element.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -151,7 +149,7 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     }
 
     /**
-     * Scenario ZMOV-SA29: a blocking move on a missing source with a fractional timeout completes without an element.
+     * A blocking move on a missing source with a fractional timeout completes without an element.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -162,8 +160,7 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     }
 
     /**
-     * Scenario ZMOV-SA34: a positive timeout under one millisecond, and one with a long fraction, complete without an element
-     * on a missing source.
+     * A positive timeout under one millisecond, and one with a long fraction, complete without an element on a missing source.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -175,8 +172,7 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     }
 
     /**
-     * Scenario ZMOV-C08: a blocking move on a missing source with a 100 ms timeout completes without an element well under a
-     * second.
+     * A blocking move on a missing source with a 100 ms timeout completes without an element well under a second.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -189,8 +185,8 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     }
 
     /**
-     * Scenario ZMOV-C02: through the reactive API a missing source completes with no element and no error; moving the two
-     * highest members emits them in descending order.
+     * Through the reactive API a missing source completes with no element and no error; moving the two highest members emits
+     * them in descending order.
      */
     @Test
     @EnabledOnCommand("ZMOVE")

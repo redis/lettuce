@@ -72,7 +72,7 @@ internal class CoroutinesIntegrationTests @Inject constructor(private val connec
     }
 
     /**
-     * Scenario ZMOV-C03: through the coroutine API a move from a missing source returns `null`, a member move returns the
+     * Through the coroutine API a move from a missing source returns `null`, a member move returns the
      * moved pair, and a blocking move that times out returns `null`.
      */
     @Test

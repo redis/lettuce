@@ -1227,8 +1227,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA01: moving the lowest member without a count replies a list of one pair, and the member is in the
-     * destination.
+     * Moving the lowest member without a count replies a list of one pair, and the member is in the destination.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1240,8 +1239,8 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA02: moving the two lowest members replies them in ascending order; the destination holds them with their
-     * scores and the source keeps one member.
+     * Moving the two lowest members replies them in ascending order; the destination holds them with their scores and the
+     * source keeps one member.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1254,7 +1253,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA03: moving the two highest members replies them in descending order.
+     * Moving the two highest members replies them in descending order.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1265,7 +1264,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA04: a score range with an exclusive minimum and no count moves the whole range.
+     * A score range with an exclusive minimum and no count moves the whole range.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1278,8 +1277,8 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA05: an infinite score range with a count moves the lowest members up to the count; exclusive infinite
-     * bounds are accepted too.
+     * An infinite score range with a count moves the lowest members up to the count; exclusive infinite bounds are accepted
+     * too.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1295,7 +1294,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA06: members with equal scores move in member order.
+     * Members with equal scores move in member order.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1307,7 +1306,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA07: an infinite score reads as positive infinity.
+     * An infinite score reads as positive infinity.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1322,8 +1321,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA08: a score range that selects nothing replies {@code null}, not an empty list, and creates no
-     * destination.
+     * A score range that selects nothing replies {@code null}, not an empty list, and creates no destination.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1335,8 +1333,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA09: a missing source replies {@code null} for a move and a member move, also when the destination holds a
-     * string.
+     * A missing source replies {@code null} for a move and a member move, also when the destination holds a string.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -1352,8 +1349,8 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA10: a source that is also the destination replies {@code null} at once for each command, and keeps its
-     * member; a blocking move on a missing key to itself replies {@code null} at once.
+     * A source that is also the destination replies {@code null} at once for each command, and keeps its member; a blocking
+     * move on a missing key to itself replies {@code null} at once.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -1369,7 +1366,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA11: a count larger than the source moves every member and deletes the source.
+     * A count larger than the source moves every member and deletes the source.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1382,7 +1379,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA12: members move in argument order, a missing member is skipped and a repeated member moves once.
+     * Members move in argument order, a missing member is skipped and a repeated member moves once.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -1394,7 +1391,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA13: without a condition, a member the destination holds takes the source score.
+     * Without a condition, a member the destination holds takes the source score.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -1408,7 +1405,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA14: a member with the same score in the destination still moves.
+     * A member with the same score in the destination still moves.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -1421,7 +1418,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA15: with NX only members the destination doesn't hold move; the others stay in both keys.
+     * With NX only members the destination doesn't hold move; the others stay in both keys.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -1434,7 +1431,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA16: with XX only members the destination holds move; the others stay in the source.
+     * With XX only members the destination holds move; the others stay in the source.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -1446,7 +1443,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA17: XX with a missing destination replies {@code null}, creates no destination and leaves the source.
+     * XX with a missing destination replies {@code null}, creates no destination and leaves the source.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -1459,7 +1456,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA18: members named like keywords are data.
+     * Members named like keywords are data.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -1472,7 +1469,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA35: a move keeps the destination's TTL and a source's TTL; a destination the move creates has none.
+     * A move keeps the destination's TTL and a source's TTL; a destination the move creates has none.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1495,8 +1492,8 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA19: a count of 0 or below is rejected by the server and nothing moves; the count error comes before the
-     * type check of the keys.
+     * A count of 0 or below is rejected by the server and nothing moves; the count error comes before the type check of the
+     * keys.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1520,7 +1517,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA22: a NaN bound is rejected by the server; an inverted range replies {@code null}.
+     * A NaN bound is rejected by the server; an inverted range replies {@code null}.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1533,8 +1530,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA23: a source or destination of another type is rejected with WRONGTYPE at once, and the source keeps its
-     * member.
+     * A source or destination of another type is rejected with WRONGTYPE at once, and the source keeps its member.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -1558,8 +1554,8 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA27: an empty member list reaches the server, which rejects it: without a condition with the arity error,
-     * with NX with the number-of-members error.
+     * An empty member list reaches the server, which rejects it: without a condition with the arity error, with NX with the
+     * number-of-members error.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -1574,7 +1570,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA28: a blocking move on a non-empty source replies at once, highest scores first.
+     * A blocking move on a non-empty source replies at once, highest scores first.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -1586,7 +1582,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA29: a blocking move on a missing source with a fractional timeout replies {@code null}.
+     * A blocking move on a missing source with a fractional timeout replies {@code null}.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -1596,8 +1592,8 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA31: a blocking move on a missing source with a count of 0, a negative timeout or an infinite timeout is
-     * rejected by the server at once.
+     * A blocking move on a missing source with a count of 0, a negative timeout or an infinite timeout is rejected by the
+     * server at once.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -1615,8 +1611,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA34: a positive timeout under one millisecond, and one with a long fraction, reply {@code null} on a
-     * missing source.
+     * A positive timeout under one millisecond, and one with a long fraction, reply {@code null} on a missing source.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -1627,7 +1622,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-C08: a blocking move on a missing source with a 100 ms timeout replies {@code null} well under a second.
+     * A blocking move on a missing source with a 100 ms timeout replies {@code null} well under a second.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -1639,7 +1634,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SV01: a count below 1 on the blocking move is sent and the server's count error comes back; nothing moves.
+     * A count below 1 on the blocking move is sent and the server's count error comes back; nothing moves.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -1652,7 +1647,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SV02: a negative fractional timeout is sent and the server's negative-timeout error comes back.
+     * A negative fractional timeout is sent and the server's negative-timeout error comes back.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
@@ -1664,7 +1659,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SV03: an empty member list with XX is sent and the server's number-of-members error comes back.
+     * An empty member list with XX is sent and the server's number-of-members error comes back.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -1677,7 +1672,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SV05: a score range without a count moves the whole range, its inclusive ends included.
+     * A score range without a count moves the whole range, its inclusive ends included.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -1689,7 +1684,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SV06: the largest count is accepted and every member moves.
+     * The largest count is accepted and every member moves.
      */
     @Test
     @EnabledOnCommand("ZMOVE")

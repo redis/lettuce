@@ -355,8 +355,7 @@ class SortedSetClusterCommandIntegrationTests extends SortedSetCommandIntegratio
     }
 
     /**
-     * Scenario ZMOV-SA33: source and destination in two slots are rejected by the server with CROSSSLOT, for a move and a
-     * member move.
+     * Source and destination in two slots are rejected by the server with CROSSSLOT, for a move and a member move.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")
@@ -371,8 +370,7 @@ class SortedSetClusterCommandIntegrationTests extends SortedSetCommandIntegratio
     }
 
     /**
-     * Scenario ZMOV-C04: through the node selection of the upstream that owns the slot, the move runs once and replies the
-     * moved pair.
+     * Through the node selection of the upstream that owns the slot, the move runs once and replies the moved pair.
      */
     @Test
     @EnabledOnCommand("ZMOVE")
@@ -389,8 +387,7 @@ class SortedSetClusterCommandIntegrationTests extends SortedSetCommandIntegratio
     }
 
     /**
-     * Scenario ZMOV-C09: a client seeded with a node that does not own the slot routes the move to the slot owner by the source
-     * key.
+     * A client seeded with a node that does not own the slot routes the move to the slot owner by the source key.
      */
     @Test
     @EnabledOnCommand("ZMOVE")

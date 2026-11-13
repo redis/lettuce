@@ -109,7 +109,7 @@ class NullableScoredValueListOutputUnitTests {
     }
 
     /**
-     * Scenario ZMOV-B01: a RESP2 reply of two nested pairs with bulk-string scores decodes to the pairs in reply order.
+     * A RESP2 reply of two nested pairs with bulk-string scores decodes to the pairs in reply order.
      */
     @Test
     void resp2TwoPairsDecodeInOrder() {
@@ -119,7 +119,7 @@ class NullableScoredValueListOutputUnitTests {
     }
 
     /**
-     * Scenario ZMOV-B02: a RESP3 reply of two nested pairs with double scores decodes to the same list as RESP2.
+     * A RESP3 reply of two nested pairs with double scores decodes to the same list as RESP2.
      */
     @Test
     void resp3TwoPairsDecodeLikeResp2() {
@@ -131,7 +131,7 @@ class NullableScoredValueListOutputUnitTests {
     }
 
     /**
-     * Scenario ZMOV-B03: one nested pair decodes to a list of one, in both protocols.
+     * One nested pair decodes to a list of one, in both protocols.
      */
     @Test
     void onePairIsAListOfOne() {
@@ -142,7 +142,7 @@ class NullableScoredValueListOutputUnitTests {
     }
 
     /**
-     * Scenario ZMOV-B04: the RESP2 null array decodes to {@code null}, not to an empty list.
+     * The RESP2 null array decodes to {@code null}, not to an empty list.
      */
     @Test
     void resp2NullArrayDecodesToNull() {
@@ -151,7 +151,7 @@ class NullableScoredValueListOutputUnitTests {
     }
 
     /**
-     * Scenario ZMOV-B05: the RESP3 null decodes to {@code null}.
+     * The RESP3 null decodes to {@code null}.
      */
     @Test
     void resp3NullDecodesToNull() {
@@ -160,7 +160,7 @@ class NullableScoredValueListOutputUnitTests {
     }
 
     /**
-     * Scenario ZMOV-B06: infinite scores decode to positive and negative infinity, in both protocols.
+     * Infinite scores decode to positive and negative infinity, in both protocols.
      */
     @Test
     void infiniteScoresDecode() {
@@ -180,7 +180,7 @@ class NullableScoredValueListOutputUnitTests {
     }
 
     /**
-     * Scenario ZMOV-B07: a small score written in plain decimal decodes to the number, in both protocols.
+     * A small score written in plain decimal decodes to the number, in both protocols.
      */
     @Test
     void smallScoreDecodesAsNumber() {
@@ -193,7 +193,7 @@ class NullableScoredValueListOutputUnitTests {
     }
 
     /**
-     * Scenario ZMOV-B08: a streaming subscriber receives each decoded pair in reply order.
+     * A streaming subscriber receives each decoded pair in reply order.
      */
     @Test
     void subscriberReceivesPairsInOrder() {

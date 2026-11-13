@@ -30,9 +30,8 @@ class SortedSetTxCommandIntegrationTests extends SortedSetCommandIntegrationTest
     }
 
     /**
-     * Scenario ZMOV-SA27: an empty member list reaches the server inside a transaction. Without a condition the server rejects
-     * the command when it is queued, so the transaction is discarded; with NX the number-of-members error is the command's
-     * result. Nothing moves.
+     * An empty member list reaches the server inside a transaction. Without a condition the server rejects the command when it
+     * is queued, so the transaction is discarded; with NX the number-of-members error is the command's result. Nothing moves.
      */
     @Test
     @EnabledOnCommand("ZMOVEMEMBER")

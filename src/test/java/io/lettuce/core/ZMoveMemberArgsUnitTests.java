@@ -38,7 +38,7 @@ class ZMoveMemberArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A07c: the type holds one condition, so {@code NX} with {@code XX} can't be written: the last call wins.
+     * The type holds one condition, so {@code NX} with {@code XX} can't be written: the last call wins.
      */
     @Test
     void nxWithXxNeverReachesTheWire() {
@@ -47,8 +47,7 @@ class ZMoveMemberArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-SV04: NX and XX together are unrepresentable in the type: however the setters are chained, one condition is
-     * written.
+     * NX and XX together are unrepresentable in the type: however the setters are chained, one condition is written.
      */
     @Test
     void conditionHasOneSlot() {

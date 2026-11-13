@@ -31,7 +31,7 @@ class ZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A01: {@code MIN} and {@code MAX} without a count append the selection only, no {@code COUNT} token.
+     * {@code MIN} and {@code MAX} without a count append the selection only, no {@code COUNT} token.
      */
     @Test
     void minAndMaxWithoutCountAppendNoCount() {
@@ -40,7 +40,7 @@ class ZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A02: a count is appended after the selection, a count of 1 included.
+     * A count is appended after the selection, a count of 1 included.
      */
     @Test
     void countIsAppendedAfterSelectionIncludingOne() {
@@ -49,8 +49,8 @@ class ZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A03: score ranges are written as {@code BYSCORE min max}, exclusive bounds with {@code (}, unbounded and
-     * infinite bounds as {@code -inf} / {@code +inf}; no {@code COUNT} unless set.
+     * Score ranges are written as {@code BYSCORE min max}, exclusive bounds with {@code (}, unbounded and infinite bounds as
+     * {@code -inf} / {@code +inf}; no {@code COUNT} unless set.
      */
     @Test
     void byScoreRangeSpellings() {
@@ -66,7 +66,7 @@ class ZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A03a: bounds of other {@link Number} types are written with their {@code toString()} spelling.
+     * Bounds of other {@link Number} types are written with their {@code toString()} spelling.
      */
     @Test
     void byScoreBoundsOfOtherNumberTypes() {
@@ -84,8 +84,8 @@ class ZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A04: counts of 0, -1 and {@link Long#MAX_VALUE} are written as given on {@code MIN} and on {@code BYSCORE},
-     * without an exception.
+     * Counts of 0, -1 and {@link Long#MAX_VALUE} are written as given on {@code MIN} and on {@code BYSCORE}, without an
+     * exception.
      */
     @Test
     void countIsNeverCheckedOnMinAndByScore() {
@@ -99,7 +99,7 @@ class ZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-SV05: without a count no {@code COUNT} token is written, for {@code MIN} and for {@code BYSCORE}.
+     * Without a count no {@code COUNT} token is written, for {@code MIN} and for {@code BYSCORE}.
      */
     @Test
     void noCountMeansNoCountToken() {

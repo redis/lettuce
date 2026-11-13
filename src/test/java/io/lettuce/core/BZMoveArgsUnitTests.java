@@ -28,8 +28,7 @@ class BZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A05: the timeout follows the end, with its fraction, and comes before {@code COUNT}; without a timeout
-     * {@code 0} is written.
+     * The timeout follows the end, with its fraction, and comes before {@code COUNT}; without a timeout {@code 0} is written.
      */
     @Test
     void timeoutEncoding() {
@@ -42,7 +41,7 @@ class BZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A06: negative timeouts and a count of 0 are written as given, without an exception.
+     * Negative timeouts and a count of 0 are written as given, without an exception.
      */
     @Test
     void negativeTimeoutAndZeroCountAreNotChecked() {
@@ -52,8 +51,7 @@ class BZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A06b: infinite and NaN timeouts are written with the {@link Double#toString(double)} spelling, without an
-     * exception.
+     * Infinite and NaN timeouts are written with the {@link Double#toString(double)} spelling, without an exception.
      */
     @Test
     void infiniteAndNanTimeoutsAreWrittenAsGiven() {
@@ -62,7 +60,7 @@ class BZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-A06c: the last timeout setter wins, whichever of the two forms it is.
+     * The last timeout setter wins, whichever of the two forms it is.
      */
     @Test
     void lastTimeoutSetterWins() {
@@ -71,7 +69,7 @@ class BZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-SV01: a count of 0 or below is written as given for the blocking move, without an exception.
+     * A count of 0 or below is written as given for the blocking move, without an exception.
      */
     @Test
     void countBelowOneIsWritten() {
@@ -79,7 +77,7 @@ class BZMoveArgsUnitTests {
     }
 
     /**
-     * Scenario ZMOV-SV02: a negative timeout is written as given, without an exception.
+     * A negative timeout is written as given, without an exception.
      */
     @Test
     void negativeTimeoutIsWritten() {
