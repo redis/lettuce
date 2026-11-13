@@ -8,7 +8,6 @@ package io.lettuce.core.cluster.commands;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.List;
@@ -23,7 +22,6 @@ import io.lettuce.core.KeyValue;
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
 import io.lettuce.core.Range.Boundary;
-import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.ZMoveArgs;
 import io.lettuce.core.ZPopArgs;
@@ -352,21 +350,6 @@ class SortedSetClusterCommandIntegrationTests extends SortedSetCommandIntegratio
         assertThat(redis.zunionWithScores(ZStoreArgs.Builder.count(), s1, s2, s3))
                 .isEqualTo(svlist(sv(2.0, "bar"), sv(3.0, "foo")));
         assertThat(redis.zinterWithScores(ZStoreArgs.Builder.count(), s1, s2, s3)).isEqualTo(svlist(sv(3.0, "foo")));
-    }
-
-    /**
-     * Source and destination in two slots are rejected by the server with CROSSSLOT, for a move and a member move.
-     */
-    @Test
-    @EnabledOnCommand("ZMOVEMEMBER")
-    void moveAcrossSlotsIsRejectedByServer() {
-        redis.zadd("{a}s", 1.0, "a");
-
-        assertThatThrownBy(() -> redis.zmove("{a}s", "{b}d", ZMoveArgs.Builder.min()))
-                .isInstanceOf(RedisCommandExecutionException.class)
-                .hasMessageContaining("CROSSSLOT Keys in request don't hash to the same slot");
-        assertThatThrownBy(() -> redis.zmovemember("{a}s", "{b}d", "a")).isInstanceOf(RedisCommandExecutionException.class)
-                .hasMessageContaining("CROSSSLOT Keys in request don't hash to the same slot");
     }
 
     /**

@@ -16,7 +16,6 @@ import io.lettuce.core.BZMoveArgs;
 import io.lettuce.core.Range;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.ZMoveArgs;
-import io.lettuce.core.ZMoveMemberArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -80,95 +79,6 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
 
         reactive.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.create(5, 6))).as(StepVerifier::create).verifyComplete();
         assertThat(sync.exists(DST)).isEqualTo(0);
-    }
-
-    /**
-     * A missing source completes without an element for a move and a member move, also when the destination holds a string.
-     */
-    @Test
-    @EnabledOnCommand("ZMOVEMEMBER")
-    @Override
-    public void moveFromMissingSourceRepliesNull() {
-
-        reactive.zmove(SRC, DST, ZMoveArgs.Builder.min()).as(StepVerifier::create).verifyComplete();
-        reactive.zmovemember(SRC, DST, "a").as(StepVerifier::create).verifyComplete();
-
-        connection.sync().set(DST, "string");
-
-        reactive.zmove(SRC, DST, ZMoveArgs.Builder.min()).as(StepVerifier::create).verifyComplete();
-        reactive.zmovemember(SRC, DST, "a").as(StepVerifier::create).verifyComplete();
-    }
-
-    /**
-     * A source that is also the destination completes without an element for each command, and keeps its member; a blocking
-     * move on a missing key to itself completes without an element.
-     */
-    @Test
-    @EnabledOnCommand("BZMOVE")
-    @Override
-    public void moveToSameKeyRepliesNull() {
-        RedisCommands<String, String> sync = connection.sync();
-        sync.zadd(SRC, 1.0, "a");
-
-        reactive.zmove(SRC, SRC, ZMoveArgs.Builder.min()).as(StepVerifier::create).verifyComplete();
-        reactive.bzmove(SRC, SRC, BZMoveArgs.Builder.min().timeout(0L)).as(StepVerifier::create).verifyComplete();
-        reactive.zmovemember(SRC, SRC, "a").as(StepVerifier::create).verifyComplete();
-        assertThat(sync.zscore(SRC, "a")).isEqualTo(1.0);
-
-        reactive.bzmove("{z}missing", "{z}missing", BZMoveArgs.Builder.min().timeout(0L)).as(StepVerifier::create)
-                .verifyComplete();
-    }
-
-    /**
-     * XX with a missing destination completes without an element, creates no destination and leaves the source.
-     */
-    @Test
-    @EnabledOnCommand("ZMOVEMEMBER")
-    @Override
-    public void zmovememberXxMissingDestinationRepliesNull() {
-        RedisCommands<String, String> sync = connection.sync();
-        sync.zadd(SRC, 5.0, "a");
-
-        reactive.zmovemember(SRC, DST, ZMoveMemberArgs.Builder.xx(), "a").as(StepVerifier::create).verifyComplete();
-        assertThat(sync.exists(DST)).isEqualTo(0);
-        assertThat(sync.zscore(SRC, "a")).isEqualTo(5.0);
-    }
-
-    /**
-     * A NaN bound errors with the server's message; an inverted range completes without an element.
-     */
-    @Test
-    @EnabledOnCommand("ZMOVE")
-    @Override
-    public void zmoveNanBoundRejectedAndInvertedRangeRepliesNull() {
-        connection.sync().zadd(SRC, 1.0, "a", 2.0, "b", 3.0, "c");
-
-        reactive.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.create(Double.NaN, 3.0))).as(StepVerifier::create)
-                .expectErrorMatches(e -> e.getMessage().contains("ERR min or max is not a float")).verify();
-        reactive.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.create(3, 1))).as(StepVerifier::create).verifyComplete();
-    }
-
-    /**
-     * A blocking move on a missing source with a fractional timeout completes without an element.
-     */
-    @Test
-    @EnabledOnCommand("BZMOVE")
-    @Override
-    public void bzmoveFractionalTimeoutRepliesNull() {
-
-        reactive.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(0.1)).as(StepVerifier::create).verifyComplete();
-    }
-
-    /**
-     * A positive timeout under one millisecond, and one with a long fraction, complete without an element on a missing source.
-     */
-    @Test
-    @EnabledOnCommand("BZMOVE")
-    @Override
-    public void bzmoveSubMillisecondAndLongFractionTimeoutsRepliesNull() {
-
-        reactive.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(0.0005)).as(StepVerifier::create).verifyComplete();
-        reactive.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(1.000000001)).as(StepVerifier::create).verifyComplete();
     }
 
     /**
