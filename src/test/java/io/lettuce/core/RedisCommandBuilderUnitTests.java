@@ -1467,6 +1467,8 @@ class RedisCommandBuilderUnitTests {
         assertThatThrownBy(() -> sut.zmovemember("s", "d", (String) null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> sut.zmovemember(null, "d", "a")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> sut.zmovemember("s", "d", null, "a")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), (String) null))
+                .isInstanceOf(IllegalArgumentException.class);
 
         assertThatThrownBy(() -> ZMoveArgs.Builder.byScore(null)).isInstanceOf(IllegalArgumentException.class);
     }
