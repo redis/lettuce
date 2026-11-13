@@ -4243,10 +4243,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return zmovemember(source, destination, zMoveMemberArgs, null, members);
     }
 
+    private static final String ZMOVEMEMBER_EXAMPLE = "zmovemember(source, destination, zMoveMemberArgs, member)";
+
     private Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V member,
             V[] members) {
         LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        if (members != null) {
+            for (V each : members) {
+                notArgumentObject(each, ZMOVEMEMBER_EXAMPLE);
+            }
+        } else {
+            notArgumentObject(member, ZMOVEMEMBER_EXAMPLE);
+        }
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(source).addKey(destination);
         if (zMoveMemberArgs != null) {
@@ -5176,9 +5185,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     private static void notArgumentObject(Object member) {
-        LettuceAssert.isTrue(!(member instanceof CompositeArgument),
-                () -> "Members must not be a " + member.getClass().getSimpleName()
-                        + "; pass the arguments before the members, e.g. sexpire(key, seconds, expireArgs, member)");
+        notArgumentObject(member, "sexpire(key, seconds, expireArgs, member)");
+    }
+
+    private static void notArgumentObject(Object member, String example) {
+        LettuceAssert.isTrue(!(member instanceof CompositeArgument), () -> "Members must not be a "
+                + member.getClass().getSimpleName() + "; pass the arguments before the members, e.g. " + example);
     }
 
     Command<K, V, Long> saddex(K key, V... members) {

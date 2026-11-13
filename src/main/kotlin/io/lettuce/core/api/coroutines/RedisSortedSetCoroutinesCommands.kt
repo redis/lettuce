@@ -447,7 +447,8 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @param member the member to move, must not be `null`.
      * @return List<ScoredValue<V>> the moved member with its score, as a list of one, or `null` when the member was not
      *         moved.
-     * @throws IllegalArgumentException if `source`, `destination` or `member` is `null`.
+     * @throws IllegalArgumentException if `source`, `destination` or `member` is `null`, or a member is an argument
+     * object such as [ZMoveMemberArgs].
      * @since 8.0
      */
     suspend fun zmovemember(source: K, destination: K, member: V): List<ScoredValue<V>>?
@@ -464,7 +465,8 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @param members the members to move, must not be `null`.
      * @return List<ScoredValue<V>> the moved members with their scores, in argument order, or `null` when no member was
      *         moved.
-     * @throws IllegalArgumentException if `source`, `destination` or `members` is `null`.
+     * @throws IllegalArgumentException if `source`, `destination` or `members` is `null`, or a member is an argument
+     * object such as [ZMoveMemberArgs].
      * @since 8.0
      */
     suspend fun zmovemember(source: K, destination: K, vararg members: V): List<ScoredValue<V>>?
@@ -483,7 +485,8 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @param member the member to move, must not be `null`.
      * @return List<ScoredValue<V>> the moved member with its score, as a list of one, or `null` when the member was not
      *         moved.
-     * @throws IllegalArgumentException if `source`, `destination`, `args` or `member` is `null`.
+     * @throws IllegalArgumentException if `source`, `destination`, `args` or `member` is `null`, or a member is an
+     * argument object such as [ZMoveMemberArgs].
      * @since 8.0
      */
     suspend fun zmovemember(source: K, destination: K, args: ZMoveMemberArgs, member: V): List<ScoredValue<V>>?
@@ -503,7 +506,8 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @param members the members to move, must not be `null`.
      * @return List<ScoredValue<V>> the moved members with their scores, in argument order, or `null` when no member was
      *         moved.
-     * @throws IllegalArgumentException if `source`, `destination`, `args` or `members` is `null`.
+     * @throws IllegalArgumentException if `source`, `destination`, `args` or `members` is `null`, or a member is an
+     * argument object such as [ZMoveMemberArgs].
      * @since 8.0
      */
     suspend fun zmovemember(source: K, destination: K, args: ZMoveMemberArgs, vararg members: V): List<ScoredValue<V>>?

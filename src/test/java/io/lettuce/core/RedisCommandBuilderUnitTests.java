@@ -1514,6 +1514,27 @@ class RedisCommandBuilderUnitTests {
     }
 
     /**
+     * Scenario ZMOV-A12: an argument object passed in place of a member is rejected before a command is built.
+     */
+    @Test
+    void zmovememberRejectsArgumentObjectPassedAsMember() {
+
+        RedisCommandBuilder<String, Object> objectBuilder = new RedisCommandBuilder<>(OBJECT_VALUE_CODEC);
+
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", (Object) ZMoveMemberArgs.Builder.nx()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ZMoveMemberArgs")
+                .hasMessageContaining("pass the arguments before the members");
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", ZMoveMemberArgs.Builder.xx(),
+                (Object) new ZMoveMemberArgs().nx())).isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("ZMoveMemberArgs");
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", new Object[] { "a", ZMoveMemberArgs.Builder.nx() }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ZMoveMemberArgs");
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", ZMoveMemberArgs.Builder.nx(),
+                new Object[] { ZMoveMemberArgs.Builder.xx() })).isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("ZMoveMemberArgs");
+    }
+
+    /**
      * Scenario ZMOV-A10: each command has its own type, with the source as the first key and the destination as the second.
      */
     @Test

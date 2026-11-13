@@ -465,7 +465,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param member the member to move, must not be {@code null}.
      * @return ScoredValue&lt;V&gt; the moved member with its score, as a list of one; emits no element when the member was not
      *         moved.
-     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code member} is {@code null}.
+     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code member} is {@code null}, or a member is
+     *         an argument object such as {@link ZMoveMemberArgs}.
      * @since 8.0
      */
     Flux<ScoredValue<V>> zmovemember(K source, K destination, V member);
@@ -482,7 +483,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param members the members to move, must not be {@code null}.
      * @return ScoredValue&lt;V&gt; the moved members with their scores, in argument order; emits no element when no member was
      *         moved.
-     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code members} is {@code null}.
+     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code members} is {@code null}, or a member
+     *         is an argument object such as {@link ZMoveMemberArgs}.
      * @since 8.0
      */
     Flux<ScoredValue<V>> zmovemember(K source, K destination, V... members);
@@ -502,7 +504,7 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @return ScoredValue&lt;V&gt; the moved member with its score, as a list of one; emits no element when the member was not
      *         moved.
      * @throws IllegalArgumentException if {@code source}, {@code destination}, {@code args} or {@code member} is {@code
-     * null}.
+     * null}, or a member is an argument object such as {@link ZMoveMemberArgs}.
      * @since 8.0
      */
     Flux<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member);
@@ -523,7 +525,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param members the members to move, must not be {@code null}.
      * @return ScoredValue&lt;V&gt; the moved members with their scores, in argument order; emits no element when no member was
      *         moved.
-     * @throws IllegalArgumentException if {@code source}, {@code destination}, {@code args} or {@code members} is {@code null}.
+     * @throws IllegalArgumentException if {@code source}, {@code destination}, {@code args} or {@code members} is {@code null},
+     *         or a member is an argument object such as {@link ZMoveMemberArgs}.
      * @since 8.0
      */
     Flux<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V... members);
