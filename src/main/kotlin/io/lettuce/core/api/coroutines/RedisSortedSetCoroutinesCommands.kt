@@ -424,10 +424,11 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * stored at `destination`, blocking the connection while `source` is empty or missing, until a member arrives or
      * the timeout carried by `args` passes. When it wakes it moves up to the count and does not wait for more. The
      * timeout is in seconds, may have a fraction, and defaults to `0` (block indefinitely); the connection's command
-     * timeout must be longer than the blocking timeout. Inside a transaction it replies at once and does not wait. A
-     * source left empty is deleted. A member the destination already holds takes the score from `source`. Both keys
-     * must hash to the same slot in Redis Cluster. The same key as `source` and `destination` moves nothing and returns
-     * `null`. A command repeated after a connection failure may move further members.
+     * timeout must be longer than the blocking timeout. When the connection's command timeout ends the call first, the
+     * command may still be waiting on the server and may still move members. Inside a transaction it replies at once
+     * and does not wait. A source left empty is deleted. A member the destination already holds takes the score from
+     * `source`. Both keys must hash to the same slot in Redis Cluster. The same key as `source` and `destination` moves
+     * nothing and returns `null`. A command repeated after a connection failure may move further members.
      *
      * @param source the source key, must not be `null`.
      * @param destination the destination key, must not be `null`.
