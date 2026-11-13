@@ -440,8 +440,9 @@ public interface RedisSortedSetCommands<K, V> {
      * stored at {@code destination}, blocking the connection while {@code source} is empty or missing, until a member arrives
      * or the timeout carried by {@code args} passes. When it wakes it moves up to the count and does not wait for more. The
      * timeout is in seconds, may have a fraction, and defaults to {@code 0} (block indefinitely); the connection's command
-     * timeout must be longer than the blocking timeout. A source left empty is deleted. Both keys must hash to the same slot in
-     * Redis Cluster. A command repeated after a connection failure may move further members.
+     * timeout must be longer than the blocking timeout. Inside a transaction it replies at once and does not wait. A source
+     * left empty is deleted. Both keys must hash to the same slot in Redis Cluster. A command repeated after a connection
+     * failure may move further members.
      *
      * @param source the source key, must not be {@code null}.
      * @param destination the destination key, must not be {@code null}.
