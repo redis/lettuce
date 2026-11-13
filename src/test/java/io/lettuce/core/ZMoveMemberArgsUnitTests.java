@@ -37,12 +37,6 @@ class ZMoveMemberArgsUnitTests {
         assertThat(render(ZMoveMemberArgs.Builder.xx())).isEqualTo("XX");
     }
 
-    @Test
-    void lastConditionWins() {
-        assertThat(render(ZMoveMemberArgs.Builder.nx().xx())).isEqualTo("XX");
-        assertThat(render(ZMoveMemberArgs.Builder.xx().nx())).isEqualTo("NX");
-    }
-
     /**
      * Scenario ZMOV-A07c: the type holds one condition, so {@code NX} with {@code XX} can't be written: the last call wins.
      */

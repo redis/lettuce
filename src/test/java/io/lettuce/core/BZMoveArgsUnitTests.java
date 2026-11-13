@@ -27,27 +27,6 @@ class BZMoveArgsUnitTests {
         return args.toCommandString();
     }
 
-    @Test
-    void defaultTimeoutIsZero() {
-        assertThat(render(BZMoveArgs.Builder.min())).isEqualTo("MIN 0");
-    }
-
-    @Test
-    void longTimeoutAndCount() {
-        assertThat(render(BZMoveArgs.Builder.max().timeout(2).count(5))).isEqualTo("MAX 2 COUNT 5");
-    }
-
-    @Test
-    void doubleTimeoutKeepsFraction() {
-        assertThat(render(BZMoveArgs.Builder.min().timeout(0.5))).isEqualTo("MIN 0.5");
-    }
-
-    @Test
-    void lastTimeoutWins() {
-        assertThat(render(BZMoveArgs.Builder.min().timeout(0.5).timeout(3))).isEqualTo("MIN 3");
-        assertThat(render(BZMoveArgs.Builder.min().timeout(3).timeout(0.25))).isEqualTo("MIN 0.25");
-    }
-
     /**
      * Scenario ZMOV-A05: the timeout follows the end, with its fraction, and comes before {@code COUNT}; without a timeout
      * {@code 0} is written.

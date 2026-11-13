@@ -1354,51 +1354,6 @@ class RedisCommandBuilderUnitTests {
         assertThat(command.getOutput()).isInstanceOf(NullableScoredValueListOutput.class);
     }
 
-    @Test
-    void shouldCorrectlyConstructZmovemember() {
-
-        Command<String, String, ?> single = sut.zmovemember("source", "destination", "a");
-        Command<String, String, ?> multiple = sut.zmovemember("source", "destination", new String[] { "a", "b", "a" });
-        Command<String, String, ?> conditional = sut.zmovemember("source", "destination", ZMoveMemberArgs.Builder.nx(), "a");
-        Command<String, String, ?> conditionalMultiple = sut.zmovemember("source", "destination", ZMoveMemberArgs.Builder.xx(),
-                new String[] { "a", "b" });
-
-        assertThat(single.getType()).isEqualTo(CommandType.ZMOVEMEMBER);
-        assertThat(single.getArgs().toCommandString()).isEqualTo("key<source> key<destination> MEMBERS 1 value<a>");
-        assertThat(multiple.getArgs().toCommandString())
-                .isEqualTo("key<source> key<destination> MEMBERS 3 value<a> value<b> value<a>");
-        assertThat(conditional.getArgs().toCommandString()).isEqualTo("key<source> key<destination> NX MEMBERS 1 value<a>");
-        assertThat(conditionalMultiple.getArgs().toCommandString())
-                .isEqualTo("key<source> key<destination> XX MEMBERS 2 value<a> value<b>");
-        assertThat(single.getOutput()).isInstanceOf(NullableScoredValueListOutput.class);
-    }
-
-    @Test
-    void zmovememberSendsEmptyMemberList() {
-
-        Command<String, String, ?> command = sut.zmovemember("source", "destination", new String[0]);
-
-        assertThat(command.getArgs().toCommandString()).isEqualTo("key<source> key<destination> MEMBERS 0");
-    }
-
-    @Test
-    void sortedSetMoveCommandsRejectNullArguments() {
-
-        assertThatThrownBy(() -> sut.zmove(null, "destination", ZMoveArgs.Builder.min()))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> sut.zmove("source", null, ZMoveArgs.Builder.min()))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> sut.zmove("source", "destination", null)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> sut.bzmove("source", "destination", null)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> sut.zmovemember("source", "destination", (String) null))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> sut.zmovemember("source", "destination", (String[]) null))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> sut.zmovemember("source", "destination", null, "a"))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> sut.zmovemember(null, "destination", "a")).isInstanceOf(IllegalArgumentException.class);
-    }
-
     /**
      * Scenario ZMOV-A11: none of the three commands is registered as read-only.
      */
@@ -1509,6 +1464,9 @@ class RedisCommandBuilderUnitTests {
         assertThatThrownBy(() -> sut.zmovemember("s", "d", (String[]) null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), (String[]) null))
                 .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", (String) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember(null, "d", "a")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", null, "a")).isInstanceOf(IllegalArgumentException.class);
 
         assertThatThrownBy(() -> ZMoveArgs.Builder.byScore(null)).isInstanceOf(IllegalArgumentException.class);
     }
