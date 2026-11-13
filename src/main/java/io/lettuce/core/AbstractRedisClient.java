@@ -604,16 +604,22 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
     }
 
     protected RedisHandshake createHandshake(ConnectionState state) {
-        EndpointTypeSource source = null;
-        if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
-            LettuceAssert.notNull(clientOptions.getMaintNotificationsConfig().getEndpointTypeSource(),
-                    "Address type source must not be null");
 
-            source = clientOptions.getMaintNotificationsConfig().getEndpointTypeSource();
+        ClientOptions options = state.getClientOptions();
+        if (options == null) {
+            options = clientOptions;
         }
 
-        return new RedisHandshake(clientOptions.getConfiguredProtocolVersion(), clientOptions.isPingBeforeActivateConnection(),
-                state, source);
+        EndpointTypeSource source = null;
+        if (options.getMaintNotificationsConfig().maintNotificationsEnabled()) {
+            LettuceAssert.notNull(options.getMaintNotificationsConfig().getEndpointTypeSource(),
+                    "Address type source must not be null");
+
+            source = options.getMaintNotificationsConfig().getEndpointTypeSource();
+        }
+
+        return new RedisHandshake(options.getConfiguredProtocolVersion(), options.isPingBeforeActivateConnection(), state,
+                source);
     }
 
 }

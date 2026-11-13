@@ -542,12 +542,13 @@ public class RedisClusterClient extends AbstractRedisClient {
         assertNotEmpty(initialUris);
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
 
-        ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(getClusterClientOptions(), getResources(), clusterWriter);
+        ClusterClientOptions clientOptions = getClusterClientOptions();
+        ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(clientOptions, getResources(), clusterWriter);
 
         RedisChannelWriter writer = endpoint;
 
-        if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+        if (CommandExpiryWriter.isSupported(clientOptions)) {
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, clientOptions, getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
@@ -555,14 +556,13 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec,
-                getFirstUri().getTimeout(), getClusterClientOptions().getJsonParser());
+                getFirstUri().getTimeout(), clientOptions.getJsonParser());
 
         connection.setAuthenticationHandler(
-                createHandler(connection, getFirstUri().getCredentialsProviderAsync(), false, getOptions()));
+                createHandler(connection, getFirstUri().getCredentialsProviderAsync(), false, clientOptions));
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
-                getFirstUri(), socketAddressSupplier,
-                () -> new CommandHandler(getClusterClientOptions(), getResources(), endpoint));
+                getFirstUri(), socketAddressSupplier, () -> new CommandHandler(clientOptions, getResources(), endpoint));
 
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
@@ -628,12 +628,13 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         logger.debug("connectPubSubToNode(" + nodeId + ")");
 
-        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(getClusterClientOptions(), getResources());
+        ClusterClientOptions clientOptions = getClusterClientOptions();
+        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(clientOptions, getResources());
 
         RedisChannelWriter writer = endpoint;
 
-        if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+        if (CommandExpiryWriter.isSupported(clientOptions)) {
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, clientOptions, getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
@@ -643,11 +644,11 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
                 getFirstUri().getTimeout());
         connection.setAuthenticationHandler(
-                createHandler(connection, getFirstUri().getCredentialsProviderAsync(), true, getOptions()));
+                createHandler(connection, getFirstUri().getCredentialsProviderAsync(), true, clientOptions));
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
-                () -> new PubSubCommandHandler<>(getClusterClientOptions(), getResources(), codec, endpoint));
+                () -> new PubSubCommandHandler<>(clientOptions, getResources(), codec, endpoint));
 
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
@@ -675,32 +676,32 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         logger.debug("connectCluster(" + initialUris + ")");
 
-        DefaultEndpoint endpoint = new DefaultEndpoint(getClusterClientOptions(), getResources());
+        ClusterClientOptions clientOptions = getClusterClientOptions();
+        DefaultEndpoint endpoint = new DefaultEndpoint(clientOptions, getResources());
         RedisChannelWriter writer = endpoint;
 
-        if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+        if (CommandExpiryWriter.isSupported(clientOptions)) {
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, clientOptions, getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
             writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
-        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(writer, getClusterClientOptions(),
+        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(writer, clientOptions,
                 topologyRefreshScheduler);
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<>(this,
-                clusterWriter, codec, topologyRefreshScheduler);
+                clusterWriter, codec, topologyRefreshScheduler, clientOptions);
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 
         StatefulRedisClusterConnectionImpl<K, V> connection = newStatefulRedisClusterConnection(clusterWriter,
-                pooledClusterConnectionProvider, codec, getFirstUri().getTimeout(), getClusterClientOptions().getJsonParser());
+                pooledClusterConnectionProvider, codec, getFirstUri().getTimeout(), clientOptions.getJsonParser());
 
         connection.setReadFrom(ReadFrom.UPSTREAM);
         connection.setPartitions(partitions);
 
-        Supplier<CommandHandler> commandHandlerSupplier = () -> new CommandHandler(getClusterClientOptions(), getResources(),
-                endpoint);
+        Supplier<CommandHandler> commandHandlerSupplier = () -> new CommandHandler(clientOptions, getResources(), endpoint);
         Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = getSocketAddressSupplier(connection::getPartitions,
                 TopologyComparators::sortByClientCount);
         Supplier<CompletionStage<StatefulRedisClusterConnectionImpl<K, V>>> connectSupplier = () -> connect(
@@ -801,22 +802,23 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         logger.debug("connectClusterPubSub(" + initialUris + ")");
 
-        PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<>(getClusterClientOptions(), getResources());
+        ClusterClientOptions clientOptions = getClusterClientOptions();
+        PubSubClusterEndpoint<K, V> endpoint = new PubSubClusterEndpoint<>(clientOptions, getResources());
         RedisChannelWriter writer = endpoint;
 
-        if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+        if (CommandExpiryWriter.isSupported(clientOptions)) {
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, clientOptions, getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
             writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
-        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(writer, getClusterClientOptions(),
+        ClusterDistributionChannelWriter clusterWriter = new ClusterDistributionChannelWriter(writer, clientOptions,
                 topologyRefreshScheduler);
 
         ClusterPubSubConnectionProvider<K, V> pooledClusterConnectionProvider = new ClusterPubSubConnectionProvider<>(this,
-                clusterWriter, codec, endpoint.getUpstreamListener(), topologyRefreshScheduler);
+                clusterWriter, codec, endpoint.getUpstreamListener(), topologyRefreshScheduler, clientOptions);
 
         StatefulRedisClusterPubSubConnectionImpl<K, V> connection = new StatefulRedisClusterPubSubConnectionImpl<>(endpoint,
                 pooledClusterConnectionProvider, clusterWriter, codec, getFirstUri().getTimeout());
@@ -824,10 +826,10 @@ public class RedisClusterClient extends AbstractRedisClient {
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
         connection.setPartitions(partitions);
         connection.setAuthenticationHandler(
-                createHandler(connection, getFirstUri().getCredentialsProviderAsync(), true, getOptions()));
+                createHandler(connection, getFirstUri().getCredentialsProviderAsync(), true, clientOptions));
 
-        Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(getClusterClientOptions(),
-                getResources(), codec, endpoint);
+        Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(clientOptions, getResources(), codec,
+                endpoint);
         Supplier<CompletionStage<SocketAddress>> socketAddressSupplier = getSocketAddressSupplier(connection::getPartitions,
                 TopologyComparators::sortByClientCount);
         Supplier<CompletionStage<StatefulRedisClusterPubSubConnectionImpl<K, V>>> connectSupplier = () -> connect(
@@ -893,12 +895,15 @@ public class RedisClusterClient extends AbstractRedisClient {
             connectionBuilder = ConnectionBuilder.connectionBuilder();
         }
 
+        ClientOptions clientOptions = endpoint.getClientOptions();
+
         state.apply(connectionSettings);
+        state.setClientOptions(clientOptions);
 
         connectionBuilder.connectionInitializer(createHandshake(state));
 
         connectionBuilder.reconnectionListener(new ReconnectEventListener(topologyRefreshScheduler));
-        connectionBuilder.clientOptions(getClusterClientOptions());
+        connectionBuilder.clientOptions(clientOptions);
         connectionBuilder.connection(connection);
         connectionBuilder.clientResources(getResources());
         connectionBuilder.endpoint(endpoint);

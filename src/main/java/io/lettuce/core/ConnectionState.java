@@ -21,6 +21,7 @@ package io.lettuce.core;
 
 import java.util.List;
 
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ProtocolVersion;
 
 /**
@@ -42,6 +43,8 @@ public class ConnectionState {
     private volatile boolean readOnly;
 
     private volatile ConnectionMetadata connectionMetadata = new ConnectionMetadata();
+
+    private volatile ClientOptions clientOptions;
 
     /**
      * Applies settings from {@link RedisURI}.
@@ -139,6 +142,28 @@ public class ConnectionState {
      */
     public CredentialsProvider getCredentialsProviderAsync() {
         return credentialsProvider;
+    }
+
+    /**
+     * Sets the {@link ClientOptions} used to initialize the connection.
+     *
+     * @param clientOptions the {@link ClientOptions} of the connection, must not be {@code null}.
+     * @since 8.0
+     */
+    public void setClientOptions(ClientOptions clientOptions) {
+
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+        this.clientOptions = clientOptions;
+    }
+
+    /**
+     * Returns the {@link ClientOptions} used to initialize the connection.
+     *
+     * @return the {@link ClientOptions} of the connection. Can be {@code null} if not set.
+     * @since 8.0
+     */
+    public ClientOptions getClientOptions() {
+        return clientOptions;
     }
 
     protected void setDb(int db) {

@@ -26,6 +26,7 @@ import io.lettuce.core.failover.api.DatabaseConfig;
 import io.lettuce.core.failover.api.MultiDbConnectionFuture;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.settings.TestSettings;
@@ -99,6 +100,28 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
         // Verify database 2 has options2
         assertThat(conn2.getOptions().isAutoReconnect()).isFalse();
         assertThat(conn2.getOptions().getSocketOptions().getConnectTimeout()).isEqualTo(Duration.ofSeconds(10));
+    }
+
+    /**
+     * Test that the handshake of each database connection uses the ClientOptions of that database.
+     */
+    @Test
+    void handshakeShouldRespectPerDatabaseOptions() {
+
+        ClientOptions resp2 = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build();
+        ClientOptions resp3 = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).build();
+
+        DatabaseConfig db1 = DatabaseConfig.builder(URI1).weight(1.0f).clientOptions(resp2).build();
+        DatabaseConfig db2 = DatabaseConfig.builder(URI2).weight(0.5f).clientOptions(resp3).build();
+
+        client = MultiDbClient.create(Arrays.asList(db1, db2));
+        connection = client.connect(StringCodec.UTF8);
+
+        StatefulRedisConnection<?, ?> conn1 = ((RedisDatabaseImpl<?>) connection.getDatabase(URI1)).getConnection();
+        StatefulRedisConnection<?, ?> conn2 = ((RedisDatabaseImpl<?>) connection.getDatabase(URI2)).getConnection();
+
+        assertThat(conn1.sync().clientInfo()).contains("resp=2");
+        assertThat(conn2.sync().clientInfo()).contains("resp=3");
     }
 
     /**

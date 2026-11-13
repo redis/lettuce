@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.io.Closeable;
 import java.lang.reflect.Field;
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -31,6 +33,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.ProtocolVersion;
+import io.lettuce.core.protocol.PushHandler;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.resource.FastShutdown;
@@ -159,6 +165,76 @@ class RedisClientUnitTests {
             assertThat(error.getCause()).isInstanceOf(RedisConnectionException.class)
                     .hasMessage("Cannot resolve master address");
             assertThat(causeChain(error.getCause())).doesNotHaveAnyElementsOfTypes(CompletionException.class);
+        } finally {
+            FastShutdown.shutdown(redisClient);
+        }
+    }
+
+    @Test
+    void newConnectionShouldUseJsonParserOfEndpoint() {
+
+        Supplier<JsonParser> clientParser = () -> null;
+        Supplier<JsonParser> endpointParser = () -> null;
+        RedisClient redisClient = RedisClient.create(TestClientResources.get());
+        redisClient.setOptions(ClientOptions.builder().jsonParser(clientParser).build());
+        DefaultEndpoint endpoint = new DefaultEndpoint(ClientOptions.builder().jsonParser(endpointParser).build(),
+                TestClientResources.get());
+
+        try {
+            StatefulRedisConnectionImpl<String, String> connection = redisClient.newStatefulRedisConnection(endpoint, endpoint,
+                    StringCodec.UTF8, Duration.ofSeconds(1));
+
+            assertThat((Object) ReflectionTestUtils.getField(connection, "parser")).isSameAs(endpointParser);
+        } finally {
+            FastShutdown.shutdown(redisClient);
+        }
+    }
+
+    @Test
+    void newConnectionShouldUseJsonParserOfClientWithoutEndpoint() {
+
+        Supplier<JsonParser> clientParser = () -> null;
+        RedisClient redisClient = RedisClient.create(TestClientResources.get());
+        redisClient.setOptions(ClientOptions.builder().jsonParser(clientParser).build());
+        DefaultEndpoint writer = new DefaultEndpoint(ClientOptions.create(), TestClientResources.get());
+
+        try {
+            StatefulRedisConnectionImpl<String, String> connection = redisClient.newStatefulRedisConnection(writer,
+                    mock(PushHandler.class), StringCodec.UTF8, Duration.ofSeconds(1));
+
+            assertThat((Object) ReflectionTestUtils.getField(connection, "parser")).isSameAs(clientParser);
+        } finally {
+            FastShutdown.shutdown(redisClient);
+        }
+    }
+
+    @Test
+    void createHandshakeShouldUseStateOptions() {
+
+        ConnectionState state = new ConnectionState();
+        state.setClientOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build());
+        RedisClient redisClient = RedisClient.create(TestClientResources.get());
+        redisClient.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).build());
+
+        try {
+            RedisHandshake handshake = redisClient.createHandshake(state);
+
+            assertThat(handshake.getRequestedProtocolVersion()).isEqualTo(ProtocolVersion.RESP2);
+        } finally {
+            FastShutdown.shutdown(redisClient);
+        }
+    }
+
+    @Test
+    void createHandshakeShouldUseClientOptionsWithoutStateOptions() {
+
+        RedisClient redisClient = RedisClient.create(TestClientResources.get());
+        redisClient.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build());
+
+        try {
+            RedisHandshake handshake = redisClient.createHandshake(new ConnectionState());
+
+            assertThat(handshake.getRequestedProtocolVersion()).isEqualTo(ProtocolVersion.RESP2);
         } finally {
             FastShutdown.shutdown(redisClient);
         }
