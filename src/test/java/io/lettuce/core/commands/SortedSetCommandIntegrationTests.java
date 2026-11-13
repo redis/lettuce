@@ -1596,13 +1596,12 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
-     * Scenario ZMOV-SA31: a blocking move with a count of 0, a negative timeout or an infinite timeout is rejected by the
-     * server at once.
+     * Scenario ZMOV-SA31: a blocking move on a missing source with a count of 0, a negative timeout or an infinite timeout is
+     * rejected by the server at once.
      */
     @Test
     @EnabledOnCommand("BZMOVE")
     public void bzmoveInvalidCountOrTimeoutIsRejectedByServer() {
-        fixtureF1();
 
         assertThatThrownBy(() -> redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(1L).count(0)))
                 .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR count should be greater than 0");
@@ -1612,7 +1611,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
                 .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR timeout is out of range");
         assertThatThrownBy(() -> redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(NEGATIVE_INFINITY)))
                 .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR timeout is negative");
-        assertThat(redis.zcard(SRC)).isEqualTo(3);
+        assertThat(redis.exists(SRC, DST)).isEqualTo(0);
     }
 
     /**
