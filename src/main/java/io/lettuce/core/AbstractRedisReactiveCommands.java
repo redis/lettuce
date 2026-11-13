@@ -3851,6 +3851,36 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Flux<ScoredValue<V>> zmove(K source, K destination, ZMoveArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.zmove(source, destination, args));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> bzmove(K source, K destination, BZMoveArgs args) {
+        return createDissolvingFlux(() -> commandBuilder.bzmove(source, destination, args));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zmovemember(K source, K destination, V member) {
+        return createDissolvingFlux(() -> commandBuilder.zmovemember(source, destination, member));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zmovemember(K source, K destination, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.zmovemember(source, destination, members));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member) {
+        return createDissolvingFlux(() -> commandBuilder.zmovemember(source, destination, args, member));
+    }
+
+    @Override
+    public Flux<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V... members) {
+        return createDissolvingFlux(() -> commandBuilder.zmovemember(source, destination, args, members));
+    }
+
+    @Override
     public Mono<KeyValue<K, ScoredValue<V>>> zmpop(ZPopArgs args, K... keys) {
         return createMono(() -> commandBuilder.zmpop(args, keys));
     }

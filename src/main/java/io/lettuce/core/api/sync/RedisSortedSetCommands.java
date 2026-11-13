@@ -419,6 +419,114 @@ public interface RedisSortedSetCommands<K, V> {
     List<Double> zmscore(K key, V... members);
 
     /**
+     * Atomically moves members from the sorted set stored at {@code source} to the sorted set stored at {@code
+     * destination}, keeping their scores. {@code args} selects the members: the lowest or highest scores, or a score range,
+     * optionally limited by a count. A {@code source} left empty is deleted; a member the destination already holds takes the
+     * score from {@code source}. Both keys must hash to the same slot in Redis Cluster. A command repeated after a connection
+     * failure may move further members.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param args the member selection and optional count, must not be {@code null}.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; the moved members with their scores, in the order of the selection (ascending
+     *         for {@code MIN} and {@code BYSCORE}, descending for {@code MAX}), or {@code null} when no member was moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code args} is {@code null}.
+     * @since 8.0
+     */
+    List<ScoredValue<V>> zmove(K source, K destination, ZMoveArgs args);
+
+    /**
+     * Atomically moves members from the lowest or highest scores of the sorted set stored at {@code source} to the sorted set
+     * stored at {@code destination}, blocking the connection while {@code source} is empty or missing, until a member arrives
+     * or the timeout carried by {@code args} passes. When it wakes it moves up to the count and does not wait for more. The
+     * timeout is in seconds, may have a fraction, and defaults to {@code 0} (block indefinitely); the connection's command
+     * timeout must be longer than the blocking timeout. A source left empty is deleted. Both keys must hash to the same slot in
+     * Redis Cluster. A command repeated after a connection failure may move further members.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param args the end to take from, the blocking timeout and the optional count, must not be {@code null}.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; the moved members with their scores, in the order of the selection (ascending
+     *         for {@code MIN}, descending for {@code MAX}), or {@code null} when the timeout passed or no member was moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code args} is {@code null}.
+     * @since 8.0
+     */
+    List<ScoredValue<V>> bzmove(K source, K destination, BZMoveArgs args);
+
+    /**
+     * Atomically moves the given {@code member} from the sorted set stored at {@code source} to the sorted set stored at
+     * {@code destination}, keeping its score. A {@code source} left empty is deleted. Both keys must hash to the same slot in
+     * Redis Cluster. A command repeated after a connection failure may find the member already moved.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param member the member to move, must not be {@code null}.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; the moved member with its score, as a list of one, or {@code null} when the
+     *         member was not moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code member} is {@code null}.
+     * @since 8.0
+     */
+    List<ScoredValue<V>> zmovemember(K source, K destination, V member);
+
+    /**
+     * Atomically moves the given {@code members} from the sorted set stored at {@code source} to the sorted set stored at
+     * {@code destination}, keeping their scores. Members missing from {@code source} are skipped, a member given twice moves
+     * once, and the members are sent as given. An empty member list is sent to the server, which rejects it. A {@code source}
+     * left empty is deleted. Both keys must hash to the same slot in Redis Cluster. A command repeated after a connection
+     * failure may find the members already moved.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param members the members to move, must not be {@code null}.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; the moved members with their scores, in argument order, or {@code null} when no
+     *         member was moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code members} is {@code null}.
+     * @since 8.0
+     */
+    List<ScoredValue<V>> zmovemember(K source, K destination, V... members);
+
+    /**
+     * Atomically moves the given {@code member} from the sorted set stored at {@code source} to the sorted set stored at
+     * {@code destination}, keeping its score. A {@code source} left empty is deleted. Both keys must hash to the same slot in
+     * Redis Cluster. A command repeated after a connection failure may find the member already moved. {@code args} sets the
+     * destination condition: {@link ZMoveMemberArgs.Builder#nx()} moves only members the destination doesn't hold,
+     * {@link ZMoveMemberArgs.Builder#xx()} only members it holds; a member the condition leaves out stays in {@code source} and
+     * is not in the reply.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param args the destination condition, must not be {@code null}.
+     * @param member the member to move, must not be {@code null}.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; the moved member with its score, as a list of one, or {@code null} when the
+     *         member was not moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination}, {@code args} or {@code member} is {@code
+     * null}.
+     * @since 8.0
+     */
+    List<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member);
+
+    /**
+     * Atomically moves the given {@code members} from the sorted set stored at {@code source} to the sorted set stored at
+     * {@code destination}, keeping their scores. Members missing from {@code source} are skipped, a member given twice moves
+     * once, and the members are sent as given. An empty member list is sent to the server, which rejects it. A {@code source}
+     * left empty is deleted. Both keys must hash to the same slot in Redis Cluster. A command repeated after a connection
+     * failure may find the members already moved. {@code args} sets the destination condition:
+     * {@link ZMoveMemberArgs.Builder#nx()} moves only members the destination doesn't hold,
+     * {@link ZMoveMemberArgs.Builder#xx()} only members it holds; a member the condition leaves out stays in {@code source} and
+     * is not in the reply.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param args the destination condition, must not be {@code null}.
+     * @param members the members to move, must not be {@code null}.
+     * @return List&lt;ScoredValue&lt;V&gt;&gt; the moved members with their scores, in argument order, or {@code null} when no
+     *         member was moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination}, {@code args} or {@code members} is {@code null}.
+     * @since 8.0
+     */
+    List<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V... members);
+
+    /**
      * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
      *
      * @param args the command args.

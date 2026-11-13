@@ -242,11 +242,15 @@ class KotlinCoroutinesConsistencyUnitTests {
     }
 
     /**
-     * Whether the suspended result is nullable. Collections are returned empty rather than null, `Unit` cannot be nullable,
-     * and [KnownKotlinApiDeviations.NON_NULLABLE_RESULT] records the commands that always answer.
+     * Whether the suspended result is nullable. Collections are returned empty rather than null, except the ones
+     * [KnownKotlinApiDeviations.NULLABLE_COLLECTION_RESULT] records, `Unit` cannot be nullable, and
+     * [KnownKotlinApiDeviations.NON_NULLABLE_RESULT] records the commands that always answer.
      */
     private fun expectNullableResult(syncMethod: Method, syncGroup: Class<*>): Boolean {
 
+        if (KnownApiDeviations.contains(KnownKotlinApiDeviations.NULLABLE_COLLECTION_RESULT, syncMethod, syncGroup)) {
+            return true
+        }
         val syncReturn = TypeSignatures.normalizeBoxed(syncMethod.genericReturnType)
         if (syncReturn == "Void" || syncReturn.startsWith("List<") || syncReturn.startsWith("Set<")) {
             return false

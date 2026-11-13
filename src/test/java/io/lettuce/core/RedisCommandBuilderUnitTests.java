@@ -7,10 +7,12 @@ import io.lettuce.core.models.stream.StreamEntryDeletionResult;
 import io.lettuce.core.output.BlessFlagListOutput;
 import io.lettuce.core.output.BooleanOutput;
 import io.lettuce.core.output.KeyScanOutput;
+import io.lettuce.core.output.NullableScoredValueListOutput;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Tag;
@@ -1328,6 +1330,81 @@ class RedisCommandBuilderUnitTests {
         Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight());
         String s = command.getArgs().toCommandString();
         assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZmove() {
+
+        Command<String, String, ?> command = sut.zmove("source", "destination",
+                ZMoveArgs.Builder.byScore(Range.create(1, 5)).count(2));
+
+        assertThat(command.getType()).isEqualTo(CommandType.ZMOVE);
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<source> key<destination> BYSCORE 1 5 COUNT 2");
+        assertThat(command.getOutput()).isInstanceOf(NullableScoredValueListOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructBzmove() {
+
+        Command<String, String, ?> command = sut.bzmove("source", "destination",
+                BZMoveArgs.Builder.max().timeout(0.5).count(3));
+
+        assertThat(command.getType()).isEqualTo(CommandType.BZMOVE);
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<source> key<destination> MAX 0.5 COUNT 3");
+        assertThat(command.getOutput()).isInstanceOf(NullableScoredValueListOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructZmovemember() {
+
+        Command<String, String, ?> single = sut.zmovemember("source", "destination", "a");
+        Command<String, String, ?> multiple = sut.zmovemember("source", "destination", new String[] { "a", "b", "a" });
+        Command<String, String, ?> conditional = sut.zmovemember("source", "destination", ZMoveMemberArgs.Builder.nx(), "a");
+        Command<String, String, ?> conditionalMultiple = sut.zmovemember("source", "destination", ZMoveMemberArgs.Builder.xx(),
+                new String[] { "a", "b" });
+
+        assertThat(single.getType()).isEqualTo(CommandType.ZMOVEMEMBER);
+        assertThat(single.getArgs().toCommandString()).isEqualTo("key<source> key<destination> MEMBERS 1 value<a>");
+        assertThat(multiple.getArgs().toCommandString())
+                .isEqualTo("key<source> key<destination> MEMBERS 3 value<a> value<b> value<a>");
+        assertThat(conditional.getArgs().toCommandString()).isEqualTo("key<source> key<destination> NX MEMBERS 1 value<a>");
+        assertThat(conditionalMultiple.getArgs().toCommandString())
+                .isEqualTo("key<source> key<destination> XX MEMBERS 2 value<a> value<b>");
+        assertThat(single.getOutput()).isInstanceOf(NullableScoredValueListOutput.class);
+    }
+
+    @Test
+    void zmovememberSendsEmptyMemberList() {
+
+        Command<String, String, ?> command = sut.zmovemember("source", "destination", new String[0]);
+
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<source> key<destination> MEMBERS 0");
+    }
+
+    @Test
+    void sortedSetMoveCommandsRejectNullArguments() {
+
+        assertThatThrownBy(() -> sut.zmove(null, "destination", ZMoveArgs.Builder.min()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmove("source", null, ZMoveArgs.Builder.min()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmove("source", "destination", null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.bzmove("source", "destination", null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("source", "destination", (String) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("source", "destination", (String[]) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("source", "destination", null, "a"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember(null, "destination", "a")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void sortedSetMoveCommandsAreNotReadOnly() {
+
+        assertThat(ReadOnlyCommands.isReadOnlyCommand(CommandType.ZMOVE)).isFalse();
+        assertThat(ReadOnlyCommands.isReadOnlyCommand(CommandType.BZMOVE)).isFalse();
+        assertThat(ReadOnlyCommands.isReadOnlyCommand(CommandType.ZMOVEMEMBER)).isFalse();
     }
 
     @Test

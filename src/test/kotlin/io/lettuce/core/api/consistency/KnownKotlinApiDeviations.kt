@@ -111,6 +111,13 @@ object KnownKotlinApiDeviations {
     val UNSOUND_NON_NULLABLE_RESULT = setOf("zmpop", "bzmpop")
 
     /**
+     * Coroutine methods whose result is a nullable collection, although the regular rule returns a collection empty rather
+     * than null. The sorted-set move commands answer with a null reply when no member was moved, never with an empty array,
+     * and their coroutine methods keep that reply as `null`, as the sync and async methods do.
+     */
+    val NULLABLE_COLLECTION_RESULT = setOf("zmove", "bzmove", "zmovemember")
+
+    /**
      * Methods declared on a sync aggregate that its coroutine counterpart is known not to expose yet. The Kotlin coroutine API
      * has no `CLUSTER` management commands at all — `RedisClusterCoroutinesCommands` declares only `auth`, where
      * `RedisClusterCommands` declares the full cluster surface. Filling the gap is an API addition, so the entries document it
@@ -145,6 +152,7 @@ object KnownKotlinApiDeviations {
         "KEEP_DEPRECATED" to KEEP_DEPRECATED,
         "NON_NULLABLE_RESULT" to NON_NULLABLE_RESULT,
         "UNSOUND_NON_NULLABLE_RESULT" to UNSOUND_NON_NULLABLE_RESULT,
+        "NULLABLE_COLLECTION_RESULT" to NULLABLE_COLLECTION_RESULT,
         "AGGREGATE_PENDING" to AGGREGATE_PENDING,
         "RESULT_OVERRIDES" to RESULT_OVERRIDES.keys
     )
