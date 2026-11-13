@@ -48,4 +48,25 @@ class JsonTypeListOutputUnitTests {
         assertThat(sut.get().get(6)).isEqualTo(JsonType.UNKNOWN);
     }
 
+    @Test
+    void setNullReply() {
+        JsonTypeListOutput<String, String> sut = new JsonTypeListOutput<>(StringCodec.UTF8);
+        sut.set(null);
+
+        assertThat(sut.get()).hasSize(1);
+        assertThat(sut.get().get(0)).isNull();
+    }
+
+    @Test
+    void setNullElementInArray() {
+        JsonTypeListOutput<String, String> sut = new JsonTypeListOutput<>(StringCodec.UTF8);
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("array".getBytes()));
+        sut.set(null);
+
+        assertThat(sut.get()).hasSize(2);
+        assertThat(sut.get().get(0)).isEqualTo(JsonType.ARRAY);
+        assertThat(sut.get().get(1)).isNull();
+    }
+
 }
