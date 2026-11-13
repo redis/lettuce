@@ -457,9 +457,10 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     /**
      * Atomically moves the given `members` from the sorted set stored at `source` to the sorted set stored at
      * `destination`, keeping their scores. Members missing from `source` are skipped, a member given twice moves once,
-     * and the members are sent as given. An empty member list is sent to the server, which rejects it. A `source` left
-     * empty is deleted. Both keys must hash to the same slot in Redis Cluster. A command repeated after a connection
-     * failure may find the members already moved.
+     * and the members are sent as given. An empty member list is sent to the server, which rejects it. Inside a
+     * transaction an empty member list is rejected when the command is queued, so the whole transaction fails. A
+     * `source` left empty is deleted. Both keys must hash to the same slot in Redis Cluster. A command repeated after a
+     * connection failure may find the members already moved.
      *
      * @param source the source key, must not be `null`.
      * @param destination the destination key, must not be `null`.

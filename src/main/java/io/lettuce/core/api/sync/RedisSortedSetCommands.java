@@ -473,7 +473,8 @@ public interface RedisSortedSetCommands<K, V> {
     /**
      * Atomically moves the given {@code members} from the sorted set stored at {@code source} to the sorted set stored at
      * {@code destination}, keeping their scores. Members missing from {@code source} are skipped, a member given twice moves
-     * once, and the members are sent as given. An empty member list is sent to the server, which rejects it. A {@code source}
+     * once, and the members are sent as given. An empty member list is sent to the server, which rejects it. Inside a
+     * transaction an empty member list is rejected when the command is queued, so the whole transaction fails. A {@code source}
      * left empty is deleted. Both keys must hash to the same slot in Redis Cluster. A command repeated after a connection
      * failure may find the members already moved.
      *
