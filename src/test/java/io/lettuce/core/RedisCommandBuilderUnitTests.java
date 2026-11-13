@@ -1367,8 +1367,12 @@ class RedisCommandBuilderUnitTests {
 
     private static String encoded(Command<String, String, ?> command) {
         ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-        return buf.toString(StandardCharsets.UTF_8);
+        try {
+            command.encode(buf);
+            return buf.toString(StandardCharsets.UTF_8);
+        } finally {
+            buf.release();
+        }
     }
 
     private static String resp(String... parts) {
