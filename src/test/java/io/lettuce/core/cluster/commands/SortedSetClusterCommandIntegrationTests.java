@@ -8,7 +8,11 @@ package io.lettuce.core.cluster.commands;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+import java.util.List;
+import java.util.Optional;
 
 import javax.inject.Inject;
 
@@ -19,15 +23,23 @@ import io.lettuce.core.KeyValue;
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
 import io.lettuce.core.Range.Boundary;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.ScoredValue;
+import io.lettuce.core.ZMoveArgs;
 import io.lettuce.core.ZPopArgs;
 import io.lettuce.core.ZStoreArgs;
 import io.lettuce.core.cluster.ClusterTestUtil;
+import io.lettuce.core.cluster.RedisClusterClient;
+import io.lettuce.core.cluster.SlotHash;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.sync.Executions;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.commands.SortedSetCommandIntegrationTests;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
+import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.test.resource.TestClientResources;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisSortedSetCommands} using Redis Cluster.
@@ -40,10 +52,13 @@ class SortedSetClusterCommandIntegrationTests extends SortedSetCommandIntegratio
 
     private final RedisClusterCommands<String, String> redis;
 
+    private final StatefulRedisClusterConnection<String, String> connection;
+
     @Inject
     SortedSetClusterCommandIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
         super(ClusterTestUtil.redisCommandsOverCluster(connection));
         this.redis = connection.sync();
+        this.connection = connection;
     }
 
     /**
@@ -337,6 +352,63 @@ class SortedSetClusterCommandIntegrationTests extends SortedSetCommandIntegratio
         assertThat(redis.zunionWithScores(ZStoreArgs.Builder.count(), s1, s2, s3))
                 .isEqualTo(svlist(sv(2.0, "bar"), sv(3.0, "foo")));
         assertThat(redis.zinterWithScores(ZStoreArgs.Builder.count(), s1, s2, s3)).isEqualTo(svlist(sv(3.0, "foo")));
+    }
+
+    /**
+     * Scenario ZMOV-SA33: source and destination in two slots are rejected by the server with CROSSSLOT, for a move and a
+     * member move.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    void moveAcrossSlotsIsRejectedByServer() {
+        redis.zadd("{a}s", 1.0, "a");
+
+        assertThatThrownBy(() -> redis.zmove("{a}s", "{b}d", ZMoveArgs.Builder.min()))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("CROSSSLOT Keys in request don't hash to the same slot");
+        assertThatThrownBy(() -> redis.zmovemember("{a}s", "{b}d", "a")).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("CROSSSLOT Keys in request don't hash to the same slot");
+    }
+
+    /**
+     * Scenario ZMOV-C04: through the node selection of the upstream that owns the slot, the move runs once and replies the
+     * moved pair.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    void zmoveThroughNodeSelection() {
+        fixtureF1();
+        int slot = SlotHash.getSlot(SRC);
+
+        Executions<List<ScoredValue<String>>> executions = connection.sync()
+                .nodes(node -> node.is(RedisClusterNode.NodeFlag.UPSTREAM) && node.hasSlot(slot)).commands()
+                .zmove(SRC, DST, ZMoveArgs.Builder.min());
+
+        assertThat(executions.nodes()).hasSize(1);
+        assertThat(executions).containsExactly(svlist(sv(1.0, "a")));
+    }
+
+    /**
+     * Scenario ZMOV-C09: a client seeded with a node that does not own the slot routes the move to the slot owner by the source
+     * key.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    void zmoveIsRoutedToSlotOwner() {
+        fixtureF1();
+        int slot = SlotHash.getSlot(SRC);
+
+        Optional<RedisClusterNode> other = connection.getPartitions().stream()
+                .filter(node -> node.is(RedisClusterNode.NodeFlag.UPSTREAM) && !node.hasSlot(slot)).findFirst();
+        assumeTrue(other.isPresent(), "needs an upstream that does not own the slot");
+
+        RedisClusterClient seeded = RedisClusterClient.create(TestClientResources.get(), other.get().getUri());
+        try (StatefulRedisClusterConnection<String, String> fresh = seeded.connect()) {
+            assertThat(fresh.sync().zmove(SRC, DST, ZMoveArgs.Builder.min())).containsExactly(sv(1.0, "a"));
+        } finally {
+            FastShutdown.shutdown(seeded);
+        }
+        assertThat(redis.zscore(DST, "a")).isEqualTo(1.0);
     }
 
 }
