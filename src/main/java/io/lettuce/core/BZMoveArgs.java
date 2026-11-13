@@ -19,8 +19,8 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * methods from {@link Builder} and chain the method calls: {@code min().timeout(0.5).count(10)}.
  * <p>
  * The {@code timeout} defaults to {@code 0} (block indefinitely) when not set explicitly. When the connection's command timeout
- * ends the call first, the command may still be waiting on the server and may still move members. Without a count, one member
- * is moved. {@link BZMoveArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
+ * ends the call first, the command may still be waiting on the server and may still move members. {@link BZMoveArgs} is a
+ * mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @since 8.0
  */

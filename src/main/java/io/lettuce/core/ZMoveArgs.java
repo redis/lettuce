@@ -21,7 +21,6 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * highest scores ({@code MAX}) or a score range ({@code BYSCORE}), optionally limited by a {@code COUNT}. Static import the
  * methods from {@link Builder} and chain the method calls: {@code byScore(Range.create(0, 100)).count(10)}.
  * <p>
- * Without a count, {@code MIN} and {@code MAX} move one member and {@code BYSCORE} moves every member in the range.
  * {@link ZMoveArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @since 8.0

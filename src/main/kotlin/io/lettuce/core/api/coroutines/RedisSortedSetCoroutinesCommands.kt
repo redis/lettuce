@@ -405,15 +405,13 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     /**
      * Atomically moves members from the sorted set stored at `source` to the sorted set stored at `destination`,
      * keeping their scores. `args` selects the members: the lowest or highest scores, or a score range, optionally
-     * limited by a count. A `source` left empty is deleted; a member the destination already holds takes the score from
-     * `source`. Both keys must hash to the same slot in Redis Cluster. The same key as `source` and `destination` moves
-     * nothing and returns `null`. A command repeated after a connection failure may move further members.
+     * limited by a count.
      *
      * @param source the source key, must not be `null`.
      * @param destination the destination key, must not be `null`.
      * @param args the member selection and optional count, must not be `null`.
-     * @return List<ScoredValue<V>> the moved members with their scores, in the order of the selection (ascending for
-     *         `MIN` and `BYSCORE`, descending for `MAX`), or `null` when no member was moved.
+     * @return List<ScoredValue<V>> the moved members with their scores, in the order the server replies, or `null` when
+     *         no member was moved.
      * @throws IllegalArgumentException if `source`, `destination` or `args` is `null`.
      * @since 8.0
      */
@@ -421,20 +419,17 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Atomically moves members from the lowest or highest scores of the sorted set stored at `source` to the sorted set
-     * stored at `destination`, blocking the connection while `source` is empty or missing, until a member arrives or
-     * the timeout carried by `args` passes. When it wakes it moves up to the count and does not wait for more. The
-     * timeout is in seconds, may have a fraction, and defaults to `0` (block indefinitely); the connection's command
-     * timeout must be longer than the blocking timeout. When the connection's command timeout ends the call first, the
-     * command may still be waiting on the server and may still move members. Inside a transaction it replies at once
-     * and does not wait. A source left empty is deleted. A member the destination already holds takes the score from
-     * `source`. Both keys must hash to the same slot in Redis Cluster. The same key as `source` and `destination` moves
-     * nothing and returns `null`. A command repeated after a connection failure may move further members.
+     * stored at `destination`, keeping their scores, blocking the connection while `source` is empty or missing, until
+     * a member arrives or the timeout carried by `args` passes. The timeout is in seconds, may have a fraction, and
+     * defaults to `0` (block indefinitely); the connection's command timeout must be longer than the blocking timeout.
+     * When the connection's command timeout ends the call first, the command may still be waiting on the server and may
+     * still move members.
      *
      * @param source the source key, must not be `null`.
      * @param destination the destination key, must not be `null`.
      * @param args the end to take from, the blocking timeout and the optional count, must not be `null`.
-     * @return List<ScoredValue<V>> the moved members with their scores, in the order of the selection (ascending for
-     *         `MIN`, descending for `MAX`), or `null` when the timeout passed or no member was moved.
+     * @return List<ScoredValue<V>> the moved members with their scores, in the order the server replies, or `null` when
+     *         the timeout passed or no member was moved.
      * @throws IllegalArgumentException if `source`, `destination` or `args` is `null`.
      * @since 8.0
      */
@@ -442,10 +437,7 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Atomically moves the given `member` from the sorted set stored at `source` to the sorted set stored at
-     * `destination`, keeping its score. A member the destination already holds takes the score from `source`. A
-     * `source` left empty is deleted. Both keys must hash to the same slot in Redis Cluster. The same key as `source`
-     * and `destination` moves nothing and returns `null`. A command repeated after a connection failure may find the
-     * member already moved.
+     * `destination`, keeping its score.
      *
      * @param source the source key, must not be `null`.
      * @param destination the destination key, must not be `null`.
@@ -460,18 +452,13 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Atomically moves the given `members` from the sorted set stored at `source` to the sorted set stored at
-     * `destination`, keeping their scores. Members missing from `source` are skipped, a member given twice moves once,
-     * and the members are sent as given. An empty member list is sent to the server, which rejects it. Inside a
-     * transaction an empty member list is rejected when the command is queued, so the whole transaction fails. A member
-     * the destination already holds takes the score from `source`. A `source` left empty is deleted. Both keys must
-     * hash to the same slot in Redis Cluster. The same key as `source` and `destination` moves nothing and returns
-     * `null`. A command repeated after a connection failure may find the members already moved.
+     * `destination`, keeping their scores. The members are sent as given; an empty member list is sent too.
      *
      * @param source the source key, must not be `null`.
      * @param destination the destination key, must not be `null`.
      * @param members the members to move, must not be `null`.
-     * @return List<ScoredValue<V>> the moved members with their scores, in argument order, or `null` when no member was
-     *         moved.
+     * @return List<ScoredValue<V>> the moved members with their scores, in the order the server replies, or `null` when
+     *         no member was moved.
      * @throws IllegalArgumentException if `source`, `destination` or `members` is `null`, or a member is an argument
      * object such as [ZMoveMemberArgs].
      * @since 8.0
@@ -480,11 +467,8 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Atomically moves the given `member` from the sorted set stored at `source` to the sorted set stored at
-     * `destination`, keeping its score. A `source` left empty is deleted. Both keys must hash to the same slot in Redis
-     * Cluster. The same key as `source` and `destination` moves nothing and returns `null`. A command repeated after a
-     * connection failure may find the member already moved. `args` sets the destination condition:
-     * [ZMoveMemberArgs.Builder.nx] moves only members the destination doesn't hold, [ZMoveMemberArgs.Builder.xx] only
-     * members it holds; a member the condition leaves out stays in `source` and is not in the reply.
+     * `destination`, keeping its score. `args` sets the destination condition: [ZMoveMemberArgs.Builder.nx] moves only
+     * members the destination doesn't hold, [ZMoveMemberArgs.Builder.xx] only members it holds.
      *
      * @param source the source key, must not be `null`.
      * @param destination the destination key, must not be `null`.
@@ -500,20 +484,16 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Atomically moves the given `members` from the sorted set stored at `source` to the sorted set stored at
-     * `destination`, keeping their scores. Members missing from `source` are skipped, a member given twice moves once,
-     * and the members are sent as given. An empty member list is sent to the server, which rejects it. A `source` left
-     * empty is deleted. Both keys must hash to the same slot in Redis Cluster. The same key as `source` and
-     * `destination` moves nothing and returns `null`. A command repeated after a connection failure may find the
-     * members already moved. `args` sets the destination condition: [ZMoveMemberArgs.Builder.nx] moves only members the
-     * destination doesn't hold, [ZMoveMemberArgs.Builder.xx] only members it holds; a member the condition leaves out
-     * stays in `source` and is not in the reply.
+     * `destination`, keeping their scores. The members are sent as given; an empty member list is sent too. `args` sets
+     * the destination condition: [ZMoveMemberArgs.Builder.nx] moves only members the destination doesn't hold,
+     * [ZMoveMemberArgs.Builder.xx] only members it holds.
      *
      * @param source the source key, must not be `null`.
      * @param destination the destination key, must not be `null`.
      * @param args the destination condition, must not be `null`.
      * @param members the members to move, must not be `null`.
-     * @return List<ScoredValue<V>> the moved members with their scores, in argument order, or `null` when no member was
-     *         moved.
+     * @return List<ScoredValue<V>> the moved members with their scores, in the order the server replies, or `null` when
+     *         no member was moved.
      * @throws IllegalArgumentException if `source`, `destination`, `args` or `members` is `null`, or a member is an
      * argument object such as [ZMoveMemberArgs].
      * @since 8.0
