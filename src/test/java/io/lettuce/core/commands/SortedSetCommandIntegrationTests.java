@@ -26,8 +26,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -1201,6 +1203,503 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
         assertThat(redis.zunionWithScores(ZStoreArgs.Builder.count(), "s1", "s2", "s3"))
                 .isEqualTo(svlist(sv(2.0, "bar"), sv(3.0, "foo")));
         assertThat(redis.zinterWithScores(ZStoreArgs.Builder.count(), "s1", "s2", "s3")).isEqualTo(svlist(sv(3.0, "foo")));
+    }
+
+    // Sorted-set move commands: keys share the hash tag {z} so that they hash to the same slot.
+
+    protected static final String SRC = "{z}s";
+
+    protected static final String DST = "{z}d";
+
+    /**
+     * Fixture F1: {@code {z}s} holds {@code a 1, b 2, c 3}.
+     */
+    protected void fixtureF1() {
+        redis.zadd(SRC, 1.0, "a", 2.0, "b", 3.0, "c");
+    }
+
+    /**
+     * Fixture F4: {@code {z}s} holds {@code a 5, b 6}; {@code {z}d} holds {@code a 1}.
+     */
+    protected void fixtureF4() {
+        redis.zadd(SRC, 5.0, "a", 6.0, "b");
+        redis.zadd(DST, 1.0, "a");
+    }
+
+    /**
+     * Scenario ZMOV-SA01: moving the lowest member without a count replies a list of one pair, and the member is in the
+     * destination.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveMinWithoutCountRepliesListOfOne() {
+        fixtureF1();
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min())).containsExactly(sv(1.0, "a"));
+        assertThat(redis.zscore(DST, "a")).isEqualTo(1.0);
+    }
+
+    /**
+     * Scenario ZMOV-SA02: moving the two lowest members replies them in ascending order; the destination holds them with their
+     * scores and the source keeps one member.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveMinWithCountRepliesAscending() {
+        fixtureF1();
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min().count(2))).containsExactly(sv(1.0, "a"), sv(2.0, "b"));
+        assertThat(redis.zrangeWithScores(DST, 0, -1)).containsExactly(sv(1.0, "a"), sv(2.0, "b"));
+        assertThat(redis.zcard(SRC)).isEqualTo(1);
+    }
+
+    /**
+     * Scenario ZMOV-SA03: moving the two highest members replies them in descending order.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveMaxWithCountRepliesDescending() {
+        fixtureF1();
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.max().count(2))).containsExactly(sv(3.0, "c"), sv(2.0, "b"));
+    }
+
+    /**
+     * Scenario ZMOV-SA04: a score range with an exclusive minimum and no count moves the whole range.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveByScoreWithoutCountMovesWholeRange() {
+        redis.zadd(SRC, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "e");
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.from(excluding(1), including(3)))))
+                .containsExactly(sv(2.0, "b"), sv(3.0, "c"));
+        assertThat(redis.zrange(SRC, 0, -1)).containsExactly("a", "e");
+    }
+
+    /**
+     * Scenario ZMOV-SA05: an infinite score range with a count moves the lowest members up to the count; exclusive infinite
+     * bounds are accepted too.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveByInfiniteScoreRangeWithCount() {
+        fixtureF1();
+
+        assertThat(
+                redis.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.create(NEGATIVE_INFINITY, POSITIVE_INFINITY)).count(2)))
+                        .containsExactly(sv(1.0, "a"), sv(2.0, "b"));
+        assertThat(redis.zmove(SRC, DST,
+                ZMoveArgs.Builder.byScore(Range.from(excluding(NEGATIVE_INFINITY), excluding(POSITIVE_INFINITY))).count(2)))
+                        .containsExactly(sv(3.0, "c"));
+    }
+
+    /**
+     * Scenario ZMOV-SA06: members with equal scores move in member order.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveEqualScoresMoveByMemberOrder() {
+        redis.zadd(SRC, 1.0, "c", 1.0, "a", 1.0, "b");
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min().count(2))).containsExactly(sv(1.0, "a"), sv(1.0, "b"));
+        assertThat(redis.zrange(SRC, 0, -1)).containsExactly("c");
+    }
+
+    /**
+     * Scenario ZMOV-SA07: an infinite score reads as positive infinity.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveInfiniteScore() {
+        redis.zadd(SRC, POSITIVE_INFINITY, "a");
+
+        List<ScoredValue<String>> moved = redis.zmove(SRC, DST, ZMoveArgs.Builder.min());
+
+        assertThat(moved).hasSize(1);
+        assertThat(moved.get(0).getValue()).isEqualTo("a");
+        assertThat(moved.get(0).getScore()).isEqualTo(POSITIVE_INFINITY);
+    }
+
+    /**
+     * Scenario ZMOV-SA08: a score range that selects nothing replies {@code null}, not an empty list, and creates no
+     * destination.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveEmptyScoreRangeRepliesNull() {
+        redis.zadd(SRC, 1.0, "a");
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.create(5, 6)))).isNull();
+        assertThat(redis.exists(DST)).isEqualTo(0);
+    }
+
+    /**
+     * Scenario ZMOV-SA09: a missing source replies {@code null} for a move and a member move, also when the destination holds a
+     * string.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void moveFromMissingSourceRepliesNull() {
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min())).isNull();
+        assertThat(redis.zmovemember(SRC, DST, "a")).isNull();
+
+        redis.set(DST, "string");
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min())).isNull();
+        assertThat(redis.zmovemember(SRC, DST, "a")).isNull();
+    }
+
+    /**
+     * Scenario ZMOV-SA10: a source that is also the destination replies {@code null} at once for each command, and keeps its
+     * member; a blocking move on a missing key to itself replies {@code null} at once.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    public void moveToSameKeyRepliesNull() {
+        redis.zadd(SRC, 1.0, "a");
+
+        assertThat(redis.zmove(SRC, SRC, ZMoveArgs.Builder.min())).isNull();
+        assertThat(redis.bzmove(SRC, SRC, BZMoveArgs.Builder.min().timeout(0L))).isNull();
+        assertThat(redis.zmovemember(SRC, SRC, "a")).isNull();
+        assertThat(redis.zscore(SRC, "a")).isEqualTo(1.0);
+
+        assertThat(redis.bzmove("{z}missing", "{z}missing", BZMoveArgs.Builder.min().timeout(0L))).isNull();
+    }
+
+    /**
+     * Scenario ZMOV-SA11: a count larger than the source moves every member and deletes the source.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveCountLargerThanSourceDeletesSource() {
+        redis.zadd(SRC, 1.0, "a", 2.0, "b");
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min().count(100))).hasSize(2);
+        assertThat(redis.exists(SRC)).isEqualTo(0);
+        assertThat(redis.zcard(DST)).isEqualTo(2);
+    }
+
+    /**
+     * Scenario ZMOV-SA12: members move in argument order, a missing member is skipped and a repeated member moves once.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberKeepsArgumentOrder() {
+        fixtureF1();
+
+        assertThat(redis.zmovemember(SRC, DST, "c", "a", "missing", "a")).containsExactly(sv(3.0, "c"), sv(1.0, "a"));
+        assertThat(redis.zrange(SRC, 0, -1)).containsExactly("b");
+    }
+
+    /**
+     * Scenario ZMOV-SA13: without a condition, a member the destination holds takes the source score.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberOverwritesDestinationScore() {
+        redis.zadd(SRC, 5.0, "a");
+        redis.zadd(DST, 1.0, "a");
+
+        assertThat(redis.zmovemember(SRC, DST, "a")).containsExactly(sv(5.0, "a"));
+        assertThat(redis.zscore(DST, "a")).isEqualTo(5.0);
+        assertThat(redis.exists(SRC)).isEqualTo(0);
+    }
+
+    /**
+     * Scenario ZMOV-SA14: a member with the same score in the destination still moves.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberEqualScoreStillMoves() {
+        redis.zadd(SRC, 5.0, "a");
+        redis.zadd(DST, 5.0, "a");
+
+        assertThat(redis.zmovemember(SRC, DST, "a")).containsExactly(sv(5.0, "a"));
+        assertThat(redis.exists(SRC)).isEqualTo(0);
+    }
+
+    /**
+     * Scenario ZMOV-SA15: with NX only members the destination doesn't hold move; the others stay in both keys.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberNx() {
+        fixtureF4();
+
+        assertThat(redis.zmovemember(SRC, DST, ZMoveMemberArgs.Builder.nx(), "a", "b")).containsExactly(sv(6.0, "b"));
+        assertThat(redis.zscore(SRC, "a")).isEqualTo(5.0);
+        assertThat(redis.zscore(DST, "a")).isEqualTo(1.0);
+    }
+
+    /**
+     * Scenario ZMOV-SA16: with XX only members the destination holds move; the others stay in the source.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberXx() {
+        fixtureF4();
+
+        assertThat(redis.zmovemember(SRC, DST, ZMoveMemberArgs.Builder.xx(), "a", "b")).containsExactly(sv(5.0, "a"));
+        assertThat(redis.zscore(SRC, "b")).isEqualTo(6.0);
+    }
+
+    /**
+     * Scenario ZMOV-SA17: XX with a missing destination replies {@code null}, creates no destination and leaves the source.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberXxMissingDestinationRepliesNull() {
+        redis.zadd(SRC, 5.0, "a");
+
+        assertThat(redis.zmovemember(SRC, DST, ZMoveMemberArgs.Builder.xx(), "a")).isNull();
+        assertThat(redis.exists(DST)).isEqualTo(0);
+        assertThat(redis.zscore(SRC, "a")).isEqualTo(5.0);
+    }
+
+    /**
+     * Scenario ZMOV-SA18: members named like keywords are data.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberKeywordNamedMembers() {
+        redis.zadd(SRC, 1.0, "NX", 2.0, "XX", 3.0, "MEMBERS");
+
+        assertThat(redis.zmovemember(SRC, DST, "NX", "XX", "MEMBERS")).containsExactly(sv(1.0, "NX"), sv(2.0, "XX"),
+                sv(3.0, "MEMBERS"));
+        assertThat(redis.exists(SRC)).isEqualTo(0);
+    }
+
+    /**
+     * Scenario ZMOV-SA35: a move keeps the destination's TTL and a source's TTL; a destination the move creates has none.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveKeepsTtls() {
+        redis.zadd(DST, 9.0, "z");
+        redis.expire(DST, 1000);
+        redis.zadd(SRC, 1.0, "a");
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min())).containsExactly(sv(1.0, "a"));
+        assertThat(redis.ttl(DST)).isPositive();
+
+        String source = "{z}s2";
+        String destination = "{z}d2";
+        redis.zadd(source, 1.0, "a", 2.0, "b");
+        redis.expire(source, 1000);
+
+        assertThat(redis.zmove(source, destination, ZMoveArgs.Builder.min())).containsExactly(sv(1.0, "a"));
+        assertThat(redis.ttl(destination)).isEqualTo(-1);
+        assertThat(redis.ttl(source)).isPositive();
+    }
+
+    /**
+     * Scenario ZMOV-SA19: a count of 0 or below is rejected by the server and nothing moves; the count error comes before the
+     * type check of the keys.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveCountBelowOneIsRejectedByServer() {
+        fixtureF1();
+
+        for (ZMoveArgs args : Arrays.asList(ZMoveArgs.Builder.min().count(0), ZMoveArgs.Builder.min().count(-1),
+                ZMoveArgs.Builder.byScore(Range.create(1, 3)).count(0),
+                ZMoveArgs.Builder.byScore(Range.create(1, 3)).count(-1))) {
+            assertThatThrownBy(() -> redis.zmove(SRC, DST, args)).isInstanceOf(RedisCommandExecutionException.class)
+                    .hasMessageContaining("ERR count should be greater than 0");
+        }
+        assertThat(redis.zcard(SRC)).isEqualTo(3);
+        assertThat(redis.exists(DST)).isEqualTo(0);
+
+        redis.set("{z}string", "value");
+        assertThatThrownBy(() -> redis.zmove("{z}string", DST, ZMoveArgs.Builder.min().count(0)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR count should be greater than 0");
+        assertThatThrownBy(() -> redis.zmove("{z}string", DST, ZMoveArgs.Builder.byScore(Range.create(1, 3)).count(-1)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR count should be greater than 0");
+    }
+
+    /**
+     * Scenario ZMOV-SA22: a NaN bound is rejected by the server; an inverted range replies {@code null}.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveNanBoundRejectedAndInvertedRangeRepliesNull() {
+        fixtureF1();
+
+        assertThatThrownBy(() -> redis.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.create(NaN, 3.0))))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR min or max is not a float");
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.create(3, 1)))).isNull();
+    }
+
+    /**
+     * Scenario ZMOV-SA23: a source or destination of another type is rejected with WRONGTYPE at once, and the source keeps its
+     * member.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    public void moveWithWrongTypeKeys() {
+        redis.set("{z}string", "value");
+
+        assertThatThrownBy(() -> redis.zmove("{z}string", DST, ZMoveArgs.Builder.min()))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("WRONGTYPE");
+
+        redis.zadd(SRC, 1.0, "a");
+        redis.set(DST, "value");
+
+        assertThatThrownBy(() -> redis.zmove(SRC, DST, ZMoveArgs.Builder.min()))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("WRONGTYPE");
+        assertThatThrownBy(() -> redis.zmovemember(SRC, DST, "a")).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("WRONGTYPE");
+        assertThat(redis.zscore(SRC, "a")).isEqualTo(1.0);
+
+        assertThatThrownBy(() -> redis.bzmove("{z}string", "{z}d2", BZMoveArgs.Builder.min().timeout(1L)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("WRONGTYPE");
+    }
+
+    /**
+     * Scenario ZMOV-SA27: an empty member list reaches the server, which rejects it: without a condition with the arity error,
+     * with NX with the number-of-members error.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberEmptyMemberListIsRejectedByServer() {
+        fixtureF1();
+
+        assertThatThrownBy(() -> redis.zmovemember(SRC, DST, new String[0])).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("ERR wrong number of arguments for 'zmovemember' command");
+        assertThatThrownBy(() -> redis.zmovemember(SRC, DST, ZMoveMemberArgs.Builder.nx(), new String[0]))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("ERR Number of members must be a positive integer");
+    }
+
+    /**
+     * Scenario ZMOV-SA28: a blocking move on a non-empty source replies at once, highest scores first.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    public void bzmoveNonEmptySourceRepliesAtOnce() {
+        redis.zadd(SRC, 1.0, "a", 2.0, "b");
+
+        assertThat(redis.bzmove(SRC, DST, BZMoveArgs.Builder.max().timeout(1L).count(5))).containsExactly(sv(2.0, "b"),
+                sv(1.0, "a"));
+    }
+
+    /**
+     * Scenario ZMOV-SA29: a blocking move on a missing source with a fractional timeout replies {@code null}.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    public void bzmoveFractionalTimeoutRepliesNull() {
+
+        assertThat(redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(0.1))).isNull();
+    }
+
+    /**
+     * Scenario ZMOV-SA31: a blocking move with a count of 0, a negative timeout or an infinite timeout is rejected by the
+     * server at once.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    public void bzmoveInvalidCountOrTimeoutIsRejectedByServer() {
+        fixtureF1();
+
+        assertThatThrownBy(() -> redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(1L).count(0)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR count should be greater than 0");
+        assertThatThrownBy(() -> redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(-1L)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR timeout is negative");
+        assertThatThrownBy(() -> redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(POSITIVE_INFINITY)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR timeout is out of range");
+        assertThatThrownBy(() -> redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(NEGATIVE_INFINITY)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR timeout is negative");
+        assertThat(redis.zcard(SRC)).isEqualTo(3);
+    }
+
+    /**
+     * Scenario ZMOV-SA34: a positive timeout under one millisecond, and one with a long fraction, reply {@code null} on a
+     * missing source.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    public void bzmoveSubMillisecondAndLongFractionTimeoutsRepliesNull() {
+
+        assertThat(redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(0.0005))).isNull();
+        assertThat(redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(1.000000001))).isNull();
+    }
+
+    /**
+     * Scenario ZMOV-C08: a blocking move on a missing source with a 100 ms timeout replies {@code null} well under a second.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    public void bzmoveFractionalTimeoutIsNotRoundedToSeconds() {
+
+        long start = System.nanoTime();
+        assertThat(redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(0.1))).isNull();
+        assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofMillis(900));
+    }
+
+    /**
+     * Scenario ZMOV-SV01: a count below 1 on the blocking move is sent and the server's count error comes back; nothing moves.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    public void bzmoveNegativeCountIsSent() {
+        fixtureF1();
+
+        assertThatThrownBy(() -> redis.bzmove(SRC, DST, BZMoveArgs.Builder.max().timeout(1L).count(-1)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR count should be greater than 0");
+        assertThat(redis.zcard(SRC)).isEqualTo(3);
+    }
+
+    /**
+     * Scenario ZMOV-SV02: a negative fractional timeout is sent and the server's negative-timeout error comes back.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    public void bzmoveNegativeFractionalTimeoutIsSent() {
+        fixtureF1();
+
+        assertThatThrownBy(() -> redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(-0.5)))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR timeout is negative");
+    }
+
+    /**
+     * Scenario ZMOV-SV03: an empty member list with XX is sent and the server's number-of-members error comes back.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberEmptyMemberListWithXxIsSent() {
+        fixtureF1();
+
+        assertThatThrownBy(() -> redis.zmovemember(SRC, DST, ZMoveMemberArgs.Builder.xx(), new String[0]))
+                .isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("ERR Number of members must be a positive integer");
+    }
+
+    /**
+     * Scenario ZMOV-SV05: a score range without a count moves the whole range, its inclusive ends included.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveByScoreWithoutCountMovesInclusiveRange() {
+        redis.zadd(SRC, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "e");
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.create(1, 4)))).containsExactly(sv(1.0, "a"),
+                sv(2.0, "b"), sv(3.0, "c"), sv(4.0, "e"));
+    }
+
+    /**
+     * Scenario ZMOV-SV06: the largest count is accepted and every member moves.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveLargestCountMovesEverything() {
+        fixtureF1();
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min().count(Long.MAX_VALUE))).containsExactly(sv(1.0, "a"),
+                sv(2.0, "b"), sv(3.0, "c"));
+        assertThat(redis.exists(SRC)).isEqualTo(0);
     }
 
     void setup100KeyValues(Set<String> expect) {
