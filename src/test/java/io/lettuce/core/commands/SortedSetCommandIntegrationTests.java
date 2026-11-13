@@ -1376,7 +1376,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     public void zmoveCountLargerThanSourceDeletesSource() {
         redis.zadd(SRC, 1.0, "a", 2.0, "b");
 
-        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min().count(100))).hasSize(2);
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min().count(100))).containsExactly(sv(1.0, "a"), sv(2.0, "b"));
         assertThat(redis.exists(SRC)).isEqualTo(0);
         assertThat(redis.zcard(DST)).isEqualTo(2);
     }
