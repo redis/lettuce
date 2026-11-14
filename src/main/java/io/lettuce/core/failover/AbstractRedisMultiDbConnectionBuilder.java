@@ -227,7 +227,15 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                     // here its is possible race condition if other thread running this handler at the same time.
                     // but only one can set initialDb to non null, and that's the one we want.
                     // 'compareAndSet' guards against multiple connection creation.
-                    conn = buildConn(healthStatusManager, databases, databaseFutures, candidate);
+                    try {
+                        conn = buildConn(healthStatusManager, databases, databaseFutures, candidate);
+                    } catch (RuntimeException e) {
+                        // initialDb is already taken, so no other handler will build a connection. Fail now, otherwise
+                        // connectionFuture never completes.
+                        connectionFuture.completeExceptionally(
+                                new RedisConnectionException("Failed to build connection with " + candidate.getId(), e));
+                        throw e;
+                    }
                     connectionFuture.complete(conn);
                 }
             }

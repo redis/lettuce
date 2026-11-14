@@ -690,6 +690,36 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             healthStatusManager.close();
         }
 
+        @Test
+        @DisplayName("Should complete connection future exceptionally when building the connection fails")
+        void shouldFailConnectionFutureWhenBuildConnFails() {
+            HealthStatusManager healthStatusManager = new HealthStatusManagerImpl();
+            DatabaseMap<StatefulRedisConnection<String, String>> databases = new DatabaseMap<>();
+            DatabaseFutureMap<StatefulRedisConnection<String, String>> databaseFutures = new DatabaseFutureMap<>();
+
+            // The first health check reported HEALTHY, but the database is unhealthy by the time the connection is built,
+            // so the connection constructor throws "No healthy database available"
+            when(mockHealthCheck1.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> db1 = createMockDatabase(config1, mockConnection1,
+                    mockHealthCheck1);
+            databases.put(uri1, db1);
+            databaseFutures.put(uri1, CompletableFuture.completedFuture(db1));
+
+            Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures = new HashMap<>();
+            healthStatusFutures.put(uri1, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
+
+            CompletableFuture<StatefulRedisMultiDbConnection<String, String>> connectionFuture = new CompletableFuture<>();
+
+            regularBuilder.handleHealthStatusResults(healthStatusManager, databases, databaseFutures, healthStatusFutures,
+                    connectionFuture, Collections.singletonList(config1), new AtomicReference<>());
+
+            assertThat(connectionFuture).isCompletedExceptionally();
+            assertThatThrownBy(connectionFuture::join).hasCauseInstanceOf(RedisConnectionException.class)
+                    .hasRootCauseMessage("No healthy database available");
+
+            healthStatusManager.close();
+        }
+
     }
 
     // ============ Async Connection Builder Specific Tests ============
