@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.net.SocketAddress;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -78,6 +79,40 @@ class MicrometerCommandLatencyRecorderUnitTests {
         assertThat(meterRegistry.find(METRIC_COMPLETION).tag(LABEL_COMMAND, CommandType.BGSAVE.name()).timers()).hasSize(1)
                 .element(0).extracting(Timer::takeSnapshot).hasFieldOrPropertyWithValue("count", 3L)
                 .hasFieldOrPropertyWithValue("max", 1500.0).hasFieldOrPropertyWithValue("total", 3000.0);
+    }
+
+    @Test
+    void queueingIsOptInAndRecordedPerAttempt() {
+        Command<String, String, String> command = new Command<>(CommandType.GET, null);
+        MicrometerCommandLatencyRecorder disabled = new MicrometerCommandLatencyRecorder(meterRegistry,
+                MicrometerOptions.create());
+        assertThat(disabled.isQueueLatencyEnabled()).isFalse();
+        disabled.recordCommandQueueLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, command, 40);
+        assertThat(meterRegistry.find(METRIC_QUEUEING).timers()).isEmpty();
+
+        MicrometerCommandLatencyRecorder enabled = new MicrometerCommandLatencyRecorder(meterRegistry,
+                MicrometerOptions.builder().queueLatency(true).build());
+        enabled.recordCommandQueueLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, command, 40);
+        enabled.recordCommandQueueLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, command, 80);
+
+        Timer timer = meterRegistry.get(METRIC_QUEUEING).tag(LABEL_COMMAND, CommandType.GET.name()).timer();
+        assertThat(timer.count()).isEqualTo(2);
+        assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(120);
+        assertThat(meterRegistry.find("lettuce.command.endtoend").timers()).isEmpty();
+    }
+
+    @Test
+    void queueingRespectsCommandFilterAndNodeTags() {
+        MicrometerCommandLatencyRecorder recorder = new MicrometerCommandLatencyRecorder(meterRegistry,
+                MicrometerOptions.builder().queueLatency(true).enabledCommands(CommandType.GET).build());
+        SocketAddress secondNode = new LocalAddress("localhost:6380");
+        recorder.recordCommandQueueLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, new Command<>(CommandType.SET, null), 30);
+        recorder.recordCommandQueueLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, new Command<>(CommandType.GET, null), 30);
+        recorder.recordCommandQueueLatency(LOCAL_ADDRESS, secondNode, new Command<>(CommandType.GET, null), 50);
+
+        assertThat(meterRegistry.find(METRIC_QUEUEING).timers()).hasSize(2);
+        assertThat(meterRegistry.find(METRIC_QUEUEING).tag(LABEL_COMMAND, CommandType.SET.name()).timers()).isEmpty();
+        assertThat(meterRegistry.get(METRIC_QUEUEING).tag(LABEL_REMOTE, secondNode.toString()).timer().count()).isEqualTo(1);
     }
 
     @Test

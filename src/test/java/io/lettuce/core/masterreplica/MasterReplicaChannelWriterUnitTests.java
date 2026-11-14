@@ -38,8 +38,10 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
@@ -193,6 +195,30 @@ class MasterReplicaChannelWriterUnitTests {
 
         verify(connectionProvider).getConnectionAsync(ConnectionIntent.WRITE);
         verify(connectionProvider).getConnectionAsync(ConnectionIntent.READ);
+    }
+
+    @Test
+    void duplicateBatchDoesNotCompleteEarlierMasterReplicaAttempt() {
+        CommandLatencyRecorder recorder = mock(CommandLatencyRecorder.class);
+        when(clientResources.commandLatencyRecorder()).thenReturn(recorder);
+        when(recorder.isQueueLatencyEnabled()).thenReturn(true);
+        when(connectionProvider.getConnectionAsync(any(ConnectionIntent.class)))
+                .thenReturn(CompletableFuture.completedFuture(connection));
+
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+        Command<String, String, String> prior = mockCommand(CommandType.SET);
+        Command<String, String, String> other = mockCommand(CommandType.GET);
+        writer.write(prior);
+
+        assertThatThrownBy(() -> writer.write(Arrays.asList(prior, other, prior)))
+                .isInstanceOf(RedisException.class)
+                .hasMessageContaining("repeated command instance");
+
+        verify(connection).dispatch(prior);
+        verify(connection, never()).dispatch(anyCollection());
+        verify(connectionProvider, times(1)).getConnectionAsync(any(ConnectionIntent.class));
+        assertThat(prior.isDone()).isFalse();
+        assertThat(other.isDone()).isFalse();
     }
 
     private static Command<String, String, String> mockCommand(CommandType multi) {

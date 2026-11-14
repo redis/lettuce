@@ -30,8 +30,11 @@ import java.time.LocalTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -110,6 +113,14 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private final boolean latencyMetricsEnabled;
 
+    private final boolean queueLatencyMetricsEnabled;
+
+    // Only used on the Netty event loop. Collection writes call write() per command before flushing.
+    private final List<WithLatency> pendingFlushLatency = new ArrayList<>();
+
+    // Event-loop confined; a claimed timestamp must not be recorded until ctx.write succeeds.
+    private final Map<RedisCommand<?, ?, ?>, Long> pendingQueueSamples = new IdentityHashMap<>();
+
     private final boolean tracingEnabled;
 
     private final DecodeBufferPolicy decodeBufferPolicy;
@@ -156,6 +167,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.endpoint = endpoint;
         this.commandLatencyRecorder = clientResources.commandLatencyRecorder();
         this.latencyMetricsEnabled = commandLatencyRecorder.isEnabled();
+        this.queueLatencyMetricsEnabled = latencyMetricsEnabled && commandLatencyRecorder.isQueueLatencyEnabled();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
         this.stack = clientOptions.isUseHashIndexedQueue() ? new HashIndexedQueue<>() : new ArrayDeque<>();
 
@@ -365,6 +377,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
 
         tracedEndpoint = null;
+        pendingFlushLatency.clear();
         setState(LifecycleState.DISCONNECTED);
         setState(LifecycleState.DEACTIVATING);
 
@@ -389,6 +402,20 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
      * @see io.netty.channel.ChannelDuplexHandler#write(io.netty.channel.ChannelHandlerContext, java.lang.Object,
      *      io.netty.channel.ChannelPromise)
      */
+    @Override
+    public void flush(ChannelHandlerContext ctx) throws Exception {
+
+        if (!pendingFlushLatency.isEmpty()) {
+            long sentAt = nanoTime();
+            for (WithLatency command : pendingFlushLatency) {
+                command.sent(sentAt);
+            }
+            pendingFlushLatency.clear();
+        }
+
+        ctx.flush();
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -424,15 +451,37 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private void writeSingleCommand(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command, ChannelPromise promise) {
 
         if (!isWriteable(command)) {
+            discardQueueLatencyStart(command);
             promise.trySuccess();
             return;
         }
 
-        addToStack(command, promise);
+        RedisCommand<?, ?, ?> queuedCommand = addToStack(command, promise);
+        if (queuedCommand == null) {
+            // A cancellation can race with queue recording after the initial writable check.
+            promise.trySuccess();
+            return;
+        }
 
-        attachTracing(ctx, command);
-
-        ctx.write(command, promise);
+        boolean written = false;
+        try {
+            attachTracingSafely(ctx, command);
+            if (queueLatencyMetricsEnabled && (command.isCancelled() || command.getOutput() != null && !isWriteable(command))) {
+                discardPreparedCommand(command, queuedCommand);
+                written = true; // Cancellation was handled; do not remove an earlier flush entry in finally.
+                promise.trySuccess();
+                return;
+            }
+            long dispatchedAt = queueLatencyMetricsEnabled ? nanoTime() : 0;
+            ctx.write(command, promise);
+            written = true;
+            recordQueueLatencyAfterWrite(command, dispatchedAt);
+        } finally {
+            if (!written) {
+                removePendingFlushLatency(queuedCommand);
+            }
+            pendingQueueSamples.remove(command);
+        }
     }
 
     private void writeBatch(ChannelHandlerContext ctx, Collection<RedisCommand<?, ?, ?>> batch, ChannelPromise promise) {
@@ -441,8 +490,14 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         for (RedisCommand<?, ?, ?> command : batch) {
 
-            if (isWriteable(command) && !deduplicated.add(command)) {
+            if (!isWriteable(command)) {
+                discardQueueLatencyStart(command);
+                continue;
+            }
+
+            if (!deduplicated.add(command)) {
                 deduplicated.remove(command);
+                discardQueueLatencyStart(command);
                 command.completeExceptionally(
                         new RedisException("Attempting to write duplicate command that is already enqueued: " + command));
             }
@@ -453,21 +508,75 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         } catch (Exception e) {
 
             for (RedisCommand<?, ?, ?> redisCommand : deduplicated) {
+                discardQueueLatencyStart(redisCommand);
                 redisCommand.completeExceptionally(e);
             }
 
             throw e;
         }
 
-        for (RedisCommand<?, ?, ?> command : deduplicated) {
-            attachTracing(ctx, command);
-            addToStack(command, promise);
-        }
+        // Endpoint collection writes are usually processed one command at a time.
+        // The common flush() method must assign the timing start in either case.
+        List<RedisCommand<?, ?, ?>> queuedCommands = new ArrayList<>(deduplicated.size());
+        boolean written = false;
+        try {
+            for (Iterator<RedisCommand<?, ?, ?>> iterator = deduplicated.iterator(); iterator.hasNext();) {
+                RedisCommand<?, ?, ?> command = iterator.next();
+                RedisCommand<?, ?, ?> queuedCommand = addToStack(command, promise);
+                if (queuedCommand == null) {
+                    iterator.remove();
+                } else {
+                    // Track the current entry before invoking any user-supplied tracing code.
+                    queuedCommands.add(queuedCommand);
+                    attachTracingSafely(ctx, command);
+                }
+            }
 
-        if (!deduplicated.isEmpty()) {
-            ctx.write(deduplicated, promise);
-        } else {
-            promise.trySuccess();
+            // A command can finish while later batch entries are being traced. Check at
+            // the final dispatch boundary so it cannot be written or timed after cancellation.
+            if (queueLatencyMetricsEnabled) {
+                Iterator<RedisCommand<?, ?, ?>> queued = queuedCommands.iterator();
+                for (Iterator<RedisCommand<?, ?, ?>> iterator = deduplicated.iterator(); iterator.hasNext();) {
+                    RedisCommand<?, ?, ?> command = iterator.next();
+                    RedisCommand<?, ?, ?> queuedCommand = queued.next();
+                    if (command.isCancelled() || command.getOutput() != null && !isWriteable(command)) {
+                        iterator.remove();
+                        discardPreparedCommand(command, queuedCommand);
+                        queued.remove(); // Do not clean this attempt again in the failure handler.
+                    }
+                }
+            }
+
+            if (!deduplicated.isEmpty()) {
+                long dispatchedAt = queueLatencyMetricsEnabled ? nanoTime() : 0;
+                ctx.write(deduplicated, promise);
+                written = true;
+                for (RedisCommand<?, ?, ?> command : deduplicated) {
+                    recordQueueLatencyAfterWrite(command, dispatchedAt);
+                }
+            } else {
+                promise.trySuccess();
+                written = true;
+            }
+        } finally {
+            if (!written) {
+                // A failed batch must not timestamp any of its prepared commands on a later flush.
+                for (RedisCommand<?, ?, ?> queuedCommand : queuedCommands) {
+                    removePendingFlushLatency(queuedCommand);
+                }
+            }
+            for (RedisCommand<?, ?, ?> command : deduplicated) {
+                pendingQueueSamples.remove(command);
+            }
+        }
+    }
+
+    private void attachTracingSafely(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
+        // Tracing is auxiliary. Failures must not leave a queued command without a write.
+        try {
+            attachTracing(ctx, command);
+        } catch (Exception e) {
+            logger.warn("{} Failed to attach command tracing", logPrefix(), e);
         }
     }
 
@@ -502,28 +611,93 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
-    private void addToStack(RedisCommand<?, ?, ?> command, ChannelPromise promise) {
+    private RedisCommand<?, ?, ?> addToStack(RedisCommand<?, ?, ?> command, ChannelPromise promise) {
 
+        RedisCommand<?, ?, ?> redisCommand = null;
+        boolean pendingFlushRegistered = false;
         try {
 
             if (!ActivationCommand.isActivationCommand(command)) {
                 validateWrite(1);
             }
 
+            // Claim the acceptance timestamp before completing output-less commands.
+            // Completion callbacks must not remove a stamp that is about to be dispatched.
+            Long acceptedAt = queueLatencyMetricsEnabled && endpoint instanceof DefaultEndpoint
+                    ? ((DefaultEndpoint) endpoint).takeQueueLatencyStart(command)
+                    : null;
+
             if (command.getOutput() == null) {
-                // fire&forget commands are excluded from metrics and replies
+                // fire&forget commands are excluded from reply/response latency metrics.
                 complete(command);
             }
+            redisCommand = potentiallyWrapLatencyCommand(command);
 
-            RedisCommand<?, ?, ?> redisCommand = potentiallyWrapLatencyCommand(command);
+            // Completion can happen on another thread between acceptance and dispatch.
+            // Never dispatch a command that became terminal while we were preparing it.
+            if (queueLatencyMetricsEnabled && (command.isCancelled() || command.getOutput() != null && !isWriteable(command))) {
+                return null;
+            }
 
             stack.add(redisCommand);
+            if (queueLatencyMetricsEnabled) {
+                pendingFlushLatency.add((WithLatency) redisCommand);
+                pendingFlushRegistered = true;
+                if (acceptedAt != null) {
+                    pendingQueueSamples.put(command, acceptedAt);
+                }
+            }
             if (!promise.isVoid()) {
                 promise.addListener(AddToStack.newInstance(stack, redisCommand));
             }
+            return redisCommand;
         } catch (Exception e) {
+            discardQueueLatencyStart(command);
+            pendingQueueSamples.remove(command);
+            if (pendingFlushRegistered) {
+                removePendingFlushLatency(redisCommand);
+            }
             command.completeExceptionally(e);
             throw e;
+        }
+    }
+
+    private void discardPreparedCommand(RedisCommand<?, ?, ?> command, RedisCommand<?, ?, ?> queuedCommand) {
+        // The same command object can have an earlier, already-dispatched attempt in
+        // the reply stack. Remove the last identity-matching entry, not the first one.
+        int lastIndex = -1;
+        int index = 0;
+        for (RedisCommand<?, ?, ?> queued : stack) {
+            if (queued == queuedCommand) {
+                lastIndex = index;
+            }
+            index++;
+        }
+        if (lastIndex != -1) {
+            Iterator<RedisCommand<?, ?, ?>> iterator = stack.iterator();
+            for (index = 0; iterator.hasNext(); index++) {
+                iterator.next();
+                if (index == lastIndex) {
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+        removePendingFlushLatency(queuedCommand);
+        pendingQueueSamples.remove(command);
+    }
+
+    // Remove precisely the most recent pending entry for this attempt. The same
+    // command wrapper can appear in an earlier successful, still-unflushed write.
+    private void removePendingFlushLatency(RedisCommand<?, ?, ?> command) {
+        if (!queueLatencyMetricsEnabled) {
+            return;
+        }
+        for (int i = pendingFlushLatency.size() - 1; i >= 0; i--) {
+            if (pendingFlushLatency.get(i) == command) {
+                pendingFlushLatency.remove(i);
+                return;
+            }
         }
     }
 
@@ -546,7 +720,34 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     private static boolean isWriteable(RedisCommand<?, ?, ?> command) {
-        return !command.isDone();
+        return !command.isDone() && !command.isCancelled();
+    }
+
+    private void discardQueueLatencyStart(RedisCommand<?, ?, ?> command) {
+        if (queueLatencyMetricsEnabled && endpoint instanceof DefaultEndpoint) {
+            ((DefaultEndpoint) endpoint).takeQueueLatencyStart(command);
+        }
+    }
+
+    private void recordQueueLatencyAfterWrite(RedisCommand<?, ?, ?> command, long dispatchedAt) {
+
+        // The outbound write has already been accepted. A metrics failure must not fail
+        // the Netty promise and remove a command whose bytes may still be on the wire.
+        try {
+            Long acceptedAt = pendingQueueSamples.remove(command);
+            if (acceptedAt == null || channel == null || remote() == null) {
+                return;
+            }
+
+            // Capture dispatch before outbound handlers synchronously encode the command.
+            // Publish the sample only after ctx.write returns without throwing.
+            long queueLatency = dispatchedAt - acceptedAt;
+            if (queueLatency >= 0) {
+                commandLatencyRecorder.recordCommandQueueLatency(local(), remote(), command, queueLatency);
+            }
+        } catch (Exception e) {
+            logger.warn("{} Failed to record command queue latency", logPrefix(), e);
+        }
     }
 
     private RedisCommand<?, ?, ?> potentiallyWrapLatencyCommand(RedisCommand<?, ?, ?> command) {
@@ -555,19 +756,23 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             return command;
         }
 
+        // Only the existing non-queue-metric path timestamps immediately.
+        // Queue-aware network starts are assigned as a group at the flush boundary.
+        long sentAt = queueLatencyMetricsEnabled ? 0 : nanoTime();
+
         if (command instanceof WithLatency) {
 
             WithLatency withLatency = (WithLatency) command;
 
             withLatency.firstResponse(-1);
-            withLatency.sent(nanoTime());
+            withLatency.sent(sentAt);
 
             return command;
         }
 
         LatencyMeteredCommand<?, ?, ?> latencyMeteredCommand = new LatencyMeteredCommand<>(command);
         latencyMeteredCommand.firstResponse(-1);
-        latencyMeteredCommand.sent(nanoTime());
+        latencyMeteredCommand.sent(sentAt);
 
         return latencyMeteredCommand;
     }
@@ -959,6 +1164,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private void reset() {
 
+        pendingFlushLatency.clear();
         resetInternals();
         cancelCommands("Reset", drainCommands(stack));
     }

@@ -71,6 +71,20 @@ public interface CommandLatencyRecorder {
     }
 
     /**
+     * Record command queueing latency for one send attempt. This default method preserves compatibility with existing command
+     * latency recorders.
+     *
+     * @param local the local address
+     * @param remote the remote address
+     * @param command the command
+     * @param queueLatency nanoseconds between endpoint acceptance and dispatch
+     * @since 7.9
+     */
+    default void recordCommandQueueLatency(SocketAddress local, SocketAddress remote, RedisCommand<?, ?, ?> command,
+            long queueLatency) {
+    }
+
+    /**
      * Record the command latency per {@code connectionPoint} and {@code commandType}.
      *
      * @param local the local address
@@ -91,6 +105,16 @@ public interface CommandLatencyRecorder {
      */
     default boolean isEnabled() {
         return true;
+    }
+
+    /**
+     * Whether to measure queueing time for each send attempt. Disabled by default.
+     *
+     * @return whether queueing latency collection is enabled
+     * @since 7.9
+     */
+    default boolean isQueueLatencyEnabled() {
+        return false;
     }
 
 }
