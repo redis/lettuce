@@ -411,7 +411,8 @@ public interface RedisJsonReactiveCommands<K, V> {
      *
      * @param jsonPath the {@link JsonPath} pointing to the value to fetch.
      * @param keys the keys holding the values to fetch.
-     * @return List<String> the values at path, or null if the path does not exist.
+     * @return the values at path; a key that does not exist is omitted because a {@link Flux} cannot emit {@code null}. Use the
+     *         async or sync command API when one element per key is required.
      * @since 7.0
      */
     Flux<String> jsonMGetRaw(JsonPath jsonPath, K... keys);
