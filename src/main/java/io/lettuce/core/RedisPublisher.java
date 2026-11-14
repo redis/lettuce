@@ -384,7 +384,13 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
         }
 
         boolean afterRead() {
-            return changeState(State.READING, getDemand() > 0 ? State.DEMAND : State.NO_DEMAND);
+            boolean changed = changeState(State.READING, getDemand() > 0 ? State.DEMAND : State.NO_DEMAND);
+
+            if (changed && data.isEmpty()) {
+                state().readData(this);
+            }
+
+            return changed;
         }
 
         public boolean complete() {
