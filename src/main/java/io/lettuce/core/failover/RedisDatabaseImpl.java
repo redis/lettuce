@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * @param <C> Connection type.
  *
  * @author Ali Takavci
+ * @author Mosiur Zzaman
  * @since 7.4
  */
 class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements RedisDatabase, AsyncCloseable {
@@ -53,7 +55,7 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
      * Timestamp (in milliseconds) when the grace period ends. A value of 0 means no grace period is active. During the grace
      * period, this database cannot be selected for failover or failback.
      */
-    private volatile long gracePeriodEndTime = 0;
+    private final AtomicLong gracePeriodEndTime = new AtomicLong();
 
     public RedisDatabaseImpl(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint,
             CircuitBreaker circuitBreaker, HealthCheck healthCheck) {
@@ -161,7 +163,7 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
         if (durationMillis.toMillis() > 0) {
             long endTime = clock.millis() + durationMillis.toMillis();
             // this is against a possible overflow
-            this.gracePeriodEndTime = endTime < 0 ? Long.MAX_VALUE : endTime;
+            this.gracePeriodEndTime.set(endTime < 0 ? Long.MAX_VALUE : endTime);
             logger.info("Started grace period of {}ms for database {}", durationMillis, getId());
         }
     }
@@ -172,24 +174,25 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
      * @return {@code true} if the database is in a grace period, {@code false} otherwise
      */
     boolean isInGracePeriod() {
-        long endTime = this.gracePeriodEndTime;
-        if (endTime == 0) {
-            return false;
+        long endTime = this.gracePeriodEndTime.get();
+        while (endTime != 0) {
+            if (clock.millis() < endTime) {
+                return true;
+            }
+            if (this.gracePeriodEndTime.compareAndSet(endTime, 0)) {
+                break;
+            }
+            endTime = this.gracePeriodEndTime.get();
         }
-        boolean inGracePeriod = clock.millis() < endTime;
-        if (!inGracePeriod) {
-            // Grace period has ended, reset the end time
-            clearGracePeriod();
-            circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
-        }
-        return inGracePeriod;
+        circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
+        return false;
     }
 
     /**
      * Clears the grace period for this database.
      */
     void clearGracePeriod() {
-        this.gracePeriodEndTime = 0;
+        this.gracePeriodEndTime.set(0);
     }
 
 }
