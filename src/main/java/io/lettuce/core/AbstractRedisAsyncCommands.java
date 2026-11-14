@@ -3717,6 +3717,36 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<ScoredValue<V>>> zmove(K source, K destination, ZMoveArgs args) {
+        return dispatch(commandBuilder.zmove(source, destination, args));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> bzmove(K source, K destination, BZMoveArgs args) {
+        return dispatch(commandBuilder.bzmove(source, destination, args));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zmovemember(K source, K destination, V member) {
+        return dispatch(commandBuilder.zmovemember(source, destination, member));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zmovemember(K source, K destination, V... members) {
+        return dispatch(commandBuilder.zmovemember(source, destination, members));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member) {
+        return dispatch(commandBuilder.zmovemember(source, destination, args, member));
+    }
+
+    @Override
+    public RedisFuture<List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs args, V... members) {
+        return dispatch(commandBuilder.zmovemember(source, destination, args, members));
+    }
+
+    @Override
     public RedisFuture<KeyValue<K, ScoredValue<V>>> zmpop(ZPopArgs args, K... keys) {
         return dispatch(commandBuilder.zmpop(args, keys));
     }

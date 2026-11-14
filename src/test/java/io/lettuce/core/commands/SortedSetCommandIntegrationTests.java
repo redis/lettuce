@@ -26,8 +26,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -1201,6 +1203,159 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
         assertThat(redis.zunionWithScores(ZStoreArgs.Builder.count(), "s1", "s2", "s3"))
                 .isEqualTo(svlist(sv(2.0, "bar"), sv(3.0, "foo")));
         assertThat(redis.zinterWithScores(ZStoreArgs.Builder.count(), "s1", "s2", "s3")).isEqualTo(svlist(sv(3.0, "foo")));
+    }
+
+    // Sorted-set move commands: keys share the hash tag {z} so that they hash to the same slot.
+
+    protected static final String SRC = "{z}s";
+
+    protected static final String DST = "{z}d";
+
+    /**
+     * Fixture F1: {@code {z}s} holds {@code a 1, b 2, c 3}.
+     */
+    protected void fixtureF1() {
+        redis.zadd(SRC, 1.0, "a", 2.0, "b", 3.0, "c");
+    }
+
+    /**
+     * Fixture F4: {@code {z}s} holds {@code a 5, b 6}; {@code {z}d} holds {@code a 1}.
+     */
+    protected void fixtureF4() {
+        redis.zadd(SRC, 5.0, "a", 6.0, "b");
+        redis.zadd(DST, 1.0, "a");
+    }
+
+    /**
+     * Moving the lowest member without a count replies a list of one pair, and the member is in the destination.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveMinWithoutCountRepliesListOfOne() {
+        fixtureF1();
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min())).containsExactly(sv(1.0, "a"));
+        assertThat(redis.zscore(DST, "a")).isEqualTo(1.0);
+    }
+
+    /**
+     * Moving the two lowest members replies them in ascending order; the destination holds them with their scores and the
+     * source keeps one member.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveMinWithCountRepliesAscending() {
+        fixtureF1();
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.min().count(2))).containsExactly(sv(1.0, "a"), sv(2.0, "b"));
+        assertThat(redis.zrangeWithScores(DST, 0, -1)).containsExactly(sv(1.0, "a"), sv(2.0, "b"));
+        assertThat(redis.zcard(SRC)).isEqualTo(1);
+    }
+
+    /**
+     * A score range with an exclusive minimum and no count moves the whole range.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveByScoreWithoutCountMovesWholeRange() {
+        redis.zadd(SRC, 1.0, "a", 2.0, "b", 3.0, "c", 4.0, "e");
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.from(excluding(1), including(3)))))
+                .containsExactly(sv(2.0, "b"), sv(3.0, "c"));
+        assertThat(redis.zrange(SRC, 0, -1)).containsExactly("a", "e");
+    }
+
+    /**
+     * An infinite score range with a count moves the lowest members up to the count; exclusive infinite bounds are accepted
+     * too.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveByInfiniteScoreRangeWithCount() {
+        fixtureF1();
+
+        assertThat(
+                redis.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.create(NEGATIVE_INFINITY, POSITIVE_INFINITY)).count(2)))
+                        .containsExactly(sv(1.0, "a"), sv(2.0, "b"));
+        assertThat(redis.zmove(SRC, DST,
+                ZMoveArgs.Builder.byScore(Range.from(excluding(NEGATIVE_INFINITY), excluding(POSITIVE_INFINITY))).count(2)))
+                        .containsExactly(sv(3.0, "c"));
+    }
+
+    /**
+     * An infinite score reads as positive infinity.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveInfiniteScore() {
+        redis.zadd(SRC, POSITIVE_INFINITY, "a");
+
+        List<ScoredValue<String>> moved = redis.zmove(SRC, DST, ZMoveArgs.Builder.min());
+
+        assertThat(moved).hasSize(1);
+        assertThat(moved.get(0).getValue()).isEqualTo("a");
+        assertThat(moved.get(0).getScore()).isEqualTo(POSITIVE_INFINITY);
+    }
+
+    /**
+     * A score range that selects nothing replies {@code null}, not an empty list, and creates no destination.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVE")
+    public void zmoveEmptyScoreRangeRepliesNull() {
+        redis.zadd(SRC, 1.0, "a");
+
+        assertThat(redis.zmove(SRC, DST, ZMoveArgs.Builder.byScore(Range.create(5, 6)))).isNull();
+        assertThat(redis.exists(DST)).isEqualTo(0);
+    }
+
+    /**
+     * With NX only members the destination doesn't hold move; the others stay in both keys.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberNx() {
+        fixtureF4();
+
+        assertThat(redis.zmovemember(SRC, DST, ZMoveMemberArgs.Builder.nx(), "a", "b")).containsExactly(sv(6.0, "b"));
+        assertThat(redis.zscore(SRC, "a")).isEqualTo(5.0);
+        assertThat(redis.zscore(DST, "a")).isEqualTo(1.0);
+    }
+
+    /**
+     * With XX only members the destination holds move; the others stay in the source.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberXx() {
+        fixtureF4();
+
+        assertThat(redis.zmovemember(SRC, DST, ZMoveMemberArgs.Builder.xx(), "a", "b")).containsExactly(sv(5.0, "a"));
+        assertThat(redis.zscore(SRC, "b")).isEqualTo(6.0);
+    }
+
+    /**
+     * A blocking move on a non-empty source replies at once, highest scores first.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    public void bzmoveNonEmptySourceRepliesAtOnce() {
+        redis.zadd(SRC, 1.0, "a", 2.0, "b");
+
+        assertThat(redis.bzmove(SRC, DST, BZMoveArgs.Builder.max().timeout(1L).count(5))).containsExactly(sv(2.0, "b"),
+                sv(1.0, "a"));
+    }
+
+    /**
+     * A blocking move on a missing source with a 100 ms timeout replies {@code null} well under a second.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    public void bzmoveFractionalTimeoutIsNotRoundedToSeconds() {
+
+        long start = System.nanoTime();
+        assertThat(redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(0.1))).isNull();
+        assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofMillis(900));
     }
 
     void setup100KeyValues(Set<String> expect) {

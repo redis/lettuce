@@ -4,9 +4,11 @@ import io.lettuce.TestTags
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.coroutines
 import io.lettuce.test.LettuceExtension
+import io.lettuce.test.condition.EnabledOnCommand
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -66,6 +68,28 @@ internal class CoroutinesIntegrationTests @Inject constructor(private val connec
                     } else null
                 }.toList()
             }
+        }
+    }
+
+    /**
+     * Through the coroutine API a move from a missing source returns `null`, a member move returns the
+     * moved pair, and a blocking move that times out returns `null`.
+     */
+    @Test
+    @EnabledOnCommand("BZMOVE")
+    fun shouldMoveSortedSetMembersWithCoroutines() {
+
+        runBlocking {
+            val api = connection.coroutines()
+            api.del("{z}s", "{z}d")
+
+            assertThat(api.zmove("{z}s", "{z}d", ZMoveArgs.Builder.min())).isNull()
+
+            api.zadd("{z}s", 1.0, "a", 2.0, "b", 3.0, "c")
+            assertThat(api.zmovemember("{z}s", "{z}d", "a")).containsExactly(ScoredValue.just(1.0, "a"))
+
+            api.del("{z}s", "{z}d")
+            assertThat(api.bzmove("{z}s", "{z}d", BZMoveArgs.Builder.min().timeout(0.1))).isNull()
         }
     }
 }

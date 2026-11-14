@@ -421,6 +421,102 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Mono<List<Double>> zmscore(K key, V... members);
 
     /**
+     * Atomically moves members from the sorted set stored at {@code source} to the sorted set stored at {@code
+     * destination}, keeping their scores. {@code args} selects the members: the lowest or highest scores, or a score range,
+     * optionally limited by a count.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param args the member selection and optional count, must not be {@code null}.
+     * @return ScoredValue&lt;V&gt; the moved members with their scores, in the order the server replies; emits no element when
+     *         no member was moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code args} is {@code null}.
+     * @since 8.0
+     */
+    Flux<ScoredValue<V>> zmove(K source, K destination, ZMoveArgs args);
+
+    /**
+     * Atomically moves members from the lowest or highest scores of the sorted set stored at {@code source} to the sorted set
+     * stored at {@code destination}, keeping their scores, blocking the connection while {@code source} is empty or missing,
+     * until a member arrives or the timeout carried by {@code args} passes. The timeout is in seconds, may have a fraction, and
+     * defaults to {@code 0} (block indefinitely); the connection's command timeout must be longer than the blocking timeout.
+     * When the connection's command timeout ends the call first, the command may still be waiting on the server and may still
+     * move members.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param args the end to take from, the blocking timeout and the optional count, must not be {@code null}.
+     * @return ScoredValue&lt;V&gt; the moved members with their scores, in the order the server replies; emits no element when
+     *         the timeout passed or no member was moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code args} is {@code null}.
+     * @since 8.0
+     */
+    Flux<ScoredValue<V>> bzmove(K source, K destination, BZMoveArgs args);
+
+    /**
+     * Atomically moves the given {@code member} from the sorted set stored at {@code source} to the sorted set stored at
+     * {@code destination}, keeping its score.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param member the member to move, must not be {@code null}.
+     * @return ScoredValue&lt;V&gt; emits the moved member with its score; emits no element when the member was not moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code member} is {@code null}, or a member is
+     *         an argument object such as {@link ZMoveMemberArgs}.
+     * @since 8.0
+     */
+    Flux<ScoredValue<V>> zmovemember(K source, K destination, V member);
+
+    /**
+     * Atomically moves the given {@code members} from the sorted set stored at {@code source} to the sorted set stored at
+     * {@code destination}, keeping their scores. The members are sent as given; an empty member list is sent too.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param members the members to move, must not be {@code null}.
+     * @return ScoredValue&lt;V&gt; the moved members with their scores, in the order the server replies; emits no element when
+     *         no member was moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code members} is {@code null}, or a member
+     *         is an argument object such as {@link ZMoveMemberArgs}.
+     * @since 8.0
+     */
+    Flux<ScoredValue<V>> zmovemember(K source, K destination, V... members);
+
+    /**
+     * Atomically moves the given {@code member} from the sorted set stored at {@code source} to the sorted set stored at
+     * {@code destination}, keeping its score. {@code args} sets the destination condition: {@link ZMoveMemberArgs.Builder#nx()}
+     * moves only members the destination doesn't hold, {@link ZMoveMemberArgs.Builder#xx()} only members it holds.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param args the destination condition, must not be {@code null}.
+     * @param member the member to move, must not be {@code null}.
+     * @return ScoredValue&lt;V&gt; emits the moved member with its score; emits no element when the member was not moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination}, {@code args} or {@code member} is {@code
+     * null}, or a member is an argument object such as {@link ZMoveMemberArgs}.
+     * @since 8.0
+     */
+    Flux<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member);
+
+    /**
+     * Atomically moves the given {@code members} from the sorted set stored at {@code source} to the sorted set stored at
+     * {@code destination}, keeping their scores. The members are sent as given; an empty member list is sent too. {@code args}
+     * sets the destination condition: {@link ZMoveMemberArgs.Builder#nx()} moves only members the destination doesn't hold,
+     * {@link ZMoveMemberArgs.Builder#xx()} only members it holds.
+     *
+     * @param source the source key, must not be {@code null}.
+     * @param destination the destination key, must not be {@code null}.
+     * @param args the destination condition, must not be {@code null}.
+     * @param members the members to move, must not be {@code null}.
+     * @return ScoredValue&lt;V&gt; the moved members with their scores, in the order the server replies; emits no element when
+     *         no member was moved.
+     * @throws IllegalArgumentException if {@code source}, {@code destination}, {@code args} or {@code members} is {@code null},
+     *         or a member is an argument object such as {@link ZMoveMemberArgs}.
+     * @since 8.0
+     */
+    Flux<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V... members);
+
+    /**
      * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
      *
      * @param args the command args.

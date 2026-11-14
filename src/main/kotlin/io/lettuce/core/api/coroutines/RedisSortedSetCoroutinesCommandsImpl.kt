@@ -160,6 +160,24 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override suspend fun zmscore(key: K, vararg members: V): List<Double?> =
         ops.zmscore(key, *members).awaitFirstOrNull().orEmpty()
 
+    override suspend fun zmove(source: K, destination: K, args: ZMoveArgs): List<ScoredValue<V>>? =
+        ops.zmove(source, destination, args).asFlow().toList().takeIf { it.isNotEmpty() }
+
+    override suspend fun bzmove(source: K, destination: K, args: BZMoveArgs): List<ScoredValue<V>>? =
+        ops.bzmove(source, destination, args).asFlow().toList().takeIf { it.isNotEmpty() }
+
+    override suspend fun zmovemember(source: K, destination: K, member: V): List<ScoredValue<V>>? =
+        ops.zmovemember(source, destination, member).asFlow().toList().takeIf { it.isNotEmpty() }
+
+    override suspend fun zmovemember(source: K, destination: K, vararg members: V): List<ScoredValue<V>>? =
+        ops.zmovemember(source, destination, *members).asFlow().toList().takeIf { it.isNotEmpty() }
+
+    override suspend fun zmovemember(source: K, destination: K, args: ZMoveMemberArgs, member: V): List<ScoredValue<V>>? =
+        ops.zmovemember(source, destination, args, member).asFlow().toList().takeIf { it.isNotEmpty() }
+
+    override suspend fun zmovemember(source: K, destination: K, args: ZMoveMemberArgs, vararg members: V): List<ScoredValue<V>>? =
+        ops.zmovemember(source, destination, args, *members).asFlow().toList().takeIf { it.isNotEmpty() }
+
     override suspend fun zmpop(
         args: ZPopArgs,
         vararg keys: K

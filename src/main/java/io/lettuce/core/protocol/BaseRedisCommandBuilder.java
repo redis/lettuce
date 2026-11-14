@@ -6,6 +6,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.RangeEncoding;
 import io.lettuce.core.output.*;
 
 import java.nio.ByteBuffer;
@@ -156,41 +157,11 @@ public class BaseRedisCommandBuilder<K, V> {
     }
 
     protected static String max(Range<? extends Number> range) {
-
-        Range.Boundary<? extends Number> upper = range.getUpper();
-
-        if (upper.getValue() == null) {
-            return "+inf";
-        }
-
-        if (upper.getValue() instanceof Double && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
-            return upper.isIncluding() ? "+inf" : "(+inf";
-        }
-
-        if (!upper.isIncluding()) {
-            return "(" + upper.getValue();
-        }
-
-        return upper.getValue().toString();
+        return RangeEncoding.max(range);
     }
 
     protected static String min(Range<? extends Number> range) {
-
-        Range.Boundary<? extends Number> lower = range.getLower();
-
-        if (lower.getValue() == null) {
-            return "-inf";
-        }
-
-        if (lower.getValue() instanceof Double && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
-            return lower.isIncluding() ? "-inf" : "(-inf";
-        }
-
-        if (!lower.isIncluding()) {
-            return "(" + lower.getValue();
-        }
-
-        return lower.getValue().toString();
+        return RangeEncoding.min(range);
     }
 
     protected static void notEmpty(Object[] keys) {

@@ -7,10 +7,12 @@ import io.lettuce.core.models.stream.StreamEntryDeletionResult;
 import io.lettuce.core.output.BlessFlagListOutput;
 import io.lettuce.core.output.BooleanOutput;
 import io.lettuce.core.output.KeyScanOutput;
+import io.lettuce.core.output.NullableScoredValueListOutput;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Tag;
@@ -1328,6 +1330,190 @@ class RedisCommandBuilderUnitTests {
         Command<String, String, ?> command = sut.blmovem("source", "destination", BLMovemArgs.Builder.leftRight());
         String s = command.getArgs().toCommandString();
         assertThat(s).isEqualTo("key<source> key<destination> LEFT RIGHT 0");
+    }
+
+    @Test
+    void shouldCorrectlyConstructZmove() {
+
+        Command<String, String, ?> command = sut.zmove("source", "destination",
+                ZMoveArgs.Builder.byScore(Range.create(1, 5)).count(2));
+
+        assertThat(command.getType()).isEqualTo(CommandType.ZMOVE);
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<source> key<destination> BYSCORE 1 5 COUNT 2");
+        assertThat(command.getOutput()).isInstanceOf(NullableScoredValueListOutput.class);
+    }
+
+    @Test
+    void shouldCorrectlyConstructBzmove() {
+
+        Command<String, String, ?> command = sut.bzmove("source", "destination",
+                BZMoveArgs.Builder.max().timeout(0.5).count(3));
+
+        assertThat(command.getType()).isEqualTo(CommandType.BZMOVE);
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<source> key<destination> MAX 0.5 COUNT 3");
+        assertThat(command.getOutput()).isInstanceOf(NullableScoredValueListOutput.class);
+    }
+
+    /**
+     * None of the three commands is registered as read-only.
+     */
+    @Test
+    void sortedSetMoveCommandsAreNotReadOnly() {
+
+        assertThat(ReadOnlyCommands.isReadOnlyCommand(CommandType.ZMOVE)).isFalse();
+        assertThat(ReadOnlyCommands.isReadOnlyCommand(CommandType.BZMOVE)).isFalse();
+        assertThat(ReadOnlyCommands.isReadOnlyCommand(CommandType.ZMOVEMEMBER)).isFalse();
+    }
+
+    private static String encoded(Command<String, String, ?> command) {
+        ByteBuf buf = Unpooled.directBuffer();
+        try {
+            command.encode(buf);
+            return buf.toString(StandardCharsets.UTF_8);
+        } finally {
+            buf.release();
+        }
+    }
+
+    private static String resp(String... parts) {
+        StringBuilder sb = new StringBuilder("*").append(parts.length).append("\r\n");
+        for (String part : parts) {
+            sb.append('$').append(part.getBytes(StandardCharsets.UTF_8).length).append("\r\n").append(part).append("\r\n");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * The members follow {@code MEMBERS} and their number; a condition comes before {@code MEMBERS}.
+     */
+    @Test
+    void zmovememberWritesMembersAfterNumberAndConditionBefore() {
+
+        assertThat(encoded(sut.zmovemember("s", "d", new String[] { "a", "b" })))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "2", "a", "b"));
+        assertThat(encoded(sut.zmovemember("s", "d", "a"))).isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "1", "a"));
+        assertThat(encoded(sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), new String[] { "a", "b" })))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "NX", "MEMBERS", "2", "a", "b"));
+        assertThat(encoded(sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.xx(), "a")))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "XX", "MEMBERS", "1", "a"));
+    }
+
+    /**
+     * Members are data: keyword names, repeats and order are written as given, a member with a space stays one argument.
+     */
+    @Test
+    void zmovememberWritesMembersAsGiven() {
+
+        assertThat(encoded(sut.zmovemember("s", "d", new String[] { "NX", "XX", "MEMBERS", "COUNT" })))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "4", "NX", "XX", "MEMBERS", "COUNT"));
+        assertThat(encoded(sut.zmovemember("s", "d", new String[] { "c", "a", "missing", "a" })))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "4", "c", "a", "missing", "a"));
+        assertThat(encoded(sut.zmovemember("s", "d", "a b"))).isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "1", "a b"));
+    }
+
+    /**
+     * An empty member list is written as {@code MEMBERS 0}, with and without a condition, without an exception.
+     */
+    @Test
+    void zmovememberWritesEmptyMemberList() {
+
+        assertThat(encoded(sut.zmovemember("s", "d", new String[0]))).isEqualTo(resp("ZMOVEMEMBER", "s", "d", "MEMBERS", "0"));
+        assertThat(encoded(sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), new String[0])))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "NX", "MEMBERS", "0"));
+    }
+
+    /**
+     * An empty member list is sent, never rejected by the client.
+     */
+    @Test
+    void zmovememberEmptyMemberListIsSent() {
+
+        assertThat(encoded(sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.xx(), new String[0])))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "XX", "MEMBERS", "0"));
+    }
+
+    /**
+     * NX with XX can't be produced through the API, so the command never carries both conditions.
+     */
+    @Test
+    void zmovememberNeverCarriesBothConditions() {
+
+        assertThat(encoded(sut.zmovemember("s", "d", new ZMoveMemberArgs().nx().xx(), "a")))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "XX", "MEMBERS", "1", "a"));
+        assertThat(encoded(sut.zmovemember("s", "d", new ZMoveMemberArgs().xx().nx(), new String[] { "a", "b" })))
+                .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "NX", "MEMBERS", "2", "a", "b"));
+    }
+
+    /**
+     * {@code null} keys, args, member arrays and score ranges are rejected with {@link IllegalArgumentException} before a
+     * command is built.
+     */
+    @Test
+    void moveCommandsRejectNulls() {
+
+        assertThatThrownBy(() -> sut.zmove(null, "d", ZMoveArgs.Builder.min())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmove("s", null, ZMoveArgs.Builder.min())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmove("s", "d", null)).isInstanceOf(IllegalArgumentException.class);
+
+        assertThatThrownBy(() -> sut.bzmove(null, "d", BZMoveArgs.Builder.min())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.bzmove("s", null, BZMoveArgs.Builder.min())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.bzmove("s", "d", null)).isInstanceOf(IllegalArgumentException.class);
+
+        assertThatThrownBy(() -> sut.zmovemember(null, "d", new String[] { "a" })).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", null, new String[] { "a" })).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", null, new String[] { "a" }))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", (String[]) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), (String[]) null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", (String) null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember(null, "d", "a")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", null, "a")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), (String) null))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThatThrownBy(() -> ZMoveArgs.Builder.byScore(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * An argument object passed in place of a member is rejected before a command is built.
+     */
+    @Test
+    void zmovememberRejectsArgumentObjectPassedAsMember() {
+
+        RedisCommandBuilder<String, Object> objectBuilder = new RedisCommandBuilder<>(OBJECT_VALUE_CODEC);
+
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", (Object) ZMoveMemberArgs.Builder.nx()))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ZMoveMemberArgs")
+                .hasMessageContaining("pass the arguments before the members");
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", ZMoveMemberArgs.Builder.xx(),
+                (Object) new ZMoveMemberArgs().nx())).isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("ZMoveMemberArgs");
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", new Object[] { "a", ZMoveMemberArgs.Builder.nx() }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ZMoveMemberArgs");
+        assertThatThrownBy(() -> objectBuilder.zmovemember("{z}s", "{z}d", ZMoveMemberArgs.Builder.nx(),
+                new Object[] { ZMoveMemberArgs.Builder.xx() })).isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("ZMoveMemberArgs");
+    }
+
+    /**
+     * Each command has its own type, with the source as the first key and the destination as the second.
+     */
+    @Test
+    void moveCommandsCarrySourceThenDestination() {
+
+        Command<String, String, ?> zmove = sut.zmove("src", "dst", ZMoveArgs.Builder.min());
+        Command<String, String, ?> bzmove = sut.bzmove("src", "dst", BZMoveArgs.Builder.min());
+        Command<String, String, ?> zmovemember = sut.zmovemember("src", "dst", "a");
+
+        assertThat(zmove.getType()).isEqualTo(CommandType.ZMOVE);
+        assertThat(bzmove.getType()).isEqualTo(CommandType.BZMOVE);
+        assertThat(zmovemember.getType()).isEqualTo(CommandType.ZMOVEMEMBER);
+
+        for (Command<String, String, ?> command : Arrays.asList(zmove, bzmove, zmovemember)) {
+            assertThat(command.getArgs().getFirstEncodedKey()).isEqualTo(StandardCharsets.UTF_8.encode("src"));
+            assertThat(command.getArgs().toCommandString()).startsWith("key<src> key<dst> ");
+        }
     }
 
     @Test

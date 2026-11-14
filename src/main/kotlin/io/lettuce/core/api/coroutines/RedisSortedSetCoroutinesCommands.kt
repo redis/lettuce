@@ -403,6 +403,104 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     suspend fun zmscore(key: K, vararg members: V): List<Double?>
 
     /**
+     * Atomically moves members from the sorted set stored at `source` to the sorted set stored at `destination`,
+     * keeping their scores. `args` selects the members: the lowest or highest scores, or a score range, optionally
+     * limited by a count.
+     *
+     * @param source the source key, must not be `null`.
+     * @param destination the destination key, must not be `null`.
+     * @param args the member selection and optional count, must not be `null`.
+     * @return List<ScoredValue<V>> the moved members with their scores, in the order the server replies, or `null` when
+     *         no member was moved.
+     * @throws IllegalArgumentException if `source`, `destination` or `args` is `null`.
+     * @since 8.0
+     */
+    suspend fun zmove(source: K, destination: K, args: ZMoveArgs): List<ScoredValue<V>>?
+
+    /**
+     * Atomically moves members from the lowest or highest scores of the sorted set stored at `source` to the sorted set
+     * stored at `destination`, keeping their scores, blocking the connection while `source` is empty or missing, until
+     * a member arrives or the timeout carried by `args` passes. The timeout is in seconds, may have a fraction, and
+     * defaults to `0` (block indefinitely); the connection's command timeout must be longer than the blocking timeout.
+     * When the connection's command timeout ends the call first, the command may still be waiting on the server and may
+     * still move members.
+     *
+     * @param source the source key, must not be `null`.
+     * @param destination the destination key, must not be `null`.
+     * @param args the end to take from, the blocking timeout and the optional count, must not be `null`.
+     * @return List<ScoredValue<V>> the moved members with their scores, in the order the server replies, or `null` when
+     *         the timeout passed or no member was moved.
+     * @throws IllegalArgumentException if `source`, `destination` or `args` is `null`.
+     * @since 8.0
+     */
+    suspend fun bzmove(source: K, destination: K, args: BZMoveArgs): List<ScoredValue<V>>?
+
+    /**
+     * Atomically moves the given `member` from the sorted set stored at `source` to the sorted set stored at
+     * `destination`, keeping its score.
+     *
+     * @param source the source key, must not be `null`.
+     * @param destination the destination key, must not be `null`.
+     * @param member the member to move, must not be `null`.
+     * @return List<ScoredValue<V>> the moved member with its score, as a list of one, or `null` when the member was not
+     *         moved.
+     * @throws IllegalArgumentException if `source`, `destination` or `member` is `null`, or a member is an argument
+     * object such as [ZMoveMemberArgs].
+     * @since 8.0
+     */
+    suspend fun zmovemember(source: K, destination: K, member: V): List<ScoredValue<V>>?
+
+    /**
+     * Atomically moves the given `members` from the sorted set stored at `source` to the sorted set stored at
+     * `destination`, keeping their scores. The members are sent as given; an empty member list is sent too.
+     *
+     * @param source the source key, must not be `null`.
+     * @param destination the destination key, must not be `null`.
+     * @param members the members to move, must not be `null`.
+     * @return List<ScoredValue<V>> the moved members with their scores, in the order the server replies, or `null` when
+     *         no member was moved.
+     * @throws IllegalArgumentException if `source`, `destination` or `members` is `null`, or a member is an argument
+     * object such as [ZMoveMemberArgs].
+     * @since 8.0
+     */
+    suspend fun zmovemember(source: K, destination: K, vararg members: V): List<ScoredValue<V>>?
+
+    /**
+     * Atomically moves the given `member` from the sorted set stored at `source` to the sorted set stored at
+     * `destination`, keeping its score. `args` sets the destination condition: [ZMoveMemberArgs.Builder.nx] moves only
+     * members the destination doesn't hold, [ZMoveMemberArgs.Builder.xx] only members it holds.
+     *
+     * @param source the source key, must not be `null`.
+     * @param destination the destination key, must not be `null`.
+     * @param args the destination condition, must not be `null`.
+     * @param member the member to move, must not be `null`.
+     * @return List<ScoredValue<V>> the moved member with its score, as a list of one, or `null` when the member was not
+     *         moved.
+     * @throws IllegalArgumentException if `source`, `destination`, `args` or `member` is `null`, or a member is an
+     * argument object such as [ZMoveMemberArgs].
+     * @since 8.0
+     */
+    suspend fun zmovemember(source: K, destination: K, args: ZMoveMemberArgs, member: V): List<ScoredValue<V>>?
+
+    /**
+     * Atomically moves the given `members` from the sorted set stored at `source` to the sorted set stored at
+     * `destination`, keeping their scores. The members are sent as given; an empty member list is sent too. `args` sets
+     * the destination condition: [ZMoveMemberArgs.Builder.nx] moves only members the destination doesn't hold,
+     * [ZMoveMemberArgs.Builder.xx] only members it holds.
+     *
+     * @param source the source key, must not be `null`.
+     * @param destination the destination key, must not be `null`.
+     * @param args the destination condition, must not be `null`.
+     * @param members the members to move, must not be `null`.
+     * @return List<ScoredValue<V>> the moved members with their scores, in the order the server replies, or `null` when
+     *         no member was moved.
+     * @throws IllegalArgumentException if `source`, `destination`, `args` or `members` is `null`, or a member is an
+     * argument object such as [ZMoveMemberArgs].
+     * @since 8.0
+     */
+    suspend fun zmovemember(source: K, destination: K, args: ZMoveMemberArgs, vararg members: V): List<ScoredValue<V>>?
+
+    /**
      * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
      *
      * @param keys the keys.

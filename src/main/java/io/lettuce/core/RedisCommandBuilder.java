@@ -4201,6 +4201,74 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZMSCORE, new DoubleListOutput<>(codec), key, members);
     }
 
+    Command<K, V, List<ScoredValue<V>>> zmove(K source, K destination, ZMoveArgs zMoveArgs) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(zMoveArgs, "ZMoveArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(source).addKey(destination);
+        zMoveArgs.build(args);
+        return createCommand(ZMOVE, new NullableScoredValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> bzmove(K source, K destination, BZMoveArgs bzMoveArgs) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(bzMoveArgs, "BZMoveArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(source).addKey(destination);
+        bzMoveArgs.build(args);
+        return createCommand(BZMOVE, new NullableScoredValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, V member) {
+        LettuceAssert.notNull(member, "Member " + MUST_NOT_BE_NULL);
+        return zmovemember(source, destination, null, member, null);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, V[] members) {
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
+        return zmovemember(source, destination, null, null, members);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V member) {
+        LettuceAssert.notNull(zMoveMemberArgs, "ZMoveMemberArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(member, "Member " + MUST_NOT_BE_NULL);
+        return zmovemember(source, destination, zMoveMemberArgs, member, null);
+    }
+
+    Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V[] members) {
+        LettuceAssert.notNull(zMoveMemberArgs, "ZMoveMemberArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
+        return zmovemember(source, destination, zMoveMemberArgs, null, members);
+    }
+
+    private static final String ZMOVEMEMBER_EXAMPLE = "zmovemember(source, destination, zMoveMemberArgs, member)";
+
+    private Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V member,
+            V[] members) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        if (members != null) {
+            for (V each : members) {
+                notArgumentObject(each, ZMOVEMEMBER_EXAMPLE);
+            }
+        } else {
+            notArgumentObject(member, ZMOVEMEMBER_EXAMPLE);
+        }
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(source).addKey(destination);
+        if (zMoveMemberArgs != null) {
+            zMoveMemberArgs.build(args);
+        }
+        if (members != null) {
+            args.add(MEMBERS).add(members.length).addValues(members);
+        } else {
+            args.add(MEMBERS).add(1).addValue(member);
+        }
+        return createCommand(ZMOVEMEMBER, new NullableScoredValueListOutput<>(codec), args);
+    }
+
     Command<K, V, KeyValue<K, ScoredValue<V>>> zmpop(ZPopArgs popArgs, K[] keys) {
         notEmpty(keys);
 
@@ -5117,9 +5185,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     private static void notArgumentObject(Object member) {
-        LettuceAssert.isTrue(!(member instanceof CompositeArgument),
-                () -> "Members must not be a " + member.getClass().getSimpleName()
-                        + "; pass the arguments before the members, e.g. sexpire(key, seconds, expireArgs, member)");
+        notArgumentObject(member, "sexpire(key, seconds, expireArgs, member)");
+    }
+
+    private static void notArgumentObject(Object member, String example) {
+        LettuceAssert.isTrue(!(member instanceof CompositeArgument), () -> "Members must not be a "
+                + member.getClass().getSimpleName() + "; pass the arguments before the members, e.g. " + example);
     }
 
     Command<K, V, Long> saddex(K key, V... members) {
