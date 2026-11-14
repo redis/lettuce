@@ -203,6 +203,33 @@ mandatory tracing library dependencies. Lettuce ships integrations with
 [Brave](https://github.com/openzipkin/brave) which can be configured
 through [client resources](client-resources.md).
 
+Both integrations attach connection details taken from the `RedisURI`
+that was used to open the connection. The details are computed once per
+connection:
+
+- `db.redis.database_index`: the database number configured in the
+  `RedisURI`. A database changed later with `SELECT` is not reflected.
+
+- `db.user`: the username, if the credentials provider has the
+  credentials available without waiting (for example static
+  credentials). Lettuce asks the credentials provider once per
+  connection for this and does not wait for the result. A deprecated
+  `RedisCredentialsProvider` is not asked, unless it is an
+  `ImmediateRedisCredentialsProvider`.
+
+- `db.connection_string`: the `RedisURI` without credentials. For a
+  TCP connection, the host and port are those of the connected server.
+  For Redis Cluster and Redis Sentinel, this is the node, master or
+  replica the connection is connected to, not the seed or Sentinel
+  `RedisURI`. For a Unix domain socket connection, the `RedisURI` is
+  used as is.
+
+With Micrometer, `db.redis.database_index` is a low cardinality key
+value, `db.user` and `db.connection_string` are high cardinality key
+values. Low cardinality key values are also added as tags to meters
+created from observations, so `db.redis.database_index` adds a tag to
+existing Redis command metrics.
+
 ### Micrometer Tracing
 
 With Micrometer tracing enabled, Lettuce creates an observation for each

@@ -48,6 +48,12 @@ public final class DefaultLettuceObservationConvention implements LettuceObserva
                         .and(KeyValues.of(LowCardinalityCommandKeyNames.NET_PEER_NAME.withValue(endpoint.toString()),
                                 LowCardinalityCommandKeyNames.NET_TRANSPORT.withValue("Unix")));
             }
+
+            RedisUriDetails details = endpoint.getRedisUriDetails();
+
+            if (details != null) {
+                keyValues = keyValues.and(LowCardinalityCommandKeyNames.DB_INDEX.withValue(details.getDatabase()));
+            }
         }
 
         return keyValues;
@@ -57,16 +63,35 @@ public final class DefaultLettuceObservationConvention implements LettuceObserva
     public KeyValues getHighCardinalityKeyValues(LettuceObservationContext context) {
 
         RedisCommand<?, ?, ?> command = context.getRequiredCommand();
+        KeyValues keyValues = KeyValues.empty();
 
         if (includeCommandArgsInSpanTags) {
 
             if (command.getArgs() != null) {
-                return KeyValues.of(HighCardinalityCommandKeyNames.STATEMENT
+                keyValues = keyValues.and(HighCardinalityCommandKeyNames.STATEMENT
                         .withValue(command.getType().toString() + " " + command.getArgs().toCommandString()));
             }
         }
 
-        return KeyValues.empty();
+        Tracing.Endpoint ep = context.getRequiredEndpoint();
+
+        if (ep instanceof SocketAddressEndpoint) {
+
+            RedisUriDetails details = ((SocketAddressEndpoint) ep).getRedisUriDetails();
+
+            if (details != null) {
+
+                if (details.getUsername() != null) {
+                    keyValues = keyValues.and(HighCardinalityCommandKeyNames.DB_USER.withValue(details.getUsername()));
+                }
+
+                if (details.getUrl() != null) {
+                    keyValues = keyValues.and(HighCardinalityCommandKeyNames.DB_CONNECTION_STRING.withValue(details.getUrl()));
+                }
+            }
+        }
+
+        return keyValues;
     }
 
     @Override
