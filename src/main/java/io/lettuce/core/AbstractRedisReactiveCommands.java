@@ -146,6 +146,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author SeugnSu Kim
  * @author Yordan Tsintsov
  * @author dae won
+ * @author Taewoong Kim
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V>
@@ -1523,18 +1524,18 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate) {
+    public Flux<V> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate) {
         return createDissolvingFlux(() -> commandBuilder.geosearch(key, reference, predicate));
     }
 
     @Override
-    public Flux<GeoWithin<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+    public Flux<GeoWithin<V>> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate,
             GeoArgs geoArgs) {
         return createDissolvingFlux(() -> commandBuilder.geosearch(key, reference, predicate, geoArgs));
     }
 
     @Override
-    public Mono<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+    public Mono<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate,
             GeoArgs geoArgs, boolean storeDist) {
         return createMono(() -> commandBuilder.geosearchstore(destination, key, reference, predicate, geoArgs, storeDist));
     }

@@ -34,6 +34,7 @@ import io.lettuce.core.Value;
  * Reactive executed commands for the Geo-API.
  *
  * @author Mark Paluch
+ * @author Taewoong Kim
  * @since 4.0
  */
 public interface RedisGeoReactiveCommands<K, V> {
@@ -246,7 +247,7 @@ public interface RedisGeoReactiveCommands<K, V> {
      * @return bulk reply.
      * @since 6.1
      */
-    Flux<V> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate);
+    Flux<V> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate);
 
     /**
      * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
@@ -259,7 +260,7 @@ public interface RedisGeoReactiveCommands<K, V> {
      * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}.
      * @since 6.1
      */
-    Flux<GeoWithin<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate, GeoArgs geoArgs);
+    Flux<GeoWithin<V>> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate, GeoArgs geoArgs);
 
     /**
      * Perform a {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} query and store the results in a
@@ -275,7 +276,7 @@ public interface RedisGeoReactiveCommands<K, V> {
      * @return Long integer-reply the number of elements in the result.
      * @since 6.1
      */
-    Mono<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+    Mono<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate,
             GeoArgs geoArgs, boolean storeDist);
 
 }

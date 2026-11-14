@@ -36,6 +36,7 @@ import io.lettuce.core.Value;
  * Asynchronous executed commands for the Geo-API.
  *
  * @author Mark Paluch
+ * @author Taewoong Kim
  * @since 4.0
  */
 public interface RedisGeoAsyncCommands<K, V> {
@@ -250,7 +251,7 @@ public interface RedisGeoAsyncCommands<K, V> {
      * @return bulk reply.
      * @since 6.1
      */
-    RedisFuture<Set<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate);
+    RedisFuture<Set<V>> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate);
 
     /**
      * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
@@ -263,7 +264,7 @@ public interface RedisGeoAsyncCommands<K, V> {
      * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}.
      * @since 6.1
      */
-    RedisFuture<List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+    RedisFuture<List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate,
             GeoArgs geoArgs);
 
     /**
@@ -280,7 +281,7 @@ public interface RedisGeoAsyncCommands<K, V> {
      * @return Long integer-reply the number of elements in the result.
      * @since 6.1
      */
-    RedisFuture<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+    RedisFuture<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<V> reference, GeoSearch.GeoPredicate predicate,
             GeoArgs geoArgs, boolean storeDist);
 
 }

@@ -3,6 +3,8 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.TestTags
 import io.lettuce.core.BitFieldArgs
 import io.lettuce.core.Consumer
+import io.lettuce.core.GeoArgs
+import io.lettuce.core.GeoSearch
 import io.lettuce.core.KeyValue
 import io.lettuce.core.RedisClient
 import io.lettuce.core.StreamDeletionPolicy
@@ -13,6 +15,9 @@ import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.coroutines
 import io.lettuce.core.cluster.RedisClusterClient
 import io.lettuce.core.cluster.api.coroutines
+import io.lettuce.core.codec.ByteArrayCodec
+import io.lettuce.core.codec.RedisCodec
+import io.lettuce.core.codec.StringCodec
 import io.lettuce.core.models.stream.StreamEntryDeletionResult
 import io.lettuce.core.sentinel.SentinelTestSettings
 import io.lettuce.core.sentinel.api.coroutines
@@ -32,6 +37,7 @@ import javax.inject.Inject
  * Integration tests for Kotlin Coroutine extensions.
  *
  * @author Mark Paluch
+ * @author Taewoong Kim
  */
 @Tag(TestTags.INTEGRATION_TEST)
 @ExtendWith(LettuceExtension::class)
@@ -47,6 +53,30 @@ class CoroutinesIntegrationTests : TestSupport() {
             api.set("key", "value")
 
             assertThat(api.get("key")).isEqualTo("value")
+        }
+    }
+
+    @Test
+    @EnabledOnCommand("GEOSEARCH")
+    @Inject
+    internal fun shouldGeosearchWithDifferentKeyAndValueTypes(client: RedisClient) {
+
+        client.connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE)).use { connection ->
+            runBlocking {
+                val api = connection.coroutines()
+                val member = "Palermo".toByteArray(Charsets.UTF_8)
+                api.del(key, "destination")
+                api.geoadd(key, 13.361389, 38.115556, member)
+
+                val reference = GeoSearch.fromMember(member)
+                val predicate = GeoSearch.byRadius(1.0, GeoArgs.Unit.km)
+
+                assertThat(api.geosearch(key, reference, predicate).toList().single()).isEqualTo(member)
+                assertThat(api.geosearch(key, reference, predicate, GeoArgs().withDistance()).toList().single().member)
+                    .isEqualTo(member)
+                assertThat(api.geosearchstore("destination", key, reference, predicate, GeoArgs(), false)).isEqualTo(1L)
+                assertThat(api.zrange("destination", 0, -1).toList().single()).isEqualTo(member)
+            }
         }
     }
 

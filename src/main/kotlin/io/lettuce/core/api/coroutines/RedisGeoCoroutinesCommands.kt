@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
  * Coroutine executed commands for the Geo-API.
  *
  * @author Mikhael Sokolov
+ * @author Taewoong Kim
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
@@ -140,7 +141,7 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * @return bulk reply.
      * @since 6.1
      */
-    fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate): Flow<V>
+    fun geosearch(key: K, reference: GeoSearch.GeoRef<V>, predicate: GeoSearch.GeoPredicate): Flow<V>
 
     /**
      * Retrieve members selected by distance with the center of `reference` the search `predicate`. Use
@@ -153,7 +154,7 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * @return nested multi-bulk reply. The [GeoWithin] contains only fields which were requested by [GeoArgs].
      * @since 6.1
      */
-    fun geosearch(key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs): Flow<GeoWithin<V>>
+    fun geosearch(key: K, reference: GeoSearch.GeoRef<V>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs): Flow<GeoWithin<V>>
 
     /**
      * Perform a [geosearch(Any, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)] query and store the results in a
@@ -169,7 +170,7 @@ interface RedisGeoCoroutinesCommands<K : Any, V : Any> {
      * @return Long integer-reply the number of elements in the result.
      * @since 6.1
      */
-    suspend fun geosearchstore(destination: K, key: K, reference: GeoSearch.GeoRef<K>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs, storeDist: Boolean): Long?
+    suspend fun geosearchstore(destination: K, key: K, reference: GeoSearch.GeoRef<V>, predicate: GeoSearch.GeoPredicate, geoArgs: GeoArgs, storeDist: Boolean): Long?
 
 }
 
