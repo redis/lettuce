@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.*;
@@ -206,6 +207,66 @@ class RedisAdvancedClusterReactiveCommandsImplUnitTests {
             boolean logged = logs.messages().stream()
                     .anyMatch(m -> m.contains("Cluster routing failed for FT.EXPLAIN - falling back to superCall"));
             assertThat(logged).isTrue();
+        }
+    }
+
+    @Test
+    void routeKeyless_function_argumentFailure_doesNotFallbackAndDoesNotLogRoutingError() {
+        try (LoggingTestUtils.CapturingAppender logs = LoggingTestUtils
+                .attachAppenderFor(RedisAdvancedClusterReactiveCommandsImpl.class, Level.ERROR)) {
+
+            AtomicBoolean fallback = new AtomicBoolean();
+
+            Mono<String> mono = reactive.routeKeyless(() -> {
+                fallback.set(true);
+                return Mono.just("SUPER");
+            }, (RedisClusterReactiveCommands<String, String> c) -> {
+                throw new IllegalArgumentException("index must not be null");
+            }, CommandType.FT_SEARCH);
+
+            assertThatThrownBy(mono::block).isInstanceOf(IllegalArgumentException.class);
+            assertThat(fallback).isFalse();
+            assertThat(logs.messages()).noneMatch(m -> m.contains("Cluster routing failed"));
+        }
+    }
+
+    @Test
+    void routeKeylessMany_argumentFailure_doesNotFallbackAndDoesNotLogRoutingError() {
+        try (LoggingTestUtils.CapturingAppender logs = LoggingTestUtils
+                .attachAppenderFor(RedisAdvancedClusterReactiveCommandsImpl.class, Level.ERROR)) {
+
+            AtomicBoolean fallback = new AtomicBoolean();
+
+            Flux<String> flux = reactive.routeKeylessMany(() -> {
+                fallback.set(true);
+                return Flux.just("SUPER");
+            }, (RedisClusterReactiveCommands<String, String> c) -> {
+                throw new IllegalArgumentException("index must not be null");
+            }, CommandType.FT_LIST);
+
+            assertThatThrownBy(() -> flux.collectList().block()).isInstanceOf(IllegalArgumentException.class);
+            assertThat(fallback).isFalse();
+            assertThat(logs.messages()).noneMatch(m -> m.contains("Cluster routing failed"));
+        }
+    }
+
+    @Test
+    void routeKeyless_biFunction_argumentFailure_doesNotFallbackAndDoesNotLogRoutingError() {
+        try (LoggingTestUtils.CapturingAppender logs = LoggingTestUtils
+                .attachAppenderFor(RedisAdvancedClusterReactiveCommandsImpl.class, Level.ERROR)) {
+
+            AtomicBoolean fallback = new AtomicBoolean();
+
+            Mono<String> mono = reactive.routeKeyless(() -> {
+                fallback.set(true);
+                return Mono.just("SUPER");
+            }, (String nodeId, RedisClusterReactiveCommands<String, String> c) -> {
+                throw new IllegalArgumentException("index must not be null");
+            }, CommandType.FT_SEARCH);
+
+            assertThatThrownBy(mono::block).isInstanceOf(IllegalArgumentException.class);
+            assertThat(fallback).isFalse();
+            assertThat(logs.messages()).noneMatch(m -> m.contains("Cluster routing failed"));
         }
     }
 
