@@ -668,7 +668,7 @@ public class RediSearchIntegrationTests {
         redis.hset("doc:1", doc1);
 
         // Verify initial search works
-        SearchReply<String> initialSearch = redis.ftSearch(testIndex, "Test");
+        SearchReply<String> initialSearch = SearchTestSupport.searchUntilCount(redis, testIndex, "Test", 1);
         assertThat(initialSearch.getCount()).isEqualTo(1);
 
         // Add new fields to the index
@@ -691,11 +691,11 @@ public class RediSearchIntegrationTests {
         redis.hset("doc:2", doc2);
 
         // Verify search still works and new fields are indexed
-        SearchReply<String> searchAfterAlter = redis.ftSearch(testIndex, "Document");
+        SearchReply<String> searchAfterAlter = SearchTestSupport.searchUntilCount(redis, testIndex, "Document", 2);
         assertThat(searchAfterAlter.getCount()).isEqualTo(2);
 
         // Search by new field
-        SearchReply<String> authorSearch = redis.ftSearch(testIndex, "@author:John");
+        SearchReply<String> authorSearch = SearchTestSupport.searchUntilCount(redis, testIndex, "@author:John", 1);
         assertThat(authorSearch.getCount()).isEqualTo(1);
         assertThat(authorSearch.getResults().get(0).getId()).isEqualTo("doc:1");
 

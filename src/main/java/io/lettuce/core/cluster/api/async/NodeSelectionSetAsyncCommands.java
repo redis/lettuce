@@ -19,9 +19,14 @@
  */
 package io.lettuce.core.cluster.api.async;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import io.lettuce.core.ExpireArgs;
+import io.lettuce.core.SAddExArgs;
 import io.lettuce.core.SDiffCardArgs;
 import io.lettuce.core.SUnionCardArgs;
 import io.lettuce.core.ScanArgs;
@@ -444,5 +449,944 @@ public interface NodeSelectionSetAsyncCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      */
     AsyncExecutions<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
+
+    /**
+     * Set the time to live, in seconds, of one or more members of the set stored at {@code key}. A time to live of {@code 0} is
+     * already in the past and deletes the members.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param seconds the time to live in seconds, must not be negative.
+     * @param members the members to set the time to live for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code members} is {@code null} or empty, or its only
+     *         element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sexpire(K key, long seconds, V... members);
+
+    /**
+     * Set the time to live, in seconds, of a single member of the set stored at {@code key}. A time to live of {@code 0} is
+     * already in the past and deletes the member.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param seconds the time to live in seconds, must not be negative.
+     * @param member the member to set the time to live for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
+     *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sexpire(K key, long seconds, V member);
+
+    /**
+     * Set the time to live, in seconds, of one or more members of the set stored at {@code key}, applying the
+     * {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A member without an
+     * expiration is treated as having an infinite one: {@code LT} succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param seconds the time to live in seconds, must not be negative.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param members the members to set the time to live for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code members} is {@code null}
+     *         or empty, or its only element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sexpire(K key, long seconds, ExpireArgs expireArgs, V... members);
+
+    /**
+     * Set the time to live, in seconds, of a single member of the set stored at {@code key}, applying the {@link ExpireArgs}
+     * condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A member without an expiration is treated as
+     * having an infinite one: {@code LT} succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param seconds the time to live in seconds, must not be negative.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param member the member to set the time to live for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code member} is an argument
+     *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sexpire(K key, long seconds, ExpireArgs expireArgs, V member);
+
+    /**
+     * Set the time to live of one or more members of the set stored at {@code key}. The {@link Duration} is truncated to whole
+     * seconds; a duration under one second becomes {@code 0}, which is already in the past and deletes the members.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param seconds the time to live, must not be {@code null}; truncated to whole seconds.
+     * @param members the members to set the time to live for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code seconds} is {@code null}, or {@code members} is {@code null} or
+     *         empty, or its only element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sexpire(K key, Duration seconds, V... members);
+
+    /**
+     * Set the time to live of a single member of the set stored at {@code key}. The {@link Duration} is truncated to whole
+     * seconds; a duration under one second becomes {@code 0}, which is already in the past and deletes the member.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param seconds the time to live, must not be {@code null}; truncated to whole seconds.
+     * @param member the member to set the time to live for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code seconds} is {@code null}, or {@code member} is an argument
+     *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sexpire(K key, Duration seconds, V member);
+
+    /**
+     * Set the time to live of one or more members of the set stored at {@code key}, applying the {@link ExpireArgs} condition
+     * ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. The {@link Duration} is truncated to whole seconds; a
+     * duration under one second becomes {@code 0}, which is already in the past and deletes the members. A member without an
+     * expiration is treated as having an infinite one: {@code LT} succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param seconds the time to live, must not be {@code null}; truncated to whole seconds.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param members the members to set the time to live for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code seconds} or {@code expireArgs} is {@code null}, or
+     *         {@code members} is {@code null} or empty, or its only element is an argument object such as {@link ExpireArgs}
+     *         passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V... members);
+
+    /**
+     * Set the time to live of a single member of the set stored at {@code key}, applying the {@link ExpireArgs} condition
+     * ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. The {@link Duration} is truncated to whole seconds; a
+     * duration under one second becomes {@code 0}, which is already in the past and deletes the member. A member without an
+     * expiration is treated as having an infinite one: {@code LT} succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param seconds the time to live, must not be {@code null}; truncated to whole seconds.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param member the member to set the time to live for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code seconds} or {@code expireArgs} is {@code null}, or {@code member}
+     *         is an argument object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the
+     *         members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sexpire(K key, Duration seconds, ExpireArgs expireArgs, V member);
+
+    /**
+     * Set the time to live, in milliseconds, of one or more members of the set stored at {@code key}. A time to live of
+     * {@code 0} is already in the past and deletes the members.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param milliseconds the time to live in milliseconds, must not be negative.
+     * @param members the members to set the time to live for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code members} is {@code null} or empty, or its only
+     *         element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spexpire(K key, long milliseconds, V... members);
+
+    /**
+     * Set the time to live, in milliseconds, of a single member of the set stored at {@code key}. A time to live of {@code 0}
+     * is already in the past and deletes the member.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param milliseconds the time to live in milliseconds, must not be negative.
+     * @param member the member to set the time to live for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
+     *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spexpire(K key, long milliseconds, V member);
+
+    /**
+     * Set the time to live, in milliseconds, of one or more members of the set stored at {@code key}, applying the
+     * {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A member without an
+     * expiration is treated as having an infinite one: {@code LT} succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param milliseconds the time to live in milliseconds, must not be negative.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param members the members to set the time to live for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code members} is {@code null}
+     *         or empty, or its only element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V... members);
+
+    /**
+     * Set the time to live, in milliseconds, of a single member of the set stored at {@code key}, applying the
+     * {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A member without an
+     * expiration is treated as having an infinite one: {@code LT} succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param milliseconds the time to live in milliseconds, must not be negative.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param member the member to set the time to live for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code member} is an argument
+     *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spexpire(K key, long milliseconds, ExpireArgs expireArgs, V member);
+
+    /**
+     * Set the time to live of one or more members of the set stored at {@code key}. The {@link Duration} is truncated to whole
+     * milliseconds; a duration under one millisecond becomes {@code 0}, which is already in the past and deletes the members.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param milliseconds the time to live, must not be {@code null}; truncated to whole milliseconds.
+     * @param members the members to set the time to live for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code milliseconds} is {@code null}, or {@code members} is
+     *         {@code null} or empty, or its only element is an argument object such as {@link ExpireArgs} passed in place of
+     *         the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spexpire(K key, Duration milliseconds, V... members);
+
+    /**
+     * Set the time to live of a single member of the set stored at {@code key}. The {@link Duration} is truncated to whole
+     * milliseconds; a duration under one millisecond becomes {@code 0}, which is already in the past and deletes the member.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param milliseconds the time to live, must not be {@code null}; truncated to whole milliseconds.
+     * @param member the member to set the time to live for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code milliseconds} is {@code null}, or {@code member} is an argument
+     *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spexpire(K key, Duration milliseconds, V member);
+
+    /**
+     * Set the time to live of one or more members of the set stored at {@code key}, applying the {@link ExpireArgs} condition
+     * ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. The {@link Duration} is truncated to whole
+     * milliseconds; a duration under one millisecond becomes {@code 0}, which is already in the past and deletes the members. A
+     * member without an expiration is treated as having an infinite one: {@code LT} succeeds on it, {@code GT} and {@code XX}
+     * fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param milliseconds the time to live, must not be {@code null}; truncated to whole milliseconds.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param members the members to set the time to live for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code milliseconds} or {@code expireArgs} is {@code null}, or
+     *         {@code members} is {@code null} or empty, or its only element is an argument object such as {@link ExpireArgs}
+     *         passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V... members);
+
+    /**
+     * Set the time to live of a single member of the set stored at {@code key}, applying the {@link ExpireArgs} condition
+     * ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. The {@link Duration} is truncated to whole
+     * milliseconds; a duration under one millisecond becomes {@code 0}, which is already in the past and deletes the member. A
+     * member without an expiration is treated as having an infinite one: {@code LT} succeeds on it, {@code GT} and {@code XX}
+     * fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param milliseconds the time to live, must not be {@code null}; truncated to whole milliseconds.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param member the member to set the time to live for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code milliseconds} or {@code expireArgs} is {@code null}, or
+     *         {@code member} is an argument object such as {@link ExpireArgs} passed in place of the members (pass the
+     *         arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spexpire(K key, Duration milliseconds, ExpireArgs expireArgs, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute Unix time in seconds. A time in
+     * the past deletes the members.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code members} is {@code null} or empty, or its only
+     *         element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sexpireat(K key, long timestamp, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute Unix time in seconds. A time in the
+     * past deletes the member.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
+     *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sexpireat(K key, long timestamp, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute Unix time in seconds, applying
+     * the {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A time in the past
+     * deletes the members. A member without an expiration is treated as having an infinite one: {@code LT} succeeds on it,
+     * {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code members} is {@code null}
+     *         or empty, or its only element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute Unix time in seconds, applying the
+     * {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A time in the past
+     * deletes the member. A member without an expiration is treated as having an infinite one: {@code LT} succeeds on it,
+     * {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the Unix time in seconds at which the members expire, must not be negative.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code member} is an argument
+     *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sexpireat(K key, long timestamp, ExpireArgs expireArgs, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with second
+     * precision. A time in the past deletes the members.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code members} is {@code null}
+     *         or empty, or its only element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sexpireat(K key, Date timestamp, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute point in time, with second
+     * precision. A time in the past deletes the member.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code member} is an argument
+     *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sexpireat(K key, Date timestamp, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with second
+     * precision, applying the {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A
+     * time in the past deletes the members. A member without an expiration is treated as having an infinite one: {@code LT}
+     * succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
+     *         {@code members} is {@code null} or empty, or its only element is an argument object such as {@link ExpireArgs}
+     *         passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute point in time, with second
+     * precision, applying the {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A
+     * time in the past deletes the member. A member without an expiration is treated as having an infinite one: {@code LT}
+     * succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
+     *         {@code member} is an argument object such as {@link ExpireArgs} passed in place of the members (pass the
+     *         arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with second
+     * precision. A time in the past deletes the members.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code members} is {@code null}
+     *         or empty, or its only element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sexpireat(K key, Instant timestamp, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute point in time, with second
+     * precision. A time in the past deletes the member.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code member} is an argument
+     *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sexpireat(K key, Instant timestamp, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with second
+     * precision, applying the {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A
+     * time in the past deletes the members. A member without an expiration is treated as having an infinite one: {@code LT}
+     * succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
+     *         {@code members} is {@code null} or empty, or its only element is an argument object such as {@link ExpireArgs}
+     *         passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute point in time, with second
+     * precision, applying the {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A
+     * time in the past deletes the member. A member without an expiration is treated as having an infinite one: {@code LT}
+     * succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}; truncated to whole seconds.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
+     *         {@code member} is an argument object such as {@link ExpireArgs} passed in place of the members (pass the
+     *         arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute Unix time in milliseconds. A
+     * time in the past deletes the members.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code members} is {@code null} or empty, or its only
+     *         element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spexpireat(K key, long timestamp, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute Unix time in milliseconds. A time
+     * in the past deletes the member.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
+     *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spexpireat(K key, long timestamp, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute Unix time in milliseconds,
+     * applying the {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A time in
+     * the past deletes the members. A member without an expiration is treated as having an infinite one: {@code LT} succeeds on
+     * it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code members} is {@code null}
+     *         or empty, or its only element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute Unix time in milliseconds, applying
+     * the {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A time in the past
+     * deletes the member. A member without an expiration is treated as having an infinite one: {@code LT} succeeds on it,
+     * {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the Unix time in milliseconds at which the members expire, must not be negative.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code expireArgs} is {@code null}, or {@code member} is an argument
+     *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spexpireat(K key, long timestamp, ExpireArgs expireArgs, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with millisecond
+     * precision. A time in the past deletes the members.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code members} is {@code null}
+     *         or empty, or its only element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spexpireat(K key, Date timestamp, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute point in time, with millisecond
+     * precision. A time in the past deletes the member.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code member} is an argument
+     *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spexpireat(K key, Date timestamp, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with millisecond
+     * precision, applying the {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A
+     * time in the past deletes the members. A member without an expiration is treated as having an infinite one: {@code LT}
+     * succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
+     *         {@code members} is {@code null} or empty, or its only element is an argument object such as {@link ExpireArgs}
+     *         passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute point in time, with millisecond
+     * precision, applying the {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A
+     * time in the past deletes the member. A member without an expiration is treated as having an infinite one: {@code LT}
+     * succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
+     *         {@code member} is an argument object such as {@link ExpireArgs} passed in place of the members (pass the
+     *         arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spexpireat(K key, Date timestamp, ExpireArgs expireArgs, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with millisecond
+     * precision. A time in the past deletes the members.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code members} is {@code null}
+     *         or empty, or its only element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spexpireat(K key, Instant timestamp, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute point in time, with millisecond
+     * precision. A time in the past deletes the member.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} or {@code timestamp} is {@code null}, or {@code member} is an argument
+     *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spexpireat(K key, Instant timestamp, V member);
+
+    /**
+     * Set the expiration of one or more members of the set stored at {@code key} to an absolute point in time, with millisecond
+     * precision, applying the {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A
+     * time in the past deletes the members. A member without an expiration is treated as having an infinite one: {@code LT}
+     * succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param members the members to set the expiration for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 2} if the member was deleted
+     *         because the expiration is in the past; {@code 1} if the expiration was set or updated; {@code 0} if a {@code NX},
+     *         {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the member does not exist (a logically
+     *         expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
+     *         {@code members} is {@code null} or empty, or its only element is an argument object such as {@link ExpireArgs}
+     *         passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V... members);
+
+    /**
+     * Set the expiration of a single member of the set stored at {@code key} to an absolute point in time, with millisecond
+     * precision, applying the {@link ExpireArgs} condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}) to each member. A
+     * time in the past deletes the member. A member without an expiration is treated as having an infinite one: {@code LT}
+     * succeeds on it, {@code GT} and {@code XX} fail.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param timestamp the point in time at which the members expire, must not be {@code null}.
+     * @param expireArgs the condition ({@code NX}, {@code XX}, {@code GT} or {@code LT}), must not be {@code null}.
+     * @param member the member to set the expiration for.
+     * @return {@code 2} if the member was deleted because the expiration is in the past; {@code 1} if the expiration was set or
+     *         updated; {@code 0} if a {@code NX}, {@code XX}, {@code GT} or {@code LT} condition was not met; {@code -2} if the
+     *         member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key}, {@code timestamp} or {@code expireArgs} is {@code null}, or
+     *         {@code member} is an argument object such as {@link ExpireArgs} passed in place of the members (pass the
+     *         arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spexpireat(K key, Instant timestamp, ExpireArgs expireArgs, V member);
+
+    /**
+     * Get the remaining time to live, in seconds, of one or more members of the set stored at {@code key}. The value is rounded
+     * up to the next second, so a live member never returns {@code 0}.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param members the members to get the time to live for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: the remaining time to live in seconds,
+     *         rounded up to the next second; {@code -1} if the member exists but has no expiration; {@code -2} if the member
+     *         does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code members} is {@code null} or empty, or its only
+     *         element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sttl(K key, V... members);
+
+    /**
+     * Get the remaining time to live, in seconds, of a single member of the set stored at {@code key}. The value is rounded up
+     * to the next second, so a live member never returns {@code 0}.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param member the member to get the time to live for.
+     * @return the remaining time to live in seconds, rounded up to the next second; {@code -1} if the member exists but has no
+     *         expiration; {@code -2} if the member does not exist (a logically expired member does not exist) or {@code key}
+     *         does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
+     *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sttl(K key, V member);
+
+    /**
+     * Get the remaining time to live, in milliseconds, of one or more members of the set stored at {@code key}.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param members the members to get the time to live for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: the remaining time to live in
+     *         milliseconds, {@code 0} if the member is expiring now; {@code -1} if the member exists but has no expiration;
+     *         {@code -2} if the member does not exist (a logically expired member does not exist) or {@code key} does not
+     *         exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code members} is {@code null} or empty, or its only
+     *         element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spttl(K key, V... members);
+
+    /**
+     * Get the remaining time to live, in milliseconds, of a single member of the set stored at {@code key}.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param member the member to get the time to live for.
+     * @return the remaining time to live in milliseconds, {@code 0} if the member is expiring now; {@code -1} if the member
+     *         exists but has no expiration; {@code -2} if the member does not exist (a logically expired member does not exist)
+     *         or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
+     *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spttl(K key, V member);
+
+    /**
+     * Get the absolute Unix time, in seconds, at which one or more members of the set stored at {@code key} expire. The value
+     * is rounded up to the next second.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param members the members to get the expiration time for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: the Unix time in seconds at which the
+     *         member expires, rounded up to the next second; {@code -1} if the member exists but has no expiration; {@code -2}
+     *         if the member does not exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code members} is {@code null} or empty, or its only
+     *         element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> sexpiretime(K key, V... members);
+
+    /**
+     * Get the absolute Unix time, in seconds, at which a single member of the set stored at {@code key} expire. The value is
+     * rounded up to the next second.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param member the member to get the expiration time for.
+     * @return the Unix time in seconds at which the member expires, rounded up to the next second; {@code -1} if the member
+     *         exists but has no expiration; {@code -2} if the member does not exist (a logically expired member does not exist)
+     *         or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
+     *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> sexpiretime(K key, V member);
+
+    /**
+     * Get the absolute Unix time, in milliseconds, at which one or more members of the set stored at {@code key} expire.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param members the members to get the expiration time for, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: the Unix time in milliseconds at which
+     *         the member expires; {@code -1} if the member exists but has no expiration; {@code -2} if the member does not
+     *         exist (a logically expired member does not exist) or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code members} is {@code null} or empty, or its only
+     *         element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spexpiretime(K key, V... members);
+
+    /**
+     * Get the absolute Unix time, in milliseconds, at which a single member of the set stored at {@code key} expire.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param member the member to get the expiration time for.
+     * @return the Unix time in milliseconds at which the member expires; {@code -1} if the member exists but has no expiration;
+     *         {@code -2} if the member does not exist (a logically expired member does not exist) or {@code key} does not
+     *         exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
+     *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spexpiretime(K key, V member);
+
+    /**
+     * Remove the expiration of one or more members of the set stored at {@code key}.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param members the members to remove the expiration from, must not be {@code null} or empty.
+     * @return a list with one {@link Long} per member, in the order of {@code members}: {@code 1} if the expiration was
+     *         removed; {@code -1} if the member exists but has no expiration; {@code -2} if the member does not exist or
+     *         {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code members} is {@code null} or empty, or its only
+     *         element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<List<Long>> spersist(K key, V... members);
+
+    /**
+     * Remove the expiration of a single member of the set stored at {@code key}.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param member the member to remove the expiration from.
+     * @return {@code 1} if the expiration was removed; {@code -1} if the member exists but has no expiration; {@code -2} if the
+     *         member does not exist or {@code key} does not exist.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
+     *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> spersist(K key, V member);
+
+    /**
+     * Add one or more members to the set stored at {@code key}, creating it when it does not exist. Unlike
+     * {@link #sadd(Object, Object[])}, a member that already exists is not skipped: its expiration is discarded. Without
+     * {@link SAddExArgs} the command behaves like {@code SADD} for members without an expiration.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param members the members to add, must not be {@code null} or empty.
+     * @return {@code 1} if at least one member was added, updated or deleted; {@code 0} if nothing changed.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code members} is {@code null} or empty, or its only
+     *         element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<Long> saddex(K key, V... members);
+
+    /**
+     * Add a single member to the set stored at {@code key}, creating it when it does not exist. Unlike
+     * {@link #sadd(Object, Object[])}, a member that already exists is not skipped: its expiration is discarded. Without
+     * {@link SAddExArgs} the command behaves like {@code SADD} for members without an expiration.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param member the member to add.
+     * @return {@code 1} if at least one member was added, updated or deleted; {@code 0} if nothing changed.
+     * @throws IllegalArgumentException if {@code key} is {@code null}, or {@code member} is an argument object such as
+     *         {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> saddex(K key, V member);
+
+    /**
+     * Add one or more members to the set stored at {@code key} and set their expiration, applying {@link SAddExArgs}.
+     * {@code MNX} adds only if none of the members exists, {@code MXX} only if all of them exist; both apply to the whole
+     * command. {@code EX}, {@code PX}, {@code EXAT} or {@code PXAT} set the expiration of every member in the command,
+     * {@code KEEPTTL} keeps the expiration a member already has; without any of them an existing member loses its expiration.
+     * An expiration in the past deletes the members that exist and adds none.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param sAddExArgs the command arguments, must not be {@code null}.
+     * @param members the members to add, must not be {@code null} or empty.
+     * @return {@code 1} if at least one member was added, updated or deleted; {@code 0} if the {@code MNX} or {@code MXX}
+     *         condition was not met, or nothing changed.
+     * @throws IllegalArgumentException if {@code key} or {@code sAddExArgs} is {@code null}, or {@code members} is {@code null}
+     *         or empty, or its only element is an argument object such as {@link ExpireArgs} passed in place of the members.
+     * @since 8.0
+     */
+    AsyncExecutions<Long> saddex(K key, SAddExArgs sAddExArgs, V... members);
+
+    /**
+     * Add a single member to the set stored at {@code key} and set its expiration, applying {@link SAddExArgs}. {@code MNX}
+     * adds only if none of the members exists, {@code MXX} only if all of them exist; both apply to the whole command.
+     * {@code EX}, {@code PX}, {@code EXAT} or {@code PXAT} set the expiration of every member in the command, {@code KEEPTTL}
+     * keeps the expiration a member already has; without any of them an existing member loses its expiration. An expiration in
+     * the past deletes the member if it exists and adds nothing.
+     *
+     * @param key the key of the set, must not be {@code null}.
+     * @param sAddExArgs the command arguments, must not be {@code null}.
+     * @param member the member to add.
+     * @return {@code 1} if at least one member was added, updated or deleted; {@code 0} if the {@code MNX} or {@code MXX}
+     *         condition was not met, or nothing changed.
+     * @throws IllegalArgumentException if {@code key} or {@code sAddExArgs} is {@code null}, or {@code member} is an argument
+     *         object such as {@link ExpireArgs} passed in place of the members (pass the arguments before the members).
+     * @since 8.0
+     */
+    AsyncExecutions<Long> saddex(K key, SAddExArgs sAddExArgs, V member);
 
 }

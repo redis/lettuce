@@ -32,9 +32,15 @@ import io.micrometer.core.instrument.Timer;
 import io.netty.channel.local.LocalAddress;
 
 /**
- * Micrometer implementation of {@link CommandLatencyRecorder}
+ * Micrometer implementation of {@link CommandLatencyRecorder}.
+ * <p>
+ * The recorder registers a pair of {@link Timer}s for each distinct remote address and command name (see
+ * {@link ProtocolKeyword#toString()}), and also for each local address if {@link MicrometerOptions#localDistinction()} is
+ * enabled, with the {@link MeterRegistry}. The timers stay registered until they are removed from the {@link MeterRegistry},
+ * even after the recorder is no longer used.
  *
  * @author Steven Sheehy
+ * @author Sharior Hossain Farhan
  * @since 6.1
  */
 public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder {

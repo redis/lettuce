@@ -25,11 +25,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.Exceptions;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -121,11 +121,9 @@ class ReplicaTopologyProvider implements TopologyProvider {
 
         RedisFuture<String> info = connection.async().info("replication");
 
-        try {
-            return Mono.fromCompletionStage(info).timeout(redisURI.getTimeout()).map(this::getNodesFromInfo).toFuture();
-        } catch (RuntimeException e) {
-            throw Exceptions.bubble(e);
-        }
+        return Futures
+                .withTimeout(info.toCompletableFuture(), redisURI.getTimeout(), connection.getResources(), "INFO REPLICATION")
+                .thenApply(this::getNodesFromInfo);
     }
 
     protected List<RedisNodeDescription> getNodesFromInfo(String info) {

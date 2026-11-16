@@ -79,7 +79,7 @@ class MasterReplicaTopologyRefreshUnitTests {
     }
 
     @Test
-    void shouldRetrieveTopology() {
+    void shouldRetrieveTopology() throws Exception {
 
         MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService, provider);
 
@@ -91,13 +91,13 @@ class MasterReplicaTopologyRefreshUnitTests {
         RedisURI redisURI = new RedisURI();
         redisURI.setTimeout(Duration.ofMillis(1));
 
-        List<RedisNodeDescription> nodes = refresh.getNodes(redisURI).block();
+        List<RedisNodeDescription> nodes = refresh.getNodesAsync(redisURI).toCompletableFuture().get();
 
         assertThat(nodes).hasSize(2);
     }
 
     @Test
-    void shouldRetrieveTopologyWithFailedNode() {
+    void shouldRetrieveTopologyWithFailedNode() throws Exception {
 
         MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService, provider);
 
@@ -109,7 +109,7 @@ class MasterReplicaTopologyRefreshUnitTests {
         RedisURI redisURI = new RedisURI();
         redisURI.setTimeout(Duration.ofMillis(1));
 
-        List<RedisNodeDescription> nodes = refresh.getNodes(redisURI).block();
+        List<RedisNodeDescription> nodes = refresh.getNodesAsync(redisURI).toCompletableFuture().get();
 
         assertThat(nodes).hasSize(1).containsOnly(UPSTREAM);
     }

@@ -8,7 +8,9 @@ package io.lettuce.core.probabilistic;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.cluster.ClusterTestUtil;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -27,6 +29,12 @@ public class RedisBloomFilterClusterIntegrationTests extends RedisBloomFilterInt
     @Inject
     RedisBloomFilterClusterIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
         super(ClusterTestUtil.redisCommandsOverCluster(connection));
+    }
+
+    @Disabled("MULTI not available on Redis Cluster")
+    @Test
+    @Override
+    void bfAddAndExistsInTransaction() {
     }
 
 }

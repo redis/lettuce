@@ -87,11 +87,10 @@ Subscription subscription = eventBus.subscribe(ConnectedEvent.class,
 An exception thrown by a listener is caught and logged; it does not
 cancel the subscription or affect delivery to other subscribers.
 
-**Deprecated since 7.8:** `EventBus.get()`, which returns a Project
-Reactor `Flux<Event>`, is deprecated in favor of the callback-based
-`subscribe(...)` methods and is scheduled for removal in Lettuce 8.0, as
-part of making Reactor an optional dependency. If you still need a
-`Flux`, bridge it yourself:
+**Removed in 8.0:** `EventBus.get()`, which returned a Project Reactor
+`Flux<Event>`, was deprecated in 7.8 and has been removed in favor of the
+callback-based `subscribe(...)` methods, so that consuming events no
+longer requires Reactor. If you still need a `Flux`, bridge it yourself:
 
 ``` java
 Flux.create(sink -> {

@@ -72,6 +72,18 @@ class StatefulRedisPubSubConnectionImplUnitTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    void reactiveDelegatesToCommandsAccessor() {
+        assertThat(connection.reactive()).isSameAs(connection.commands(RedisPubSubReactiveCommands.factory()));
+    }
+
+    @Test
+    void factoryProducesReactiveCommands() {
+        assertThat(connection.commands(RedisPubSubReactiveCommands.factory()))
+                .isInstanceOf(RedisPubSubReactiveCommandsImpl.class);
+    }
+
+    @Test
     void addListener() {
         RedisPubSubListener listener = mock(RedisPubSubListener.class);
 

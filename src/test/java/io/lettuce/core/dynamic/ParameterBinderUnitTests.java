@@ -22,6 +22,7 @@ import io.lettuce.core.protocol.CommandType;
 
 /**
  * @author Mark Paluch
+ * @author Taewoong Kim
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
@@ -122,6 +123,23 @@ class ParameterBinderUnitTests {
     void bindsUnboundedRangeCorrectly() {
 
         CommandArgs<String, String> args = bind(Range.unbounded());
+
+        assertThat(args.toCommandString()).isEqualTo("-inf +inf");
+    }
+
+    @Test
+    void bindsExclusiveInfiniteRangeCorrectly() {
+
+        CommandArgs<String, String> args = bind(
+                Range.<Double> unbounded().gt(Double.NEGATIVE_INFINITY).lt(Double.POSITIVE_INFINITY));
+
+        assertThat(args.toCommandString()).isEqualTo("(-inf (+inf");
+    }
+
+    @Test
+    void bindsInclusiveInfiniteRangeCorrectly() {
+
+        CommandArgs<String, String> args = bind(Range.create(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
 
         assertThat(args.toCommandString()).isEqualTo("-inf +inf");
     }

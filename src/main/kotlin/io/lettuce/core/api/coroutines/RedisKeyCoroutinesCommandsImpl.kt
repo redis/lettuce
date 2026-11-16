@@ -23,6 +23,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.*
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import java.time.Duration
@@ -251,5 +252,27 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override suspend fun scan(scanCursor: ScanCursor): KeyScanCursor<K>? =
         ops.scan(scanCursor).awaitFirstOrNull()
 
-}
+    override suspend fun blessSet(key: K, flag: BlessFlag): Boolean? =
+        ops.blessSet(key, flag).awaitFirstOrNull()
 
+    override suspend fun blessClear(key: K, flag: BlessFlag): Boolean? =
+        ops.blessClear(key, flag).awaitFirstOrNull()
+
+    override suspend fun blessGet(key: K): List<BlessFlag> = ops.blessGet(key).asFlow().toList()
+
+    override suspend fun blessScan(flag: BlessFlag): KeyScanCursor<K>? =
+        ops.blessScan(flag).awaitFirstOrNull()
+
+    override suspend fun blessScan(flag: BlessFlag, scanArgs: BlessScanArgs): KeyScanCursor<K>? =
+        ops.blessScan(flag, scanArgs).awaitFirstOrNull()
+
+    override suspend fun blessScan(scanCursor: ScanCursor, flag: BlessFlag): KeyScanCursor<K>? =
+        ops.blessScan(scanCursor, flag).awaitFirstOrNull()
+
+    override suspend fun blessScan(
+        scanCursor: ScanCursor,
+        flag: BlessFlag,
+        scanArgs: BlessScanArgs
+    ): KeyScanCursor<K>? = ops.blessScan(scanCursor, flag, scanArgs).awaitFirstOrNull()
+
+}

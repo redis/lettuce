@@ -27,6 +27,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * The default implementation of {@link CommandLatencyCollectorOptions}.
  *
  * @author Mark Paluch
+ * @author Sharior Hossain Farhan
  */
 public class DefaultCommandLatencyCollectorOptions implements CommandLatencyCollectorOptions {
 
@@ -209,7 +210,8 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
 
         /**
          * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}. See
-         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
+         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}. If {@code false}, the collector
+         * retains latency data for every distinct remote address and command type for its lifetime.
          *
          * @param resetLatenciesAfterEvent {@code true} if the recorded latencies should be reset once the metrics event was
          *        emitted

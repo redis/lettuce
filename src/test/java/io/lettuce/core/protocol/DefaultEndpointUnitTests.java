@@ -562,6 +562,18 @@ class DefaultEndpointUnitTests {
 
     }
 
+    @Test
+    void shouldRejectNullClientOptions() {
+        assertThatThrownBy(() -> new TestableEndpoint(null, clientResources)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("ClientOptions must not be null");
+    }
+
+    @Test
+    void shouldRejectNullClientResources() {
+        assertThatThrownBy(() -> new TestableEndpoint(ClientOptions.create(), null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessage("ClientResources must not be null");
+    }
+
     static class TestableEndpoint extends DefaultEndpoint {
 
         /**

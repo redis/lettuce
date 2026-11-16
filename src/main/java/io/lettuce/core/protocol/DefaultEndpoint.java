@@ -139,7 +139,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     public DefaultEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
 
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
-        LettuceAssert.notNull(clientOptions, "ClientResources must not be null");
+        LettuceAssert.notNull(clientResources, "ClientResources must not be null");
 
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;

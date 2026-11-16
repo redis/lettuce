@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
  * Configuration interface for command latency collection.
  *
  * @author Mark Paluch
+ * @author Sharior Hossain Farhan
  */
 public interface CommandLatencyCollectorOptions {
 
@@ -84,7 +85,8 @@ public interface CommandLatencyCollectorOptions {
     double[] targetPercentiles();
 
     /**
-     * Returns whether the latencies should be reset once an event is emitted.
+     * Returns whether the latencies should be reset once an event is emitted. If {@code false}, the collector retains latency
+     * data for every distinct remote address and command type for its lifetime.
      *
      * @return {@code true} if the latencies should be reset once an event is emitted.
      */
@@ -167,7 +169,8 @@ public interface CommandLatencyCollectorOptions {
 
         /**
          * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}. See
-         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
+         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}. If {@code false}, the collector
+         * retains latency data for every distinct remote address and command type for its lifetime.
          *
          * @param resetLatenciesAfterEvent {@code true} if the recorded latencies should be reset once the metrics event was
          *        emitted.

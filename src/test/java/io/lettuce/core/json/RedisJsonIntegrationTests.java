@@ -26,6 +26,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import reactor.test.StepVerifier;
@@ -47,6 +48,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import io.lettuce.test.resource.ModulesTestUri;
 
 @Tag(INTEGRATION_TEST)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RedisJsonIntegrationTests {
 
     private static final String BIKES_INVENTORY = "bikes:inventory";
@@ -67,7 +69,12 @@ public class RedisJsonIntegrationTests {
         RedisURI redisURI = ModulesTestUri.create();
 
         client = RedisClient.create(redisURI);
+        client.setOptions(getOptions());
         redis = client.connect().sync();
+    }
+
+    protected ClientOptions getOptions() {
+        return ClientOptions.builder().build();
     }
 
     @BeforeEach
@@ -420,6 +427,26 @@ public class RedisJsonIntegrationTests {
         List<Number> value = redis.jsonNumincrby(BIKES_INVENTORY, myPath, 5L);
         assertThat(value).hasSize(1);
         assertThat(value.get(0).longValue()).isEqualTo(1933L);
+    }
+
+    @Test
+    void jsonNumincrbyMultiplePaths() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[*].price");
+
+        List<Number> value = redis.jsonNumincrby(BIKES_INVENTORY, myPath, 0.5);
+        assertThat(value).hasSize(3);
+        assertThat(value.get(0).doubleValue()).isEqualTo(1928.5);
+        assertThat(value.get(1).doubleValue()).isEqualTo(2072.5);
+        assertThat(value.get(2).doubleValue()).isEqualTo(3264.5);
+    }
+
+    @Test
+    void jsonNumincrbyNonNumericPath() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[0].model");
+
+        List<Number> value = redis.jsonNumincrby(BIKES_INVENTORY, myPath, 5L);
+        assertThat(value).hasSize(1);
+        assertThat(value.get(0)).isNull();
     }
 
     @ParameterizedTest(name = "With {0} as path")
