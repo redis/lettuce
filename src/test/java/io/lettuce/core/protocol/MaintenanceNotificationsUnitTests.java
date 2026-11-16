@@ -21,8 +21,13 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.HostAndPort;
 import io.lettuce.core.protocol.MaintenanceNotification.Moving;
 import io.lettuce.core.protocol.MaintenanceNotification.ShardScoped;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotMigration;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotRange;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrated;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrating;
 import io.lettuce.core.protocol.MaintenanceNotification.Type;
 
 /**
@@ -120,6 +125,76 @@ class MaintenanceNotificationsUnitTests {
     }
 
     @Test
+    void shouldDecodeSlotsMigrating() {
+
+        SlotsMigrating notification = (SlotsMigrating) MaintenanceNotifications
+                .from(push("SMIGRATING", 93923L, bytes("123,456,789-1000")));
+
+        assertThat(notification.getType()).isEqualTo(Type.SMIGRATING);
+        assertThat(notification.getSeqId()).isEqualTo(93923L);
+        assertThat(notification.getSlots()).extracting(SlotRange::toString).containsExactly("123", "456", "789-1000");
+        assertThat(notification.getSlots().get(2).getFrom()).isEqualTo(789);
+        assertThat(notification.getSlots().get(2).getTo()).isEqualTo(1000);
+    }
+
+    @Test
+    void shouldDecodeSlotsMigratingWithMalformedSlots() {
+
+        assertThat(slotsMigrating()).isEmpty();
+        assertThat(slotsMigrating("not-a-bytebuffer")).isEmpty();
+        assertThat(slotsMigrating(bytes("abc"))).isEmpty();
+        assertThat(slotsMigrating(bytes("5-1"))).isEmpty();
+        assertThat(slotsMigrating(bytes("16384"))).isEmpty();
+        assertThat(slotsMigrating(bytes("1,,2"))).isEmpty();
+        assertThat(slotsMigrating(bytes("0-16383"))).hasSize(1);
+    }
+
+    @Test
+    void shouldDecodeSlotsMigrated() {
+
+        SlotsMigrated notification = (SlotsMigrated) MaintenanceNotifications
+                .from(push("SMIGRATED", 93923L, Arrays.asList(triplet("abc.com:6789", "abc.com:6790", "123,789-1000"),
+                        triplet("abc.com:4545", "abc.com:4555", "1000-2000"))));
+
+        assertThat(notification.getType()).isEqualTo(Type.SMIGRATED);
+        assertThat(notification.getSeqId()).isEqualTo(93923L);
+        assertThat(notification.getMigrations()).hasSize(2);
+
+        SlotMigration first = notification.getMigrations().get(0);
+        assertThat(first.getSource()).isEqualTo(HostAndPort.of("abc.com", 6789));
+        assertThat(first.getDestination()).isEqualTo(HostAndPort.of("abc.com", 6790));
+        assertThat(first.getSlots()).extracting(SlotRange::toString).containsExactly("123", "789-1000");
+
+        SlotMigration second = notification.getMigrations().get(1);
+        assertThat(second.getSource()).isEqualTo(HostAndPort.of("abc.com", 4545));
+        assertThat(second.getDestination()).isEqualTo(HostAndPort.of("abc.com", 4555));
+        assertThat(second.getSlots()).extracting(SlotRange::toString).containsExactly("1000-2000");
+    }
+
+    @Test
+    void shouldSkipMalformedSlotMigrations() {
+
+        SlotsMigrated notification = (SlotsMigrated) MaintenanceNotifications.from(push("SMIGRATED", 1L,
+                Arrays.asList(triplet("a:1", "b:2", "1-2"), triplet("no-port", "b:2", "3"), triplet("a:1", "b:2", "x"),
+                        Arrays.asList(bytes("a:1"), bytes("b:2")), "not-a-list", triplet("c:3", "d:4", "5"))));
+
+        assertThat(notification.getMigrations()).extracting(SlotMigration::toString).containsExactly("a:1 -> b:2: [1-2]",
+                "c:3 -> d:4: [5]");
+    }
+
+    @Test
+    void shouldDecodeSlotsMigratedWithoutMigrations() {
+
+        SlotsMigrated missing = (SlotsMigrated) MaintenanceNotifications.from(push("SMIGRATED", 1L));
+        SlotsMigrated notAList = (SlotsMigrated) MaintenanceNotifications.from(push("SMIGRATED", 1L, bytes("a:1")));
+        SlotsMigrated noSeqId = (SlotsMigrated) MaintenanceNotifications.from(push("SMIGRATED"));
+
+        assertThat(missing.getMigrations()).isEmpty();
+        assertThat(notAList.getMigrations()).isEmpty();
+        assertThat(noSeqId.getSeqId()).isNull();
+    }
+
+    @Test
     void shouldSupportEveryType() {
 
         for (Type type : Type.values()) {
@@ -135,11 +210,24 @@ class MaintenanceNotificationsUnitTests {
     void shouldIgnoreOtherPushMessages() {
 
         assertThat(MaintenanceNotifications.from(push("message", bytes("channel"), bytes("payload")))).isNull();
-        assertThat(MaintenanceNotifications.from(push("SMIGRATED", 1L))).isNull();
+        assertThat(MaintenanceNotifications.from(push("UNKNOWN", 1L))).isNull();
     }
 
     private static InetSocketAddress movingEndpoint(String addressAndPort) {
         return ((Moving) MaintenanceNotifications.from(push("MOVING", 1L, 15L, bytes(addressAndPort)))).getEndpoint();
+    }
+
+    private static List<SlotRange> slotsMigrating(Object... slots) {
+
+        Object[] arguments = new Object[slots.length + 1];
+        arguments[0] = 1L;
+        System.arraycopy(slots, 0, arguments, 1, slots.length);
+
+        return ((SlotsMigrating) MaintenanceNotifications.from(push("SMIGRATING", arguments))).getSlots();
+    }
+
+    private static List<Object> triplet(String source, String destination, String slots) {
+        return Arrays.asList(bytes(source), bytes(destination), bytes(slots));
     }
 
     private static void assertShards(MaintenanceNotification notification, Type type, Long seqId, String shards) {

@@ -17,6 +17,8 @@ import io.lettuce.core.protocol.MaintenanceNotification.FailingOver;
 import io.lettuce.core.protocol.MaintenanceNotification.Migrated;
 import io.lettuce.core.protocol.MaintenanceNotification.Migrating;
 import io.lettuce.core.protocol.MaintenanceNotification.Moving;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrated;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrating;
 
 /**
  * Factory for {@link MaintenanceNotification}s, keyed by the push message type.
@@ -31,6 +33,8 @@ final class MaintenanceNotifications {
         PARSERS.put("MIGRATED", Migrated::from);
         PARSERS.put("FAILING_OVER", FailingOver::from);
         PARSERS.put("FAILED_OVER", FailedOver::from);
+        PARSERS.put("SMIGRATING", SlotsMigrating::from);
+        PARSERS.put("SMIGRATED", SlotsMigrated::from);
     }
 
     private MaintenanceNotifications() {

@@ -9,8 +9,11 @@ package io.lettuce.core.protocol;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import io.lettuce.core.cluster.SlotHash;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.HostAndPort;
 import io.netty.util.internal.logging.InternalLogger;
@@ -73,6 +76,34 @@ abstract class MaintenanceNotification {
         }
     }
 
+    /**
+     * @return the ranges of a comma-separated list of slots and {@code from-to} ranges, or {@code null} if it is malformed
+     */
+    private static List<SlotRange> slotRanges(String slots) {
+
+        List<SlotRange> ranges = new ArrayList<>();
+
+        for (String token : slots.split(",")) {
+
+            int dash = token.indexOf('-');
+
+            try {
+                int from = Integer.parseInt(dash < 0 ? token : token.substring(0, dash));
+                int to = dash < 0 ? from : Integer.parseInt(token.substring(dash + 1));
+
+                if (from < 0 || to >= SlotHash.SLOT_COUNT || from > to) {
+                    return null;
+                }
+
+                ranges.add(new SlotRange(from, to));
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+
+        return ranges;
+    }
+
     private static boolean isNullOr(Object value, Class<?> type) {
         return value == null || type.isInstance(value);
     }
@@ -101,7 +132,7 @@ abstract class MaintenanceNotification {
 
     enum Type {
 
-        MOVING, MIGRATING, MIGRATED, FAILING_OVER, FAILED_OVER
+        MOVING, MIGRATING, MIGRATED, FAILING_OVER, FAILED_OVER, SMIGRATING, SMIGRATED
 
     }
 
@@ -287,6 +318,190 @@ abstract class MaintenanceNotification {
         @Override
         public String getShards() {
             return shards;
+        }
+
+    }
+
+    /**
+     * An inclusive range of hash slots.
+     */
+    static final class SlotRange {
+
+        private final int from;
+
+        private final int to;
+
+        private SlotRange(int from, int to) {
+            this.from = from;
+            this.to = to;
+        }
+
+        int getFrom() {
+            return from;
+        }
+
+        int getTo() {
+            return to;
+        }
+
+        @Override
+        public String toString() {
+            return from == to ? Integer.toString(from) : from + "-" + to;
+        }
+
+    }
+
+    /**
+     * Slots that moved from one node to another.
+     */
+    static final class SlotMigration {
+
+        private final HostAndPort source;
+
+        private final HostAndPort destination;
+
+        private final List<SlotRange> slots;
+
+        private SlotMigration(HostAndPort source, HostAndPort destination, List<SlotRange> slots) {
+            this.source = source;
+            this.destination = destination;
+            this.slots = slots;
+        }
+
+        HostAndPort getSource() {
+            return source;
+        }
+
+        HostAndPort getDestination() {
+            return destination;
+        }
+
+        List<SlotRange> getSlots() {
+            return slots;
+        }
+
+        @Override
+        public String toString() {
+            return source + " -> " + destination + ": " + slots;
+        }
+
+    }
+
+    /**
+     * {@code SMIGRATING <seq> <slots>}: a slot migration is about to start.
+     */
+    static final class SlotsMigrating extends MaintenanceNotification {
+
+        private static final int SLOTS_INDEX = 2;
+
+        private final List<SlotRange> slots;
+
+        private SlotsMigrating(Long seqId, List<SlotRange> slots) {
+            super(Type.SMIGRATING, seqId);
+            this.slots = slots;
+        }
+
+        /**
+         * @return the notification; malformed slots are left out so that the notification is still delivered
+         */
+        static SlotsMigrating from(List<Object> content) {
+
+            List<SlotRange> slots = new ArrayList<>();
+
+            for (int i = SLOTS_INDEX; i < content.size(); i++) {
+
+                String value = stringAt(content, i);
+                List<SlotRange> ranges = value != null ? slotRanges(value) : null;
+
+                if (ranges == null) {
+                    logger.warn("Invalid SMIGRATING slots at index {}: {}", i, content);
+                    continue;
+                }
+
+                slots.addAll(ranges);
+            }
+
+            return new SlotsMigrating(longAt(content, SEQ_ID_INDEX), Collections.unmodifiableList(slots));
+        }
+
+        List<SlotRange> getSlots() {
+            return slots;
+        }
+
+    }
+
+    /**
+     * {@code SMIGRATED <seq> [[<source>, <destination>, <slots>], ...]}: a slot migration completed.
+     */
+    static final class SlotsMigrated extends MaintenanceNotification {
+
+        private static final int MIGRATIONS_INDEX = 2;
+
+        private static final int MIGRATION_SIZE = 3;
+
+        private final List<SlotMigration> migrations;
+
+        private SlotsMigrated(Long seqId, List<SlotMigration> migrations) {
+            super(Type.SMIGRATED, seqId);
+            this.migrations = migrations;
+        }
+
+        /**
+         * @return the notification; malformed migrations are left out so that the notification is still delivered
+         */
+        static SlotsMigrated from(List<Object> content) {
+
+            List<SlotMigration> migrations = new ArrayList<>();
+
+            if (content.size() > MIGRATIONS_INDEX && content.get(MIGRATIONS_INDEX) instanceof List) {
+
+                for (Object entry : (List<?>) content.get(MIGRATIONS_INDEX)) {
+
+                    SlotMigration migration = migration(entry);
+
+                    if (migration == null) {
+                        logger.warn("Invalid SMIGRATED migration: {}", entry);
+                        continue;
+                    }
+
+                    migrations.add(migration);
+                }
+            } else {
+                logger.warn("Invalid SMIGRATED message format, expected migrations at index {}: {}", MIGRATIONS_INDEX, content);
+            }
+
+            return new SlotsMigrated(longAt(content, SEQ_ID_INDEX), Collections.unmodifiableList(migrations));
+        }
+
+        @SuppressWarnings("unchecked")
+        private static SlotMigration migration(Object entry) {
+
+            if (!(entry instanceof List) || ((List<?>) entry).size() != MIGRATION_SIZE) {
+                return null;
+            }
+
+            List<Object> triplet = (List<Object>) entry;
+            String source = stringAt(triplet, 0);
+            String destination = stringAt(triplet, 1);
+            String slots = stringAt(triplet, 2);
+
+            if (source == null || destination == null || slots == null) {
+                return null;
+            }
+
+            HostAndPort sourceAddress = hostAndPort(source);
+            HostAndPort destinationAddress = hostAndPort(destination);
+            List<SlotRange> ranges = slotRanges(slots);
+
+            if (sourceAddress == null || destinationAddress == null || ranges == null) {
+                return null;
+            }
+
+            return new SlotMigration(sourceAddress, destinationAddress, Collections.unmodifiableList(ranges));
+        }
+
+        List<SlotMigration> getMigrations() {
+            return migrations;
         }
 
     }
