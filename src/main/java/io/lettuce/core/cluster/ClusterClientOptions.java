@@ -141,6 +141,7 @@ public class ClusterClientOptions extends ClientOptions {
                 .socketOptions(clientOptions.getSocketOptions()).sslOptions(clientOptions.getSslOptions())
                 .suspendReconnectOnProtocolFailure(clientOptions.isSuspendReconnectOnProtocolFailure())
                 .timeoutOptions(clientOptions.getTimeoutOptions());
+        builder.maintNotificationsConfig(clientOptions.getMaintNotificationsConfig());
 
         return builder;
     }
@@ -345,6 +346,7 @@ public class ClusterClientOptions extends ClientOptions {
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
                 .topologyRefreshOptions(getTopologyRefreshOptions())
                 .validateClusterNodeMembership(isValidateClusterNodeMembership()).nodeFilter(getNodeFilter());
+        builder.maintNotificationsConfig(getMaintNotificationsConfig());
 
         return builder;
     }

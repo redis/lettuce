@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.MaintNotificationsConfig;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
@@ -77,6 +78,30 @@ class ClusterClientOptionsUnitTests {
                 .isEqualTo(clusterClientOptions.isSuspendReconnectOnProtocolFailure());
         assertThat(clusterClientOptions.getScriptCharset()).isEqualTo(clusterClientOptions.getScriptCharset());
         assertThat(clusterClientOptions.mutate()).isNotNull();
+    }
+
+    @Test
+    void builderFromClientOptionsShouldPreserveMaintNotificationsConfig() {
+
+        ClientOptions clientOptions = ClientOptions.builder().maintNotificationsConfig(MaintNotificationsConfig.disabled())
+                .build();
+
+        ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder(clientOptions).build();
+
+        assertThat(clusterClientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()).isFalse();
+    }
+
+    @Test
+    void mutateShouldPreserveMaintNotificationsConfig() {
+
+        ClusterClientOptions options = (ClusterClientOptions) ClusterClientOptions.builder()
+                .maintNotificationsConfig(MaintNotificationsConfig.disabled()).build();
+
+        ClusterClientOptions mutated = options.mutate().build();
+        ClusterClientOptions copy = ClusterClientOptions.builder(options).build();
+
+        assertThat(mutated.getMaintNotificationsConfig().maintNotificationsEnabled()).isFalse();
+        assertThat(copy.getMaintNotificationsConfig().maintNotificationsEnabled()).isFalse();
     }
 
     @Test
