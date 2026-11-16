@@ -53,7 +53,35 @@ public abstract class CipherCodec {
         LettuceAssert.notNull(delegate, "RedisCodec must not be null");
         LettuceAssert.notNull(encrypt, "Encryption Supplier must not be null");
         LettuceAssert.notNull(decrypt, "Decryption Supplier must not be null");
-        return (RedisCodec) new CipherCodecWrapper((RedisCodec) delegate, encrypt, decrypt);
+        return (RedisCodec) new CipherCodecWrapper((RedisCodec) delegate, encrypt, decrypt, 0);
+    }
+
+    /**
+     * Create a codec that stores a fixed-length initialization vector between the key descriptor and ciphertext.
+     * <p>
+     * The encryption supplier must initialize each cipher with a fresh IV of the configured length. The decryption supplier can
+     * obtain the stored IV from {@link KeyDescriptor#getInitializationVector()}. Both readers and writers must use the same IV
+     * length. Values written by the three-argument factory do not contain an IV and require that factory to decode.
+     *
+     * @param <K> key type.
+     * @param <V> value type.
+     * @param delegate codec used for key-value encoding/decoding, must not be {@code null}.
+     * @param encrypt supplier of initialized encryption ciphers, must not be {@code null}.
+     * @param decrypt supplier of initialized decryption ciphers, must not be {@code null}.
+     * @param initializationVectorLength number of IV bytes stored with each value, must be positive.
+     * @return cipher codec that stores initialization vectors with encrypted values.
+     * @throws IllegalArgumentException if a supplier or delegate is {@code null}, or the IV length is not positive.
+     * @since 8.0
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static <K, V> RedisCodec<K, V> forValues(RedisCodec<K, V> delegate, CipherSupplier encrypt, CipherSupplier decrypt,
+            int initializationVectorLength) {
+
+        LettuceAssert.notNull(delegate, "RedisCodec must not be null");
+        LettuceAssert.notNull(encrypt, "Encryption Supplier must not be null");
+        LettuceAssert.notNull(decrypt, "Decryption Supplier must not be null");
+        LettuceAssert.isTrue(initializationVectorLength > 0, "Initialization vector length must be positive");
+        return (RedisCodec) new CipherCodecWrapper((RedisCodec) delegate, encrypt, decrypt, initializationVectorLength);
     }
 
     @SuppressWarnings("unchecked")
@@ -65,11 +93,15 @@ public abstract class CipherCodec {
 
         private CipherSupplier decrypt;
 
-        CipherCodecWrapper(RedisCodec<Object, Object> delegate, CipherSupplier encrypt, CipherSupplier decrypt) {
+        private final int initializationVectorLength;
+
+        CipherCodecWrapper(RedisCodec<Object, Object> delegate, CipherSupplier encrypt, CipherSupplier decrypt,
+                int initializationVectorLength) {
 
             this.delegate = delegate;
             this.encrypt = encrypt;
             this.decrypt = decrypt;
+            this.initializationVectorLength = initializationVectorLength;
         }
 
         @Override
@@ -81,6 +113,12 @@ public abstract class CipherCodec {
         public Object decodeValue(ByteBuffer bytes) {
 
             KeyDescriptor keyDescriptor = KeyDescriptor.from(bytes);
+            if (initializationVectorLength > 0) {
+                LettuceAssert.isTrue(bytes.remaining() >= initializationVectorLength, "Truncated initialization vector");
+                byte[] initializationVector = new byte[initializationVectorLength];
+                bytes.get(initializationVector);
+                keyDescriptor = new KeyDescriptor(keyDescriptor.name, keyDescriptor.version, initializationVector);
+            }
 
             try {
                 return delegate.decodeValue(doWithCipher(this.decrypt.get(keyDescriptor), bytes));
@@ -117,7 +155,9 @@ public abstract class CipherCodec {
                 KeyDescriptor keyDescriptor = this.encrypt.encryptionKey();
                 Cipher cipher = this.encrypt.get(keyDescriptor);
 
+                byte[] initializationVector = getInitializationVector(cipher);
                 keyDescriptor.writeTo(target);
+                target.writeBytes(initializationVector);
                 doWithCipher(cipher, serialized, target);
             } catch (GeneralSecurityException e) {
                 throw new IllegalStateException(e);
@@ -149,10 +189,13 @@ public abstract class CipherCodec {
                 KeyDescriptor keyDescriptor = this.encrypt.encryptionKey();
                 Cipher cipher = this.encrypt.get(keyDescriptor);
 
+                byte[] initializationVector = getInitializationVector(cipher);
                 ByteBuffer intermediate = ByteBuffer
-                        .allocate(cipher.getOutputSize(serialized.remaining() + 3 + keyDescriptor.name.length + 10));
+                        .allocate(cipher.getOutputSize(serialized.remaining() + 3 + keyDescriptor.name.length + 10)
+                                + initializationVector.length);
 
                 keyDescriptor.writeTo(intermediate);
+                intermediate.put(initializationVector);
                 intermediate.put(doWithCipher(cipher, serialized));
                 intermediate.flip();
 
@@ -160,6 +203,18 @@ public abstract class CipherCodec {
             } catch (GeneralSecurityException e) {
                 throw new IllegalStateException(e);
             }
+        }
+
+        private byte[] getInitializationVector(Cipher cipher) {
+
+            if (initializationVectorLength == 0) {
+                return new byte[0];
+            }
+
+            byte[] initializationVector = cipher.getIV();
+            LettuceAssert.isTrue(initializationVector != null && initializationVector.length == initializationVectorLength,
+                    "Cipher initialization vector must match the configured length");
+            return initializationVector;
         }
 
         private void doWithCipher(Cipher cipher, ByteBuf serialized, ByteBuf target) throws GeneralSecurityException {
@@ -183,6 +238,9 @@ public abstract class CipherCodec {
             source.get(encrypted);
 
             byte[] update = cipher.update(encrypted);
+            if (update == null) {
+                update = new byte[0];
+            }
             byte[] finalBytes = cipher.doFinal();
 
             ByteBuffer buffer = ByteBuffer.allocate(update.length + finalBytes.length);
@@ -233,7 +291,13 @@ public abstract class CipherCodec {
 
         private final int version;
 
+        private final byte[] initializationVector;
+
         private KeyDescriptor(byte[] name, int version) {
+            this(name, version, new byte[0]);
+        }
+
+        private KeyDescriptor(byte[] name, int version, byte[] initializationVector) {
 
             for (byte b : name) {
                 if (b == '+' || b == '$') {
@@ -243,6 +307,7 @@ public abstract class CipherCodec {
             }
             this.name = name;
             this.version = version;
+            this.initializationVector = initializationVector;
         }
 
         /**
@@ -327,6 +392,17 @@ public abstract class CipherCodec {
             bytes.get(); // skip last char
 
             return new KeyDescriptor(name, Integer.parseInt(new String(versionBytes)));
+        }
+
+        /**
+         * Get the initialization vector stored with the value being decrypted.
+         *
+         * @return a copy of the IV, or an empty array when the codec does not store IVs or the descriptor is used for
+         *         encryption.
+         * @since 8.0
+         */
+        public byte[] getInitializationVector() {
+            return initializationVector.clone();
         }
 
         public int getVersion() {

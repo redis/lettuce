@@ -50,6 +50,38 @@ other constellations are possible like:
 
 - Any specialized codecs like the `BitStringCodec` (see below)
 
+### Storing initialization vectors with encrypted values
+
+Use the four-argument `CipherCodec.forValues` factory when the cipher requires a fresh initialization vector (IV) for each value.
+The codec stores the configured number of IV bytes after the key descriptor and before the ciphertext:
+
+```text
+$<key name>+<key version>$<initialization vector><ciphertext>
+```
+
+For example, AES/GCM can use a 12-byte IV and a 128-bit authentication tag:
+
+```java
+RedisCodec<String, String> codec = CipherCodec.forValues(StringCodec.UTF8,
+        descriptor -> {
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            return cipher;
+        },
+        descriptor -> {
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey,
+                    new GCMParameterSpec(128, descriptor.getInitializationVector()));
+            return cipher;
+        }, 12);
+```
+
+Here `secretKey` is your AES key, `Cipher` is `javax.crypto.Cipher`, and `GCMParameterSpec` is `javax.crypto.spec.GCMParameterSpec`.
+The encryption supplier must initialize each cipher with a fresh IV of exactly the configured length; the example lets the cipher provider generate it.
+The decryption supplier receives the stored IV through `KeyDescriptor.getInitializationVector()` and can still use the descriptor's name and version to select the key.
+Readers and writers must agree on the IV length and cipher parameters.
+The three-argument factory retains its existing format without a stored IV; existing values require that factory and their original IV configuration to decode.
+
 ### Exception handling during Encoding
 
 Codecs should be designed in a way that doesn’t allow encoding
