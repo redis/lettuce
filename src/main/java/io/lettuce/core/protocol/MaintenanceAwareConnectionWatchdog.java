@@ -9,8 +9,9 @@ package io.lettuce.core.protocol;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
-import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.EventBus;
+import io.lettuce.core.protocol.MaintenanceNotification.Moving;
+import io.lettuce.core.protocol.MaintenanceNotification.ShardScoped;
 import io.lettuce.core.resource.Delay;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -23,15 +24,12 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -51,25 +49,7 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MaintenanceAwareConnectionWatchdog.class);
 
-    private static final String REBIND_MESSAGE_TYPE = "MOVING";
-
-    private static final String MIGRATING_MESSAGE_TYPE = "MIGRATING";
-
-    private static final String MIGRATED_MESSAGE_TYPE = "MIGRATED";
-
-    private static final String FAILING_OVER_MESSAGE_TYPE = "FAILING_OVER";
-
-    private static final String FAILED_OVER_MESSAGE_TYPE = "FAILED_OVER";
-
     public static final AttributeKey<RebindState> REBIND_ATTRIBUTE = AttributeKey.newInstance("rebindAddress");
-
-    private static final int MIGRATING_SHARDS_INDEX = 3;
-
-    private static final int MIGRATED_SHARDS_INDEX = 2;
-
-    private static final int FAILING_OVER_SHARDS_INDEX = 3;
-
-    private static final int FAILED_OVER_SHARDS_INDEX = 2;
 
     private Channel channel;
 
@@ -121,37 +101,44 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     @Override
     public void onPushMessage(PushMessage message) {
-        String mType = message.getType();
 
-        if (REBIND_MESSAGE_TYPE.equals(mType)) {
-            logger.debug("Rebind requested");
-            final MovingEvent movingEvent = MovingEvent.from(message);
-            if (movingEvent != null) {
-                if (null == movingEvent.getEndpoint()) {
+        MaintenanceNotification notification = MaintenanceNotifications.from(message);
+        if (notification == null) {
+            return;
+        }
+
+        switch (notification.getType()) {
+            case MOVING:
+                logger.debug("Rebind requested");
+                Moving moving = (Moving) notification;
+                if (null == moving.getEndpoint()) {
                     logger.debug("[channel={}] Deferred Rebind requested. Rebinding to current endpoint after '{}'",
-                            channel.id(), movingEvent.getTime());
-                    channel.eventLoop().schedule(() -> rebind(movingEvent), movingEvent.getTime().toMillis() / 2,
-                            TimeUnit.MILLISECONDS);
+                            channel.id(), moving.getTime());
+                    channel.eventLoop().schedule(() -> rebind(moving), moving.getTime().toMillis() / 2, TimeUnit.MILLISECONDS);
                 } else {
-                    rebind(movingEvent);
+                    rebind(moving);
                 }
-            }
-        } else if (MIGRATING_MESSAGE_TYPE.equals(mType)) {
-            logger.debug("[{}] Shard migration started", ChannelLogDescriptor.logDescriptor(channel));
-            notifyMigrateStarted(getMigratingShards(message));
-        } else if (MIGRATED_MESSAGE_TYPE.equals(mType)) {
-            logger.debug("[{}] Shard migration completed", ChannelLogDescriptor.logDescriptor(channel));
-            notifyMigrateCompleted(getMigratedShards(message));
-        } else if (FAILING_OVER_MESSAGE_TYPE.equals(mType)) {
-            logger.debug("[{}] Failover started", ChannelLogDescriptor.logDescriptor(channel));
-            notifyFailoverStarted(getFailingOverShards(message));
-        } else if (FAILED_OVER_MESSAGE_TYPE.equals(mType)) {
-            logger.debug("[{}] Failover completed", ChannelLogDescriptor.logDescriptor(channel));
-            notifyFailoverCompleted(getFailedOverShards(message));
+                break;
+            case MIGRATING:
+                logger.debug("[{}] Shard migration started", ChannelLogDescriptor.logDescriptor(channel));
+                notifyMigrateStarted(((ShardScoped) notification).getShards());
+                break;
+            case MIGRATED:
+                logger.debug("[{}] Shard migration completed", ChannelLogDescriptor.logDescriptor(channel));
+                notifyMigrateCompleted(((ShardScoped) notification).getShards());
+                break;
+            case FAILING_OVER:
+                logger.debug("[{}] Failover started", ChannelLogDescriptor.logDescriptor(channel));
+                notifyFailoverStarted(((ShardScoped) notification).getShards());
+                break;
+            case FAILED_OVER:
+                logger.debug("[{}] Failover completed", ChannelLogDescriptor.logDescriptor(channel));
+                notifyFailoverCompleted(((ShardScoped) notification).getShards());
+                break;
         }
     }
 
-    private void rebind(MovingEvent movingEvent) {
+    private void rebind(Moving movingEvent) {
         logger.debug("[{}] Rebind to '{}'", ChannelLogDescriptor.logDescriptor(channel), movingEvent.getEndpoint());
         channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
         rebindAwareAddressSupplier.rebind(movingEvent.getTime(), movingEvent.getEndpoint());
@@ -176,135 +163,6 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
         // Otherwise CommandHandler#decode flips the state to COMPLETED once the stack has been drained and
         // channelReadComplete() closes the channel and reports the completion of the re-bind.
-    }
-
-    private String getMigratingShards(PushMessage message) {
-        List<Object> content = message.getContent();
-
-        if (isInvalidMaintenanceEvent(content, 4))
-            return null;
-
-        return getShards(content, MIGRATING_SHARDS_INDEX, MIGRATING_MESSAGE_TYPE);
-    }
-
-    private String getMigratedShards(PushMessage message) {
-        List<Object> content = message.getContent();
-
-        if (isInvalidMaintenanceEvent(content, 3))
-            return null;
-
-        return getShards(content, MIGRATED_SHARDS_INDEX, MIGRATED_MESSAGE_TYPE);
-    }
-
-    private String getFailingOverShards(PushMessage message) {
-        List<Object> content = message.getContent();
-
-        if (isInvalidMaintenanceEvent(content, 4))
-            return null;
-
-        return getShards(content, FAILING_OVER_SHARDS_INDEX, FAILING_OVER_MESSAGE_TYPE);
-    }
-
-    private String getFailedOverShards(PushMessage message) {
-        List<Object> content = message.getContent();
-
-        if (isInvalidMaintenanceEvent(content, 3))
-            return null;
-
-        return getShards(content, FAILED_OVER_SHARDS_INDEX, FAILED_OVER_MESSAGE_TYPE);
-    }
-
-    private static boolean isInvalidMaintenanceEvent(List<Object> content, int expectedSize) {
-        if (content.size() < expectedSize) {
-            logger.warn("Invalid maintenance message format, expected at least {} elements, got {}", expectedSize,
-                    content.size());
-            return true;
-        }
-
-        return false;
-    }
-
-    private static String getShards(List<Object> content, int shardsIndex, String maintenanceEvent) {
-        Object shardsObject = content.get(shardsIndex);
-
-        if (!(shardsObject instanceof ByteBuffer)) {
-            logger.warn("Invalid shards format, expected ByteBuffer, got {} for {} maintenance event",
-                    shardsObject != null ? shardsObject.getClass() : "null", maintenanceEvent);
-            return null;
-        }
-
-        return StringCodec.UTF8.decodeKey((ByteBuffer) shardsObject);
-    }
-
-    static class MovingEvent {
-
-        private static final int EVENT_ID_INDEX = 1;
-
-        private static final int TIME_INDEX = 2;
-
-        private static final int ADDRESS_INDEX = 3;
-
-        private final Long eventId;
-
-        private final InetSocketAddress endpoint;
-
-        private final Duration time;
-
-        private MovingEvent(Long eventId, Duration time, InetSocketAddress endpoint) {
-            this.eventId = eventId;
-            this.endpoint = endpoint;
-            this.time = time;
-        }
-
-        static MovingEvent from(PushMessage message) {
-            if (!REBIND_MESSAGE_TYPE.equals(message.getType())) {
-                return null;
-            }
-
-            List<Object> content = message.getContent();
-
-            if (content.size() != 4) {
-                logger.warn("Invalid re-bind message format, expected 4 elements, got {}", content.size());
-                return null;
-            }
-
-            try {
-                Long eventId = (Long) content.get(EVENT_ID_INDEX);
-                Long timeInSec = (Long) content.get(TIME_INDEX);
-                ByteBuffer addressBuffer = (ByteBuffer) content.get(ADDRESS_INDEX);
-
-                InetSocketAddress endpoint = null;
-                if (addressBuffer != null) {
-                    String addressAndPort = StringCodec.UTF8.decodeKey(addressBuffer);
-
-                    // Handle "none" option where endpoint is null
-                    if (addressAndPort != null && !"null".equals(addressAndPort)) {
-                        String[] parts = addressAndPort.split(":");
-                        String address = parts[0];
-                        int port = Integer.parseInt(parts[1]);
-                        endpoint = new InetSocketAddress(address, port);
-                    }
-                }
-
-                return new MovingEvent(eventId, Duration.ofSeconds(timeInSec), endpoint);
-            } catch (Exception e) {
-                logger.error("Invalid re-bind message format", e);
-                return null;
-            }
-        }
-
-        public Long getEventId() {
-            return eventId;
-        }
-
-        public InetSocketAddress getEndpoint() {
-            return endpoint;
-        }
-
-        public Duration getTime() {
-            return time;
-        }
-
     }
 
     /**
