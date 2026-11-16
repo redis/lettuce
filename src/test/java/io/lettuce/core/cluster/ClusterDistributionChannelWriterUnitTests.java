@@ -176,6 +176,11 @@ class ClusterDistributionChannelWriterUnitTests {
     }
 
     @Test
+    void shouldExposeDefaultWriterAsDelegate() {
+        assertThat(clusterDistributionChannelWriter.getDelegate()).isSameAs(defaultWriter);
+    }
+
+    @Test
     void shouldReturnIntentForWriteCommand() {
 
         ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter,

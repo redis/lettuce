@@ -156,8 +156,9 @@ public class ConnectionBuilder {
                     clientResources.reconnectDelay(), clientOptions, bootstrap, clientResources.timer(),
                     clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
                     clientResources.eventBus(), endpoint);
-            if (connection.getChannelWriter() instanceof MaintenanceAwareComponent) {
-                maintenanceAwareWatchdog.setMaintenanceEventListener((MaintenanceAwareComponent) connection.getChannelWriter());
+            MaintenanceAwareComponent maintenanceAwareComponent = findMaintenanceAwareComponent(connection.getChannelWriter());
+            if (maintenanceAwareComponent != null) {
+                maintenanceAwareWatchdog.setMaintenanceEventListener(maintenanceAwareComponent);
             }
             watchdog = maintenanceAwareWatchdog;
         } else {
@@ -170,6 +171,28 @@ public class ConnectionBuilder {
 
         connectionWatchdog = watchdog;
         return watchdog;
+    }
+
+    /**
+     * Find the first {@link MaintenanceAwareComponent} in a chain of delegating writers.
+     *
+     * @param writer the outermost writer
+     * @return the component, or {@code null} if the chain contains none
+     */
+    static MaintenanceAwareComponent findMaintenanceAwareComponent(RedisChannelWriter writer) {
+
+        Object current = writer;
+
+        while (current != null) {
+
+            if (current instanceof MaintenanceAwareComponent) {
+                return (MaintenanceAwareComponent) current;
+            }
+
+            current = current instanceof Delegating ? ((Delegating<?>) current).getDelegate() : null;
+        }
+
+        return null;
     }
 
     public ChannelInitializer<Channel> build(SocketAddress socketAddress) {
