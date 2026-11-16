@@ -54,6 +54,8 @@ public class ClusterTopologyRefreshOptions {
 
     public static final boolean DEFAULT_DYNAMIC_REFRESH_SOURCES = true;
 
+    public static final int DEFAULT_MAX_TOPOLOGY_REFRESH_SOURCES = Integer.MAX_VALUE;
+
     public static final boolean DEFAULT_PERIODIC_REFRESH_ENABLED = false;
 
     public static final long DEFAULT_REFRESH_PERIOD = 60;
@@ -73,6 +75,8 @@ public class ClusterTopologyRefreshOptions {
 
     private final boolean dynamicRefreshSources;
 
+    private final int maxTopologyRefreshSources;
+
     private final boolean periodicRefreshEnabled;
 
     private final Duration refreshPeriod;
@@ -85,6 +89,7 @@ public class ClusterTopologyRefreshOptions {
         this.adaptiveRefreshTimeout = builder.adaptiveRefreshTimeout;
         this.closeStaleConnections = builder.closeStaleConnections;
         this.dynamicRefreshSources = builder.dynamicRefreshSources;
+        this.maxTopologyRefreshSources = builder.maxTopologyRefreshSources;
         this.periodicRefreshEnabled = builder.periodicRefreshEnabled;
         this.refreshPeriod = builder.refreshPeriod;
         this.refreshTriggersReconnectAttempts = builder.refreshTriggersReconnectAttempts;
@@ -96,6 +101,7 @@ public class ClusterTopologyRefreshOptions {
         this.adaptiveRefreshTimeout = original.adaptiveRefreshTimeout;
         this.closeStaleConnections = original.closeStaleConnections;
         this.dynamicRefreshSources = original.dynamicRefreshSources;
+        this.maxTopologyRefreshSources = original.maxTopologyRefreshSources;
         this.periodicRefreshEnabled = original.periodicRefreshEnabled;
         this.refreshPeriod = original.refreshPeriod;
         this.refreshTriggersReconnectAttempts = original.refreshTriggersReconnectAttempts;
@@ -150,6 +156,8 @@ public class ClusterTopologyRefreshOptions {
         private boolean closeStaleConnections = DEFAULT_CLOSE_STALE_CONNECTIONS;
 
         private boolean dynamicRefreshSources = DEFAULT_DYNAMIC_REFRESH_SOURCES;
+
+        private int maxTopologyRefreshSources = DEFAULT_MAX_TOPOLOGY_REFRESH_SOURCES;
 
         private boolean periodicRefreshEnabled = DEFAULT_PERIODIC_REFRESH_ENABLED;
 
@@ -290,17 +298,35 @@ public class ClusterTopologyRefreshOptions {
 
         /**
          * Discover cluster nodes from topology and use the discovered nodes as source for the cluster topology. Using dynamic
-         * refresh will query all discovered nodes for the cluster topology and calculate the number of clients for each node.
-         * If set to {@code false}, only the initial seed nodes will be used as sources for topology discovery and the number of
-         * clients including response latency will be obtained only for the initial seed nodes. This can be useful when using
-         * Redis Cluster with many nodes. Defaults to {@code true}. See
-         * {@link ClusterTopologyRefreshOptions#DEFAULT_DYNAMIC_REFRESH_SOURCES}.
+         * refresh will query all discovered nodes for the cluster topology and calculate the number of clients for each node
+         * unless {@link #maxTopologyRefreshSources(int)} limits the refresh sources. If set to {@code false}, only the initial
+         * seed nodes will be used as sources for topology discovery and the number of clients including response latency will
+         * be obtained only for the initial seed nodes. This can be useful when using Redis Cluster with many nodes. Defaults to
+         * {@code true}. See {@link ClusterTopologyRefreshOptions#DEFAULT_DYNAMIC_REFRESH_SOURCES}.
          *
          * @param dynamicRefreshSources {@code true} to discover and query all cluster nodes for obtaining the cluster topology
          * @return {@code this}
          */
         public Builder dynamicRefreshSources(boolean dynamicRefreshSources) {
             this.dynamicRefreshSources = dynamicRefreshSources;
+            return this;
+        }
+
+        /**
+         * Limit the number of nodes queried during topology refresh. The limit applies to seed nodes and discovered nodes. A
+         * value of {@link Integer#MAX_VALUE} queries all available sources. Defaults to
+         * {@link ClusterTopologyRefreshOptions#DEFAULT_MAX_TOPOLOGY_REFRESH_SOURCES}.
+         *
+         * @param maxTopologyRefreshSources maximum number of nodes to query during topology refresh, must be greater than
+         *        {@literal 0}
+         * @return {@code this}
+         * @since 7.6
+         */
+        public Builder maxTopologyRefreshSources(int maxTopologyRefreshSources) {
+
+            LettuceAssert.isTrue(maxTopologyRefreshSources > 0, "Max topology refresh sources must be greater 0");
+
+            this.maxTopologyRefreshSources = maxTopologyRefreshSources;
             return this;
         }
 
@@ -447,16 +473,27 @@ public class ClusterTopologyRefreshOptions {
 
     /**
      * Discover cluster nodes from topology and use the discovered nodes as source for the cluster topology. Using dynamic
-     * refresh will query all discovered nodes for the cluster topology and calculate the number of clients for each node. If
-     * set to {@code false}, only the initial seed nodes will be used as sources for topology discovery and the number of
-     * clients including response latency will be obtained only for the initial seed nodes. This can be useful when using Redis
-     * Cluster with many nodes. Defaults to {@code true}. See
+     * refresh will query all discovered nodes for the cluster topology and calculate the number of clients for each node unless
+     * {@link #getMaxTopologyRefreshSources()} limits the refresh sources. If set to {@code false}, only the initial seed nodes
+     * will be used as sources for topology discovery and the number of clients including response latency will be obtained only
+     * for the initial seed nodes. This can be useful when using Redis Cluster with many nodes. Defaults to {@code true}. See
      * {@link ClusterTopologyRefreshOptions#DEFAULT_DYNAMIC_REFRESH_SOURCES}.
      *
      * @return {@code true} if dynamic refresh sources are enabled
      */
     public boolean useDynamicRefreshSources() {
         return dynamicRefreshSources;
+    }
+
+    /**
+     * Maximum number of nodes queried during topology refresh. Defaults to
+     * {@link ClusterTopologyRefreshOptions#DEFAULT_MAX_TOPOLOGY_REFRESH_SOURCES}.
+     *
+     * @return maximum number of nodes queried during topology refresh
+     * @since 7.6
+     */
+    public int getMaxTopologyRefreshSources() {
+        return maxTopologyRefreshSources;
     }
 
     /**

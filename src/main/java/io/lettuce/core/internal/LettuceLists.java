@@ -72,6 +72,43 @@ public final class LettuceLists {
     }
 
     /**
+     * Creates a new {@link ArrayList} containing the first distinct elements from {@code elements} up to {@code maxElements}.
+     * Encounter order is preserved.
+     *
+     * @param elements the elements that the list should contain, must not be {@code null}.
+     * @param maxElements maximum number of distinct elements to include, must not be negative.
+     * @param <T> the element type
+     * @return a new {@link ArrayList} containing at most {@code maxElements} distinct elements from {@code elements}.
+     */
+    public static <T> List<T> newListDeduplicated(Iterable<? extends T> elements, int maxElements) {
+
+        LettuceAssert.notNull(elements, "Iterable must not be null");
+        LettuceAssert.isTrue(maxElements >= 0, "Max elements must not be negative");
+
+        List<T> objects = new ArrayList<>();
+
+        if (maxElements == 0) {
+            return objects;
+        }
+
+        HashSet<T> seen = new HashSet<>();
+
+        for (T element : elements) {
+            if (!seen.add(element)) {
+                continue;
+            }
+
+            objects.add(element);
+
+            if (objects.size() == maxElements) {
+                break;
+            }
+        }
+
+        return objects;
+    }
+
+    /**
      * Creates a new unmodifiable {@link ArrayList} containing all elements from {@code elements}.
      *
      * @param elements the elements that the list should contain, must not be {@code null}.
