@@ -12,6 +12,8 @@ import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.protocol.MaintenanceNotification.Moving;
 import io.lettuce.core.protocol.MaintenanceNotification.ShardScoped;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrated;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrating;
 import io.lettuce.core.resource.Delay;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -135,6 +137,14 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
                 logger.debug("[{}] Failover completed", ChannelLogDescriptor.logDescriptor(channel));
                 notifyFailoverCompleted(((ShardScoped) notification).getShards());
                 break;
+            case SMIGRATING:
+                logger.debug("[{}] Slot migration started", ChannelLogDescriptor.logDescriptor(channel));
+                notifySlotMigrateStarted(((SlotsMigrating) notification).getSlots().toString());
+                break;
+            case SMIGRATED:
+                logger.debug("[{}] Slot migration completed", ChannelLogDescriptor.logDescriptor(channel));
+                notifySlotMigrateCompleted(((SlotsMigrated) notification).getMigrations().toString());
+                break;
         }
     }
 
@@ -206,6 +216,14 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     private void notifyFailoverCompleted(String shards) {
         this.componentListeners.forEach(component -> component.onFailoverCompleted(shards));
+    }
+
+    private void notifySlotMigrateStarted(String slots) {
+        this.componentListeners.forEach(component -> component.onSlotMigrateStarted(slots));
+    }
+
+    private void notifySlotMigrateCompleted(String slots) {
+        this.componentListeners.forEach(component -> component.onSlotMigrateCompleted(slots));
     }
 
     /**

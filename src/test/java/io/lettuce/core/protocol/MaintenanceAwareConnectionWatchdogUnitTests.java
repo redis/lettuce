@@ -319,6 +319,59 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     }
 
     @Test
+    void testOnPushMessageSlotsMigrating() {
+        // Given
+        when(pushMessage.getType()).thenReturn("SMIGRATING");
+        when(pushMessage.getContent()).thenReturn(Arrays.asList("SMIGRATING", 1L, StringCodec.UTF8.encodeKey("1,5-7")));
+
+        watchdog.setMaintenanceEventListener(component1);
+        watchdog.setMaintenanceEventListener(component2);
+
+        // When
+        watchdog.onPushMessage(pushMessage);
+
+        // Then
+        verify(component1).onSlotMigrateStarted(eq("[1, 5-7]"));
+        verify(component2).onSlotMigrateStarted(eq("[1, 5-7]"));
+        verify(component1, never()).onRebindStarted(any(), any());
+    }
+
+    @Test
+    void testOnPushMessageSlotsMigrated() {
+        // Given
+        List<Object> migration = Arrays.asList(StringCodec.UTF8.encodeKey("a:1"), StringCodec.UTF8.encodeKey("b:2"),
+                StringCodec.UTF8.encodeKey("1,5-7"));
+
+        when(pushMessage.getType()).thenReturn("SMIGRATED");
+        when(pushMessage.getContent()).thenReturn(Arrays.asList("SMIGRATED", 1L, Arrays.asList(migration)));
+
+        watchdog.setMaintenanceEventListener(component1);
+
+        // When
+        watchdog.onPushMessage(pushMessage);
+
+        // Then
+        verify(component1).onSlotMigrateCompleted(eq("[a:1 -> b:2: [1, 5-7]]"));
+        verify(component1, never()).onRebindStarted(any(), any());
+        verify(rebindAttribute, never()).set(any());
+    }
+
+    @Test
+    void testOnPushMessageSlotsMigratedWithMalformedContent() {
+        // Given
+        when(pushMessage.getType()).thenReturn("SMIGRATED");
+        when(pushMessage.getContent()).thenReturn(Arrays.asList("SMIGRATED", 1L));
+
+        watchdog.setMaintenanceEventListener(component1);
+
+        // When
+        watchdog.onPushMessage(pushMessage);
+
+        // Then - relaxation still ends
+        verify(component1).onSlotMigrateCompleted(eq("[]"));
+    }
+
+    @Test
     void testOnPushMessageMigrated() {
         // Given
         when(pushMessage.getType()).thenReturn("MIGRATED");

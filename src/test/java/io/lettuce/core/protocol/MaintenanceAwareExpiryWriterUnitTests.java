@@ -6,6 +6,7 @@
  */
 package io.lettuce.core.protocol;
 
+import static io.lettuce.test.ReflectionTestUtils.getField;
 import static io.lettuce.test.ReflectionTestUtils.setField;
 
 import static io.lettuce.TestTags.UNIT_TEST;
@@ -283,6 +284,42 @@ class MaintenanceAwareExpiryWriterUnitTests {
 
         // Then
         verify(timer).newTimeout(any(TimerTask.class), eq(500L), eq(TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    void testOnSlotMigrateStarted() {
+        // When
+        writer.onSlotMigrateStarted("[1-2]");
+
+        // Then
+        assertThat((Boolean) getField(writer, "relaxTimeouts")).isTrue();
+    }
+
+    @Test
+    void testOnSlotMigrateCompleted() {
+        // Given
+        writer.onSlotMigrateStarted("[1-2]");
+
+        // When
+        writer.onSlotMigrateCompleted("[a:1 -> b:2: [1-2]]");
+
+        // Then - still relaxed until the delayed restore fires
+        assertThat((Boolean) getField(writer, "relaxTimeouts")).isTrue();
+        verify(timer).newTimeout(any(TimerTask.class), eq(500L), eq(TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    void testOnSlotMigrateStartedCancelsPendingRestore() {
+        // Given
+        writer.onSlotMigrateStarted("[1-2]");
+        writer.onSlotMigrateCompleted("[a:1 -> b:2: [1-2]]");
+
+        // When
+        writer.onSlotMigrateStarted("[3-4]");
+
+        // Then
+        verify(timeout).cancel();
+        assertThat((Boolean) getField(writer, "relaxTimeouts")).isTrue();
     }
 
     @Test

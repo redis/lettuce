@@ -41,6 +41,24 @@ public interface MaintenanceAwareComponent {
     void onFailoverCompleted(String shards);
 
     /**
+     * Called whenever a slot migration is initiated.
+     *
+     * @param slots the migrating slots
+     * @since 8.0
+     */
+    default void onSlotMigrateStarted(String slots) {
+    }
+
+    /**
+     * Called whenever a slot migration is completed.
+     *
+     * @param slots the migrated slots
+     * @since 8.0
+     */
+    default void onSlotMigrateCompleted(String slots) {
+    }
+
+    /**
      * Called whenever a re-bind has been initiated by the remote server
      * <p>
      * A specific endpoint is going to move to another node within <time> seconds
