@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.util.List;
 
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.HostAndPort;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -57,6 +58,19 @@ abstract class MaintenanceNotification {
         }
 
         return null;
+    }
+
+    /**
+     * @return the parsed {@code host:port}, or {@code null} if it is malformed or has no port
+     */
+    private static HostAndPort hostAndPort(String hostAndPort) {
+
+        try {
+            HostAndPort parsed = HostAndPort.parseCompat(hostAndPort);
+            return parsed.hasPort() ? parsed : null;
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static boolean isNullOr(Object value, Class<?> type) {
@@ -159,16 +173,9 @@ abstract class MaintenanceNotification {
 
         private static InetSocketAddress endpoint(String addressAndPort) {
 
-            String[] parts = addressAndPort.split(":");
-            if (parts.length < 2) {
-                return null;
-            }
+            HostAndPort hostAndPort = hostAndPort(addressAndPort);
 
-            try {
-                return new InetSocketAddress(parts[0], Integer.parseInt(parts[1]));
-            } catch (IllegalArgumentException e) {
-                return null;
-            }
+            return hostAndPort != null ? new InetSocketAddress(hostAndPort.getHostText(), hostAndPort.getPort()) : null;
         }
 
         Duration getTime() {

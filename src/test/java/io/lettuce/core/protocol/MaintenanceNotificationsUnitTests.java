@@ -56,6 +56,14 @@ class MaintenanceNotificationsUnitTests {
     }
 
     @Test
+    void shouldDecodeMovingEndpointForms() {
+
+        assertThat(movingEndpoint("redis.example.com:6380")).isEqualTo(new InetSocketAddress("redis.example.com", 6380));
+        assertThat(movingEndpoint("[2001:db8::1]:6380")).isEqualTo(new InetSocketAddress("2001:db8::1", 6380));
+        assertThat(movingEndpoint("2001:db8::1:6380")).isEqualTo(new InetSocketAddress("2001:db8::1", 6380));
+    }
+
+    @Test
     void shouldRejectMalformedMoving() {
 
         assertThat(MaintenanceNotifications.from(push("MOVING", 1L))).isNull();
@@ -64,6 +72,7 @@ class MaintenanceNotificationsUnitTests {
         assertThat(MaintenanceNotifications.from(push("MOVING", 1L, 15L, "not-a-bytebuffer"))).isNull();
         assertThat(MaintenanceNotifications.from(push("MOVING", 1L, 15L, bytes("no-port")))).isNull();
         assertThat(MaintenanceNotifications.from(push("MOVING", 1L, 15L, bytes("host:port")))).isNull();
+        assertThat(MaintenanceNotifications.from(push("MOVING", 1L, 15L, bytes("host:70000")))).isNull();
     }
 
     @Test
@@ -127,6 +136,10 @@ class MaintenanceNotificationsUnitTests {
 
         assertThat(MaintenanceNotifications.from(push("message", bytes("channel"), bytes("payload")))).isNull();
         assertThat(MaintenanceNotifications.from(push("SMIGRATED", 1L))).isNull();
+    }
+
+    private static InetSocketAddress movingEndpoint(String addressAndPort) {
+        return ((Moving) MaintenanceNotifications.from(push("MOVING", 1L, 15L, bytes(addressAndPort)))).getEndpoint();
     }
 
     private static void assertShards(MaintenanceNotification notification, Type type, Long seqId, String shards) {
