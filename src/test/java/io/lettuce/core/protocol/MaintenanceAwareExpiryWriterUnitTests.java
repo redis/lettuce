@@ -40,6 +40,7 @@ import java.time.Duration;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -288,6 +289,42 @@ class MaintenanceAwareExpiryWriterUnitTests {
     }
 
     @Test
+    void testOnSlotMigrateStarted() {
+        // When
+        writer.onMaintenanceNotification(slotsMigrating("1-2"));
+
+        // Then
+        assertThat((Boolean) getField(writer, "relaxTimeouts")).isTrue();
+    }
+
+    @Test
+    void testOnSlotMigrateCompleted() {
+        // Given
+        writer.onMaintenanceNotification(slotsMigrating("1-2"));
+
+        // When
+        writer.onMaintenanceNotification(slotsMigrated("a:1", "b:2", "1-2"));
+
+        // Then - still relaxed until the delayed restore fires
+        assertThat((Boolean) getField(writer, "relaxTimeouts")).isTrue();
+        verify(timer).newTimeout(any(TimerTask.class), eq(500L), eq(TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    void testOnSlotMigrateStartedCancelsPendingRestore() {
+        // Given
+        writer.onMaintenanceNotification(slotsMigrating("1-2"));
+        writer.onMaintenanceNotification(slotsMigrated("a:1", "b:2", "1-2"));
+
+        // When
+        writer.onMaintenanceNotification(slotsMigrating("3-4"));
+
+        // Then
+        verify(timeout).cancel();
+        assertThat((Boolean) getField(writer, "relaxTimeouts")).isTrue();
+    }
+
+    @Test
     void testOnFailoverStarted() {
         // Given
         String shards = "[\"1\",\"2\",\"3\"]";
@@ -445,6 +482,15 @@ class MaintenanceAwareExpiryWriterUnitTests {
 
     private static MaintenanceNotification failedOver(String shards) {
         return MaintenanceNotification.FailedOver.from(Arrays.asList(bytes("FAILED_OVER"), 1L, bytes(shards)));
+    }
+
+    private static MaintenanceNotification slotsMigrating(String slots) {
+        return MaintenanceNotification.SlotsMigrating.from(Arrays.asList(bytes("SMIGRATING"), 1L, bytes(slots)));
+    }
+
+    private static MaintenanceNotification slotsMigrated(String source, String destination, String slots) {
+        return MaintenanceNotification.SlotsMigrated.from(Arrays.asList(bytes("SMIGRATED"), 1L,
+                Collections.singletonList(Arrays.asList(bytes(source), bytes(destination), bytes(slots)))));
     }
 
     private static ByteBuffer bytes(String value) {

@@ -12,6 +12,8 @@ import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.protocol.MaintenanceNotification.Moving;
 import io.lettuce.core.protocol.MaintenanceNotification.ShardScoped;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrated;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrating;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
@@ -172,6 +174,13 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
                 break;
             case FAILED_OVER:
                 disableRelaxedTimeoutDelayed("Failover completed: " + ((ShardScoped) notification).getShards(), relaxedTimeout);
+                break;
+            case SMIGRATING:
+                enableRelaxedTimeout("Slot migration started for slots: " + ((SlotsMigrating) notification).getSlots());
+                break;
+            case SMIGRATED:
+                disableRelaxedTimeoutDelayed("Slot migration completed: " + ((SlotsMigrated) notification).getMigrations(),
+                        relaxedTimeout);
                 break;
             default:
                 // MOVING relaxes timeouts once the re-bind starts, see onRebindStarted(Moving)
