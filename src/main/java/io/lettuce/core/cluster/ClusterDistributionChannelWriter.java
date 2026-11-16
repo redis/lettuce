@@ -33,6 +33,7 @@ import java.util.stream.IntStream;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.CommandListenerWriter;
+import io.lettuce.core.Delegating;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
@@ -69,7 +70,7 @@ import io.lettuce.core.resource.ClientResources;
  * @author Vaibhav Vashisht
  * @since 3.0
  */
-class ClusterDistributionChannelWriter implements RedisChannelWriter {
+class ClusterDistributionChannelWriter implements RedisChannelWriter, Delegating<RedisChannelWriter> {
 
     private final RedisChannelWriter defaultWriter;
 
@@ -458,6 +459,14 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         }
 
         return Futures.allOf(futures);
+    }
+
+    /**
+     * @return the writer of the default connection
+     */
+    @Override
+    public RedisChannelWriter getDelegate() {
+        return defaultWriter;
     }
 
     public void disconnectDefaultEndpoint() {
