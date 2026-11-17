@@ -88,6 +88,8 @@ public class ConnectionBuilder {
 
     private ReconnectionListener reconnectionListener = ReconnectionListener.NO_OP;
 
+    private MaintenanceNotificationListener maintenanceNotificationListener;
+
     private ConnectionWatchdog connectionWatchdog;
 
     private RedisURI redisURI;
@@ -160,6 +162,9 @@ public class ConnectionBuilder {
             if (writerListener != null) {
                 maintenanceAwareWatchdog.addMaintenanceNotificationListener(writerListener);
             }
+            if (maintenanceNotificationListener != null) {
+                maintenanceAwareWatchdog.addMaintenanceNotificationListener(maintenanceNotificationListener);
+            }
             watchdog = maintenanceAwareWatchdog;
         } else {
             watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
@@ -197,6 +202,18 @@ public class ConnectionBuilder {
 
     public ChannelInitializer<Channel> build(SocketAddress socketAddress) {
         return new PlainChannelInitializer(this::buildHandlers, clientResources);
+    }
+
+    /**
+     * Set a listener for the maintenance notifications of the connection, in addition to the connection's own writer.
+     *
+     * @param maintenanceNotificationListener the listener, may be {@code null}
+     * @return {@code this}
+     * @since 8.0
+     */
+    public ConnectionBuilder maintenanceNotificationListener(MaintenanceNotificationListener maintenanceNotificationListener) {
+        this.maintenanceNotificationListener = maintenanceNotificationListener;
+        return this;
     }
 
     public ConnectionBuilder socketAddressSupplier(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {

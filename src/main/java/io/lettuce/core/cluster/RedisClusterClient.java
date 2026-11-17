@@ -163,6 +163,9 @@ public class RedisClusterClient extends AbstractRedisClient {
     private final ClusterTopologyRefreshScheduler topologyRefreshScheduler = new ClusterTopologyRefreshScheduler(
             this::getClusterClientOptions, this::getPartitions, this::refreshPartitionsAsync, getResources());
 
+    private final ClusterMaintenanceCoordinator maintenanceCoordinator = new ClusterMaintenanceCoordinator(
+            topologyRefreshScheduler::requestMaintenanceRefresh);
+
     private final Iterable<RedisURI> initialUris;
 
     private volatile Partitions partitions;
@@ -898,6 +901,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         connectionBuilder.connectionInitializer(createHandshake(state));
 
         connectionBuilder.reconnectionListener(new ReconnectEventListener(topologyRefreshScheduler));
+        connectionBuilder.maintenanceNotificationListener(maintenanceCoordinator);
         connectionBuilder.clientOptions(getClusterClientOptions());
         connectionBuilder.connection(connection);
         connectionBuilder.clientResources(getResources());

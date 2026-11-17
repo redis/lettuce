@@ -107,6 +107,17 @@ public abstract class MaintenanceNotification {
         return ranges;
     }
 
+    private static Long seqId(List<Object> content, Type type) {
+
+        Long seqId = longAt(content, SEQ_ID_INDEX);
+
+        if (seqId == null) {
+            logger.warn("Invalid {} message format, expected sequence id at index {}: {}", type, SEQ_ID_INDEX, content);
+        }
+
+        return seqId;
+    }
+
     private static boolean isNullOr(Object value, Class<?> type) {
         return value == null || type.isInstance(value);
     }
@@ -424,7 +435,7 @@ public abstract class MaintenanceNotification {
                 slots.addAll(ranges);
             }
 
-            return new SlotsMigrating(longAt(content, SEQ_ID_INDEX), Collections.unmodifiableList(slots));
+            return new SlotsMigrating(seqId(content, Type.SMIGRATING), Collections.unmodifiableList(slots));
         }
 
         public List<SlotRange> getSlots() {
@@ -473,7 +484,7 @@ public abstract class MaintenanceNotification {
                 logger.warn("Invalid SMIGRATED message format, expected migrations at index {}: {}", MIGRATIONS_INDEX, content);
             }
 
-            return new SlotsMigrated(longAt(content, SEQ_ID_INDEX), Collections.unmodifiableList(migrations));
+            return new SlotsMigrated(seqId(content, Type.SMIGRATED), Collections.unmodifiableList(migrations));
         }
 
         @SuppressWarnings("unchecked")
