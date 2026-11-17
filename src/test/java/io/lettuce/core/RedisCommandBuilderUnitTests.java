@@ -61,6 +61,32 @@ class RedisCommandBuilderUnitTests {
 
     RedisCommandBuilder<String, String> sut = new RedisCommandBuilder<>(StringCodec.UTF8);
 
+    @Test
+    void geosearchShouldEncodeMemberUsingValueCodec() {
+
+        RedisCommandBuilder<String, String> builder = new RedisCommandBuilder<>(
+                RedisCodec.of(StringCodec.UTF8, new StringCodec(StandardCharsets.UTF_16BE)));
+        GeoSearch.GeoRef<String> reference = GeoSearch.fromMember("Palermo");
+        GeoSearch.GeoPredicate predicate = GeoSearch.byRadius(1, GeoArgs.Unit.km);
+
+        assertThat(encode(builder.geosearch(MY_KEY, reference, predicate))).contains("$4\r\nhKey\r\n",
+                "$10\r\nFROMMEMBER\r\n$14\r\n\0P\0a\0l\0e\0r\0m\0o\r\n");
+        assertThat(encode(builder.geosearch(MY_KEY, reference, predicate, new GeoArgs().withDistance())))
+                .contains("$4\r\nhKey\r\n", "$10\r\nFROMMEMBER\r\n$14\r\n\0P\0a\0l\0e\0r\0m\0o\r\n");
+    }
+
+    @Test
+    void geosearchstoreShouldEncodeMemberUsingValueCodec() {
+
+        RedisCommandBuilder<String, String> builder = new RedisCommandBuilder<>(
+                RedisCodec.of(StringCodec.UTF8, new StringCodec(StandardCharsets.UTF_16BE)));
+        Command<String, String, ?> command = builder.geosearchstore("destination", MY_KEY, GeoSearch.fromMember("Palermo"),
+                GeoSearch.byRadius(1, GeoArgs.Unit.km), new GeoArgs(), false);
+
+        assertThat(encode(command)).contains("$11\r\ndestination\r\n$4\r\nhKey\r\n",
+                "$10\r\nFROMMEMBER\r\n$14\r\n\0P\0a\0l\0e\0r\0m\0o\r\n");
+    }
+
     @Test()
     void shouldCorrectlyConstructHello() {
 
