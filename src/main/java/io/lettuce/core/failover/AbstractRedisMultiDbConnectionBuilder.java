@@ -229,7 +229,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                     // 'compareAndSet' guards against multiple connection creation.
                     try {
                         conn = buildConn(healthStatusManager, databases, databaseFutures, candidate);
-                    } catch (RuntimeException e) {
+                    } catch (Throwable e) {
                         // initialDb is already taken, so no other handler will build a connection. Fail now, otherwise
                         // connectionFuture never completes.
                         connectionFuture.completeExceptionally(

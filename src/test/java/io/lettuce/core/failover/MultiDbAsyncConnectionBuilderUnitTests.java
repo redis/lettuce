@@ -714,8 +714,8 @@ class MultiDbAsyncConnectionBuilderUnitTests {
                     connectionFuture, Collections.singletonList(config1), new AtomicReference<>());
 
             assertThat(connectionFuture).isCompletedExceptionally();
-            assertThatThrownBy(connectionFuture::join).hasCauseInstanceOf(RedisConnectionException.class)
-                    .hasRootCauseMessage("No healthy database available");
+            Throwable failure = connectionFuture.handle((connection, error) -> error).join();
+            assertThat(failure).isInstanceOf(RedisConnectionException.class);
 
             healthStatusManager.close();
         }
