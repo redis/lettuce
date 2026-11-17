@@ -20,6 +20,11 @@ import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.RebindAwareAddressSupplier;
+import io.lettuce.core.protocol.MaintenanceNotification.Moving;
+import io.lettuce.core.protocol.MaintenanceNotification.ShardScoped;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrated;
+import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrating;
+import io.lettuce.core.protocol.MaintenanceNotification.Type;
 import io.lettuce.core.resource.Delay;
 import io.lettuce.test.MutableClock;
 import io.netty.bootstrap.Bootstrap;
@@ -49,6 +54,7 @@ import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -108,10 +114,10 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     private PushMessage pushMessage;
 
     @Mock
-    private MaintenanceAwareComponent component1;
+    private MaintenanceNotificationListener component1;
 
     @Mock
-    private MaintenanceAwareComponent component2;
+    private MaintenanceNotificationListener component2;
 
     @Mock
     private Queue<RedisCommand<?, ?, ?>> commandStack;
@@ -187,14 +193,14 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(rebindAttribute.get()).thenReturn(RebindState.COMPLETED);
         when(channel.close()).thenReturn(mock(ChannelFuture.class));
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.channelReadComplete(ctx);
 
         // Then
         verify(channel).close();
-        verify(component1).onRebindCompleted();
+        verify(component1).onRebindCompleted(any());
     }
 
     @Test
@@ -206,14 +212,14 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(channel.attr(MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE)).thenReturn(rebindAttribute);
         when(rebindAttribute.get()).thenReturn(RebindState.STARTED);
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.channelReadComplete(ctx);
 
         // Then
         verify(channel, never()).close();
-        verify(component1, never()).onRebindCompleted();
+        verify(component1, never()).onRebindCompleted(any());
 
     }
 
@@ -234,7 +240,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Set up channel field using ReflectionTestUtils
         setField(watchdog, "channel", channel);
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.onPushMessage(pushMessage);
@@ -246,9 +252,10 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         verify(rebindAttribute).set(RebindState.COMPLETED);
         // Commands issued after the MOVING notification are buffered until the new connection is up, so the timeouts
         // have to be relaxed for the re-bind window even when nothing was in flight when the notification arrived.
-        verify(component1).onRebindStarted(eq(Duration.ofSeconds(15)), eq(new InetSocketAddress("127.0.0.1", 6380)));
+        verify(component1).onRebindStarted(moving(Duration.ofSeconds(15), new InetSocketAddress("127.0.0.1", 6380)));
+        verify(component1).onMaintenanceNotification(moving(Duration.ofSeconds(15), new InetSocketAddress("127.0.0.1", 6380)));
         // The channel is closed here, so this is the only place that can report the completion of the re-bind.
-        verify(component1).onRebindCompleted();
+        verify(component1).onRebindCompleted(moving(Duration.ofSeconds(15), new InetSocketAddress("127.0.0.1", 6380)));
     }
 
     @Test
@@ -267,7 +274,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Set up channel field using ReflectionTestUtils
         setField(watchdog, "channel", channel);
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.onPushMessage(pushMessage);
@@ -275,9 +282,9 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Then
         verify(rebindAttribute).set(RebindState.STARTED);
         verify(channel, never()).close();
-        verify(component1).onRebindStarted(any(), any()); // Called when stack is not empty
+        verify(component1).onRebindStarted(any()); // Called when stack is not empty
         // The stack still has to be drained, channelReadComplete() reports the completion later on.
-        verify(component1, never()).onRebindCompleted();
+        verify(component1, never()).onRebindCompleted(any());
     }
 
     @Test
@@ -291,14 +298,14 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Set up channel field using ReflectionTestUtils
         setField(watchdog, "channel", channel);
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.onPushMessage(pushMessage);
 
         // Then
         verify(rebindAttribute, never()).set(any());
-        verify(component1, never()).onRebindStarted(any(), any());
+        verify(component1, never()).onRebindStarted(any());
     }
 
     @Test
@@ -307,15 +314,68 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(pushMessage.getType()).thenReturn("MIGRATING");
         when(pushMessage.getContent()).thenReturn(migratingPushContent(1, 15, "[\"1\",\"2\",\"3\"]"));
 
-        watchdog.setMaintenanceEventListener(component1);
-        watchdog.setMaintenanceEventListener(component2);
+        watchdog.addMaintenanceNotificationListener(component1);
+        watchdog.addMaintenanceNotificationListener(component2);
 
         // When
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
-        verify(component2).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component1).onMaintenanceNotification(shardNotification(Type.MIGRATING, "[\"1\",\"2\",\"3\"]"));
+        verify(component2).onMaintenanceNotification(shardNotification(Type.MIGRATING, "[\"1\",\"2\",\"3\"]"));
+    }
+
+    @Test
+    void testOnPushMessageSlotsMigrating() {
+        // Given
+        when(pushMessage.getType()).thenReturn("SMIGRATING");
+        when(pushMessage.getContent()).thenReturn(Arrays.asList("SMIGRATING", 1L, StringCodec.UTF8.encodeKey("1,5-7")));
+
+        watchdog.addMaintenanceNotificationListener(component1);
+        watchdog.addMaintenanceNotificationListener(component2);
+
+        // When
+        watchdog.onPushMessage(pushMessage);
+
+        // Then
+        verify(component1).onMaintenanceNotification(slotsMigrating("[1, 5-7]"));
+        verify(component2).onMaintenanceNotification(slotsMigrating("[1, 5-7]"));
+        verify(component1, never()).onRebindStarted(any());
+    }
+
+    @Test
+    void testOnPushMessageSlotsMigrated() {
+        // Given
+        List<Object> migration = Arrays.asList(StringCodec.UTF8.encodeKey("a:1"), StringCodec.UTF8.encodeKey("b:2"),
+                StringCodec.UTF8.encodeKey("1,5-7"));
+
+        when(pushMessage.getType()).thenReturn("SMIGRATED");
+        when(pushMessage.getContent()).thenReturn(Arrays.asList("SMIGRATED", 1L, Arrays.asList(migration)));
+
+        watchdog.addMaintenanceNotificationListener(component1);
+
+        // When
+        watchdog.onPushMessage(pushMessage);
+
+        // Then
+        verify(component1).onMaintenanceNotification(slotsMigrated("[a:1 -> b:2: [1, 5-7]]"));
+        verify(component1, never()).onRebindStarted(any());
+        verify(rebindAttribute, never()).set(any());
+    }
+
+    @Test
+    void testOnPushMessageSlotsMigratedWithMalformedContent() {
+        // Given
+        when(pushMessage.getType()).thenReturn("SMIGRATED");
+        when(pushMessage.getContent()).thenReturn(Arrays.asList("SMIGRATED", 1L));
+
+        watchdog.addMaintenanceNotificationListener(component1);
+
+        // When
+        watchdog.onPushMessage(pushMessage);
+
+        // Then - relaxation still ends
+        verify(component1).onMaintenanceNotification(slotsMigrated("[]"));
     }
 
     @Test
@@ -324,15 +384,15 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(pushMessage.getType()).thenReturn("MIGRATED");
         when(pushMessage.getContent()).thenReturn(migratedPushContent(1, "[\"1\",\"2\",\"3\"]"));
 
-        watchdog.setMaintenanceEventListener(component1);
-        watchdog.setMaintenanceEventListener(component2);
+        watchdog.addMaintenanceNotificationListener(component1);
+        watchdog.addMaintenanceNotificationListener(component2);
 
         // When
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onMigrateCompleted(eq("[\"1\",\"2\",\"3\"]"));
-        verify(component2).onMigrateCompleted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component1).onMaintenanceNotification(shardNotification(Type.MIGRATED, "[\"1\",\"2\",\"3\"]"));
+        verify(component2).onMaintenanceNotification(shardNotification(Type.MIGRATED, "[\"1\",\"2\",\"3\"]"));
     }
 
     @Test
@@ -341,15 +401,15 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(pushMessage.getType()).thenReturn("FAILING_OVER");
         when(pushMessage.getContent()).thenReturn(failingoverPushContent(1, 15, "[\"1\",\"2\",\"3\"]"));
 
-        watchdog.setMaintenanceEventListener(component1);
-        watchdog.setMaintenanceEventListener(component2);
+        watchdog.addMaintenanceNotificationListener(component1);
+        watchdog.addMaintenanceNotificationListener(component2);
 
         // When
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onFailoverStarted(eq("[\"1\",\"2\",\"3\"]"));
-        verify(component2).onFailoverStarted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component1).onMaintenanceNotification(shardNotification(Type.FAILING_OVER, "[\"1\",\"2\",\"3\"]"));
+        verify(component2).onMaintenanceNotification(shardNotification(Type.FAILING_OVER, "[\"1\",\"2\",\"3\"]"));
     }
 
     @Test
@@ -359,13 +419,13 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(pushMessage.getType()).thenReturn("FAILING_OVER");
         when(pushMessage.getContent()).thenReturn(content);
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onFailoverStarted(null);
+        verify(component1).onMaintenanceNotification(shardNotification(Type.FAILING_OVER, null));
     }
 
     @Test
@@ -375,13 +435,13 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(pushMessage.getType()).thenReturn("FAILING_OVER");
         when(pushMessage.getContent()).thenReturn(content);
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onFailoverStarted(null);
+        verify(component1).onMaintenanceNotification(shardNotification(Type.FAILING_OVER, null));
     }
 
     @Test
@@ -390,15 +450,15 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
         when(pushMessage.getContent()).thenReturn(failedoverPushContent(1, "4,5,6"));
 
-        watchdog.setMaintenanceEventListener(component1);
-        watchdog.setMaintenanceEventListener(component2);
+        watchdog.addMaintenanceNotificationListener(component1);
+        watchdog.addMaintenanceNotificationListener(component2);
 
         // When
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onFailoverCompleted(eq("4,5,6"));
-        verify(component2).onFailoverCompleted(eq("4,5,6"));
+        verify(component1).onMaintenanceNotification(shardNotification(Type.FAILED_OVER, "4,5,6"));
+        verify(component2).onMaintenanceNotification(shardNotification(Type.FAILED_OVER, "4,5,6"));
     }
 
     @Test
@@ -408,13 +468,13 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
         when(pushMessage.getContent()).thenReturn(content);
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onFailoverCompleted(null);
+        verify(component1).onMaintenanceNotification(shardNotification(Type.FAILED_OVER, null));
     }
 
     @Test
@@ -424,13 +484,13 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
         when(pushMessage.getContent()).thenReturn(content);
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onFailoverCompleted(null);
+        verify(component1).onMaintenanceNotification(shardNotification(Type.FAILED_OVER, null));
     }
 
     @Test
@@ -438,7 +498,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Given
         when(pushMessage.getType()).thenReturn("UNKNOWN_TYPE");
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.onPushMessage(pushMessage);
@@ -458,14 +518,14 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Set up channel field using ReflectionTestUtils
         setField(watchdog, "channel", channel);
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.onPushMessage(pushMessage);
 
         // Then - should not proceed with rebind due to invalid address
         verify(rebindAttribute, never()).set(any());
-        verify(component1, never()).onRebindStarted(any(), any());
+        verify(component1, never()).onRebindStarted(any());
     }
 
     @Test
@@ -479,29 +539,29 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Set up channel field using ReflectionTestUtils
         setField(watchdog, "channel", channel);
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.onPushMessage(pushMessage);
 
         // Then - should not proceed with rebind due to invalid address type
         verify(rebindAttribute, never()).set(any());
-        verify(component1, never()).onRebindStarted(any(), any());
+        verify(component1, never()).onRebindStarted(any());
     }
 
     @Test
     void testSetMaintenanceEventListener() {
         // When
-        watchdog.setMaintenanceEventListener(component1);
-        watchdog.setMaintenanceEventListener(component2);
+        watchdog.addMaintenanceNotificationListener(component1);
+        watchdog.addMaintenanceNotificationListener(component2);
 
         // Then - verify components are stored (tested indirectly through notification methods)
         when(pushMessage.getType()).thenReturn("MIGRATING");
         when(pushMessage.getContent()).thenReturn(migratingPushContent(1, 15, "[\"1\",\"2\",\"3\"]"));
         watchdog.onPushMessage(pushMessage);
 
-        verify(component1).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
-        verify(component2).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component1).onMaintenanceNotification(shardNotification(Type.MIGRATING, "[\"1\",\"2\",\"3\"]"));
+        verify(component2).onMaintenanceNotification(shardNotification(Type.MIGRATING, "[\"1\",\"2\",\"3\"]"));
     }
 
     @Test
@@ -634,7 +694,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Set up channel field using ReflectionTestUtils
         setField(watchdog, "channel", channel);
 
-        watchdog.setMaintenanceEventListener(component1);
+        watchdog.addMaintenanceNotificationListener(component1);
 
         // When
         watchdog.onPushMessage(pushMessage);
@@ -645,9 +705,9 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         assertThat(unitCaptor.getValue()).isEqualTo(TimeUnit.MILLISECONDS);
         verify(rebindAttribute).set(RebindState.STARTED);
         verify(channel, never()).close();
-        verify(component1).onRebindStarted(any(), any()); // Called when stack is not empty
+        verify(component1).onRebindStarted(any()); // Called when stack is not empty
         // The stack still has to be drained, channelReadComplete() reports the completion later on.
-        verify(component1, never()).onRebindCompleted();
+        verify(component1, never()).onRebindCompleted(any());
     }
 
     /**
@@ -708,6 +768,22 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     private static List<Object> failedoverPushContent(long seqNumber, String shards) {
         ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
         return Arrays.asList("FAILED_OVER", seqNumber, shardsBuffer);
+    }
+
+    private static Moving moving(Duration time, InetSocketAddress endpoint) {
+        return argThat((Moving n) -> time.equals(n.getTime()) && endpoint.equals(n.getEndpoint()));
+    }
+
+    private static MaintenanceNotification shardNotification(Type type, String shards) {
+        return argThat(n -> n.getType() == type && Objects.equals(((ShardScoped) n).getShards(), shards));
+    }
+
+    private static MaintenanceNotification slotsMigrating(String slots) {
+        return argThat(n -> n instanceof SlotsMigrating && ((SlotsMigrating) n).getSlots().toString().equals(slots));
+    }
+
+    private static MaintenanceNotification slotsMigrated(String migrations) {
+        return argThat(n -> n instanceof SlotsMigrated && ((SlotsMigrated) n).getMigrations().toString().equals(migrations));
     }
 
 }

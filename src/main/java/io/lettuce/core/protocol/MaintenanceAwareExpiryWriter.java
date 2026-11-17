@@ -10,13 +10,14 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.ExceptionFactory;
+import io.lettuce.core.protocol.MaintenanceNotification.Moving;
+import io.lettuce.core.protocol.MaintenanceNotification.ShardScoped;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,11 +38,11 @@ import static io.lettuce.core.TimeoutOptions.TimeoutSource;
  * @author Tihomir Mateev
  * @since 7.0
  * @see TimeoutOptions
- * @see MaintenanceAwareComponent
+ * @see MaintenanceNotificationListener
  * @see MaintenanceAwareConnectionWatchdog
  * @see ClientOptions#getMaintNotificationsConfig()
  */
-public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements MaintenanceAwareComponent {
+public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements MaintenanceNotificationListener {
 
     private static final Logger log = LoggerFactory.getLogger(MaintenanceAwareExpiryWriter.class);
 
@@ -146,33 +147,36 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
     }
 
     @Override
-    public void onRebindStarted(Duration time, SocketAddress endpoint) {
+    public void onRebindStarted(Moving moving) {
         enableRelaxedTimeout("Re-bind started");
     }
 
     @Override
-    public void onRebindCompleted() {
+    public void onRebindCompleted(Moving moving) {
         disableRelaxedTimeoutDelayed("Re-bind completed", relaxedTimeout);
     }
 
     @Override
-    public void onMigrateStarted(String shards) {
-        enableRelaxedTimeout("Migration started for shards: " + shards);
-    }
+    public void onMaintenanceNotification(MaintenanceNotification notification) {
 
-    @Override
-    public void onMigrateCompleted(String shards) {
-        disableRelaxedTimeoutDelayed("Migration completed: " + shards, relaxedTimeout);
-    }
-
-    @Override
-    public void onFailoverStarted(String shards) {
-        enableRelaxedTimeout("Failover started for shards: " + shards);
-    }
-
-    @Override
-    public void onFailoverCompleted(String shards) {
-        disableRelaxedTimeoutDelayed("Failover completed: " + shards, relaxedTimeout);
+        switch (notification.getType()) {
+            case MIGRATING:
+                enableRelaxedTimeout("Migration started for shards: " + ((ShardScoped) notification).getShards());
+                break;
+            case MIGRATED:
+                disableRelaxedTimeoutDelayed("Migration completed: " + ((ShardScoped) notification).getShards(),
+                        relaxedTimeout);
+                break;
+            case FAILING_OVER:
+                enableRelaxedTimeout("Failover started for shards: " + ((ShardScoped) notification).getShards());
+                break;
+            case FAILED_OVER:
+                disableRelaxedTimeoutDelayed("Failover completed: " + ((ShardScoped) notification).getShards(), relaxedTimeout);
+                break;
+            default:
+                // MOVING relaxes timeouts once the re-bind starts, see onRebindStarted(Moving)
+                break;
+        }
     }
 
     private void enableRelaxedTimeout(String reason) {

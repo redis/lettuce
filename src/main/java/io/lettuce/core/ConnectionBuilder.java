@@ -27,7 +27,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.lettuce.core.protocol.MaintenanceAwareComponent;
+import io.lettuce.core.protocol.MaintenanceNotificationListener;
 import io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandEncoder;
@@ -156,9 +156,9 @@ public class ConnectionBuilder {
                     clientResources.reconnectDelay(), clientOptions, bootstrap, clientResources.timer(),
                     clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
                     clientResources.eventBus(), endpoint);
-            MaintenanceAwareComponent maintenanceAwareComponent = findMaintenanceAwareComponent(connection.getChannelWriter());
-            if (maintenanceAwareComponent != null) {
-                maintenanceAwareWatchdog.setMaintenanceEventListener(maintenanceAwareComponent);
+            MaintenanceNotificationListener writerListener = findMaintenanceNotificationListener(connection.getChannelWriter());
+            if (writerListener != null) {
+                maintenanceAwareWatchdog.addMaintenanceNotificationListener(writerListener);
             }
             watchdog = maintenanceAwareWatchdog;
         } else {
@@ -174,19 +174,19 @@ public class ConnectionBuilder {
     }
 
     /**
-     * Find the first {@link MaintenanceAwareComponent} in a chain of delegating writers.
+     * Find the first {@link MaintenanceNotificationListener} in a chain of delegating writers.
      *
      * @param writer the outermost writer
-     * @return the component, or {@code null} if the chain contains none
+     * @return the listener, or {@code null} if the chain contains none
      */
-    static MaintenanceAwareComponent findMaintenanceAwareComponent(RedisChannelWriter writer) {
+    static MaintenanceNotificationListener findMaintenanceNotificationListener(RedisChannelWriter writer) {
 
         Object current = writer;
 
         while (current != null) {
 
-            if (current instanceof MaintenanceAwareComponent) {
-                return (MaintenanceAwareComponent) current;
+            if (current instanceof MaintenanceNotificationListener) {
+                return (MaintenanceNotificationListener) current;
             }
 
             current = current instanceof Delegating ? ((Delegating<?>) current).getDelegate() : null;

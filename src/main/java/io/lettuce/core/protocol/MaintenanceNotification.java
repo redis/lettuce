@@ -21,10 +21,13 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * A decoded maintenance push notification. Each type holds its own wire format and validation.
+ * <p>
+ * This class and its nested types are part of the internal API and may change without further notice.
  *
- * @see MaintenanceNotifications
+ * @since 8.0
+ * @see MaintenanceNotificationListener
  */
-abstract class MaintenanceNotification {
+public abstract class MaintenanceNotification {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MaintenanceNotification.class);
 
@@ -119,18 +122,18 @@ abstract class MaintenanceNotification {
         return shards;
     }
 
-    Type getType() {
+    public Type getType() {
         return type;
     }
 
     /**
      * @return the sequence id, or {@code null} if absent
      */
-    Long getSeqId() {
+    public Long getSeqId() {
         return seqId;
     }
 
-    enum Type {
+    public enum Type {
 
         MOVING, MIGRATING, MIGRATED, FAILING_OVER, FAILED_OVER, SMIGRATING, SMIGRATED
 
@@ -139,7 +142,7 @@ abstract class MaintenanceNotification {
     /**
      * A notification that affects a set of shards.
      */
-    interface ShardScoped {
+    public interface ShardScoped {
 
         /**
          * @return the affected shards, or {@code null} if absent or malformed
@@ -151,7 +154,7 @@ abstract class MaintenanceNotification {
     /**
      * {@code MOVING <seq> <time> <endpoint>}: the endpoint is re-bound within the given time.
      */
-    static final class Moving extends MaintenanceNotification {
+    public static final class Moving extends MaintenanceNotification {
 
         private static final int TIME_INDEX = 2;
 
@@ -209,14 +212,14 @@ abstract class MaintenanceNotification {
             return hostAndPort != null ? new InetSocketAddress(hostAndPort.getHostText(), hostAndPort.getPort()) : null;
         }
 
-        Duration getTime() {
+        public Duration getTime() {
             return time;
         }
 
         /**
          * @return the new endpoint, or {@code null} if none was announced
          */
-        InetSocketAddress getEndpoint() {
+        public InetSocketAddress getEndpoint() {
             return endpoint;
         }
 
@@ -225,7 +228,7 @@ abstract class MaintenanceNotification {
     /**
      * {@code MIGRATING <seq> <time> <shards>}: a shard migration is about to start.
      */
-    static final class Migrating extends MaintenanceNotification implements ShardScoped {
+    public static final class Migrating extends MaintenanceNotification implements ShardScoped {
 
         private static final int SHARDS_INDEX = 3;
 
@@ -250,7 +253,7 @@ abstract class MaintenanceNotification {
     /**
      * {@code MIGRATED <seq> <shards>}: a shard migration completed.
      */
-    static final class Migrated extends MaintenanceNotification implements ShardScoped {
+    public static final class Migrated extends MaintenanceNotification implements ShardScoped {
 
         private static final int SHARDS_INDEX = 2;
 
@@ -275,7 +278,7 @@ abstract class MaintenanceNotification {
     /**
      * {@code FAILING_OVER <seq> <time> <shards>}: a shard failover is about to start.
      */
-    static final class FailingOver extends MaintenanceNotification implements ShardScoped {
+    public static final class FailingOver extends MaintenanceNotification implements ShardScoped {
 
         private static final int SHARDS_INDEX = 3;
 
@@ -300,7 +303,7 @@ abstract class MaintenanceNotification {
     /**
      * {@code FAILED_OVER <seq> <shards>}: a shard failover completed.
      */
-    static final class FailedOver extends MaintenanceNotification implements ShardScoped {
+    public static final class FailedOver extends MaintenanceNotification implements ShardScoped {
 
         private static final int SHARDS_INDEX = 2;
 
@@ -325,7 +328,7 @@ abstract class MaintenanceNotification {
     /**
      * An inclusive range of hash slots.
      */
-    static final class SlotRange {
+    public static final class SlotRange {
 
         private final int from;
 
@@ -336,11 +339,11 @@ abstract class MaintenanceNotification {
             this.to = to;
         }
 
-        int getFrom() {
+        public int getFrom() {
             return from;
         }
 
-        int getTo() {
+        public int getTo() {
             return to;
         }
 
@@ -354,7 +357,7 @@ abstract class MaintenanceNotification {
     /**
      * Slots that moved from one node to another.
      */
-    static final class SlotMigration {
+    public static final class SlotMigration {
 
         private final HostAndPort source;
 
@@ -368,15 +371,15 @@ abstract class MaintenanceNotification {
             this.slots = slots;
         }
 
-        HostAndPort getSource() {
+        public HostAndPort getSource() {
             return source;
         }
 
-        HostAndPort getDestination() {
+        public HostAndPort getDestination() {
             return destination;
         }
 
-        List<SlotRange> getSlots() {
+        public List<SlotRange> getSlots() {
             return slots;
         }
 
@@ -390,7 +393,7 @@ abstract class MaintenanceNotification {
     /**
      * {@code SMIGRATING <seq> <slots>}: a slot migration is about to start.
      */
-    static final class SlotsMigrating extends MaintenanceNotification {
+    public static final class SlotsMigrating extends MaintenanceNotification {
 
         private static final int SLOTS_INDEX = 2;
 
@@ -424,7 +427,7 @@ abstract class MaintenanceNotification {
             return new SlotsMigrating(longAt(content, SEQ_ID_INDEX), Collections.unmodifiableList(slots));
         }
 
-        List<SlotRange> getSlots() {
+        public List<SlotRange> getSlots() {
             return slots;
         }
 
@@ -433,7 +436,7 @@ abstract class MaintenanceNotification {
     /**
      * {@code SMIGRATED <seq> [[<source>, <destination>, <slots>], ...]}: a slot migration completed.
      */
-    static final class SlotsMigrated extends MaintenanceNotification {
+    public static final class SlotsMigrated extends MaintenanceNotification {
 
         private static final int MIGRATIONS_INDEX = 2;
 
@@ -500,7 +503,7 @@ abstract class MaintenanceNotification {
             return new SlotMigration(sourceAddress, destinationAddress, Collections.unmodifiableList(ranges));
         }
 
-        List<SlotMigration> getMigrations() {
+        public List<SlotMigration> getMigrations() {
             return migrations;
         }
 

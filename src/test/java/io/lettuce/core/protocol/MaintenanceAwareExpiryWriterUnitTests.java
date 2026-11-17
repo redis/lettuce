@@ -6,6 +6,7 @@
  */
 package io.lettuce.core.protocol;
 
+import static io.lettuce.test.ReflectionTestUtils.getField;
 import static io.lettuce.test.ReflectionTestUtils.setField;
 
 import static io.lettuce.TestTags.UNIT_TEST;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.*;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.TimeoutOptions;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
@@ -34,8 +36,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -200,7 +202,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     }
 
     @Test
-    void testRegisterAsMaintenanceAwareComponentWithNonDefaultEndpoint() {
+    void testRegisterAsMaintenanceListenerWithNonDefaultEndpoint() {
         // Given
         when(delegate.write(command)).thenReturn(command);
 
@@ -213,7 +215,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     }
 
     @Test
-    void testRegisterAsMaintenanceAwareComponentWithNullChannel() {
+    void testRegisterAsMaintenanceListenerWithNullChannel() {
         // Given
         setField(endpoint, "channel", null);
         when(endpoint.write(command)).thenReturn(command);
@@ -237,7 +239,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testOnRebindStarted() {
         // When
-        writer.onRebindStarted(Duration.ofSeconds(15), new InetSocketAddress("10.0.0.1", 6379));
+        writer.onRebindStarted(moving());
 
         // Then - relaxTimeouts should be enabled (tested indirectly through timeout behavior)
         // Verify that the relaxed timeout is not negative
@@ -252,7 +254,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
         writer = new MaintenanceAwareExpiryWriter(delegate, clientOptions, clientResources);
 
         // When
-        writer.onRebindStarted(Duration.ofSeconds(15), new InetSocketAddress("10.0.0.1", 6379));
+        writer.onRebindStarted(moving());
 
         // Then - relaxTimeouts should remain disabled for negative timeout
         assertThat(writer).isNotNull();
@@ -261,7 +263,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testOnRebindCompleted() {
         // When
-        writer.onRebindCompleted();
+        writer.onRebindCompleted(moving());
 
         // Then
         verify(timer).newTimeout(any(TimerTask.class), eq(500L), eq(TimeUnit.MILLISECONDS));
@@ -270,7 +272,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testOnMigrateStarted() {
         // When
-        writer.onMigrateStarted("[\"1\",\"2\",\"3\"]");
+        writer.onMaintenanceNotification(migrating("[\"1\",\"2\",\"3\"]"));
 
         // Then - relaxTimeouts should be enabled
         assertThat(writer).isNotNull();
@@ -279,7 +281,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testOnMigrateCompleted() {
         // When
-        writer.onMigrateCompleted("[\"1\",\"2\",\"3\"]");
+        writer.onMaintenanceNotification(migrated("[\"1\",\"2\",\"3\"]"));
 
         // Then
         verify(timer).newTimeout(any(TimerTask.class), eq(500L), eq(TimeUnit.MILLISECONDS));
@@ -291,7 +293,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
         String shards = "[\"1\",\"2\",\"3\"]";
 
         // When
-        writer.onFailoverStarted(shards);
+        writer.onMaintenanceNotification(failingOver(shards));
 
         // Then - relaxTimeouts should be enabled
         assertThat(writer).isNotNull();
@@ -300,7 +302,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testOnFailoverStartedWithNullShards() {
         // When
-        writer.onFailoverStarted(null);
+        writer.onMaintenanceNotification(failingOver(null));
 
         // Then - should handle null shards gracefully
         assertThat(writer).isNotNull();
@@ -312,7 +314,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
         String shards = "4,5,6";
 
         // When
-        writer.onFailoverCompleted(shards);
+        writer.onMaintenanceNotification(failedOver(shards));
 
         // Then
         verify(timer).newTimeout(any(TimerTask.class), eq(500L), eq(TimeUnit.MILLISECONDS));
@@ -321,7 +323,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testOnFailoverCompletedWithNullShards() {
         // When
-        writer.onFailoverCompleted(null);
+        writer.onMaintenanceNotification(failedOver(null));
 
         // Then
         verify(timer).newTimeout(any(TimerTask.class), eq(500L), eq(TimeUnit.MILLISECONDS));
@@ -334,7 +336,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
         setField(writer, "relaxTimeout", previousTimeout);
 
         // When
-        writer.onRebindStarted(Duration.ofSeconds(15), new InetSocketAddress("10.0.0.1", 6379));
+        writer.onRebindStarted(moving());
 
         // Then
         verify(previousTimeout).cancel();
@@ -347,7 +349,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
         setField(writer, "relaxTimeout", previousTimeout);
 
         // When
-        writer.onRebindCompleted();
+        writer.onRebindCompleted(moving());
 
         // Then
         verify(previousTimeout).cancel();
@@ -406,9 +408,9 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testMultipleMaintenanceEvents() {
         // When
-        writer.onRebindStarted(Duration.ofSeconds(15), new InetSocketAddress("10.0.0.1", 6379));
-        writer.onMigrateStarted("[\"1\",\"2\",\"3\"]");
-        writer.onFailoverStarted("[\"1\",\"2\",\"3\"]");
+        writer.onRebindStarted(moving());
+        writer.onMaintenanceNotification(migrating("[\"1\",\"2\",\"3\"]"));
+        writer.onMaintenanceNotification(failingOver("[\"1\",\"2\",\"3\"]"));
 
         // Then - each event should enable relaxed timeouts
         assertThat(writer).isNotNull();
@@ -417,12 +419,36 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testMultipleCompletionEvents() {
         // When
-        writer.onRebindCompleted();
-        writer.onMigrateCompleted("[\"1\",\"2\",\"3\"]");
-        writer.onFailoverCompleted("[\"1\",\"2\",\"3\"]");
+        writer.onRebindCompleted(moving());
+        writer.onMaintenanceNotification(migrated("[\"1\",\"2\",\"3\"]"));
+        writer.onMaintenanceNotification(failedOver("[\"1\",\"2\",\"3\"]"));
 
         // Then - each completion should schedule timeout disable
         verify(timer, times(3)).newTimeout(any(TimerTask.class), eq(500L), eq(TimeUnit.MILLISECONDS));
+    }
+
+    private static MaintenanceNotification.Moving moving() {
+        return MaintenanceNotification.Moving.from(Arrays.asList(bytes("MOVING"), 1L, 15L, bytes("10.0.0.1:6379")));
+    }
+
+    private static MaintenanceNotification migrating(String shards) {
+        return MaintenanceNotification.Migrating.from(Arrays.asList(bytes("MIGRATING"), 1L, 15L, bytes(shards)));
+    }
+
+    private static MaintenanceNotification migrated(String shards) {
+        return MaintenanceNotification.Migrated.from(Arrays.asList(bytes("MIGRATED"), 1L, bytes(shards)));
+    }
+
+    private static MaintenanceNotification failingOver(String shards) {
+        return MaintenanceNotification.FailingOver.from(Arrays.asList(bytes("FAILING_OVER"), 1L, 15L, bytes(shards)));
+    }
+
+    private static MaintenanceNotification failedOver(String shards) {
+        return MaintenanceNotification.FailedOver.from(Arrays.asList(bytes("FAILED_OVER"), 1L, bytes(shards)));
+    }
+
+    private static ByteBuffer bytes(String value) {
+        return value != null ? StringCodec.UTF8.encodeKey(value) : null;
     }
 
 }
