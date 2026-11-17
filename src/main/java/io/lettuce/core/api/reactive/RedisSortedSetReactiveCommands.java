@@ -460,12 +460,12 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param source the source key, must not be {@code null}.
      * @param destination the destination key, must not be {@code null}.
      * @param member the member to move, must not be {@code null}.
-     * @return ScoredValue&lt;V&gt; emits the moved member with its score; emits no element when the member was not moved.
+     * @return ScoredValue&lt;V&gt; emits the moved member with its score, or completes empty when it was not moved.
      * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code member} is {@code null}, or a member is
      *         an argument object such as {@link ZMoveMemberArgs}.
      * @since 8.0
      */
-    Flux<ScoredValue<V>> zmovemember(K source, K destination, V member);
+    Mono<ScoredValue<V>> zmovemember(K source, K destination, V member);
 
     /**
      * Atomically moves the given {@code members} from the sorted set stored at {@code source} to the sorted set stored at
@@ -491,12 +491,12 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param destination the destination key, must not be {@code null}.
      * @param args the destination condition, must not be {@code null}.
      * @param member the member to move, must not be {@code null}.
-     * @return ScoredValue&lt;V&gt; emits the moved member with its score; emits no element when the member was not moved.
+     * @return ScoredValue&lt;V&gt; emits the moved member with its score, or completes empty when it was not moved.
      * @throws IllegalArgumentException if {@code source}, {@code destination}, {@code args} or {@code member} is {@code
      * null}, or a member is an argument object such as {@link ZMoveMemberArgs}.
      * @since 8.0
      */
-    Flux<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member);
+    Mono<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member);
 
     /**
      * Atomically moves the given {@code members} from the sorted set stored at {@code source} to the sorted set stored at

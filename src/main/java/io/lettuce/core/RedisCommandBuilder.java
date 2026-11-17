@@ -4221,32 +4221,32 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BZMOVE, new NullableScoredValueListOutput<>(codec), args);
     }
 
-    Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, V member) {
+    Command<K, V, ScoredValue<V>> zmovemember(K source, K destination, V member) {
         LettuceAssert.notNull(member, "Member " + MUST_NOT_BE_NULL);
-        return zmovemember(source, destination, null, member, null);
+        return zmovemember(source, destination, null, member, null, new NullableScoredValueOutput<>(codec));
     }
 
     Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, V[] members) {
         LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
-        return zmovemember(source, destination, null, null, members);
+        return zmovemember(source, destination, null, null, members, new NullableScoredValueListOutput<>(codec));
     }
 
-    Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V member) {
+    Command<K, V, ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V member) {
         LettuceAssert.notNull(zMoveMemberArgs, "ZMoveMemberArgs " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(member, "Member " + MUST_NOT_BE_NULL);
-        return zmovemember(source, destination, zMoveMemberArgs, member, null);
+        return zmovemember(source, destination, zMoveMemberArgs, member, null, new NullableScoredValueOutput<>(codec));
     }
 
     Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V[] members) {
         LettuceAssert.notNull(zMoveMemberArgs, "ZMoveMemberArgs " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
-        return zmovemember(source, destination, zMoveMemberArgs, null, members);
+        return zmovemember(source, destination, zMoveMemberArgs, null, members, new NullableScoredValueListOutput<>(codec));
     }
 
     private static final String ZMOVEMEMBER_EXAMPLE = "zmovemember(source, destination, zMoveMemberArgs, member)";
 
-    private Command<K, V, List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V member,
-            V[] members) {
+    private <T> Command<K, V, T> zmovemember(K source, K destination, ZMoveMemberArgs zMoveMemberArgs, V member, V[] members,
+            CommandOutput<K, V, T> output) {
         LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
         if (members != null) {
@@ -4266,7 +4266,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         } else {
             args.add(MEMBERS).add(1).addValue(member);
         }
-        return createCommand(ZMOVEMEMBER, new NullableScoredValueListOutput<>(codec), args);
+        return createCommand(ZMOVEMEMBER, output, args);
     }
 
     Command<K, V, KeyValue<K, ScoredValue<V>>> zmpop(ZPopArgs popArgs, K[] keys) {

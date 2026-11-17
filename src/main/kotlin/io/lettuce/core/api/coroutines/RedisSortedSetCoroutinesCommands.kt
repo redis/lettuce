@@ -442,13 +442,12 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @param source the source key, must not be `null`.
      * @param destination the destination key, must not be `null`.
      * @param member the member to move, must not be `null`.
-     * @return List<ScoredValue<V>> the moved member with its score, as a list of one, or `null` when the member was not
-     *         moved.
+     * @return ScoredValue<V> the moved member with its score, or `null` when it was not moved.
      * @throws IllegalArgumentException if `source`, `destination` or `member` is `null`, or a member is an argument
      * object such as [ZMoveMemberArgs].
      * @since 8.0
      */
-    suspend fun zmovemember(source: K, destination: K, member: V): List<ScoredValue<V>>?
+    suspend fun zmovemember(source: K, destination: K, member: V): ScoredValue<V>?
 
     /**
      * Atomically moves the given `members` from the sorted set stored at `source` to the sorted set stored at
@@ -474,13 +473,12 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @param destination the destination key, must not be `null`.
      * @param args the destination condition, must not be `null`.
      * @param member the member to move, must not be `null`.
-     * @return List<ScoredValue<V>> the moved member with its score, as a list of one, or `null` when the member was not
-     *         moved.
+     * @return ScoredValue<V> the moved member with its score, or `null` when it was not moved.
      * @throws IllegalArgumentException if `source`, `destination`, `args` or `member` is `null`, or a member is an
      * argument object such as [ZMoveMemberArgs].
      * @since 8.0
      */
-    suspend fun zmovemember(source: K, destination: K, args: ZMoveMemberArgs, member: V): List<ScoredValue<V>>?
+    suspend fun zmovemember(source: K, destination: K, args: ZMoveMemberArgs, member: V): ScoredValue<V>?
 
     /**
      * Atomically moves the given `members` from the sorted set stored at `source` to the sorted set stored at

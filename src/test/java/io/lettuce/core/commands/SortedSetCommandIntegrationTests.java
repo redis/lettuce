@@ -1335,6 +1335,20 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     /**
+     * A single-member move replies the moved pair itself, and {@code null} once the member is gone; with a condition it replies
+     * the pair too.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    public void zmovememberSingleMemberRepliesThePair() {
+        fixtureF1();
+
+        assertThat(redis.zmovemember(SRC, DST, "a")).isEqualTo(sv(1.0, "a"));
+        assertThat(redis.zmovemember(SRC, DST, "a")).isNull();
+        assertThat(redis.zmovemember(SRC, DST, ZMoveMemberArgs.Builder.nx(), "b")).isEqualTo(sv(2.0, "b"));
+    }
+
+    /**
      * A blocking move on a non-empty source replies at once, highest scores first.
      */
     @Test

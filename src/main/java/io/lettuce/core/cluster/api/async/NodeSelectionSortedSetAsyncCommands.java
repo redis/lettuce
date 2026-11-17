@@ -458,13 +458,12 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @param source the source key, must not be {@code null}.
      * @param destination the destination key, must not be {@code null}.
      * @param member the member to move, must not be {@code null}.
-     * @return List&lt;ScoredValue&lt;V&gt;&gt; the moved member with its score, as a list of one, or {@code null} when the
-     *         member was not moved.
+     * @return ScoredValue&lt;V&gt; the moved member with its score, or {@code null} when it was not moved.
      * @throws IllegalArgumentException if {@code source}, {@code destination} or {@code member} is {@code null}, or a member is
      *         an argument object such as {@link ZMoveMemberArgs}.
      * @since 8.0
      */
-    AsyncExecutions<List<ScoredValue<V>>> zmovemember(K source, K destination, V member);
+    AsyncExecutions<ScoredValue<V>> zmovemember(K source, K destination, V member);
 
     /**
      * Atomically moves the given {@code members} from the sorted set stored at {@code source} to the sorted set stored at
@@ -490,13 +489,12 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @param destination the destination key, must not be {@code null}.
      * @param args the destination condition, must not be {@code null}.
      * @param member the member to move, must not be {@code null}.
-     * @return List&lt;ScoredValue&lt;V&gt;&gt; the moved member with its score, as a list of one, or {@code null} when the
-     *         member was not moved.
+     * @return ScoredValue&lt;V&gt; the moved member with its score, or {@code null} when it was not moved.
      * @throws IllegalArgumentException if {@code source}, {@code destination}, {@code args} or {@code member} is {@code
      * null}, or a member is an argument object such as {@link ZMoveMemberArgs}.
      * @since 8.0
      */
-    AsyncExecutions<List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member);
+    AsyncExecutions<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member);
 
     /**
      * Atomically moves the given {@code members} from the sorted set stored at {@code source} to the sorted set stored at

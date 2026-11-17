@@ -3861,8 +3861,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<ScoredValue<V>> zmovemember(K source, K destination, V member) {
-        return createDissolvingFlux(() -> commandBuilder.zmovemember(source, destination, member));
+    public Mono<ScoredValue<V>> zmovemember(K source, K destination, V member) {
+        return createMono(() -> commandBuilder.zmovemember(source, destination, member));
     }
 
     @Override
@@ -3871,8 +3871,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member) {
-        return createDissolvingFlux(() -> commandBuilder.zmovemember(source, destination, args, member));
+    public Mono<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member) {
+        return createMono(() -> commandBuilder.zmovemember(source, destination, args, member));
     }
 
     @Override

@@ -8,6 +8,7 @@ import io.lettuce.core.output.BlessFlagListOutput;
 import io.lettuce.core.output.BooleanOutput;
 import io.lettuce.core.output.KeyScanOutput;
 import io.lettuce.core.output.NullableScoredValueListOutput;
+import io.lettuce.core.output.NullableScoredValueOutput;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 import io.lettuce.core.protocol.Command;
@@ -1396,6 +1397,12 @@ class RedisCommandBuilderUnitTests {
                 .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "NX", "MEMBERS", "2", "a", "b"));
         assertThat(encoded(sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.xx(), "a")))
                 .isEqualTo(resp("ZMOVEMEMBER", "s", "d", "XX", "MEMBERS", "1", "a"));
+
+        assertThat(sut.zmovemember("s", "d", "a").getOutput()).isInstanceOf(NullableScoredValueOutput.class);
+        assertThat(sut.zmovemember("s", "d", ZMoveMemberArgs.Builder.nx(), "a").getOutput())
+                .isInstanceOf(NullableScoredValueOutput.class);
+        assertThat(sut.zmovemember("s", "d", new String[] { "a" }).getOutput())
+                .isInstanceOf(NullableScoredValueListOutput.class);
     }
 
     /**

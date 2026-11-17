@@ -3727,7 +3727,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<ScoredValue<V>>> zmovemember(K source, K destination, V member) {
+    public RedisFuture<ScoredValue<V>> zmovemember(K source, K destination, V member) {
         return dispatch(commandBuilder.zmovemember(source, destination, member));
     }
 
@@ -3737,7 +3737,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<ScoredValue<V>>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member) {
+    public RedisFuture<ScoredValue<V>> zmovemember(K source, K destination, ZMoveMemberArgs args, V member) {
         return dispatch(commandBuilder.zmovemember(source, destination, args, member));
     }
 

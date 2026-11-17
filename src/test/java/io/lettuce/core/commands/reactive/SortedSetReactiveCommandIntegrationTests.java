@@ -16,6 +16,7 @@ import io.lettuce.core.BZMoveArgs;
 import io.lettuce.core.Range;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.ZMoveArgs;
+import io.lettuce.core.ZMoveMemberArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -66,6 +67,22 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     }
 
     // Nothing moved arrives as an empty Flux: these override the base tests that expect null.
+
+    /**
+     * A single-member move emits the moved pair, then completes empty once the member is gone; with a condition it emits the
+     * pair too.
+     */
+    @Test
+    @EnabledOnCommand("ZMOVEMEMBER")
+    @Override
+    public void zmovememberSingleMemberRepliesThePair() {
+        connection.sync().zadd(SRC, 1.0, "a", 2.0, "b", 3.0, "c");
+
+        reactive.zmovemember(SRC, DST, "a").as(StepVerifier::create).expectNext(ScoredValue.just(1.0, "a")).verifyComplete();
+        reactive.zmovemember(SRC, DST, "a").as(StepVerifier::create).verifyComplete();
+        reactive.zmovemember(SRC, DST, ZMoveMemberArgs.Builder.nx(), "b").as(StepVerifier::create)
+                .expectNext(ScoredValue.just(2.0, "b")).verifyComplete();
+    }
 
     /**
      * A score range that selects nothing completes without an element, and creates no destination.

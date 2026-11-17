@@ -122,7 +122,7 @@ class SortedSetMoveCommandIntegrationTests extends TestSupport {
         assertThat(result.wasDiscarded()).isFalse();
         assertThat(result).hasSize(3);
         assertThat(result.<List<ScoredValue<String>>> get(0)).containsExactly(ScoredValue.just(1.0, "a"));
-        assertThat(result.<List<ScoredValue<String>>> get(1)).containsExactly(ScoredValue.just(3.0, "c"));
+        assertThat(result.<ScoredValue<String>> get(1)).isEqualTo(ScoredValue.just(3.0, "c"));
         assertThat((Object) result.get(2)).isNull();
     }
 
