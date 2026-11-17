@@ -420,10 +420,10 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     /**
      * Atomically moves members from the lowest or highest scores of the sorted set stored at `source` to the sorted set
      * stored at `destination`, keeping their scores, blocking the connection while `source` is empty or missing, until
-     * a member arrives or the timeout carried by `args` passes. The timeout is in seconds, may have a fraction, and
-     * defaults to `0` (block indefinitely); the connection's command timeout must be longer than the blocking timeout.
-     * When the connection's command timeout ends the call first, the command may still be waiting on the server and may
-     * still move members.
+     * a member arrives or the timeout carried by `args` passes. The timeout is in seconds, may have a fraction, and `0`
+     * blocks indefinitely; the connection's command timeout must be longer than the blocking timeout. When the
+     * connection's command timeout ends the call first, the command may still be waiting on the server and may still
+     * move members.
      *
      * @param source the source key, must not be `null`.
      * @param destination the destination key, must not be `null`.

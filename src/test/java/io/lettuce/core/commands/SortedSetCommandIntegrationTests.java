@@ -1356,8 +1356,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     public void bzmoveNonEmptySourceRepliesAtOnce() {
         redis.zadd(SRC, 1.0, "a", 2.0, "b");
 
-        assertThat(redis.bzmove(SRC, DST, BZMoveArgs.Builder.max().timeout(1L).count(5))).containsExactly(sv(2.0, "b"),
-                sv(1.0, "a"));
+        assertThat(redis.bzmove(SRC, DST, BZMoveArgs.Builder.max(1L).count(5))).containsExactly(sv(2.0, "b"), sv(1.0, "a"));
     }
 
     /**
@@ -1368,7 +1367,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     public void bzmoveFractionalTimeoutIsNotRoundedToSeconds() {
 
         long start = System.nanoTime();
-        assertThat(redis.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(0.1))).isNull();
+        assertThat(redis.bzmove(SRC, DST, BZMoveArgs.Builder.min(0.1))).isNull();
         assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofMillis(900));
     }
 

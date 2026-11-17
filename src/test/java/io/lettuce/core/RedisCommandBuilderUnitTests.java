@@ -1347,8 +1347,7 @@ class RedisCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructBzmove() {
 
-        Command<String, String, ?> command = sut.bzmove("source", "destination",
-                BZMoveArgs.Builder.max().timeout(0.5).count(3));
+        Command<String, String, ?> command = sut.bzmove("source", "destination", BZMoveArgs.Builder.max(0.5).count(3));
 
         assertThat(command.getType()).isEqualTo(CommandType.BZMOVE);
         assertThat(command.getArgs().toCommandString()).isEqualTo("key<source> key<destination> MAX 0.5 COUNT 3");
@@ -1462,8 +1461,10 @@ class RedisCommandBuilderUnitTests {
         assertThatThrownBy(() -> sut.zmove("s", null, ZMoveArgs.Builder.min())).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> sut.zmove("s", "d", null)).isInstanceOf(IllegalArgumentException.class);
 
-        assertThatThrownBy(() -> sut.bzmove(null, "d", BZMoveArgs.Builder.min())).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> sut.bzmove("s", null, BZMoveArgs.Builder.min())).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.bzmove(null, "d", BZMoveArgs.Builder.min(0L)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.bzmove("s", null, BZMoveArgs.Builder.min(0L)))
+                .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> sut.bzmove("s", "d", null)).isInstanceOf(IllegalArgumentException.class);
 
         assertThatThrownBy(() -> sut.zmovemember(null, "d", new String[] { "a" })).isInstanceOf(IllegalArgumentException.class);
@@ -1510,7 +1511,7 @@ class RedisCommandBuilderUnitTests {
     void moveCommandsCarrySourceThenDestination() {
 
         Command<String, String, ?> zmove = sut.zmove("src", "dst", ZMoveArgs.Builder.min());
-        Command<String, String, ?> bzmove = sut.bzmove("src", "dst", BZMoveArgs.Builder.min());
+        Command<String, String, ?> bzmove = sut.bzmove("src", "dst", BZMoveArgs.Builder.min(0L));
         Command<String, String, ?> zmovemember = sut.zmovemember("src", "dst", "a");
 
         assertThat(zmove.getType()).isEqualTo(CommandType.ZMOVE);

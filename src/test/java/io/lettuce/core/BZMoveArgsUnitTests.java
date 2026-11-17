@@ -9,6 +9,9 @@ package io.lettuce.core;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
+
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -28,16 +31,25 @@ class BZMoveArgsUnitTests {
     }
 
     /**
-     * The timeout follows the end, with its fraction, and comes before {@code COUNT}; without a timeout {@code 0} is written.
+     * The timeout given to the factory follows the end, with its fraction, and comes before {@code COUNT}.
      */
     @Test
     void timeoutEncoding() {
-        assertThat(render(BZMoveArgs.Builder.min().timeout(0.1))).isEqualTo("MIN 0.1");
-        assertThat(render(BZMoveArgs.Builder.max().timeout(1L))).isEqualTo("MAX 1");
-        assertThat(render(BZMoveArgs.Builder.min())).isEqualTo("MIN 0");
-        assertThat(render(BZMoveArgs.Builder.min().timeout(0.0))).isEqualTo("MIN 0.0");
-        assertThat(render(BZMoveArgs.Builder.min().timeout(5.0E-4))).isEqualTo("MIN 5.0E-4");
-        assertThat(render(BZMoveArgs.Builder.min().timeout(0.1).count(5))).isEqualTo("MIN 0.1 COUNT 5");
+        assertThat(render(BZMoveArgs.Builder.min(0.1))).isEqualTo("MIN 0.1");
+        assertThat(render(BZMoveArgs.Builder.max(1L))).isEqualTo("MAX 1");
+        assertThat(render(BZMoveArgs.Builder.min(0L))).isEqualTo("MIN 0");
+        assertThat(render(BZMoveArgs.Builder.min(0.0))).isEqualTo("MIN 0.0");
+        assertThat(render(BZMoveArgs.Builder.min(5.0E-4))).isEqualTo("MIN 5.0E-4");
+        assertThat(render(BZMoveArgs.Builder.min(0.1).count(5))).isEqualTo("MIN 0.1 COUNT 5");
+    }
+
+    /**
+     * The timeout can only be given to a factory: there is no timeout setter and no public constructor.
+     */
+    @Test
+    void timeoutIsRequired() {
+        assertThat(BZMoveArgs.class.getConstructors()).isEmpty();
+        assertThat(Arrays.stream(BZMoveArgs.class.getMethods()).map(Method::getName)).doesNotContain("timeout");
     }
 
     /**
@@ -45,9 +57,9 @@ class BZMoveArgsUnitTests {
      */
     @Test
     void negativeTimeoutAndZeroCountAreNotChecked() {
-        assertThat(render(BZMoveArgs.Builder.min().timeout(-1L))).isEqualTo("MIN -1");
-        assertThat(render(BZMoveArgs.Builder.min().timeout(-0.5))).isEqualTo("MIN -0.5");
-        assertThat(render(BZMoveArgs.Builder.min().timeout(1L).count(0))).isEqualTo("MIN 1 COUNT 0");
+        assertThat(render(BZMoveArgs.Builder.min(-1L))).isEqualTo("MIN -1");
+        assertThat(render(BZMoveArgs.Builder.min(-0.5))).isEqualTo("MIN -0.5");
+        assertThat(render(BZMoveArgs.Builder.min(1L).count(0))).isEqualTo("MIN 1 COUNT 0");
     }
 
     /**
@@ -55,17 +67,8 @@ class BZMoveArgsUnitTests {
      */
     @Test
     void infiniteAndNanTimeoutsAreWrittenAsGiven() {
-        assertThat(render(BZMoveArgs.Builder.min().timeout(Double.POSITIVE_INFINITY))).isEqualTo("MIN Infinity");
-        assertThat(render(BZMoveArgs.Builder.min().timeout(Double.NaN))).isEqualTo("MIN NaN");
-    }
-
-    /**
-     * The last timeout setter wins, whichever of the two forms it is.
-     */
-    @Test
-    void lastTimeoutSetterWins() {
-        assertThat(render(BZMoveArgs.Builder.min().timeout(2L).timeout(0.5))).isEqualTo("MIN 0.5");
-        assertThat(render(BZMoveArgs.Builder.min().timeout(0.5).timeout(2L))).isEqualTo("MIN 2");
+        assertThat(render(BZMoveArgs.Builder.min(Double.POSITIVE_INFINITY))).isEqualTo("MIN Infinity");
+        assertThat(render(BZMoveArgs.Builder.min(Double.NaN))).isEqualTo("MIN NaN");
     }
 
     /**
@@ -73,7 +76,7 @@ class BZMoveArgsUnitTests {
      */
     @Test
     void countBelowOneIsWritten() {
-        assertThat(render(BZMoveArgs.Builder.max().timeout(1L).count(-3))).isEqualTo("MAX 1 COUNT -3");
+        assertThat(render(BZMoveArgs.Builder.max(1L).count(-3))).isEqualTo("MAX 1 COUNT -3");
     }
 
     /**
@@ -81,7 +84,7 @@ class BZMoveArgsUnitTests {
      */
     @Test
     void negativeTimeoutIsWritten() {
-        assertThat(render(BZMoveArgs.Builder.max().timeout(-2.25))).isEqualTo("MAX -2.25");
+        assertThat(render(BZMoveArgs.Builder.max(-2.25))).isEqualTo("MAX -2.25");
     }
 
 }

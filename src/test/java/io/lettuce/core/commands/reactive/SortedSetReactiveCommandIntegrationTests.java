@@ -106,8 +106,7 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
     @Override
     public void bzmoveFractionalTimeoutIsNotRoundedToSeconds() {
 
-        Duration elapsed = reactive.bzmove(SRC, DST, BZMoveArgs.Builder.min().timeout(0.1)).as(StepVerifier::create)
-                .verifyComplete();
+        Duration elapsed = reactive.bzmove(SRC, DST, BZMoveArgs.Builder.min(0.1)).as(StepVerifier::create).verifyComplete();
         assertThat(elapsed).isLessThan(Duration.ofMillis(900));
     }
 

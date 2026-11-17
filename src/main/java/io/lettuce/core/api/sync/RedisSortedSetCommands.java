@@ -437,9 +437,9 @@ public interface RedisSortedSetCommands<K, V> {
      * Atomically moves members from the lowest or highest scores of the sorted set stored at {@code source} to the sorted set
      * stored at {@code destination}, keeping their scores, blocking the connection while {@code source} is empty or missing,
      * until a member arrives or the timeout carried by {@code args} passes. The timeout is in seconds, may have a fraction, and
-     * defaults to {@code 0} (block indefinitely); the connection's command timeout must be longer than the blocking timeout.
-     * When the connection's command timeout ends the call first, the command may still be waiting on the server and may still
-     * move members.
+     * {@code 0} blocks indefinitely; the connection's command timeout must be longer than the blocking timeout. When the
+     * connection's command timeout ends the call first, the command may still be waiting on the server and may still move
+     * members.
      *
      * @param source the source key, must not be {@code null}.
      * @param destination the destination key, must not be {@code null}.

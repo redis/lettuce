@@ -89,7 +89,7 @@ internal class CoroutinesIntegrationTests @Inject constructor(private val connec
             assertThat(api.zmovemember("{z}s", "{z}d", "a")).isEqualTo(ScoredValue.just(1.0, "a"))
 
             api.del("{z}s", "{z}d")
-            assertThat(api.bzmove("{z}s", "{z}d", BZMoveArgs.Builder.min().timeout(0.1))).isNull()
+            assertThat(api.bzmove("{z}s", "{z}d", BZMoveArgs.Builder.min(0.1))).isNull()
         }
     }
 }
