@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -239,6 +240,122 @@ class ClusterTopologyRefreshSchedulerUnitTests {
         sut.onAskRedirection();
 
         verify(eventExecutors, times(2)).submit(any(Runnable.class));
+    }
+
+    @Test
+    void maintenanceRefreshShouldIgnoreAdaptiveRefreshTimeout() {
+
+        ClusterTopologyRefreshOptions adaptiveTimeout = ClusterTopologyRefreshOptions.builder().enablePeriodicRefresh(false)
+                .enableAllAdaptiveRefreshTriggers().adaptiveRefreshTriggersTimeout(1, TimeUnit.HOURS).build();
+
+        when(clusterClient.getClusterClientOptions())
+                .thenReturn(ClusterClientOptions.builder().topologyRefreshOptions(adaptiveTimeout).build());
+
+        sut.onMovedRedirection();
+        sut.onMovedRedirection();
+
+        assertThat(sut.requestMaintenanceRefresh()).isTrue();
+
+        verify(eventExecutors, times(2)).submit(any(Runnable.class));
+    }
+
+    @Test
+    void maintenanceRefreshShouldNotRequireAdaptiveTriggers() {
+
+        ClusterTopologyRefreshOptions noTriggers = ClusterTopologyRefreshOptions.builder().enablePeriodicRefresh(false).build();
+
+        when(clusterClient.getClusterClientOptions())
+                .thenReturn(ClusterClientOptions.builder().topologyRefreshOptions(noTriggers).build());
+
+        assertThat(sut.requestMaintenanceRefresh()).isTrue();
+
+        verify(eventExecutors).submit(any(Runnable.class));
+        verify(eventBus, never()).publish(any());
+    }
+
+    @Test
+    void maintenanceRefreshShouldNotSubmitIfExecutorIsShuttingDown() {
+
+        when(eventExecutors.isShuttingDown()).thenReturn(true);
+
+        assertThat(sut.requestMaintenanceRefresh()).isFalse();
+
+        verify(eventExecutors, never()).submit(any(Runnable.class));
+    }
+
+    @Test
+    void maintenanceRefreshShouldRunOnceWhenIdle() {
+
+        runSubmittedTasksImmediately();
+        when(clusterClient.refreshPartitionsAsync()).thenReturn(CompletableFuture.completedFuture(null));
+
+        sut.requestMaintenanceRefresh();
+
+        verify(clusterClient).refreshPartitionsAsync();
+        assertThat(sut.isTopologyRefreshInProgress()).isFalse();
+    }
+
+    @Test
+    void maintenanceRefreshDuringRunningRefreshShouldRerunOnce() {
+
+        runSubmittedTasksImmediately();
+        CompletableFuture<Void> first = new CompletableFuture<>();
+        CompletableFuture<Void> second = new CompletableFuture<>();
+        when(clusterClient.refreshPartitionsAsync()).thenReturn(first, second);
+
+        sut.requestMaintenanceRefresh();
+        sut.requestMaintenanceRefresh();
+        sut.requestMaintenanceRefresh();
+
+        verify(clusterClient).refreshPartitionsAsync();
+
+        first.complete(null);
+
+        verify(clusterClient, times(2)).refreshPartitionsAsync();
+
+        second.complete(null);
+
+        verify(clusterClient, times(2)).refreshPartitionsAsync();
+        assertThat(sut.isTopologyRefreshInProgress()).isFalse();
+    }
+
+    @Test
+    void maintenanceRefreshShouldRerunAfterFailedRefresh() {
+
+        runSubmittedTasksImmediately();
+        CompletableFuture<Void> first = new CompletableFuture<>();
+        when(clusterClient.refreshPartitionsAsync()).thenReturn(first, CompletableFuture.completedFuture(null));
+
+        sut.requestMaintenanceRefresh();
+        sut.requestMaintenanceRefresh();
+
+        first.completeExceptionally(new IllegalStateException("boom"));
+
+        verify(clusterClient, times(2)).refreshPartitionsAsync();
+    }
+
+    @Test
+    void adaptiveRefreshDuringRunningRefreshShouldBeDropped() {
+
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
+        runSubmittedTasksImmediately();
+        CompletableFuture<Void> first = new CompletableFuture<>();
+        when(clusterClient.refreshPartitionsAsync()).thenReturn(first);
+
+        sut.run();
+        sut.onMovedRedirection();
+
+        first.complete(null);
+
+        verify(clusterClient).refreshPartitionsAsync();
+    }
+
+    private void runSubmittedTasksImmediately() {
+
+        when(eventExecutors.submit(any(Runnable.class))).then(invocation -> {
+            ((Runnable) invocation.getArguments()[0]).run();
+            return null;
+        });
     }
 
     @Test

@@ -71,7 +71,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         this.partitions = partitions;
         this.clientResources = clientResources;
         this.genericWorkerPool = this.clientResources.eventExecutorGroup();
-        this.clusterTopologyRefreshTask = new ClusterTopologyRefreshTask(refreshTopology);
+        this.clusterTopologyRefreshTask = new ClusterTopologyRefreshTask(refreshTopology, this::scheduleRefresh);
     }
 
     protected void activateTopologyRefreshIfNeeded() {
@@ -221,6 +221,26 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         return scheduleRefresh();
     }
 
+    /**
+     * Request a topology refresh on behalf of a maintenance notification. Unlike adaptive refresh, the request is neither
+     * subject to the adaptive refresh triggers nor to the adaptive refresh timeout. A request made while a refresh is running
+     * causes exactly one further refresh after the running one completes.
+     *
+     * @return {@code true} if the refresh was accepted
+     */
+    boolean requestMaintenanceRefresh() {
+
+        logger.debug("ClusterTopologyRefreshScheduler.requestMaintenanceRefresh()");
+
+        if (!isEventLoopActive()) {
+            logger.debug("ClusterTopologyRefresh is disabled");
+            return false;
+        }
+
+        clusterTopologyRefreshTask.requestRerun();
+        return scheduleRefresh();
+    }
+
     private boolean scheduleRefresh() {
 
         if (isEventLoopActive()) {
@@ -317,13 +337,27 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         private final Supplier<CompletionStage<?>> reloadTopologyAsync;
 
-        ClusterTopologyRefreshTask(Supplier<CompletionStage<?>> reloadTopologyAsync) {
+        private final Runnable reschedule;
+
+        private final AtomicBoolean rerunRequested = new AtomicBoolean();
+
+        ClusterTopologyRefreshTask(Supplier<CompletionStage<?>> reloadTopologyAsync, Runnable reschedule) {
             this.reloadTopologyAsync = reloadTopologyAsync;
+            this.reschedule = reschedule;
+        }
+
+        /**
+         * Request another run after the one in progress. Has no effect beyond a regular run if the task is idle.
+         */
+        void requestRerun() {
+            rerunRequested.set(true);
         }
 
         public void run() {
 
             if (compareAndSet(false, true)) {
+                // this run starts after the request and therefore serves it
+                rerunRequested.set(false);
                 doRun();
                 return;
             }
@@ -345,11 +379,20 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
                         logger.warn("Cannot refresh Redis Cluster topology", throwable);
                     }
 
-                    set(false);
+                    complete();
                 });
             } catch (Exception e) {
                 logger.warn("Cannot refresh Redis Cluster topology", e);
-                set(false);
+                complete();
+            }
+        }
+
+        private void complete() {
+
+            set(false);
+
+            if (rerunRequested.compareAndSet(true, false)) {
+                reschedule.run();
             }
         }
 
