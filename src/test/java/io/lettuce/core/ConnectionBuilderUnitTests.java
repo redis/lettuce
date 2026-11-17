@@ -28,38 +28,37 @@ class ConnectionBuilderUnitTests {
     private final MaintenanceAwareExpiryWriter expiryWriter = mock(MaintenanceAwareExpiryWriter.class);
 
     @Test
-    void shouldFindMaintenanceAwareComponentWhenOutermost() {
-        assertThat(ConnectionBuilder.findMaintenanceAwareComponent(expiryWriter)).isSameAs(expiryWriter);
+    void shouldFindMaintenanceNotificationListenerWhenOutermost() {
+        assertThat(ConnectionBuilder.findMaintenanceNotificationListener(expiryWriter)).isSameAs(expiryWriter);
     }
 
     @Test
-    void shouldFindMaintenanceAwareComponentBehindCommandListenerWriter() {
+    void shouldFindMaintenanceNotificationListenerBehindCommandListenerWriter() {
 
         RedisChannelWriter writer = new CommandListenerWriter(expiryWriter, Collections.emptyList());
 
-        assertThat(ConnectionBuilder.findMaintenanceAwareComponent(writer)).isSameAs(expiryWriter);
+        assertThat(ConnectionBuilder.findMaintenanceNotificationListener(writer)).isSameAs(expiryWriter);
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void shouldFindMaintenanceAwareComponentBehindNestedDelegates() {
+    void shouldFindMaintenanceNotificationListenerBehindNestedDelegates() {
 
         RedisChannelWriter outer = mock(RedisChannelWriter.class, withSettings().extraInterfaces(Delegating.class));
         when(((Delegating<RedisChannelWriter>) outer).getDelegate())
                 .thenReturn(new CommandListenerWriter(expiryWriter, Collections.emptyList()));
 
-        assertThat(ConnectionBuilder.findMaintenanceAwareComponent(outer)).isSameAs(expiryWriter);
+        assertThat(ConnectionBuilder.findMaintenanceNotificationListener(outer)).isSameAs(expiryWriter);
     }
 
     @Test
-    void shouldNotFindMaintenanceAwareComponentWithoutOne() {
+    void shouldNotFindMaintenanceNotificationListenerWithoutOne() {
 
         RedisChannelWriter endpoint = mock(RedisChannelWriter.class);
 
-        assertThat(ConnectionBuilder.findMaintenanceAwareComponent(endpoint)).isNull();
-        assertThat(
-                ConnectionBuilder.findMaintenanceAwareComponent(new CommandListenerWriter(endpoint, Collections.emptyList())))
-                        .isNull();
+        assertThat(ConnectionBuilder.findMaintenanceNotificationListener(endpoint)).isNull();
+        assertThat(ConnectionBuilder
+                .findMaintenanceNotificationListener(new CommandListenerWriter(endpoint, Collections.emptyList()))).isNull();
     }
 
 }

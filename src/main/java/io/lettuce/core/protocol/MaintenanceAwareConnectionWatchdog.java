@@ -11,9 +11,6 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.protocol.MaintenanceNotification.Moving;
-import io.lettuce.core.protocol.MaintenanceNotification.ShardScoped;
-import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrated;
-import io.lettuce.core.protocol.MaintenanceNotification.SlotsMigrating;
 import io.lettuce.core.resource.Delay;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -31,10 +28,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -55,7 +52,10 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     private Channel channel;
 
-    private final Set<MaintenanceAwareComponent> componentListeners = new HashSet<>();
+    // the MOVING notification of the re-bind in progress; accessed on the event loop only
+    private Moving currentRebind;
+
+    private final List<MaintenanceNotificationListener> listeners = new CopyOnWriteArrayList<>();
 
     private RebindAwareAddressSupplier rebindAwareAddressSupplier;
 
@@ -109,55 +109,33 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
             return;
         }
 
-        switch (notification.getType()) {
-            case MOVING:
-                logger.debug("Rebind requested");
-                Moving moving = (Moving) notification;
-                if (null == moving.getEndpoint()) {
-                    logger.debug("[channel={}] Deferred Rebind requested. Rebinding to current endpoint after '{}'",
-                            channel.id(), moving.getTime());
-                    channel.eventLoop().schedule(() -> rebind(moving), moving.getTime().toMillis() / 2, TimeUnit.MILLISECONDS);
-                } else {
-                    rebind(moving);
-                }
-                break;
-            case MIGRATING:
-                logger.debug("[{}] Shard migration started", ChannelLogDescriptor.logDescriptor(channel));
-                notifyMigrateStarted(((ShardScoped) notification).getShards());
-                break;
-            case MIGRATED:
-                logger.debug("[{}] Shard migration completed", ChannelLogDescriptor.logDescriptor(channel));
-                notifyMigrateCompleted(((ShardScoped) notification).getShards());
-                break;
-            case FAILING_OVER:
-                logger.debug("[{}] Failover started", ChannelLogDescriptor.logDescriptor(channel));
-                notifyFailoverStarted(((ShardScoped) notification).getShards());
-                break;
-            case FAILED_OVER:
-                logger.debug("[{}] Failover completed", ChannelLogDescriptor.logDescriptor(channel));
-                notifyFailoverCompleted(((ShardScoped) notification).getShards());
-                break;
-            case SMIGRATING:
-                logger.debug("[{}] Slot migration started", ChannelLogDescriptor.logDescriptor(channel));
-                notifySlotMigrateStarted(((SlotsMigrating) notification).getSlots().toString());
-                break;
-            case SMIGRATED:
-                logger.debug("[{}] Slot migration completed", ChannelLogDescriptor.logDescriptor(channel));
-                notifySlotMigrateCompleted(((SlotsMigrated) notification).getMigrations().toString());
-                break;
+        logger.debug("[{}] Received {}", ChannelLogDescriptor.logDescriptor(channel), notification.getType());
+
+        if (notification.getType() == MaintenanceNotification.Type.MOVING) {
+            Moving moving = (Moving) notification;
+            if (null == moving.getEndpoint()) {
+                logger.debug("[channel={}] Deferred Rebind requested. Rebinding to current endpoint after '{}'", channel.id(),
+                        moving.getTime());
+                channel.eventLoop().schedule(() -> rebind(moving), moving.getTime().toMillis() / 2, TimeUnit.MILLISECONDS);
+            } else {
+                rebind(moving);
+            }
         }
+
+        listeners.forEach(listener -> listener.onMaintenanceNotification(notification));
     }
 
     private void rebind(Moving movingEvent) {
         logger.debug("[{}] Rebind to '{}'", ChannelLogDescriptor.logDescriptor(channel), movingEvent.getEndpoint());
         channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
         rebindAwareAddressSupplier.rebind(movingEvent.getTime(), movingEvent.getEndpoint());
+        currentRebind = movingEvent;
 
         // Relax the timeouts for the whole re-bind window, not only while commands are still in flight. While the
         // re-bind is in progress the endpoint reports itself as disconnected (see DefaultEndpoint#isConnected), so
         // every command issued after the MOVING notification is buffered until the connection to the new endpoint has
         // been established. Those commands need the relaxed timeout just as much as the ones already on the wire.
-        notifyRebindStarted(movingEvent.getTime(), movingEvent.getEndpoint());
+        listeners.forEach(listener -> listener.onRebindStarted(movingEvent));
 
         ChannelPipeline pipeline = channel.pipeline();
         CommandHandler commandHandler = pipeline.get(CommandHandler.class);
@@ -175,55 +153,22 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         // channelReadComplete() closes the channel and reports the completion of the re-bind.
     }
 
-    /**
-     * Register a component that is aware of re-bind events. Such a component is going to be notified of re-bind events by
-     * calling their {@code onRebindStarted} and {@code onRebindCompleted} methods.
-     *
-     * @param component the component to register
-     */
-    public void setMaintenanceEventListener(MaintenanceAwareComponent component) {
-        this.componentListeners.add(component);
-    }
-
     private void notifyRebindCompleted() {
-        this.componentListeners.forEach(MaintenanceAwareComponent::onRebindCompleted);
+
+        Moving moving = currentRebind;
+        currentRebind = null;
+
+        listeners.forEach(listener -> listener.onRebindCompleted(moving));
     }
 
     /**
-     * Called whenever a re-bind has been initiated by the remote server
-     * <p>
-     * A specific endpoint is going to move to another node within <time> seconds
-     * </p>
-     * 
-     * @param endpoint address of the target endpoint
-     * @param time estimated time for the re-bind to complete
+     * Register a listener for the maintenance notifications and re-bind steps of this connection.
+     *
+     * @param listener the listener to register
+     * @since 8.0
      */
-    private void notifyRebindStarted(Duration time, SocketAddress endpoint) {
-        this.componentListeners.forEach(e -> e.onRebindStarted(time, endpoint));
-    }
-
-    private void notifyMigrateStarted(String shards) {
-        this.componentListeners.forEach(component -> component.onMigrateStarted(shards));
-    }
-
-    private void notifyMigrateCompleted(String shards) {
-        this.componentListeners.forEach(component -> component.onMigrateCompleted(shards));
-    }
-
-    private void notifyFailoverStarted(String shards) {
-        this.componentListeners.forEach(component -> component.onFailoverStarted(shards));
-    }
-
-    private void notifyFailoverCompleted(String shards) {
-        this.componentListeners.forEach(component -> component.onFailoverCompleted(shards));
-    }
-
-    private void notifySlotMigrateStarted(String slots) {
-        this.componentListeners.forEach(component -> component.onSlotMigrateStarted(slots));
-    }
-
-    private void notifySlotMigrateCompleted(String slots) {
-        this.componentListeners.forEach(component -> component.onSlotMigrateCompleted(slots));
+    public void addMaintenanceNotificationListener(MaintenanceNotificationListener listener) {
+        this.listeners.add(listener);
     }
 
     /**
