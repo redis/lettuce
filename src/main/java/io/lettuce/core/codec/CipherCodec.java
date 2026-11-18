@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.util.function.ToIntFunction;
 
 import javax.crypto.Cipher;
 
@@ -21,6 +22,16 @@ import io.netty.buffer.ByteBuf;
  *     $&lt;key name&gt;+&lt;key version&gt;$&lt;cipher text&gt;
  * </pre>
  *
+ * When storing initialization vectors, the message format is:
+ *
+ * <pre class="code">
+ *     $&lt;key name&gt;+&lt;key version&gt;$&lt;initialization vector&gt;&lt;cipher text&gt;
+ * </pre>
+ *
+ * The IV length is configured on the codec and is not encoded in the message. To read both formats with one codec, use
+ * {@link #forValues(RedisCodec, CipherSupplier, CipherSupplier, ToIntFunction)} to select zero for legacy key versions and the
+ * stored IV length for new key versions. Readers and writers must agree on the format for each key name and version.
+ * <p>
  * Each value is prefixed with the key message that is enclosed with dollar ({@code $}) signs and using the plus sign
  * ({@code +}) to denote the key version. Decryption decodes the key name and requests a {@link Cipher} from
  * {@link CipherSupplier} to decrypt values with an appropriate key/{@link Cipher}.
@@ -53,7 +64,7 @@ public abstract class CipherCodec {
         LettuceAssert.notNull(delegate, "RedisCodec must not be null");
         LettuceAssert.notNull(encrypt, "Encryption Supplier must not be null");
         LettuceAssert.notNull(decrypt, "Decryption Supplier must not be null");
-        return (RedisCodec) new CipherCodecWrapper((RedisCodec) delegate, encrypt, decrypt, 0);
+        return (RedisCodec) new CipherCodecWrapper((RedisCodec) delegate, encrypt, decrypt, descriptor -> 0);
     }
 
     /**
@@ -61,7 +72,8 @@ public abstract class CipherCodec {
      * <p>
      * The encryption supplier must initialize each cipher with a fresh IV of the configured length. The decryption supplier can
      * obtain the stored IV from {@link KeyDescriptor#getInitializationVector()}. Both readers and writers must use the same IV
-     * length. Values written by the three-argument factory do not contain an IV and require that factory to decode.
+     * length. To read values with and without stored IVs, use
+     * {@link #forValues(RedisCodec, CipherSupplier, CipherSupplier, ToIntFunction)} instead.
      *
      * @param <K> key type.
      * @param <V> value type.
@@ -81,6 +93,40 @@ public abstract class CipherCodec {
         LettuceAssert.notNull(encrypt, "Encryption Supplier must not be null");
         LettuceAssert.notNull(decrypt, "Decryption Supplier must not be null");
         LettuceAssert.isTrue(initializationVectorLength > 0, "Initialization vector length must be positive");
+        return (RedisCodec) new CipherCodecWrapper((RedisCodec) delegate, encrypt, decrypt,
+                descriptor -> initializationVectorLength);
+    }
+
+    /**
+     * Create a codec that selects the stored IV length by key descriptor for each value.
+     * <p>
+     * The selector receives the key name and version before an IV is attached to the descriptor. Return zero for values without
+     * a stored IV, or a positive length for values with a stored IV. A negative result is rejected when encoding or decoding.
+     * The selector must be thread-safe and return a consistent length for each key name and version.
+     * <p>
+     * To migrate existing data, first deploy readers that accept both formats while retaining the legacy encryption key
+     * version. Once all readers accept both, select a new encryption key version with a positive IV length. Keep the legacy
+     * decryption key and original cipher parameters available until legacy values are replaced or expire. Reusing a key version
+     * for a different layout makes those values ambiguous and can cause decryption failures or incorrect plaintext.
+     *
+     * @param <K> key type.
+     * @param <V> value type.
+     * @param delegate codec used for key-value encoding/decoding, must not be {@code null}.
+     * @param encrypt supplier of initialized encryption ciphers, must not be {@code null}.
+     * @param decrypt supplier of initialized decryption ciphers, must not be {@code null}.
+     * @param initializationVectorLength selector of the number of IV bytes stored with each value, must not be {@code null}.
+     * @return cipher codec that can read both legacy values and values with stored IVs.
+     * @throws IllegalArgumentException if a supplier, delegate, or selector is {@code null}.
+     * @since 8.0
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static <K, V> RedisCodec<K, V> forValues(RedisCodec<K, V> delegate, CipherSupplier encrypt, CipherSupplier decrypt,
+            ToIntFunction<KeyDescriptor> initializationVectorLength) {
+
+        LettuceAssert.notNull(delegate, "RedisCodec must not be null");
+        LettuceAssert.notNull(encrypt, "Encryption Supplier must not be null");
+        LettuceAssert.notNull(decrypt, "Decryption Supplier must not be null");
+        LettuceAssert.notNull(initializationVectorLength, "Initialization vector length selector must not be null");
         return (RedisCodec) new CipherCodecWrapper((RedisCodec) delegate, encrypt, decrypt, initializationVectorLength);
     }
 
@@ -93,10 +139,10 @@ public abstract class CipherCodec {
 
         private CipherSupplier decrypt;
 
-        private final int initializationVectorLength;
+        private final ToIntFunction<KeyDescriptor> initializationVectorLength;
 
         CipherCodecWrapper(RedisCodec<Object, Object> delegate, CipherSupplier encrypt, CipherSupplier decrypt,
-                int initializationVectorLength) {
+                ToIntFunction<KeyDescriptor> initializationVectorLength) {
 
             this.delegate = delegate;
             this.encrypt = encrypt;
@@ -113,6 +159,7 @@ public abstract class CipherCodec {
         public Object decodeValue(ByteBuffer bytes) {
 
             KeyDescriptor keyDescriptor = KeyDescriptor.from(bytes);
+            int initializationVectorLength = getInitializationVectorLength(keyDescriptor);
             if (initializationVectorLength > 0) {
                 LettuceAssert.isTrue(bytes.remaining() >= initializationVectorLength, "Truncated initialization vector");
                 byte[] initializationVector = new byte[initializationVectorLength];
@@ -155,7 +202,7 @@ public abstract class CipherCodec {
                 KeyDescriptor keyDescriptor = this.encrypt.encryptionKey();
                 Cipher cipher = this.encrypt.get(keyDescriptor);
 
-                byte[] initializationVector = getInitializationVector(cipher);
+                byte[] initializationVector = getInitializationVector(keyDescriptor, cipher);
                 keyDescriptor.writeTo(target);
                 target.writeBytes(initializationVector);
                 doWithCipher(cipher, serialized, target);
@@ -189,7 +236,7 @@ public abstract class CipherCodec {
                 KeyDescriptor keyDescriptor = this.encrypt.encryptionKey();
                 Cipher cipher = this.encrypt.get(keyDescriptor);
 
-                byte[] initializationVector = getInitializationVector(cipher);
+                byte[] initializationVector = getInitializationVector(keyDescriptor, cipher);
                 ByteBuffer intermediate = ByteBuffer
                         .allocate(cipher.getOutputSize(serialized.remaining() + 3 + keyDescriptor.name.length + 10)
                                 + initializationVector.length);
@@ -205,8 +252,16 @@ public abstract class CipherCodec {
             }
         }
 
-        private byte[] getInitializationVector(Cipher cipher) {
+        private int getInitializationVectorLength(KeyDescriptor keyDescriptor) {
 
+            int length = initializationVectorLength.applyAsInt(keyDescriptor);
+            LettuceAssert.isTrue(length >= 0, "Initialization vector length must not be negative");
+            return length;
+        }
+
+        private byte[] getInitializationVector(KeyDescriptor keyDescriptor, Cipher cipher) {
+
+            int initializationVectorLength = getInitializationVectorLength(keyDescriptor);
             if (initializationVectorLength == 0) {
                 return new byte[0];
             }
