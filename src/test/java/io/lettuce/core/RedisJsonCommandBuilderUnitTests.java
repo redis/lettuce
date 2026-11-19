@@ -746,6 +746,11 @@ class RedisJsonCommandBuilderUnitTests {
     }
 
     @Test
+    void jsonMSetShouldRejectNullArguments() {
+        assertThatThrownBy(() -> builder.jsonMSet(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void jsonGetShouldRejectNullPathArray() {
         assertThatThrownBy(() -> builder.jsonGet(MY_KEY, JsonGetArgs.Builder.defaults(), (JsonPath[]) null))
                 .isInstanceOf(IllegalArgumentException.class);

@@ -279,6 +279,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, String> jsonMSet(List<JsonMsetArgs<K, V>> arguments) {
+        LettuceAssert.notNull(arguments, "Arguments " + MUST_NOT_BE_NULL);
         notEmpty(arguments.toArray());
         LettuceAssert.noNullElements(arguments, "Arguments must not be null");
 
