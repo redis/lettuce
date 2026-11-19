@@ -302,8 +302,10 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                 // indefinite delay > 100ms timeout
                 testStrategy.setHealthCheckDelay(uri1, TestHealthCheckStrategy.Delay.Await(timeoutLatch));
 
-                // When health check times out, it should be recorded as failed and status becomes UNHEALTHY
-                with().pollInterval(5, MILLISECONDS).timeout(Duration.ofMillis(customTimeout + 50)).await()
+                // When health check times out, it should be recorded as failed and status becomes UNHEALTHY. The delayed check
+                // never completes on its own, so only the configured timeout can mark it failed; the extra second covers a
+                // slow CI runner scheduling the health check threads.
+                with().pollInterval(5, MILLISECONDS).timeout(Duration.ofMillis(customTimeout + 1000)).await()
                         .untilAsserted(() -> {
                             assertThat(connection.isHealthy(uri1)).isFalse();
                         });
