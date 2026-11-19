@@ -158,6 +158,8 @@ public interface RedisJsonReactiveCommands<K, V> {
 
     /**
      * Report the length of the JSON array at a the {@link JsonPath#ROOT_PATH}
+     * <p>
+     * Fails if {@code key} does not exist.
      *
      * @param key the key holding the JSON document.
      * @return the size of the arrays, or null if the path does not exist.
@@ -329,7 +331,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * the returned value conforms to the JSONPath version (an array of values).
      *
      * @param key the key holding the JSON document.
-     * @param options the {@link JsonGetArgs} to use.
+     * @param options the {@link JsonGetArgs} to use, must not be {@code null}.
      * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
      * @return JsonValue the value at path in JSON serialized form, or null if the path does not exist.
      * @since 6.5
@@ -343,7 +345,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * {@link JsonValue} wrappers.
      *
      * @param key the key holding the JSON document.
-     * @param options the {@link JsonGetArgs} to use.
+     * @param options the {@link JsonGetArgs} to use, must not be {@code null}.
      * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
      * @return List<String> the value at path in JSON serialized form, or null if the path does not exist.
      * @since 7.0
@@ -476,6 +478,8 @@ public interface RedisJsonReactiveCommands<K, V> {
 
     /**
      * Return the keys in the JSON document that are referenced by the {@link JsonPath#ROOT_PATH}
+     * <p>
+     * Fails if {@code key} does not exist.
      *
      * @param key the key holding the JSON document.
      * @return List<V> the keys in the JSON document that are referenced by the given {@link JsonPath}.
@@ -495,6 +499,8 @@ public interface RedisJsonReactiveCommands<K, V> {
 
     /**
      * Report the number of keys in the JSON object at the {@link JsonPath#ROOT_PATH} and for the provided key
+     * <p>
+     * Fails if {@code key} does not exist.
      *
      * @param key the key holding the JSON document.
      * @return Long the number of keys in the JSON object at the specified path, or null if the path does not exist.
@@ -516,7 +522,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the value(s) where we want to set the value.
      * @param value the {@link JsonValue} to set.
-     * @param options the {@link JsonSetArgs} the options for setting the value.
+     * @param options the {@link JsonSetArgs} the options for setting the value, must not be {@code null}.
      * @return String "OK" if the set was successful, null if the {@link JsonSetArgs} conditions are not met.
      * @since 6.5
      */
@@ -558,7 +564,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the value(s) where we want to set the value.
      * @param jsonString the JSON string to set.
-     * @param options the {@link JsonSetArgs} the options for setting the value.
+     * @param options the {@link JsonSetArgs} the options for setting the value, must not be {@code null}.
      * @return String "OK" if the set was successful, null if the {@link JsonSetArgs} conditions are not met.
      * @since 6.8
      */
@@ -619,6 +625,8 @@ public interface RedisJsonReactiveCommands<K, V> {
 
     /**
      * Report the length of the JSON String at the {@link JsonPath#ROOT_PATH} in the JSON document.
+     * <p>
+     * Fails if {@code key} does not exist.
      *
      * @param key the key holding the JSON document.
      * @return Long (in recursive descent) the length of the JSON String at the provided {@link JsonPath}, or null if the value

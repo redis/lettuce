@@ -157,6 +157,8 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Report the length of the JSON array at a the {@link JsonPath#ROOT_PATH}
+     * <p>
+     * Fails if `key` does not exist.
      *
      * @param key the key holding the JSON document.
      * @return the size of the arrays, or null if the path does not exist.
@@ -328,7 +330,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * the returned value conforms to the JSONPath version (an array of values).
      *
      * @param key the key holding the JSON document.
-     * @param options the [JsonGetArgs] to use.
+     * @param options the [JsonGetArgs] to use, must not be `null`.
      * @param jsonPaths the [JsonPath]s to use to identify the values to get.
      * @return JsonValue the value at path in JSON serialized form, or null if the path does not exist.
      * @since 6.5
@@ -342,7 +344,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * [JsonValue] wrappers.
      *
      * @param key the key holding the JSON document.
-     * @param options the [JsonGetArgs] to use.
+     * @param options the [JsonGetArgs] to use, must not be `null`.
      * @param jsonPaths the [JsonPath]s to use to identify the values to get.
      * @return List<String> the value at path in JSON serialized form, or null if the path does not exist.
      * @since 7.0
@@ -475,6 +477,8 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Return the keys in the JSON document that are referenced by the {@link JsonPath#ROOT_PATH}
+     * <p>
+     * Fails if `key` does not exist.
      *
      * @param key the key holding the JSON document.
      * @return List<V> the keys in the JSON document that are referenced by the given [JsonPath].
@@ -494,6 +498,8 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Report the number of keys in the JSON object at the {@link JsonPath#ROOT_PATH} and for the provided key
+     * <p>
+     * Fails if `key` does not exist.
      *
      * @param key the key holding the JSON document.
      * @return Long the number of keys in the JSON object at the specified path, or null if the path does not exist.
@@ -515,7 +521,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @param key the key holding the JSON document.
      * @param jsonPath the [JsonPath] pointing to the value(s) where we want to set the value.
      * @param value the [JsonValue] to set.
-     * @param options the [JsonSetArgs] the options for setting the value.
+     * @param options the [JsonSetArgs] the options for setting the value, must not be `null`.
      * @return String "OK" if the set was successful, null if the [JsonSetArgs] conditions are not met.
      * @since 6.5
      */
@@ -557,7 +563,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @param key the key holding the JSON document.
      * @param jsonPath the [JsonPath] pointing to the value(s) where we want to set the value.
      * @param jsonString the JSON string to set.
-     * @param options the [JsonSetArgs] the options for setting the value.
+     * @param options the [JsonSetArgs] the options for setting the value, must not be `null`.
      * @return String "OK" if the set was successful, null if the [JsonSetArgs] conditions are not met.
      * @since 6.8
      */
@@ -618,6 +624,8 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Report the length of the JSON String at the {@link JsonPath#ROOT_PATH} in the JSON document.
+     * <p>
+     * Fails if `key` does not exist.
      *
      * @param key the key holding the JSON document.
      * @return Long (in recursive descent) the length of the JSON String at the provided [JsonPath], or null if the value
