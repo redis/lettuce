@@ -703,6 +703,9 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
 
         try (StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect(StringCodec.UTF8)) {
 
+            // connect() returns once one database is healthy; the others are added in the background
+            waitForEndpoints(connection, 3, 2);
+
             // Get the initial active endpoint
             RedisURI initialActive = connection.getCurrentEndpoint();
 

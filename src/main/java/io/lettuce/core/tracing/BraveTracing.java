@@ -26,7 +26,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
 import brave.Span;
 import brave.propagation.TraceContextOrSamplingFlags;
 import io.lettuce.core.internal.LettuceAssert;
@@ -42,8 +41,8 @@ import io.lettuce.core.protocol.RedisCommand;
  * imperative (synchronous/asynchronous) API usage from {@link brave.Tracing#currentTracer()}. The context is not propagated
  * across asynchronous call chains resulting from {@link java.util.concurrent.CompletionStage} chaining.
  * <p>
- * Reactive API usage leverages Reactor's {@link reactor.util.context.Context} so that subscribers can register one of the
- * following objects (using their {@link Class} as context key):
+ * Reactive API usage leverages Reactor's {@code Context} so that subscribers can register one of the following objects (using
+ * their {@link Class} as context key):
  *
  * <ol>
  * <li>A {@link TraceContextProvider}</li>
@@ -484,20 +483,6 @@ public class BraveTracing implements Tracing {
                 }
             }
             return null;
-        }
-
-        @Override
-        public Mono<TraceContext> getTraceContextLater() {
-
-            return Mono.deferContextual(Mono::justOrEmpty)
-                    .filter(it -> it.hasKey(Span.class) || it.hasKey(brave.propagation.TraceContext.class)).map(it -> {
-
-                        if (it.hasKey(Span.class)) {
-                            return new BraveTraceContext(it.get(Span.class).context());
-                        }
-
-                        return new BraveTraceContext(it.get(brave.propagation.TraceContext.class));
-                    });
         }
 
         @Override

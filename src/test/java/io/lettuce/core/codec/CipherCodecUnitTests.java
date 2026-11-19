@@ -28,6 +28,7 @@ import io.netty.buffer.Unpooled;
  * Unit tests for {@link CipherCodec}.
  *
  * @author Mark Paluch
+ * @author Armen Petrosyan
  */
 @Tag(UNIT_TEST)
 class CipherCodecUnitTests {
@@ -98,6 +99,30 @@ class CipherCodecUnitTests {
         assertThat(result).isEqualTo(testArgs.content);
     }
 
+    @Test
+    void shouldEncryptValueToByteBufUsingValueEncoding() {
+
+        RedisCodec<String, String> crypto = CipherCodec.forValues(new PrefixCodec(), encrypt, decrypt);
+
+        ToByteBufEncoder<String, String> direct = (ToByteBufEncoder<String, String>) crypto;
+
+        ByteBufAllocator allocator = ByteBufAllocator.DEFAULT;
+        ByteBuf target = allocator.buffer();
+        ByteBuf keyTarget = allocator.buffer();
+
+        try {
+            direct.encodeValue("foobar", target);
+            direct.encodeKey("foobar", keyTarget);
+
+            assertThat(crypto.decodeValue(target.nioBuffer())).isEqualTo("V:foobar");
+            assertThat(crypto.decodeValue(crypto.encodeValue("foobar"))).isEqualTo("V:foobar");
+            assertThat(crypto.decodeKey(keyTarget.nioBuffer())).isEqualTo("K:foobar");
+        } finally {
+            target.release();
+            keyTarget.release();
+        }
+    }
+
     static List<CryptoTestArgs> cryptoTestValues() {
 
         StringBuilder hugeString = new StringBuilder();
@@ -125,6 +150,48 @@ class CipherCodecUnitTests {
 
         assertThatThrownBy(() -> CipherCodec.KeyDescriptor.create("my+key")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> CipherCodec.KeyDescriptor.create("my$key")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /**
+     * Codec using distinct key and value encodings to tell both encoders apart.
+     */
+    static class PrefixCodec implements RedisCodec<String, String>, ToByteBufEncoder<String, String> {
+
+        @Override
+        public String decodeKey(ByteBuffer bytes) {
+            return StringCodec.UTF8.decodeKey(bytes);
+        }
+
+        @Override
+        public String decodeValue(ByteBuffer bytes) {
+            return StringCodec.UTF8.decodeValue(bytes);
+        }
+
+        @Override
+        public ByteBuffer encodeKey(String key) {
+            return StringCodec.UTF8.encodeKey("K:" + key);
+        }
+
+        @Override
+        public ByteBuffer encodeValue(String value) {
+            return StringCodec.UTF8.encodeValue("V:" + value);
+        }
+
+        @Override
+        public void encodeKey(String key, ByteBuf target) {
+            StringCodec.UTF8.encodeKey("K:" + key, target);
+        }
+
+        @Override
+        public void encodeValue(String value, ByteBuf target) {
+            StringCodec.UTF8.encodeValue("V:" + value, target);
+        }
+
+        @Override
+        public int estimateSize(Object keyOrValue) {
+            return StringCodec.UTF8.estimateSize(keyOrValue) + 2;
+        }
+
     }
 
     static class CryptoTestArgs {

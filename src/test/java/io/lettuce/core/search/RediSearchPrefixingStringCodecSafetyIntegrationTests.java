@@ -123,6 +123,10 @@ public class RediSearchPrefixingStringCodecSafetyIntegrationTests {
         String jsonDoc = "{\"title\":\"Redis search guide\",\"body\":\"" + BODY_TEXT + "\",\"category\":\"tutorial\","
                 + "\"price\":50}";
         redis.jsonSet(JSON_DOC_KEY, JsonPath.ROOT_PATH, redis.getJsonParser().createJsonValue(jsonDoc));
+
+        // Let the notification-driven indexer catch up before the tests query either index
+        SearchTestSupport.searchUntilCount(redis, HASH_INDEX, "search", 1);
+        SearchTestSupport.searchUntilCount(redis, JSON_INDEX, "search", 1);
     }
 
     @AfterAll

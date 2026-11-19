@@ -60,6 +60,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  *
  * @author Mark Paluch
  * @author dengliming
+ * @author Taewoong Kim
  */
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -667,6 +668,28 @@ public class StreamCommandIntegrationTests extends TestSupport {
                 Limit.from(10))).hasSize(1);
         assertThat(redis.xpending(key, "group", Range.from(Range.Boundary.including(id1), Range.Boundary.including(id2)),
                 Limit.from(10))).hasSize(2);
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xpendingRangesWithArgs() {
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id1 = redis.xadd(key, Collections.singletonMap("key", "value"));
+        String id2 = redis.xadd(key, Collections.singletonMap("key", "value"));
+        String id3 = redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
+
+        assertThat(redis.xpending(key,
+                XPendingArgs.Builder.xpending("group", Range.<String> unbounded().gt(id1).lt(id3), Limit.from(10))))
+                        .extracting(PendingMessage::getId).containsExactly(id2);
+        assertThat(redis.xpending(key,
+                XPendingArgs.Builder.xpending("group", Range.<String> unbounded().gt(id1), Limit.from(1)).idle(0)))
+                        .extracting(PendingMessage::getId).containsExactly(id2);
+        assertThat(redis.xpending(key, XPendingArgs.Builder
+                .xpending(Consumer.from("group", "consumer1"), Range.<String> unbounded().lt(id3), Limit.from(10)).idle(0)))
+                        .extracting(PendingMessage::getId).containsExactly(id1, id2);
     }
 
     @Test

@@ -298,6 +298,8 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
 
         String firstElement;
 
+        private boolean headerSeen;
+
         @Override
         public void set(ByteBuffer bytes) {
 
@@ -313,12 +315,42 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
 
         @Override
         public void multi(int count) {
+            captureHeader(count);
+            super.multi(count);
+        }
 
-            if (multiCount == null) {
+        @Override
+        public void multiArray(int count) {
+            // the state machine reports array headers through multiArray(int), RESP2 Pub/Sub messages are arrays
+            captureHeader(count);
+            super.multiArray(count);
+        }
+
+        @Override
+        public void multiPush(int count) {
+            headerSeen = true;
+            super.multiPush(count);
+        }
+
+        @Override
+        public void multiMap(int count) {
+            // a RESP3 map or set is never a RESP2 Pub/Sub message, so arrays nested in it must not be inspected
+            headerSeen = true;
+            super.multiMap(count);
+        }
+
+        @Override
+        public void multiSet(int count) {
+            headerSeen = true;
+            super.multiSet(count);
+        }
+
+        private void captureHeader(int count) {
+
+            if (!headerSeen) {
+                headerSeen = true;
                 multiCount = count;
             }
-
-            super.multi(count);
         }
 
     }

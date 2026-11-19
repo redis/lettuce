@@ -10,6 +10,7 @@ import java.util.List;
 
 import io.lettuce.core.probabilistic.CMSInfoValue;
 import io.lettuce.core.probabilistic.CMSInfoValueParser;
+import io.lettuce.core.probabilistic.CmsCellSize;
 import io.lettuce.core.probabilistic.IncrementPair;
 import io.lettuce.core.probabilistic.MergePair;
 import io.lettuce.core.codec.RedisCodec;
@@ -72,10 +73,30 @@ class RedisCMSCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CMS_INITBYDIM, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, String> cmsInitByDim(K key, long width, long depth, CmsCellSize cellSize) {
+        notNullKey(key);
+        LettuceAssert.notNull(cellSize, "CmsCellSize " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(width).add(depth).add(CommandKeyword.CELL_SIZE)
+                .add(cellSize);
+
+        return createCommand(CMS_INITBYDIM, new StatusOutput<>(codec), args);
+    }
+
     Command<K, V, String> cmsInitByProb(K key, double error, double probability) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(error).add(probability);
+
+        return createCommand(CMS_INITBYPROB, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> cmsInitByProb(K key, double error, double probability, CmsCellSize cellSize) {
+        notNullKey(key);
+        LettuceAssert.notNull(cellSize, "CmsCellSize " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(error).add(probability).add(CommandKeyword.CELL_SIZE)
+                .add(cellSize);
 
         return createCommand(CMS_INITBYPROB, new StatusOutput<>(codec), args);
     }

@@ -5,6 +5,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Queue;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +26,8 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollector;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
+import io.lettuce.core.output.BooleanOutput;
+import io.lettuce.core.output.ObjectOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
@@ -314,6 +320,78 @@ class PubSubCommandHandlerUnitTests {
         assertThat(captor.getAllValues().get(0).channel()).isEqualTo("foo");
         assertThat(captor.getAllValues().get(0).get()).isEqualTo("bar");
         assertThat(captor.getAllValues().get(1).channel()).isEqualTo("a");
+    }
+
+    @Test
+    void shouldDecodeResp3MapReplyStartingWithMessageKey() throws Exception {
+
+        Command<String, String, Object> command1 = new Command<>(CommandType.HGETALL, new ObjectOutput<>(StringCodec.UTF8),
+                null);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        stack.add(command1);
+
+        sut.channelRead(context,
+                responseBytes("%3\r\n$7\r\nmessage\r\n$1\r\na\r\n$1\r\nb\r\n$1\r\nc\r\n$1\r\nd\r\n$1\r\ne\r\n"));
+
+        Map<String, String> expected = new LinkedHashMap<>();
+        expected.put("message", "a");
+        expected.put("b", "c");
+        expected.put("d", "e");
+
+        assertThat(command1.isDone()).isTrue();
+        assertThat(command1.get()).isEqualTo(expected);
+        verify(endpoint, never()).notifyMessage(any());
+    }
+
+    @Test
+    void shouldDecodeResp3MapReplyWithNestedArray() throws Exception {
+
+        Command<String, String, Object> command1 = new Command<>(CommandType.EVAL, new ObjectOutput<>(StringCodec.UTF8), null);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        stack.add(command1);
+
+        sut.channelRead(context, responseBytes("%1\r\n$7\r\nmessage\r\n*3\r\n$1\r\na\r\n$1\r\nb\r\n$1\r\nc\r\n"));
+
+        assertThat(command1.isDone()).isTrue();
+        assertThat(command1.get()).isEqualTo(Collections.singletonMap("message", Arrays.asList("a", "b", "c")));
+        verify(endpoint, never()).notifyMessage(any());
+    }
+
+    @Test
+    void shouldDecodeResp3SetReply() throws Exception {
+
+        Command<String, String, Object> command1 = new Command<>(CommandType.SMEMBERS, new ObjectOutput<>(StringCodec.UTF8),
+                null);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        stack.add(command1);
+
+        sut.channelRead(context, responseBytes("~3\r\n$7\r\nmessage\r\n$1\r\na\r\n$1\r\nb\r\n"));
+
+        assertThat(command1.isDone()).isTrue();
+        assertThat(command1.get()).isEqualTo(Arrays.asList("message", "a", "b"));
+        verify(endpoint, never()).notifyMessage(any());
+    }
+
+    @Test
+    void shouldDecodeResp3BooleanReply() throws Exception {
+
+        Command<String, String, Boolean> command1 = new Command<>(CommandType.EXISTS, new BooleanOutput<>(StringCodec.UTF8),
+                null);
+
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        stack.add(command1);
+
+        sut.channelRead(context, responseBytes("#t\r\n"));
+
+        assertThat(command1.isDone()).isTrue();
+        assertThat(command1.get()).isTrue();
     }
 
     private static ByteBuf responseBytes(String s) {

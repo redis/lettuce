@@ -46,7 +46,7 @@ public interface RedisStreamReactiveCommands<K, V> {
      * @param key the stream key.
      * @param group name of the consumer group.
      * @param messageIds message Id's to acknowledge.
-     * @return simple-reply the lenght of acknowledged messages.
+     * @return simple-reply the length of acknowledged messages.
      */
     Mono<Long> xack(K key, K group, String... messageIds);
 
@@ -313,7 +313,7 @@ public interface RedisStreamReactiveCommands<K, V> {
      * Get the length of a steam.
      *
      * @param key the stream key.
-     * @return simple-reply the lenght of the stream.
+     * @return simple-reply the length of the stream.
      */
     Mono<Long> xlen(K key);
 
