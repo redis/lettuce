@@ -736,6 +736,16 @@ class RedisJsonCommandBuilderUnitTests {
     }
 
     @Test
+    void jsonStrappendStringOverloadShouldEncodeUtf8() {
+        Command<String, String, List<Long>> command = builder.jsonStrappend(MY_KEY, MY_PATH, "\"ü\"");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$14\r\nJSON.STRAPPEND\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n" + "$4\r\n" + "\"ü\"" + "\r\n");
+    }
+
+    @Test
     void jsonGetShouldRejectNullPathArray() {
         assertThatThrownBy(() -> builder.jsonGet(MY_KEY, JsonGetArgs.Builder.defaults(), (JsonPath[]) null))
                 .isInstanceOf(IllegalArgumentException.class);
