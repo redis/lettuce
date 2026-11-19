@@ -29,6 +29,7 @@ import java.util.List;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link RedisJsonCommandBuilder}.
@@ -138,7 +139,7 @@ class RedisJsonCommandBuilderUnitTests {
         command.encode(buf);
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*2\r\n" + "$11\r\nJSON.ARRLEN\r\n" + "$15\r\nbikes:inventory\r\n");
+                .isEqualTo("*3\r\n" + "$11\r\nJSON.ARRLEN\r\n" + "$15\r\nbikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH);
     }
 
     @Test
@@ -167,8 +168,8 @@ class RedisJsonCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*2\r\n" + "$11\r\n" + "JSON.ARRPOP\r\n" + "$15\r\n" + "bikes:inventory\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*3\r\n" + "$11\r\n" + "JSON.ARRPOP\r\n" + "$15\r\n" + "bikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH);
     }
 
     @Test
@@ -205,6 +206,38 @@ class RedisJsonCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructJsonArrtrimWithIndexes() {
+        Command<String, String, List<Long>> command = builder.jsonArrtrim(MY_KEY, MY_PATH, 1, 2);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*5\r\n" + "$12\r\n" + "JSON.ARRTRIM\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n"
+                        + "$..commuter_bikes\r\n" + "$1" + "\r\n" + "1" + "\r\n" + "$1" + "\r\n" + "2" + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrtrimWithIndexesRootPath() {
+        Command<String, String, List<Long>> command = builder.jsonArrtrim(MY_KEY, JsonPath.ROOT_PATH, 1, 2);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$12\r\n" + "JSON.ARRTRIM\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH + "$1" + "\r\n" + "1" + "\r\n" + "$1" + "\r\n" + "2" + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrtrimWithZeroIndexes() {
+        Command<String, String, List<Long>> command = builder.jsonArrtrim(MY_KEY, MY_PATH, 0, 0);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*5\r\n" + "$12\r\n" + "JSON.ARRTRIM\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n"
+                        + "$..commuter_bikes\r\n" + "$1" + "\r\n" + "0" + "\r\n" + "$1" + "\r\n" + "0" + "\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructJsonClear() {
         Command<String, String, Long> command = builder.jsonClear(MY_KEY, MY_PATH);
         ByteBuf buf = Unpooled.directBuffer();
@@ -220,8 +253,8 @@ class RedisJsonCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*2\r\n" + "$10\r\n" + "JSON.CLEAR\r\n" + "$15\r\n" + "bikes:inventory\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*3\r\n" + "$10\r\n" + "JSON.CLEAR\r\n" + "$15\r\n" + "bikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH);
     }
 
     @Test
@@ -346,8 +379,8 @@ class RedisJsonCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*2\r\n" + "$12\r\n" + "JSON.OBJKEYS\r\n" + "$15\r\n" + "bikes:inventory\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*3\r\n" + "$12\r\n" + "JSON.OBJKEYS\r\n" + "$15\r\n" + "bikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH);
     }
 
     @Test
@@ -366,8 +399,8 @@ class RedisJsonCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*2\r\n" + "$11\r\n" + "JSON.OBJLEN\r\n" + "$15\r\n" + "bikes:inventory\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*3\r\n" + "$11\r\n" + "JSON.OBJLEN\r\n" + "$15\r\n" + "bikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH);
     }
 
     @Test
@@ -446,8 +479,8 @@ class RedisJsonCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + "$14\r\n" + "JSON.STRAPPEND\r\n" + "$15\r\n"
-                + "bikes:inventory\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$14\r\n" + "JSON.STRAPPEND\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH + "$14\r\n" + ID_BIKE_6 + "\r\n");
     }
 
     @Test
@@ -466,8 +499,8 @@ class RedisJsonCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*2\r\n" + "$11\r\n" + "JSON.STRLEN\r\n" + "$15\r\n" + "bikes:inventory\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*3\r\n" + "$11\r\n" + "JSON.STRLEN\r\n" + "$15\r\n" + "bikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH);
     }
 
     @Test
@@ -507,7 +540,7 @@ class RedisJsonCommandBuilderUnitTests {
         command.encode(buf);
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*2\r\n" + "$8\r\n" + "JSON.DEL\r\n" + "$15\r\n" + "bikes:inventory\r\n");
+                .isEqualTo("*3\r\n" + "$8\r\n" + "JSON.DEL\r\n" + "$15\r\n" + "bikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH);
     }
 
     @Test
@@ -527,7 +560,7 @@ class RedisJsonCommandBuilderUnitTests {
         command.encode(buf);
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*2\r\n" + "$9\r\n" + "JSON.TYPE\r\n" + "$15\r\n" + "bikes:inventory\r\n");
+                .isEqualTo("*3\r\n" + "$9\r\n" + "JSON.TYPE\r\n" + "$15\r\n" + "bikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH);
     }
 
     @Test
@@ -611,8 +644,8 @@ class RedisJsonCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
-                "*3\r\n" + "$14\r\nJSON.STRAPPEND\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$14\r\nJSON.STRAPPEND\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + RESP_ENCODED_ROOT_PATH + "$14\r\n" + ID_BIKE_6 + "\r\n");
     }
 
     @Test
@@ -700,6 +733,33 @@ class RedisJsonCommandBuilderUnitTests {
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + "$11\r\n" + "JSON.ARRPOP\r\n" + "$15\r\n"
                 + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void jsonStrappendStringOverloadShouldEncodeUtf8() {
+        Command<String, String, List<Long>> command = builder.jsonStrappend(MY_KEY, MY_PATH, "\"ü\"");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$14\r\nJSON.STRAPPEND\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n" + "$4\r\n" + "\"ü\"" + "\r\n");
+    }
+
+    @Test
+    void jsonMSetShouldRejectNullArguments() {
+        assertThatThrownBy(() -> builder.jsonMSet(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void jsonGetShouldRejectNullPathArray() {
+        assertThatThrownBy(() -> builder.jsonGet(MY_KEY, JsonGetArgs.Builder.defaults(), (JsonPath[]) null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void jsonGetRawShouldRejectNullPathArray() {
+        assertThatThrownBy(() -> builder.jsonGetRaw(MY_KEY, JsonGetArgs.Builder.defaults(), (JsonPath[]) null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
 }

@@ -50,6 +50,76 @@ other constellations are possible like:
 
 - Any specialized codecs like the `BitStringCodec` (see below)
 
+### Storing initialization vectors with encrypted values
+
+Use the four-argument `CipherCodec.forValues` factory when the cipher requires a fresh initialization vector (IV) for each value.
+The codec stores the configured number of IV bytes after the key descriptor and before the ciphertext:
+
+```text
+$<key name>+<key version>$<initialization vector><ciphertext>
+```
+
+For example, AES/GCM can use a 12-byte IV and a 128-bit authentication tag:
+
+```java
+RedisCodec<String, String> codec = CipherCodec.forValues(StringCodec.UTF8,
+        descriptor -> {
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            return cipher;
+        },
+        descriptor -> {
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey,
+                    new GCMParameterSpec(128, descriptor.getInitializationVector()));
+            return cipher;
+        }, 12);
+```
+
+Here `secretKey` is your AES key, `Cipher` is `javax.crypto.Cipher`, and `GCMParameterSpec` is `javax.crypto.spec.GCMParameterSpec`.
+The encryption supplier must initialize each cipher with a fresh IV of exactly the configured length; the example lets the cipher provider generate it.
+The decryption supplier receives the stored IV through `KeyDescriptor.getInitializationVector()` and can still use the descriptor's name and version to select the key.
+Readers and writers must agree on the IV length and cipher parameters.
+The three-argument factory retains its existing format without a stored IV.
+For a mix of existing and new values, use the overload accepting `ToIntFunction<CipherCodec.KeyDescriptor>` instead of a fixed length.
+
+#### Switching an existing application to stored IVs
+
+Reserve a new key version for the new layout, even if you keep the same encryption key material.
+For example, if version 1 has no stored IV and version 2 uses a 12-byte IV, configure the length selector as follows:
+
+```java
+ToIntFunction<CipherCodec.KeyDescriptor> ivLength = descriptor -> {
+    switch (descriptor.getVersion()) {
+        case 1:
+            return 0;
+        case 2:
+            return 12;
+        default:
+            throw new IllegalArgumentException("Unknown key version: " + descriptor.getVersion());
+    }
+};
+RedisCodec<String, String> codec = CipherCodec.forValues(StringCodec.UTF8, encrypt, decrypt, ivLength);
+```
+
+Here `ToIntFunction` is `java.util.function.ToIntFunction`, and `encrypt` and `decrypt` are your `CipherSupplier` implementations.
+The selector must return a stable length for each key name and version; include the key name in the lookup if your keys use different layouts.
+Configure `decrypt` to use the original key, IV, and cipher parameters for version 1, and the appropriate key and `descriptor.getInitializationVector()` for version 2.
+For legacy values the descriptor's IV is empty; the codec cannot recover an IV that was never stored.
+
+1. Deploy this mixed-format reader to every application that reads the data, while `encrypt.encryptionKey()` still returns version 1.
+   With a selected length of zero, writes retain the legacy format and remain readable by applications still running the old codec.
+2. After all readers support both versions, switch `encrypt.encryptionKey()` to version 2 and supply initialized encryption ciphers with fresh 12-byte IVs.
+   The same codec can read both existing version-1 values and new version-2 values, through either encoder.
+3. Keep the version-1 mapping, decryption key, and original cipher parameters until those values have expired or been read and rewritten under version 2.
+   This codec does not rewrite existing values automatically.
+
+Do not change the layout associated with an existing key name and version, infer the layout from ciphertext bytes, or retry another layout after a decryption failure.
+Treating legacy ciphertext as an IV, or treating a stored IV as ciphertext, can cause decryption errors and may produce incorrect plaintext for unauthenticated ciphers.
+An incorrect IV length or cipher/key configuration can also make values unreadable.
+Deploying new-format writers before all readers are ready, or rolling back to legacy-only readers after new-format writes begin, leaves those readers unable to interpret the new values.
+A rollback must retain support for both formats until new-format values have been removed or migrated.
+
 ### Exception handling during Encoding
 
 Codecs should be designed in a way that doesn’t allow encoding

@@ -10,7 +10,6 @@ import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonArray;
 import io.lettuce.core.json.JsonObject;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.json.arguments.JsonRangeArgs;
 
 import java.util.concurrent.CompletableFuture;
 import java.nio.ByteBuffer;
@@ -222,7 +221,7 @@ public class JsonExample {
                     }).thenCompose(res14 -> {
                         System.out.println(res14); // >>> ["Norem","Prickett","Royce","Castilla"]
                         //
-                        return asyncCommands.jsonArrtrim("riders", JsonPath.ROOT_PATH, new JsonRangeArgs().start(1).stop(1));
+                        return asyncCommands.jsonArrtrim("riders", JsonPath.ROOT_PATH, 1, 1);
                     }).thenCompose(res15 -> {
                         System.out.println(res15); // >>> [1]
                         // REMOVE_START
