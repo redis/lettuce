@@ -19,7 +19,6 @@ import io.lettuce.core.protocol.CommandArgs;
  * @author Tihomir Mateev
  * @since 6.5
  * @see <a href="https://redis.io/docs/latest/commands/json.arrindex/">JSON.ARRINDEX</a>
- * @see <a href="https://redis.io/docs/latest/commands/json.arrtrim/">JSON.ARRTRIM</a>
  */
 public class JsonRangeArgs implements CompositeArgument {
 

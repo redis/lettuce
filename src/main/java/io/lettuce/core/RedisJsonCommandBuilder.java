@@ -180,19 +180,6 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_ARRTRIM, (CommandOutput) new ArrayOutput<>(codec), args);
     }
 
-    @Deprecated
-    Command<K, V, List<Long>> jsonArrtrim(K key, JsonPath jsonPath, JsonRangeArgs range) {
-        notNullKey(key);
-        notNullPath(jsonPath);
-        LettuceAssert.notNull(range, "Range must not be null");
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        args.add(jsonPath.toString());
-        range.build(args);
-
-        return createCommand(JSON_ARRTRIM, (CommandOutput) new ArrayOutput<>(codec), args);
-    }
-
     Command<K, V, Long> jsonClear(K key, JsonPath jsonPath) {
         notNullKey(key);
         notNullPath(jsonPath);
