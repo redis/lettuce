@@ -183,6 +183,29 @@ class RedisJsonCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructJsonArrtrim() {
+        JsonRangeArgs range = JsonRangeArgs.Builder.start(0).stop(1);
+        Command<String, String, List<Long>> command = builder.jsonArrtrim(MY_KEY, MY_PATH, range);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*5\r\n" + "$12\r\n" + "JSON.ARRTRIM\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n"
+                        + "$..commuter_bikes\r\n" + "$1" + "\r\n" + "0" + "\r\n" + "$1" + "\r\n" + "1" + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrtrimRootPath() {
+        JsonRangeArgs range = JsonRangeArgs.Builder.start(0).stop(1);
+        Command<String, String, List<Long>> command = builder.jsonArrtrim(MY_KEY, JsonPath.ROOT_PATH, range);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$12\r\n" + "JSON.ARRTRIM\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$1\r\n" + "$\r\n" + "$1" + "\r\n" + "0" + "\r\n" + "$1" + "\r\n" + "1" + "\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructJsonArrtrimWithIndexes() {
         Command<String, String, List<Long>> command = builder.jsonArrtrim(MY_KEY, MY_PATH, 1, 2);
         ByteBuf buf = Unpooled.directBuffer();

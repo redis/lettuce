@@ -107,6 +107,9 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonArrtrim(key: K, jsonPath: JsonPath, start: Int, stop: Int): List<Long> =
         ops.jsonArrtrim(key, jsonPath, start, stop).asFlow().toList()
 
+    override suspend fun jsonArrtrim(key: K, jsonPath: JsonPath, range: JsonRangeArgs): List<Long> =
+        ops.jsonArrtrim(key, jsonPath, range).asFlow().toList()
+
     override suspend fun jsonClear(key: K, jsonPath: JsonPath): Long? =
         ops.jsonClear(key, jsonPath).awaitFirstOrNull()
 

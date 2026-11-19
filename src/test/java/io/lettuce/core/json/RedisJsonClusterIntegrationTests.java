@@ -161,7 +161,9 @@ public class RedisJsonClusterIntegrationTests {
     @ValueSource(strings = { BIKE_COLORS_V1, BIKE_COLORS_V2 })
     void jsonArrtrim(String path) {
         JsonPath myPath = JsonPath.of(path);
-        List<Long> arrayIndex = redis.jsonArrtrim(BIKES_INVENTORY, myPath, 1, 2);
+        JsonRangeArgs range = JsonRangeArgs.Builder.start(1).stop(2);
+
+        List<Long> arrayIndex = redis.jsonArrtrim(BIKES_INVENTORY, myPath, range);
         assertThat(arrayIndex).isNotNull();
         assertThat(arrayIndex).hasSize(1);
         assertThat(arrayIndex.get(0).longValue()).isEqualTo(1L);

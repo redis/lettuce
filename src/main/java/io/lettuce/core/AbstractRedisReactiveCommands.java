@@ -2162,6 +2162,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Flux<Long> jsonArrtrim(K key, JsonPath jsonPath, JsonRangeArgs range) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrtrim(key, jsonPath, range));
+    }
+
+    @Override
     public Mono<Long> jsonClear(K key, JsonPath jsonPath) {
         return createMono(() -> jsonCommandBuilder.jsonClear(key, jsonPath));
     }

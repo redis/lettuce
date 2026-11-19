@@ -60,7 +60,7 @@ Lettuce 8.0 removes the Reactor-based APIs deprecated in 7.8 and 7.9, and change
 
     To keep the legacy behavior, pass the deprecated `JsonPath.ROOT_PATH_LEGACY`.
   - The JSON commands reject `null` arguments with an `IllegalArgumentException`. Before, some were skipped: a `null` `JsonRangeArgs` in `jsonArrindex`, `null` options in `jsonGet`, `jsonGetRaw` and `jsonSet`, a `null` path, and `null` paths in `jsonGet` and `jsonGetRaw`. Use `JsonRangeArgs.Builder.defaults()`, `JsonGetArgs.Builder.defaults()` or `JsonSetArgs.Builder.defaults()` instead.
-  - `jsonArrtrim(key, path, JsonRangeArgs)` is removed. Use the new `jsonArrtrim(key, path, start, stop)`, which always sends both indexes. `JsonRangeArgs` leaves out an index of `0`, but `JSON.ARRTRIM` requires both, so the removed overload failed for ranges such as `0 0` or a start alone. `JsonRangeArgs` is still used by `jsonArrindex`.
+  - `jsonArrtrim(key, path, JsonRangeArgs)` is deprecated in favor of `jsonArrtrim(key, path, start, stop)`. `JsonRangeArgs` leaves out an index of `0`, so it can't express ranges such as `0 0`, which the server requires both indexes for.
   - `JsonPath.equals` now compares two `JsonPath` instances. Before, it compared the path against the other object, so `JsonPath.of("$").equals("$")` was `true` and two equal paths were not equal.
   - `RedisJsonCommands` and its other flavors gain `jsonArrtrim(K, JsonPath, int, int)`, so custom implementations of these interfaces must implement it.
 

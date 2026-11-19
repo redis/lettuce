@@ -19,6 +19,7 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
+import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
@@ -217,6 +218,18 @@ public class RedisJsonIntegrationTests {
         List<JsonValue> result = redis.jsonArrpop("myKey", JsonPath.ROOT_PATH, 1);
         assertThat(result.toString()).isEqualTo("[\"two\"]");
         assertThat(redis.jsonGet("myKey").get(0).toString()).isEqualTo("[\"one\",\"three\"]");
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { BIKE_COLORS_V1, BIKE_COLORS_V2 })
+    void jsonArrtrim(String path) {
+        JsonPath myPath = JsonPath.of(path);
+        JsonRangeArgs range = JsonRangeArgs.Builder.start(1).stop(2);
+
+        List<Long> arrayIndex = redis.jsonArrtrim(BIKES_INVENTORY, myPath, range);
+        assertThat(arrayIndex).isNotNull();
+        assertThat(arrayIndex).hasSize(1);
+        assertThat(arrayIndex.get(0).longValue()).isEqualTo(1L);
     }
 
     @ParameterizedTest(name = "With {0} as path")
