@@ -413,7 +413,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     private static void notNullJson(JsonValue jsonValue) {
-        LettuceAssert.notNull(jsonValue, "JSON value" + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(jsonValue, "JSON value " + MUST_NOT_BE_NULL);
     }
 
     private static void notNullJsonString(String json) {
