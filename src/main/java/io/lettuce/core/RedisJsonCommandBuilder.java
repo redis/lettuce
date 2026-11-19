@@ -205,6 +205,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     Command<K, V, List<JsonValue>> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths) {
         notNullKey(key);
         LettuceAssert.notNull(options, "Options must not be null");
+        LettuceAssert.notNull(jsonPaths, "JSON paths " + MUST_NOT_BE_NULL);
         LettuceAssert.noNullElements(jsonPaths, "JSON paths must not contain null elements");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
@@ -219,6 +220,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     Command<K, V, List<String>> jsonGetRaw(K key, JsonGetArgs options, JsonPath... jsonPaths) {
         notNullKey(key);
         LettuceAssert.notNull(options, "Options must not be null");
+        LettuceAssert.notNull(jsonPaths, "JSON paths " + MUST_NOT_BE_NULL);
         LettuceAssert.noNullElements(jsonPaths, "JSON paths must not contain null elements");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);

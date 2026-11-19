@@ -29,6 +29,7 @@ import java.util.List;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link RedisJsonCommandBuilder}.
@@ -732,6 +733,18 @@ class RedisJsonCommandBuilderUnitTests {
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + "$11\r\n" + "JSON.ARRPOP\r\n" + "$15\r\n"
                 + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void jsonGetShouldRejectNullPathArray() {
+        assertThatThrownBy(() -> builder.jsonGet(MY_KEY, JsonGetArgs.Builder.defaults(), (JsonPath[]) null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void jsonGetRawShouldRejectNullPathArray() {
+        assertThatThrownBy(() -> builder.jsonGetRaw(MY_KEY, JsonGetArgs.Builder.defaults(), (JsonPath[]) null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
 }
