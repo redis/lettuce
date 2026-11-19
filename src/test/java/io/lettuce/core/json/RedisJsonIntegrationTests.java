@@ -9,6 +9,7 @@ package io.lettuce.core.json;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -43,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import io.lettuce.test.resource.ModulesTestUri;
@@ -657,6 +659,36 @@ public class RedisJsonIntegrationTests {
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0)).isNull();
+    }
+
+    @Test
+    void rootPathCommandsShouldFailOnMissingKey() {
+        String missingKey = "bikes:missing";
+
+        assertThatThrownBy(() -> redis.jsonArrlen(missingKey)).isInstanceOf(RedisCommandExecutionException.class);
+        assertThatThrownBy(() -> redis.jsonStrlen(missingKey)).isInstanceOf(RedisCommandExecutionException.class);
+        assertThatThrownBy(() -> redis.jsonObjkeys(missingKey)).isInstanceOf(RedisCommandExecutionException.class);
+        assertThatThrownBy(() -> redis.jsonObjlen(missingKey)).isInstanceOf(RedisCommandExecutionException.class);
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    void legacyRootPathShouldReturnNullOnMissingKey() {
+        List<Long> result = redis.jsonArrlen("bikes:missing", JsonPath.ROOT_PATH_LEGACY);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isNull();
+    }
+
+    @Test
+    void rootPathCommandsShouldReturnNullForRootOfWrongType() {
+        redis.jsonSet("bikes:object", JsonPath.ROOT_PATH, "{\"a\":1}");
+        redis.jsonSet("bikes:array", JsonPath.ROOT_PATH, "[1,2]");
+
+        assertThat(redis.jsonArrlen("bikes:object")).containsExactly((Long) null);
+        assertThat(redis.jsonStrlen("bikes:object")).containsExactly((Long) null);
+        assertThat(redis.jsonObjlen("bikes:array")).containsExactly((Long) null);
+        assertThat(redis.jsonObjkeys("bikes:array")).containsExactly((String) null);
     }
 
     @Test
