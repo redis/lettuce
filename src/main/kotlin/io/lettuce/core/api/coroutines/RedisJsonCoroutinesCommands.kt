@@ -250,7 +250,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @param start the index of the first element to keep.
      * @param stop the index of the last element to keep (inclusive).
      * @return Long the resulting size of the arrays after the trimming, or null if the path does not exist.
-     * @since 7.9
+     * @since 8.0
      */
     suspend fun jsonArrtrim(key: K, jsonPath: JsonPath, start: Int, stop: Int): List<Long>
 
@@ -270,7 +270,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @param range the [JsonRangeArgs] to trim by.
      * @return Long the resulting size of the arrays after the trimming, or null if the path does not exist.
      * @since 6.5
-     * @deprecated since 7.9, use [jsonArrtrim(K, JsonPath, Int, Int)] instead; scheduled for removal in a future major release.
+     * @deprecated since 8.0, use [jsonArrtrim(K, JsonPath, Int, Int)] instead; scheduled for removal in a future major release.
      */
     @Deprecated(
         "Use jsonArrtrim(key, jsonPath, start, stop) instead.",

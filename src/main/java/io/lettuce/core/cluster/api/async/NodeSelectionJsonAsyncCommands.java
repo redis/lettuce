@@ -250,7 +250,7 @@ public interface NodeSelectionJsonAsyncCommands<K, V> {
      * @param start the index of the first element to keep.
      * @param stop the index of the last element to keep (inclusive).
      * @return Long the resulting size of the arrays after the trimming, or null if the path does not exist.
-     * @since 7.9
+     * @since 8.0
      */
     AsyncExecutions<List<Long>> jsonArrtrim(K key, JsonPath jsonPath, int start, int stop);
 
@@ -270,7 +270,7 @@ public interface NodeSelectionJsonAsyncCommands<K, V> {
      * @param range the {@link JsonRangeArgs} to trim by.
      * @return Long the resulting size of the arrays after the trimming, or null if the path does not exist.
      * @since 6.5
-     * @deprecated since 7.9, use {@link #jsonArrtrim(Object, JsonPath, int, int)} instead; scheduled for removal in a future
+     * @deprecated since 8.0, use {@link #jsonArrtrim(Object, JsonPath, int, int)} instead; scheduled for removal in a future
      *             major release.
      */
     @Deprecated
