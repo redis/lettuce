@@ -21,14 +21,17 @@ import reactor.core.scheduler.Schedulers;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.metrics.CommandLatencyCollector;
+import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.DemandAware;
 import io.lettuce.core.protocol.Endpoint;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
+import io.lettuce.test.ReflectionTestUtils;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.channel.local.LocalAddress;
@@ -62,7 +65,7 @@ class ReactiveBackpressurePropagationUnitTests {
 
         when(clientResources.commandLatencyRecorder()).thenReturn(latencyCollector);
         when(clientResources.tracing()).thenReturn(Tracing.disabled());
-        when(statefulConnection.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
+        lenient().when(statefulConnection.dispatch(any(RedisCommand.class))).thenAnswer(invocation -> {
 
             RedisCommand command = (RedisCommand) invocation.getArguments()[0];
             embeddedChannel.writeOutbound(command);
@@ -176,6 +179,65 @@ class ReactiveBackpressurePropagationUnitTests {
 
         // done
         assertThat(embeddedChannel.config().isAutoRead()).isTrue();
+    }
+
+    @Test
+    void shouldEnableAutoReadWhenDemandArrivesWhileDisablingReads() {
+
+        DemandAwareCommand command = new DemandAwareCommand();
+        commandHandler.getStack().add(command);
+
+        embeddedChannel.writeInbound(Unpooled.wrappedBuffer("*1\r\n".getBytes()));
+
+        assertThat(embeddedChannel.config().isAutoRead()).isTrue();
+    }
+
+    @Test
+    void shouldRequestMoreWhenSubscriberDrainsBufferedData() {
+
+        Command<String, String, String> command = new Command<>(CommandType.PING, new StatusOutput<>(StringCodec.UTF8));
+        RedisPublisher.RedisSubscription<String> subscription = new RedisPublisher.RedisSubscription<>(statefulConnection,
+                command, true, ImmediateEventExecutor.INSTANCE);
+        RedisPublisher.RedisSubscriber<String> subscriber = mock(RedisPublisher.RedisSubscriber.class);
+        DemandAware.Source source = mock(DemandAware.Source.class);
+
+        subscription.subscriber = subscriber;
+        RedisPublisher.RedisSubscription.DEMAND.set(subscription, 2);
+        assertThat(subscription.changeState(RedisPublisher.State.UNSUBSCRIBED, RedisPublisher.State.NO_DEMAND)).isTrue();
+        assertThat(subscription.changeState(RedisPublisher.State.NO_DEMAND, RedisPublisher.State.DEMAND)).isTrue();
+        subscription.data.offer("value");
+
+        DemandAware.Sink sink = (DemandAware.Sink) ReflectionTestUtils.getField(subscription, "subscriptionCommand");
+        sink.setSource(source);
+
+        RedisPublisher.State.DEMAND.onDataAvailable(subscription);
+
+        assertThat(subscription.state()).isEqualTo(RedisPublisher.State.DEMAND);
+        verify(subscriber).onNext("value");
+        verify(source).requestMore();
+    }
+
+    static class DemandAwareCommand extends Command<String, String, List<String>> implements DemandAware.Sink {
+
+        private int demandChecks;
+
+        DemandAwareCommand() {
+            super(CommandType.LRANGE, new ValueListOutput<>(StringCodec.UTF8));
+        }
+
+        @Override
+        public boolean hasDemand() {
+            return ++demandChecks > 1;
+        }
+
+        @Override
+        public void setSource(DemandAware.Source source) {
+        }
+
+        @Override
+        public void removeSource() {
+        }
+
     }
 
     static class RESP {

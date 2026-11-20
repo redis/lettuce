@@ -824,6 +824,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 sink.setSource(backpressureSource);
 
                 ctx.channel().config().setAutoRead(sink.hasDemand());
+
+                if (!ctx.channel().config().isAutoRead() && sink.hasDemand()) {
+                    ctx.channel().config().setAutoRead(true);
+                }
             }
 
             return false;
