@@ -7,6 +7,7 @@
 package io.lettuce.scenario;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,12 +18,20 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -38,6 +47,7 @@ import java.util.function.ToLongFunction;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.lettuce.core.ClientOptions;
@@ -65,6 +75,7 @@ import io.lettuce.core.cluster.event.MovedRedirectionEvent;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.Event;
+import io.lettuce.core.event.cluster.AdaptiveRefreshTriggeredEvent;
 import io.lettuce.core.event.connection.DisconnectedEvent;
 import io.lettuce.core.event.connection.ReconnectFailedEvent;
 import io.lettuce.core.protocol.ProtocolVersion;
@@ -110,6 +121,10 @@ import io.lettuce.test.env.Endpoints.Endpoint;
  * <li><b>Manual</b> ({@code <redis-uri>} argument): trigger the migration by hand. Enter prints a snapshot, {@code q} + Enter
  * stops.</li>
  * </ul>
+ * Every observed event is also written as one JSON object per line to a trace file ({@code -Dtrace=<file>}, default
+ * {@code target/sch-trace/<time>-<scenario>.jsonl}, {@code -Dtrace=none} to disable), for the timeline viewer.
+ * {@code -Dtrigger=none} runs the load on the {@code -Dendpoint} database for {@code durationSeconds} without a migration.
+ * <p>
  * The exit code is 1 if a check failed. System properties: {@code endpoint} (re-single-shard-oss-cluster),
  * {@code warmupSeconds} (20), {@code settleSeconds} (40), {@code restore} (true), {@code connections} (4, per client),
  * {@code keys} (2000), {@code pauseMillis} (2), {@code timeoutMillis} (500), {@code relaxedMillis} (10000),
@@ -184,6 +199,15 @@ public class SlotMigrationManualRunner {
 
     private int failedChecks;
 
+    // width of one bucket of successful iterations in the trace
+    private static final int BUCKET_MILLIS = 250;
+
+    private static final int BUCKETS = 4 * 60 * 60 * 1000 / BUCKET_MILLIS;
+
+    private BufferedWriter trace;
+
+    private Path traceFile;
+
     public static void main(String[] args) throws Exception {
 
         SlotMigrationManualRunner runner = new SlotMigrationManualRunner();
@@ -242,7 +266,8 @@ public class SlotMigrationManualRunner {
                 }
             }
 
-            failed = runner.run(uri.build(), runner.new ShardMigration(String.valueOf(endpoint.getBdbId())));
+            failed = runner.run(uri.build(), "none".equals(System.getProperty("trigger")) ? null
+                    : runner.new ShardMigration(String.valueOf(endpoint.getBdbId())));
         }
 
         System.exit(failed == 0 ? 0 : 1);
@@ -281,6 +306,8 @@ public class SlotMigrationManualRunner {
         clients.add(on);
         clients.add(onAdaptive);
         clients.addAll(controls);
+        openTrace(uri, clients);
+
         try {
             for (ClientRun client : clients) {
                 client.start(uri);
@@ -301,7 +328,9 @@ public class SlotMigrationManualRunner {
 
             if (scenario != null) {
                 sleep(TimeUnit.SECONDS.toMillis(Long.getLong("warmupSeconds", 20)));
+                emit(traceEvent("control").put("name", "trigger-requested").put("detail", scenario.getClass().getSimpleName()));
                 scenario.trigger();
+                emit(traceEvent("control").put("name", "trigger-completed"));
                 sleep(TimeUnit.SECONDS.toMillis(Long.getLong("settleSeconds", 40)));
             } else {
                 out.println("Trigger the slot migration now. Enter = snapshot, q + Enter = stop.");
@@ -309,9 +338,11 @@ public class SlotMigrationManualRunner {
             }
         } finally {
             running.set(false);
+            emit(traceEvent("control").put("name", "load-stopped"));
             for (ClientRun client : clients) {
                 client.join();
             }
+            closeTrace(clients);
 
             try {
                 out.println();
@@ -603,7 +634,11 @@ public class SlotMigrationManualRunner {
     /**
      * Workload outcomes per phase and hash slot, so that slots that moved can be reported apart from the others.
      */
-    private static class Stats {
+    private class Stats {
+
+        private final AtomicLongArray okByBucket = new AtomicLongArray(BUCKETS);
+
+        private final AtomicLongArray maxMillisByBucket = new AtomicLongArray(BUCKETS);
 
         private final AtomicLongArray[][] bySlot = new AtomicLongArray[Phase.values().length][Outcome.values().length];
 
@@ -617,6 +652,17 @@ public class SlotMigrationManualRunner {
 
         void record(Phase phase, Outcome outcome, int slot) {
             bySlot[phase.ordinal()][outcome.ordinal()].incrementAndGet(slot);
+        }
+
+        /**
+         * Counts a successful iteration in the time bucket in which it completed and keeps the slowest one per bucket.
+         */
+        void completed(long sentNanos) {
+
+            long now = System.nanoTime();
+            int bucket = (int) Math.min(BUCKETS - 1, (now - startedAt) / 1_000_000 / BUCKET_MILLIS);
+            okByBucket.incrementAndGet(bucket);
+            maxMillisByBucket.accumulateAndGet(bucket, (now - sentNanos) / 1_000_000, Math::max);
         }
 
         /**
@@ -755,7 +801,7 @@ public class SlotMigrationManualRunner {
             builder.timeoutOptions(
                     TimeoutOptions.builder().fixedTimeout(timeout).relaxedTimeoutsDuringMaintenance(relaxed).build());
 
-            client = RedisClusterClient.create(uri);
+            client = new TracedClusterClient(uri, name);
             client.setOptions(builder.build());
             eventSubscription = client.getResources().eventBus().subscribe(this::onEvent);
 
@@ -815,13 +861,17 @@ public class SlotMigrationManualRunner {
                 Phase current = phase.get();
                 int slot = SlotHash.getSlot(key);
 
+                long sent = System.nanoTime();
+
                 try {
                     commands.set(key, "v");
                     commands.get(key);
                     sync.record(current, Outcome.OK, slot);
+                    sync.completed(sent);
                 } catch (Exception e) {
                     sync.record(current, classify(e), slot);
                     sample(current, "sync", e);
+                    error("sync", classify(e), slot, sent, e);
                 }
 
                 sleep(pauseMillis);
@@ -845,16 +895,21 @@ public class SlotMigrationManualRunner {
                 Phase current = phase.get();
                 int slot = SlotHash.getSlot(key);
 
+                long sent = System.nanoTime();
+
                 try {
                     commands.set(key, "v").get(awaitMillis, TimeUnit.MILLISECONDS);
                     commands.get(key).get(awaitMillis, TimeUnit.MILLISECONDS);
                     async.record(current, Outcome.OK, slot);
+                    async.completed(sent);
                 } catch (ExecutionException e) {
                     async.record(current, classify(e.getCause()), slot);
                     sample(current, "async", e.getCause());
+                    error("async", classify(e.getCause()), slot, sent, e.getCause());
                 } catch (TimeoutException e) {
                     async.record(current, Outcome.TIMEOUT, slot);
                     sample(current, "async", e);
+                    error("async", Outcome.TIMEOUT, slot, sent, e);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     return;
@@ -862,6 +917,13 @@ public class SlotMigrationManualRunner {
 
                 sleep(pauseMillis);
             }
+        }
+
+        private void error(String api, Outcome outcome, int slot, long sentNanos, Throwable e) {
+
+            emit(traceEvent("error").put("client", name).put("api", api).put("outcome", outcome.name()).put("slot", slot)
+                    .put("ms", (System.nanoTime() - sentNanos) / 1_000_000)
+                    .put("message", abbreviate(e.getClass().getSimpleName() + ": " + e.getMessage(), 160)));
         }
 
         private void sample(Phase current, String api, Throwable e) {
@@ -908,6 +970,7 @@ public class SlotMigrationManualRunner {
 
                 for (Map.Entry<String, RedisFuture<KeyValue<String, String>>> entry : pending.entrySet()) {
                     Probe result = await(entry.getValue(), awaitMillis);
+                    emit(traceEvent("probe").put("client", name).put("node", entry.getKey()).put("result", result.name()));
                     probes.computeIfAbsent(entry.getKey(), n -> counters(Probe.class))
                             .get(completedIn.get(entry.getKey()).get()).get(result).increment();
                 }
@@ -931,6 +994,8 @@ public class SlotMigrationManualRunner {
             Object seqId = content.size() > 1 ? content.get(1) : null;
             String id = type + " seq=" + seqId;
             pushes.computeIfAbsent(id, k -> new LongAdder()).increment();
+            emit(traceEvent("push").put("client", name).put("node", describe(node)).put("name", type).put("seq",
+                    String.valueOf(seqId)));
 
             // copies of a notification arrive on every connection; only the first one of a sequence id moves the phase
             if (!phaseDriver || !(seqId instanceof Long)
@@ -958,14 +1023,21 @@ public class SlotMigrationManualRunner {
 
             if (event instanceof MovedRedirectionEvent) {
                 events.get(current).get(Counter.MOVED).increment();
+                clientEvent("moved", ((MovedRedirectionEvent) event).getMessage());
             } else if (event instanceof AskRedirectionEvent) {
                 events.get(current).get(Counter.ASK).increment();
+                clientEvent("ask", ((AskRedirectionEvent) event).getMessage());
             } else if (event instanceof DisconnectedEvent) {
                 events.get(current).get(Counter.DISCONNECTED).increment();
+                clientEvent("disconnected", String.valueOf(((DisconnectedEvent) event).remoteAddress()));
             } else if (event instanceof ReconnectFailedEvent) {
                 events.get(current).get(Counter.RECONNECT_FAILED).increment();
+                clientEvent("reconnect-failed", String.valueOf(((ReconnectFailedEvent) event).remoteAddress()));
+            } else if (event instanceof AdaptiveRefreshTriggeredEvent) {
+                clientEvent("adaptive-trigger", event.getClass().getSimpleName());
             } else if (event instanceof ClusterTopologyChangedEvent) {
                 events.get(current).get(Counter.TOPOLOGY_CHANGED).increment();
+                topologyChanged((ClusterTopologyChangedEvent) event);
                 if (topologyChangedAt < 0 && smigratingAt >= 0) {
                     topologyChangedAt = seconds();
                 }
@@ -973,6 +1045,18 @@ public class SlotMigrationManualRunner {
                     timeline.add(elapsed() + "  " + name + " topology changed (phase " + current + ")");
                 }
             }
+        }
+
+        private void clientEvent(String eventName, String detail) {
+            emit(traceEvent("client").put("client", name).put("name", eventName).put("detail", abbreviate(detail, 160)));
+        }
+
+        private void topologyChanged(ClusterTopologyChangedEvent event) {
+
+            ObjectNode node = traceEvent("client").put("client", name).put("name", "topology-changed");
+            node.set("before", masters(event.before()));
+            node.set("after", masters(event.after()));
+            emit(node);
         }
 
         // ---- totals -----------------------------------------------------------------------------------------------
@@ -1144,6 +1228,11 @@ public class SlotMigrationManualRunner {
 
                 results.get(current).get(result).increment();
 
+                if (result != last) {
+                    emit(traceEvent("endpoint").put("node", node).put("state", result.name()).put("detail",
+                            abbreviate(detail, 160)));
+                }
+
                 if (result != last && changes++ < 20) {
                     timeline.add(elapsed() + "  direct " + node + ": " + (last == null ? "start" : last) + " -> " + result
                             + (detail.isEmpty() ? ""
@@ -1185,6 +1274,8 @@ public class SlotMigrationManualRunner {
             }
 
             migrations.add(migration);
+            emit(traceEvent("migration").put("source", migration[0]).put("destination", migration[1]).put("slots",
+                    migration[2]));
             timeline.add(elapsed() + "  SMIGRATED " + migration[0] + " -> " + migration[1] + " slots "
                     + abbreviate(migration[2], 60));
 
@@ -1222,12 +1313,146 @@ public class SlotMigrationManualRunner {
 
         for (Phase expected : from) {
             if (phase.compareAndSet(expected, to)) {
+                emit(traceEvent("phase").put("from", expected.name()).put("to", to.name()).put("reason", reason));
                 timeline.add(elapsed() + "  " + expected + " -> " + to + "  (" + reason + ")");
                 return true;
             }
         }
 
         return false;
+    }
+
+    // ---- trace --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Reports when a topology refresh of this client starts and ends.
+     */
+    private class TracedClusterClient extends RedisClusterClient {
+
+        private final String name;
+
+        TracedClusterClient(RedisURI uri, String name) {
+            super(null, Collections.singleton(uri));
+            this.name = name;
+        }
+
+        @Override
+        public CompletionStage<Void> refreshPartitionsAsync() {
+
+            long started = System.nanoTime();
+            emit(traceEvent("refresh").put("client", name).put("name", "started"));
+
+            return super.refreshPartitionsAsync().whenComplete((ignore, error) -> {
+                ObjectNode node = traceEvent("refresh").put("client", name).put("name", error == null ? "completed" : "failed")
+                        .put("ms", (System.nanoTime() - started) / 1_000_000);
+                if (error != null) {
+                    node.put("detail", abbreviate(String.valueOf(error.getMessage()), 160));
+                }
+                emit(node);
+            });
+        }
+
+    }
+
+    private void openTrace(RedisURI uri, List<ClientRun> clients) throws IOException {
+
+        String target = System.getProperty("trace");
+
+        if ("none".equals(target)) {
+            return;
+        }
+
+        String scenario = System.getProperty("effect") != null
+                ? System.getProperty("effect") + "-" + System.getProperty("trigger", "migrate")
+                : "none".equals(System.getProperty("trigger")) ? "no-migration" : "shard-migration";
+
+        traceFile = target != null ? Paths.get(target)
+                : Paths.get("target", "sch-trace",
+                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + "-" + scenario + ".jsonl");
+        if (traceFile.getParent() != null) {
+            Files.createDirectories(traceFile.getParent());
+        }
+        trace = Files.newBufferedWriter(traceFile, StandardCharsets.UTF_8);
+
+        ObjectNode run = traceEvent("run").put("startedAt", Instant.now().toString()).put("scenario", scenario)
+                .put("host", uri.getHost()).put("port", uri.getPort()).put("timeoutMs", timeout.toMillis())
+                .put("relaxedMs", relaxed.toMillis()).put("blockSeconds", blockSeconds).put("connections", connectionCount)
+                .put("bucketMs", BUCKET_MILLIS);
+        ArrayNode list = run.putArray("clients");
+        for (ClientRun client : clients) {
+            list.addObject().put("name", client.name).put("maintenance", client.maintenance).put("adaptive", client.adaptive);
+        }
+        emit(run);
+    }
+
+    /**
+     * Writes the buckets of successful iterations and closes the trace.
+     */
+    private void closeTrace(List<ClientRun> clients) {
+
+        if (trace == null) {
+            return;
+        }
+
+        int buckets = (int) Math.min(BUCKETS, (long) (seconds() * 1000) / BUCKET_MILLIS + 1);
+
+        for (ClientRun client : clients) {
+            emit(okBuckets(client.name, "sync", client.sync, buckets));
+            emit(okBuckets(client.name, "async", client.async, buckets));
+        }
+
+        synchronized (this) {
+            try {
+                trace.close();
+            } catch (IOException e) {
+                out.println("Cannot close trace: " + e);
+            }
+            trace = null;
+        }
+
+        out.println("Trace written to " + traceFile.toAbsolutePath());
+    }
+
+    private ObjectNode okBuckets(String client, String api, Stats stats, int buckets) {
+
+        ObjectNode node = traceEvent("ok").put("client", client).put("api", api);
+        ArrayNode counts = node.putArray("counts");
+        ArrayNode slowest = node.putArray("maxMs");
+
+        for (int i = 0; i < buckets; i++) {
+            counts.add(stats.okByBucket.get(i));
+            slowest.add(stats.maxMillisByBucket.get(i));
+        }
+        return node;
+    }
+
+    private static ArrayNode masters(List<RedisClusterNode> nodes) {
+
+        ArrayNode masters = JSON.createArrayNode();
+        for (RedisClusterNode node : nodes) {
+            if (node.is(RedisClusterNode.NodeFlag.UPSTREAM) && !node.getSlots().isEmpty()) {
+                masters.addObject().put("node", describe(node)).put("slots", node.getSlots().size());
+            }
+        }
+        return masters;
+    }
+
+    private ObjectNode traceEvent(String type) {
+        return JSON.createObjectNode().put("t", Math.round(seconds() * 1000) / 1000.0).put("type", type);
+    }
+
+    private synchronized void emit(ObjectNode event) {
+
+        if (trace == null) {
+            return;
+        }
+
+        try {
+            trace.write(event.toString());
+            trace.newLine();
+        } catch (IOException e) {
+            out.println("Cannot write trace: " + e);
+        }
     }
 
     // ---- reporting ----------------------------------------------------------------------------------------------------
