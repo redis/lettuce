@@ -20,6 +20,7 @@
 package io.lettuce.core.resource;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.lettuce.core.event.EventBus;
@@ -175,6 +176,21 @@ public interface ClientResources {
          * @return {@code this} {@link Builder}.
          */
         Builder eventBus(EventBus eventBus);
+
+        /**
+         * Sets a factory that creates the {@link EventBus} from the computation {@link EventExecutorGroup} of these client
+         * resources. Use it to configure the event bus without creating an executor group yourself, for example
+         * {@code eventBusFactory(group -> new DefaultEventBus(group, 2048))}. Replaces an {@link EventBus} set through
+         * {@link #eventBus(EventBus)}, and is replaced by a later call to it.
+         *
+         * @param eventBusFactory the factory, called once with the computation {@link EventExecutorGroup}, must not be
+         *        {@code null}.
+         * @return {@code this} {@link Builder}.
+         * @since 8.0
+         */
+        default Builder eventBusFactory(Function<EventExecutorGroup, EventBus> eventBusFactory) {
+            throw new UnsupportedOperationException("eventBusFactory is not supported by " + getClass().getName());
+        }
 
         /**
          * Sets a shared {@link EventExecutorGroup event executor group} that can be used across different instances of

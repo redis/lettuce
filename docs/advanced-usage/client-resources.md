@@ -170,6 +170,20 @@ events. If you wish to do so, make sure that your events implement the
 <code>Event</code> marker interface.</td>
 </tr>
 <tr>
+<td><strong>Event bus factory</strong></td>
+<td><code>eventBusFactory</code></td>
+<td><code>none</code></td>
+</tr>
+<tr>
+<td colspan="3">Creates the event bus from the client resources' own
+computation thread pool, so you can configure the event bus without
+creating and shutting down an executor group yourself. For example,
+<code>eventBusFactory(group -&gt; new DefaultEventBus(group, 2048))</code>
+raises the number of events that may wait per subscriber before further
+events are dropped (default 1024). A later call to <code>eventBus</code>
+replaces the factory, and the other way round (since 8.0).</td>
+</tr>
+<tr>
 <td><strong>Command latency collector options</strong></td>
 <td><code>commandLatencyCollectorOptions</code></td>
 <td><code>DefaultCommandLatencyCollectorOptions</code></td>
