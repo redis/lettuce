@@ -1,5 +1,10 @@
 package io.lettuce.core.event;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,13 +20,21 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Default implementation for an {@link EventBus}. Events are recorded through {@link EventRecorder#record(Event) EventRecorder}
- * and dispatched to subscribers on an {@link EventExecutorGroup}. Each subscription is pinned to a single
- * {@link EventExecutor}, so events published from a single thread are delivered to that subscriber in publication order;
- * ordering across concurrent publishers, and relative to {@link EventRecorder}, is not guaranteed. A subscriber that cannot
- * keep up drops events (bounded by {@code maxInFlightPerSubscription}) rather than applying back-pressure to the publishing
- * thread. Dropped events are logged at {@code DEBUG} level.
+ * and delivered to subscribers on an {@link EventExecutorGroup}. Each subscription is pinned to a single {@link EventExecutor},
+ * which invokes its listener.
+ * <p>
+ * All subscribers receive events in the same order, including events published concurrently from different threads. Order
+ * relative to {@link EventRecorder} is not guaranteed. Publishing never waits for another publisher: when another thread is
+ * already handing events to the subscribers, a publisher only adds its event to a shared queue and returns. Listeners are never
+ * invoked by the publishing thread, unless the {@link EventExecutorGroup} runs tasks on the calling thread.
+ * <p>
+ * A subscriber that cannot keep up drops events once its limit of events waiting or being delivered is reached, rather than
+ * applying back-pressure to the publishing thread. The limit defaults to {@code maxInFlightPerSubscription}, and the newest
+ * event is dropped by default. Each subscription can set its own limit and {@link OverflowStrategy} through
+ * {@link EventSubscriptionOptions}. Dropped events are logged at {@code DEBUG} level.
  *
  * @author Mark Paluch
+ * @author Aleksandar Todorov
  * @since 3.4
  */
 public class DefaultEventBus implements EventBus {
@@ -30,6 +43,13 @@ public class DefaultEventBus implements EventBus {
 
     static final int DEFAULT_MAX_IN_FLIGHT = 1024;
 
+    /**
+     * Number of events a subscription delivers in one task before it yields its {@link EventExecutor} to other tasks.
+     */
+    static final int DELIVERY_BATCH_SIZE = 64;
+
+    private static final EventSubscription[] NO_SUBSCRIPTIONS = new EventSubscription[0];
+
     private final EventExecutorGroup eventExecutorGroup;
 
     private final int maxInFlightPerSubscription;
@@ -37,6 +57,24 @@ public class DefaultEventBus implements EventBus {
     private final EventRecorder recorder = EventRecorder.getInstance();
 
     private final CopyOnWriteArrayList<EventSubscription> subscriptions = new CopyOnWriteArrayList<>();
+
+    /**
+     * Concrete event class to the subscriptions that receive it. Filled on first distribution of a class and replaced as a
+     * whole after every subscribe and close.
+     */
+    private volatile ConcurrentHashMap<Class<?>, EventSubscription[]> receiversByType = new ConcurrentHashMap<>();
+
+    /**
+     * Published events that are not yet distributed to the subscriptions. Shared by all publishers, so its order is the one
+     * order that every subscriber sees.
+     */
+    private final Queue<Event> published = new ConcurrentLinkedQueue<>();
+
+    /**
+     * Number of publishes not yet accounted for by a distribution pass. The publisher that moves it from {@code 0} distributes;
+     * all others only add their event to {@link #published}.
+     */
+    private final AtomicInteger distributing = new AtomicInteger();
 
     /**
      * Creates a new {@link DefaultEventBus} that dispatches events on the given {@link EventExecutorGroup}, using the default
@@ -51,11 +89,12 @@ public class DefaultEventBus implements EventBus {
 
     /**
      * Creates a new {@link DefaultEventBus} that dispatches events on the given {@link EventExecutorGroup}, dropping events for
-     * a subscriber once more than {@code maxInFlightPerSubscription} of its events are awaiting delivery.
+     * a subscriber once {@code maxInFlightPerSubscription} of its events are waiting or being delivered, unless the
+     * subscription sets its own limit through {@link EventSubscriptionOptions}.
      *
      * @param eventExecutorGroup the executor group on which events are dispatched to subscribers, must not be {@code null}.
-     * @param maxInFlightPerSubscription the number of events that may await delivery per subscriber before further events are
-     *        dropped, must be greater than {@code 0}.
+     * @param maxInFlightPerSubscription the default number of events that may wait or be in delivery per subscriber before
+     *        events are dropped, must be greater than {@code 0}.
      * @since 8.0
      */
     public DefaultEventBus(EventExecutorGroup eventExecutorGroup, int maxInFlightPerSubscription) {
@@ -68,39 +107,105 @@ public class DefaultEventBus implements EventBus {
     @Override
     public void publish(Event event) {
 
+        LettuceAssert.notNull(event, "Event must not be null");
+
         recorder.record(event);
 
-        for (EventSubscription subscription : subscriptions) {
-            subscription.dispatch(event);
+        if (subscriptions.isEmpty()) {
+            return;
+        }
+
+        published.offer(event);
+
+        if (distributing.getAndIncrement() != 0) {
+            // another thread is distributing and will also distribute this event
+            return;
+        }
+
+        int missed = 1;
+        for (;;) {
+
+            Event next;
+            while ((next = published.poll()) != null) {
+                distribute(next);
+            }
+
+            missed = distributing.addAndGet(-missed);
+            if (missed == 0) {
+                return;
+            }
         }
     }
 
-    @Override
-    public Subscription subscribe(Consumer<Event> listener) {
+    /**
+     * Adds {@code event} to the queue of every subscription that receives it. Never throws, so that a distribution pass always
+     * completes and {@link #distributing} returns to {@code 0}.
+     */
+    private void distribute(Event event) {
 
-        LettuceAssert.notNull(listener, "Listener must not be null");
+        try {
+            for (EventSubscription subscription : receiversByType.computeIfAbsent(event.getClass(), this::receiversOf)) {
+                subscription.enqueue(event);
+            }
+        } catch (Throwable t) {
+            logger.warn("Event bus failed to distribute {}", event.getClass().getName(), t);
+        }
+    }
 
-        return register(null, listener);
+    /**
+     * Collects the subscriptions that receive events of {@code eventType}, in subscription order.
+     */
+    private EventSubscription[] receiversOf(Class<?> eventType) {
+
+        List<EventSubscription> receivers = new ArrayList<>();
+        for (EventSubscription subscription : subscriptions) {
+            if (subscription.receives(eventType)) {
+                receivers.add(subscription);
+            }
+        }
+        return receivers.toArray(NO_SUBSCRIPTIONS);
+    }
+
+    /**
+     * Drops all cached receiver arrays. Called after every change to {@link #subscriptions}, so that the next lookup is built
+     * from the changed list.
+     */
+    private void invalidateReceivers() {
+        receiversByType = new ConcurrentHashMap<>();
     }
 
     @Override
-    public <T extends Event> Subscription subscribe(Class<T> type, Consumer<T> listener) {
+    public Subscription subscribe(Consumer<Event> listener, EventSubscriptionOptions options) {
+
+        LettuceAssert.notNull(listener, "Listener must not be null");
+        LettuceAssert.notNull(options, "EventSubscriptionOptions must not be null");
+
+        return register(null, listener, options);
+    }
+
+    @Override
+    public <T extends Event> Subscription subscribe(Class<T> type, Consumer<T> listener, EventSubscriptionOptions options) {
 
         LettuceAssert.notNull(type, "Event type must not be null");
         LettuceAssert.notNull(listener, "Listener must not be null");
+        LettuceAssert.notNull(options, "EventSubscriptionOptions must not be null");
 
-        return register(type, event -> listener.accept(type.cast(event)));
+        return register(type, event -> listener.accept(type.cast(event)), options);
     }
 
-    private Subscription register(Class<? extends Event> type, Consumer<Event> listener) {
+    private Subscription register(Class<? extends Event> type, Consumer<Event> listener, EventSubscriptionOptions options) {
 
-        EventSubscription subscription = new EventSubscription(type, listener, eventExecutorGroup.next());
+        EventSubscription subscription = new EventSubscription(type, listener, eventExecutorGroup.next(),
+                options.maxInFlight().orElse(maxInFlightPerSubscription),
+                options.overflowStrategy().orElse(OverflowStrategy.DROP_NEWEST));
         subscriptions.add(subscription);
+        invalidateReceivers();
         return subscription;
     }
 
     /**
-     * A single subscription, pinned to one {@link EventExecutor} for in-order delivery and bounded by an in-flight counter.
+     * A single subscription: its own queue of events, bounded by its own limit and overflow strategy, delivered in queue order
+     * by at most one task at a time on its {@link EventExecutor}.
      */
     private class EventSubscription implements Subscription {
 
@@ -110,37 +215,96 @@ public class DefaultEventBus implements EventBus {
 
         private final EventExecutor executor;
 
+        private final int maxInFlight;
+
+        private final OverflowStrategy overflowStrategy;
+
+        private final Queue<Event> queue = new ConcurrentLinkedQueue<>();
+
+        /**
+         * Events waiting in {@link #queue} plus the event being delivered.
+         */
         private final AtomicInteger inFlight = new AtomicInteger();
+
+        /**
+         * Number of enqueues not yet accounted for by {@link #deliver()}. The enqueue that moves it from {@code 0} schedules
+         * delivery.
+         */
+        private final AtomicInteger scheduled = new AtomicInteger();
 
         private volatile boolean closed;
 
-        EventSubscription(Class<? extends Event> type, Consumer<Event> listener, EventExecutor executor) {
+        EventSubscription(Class<? extends Event> type, Consumer<Event> listener, EventExecutor executor, int maxInFlight,
+                OverflowStrategy overflowStrategy) {
             this.type = type;
             this.listener = listener;
             this.executor = executor;
+            this.maxInFlight = maxInFlight;
+            this.overflowStrategy = overflowStrategy;
         }
 
-        void dispatch(Event event) {
+        boolean receives(Class<?> eventType) {
+            return !closed && (type == null || type.isAssignableFrom(eventType));
+        }
+
+        /**
+         * Adds {@code event} to this subscription's queue, applying the {@link OverflowStrategy} when the queue is full, and
+         * schedules delivery. Called only by the distributing thread.
+         */
+        void enqueue(Event event) {
 
             if (closed) {
                 return;
             }
 
-            if (type != null && !type.isInstance(event)) {
-                return;
-            }
-
-            if (inFlight.incrementAndGet() > maxInFlightPerSubscription) {
-                inFlight.decrementAndGet();
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Dropping event {} for a slow event bus subscriber ({} in-flight events exceeded)",
-                            event.getClass().getName(), maxInFlightPerSubscription);
+            if (overflowStrategy == OverflowStrategy.DROP_NEWEST) {
+                if (inFlight.incrementAndGet() > maxInFlight) {
+                    inFlight.decrementAndGet();
+                    logDropped(event);
+                    return;
                 }
-                return;
+                queue.offer(event);
+            } else {
+                queue.offer(event);
+                if (inFlight.incrementAndGet() > maxInFlight) {
+                    Event oldest = queue.poll();
+                    if (oldest != null) {
+                        inFlight.decrementAndGet();
+                        logDropped(oldest);
+                    }
+                }
             }
 
+            if (scheduled.getAndIncrement() == 0) {
+                schedule();
+            }
+        }
+
+        private void schedule() {
             try {
-                executor.execute(() -> {
+                executor.execute(this::deliver);
+            } catch (RejectedExecutionException e) {
+                // the executor is shut down: nothing can be delivered any more
+                queue.clear();
+                inFlight.set(0);
+                scheduled.set(0);
+            }
+        }
+
+        /**
+         * Delivers queued events in order. Runs as one task at a time; after {@link #DELIVERY_BATCH_SIZE} events it schedules
+         * itself again so that other tasks on the same executor are not starved.
+         */
+        private void deliver() {
+
+            int missed = scheduled.get();
+            int delivered = 0;
+
+            for (;;) {
+
+                Event event;
+                while ((event = queue.poll()) != null) {
+
                     try {
                         if (!closed) {
                             listener.accept(event);
@@ -150,9 +314,25 @@ public class DefaultEventBus implements EventBus {
                     } finally {
                         inFlight.decrementAndGet();
                     }
-                });
-            } catch (RejectedExecutionException e) {
-                inFlight.decrementAndGet();
+
+                    if (++delivered == DELIVERY_BATCH_SIZE && !queue.isEmpty()) {
+                        // yield: keep the scheduled count above 0 so that no one else schedules, and continue in a new task
+                        schedule();
+                        return;
+                    }
+                }
+
+                missed = scheduled.addAndGet(-missed);
+                if (missed == 0) {
+                    return;
+                }
+            }
+        }
+
+        private void logDropped(Event event) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Dropping event {} for a slow event bus subscriber ({} in-flight events exceeded, {})",
+                        event.getClass().getName(), maxInFlight, overflowStrategy);
             }
         }
 
@@ -163,6 +343,7 @@ public class DefaultEventBus implements EventBus {
             }
             closed = true;
             subscriptions.remove(this);
+            invalidateReceivers();
         }
 
     }

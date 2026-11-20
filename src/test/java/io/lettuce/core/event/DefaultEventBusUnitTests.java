@@ -2,16 +2,23 @@ package io.lettuce.core.event;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.AfterEach;
@@ -21,7 +28,11 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.Subscription;
 import io.lettuce.test.LoggingTestUtils;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.ImmediateEventExecutor;
+import io.netty.util.concurrent.RejectedExecutionHandler;
+import io.netty.util.concurrent.SingleThreadEventExecutor;
 
 /**
  * @author Mark Paluch
@@ -270,6 +281,340 @@ class DefaultEventBusUnitTests {
         assertThat(received.poll(1, TimeUnit.SECONDS)).isSameAs(expected);
     }
 
+    @Test
+    void allSubscribersSeeOneOrderAcrossConcurrentPublishers() throws Exception {
+
+        GatedEventExecutorGroup gatedGroup = new GatedEventExecutorGroup(2);
+        try {
+            DefaultEventBus sut = new DefaultEventBus(gatedGroup);
+            LinkedBlockingQueue<Event> first = new LinkedBlockingQueue<>();
+            LinkedBlockingQueue<Event> second = new LinkedBlockingQueue<>();
+            AtomicReference<EventExecutor> firstExecutor = new AtomicReference<>();
+
+            sut.subscribe(event -> {
+                firstExecutor.compareAndSet(null, currentExecutor(gatedGroup));
+                first.add(event);
+            });
+            sut.subscribe(second::add);
+
+            // find the executor of the first subscriber, then pause the next hand-off to it
+            Event probe = new TestEvent();
+            sut.publish(probe);
+            assertThat(first.poll(1, TimeUnit.SECONDS)).isSameAs(probe);
+            assertThat(second.poll(1, TimeUnit.SECONDS)).isSameAs(probe);
+            gatedGroup.arm(firstExecutor.get());
+
+            Event e1 = new IndexedEvent(1);
+            Event e2 = new IndexedEvent(2);
+
+            // Thread 1 publishes e1 and pauses right after handing it to the first subscriber. While it is paused, thread 2
+            // publishes e2: it must return without waiting, and the second subscriber must still get e1 before e2.
+            Thread publisher1 = new Thread(() -> sut.publish(e1));
+            publisher1.start();
+            assertThat(gatedGroup.entered.await(1, TimeUnit.SECONDS)).isTrue();
+            Thread publisher2 = new Thread(() -> sut.publish(e2));
+            publisher2.start();
+            publisher2.join(TimeUnit.SECONDS.toMillis(1));
+            assertThat(publisher2.isAlive()).isFalse();
+            gatedGroup.release.countDown();
+            publisher1.join(TimeUnit.SECONDS.toMillis(1));
+
+            assertThat(Arrays.asList(first.poll(1, TimeUnit.SECONDS), first.poll(1, TimeUnit.SECONDS))).containsExactly(e1, e2);
+            assertThat(Arrays.asList(second.poll(1, TimeUnit.SECONDS), second.poll(1, TimeUnit.SECONDS))).containsExactly(e1,
+                    e2);
+        } finally {
+            gatedGroup.release.countDown();
+            gatedGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    @Test
+    void listenerOnInlineExecutorCanWaitForAnotherPublisher() throws Exception {
+
+        // ImmediateEventExecutor runs listeners on the thread that hands events over. A listener that waits for a publish
+        // from another thread must not block that other thread.
+        DefaultEventBus sut = new DefaultEventBus(ImmediateEventExecutor.INSTANCE);
+        LinkedBlockingQueue<Event> second = new LinkedBlockingQueue<>();
+        AtomicBoolean otherPublisherReturned = new AtomicBoolean();
+
+        sut.subscribe(event -> {
+            if (event instanceof TestEvent) {
+                Thread other = new Thread(() -> sut.publish(new EventB()));
+                other.start();
+                try {
+                    other.join(TimeUnit.SECONDS.toMillis(2));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                otherPublisherReturned.set(!other.isAlive());
+            }
+        });
+        sut.subscribe(second::add);
+
+        sut.publish(new TestEvent());
+
+        assertThat(otherPublisherReturned).isTrue();
+        assertThat(second.poll(1, TimeUnit.SECONDS)).isInstanceOf(TestEvent.class);
+        assertThat(second.poll(1, TimeUnit.SECONDS)).isInstanceOf(EventB.class);
+    }
+
+    @Test
+    void dropsNewestByDefault() throws Exception {
+
+        DefaultEventBus sut = new DefaultEventBus(group, 2);
+        assertThat(deliveredWithSlowSubscriber(sut, EventSubscriptionOptions.defaults())).containsExactly(1, 2);
+    }
+
+    @Test
+    void subscriptionCanDropOldest() throws Exception {
+
+        DefaultEventBus sut = new DefaultEventBus(group, 2);
+        EventSubscriptionOptions options = EventSubscriptionOptions.builder().overflowStrategy(OverflowStrategy.DROP_OLDEST)
+                .build();
+
+        assertThat(deliveredWithSlowSubscriber(sut, options)).containsExactly(1, 3);
+    }
+
+    @Test
+    void subscriptionMaxInFlightOverridesBusDefault() throws Exception {
+
+        DefaultEventBus sut = new DefaultEventBus(group); // room for 1024 events by default
+        EventSubscriptionOptions options = EventSubscriptionOptions.builder().maxInFlight(2).build();
+
+        assertThat(deliveredWithSlowSubscriber(sut, options)).containsExactly(1, 2);
+    }
+
+    /**
+     * Publishes events 1, 2 and 3 to a subscriber that is still handling event 1, and returns the indexes it received. With
+     * room for two events, one of 2 and 3 is dropped.
+     */
+    private List<Integer> deliveredWithSlowSubscriber(DefaultEventBus sut, EventSubscriptionOptions options) throws Exception {
+
+        List<Integer> received = new CopyOnWriteArrayList<>();
+        CountDownLatch gate = new CountDownLatch(1);
+        CountDownLatch firstRunning = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(2);
+
+        sut.subscribe(event -> {
+            received.add(((IndexedEvent) event).index);
+            firstRunning.countDown();
+            awaitQuietly(gate);
+            done.countDown();
+        }, options);
+
+        sut.publish(new IndexedEvent(1)); // being delivered, in flight == 1
+        assertThat(firstRunning.await(1, TimeUnit.SECONDS)).isTrue();
+        sut.publish(new IndexedEvent(2)); // waiting, in flight == 2
+        sut.publish(new IndexedEvent(3)); // full: one of 2 and 3 is dropped
+        gate.countDown();
+
+        assertThat(done.await(1, TimeUnit.SECONDS)).isTrue();
+        Thread.sleep(100); // no third delivery may follow
+        return received;
+    }
+
+    @Test
+    void eventBusSubscribeMethodsDelegateToOptionsVariant() {
+
+        List<EventSubscriptionOptions> passedOptions = new CopyOnWriteArrayList<>();
+        List<Consumer<Event>> passedListeners = new CopyOnWriteArrayList<>();
+        EventBus custom = new EventBus() {
+
+            @Override
+            public void publish(Event event) {
+            }
+
+            @Override
+            public Subscription subscribe(Consumer<Event> listener, EventSubscriptionOptions options) {
+                passedListeners.add(listener);
+                passedOptions.add(options);
+                return () -> {
+                };
+            }
+
+        };
+        EventSubscriptionOptions options = EventSubscriptionOptions.builder().maxInFlight(1).build();
+        List<EventA> typedReceived = new CopyOnWriteArrayList<>();
+
+        custom.subscribe(event -> {
+        });
+        custom.subscribe(EventA.class, event -> {
+        });
+        custom.subscribe(EventA.class, typedReceived::add, options);
+
+        assertThat(passedOptions).containsExactly(EventSubscriptionOptions.defaults(), EventSubscriptionOptions.defaults(),
+                options);
+
+        // the typed default filters by type before calling the listener
+        EventA matching = new EventA();
+        passedListeners.get(2).accept(new EventB());
+        passedListeners.get(2).accept(matching);
+        assertThat(typedReceived).containsExactly(matching);
+    }
+
+    @Test
+    void subscriptionOptionsValidateAndDefaultToEmpty() {
+
+        assertThat(EventSubscriptionOptions.defaults().maxInFlight()).isEmpty();
+        assertThat(EventSubscriptionOptions.defaults().overflowStrategy()).isEmpty();
+        assertThatThrownBy(() -> EventSubscriptionOptions.builder().maxInFlight(0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> EventSubscriptionOptions.builder().overflowStrategy(null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void busySubscriberYieldsItsExecutor() throws Exception {
+
+        int events = DefaultEventBus.DELIVERY_BATCH_SIZE * 4;
+        DefaultEventBus sut = new DefaultEventBus(group, events + 1);
+        AtomicInteger delivered = new AtomicInteger();
+        CountDownLatch gate = new CountDownLatch(1);
+        CountDownLatch firstRunning = new CountDownLatch(1);
+        CountDownLatch all = new CountDownLatch(events + 1);
+
+        sut.subscribe(event -> {
+            if (delivered.getAndIncrement() == 0) {
+                firstRunning.countDown();
+                awaitQuietly(gate);
+            }
+            all.countDown();
+        });
+
+        sut.publish(new TestEvent()); // blocks the single executor thread
+        assertThat(firstRunning.await(1, TimeUnit.SECONDS)).isTrue();
+        for (int i = 0; i < events; i++) {
+            sut.publish(new TestEvent());
+        }
+
+        AtomicInteger deliveredWhenOtherTaskRan = new AtomicInteger(-1);
+        group.next().execute(() -> deliveredWhenOtherTaskRan.set(delivered.get()));
+        gate.countDown();
+
+        assertThat(all.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(deliveredWhenOtherTaskRan.get()).isBetween(1, events);
+    }
+
+    @Test
+    void subscribeAndCloseApplyToEventTypesPublishedBefore() throws Exception {
+
+        DefaultEventBus sut = new DefaultEventBus(group);
+        ArrayBlockingQueue<Event> first = new ArrayBlockingQueue<>(8);
+        ArrayBlockingQueue<Event> second = new ArrayBlockingQueue<>(8);
+
+        Subscription firstSubscription = sut.subscribe(EventA.class, first::add);
+        Event before = new EventA();
+        sut.publish(before);
+        assertThat(first.poll(1, TimeUnit.SECONDS)).isSameAs(before);
+
+        sut.subscribe(EventA.class, second::add);
+        firstSubscription.close();
+        Event after = new EventA();
+        sut.publish(after);
+
+        assertThat(second.poll(1, TimeUnit.SECONDS)).isSameAs(after);
+        assertThat(first.poll(200, TimeUnit.MILLISECONDS)).isNull();
+    }
+
+    @Test
+    void subscribeBySupertypeReceivesSubtypeEvents() throws Exception {
+
+        DefaultEventBus sut = new DefaultEventBus(group);
+        ArrayBlockingQueue<EventA> received = new ArrayBlockingQueue<>(8);
+
+        sut.subscribe(EventA.class, received::add);
+        EventA expected = new SpecialEventA();
+        sut.publish(expected);
+
+        assertThat(received.poll(1, TimeUnit.SECONDS)).isSameAs(expected);
+    }
+
+    private static EventExecutor currentExecutor(EventExecutorGroup group) {
+
+        for (EventExecutor executor : group) {
+            if (executor.inEventLoop()) {
+                return executor;
+            }
+        }
+        return null;
+    }
+
+    private static void awaitQuietly(CountDownLatch latch) {
+        try {
+            latch.await(2, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * Executor group whose armed executor pauses once, right after accepting a task, until {@link #release} is counted down.
+     */
+    static class GatedEventExecutorGroup extends DefaultEventExecutorGroup {
+
+        final AtomicBoolean armed = new AtomicBoolean();
+
+        final CountDownLatch entered = new CountDownLatch(1);
+
+        final CountDownLatch release = new CountDownLatch(1);
+
+        volatile EventExecutor gated;
+
+        GatedEventExecutorGroup(int nThreads) {
+            super(nThreads);
+        }
+
+        void arm(EventExecutor executor) {
+            this.gated = executor;
+            this.armed.set(true);
+        }
+
+        @Override
+        protected EventExecutor newChild(Executor executor, Object... args) {
+            return new GatedEventExecutor(this, executor, (Integer) args[0], (RejectedExecutionHandler) args[1]);
+        }
+
+    }
+
+    /**
+     * Same run loop as netty's (final) {@code DefaultEventExecutor}, plus the pause in {@link #execute(Runnable)}.
+     */
+    static class GatedEventExecutor extends SingleThreadEventExecutor {
+
+        GatedEventExecutor(EventExecutorGroup parent, Executor executor, int maxPendingTasks,
+                RejectedExecutionHandler rejectedHandler) {
+            super(parent, executor, true, maxPendingTasks, rejectedHandler);
+        }
+
+        @Override
+        protected void run() {
+            for (;;) {
+                Runnable task = takeTask();
+                if (task != null) {
+                    runTask(task);
+                    updateLastExecutionTime();
+                }
+
+                if (confirmShutdown()) {
+                    break;
+                }
+            }
+        }
+
+        @Override
+        public void execute(Runnable task) {
+
+            super.execute(task);
+
+            GatedEventExecutorGroup group = (GatedEventExecutorGroup) parent();
+            if (group.gated == this && group.armed.compareAndSet(true, false)) {
+                group.entered.countDown();
+                awaitQuietly(group.release);
+            }
+        }
+
+    }
+
     static class TestEvent implements Event {
     }
 
@@ -299,6 +644,9 @@ class DefaultEventBusUnitTests {
     }
 
     static class EventB implements Event {
+    }
+
+    static class SpecialEventA extends EventA {
     }
 
     static class IndexedEvent implements Event {
