@@ -761,6 +761,56 @@ class DefaultEventBusUnitTests {
         }
     }
 
+    @Test
+    void dropOldestNeverDropsTheEventJustAdded() throws Exception {
+
+        // Simulate the delivery task taking the oldest waiting event right after a new one was added to a full queue.
+        AtomicReference<Event> takeHeadAfterOffering = new AtomicReference<>();
+        ConcurrentLinkedQueue<Event> hookedQueue = new ConcurrentLinkedQueue<Event>() {
+
+            @Override
+            public boolean offer(Event event) {
+                boolean added = super.offer(event);
+                if (takeHeadAfterOffering.compareAndSet(event, null)) {
+                    super.poll();
+                }
+                return added;
+            }
+
+        };
+        DefaultEventBus sut = new DefaultEventBus(group, 2) {
+
+            @Override
+            Queue<Event> newSubscriptionQueue() {
+                return hookedQueue;
+            }
+
+        };
+
+        List<Integer> received = new CopyOnWriteArrayList<>();
+        CountDownLatch gate = new CountDownLatch(1);
+        CountDownLatch firstRunning = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(2);
+
+        sut.subscribe(event -> {
+            received.add(((IndexedEvent) event).index);
+            firstRunning.countDown();
+            awaitQuietly(gate);
+            done.countDown();
+        }, EventSubscriptionOptions.builder().overflowStrategy(OverflowStrategy.DROP_OLDEST).build());
+
+        sut.publish(new IndexedEvent(1)); // being delivered
+        assertThat(firstRunning.await(1, TimeUnit.SECONDS)).isTrue();
+        sut.publish(new IndexedEvent(2)); // waiting; the limit of 2 is reached
+        IndexedEvent newest = new IndexedEvent(3);
+        takeHeadAfterOffering.set(newest);
+        sut.publish(newest); // over the limit while event 2 is taken away
+        gate.countDown();
+
+        assertThat(done.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(received).containsExactly(1, 3);
+    }
+
     static class TestEvent implements Event {
     }
 

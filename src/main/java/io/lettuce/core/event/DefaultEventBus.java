@@ -295,9 +295,15 @@ public class DefaultEventBus implements EventBus {
                 queue.offer(event);
             } else {
                 queue.offer(event);
-                if (inFlight.incrementAndGet() > maxInFlight) {
-                    Event oldest = queue.poll();
-                    if (oldest != null) {
+                inFlight.incrementAndGet();
+                // Drop the oldest waiting event, never the one just added. The delivery task takes events from the same
+                // head, so look at the head first: if delivery took it meanwhile, that already made room.
+                while (inFlight.get() > maxInFlight) {
+                    Event oldest = queue.peek();
+                    if (oldest == null || oldest == event) {
+                        break;
+                    }
+                    if (queue.remove(oldest)) {
                         inFlight.decrementAndGet();
                         logDropped(oldest);
                     }
