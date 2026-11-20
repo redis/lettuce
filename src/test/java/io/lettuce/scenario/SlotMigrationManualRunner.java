@@ -339,8 +339,24 @@ public class SlotMigrationManualRunner {
             }
             controlProbe = new ControlProbe(uri);
 
+            AtomicBoolean probing = new AtomicBoolean(Boolean.getBoolean("refreshProbe"));
+            if (probing.get()) {
+                // times plain topology refreshes of every client before the migration is triggered
+                startThread("refresh-probe", () -> {
+                    while (running.get() && probing.get()) {
+                        sleep(3000);
+                        for (ClientRun client : clients) {
+                            if (probing.get()) {
+                                client.client.refreshPartitionsAsync();
+                            }
+                        }
+                    }
+                });
+            }
+
             if (scenario != null) {
                 sleep(TimeUnit.SECONDS.toMillis(Long.getLong("warmupSeconds", 20)));
+                probing.set(false);
                 emit(traceEvent("control").put("name", "trigger-requested").put("detail", scenario.getClass().getSimpleName()));
                 scenario.trigger();
                 emit(traceEvent("control").put("name", "trigger-completed"));
@@ -1041,12 +1057,14 @@ public class SlotMigrationManualRunner {
                     smigratingAt = seconds();
                 }
                 transition(Phase.MIGRATING, id, Phase.BEFORE, Phase.AFTER);
+                directProbes.forEach(probe -> probe.timeRefreshSteps("SMIGRATING"));
             } else {
                 if (smigratedAt < 0) {
                     smigratedAt = seconds();
                 }
                 recordMigrations(content);
                 transition(Phase.REFRESHING, id, Phase.BEFORE, Phase.MIGRATING, Phase.AFTER);
+                directProbes.forEach(probe -> probe.timeRefreshSteps("SMIGRATED"));
             }
         }
 
@@ -1205,6 +1223,8 @@ public class SlotMigrationManualRunner {
 
         private final RedisClient client;
 
+        private final RedisURI uri;
+
         private final Map<Phase, Map<Direct, LongAdder>> results = counters(Direct.class);
 
         private final Thread thread;
@@ -1220,7 +1240,7 @@ public class SlotMigrationManualRunner {
             this.node = describe(node);
             this.key = keyForSlot(node.getSlots().get(0));
 
-            RedisURI uri = RedisURI.builder(base).withHost(node.getUri().getHost()).withPort(node.getUri().getPort()).build();
+            this.uri = RedisURI.builder(base).withHost(node.getUri().getHost()).withPort(node.getUri().getPort()).build();
             this.client = RedisClient.create(uri);
             this.client.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
                     .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS).build());
@@ -1274,6 +1294,46 @@ public class SlotMigrationManualRunner {
                 last = result;
 
                 sleep(100);
+            }
+        }
+
+        /**
+         * Times the steps a topology refresh takes against this endpoint on a new connection: connect and handshake,
+         * {@code CLUSTER NODES}, {@code INFO}; once without and once with maintenance notifications.
+         */
+        void timeRefreshSteps(String moment) {
+
+            for (boolean maintenance : new boolean[] { false, true }) {
+                startThread("refresh-steps-" + node, () -> {
+
+                    RedisClient stepClient = RedisClient.create(uri);
+                    stepClient.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
+                            .maintNotificationsConfig(
+                                    maintenance ? MaintNotificationsConfig.enabled() : MaintNotificationsConfig.disabled())
+                            .build());
+                    ObjectNode steps = JSON.createObjectNode().put("type", "refresh-steps").put("node", node)
+                            .put("moment", moment).put("maintenance", maintenance);
+                    long started = System.nanoTime();
+
+                    try {
+                        StatefulRedisConnection<String, String> fresh = stepClient.connect();
+                        steps.put("connectMs", (System.nanoTime() - started) / 1_000_000);
+                        long sent = System.nanoTime();
+                        String nodes = fresh.async().clusterNodes().get(20, TimeUnit.SECONDS);
+                        steps.put("clusterNodesMs", (System.nanoTime() - sent) / 1_000_000);
+                        steps.put("clusterNodes", nodes);
+                        sent = System.nanoTime();
+                        fresh.async().info().get(20, TimeUnit.SECONDS);
+                        steps.put("infoMs", (System.nanoTime() - sent) / 1_000_000);
+                    } catch (Exception e) {
+                        steps.put("error", abbreviate(String.valueOf(e.getCause() != null ? e.getCause() : e), 160));
+                    }
+
+                    steps.put("totalMs", (System.nanoTime() - started) / 1_000_000);
+                    steps.put("t", Math.round(seconds() * 1000) / 1000.0);
+                    emit(steps);
+                    stepClient.shutdownAsync(0, 1, TimeUnit.SECONDS);
+                });
             }
         }
 
