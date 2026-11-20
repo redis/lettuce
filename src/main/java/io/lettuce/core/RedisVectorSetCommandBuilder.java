@@ -392,13 +392,9 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
-        if (vectors.length > 1) {
-            args.add(CommandKeyword.VALUES);
-            args.add(vectors.length);
-            Arrays.stream(vectors).forEach(args::add);
-        } else {
-            args.add(vectors[0]);
-        }
+        args.add(CommandKeyword.VALUES);
+        args.add(vectors.length);
+        Arrays.stream(vectors).forEach(args::add);
 
         if (vSimArgs != null) {
             vSimArgs.build(args);
@@ -472,13 +468,9 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
-        if (vectors.length > 1) {
-            args.add(CommandKeyword.VALUES);
-            args.add(vectors.length);
-            Arrays.stream(vectors).forEach(args::add);
-        } else {
-            args.add(vectors[0]);
-        }
+        args.add(CommandKeyword.VALUES);
+        args.add(vectors.length);
+        Arrays.stream(vectors).forEach(args::add);
 
         args.add(WITHSCORES);
 
@@ -527,13 +519,9 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
-        if (vectors.length > 1) {
-            args.add(CommandKeyword.VALUES);
-            args.add(vectors.length);
-            Arrays.stream(vectors).forEach(args::add);
-        } else {
-            args.add(vectors[0]);
-        }
+        args.add(CommandKeyword.VALUES);
+        args.add(vectors.length);
+        Arrays.stream(vectors).forEach(args::add);
 
         args.add(WITHSCORES).add(WITHATTRIBS);
 
