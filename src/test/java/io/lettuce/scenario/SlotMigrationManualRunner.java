@@ -26,11 +26,16 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -92,7 +97,7 @@ import io.lettuce.test.env.Endpoints.Endpoint;
  * <ul>
  * <li>{@code SCH-ON}: maintenance notifications enabled, no adaptive refresh, so its topology can only change through the
  * maintenance-triggered refresh,</li>
- * <li>{@code SCH-OFF}: control without notifications and without adaptive refresh,</li>
+ * <li>{@code SCH-ON-ADAPT}: maintenance notifications and all adaptive refresh triggers enabled,</li>
  * <li>{@code SCH-OFF-ADAPT}: control without notifications, with all adaptive refresh triggers enabled.</li>
  * </ul>
  * Periodic refresh is off for all. In addition, a plain (non-cluster) connection to every master that exists at start sends a
@@ -304,7 +309,6 @@ public class SlotMigrationManualRunner {
         ClientRun on = new ClientRun("SCH-ON", true, false);
         ClientRun onAdaptive = new ClientRun("SCH-ON-ADAPT", true, true);
         List<ClientRun> controls = new ArrayList<>();
-        controls.add(new ClientRun("SCH-OFF", false, false));
         controls.add(new ClientRun("SCH-OFF-ADAPT", false, true));
         List<ClientRun> clients = new ArrayList<>();
         clients.add(on);
@@ -1296,9 +1300,9 @@ public class SlotMigrationManualRunner {
     // ---- control connection -------------------------------------------------------------------------------------------
 
     /**
-     * Asks the database endpoint for {@code CLUSTER SLOTS} every 200 ms on a plain connection and reports masters that are
-     * added, removed, or change their number of slots. It shows when the server changes the topology, independent of when a
-     * client learns about it.
+     * Asks the database endpoint for {@code CLUSTER SLOTS} every 200 ms on a plain connection and reports every change of the
+     * reply as one event: slot ranges that changed owner, masters that appeared, masters that disappeared. It shows when the
+     * server changes the topology, independent of when a client learns about it.
      */
     private class ControlProbe {
 
@@ -1308,7 +1312,8 @@ public class SlotMigrationManualRunner {
 
         private StatefulRedisConnection<String, String> connection;
 
-        private Map<String, Integer> masters;
+        // owner of every slot in the last reply, or null before the first one
+        private String[] owners;
 
         private boolean reachable = true;
 
@@ -1328,7 +1333,7 @@ public class SlotMigrationManualRunner {
                     if (connection == null) {
                         connection = client.connect();
                     }
-                    report(masters(connection.async().clusterSlots().get(1, TimeUnit.SECONDS)));
+                    report(connection.async().clusterSlots().get(1, TimeUnit.SECONDS));
                     reachable(true, "");
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -1350,21 +1355,21 @@ public class SlotMigrationManualRunner {
             }
         }
 
-        private Map<String, Integer> masters(List<Object> clusterSlots) {
+        private void report(List<Object> clusterSlots) {
 
-            Map<String, Integer> current = new TreeMap<>();
-            Map<String, ObjectNode> described = new TreeMap<>();
+            String[] current = new String[SlotHash.SLOT_COUNT];
+            Map<String, ObjectNode> masters = new TreeMap<>();
 
             for (Object entry : clusterSlots) {
                 List<?> range = (List<?>) entry;
                 String master = address(range.get(2));
-                int slots = (int) ((Long) range.get(1) - (Long) range.get(0) + 1);
-                current.merge(master, slots, Integer::sum);
+                int from = ((Long) range.get(0)).intValue();
+                int to = ((Long) range.get(1)).intValue();
+                Arrays.fill(current, from, to + 1, master);
 
-                ObjectNode node = described.computeIfAbsent(master, m -> JSON.createObjectNode().put("node", m));
-                node.put("slots", current.get(master));
-                node.put("ranges",
-                        (node.has("ranges") ? node.get("ranges").asText() + "," : "") + range.get(0) + "-" + range.get(1));
+                ObjectNode node = masters.computeIfAbsent(master, m -> JSON.createObjectNode().put("node", m).put("slots", 0));
+                node.put("slots", node.get("slots").asInt() + to - from + 1);
+                node.put("ranges", (node.has("ranges") ? node.get("ranges").asText() + "," : "") + from + "-" + to);
                 if (!node.has("replicas")) {
                     ArrayNode replicas = node.putArray("replicas");
                     for (int i = 3; i < range.size(); i++) {
@@ -1373,42 +1378,63 @@ public class SlotMigrationManualRunner {
                 }
             }
 
-            if (masters == null) {
+            if (owners == null) {
                 ObjectNode topology = traceEvent("cluster").put("name", "topology");
-                topology.putArray("masters").addAll(described.values());
+                topology.putArray("masters").addAll(masters.values());
                 emit(topology);
+            } else if (!Arrays.equals(owners, current)) {
+                emit(change(owners, current));
             }
-            return current;
+
+            owners = current;
+        }
+
+        /**
+         * One event per changed reply: the slot ranges that changed owner, and the masters that appeared in or disappeared from
+         * the reply.
+         */
+        private ObjectNode change(String[] before, String[] after) {
+
+            // "from -> to" in order of first slot -> { from, to, ranges, count }
+            Map<String, ObjectNode> moves = new LinkedHashMap<>();
+            int start = -1;
+
+            for (int slot = 0; slot <= SlotHash.SLOT_COUNT; slot++) {
+
+                boolean last = slot == SlotHash.SLOT_COUNT;
+                boolean moved = !last && !Objects.equals(before[slot], after[slot]);
+                boolean sameMove = moved && start >= 0 && Objects.equals(before[slot], before[start])
+                        && Objects.equals(after[slot], after[start]);
+
+                if (start >= 0 && !sameMove) {
+                    ObjectNode move = moves.computeIfAbsent(before[start] + " -> " + after[start],
+                            k -> JSON.createObjectNode());
+                    move.put("from", before[start]).put("to", after[start]);
+                    move.put("slots", (move.has("slots") ? move.get("slots").asText() + "," : "") + start + "-" + (slot - 1));
+                    move.put("count", move.path("count").asInt() + slot - start);
+                    start = -1;
+                }
+                if (moved && start < 0) {
+                    start = slot;
+                }
+            }
+
+            Set<String> previous = new TreeSet<>(Arrays.asList(before));
+            Set<String> current = new TreeSet<>(Arrays.asList(after));
+            previous.remove(null);
+            current.remove(null);
+
+            ObjectNode event = traceEvent("cluster").put("name", "topology-changed");
+            event.putArray("moved").addAll(moves.values());
+            ArrayNode added = event.putArray("added");
+            ArrayNode dropped = event.putArray("dropped");
+            current.stream().filter(node -> !previous.contains(node)).forEach(added::add);
+            previous.stream().filter(node -> !current.contains(node)).forEach(dropped::add);
+            return event;
         }
 
         private String address(Object node) {
             return ((List<?>) node).get(0) + ":" + ((List<?>) node).get(1);
-        }
-
-        private void report(Map<String, Integer> current) {
-
-            if (current.equals(masters)) {
-                return;
-            }
-
-            if (masters != null) {
-                Map<String, Integer> previous = masters;
-                current.forEach((master, slots) -> {
-                    if (!previous.containsKey(master)) {
-                        emit(traceEvent("cluster").put("name", "node-added").put("node", master).put("slots", slots));
-                    } else if (!previous.get(master).equals(slots)) {
-                        emit(traceEvent("cluster").put("name", "slots-changed").put("node", master)
-                                .put("before", previous.get(master)).put("slots", slots));
-                    }
-                });
-                previous.forEach((master, slots) -> {
-                    if (!current.containsKey(master)) {
-                        emit(traceEvent("cluster").put("name", "node-removed").put("node", master).put("slots", slots));
-                    }
-                });
-            }
-
-            masters = current;
         }
 
         void close() throws Exception {
