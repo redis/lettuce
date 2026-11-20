@@ -174,6 +174,8 @@ public class SlotMigrationManualRunner {
 
     private final List<DirectProbe> directProbes = new CopyOnWriteArrayList<>();
 
+    private ControlProbe controlProbe;
+
     // { source, destination, slots } of every SMIGRATED sequence id
     private final List<String[]> migrations = new CopyOnWriteArrayList<>();
 
@@ -325,6 +327,7 @@ public class SlotMigrationManualRunner {
                     directProbes.add(new DirectProbe(uri, node));
                 }
             }
+            controlProbe = new ControlProbe(uri);
 
             if (scenario != null) {
                 sleep(TimeUnit.SECONDS.toMillis(Long.getLong("warmupSeconds", 20)));
@@ -355,6 +358,9 @@ public class SlotMigrationManualRunner {
                 }
                 for (DirectProbe probe : directProbes) {
                     probe.close();
+                }
+                if (controlProbe != null) {
+                    controlProbe.close();
                 }
                 if (scenario != null) {
                     scenario.cleanup();
@@ -1242,6 +1248,115 @@ public class SlotMigrationManualRunner {
 
                 sleep(100);
             }
+        }
+
+        void close() throws Exception {
+
+            thread.join(3000);
+            client.shutdownAsync(0, 2, TimeUnit.SECONDS).get(10, TimeUnit.SECONDS);
+        }
+
+    }
+
+    // ---- control connection -------------------------------------------------------------------------------------------
+
+    /**
+     * Asks the database endpoint for {@code CLUSTER SLOTS} every 200 ms on a plain connection and reports masters that are
+     * added, removed, or change their number of slots. It shows when the server changes the topology, independent of when a
+     * client learns about it.
+     */
+    private class ControlProbe {
+
+        private final RedisClient client;
+
+        private final Thread thread;
+
+        private StatefulRedisConnection<String, String> connection;
+
+        private Map<String, Integer> masters;
+
+        private boolean reachable = true;
+
+        ControlProbe(RedisURI uri) {
+
+            this.client = RedisClient.create(uri);
+            this.client.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
+                    .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS).build());
+            this.thread = startThread("control-probe", this::probe);
+        }
+
+        private void probe() {
+
+            while (running.get()) {
+
+                try {
+                    if (connection == null) {
+                        connection = client.connect();
+                    }
+                    report(masters(connection.async().clusterSlots().get(1, TimeUnit.SECONDS)));
+                    reachable(true, "");
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                } catch (Exception e) {
+                    reachable(false, String.valueOf(e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
+                }
+
+                sleep(200);
+            }
+        }
+
+        private void reachable(boolean now, String detail) {
+
+            if (now != reachable) {
+                reachable = now;
+                emit(traceEvent("cluster").put("name", now ? "control-restored" : "control-lost").put("detail",
+                        abbreviate(detail, 160)));
+            }
+        }
+
+        private Map<String, Integer> masters(List<Object> clusterSlots) {
+
+            Map<String, Integer> current = new TreeMap<>();
+
+            for (Object entry : clusterSlots) {
+                List<?> range = (List<?>) entry;
+                List<?> master = (List<?>) range.get(2);
+                int slots = (int) ((Long) range.get(1) - (Long) range.get(0) + 1);
+                current.merge(master.get(0) + ":" + master.get(1), slots, Integer::sum);
+            }
+            return current;
+        }
+
+        private void report(Map<String, Integer> current) {
+
+            if (current.equals(masters)) {
+                return;
+            }
+
+            if (masters == null) {
+                ObjectNode node = traceEvent("cluster").put("name", "topology");
+                ArrayNode list = node.putArray("masters");
+                current.forEach((master, slots) -> list.addObject().put("node", master).put("slots", slots));
+                emit(node);
+            } else {
+                Map<String, Integer> previous = masters;
+                current.forEach((master, slots) -> {
+                    if (!previous.containsKey(master)) {
+                        emit(traceEvent("cluster").put("name", "node-added").put("node", master).put("slots", slots));
+                    } else if (!previous.get(master).equals(slots)) {
+                        emit(traceEvent("cluster").put("name", "slots-changed").put("node", master)
+                                .put("before", previous.get(master)).put("slots", slots));
+                    }
+                });
+                previous.forEach((master, slots) -> {
+                    if (!current.containsKey(master)) {
+                        emit(traceEvent("cluster").put("name", "node-removed").put("node", master).put("slots", slots));
+                    }
+                });
+            }
+
+            masters = current;
         }
 
         void close() throws Exception {
