@@ -218,6 +218,52 @@ class DefaultClientResourcesUnitTests {
     }
 
     @Test
+    void eventBusFactoryReceivesComputationPool() throws Exception {
+
+        AtomicReference<EventExecutorGroup> passedGroup = new AtomicReference<>();
+        AtomicInteger calls = new AtomicInteger();
+        EventBus custom = mock(EventBus.class);
+
+        DefaultClientResources sut = DefaultClientResources.builder().eventBusFactory(group -> {
+            calls.incrementAndGet();
+            passedGroup.set(group);
+            return custom;
+        }).build();
+
+        assertThat(sut.eventBus()).isSameAs(custom);
+        assertThat(passedGroup.get()).isSameAs(sut.eventExecutorGroup());
+        assertThat(calls).hasValue(1);
+
+        assertThat(TestFutures.getOrTimeout(sut.shutdown(0, 0, TimeUnit.MILLISECONDS))).isTrue();
+        assertThat(sut.eventExecutorGroup().isShutdown()).isTrue();
+    }
+
+    @Test
+    void lastOfEventBusAndEventBusFactoryWins() throws Exception {
+
+        EventBus instance = mock(EventBus.class);
+        EventBus fromFactory = mock(EventBus.class);
+
+        DefaultClientResources factoryLast = DefaultClientResources.builder().eventBus(instance)
+                .eventBusFactory(group -> fromFactory).build();
+        DefaultClientResources instanceLast = DefaultClientResources.builder().eventBusFactory(group -> fromFactory)
+                .eventBus(instance).build();
+
+        assertThat(factoryLast.eventBus()).isSameAs(fromFactory);
+        assertThat(instanceLast.eventBus()).isSameAs(instance);
+
+        assertThat(TestFutures.getOrTimeout(factoryLast.shutdown(0, 0, TimeUnit.MILLISECONDS))).isTrue();
+        assertThat(TestFutures.getOrTimeout(instanceLast.shutdown(0, 0, TimeUnit.MILLISECONDS))).isTrue();
+    }
+
+    @Test
+    void eventBusFactoryMustNotReturnNull() {
+
+        assertThatThrownBy(() -> DefaultClientResources.builder().eventBusFactory(group -> null).build())
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void delayInstanceShouldRejectStatefulDelay() {
 
         assertThatThrownBy(() -> DefaultClientResources.builder().reconnectDelay(Delay.decorrelatedJitter().get()))

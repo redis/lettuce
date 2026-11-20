@@ -20,6 +20,7 @@
 package io.lettuce.core.resource;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.lettuce.core.event.DefaultEventBus;
@@ -67,6 +68,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <li>a {@code commandLatencyRecorder} which is a provided instance of {@link io.lettuce.core.metrics.CommandLatencyRecorder}
  * <li>a {@code dnsResolver} which is a provided instance of {@link DnsResolver}.</li>
  * <li>an {@code eventBus} which is a provided instance of {@link EventBus}.</li> .</li>
+ * <li>an {@code eventBusFactory} which creates the {@link EventBus} from the computation {@link EventExecutorGroup},
+ * alternatively to {@code eventBus}.</li>
  * <li>the {@code ioThreadPoolSize}, alternatively</li>
  * <li>a {@code eventLoopGroupProvider} which is a provided instance of {@link EventLoopGroupProvider}. Higher precedence than
  * {@code ioThreadPoolSize}.</li>
@@ -220,10 +223,13 @@ public class DefaultClientResources implements ClientResources {
             sharedTimer = builder.sharedTimer;
         }
 
-        if (builder.eventBus == null) {
-            eventBus = new DefaultEventBus(eventExecutorGroup);
-        } else {
+        if (builder.eventBus != null) {
             eventBus = builder.eventBus;
+        } else if (builder.eventBusFactory != null) {
+            eventBus = builder.eventBusFactory.apply(eventExecutorGroup);
+            LettuceAssert.notNull(eventBus, "EventBus factory must not return null");
+        } else {
+            eventBus = new DefaultEventBus(eventExecutorGroup);
         }
 
         if (builder.commandLatencyRecorder == null) {
@@ -304,6 +310,8 @@ public class DefaultClientResources implements ClientResources {
         private int computationThreadPoolSize = DEFAULT_COMPUTATION_THREADS;
 
         private EventBus eventBus;
+
+        private Function<EventExecutorGroup, EventBus> eventBusFactory;
 
         private EventExecutorGroup eventExecutorGroup;
 
@@ -453,6 +461,28 @@ public class DefaultClientResources implements ClientResources {
             LettuceAssert.notNull(eventBus, "EventBus must not be null");
 
             this.eventBus = eventBus;
+            this.eventBusFactory = null;
+            return this;
+        }
+
+        /**
+         * Sets a factory that creates the {@link EventBus} from the computation {@link EventExecutorGroup} of these client
+         * resources. Use it to configure the event bus without creating an executor group yourself, for example
+         * {@code eventBusFactory(group -> new DefaultEventBus(group, 2048))}. Replaces an {@link EventBus} set through
+         * {@link #eventBus(EventBus)}, and is replaced by a later call to it.
+         *
+         * @param eventBusFactory the factory, called once with the computation {@link EventExecutorGroup}, must not be
+         *        {@code null}.
+         * @return {@code this} {@link Builder}.
+         * @since 8.0
+         */
+        @Override
+        public Builder eventBusFactory(Function<EventExecutorGroup, EventBus> eventBusFactory) {
+
+            LettuceAssert.notNull(eventBusFactory, "EventBus factory must not be null");
+
+            this.eventBusFactory = eventBusFactory;
+            this.eventBus = null;
             return this;
         }
 
