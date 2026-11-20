@@ -44,6 +44,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -309,6 +311,9 @@ public class SlotMigrationManualRunner {
         clients.add(onAdaptive);
         clients.addAll(controls);
         openTrace(uri, clients);
+        if (scenario != null) {
+            traceDatabase(scenario.bdbId());
+        }
 
         try {
             for (ClientRun client : clients) {
@@ -379,6 +384,8 @@ public class SlotMigrationManualRunner {
 
         void cleanup() throws Exception;
 
+        String bdbId();
+
     }
 
     /**
@@ -428,6 +435,11 @@ public class SlotMigrationManualRunner {
         }
 
         @Override
+        public String bdbId() {
+            return bdbId;
+        }
+
+        @Override
         public void cleanup() {
 
             if (shardId != null && Boolean.parseBoolean(System.getProperty("restore", "true"))) {
@@ -468,6 +480,11 @@ public class SlotMigrationManualRunner {
                         + abbreviate(result.path("status").asText().equals("success") ? result.path("output").toString()
                                 : result.path("error").toString(), 200));
             }
+        }
+
+        @Override
+        public String bdbId() {
+            return setup.path("bdb_id").asText();
         }
 
         @Override
@@ -514,6 +531,11 @@ public class SlotMigrationManualRunner {
                         + abbreviate(result.path("status").asText().equals("success") ? result.path("output").toString()
                                 : result.path("error").toString(), 200));
             }
+        }
+
+        @Override
+        public String bdbId() {
+            return bdbId;
         }
 
         @Override
@@ -1213,7 +1235,7 @@ public class SlotMigrationManualRunner {
                         connection = client.connect();
                     }
                     // once slots have moved, ask every endpoint for a key in a moved slot
-                    connection.async().get(migratedKey != null ? migratedKey : key).get(1, TimeUnit.SECONDS);
+                    connection.async().get(migratedKey != null && involved() ? migratedKey : key).get(1, TimeUnit.SECONDS);
                     result = Direct.OK;
                 } catch (ExecutionException e) {
                     detail = String.valueOf(e.getCause().getMessage());
@@ -1248,6 +1270,19 @@ public class SlotMigrationManualRunner {
 
                 sleep(100);
             }
+        }
+
+        /**
+         * @return whether this endpoint is the source or the destination of a migration seen so far
+         */
+        private boolean involved() {
+
+            for (String[] migration : migrations) {
+                if (node.equals(migration[0]) || node.equals(migration[1])) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         void close() throws Exception {
@@ -1318,14 +1353,36 @@ public class SlotMigrationManualRunner {
         private Map<String, Integer> masters(List<Object> clusterSlots) {
 
             Map<String, Integer> current = new TreeMap<>();
+            Map<String, ObjectNode> described = new TreeMap<>();
 
             for (Object entry : clusterSlots) {
                 List<?> range = (List<?>) entry;
-                List<?> master = (List<?>) range.get(2);
+                String master = address(range.get(2));
                 int slots = (int) ((Long) range.get(1) - (Long) range.get(0) + 1);
-                current.merge(master.get(0) + ":" + master.get(1), slots, Integer::sum);
+                current.merge(master, slots, Integer::sum);
+
+                ObjectNode node = described.computeIfAbsent(master, m -> JSON.createObjectNode().put("node", m));
+                node.put("slots", current.get(master));
+                node.put("ranges",
+                        (node.has("ranges") ? node.get("ranges").asText() + "," : "") + range.get(0) + "-" + range.get(1));
+                if (!node.has("replicas")) {
+                    ArrayNode replicas = node.putArray("replicas");
+                    for (int i = 3; i < range.size(); i++) {
+                        replicas.add(address(range.get(i)));
+                    }
+                }
+            }
+
+            if (masters == null) {
+                ObjectNode topology = traceEvent("cluster").put("name", "topology");
+                topology.putArray("masters").addAll(described.values());
+                emit(topology);
             }
             return current;
+        }
+
+        private String address(Object node) {
+            return ((List<?>) node).get(0) + ":" + ((List<?>) node).get(1);
         }
 
         private void report(Map<String, Integer> current) {
@@ -1334,12 +1391,7 @@ public class SlotMigrationManualRunner {
                 return;
             }
 
-            if (masters == null) {
-                ObjectNode node = traceEvent("cluster").put("name", "topology");
-                ArrayNode list = node.putArray("masters");
-                current.forEach((master, slots) -> list.addObject().put("node", master).put("slots", slots));
-                emit(node);
-            } else {
+            if (masters != null) {
                 Map<String, Integer> previous = masters;
                 current.forEach((master, slots) -> {
                     if (!previous.containsKey(master)) {
@@ -1500,6 +1552,37 @@ public class SlotMigrationManualRunner {
         emit(run);
     }
 
+    private static final Pattern SHARD = Pattern
+            .compile("db:(\\d+)\\s+(\\S+)\\s+(redis:\\d+)\\s+(node:\\d+)\\s+(master|slave)\\s+(\\S+).*");
+
+    /**
+     * Records the shards of the database as {@code rladmin status shards} reports them: id, node, role and slots.
+     */
+    private void traceDatabase(String bdbId) {
+
+        if (trace == null) {
+            return;
+        }
+
+        try {
+            String status = faultClient.executeRladminCommandAndCaptureOutput(bdbId, "status shards").block(MIGRATION_TIMEOUT);
+            ObjectNode database = traceEvent("database").put("bdbId", bdbId);
+            ArrayNode shards = database.putArray("shards");
+
+            for (String line : String.valueOf(status).split("\\n")) {
+                Matcher matcher = SHARD.matcher(line.trim());
+                if (matcher.matches() && matcher.group(1).equals(bdbId)) {
+                    database.put("name", matcher.group(2));
+                    shards.addObject().put("shard", matcher.group(3)).put("node", matcher.group(4))
+                            .put("role", matcher.group(5)).put("slots", matcher.group(6));
+                }
+            }
+            emit(database);
+        } catch (RuntimeException e) {
+            out.println("Cannot read the shards of database " + bdbId + ": " + e);
+        }
+    }
+
     /**
      * Writes the buckets of successful iterations and closes the trace.
      */
@@ -1585,7 +1668,7 @@ public class SlotMigrationManualRunner {
 
         out.println();
         out.println("######## Direct probe of each master endpoint that existed at start (no cluster routing) ########");
-        out.println("  key: own first slot until SMIGRATED, then a key in the first migrated slot"
+        out.println("  key: own first slot; source and destination switch to a key in the first migrated slot after SMIGRATED"
                 + (migratedKey != null ? " (" + migratedKey + ", slot " + SlotHash.getSlot(migratedKey) + ")" : ""));
         for (DirectProbe probe : directProbes) {
             out.println("  " + probe.node);
