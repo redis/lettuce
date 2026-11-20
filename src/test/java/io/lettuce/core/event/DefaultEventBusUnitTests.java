@@ -615,6 +615,42 @@ class DefaultEventBusUnitTests {
 
     }
 
+    @Test
+    void blockedInlineListenerKeepsSubscriptionLimit() throws Exception {
+
+        // With an executor that runs tasks on the calling thread, a blocked listener must not stop other publishers from
+        // reaching the subscription's limit: their events are dropped there instead of piling up in the shared queue.
+        DefaultEventBus sut = new DefaultEventBus(ImmediateEventExecutor.INSTANCE);
+        AtomicInteger received = new AtomicInteger();
+        CountDownLatch firstRunning = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+
+        sut.subscribe(event -> {
+            received.incrementAndGet();
+            firstRunning.countDown();
+            awaitQuietly(release);
+        }, EventSubscriptionOptions.builder().maxInFlight(1).build());
+
+        Thread blocked = new Thread(() -> sut.publish(new TestEvent()));
+        blocked.start();
+        assertThat(firstRunning.await(1, TimeUnit.SECONDS)).isTrue();
+
+        Thread burst = new Thread(() -> {
+            for (int i = 0; i < 1000; i++) {
+                sut.publish(new TestEvent());
+            }
+        });
+        burst.start();
+        burst.join(TimeUnit.SECONDS.toMillis(2));
+        assertThat(burst.isAlive()).isFalse();
+
+        release.countDown();
+        blocked.join(TimeUnit.SECONDS.toMillis(2));
+
+        // only the first event fitted the limit of 1; the burst was dropped while the listener was blocked
+        assertThat(received).hasValue(1);
+    }
+
     static class TestEvent implements Event {
     }
 

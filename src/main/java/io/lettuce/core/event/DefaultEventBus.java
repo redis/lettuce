@@ -122,34 +122,53 @@ public class DefaultEventBus implements EventBus {
             return;
         }
 
+        // Subscriptions whose delivery must be started. Started only after this thread gives up distributing, so that a
+        // listener
+        // invoked by an executor that runs tasks on the calling thread never holds up distribution: other publishers then
+        // distribute themselves, and each subscription's limit keeps applying.
+        List<EventSubscription> toSchedule = null;
+
         int missed = 1;
         for (;;) {
 
             Event next;
             while ((next = published.poll()) != null) {
-                distribute(next);
+                toSchedule = distribute(next, toSchedule);
             }
 
             missed = distributing.addAndGet(-missed);
             if (missed == 0) {
-                return;
+                break;
+            }
+        }
+
+        if (toSchedule != null) {
+            for (EventSubscription subscription : toSchedule) {
+                subscription.schedule();
             }
         }
     }
 
     /**
-     * Adds {@code event} to the queue of every subscription that receives it. Never throws, so that a distribution pass always
-     * completes and {@link #distributing} returns to {@code 0}.
+     * Adds {@code event} to the queue of every subscription that receives it, and collects the subscriptions whose delivery
+     * must be started. Never throws, so that a distribution pass always completes and {@link #distributing} returns to
+     * {@code 0}.
      */
-    private void distribute(Event event) {
+    private List<EventSubscription> distribute(Event event, List<EventSubscription> toSchedule) {
 
         try {
             for (EventSubscription subscription : receiversByType.computeIfAbsent(event.getClass(), this::receiversOf)) {
-                subscription.enqueue(event);
+                if (subscription.enqueue(event)) {
+                    if (toSchedule == null) {
+                        toSchedule = new ArrayList<>(2);
+                    }
+                    toSchedule.add(subscription);
+                }
             }
         } catch (Throwable t) {
             logger.warn("Event bus failed to distribute {}", event.getClass().getName(), t);
         }
+        return toSchedule;
     }
 
     /**
@@ -248,20 +267,22 @@ public class DefaultEventBus implements EventBus {
         }
 
         /**
-         * Adds {@code event} to this subscription's queue, applying the {@link OverflowStrategy} when the queue is full, and
-         * schedules delivery. Called only by the distributing thread.
+         * Adds {@code event} to this subscription's queue, applying the {@link OverflowStrategy} when the queue is full. Called
+         * only by the distributing thread.
+         *
+         * @return {@code true} if the caller must {@link #schedule()} delivery, because no delivery is scheduled yet.
          */
-        void enqueue(Event event) {
+        boolean enqueue(Event event) {
 
             if (closed) {
-                return;
+                return false;
             }
 
             if (overflowStrategy == OverflowStrategy.DROP_NEWEST) {
                 if (inFlight.incrementAndGet() > maxInFlight) {
                     inFlight.decrementAndGet();
                     logDropped(event);
-                    return;
+                    return false;
                 }
                 queue.offer(event);
             } else {
@@ -275,12 +296,10 @@ public class DefaultEventBus implements EventBus {
                 }
             }
 
-            if (scheduled.getAndIncrement() == 0) {
-                schedule();
-            }
+            return scheduled.getAndIncrement() == 0;
         }
 
-        private void schedule() {
+        void schedule() {
             try {
                 executor.execute(this::deliver);
             } catch (RejectedExecutionException e) {
