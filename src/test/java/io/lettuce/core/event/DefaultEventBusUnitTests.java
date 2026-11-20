@@ -7,7 +7,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -649,6 +651,67 @@ class DefaultEventBusUnitTests {
 
         // only the first event fitted the limit of 1; the burst was dropped while the listener was blocked
         assertThat(received).hasValue(1);
+    }
+
+    @Test
+    void subscriberRefilledAtBatchBoundaryStillYields() throws Exception {
+
+        int refill = DefaultEventBus.DELIVERY_BATCH_SIZE * 3;
+        AtomicInteger delivered = new AtomicInteger();
+        AtomicInteger deliveredWhenOtherTaskRan = new AtomicInteger(-1);
+        AtomicReference<DefaultEventBus> bus = new AtomicReference<>();
+
+        // When the queue is found empty right after a full batch, refill it and queue an unrelated task on the same
+        // executor. A subscriber that keeps yielding lets that task run before it has delivered the whole refill.
+        AtomicBoolean armed = new AtomicBoolean(true);
+        ConcurrentLinkedQueue<Event> hookedQueue = new ConcurrentLinkedQueue<Event>() {
+
+            @Override
+            public Event poll() {
+                Event event = super.poll();
+                if (event == null && delivered.get() >= DefaultEventBus.DELIVERY_BATCH_SIZE
+                        && armed.compareAndSet(true, false)) {
+                    for (int i = 0; i < refill; i++) {
+                        bus.get().publish(new TestEvent());
+                    }
+                    group.next().execute(() -> deliveredWhenOtherTaskRan.set(delivered.get()));
+                }
+                return event;
+            }
+
+        };
+
+        DefaultEventBus sut = new DefaultEventBus(group, refill * 2) {
+
+            @Override
+            Queue<Event> newSubscriptionQueue() {
+                return hookedQueue;
+            }
+
+        };
+        bus.set(sut);
+
+        CountDownLatch gate = new CountDownLatch(1);
+        CountDownLatch firstRunning = new CountDownLatch(1);
+        CountDownLatch all = new CountDownLatch(DefaultEventBus.DELIVERY_BATCH_SIZE + refill);
+
+        sut.subscribe(event -> {
+            if (delivered.getAndIncrement() == 0) {
+                firstRunning.countDown();
+                awaitQuietly(gate);
+            }
+            all.countDown();
+        });
+
+        sut.publish(new TestEvent()); // blocks the single executor thread
+        assertThat(firstRunning.await(1, TimeUnit.SECONDS)).isTrue();
+        for (int i = 1; i < DefaultEventBus.DELIVERY_BATCH_SIZE; i++) {
+            sut.publish(new TestEvent()); // exactly one batch in total
+        }
+        gate.countDown();
+
+        assertThat(all.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(deliveredWhenOtherTaskRan.get()).isBetween(0, DefaultEventBus.DELIVERY_BATCH_SIZE + refill - 1);
     }
 
     static class TestEvent implements Event {

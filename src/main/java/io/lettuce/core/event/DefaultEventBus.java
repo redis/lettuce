@@ -223,6 +223,14 @@ public class DefaultEventBus implements EventBus {
     }
 
     /**
+     * Creates the queue of one subscription. Must be safe for one writer (the distributing thread) and one reader (the delivery
+     * task) at the same time. Package-private so that tests can observe the queue.
+     */
+    Queue<Event> newSubscriptionQueue() {
+        return new ConcurrentLinkedQueue<>();
+    }
+
+    /**
      * A single subscription: its own queue of events, bounded by its own limit and overflow strategy, delivered in queue order
      * by at most one task at a time on its {@link EventExecutor}.
      */
@@ -238,7 +246,7 @@ public class DefaultEventBus implements EventBus {
 
         private final OverflowStrategy overflowStrategy;
 
-        private final Queue<Event> queue = new ConcurrentLinkedQueue<>();
+        private final Queue<Event> queue = newSubscriptionQueue();
 
         /**
          * Events waiting in {@link #queue} plus the event being delivered.
@@ -321,8 +329,20 @@ public class DefaultEventBus implements EventBus {
 
             for (;;) {
 
-                Event event;
-                while ((event = queue.poll()) != null) {
+                for (;;) {
+
+                    if (delivered >= DELIVERY_BATCH_SIZE) {
+                        // yield before taking the next event: keep the scheduled count above 0 so that no one else
+                        // schedules, and continue in a new task. Checked before every poll, so events that arrive later
+                        // cannot make this task skip the yield.
+                        schedule();
+                        return;
+                    }
+
+                    Event event = queue.poll();
+                    if (event == null) {
+                        break;
+                    }
 
                     try {
                         if (!closed) {
@@ -333,12 +353,7 @@ public class DefaultEventBus implements EventBus {
                     } finally {
                         inFlight.decrementAndGet();
                     }
-
-                    if (++delivered == DELIVERY_BATCH_SIZE && !queue.isEmpty()) {
-                        // yield: keep the scheduled count above 0 so that no one else schedules, and continue in a new task
-                        schedule();
-                        return;
-                    }
+                    delivered++;
                 }
 
                 missed = scheduled.addAndGet(-missed);
