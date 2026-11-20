@@ -34,6 +34,7 @@ import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.concurrent.RejectedExecutionHandler;
+import io.netty.util.concurrent.RejectedExecutionHandlers;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 
 /**
@@ -712,6 +713,52 @@ class DefaultEventBusUnitTests {
 
         assertThat(all.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(deliveredWhenOtherTaskRan.get()).isBetween(0, DefaultEventBus.DELIVERY_BATCH_SIZE + refill - 1);
+    }
+
+    @Test
+    void rejectedRescheduleKeepsAcceptedEvents() throws Exception {
+
+        // One thread, and room for only 16 pending tasks, after which execute(...) is rejected.
+        EventExecutorGroup bounded = new DefaultEventExecutorGroup(1, Executors.defaultThreadFactory(), 16,
+                RejectedExecutionHandlers.reject());
+        try {
+            DefaultEventBus sut = new DefaultEventBus(bounded, 1024);
+            int accepted = DefaultEventBus.DELIVERY_BATCH_SIZE + 36;
+            AtomicInteger delivered = new AtomicInteger();
+            CountDownLatch gate = new CountDownLatch(1);
+            CountDownLatch firstRunning = new CountDownLatch(1);
+            CountDownLatch all = new CountDownLatch(accepted + 1);
+
+            sut.subscribe(event -> {
+                if (delivered.getAndIncrement() == 0) {
+                    firstRunning.countDown();
+                    awaitQuietly(gate);
+                }
+                all.countDown();
+            });
+
+            sut.publish(new TestEvent()); // blocks the executor thread
+            assertThat(firstRunning.await(1, TimeUnit.SECONDS)).isTrue();
+            for (int i = 1; i < accepted; i++) {
+                sut.publish(new TestEvent()); // accepted into the subscriber's queue
+            }
+
+            // fill the executor's task queue, so that the yield after the first batch cannot be scheduled
+            CountDownLatch fillersRan = new CountDownLatch(16);
+            for (int i = 0; i < 16; i++) {
+                bounded.next().execute(fillersRan::countDown);
+            }
+            gate.countDown();
+            assertThat(fillersRan.await(1, TimeUnit.SECONDS)).isTrue();
+
+            // the next event schedules delivery again, including the events accepted before the rejection
+            sut.publish(new TestEvent());
+
+            assertThat(all.await(2, TimeUnit.SECONDS)).isTrue();
+            assertThat(delivered).hasValue(accepted + 1);
+        } finally {
+            bounded.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS);
+        }
     }
 
     static class TestEvent implements Event {

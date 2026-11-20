@@ -311,10 +311,20 @@ public class DefaultEventBus implements EventBus {
             try {
                 executor.execute(this::deliver);
             } catch (RejectedExecutionException e) {
-                // the executor is shut down: nothing can be delivered any more
-                queue.clear();
-                inFlight.set(0);
+
+                if (executor.isShuttingDown()) {
+                    // nothing can be delivered any more
+                    queue.clear();
+                    inFlight.set(0);
+                    scheduled.set(0);
+                    return;
+                }
+
+                // the executor is only full for now: keep the accepted events, they are delivered once the next event
+                // for this subscription schedules delivery again
                 scheduled.set(0);
+                logger.warn("Event bus could not schedule delivery of {} waiting events for a subscriber: {}", queue.size(),
+                        e.toString());
             }
         }
 
