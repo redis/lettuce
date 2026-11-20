@@ -63,6 +63,7 @@ import io.lettuce.core.MaintNotificationsConfig;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandTimeoutException;
+import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.Subscription;
@@ -1338,8 +1339,13 @@ public class SlotMigrationManualRunner {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     return;
-                } catch (Exception e) {
-                    reachable(false, String.valueOf(e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
+                } catch (TimeoutException | ExecutionException | RedisException e) {
+                    reachable(false, String.valueOf(e.getCause() != null ? e.getCause() : e));
+                } catch (RuntimeException e) {
+                    // a defect in this probe, not an unreachable endpoint
+                    emit(traceEvent("cluster").put("name", "probe-error").put("detail", abbreviate(String.valueOf(e), 160)));
+                    e.printStackTrace(out);
+                    return;
                 }
 
                 sleep(200);
@@ -1419,10 +1425,16 @@ public class SlotMigrationManualRunner {
                 }
             }
 
-            Set<String> previous = new TreeSet<>(Arrays.asList(before));
-            Set<String> current = new TreeSet<>(Arrays.asList(after));
-            previous.remove(null);
-            current.remove(null);
+            Set<String> previous = new TreeSet<>();
+            Set<String> current = new TreeSet<>();
+            for (int slot = 0; slot < SlotHash.SLOT_COUNT; slot++) {
+                if (before[slot] != null) {
+                    previous.add(before[slot]);
+                }
+                if (after[slot] != null) {
+                    current.add(after[slot]);
+                }
+            }
 
             ObjectNode event = traceEvent("cluster").put("name", "topology-changed");
             event.putArray("moved").addAll(moves.values());
