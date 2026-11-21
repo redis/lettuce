@@ -37,8 +37,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.datastructure.queue.HashIndexedQueue;
@@ -326,7 +328,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         setState(LifecycleState.CONNECTED);
 
-        tracedEndpoint = clientResources.tracing().createEndpoint(ctx.channel().remoteAddress());
+        if (tracedEndpoint == null) {
+            tracedEndpoint = createTracedEndpoint(ctx.channel());
+        }
 
         endpoint.notifyChannelActive(ctx.channel());
         super.channelActive(ctx);
@@ -488,11 +492,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             Tracer.Span span = tracer.nextSpan(context);
             span.name(command.getType().toString());
 
-            if (tracedEndpoint != null) {
-                span.remoteEndpoint(tracedEndpoint);
-            } else {
-                span.remoteEndpoint(clientResources.tracing().createEndpoint(ctx.channel().remoteAddress()));
+            if (tracedEndpoint == null) {
+                // handshake commands are written before channelActive reaches this handler
+                tracedEndpoint = createTracedEndpoint(ctx.channel());
             }
+
+            span.remoteEndpoint(tracedEndpoint);
 
             span.start(command);
 
@@ -500,6 +505,22 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 traced.setSpan(span);
             }
         }
+    }
+
+    private Tracing.Endpoint createTracedEndpoint(Channel channel) {
+
+        Tracing tracing = clientResources.tracing();
+
+        if (channel.hasAttr(ConnectionBuilder.REDIS_URI_INSTANCE)) {
+
+            RedisURI redisURI = channel.attr(ConnectionBuilder.REDIS_URI_INSTANCE).get();
+
+            if (redisURI != null) {
+                return tracing.createEndpoint(channel.remoteAddress(), redisURI);
+            }
+        }
+
+        return tracing.createEndpoint(channel.remoteAddress());
     }
 
     private void addToStack(RedisCommand<?, ?, ?> command, ChannelPromise promise) {
