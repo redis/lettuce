@@ -606,14 +606,38 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 connectionWatchdog.prepareClose();
             }
 
-            cancelBufferedCommands("Close");
+            Throwable cancelError = null;
+            try {
+                cancelBufferedCommands("Close");
+            } catch (Throwable t) {
+                cancelError = t;
+                try {
+                    cancelCommands("Close", drainCommands(), RedisCommand::cancel);
+                } catch (Throwable drainEx) {
+                    cancelError.addSuppressed(drainEx);
+                }
+            }
 
             Channel channel = getOpenChannel();
 
             if (channel != null) {
-                Futures.adapt(channel.close(), closeFuture);
+                if (cancelError != null) {
+                    final Throwable ex = cancelError;
+                    channel.close().addListener(future -> {
+                        if (!future.isSuccess() && future.cause() != null) {
+                            ex.addSuppressed(future.cause());
+                        }
+                        closeFuture.completeExceptionally(ex);
+                    });
+                } else {
+                    Futures.adapt(channel.close(), closeFuture);
+                }
             } else {
-                closeFuture.complete(null);
+                if (cancelError != null) {
+                    closeFuture.completeExceptionally(cancelError);
+                } else {
+                    closeFuture.complete(null);
+                }
             }
         }
 
