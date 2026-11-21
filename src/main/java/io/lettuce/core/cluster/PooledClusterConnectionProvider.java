@@ -67,6 +67,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  * @author Tihomir Mateev
  * @author dae won
+ * @author Sankalp Shukla
  * @since 3.0
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -84,6 +85,9 @@ class PooledClusterConnectionProvider<K, V>
     private final CompletableFuture<StatefulRedisConnection<K, V>> writers[] = new CompletableFuture[SlotHash.SLOT_COUNT];
 
     private final CompletableFuture<StatefulRedisConnection<K, V>> readers[][] = new CompletableFuture[SlotHash.SLOT_COUNT][];
+
+    // Invalidate pending reader selections before they can publish into a refreshed cache.
+    private long readCacheEpoch;
 
     private final RedisClusterClient redisClusterClient;
 
@@ -221,10 +225,12 @@ class PooledClusterConnectionProvider<K, V>
         CompletableFuture<StatefulRedisConnection<K, V>> readerCandidates[];// avoid races when reconfiguring partitions.
 
         boolean cached = true;
+        long selectionEpoch;
 
         stateLock.lock();
         try {
             readerCandidates = readers[slot];
+            selectionEpoch = readCacheEpoch;
         } finally {
             stateLock.unlock();
         }
@@ -325,7 +331,9 @@ class PooledClusterConnectionProvider<K, V>
 
             stateLock.lock();
             try {
-                readers[slot] = toCache;
+                if (readCacheEpoch == selectionEpoch) {
+                    readers[slot] = toCache;
+                }
             } finally {
                 stateLock.unlock();
             }
@@ -653,6 +661,7 @@ class PooledClusterConnectionProvider<K, V>
         stateLock.lock();
         try {
             this.readFrom = readFrom;
+            readCacheEpoch++;
             Arrays.fill(readers, null);
         } finally {
             stateLock.unlock();
@@ -682,6 +691,7 @@ class PooledClusterConnectionProvider<K, V>
         stateLock.lock();
         try {
             Arrays.fill(writers, null);
+            readCacheEpoch++;
             Arrays.fill(readers, null);
         } finally {
             stateLock.unlock();
