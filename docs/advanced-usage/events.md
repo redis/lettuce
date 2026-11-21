@@ -102,6 +102,10 @@ Flux.create(sink -> {
 A thread of the computation thread pool (can be configured using [client
 resources](client-resources.md)) transports the events.
 
+All subscribers receive events in the same order, also when different
+threads publish events at the same time. A subscriber that cannot keep
+up drops events instead of slowing down the publishing thread.
+
 ### Connection events
 
 When working with events, multiple events occur. These can be used to
