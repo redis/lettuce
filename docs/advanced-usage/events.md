@@ -102,6 +102,45 @@ Flux.create(sink -> {
 A thread of the computation thread pool (can be configured using [client
 resources](client-resources.md)) transports the events.
 
+All subscribers receive events in the same order, also when different
+threads publish events at the same time. Publishing never waits for
+another publisher.
+
+Each subscriber can hold up to 1024 events that are waiting or being
+delivered. When a subscriber cannot keep up, `DefaultEventBus` drops
+events for that subscriber only; other subscribers are not affected. By
+default the newest event is dropped. You can change both the limit and
+the overflow strategy for one subscription, for example to keep only
+the latest few events:
+
+``` java
+Subscription subscription = eventBus.subscribe(ConnectionEvent.class, listener,
+        EventSubscriptionOptions.builder()
+                .maxInFlight(16)
+                .overflowStrategy(OverflowStrategy.DROP_OLDEST)
+                .build());
+```
+
+A limit you leave unset uses the default of the event bus, and an unset
+overflow strategy drops the newest event. To change the default limit
+for all subscriptions, for example for listeners registered by
+libraries, create the `DefaultEventBus` with it:
+
+``` java
+EventExecutorGroup group = new DefaultEventExecutorGroup(4);
+ClientResources resources = ClientResources.builder()
+        .eventExecutorGroup(group)
+        .eventBus(new DefaultEventBus(group, 2048))
+        .build();
+```
+
+When you pass your own `EventExecutorGroup`, the client resources do not
+shut it down; shut it down yourself after the resources.
+
+If you implement your own `EventBus`, implement
+`subscribe(Consumer, EventSubscriptionOptions)` (since 8.0). All other
+`subscribe` methods delegate to it.
+
 ### Connection events
 
 When working with events, multiple events occur. These can be used to

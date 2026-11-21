@@ -25,6 +25,7 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.event.Event;
 import io.lettuce.core.event.EventBus;
+import io.lettuce.core.event.EventSubscriptionOptions;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.resource.FastShutdown;
 
@@ -76,7 +77,7 @@ class RedisClusterClientTopologyRefreshUnitTests {
         final AtomicReference<List<RedisClusterNode>> partitionsWhenPublished = new AtomicReference<>();
 
         @Override
-        public Subscription subscribe(Consumer<Event> listener) {
+        public Subscription subscribe(Consumer<Event> listener, EventSubscriptionOptions options) {
             return () -> {
             };
         }
