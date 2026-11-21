@@ -49,6 +49,7 @@ class MicrometerOptionsUnitTests {
 
         assertThat(options.isEnabled()).isEqualTo(DEFAULT_ENABLED);
         assertThat(options.isHistogram()).isEqualTo(DEFAULT_HISTOGRAM);
+        assertThat(options.isQueueLatencyEnabled()).isFalse();
         assertThat(options.localDistinction()).isEqualTo(DEFAULT_LOCAL_DISTINCTION);
         assertThat(options.maxLatency()).isEqualTo(DEFAULT_MAX_LATENCY);
         assertThat(options.minLatency()).isEqualTo(DEFAULT_MIN_LATENCY);
@@ -70,6 +71,14 @@ class MicrometerOptionsUnitTests {
         MicrometerOptions options = MicrometerOptions.builder().histogram(true).build();
 
         assertThat(options.isHistogram()).isTrue();
+    }
+
+    @Test
+    void queueLatencyOptIn() {
+        MicrometerOptions options = MicrometerOptions.builder().queueLatency(true).build();
+
+        assertThat(options.isQueueLatencyEnabled()).isTrue();
+        assertThat(options.mutate().queueLatency(false).build().isQueueLatencyEnabled()).isFalse();
     }
 
     @Test

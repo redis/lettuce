@@ -23,16 +23,25 @@ import static io.lettuce.core.protocol.CommandHandler.*;
 import static io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE;
 
 import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.nio.channels.ClosedChannelException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -46,6 +55,7 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceFactories;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -94,6 +104,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
     private final Queue<RedisCommand<?, ?, ?>> commandBuffer;
 
+    // Connection-local, weak identity keys keep wrappers from consuming each other's timestamps.
+    private final Map<IdentityWeakReference, ArrayDeque<QueueLatencyStamp>> queueingTimestamps;
+
+    private final ReferenceQueue<RedisCommand<?, ?, ?>> queueingTimestampReferences = new ReferenceQueue<>();
+
     private final boolean boundedQueues;
 
     private final boolean rejectCommandsWhileDisconnected;
@@ -103,6 +118,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     private final List<PushListener> pushListeners = new CopyOnWriteArrayList<>();
 
     private final SharedLock sharedLock = new SharedLock();
+
+    // With queue metrics enabled, a command's timing stamp and its enqueue/write
+    // must be serialized with other submissions of that same instance.
+    private final Map<IdentityWeakReference, AdmissionLock> queueingAdmissionLocks;
+
+    private final ReferenceQueue<RedisCommand<?, ?, ?>> admissionLockReferences = new ReferenceQueue<>();
+
+    private long nextAdmissionLockId;
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
@@ -147,6 +170,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         this.replayFilter = clientOptions.getReplayFilter();
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
+        CommandLatencyRecorder recorder = clientResources.commandLatencyRecorder();
+        this.queueingTimestamps = recorder != null && recorder.isQueueLatencyEnabled()
+                ? Collections.synchronizedMap(new HashMap<>())
+                : null;
+        this.queueingAdmissionLocks = queueingTimestamps == null ? null : new HashMap<>();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
         this.rejectCommandsWhileDisconnected = clientOptions.isRejectCommandsWhileDisconnected();
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
@@ -193,11 +221,26 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return command;
         }
 
+        // Include time waiting for the endpoint lock in the queueing interval.
+        long acceptedAt = queueingTimestamps == null ? 0 : System.nanoTime();
+        List<AdmissionLock> acquiredAdmissionLocks = Collections.emptyList();
+
         try {
-            sharedLock.incrementWriters();
+            acquiredAdmissionLocks = acquireAdmissionLocks(command);
+
+            // Waiting for another attempt can temporarily release the SharedLock writer
+            // reservation. Close can finish during that gap, so recheck after admission.
+            if (isClosed()) {
+                command.completeExceptionally(new RedisException("Connection is closed"));
+                return command;
+            }
 
             if (inActivation) {
                 command = processActivationCommand(command);
+            }
+
+            if (queueingTimestamps != null) {
+                trackQueueLatency(command, acceptedAt);
             }
 
             if (autoFlushCommands) {
@@ -212,6 +255,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 writeToBuffer(command);
             }
         } finally {
+            releaseAdmissionLocks(acquiredAdmissionLocks);
             sharedLock.decrementWriters();
             if (debugEnabled) {
                 logger.debug("{} write() done", logPrefix());
@@ -227,6 +271,20 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         LettuceAssert.notNull(commands, "Commands must not be null");
 
+        // A collection containing the same command instance multiple times is invalid
+        // for per-attempt queue metrics. Reject the submission as a whole without
+        // completing the shared command: an earlier write may already own that
+        // command instance and must remain live.
+        if (queueingTimestamps != null && commands.size() > 1) {
+            Set<RedisCommand<?, ?, ?>> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+
+            for (RedisCommand<?, ?, ?> command : commands) {
+                if (!seen.add(command)) {
+                    throw new RedisException("Batch contains repeated command instance: " + command);
+                }
+            }
+        }
+
         RedisException validation = validateWrite(commands.size());
 
         if (validation != null) {
@@ -234,8 +292,19 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return (Collection<RedisCommand<K, V, ?>>) commands;
         }
 
+        long acceptedAt = queueingTimestamps == null ? 0 : System.nanoTime();
+        List<AdmissionLock> acquiredAdmissionLocks = Collections.emptyList();
+
         try {
-            sharedLock.incrementWriters();
+            acquiredAdmissionLocks = acquireAdmissionLocks(commands);
+
+            // A close may run while this batch waits for a command admission lock.
+            // Never enqueue the resumed batch after the endpoint was closed.
+            if (isClosed()) {
+                RedisException closed = new RedisException("Connection is closed");
+                commands.forEach(it -> it.completeExceptionally(closed));
+                return (Collection<RedisCommand<K, V, ?>>) commands;
+            }
 
             if (inActivation) {
                 commands = processActivationCommands(commands);
@@ -244,15 +313,22 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             if (autoFlushCommands) {
                 Channel channel = this.channel;
                 if (isConnected(channel)) {
+                    // A channel write can be dispatched asynchronously, so all
+                    // acceptance stamps must exist before the first write.
+                    if (queueingTimestamps != null) {
+                        for (RedisCommand<?, ?, ?> command : commands) {
+                            trackQueueLatency(command, acceptedAt);
+                        }
+                    }
                     writeToChannelAndFlush(channel, commands);
                 } else {
-                    writeToDisconnectedBuffer(commands);
+                    writeToDisconnectedBuffer(commands, acceptedAt);
                 }
-
             } else {
-                writeToBuffer(commands);
+                writeToBuffer(commands, acceptedAt);
             }
         } finally {
+            releaseAdmissionLocks(acquiredAdmissionLocks);
             sharedLock.decrementWriters();
             if (debugEnabled) {
                 logger.debug("{} write() done", logPrefix());
@@ -260,6 +336,205 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         }
 
         return (Collection<RedisCommand<K, V, ?>>) commands;
+    }
+
+    Long takeQueueLatencyStart(RedisCommand<?, ?, ?> command) {
+        if (queueingTimestamps == null) {
+            return null;
+        }
+
+        synchronized (queueingTimestamps) {
+            expungeStaleQueueingTimestamps();
+            IdentityWeakReference key = new IdentityWeakReference(command, null);
+            ArrayDeque<QueueLatencyStamp> attempts = queueingTimestamps.get(key);
+            if (attempts == null) {
+                return null;
+            }
+            QueueLatencyStamp stamp = attempts.removeFirst();
+            if (attempts.isEmpty()) {
+                queueingTimestamps.remove(key);
+            }
+            return stamp.acceptedAt;
+        }
+    }
+
+    private void discardLatestQueueLatencyStart(RedisCommand<?, ?, ?> command) {
+        if (queueingTimestamps == null) {
+            return;
+        }
+        synchronized (queueingTimestamps) {
+            IdentityWeakReference key = new IdentityWeakReference(command, null);
+            ArrayDeque<QueueLatencyStamp> attempts = queueingTimestamps.get(key);
+            if (attempts != null) {
+                attempts.removeLast();
+                if (attempts.isEmpty()) {
+                    queueingTimestamps.remove(key);
+                }
+            }
+        }
+    }
+
+    private void trackQueueLatency(RedisCommand<?, ?, ?> command, long acceptedAt) {
+        if (queueingTimestamps == null || command.isDone() || command.isCancelled()) {
+            return;
+        }
+
+        IdentityWeakReference key = new IdentityWeakReference(command, queueingTimestampReferences);
+        QueueLatencyStamp stamp = new QueueLatencyStamp(acceptedAt);
+        synchronized (queueingTimestamps) {
+            expungeStaleQueueingTimestamps();
+            // Separate writes of the same command instance can queue before either reaches
+            // the event loop. Consume their acceptance times in dispatch (FIFO) order.
+            queueingTimestamps.computeIfAbsent(key, ignored -> new ArrayDeque<>()).addLast(stamp);
+        }
+
+        // Completion of an earlier attempt must not remove later acceptance timestamps.
+        if (command instanceof CompleteableCommand) {
+            ((CompleteableCommand<?>) command).onComplete((result, failure) -> {
+                if (command.isDone() || command.isCancelled()) {
+                    synchronized (queueingTimestamps) {
+                        ArrayDeque<QueueLatencyStamp> attempts = queueingTimestamps.get(key);
+                        if (attempts != null && attempts.contains(stamp)) {
+                            // A terminal attempt also invalidates any earlier unclaimed stamps.
+                            // Later acceptances must remain untouched.
+                            while (attempts.removeFirst() != stamp) {
+                                // Discard older unclaimed attempts.
+                            }
+                            if (attempts.isEmpty()) {
+                                queueingTimestamps.remove(key);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    private List<AdmissionLock> acquireAdmissionLocks(RedisCommand<?, ?, ?> command) {
+        return acquireAdmissionLocks(Collections.singleton(command));
+    }
+
+    private List<AdmissionLock> acquireAdmissionLocks(Iterable<? extends RedisCommand<?, ?, ?>> commands) {
+        // Register as a writer before walking a caller-provided collection.
+        // If its iterator fails, write() still has a matching writer count to release.
+        sharedLock.incrementWriters();
+        if (queueingAdmissionLocks == null) {
+            return Collections.emptyList();
+        }
+
+        List<AdmissionLock> locks = new ArrayList<>();
+        Set<AdmissionLock> unique = Collections.newSetFromMap(new IdentityHashMap<>());
+        synchronized (queueingAdmissionLocks) {
+            // A write may have passed validateWrite just before close changed the
+            // state. Do not recreate admission locks after the close cleanup.
+            if (isClosed()) {
+                return Collections.emptyList();
+            }
+
+            IdentityWeakReference collected;
+            while ((collected = (IdentityWeakReference) admissionLockReferences.poll()) != null) {
+                queueingAdmissionLocks.remove(collected);
+            }
+            for (RedisCommand<?, ?, ?> command : commands) {
+                IdentityWeakReference lookup = new IdentityWeakReference(command, null);
+                AdmissionLock admission = queueingAdmissionLocks.get(lookup);
+                if (admission == null) {
+                    admission = new AdmissionLock(++nextAdmissionLockId);
+                    queueingAdmissionLocks.put(new IdentityWeakReference(command, admissionLockReferences), admission);
+                }
+                if (unique.add(admission)) {
+                    locks.add(admission);
+                }
+            }
+        }
+        locks.sort(Comparator.comparingLong(admission -> admission.id));
+
+        for (;;) {
+            int acquired = 0;
+            while (acquired < locks.size() && locks.get(acquired).lock.tryLock()) {
+                acquired++;
+            }
+            if (acquired == locks.size()) {
+                return locks;
+            }
+
+            // A writer waiting for admission must not prevent the current lock holder
+            // from acquiring SharedLock exclusively (for example, in a write callback).
+            for (int i = acquired - 1; i >= 0; i--) {
+                locks.get(i).lock.unlock();
+            }
+            sharedLock.decrementWriters();
+
+            // Wait without being counted as a writer or holding another admission lock.
+            // Release before re-entering SharedLock to avoid the opposite lock inversion.
+            AdmissionLock contended = locks.get(acquired);
+            contended.lock.lock();
+            contended.lock.unlock();
+            sharedLock.incrementWriters();
+        }
+    }
+
+    private void releaseAdmissionLocks(List<AdmissionLock> locks) {
+        for (int i = locks.size() - 1; i >= 0; i--) {
+            locks.get(i).lock.unlock();
+        }
+    }
+
+    private static final class AdmissionLock {
+
+        final long id;
+
+        final ReentrantLock lock = new ReentrantLock();
+
+        AdmissionLock(long id) {
+            this.id = id;
+        }
+
+    }
+
+    private void expungeStaleQueueingTimestamps() {
+        IdentityWeakReference reference;
+        while ((reference = (IdentityWeakReference) queueingTimestampReferences.poll()) != null) {
+            queueingTimestamps.remove(reference);
+        }
+    }
+
+    private static final class QueueLatencyStamp {
+
+        final long acceptedAt;
+
+        QueueLatencyStamp(long acceptedAt) {
+            this.acceptedAt = acceptedAt;
+        }
+
+    }
+
+    private static final class IdentityWeakReference extends WeakReference<RedisCommand<?, ?, ?>> {
+
+        private final int hash;
+
+        IdentityWeakReference(RedisCommand<?, ?, ?> command, ReferenceQueue<RedisCommand<?, ?, ?>> queue) {
+            super(command, queue);
+            this.hash = System.identityHashCode(command);
+        }
+
+        @Override
+        public int hashCode() {
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof IdentityWeakReference)) {
+                return false;
+            }
+            RedisCommand<?, ?, ?> command = get();
+            return command != null && command == ((IdentityWeakReference) other).get();
+        }
+
     }
 
     private <K, V, T> RedisCommand<K, V, T> processActivationCommand(RedisCommand<K, V, T> command) {
@@ -324,15 +599,23 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         return boundedQueues;
     }
 
-    private void writeToBuffer(Iterable<? extends RedisCommand<?, ?, ?>> commands) {
+    private void writeToBuffer(Iterable<? extends RedisCommand<?, ?, ?>> commands, long acceptedAt) {
 
         for (RedisCommand<?, ?, ?> command : commands) {
+            // Track only commands actually visited: a failed bounded enqueue
+            // must not leave stamps for later batch entries that were not attempted.
+            if (queueingTimestamps != null) {
+                trackQueueLatency(command, acceptedAt);
+            }
             writeToBuffer(command);
         }
     }
 
-    private void writeToDisconnectedBuffer(Collection<? extends RedisCommand<?, ?, ?>> commands) {
+    private void writeToDisconnectedBuffer(Collection<? extends RedisCommand<?, ?, ?>> commands, long acceptedAt) {
         for (RedisCommand<?, ?, ?> command : commands) {
+            if (queueingTimestamps != null) {
+                trackQueueLatency(command, acceptedAt);
+            }
             writeToDisconnectedBuffer(command);
         }
     }
@@ -344,12 +627,14 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 logger.debug("{} writeToDisconnectedBuffer() Completing command {} due to connection error", logPrefix(),
                         command);
             }
+            discardLatestQueueLatencyStart(command);
             command.completeExceptionally(connectionError);
 
             return;
         }
 
         if (replayFilter.test(command)) {
+            discardLatestQueueLatencyStart(command);
             if (debugEnabled) {
                 logger.debug("{} writeToDisconnectedBuffer() Filtering out command {}", logPrefix(), command);
             }
@@ -360,7 +645,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             logger.debug("{} writeToDisconnectedBuffer() buffering (disconnected) command {}", logPrefix(), command);
         }
 
-        disconnectedBuffer.add(command);
+        try {
+            disconnectedBuffer.add(command);
+        } catch (RuntimeException e) {
+            // A concurrent writer can fill the bounded buffer after validateWrite().
+            discardLatestQueueLatencyStart(command);
+            throw e;
+        }
     }
 
     protected <C extends RedisCommand<?, ?, T>, T> void writeToBuffer(C command) {
@@ -374,12 +665,19 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             if (debugEnabled) {
                 logger.debug("{} writeToBuffer() Completing command {} due to connection error", logPrefix(), command);
             }
+            discardLatestQueueLatencyStart(command);
             command.completeExceptionally(connectionError);
 
             return;
         }
 
-        commandBuffer.add(command);
+        try {
+            commandBuffer.add(command);
+        } catch (RuntimeException e) {
+            // Do not retain the most recent acceptance stamp for a failed bounded enqueue.
+            discardLatestQueueLatencyStart(command);
+            throw e;
+        }
     }
 
     private void writeToChannelAndFlush(Channel channel, RedisCommand<?, ?, ?> command) {
@@ -530,7 +828,10 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         if (t instanceof RedisConnectionException && RedisConnectionException.isProtectedMode(t.getMessage())) {
 
             connectionError = t;
-            doExclusive(this::drainCommands).forEach(cmd -> cmd.completeExceptionally(t));
+            doExclusive(this::drainCommands).forEach(cmd -> {
+                takeQueueLatencyStart(cmd);
+                cmd.completeExceptionally(t);
+            });
         }
 
         if (!isConnected(this.channel)) {
@@ -607,6 +908,19 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             }
 
             cancelBufferedCommands("Close");
+            if (queueingTimestamps != null) {
+                // Writes queued on the event loop must consume their timestamps before cleanup.
+                closeFuture.whenComplete((result, failure) -> {
+                    queueingTimestamps.clear();
+                    // No new admissions are registered after ST_CLOSED.
+                    synchronized (queueingAdmissionLocks) {
+                        queueingAdmissionLocks.clear();
+                        while (admissionLockReferences.poll() != null) {
+                            // Drain stale weak references retained by this endpoint.
+                        }
+                    }
+                });
+            }
 
             Channel channel = getOpenChannel();
 
@@ -702,10 +1016,22 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                     logger.debug("{} notifyQueuedCommands Queue overcommit. Cannot add all commands to buffer (disconnected).",
                             logPrefix(), commands.size());
                 }
-                commands.removeAll(disconnectedBuffer);
-
+                // addAll may have enqueued a prefix before failing. Removing by
+                // equals() would also remove rejected occurrences of a command
+                // instance that was already accepted into the buffer.
+                int acceptedCount = disconnectedBuffer.size();
+                int index = 0;
+                Set<RedisCommand<?, ?, ?>> accepted = Collections.newSetFromMap(new IdentityHashMap<>());
                 for (RedisCommand<?, ?, ?> command : commands) {
-                    command.completeExceptionally(e);
+                    if (index++ < acceptedCount) {
+                        accepted.add(command);
+                        continue;
+                    }
+                    // A reused command may have an older accepted timestamp.
+                    discardLatestQueueLatencyStart(command);
+                    if (!accepted.contains(command)) {
+                        command.completeExceptionally(e);
+                    }
                 }
             }
 
@@ -744,15 +1070,17 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
      * @param source the source queue.
      * @return List of commands.
      */
-    private static List<RedisCommand<?, ?, ?>> drainCommands(Queue<? extends RedisCommand<?, ?, ?>> source) {
+    private List<RedisCommand<?, ?, ?>> drainCommands(Queue<? extends RedisCommand<?, ?, ?>> source) {
 
         List<RedisCommand<?, ?, ?>> target = new ArrayList<>(source.size());
 
         RedisCommand<?, ?, ?> cmd;
         while ((cmd = source.poll()) != null) {
 
-            if (!cmd.isDone() && !ActivationCommand.isActivationCommand(cmd)) {
+            if (!cmd.isDone() && !cmd.isCancelled() && !ActivationCommand.isActivationCommand(cmd)) {
                 target.add(cmd);
+            } else {
+                takeQueueLatencyStart(cmd);
             }
         }
 
@@ -765,13 +1093,15 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
      *
      * @param source the source queue.
      */
-    private static void drainCommands(Queue<? extends RedisCommand<?, ?, ?>> source, Collection<RedisCommand<?, ?, ?>> target) {
+    private void drainCommands(Queue<? extends RedisCommand<?, ?, ?>> source, Collection<RedisCommand<?, ?, ?>> target) {
 
         RedisCommand<?, ?, ?> cmd;
         while ((cmd = source.poll()) != null) {
 
-            if (!cmd.isDone() && !ActivationCommand.isActivationCommand(cmd)) {
+            if (!cmd.isDone() && !cmd.isCancelled() && !ActivationCommand.isActivationCommand(cmd)) {
                 target.add(cmd);
+            } else {
+                takeQueueLatencyStart(cmd);
             }
         }
     }
@@ -787,6 +1117,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             if (cmd.getOutput() != null) {
                 cmd.getOutput().setError(message);
             }
+            takeQueueLatencyStart(cmd);
             commandConsumer.accept(cmd);
         }
     }
