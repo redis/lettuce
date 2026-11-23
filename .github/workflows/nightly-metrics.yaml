@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   nightly-metrics:
-    name: Redis 8.10; test metrics
+    name: Redis 8.12; test metrics
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -58,7 +58,7 @@ jobs:
 
       - name: Set up Docker Compose environment
         if: steps.gate.outputs.run == 'true'
-        run: make start version=8.10
+        run: make start version=8.12
 
       - name: Run tests
         if: steps.gate.outputs.run == 'true'
@@ -69,7 +69,7 @@ jobs:
 
       - name: Tear down Docker Compose environment
         if: always() && steps.gate.outputs.run == 'true'
-        run: make stop version=8.10
+        run: make stop version=8.12
         continue-on-error: true
 
       # Surefire (unit tests) and failsafe (integration tests) write their
@@ -88,4 +88,4 @@ jobs:
           junit-xml-folder: 'test-results'
           otlp-endpoint: 'https://otlp-gateway-prod-us-central-0.grafana.net/otlp/v1/metrics'
           otlp-headers: 'Authorization=Basic ${{ secrets.OTEL_CI_VISIBILITY_TOKEN }}'
-          server-version: '8.10'
+          server-version: '8.12'
