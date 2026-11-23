@@ -415,9 +415,11 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
         @Test
         @DisplayName("Should transition from UNKNOWN to HEALTHY")
         void shouldTransitionFromUnknownToHealthy() {
-            // Given: Health check strategy with fast interval for testing
+            // Given: Health check strategy with fast interval for testing. The timeout must outlast every step until the
+            // blocked uri2 check is released below, otherwise the check times out and uri2 becomes UNHEALTHY instead of
+            // staying UNKNOWN.
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms interval
-                    .timeout(1000).numProbes(1).delayInBetweenProbes(1).build();
+                    .timeout(10_000).numProbes(1).delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
